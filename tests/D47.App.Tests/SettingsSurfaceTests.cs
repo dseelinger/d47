@@ -38,6 +38,8 @@ public class SettingsSurfaceTests
         var secrets = new SecretStore(paths, new NoopProtector(), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(store, secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             paths,
             new NoopVerbosity(),
@@ -52,7 +54,10 @@ public class SettingsSurfaceTests
                 Beds = [.. CueLibrary.Load().BedNames],
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
+            () => built!));
+
+        built = registry;
 
         settings.Bind(registry);
 

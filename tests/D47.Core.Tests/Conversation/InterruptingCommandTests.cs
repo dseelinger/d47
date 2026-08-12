@@ -21,6 +21,8 @@ public class InterruptingCommandTests
 {
     private static KeywordRouter Router(TempInstall install, Action? onSilence = null)
     {
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             install.Paths,
             new FakeVerbosityControl(),
@@ -31,7 +33,10 @@ public class InterruptingCommandTests
             "1.0.0-test",
             TestSurface.SilentSpeech(onSilence),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
+            () => built!));
+
+        built = registry;
 
         return new KeywordRouter(registry);
     }
@@ -166,6 +171,8 @@ public class InterruptingCommandTests
     {
         using var install = new TempInstall();
 
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             install.Paths,
             new FakeVerbosityControl(),
@@ -176,7 +183,10 @@ public class InterruptingCommandTests
             "1.0.0-test",
             TestSurface.SilentSpeech(),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
+            () => built!));
+
+        built = registry;
 
         var interrupting =
             (from capability in registry.All
@@ -197,6 +207,8 @@ public class InterruptingCommandTests
         using var install = new TempInstall();
         var silenced = 0;
 
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             install.Paths,
             new FakeVerbosityControl(),
@@ -207,7 +219,10 @@ public class InterruptingCommandTests
             "1.0.0-test",
             TestSurface.SilentSpeech(() => silenced++),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
+            () => built!));
+
+        built = registry;
 
         var match = new KeywordRouter(registry).MatchInterrupting("shut up");
         Assert.NotNull(match);

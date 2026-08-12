@@ -58,7 +58,16 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
 
         foreach (var capability in candidates)
         {
-            var tool = capability.Descriptor.Tools.FirstOrDefault(t => t.Parameters.Count == 0);
+            // No *required* parameters, rather than no parameters at all. The router invokes
+            // with empty arguments, so an optional parameter is no obstacle — and the stricter
+            // test made a capability unreachable by voice purely for offering a refinement it
+            // does not need. Spoken help was exactly that: "what can you do" matched nothing,
+            // because get_capabilities takes an optional group to expand.
+            //
+            // Required parameters still disqualify a tool. The router deliberately does not
+            // extract values from free text — a router that guesses at arguments is a router
+            // that calls the right tool with the wrong ones.
+            var tool = capability.Descriptor.Tools.FirstOrDefault(t => !t.Parameters.Any(p => p.Required));
             if (tool is not null)
             {
                 return new KeywordMatch(capability.Descriptor.Id, tool.Name);

@@ -281,6 +281,12 @@ public sealed class AppHost : IDisposable
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
+        // The help capability answers from the registry it is itself registered in, so the
+        // accessor is filled in immediately after Build. A Func rather than a mutable property
+        // on the descriptor: descriptors are registered once and never mutated (architecture.md
+        // D5), and that rule is what keeps tool schemas byte-identical across turns.
+        CapabilityRegistry? built = null;
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -299,7 +305,11 @@ public sealed class AppHost : IDisposable
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
                 },
                 cancellation,
-                callouts));
+                callouts,
+                () => built ?? throw new InvalidOperationException(
+                    "Spoken help was asked what d47 can do before the registry finished building.")));
+
+        built = capabilities;
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and
         // some descriptors read settings, so the row table is supplied once the registry exists.

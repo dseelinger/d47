@@ -29,6 +29,18 @@ public sealed partial class CapabilityRegistry
     private readonly Dictionary<string, RegisteredCapability> _byId;
     private readonly Dictionary<string, (RegisteredCapability Capability, ToolDefinition Tool)> _byToolName;
 
+    /// <summary>
+    /// How many times each capability has actually been used this session. Spoken help is
+    /// ranked by it (list.md Phase 6, "ranked by real usage"), so the capabilities a Commander
+    /// reaches for come first instead of whichever happened to be registered first.
+    /// <para>
+    /// Session-scoped rather than persisted. Persisting it means a store, a schema and a
+    /// migration for a ranking, and the phase that needs help to survive a restart can add
+    /// those; what it must not do is invent a usage history that never happened.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
+
     private CapabilityRegistry(IReadOnlyList<RegisteredCapability> capabilities)
     {
         All = capabilities;
@@ -100,6 +112,15 @@ public sealed partial class CapabilityRegistry
 
     public RegisteredCapability? Find(string id) => _byId.GetValueOrDefault(id);
 
+    /// <summary>How often a capability has been invoked this session.</summary>
+    public int UseCountOf(string capabilityId)
+    {
+        lock (_uses)
+        {
+            return _uses.GetValueOrDefault(capabilityId, 0);
+        }
+    }
+
     /// <summary>
     /// Runs a tool. Arguments are validated against the declared schema first, so a
     /// hallucinated parameter or an out-of-vocabulary value never reaches capability code.
@@ -117,6 +138,14 @@ public sealed partial class CapabilityRegistry
         }
 
         var tool = found.Tool;
+
+        // Counted on the attempt rather than on success. A capability the Commander keeps
+        // reaching for is one worth ranking highly even on the days it fails.
+        lock (_uses)
+        {
+            var id = found.Capability.Descriptor.Id;
+            _uses[id] = _uses.GetValueOrDefault(id, 0) + 1;
+        }
 
         foreach (var parameter in tool.Parameters)
         {
