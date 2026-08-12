@@ -1,0 +1,9 @@
+{ "timestamp":"2026-02-10T09:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.0.0.1904", "build":"r302749/r0 " }
+{ "timestamp":"2026-02-10T09:00:01Z", "event":"Commander", "FID":"F1000001", "Name":"Fixture One" }
+{ "timestamp":"2026-02-10T09:00:02Z", "event":"LoadGame", "FID":"F1000001", "Commander":"Fixture One", "Horizons":true, "Odyssey":true, "Ship":"Asp Explorer", "ShipID":1, "GameMode":"Open", "Credits":100000, "Loan":0 }
+{ "timestamp":"2026-02-10T09:00:05Z", "event":"Location", "Docked":false, "StarSystem":"Fixture Anchorage", "SystemAddress":1001, "Body":"Fixture Anchorage", "BodyID":0, "BodyType":"Star" }
+this line is not json and must be skipped without killing the tail loop
+{ "timestamp":"2026-02-10T09:05:00Z", "event":"FutureEventTypeNobodyHasHeardOf", "someField":"from a later game version" }
+{ "timestamp":"2026-02-10T09:10:00Z", "event":"FSDJump", "StarSystem":"Fixture Nebula Point", "SystemAddress":1002, "Body":"Fixture Nebula Point A", "BodyID":1, "BodyType":"Star", "JumpDist":18.42, "FuelUsed":2.7, "FuelLevel":28.3 }
+{ "timestamp":"2026-02-10T09:15:00Z", "event":"Docked", "StationName":"Fixture Outpost", "StarSystem":"Fixture Nebula Point", "StationType":"Coriolis" }
+{ "timestamp":"2026-02-10T09:25:00Z", "event":"Undocked", "StationName":"Fixture Outpost" }

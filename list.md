@@ -9,11 +9,11 @@
   - [x] Every capability has a documentation page - CI fails if a registered capability has no documentation page, making "write the docs later" impossible rather than merely discouraged. Pages are written from real artifacts and must quote at least one code block or line of real output.
   - [x] GitHub Pages documentation - Each capability should have a documentation page. General help for TheApp outside of the particular capabilities is also available.
 
-- [ ] **Phase 2 — Journal spine**
-  - [ ] Journal behavior is testable without the game - A recorded session replays deterministically at 1x and 100x with no game, headset or hardware. Fixtures are byte-preserved via `.gitattributes` and scrubbed of the Commander name and real system visits, since the repository is public.
-  - [ ] TheApp knows where you are - TheApp answers what system you are in from the journal as part of an ordinary turn. Picks the newest journal by ordinal filename sort, opens shared for read/write/delete since Elite holds the file open, and is pull-based with no internal thread, which is what makes it testable.
-  - [ ] Survive a journal schema change - Elite adds and changes journal events several times a year. Unknown events are logged and skipped, a parse failure never kills the tail loop, and the machine-readable sink makes the diff findable, so a game patch costs a morning rather than an outage.
-  - [ ] Handle more than one Commander on a machine - A second Commander's journals must not merge into the first one's fleet, materials or location. The Commander is identified from the journal header and all derived state is kept per Commander, because a naive newest-file reader silently blends two people into one.
+- [x] **Phase 2 — Journal spine**
+  - [x] Journal behavior is testable without the game - A recorded session replays deterministically at 1x and 100x with no game, headset or hardware. Fixtures are byte-preserved via `.gitattributes` and scrubbed of the Commander name and real system visits, since the repository is public.
+  - [x] TheApp knows where you are - TheApp answers what system you are in from the journal as part of an ordinary turn. Picks the newest journal by ordinal filename sort, opens shared for read/write/delete since Elite holds the file open, and is pull-based with no internal thread, which is what makes it testable.
+  - [x] Survive a journal schema change - Elite adds and changes journal events several times a year. Unknown events are logged and skipped, a parse failure never kills the tail loop, and the machine-readable sink makes the diff findable, so a game patch costs a morning rather than an outage.
+  - [x] Handle more than one Commander on a machine - A second Commander's journals must not merge into the first one's fleet, materials or location. The Commander is identified from the journal header and all derived state is kept per Commander, because a naive newest-file reader silently blends two people into one.
 
 - [ ] **Phase 3 — First conversation (typed)**
   - [ ] TheApp answers a typed question - Type a question into TheApp's window and get a streamed reply from the model.

@@ -1,4 +1,5 @@
 using D47.Core.Capabilities;
+using D47.Core.Journal;
 using Xunit;
 
 namespace D47.Core.Tests;
@@ -104,7 +105,8 @@ public class DocumentationGateTests
         // A throwaway install: the gate cares about identity and schemas, neither of which
         // depends on where the app happens to be installed.
         var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-docs-gate"));
-        return CapabilityRegistry.Build(BuiltinCapabilities.All(paths, new FakeVerbosityControl(), "0.0.0"));
+        return CapabilityRegistry.Build(
+            BuiltinCapabilities.All(paths, new FakeVerbosityControl(), new GameStateStore(), "0.0.0"));
     }
 
     private static string RepositoryRoot()

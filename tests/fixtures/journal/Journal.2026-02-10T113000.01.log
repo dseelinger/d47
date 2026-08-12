@@ -1,0 +1,5 @@
+{ "timestamp":"2026-02-10T11:30:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.0.0.1904", "build":"r302749/r0 " }
+{ "timestamp":"2026-02-10T11:30:01Z", "event":"Commander", "FID":"F1000002", "Name":"Fixture Two" }
+{ "timestamp":"2026-02-10T11:30:02Z", "event":"LoadGame", "FID":"F1000002", "Commander":"Fixture Two", "Horizons":true, "Odyssey":true, "Ship":"Diamondback Explorer", "ShipID":2, "GameMode":"Open", "Credits":50000, "Loan":0 }
+{ "timestamp":"2026-02-10T11:30:10Z", "event":"Location", "Docked":false, "StarSystem":"Fixture Drift", "SystemAddress":2001, "Body":"Fixture Drift", "BodyID":0, "BodyType":"Star" }
+{ "timestamp":"2026-02-10T11:40:00Z", "event":"FSDJump", "StarSystem":"Fixture Reach", "SystemAddress":2002, "Body":"Fixture Reach A", "BodyID":1, "BodyType":"Star", "JumpDist":9.87, "FuelUsed":1.9, "FuelLevel":26.4 }

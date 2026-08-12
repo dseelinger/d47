@@ -1,5 +1,6 @@
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Diagnostics;
+using D47.Core.Journal;
 
 namespace D47.Core.Capabilities;
 
@@ -13,8 +14,10 @@ public static class BuiltinCapabilities
     public static IReadOnlyList<CapabilityDescriptor> All(
         AppPaths paths,
         ILogVerbosityControl verbosity,
+        GameStateStore gameState,
         string version) =>
     [
         DiagnosticsCapability.Create(paths, verbosity, version),
+        JournalCapability.Create(gameState),
     ];
 }

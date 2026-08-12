@@ -427,3 +427,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Recorded journal fixtures are committed on purpose and read byte-for-byte in tests
+# (architecture.md §8) - the blanket *.log rule above must not swallow them.
+!tests/fixtures/**/*.log

@@ -30,22 +30,25 @@ public partial class MainWindow : Window
 
         VersionLine.Text = $"build {_host.Version}";
 
-        if (_host.StartupError is { } error)
+        var errors = new List<string>();
+        if (_host.StartupError is { } startupError)
         {
-            ErrorText.Text = error;
-            ErrorBanner.IsVisible = true;
+            errors.Add(startupError);
         }
 
         // The Phase 1 claim is that a request produces a real tool call that runs and returns
-        // a result. This is that call — dispatched by name through the registry, validated
-        // against the declared schema, and rendered verbatim.
-        var result = await _host.Capabilities.InvokeAsync("get_app_status", ToolArguments.Empty);
+        // a result. These are that call, twice — dispatched by name through the registry,
+        // validated against each tool's declared schema, and rendered verbatim.
+        var status = await _host.Capabilities.InvokeAsync("get_app_status", ToolArguments.Empty);
+        var location = await _host.Capabilities.InvokeAsync("get_location", ToolArguments.Empty);
 
-        StatusText.Text = result.Content;
+        StatusText.Text = status.Content + Environment.NewLine + Environment.NewLine + location.Content;
 
-        if (result.IsError)
+        errors.AddRange(new[] { status, location }.Where(r => r.IsError).Select(r => r.Content));
+
+        if (errors.Count > 0)
         {
-            ErrorText.Text = result.Content;
+            ErrorText.Text = string.Join(Environment.NewLine, errors);
             ErrorBanner.IsVisible = true;
         }
     }

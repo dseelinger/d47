@@ -3,6 +3,7 @@ using D47.App.Logging;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
@@ -23,6 +24,8 @@ public sealed class AppHost : IDisposable
         SerilogVerbosityControl verbosity,
         D47Settings settings,
         SecretStore secrets,
+        GameStateStore gameState,
+        JournalSpine journal,
         CapabilityRegistry capabilities,
         string version,
         string? startupError)
@@ -32,6 +35,8 @@ public sealed class AppHost : IDisposable
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
+        GameState = gameState;
+        Journal = journal;
         Capabilities = capabilities;
         Version = version;
         StartupError = startupError;
@@ -44,6 +49,10 @@ public sealed class AppHost : IDisposable
     public D47Settings Settings { get; }
 
     public SecretStore Secrets { get; }
+
+    public GameStateStore GameState { get; }
+
+    public JournalSpine Journal { get; }
 
     public CapabilityRegistry Capabilities { get; }
 
@@ -93,14 +102,48 @@ public sealed class AppHost : IDisposable
             new DpapiSecretProtector(),
             loggerFactory.CreateLogger<SecretStore>());
 
-        var capabilities = CapabilityRegistry.Build(BuiltinCapabilities.All(paths, verbosity, version));
+        var journalDirectory = ResolveJournalDirectory();
+        var gameState = new GameStateStore();
+        var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
+
+        // One tick now, at startup, rather than a repeating timer: nothing in the app yet
+        // drives a recurring cadence, and adding one ahead of Phase 3's real turn loop would
+        // be structure this phase does not need. Reading once still means a journal already on
+        // disk when d47 starts is answered correctly, backlog and all.
+        journal.Poll();
+        logger.LogInformation(
+            "Journal folder {Directory}; tailing {File}",
+            journalDirectory,
+            journal.CurrentFile ?? "(none found)");
+
+        var capabilities = CapabilityRegistry.Build(BuiltinCapabilities.All(paths, verbosity, gameState, version));
 
         logger.LogInformation(
             "Registered {Count} capabilities exposing {ToolCount} tools",
             capabilities.All.Count,
             capabilities.ToolNames.Count());
 
-        return new AppHost(paths, loggerFactory, verbosity, settings, secrets, capabilities, version, startupError);
+        return new AppHost(
+            paths,
+            loggerFactory,
+            verbosity,
+            settings,
+            secrets,
+            gameState,
+            journal,
+            capabilities,
+            version,
+            startupError);
+    }
+
+    /// <summary>
+    /// The real Elite Dangerous journal folder, unless overridden — useful for developing and
+    /// testing d47 without needing a live game session.
+    /// </summary>
+    private static string ResolveJournalDirectory()
+    {
+        var overridePath = Environment.GetEnvironmentVariable("D47_JOURNAL_DIR");
+        return string.IsNullOrWhiteSpace(overridePath) ? JournalFolder.DefaultPath() : overridePath;
     }
 
     public void Dispose()

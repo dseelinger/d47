@@ -26,3 +26,4 @@ capability's real tool schema.
 | Capability | Group | What it does |
 |---|---|---|
 | [Diagnostics](capabilities/diagnostics.md) | Foundation | Report where d47 keeps its files, and change a subsystem's log level without a restart. |
+| [Journal](capabilities/journal.md) | Foundation | Report the Commander's current system, body and docking state from the journal. |
