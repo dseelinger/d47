@@ -1,5 +1,6 @@
 using System.Reflection;
 using D47.App.Logging;
+using D47.App.Ticking;
 using D47.App.Updates;
 using D47.App.Voice;
 using D47.Audio;
@@ -11,6 +12,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
 using D47.Core.Journal;
+using D47.Core.Ticking;
 using D47.Llm;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
@@ -40,6 +42,7 @@ public sealed class AppHost : IDisposable
         ViewStateStore viewState,
         GameStateStore gameState,
         JournalSpine journal,
+        TickLoop tick,
         CapabilityRegistry capabilities,
         UpdateChecker updates,
         TurnLoop turns,
@@ -63,6 +66,7 @@ public sealed class AppHost : IDisposable
         ViewState = viewState;
         GameState = gameState;
         Journal = journal;
+        Tick = tick;
         Capabilities = capabilities;
         Updates = updates;
         Turns = turns;
@@ -94,6 +98,13 @@ public sealed class AppHost : IDisposable
     public GameStateStore GameState { get; }
 
     public JournalSpine Journal { get; }
+
+    /// <summary>
+    /// The ~4-10 Hz loop (architecture.md §4). Exposed because a surface that needs sampling
+    /// rather than events — push-to-talk edge detection, the VR connection state machine —
+    /// registers here instead of growing a timer of its own.
+    /// </summary>
+    public TickLoop Tick { get; }
 
     public CapabilityRegistry Capabilities { get; }
 
@@ -193,11 +204,19 @@ public sealed class AppHost : IDisposable
         var gameState = new GameStateStore();
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
 
-        // One tick now, at startup, rather than a repeating timer: nothing in the app yet
-        // drives a recurring cadence, and adding one ahead of Phase 3's real turn loop would
-        // be structure this phase does not need. Reading once still means a journal already on
-        // disk when d47 starts is answered correctly, backlog and all.
-        journal.Poll();
+        // The ~4-10 Hz loop from architecture.md §4. Registration order is load-bearing: the
+        // journal is polled first, so everything downstream sees this tick's events rather
+        // than the last tick's.
+        var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
+        tick.Add("journal", _ => journal.Poll());
+
+        // Primed synchronously before anything reads game state, so a journal already on disk
+        // when d47 starts is answered correctly, backlog and all — and so the panel's first
+        // status is not a race against the first timer tick. Subscribers tell this tick apart
+        // from a live one by TickContext.IsFirst, which is what keeps a backlog of past events
+        // from being announced as though it had just happened.
+        tick.Tick(DateTimeOffset.Now);
+
         logger.LogInformation(
             "Journal folder {Directory}; tailing {File}",
             journalDirectory,
@@ -282,6 +301,7 @@ public sealed class AppHost : IDisposable
             viewState,
             gameState,
             journal,
+            tick,
             capabilities,
             updates,
             turns,
@@ -300,6 +320,11 @@ public sealed class AppHost : IDisposable
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
+
+        // Last, so every subscriber registered during composition is in place before the first
+        // timer-driven tick — and so a failure above happens against a loop that never started
+        // rather than one already running against half-built state.
+        host._ticking = new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start();
 
         return host;
     }
@@ -439,6 +464,8 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    private TickDriver? _ticking;
+
     private EdgeNeuralTtsProvider? _tts;
 
     private string? _openDevice;
@@ -500,6 +527,10 @@ public sealed class AppHost : IDisposable
     public void Dispose()
     {
         Settings.Changed -= OnSettingsChanged;
+
+        // The loop stops before anything it polls is torn down, so a tick cannot land on a
+        // disposed sink or a closed file handle on the way out.
+        _ticking?.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.
