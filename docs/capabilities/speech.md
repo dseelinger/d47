@@ -47,6 +47,10 @@ output device or the cue settings is not exposed as a tool: a model able to make
 hear has no request that needs it. Stopping is the exception, because it is the one thing the
 Commander must always be able to ask for.
 
+If you want the model to stop *working* rather than just stop talking, that is
+[`cancel_turn`](conversation.md#cancel_turn) on the language-model capability — `stop` leaves the
+turn running and still billing.
+
 **`stop` is the one to reach for.** One syllable, four letters — an interrupt is judged on how
 fast it can be said, and everything else here is a longer way to say the same thing.
 

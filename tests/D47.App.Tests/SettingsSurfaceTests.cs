@@ -49,7 +49,8 @@ public class SettingsSurfaceTests
             {
                 Silence = () => { },
                 Beds = [.. CueLibrary.Load().BedNames],
-            }));
+            },
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
 
         settings.Bind(registry);
 

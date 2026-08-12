@@ -114,12 +114,16 @@ public sealed class VoicePipeline(
 
             // The bed is dropped by entering any state that is not Thinking, so a turn that
             // ends by throwing still cannot leave it looping.
+            //
+            // A cancelled turn lands on Idle rather than Failed: nothing went wrong, the
+            // Commander called it off, and a failure cue would be d47 complaining about being
+            // told to stop.
             EnterState(result?.Outcome switch
             {
                 TurnOutcome.Answered => LoopState.Answered,
                 TurnOutcome.Unsure => LoopState.Unsure,
                 TurnOutcome.Failed => LoopState.Failed,
-                _ => LoopState.Failed,
+                _ => cancellationToken.IsCancellationRequested ? LoopState.Idle : LoopState.Failed,
             });
         }
 

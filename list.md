@@ -43,7 +43,7 @@
   - [x] Say something when a turn is taking too long - Retry with backoff (N tries, X wait, sequential or logarithmic), and if exceeded say so aloud in the current voice rather than leaving silence.
   - [x] #20 Give every loop state its own audio cue - One default per state. Cue names come from the shipped resources rather than a hand-written table, since a wrong name goes wrong as silence nobody notices.
   - [x] #18 Play a thinking bed while the model works - Audible evidence that TheApp heard you and is working, instead of dead air while a turn runs.
-  - [ ] Shut up - An always-available instant silence that supersedes everything on the queue and stops mid-sentence, reachable by voice and by hotkey and never gated behind a turn completing. A companion that talks is only tolerable if it can be silenced faster than it can finish a sentence.
+  - [ ] Stop - An always-available instant silence that supersedes everything on the queue and stops mid-sentence, reachable by voice and by hotkey and never gated behind a turn completing. A companion that talks is only tolerable if it can be silenced faster than it can finish a sentence.
 
 - [ ] **Phase 6 — Listening**
   - [ ] Choose the microphone in settings - Pick the input device instead of inheriting the system default. A blank selection produces a silent default and a turn reporting no speech detected, with nothing indicating why.

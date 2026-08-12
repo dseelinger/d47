@@ -2,6 +2,7 @@ using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;
@@ -27,9 +28,47 @@ public class InterruptingCommandTests
             new LlmAvailabilityState(providerConfigured: false),
             new SpendTracker(),
             "1.0.0-test",
-            TestSurface.SilentSpeech(onSilence)));
+            TestSurface.SilentSpeech(onSilence),
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
 
         return new KeywordRouter(registry);
+    }
+
+    /// <summary>
+    /// Typed input arrives however it arrives. Case is handled by matching case-insensitively
+    /// rather than by lowercasing the string, and surrounding whitespace and punctuation by
+    /// word-boundary matching — so nothing has to remember to normalise before asking.
+    /// </summary>
+    [Theory]
+    [InlineData("STOP")]
+    [InlineData("Stop")]
+    [InlineData("sToP")]
+    [InlineData("stop.")]
+    [InlineData("stop?")]
+    [InlineData("   stop   ")]
+    [InlineData("...stop...")]
+    [InlineData("\tstop\n")]
+    [InlineData("\"stop\"")]
+    public void SilenceIsRecognisedWhateverTheCaseOrPunctuation(string said)
+    {
+        using var install = new TempInstall();
+
+        Assert.NotNull(Router(install).MatchInterrupting(said));
+    }
+
+    /// <summary>
+    /// The other half of word-boundary matching, and the reason it is not a substring search:
+    /// "stop" inside a longer word is not the command.
+    /// </summary>
+    [Theory]
+    [InlineData("stopping")]
+    [InlineData("unstoppable")]
+    [InlineData("nonstop")]
+    public void AWordMerelyContainingStopIsNotTheCommand(string said)
+    {
+        using var install = new TempInstall();
+
+        Assert.Null(Router(install).MatchInterrupting(said));
     }
 
     [Theory]
@@ -112,11 +151,16 @@ public class InterruptingCommandTests
     }
 
     /// <summary>
-    /// Interrupting is declared on the tool, not decided by name at the call site. A second
-    /// tool earning it should be a deliberate edit here, not a surprise.
+    /// Interrupting is declared on the tool, not decided by name at the call site. A tool
+    /// earning it should be a deliberate edit here, not a surprise — this test is the reason
+    /// cancel_turn could not be added quietly.
+    /// <para>
+    /// Two, and they are different strengths: stop_speaking stops the mouth, cancel_turn ends
+    /// the work. Anything that wants to join them has to justify interrupting a turn in flight.
+    /// </para>
     /// </summary>
     [Fact]
-    public void StopSpeakingIsTheOnlyInterruptingToolThatShips()
+    public void OnlyTheTwoInterruptsShip()
     {
         using var install = new TempInstall();
 
@@ -128,7 +172,8 @@ public class InterruptingCommandTests
             new LlmAvailabilityState(providerConfigured: false),
             new SpendTracker(),
             "1.0.0-test",
-            TestSurface.SilentSpeech()));
+            TestSurface.SilentSpeech(),
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
 
         var interrupting =
             (from capability in registry.All
@@ -136,7 +181,7 @@ public class InterruptingCommandTests
              where tool.Interrupting
              select tool.Name).ToArray();
 
-        Assert.Equal(["stop_speaking"], interrupting);
+        Assert.Equal(["cancel_turn", "stop_speaking"], interrupting.OrderBy(name => name, StringComparer.Ordinal));
     }
 
     /// <summary>
@@ -157,7 +202,8 @@ public class InterruptingCommandTests
             new LlmAvailabilityState(providerConfigured: false),
             new SpendTracker(),
             "1.0.0-test",
-            TestSurface.SilentSpeech(() => silenced++)));
+            TestSurface.SilentSpeech(() => silenced++),
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
 
         var match = new KeywordRouter(registry).MatchInterrupting("shut up");
         Assert.NotNull(match);

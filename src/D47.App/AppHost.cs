@@ -32,6 +32,7 @@ public sealed class AppHost : IDisposable
     private AppHost(
         AppPaths paths,
         KeywordRouter router,
+        TurnCancellation cancellation,
         ILoggerFactory loggerFactory,
         SerilogVerbosityControl verbosity,
         SettingsService settings,
@@ -53,6 +54,7 @@ public sealed class AppHost : IDisposable
     {
         Paths = paths;
         Router = router;
+        Cancellation = cancellation;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<AppHost>();
         Verbosity = verbosity;
@@ -100,6 +102,13 @@ public sealed class AppHost : IDisposable
     /// a turn in flight before applying its own in-flight gate — see MainWindow.AskAsync.
     /// </summary>
     public KeywordRouter Router { get; }
+
+    /// <summary>
+    /// The handle on the turn in flight. A surface must run its turns under
+    /// <see cref="TurnCancellation.Begin"/>, or "cancel" has nothing to cancel and the model
+    /// keeps generating — and billing — after the Commander has called it off.
+    /// </summary>
+    public TurnCancellation Cancellation { get; }
 
     public UpdateChecker Updates { get; }
 
@@ -219,6 +228,8 @@ public sealed class AppHost : IDisposable
             logger.LogError(ex, "No audio output could be opened; d47 will be silent");
         }
 
+        var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -235,7 +246,8 @@ public sealed class AppHost : IDisposable
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => WasapiAudioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
-                }));
+                },
+                cancellation));
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and
         // some descriptors read settings, so the row table is supplied once the registry exists.
@@ -262,6 +274,7 @@ public sealed class AppHost : IDisposable
         var host = new AppHost(
             paths,
             router,
+            cancellation,
             loggerFactory,
             verbosity,
             settings,

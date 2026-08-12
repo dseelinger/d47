@@ -169,7 +169,7 @@ public sealed class TestSurface
         var verbosity = new FakeVerbosityControl();
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech()));
+            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance)));
 
         service.Bind(registry);
 

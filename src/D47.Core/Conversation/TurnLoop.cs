@@ -393,7 +393,16 @@ public sealed class TurnLoop(
                     ended = true;
                 }
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The Commander called the turn off. Propagated rather than turned into a
+                // failure event, and this clause has to come first: without it the general
+                // catch below claims the cancellation, reports it as a transient failure, and
+                // d47 announces "I couldn't reach the model" about a turn that was working
+                // fine until it was told to stop.
+                throw;
+            }
+            catch (OperationCanceledException)
             {
                 // Ours tripped, not the caller's: the attempt ran out of time.
                 failed = new LlmStreamEvent.Failed(

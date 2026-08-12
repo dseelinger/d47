@@ -27,7 +27,9 @@ public static class ConversationCapability
     public static CapabilityDescriptor Create(
         SettingsService settings,
         LlmAvailabilityState availability,
-        SpendTracker spend)
+        SpendTracker spend,
+        TurnCancellation cancellation,
+        Action silence)
     {
         return new CapabilityDescriptor
         {
@@ -52,9 +54,37 @@ public static class ConversationCapability
                 "session spend",
                 "what have you cost",
             ],
+
+            // "Cancel" is as common a verb as "stop" and is kept out of the general vocabulary
+            // for the same reason. It only means this while there is a turn to abandon; idle,
+            // it belongs to whatever else might want it.
+            InterruptKeywords = ["cancel", "cancel that", "never mind", "nevermind", "forget it"],
             Display = new CapabilityDisplay { PanelTitle = "Language model", Order = 30 },
             Tools =
             [
+                new ToolDefinition
+                {
+                    Name = "cancel_turn",
+                    Description =
+                        "Abandon the turn currently running: stop speaking, stop the model, and stop " +
+                        "spending. Use when the Commander says to cancel or never mind.",
+
+                    // Stronger than stop_speaking and correspondingly rarer. Stopping the mouth
+                    // leaves the model generating into a void that is still billed for; this
+                    // ends the work itself.
+                    Interrupting = true,
+                    Handler = (_, _) =>
+                    {
+                        // Silence first. Cancelling tears down the stream, but whatever already
+                        // reached the queue would otherwise play on after the turn behind it is
+                        // gone — which sounds exactly like the cancel not having worked.
+                        silence();
+
+                        return Task.FromResult(cancellation.Cancel()
+                            ? ToolResult.Ok("Cancelled.")
+                            : ToolResult.Ok("Nothing was running to cancel."));
+                    },
+                },
                 new ToolDefinition
                 {
                     Name = "get_model_status",

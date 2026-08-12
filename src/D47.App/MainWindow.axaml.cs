@@ -242,6 +242,11 @@ public partial class MainWindow : Window
         AskBox.Text = string.Empty;
         Append($"\n\n> {input}\n");
 
+        // Claimed before the turn starts and released in the finally. Without this the token
+        // reaching the provider is CancellationToken.None, "cancel" has nothing to act on, and
+        // a runaway turn keeps generating — and billing — with no way to call it off.
+        var cancelling = _host.Cancellation.Begin();
+
         try
         {
             // Through the voice pipeline rather than straight off the turn loop, so the panel
@@ -249,7 +254,7 @@ public partial class MainWindow : Window
             // is what lets speech start at the first sentence boundary rather than at end of
             // turn (list.md Phase 5).
             await _host.Voice.RunAsync(
-                _host.Turns.RunAsync(input),
+                _host.Turns.RunAsync(input, cancelling.Token),
                 turnEvent =>
                 {
                     switch (turnEvent)
