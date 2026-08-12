@@ -226,6 +226,42 @@
           "text": "If a second Commander has ever played on this machine, confirm the name reported is the one whose session is newest — not a blend of both."
         }
       ]
+    },
+    {
+      "id": "update-banner-offers-upgrade",
+      "title": "A newer release is offered, with a way to take it",
+      "section": "17. Release polish",
+      "tags": [
+        "NET"
+      ],
+      "requires": "No API key needed. The running build must be OLDER than the newest GitHub release, which normally never happens on a dev machine - force it by stamping an old version at build time.",
+      "expected": "A banner appears saying a newer version is available and naming both versions. `Update now` opens the release page in the browser and closes d47; `Later` dismisses the banner and leaves the app running. Nothing about this may block startup - the status and the ask box must work while the banner is up.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Launch stamped as an old version: `dotnet run --project src/D47.App -p:Version=0.0.1`"
+        },
+        {
+          "id": "s2",
+          "text": "Confirm a banner appears offering the newer release. It may take a second - the check is deliberately fire-and-forget so it cannot delay startup."
+        },
+        {
+          "id": "s3",
+          "text": "Confirm the app is fully usable while the banner is showing: ask `what's your status` and get an answer."
+        },
+        {
+          "id": "s4",
+          "text": "Click `Later` and confirm the banner disappears and the app keeps running."
+        },
+        {
+          "id": "s5",
+          "text": "Relaunch the same way, click `Update now`, and confirm the release page opens in a browser AND d47 exits."
+        },
+        {
+          "id": "s6",
+          "text": "Finally relaunch normally with `dotnet run --project src/D47.App` and confirm NO banner appears, since the build is then current."
+        }
+      ]
     }
   ],
   "runs": [
