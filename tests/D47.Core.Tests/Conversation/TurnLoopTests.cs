@@ -314,7 +314,7 @@ public class TurnLoopTests
         using var install = new TempInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
-        loop.LiveGameState = "Current system: Shinrarta Dezhra.";
+        loop.LiveGameState = () => "Current system: Shinrarta Dezhra.";
 
         await RunAsync(loop, "tell me about hyperspace physics");
 

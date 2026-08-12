@@ -288,7 +288,13 @@ public sealed class AppHost : IDisposable
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<TurnLoop>(),
-            settings: settings);
+            settings: settings)
+        {
+            // Asked once per turn rather than assigned, so the state the model sees is the state
+            // as of the moment the prompt was built — not as of whenever something last pushed
+            // it in. The tick loop is folding events continuously underneath this.
+            LiveGameState = () => Situation.Describe(gameState.Active),
+        };
 
         var host = new AppHost(
             paths,

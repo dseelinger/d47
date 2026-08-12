@@ -36,14 +36,14 @@
   - [x] Hotkey Binding - (Only in main window) Press the key to bind it.
   - [x] Themes - Dark, light, default Elite-flavored, Guardian, and based on the current Elite Color Scheme palette, with color living in one place so no view hardcodes a literal.
 
-- [ ] **Phase 5 — Speaking**
+- [x] **Phase 5 — Speaking**
   - [x] One audio stream - Everything audible goes through one queue with priority and supersede, including audio cues, so ducking, interruption and captioning need no second mechanism. One arbiter for every voice, because separate paths per voice are how a line gets spoken in the wrong one. The arbiter exposes a render-side reference tap from the start, since echo cancellation needs the far-end signal and retrofitting that tap means opening the one component every voice path depends on.
   - [x] TheApp speaks its answer aloud - The reply is audible in the chosen voice. Synthesis is sentence-chunked so speaking starts at the first sentence boundary - the largest perceived-latency win available.
   - [x] Say so when the model is misconfigured - An audible warning when the provider setup is wrong, rather than silence that is indistinguishable from a model with nothing to say.
   - [x] Say something when a turn is taking too long - Retry with backoff (N tries, X wait, sequential or logarithmic), and if exceeded say so aloud in the current voice rather than leaving silence.
   - [x] #20 Give every loop state its own audio cue - One default per state. Cue names come from the shipped resources rather than a hand-written table, since a wrong name goes wrong as silence nobody notices.
   - [x] #18 Play a thinking bed while the model works - Audible evidence that TheApp heard you and is working, instead of dead air while a turn runs.
-  - [ ] Stop - An always-available instant silence that supersedes everything on the queue and stops mid-sentence, reachable by voice and by hotkey and never gated behind a turn completing. A companion that talks is only tolerable if it can be silenced faster than it can finish a sentence.
+  - [x] Stop - An always-available instant silence that supersedes everything on the queue and stops mid-sentence, reachable by voice and by hotkey and never gated behind a turn completing. A companion that talks is only tolerable if it can be silenced faster than it can finish a sentence.
 
 - [ ] **Phase 6 — Listening**
   - [ ] Choose the microphone in settings - Pick the input device instead of inheriting the system default. A blank selection produces a silent default and a turn reporting no speech detected, with nothing indicating why.
@@ -54,15 +54,15 @@
   - [ ] Settings by voice - Unless otherwise noted, every setting should be settable by voice. Protected rows are reachable by voice only through the model-free keyword router, so "by voice" never silently means "by the LLM."
   - [ ] Answer what can you do, from the registry - Spoken help projected from the capability registry - groups, then capabilities, then detail and example phrasings - ranked by real usage. The model is never asked what TheApp can do, because asking produces confidently invented capabilities.
 
-- [ ] **Phase 7 — Knowing the game**
-  - [ ] Know what is happening around you - Live situational awareness attached to each turn: where you are, what you are flying, and what just happened.
-  - [ ] Know your location and your carrier (if owned) - Current system, station and body, plus where your fleet carrier is.
-  - [ ] Ship's loadout - Modules and stats from the loadout event.
-  - [ ] Ship metrics - Base jump range and similar, computed from what the loadout event actually reports rather than from a table of ship specifications.
-  - [ ] Know what ships you own and where they are - A fleet registry built from stored-ships journal events.
-  - [ ] Know what materials you are carrying - Materials inventory built from journal events, answerable without an external lookup.
-  - [ ] Know what is in your backpack and ship locker - On-foot inventory parsed from the local files Elite writes.
-  - [ ] Session summary - Earnings, bounties, exploration data sold, materials gained and jumps made since the session began, built from the journal already being tailed rather than from anything new.
+- [x] **Phase 7 — Knowing the game**
+  - [x] Know what is happening around you - Live situational awareness attached to each turn: where you are, what you are flying, and what just happened.
+  - [x] Know your location and your carrier (if owned) - Current system, station and body, plus where your fleet carrier is.
+  - [x] Ship's loadout - Modules and stats from the loadout event.
+  - [x] Ship metrics - Base jump range and similar, computed from what the loadout event actually reports rather than from a table of ship specifications.
+  - [x] Know what ships you own and where they are - A fleet registry built from stored-ships journal events.
+  - [x] Know what materials you are carrying - Materials inventory built from journal events, answerable without an external lookup.
+  - [x] Know what is in your backpack and ship locker - On-foot inventory parsed from the local files Elite writes.
+  - [x] Session summary - Earnings, bounties, exploration data sold, materials gained and jumps made since the session began, built from the journal already being tailed rather than from anything new.
 
 - [ ] **Phase 8 — Proactive speech**
   - [ ] Call out danger without waiting for a turn - Interdiction, shields down, hull damage, dangerous heat and a full cargo hold announce themselves from journal and Status.json events. These fire on the event and never at the model's discretion, because an alert that depends on a turn completing is not an alert.

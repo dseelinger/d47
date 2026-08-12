@@ -62,6 +62,18 @@ public class DocumentationGateTests
 
         foreach (var (tool, schema) in capability.ToolSchemas)
         {
+            // The name as well as the schema, and the name first. Every no-argument tool
+            // serialises to the same schema text, so a capability registering five of them was
+            // satisfied entirely by one code block quoted once — the gate reported a fully
+            // documented capability with four tools missing from its page. Checking the name is
+            // what makes the assertion per-tool rather than per-distinct-schema.
+            Assert.True(
+                page.Contains($"`{tool}`", StringComparison.Ordinal),
+                $"""
+                 The documentation page for '{id}' does not document the tool '{tool}'.
+                 Add a section for it to {CapabilityDocsFolder}/{id}.md, naming it as `{tool}`.
+                 """);
+
             // Quoting the canonical schema means the page cannot drift from the tool. When this
             // fails, the fix is to paste the schema below into the page.
             Assert.True(

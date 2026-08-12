@@ -38,7 +38,10 @@ public class JournalCapabilityTests
         var result = await registry.InvokeAsync("get_location", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
-        Assert.Equal("Fixture is in Fixture Nebula Point, near Fixture Nebula Point A.", result.Content);
+        // Arriving from a hyperspace jump drops you into supercruise, and Phase 7 now says so.
+        Assert.Equal(
+            "Fixture is in Fixture Nebula Point, near Fixture Nebula Point A. Currently in supercruise.",
+            result.Content);
     }
 
     [Fact]

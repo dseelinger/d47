@@ -11,17 +11,17 @@ public sealed record CommanderIdentity(string FrontierId, string Name)
     public static CommanderIdentity? From(JournalEvent journalEvent)
     {
         if (journalEvent.Kind == "Commander" &&
-            journalEvent.TryGetString("FID", out var fid) &&
-            journalEvent.TryGetString("Name", out var name))
+            journalEvent.String("FID") is { } fid &&
+            journalEvent.String("Name") is { } name)
         {
-            return new CommanderIdentity(fid!, name!);
+            return new CommanderIdentity(fid, name);
         }
 
         if (journalEvent.Kind == "LoadGame" &&
-            journalEvent.TryGetString("FID", out var loadFid) &&
-            journalEvent.TryGetString("Commander", out var loadName))
+            journalEvent.String("FID") is { } loadFid &&
+            journalEvent.String("Commander") is { } loadName)
         {
-            return new CommanderIdentity(loadFid!, loadName!);
+            return new CommanderIdentity(loadFid, loadName);
         }
 
         return null;

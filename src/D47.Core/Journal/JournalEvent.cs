@@ -58,30 +58,27 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
         }
     }
 
-    public bool TryGetString(string property, out string? value)
-    {
-        value = Raw.ValueKind == JsonValueKind.Object &&
-                Raw.TryGetProperty(property, out var element) &&
-                element.ValueKind == JsonValueKind.String
-            ? element.GetString()
-            : null;
+    /// <summary>
+    /// Field access, forwarded to <see cref="JournalJson"/> so an event and a nested object are
+    /// read exactly the same way. All of these answer null for a field that is missing or is
+    /// the wrong type; see that class for why that matters.
+    /// </summary>
+    public string? String(string property) => Raw.String(property);
 
-        return value is not null;
-    }
+    public bool Bool(string property) => Raw.Bool(property);
 
-    public bool TryGetBoolean(string property, out bool value)
-    {
-        if (Raw.ValueKind == JsonValueKind.Object &&
-            Raw.TryGetProperty(property, out var element) &&
-            element.ValueKind is JsonValueKind.True or JsonValueKind.False)
-        {
-            value = element.GetBoolean();
-            return true;
-        }
+    public int? Int(string property) => Raw.Int(property);
 
-        value = false;
-        return false;
-    }
+    public long? Long(string property) => Raw.Long(property);
+
+    public double? Double(string property) => Raw.Double(property);
+
+    public JsonElement? Object(string property) => Raw.Object(property);
+
+    public IEnumerable<JsonElement> Items(string property) => Raw.Items(property);
+
+    /// <summary>The player-facing name where Elite supplies one, else the internal symbol.</summary>
+    public string? Named(string property) => Raw.Named(property);
 
     private static string Truncate(string line) => line.Length <= 200 ? line : line[..200] + "…";
 }
