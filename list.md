@@ -37,12 +37,12 @@
   - [x] Themes - Dark, light, default Elite-flavored, Guardian, and based on the current Elite Color Scheme palette, with color living in one place so no view hardcodes a literal.
 
 - [ ] **Phase 5 — Speaking**
-  - [ ] One audio stream - Everything audible goes through one queue with priority and supersede, including audio cues, so ducking, interruption and captioning need no second mechanism. One arbiter for every voice, because separate paths per voice are how a line gets spoken in the wrong one. The arbiter exposes a render-side reference tap from the start, since echo cancellation needs the far-end signal and retrofitting that tap means opening the one component every voice path depends on.
-  - [ ] TheApp speaks its answer aloud - The reply is audible in the chosen voice. Synthesis is sentence-chunked so speaking starts at the first sentence boundary - the largest perceived-latency win available.
-  - [ ] Say so when the model is misconfigured - An audible warning when the provider setup is wrong, rather than silence that is indistinguishable from a model with nothing to say.
-  - [ ] Say something when a turn is taking too long - Retry with backoff (N tries, X wait, sequential or logarithmic), and if exceeded say so aloud in the current voice rather than leaving silence.
-  - [ ] #20 Give every loop state its own audio cue - One default per state. Cue names come from the shipped resources rather than a hand-written table, since a wrong name goes wrong as silence nobody notices.
-  - [ ] #18 Play a thinking bed while the model works - Audible evidence that TheApp heard you and is working, instead of dead air while a turn runs.
+  - [x] One audio stream - Everything audible goes through one queue with priority and supersede, including audio cues, so ducking, interruption and captioning need no second mechanism. One arbiter for every voice, because separate paths per voice are how a line gets spoken in the wrong one. The arbiter exposes a render-side reference tap from the start, since echo cancellation needs the far-end signal and retrofitting that tap means opening the one component every voice path depends on.
+  - [x] TheApp speaks its answer aloud - The reply is audible in the chosen voice. Synthesis is sentence-chunked so speaking starts at the first sentence boundary - the largest perceived-latency win available.
+  - [x] Say so when the model is misconfigured - An audible warning when the provider setup is wrong, rather than silence that is indistinguishable from a model with nothing to say.
+  - [x] Say something when a turn is taking too long - Retry with backoff (N tries, X wait, sequential or logarithmic), and if exceeded say so aloud in the current voice rather than leaving silence.
+  - [x] #20 Give every loop state its own audio cue - One default per state. Cue names come from the shipped resources rather than a hand-written table, since a wrong name goes wrong as silence nobody notices.
+  - [x] #18 Play a thinking bed while the model works - Audible evidence that TheApp heard you and is working, instead of dead air while a turn runs.
   - [ ] Shut up - An always-available instant silence that supersedes everything on the queue and stops mid-sentence, reachable by voice and by hotkey and never gated behind a turn completing. A companion that talks is only tolerable if it can be silenced faster than it can finish a sentence.
 
 - [ ] **Phase 6 — Listening**
