@@ -7,9 +7,12 @@ title: Installing d47
 d47 ships as one file. There is no installer, no runtime prerequisite, and nothing that
 asks for administrator rights.
 
-1. Download `d47.exe` from the [v0.1.0 release](https://github.com/dseelinger/d47/releases/tag/v0.1.0)
-   (or the [releases page](https://github.com/dseelinger/d47/releases) for the latest build).
-2. Put it wherever you like — a folder you own, not `Program Files`.
+1. Download `d47.exe` from the
+   [latest release](https://github.com/dseelinger/d47/releases/latest) — or pick a specific
+   build from the [releases page](https://github.com/dseelinger/d47/releases).
+2. Put it in a folder you own — **not** `Program Files`. d47 never asks for administrator
+   rights, so it could not write there anyway; and everything it saves goes in a `data`
+   folder beside the executable, so it needs somewhere you can write.
 3. Run it.
 
 ## What "one file" does and does not mean
@@ -23,6 +26,8 @@ narrower and more useful:
 - No elevation, ever.
 - Everything d47 writes lives in a `data` folder beside the executable. Move the folder,
   and your settings and secrets move with it.
+
+First launch is slower than later ones, because that native extraction happens once.
 
 ## Verifying the download
 
@@ -45,6 +50,7 @@ d47.exe
 data\
   settings.json        plain JSON, hand-editable, unknown keys rejected on load
   secrets.json         API keys, DPAPI-encrypted for your Windows account only
+  models\              speech models — only if you chose one and agreed to the download
   logs\
     d47-20260812.log     human-readable
     d47-20260812.jsonl   the same events as newline-delimited JSON
@@ -58,11 +64,27 @@ release page in your browser and closes d47 so the new `d47.exe` can be saved ov
 Offline or GitHub unreachable is treated as "no update" — startup never waits on it and never
 fails because of it.
 
-Nothing about you or your game leaves the machine. There is no analytics, no metrics
-endpoint and no crash reporter. The one outbound request is the anonymous update check
-above — a GET with no Commander data, no journal data and nothing identifying. Providers
-that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web search —
-are individually enabled and each states what it transmits.
+## What leaves the machine
+
+Nothing about you or your game. There is no analytics, no metrics endpoint and no crash
+reporter.
+
+Out of the box d47 makes two kinds of outbound request, and neither carries anything about
+you:
+
+- **The update check** described above — a GET with no Commander data, no journal data and
+  nothing identifying. Switch it off in Settings and d47 makes no network call of its own.
+- **A speech model download**, and only if you ask for one. No model is selected by default.
+  Choosing one asks first, states the real size and the host it comes from, and downloads
+  nothing until you agree. Once the file is on disk, transcription runs entirely on this
+  machine — no audio and no transcript ever leaves it.
+
+Providers that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web
+search — are each enabled individually and each states what it transmits.
+
+You never have to take this page's word for any of it. d47 computes the answer from your
+current settings: ask it *"what are you sending"*, or open the **Privacy and egress** section
+of Settings. A page can go stale; that report cannot.
 
 `secrets.json` is encrypted with Windows DPAPI scoped to your user account. Copying it to
 another machine or another account leaves it undecryptable, and d47 treats an unreadable
