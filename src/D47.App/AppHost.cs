@@ -7,6 +7,7 @@ using D47.Audio;
 using D47.Core.Audio;
 using D47.Core;
 using D47.Core.Capabilities;
+using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -43,6 +44,7 @@ public sealed class AppHost : IDisposable
         GameStateStore gameState,
         JournalSpine journal,
         TickLoop tick,
+        CalloutEngine callouts,
         CapabilityRegistry capabilities,
         UpdateChecker updates,
         TurnLoop turns,
@@ -67,6 +69,7 @@ public sealed class AppHost : IDisposable
         GameState = gameState;
         Journal = journal;
         Tick = tick;
+        Callouts = callouts;
         Capabilities = capabilities;
         Updates = updates;
         Turns = turns;
@@ -105,6 +108,12 @@ public sealed class AppHost : IDisposable
     /// registers here instead of growing a timer of its own.
     /// </summary>
     public TickLoop Tick { get; }
+
+    /// <summary>
+    /// What d47 says without being asked (list.md Phase 8). Exposed because the panel drains it:
+    /// the tick that produces an announcement must not block on synthesising it.
+    /// </summary>
+    public CalloutEngine Callouts { get; }
 
     public CapabilityRegistry Capabilities { get; }
 
@@ -204,17 +213,40 @@ public sealed class AppHost : IDisposable
         var gameState = new GameStateStore();
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
 
+        // The two state files Elite rewrites in place. Same folder as the journal, different
+        // shape: a log is appended to and these are replaced, which is entirely inside the
+        // readers.
+        var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
+        var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
+
+        var callouts = BuildCallouts(loaded, loggerFactory);
+
         // The ~4-10 Hz loop from architecture.md §4. Registration order is load-bearing: the
-        // journal is polled first, so everything downstream sees this tick's events rather
-        // than the last tick's.
+        // journal and the two state files are read first, so the callouts examining them see
+        // this tick's events rather than the last tick's.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
-        tick.Add("journal", _ => journal.Poll());
+
+        tick.Add("journal", context =>
+        {
+            var events = journal.Poll();
+            status.Poll();
+            route.Poll();
+
+            callouts.Tick(new CalloutContext(
+                context.Now,
+                IsPriming: context.IsFirst,
+                gameState.Active,
+                status.Current,
+                route.Current,
+                events));
+        });
 
         // Primed synchronously before anything reads game state, so a journal already on disk
         // when d47 starts is answered correctly, backlog and all — and so the panel's first
         // status is not a race against the first timer tick. Subscribers tell this tick apart
         // from a live one by TickContext.IsFirst, which is what keeps a backlog of past events
-        // from being announced as though it had just happened.
+        // from being announced as though it had just happened — and is what the material
+        // milestone tracker means by being primed from the session backlog.
         tick.Tick(DateTimeOffset.Now);
 
         logger.LogInformation(
@@ -266,7 +298,8 @@ public sealed class AppHost : IDisposable
                     DeviceLabel = id => WasapiAudioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
                 },
-                cancellation));
+                cancellation,
+                callouts));
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and
         // some descriptors read settings, so the row table is supplied once the registry exists.
@@ -308,6 +341,7 @@ public sealed class AppHost : IDisposable
             gameState,
             journal,
             tick,
+            callouts,
             capabilities,
             updates,
             turns,
@@ -327,12 +361,79 @@ public sealed class AppHost : IDisposable
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
 
+        // The async half of a synchronous tick. Callouts are produced on the tick thread, which
+        // must not block, and spoken here on the thread pool — so a slow TTS synthesis cannot
+        // stall push-to-talk edge detection or the journal poll behind it.
+        //
+        // Registered after the priming tick above, which is belt and braces: the engine already
+        // refuses to queue anything while priming, so there is nothing here to drain from the
+        // backlog even if this ran first.
+        tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
+
         // Last, so every subscriber registered during composition is in place before the first
         // timer-driven tick — and so a failure above happens against a loop that never started
         // rather than one already running against half-built state.
         host._ticking = new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start();
 
         return host;
+    }
+
+    /// <summary>
+    /// The callouts d47 ships with, in the order they are examined. Declaration order is
+    /// announcement order within one tick, which is why danger comes first: an interdiction and
+    /// a route progress report arriving together should not be spoken the other way round.
+    /// </summary>
+    private static CalloutEngine BuildCallouts(D47Settings settings, ILoggerFactory loggers)
+    {
+        var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
+            .Add(new DangerCallout())
+            .Add(new FuelCallout())
+            .Add(new RouteCallout())
+            .Add(new LongJumpCallout())
+            .Add(new ArrivalCallout())
+
+            // Capacity is left at its default, which answers "unknown" for every material. That
+            // silences the percentage milestones rather than guessing where they fall — see
+            // MaterialMilestoneCallout for why d47 has no source for a material's cap.
+            .Add(new MaterialMilestoneCallout());
+
+        ApplyCalloutSettings(engine, settings);
+        return engine;
+    }
+
+    /// <summary>
+    /// Pushes the callout settings into the engine and into the individual callouts that carry
+    /// a tunable. Called at startup and on any change, so the two paths cannot drift.
+    /// </summary>
+    private static void ApplyCalloutSettings(CalloutEngine engine, D47Settings settings)
+    {
+        var callouts = settings.Callouts;
+
+        engine.Enabled = callouts.Enabled;
+        engine.SetEnabled("danger", callouts.Danger);
+        engine.SetEnabled("fuel", callouts.Fuel);
+        engine.SetEnabled("route", callouts.Route);
+        engine.SetEnabled("long-jump", callouts.LongJump);
+        engine.SetEnabled("arrival", callouts.Arrival);
+        engine.SetEnabled("materials", callouts.Materials);
+
+        foreach (var callout in engine.Callouts)
+        {
+            switch (callout)
+            {
+                case RouteCallout route:
+                    route.EveryNJumps = callouts.RouteEveryNJumps;
+                    break;
+
+                case LongJumpCallout longJump:
+                    longJump.Threshold = TimeSpan.FromSeconds(callouts.LongJumpSeconds);
+                    break;
+
+                case ArrivalCallout arrival:
+                    arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+            }
+        }
     }
 
     /// <summary>
@@ -472,7 +573,56 @@ public sealed class AppHost : IDisposable
 
     private TickDriver? _ticking;
 
+    /// <summary>
+    /// Guards the callout speaker. Announcements are spoken one at a time in the order they were
+    /// queued: two callouts landing on the same tick and being synthesised concurrently would
+    /// arrive in whichever order the network happened to return them, and "shields are down" is
+    /// not interchangeable with "route complete".
+    /// </summary>
+    private readonly SemaphoreSlim _speaking = new(1, 1);
+
     private EdgeNeuralTtsProvider? _tts;
+
+    /// <summary>
+    /// Takes whatever the callouts queued this tick and says it. Called from the tick thread and
+    /// returns immediately — the speaking itself happens on the thread pool, because the tick
+    /// must never block on synthesis.
+    /// </summary>
+    private void SpeakPendingCallouts()
+    {
+        var pending = Callouts.Drain();
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            // One at a time, and in order. A previous batch still being spoken holds this one
+            // until it finishes rather than talking over it.
+            await _speaking.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var announcement in pending)
+                {
+                    await Voice.AnnounceAsync(announcement).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                // A callout that cannot be synthesised is a callout the Commander does not hear.
+                // It is already in the log as text from the engine, so this records why it was
+                // not also audible rather than losing the fact entirely.
+                _logger.LogError(ex, "A callout could not be spoken");
+            }
+            finally
+            {
+                _speaking.Release();
+            }
+        });
+    }
 
     private string? _openDevice;
 
@@ -485,6 +635,10 @@ public sealed class AppHost : IDisposable
         else if (change.Key.StartsWith("speech.", StringComparison.OrdinalIgnoreCase))
         {
             ApplySpeechSettings();
+        }
+        else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyCalloutSettings(Callouts, Settings.Current);
         }
     }
 
@@ -537,6 +691,7 @@ public sealed class AppHost : IDisposable
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.
         _ticking?.Dispose();
+        _speaking.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.

@@ -1,3 +1,4 @@
+using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -26,12 +27,14 @@ public static class BuiltinCapabilities
         SpendTracker spend,
         string version,
         SpeechCapability.SpeechSurface speech,
-        Conversation.TurnCancellation cancellation) =>
+        Conversation.TurnCancellation cancellation,
+        CalloutEngine callouts) =>
     [
         DiagnosticsCapability.Create(paths, verbosity, settings, version),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         SpeechCapability.Create(speech),
+        CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),

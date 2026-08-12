@@ -7,6 +7,7 @@ using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core;
 using D47.Core.Audio;
+using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -50,7 +51,8 @@ public class SettingsSurfaceTests
                 Silence = () => { },
                 Beds = [.. CueLibrary.Load().BedNames],
             },
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
 
         settings.Bind(registry);
 

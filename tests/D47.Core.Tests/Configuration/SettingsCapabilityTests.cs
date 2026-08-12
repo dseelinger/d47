@@ -27,13 +27,43 @@ public class SettingsCapabilityTests
         var hidden = surface.Settings.Sections
             .SelectMany(section => section.Rows)
             .Where(row => row.Protected || row.Kind is SettingKind.Secret or SettingKind.Info)
-            .Where(row => listed.Content.Contains(row.Key, StringComparison.OrdinalIgnoreCase))
+            // Whole keys, not substrings. A protected row whose key is a prefix of a listed
+            // row's key — "callouts.route" against "callouts.routeEveryNJumps" — is reported as
+            // exposed by a Contains check while being nothing of the sort, and a false positive
+            // here is a test that gets worked around rather than believed.
+            .Where(row => Lists(listed.Content, row.Key))
             .Select(row => row.Key)
             .ToArray();
 
         Assert.True(
             hidden.Length == 0,
             $"A row the model cannot change has no reason to be in its vocabulary: {string.Join(", ", hidden)}");
+    }
+
+    /// <summary>
+    /// Whether a settings listing offers this exact key, rather than one that merely starts
+    /// with it. Keys are bounded by whitespace or punctuation in every listing format.
+    /// </summary>
+    private static bool Lists(string listing, string key)
+    {
+        var index = listing.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+
+        while (index >= 0)
+        {
+            var after = index + key.Length;
+
+            if (after >= listing.Length || !IsKeyCharacter(listing[after]))
+            {
+                return true;
+            }
+
+            index = listing.IndexOf(key, after, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+
+        static bool IsKeyCharacter(char character) =>
+            char.IsLetterOrDigit(character) || character is '.' or '_' or '-';
     }
 
     [Fact]
