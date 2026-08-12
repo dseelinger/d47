@@ -83,6 +83,71 @@ public class KeywordRouterTests
         Assert.Null(new KeywordRouter(Registry(install)).Match("compose a sonnet about hyperspace"));
     }
 
+    [Theory]
+    // The one that got away: "where" matched, and the router answered a question about Iran with
+    // the Commander's own star system, confidently. Found in manual testing on 2026-08-12.
+    [InlineData("Where is Iran?")]
+    [InlineData("where is Sol relative to the galactic core")]
+    // "system" used to hijack anything containing the word.
+    [InlineData("what's your operating system")]
+    [InlineData("how does the immune system work")]
+    // "status" likewise.
+    [InlineData("what is the status of the Thargoid war")]
+    [InlineData("explain how a frame shift drive works")]
+    public void AQuestionThatMerelyContainsAKeywordWordIsNotRouted(string input)
+    {
+        // A miss costs a fall-through to the model. A false positive costs a wrong answer
+        // delivered with certainty, and the router has no guardrail block in front of it.
+        using var install = new TempInstall();
+
+        Assert.Null(new KeywordRouter(Registry(install)).Match(input));
+    }
+
+    [Theory]
+    [InlineData("where am I")]
+    [InlineData("Where am I?")]
+    [InlineData("what system is this")]
+    [InlineData("am I docked")]
+    [InlineData("what's your status")]
+    [InlineData("what’s your status")]
+    public void RealCommandsStillRoute(string input)
+    {
+        // The fix must not have made the router useless. Includes a curly apostrophe, because
+        // autocorrect produces them and a Commander should not have to know that.
+        using var install = new TempInstall();
+
+        Assert.NotNull(new KeywordRouter(Registry(install)).Match(input));
+    }
+
+    /// <summary>
+    /// Single words that are specific enough to be safe on their own. The bar is that the word is
+    /// technical enough not to turn up incidentally in an unrelated question — "diagnostics" passes,
+    /// "status", "system" and "where" emphatically do not. Adding to this list should feel like a
+    /// decision, which is the point of having the list rather than dropping the rule.
+    /// </summary>
+    private static readonly string[] JustifiedSingleWords = ["diagnostics"];
+
+    [Fact]
+    public void KeywordsAreNeverBareCommonWords()
+    {
+        // Structural guard against the regression coming back by way of a new capability: a
+        // single-word keyword is almost always too broad to be safe, so it needs a deliberate
+        // decision rather than a default.
+        using var install = new TempInstall();
+        var registry = Registry(install);
+
+        var bare = (from capability in registry.All
+                    from keyword in capability.Descriptor.Keywords
+                    where !keyword.Contains(' ', StringComparison.Ordinal)
+                          && !JustifiedSingleWords.Contains(keyword, StringComparer.OrdinalIgnoreCase)
+                    select $"{capability.Descriptor.Id}: '{keyword}'").ToArray();
+
+        Assert.True(
+            bare.Length == 0,
+            "Single-word keywords hijack any sentence containing them. Prefer a phrase, or add it to " +
+            $"JustifiedSingleWords with a reason: {string.Join(", ", bare)}");
+    }
+
     [Fact]
     public void EmptyInputMatchesNothing()
     {

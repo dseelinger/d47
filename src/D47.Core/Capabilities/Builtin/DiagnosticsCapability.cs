@@ -34,7 +34,17 @@ public static class DiagnosticsCapability
                 "turn journal logging up to debug",
                 "set voice logging back to information",
             ],
-            Keywords = ["status", "diagnostics", "logging", "verbosity", "log level"],
+            // Phrases rather than words, for the same reason as the journal capability: a bare
+            // "status" hijacks any sentence containing it and answers a question nobody asked.
+            Keywords =
+            [
+                "your status",
+                "status report",
+                "app status",
+                "diagnostics",
+                "log level",
+                "logging level",
+            ],
             Display = new CapabilityDisplay { PanelTitle = "Diagnostics", Order = 10 },
             Tools =
             [

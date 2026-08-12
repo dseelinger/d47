@@ -19,7 +19,21 @@ public static class JournalCapability
             Name = "Journal",
             Summary = "Report the Commander's current system, body and docking state from the journal.",
             Examples = ["where am I", "what system is this", "am I docked"],
-            Keywords = ["location", "system", "docked", "where"],
+            // Phrases, not words. "where" and "system" on their own match "Where is Iran?" and
+            // "what's your operating system" — questions this capability has no business
+            // answering, answered from journal data with total confidence. Every phrase here has
+            // to be one that can only be a request for the Commander's own position.
+            Keywords =
+            [
+                "where am i",
+                "where i am",
+                "what system",
+                "which system",
+                "current system",
+                "my location",
+                "am i docked",
+                "what body",
+            ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
             Tools =
             [
