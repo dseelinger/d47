@@ -28,6 +28,52 @@ public sealed record D47Settings
     public HotkeySettings Hotkeys { get; init; } = new();
 
     public UpdateSettings Updates { get; init; } = new();
+
+    public CalloutSettings Callouts { get; init; } = new();
+}
+
+/// <summary>
+/// What d47 says without being asked (list.md Phase 8).
+/// <para>
+/// One toggle per callout rather than one for all of them: a Commander who finds route progress
+/// chatty should not have to switch off danger warnings to stop it. The master switch exists
+/// for the case where somebody wants d47 to speak only when spoken to.
+/// </para>
+/// </summary>
+public sealed record CalloutSettings
+{
+    /// <summary>Off means d47 never speaks unprompted. Everything else keeps running.</summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>Interdiction, shields, hull, heat, a full hold.</summary>
+    public bool Danger { get; init; } = true;
+
+    /// <summary>Low fuel, and the unscoopable-next-star case that strands a Commander.</summary>
+    public bool Fuel { get; init; } = true;
+
+    public bool Route { get; init; } = true;
+
+    public bool LongJump { get; init; } = true;
+
+    /// <summary>Home, carrier, stored ships, engineering.</summary>
+    public bool Arrival { get; init; } = true;
+
+    public bool Materials { get; init; } = true;
+
+    /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
+    public int RouteEveryNJumps { get; init; } = 5;
+
+    /// <summary>
+    /// How long a hyperspace jump has to run before it is worth remarking on. The checklist
+    /// specifies 20 seconds as the default.
+    /// </summary>
+    public double LongJumpSeconds { get; init; } = 20;
+
+    /// <summary>
+    /// The Commander's home system. Null means no home callout — there is no sensible default,
+    /// since where someone considers home is not something any journal event reports.
+    /// </summary>
+    public string? HomeSystem { get; init; }
 }
 
 public sealed record LlmSettings

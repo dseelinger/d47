@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Callouts;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging;
 
@@ -133,9 +134,9 @@ public sealed class VoicePipeline(
     /// <summary>
     /// Says something without a turn behind it. Used for the startup warning when the model is
     /// misconfigured — silence there is indistinguishable from a model with nothing to say
-    /// (list.md Phase 5).
+    /// (list.md Phase 5) — and for every Phase 8 callout.
     /// </summary>
-    public async Task AnnounceAsync(string text)
+    public async Task AnnounceAsync(string text, AudioChannel channel = AudioChannel.Speech)
     {
         if (Tts is not { } provider)
         {
@@ -143,10 +144,31 @@ public sealed class VoicePipeline(
         }
 
         await using var speech = new SpeechPipeline(
-            arbiter, provider, Voice, "announcement", loggers.CreateLogger<SpeechPipeline>());
+            arbiter, provider, Voice, "announcement", loggers.CreateLogger<SpeechPipeline>(), channel);
 
         speech.Push(text);
         await speech.CompleteAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Speaks one unprompted callout (list.md Phase 8).
+    /// <para>
+    /// An urgent one silences the queue first rather than joining it. That is the difference
+    /// between a warning and a remark: an interdiction announced after d47 finishes reading out
+    /// a station's commodity list has arrived after the interdiction. Routine callouts queue
+    /// normally and wait their turn.
+    /// </para>
+    /// </summary>
+    public async Task AnnounceAsync(Announcement announcement)
+    {
+        if (announcement.Urgency == CalloutUrgency.Urgent)
+        {
+            arbiter.Silence();
+        }
+
+        _logger.LogDebug("Speaking callout {Key}", announcement.Key);
+
+        await AnnounceAsync(announcement.Text, announcement.Channel).ConfigureAwait(false);
     }
 
     public void EnterState(LoopState state) =>

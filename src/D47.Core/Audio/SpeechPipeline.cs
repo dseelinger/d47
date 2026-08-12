@@ -26,6 +26,13 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     private readonly SentenceSplitter _splitter = new();
     private readonly Channel<Task<Spoken?>> _rendered = Channel.CreateUnbounded<Task<Spoken?>>();
+
+    /// <summary>
+    /// Which channel the rendered sentences enter the arbiter on. Speech for a turn; Alert for
+    /// a Phase 8 danger callout, which has to outrank whatever is being said rather than queue
+    /// behind it — an alert that waits for the current sentence to finish is not an alert.
+    /// </summary>
+    private readonly AudioChannel _channel;
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
@@ -38,13 +45,15 @@ public sealed class SpeechPipeline : IAsyncDisposable
         ITtsProvider tts,
         VoiceSelection voice,
         string group,
-        ILogger logger)
+        ILogger logger,
+        AudioChannel channel = AudioChannel.Speech)
     {
         _arbiter = arbiter;
         _tts = tts;
         _voice = voice;
         _group = group;
         _logger = logger;
+        _channel = channel;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -147,7 +156,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
                 _arbiter.Enqueue(new AudioRequest
                 {
-                    Channel = AudioChannel.Speech,
+                    Channel = _channel,
                     Clip = spoken.Clip,
                     Group = _group,
                     Caption = spoken.Text,

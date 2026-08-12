@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
@@ -29,7 +30,8 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(onSilence),
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
 
         return new KeywordRouter(registry);
     }
@@ -173,7 +175,8 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(),
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
 
         var interrupting =
             (from capability in registry.All
@@ -203,7 +206,8 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(() => silenced++),
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance)));
+            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
 
         var match = new KeywordRouter(registry).MatchInterrupting("shut up");
         Assert.NotNull(match);
