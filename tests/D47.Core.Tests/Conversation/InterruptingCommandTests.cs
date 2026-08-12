@@ -33,6 +33,11 @@ public class InterruptingCommandTests
     }
 
     [Theory]
+    [InlineData("stop")]
+    [InlineData("Stop!")]
+    [InlineData("stop it")]
+    [InlineData("enough")]
+    [InlineData("quiet")]
     [InlineData("shut up")]
     [InlineData("be quiet")]
     [InlineData("stop talking")]
@@ -62,6 +67,40 @@ public class InterruptingCommandTests
         using var install = new TempInstall();
 
         Assert.Null(Router(install).MatchInterrupting(said));
+    }
+
+    /// <summary>
+    /// The price of a one-syllable interrupt: "stop" is also how Phase 10's flight commands
+    /// begin. It stays out of the general vocabulary entirely, so nothing routes it to silence
+    /// on the ordinary path — the surface only consults the interrupt list while there is
+    /// something to interrupt.
+    /// </summary>
+    [Theory]
+    [InlineData("stop")]
+    [InlineData("stop the ship")]
+    [InlineData("stop plotting the route")]
+    public void BareStopIsNotAGeneralCommand(string said)
+    {
+        using var install = new TempInstall();
+
+        Assert.Null(Router(install).Match(said));
+    }
+
+    /// <summary>
+    /// And the phrases that can only ever mean silence stay on the ordinary path too, so they
+    /// work when d47 is idle — asking a quiet d47 to be quiet should not be an error.
+    /// </summary>
+    [Theory]
+    [InlineData("shut up")]
+    [InlineData("stop talking")]
+    public void AnUnambiguousSilencePhraseStillWorksWhenIdle(string said)
+    {
+        using var install = new TempInstall();
+
+        var match = Router(install).Match(said);
+
+        Assert.NotNull(match);
+        Assert.Equal("stop_speaking", match.ToolName);
     }
 
     [Fact]

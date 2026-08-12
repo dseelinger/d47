@@ -43,6 +43,19 @@ public sealed record CapabilityDescriptor
     /// <summary>Vocabulary for the model-free keyword router.</summary>
     public IReadOnlyList<string> Keywords { get; init; } = [];
 
+    /// <summary>
+    /// Phrases that only mean anything while there is something to interrupt.
+    /// <para>
+    /// Kept apart from <see cref="Keywords"/> so that a word too broad to be a general command
+    /// can still be the fastest possible interrupt. "Stop" is the case: on its own it is the
+    /// opening word of "stop the ship" and "stop plotting", so it must never route while d47 is
+    /// idle — but while d47 is mid-sentence it has exactly one plausible meaning, and it is the
+    /// shortest thing a Commander can say. Context is what disambiguates it, so context is what
+    /// gates it.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> InterruptKeywords { get; init; } = [];
+
     public IReadOnlyList<ToolDefinition> Tools { get; init; } = [];
 
     public IReadOnlyList<SettingRow> Settings { get; init; } = [];

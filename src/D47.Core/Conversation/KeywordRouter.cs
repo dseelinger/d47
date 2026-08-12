@@ -81,15 +81,38 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
     /// </summary>
     public KeywordMatch? MatchInterrupting(string input)
     {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        // The interrupt-only vocabulary first: it exists precisely for phrases too broad to sit
+        // in the general list, so it would never be reached if the general list were consulted
+        // first.
+        var byInterruptPhrase =
+            (from capability in registry.All
+             from keyword in capability.Descriptor.InterruptKeywords
+             where ContainsPhrase(input, keyword)
+             orderby keyword.Length descending
+             let tool = capability.Descriptor.Tools.FirstOrDefault(t => t.Interrupting && t.Parameters.Count == 0)
+             where tool is not null
+             select new KeywordMatch(capability.Descriptor.Id, tool!.Name))
+            .FirstOrDefault();
+
+        if (byInterruptPhrase is not null)
+        {
+            return byInterruptPhrase;
+        }
+
         if (Match(input) is not { } match)
         {
             return null;
         }
 
-        var tool = registry.Find(match.CapabilityId)?.Descriptor.Tools
+        var matched = registry.Find(match.CapabilityId)?.Descriptor.Tools
             .FirstOrDefault(t => t.Name == match.ToolName);
 
-        return tool?.Interrupting == true ? match : null;
+        return matched?.Interrupting == true ? match : null;
     }
 
     /// <summary>

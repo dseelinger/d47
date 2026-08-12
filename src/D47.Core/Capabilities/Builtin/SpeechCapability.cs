@@ -68,7 +68,13 @@ public static class SpeechCapability
         Group = "Voice",
         Name = "Speech",
         Summary = "Speak replies aloud, mark each loop state with its own cue, and stop on command.",
-        Examples = ["stop talking", "be quiet", "shut up"],
+        Examples = ["stop", "be quiet", "shut up"],
+
+        // The fastest thing a Commander can say, and the reason InterruptKeywords exists as a
+        // separate list. Bare "stop" is far too broad for the general router — Phase 10 brings
+        // "stop the ship" and "stop plotting" — but while d47 is mid-sentence it has one
+        // meaning, and an interrupt is judged on how quickly it can be said.
+        InterruptKeywords = ["stop", "stop it", "enough", "quiet"],
 
         // Phrases that can only be a request for silence. "stop" alone is not one of them: it
         // is the first word of "stop the ship", "stop plotting", and a dozen other things —

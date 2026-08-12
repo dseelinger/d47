@@ -28,9 +28,9 @@ D47_TTS_LIVE=1 dotnet test tests/D47.Tts.Tests
 
 ## Try it
 
+> "stop"
 > "shut up"
 > "be quiet"
-> "stop talking"
 
 ## Tool
 
@@ -47,7 +47,16 @@ output device or the cue settings is not exposed as a tool: a model able to make
 hear has no request that needs it. Stopping is the exception, because it is the one thing the
 Commander must always be able to ask for.
 
-Asking for silence never has to reach the model at all. `shut up` and its siblings are keyword
+**`stop` is the one to reach for.** One syllable, four letters — an interrupt is judged on how
+fast it can be said, and everything else here is a longer way to say the same thing.
+
+Bare `stop` is deliberately kept out of the general command vocabulary, because it is also how
+`stop the ship` and `stop plotting` begin. It is only consulted while d47 actually has something
+to interrupt: mid-sentence it has one plausible meaning, and idle it belongs to whatever answers
+those other commands. Context is the disambiguator, so context is the gate. The longer phrases —
+`shut up`, `stop talking` — are unambiguous on their own and work whether or not d47 is speaking.
+
+Asking for silence never has to reach the model at all. These are keyword
 phrases, so the model-free router answers them; and the hotkey below reaches the same queue
 operation with nothing in between. A spoken stop request that had to wait for a model would be
 gated behind the very thing it is trying to interrupt.

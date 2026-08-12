@@ -214,11 +214,17 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Asked before the in-flight gate, never after. "Shut up" is only ever wanted while d47
-        // is mid-sentence, which is exactly when _turnInFlight is true — so gating it on that
-        // would drop it silently at the one moment it matters (list.md Phase 5, "never gated
+        // Asked before the in-flight gate, never after. A silence command is only ever wanted
+        // while d47 is mid-sentence, which is exactly when _turnInFlight is true — so gating it
+        // on that would drop it at the one moment it matters (list.md Phase 5, "never gated
         // behind a turn completing"). The registry decides what may interrupt; this does not.
-        if (_host.Router.MatchInterrupting(input) is { } interrupting)
+        //
+        // Only consulted when there is actually something to interrupt, which is what lets the
+        // vocabulary include a bare "stop". Idle, "stop" is the opening word of "stop the ship"
+        // and belongs to whatever answers that; mid-sentence it has one meaning. Context is the
+        // disambiguator, so context is the gate.
+        if ((_turnInFlight || _host.Audio.IsSpeaking)
+            && _host.Router.MatchInterrupting(input) is { } interrupting)
         {
             AskBox.Text = string.Empty;
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
