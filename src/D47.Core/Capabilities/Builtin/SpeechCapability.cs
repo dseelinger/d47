@@ -71,9 +71,11 @@ public static class SpeechCapability
         Examples = ["stop", "be quiet", "shut up"],
 
         // The fastest thing a Commander can say, and the reason InterruptKeywords exists as a
-        // separate list. Bare "stop" is far too broad for the general router — Phase 10 brings
-        // "stop the ship" and "stop plotting" — but while d47 is mid-sentence it has one
-        // meaning, and an interrupt is judged on how quickly it can be said.
+        // separate list. Bare "stop" is a common verb, and the general vocabulary refuses those
+        // outright — a bare word hijacks any sentence containing it. Macros (Phase 10) are the
+        // concrete claimant: the Commander names them, and the checklist says their vocabulary
+        // cannot be closed in advance. Mid-sentence, though, "stop" has one meaning, and an
+        // interrupt is judged on how quickly it can be said.
         InterruptKeywords = ["stop", "stop it", "enough", "quiet"],
 
         // Phrases that can only be a request for silence. "stop" alone is not one of them: it

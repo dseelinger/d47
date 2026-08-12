@@ -50,10 +50,12 @@ Commander must always be able to ask for.
 **`stop` is the one to reach for.** One syllable, four letters — an interrupt is judged on how
 fast it can be said, and everything else here is a longer way to say the same thing.
 
-Bare `stop` is deliberately kept out of the general command vocabulary, because it is also how
-`stop the ship` and `stop plotting` begin. It is only consulted while d47 actually has something
-to interrupt: mid-sentence it has one plausible meaning, and idle it belongs to whatever answers
-those other commands. Context is the disambiguator, so context is the gate. The longer phrases —
+Bare `stop` is deliberately kept out of the general command vocabulary, because a bare common
+verb hijacks any sentence containing it — the same rule that keeps `where` and `system` out of
+the location commands. It is only consulted while d47 actually has something to interrupt:
+mid-sentence it has one plausible meaning, and idle it stays available to anything else that
+might want it, Commander-named macros most of all. Context is the disambiguator, so context is
+the gate. The longer phrases —
 `shut up`, `stop talking` — are unambiguous on their own and work whether or not d47 is speaking.
 
 Asking for silence never has to reach the model at all. These are keyword

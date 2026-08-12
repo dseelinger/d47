@@ -70,15 +70,15 @@ public class InterruptingCommandTests
     }
 
     /// <summary>
-    /// The price of a one-syllable interrupt: "stop" is also how Phase 10's flight commands
-    /// begin. It stays out of the general vocabulary entirely, so nothing routes it to silence
-    /// on the ordinary path — the surface only consults the interrupt list while there is
-    /// something to interrupt.
+    /// The price of a one-syllable interrupt: "stop" is a bare common verb, and a Commander-named
+    /// macro (Phase 10) may legitimately contain it. It stays out of the general vocabulary
+    /// entirely, so nothing routes it to silence on the ordinary path — the surface only consults
+    /// the interrupt list while there is something to interrupt.
     /// </summary>
     [Theory]
     [InlineData("stop")]
-    [InlineData("stop the ship")]
-    [InlineData("stop plotting the route")]
+    [InlineData("stop the mining run")]
+    [InlineData("stop recording that macro")]
     public void BareStopIsNotAGeneralCommand(string said)
     {
         using var install = new TempInstall();
