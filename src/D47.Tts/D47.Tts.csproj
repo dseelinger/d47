@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Speech synthesis providers, behind Core's ITtsProvider. Separate from D47.Audio because
+    this is a network client and that is a sound card: they fail differently, they are
+    configured differently, and Phase 11's paid provider lands here without touching the
+    rendering path.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    The wire format is internal because nothing outside this assembly should be composing
+    Edge's frames, but it is exactly the part that can be wrong without the network being
+    involved, so the tests reach it directly.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.Tts.Tests" />
+  </ItemGroup>
+
+</Project>
