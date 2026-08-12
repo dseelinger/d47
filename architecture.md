@@ -126,13 +126,23 @@ File handle: open with `FileShare.ReadWrite | FileShare.Delete` — Elite holds 
 
 **Decision.** Render the Avalonia visual tree to an offscreen surface, copy into a shared D3D11 texture, submit to `IVROverlay`.
 
+**Status: proven end to end.** See [docs/spikes/vr-texture.md](docs/spikes/vr-texture.md) — a live Avalonia panel visible as a SteamVR overlay, measured. The amendments below come out of that spike.
+
 **Why not CEF.** ~150–200 MB and a multi-process model. Incompatible with "a single statically linked binary" and with per-user install without elevation.
 
 **Why not WebView2.** No supported offscreen-to-texture path; the workaround is DirectComposition plus Windows.Graphics.Capture, which needs a live window and reintroduces the desktop-window dependency that *Keep working when the main window is minimized* is trying to remove.
 
 **Why not capture the desktop window.** WGC requires a non-minimized window, which directly contradicts the minimize requirement, and it makes the VR surface a strictly-worse copy of the desktop one rather than a peer.
 
-**Consequence.** Mini mode is a `DataTemplate` selection over the same view models, not a second surface. That falls out of the decision rather than needing enforcement.
+**"One widget tree" means one *definition*, not one live instance.** A `Visual` belongs to exactly one visual tree, so the desktop window and the VR surface each get their own instantiation of the same view, bound to the same view model. The constraint is still satisfied — there is no second UI codebase, and no path where the VR surface is a screenshot of the desktop one — but the phrase is shorthand and the framework will not do the literal thing.
+
+**Consequence — mini mode.** Mini mode is a `DataTemplate` selection over the same view models, not a second surface. That falls out of the decision rather than needing enforcement.
+
+**Consequence — the copy is a CPU roundtrip, and that is fine.** Avalonia rasterises to a `RenderTargetBitmap`, `CopyPixels` writes straight into a mapped D3D11 staging texture, and `CopyResource` moves it to the shared texture. Zero-copy GPU→GPU is *not* reachable: Avalonia 12 closes `ITopLevelImpl` and the platform render surfaces to external implementation via reference-assembly guards, `RenderTargetBitmap` is a CPU raster surface, and `ICompositionGpuInterop` is import-only. Measured at panel size (1024×640), the whole end-to-end frame costs **0.75 ms live against SteamVR** — of which the Skia rasterise is 0.30 ms and the copy itself is 0.05 ms. At 4–10 Hz that is under 1% of one core, so the roundtrip is a non-issue rather than a compromise, and the fast path is not worth reaching for.
+
+**Consequence — no window is involved in the VR path at all.** The rendered `Visual` never has a `TopLevel`. This is what closes *Keep working when the main window is minimized*: minimise-safety is structural rather than something to defend. It also means animations have no clock — anything moving on the VR panel must be driven by the tick loop, which is the intended view-model-driven model anyway.
+
+**Two things to get right in Phase 9**, both from the spike: create the D3D11 device on the adapter SteamVR reports via `IVRSystem.GetDXGIOutputInfo` rather than passing `null` (it happened to resolve correctly on the spike machine, but on a hybrid-graphics machine the default can be the iGPU, and a cross-adapter share will be rejected or slow-pathed); and render only on change, since the panel is view-model-driven and the measured cost is a worst case rather than a target.
 
 ### D2 — OpenVR overlays, not OpenXR
 
