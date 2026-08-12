@@ -182,7 +182,15 @@ GPU is opt-in and defaults off when a headset is present — see *STT Model Choi
 
 Virtual joystick drivers (vJoy, ViGEmBus) were considered and rejected: a kernel driver contradicts "per-user install, no elevation" and is a support burden disproportionate to the benefit.
 
-Binds are **read-only**. The parser resolves `Custom.4.0.binds` to a map of action → device + key, which feeds both *Know which actions the Commander can actually reach* and *Report a key that is bound twice*. TheApp never writes the Commander's bindings.
+Binds are **read-only**. The parser produces a map of action → device + key, which feeds both *Know which actions the Commander can actually reach* and *Report a key that is bound twice*. TheApp never writes the Commander's bindings.
+
+**Resolving which file to read is the part that is easy to get wrong.** There are three traps, and the naive version of this walks into all of them:
+
+1. **The active preset is named in `StartPreset.<major>.start`, not assumed.** On the development machine that file reads `KeyboardMouseOnly` — a preset shipped with the game, not a custom one. Reading `Custom.*.binds` unconditionally would parse a file the Commander is not using and confidently report the wrong keys.
+2. **A built-in preset does not live in the user profile.** `%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Bindings\` holds custom presets; the shipped ones live under the game's install directory. Both paths have to be searched.
+3. **The version suffix moves.** The custom file on that machine is `Custom.4.2.binds` while the start-preset file is still `StartPreset.4.start`, so the two numbers are not the same number and neither may be hardcoded. Match by pattern and take the highest version present.
+
+A Commander who has never customised their binds is the common case, not an edge case, and it is exactly the case a hardcoded `Custom.4.0.binds` fails on — silently, by finding nothing or by finding a stale file, and then advertising an action set that does not match the keyboard in front of them.
 
 ### D5 — Capability registry as the single source
 
