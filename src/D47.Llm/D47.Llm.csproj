@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The provider seam's implementations. This project exists for one reason: to keep the vendor
+    SDK out of D47.Core, which CoreDependencyTests asserts. Core defines ILlmProvider; this
+    references both Core and the SDK.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Anthropic" Version="12.40.0" />
+  </ItemGroup>
+
+</Project>

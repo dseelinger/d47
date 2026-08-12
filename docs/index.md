@@ -16,6 +16,7 @@ page that explains it.
 ## General help
 
 - [Installing and verifying a build](install.md)
+- [Talking to d47](conversation.md) — the two answer paths, running with no model, and what each turn reports
 
 ## Capabilities
 

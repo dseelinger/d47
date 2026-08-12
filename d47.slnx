@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/D47.App/D47.App.csproj" />
     <Project Path="src/D47.Core/D47.Core.csproj" />
+    <Project Path="src/D47.Llm/D47.Llm.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />

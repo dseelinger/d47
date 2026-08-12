@@ -4,7 +4,9 @@ using D47.App.Updates;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Llm;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
@@ -29,6 +31,9 @@ public sealed class AppHost : IDisposable
         JournalSpine journal,
         CapabilityRegistry capabilities,
         UpdateChecker updates,
+        TurnLoop turns,
+        LlmAvailabilityState llmAvailability,
+        SpendTracker spend,
         string version,
         string? startupError)
     {
@@ -41,6 +46,9 @@ public sealed class AppHost : IDisposable
         Journal = journal;
         Capabilities = capabilities;
         Updates = updates;
+        Turns = turns;
+        LlmAvailability = llmAvailability;
+        Spend = spend;
         Version = version;
         StartupError = startupError;
     }
@@ -60,6 +68,15 @@ public sealed class AppHost : IDisposable
     public CapabilityRegistry Capabilities { get; }
 
     public UpdateChecker Updates { get; }
+
+    /// <summary>One turn of conversation, whichever path answers it.</summary>
+    public TurnLoop Turns { get; }
+
+    /// <summary>Whether the model is usable right now, and why not when it isn't.</summary>
+    public LlmAvailabilityState LlmAvailability { get; }
+
+    /// <summary>Per-turn cost and the running total.</summary>
+    public SpendTracker Spend { get; }
 
     public string Version { get; }
 
@@ -130,6 +147,39 @@ public sealed class AppHost : IDisposable
 
         var updates = new UpdateChecker(loggerFactory.CreateLogger<UpdateChecker>());
 
+        // The provider is built only if there is a key to build it with. No key is not an error
+        // state: it produces a null provider, which the turn loop reads as "the model capability
+        // is off" and routes around (list.md Phase 3, "Capabilities as state, not guard").
+        ILlmProvider? provider = null;
+        if (!string.Equals(settings.Llm.Provider, "none", StringComparison.OrdinalIgnoreCase)
+            && ResolveAnthropicKey(secrets) is { } resolved)
+        {
+            provider = new AnthropicLlmProvider(resolved.Key);
+            logger.LogInformation("Anthropic provider configured from {Source}", resolved.Source);
+        }
+
+        var llmAvailability = new LlmAvailabilityState(provider is not null);
+        var spend = new SpendTracker();
+
+        var turns = new TurnLoop(
+            capabilities,
+            new KeywordRouter(capabilities),
+            llmAvailability,
+            spend,
+            PriceTable.Default,
+            loggerFactory.CreateLogger<TurnLoop>(),
+            provider,
+            settings.Llm.Model)
+        {
+            AboutMe = settings.Llm.AboutMe,
+        };
+
+        logger.LogInformation(
+            "Conversation ready; model {State} ({Provider}/{Model})",
+            llmAvailability.Current,
+            provider?.Id ?? "none",
+            settings.Llm.Model ?? provider?.DefaultModel ?? "none");
+
         return new AppHost(
             paths,
             loggerFactory,
@@ -140,8 +190,38 @@ public sealed class AppHost : IDisposable
             journal,
             capabilities,
             updates,
+            turns,
+            llmAvailability,
+            spend,
             version,
             startupError);
+    }
+
+    /// <summary>
+    /// Where the Anthropic key lives in the secret store. DPAPI-encrypted, scoped to this
+    /// Windows account, and never written to a log.
+    /// </summary>
+    public const string AnthropicApiKeySecret = "anthropic.apiKey";
+
+    /// <summary>
+    /// The secret store is the real home for the key, but nothing can write to it until the
+    /// settings surface exists in Phase 4 — so the environment variable is the interim way to
+    /// configure a model at all. The store wins when both are present.
+    /// <para>
+    /// Only the <em>source</em> is ever logged, never the key.
+    /// </para>
+    /// </summary>
+    private static (string Key, string Source)? ResolveAnthropicKey(SecretStore secrets)
+    {
+        if (secrets.TryGet(AnthropicApiKeySecret, out var stored))
+        {
+            return (stored, "the secret store");
+        }
+
+        var fromEnvironment = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
+        return string.IsNullOrWhiteSpace(fromEnvironment)
+            ? null
+            : (fromEnvironment, "the ANTHROPIC_API_KEY environment variable");
     }
 
     /// <summary>

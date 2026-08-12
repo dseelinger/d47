@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\D47.Llm\D47.Llm.csproj" />
   </ItemGroup>
 
   <!--
