@@ -213,6 +213,7 @@ public sealed class TestSurface
         CaptureState = () => (false, "No microphone in a test."),
         TranscriberState = () => (false, null, "No transcriber in a test."),
         Binds = () => D47.Core.Input.EliteBinds.None,
+        InstalledModels = () => [],
     };
 }
 

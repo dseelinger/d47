@@ -74,6 +74,24 @@ public sealed record ListeningSettings
     /// and the right value depends on the machine.
     /// </summary>
     public int PreRollMilliseconds { get; init; } = 500;
+
+    /// <summary>
+    /// Which Whisper model transcribes. "none" is the default and a real choice: d47 captures
+    /// audio and says it cannot turn it into words, which is honest, whereas silently
+    /// downloading several hundred megabytes at first launch is not.
+    /// </summary>
+    public string Model { get; init; } = Listening.WhisperModels.NoneId;
+
+    /// <summary>
+    /// Run inference on the GPU. Off by default and deliberately so.
+    /// <para>
+    /// In VR the GPU is already the scarce resource, so a large model running there surfaces as
+    /// dropped frames and reprojection rather than as anything resembling a speech problem —
+    /// which the checklist calls the hardest kind of setting to diagnose. A short push-to-talk
+    /// clip on the small English models absorbs CPU inference fine.
+    /// </para>
+    /// </summary>
+    public bool UseGpu { get; init; }
 }
 
 /// <summary>

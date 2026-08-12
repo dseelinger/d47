@@ -64,6 +64,7 @@ public class SettingsSurfaceTests
                 CaptureState = () => (false, "No microphone in a headless test."),
                 TranscriberState = () => (false, null, "No transcriber in a headless test."),
                 Binds = () => EliteBinds.None,
+                InstalledModels = () => [],
             }));
 
         built = registry;

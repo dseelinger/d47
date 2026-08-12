@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The speech-to-text end of the voice path. Its own project for the same reason D47.Audio and
+    D47.Tts are: Core must never reference Whisper.net or its native runtime, and a project
+    reference is the only way to say that in a way the build enforces (architecture.md §3).
+    Everything above ISpeechTranscriber is gate policy and lives in Core, where it is testable
+    with no model present and no microphone.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Whisper.net" Version="1.9.1" />
+
+    <!--
+      The CPU runtime, which is the default and the only one bundled. GPU is opt-in per
+      architecture.md D3 and needs the CUDA runtime present; d47 reports its absence rather
+      than silently falling back, because a GPU toggle that quietly does nothing is the setting
+      the checklist warns is hardest to diagnose.
+    -->
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+  </ItemGroup>
+
+</Project>

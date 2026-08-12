@@ -1,6 +1,7 @@
 using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Input;
+using D47.Core.Listening;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -21,6 +22,9 @@ public static class ListeningCapability
     public const string PushToTalkKeyKey = "listening.pushToTalkKey";
     public const string ModeKey = "listening.mode";
     public const string PreRollKey = "listening.preRoll";
+    public const string ModelKey = "listening.model";
+    public const string GpuKey = "listening.useGpu";
+    public const string EgressKey = "listening.egress";
 
     public const string HoldMode = "hold";
     public const string ToggleMode = "toggle";
@@ -47,6 +51,9 @@ public static class ListeningCapability
         /// parse Phase 10's keyboard reachability will use rather than a second view of it.
         /// </summary>
         public required Func<EliteBinds> Binds { get; init; }
+
+        /// <summary>Which speech models are already on disk, so the row can mark them.</summary>
+        public required Func<IReadOnlyList<string>> InstalledModels { get; init; }
     }
 
     public static CapabilityDescriptor Create(SettingsService settings, ListeningSurface surface) => new()
@@ -153,6 +160,75 @@ public static class ListeningCapability
                     Write = (s, v) => s with
                     {
                         Listening = s.Listening with { Mode = v == ToggleMode ? ToggleMode : HoldMode },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = ModelKey,
+                Label = "Speech model",
+                Help =
+                    "Which Whisper model turns your speech into words. Choosing one that is not yet on "
+                    + "disk asks first, states the size and where it comes from, and downloads nothing "
+                    + "until you agree.",
+                Kind = SettingKind.Choice,
+                Choices = WhisperModels.Ids,
+                ChoiceLabel = id =>
+                {
+                    var label = WhisperModels.LabelOf(id);
+
+                    if (id == WhisperModels.NoneId)
+                    {
+                        return label;
+                    }
+
+                    // Marked rather than hidden. A Commander comparing models needs to know
+                    // which choices cost a download and which are already paid for.
+                    var installed = surface.InstalledModels().Contains(id);
+                    var size = WhisperModels.Find(id)?.ApproximateMegabytes;
+
+                    return installed
+                        ? $"{label} — installed"
+                        : $"{label} — about {size} MB to download";
+                },
+                DefaultDisplay = "none",
+                DocsAnchor = "model",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.Model,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            Model = v is null || WhisperModels.Find(v) is null
+                                ? WhisperModels.NoneId
+                                : v,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GpuKey,
+                Label = "Run the speech model on the GPU",
+
+                // The cost stated on the row, which the checklist asks for by name. A Commander
+                // who turns this on in VR and then sees reprojection has no reason to connect
+                // the two unless it was said here.
+                Help =
+                    "Faster, but in VR the GPU is already the scarce resource — a large model there "
+                    + "shows up as dropped frames and reprojection rather than as a speech problem. "
+                    + "Needs the CUDA runtime; d47 says so rather than quietly using the CPU.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "gpu",
+                AppliesWhen = s => s.Listening.Model != WhisperModels.NoneId,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.UseGpu ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with { UseGpu = v is not "false" },
                     },
                 },
             },

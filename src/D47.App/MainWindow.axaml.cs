@@ -6,10 +6,12 @@ using Avalonia.Interactivity;
 using D47.App.Settings;
 using D47.App.Updates;
 using Avalonia.Media;
+using D47.App.Controls;
 using D47.App.Input;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Listening;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging;
 
@@ -84,6 +86,19 @@ public partial class MainWindow : Window
 
         DescribeHotkeys();
         BindShutUp();
+
+        // Spoken input runs the same turn as typed input, deliberately. A second path would be
+        // a second place for the in-flight gate, the interrupt vocabulary and the cancellation
+        // slot to be got wrong, and the Commander expects "where am I" to mean the same thing
+        // whichever way they said it (list.md Phase 6).
+        _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            AskBox.Text = text;
+            _ = AskAsync();
+        });
+
+        _host.ModelNeeded += model => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _ = OfferModelDownloadAsync(model));
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();
@@ -293,6 +308,71 @@ public partial class MainWindow : Window
             AskBox.Focus();
         }
     }
+
+    /// <summary>
+    /// Asks the Commander whether to download a speech model, and downloads it if they say yes.
+    /// <para>
+    /// The question is asked only after d47 has asked the host how big the file actually is, so
+    /// what the Commander agrees to is a real number and a named host rather than an estimate.
+    /// Declining leaves the setting alone: they may want the model later, and silently reverting
+    /// their choice would be answering for them.
+    /// </para>
+    /// </summary>
+    private async Task OfferModelDownloadAsync(WhisperModel model)
+    {
+        if (_host is null || _downloading)
+        {
+            return;
+        }
+
+        _downloading = true;
+
+        try
+        {
+            // Progress<T> captures the synchronisation context it was constructed on, which is
+            // this one, so the callback already arrives on the UI thread. Posting again would be
+            // a second hop for no reason.
+            var progress = new Progress<ModelProgress>(report =>
+                TurnLine.Text = $"Downloading {report.ModelId}: {report.Fraction:P0}");
+
+            var result = await _host.InstallModelAsync(
+                model,
+                async offer =>
+                {
+                    var dialog = new ConfirmWindow(
+                        "Download a speech model",
+                        offer.ConsentPrompt(),
+                        "Download",
+                        "Not now");
+
+                    return await dialog.AskAsync(this);
+                },
+                progress);
+
+            TurnLine.Text = result.Outcome switch
+            {
+                ModelInstall.Installed => $"{model.Id} is installed. I can understand you now.",
+                ModelInstall.AlreadyPresent => $"{model.Id} was already installed.",
+                ModelInstall.Declined => $"{model.Id} was not downloaded.",
+                ModelInstall.ChecksumMismatch => result.Detail ?? "The download did not verify.",
+                _ => result.Detail ?? $"{model.Id} could not be downloaded.",
+            };
+
+            if (result.Outcome is ModelInstall.Failed or ModelInstall.ChecksumMismatch)
+            {
+                // A failed download is worth the banner rather than a status line that scrolls
+                // away: without a model, holding the key produces nothing and looks like a bug.
+                ErrorText.Text = TurnLine.Text;
+                ErrorBanner.IsVisible = true;
+            }
+        }
+        finally
+        {
+            _downloading = false;
+        }
+    }
+
+    private bool _downloading;
 
     /// <summary>
     /// Registers the system-wide silence key.

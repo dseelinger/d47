@@ -18,6 +18,7 @@ using D47.Core.Journal;
 using D47.Core.Listening;
 using D47.Core.Ticking;
 using D47.Llm;
+using D47.Stt;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -61,6 +62,8 @@ public sealed class AppHost : IDisposable
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
         EliteBinds binds,
+        HttpModelStore models,
+        WhisperTranscriber transcriber,
         string version,
         string? startupError)
     {
@@ -90,6 +93,8 @@ public sealed class AppHost : IDisposable
         Binds = binds;
         _microphone = microphone;
         _pushToTalk = pushToTalk;
+        Models = models;
+        _transcriber = transcriber;
         Version = version;
         StartupError = startupError;
     }
@@ -174,6 +179,53 @@ public sealed class AppHost : IDisposable
     /// double-bind check and Phase 10's reachability both use.
     /// </summary>
     public EliteBinds Binds { get; }
+
+    /// <summary>
+    /// Speech models on disk, and the consent-gated way to fetch one. Exposed because the
+    /// settings surface is what asks the Commander, and only a surface can ask.
+    /// </summary>
+    public IModelStore Models { get; }
+
+    /// <summary>Raised when an utterance has been turned into words, so a surface can run it.</summary>
+    public event Action<string>? Heard;
+
+    /// <summary>
+    /// Raised when a selected speech model is not on disk. A surface answers it by asking the
+    /// Commander and calling <see cref="InstallModelAsync"/>.
+    /// <para>
+    /// Raised from here rather than from the settings panel so it fires however the model came
+    /// to be selected — the panel, the keyword router, or a hand-edited settings file. A
+    /// consent prompt that only one surface knows to show is a surface that can be gone around.
+    /// </para>
+    /// </summary>
+    public event Action<WhisperModel>? ModelNeeded;
+
+    /// <summary>
+    /// Downloads a model, having asked. Nothing is fetched unless <paramref name="consent"/>
+    /// returns true, and the offer it is given carries the real size and host rather than an
+    /// estimate.
+    /// </summary>
+    public async Task<ModelInstallResult> InstallModelAsync(
+        WhisperModel model,
+        Func<ModelOffer, Task<bool>> consent,
+        IProgress<ModelProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Models
+            .InstallAsync(model, consent, progress, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.Success)
+        {
+            // Load it now rather than at the next restart — the same "apply every setting
+            // without a restart" rule everything else follows (list.md Phase 4).
+            ApplyListeningSettings();
+        }
+
+        return result;
+    }
+
+    private readonly WhisperTranscriber _transcriber;
 
     private readonly WasapiMicrophone _microphone;
 
@@ -309,6 +361,8 @@ public sealed class AppHost : IDisposable
         // Listening. The microphone runs continuously into the gate and the gate decides which
         // part of that stream was addressed to d47 — push-to-talk is a policy over the stream,
         // not a reason to start and stop the device (list.md Phase 6).
+        var models = new HttpModelStore(paths, loggerFactory.CreateLogger<HttpModelStore>());
+        var transcriber = new WhisperTranscriber(loggerFactory.CreateLogger<WhisperTranscriber>());
         var gate = new ListenGate(WasapiMicrophone.SampleRate, loggerFactory.CreateLogger<ListenGate>());
         var microphone = new WasapiMicrophone(gate, loggerFactory.CreateLogger<WasapiMicrophone>());
         var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
@@ -357,11 +411,12 @@ public sealed class AppHost : IDisposable
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
                     CaptureState = () => (microphone.IsCapturing, microphone.Unavailable),
 
-                    // No transcriber yet. Reported as a state with the reason stated, which is
-                    // the same shape every other unconfigured capability takes.
-                    TranscriberState = () => (false, null,
-                        "No speech-to-text model is configured yet, so I capture audio but cannot turn it into words."),
+                    TranscriberState = () => (
+                        transcriber.IsReady,
+                        transcriber.Model,
+                        transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds,
+                    InstalledModels = () => models.Installed(),
                 }));
 
         built = capabilities;
@@ -420,6 +475,8 @@ public sealed class AppHost : IDisposable
             microphone,
             pushToTalk,
             binds,
+            models,
+            transcriber,
             version,
             startupError);
 
@@ -430,6 +487,16 @@ public sealed class AppHost : IDisposable
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
+
+        // Captured audio becomes words on the thread pool, never on the audio thread that
+        // produced it. Whisper on a CPU takes hundreds of milliseconds for a short clip; doing
+        // that inline would stall capture and drop the next utterance.
+        gate.Captured += host.TranscribeAsync;
+
+        // The route reader lives in the tick closure, so the host reaches it through this
+        // rather than owning it — proper-noun biasing wants the systems the Commander is about
+        // to arrive in, and those are only in the route file.
+        host._route = () => route.Current;
 
         // Push-to-talk, sampled here rather than hooked. This is the whole reason the tick runs
         // at 10 Hz rather than 4: the period is the worst-case delay before a key-down is seen,
@@ -628,6 +695,60 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// Turns one captured utterance into words and hands them on. Fire-and-forget from the
+    /// audio thread's point of view: it returns immediately and the work happens on the pool.
+    /// </summary>
+    private void TranscribeAsync(Utterance utterance)
+    {
+        if (!_transcriber.IsReady)
+        {
+            // Captured but not transcribable. Said once per utterance rather than silently
+            // discarded — the Commander held a key and expects something to happen.
+            _logger.LogInformation(
+                "Heard {Seconds:0.#}s but no speech model is loaded", utterance.Duration.TotalSeconds);
+
+            _ = Voice.AnnounceAsync("I heard you, but I have no speech model loaded to understand it.");
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Journal-derived and network-free. Proper nouns are where recognition fails
+                // hardest and most silently, so the names of where the Commander is and what
+                // they fly go in with every utterance (list.md Phase 6).
+                var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
+
+                var transcription = await _transcriber
+                    .TranscribeAsync(utterance, nouns)
+                    .ConfigureAwait(false);
+
+                if (transcription.IsEmpty)
+                {
+                    // Distinguished from a failure: the model ran and heard nothing worth
+                    // reporting, which a Commander who coughed should not be told is an error.
+                    _logger.LogInformation("Nothing intelligible in {Seconds:0.#}s", utterance.Duration.TotalSeconds);
+                    return;
+                }
+
+                _logger.LogInformation("Heard: {Text}", transcription.Text);
+                Heard?.Invoke(transcription.Text);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not transcribe an utterance");
+            }
+        });
+    }
+
+    /// <summary>
+    /// The plotted route, for proper-noun biasing. Set during composition because the reader
+    /// lives in the tick closure rather than on the host.
+    /// </summary>
+    private Func<NavRoute>? _route;
+
+    /// <summary>
     /// Rebuilds everything downstream of the listening settings: the device, the key, the gate
     /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
     /// drift (list.md Phase 4, "Apply every setting without a restart").
@@ -645,6 +766,24 @@ public sealed class AppHost : IDisposable
         // Rebinding while the key is held would leave the gate open with nothing able to close
         // it — the listening equivalent of a stranded key (architecture.md D4, rule 2).
         _pushToTalk.ForceUp();
+
+        // The model, before the key. A Commander who binds a key and finds d47 captures but
+        // cannot understand should see the reason in the status answer, not infer it.
+        if (WhisperModels.Find(listening.Model) is { } model && Models.PathOf(model) is { } path)
+        {
+            _transcriber.Load(path, model.Id, listening.UseGpu);
+        }
+        else if (WhisperModels.Find(listening.Model) is { } wanted)
+        {
+            // Selected but not on disk. Asked for rather than fetched: the whole point of the
+            // consent gate is that this moment is where the Commander is given the choice.
+            _logger.LogInformation("{Model} is selected but not installed", wanted.Id);
+            ModelNeeded?.Invoke(wanted);
+        }
+        else
+        {
+            _transcriber.Dispose();
+        }
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
 
@@ -856,6 +995,8 @@ public sealed class AppHost : IDisposable
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
         _pushToTalk.ForceUp();
         _microphone.Dispose();
+        _transcriber.Dispose();
+        (Models as IDisposable)?.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.

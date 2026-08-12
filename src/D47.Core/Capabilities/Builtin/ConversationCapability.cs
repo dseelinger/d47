@@ -140,6 +140,19 @@ public static class ConversationCapability
                 // point itself at another endpoint is a model that can be told to, by text it
                 // read in an in-game message (architecture.md §7).
                 Protected = true,
+
+                // Protected rows are unreachable from the tool surface, so without phrases here
+                // the Commander cannot switch provider by voice at all. Every phrase maps to a
+                // fixed value from the closed provider set — never free-text extraction, which
+                // is how a router points d47 at an endpoint nobody named.
+                Commands =
+                [
+                    new SettingCommandPhrase("stop using the language model", LlmProviderCatalog.NoneId),
+                    new SettingCommandPhrase("turn off the language model", LlmProviderCatalog.NoneId),
+                    new SettingCommandPhrase("go local only", LlmProviderCatalog.NoneId),
+                    new SettingCommandPhrase("use anthropic", LlmProviderCatalog.AnthropicId),
+                    new SettingCommandPhrase("turn on the language model", LlmProviderCatalog.AnthropicId),
+                ],
                 Binding = new SettingBinding
                 {
                     Read = s => s.Llm.Provider,

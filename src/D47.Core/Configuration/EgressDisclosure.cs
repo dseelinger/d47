@@ -37,11 +37,14 @@ public static class EgressDisclosure
 
     public const string JournalFiles = "journal";
 
+    /// <summary>Fetching a speech model, which is the only transfer d47 makes on request.</summary>
+    public const string SpeechModels = "models";
+
     public const string GitHubReleasesEndpoint = "api.github.com";
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
-        [LanguageModel, UpdateCheck, Diagnostics, JournalFiles];
+        [LanguageModel, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
 
     /// <summary>
     /// The heading for a disclosure. Fixed, because it labels a settings row and rows are
@@ -52,6 +55,7 @@ public static class EgressDisclosure
     {
         LanguageModel => "Language model",
         UpdateCheck => "Update check",
+        SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
@@ -70,6 +74,25 @@ public static class EgressDisclosure
                 Active: true)
             : EgressEntry.Silent(
                 UpdateCheck, NameOf(UpdateCheck), "The startup update check is off, so nothing is requested."),
+
+        // On demand and only with consent. The row reads active when a model is selected,
+        // because that is the setting that can cause a transfer — not because one is happening
+        // right now. A disclosure that only lit up mid-download would tell the Commander
+        // nothing they could act on beforehand.
+        SpeechModels => settings.Listening.Model == Listening.WhisperModels.NoneId
+            ? EgressEntry.Silent(
+                SpeechModels,
+                NameOf(SpeechModels),
+                "No speech model is selected, so nothing is downloaded and no request is made.")
+            : new EgressEntry(
+                SpeechModels,
+                NameOf(SpeechModels),
+                Listening.WhisperModels.Host,
+                $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, d47 "
+                + "asks the host how big it is, shows you that figure, and downloads nothing until you agree. "
+                + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
+                + "Once downloaded, transcription runs entirely on this machine.",
+                Active: true),
 
         // Stated rather than omitted. "No telemetry" is a claim worth being able to point at,
         // and a disclosure listing only what does send invites the question of what else exists.

@@ -111,6 +111,7 @@ public static class CalloutCapability
                 "Danger",
                 "Interdiction, shields down, hull damage, overheating and a full cargo hold.",
                 "danger",
+                "danger",
                 s => s.Callouts.Danger,
                 (s, v) => s with { Callouts = s.Callouts with { Danger = v } }),
 
@@ -118,6 +119,7 @@ public static class CalloutCapability
                 FuelKey,
                 "Fuel and range",
                 "Low fuel, and a route whose next star cannot be scooped when the jump beyond it cannot be made.",
+                "fuel",
                 "fuel",
                 s => s.Callouts.Fuel,
                 (s, v) => s with { Callouts = s.Callouts with { Fuel = v } }),
@@ -127,6 +129,7 @@ public static class CalloutCapability
                 "Route progress",
                 "Jumps remaining, the next system, and neutron or white dwarf hazards ahead.",
                 "route",
+                "route progress",
                 s => s.Callouts.Route,
                 (s, v) => s with { Callouts = s.Callouts with { Route = v } }),
 
@@ -135,6 +138,7 @@ public static class CalloutCapability
                 "Long jumps",
                 "A remark when a hyperspace jump runs longer than usual.",
                 "long-jump",
+                "long jumps",
                 s => s.Callouts.LongJump,
                 (s, v) => s with { Callouts = s.Callouts with { LongJump = v } }),
 
@@ -143,6 +147,7 @@ public static class CalloutCapability
                 "Arrivals",
                 "Your home system, where your carrier is, ships stored here, and stations offering engineering.",
                 "arrival",
+                "arrivals",
                 s => s.Callouts.Arrival,
                 (s, v) => s with { Callouts = s.Callouts with { Arrival = v } }),
 
@@ -150,6 +155,7 @@ public static class CalloutCapability
                 MaterialsKey,
                 "Material milestones",
                 "The first unit of a material, and progress towards a full stock where the cap is known.",
+                "materials",
                 "materials",
                 s => s.Callouts.Materials,
                 (s, v) => s with { Callouts = s.Callouts with { Materials = v } }),
@@ -233,6 +239,7 @@ public static class CalloutCapability
         string label,
         string help,
         string anchor,
+        string subject,
         Func<D47Settings, bool> read,
         Func<D47Settings, bool, D47Settings> write) => new()
     {
@@ -250,6 +257,17 @@ public static class CalloutCapability
         // Protected, like the master switch and for the same reason: anything the model can
         // call, a hostile in-game message can attempt to invoke.
         Protected = true,
+
+        // A protected row is unreachable from the tool surface by design, so without a phrase
+        // here it cannot be set by voice at all — and nothing would report that. The subject is
+        // what the Commander would call the thing, not the setting key.
+        Commands =
+        [
+            new SettingCommandPhrase($"stop warning me about {subject}", "false"),
+            new SettingCommandPhrase($"stop calling out {subject}", "false"),
+            new SettingCommandPhrase($"start warning me about {subject}", "true"),
+            new SettingCommandPhrase($"start calling out {subject}", "true"),
+        ],
         AppliesWhen = s => s.Callouts.Enabled,
         Binding = new SettingBinding
         {

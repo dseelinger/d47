@@ -10,11 +10,9 @@ title: Listening
 Hearing the Commander: the microphone, the push-to-talk key, and whether that key collides with
 something Elite is already using.
 
-**Status: audio capture works; transcription does not exist yet.** d47 opens the microphone,
-runs it continuously, and captures exactly the stretch the Commander held the key for. Turning
-that audio into words needs a speech-to-text model, which is not yet wired up — so
-`get_listening_status` reports transcription as unavailable, with the reason stated, in the same
-shape as every other unconfigured capability.
+Hold the key, speak, release, and the words run the same turn as if they had been typed.
+Transcription is Whisper, running locally on a model file the Commander chose and agreed to
+download. **No audio and no transcript ever leaves the machine.**
 
 ## Try it
 
@@ -37,8 +35,7 @@ Microphone: Yeti Nano, capturing.
 Push-to-talk: CapsLock (hold).
 Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. One of the two
 will not work, and neither will say so — pick another key for one of them.
-Transcription: unavailable. No speech-to-text model is configured yet, so I capture audio but
-cannot turn it into words.
+Transcription: base.en loaded.
 ```
 
 Everything is reported together on purpose. "d47 cannot hear me" has five possible causes — no
@@ -128,6 +125,97 @@ nothing able to close it, which is the listening equivalent of a stranded key.
 ### Key behaviour {#mode}
 
 Hold to talk, or press once to start and again to stop. Same gate, different policy.
+
+### Speech model {#model}
+
+Which Whisper model turns speech into words. **`none` is the default**, and a real choice: d47
+captures audio and says plainly that it cannot understand it. A default that downloaded several
+hundred megabytes at first launch would be exactly what the consent gate exists to prevent,
+arranged by the default rather than by a bug.
+
+The row marks which models are already on disk and what the rest would cost to fetch, because a
+Commander comparing options needs to know which choices are already paid for.
+
+### Running on the GPU {#gpu}
+
+Off by default, and opt-in with the cost stated on the row — which the checklist asks for by
+name.
+
+In VR the GPU is already the scarce resource, so a large model running there surfaces as dropped
+frames and reprojection rather than as anything that looks like a speech problem. That is the
+hardest kind of setting to diagnose: the symptom appears somewhere entirely unconnected to the
+cause. A short push-to-talk clip on the small English models absorbs CPU inference fine, which is
+what makes CPU a sensible default rather than a compromise.
+
+The GPU path needs the CUDA runtime present. When it is not, d47 **says so** and leaves
+transcription unavailable rather than quietly falling back to the CPU — a GPU toggle that
+silently does nothing is the same undiagnosable class of problem in the other direction.
+
+## Downloading a model {#download}
+
+**Nothing is fetched without explicit consent, and nothing is fetched at startup.** Selecting a
+model that is not on disk raises a request; the panel asks; declining leaves the setting alone,
+since the Commander may want it later and silently reverting their choice would be answering for
+them.
+
+The request is raised from the composition root rather than from the settings panel, so it fires
+however the model came to be selected — the panel, the keyword router, or a hand-edited settings
+file. A consent prompt that only one surface knows to show is a surface that can be gone around.
+
+Before asking, d47 makes one metadata request to find out what the file actually is:
+
+```text
+Download the Base (English only) — the usual choice speech model? 141.1 MB from huggingface.co,
+saved to your data folder. d47 will verify the download against the checksum the host published.
+```
+
+That size is the one the host reported, not an estimate written into d47 — a hardcoded figure is
+a number d47 asserts about a file it has never seen, and it goes stale the first time the model
+is republished. Where the host publishes no checksum, the prompt says so rather than claiming a
+verification that is not happening.
+
+The download is hashed as it lands and verified before the file is moved into place. A mismatch
+is **discarded**, not kept: a model that does not match its published hash is either a truncated
+transfer or something d47 should not load, and both answers are "do not use this file". The
+write is atomic — a half-downloaded model under its real name is one that loads and then fails
+mid-transcription.
+
+The dialog defaults to **no**. The button that costs nothing is focused, so pressing Enter out of
+habit declines rather than starting a large download, and dismissing the window is a decline
+rather than consent.
+
+This is disclosed as its own row in the egress report. The row reads active whenever a model is
+*selected*, not only while a transfer is happening — a disclosure that lit up mid-download would
+tell the Commander nothing they could act on beforehand.
+
+## Proper nouns from the journal
+
+Every utterance is transcribed with a list of names drawn from the journal: the current system,
+the station, the body, the next jump, the ship's name and type, the carrier, the route ahead, and
+the Commander's own fleet.
+
+**Proper nouns are where speech recognition fails hardest and most silently.** A misheard system
+name does not come back as an error or a low-confidence marker — it comes back as a plausible
+English phrase. "Shinrarta Dezhra" becomes "shin arta desha", the turn proceeds confidently on
+the wrong system, and nothing anywhere reports a problem.
+
+The list is journal-derived and network-free, ranked by proximity to what the Commander is
+doing, deduplicated, and capped. The cap matters: an overlong bias list does not fail loudly, it
+silently displaces the model's own context and makes transcription worse than no biasing at all.
+
+## What happens to what you say
+
+Spoken input runs **the same turn as typed input**, deliberately. A second path would be a second
+place for the in-flight gate, the interrupt vocabulary and the cancellation slot to be got wrong,
+and "where am I" should mean the same thing however it was said.
+
+Transcription runs on the thread pool, never on the audio thread that produced the samples —
+Whisper on a CPU takes hundreds of milliseconds for a short clip, and doing that inline would
+stall capture and drop the next utterance.
+
+A transcript that is entirely a bracketed annotation — `[BLANK_AUDIO]`, `(wind blowing)` — is
+treated as silence. Those are descriptions of the audio rather than things the Commander said,
+and handing one to the turn loop as a question is how d47 ends up answering the sound of a fan.
 
 ## Reporting a key that is bound twice
 
