@@ -1,5 +1,6 @@
 using System.Reflection;
 using D47.App.Logging;
+using D47.App.Updates;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -27,6 +28,7 @@ public sealed class AppHost : IDisposable
         GameStateStore gameState,
         JournalSpine journal,
         CapabilityRegistry capabilities,
+        UpdateChecker updates,
         string version,
         string? startupError)
     {
@@ -38,6 +40,7 @@ public sealed class AppHost : IDisposable
         GameState = gameState;
         Journal = journal;
         Capabilities = capabilities;
+        Updates = updates;
         Version = version;
         StartupError = startupError;
     }
@@ -55,6 +58,8 @@ public sealed class AppHost : IDisposable
     public JournalSpine Journal { get; }
 
     public CapabilityRegistry Capabilities { get; }
+
+    public UpdateChecker Updates { get; }
 
     public string Version { get; }
 
@@ -123,6 +128,8 @@ public sealed class AppHost : IDisposable
             capabilities.All.Count,
             capabilities.ToolNames.Count());
 
+        var updates = new UpdateChecker(loggerFactory.CreateLogger<UpdateChecker>());
+
         return new AppHost(
             paths,
             loggerFactory,
@@ -132,6 +139,7 @@ public sealed class AppHost : IDisposable
             gameState,
             journal,
             capabilities,
+            updates,
             version,
             startupError);
     }

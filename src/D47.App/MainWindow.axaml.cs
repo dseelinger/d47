@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using D47.App.Updates;
 using D47.Core.Capabilities;
 
 namespace D47.App;
@@ -7,6 +9,7 @@ namespace D47.App;
 public partial class MainWindow : Window
 {
     private readonly AppHost? _host;
+    private AvailableUpdate? _availableUpdate;
 
     public MainWindow() : this(host: null)
     {
@@ -51,5 +54,41 @@ public partial class MainWindow : Window
             ErrorText.Text = string.Join(Environment.NewLine, errors);
             ErrorBanner.IsVisible = true;
         }
+
+        // Fire-and-forget: an update check is optional and must never delay the status the
+        // Commander is actually here for. UpdateChecker swallows its own failures, so nothing
+        // here needs a try/catch.
+        _ = CheckForUpdateAsync(_host);
+    }
+
+    private async Task CheckForUpdateAsync(AppHost host)
+    {
+        var update = await host.Updates.CheckAsync(host.Version, CancellationToken.None);
+        if (update is null)
+        {
+            return;
+        }
+
+        _availableUpdate = update;
+        UpdateText.Text = $"d47 {update.Version} is available — you're on {host.Version}.";
+        UpdateBanner.IsVisible = true;
+    }
+
+    private void OnUpdateNowClick(object? sender, RoutedEventArgs e)
+    {
+        if (_availableUpdate is null)
+        {
+            return;
+        }
+
+        // Opens the release page for a manual download; d47 exits so the new build can
+        // overwrite this running exe on the Commander's next launch (list.md Phase 17).
+        Process.Start(new ProcessStartInfo(_availableUpdate.ReleaseUrl) { UseShellExecute = true });
+        Close();
+    }
+
+    private void OnUpdateLaterClick(object? sender, RoutedEventArgs e)
+    {
+        UpdateBanner.IsVisible = false;
     }
 }

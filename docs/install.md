@@ -49,9 +49,19 @@ data\
     d47-20260812.jsonl   the same events as newline-delimited JSON
 ```
 
-Nothing leaves the machine. There is no analytics, no metrics endpoint and no crash
-reporter. Providers that do send data off the machine — a cloud LLM, a paid voice, INARA,
-web search — are individually enabled and each states what it transmits.
+## Update checks
+
+On startup, d47 asks GitHub's public releases API for the latest tag and compares it against
+its own version. If a newer build exists, a banner offers **Update now**, which opens the
+release page in your browser and closes d47 so the new `d47.exe` can be saved over this one.
+Offline or GitHub unreachable is treated as "no update" — startup never waits on it and never
+fails because of it.
+
+Nothing about you or your game leaves the machine. There is no analytics, no metrics
+endpoint and no crash reporter. The one outbound request is the anonymous update check
+above — a GET with no Commander data, no journal data and nothing identifying. Providers
+that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web search —
+are individually enabled and each states what it transmits.
 
 `secrets.json` is encrypted with Windows DPAPI scoped to your user account. Copying it to
 another machine or another account leaves it undecryptable, and d47 treats an unreadable

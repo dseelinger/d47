@@ -26,6 +26,25 @@
       <SelectableTextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="12" />
     </Border>
 
+    <!-- Hidden until a background check finds a newer release; never blocks startup. -->
+    <Border x:Name="UpdateBanner"
+            DockPanel.Dock="Top"
+            IsVisible="False"
+            Margin="0,18,0,0"
+            Padding="12"
+            CornerRadius="4"
+            Background="#332288FF"
+            BorderBrush="#882288FF"
+            BorderThickness="1">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+          <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNowClick" />
+          <Button x:Name="UpdateLaterButton" Content="Later" Click="OnUpdateLaterClick" />
+        </StackPanel>
+        <TextBlock x:Name="UpdateText" TextWrapping="Wrap" FontSize="12" VerticalAlignment="Center" />
+      </DockPanel>
+    </Border>
+
     <StackPanel DockPanel.Dock="Top" Margin="0,22,0,8" Spacing="2">
       <TextBlock Text="get_app_status · get_location"
                  FontFamily="Cascadia Mono,Consolas,monospace"

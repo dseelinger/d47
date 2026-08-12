@@ -151,4 +151,4 @@
   - [ ] Follow the live log, or stop following it - A floating jump-to-latest control with follow and scroll-lock, so reading history does not mean fighting new lines as they arrive.
   - [ ] Live log selectable and copyable - Read back what was said and copy it out. Free-form drag-selection across a continuously appending log is the hard part; rendering it as one read-only block is the way around it. If it is free due to the nature of the controls being used, then don't invent a workflow that's unneeded.
   - [ ] Copy log - One affordance for copying the entire session's log as currently filtered.
-  - [ ] Check for Updates on start - On start, when a new release is available, the user is given an opportunity to exit, install it, and restart.
+  - [x] Check for Updates on start - On start, when a new release is available, the user is given an opportunity to exit, install it, and restart.
