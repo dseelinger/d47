@@ -91,6 +91,10 @@ public static class SpeechCapability
                 Description =
                     "Immediately stop all speech and audio, discarding anything queued. " +
                     "Use when the Commander asks for silence.",
+
+                // The one tool that must answer while a turn is mid-sentence, since that is
+                // the only moment it is ever wanted.
+                Interrupting = true,
                 Handler = (_, _) =>
                 {
                     surface.Silence();

@@ -31,6 +31,7 @@ public sealed class AppHost : IDisposable
 
     private AppHost(
         AppPaths paths,
+        KeywordRouter router,
         ILoggerFactory loggerFactory,
         SerilogVerbosityControl verbosity,
         SettingsService settings,
@@ -51,6 +52,7 @@ public sealed class AppHost : IDisposable
         string? startupError)
     {
         Paths = paths;
+        Router = router;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<AppHost>();
         Verbosity = verbosity;
@@ -92,6 +94,12 @@ public sealed class AppHost : IDisposable
     public JournalSpine Journal { get; }
 
     public CapabilityRegistry Capabilities { get; }
+
+    /// <summary>
+    /// The model-free command path. Exposed because a surface has to ask it what may interrupt
+    /// a turn in flight before applying its own in-flight gate — see MainWindow.AskAsync.
+    /// </summary>
+    public KeywordRouter Router { get; }
 
     public UpdateChecker Updates { get; }
 
@@ -240,9 +248,11 @@ public sealed class AppHost : IDisposable
 
         var updates = new UpdateChecker(loggerFactory.CreateLogger<UpdateChecker>());
 
+        var router = new KeywordRouter(capabilities);
+
         var turns = new TurnLoop(
             capabilities,
-            new KeywordRouter(capabilities),
+            router,
             llmAvailability,
             spend,
             PriceTable.Default,
@@ -251,6 +261,7 @@ public sealed class AppHost : IDisposable
 
         var host = new AppHost(
             paths,
+            router,
             loggerFactory,
             verbosity,
             settings,

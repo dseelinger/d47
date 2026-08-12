@@ -203,13 +203,30 @@ public partial class MainWindow : Window
 
     private async Task AskAsync()
     {
-        if (_host is null || _turnInFlight)
+        if (_host is null)
         {
             return;
         }
 
         var input = AskBox.Text?.Trim();
         if (string.IsNullOrEmpty(input))
+        {
+            return;
+        }
+
+        // Asked before the in-flight gate, never after. "Shut up" is only ever wanted while d47
+        // is mid-sentence, which is exactly when _turnInFlight is true — so gating it on that
+        // would drop it silently at the one moment it matters (list.md Phase 5, "never gated
+        // behind a turn completing"). The registry decides what may interrupt; this does not.
+        if (_host.Router.MatchInterrupting(input) is { } interrupting)
+        {
+            AskBox.Text = string.Empty;
+            var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
+            Append($"\n\n> {input}\n{stopped.Content}");
+            return;
+        }
+
+        if (_turnInFlight)
         {
             return;
         }

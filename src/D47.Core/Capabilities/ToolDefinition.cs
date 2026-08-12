@@ -50,5 +50,21 @@ public sealed record ToolDefinition
 
     public IReadOnlyList<ToolParameter> Parameters { get; init; } = [];
 
+    /// <summary>
+    /// Answerable while a turn is already running, rather than queued behind it.
+    /// <para>
+    /// Almost nothing should be. A second question asked mid-turn is a second turn and belongs
+    /// in line. This is for the handful of commands whose entire purpose is to interrupt what
+    /// is already happening — <c>stop_speaking</c> is the first and, for now, the only one. An
+    /// instant-silence command that waits for the turn it is trying to silence is not one
+    /// (list.md Phase 5, "never gated behind a turn completing").
+    /// </para>
+    /// <para>
+    /// Declared on the tool rather than checked by name at the call site, so the surface asks
+    /// the registry what interrupts instead of holding its own opinion about it.
+    /// </para>
+    /// </summary>
+    public bool Interrupting { get; init; }
+
     public required ToolHandler Handler { get; init; }
 }

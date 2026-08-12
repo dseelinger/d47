@@ -69,6 +69,30 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
     }
 
     /// <summary>
+    /// Matches only the commands allowed to answer while a turn is already running.
+    /// <para>
+    /// Kept separate from <see cref="Match"/> because a caller asking this question is asking
+    /// something narrower: not "can anything answer this" but "may this be answered *now*,
+    /// ahead of the turn in flight". A surface that gates input on a turn being in progress —
+    /// which every surface must, or a second question would trample the first — has to ask this
+    /// before it applies that gate, or instant silence is gated behind the very thing it exists
+    /// to interrupt (list.md Phase 5).
+    /// </para>
+    /// </summary>
+    public KeywordMatch? MatchInterrupting(string input)
+    {
+        if (Match(input) is not { } match)
+        {
+            return null;
+        }
+
+        var tool = registry.Find(match.CapabilityId)?.Descriptor.Tools
+            .FirstOrDefault(t => t.Name == match.ToolName);
+
+        return tool?.Interrupting == true ? match : null;
+    }
+
+    /// <summary>
     /// Matches a settings command phrase — the model-free way to reach a protected row.
     /// <para>
     /// Tried before <see cref="Match"/> because it is the more specific claim: a phrase declared

@@ -52,6 +52,13 @@ phrases, so the model-free router answers them; and the hotkey below reaches the
 operation with nothing in between. A spoken stop request that had to wait for a model would be
 gated behind the very thing it is trying to interrupt.
 
+It is also the only tool marked **interrupting**, which is what lets it answer while a turn is
+still running. Every surface has to refuse ordinary input during a turn — otherwise a second
+question tramples the first — and a silence command is only ever wanted while a turn is in
+flight. So a surface asks the registry what may interrupt *before* it applies that gate, rather
+than after. Getting that order wrong is invisible in normal use and total in the one case that
+matters: the command does nothing, precisely when it is needed.
+
 ## Settings
 
 ### Voice provider {#provider}
