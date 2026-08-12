@@ -272,45 +272,11 @@ public sealed class GlobalHotkey : IDisposable
     }
 
     /// <summary>
-    /// Avalonia's <see cref="Key"/> to the Windows virtual-key code <c>RegisterHotKey</c> wants.
-    /// Written out because Avalonia's enum values are its own, not the VK constants. A key
-    /// missing here is reported as unbindable rather than silently registered as the wrong key —
-    /// the worse failure, since the Commander would be pressing something that does something else.
+    /// The shared table (<see cref="VirtualKeys"/>), not a copy. Push-to-talk polls the same
+    /// codes from the tick loop, and two tables is two things to be wrong about which key the
+    /// Commander just pressed.
     /// </summary>
-    private static uint? VirtualKeyOf(Key key) => key switch
-    {
-        >= Key.A and <= Key.Z => (uint)(0x41 + (key - Key.A)),
-        >= Key.D0 and <= Key.D9 => (uint)(0x30 + (key - Key.D0)),
-        >= Key.NumPad0 and <= Key.NumPad9 => (uint)(0x60 + (key - Key.NumPad0)),
-        >= Key.F1 and <= Key.F24 => (uint)(0x70 + (key - Key.F1)),
-        Key.Space => 0x20,
-        Key.Enter => 0x0D,
-        Key.Escape => 0x1B,
-        Key.Tab => 0x09,
-        Key.Back => 0x08,
-        Key.Insert => 0x2D,
-        Key.Delete => 0x2E,
-        Key.Home => 0x24,
-        Key.End => 0x23,
-        Key.PageUp => 0x21,
-        Key.PageDown => 0x22,
-        Key.Left => 0x25,
-        Key.Up => 0x26,
-        Key.Right => 0x27,
-        Key.Down => 0x28,
-        Key.OemTilde => 0xC0,
-        Key.OemMinus => 0xBD,
-        Key.OemPlus => 0xBB,
-        Key.OemOpenBrackets => 0xDB,
-        Key.OemCloseBrackets => 0xDD,
-        Key.OemPipe => 0xDC,
-        Key.OemSemicolon => 0xBA,
-        Key.OemQuotes => 0xDE,
-        Key.OemComma => 0xBC,
-        Key.OemPeriod => 0xBE,
-        Key.OemQuestion => 0xBF,
-        _ => null,
-    };
+    private static uint? VirtualKeyOf(Key key) => VirtualKeys.Of(key);
 
     public void Dispose()
     {

@@ -28,12 +28,16 @@ public static class BuiltinCapabilities
         string version,
         SpeechCapability.SpeechSurface speech,
         Conversation.TurnCancellation cancellation,
-        CalloutEngine callouts) =>
+        CalloutEngine callouts,
+        Func<CapabilityRegistry> registry,
+        ListeningCapability.ListeningSurface listening) =>
     [
+        HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         SpeechCapability.Create(speech),
+        ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         PrivacyCapability.Create(settings),

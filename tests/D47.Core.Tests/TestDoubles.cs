@@ -168,9 +168,15 @@ public sealed class TestSurface
 
         var verbosity = new FakeVerbosityControl();
 
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance),
-            new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance)));
+            new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
+            () => built!,
+            SilentListening()));
+
+        built = registry;
 
         service.Bind(registry);
 
@@ -193,6 +199,20 @@ public sealed class TestSurface
     {
         Silence = onSilence ?? (() => { }),
         Beds = [.. D47.Core.Audio.CueLibrary.Load().BedNames],
+    };
+
+    /// <summary>
+    /// The listening surface with no microphone behind it: no devices, not capturing, no
+    /// transcriber, no binds. Every one of those is a real state d47 has to answer for, so the
+    /// double exercises an unconfigured machine rather than an invented happy path.
+    /// </summary>
+    public static Capabilities.Builtin.ListeningCapability.ListeningSurface SilentListening() => new()
+    {
+        InputDevices = () => [],
+        DeviceLabel = id => id,
+        CaptureState = () => (false, "No microphone in a test."),
+        TranscriberState = () => (false, null, "No transcriber in a test."),
+        Binds = () => D47.Core.Input.EliteBinds.None,
     };
 }
 

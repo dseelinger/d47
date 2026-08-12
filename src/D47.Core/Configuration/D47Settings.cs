@@ -30,6 +30,50 @@ public sealed record D47Settings
     public UpdateSettings Updates { get; init; } = new();
 
     public CalloutSettings Callouts { get; init; } = new();
+
+    public ListeningSettings Listening { get; init; } = new();
+}
+
+/// <summary>
+/// The microphone and the key that opens it (list.md Phase 6).
+/// <para>
+/// Push-to-talk is one gate policy over a continuous stream, so "toggle instead of hold" is a
+/// value here rather than a second mechanism — and continuous listening and a wake word arrive
+/// later as further values, not as a rewrite.
+/// </para>
+/// </summary>
+public sealed record ListeningSettings
+{
+    /// <summary>
+    /// The input device id, or null for the system default. An id rather than a name because a
+    /// friendly name is not stable across driver updates.
+    /// <para>
+    /// The checklist is specific about why this row exists: a blank selection produces a silent
+    /// default and a turn reporting no speech detected, with nothing indicating why.
+    /// </para>
+    /// </summary>
+    public string? InputDevice { get; init; }
+
+    /// <summary>
+    /// Hold to talk. Null means d47 never listens, which is a legitimate configuration and the
+    /// default until the Commander picks a key — a microphone that opens on a key nobody chose
+    /// is a microphone opening by surprise.
+    /// <para>
+    /// Protected: a model that can rebind or unbind the Commander's microphone key has taken
+    /// away how they talk to it.
+    /// </para>
+    /// </summary>
+    public string? PushToTalkKey { get; init; }
+
+    /// <summary>"hold" or "toggle".</summary>
+    public string Mode { get; init; } = "hold";
+
+    /// <summary>
+    /// How much audio from before the key was noticed is kept, in milliseconds. Exists as a
+    /// setting because it is the one number that trades memory against clipped first syllables,
+    /// and the right value depends on the machine.
+    /// </summary>
+    public int PreRollMilliseconds { get; init; } = 500;
 }
 
 /// <summary>

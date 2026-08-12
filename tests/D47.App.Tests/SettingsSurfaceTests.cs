@@ -8,6 +8,7 @@ using D47.App.Theming;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Input;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -38,6 +39,8 @@ public class SettingsSurfaceTests
         var secrets = new SecretStore(paths, new NoopProtector(), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(store, secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
+        CapabilityRegistry? built = null;
+
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             paths,
             new NoopVerbosity(),
@@ -52,7 +55,18 @@ public class SettingsSurfaceTests
                 Beds = [.. CueLibrary.Load().BedNames],
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance)));
+            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
+            () => built!,
+            new ListeningCapability.ListeningSurface
+            {
+                InputDevices = () => [],
+                DeviceLabel = id => id,
+                CaptureState = () => (false, "No microphone in a headless test."),
+                TranscriberState = () => (false, null, "No transcriber in a headless test."),
+                Binds = () => EliteBinds.None,
+            }));
+
+        built = registry;
 
         settings.Bind(registry);
 
