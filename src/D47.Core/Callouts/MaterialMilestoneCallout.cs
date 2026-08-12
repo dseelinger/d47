@@ -13,14 +13,14 @@ namespace D47.Core.Callouts;
 /// they have already been passed silently.
 /// </para>
 /// <para>
-/// <b>The percentage milestones need a per-material capacity, and d47 has no source for one.</b>
-/// Elite's caps are set by material grade, and no journal event, status file or inventory
-/// snapshot states either the grade or the cap — the game simply stops accepting more. A table
-/// of the roughly 130 material grades is game data d47 would have to carry with no way to check
-/// it, and a wrong entry surfaces as a milestone announced at the wrong number, which is
-/// indistinguishable from working. So capacity is a lookup supplied from outside, and every
-/// milestone that needs one is inert until something authoritative provides it. The first-unit
-/// milestone needs no capacity and works today.
+/// <b>The percentage milestones need a per-material capacity, and Elite reports one nowhere</b> —
+/// not in a journal event, not in Status.json, not in the inventory snapshot. Capacity is set by
+/// grade, and the grade is not in the journal either. Capacity is therefore injected rather than
+/// looked up here, and <see cref="MaterialGrades"/> supplies it from a table that is
+/// <em>derived</em> from the canonical community id list rather than hand-written — see that
+/// class for why the distinction is the whole argument. A material the table does not recognise
+/// answers null, and its percentage milestones stay silent rather than being announced against a
+/// made-up number. The first-unit milestone needs no capacity and works either way.
 /// </para>
 /// </summary>
 public sealed class MaterialMilestoneCallout : ICallout
@@ -28,9 +28,9 @@ public sealed class MaterialMilestoneCallout : ICallout
     public string Id => "materials";
 
     /// <summary>
-    /// How many of a material can be held, or null when that is not known. Returning null is
-    /// the shipped behaviour and is a correct answer, not a stub: it silences the percentage
-    /// milestones rather than guessing at where they fall.
+    /// How many of a material can be held, or null when that is not known. Defaulting to null
+    /// keeps this class testable against both answers, and null stays a correct answer rather
+    /// than a stub: it silences the percentage milestones instead of guessing where they fall.
     /// </summary>
     public Func<string, int?> Capacity { get; set; } = _ => null;
 

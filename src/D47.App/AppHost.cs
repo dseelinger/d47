@@ -542,10 +542,10 @@ public sealed class AppHost : IDisposable
             .Add(new LongJumpCallout())
             .Add(new ArrivalCallout())
 
-            // Capacity is left at its default, which answers "unknown" for every material. That
-            // silences the percentage milestones rather than guessing where they fall — see
-            // MaterialMilestoneCallout for why d47 has no source for a material's cap.
-            .Add(new MaterialMilestoneCallout());
+            // Capacity comes from the derived grade table. Elite reports it nowhere, so this is
+            // the one place d47 carries game data — generated from the canonical id list rather
+            // than written, and answering null for anything it does not recognise.
+            .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf });
 
         ApplyCalloutSettings(engine, settings);
         return engine;
