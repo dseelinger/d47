@@ -79,6 +79,27 @@ public sealed class RecordingAudioSink : IAudioSink
         }
     }
 
+    /// <summary>
+    /// Lets everything queued play out, one after another. Needed because only the head of
+    /// the queue is ever started — asserting the *order* of a reply means running the queue
+    /// down, not reading what happens to be playing.
+    /// </summary>
+    public void PlayOutAll()
+    {
+        for (var guard = 0; guard < 1000; guard++)
+        {
+            var before = Started.Count;
+            CompleteCurrent();
+
+            if (Started.Count == before)
+            {
+                return;
+            }
+        }
+
+        throw new InvalidOperationException("the queue never drained");
+    }
+
     public float? GainOf(long id) =>
         GainChanges.Count == 0
             ? Started.FirstOrDefault(request => request.Id == id)?.Gain
