@@ -45,7 +45,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\D47.Audio\D47.Audio.csproj" />
     <ProjectReference Include="..\D47.Llm\D47.Llm.csproj" />
+    <ProjectReference Include="..\D47.Tts\D47.Tts.csproj" />
   </ItemGroup>
 
   <!--

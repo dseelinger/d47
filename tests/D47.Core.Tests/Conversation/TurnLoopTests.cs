@@ -21,14 +21,20 @@ public class TurnLoopTests
         availability = new LlmAvailabilityState(provider is not null);
         spend = new SpendTracker();
 
-        return new TurnLoop(
+        var loop = new TurnLoop(
             registry,
             new KeywordRouter(registry),
             availability,
             spend,
             PriceTable.Default,
             NullLogger<TurnLoop>.Instance,
-            provider);
+            provider,
+            clock: new InstantClock());
+
+        // One attempt, so a provider call count in these tests means a turn rather than a
+        // turn times the retry budget. Retry has its own tests, where it is the subject.
+        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+        return loop;
     }
 
     private static async Task<(TurnResult Result, string Text)> RunAsync(TurnLoop loop, string input)

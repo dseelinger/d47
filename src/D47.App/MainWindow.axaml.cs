@@ -11,6 +11,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using Microsoft.Extensions.Logging;
 
 namespace D47.App;
 
@@ -28,8 +29,21 @@ public partial class MainWindow : Window
     public MainWindow(AppHost? host)
     {
         _host = host;
+        _shutUp = new GlobalHotkey(
+            host?.Loggers.CreateLogger<GlobalHotkey>()
+            ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance);
+
         InitializeComponent();
     }
+
+    private readonly GlobalHotkey _shutUp;
+
+    // UNFINISHED: RegisterHotKey delivers WM_HOTKEY to the window's message loop, and
+    // Avalonia 12 does not expose Win32Properties.AddWndProcHookCallback the way Avalonia 11
+    // did, so there is currently no route from that message to _shutUp.HandleMessage. Until
+    // there is, the key is deliberately NOT registered: a registered key with nothing listening
+    // is a stop button that does nothing, which is the exact failure this capability exists to
+    // prevent. Silencing from the panel and from the keyword router both work today.
 
     protected override async void OnLoaded(RoutedEventArgs e)
     {
@@ -74,8 +88,23 @@ public partial class MainWindow : Window
         }
 
         DescribeHotkeys();
-        _host.Settings.Changed += _ => Avalonia.Threading.Dispatcher.UIThread.Post(DescribeHotkeys);
+        BindShutUp();
+        _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            DescribeHotkeys();
+
+            if (change.Key == SpeechCapability.ShutUpHotkeyKey)
+            {
+                BindShutUp();
+            }
+        });
+
         AskBox.Focus();
+
+        // Said aloud as well as shown, because a misconfigured provider otherwise presents as
+        // silence, and silence is indistinguishable from a model with nothing to say
+        // (list.md Phase 5). Not awaited: it must never delay the panel.
+        _ = _host.AnnounceStartupProblemsAsync();
 
         // Optional in two senses: it must never delay the status the Commander is here for, and
         // it is the one network call d47 makes on its own — so it is a setting, and it is
@@ -197,27 +226,36 @@ public partial class MainWindow : Window
 
         try
         {
-            // Rendered as it arrives rather than at the end of the turn. The same streaming is
-            // what will let speech start at the first sentence boundary in Phase 5.
-            await foreach (var turnEvent in _host.Turns.RunAsync(input))
-            {
-                switch (turnEvent)
+            // Through the voice pipeline rather than straight off the turn loop, so the panel
+            // and the speaker are fed from one traversal of one stream. Rendering as it arrives
+            // is what lets speech start at the first sentence boundary rather than at end of
+            // turn (list.md Phase 5).
+            await _host.Voice.RunAsync(
+                _host.Turns.RunAsync(input),
+                turnEvent =>
                 {
-                    case TurnEvent.Routed routed:
-                        TurnLine.Text = routed.Effort is { } effort
-                            ? $"routed: {routed.Route}, effort {effort}"
-                            : $"routed: {routed.Route}";
-                        break;
+                    switch (turnEvent)
+                    {
+                        case TurnEvent.Routed routed:
+                            TurnLine.Text = routed.Effort is { } effort
+                                ? $"routed: {routed.Route}, effort {effort}"
+                                : $"routed: {routed.Route}";
+                            break;
 
-                    case TurnEvent.TextDelta text:
-                        Append(text.Text);
-                        break;
+                        case TurnEvent.TextDelta text:
+                            Append(text.Text);
+                            break;
 
-                    case TurnEvent.Completed completed:
-                        TurnLine.Text = DescribeTurn(completed.Result, _host.Spend);
-                        break;
-                }
-            }
+                        case TurnEvent.Retrying retry:
+                            TurnLine.Text =
+                                $"retrying ({retry.Attempt}/{retry.Of}) in {retry.Wait.TotalSeconds:0.#}s — {retry.Because}";
+                            break;
+
+                        case TurnEvent.Completed completed:
+                            TurnLine.Text = DescribeTurn(completed.Result, _host.Spend);
+                            break;
+                    }
+                });
         }
         catch (Exception ex)
         {
@@ -231,6 +269,26 @@ public partial class MainWindow : Window
             AskButton.IsEnabled = true;
             AskBox.Focus();
         }
+    }
+
+    /// <summary>
+    /// Registers the system-wide silence key.
+    /// <para>
+    /// Deferred to here rather than done in <see cref="AppHost"/> because a registration needs a
+    /// window handle, and the handle does not exist until the window does. The key itself is not
+    /// scoped to that window — that is the entire point of it (list.md Phase 5, "Shut up").
+    /// </para>
+    /// </summary>
+    private void BindShutUp()
+    {
+        if (_host is null || TryGetPlatformHandle()?.Handle is not { } handle)
+        {
+            return;
+        }
+
+        _shutUp.AttachTo(handle);
+
+        // See the note above: not registered until the WM_HOTKEY route exists.
     }
 
     private static string DescribeTurn(TurnResult result, SpendTracker spend)

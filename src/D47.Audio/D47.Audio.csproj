@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The hardware end of the audio path. Exists as its own project for one reason: Core must
+    never reference NAudio, and a project reference is the only way to say that in a way the
+    build enforces (architecture.md §3). Everything above IAudioSink is queue policy and lives
+    in Core, where it is testable with no audio device present.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+</Project>

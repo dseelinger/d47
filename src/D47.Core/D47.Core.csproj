@@ -9,4 +9,20 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
   </ItemGroup>
+
+  <!--
+    The shipped cue set is embedded rather than copied beside the executable. 760 KB against
+    a ~50 MB single-file publish is nothing, and it keeps "one file the Commander downloads
+    and runs" literally true instead of true-apart-from-a-folder (architecture.md §9).
+
+    They live in Core because a WAV is bytes: parsing and asserting one cue per loop state
+    needs no audio device, which is what lets CueLibrary be covered by Core's tests. The
+    logical names are what CueLibrary enumerates, so the shipped set *is* the table — there
+    is no second list of cue names anywhere to disagree with this one (list.md Phase 5, #20).
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\cues\*.wav" LogicalName="D47.Core.Cues.%(Filename)" />
+    <EmbeddedResource Include="..\..\assets\beds\*.wav" LogicalName="D47.Core.Beds.%(Filename)" />
+  </ItemGroup>
+
 </Project>

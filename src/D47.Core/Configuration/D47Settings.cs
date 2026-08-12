@@ -21,6 +21,8 @@ public sealed record D47Settings
 
     public LlmSettings Llm { get; init; } = new();
 
+    public SpeechSettings Speech { get; init; } = new();
+
     public UiSettings Ui { get; init; } = new();
 
     public HotkeySettings Hotkeys { get; init; } = new();
@@ -56,6 +58,66 @@ public sealed record LlmSettings
 
     /// <summary>The Commander's standing prompt about themselves, kept between sessions.</summary>
     public string? AboutMe { get; init; }
+}
+
+/// <summary>
+/// Everything audible. One record rather than several because the arbiter is one component and
+/// splitting its configuration across three would invite the settings to disagree with it.
+/// </summary>
+public sealed record SpeechSettings
+{
+    /// <summary>
+    /// Which voice provider, or "none". "none" is a real, supported choice: d47 stays fully
+    /// usable in text with cues still audible, which is what keeps local-only operation
+    /// reachable rather than theoretical (list.md Phase 4).
+    /// </summary>
+    public string Provider { get; init; } = "edge";
+
+    /// <summary>Null means the provider's own default voice rather than pinning one here.</summary>
+    public string? Voice { get; init; }
+
+    /// <summary>
+    /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
+    /// because providers disagree about both the units and the range (list.md Phase 11).
+    /// </summary>
+    public double Rate { get; init; } = 1.0;
+
+    /// <summary>
+    /// The output device id, or null for the system default. An id rather than a name because
+    /// a friendly name is not stable across driver updates.
+    /// </summary>
+    public string? OutputDevice { get; init; }
+
+    /// <summary>The loop-state cues (list.md Phase 5, #20).</summary>
+    public bool CuesEnabled { get; init; } = true;
+
+    /// <summary>The bed under a working turn (#18).</summary>
+    public bool ThinkingBedEnabled { get; init; } = true;
+
+    /// <summary>Which bed. Names come from the shipped set, never from a literal list.</summary>
+    public string? ThinkingBed { get; init; }
+
+    /// <summary>
+    /// Instant silence (list.md Phase 5, "Shut up"). System-wide rather than window-scoped,
+    /// because the case this exists for is Elite holding the foreground — a key that only
+    /// works when d47 has focus is gated by definition, and this one is never gated.
+    /// <para>
+    /// Protected: it gates nothing dangerous, but a model that can unbind the Commander's
+    /// stop button has removed the one control that outranks it.
+    /// </para>
+    /// </summary>
+    public string? ShutUpHotkey { get; init; } = "Ctrl+Alt+X";
+
+    /// <summary>How many times a failing turn is tried in total. 1 disables retrying.</summary>
+    public int RetryAttempts { get; init; } = 3;
+
+    public double RetryWaitSeconds { get; init; } = 2;
+
+    /// <summary>"sequential" or "logarithmic" (list.md Phase 5).</summary>
+    public string RetryBackoff { get; init; } = "sequential";
+
+    /// <summary>How long one attempt may run before it counts as a failure worth reporting.</summary>
+    public double TurnTimeoutSeconds { get; init; } = 45;
 }
 
 public sealed record LoggingSettings

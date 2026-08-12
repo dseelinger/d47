@@ -6,7 +6,9 @@ using Avalonia.VisualTree;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core;
+using D47.Core.Audio;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -42,7 +44,12 @@ public class SettingsSurfaceTests
             settings,
             new LlmAvailabilityState(providerConfigured: false),
             new SpendTracker(),
-            "1.0.0-uitest"));
+            "1.0.0-uitest",
+            new SpeechCapability.SpeechSurface
+            {
+                Silence = () => { },
+                Beds = [.. CueLibrary.Load().BedNames],
+            }));
 
         settings.Bind(registry);
 

@@ -1,11 +1,14 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/D47.App/D47.App.csproj" />
+    <Project Path="src/D47.Audio/D47.Audio.csproj" />
     <Project Path="src/D47.Core/D47.Core.csproj" />
     <Project Path="src/D47.Llm/D47.Llm.csproj" />
+    <Project Path="src/D47.Tts/D47.Tts.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/D47.App.Tests/D47.App.Tests.csproj" />
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />
+    <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
   </Folder>
 </Solution>

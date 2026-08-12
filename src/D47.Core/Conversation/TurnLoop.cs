@@ -58,6 +58,13 @@ public abstract record TurnEvent
 
     public sealed record ThinkingDelta(string Text) : TurnEvent;
 
+    /// <summary>
+    /// About to try again after a transient failure. Carries the wait so a surface can say how
+    /// long it is about to be quiet for, which is the whole point of the item: silence that
+    /// nobody has accounted for is indistinguishable from a hang (list.md Phase 5).
+    /// </summary>
+    public sealed record Retrying(int Attempt, int Of, TimeSpan Wait, string Because) : TurnEvent;
+
     public sealed record Completed(TurnResult Result) : TurnEvent;
 }
 
@@ -79,11 +86,19 @@ public sealed class TurnLoop(
     ILogger<TurnLoop> logger,
     ILlmProvider? provider = null,
     string? model = null,
-    SettingsService? settings = null)
+    SettingsService? settings = null,
+    ITurnClock? clock = null)
 {
     private readonly List<ConversationMessage> _history = [];
+    private readonly ITurnClock _clock = clock ?? SystemTurnClock.Instance;
 
     private string? _lastModelUsed;
+
+    /// <summary>
+    /// How hard to try before saying so out loud. Settable so a settings change applies to the
+    /// next turn without a restart (list.md Phase 4).
+    /// </summary>
+    public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
     public IReadOnlyList<ConversationMessage> History => _history;
 
@@ -221,40 +236,83 @@ public sealed class TurnLoop(
         var usage = LlmUsage.None;
         var stopReason = LlmStopReason.Completed;
         string? failure = null;
+        var transient = false;
 
-        await foreach (var streamEvent in activeProvider
-                           .StreamAsync(request, cancellationToken).ConfigureAwait(false))
+        // Retry lives here rather than around the whole turn because of one asymmetry: once a
+        // word has been streamed it has probably already been spoken, and there is no such
+        // thing as un-saying it. So an attempt that produced text is never retried, however
+        // transient the failure that ended it looked (list.md Phase 5).
+        for (var attempt = 1; attempt <= Math.Max(1, Retry.Attempts); attempt++)
         {
-            switch (streamEvent)
+            if (attempt > 1)
             {
-                case LlmStreamEvent.TextDelta text:
-                    reply.Append(text.Text);
-                    yield return new TurnEvent.TextDelta(text.Text);
-                    break;
+                var wait = Retry.WaitBefore(attempt);
 
-                case LlmStreamEvent.ThinkingDelta thinking:
-                    yield return new TurnEvent.ThinkingDelta(thinking.Text);
-                    break;
+                yield return new TurnEvent.Retrying(attempt, Retry.Attempts, wait, failure ?? "no answer");
+                logger.LogInformation(
+                    "Retrying the model turn, attempt {Attempt} of {Total}, after {Wait}",
+                    attempt,
+                    Retry.Attempts,
+                    wait);
 
-                case LlmStreamEvent.Completed completed:
-                    usage = completed.Usage;
-                    stopReason = completed.StopReason;
-                    break;
+                await _clock.DelayAsync(wait, cancellationToken).ConfigureAwait(false);
+            }
 
-                case LlmStreamEvent.Failed failed:
-                    failure = failed.Message;
-                    availability.MarkFailed(failed.Message, failed.Transient);
-                    logger.LogWarning(
-                        "Model turn failed ({Kind}): {Message}",
-                        failed.Transient ? "transient" : "configuration",
-                        failed.Message);
-                    break;
+            reply.Clear();
+            usage = LlmUsage.None;
+            stopReason = LlmStopReason.Completed;
+            failure = null;
+            transient = false;
+            var spokeThisAttempt = false;
+
+            await foreach (var streamEvent in AttemptAsync(request, activeProvider, cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                switch (streamEvent)
+                {
+                    case LlmStreamEvent.TextDelta text:
+                        reply.Append(text.Text);
+                        spokeThisAttempt = true;
+                        yield return new TurnEvent.TextDelta(text.Text);
+                        break;
+
+                    case LlmStreamEvent.ThinkingDelta thinking:
+                        yield return new TurnEvent.ThinkingDelta(thinking.Text);
+                        break;
+
+                    case LlmStreamEvent.Completed completed:
+                        usage = completed.Usage;
+                        stopReason = completed.StopReason;
+                        break;
+
+                    case LlmStreamEvent.Failed failed:
+                        failure = failed.Message;
+                        transient = failed.Transient;
+                        availability.MarkFailed(failed.Message, failed.Transient);
+                        logger.LogWarning(
+                            "Model turn failed ({Kind}): {Message}",
+                            failed.Transient ? "transient" : "configuration",
+                            failed.Message);
+                        break;
+                }
+            }
+
+            // A configuration failure will fail identically next time, so retrying it only
+            // spends the Commander's silence. Only transient failures are worth waiting on.
+            if (failure is null || spokeThisAttempt || !transient)
+            {
+                break;
             }
         }
 
         if (failure is not null)
         {
-            var text = $"I couldn't reach the model just then. {failure}";
+            // Said out loud in the current voice, because the alternative is silence, and
+            // silence here is indistinguishable from a model with nothing to say.
+            var text = Retry.Attempts > 1
+                ? $"I couldn't reach the model after {Retry.Attempts} tries. {failure}"
+                : $"I couldn't reach the model just then. {failure}";
+
             yield return new TurnEvent.TextDelta(text);
             yield return new TurnEvent.Completed(new TurnResult(
                 TurnOutcome.Failed, TurnRoute.Model, text, effort, Cost: null));
@@ -291,5 +349,78 @@ public sealed class TurnLoop(
             cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
 
         yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Model, answer, effort, cost));
+    }
+
+    /// <summary>
+    /// One attempt, with a stall turned into an ordinary failure event.
+    /// <para>
+    /// A provider that hangs is the case this exists for. Left alone it produces no events at
+    /// all — not an error, just a turn that never ends — which is the single worst thing this
+    /// app can do, because the Commander has no way to tell it apart from having been ignored.
+    /// The per-attempt timeout converts that into a <see cref="LlmStreamEvent.Failed"/> the
+    /// retry loop can act on and the voice can report.
+    /// </para>
+    /// <para>
+    /// Written with an explicit enumerator because a `yield` cannot sit inside a `try` that has
+    /// a `catch`, and the whole point here is catching around the provider.
+    /// </para>
+    /// </summary>
+    private async IAsyncEnumerable<LlmStreamEvent> AttemptAsync(
+        LlmRequest request,
+        ILlmProvider activeProvider,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using var timeout = _clock.CreateTimeout(Retry.AttemptTimeout, cancellationToken);
+
+        await using var events = activeProvider
+            .StreamAsync(request, timeout.Token)
+            .GetAsyncEnumerator(timeout.Token);
+
+        while (true)
+        {
+            LlmStreamEvent? current = null;
+            LlmStreamEvent.Failed? failed = null;
+            var ended = false;
+
+            try
+            {
+                if (await events.MoveNextAsync().ConfigureAwait(false))
+                {
+                    current = events.Current;
+                }
+                else
+                {
+                    ended = true;
+                }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // Ours tripped, not the caller's: the attempt ran out of time.
+                failed = new LlmStreamEvent.Failed(
+                    $"it did not answer within {Retry.AttemptTimeout.TotalSeconds:0} seconds",
+                    Transient: true);
+            }
+            catch (Exception ex)
+            {
+                // A provider throwing rather than reporting is still just a failed turn. It
+                // must not take the app down, and it must not be swallowed into silence.
+                failed = new LlmStreamEvent.Failed(ex.Message, Transient: true);
+            }
+
+            // Yielded out here because a `yield` cannot sit in a `catch` either — the value is
+            // decided inside the guarded region and emitted outside it.
+            if (failed is not null)
+            {
+                yield return failed;
+                yield break;
+            }
+
+            if (ended)
+            {
+                yield break;
+            }
+
+            yield return current!;
+        }
     }
 }
