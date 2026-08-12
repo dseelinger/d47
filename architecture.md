@@ -294,6 +294,21 @@ Mitigation: place an intermediate breakpoint roughly every 15 blocks during long
 
 - **Switching model or provider invalidates everything** (caches are model-scoped). A Commander changing providers mid-session pays a cold prefix; that is expected and should not be reported as a regression.
 - **Minimum cacheable prefix is model-dependent** — 512 tokens on Claude Opus 5, 1024 on Opus 4.8 and Sonnet 5, higher on older models. A short system prompt silently will not cache: no error, just `CacheCreationInputTokens: 0`.
+
+  **Measured 2026-08-12, and currently biting.** A first live turn on `claude-opus-5` reported 472
+  input tokens with `CacheCreationInputTokens: 0` — the cached region is the ~409-token guardrails
+  block alone, because position 1 (tool schemas) is empty and position 3 (persona) is null until
+  Phases 10 and 11. Nothing caches yet, exactly as this bullet warns, and the cost arithmetic
+  confirms it independently: the turn priced at plain input rates rather than the 1.25x cache-write
+  rate. The prefix crosses 512 on its own once tools are advertised and a persona block is present,
+  so the fix is those phases arriving rather than anything here. Padding the prompt to reach the
+  threshold would be inventing prompt content to satisfy a metric.
+
+  **It is the cached region that must clear the minimum, not the request.** A later turn in the same
+  session reported 1020 input tokens and still cached nothing, because conversation history sits
+  *below* the breakpoint — it can grow without bound and will never make a short system block
+  cacheable. Watching total input as the signal is the easy mistake here, and it reads as "caching
+  is broken" when the truth is "there is not yet enough above the breakpoint to cache".
 - **Non-deterministic serialization** of tool schemas (unordered dictionaries) breaks byte-identity. Serialize with a stable key order.
 
 `LLM Turn Price` reads `response.Usage.CacheReadInputTokens` and `CacheCreationInputTokens`; on the OpenAI protocol the analogous signal is `usage.prompt_tokens_details.cached_tokens`. The price table is per provider and per model, so the running total survives an endpoint switch. A cold prefix with no accompanying profile switch is the regression signal.

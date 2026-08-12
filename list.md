@@ -15,12 +15,12 @@
   - [x] Survive a journal schema change - Elite adds and changes journal events several times a year. Unknown events are logged and skipped, a parse failure never kills the tail loop, and the machine-readable sink makes the diff findable, so a game patch costs a morning rather than an outage.
   - [x] Handle more than one Commander on a machine - A second Commander's journals must not merge into the first one's fleet, materials or location. The Commander is identified from the journal header and all derived state is kept per Commander, because a naive newest-file reader silently blends two people into one.
 
-- [ ] **Phase 3 — First conversation (typed)**
-  - [ ] TheApp answers a typed question - Type a question into TheApp's window and get a streamed reply from the model.
+- [x] **Phase 3 — First conversation (typed)**
+  - [x] TheApp answers a typed question - Type a question into TheApp's window and get a streamed reply from the model.
   - [x] Ship's AI Unsure - An explicit "unsure" result instead of a confidence threshold, because models produce confident-sounding scores that do not mean anything. A model-free keyword router ships alongside so the whole path is exercisable without a model.
   - [x] Capabilities as state, not guard - For example, an LLM or TTS experiencing downtime or token depletion flips a capability off and the next turn reads what is currently available, so there is no failure handler to author or keep in register. It falls out that every input path must be answerable with no capabilities at all.
-  - [ ] Model Level and Thinking - LLM attempts to gauge per-turn thinking effort from low through max, but no "off" unless the LLM is set to "none" or through transient degradation.
-  - [ ] LLM Turn Price - Per-turn token usage including cache reads, priced from a table, plus a running total. A profile switch is the only sanctioned cause of a cold prefix, so an unexplained cache miss is a regression the running total can surface rather than hide.
+  - [x] Model Level and Thinking - LLM attempts to gauge per-turn thinking effort from low through max, but no "off" unless the LLM is set to "none" or through transient degradation.
+  - [x] LLM Turn Price - Per-turn token usage including cache reads, priced from a table, plus a running total. A profile switch is the only sanctioned cause of a cold prefix, so an unexplained cache miss is a regression the running total can surface rather than hide.
 
 - [ ] **Phase 4 — Settings surface**
   - [ ] TheApp is configured without manually editing a file - Every setting, including the voice, is changeable in the UI with no hand-editing. Rows are generated from capability descriptors, defaults appear as placeholders rather than values, keys are write-only, and safety-critical rows are protected from the model.

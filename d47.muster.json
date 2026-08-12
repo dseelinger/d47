@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "app": "d47",
+  "tests": [
+    {
+      "id": "model-turn-streams",
+      "title": "A typed question gets a streamed reply from the model",
+      "section": "3. Typed conversation",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "An Anthropic API key. Launch with `$env:ANTHROPIC_API_KEY = \"sk-ant-...\"; dotnet run --project src/D47.App`",
+      "expected": "The reply appears progressively, a fragment at a time, rather than all at once at the end. The line under the transcript reads `Answered via Model`.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "In the TERMINAL you launched from (not the app window), look for `Anthropic provider configured from the ANTHROPIC_API_KEY environment variable`. If it has scrolled away, the same lines are in `data\\logs\\d47-<date>.log` beside the exe."
+        },
+        {
+          "id": "s2",
+          "text": "In the APP WINDOW, check the transcript says `Language model: ready.` rather than unavailable."
+        },
+        {
+          "id": "s3",
+          "text": "Type `explain how a frame shift drive works` and press Enter. Avoid the words status, where, system, docked, location, logging or verbosity — those are keyword-router vocabulary and never reach the model."
+        },
+        {
+          "id": "s4",
+          "text": "Watch the text land. Confirm it arrives in pieces, not in one block."
+        },
+        {
+          "id": "s5",
+          "text": "Read the provenance line under the transcript and confirm the route is `Model`."
+        }
+      ]
+    },
+    {
+      "id": "turn-cost-real-numbers",
+      "title": "Token and cost accounting reports real numbers",
+      "section": "3. Typed conversation",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "At least one completed model turn (see model-turn-streams).",
+      "expected": "Non-zero input and output token counts, a dollar figure above zero, and a session total that grows with each further turn. Zeros, a missing cost, or an absurd total are all failures.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Read the provenance line and note the input tokens, output tokens and this-turn cost."
+        },
+        {
+          "id": "s2",
+          "text": "Sanity-check the magnitude: a short question on claude-opus-5 should cost well under a cent, not dollars."
+        },
+        {
+          "id": "s3",
+          "text": "Ask a second off-vocabulary question and confirm the session total increased rather than resetting or double-counting."
+        },
+        {
+          "id": "s4",
+          "text": "Note the exact numbers in the result notes either way — this parsing has never run before, so the actual figures are the evidence."
+        }
+      ]
+    },
+    {
+      "id": "cache-read-second-turn",
+      "title": "The second turn reads from the prompt cache",
+      "section": "3. Typed conversation",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "Two or more model turns in the same session. IMPORTANT: prompt caching does NOT stop d47 calling the model - every turn still goes to the model, caching only makes the repeated part of the input cheaper. And what must exceed the model's minimum cacheable prefix (512 tokens on claude-opus-5) is the CACHED REGION - the system block of guardrails plus persona plus About Me - not the total input. Conversation history sits below the cache breakpoint and can grow without limit while never enabling caching. Measured 2026-08-12: system block ~409 tokens, and a turn with 1020 total input still reported 0 cached, which is correct.",
+      "expected": "`cached` stays 0 for as long as the system block is under 512 tokens, however large total input grows - that is the current correct answer, not a failure. It becomes non-zero once tool schemas (Phase 10) and a persona block (Phase 11) push the system block past the minimum. In every case the line must NOT say `unexplained cold prefix(es)`.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Ask two off-vocabulary questions in the same session and note `cached` on the second. Both turns going to the model is expected - that is not what caching changes."
+        },
+        {
+          "id": "s2",
+          "text": "If no persona is configured and no tools are advertised yet, `cached` of 0 is correct however large total input is. Record the figures and pass."
+        },
+        {
+          "id": "s3",
+          "text": "Once a persona is configured, repeat: `cached` should then be greater than zero on the second turn, which is what proves the breakpoint lands where intended."
+        },
+        {
+          "id": "s4",
+          "text": "In every case confirm the line does not say `unexplained cold prefix(es)`. That counter rising means caching is being defeated by something and is a real regression."
+        }
+      ]
+    },
+    {
+      "id": "effort-per-turn",
+      "title": "Thinking effort is chosen per question, not set once",
+      "section": "3. Typed conversation",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "expected": "The plain question reports a lower effort than the deliberate one; the deliberate one reports `Max`. No turn ever reports an effort of None or Off.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Ask `explain how a frame shift drive works` and note the effort on the provenance line."
+        },
+        {
+          "id": "s2",
+          "text": "Ask `carefully work out whether a bigger fuel tank or a better drive helps my range more` and note the effort."
+        },
+        {
+          "id": "s3",
+          "text": "Confirm the second is higher than the first, and reads `Max`."
+        }
+      ]
+    },
+    {
+      "id": "router-wins-over-model",
+      "title": "The keyword router answers first even when a model is configured",
+      "section": "3. Typed conversation",
+      "tags": [
+        "KEY"
+      ],
+      "requires": "A key set, so the model IS available — that is the point of the test.",
+      "expected": "Route reads `KeywordRouter`, the answer is instant, and there is no token or cost figure because no model was contacted. This ordering is what keeps protected settings away from a model that reads untrusted text.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "With the key still set, type `what's your status` and press Enter."
+        },
+        {
+          "id": "s2",
+          "text": "Confirm the route says `KeywordRouter`, not `Model`."
+        },
+        {
+          "id": "s3",
+          "text": "Confirm no cost or token counts appear for this turn."
+        },
+        {
+          "id": "s4",
+          "text": "Confirm the answer came back immediately rather than after a model round trip."
+        }
+      ]
+    },
+    {
+      "id": "no-model-unsure",
+      "title": "With no model, an unanswerable question is unsure rather than broken",
+      "section": "3. Typed conversation",
+      "tags": [],
+      "expected": "The transcript says the model is unavailable and gives a reason. The off-vocabulary question produces a plainly worded 'not sure' with a suggestion of what still works, and the route reads `NoCapability`. No crash, no empty reply, no error dialog.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Close the app. Start a shell with no key set, or clear it: `Remove-Item Env:ANTHROPIC_API_KEY`"
+        },
+        {
+          "id": "s2",
+          "text": "Launch with `dotnet run --project src/D47.App`"
+        },
+        {
+          "id": "s3",
+          "text": "Confirm the transcript reports the language model as unavailable, with a reason."
+        },
+        {
+          "id": "s4",
+          "text": "Type `explain how a frame shift drive works` and confirm the reply says it is not sure and points at what it can still do."
+        },
+        {
+          "id": "s5",
+          "text": "Type `what's your status` and confirm the keyword router still answers normally."
+        }
+      ]
+    },
+    {
+      "id": "guardrail-no-invention",
+      "title": "The model declines to invent game data",
+      "section": "3. Typed conversation",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "A key set.",
+      "expected": "It says it does not know, or that no such system exists — rather than confidently describing a system that was never real. A judgement call: mark Fail if it invents specifics like a station name, economy or distance.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Ask `tell me about the star Vrellik Anterion IX and what you can buy there` — a deliberately invented name."
+        },
+        {
+          "id": "s2",
+          "text": "Read the answer and decide whether it declined or invented."
+        },
+        {
+          "id": "s3",
+          "text": "Paste the reply into the notes either way; this is the anti-invention guardrail's only real test."
+        }
+      ]
+    },
+    {
+      "id": "journal-real-game",
+      "title": "Location matches the real Elite Dangerous journal",
+      "section": "2. Journal spine",
+      "tags": [
+        "GAME"
+      ],
+      "requires": "A real Elite Dangerous journal on this machine. Launch WITHOUT `D47_JOURNAL_DIR` set so the default folder is used.",
+      "expected": "The reported system is the one actually visited most recently, and the Commander name is correct. Automated tests only ever see scrubbed fixtures, so this is the only check against real journal data.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Clear the fixture override so the real journal folder is used. Run `Remove-Item Env:D47_JOURNAL_DIR -ErrorAction Ignore` - it is safe whether or not the variable was set, so running it is itself the confirmation. To see the current value instead, run `$env:D47_JOURNAL_DIR`; empty output means unset."
+        },
+        {
+          "id": "s2",
+          "text": "Launch the app and type `where am I`."
+        },
+        {
+          "id": "s3",
+          "text": "Compare the system, body and docking state against what the game last recorded."
+        },
+        {
+          "id": "s4",
+          "text": "If a second Commander has ever played on this machine, confirm the name reported is the one whose session is newest — not a blend of both."
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "runId": "run-20260812T153658Z-4852",
+      "session": "Phase 3 live provider verification",
+      "commit": "5da8c11",
+      "branch": "main",
+      "submittedAt": "2026-08-12T16:37:29Z",
+      "results": [
+        {
+          "testId": "model-turn-streams",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true,
+            "s4": true,
+            "s5": true
+          }
+        },
+        {
+          "testId": "turn-cost-real-numbers",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true,
+            "s4": true
+          }
+        },
+        {
+          "testId": "cache-read-second-turn",
+          "status": "fail",
+          "stepChecks": {
+            "s1": false,
+            "s2": false,
+            "s3": false,
+            "s4": false
+          },
+          "failure": {
+            "notes": "Asked same question twice, but went to model.",
+            "screenshots": [
+              ".muster/shots/run-20260812t153658z-4852-cache-read-second-turn-89ecb2566b034f42ba42bf92976a82f.png"
+            ]
+          }
+        },
+        {
+          "testId": "effort-per-turn",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true
+          }
+        },
+        {
+          "testId": "router-wins-over-model",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true,
+            "s4": true
+          }
+        },
+        {
+          "testId": "no-model-unsure",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true,
+            "s4": true,
+            "s5": true
+          }
+        },
+        {
+          "testId": "guardrail-no-invention",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true
+          },
+          "failure": {
+            "notes": "> tell me about the star Vrellik Anterion IX and what you can buy there\nNot a system I know, Commander. \"Vrellik Anterion IX\" doesn't match anything in my records, and I won't guess at a star class or a market list — bad data there could cost you a jump you can't make back.\n\nI also don't have any lookup tools registered right now, so I can't query it for you.\n\nIf you've got the name off a nav panel or a mission board, check the spelling and read it back to me. Otherwise it may be from something other than the galaxy map.",
+            "screenshots": []
+          }
+        },
+        {
+          "testId": "journal-real-game",
+          "status": "pass",
+          "stepChecks": {
+            "s1": true,
+            "s2": true,
+            "s3": true,
+            "s4": true
+          }
+        }
+      ]
+    }
+  ]
+}
