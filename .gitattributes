@@ -1,0 +1,14 @@
+* text=auto
+
+# Journal fixtures are replayed byte-for-byte (architecture.md §8). Never normalise
+# line endings and never try to diff them.
+tests/fixtures/** -text -diff
+*.log -text -diff
+
+# Binary assets
+*.png binary
+*.ico binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.dll binary

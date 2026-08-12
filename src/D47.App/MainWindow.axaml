@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="D47.App.MainWindow"
+        Title="d47"
+        Width="720" Height="420"
+        WindowStartupLocation="CenterScreen">
+  <StackPanel Margin="40" Spacing="10" VerticalAlignment="Center">
+    <TextBlock Text="d47" FontSize="46" FontWeight="Light" />
+    <TextBlock Text="Directive 47 — Optimize Inferior Systems" Opacity="0.7" />
+    <TextBlock x:Name="BuildLine" Opacity="0.4" FontSize="12" />
+  </StackPanel>
+</Window>

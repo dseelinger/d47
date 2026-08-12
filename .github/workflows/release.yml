@@ -1,0 +1,44 @@
+name: release
+
+# Tag and push is the whole release process:
+#   git tag v0.1.0 && git push --tags
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Version from tag
+        id: v
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - run: dotnet test -c Release
+
+      # Publish settings live in D47.App.csproj so this needs no flags.
+      - run: dotnet publish src/D47.App -c Release -p:Version=${{ steps.v.outputs.version }}
+
+      - name: Checksum
+        shell: bash
+        working-directory: src/D47.App/bin/Release/net10.0/win-x64/publish
+        run: sha256sum d47.exe | tee d47.exe.sha256
+
+      # Unsigned with a published checksum, per architecture.md §9.
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: d47 ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            src/D47.App/bin/Release/net10.0/win-x64/publish/d47.exe
+            src/D47.App/bin/Release/net10.0/win-x64/publish/d47.exe.sha256

@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Version comes from global.json, so CI and local cannot drift.
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+
+      # The docs gate and the Core dependency boundary are both tests, so there is no
+      # separate CI step to keep in sync with them.
+      - run: dotnet test --no-build -c Release --logger "console;verbosity=normal"
