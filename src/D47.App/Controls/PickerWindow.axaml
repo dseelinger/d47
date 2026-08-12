@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="D47.App.Controls.PickerWindow"
+        Width="520" Height="420"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="BorderOnly"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource D47.Surface}"
+        Foreground="{DynamicResource D47.Text}">
+
+  <Border BorderBrush="{DynamicResource D47.Border}" BorderThickness="1" Padding="14">
+    <DockPanel>
+
+      <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,10">
+        <TextBlock x:Name="PromptText" FontSize="15" Foreground="{DynamicResource D47.Accent}" />
+        <TextBlock x:Name="HelpText"
+                   FontSize="11"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+      </StackPanel>
+
+      <TextBox x:Name="FilterBox"
+               DockPanel.Dock="Top"
+               Margin="0,0,0,8"
+               KeyDown="OnFilterKeyDown"
+               TextChanged="OnFilterChanged" />
+
+      <!-- The fail-soft contract, stated rather than implied: with nothing to offer, the box
+           above is still the answer. -->
+      <TextBlock x:Name="EmptyHint"
+                 DockPanel.Dock="Bottom"
+                 IsVisible="False"
+                 Margin="0,8,0,0"
+                 FontSize="11"
+                 TextWrapping="Wrap"
+                 Foreground="{DynamicResource D47.TextMuted}" />
+
+      <StackPanel DockPanel.Dock="Bottom"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="0,10,0,0">
+        <Button x:Name="DefaultButton" Content="Use the default" Click="OnUseDefaultClick" IsVisible="False" />
+        <Button Content="Cancel" Click="OnCancelClick" />
+        <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
+      </StackPanel>
+
+      <ListBox x:Name="Choices"
+               Background="{DynamicResource D47.SurfaceAlt}"
+               BorderBrush="{DynamicResource D47.Border}"
+               BorderThickness="1"
+               DoubleTapped="OnChoiceDoubleTapped"
+               KeyDown="OnFilterKeyDown" />
+
+    </DockPanel>
+  </Border>
+</Window>

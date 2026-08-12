@@ -104,7 +104,9 @@ public static class SettingsCapability
 
         foreach (var row in Visible(settings))
         {
-            var value = row.Binding!.Read(settings.Current) ?? $"(default: {row.DefaultDisplayFor(settings.Current)})";
+            var fallback = row.DefaultDisplayFor(settings.Current);
+            var value = row.Binding!.Read(settings.Current)
+                        ?? (fallback is null ? "(default)" : $"(default: {fallback})");
             report.AppendLine($"{row.Key} — {row.Label}: {value}");
 
             if (row.ChoicesFor(settings.Current) is { Count: > 0 } choices)

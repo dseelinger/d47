@@ -3,8 +3,11 @@ using System.Text;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using D47.App.Settings;
 using D47.App.Updates;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Conversation;
 
 namespace D47.App;
@@ -68,11 +71,88 @@ public partial class MainWindow : Window
             ErrorBanner.IsVisible = true;
         }
 
+        DescribeHotkeys();
         AskBox.Focus();
 
-        // Fire-and-forget: an update check is optional and must never delay the status the
-        // Commander is actually here for. UpdateChecker swallows its own failures.
-        _ = CheckForUpdateAsync(_host);
+        // Optional in two senses: it must never delay the status the Commander is here for, and
+        // it is the one network call d47 makes on its own — so it is a setting, and it is
+        // disclosed (list.md Phase 4, "Say what each provider receives").
+        if (_host.Settings.Current.Updates.CheckOnStartup)
+        {
+            _ = CheckForUpdateAsync(_host);
+        }
+    }
+
+    /// <summary>
+    /// Window-scoped gestures, matched against the bound settings. Protection matters here: a
+    /// hotkey is one of the callers allowed to reach a protected row, which is exactly why the
+    /// rows holding these gestures are themselves protected (architecture.md §7).
+    /// </summary>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (_host is not null && !e.Handled)
+        {
+            if (Matches(_host.Settings.Current.Hotkeys.OpenSettings, e))
+            {
+                e.Handled = true;
+                OpenSettings();
+            }
+            else if (Matches(_host.Settings.Current.Hotkeys.FocusAsk, e))
+            {
+                e.Handled = true;
+                AskBox.Focus();
+                AskBox.SelectAll();
+            }
+        }
+
+        base.OnKeyDown(e);
+    }
+
+    /// <summary>
+    /// Gestures are stored in the form <see cref="KeyGesture"/> writes, so an unparseable one is
+    /// a gesture that never matches rather than an exception on every keystroke.
+    /// </summary>
+    private static bool Matches(string? gesture, KeyEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(gesture))
+        {
+            return false;
+        }
+
+        try
+        {
+            return KeyGesture.Parse(gesture).Matches(e);
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException)
+        {
+            // A hand-edited settings file can hold anything. An unbound action is a better
+            // outcome than an exception on every keypress.
+            return false;
+        }
+    }
+
+    private void DescribeHotkeys()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var open = _host.Settings.Current.Hotkeys.OpenSettings;
+
+        ToolTip.SetTip(
+            SettingsButton,
+            open is null ? "Open settings" : $"Open settings ({open})");
+    }
+
+    private void OnSettingsClick(object? sender, RoutedEventArgs e) => OpenSettings();
+
+    private void OpenSettings()
+    {
+        if (_host is not null)
+        {
+            SettingsWindow.Show(this, _host.Settings, _host.ViewState);
+        }
     }
 
     private void OnAskBoxKeyDown(object? sender, KeyEventArgs e)

@@ -29,6 +29,7 @@ public sealed class AppHost : IDisposable
         SerilogVerbosityControl verbosity,
         SettingsService settings,
         SecretStore secrets,
+        ViewStateStore viewState,
         GameStateStore gameState,
         JournalSpine journal,
         CapabilityRegistry capabilities,
@@ -45,6 +46,7 @@ public sealed class AppHost : IDisposable
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
+        ViewState = viewState;
         GameState = gameState;
         Journal = journal;
         Capabilities = capabilities;
@@ -68,6 +70,9 @@ public sealed class AppHost : IDisposable
 
     public SecretStore Secrets { get; }
 
+    /// <summary>How the panel was left. A view preference, kept apart from settings.</summary>
+    public ViewStateStore ViewState { get; }
+
     public GameStateStore GameState { get; }
 
     public JournalSpine Journal { get; }
@@ -86,6 +91,9 @@ public sealed class AppHost : IDisposable
     public SpendTracker Spend { get; }
 
     public string Version { get; }
+
+    /// <summary>For surfaces that need a logger of their own — the theme manager, so far.</summary>
+    public ILoggerFactory Loggers => _loggerFactory;
 
     /// <summary>
     /// Set when settings could not be loaded. Surfaced on the panel rather than swallowed:
@@ -137,6 +145,8 @@ public sealed class AppHost : IDisposable
         // From here a level change is live wherever it came from — panel, tool or settings file.
         verbosity.FollowSettings(settings);
 
+        var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
+
         var journalDirectory = ResolveJournalDirectory();
         var gameState = new GameStateStore();
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
@@ -185,6 +195,7 @@ public sealed class AppHost : IDisposable
             verbosity,
             settings,
             secrets,
+            viewState,
             gameState,
             journal,
             capabilities,

@@ -3,15 +3,29 @@
         x:Class="D47.App.MainWindow"
         Title="d47"
         Width="820" Height="640"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource D47.Background}"
+        Foreground="{DynamicResource D47.Text}">
 
   <DockPanel Margin="24">
 
-    <StackPanel DockPanel.Dock="Top" Spacing="2">
-      <TextBlock Text="d47" FontSize="30" FontWeight="Light" />
-      <TextBlock Text="Directive 47 — Optimize Inferior Systems" FontSize="12" Opacity="0.6" />
-      <TextBlock x:Name="VersionLine" FontSize="11" Opacity="0.35" />
-    </StackPanel>
+    <!-- Colour by role, never by literal: every brush here is a theme resource, so switching
+         theme repaints this window without it knowing a theme exists (list.md Phase 4). -->
+    <DockPanel DockPanel.Dock="Top">
+      <Button x:Name="SettingsButton"
+              DockPanel.Dock="Right"
+              Content="Settings"
+              Padding="14,6"
+              VerticalAlignment="Top"
+              Click="OnSettingsClick" />
+      <StackPanel Spacing="2">
+        <TextBlock Text="d47" FontSize="30" FontWeight="Light" Foreground="{DynamicResource D47.Accent}" />
+        <TextBlock Text="Directive 47 — Optimize Inferior Systems"
+                   FontSize="12"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+        <TextBlock x:Name="VersionLine" FontSize="11" Foreground="{DynamicResource D47.TextMuted}" />
+      </StackPanel>
+    </DockPanel>
 
     <!-- Settings that failed to load are said out loud, not swallowed. -->
     <Border x:Name="ErrorBanner"
@@ -20,10 +34,13 @@
             Margin="0,14,0,0"
             Padding="12"
             CornerRadius="4"
-            Background="#33FF5555"
-            BorderBrush="#88FF5555"
+            Background="{DynamicResource D47.SurfaceAlt}"
+            BorderBrush="{DynamicResource D47.Danger}"
             BorderThickness="1">
-      <SelectableTextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="12" />
+      <SelectableTextBlock x:Name="ErrorText"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Foreground="{DynamicResource D47.Danger}" />
     </Border>
 
     <!-- Hidden until a background check finds a newer release; never blocks startup. -->
@@ -33,8 +50,8 @@
             Margin="0,14,0,0"
             Padding="12"
             CornerRadius="4"
-            Background="#332288FF"
-            BorderBrush="#882288FF"
+            Background="{DynamicResource D47.SurfaceAlt}"
+            BorderBrush="{DynamicResource D47.Info}"
             BorderThickness="1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
@@ -55,7 +72,7 @@
                 Padding="18,6"
                 Click="OnAskClick" />
         <TextBox x:Name="AskBox"
-                 Watermark="Ask d47 something — try &quot;where am I&quot; or &quot;what's your status&quot;"
+                 PlaceholderText="Ask d47 something — try &quot;where am I&quot; or &quot;what's your status&quot;"
                  KeyDown="OnAskBoxKeyDown" />
       </DockPanel>
     </Border>
@@ -66,10 +83,15 @@
                Margin="0,10,0,0"
                FontFamily="Cascadia Mono,Consolas,monospace"
                FontSize="11"
-               Opacity="0.55"
+               Foreground="{DynamicResource D47.TextMuted}"
                TextWrapping="Wrap" />
 
-    <Border Background="#14FFFFFF" CornerRadius="4" Padding="14" Margin="0,16,0,0">
+    <Border Background="{DynamicResource D47.Surface}"
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="14"
+            Margin="0,16,0,0">
       <ScrollViewer x:Name="TranscriptScroller">
         <SelectableTextBlock x:Name="Transcript"
                              FontFamily="Cascadia Mono,Consolas,monospace"

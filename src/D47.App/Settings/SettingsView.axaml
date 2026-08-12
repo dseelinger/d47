@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="D47.App.Settings.SettingsView"
+             Background="{DynamicResource D47.Background}"
+             Foreground="{DynamicResource D47.Text}">
+
+  <!--
+    One view definition. Phase 9 instantiates it a second time against the same settings
+    service for the VR overlay; nothing here knows about a window (architecture.md D1).
+
+    Layout is scroll-spy: one scrolling column of cards, and a nav that highlights whichever
+    card is topmost in view (list.md Phase 4, "Settings Nav Menu"). Nav items are built in
+    code from the same sections the cards are - there is no second list.
+  -->
+  <Grid ColumnDefinitions="224,*">
+
+    <Border Grid.Column="0"
+            Background="{DynamicResource D47.Background}"
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="0,0,1,0">
+      <DockPanel Margin="12,20,12,16">
+        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="10,0,10,16">
+          <TextBlock Text="Settings"
+                     FontSize="17"
+                     FontWeight="Medium"
+                     Foreground="{DynamicResource D47.Text}" />
+          <TextBlock Text="Changes apply as you make them."
+                     FontSize="11"
+                     TextWrapping="Wrap"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+        </StackPanel>
+        <StackPanel x:Name="NavItems" Spacing="2" />
+      </DockPanel>
+    </Border>
+
+    <ScrollViewer Grid.Column="1"
+                  x:Name="Scroller"
+                  ScrollChanged="OnScrollChanged"
+                  HorizontalScrollBarVisibility="Disabled">
+      <StackPanel x:Name="Cards"
+                  Margin="28,20,28,28"
+                  Spacing="14"
+                  MaxWidth="700"
+                  HorizontalAlignment="Left" />
+    </ScrollViewer>
+
+  </Grid>
+</UserControl>

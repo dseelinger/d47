@@ -16,6 +16,7 @@ public sealed class AppPaths
         Logs = Path.Combine(Data, "logs");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
+        ViewStateFile = Path.Combine(Data, "view-state.json");
     }
 
     /// <summary>
@@ -30,6 +31,9 @@ public sealed class AppPaths
     public string Logs { get; }
     public string SettingsFile { get; }
     public string SecretsFile { get; }
+
+    /// <summary>How the panel was left. A view preference, not a setting.</summary>
+    public string ViewStateFile { get; }
 
     public void EnsureCreated()
     {

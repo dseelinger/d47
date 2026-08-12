@@ -174,7 +174,6 @@ public static class DiagnosticsCapability
             Help = $"Minimum level for the {subsystem} subsystem. Changes apply immediately.",
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
-            DefaultDisplay = "(default)",
             DocsAnchor = "subsystem-log-levels",
             Binding = new SettingBinding
             {

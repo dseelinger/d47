@@ -5,6 +5,7 @@
     <Project Path="src/D47.Llm/D47.Llm.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/D47.App.Tests/D47.App.Tests.csproj" />
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />
   </Folder>
 </Solution>
