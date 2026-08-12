@@ -432,6 +432,3 @@ FodyWeavers.xsd
 # (architecture.md §8) - the blanket *.log rule above must not swallow them.
 !tests/fixtures/**/*.log
 
-# Muster screenshots attached to manual-test failures. The suite JSON is committed; the
-# images are local evidence for whoever walked the run.
-.muster/shots/
