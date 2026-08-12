@@ -67,13 +67,17 @@ public class EdgeProtocolTests
         Assert.Contains("Sec-MS-GEC-Version=1-", early, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// MP3 is not a choice: the endpoint removed its raw-PCM formats in mid-2026 and closes
+    /// the socket with "Unsupported Edge output format" for them. 24 kHz mono is pinned
+    /// because the decoder rejects any other shape rather than resampling around it.
+    /// </summary>
     [Fact]
-    public void TheConfigurationAsksForRawPcmSoNoDecoderIsNeeded()
+    public void TheConfigurationAsksForTheOneFormatTheEndpointStillServes()
     {
         var configuration = EdgeProtocol.Configuration(Noon);
 
-        Assert.Contains("raw-24khz-16bit-mono-pcm", configuration, StringComparison.Ordinal);
-        Assert.DoesNotContain("mp3", configuration, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("audio-24khz-48kbitrate-mono-mp3", configuration, StringComparison.Ordinal);
     }
 
     [Fact]

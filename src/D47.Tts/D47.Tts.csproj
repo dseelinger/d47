@@ -11,6 +11,16 @@
   </ItemGroup>
 
   <!--
+    NAudio here is the MP3 decoder, nothing else. The endpoint dropped its raw-PCM output
+    format in mid-2026, so the audio arrives as 24 kHz mono MP3 and is decoded through
+    Windows' own ACM codec — built into the OS, MIT-wrapped, and still no FFmpeg anywhere
+    in the graph (architecture.md §10).
+  -->
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+  <!--
     The wire format is internal because nothing outside this assembly should be composing
     Edge's frames, but it is exactly the part that can be wrong without the network being
     involved, so the tests reach it directly.

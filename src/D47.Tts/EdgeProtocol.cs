@@ -18,18 +18,42 @@ internal static class EdgeProtocol
     /// <summary>The token Edge itself ships with. Public knowledge, not a secret of ours.</summary>
     public const string TrustedClientToken = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
 
-    public const string ChromiumVersion = "130.0.2849.68";
+    /// <summary>
+    /// Tracks what current Edge actually ships. The service checks this against expectations:
+    /// the working reference (edge-tts 7.2.8, verified against this endpoint from this machine)
+    /// carries 143, and 130 gets a flat 403.
+    /// </summary>
+    public const string ChromiumVersion = "143.0.3650.75";
+
+    /// <summary>"143" from "143.0.3650.75". The User-Agent wants major-only, below.</summary>
+    public static readonly string ChromiumMajor = ChromiumVersion.Split('.')[0];
 
     /// <summary>
-    /// 24 kHz mono is the highest raw rate this endpoint reliably offers. The arbiter runs at
-    /// 48 kHz, so it is upsampled 2× on arrival — an exact integer ratio, which is the reason
-    /// for choosing 24 over 16.
+    /// What the MP3 decodes to. Raw PCM output was removed from this endpoint in mid-2026 —
+    /// the service now closes the socket with "Unsupported Edge output format" for the raw
+    /// and riff formats, so 24 kHz mono MP3 (the format Edge itself uses) is what there is.
+    /// The arbiter runs at 48 kHz, so decoded audio is upsampled 2× — an exact integer ratio.
     /// </summary>
     public const int SourceSampleRate = 24_000;
 
-    public const string UserAgent =
+    /// <summary>
+    /// Major-version-only ("Chrome/143.0.0.0"), never the full build. Real Chromium reduces the
+    /// UA this way, and the full version appearing in a UA is exactly the kind of tell the
+    /// service's checks look for. The full version goes in Sec-MS-GEC-Version instead.
+    /// </summary>
+    public static readonly string UserAgent =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/" + ChromiumVersion + " Safari/537.36 Edg/" + ChromiumVersion;
+        $"Chrome/{ChromiumMajor}.0.0.0 Safari/537.36 Edg/{ChromiumMajor}.0.0.0";
+
+    /// <summary>
+    /// A fresh randomly-generated MUID cookie, sent on every request. Required as of mid-2026:
+    /// the endpoint 403s any request without one, which is precisely how d47 went mute while
+    /// edge-tts 7.x (which sends it) kept working. Random per request rather than stored —
+    /// this is an impersonation of a browser cookie, not a durable identity, and d47 does not
+    /// keep identifiers it does not need.
+    /// </summary>
+    public static string MuidCookie() =>
+        "muid=" + Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)) + ";";
 
     public const string Origin = "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold";
 
@@ -56,7 +80,7 @@ internal static class EdgeProtocol
         "Content-Type:application/json; charset=utf-8\r\n" +
         "Path:speech.config\r\n\r\n" +
         """
-        {"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"raw-24khz-16bit-mono-pcm"}}}}
+        {"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}
         """;
 
     public static string SsmlRequest(string text, string voice, double rate, string requestId, DateTimeOffset now)

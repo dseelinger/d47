@@ -16,10 +16,15 @@ caption timing are properties of that queue rather than four separate mechanisms
 to agree with each other. That is also why silence is instant: stopping is a queue operation, not
 a feature layered on top of one.
 
-> **Currently silent.** The free Edge Neural endpoint began refusing synthesis requests with
-> HTTP 403 in August 2026. Voice *listing* still works; synthesis does not. Everything else on
-> this page — cues, the bed, ducking, retry, and stopping — works regardless, because none of it
-> goes near a voice provider. See [Voice provider](#provider).
+The endpoint changed under d47 once already, in August 2026: it began requiring a browser
+`muid` cookie and a current Chromium version string (403 without them), and it dropped its
+raw-PCM output formats, so audio now arrives as 24 kHz mono MP3 and is decoded through
+Windows' own ACM codec. If the voice ever stops working again, run the live diagnostic to
+tell "the endpoint moved" apart from "d47 broke":
+
+```text
+D47_TTS_LIVE=1 dotnet test tests/D47.Tts.Tests
+```
 
 ## Try it
 

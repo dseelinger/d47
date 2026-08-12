@@ -70,6 +70,8 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Origin", EdgeProtocol.Origin);
             request.Headers.Add("User-Agent", EdgeProtocol.UserAgent);
+            request.Headers.Add("Cookie", EdgeProtocol.MuidCookie());
+            request.Headers.Add("Accept-Language", "en-US,en;q=0.9");
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
@@ -114,8 +116,12 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         var now = DateTimeOffset.UtcNow;
         using var socket = new ClientWebSocket();
 
+        socket.Options.SetRequestHeader("Pragma", "no-cache");
+        socket.Options.SetRequestHeader("Cache-Control", "no-cache");
         socket.Options.SetRequestHeader("Origin", EdgeProtocol.Origin);
         socket.Options.SetRequestHeader("User-Agent", EdgeProtocol.UserAgent);
+        socket.Options.SetRequestHeader("Accept-Language", "en-US,en;q=0.9");
+        socket.Options.SetRequestHeader("Cookie", EdgeProtocol.MuidCookie());
 
         var url = $"{SynthesisUrl}?TrustedClientToken={EdgeProtocol.TrustedClientToken}" +
                   $"&{EdgeProtocol.SecurityQuery(now)}&ConnectionId={Guid.NewGuid():N}";
@@ -135,14 +141,14 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
                     now),
                 cancellationToken).ConfigureAwait(false);
 
-            var pcm = await ReceiveAudioAsync(socket, cancellationToken).ConfigureAwait(false);
+            var mp3 = await ReceiveAudioAsync(socket, cancellationToken).ConfigureAwait(false);
 
-            if (pcm.Length == 0)
+            if (mp3.Length == 0)
             {
                 throw new TtsException($"Edge Neural returned no audio for \"{Excerpt(text)}\".");
             }
 
-            return new AudioClip(text, EdgeProtocol.Upsample(pcm), AudioFormat.Standard);
+            return new AudioClip(text, EdgeProtocol.Upsample(Decode(mp3)), AudioFormat.Standard);
         }
         catch (OperationCanceledException)
         {
@@ -217,6 +223,28 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     {
         var parts = friendlyName.Split(' ');
         return parts.Length >= 2 && parts[0] == "Microsoft" ? parts[1] : friendlyName;
+    }
+
+    /// <summary>
+    /// MP3 to 16-bit PCM through the OS codec. Strict about what comes out: the request named
+    /// 24 kHz mono, and audio in any other shape reaching the arbiter would play at the wrong
+    /// pitch — an error worth raising, not resampling around.
+    /// </summary>
+    private static byte[] Decode(byte[] mp3)
+    {
+        using var reader = new NAudio.Wave.Mp3FileReader(new MemoryStream(mp3));
+
+        if (reader.WaveFormat.SampleRate != EdgeProtocol.SourceSampleRate
+            || reader.WaveFormat.Channels != 1)
+        {
+            throw new TtsException(
+                $"Edge Neural sent {reader.WaveFormat.SampleRate} Hz / " +
+                $"{reader.WaveFormat.Channels}ch audio where 24 kHz mono was requested.");
+        }
+
+        using var pcm = new MemoryStream();
+        reader.CopyTo(pcm);
+        return pcm.ToArray();
     }
 
     private static string Excerpt(string text) => text.Length <= 40 ? text : text[..40] + "…";
