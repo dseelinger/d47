@@ -139,14 +139,36 @@ which is why the tick loop marks its first tick. Without it, starting d47 after 
 material already gathered counts as a "first unit" the moment the backlog is read, and the real
 milestones never fire because they have already been passed silently.
 
-**The percentage milestones are currently inert, and this is stated rather than faked.** Elite's
-per-material caps are set by material grade, and no journal event, status file or inventory
-snapshot reports either the grade or the cap — the game simply stops accepting more. A table of
-roughly 130 material grades is game data d47 would carry with no way to verify it, and a wrong
-entry surfaces as a milestone announced at the wrong number, which is indistinguishable from
-working correctly. So capacity is a lookup supplied from outside, it currently answers "unknown"
-for every material, and every milestone that needs it stays silent. **The first-unit milestone
-needs no capacity and works today.**
+### Where the capacity comes from
+
+Elite reports material capacity **nowhere** — not in a journal event, not in `Status.json`, not
+in the inventory snapshot. The game simply stops accepting more. Capacity is set by the
+material's grade, and the grade is not in the journal either.
+
+So the percentage milestones need a table, and the only question was what kind. A hand-written
+table of ~130 grades would be exactly the confidently-invented game data the guardrails exist to
+prevent: a wrong entry surfaces as a milestone announced at the wrong number, which is
+indistinguishable from the feature working.
+
+The shipped table is **derived, not written**. `tools/gen-material-grades.py` generates
+`MaterialGrades.g.cs` from [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `material.csv` — the
+canonical community-maintained id list that Coriolis and EDEngineer are built on. The generator
+is not part of the build and the app never runs it or reaches the network for it; its output is
+committed, and it is rerun when Frontier adds or reclassifies a material.
+
+That distinction is not academic. The first draft of the tests asserted Antimony was grade 5,
+from memory. The derived table said grade 4, and it was right: raw materials come in categories
+of four graded 1–4, so no raw material is grade 5 at all. A written-out table would have shipped
+that error, and it would have surfaced as a milestone firing at the wrong count — with nothing
+anywhere reporting a problem. The category progression is now a test in its own right.
+
+The grade-to-capacity rule — 300/250/200/150/100 for grades 1–5 — lives beside the generated
+table rather than in it. It is five numbers that do not change when Frontier adds a material, so
+regenerating the table must not be able to disturb it.
+
+A material the table does not recognise — one added by a game update this table predates —
+answers "unknown", and its percentage milestones stay silent rather than being announced against
+a number nobody checked. The first-unit milestone needs no capacity and works either way.
 
 ## Settings
 
