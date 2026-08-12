@@ -28,3 +28,7 @@ capability's real tool schema.
 |---|---|---|
 | [Diagnostics](capabilities/diagnostics.md) | Foundation | Report where d47 keeps its files, and change a subsystem's log level without a restart. |
 | [Journal](capabilities/journal.md) | Foundation | Report the Commander's current system, body and docking state from the journal. |
+| [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
+| [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach d47. |
+| [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |
+| [Settings](capabilities/settings.md) | Foundation | What a tool call may change, and the protected set that no model can reach. |

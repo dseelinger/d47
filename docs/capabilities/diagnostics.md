@@ -104,5 +104,6 @@ parsing. Turning a subsystem up to `Trace` affects both.
 | Default log level | Applies to any subsystem without its own level |
 | *&lt;Subsystem&gt;* log level | One row per subsystem, offering the same levels |
 
-Levels set by voice or by tool call are live but not persisted. Levels in `settings.json`
-are what d47 starts with.
+Every path writes the same settings row — the panel, the tool call, and a hand-edited
+`settings.json` — so a level change is live on the next log line *and* still there after a
+restart. There is no second, unsaved kind of change.

@@ -22,19 +22,19 @@
   - [x] Model Level and Thinking - LLM attempts to gauge per-turn thinking effort from low through max, but no "off" unless the LLM is set to "none" or through transient degradation.
   - [x] LLM Turn Price - Per-turn token usage including cache reads, priced from a table, plus a running total. A profile switch is the only sanctioned cause of a cold prefix, so an unexplained cache miss is a regression the running total can surface rather than hide.
 
-- [ ] **Phase 4 — Settings surface**
-  - [ ] TheApp is configured without manually editing a file - Every setting, including the voice, is changeable in the UI with no hand-editing. Rows are generated from capability descriptors, defaults appear as placeholders rather than values, keys are write-only, and safety-critical rows are protected from the model.
-  - [ ] Apply every setting without a restart - Changing a setting takes effect immediately (no need to manually "save").
-  - [ ] Offer one searchable picker everywhere a value is chosen - A command-palette style picker with keyboard navigation, reused for voices, models and devices. Fail-soft by contract: with an empty list you can still keep the current value or type one.
-  - [ ] Show the controls the active provider actually has - Settings adapt to the selected provider instead of showing a hardwired set, and changing an endpoint resets the model list to that endpoint's namespace rather than leaving a stale selection.
-  - [ ] Settings only expose specifics of a provider (LLM, TTS, STT), such as selected voice(s), Model, etc. for the currently selected provider.
-  - [ ] Protect safety-critical settings from the model - Rows gating keyboard actions and macros are marked protected: never changeable through a tool the model can call, because the model consumes untrusted text and a guard it can flip is privilege escalation. Protected is a property of the caller, not of the modality. The panel, a hotkey and the model-free keyword router all reach these rows; the LLM path does not.
-  - [ ] Say what each provider receives - A settings row and a documentation page stating exactly what leaves the machine for each enabled provider: system and station names to INARA, turn text and game context to a cloud LLM, reply text to a paid TTS, query text to web search. What is currently leaving is answerable at any time, and local-only operation is a reachable configuration rather than a theoretical one.
-  - [ ] Link each settings row to its documentation - A setup-guide link per settings row pointing at that setting's page. In-app help stays the short form; the page is the long form.
-  - [ ] Collapse settings cards - Collapsible sections whose collapse state is remembered as a view preference, not a setting, and applied before first paint so a collapsed card never flashes open.
-  - [ ] Settings Nav Menu - Is present and highlights the section based on the topmost visible setting.
-  - [ ] Hotkey Binding - (Only in main window) Press the key to bind it.
-  - [ ] Themes - Dark, light, default Elite-flavored, Guardian, and based on the current Elite Color Scheme palette, with color living in one place so no view hardcodes a literal.
+- [x] **Phase 4 — Settings surface**
+  - [x] TheApp is configured without manually editing a file - Every setting, including the voice, is changeable in the UI with no hand-editing. Rows are generated from capability descriptors, defaults appear as placeholders rather than values, keys are write-only, and safety-critical rows are protected from the model.
+  - [x] Apply every setting without a restart - Changing a setting takes effect immediately (no need to manually "save").
+  - [x] Offer one searchable picker everywhere a value is chosen - A command-palette style picker with keyboard navigation, reused for voices, models and devices. Fail-soft by contract: with an empty list you can still keep the current value or type one.
+  - [x] Show the controls the active provider actually has - Settings adapt to the selected provider instead of showing a hardwired set, and changing an endpoint resets the model list to that endpoint's namespace rather than leaving a stale selection.
+  - [x] Settings only expose specifics of a provider (LLM, TTS, STT), such as selected voice(s), Model, etc. for the currently selected provider.
+  - [x] Protect safety-critical settings from the model - Rows gating keyboard actions and macros are marked protected: never changeable through a tool the model can call, because the model consumes untrusted text and a guard it can flip is privilege escalation. Protected is a property of the caller, not of the modality. The panel, a hotkey and the model-free keyword router all reach these rows; the LLM path does not.
+  - [x] Say what each provider receives - A settings row and a documentation page stating exactly what leaves the machine for each enabled provider: system and station names to INARA, turn text and game context to a cloud LLM, reply text to a paid TTS, query text to web search. What is currently leaving is answerable at any time, and local-only operation is a reachable configuration rather than a theoretical one.
+  - [x] Link each settings row to its documentation - A setup-guide link per settings row pointing at that setting's page. In-app help stays the short form; the page is the long form.
+  - [x] Collapse settings cards - Collapsible sections whose collapse state is remembered as a view preference, not a setting, and applied before first paint so a collapsed card never flashes open.
+  - [x] Settings Nav Menu - Is present and highlights the section based on the topmost visible setting.
+  - [x] Hotkey Binding - (Only in main window) Press the key to bind it.
+  - [x] Themes - Dark, light, default Elite-flavored, Guardian, and based on the current Elite Color Scheme palette, with color living in one place so no view hardcodes a literal.
 
 - [ ] **Phase 5 — Speaking**
   - [ ] One audio stream - Everything audible goes through one queue with priority and supersede, including audio cues, so ducking, interruption and captioning need no second mechanism. One arbiter for every voice, because separate paths per voice are how a line gets spoken in the wrong one. The arbiter exposes a render-side reference tap from the start, since echo cancellation needs the far-end signal and retrofitting that tap means opening the one component every voice path depends on.

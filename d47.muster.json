@@ -262,6 +262,201 @@
           "text": "Finally relaunch normally with `dotnet run --project src/D47.App` and confirm NO banner appears, since the build is then current."
         }
       ]
+    },
+    {
+      "id": "settings-window-live-apply",
+      "title": "Settings open from the window and every change applies with no save button",
+      "section": "4. Settings surface",
+      "tags": [],
+      "expected": "The settings window opens on F10 or the Settings button. Changing the theme repaints the app the moment the combo changes - both windows, no restart, no save step. The change survives closing and relaunching d47.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Launch with `dotnet run --project src/D47.App` and press F10 (or click Settings)."
+        },
+        {
+          "id": "s2",
+          "text": "In the Interface card, change Theme to `guardian` and watch both the settings window and the main window repaint immediately."
+        },
+        {
+          "id": "s3",
+          "text": "Close d47 entirely, relaunch, and confirm it comes back in Guardian colours."
+        },
+        {
+          "id": "s4",
+          "text": "Open `data\\settings.json` beside the exe and confirm `\"theme\": \"guardian\"` was written without you saving anything."
+        }
+      ]
+    },
+    {
+      "id": "settings-cards-collapse-remembered",
+      "title": "Collapsed cards stay collapsed across a restart, with no flash on open",
+      "section": "4. Settings surface",
+      "tags": [],
+      "expected": "A collapsed card is collapsed the next time the settings window opens - including after a full app restart - and it never flashes open before collapsing. The nav highlights the section under the top of the scroll as you scroll, and clicking a nav item jumps to its card.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Open Settings and collapse the Diagnostics card by clicking its header."
+        },
+        {
+          "id": "s2",
+          "text": "Close the settings window, reopen it, and confirm Diagnostics is still collapsed with no flash of it open."
+        },
+        {
+          "id": "s3",
+          "text": "Restart d47, reopen Settings, and confirm the collapse survived. Note `data\\view-state.json` holds it - not settings.json, because how the panel was left is not a setting."
+        },
+        {
+          "id": "s4",
+          "text": "Scroll the panel slowly to the bottom and watch the nav highlight walk through the sections; confirm the last section highlights when you reach the end."
+        },
+        {
+          "id": "s5",
+          "text": "Click `Language model` in the nav and confirm the panel jumps to that card."
+        }
+      ]
+    },
+    {
+      "id": "settings-key-store-no-restart",
+      "title": "Storing an API key brings the model up without a restart",
+      "section": "4. Settings surface",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "An Anthropic API key, NOT set in the environment. Launch from a shell where `Remove-Item Env:ANTHROPIC_API_KEY` has run.",
+      "expected": "With no key the model reports unavailable. Pasting a key into the settings row and clicking Store flips the model to available for the very next turn - no restart. The row shows only 'A key is stored', never the key, and `data\\secrets.json` holds ciphertext, not the key.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Launch with no key in the environment and confirm the transcript reports the model unavailable, pointing at Settings."
+        },
+        {
+          "id": "s2",
+          "text": "Open Settings -> Language model, paste your key into the Anthropic API key row, click Store. Confirm the row now reads 'A key is stored.' and the box emptied itself."
+        },
+        {
+          "id": "s3",
+          "text": "Without restarting, ask `explain how a frame shift drive works` and confirm a real model answer arrives, `Answered via Model`."
+        },
+        {
+          "id": "s4",
+          "text": "Open `data\\secrets.json` and confirm the value is an opaque blob, not your key."
+        },
+        {
+          "id": "s5",
+          "text": "Click Clear on the key row and confirm the next turn routes to unsure again, with the key-missing reason."
+        }
+      ]
+    },
+    {
+      "id": "settings-provider-shape-endpoint-reset",
+      "title": "Rows follow the selected provider, and an endpoint change resets the model",
+      "section": "4. Settings surface",
+      "tags": [],
+      "expected": "Selecting provider `none` removes the endpoint, key and model rows entirely (not greyed out). Back on `anthropic`, setting a custom endpoint clears the model selection and empties the picker's list - which still lets you type a model name of your own.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Open Settings -> Language model and set Provider to `none`. Confirm the endpoint, API key and model rows vanish rather than grey out."
+        },
+        {
+          "id": "s2",
+          "text": "Set Provider back to `anthropic`. Confirm the rows return and the model picker offers the Claude list."
+        },
+        {
+          "id": "s3",
+          "text": "Pick a model, then set Endpoint to `https://gateway.example/v1`. Reopen the model picker: the selection is cleared and the list is empty, with an explanation."
+        },
+        {
+          "id": "s4",
+          "text": "Type `house-model-7` into the picker and accept it. Confirm it is accepted as the model - the fail-soft contract."
+        },
+        {
+          "id": "s5",
+          "text": "Clear the endpoint and confirm the model list comes back."
+        }
+      ]
+    },
+    {
+      "id": "settings-protected-from-model",
+      "title": "Protected settings refuse the model but obey the model-free phrase",
+      "section": "4. Settings surface",
+      "tags": [
+        "NET",
+        "KEY"
+      ],
+      "requires": "A configured model, so the LLM path is the one being refused.",
+      "expected": "Asking the model to change the provider is refused with a message naming the settings panel, and the setting does not change. The fixed phrase `stop checking for updates` - whole utterance, no model involved - flips the protected update-check row, routed as `SettingCommand`.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "With a model configured, type `please set your provider to none` and confirm the reply refuses, says the row is protected, and points at the settings panel."
+        },
+        {
+          "id": "s2",
+          "text": "Open Settings and confirm Provider is unchanged."
+        },
+        {
+          "id": "s3",
+          "text": "Type `stop checking for updates` (exactly - the whole utterance is the command). Confirm it applies, and the provenance line reads `SettingCommand`."
+        },
+        {
+          "id": "s4",
+          "text": "Confirm the toggle in Settings -> Privacy and egress turned off by itself, and `what are you sending` now reports the update check inactive."
+        },
+        {
+          "id": "s5",
+          "text": "Type `what does personality off actually change` and confirm it is answered as a question - not executed as a command."
+        }
+      ]
+    },
+    {
+      "id": "settings-hotkey-bind-by-press",
+      "title": "A hotkey is bound by pressing it",
+      "section": "4. Settings surface",
+      "tags": [],
+      "expected": "Clicking the binding button arms it; the next chord pressed becomes the binding and shows on the button; Escape cancels; Unbind clears it. The new gesture works immediately in the main window.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "Open Settings -> Interface, click the `Open settings` binding button, and press Ctrl+Shift+S. Confirm the button now reads Ctrl+Shift+S."
+        },
+        {
+          "id": "s2",
+          "text": "Close the settings window. In the main window press Ctrl+Shift+S and confirm settings open - and that F10 no longer does."
+        },
+        {
+          "id": "s3",
+          "text": "Click the binding button again and press Escape. Confirm the binding is unchanged."
+        },
+        {
+          "id": "s4",
+          "text": "Click Unbind, close settings, and confirm no key opens it while the button still does."
+        }
+      ]
+    },
+    {
+      "id": "settings-egress-disclosure-truth",
+      "title": "The egress card tells the truth about what is leaving right now",
+      "section": "4. Settings surface",
+      "tags": [],
+      "expected": "Each disclosure row describes the current configuration: no key stored reads as nothing sent; storing a key flips the language-model row to name the endpoint; provider none plus update check off reads as nothing leaving at all. `what are you sending` answers the same thing in the transcript.",
+      "steps": [
+        {
+          "id": "s1",
+          "text": "With no key stored, open Settings -> Privacy and egress and confirm the Language model row reads 'nothing sent' with the no-key explanation."
+        },
+        {
+          "id": "s2",
+          "text": "Type `what are you sending` in the main window and confirm the transcript matches the card, listing the silent destinations too - logs and journal files."
+        },
+        {
+          "id": "s3",
+          "text": "Set Provider to `none` and turn off the update check. Confirm `what are you sending` now opens with nothing leaving this machine."
+        }
+      ]
     }
   ],
   "runs": [
