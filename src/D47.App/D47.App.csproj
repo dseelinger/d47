@@ -31,6 +31,17 @@
   </ItemGroup>
 
   <!--
+    Avalonia.BuildServices is build-time telemetry that Avalonia pulls in transitively: an
+    MSBuild task that phones home on every compile. It never ships in the exe, but "no
+    telemetry" should not come with a "runtime only" asterisk, and the package's own opt-out
+    is an environment variable someone has to remember on every machine. ExcludeAssets="all"
+    keeps its .targets from being imported at all, so the task simply never runs.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
     SkiaSharp and HarfBuzzSharp ship native .pdb files as runtime assets (105 MB between
     them). Symbols for our own code are embedded in the exe, so nothing in publish output
     should be a .pdb.
