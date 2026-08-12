@@ -25,7 +25,7 @@ namespace D47.App.Tests;
 public class SettingsSurfaceTests
 {
     /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
-    private static (SettingsService Settings, ViewStateStore ViewState, string Root) Surface()
+    private static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Surface()
     {
         var root = Directory.CreateTempSubdirectory("d47-app-tests").FullName;
         var paths = new AppPaths(root);
@@ -46,10 +46,10 @@ public class SettingsSurfaceTests
 
         settings.Bind(registry);
 
-        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), root);
+        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths);
     }
 
-    private static SettingsWindow Open(SettingsService settings, ViewStateStore viewState)
+    private static SettingsWindow Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         // FollowSettings, not a one-shot Apply: the theme captures below change the setting
         // and expect the palette to follow, exactly as the app wires it.
@@ -57,7 +57,7 @@ public class SettingsSurfaceTests
             .FollowSettings(settings);
 
         var window = new SettingsWindow();
-        window.Attach(settings, viewState);
+        window.Attach(settings, viewState, paths);
         window.Show();
 
         return window;
@@ -66,9 +66,9 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void TheSettingsWindowOpensWithEveryRegisteredSection()
     {
-        var (settings, viewState, _) = Surface();
+        var (settings, viewState, paths) = Surface();
 
-        var window = Open(settings, viewState);
+        var window = Open(settings, viewState, paths);
 
         // Rendering is the assertion that matters: measure, arrange and paint all ran over
         // every generated row without a control throwing.
@@ -81,8 +81,8 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void AChangeMadeInCoreIsReflectedWithoutRebuildingTheView()
     {
-        var (settings, viewState, _) = Surface();
-        var window = Open(settings, viewState);
+        var (settings, viewState, paths) = Surface();
+        var window = Open(settings, viewState, paths);
 
         // A change from any caller — here the keyword-router path — announces itself and the
         // open panel follows. No restart, and no save button anywhere on the surface.
@@ -103,11 +103,11 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void EveryThemeRendersToACapture()
     {
-        var (settings, viewState, _) = Surface();
+        var (settings, viewState, paths) = Surface();
         var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
         Directory.CreateDirectory(output);
 
-        var window = Open(settings, viewState);
+        var window = Open(settings, viewState, paths);
 
         foreach (var theme in D47.Core.Interface.ThemeCatalog.All)
         {
@@ -139,6 +139,46 @@ public class SettingsSurfaceTests
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         window.Close();
+    }
+
+    /// <summary>
+    /// The main window, captured for the same reason: its header and its send glyph are things
+    /// a person judges by looking, and looking should not require launching the app.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMainWindowRenders()
+    {
+        var (settings, _, _) = Surface();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .Apply(settings.Current.Ui.Theme);
+
+        // No host: the window paints its chrome and says so in the transcript, which is all
+        // this capture is for.
+        var window = new MainWindow(host: null);
+        window.Show();
+
+        var frame = window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
+
+        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
+        Directory.CreateDirectory(output);
+        frame.Save(
+            Path.Combine(output, "main-window.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The mark is wired, not merely committed. An icon that silently stops being embedded
+    /// looks like nothing at all until someone notices the taskbar has gone generic.
+    /// </summary>
+    [AvaloniaFact]
+    public void EveryWindowCarriesTheApplicationIcon()
+    {
+        Assert.NotNull(new MainWindow(host: null).Icon);
+        Assert.NotNull(new SettingsWindow().Icon);
     }
 
     private sealed class NoopProtector : ISecretProtector

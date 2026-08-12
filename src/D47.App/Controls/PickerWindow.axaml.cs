@@ -13,6 +13,12 @@ public sealed record PickerRequest
 
     public IReadOnlyList<string> Choices { get; init; } = [];
 
+    /// <summary>
+    /// How a choice is written for a person. The value chosen is still the underlying one, so
+    /// what lands in settings is an id whatever the list looked like.
+    /// </summary>
+    public Func<string, string>? Describe { get; init; }
+
     /// <summary>What is selected now, so cancelling and keeping are the same thing.</summary>
     public string? Current { get; init; }
 
@@ -40,6 +46,9 @@ public sealed record PickerResult(string? Value);
 public partial class PickerWindow : Window
 {
     private PickerRequest _request = new() { Prompt = "Choose" };
+
+    /// <summary>The values behind the labels currently listed, in the same order.</summary>
+    private IReadOnlyList<string> _visible = [];
 
     public PickerWindow()
     {
@@ -73,7 +82,11 @@ public partial class PickerWindow : Window
 
         // Selecting the current value means Enter with no typing keeps what you had, which is
         // the least surprising thing a picker opened by accident can do.
-        Choices.SelectedItem = _request.Current;
+        Choices.SelectedIndex = _request.Current is null
+            ? -1
+            : Array.FindIndex(
+                _visible.ToArray(),
+                value => string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase));
 
         Opened += (_, _) =>
         {
@@ -82,16 +95,22 @@ public partial class PickerWindow : Window
         };
     }
 
+    private string Label(string choice) => _request.Describe?.Invoke(choice) ?? choice;
+
     private void ApplyFilter()
     {
         var filter = FilterBox.Text?.Trim() ?? string.Empty;
 
+        // Matches on either what it is called or what it is named, so a Commander who types
+        // what they can see finds it, and one who types the id does too.
         var matches = _request.Choices
             .Where(choice => filter.Length == 0
-                             || choice.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                             || choice.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                             || Label(choice).Contains(filter, StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
-        Choices.ItemsSource = matches;
+        _visible = matches;
+        Choices.ItemsSource = matches.Select(Label).ToArray();
         Choices.IsVisible = matches.Length > 0;
 
         EmptyHint.IsVisible = matches.Length == 0;
@@ -145,9 +164,9 @@ public partial class PickerWindow : Window
     private void Accept()
     {
         // A selection wins over typed text, because typing is how you got to the selection.
-        if (Choices.SelectedItem is string chosen)
+        if (Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count)
         {
-            Close(new PickerResult(chosen));
+            Close(new PickerResult(_visible[Choices.SelectedIndex]));
             return;
         }
 

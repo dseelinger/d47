@@ -53,7 +53,15 @@ public static class DiagnosticsCapability
                 "log level",
                 "logging level",
             ],
-            Display = new CapabilityDisplay { PanelTitle = "Diagnostics", Order = 10 },
+            // Last on the panel and closed by default. It is the card a Commander opens when
+            // something else is misbehaving; nine log levels sitting above the model settings
+            // made the panel look like it was mostly about logging.
+            Display = new CapabilityDisplay
+            {
+                PanelTitle = "Diagnostics",
+                Order = 90,
+                StartCollapsed = true,
+            },
             Tools =
             [
                 new ToolDefinition
@@ -170,8 +178,14 @@ public static class DiagnosticsCapability
         rows.AddRange(Subsystems.All.Select(subsystem => new SettingRow
         {
             Key = LevelRowFor(subsystem),
-            Label = $"{subsystem} log level",
-            Help = $"Minimum level for the {subsystem} subsystem. Changes apply immediately.",
+            // Terse on purpose: nine rows each explaining that they are one subsystem's level
+            // is nine copies of one sentence. The group heading says it once.
+            Label = Subsystems.DisplayName(subsystem),
+            Help = string.Empty,
+            Group = "Per-subsystem levels",
+            GroupHelp =
+                "Each overrides the default above for one subsystem. Leave a subsystem on "
+                + "(default) to follow it. Changes apply on the next log line.",
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
             DocsAnchor = "subsystem-log-levels",

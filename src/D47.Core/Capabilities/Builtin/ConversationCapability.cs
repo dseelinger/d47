@@ -104,7 +104,7 @@ public static class ConversationCapability
                 Help = "Which language model answers. \"None\" keeps every turn on this machine.",
                 Kind = SettingKind.Choice,
                 Choices = LlmProviderCatalog.Ids,
-                DefaultDisplay = LlmProviderCatalog.AnthropicId,
+                ChoiceLabel = id => LlmProviderCatalog.Selected(id).Name,
                 DocsAnchor = "provider",
                 // Protected: choosing a provider chooses where your turns go. A model that can
                 // point itself at another endpoint is a model that can be told to, by text it

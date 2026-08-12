@@ -7,7 +7,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Controls;
+using D47.App.Input;
 using D47.App.Theming;
+using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 
@@ -40,6 +42,7 @@ public partial class SettingsView : UserControl
     private SettingsService? _settings;
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
+    private AppPaths? _paths;
 
     /// <summary>True while controls are being written from settings rather than read from.</summary>
     private bool _refreshing;
@@ -55,11 +58,16 @@ public partial class SettingsView : UserControl
     /// Binds the view to a live settings service. Called once; the view then follows the
     /// service rather than being told when to update.
     /// </summary>
-    public void Attach(SettingsService settings, ViewStateStore viewState)
+    public void Attach(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         _settings = settings;
         _viewStateStore = viewState;
         _viewState = viewState.Load();
+        _paths = paths;
+
+        StorageLine.Text =
+            $"Saved as you go, to {paths.SettingsFile}. Keys are encrypted separately in secrets.json, "
+            + "and how this panel is left is remembered in view-state.json.";
 
         Build();
 
@@ -114,11 +122,24 @@ public partial class SettingsView : UserControl
             Margin = new Thickness(18, 4, 18, 18),
             // Applied while building, not after painting: a card that flashes open and then
             // collapses is worse than one that never remembered (list.md Phase 4).
-            IsVisible = !_viewState.CollapsedCards.Contains(section.Capability.Id, StringComparer.Ordinal),
+            IsVisible = _viewState.IsExpanded(section.Capability.Id, section.Capability.Display.StartCollapsed),
         };
+
+        string? currentGroup = null;
 
         foreach (var row in section.Rows)
         {
+            // A group heading, stated once, in place of the same sentence on every row.
+            if (row.Group is { } group && group != currentGroup)
+            {
+                content.Children.Add(BuildGroupHeading(group, row.GroupHelp));
+                currentGroup = group;
+            }
+            else if (row.Group is null)
+            {
+                currentGroup = null;
+            }
+
             var view = BuildRow(section.Capability, row);
             _rows.Add(view);
             content.Children.Add(view.Container);
@@ -179,6 +200,33 @@ public partial class SettingsView : UserControl
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
         return card;
+    }
+
+    private Control BuildGroupHeading(string group, string? help)
+    {
+        var heading = new TextBlock
+        {
+            Text = group,
+            FontSize = 11,
+            FontWeight = FontWeight.Medium,
+        };
+        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 0) };
+        stack.Children.Add(heading);
+
+        if (!string.IsNullOrWhiteSpace(help))
+        {
+            var note = new TextBlock { Text = help, FontSize = 11, TextWrapping = TextWrapping.Wrap };
+            Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            stack.Children.Add(note);
+        }
+
+        var rule = new Border { Height = 1, Margin = new Thickness(0, 8, 0, 0) };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
+        stack.Children.Add(rule);
+
+        return stack;
     }
 
     private (Border Item, Border Bar, TextBlock Text) BuildNavItem(int index, string title)
@@ -318,15 +366,16 @@ public partial class SettingsView : UserControl
 
     private void RememberCollapse(string capabilityId, bool expanded)
     {
-        var collapsed = _viewState.CollapsedCards.Where(id => id != capabilityId).ToList();
-
-        if (!expanded)
-        {
-            collapsed.Add(capabilityId);
-        }
-
-        _viewState = _viewState with { CollapsedCards = collapsed };
+        _viewState = _viewState.With(capabilityId, expanded);
         _viewStateStore?.Save(_viewState);
+    }
+
+    private void OnOpenDataFolderClick(object? sender, RoutedEventArgs e)
+    {
+        if (_paths is not null)
+        {
+            Process.Start(new ProcessStartInfo(_paths.Data) { UseShellExecute = true });
+        }
     }
 
     /// <summary>
@@ -415,6 +464,7 @@ public partial class SettingsView : UserControl
             FontSize = 11,
             Margin = new Thickness(0, 2, 0, 0),
             TextWrapping = TextWrapping.Wrap,
+            IsVisible = !string.IsNullOrWhiteSpace(row.Help),
         };
         Themed(help, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -536,18 +586,24 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildComboBox(SettingRow row, TextBlock message)
     {
-        var combo = new ComboBox { MinWidth = 170, HorizontalAlignment = HorizontalAlignment.Right };
+        var combo = new ComboBox { MinWidth = 190, HorizontalAlignment = HorizontalAlignment.Right };
 
         var choices = row.Choices;
 
-        // Index 0 stands for "no choice made": the default applies and stays visually distinct
-        // from a value the Commander actually picked (list.md Phase 4).
-        var items = new List<string>
+        // A clear item only where clearing means something. Provider and theme always hold a
+        // value, so "(default: anthropic)" above "anthropic" would be the same answer twice.
+        var clearable = row.IsClearable;
+
+        var items = new List<string>();
+        if (clearable)
         {
-            row.DefaultDisplay is null ? "(default)" : $"(default: {row.DefaultDisplay})",
-        };
-        items.AddRange(choices);
+            items.Add(row.DefaultDisplay is null ? "(default)" : $"(default: {row.DefaultDisplay})");
+        }
+
+        items.AddRange(choices.Select(row.LabelForChoice));
         combo.ItemsSource = items;
+
+        var offset = clearable ? 1 : 0;
 
         combo.SelectionChanged += (_, _) =>
         {
@@ -556,20 +612,20 @@ public partial class SettingsView : UserControl
                 return;
             }
 
-            Apply(row, combo.SelectedIndex == 0 ? null : choices[combo.SelectedIndex - 1], message);
+            Apply(row, clearable && combo.SelectedIndex == 0 ? null : choices[combo.SelectedIndex - offset], message);
         };
 
         return (combo, () =>
         {
             var value = _settings!.Read(row.Key);
-            var index = value is null
-                ? 0
+            var found = value is null
+                ? -1
                 : choices.Select((choice, i) => (choice, i))
                     .Where(pair => string.Equals(pair.choice, value, StringComparison.OrdinalIgnoreCase))
-                    .Select(pair => pair.i + 1)
-                    .FirstOrDefault();
+                    .Select(pair => (int?)pair.i)
+                    .FirstOrDefault() ?? -1;
 
-            combo.SelectedIndex = index;
+            combo.SelectedIndex = found < 0 ? (clearable ? 0 : -1) : found + offset;
         }, true);
     }
 
@@ -588,17 +644,25 @@ public partial class SettingsView : UserControl
         var button = new Button
         {
             Content = layout,
-            Padding = new Thickness(10, 6),
+            Padding = new Thickness(11, 6),
+            BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Right,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
         };
+
+        // Dressed as the combo box beside it, because it does the same job. The default button
+        // chrome reads as disabled next to a real combo, which is the opposite of the truth.
+        Themed(button, Button.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(button, Button.BorderBrushProperty, ThemeManager.BorderKey);
 
         button.Click += async (_, _) => await ChooseAsync(row, button, message);
 
         return (button, () =>
         {
             var current = _settings!.Read(row.Key);
-            value.Text = current ?? $"{row.DefaultDisplayFor(_settings.Current) ?? "not set"} (default)";
+            value.Text = current is null
+                ? $"{row.DefaultDisplayFor(_settings.Current) ?? "not set"} (default)"
+                : row.LabelForChoice(current);
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
         }, true);
     }
@@ -634,8 +698,8 @@ public partial class SettingsView : UserControl
         {
             AcceptsReturn = row.Multiline,
             TextWrapping = row.Multiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            MaxWidth = 460,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Width = 460,
         };
 
         if (row.Multiline)
@@ -730,7 +794,11 @@ public partial class SettingsView : UserControl
         panel.Children.Add(button);
         panel.Children.Add(clear);
 
-        return (panel, () => button.Content = _settings!.Read(row.Key) ?? "Press to bind", true);
+        return (panel, () =>
+        {
+            var bound = _settings!.Read(row.Key);
+            button.Content = bound is null ? "Press to bind" : Gestures.Describe(bound);
+        }, true);
     }
 
     private async Task ChooseAsync(SettingRow row, Button button, TextBlock message)
@@ -745,8 +813,9 @@ public partial class SettingsView : UserControl
             Prompt = row.Label,
             Help = row.Help,
             Choices = row.ChoicesFor(_settings.Current),
+            Describe = row.ChoiceLabel,
             Current = _settings.Read(row.Key),
-            DefaultDisplay = row.DefaultDisplayFor(_settings.Current),
+            DefaultDisplay = row.IsClearable ? row.DefaultDisplayFor(_settings.Current) : null,
             AllowsFreeText = row.AllowsFreeText,
         });
 

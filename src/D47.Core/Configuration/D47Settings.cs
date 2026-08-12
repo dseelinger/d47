@@ -8,6 +8,13 @@ namespace D47.Core.Configuration;
 /// </summary>
 public sealed record D47Settings
 {
+    /// <summary>
+    /// Settings as they are before anyone chooses anything. A row reads this to answer "does
+    /// this setting have an unset state at all" — which decides whether the panel offers a way
+    /// to clear it. Asking the binding beats a second flag that could disagree with it.
+    /// </summary>
+    public static readonly D47Settings Defaults = new();
+
     public int SchemaVersion { get; init; } = 1;
 
     public LoggingSettings Logging { get; init; } = new();
@@ -86,7 +93,11 @@ public sealed record UiSettings
 /// </summary>
 public sealed record HotkeySettings
 {
-    public string? OpenSettings { get; init; } = "F10";
+    /// <summary>
+    /// Ctrl+comma, which is what VS Code, Chrome, Slack and Discord all use for settings.
+    /// Stored in <see cref="Avalonia"/>'s own gesture spelling, hence OemComma.
+    /// </summary>
+    public string? OpenSettings { get; init; } = "Ctrl+OemComma";
 
     public string? FocusAsk { get; init; } = "Ctrl+L";
 }

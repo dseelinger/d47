@@ -33,16 +33,40 @@
       </DockPanel>
     </Border>
 
-    <ScrollViewer Grid.Column="1"
-                  x:Name="Scroller"
-                  ScrollChanged="OnScrollChanged"
-                  HorizontalScrollBarVisibility="Disabled">
-      <StackPanel x:Name="Cards"
-                  Margin="28,20,28,28"
-                  Spacing="14"
-                  MaxWidth="700"
-                  HorizontalAlignment="Left" />
-    </ScrollViewer>
+    <DockPanel Grid.Column="1">
+
+      <!-- Where all this ends up. A settings panel that will not say where it writes is a
+           settings panel you have to go and find out about. -->
+      <Border DockPanel.Dock="Bottom"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="0,1,0,0"
+              Padding="28,10">
+        <DockPanel>
+          <Button x:Name="OpenDataFolder"
+                  DockPanel.Dock="Right"
+                  Content="Open data folder"
+                  FontSize="11"
+                  Padding="10,4"
+                  Click="OnOpenDataFolderClick" />
+          <TextBlock x:Name="StorageLine"
+                     FontSize="11"
+                     VerticalAlignment="Center"
+                     TextWrapping="Wrap"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+        </DockPanel>
+      </Border>
+
+      <ScrollViewer x:Name="Scroller"
+                    ScrollChanged="OnScrollChanged"
+                    HorizontalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="Cards"
+                    Margin="28,20,28,28"
+                    Spacing="14"
+                    MaxWidth="700"
+                    HorizontalAlignment="Left" />
+      </ScrollViewer>
+
+    </DockPanel>
 
   </Grid>
 </UserControl>

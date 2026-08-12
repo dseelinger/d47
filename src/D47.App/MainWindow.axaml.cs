@@ -5,6 +5,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using D47.App.Settings;
 using D47.App.Updates;
+using Avalonia.Media;
+using D47.App.Input;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -39,7 +41,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        VersionLine.Text = $"build {_host.Version}";
+        VersionLine.Text = $"Optimize Inferior Systems  ·  build {_host.Version}";
 
         var errors = new List<string>();
         if (_host.StartupError is { } startupError)
@@ -72,6 +74,7 @@ public partial class MainWindow : Window
         }
 
         DescribeHotkeys();
+        _host.Settings.Changed += _ => Avalonia.Threading.Dispatcher.UIThread.Post(DescribeHotkeys);
         AskBox.Focus();
 
         // Optional in two senses: it must never delay the status the Commander is here for, and
@@ -140,18 +143,26 @@ public partial class MainWindow : Window
 
         var open = _host.Settings.Current.Hotkeys.OpenSettings;
 
+        // Read from settings rather than hardcoded, so rebinding the gesture updates the tip
+        // instead of leaving a "Ctrl+," that quietly became a lie.
         ToolTip.SetTip(
             SettingsButton,
-            open is null ? "Open settings" : $"Open settings ({open})");
+            open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");
     }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e) => OpenSettings();
+
+    private void OnSettingsPointerEntered(object? sender, PointerEventArgs e) =>
+        SettingsGlyph.Fill = this.FindResource("D47.Accent") as IBrush;
+
+    private void OnSettingsPointerExited(object? sender, PointerEventArgs e) =>
+        SettingsGlyph.Fill = this.FindResource("D47.TextMuted") as IBrush;
 
     private void OpenSettings()
     {
         if (_host is not null)
         {
-            SettingsWindow.Show(this, _host.Settings, _host.ViewState);
+            SettingsWindow.Show(this, _host.Settings, _host.ViewState, _host.Paths);
         }
     }
 

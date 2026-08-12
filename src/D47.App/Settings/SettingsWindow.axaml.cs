@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using D47.Core;
 using D47.Core.Configuration;
 
 namespace D47.App.Settings;
@@ -19,9 +20,10 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>Binds the hosted view. Public for the headless UI tests, which host it the same way.</summary>
-    public void Attach(SettingsService settings, ViewStateStore viewState) => View.Attach(settings, viewState);
+    public void Attach(SettingsService settings, ViewStateStore viewState, AppPaths paths) =>
+        View.Attach(settings, viewState, paths);
 
-    public static void Show(Window owner, SettingsService settings, ViewStateStore viewState)
+    public static void Show(Window owner, SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         if (_open is not null)
         {
@@ -30,7 +32,7 @@ public partial class SettingsWindow : Window
         }
 
         var window = new SettingsWindow();
-        window.Attach(settings, viewState);
+        window.Attach(settings, viewState, paths);
         window.Closed += (_, _) => _open = null;
 
         _open = window;

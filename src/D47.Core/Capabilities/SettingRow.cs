@@ -75,6 +75,13 @@ public sealed record SettingRow
     public IReadOnlyList<string> Choices { get; init; } = [];
 
     /// <summary>
+    /// How a choice is written for a person. Values stay ids — `anthropic`, `elite-palette` —
+    /// because that is what goes in the settings file and what a tool call names; only the
+    /// label changes. Null means the id reads fine as-is, which is true of log levels.
+    /// </summary>
+    public Func<string, string>? ChoiceLabel { get; init; }
+
+    /// <summary>
     /// Choices that depend on other settings — the model list belongs to the selected
     /// provider's endpoint, not to the app. Takes precedence over <see cref="Choices"/>.
     /// </summary>
@@ -121,6 +128,16 @@ public sealed record SettingRow
     public bool Multiline { get; init; }
 
     /// <summary>
+    /// An optional subheading these rows sit under. Rows sharing a group render together with
+    /// the explanation stated once, instead of repeating it per row — which is what nine
+    /// near-identical subsystem rows looked like before.
+    /// </summary>
+    public string? Group { get; init; }
+
+    /// <summary>Shown under the group heading, once, for the whole group.</summary>
+    public string? GroupHelp { get; init; }
+
+    /// <summary>
     /// Never settable through a tool the model can call — the panel, a hotkey and the
     /// model-free keyword router reach it, the LLM path does not (list.md Phase 4). The
     /// protected set is a property of the caller, so it is enforced in one place:
@@ -135,4 +152,15 @@ public sealed record SettingRow
 
     public string? DefaultDisplayFor(D47Settings settings) =>
         DefaultDisplaySource?.Invoke(settings) ?? DefaultDisplay;
+
+    public string LabelForChoice(string choice) => ChoiceLabel?.Invoke(choice) ?? choice;
+
+    /// <summary>
+    /// Whether "nothing chosen" is a state this row can be in. Provider and theme always hold a
+    /// real value, so offering to clear them would mean offering the same answer twice —
+    /// `(default: anthropic)` sitting directly above `anthropic`. Answered by asking the
+    /// binding what it reads when nothing has been set, so it cannot drift from the binding.
+    /// </summary>
+    public bool IsClearable =>
+        Binding is { Write: not null } binding && binding.Read(D47Settings.Defaults) is null;
 }

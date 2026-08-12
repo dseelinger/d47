@@ -12,8 +12,53 @@ namespace D47.Core.Configuration;
 /// </summary>
 public sealed record ViewState
 {
-    /// <summary>Capability ids whose settings card is collapsed.</summary>
+    /// <summary>Capability ids the Commander collapsed.</summary>
     public IReadOnlyList<string> CollapsedCards { get; init; } = [];
+
+    /// <summary>
+    /// Capability ids the Commander expanded. Kept separately from the collapsed list because
+    /// a card can start collapsed by default: without this, expanding one would be
+    /// indistinguishable from never having touched it, and it would close again next time.
+    /// </summary>
+    public IReadOnlyList<string> ExpandedCards { get; init; } = [];
+
+    /// <summary>
+    /// Whether a card should be open, given what the capability asked for and what the
+    /// Commander has since said. Their choice wins in both directions.
+    /// </summary>
+    public bool IsExpanded(string capabilityId, bool startCollapsed)
+    {
+        if (CollapsedCards.Contains(capabilityId, StringComparer.Ordinal))
+        {
+            return false;
+        }
+
+        if (ExpandedCards.Contains(capabilityId, StringComparer.Ordinal))
+        {
+            return true;
+        }
+
+        return !startCollapsed;
+    }
+
+    /// <summary>Records a card's new state as an explicit choice.</summary>
+    public ViewState With(string capabilityId, bool expanded) => this with
+    {
+        CollapsedCards = Without(CollapsedCards, capabilityId, add: !expanded),
+        ExpandedCards = Without(ExpandedCards, capabilityId, add: expanded),
+    };
+
+    private static IReadOnlyList<string> Without(IReadOnlyList<string> ids, string id, bool add)
+    {
+        var next = ids.Where(existing => !string.Equals(existing, id, StringComparison.Ordinal)).ToList();
+
+        if (add)
+        {
+            next.Add(id);
+        }
+
+        return next;
+    }
 }
 
 /// <summary>

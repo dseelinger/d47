@@ -26,6 +26,23 @@
     <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
 
+  <!--
+    The mark, in the two places it is read from. ApplicationIcon compiles it into the
+    executable's icon resource, which is what Explorer, the taskbar and alt-tab read with
+    nothing running. AvaloniaResource is what the windows read at runtime for their title
+    bars - Avalonia, unlike WPF, does not fall back to the executable's icon.
+
+    One file, linked from the repository root rather than copied into this project, because
+    assets/ is repository content and a second copy is a second thing to keep in step.
+  -->
+  <PropertyGroup>
+    <ApplicationIcon>..\..\assets\directive-47.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\assets\directive-47.ico" Link="Assets\directive-47.ico" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
     <ProjectReference Include="..\D47.Llm\D47.Llm.csproj" />

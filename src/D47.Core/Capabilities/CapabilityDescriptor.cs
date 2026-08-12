@@ -8,6 +8,14 @@ public sealed record CapabilityDisplay
     public int Order { get; init; } = 100;
 
     public bool ShowOnPanel { get; init; } = true;
+
+    /// <summary>
+    /// Whether the settings card starts collapsed on a panel that has never been touched. For
+    /// a card the Commander opens once a year — nine log levels — starting closed is the
+    /// difference between a panel about d47 and a panel about logging. Their own collapse
+    /// choice, once made, outranks this.
+    /// </summary>
+    public bool StartCollapsed { get; init; }
 }
 
 /// <summary>

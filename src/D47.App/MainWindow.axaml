@@ -1,30 +1,47 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="D47.App.MainWindow"
-        Title="d47"
+        Title="Directive 47"
+        Icon="/Assets/directive-47.ico"
         Width="820" Height="640"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource D47.Background}"
         Foreground="{DynamicResource D47.Text}">
 
-  <DockPanel Margin="24">
+  <DockPanel Margin="24,16,24,24">
 
     <!-- Colour by role, never by literal: every brush here is a theme resource, so switching
          theme repaints this window without it knowing a theme exists (list.md Phase 4). -->
     <DockPanel DockPanel.Dock="Top">
+      <!--
+        A gear, not a labelled button: this is reached once a session and every desktop app of
+        the last decade puts one here, so the convention carries it without spending a word of
+        the header on it. The geometry is authored in-repo rather than lifted from an icon set,
+        which keeps the licence graph as clean as the dependency graph.
+      -->
       <Button x:Name="SettingsButton"
               DockPanel.Dock="Right"
-              Content="Settings"
-              Padding="14,6"
+              Padding="9"
               VerticalAlignment="Top"
-              Click="OnSettingsClick" />
-      <StackPanel Spacing="2">
-        <TextBlock Text="d47" FontSize="30" FontWeight="Light" Foreground="{DynamicResource D47.Accent}" />
-        <TextBlock Text="Directive 47 — Optimize Inferior Systems"
-                   FontSize="12"
-                   Foreground="{DynamicResource D47.TextMuted}" />
-        <TextBlock x:Name="VersionLine" FontSize="11" Foreground="{DynamicResource D47.TextMuted}" />
-      </StackPanel>
+              CornerRadius="4"
+              Background="Transparent"
+              BorderThickness="0"
+              Click="OnSettingsClick"
+              PointerEntered="OnSettingsPointerEntered"
+              PointerExited="OnSettingsPointerExited">
+        <Path x:Name="SettingsGlyph"
+              Width="17" Height="17"
+              Stretch="Uniform"
+              Fill="{DynamicResource D47.TextMuted}"
+              Data="M 9.59,4.16 L 10.19,1.15 L 13.81,1.15 L 14.41,4.16 L 15.84,4.75 L 18.40,3.05 L 20.95,5.60 L 19.25,8.16 L 19.84,9.59 L 22.85,10.19 L 22.85,13.81 L 19.84,14.41 L 19.25,15.84 L 20.95,18.40 L 18.40,20.95 L 15.84,19.25 L 14.41,19.84 L 13.81,22.85 L 10.19,22.85 L 9.59,19.84 L 8.16,19.25 L 5.60,20.95 L 3.05,18.40 L 4.75,15.84 L 4.16,14.41 L 1.15,13.81 L 1.15,10.19 L 4.16,9.59 L 4.75,8.16 L 3.05,5.60 L 5.60,3.05 L 8.16,4.75 Z M 12.00,8.00 A 4.0,4.0 0 1 1 11.99,8.00 Z" />
+      </Button>
+      <!-- One quiet line. The name is in the window chrome and the version is the first thing
+           the transcript prints, so repeating either here would spend the panel's best space on
+           what the Commander already knows. -->
+      <TextBlock x:Name="VersionLine"
+                 FontSize="11"
+                 VerticalAlignment="Center"
+                 Foreground="{DynamicResource D47.TextMuted}" />
     </DockPanel>
 
     <!-- Settings that failed to load are said out loud, not swallowed. -->
@@ -65,12 +82,24 @@
     <!-- Ask box. Enter sends; the button is for discoverability. -->
     <Border DockPanel.Dock="Bottom" Margin="0,14,0,0">
       <DockPanel>
+        <!-- The send glyph, drawn in-repo like the gear. The label is gone because a paper
+             aeroplane next to a text box needs no caption anywhere a Commander has been. -->
         <Button x:Name="AskButton"
                 DockPanel.Dock="Right"
-                Content="Ask"
                 Margin="8,0,0,0"
-                Padding="18,6"
-                Click="OnAskClick" />
+                Padding="11,7"
+                CornerRadius="4"
+                Background="{DynamicResource D47.SurfaceAlt}"
+                BorderBrush="{DynamicResource D47.Border}"
+                BorderThickness="1"
+                ToolTip.Tip="Send (Enter)"
+                Click="OnAskClick">
+          <Path x:Name="AskGlyph"
+                Width="17" Height="17"
+                Stretch="Uniform"
+                Fill="{DynamicResource D47.Accent}"
+                Data="M 2.5,3 L 22,12 L 2.5,21 L 2.5,13.6 L 14.5,12 L 2.5,10.4 Z" />
+        </Button>
         <TextBox x:Name="AskBox"
                  PlaceholderText="Ask d47 something — try &quot;where am I&quot; or &quot;what's your status&quot;"
                  KeyDown="OnAskBoxKeyDown" />

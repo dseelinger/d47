@@ -97,7 +97,13 @@ public static class PrivacyCapability
         {
             Key = $"egress.{id}",
             Label = EgressDisclosure.NameOf(id),
-            Help = "Read-only. What d47 sends to this destination with the settings as they stand.",
+            // The heading below says "read-only" once for all four. Repeating it per row is
+            // how a disclosure starts reading as boilerplate instead of as a statement.
+            Help = string.Empty,
+            Group = "What leaves this machine",
+            GroupHelp =
+                "Read-only, and computed from the settings as they stand right now — not a "
+                + "description of what d47 could do in general.",
             Kind = SettingKind.Info,
             DocsAnchor = $"egress-{id}",
             Binding = new SettingBinding

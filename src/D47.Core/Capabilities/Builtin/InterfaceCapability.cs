@@ -35,7 +35,7 @@ public static class InterfaceCapability
                 Help = "Colour scheme. \"Elite colour scheme\" follows your own HUD matrix if the game has one.",
                 Kind = SettingKind.Choice,
                 Choices = ThemeCatalog.Ids,
-                DefaultDisplay = ThemeCatalog.Elite,
+                ChoiceLabel = id => ThemeCatalog.Selected(id).Name,
                 DocsAnchor = "theme",
                 Binding = new SettingBinding
                 {

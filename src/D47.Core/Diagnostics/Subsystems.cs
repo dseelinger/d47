@@ -38,6 +38,17 @@ public static class Subsystems
             [Input] = "D47.Input",
         };
 
+    /// <summary>
+    /// How a subsystem is written for a person. The identifier stays C#-cased because it is a
+    /// settings key and a log source prefix; only the label is fixed up.
+    /// </summary>
+    public static string DisplayName(string subsystem) => subsystem switch
+    {
+        Llm => "LLM",
+        Vr => "VR",
+        _ => subsystem,
+    };
+
     /// <summary>Returns the canonical casing, or null when the name is not a subsystem.</summary>
     public static string? Canonical(string name) =>
         All.FirstOrDefault(s => string.Equals(s, name, StringComparison.OrdinalIgnoreCase));
