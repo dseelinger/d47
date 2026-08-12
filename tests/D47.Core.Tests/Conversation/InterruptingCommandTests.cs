@@ -34,7 +34,8 @@ public class InterruptingCommandTests
             TestSurface.SilentSpeech(onSilence),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!));
+            () => built!,
+            TestSurface.SilentListening()));
 
         built = registry;
 
@@ -184,7 +185,8 @@ public class InterruptingCommandTests
             TestSurface.SilentSpeech(),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!));
+            () => built!,
+            TestSurface.SilentListening()));
 
         built = registry;
 
@@ -220,7 +222,8 @@ public class InterruptingCommandTests
             TestSurface.SilentSpeech(() => silenced++),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!));
+            () => built!,
+            TestSurface.SilentListening()));
 
         built = registry;
 

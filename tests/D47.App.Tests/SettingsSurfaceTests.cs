@@ -8,6 +8,7 @@ using D47.App.Theming;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Input;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -55,7 +56,15 @@ public class SettingsSurfaceTests
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!));
+            () => built!,
+            new ListeningCapability.ListeningSurface
+            {
+                InputDevices = () => [],
+                DeviceLabel = id => id,
+                CaptureState = () => (false, "No microphone in a headless test."),
+                TranscriberState = () => (false, null, "No transcriber in a headless test."),
+                Binds = () => EliteBinds.None,
+            }));
 
         built = registry;
 

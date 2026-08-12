@@ -29,13 +29,15 @@ public static class BuiltinCapabilities
         SpeechCapability.SpeechSurface speech,
         Conversation.TurnCancellation cancellation,
         CalloutEngine callouts,
-        Func<CapabilityRegistry> registry) =>
+        Func<CapabilityRegistry> registry,
+        ListeningCapability.ListeningSurface listening) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         SpeechCapability.Create(speech),
+        ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         PrivacyCapability.Create(settings),

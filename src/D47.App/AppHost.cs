@@ -1,4 +1,5 @@
 using System.Reflection;
+using D47.App.Input;
 using D47.App.Logging;
 using D47.App.Ticking;
 using D47.App.Updates;
@@ -12,7 +13,9 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
+using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Listening;
 using D47.Core.Ticking;
 using D47.Llm;
 using D47.Tts;
@@ -54,6 +57,10 @@ public sealed class AppHost : IDisposable
         AudioArbiter audio,
         CueLibrary cues,
         VoicePipeline voice,
+        ListenGate gate,
+        WasapiMicrophone microphone,
+        PushToTalkKey pushToTalk,
+        EliteBinds binds,
         string version,
         string? startupError)
     {
@@ -79,6 +86,10 @@ public sealed class AppHost : IDisposable
         Audio = audio;
         Cues = cues;
         Voice = voice;
+        Listening = gate;
+        Binds = binds;
+        _microphone = microphone;
+        _pushToTalk = pushToTalk;
         Version = version;
         StartupError = startupError;
     }
@@ -151,6 +162,22 @@ public sealed class AppHost : IDisposable
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
+
+    /// <summary>
+    /// The gate the microphone feeds. Exposed because a surface subscribes to its utterances —
+    /// the gate itself knows nothing about turns.
+    /// </summary>
+    public ListenGate Listening { get; }
+
+    /// <summary>
+    /// The Commander's Elite bindings, read once at startup. Read-only, and the same parse the
+    /// double-bind check and Phase 10's reachability both use.
+    /// </summary>
+    public EliteBinds Binds { get; }
+
+    private readonly WasapiMicrophone _microphone;
+
+    private readonly PushToTalkKey _pushToTalk;
 
     public string Version { get; }
 
@@ -279,6 +306,21 @@ public sealed class AppHost : IDisposable
             logger.LogError(ex, "No audio output could be opened; d47 will be silent");
         }
 
+        // Listening. The microphone runs continuously into the gate and the gate decides which
+        // part of that stream was addressed to d47 — push-to-talk is a policy over the stream,
+        // not a reason to start and stop the device (list.md Phase 6).
+        var gate = new ListenGate(WasapiMicrophone.SampleRate, loggerFactory.CreateLogger<ListenGate>());
+        var microphone = new WasapiMicrophone(gate, loggerFactory.CreateLogger<WasapiMicrophone>());
+        var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
+
+        // Read once at startup. The bindings file changes only when the Commander edits their
+        // controls, which they cannot do while d47 is the foreground window, so re-reading it
+        // ten times a second would be polling for an event that cannot happen.
+        var binds = BindsResolver.Resolve(
+            BindsResolver.DefaultBindingsDirectory(),
+            EliteInstallations(),
+            loggerFactory.CreateLogger<AppHost>());
+
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
         // The help capability answers from the registry it is itself registered in, so the
@@ -307,7 +349,20 @@ public sealed class AppHost : IDisposable
                 cancellation,
                 callouts,
                 () => built ?? throw new InvalidOperationException(
-                    "Spoken help was asked what d47 can do before the registry finished building.")));
+                    "Spoken help was asked what d47 can do before the registry finished building."),
+                new ListeningCapability.ListeningSurface
+                {
+                    InputDevices = () => [.. WasapiMicrophone.Devices().Select(device => device.Id)],
+                    DeviceLabel = id => WasapiMicrophone.Devices()
+                        .FirstOrDefault(device => device.Id == id).Name ?? id,
+                    CaptureState = () => (microphone.IsCapturing, microphone.Unavailable),
+
+                    // No transcriber yet. Reported as a state with the reason stated, which is
+                    // the same shape every other unconfigured capability takes.
+                    TranscriberState = () => (false, null,
+                        "No speech-to-text model is configured yet, so I capture audio but cannot turn it into words."),
+                    Binds = () => binds,
+                }));
 
         built = capabilities;
 
@@ -361,15 +416,33 @@ public sealed class AppHost : IDisposable
             audio,
             cues,
             voice,
+            gate,
+            microphone,
+            pushToTalk,
+            binds,
             version,
             startupError);
 
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();
+        host.ApplyListeningSettings();
 
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
+
+        // Push-to-talk, sampled here rather than hooked. This is the whole reason the tick runs
+        // at 10 Hz rather than 4: the period is the worst-case delay before a key-down is seen,
+        // and the gate's pre-roll is what absorbs it. See PushToTalkKey for why polling one
+        // virtual-key code beats the three alternatives.
+        tick.Add("push-to-talk", context =>
+        {
+            pushToTalk.Poll();
+            gate.Poll(context.Now);
+        });
+
+        pushToTalk.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
+        pushToTalk.Released += () => gate.KeyUp();
 
         // The async half of a synchronous tick. Callouts are produced on the tick thread, which
         // must not block, and spoken here on the thread pool — so a slow TTS synthesis cannot
@@ -555,6 +628,49 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// Rebuilds everything downstream of the listening settings: the device, the key, the gate
+    /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
+    /// drift (list.md Phase 4, "Apply every setting without a restart").
+    /// </summary>
+    private void ApplyListeningSettings()
+    {
+        var listening = Settings.Current.Listening;
+
+        Listening.Mode = listening.Mode == ListeningCapability.ToggleMode
+            ? ListenMode.Toggle
+            : ListenMode.PushToTalk;
+
+        Listening.PreRoll = TimeSpan.FromMilliseconds(listening.PreRollMilliseconds);
+
+        // Rebinding while the key is held would leave the gate open with nothing able to close
+        // it — the listening equivalent of a stranded key (architecture.md D4, rule 2).
+        _pushToTalk.ForceUp();
+
+        var bound = _pushToTalk.Bind(listening.PushToTalkKey);
+
+        if (!bound)
+        {
+            // No key, no microphone. d47 opening an input device it will never read from is
+            // exactly the surprise the unset default exists to avoid.
+            _microphone.Dispose();
+            return;
+        }
+
+        _microphone.Open(listening.InputDevice);
+
+        if (Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
+        {
+            // Logged at startup as well as answered on request: the symptom of a double-bound
+            // key is that nothing happens, which reads as d47 being broken.
+            _logger.LogWarning(
+                "Push-to-talk {Key} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
+                listening.PushToTalkKey,
+                Binds.PresetName,
+                string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
+        }
+    }
+
+    /// <summary>
     /// Says out loud that the model is not usable, if there is a voice to say it with.
     /// <para>
     /// The whole point of the item is that a misconfigured provider currently presents as
@@ -650,6 +766,10 @@ public sealed class AppHost : IDisposable
         {
             ApplyCalloutSettings(Callouts, Settings.Current);
         }
+        else if (change.Key.StartsWith("listening.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyListeningSettings();
+        }
     }
 
     /// <summary>
@@ -685,6 +805,36 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// Where Elite might be installed, for the shipped control presets. Best effort and
+    /// possibly empty: d47 does not require an Elite install to be locatable, and a Commander
+    /// on a custom preset never needs one (architecture.md D4, trap 2).
+    /// </summary>
+    private static IReadOnlyList<string> EliteInstallations()
+    {
+        var candidates = new List<string?>
+        {
+            Environment.GetEnvironmentVariable("D47_ELITE_DIR"),
+        };
+
+        foreach (var root in (ReadOnlySpan<Environment.SpecialFolder>)
+                 [Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolder.ProgramFiles])
+        {
+            var folder = Environment.GetFolderPath(root);
+
+            if (folder.Length == 0)
+            {
+                continue;
+            }
+
+            candidates.Add(Path.Combine(folder, "Steam", "steamapps", "common", "Elite Dangerous"));
+            candidates.Add(Path.Combine(folder, "Frontier", "EDLaunch", "Products"));
+            candidates.Add(Path.Combine(folder, "Epic Games", "EliteDangerous"));
+        }
+
+        return [.. candidates.Where(path => !string.IsNullOrWhiteSpace(path) && Directory.Exists(path))!];
+    }
+
+    /// <summary>
     /// The real Elite Dangerous journal folder, unless overridden — useful for developing and
     /// testing d47 without needing a live game session.
     /// </summary>
@@ -702,6 +852,10 @@ public sealed class AppHost : IDisposable
         // disposed sink or a closed file handle on the way out.
         _ticking?.Dispose();
         _speaking.Dispose();
+
+        // After the tick has stopped, so a poll cannot land on a disposed capture device.
+        _pushToTalk.ForceUp();
+        _microphone.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.
