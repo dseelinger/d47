@@ -160,6 +160,10 @@ Captions are a separate handle precisely so *Overlay Positioning & Look* cannot 
 
 **Lifecycle.** SteamVR may start after TheApp, exit under it, or restart mid-session. The overlay subsystem is a state machine (`Unavailable → Connecting → Active`) polled from the tick loop, and every handle is re-created on reconnect. *Order agnostic Overlay* is this state machine; there is no initialization ordering to get right.
 
+**The readiness signal is `VR_Init` succeeding, not SteamVR running.** The spike hit `VR_Init` returning `Init_HmdNotFound` while `vrserver.exe` was already up: "SteamVR is running" and "an HMD is present and usable" are different conditions, and the process is not evidence of the second. The state machine must therefore poll `VR_Init` and treat its return code as the transition, never a process check — otherwise `Connecting` latches on a machine that will never produce a headset.
+
+**The binding is vendored, not packaged.** There is no canonical Valve NuGet package for OpenVR. Valve's official `openvr_api.cs` is BSD-3 and is vendored in-tree; a stale third-party binding fails as an `FnTable` vtable mismatch — wrong function called, no error — rather than as anything diagnosable. The spike's copy under `spike/` is the one to promote.
+
 **Re-anchor.** Elite's recenter is invisible to SteamVR. Re-anchor reads `GetDeviceToAbsoluteTrackingPose` for the HMD, computes the delta against the stored anchor, and applies it to every world-locked handle as a group so relative layout survives.
 
 ### D3 — Whisper.net + NAudio, no media framework
@@ -368,6 +372,8 @@ Two things that *are* observable and should not be traded away: no elevation, an
 
 ## Open questions
 
-1. **Avalonia → D3D11 shared texture** is the highest-risk unknown in the stack. Spike it first: a coloured rectangle rendered by Avalonia and visible as a SteamVR overlay is the walking skeleton for Phase 9, and it is worth proving before Phase 1 work depends on it.
-2. **Mid-conversation tool changes in the C# SDK** — if supported, it removes the mode-transition cache miss on the Anthropic path. It is Opus-5-onward and Anthropic-only, so the profile enumeration stays regardless: it is the portable design every provider gets, and the beta is an optimization on one of them.
-3. **`Keep working when the main window is minimized`** may be architectural rather than cosmetic. Avalonia's dispatcher and the WASAPI callbacks are fine with a minimized window; the question is whether any VR rendering path assumes a visible surface. Spike early, finish late.
+1. **Mid-conversation tool changes in the C# SDK** — if supported, it removes the mode-transition cache miss on the Anthropic path. It is Opus-5-onward and Anthropic-only, so the profile enumeration stays regardless: it is the portable design every provider gets, and the beta is an optimization on one of them.
+2. **Overlay transparency.** The spike panel was opaque, so premultiplied alpha was never exercised. `IVROverlay` expects premultiplied alpha and `RenderTargetBitmap` produces straight alpha, so there may be a conversion pass between them with a cost nobody has measured. Cheap to settle, and *Overlay Positioning & Look* depends on the answer.
+3. **Multiple concurrent overlay handles.** D2 wants three — panel, mini, captions — and the spike proved one. Nothing suggests a per-handle limit, but three textures, three transforms and three submissions per tick is not what the 0.75 ms figure covers.
+
+**Resolved.** *Avalonia → D3D11 shared texture* was the highest-risk unknown in the stack and is now proven end to end — see D1 and [docs/spikes/vr-texture.md](docs/spikes/vr-texture.md). *Keep working when the main window is minimized* was listed separately and falls out of the same result: there is no window and no `TopLevel` anywhere in the VR path, so no rendering path can assume a visible surface. Neither needs revisiting.

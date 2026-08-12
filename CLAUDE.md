@@ -40,6 +40,10 @@ Each of these is cheap to break by accident and expensive to fix later.
 - **Key injection:** `SendInput` scancodes only. Never a `WH_KEYBOARD_LL` hook.
   `release_all()` is unconditional. Verify Elite is foreground before injecting.
 - **Binds are read-only.** Never write the Commander's bindings file.
+- **"One widget tree renders to both surfaces" is shorthand.** It means one view definition
+  instantiated twice against one view model — a `Visual` belongs to exactly one visual tree,
+  so the framework will not do the literal thing. The VR path involves no window and no
+  `TopLevel` at all, which is what makes minimise-safety structural. See architecture.md D1.
 - **All audio goes through the one arbiter**, which exposes the render reference tap from day one.
 - **No telemetry.** Permissive licenses only, no copyleft — verify the transitive graph, not
   just direct references.

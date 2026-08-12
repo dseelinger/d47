@@ -3,3 +3,9 @@ description: >-
   Directive 47 — Optimize Inferior Systems. A Guardian-flavoured voice companion
   for Elite Dangerous.
 theme: minima
+
+# docs/ is the published site. Spike write-ups are contributor material, not user
+# documentation: they stay in the repo (architecture.md links to them and GitHub renders
+# them there) but they do not belong next to the install guide.
+exclude:
+  - spikes/
