@@ -169,7 +169,7 @@ public sealed class TestSurface
         var verbosity = new FakeVerbosityControl();
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, verbosity, state, service, availability, spend, Version));
+            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech()));
 
         service.Bind(registry);
 
@@ -180,5 +180,48 @@ public sealed class TestSurface
 
         return new TestSurface(
             install.Paths, store, secrets, service, registry, state, availability, spend, verbosity);
+    }
+
+    /// <summary>
+    /// The speech capability's surface with no sound card behind it. The bed names still come
+    /// from the real shipped set, so the settings row is exercised against what actually ships
+    /// rather than against a list invented for the test.
+    /// </summary>
+    public static Capabilities.Builtin.SpeechCapability.SpeechSurface SilentSpeech(
+        Action? onSilence = null) => new()
+    {
+        Silence = onSilence ?? (() => { }),
+        Beds = [.. D47.Core.Audio.CueLibrary.Load().BedNames],
+    };
+}
+
+/// <summary>
+/// A clock that does not pass. <see cref="Waited"/> records what the retry policy asked for,
+/// so a backoff schedule is assertable without a test ever spending it — which is the reason
+/// no Core component reads the clock directly (architecture.md §8).
+/// </summary>
+public sealed class InstantClock : D47.Core.Conversation.ITurnClock
+{
+    public List<TimeSpan> Waited { get; } = [];
+
+    /// <summary>When set, the next attempt's timeout trips immediately — a provider that hangs.</summary>
+    public bool TimeOutImmediately { get; set; }
+
+    public Task DelayAsync(TimeSpan duration, CancellationToken cancellationToken)
+    {
+        Waited.Add(duration);
+        return Task.CompletedTask;
+    }
+
+    public CancellationTokenSource CreateTimeout(TimeSpan duration, CancellationToken linkedTo)
+    {
+        var source = CancellationTokenSource.CreateLinkedTokenSource(linkedTo);
+
+        if (TimeOutImmediately)
+        {
+            source.Cancel();
+        }
+
+        return source;
     }
 }

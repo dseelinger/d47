@@ -104,6 +104,26 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
         }
     }
 
+    /// <summary>
+    /// Moves to another output device. Closing and reopening is the only way WASAPI offers, so
+    /// it happens on a settings change rather than making the Commander restart for it
+    /// (list.md Phase 4). The mixer graph survives — only the device behind it changes.
+    /// </summary>
+    public void Reopen(string? deviceId)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            _mixer.RemoveAllMixerInputs();
+            _inputs.Clear();
+            _output?.Dispose();
+            _output = null;
+        }
+
+        Open(deviceId);
+    }
+
     public void Play(PlaybackRequest request)
     {
         lock (_gate)

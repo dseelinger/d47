@@ -54,3 +54,72 @@ public sealed class FakeLlmProvider : ILlmProvider
             new LlmStreamEvent.TextDelta(reply),
             new LlmStreamEvent.Completed(usage ?? LlmUsage.None, LlmStopReason.Completed));
 }
+
+/// <summary>A provider that throws rather than reporting. Still just a failed turn.</summary>
+public sealed class ThrowingLlmProvider : ILlmProvider
+{
+    public int CallCount { get; private set; }
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Throwing";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        CallCount++;
+        await Task.CompletedTask;
+        throw new IOException("the socket went away");
+
+#pragma warning disable CS0162 // Required to make this an iterator rather than a plain throw.
+        yield break;
+#pragma warning restore CS0162
+    }
+}
+
+/// <summary>Fails a fixed number of times, then answers. The recovery case.</summary>
+public sealed class FlakyLlmProvider(int failuresBeforeSuccess) : ILlmProvider
+{
+    private int _calls;
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Flaky";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask;
+
+        if (_calls++ < failuresBeforeSuccess)
+        {
+            yield return new LlmStreamEvent.Failed("Overloaded.", Transient: true);
+            yield break;
+        }
+
+        yield return new LlmStreamEvent.TextDelta("Jump range is 12.5 light years.");
+        yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
+    }
+}

@@ -24,11 +24,13 @@ public static class BuiltinCapabilities
         SettingsService settings,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
-        string version) =>
+        string version,
+        SpeechCapability.SpeechSurface speech) =>
     [
         DiagnosticsCapability.Create(paths, verbosity, settings, version),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend),
+        SpeechCapability.Create(speech),
         InterfaceCapability.Create(),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),

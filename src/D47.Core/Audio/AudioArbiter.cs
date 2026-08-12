@@ -265,14 +265,19 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// its turn even if the turn ends by failing.
     /// </para>
     /// </summary>
-    public void EnterState(LoopState state, CueLibrary cues, string? bedName = null, bool cueEnabled = true)
+    public void EnterState(
+        LoopState state,
+        CueLibrary cues,
+        string? bedName = null,
+        bool cueEnabled = true,
+        bool bedEnabled = true)
     {
         if (cueEnabled)
         {
             Enqueue(new AudioRequest { Channel = AudioChannel.Cue, Clip = cues.For(state) });
         }
 
-        if (state == LoopState.Thinking)
+        if (state == LoopState.Thinking && bedEnabled)
         {
             Enqueue(new AudioRequest
             {

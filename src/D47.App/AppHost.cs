@@ -1,13 +1,18 @@
 using System.Reflection;
 using D47.App.Logging;
 using D47.App.Updates;
+using D47.App.Voice;
+using D47.Audio;
+using D47.Core.Audio;
 using D47.Core;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
 using D47.Core.Journal;
 using D47.Llm;
+using D47.Tts;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
@@ -22,6 +27,7 @@ public sealed class AppHost : IDisposable
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<AppHost> _logger;
+    private readonly WasapiAudioSink _audioSink;
 
     private AppHost(
         AppPaths paths,
@@ -37,6 +43,10 @@ public sealed class AppHost : IDisposable
         TurnLoop turns,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
+        WasapiAudioSink audioSink,
+        AudioArbiter audio,
+        CueLibrary cues,
+        VoicePipeline voice,
         string version,
         string? startupError)
     {
@@ -54,6 +64,10 @@ public sealed class AppHost : IDisposable
         Turns = turns;
         LlmAvailability = llmAvailability;
         Spend = spend;
+        _audioSink = audioSink;
+        Audio = audio;
+        Cues = cues;
+        Voice = voice;
         Version = version;
         StartupError = startupError;
     }
@@ -89,6 +103,17 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Per-turn cost and the running total.</summary>
     public SpendTracker Spend { get; }
+
+    /// <summary>
+    /// The one queue every audible thing goes through (architecture.md D7). Exposed because
+    /// the hotkey and the panel both need to silence it, and there is nowhere else to ask.
+    /// </summary>
+    public AudioArbiter Audio { get; }
+
+    public CueLibrary Cues { get; }
+
+    /// <summary>What a turn sounds like.</summary>
+    public VoicePipeline Voice { get; }
 
     public string Version { get; }
 
@@ -166,8 +191,43 @@ public sealed class AppHost : IDisposable
         var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
         var spend = new SpendTracker();
 
+        // Audio comes up before the registry because the speech capability's settings rows read
+        // the shipped bed names and the device list from it. The sink is opened here rather than
+        // lazily so a machine with no working output says so once, at startup, instead of on the
+        // first turn the Commander was hoping to hear.
+        var cues = CueLibrary.Load();
+        var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
+        var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
+        var voice = new VoicePipeline(audio, cues, loggerFactory);
+
+        try
+        {
+            audioSink.Open(loaded.Speech.OutputDevice);
+        }
+        catch (Exception ex)
+        {
+            // No audio output is a capability being off, not a startup failure. d47 stays
+            // fully usable in text (list.md Phase 3, "Capabilities as state, not guard").
+            logger.LogError(ex, "No audio output could be opened; d47 will be silent");
+        }
+
         var capabilities = CapabilityRegistry.Build(
-            BuiltinCapabilities.All(paths, verbosity, gameState, settings, llmAvailability, spend, version));
+            BuiltinCapabilities.All(
+                paths,
+                verbosity,
+                gameState,
+                settings,
+                llmAvailability,
+                spend,
+                version,
+                new SpeechCapability.SpeechSurface
+                {
+                    Silence = audio.Silence,
+                    Beds = [.. cues.BedNames],
+                    OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
+                    DeviceLabel = id => WasapiAudioSink.Devices()
+                        .FirstOrDefault(device => device.Id == id).Name ?? id,
+                }));
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and
         // some descriptors read settings, so the row table is supplied once the registry exists.
@@ -203,10 +263,15 @@ public sealed class AppHost : IDisposable
             turns,
             llmAvailability,
             spend,
+            audioSink,
+            audio,
+            cues,
+            voice,
             version,
             startupError);
 
         host.ApplyLlmSettings();
+        host.ApplySpeechSettings();
 
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
@@ -278,11 +343,91 @@ public sealed class AppHost : IDisposable
         LlmAvailability.SetProviderConfigured(provider is not null, reason);
     }
 
+    /// <summary>
+    /// Rebuilds everything downstream of the speech settings: the voice provider, the voice
+    /// itself, the cues, the bed, the output device and the retry policy. Called at startup and
+    /// again on any change, so the two paths cannot drift (list.md Phase 4, "Apply every
+    /// setting without a restart").
+    /// </summary>
+    private void ApplySpeechSettings()
+    {
+        var speech = Settings.Current.Speech;
+
+        if (speech.Provider == SpeechCapability.NoneId)
+        {
+            _tts?.Dispose();
+            _tts = null;
+        }
+        else if (_tts is null)
+        {
+            _tts = new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>());
+        }
+
+        Voice.Tts = _tts;
+        Voice.Voice = new VoiceSelection(speech.Voice, speech.Rate);
+        Voice.CuesEnabled = speech.CuesEnabled;
+        Voice.BedEnabled = speech.ThinkingBedEnabled;
+        Voice.Bed = speech.ThinkingBed;
+
+        Turns.Retry = SpeechCapability.RetryFrom(speech);
+
+        if (!string.Equals(_openDevice, speech.OutputDevice, StringComparison.Ordinal))
+        {
+            _openDevice = speech.OutputDevice;
+
+            try
+            {
+                _audioSink.Reopen(speech.OutputDevice);
+            }
+            catch (Exception ex)
+            {
+                // A device that has gone away between being chosen and being opened. Silence
+                // is the consequence, not a crash.
+                _logger.LogError(ex, "Could not move audio output to {Device}", speech.OutputDevice);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Says out loud that the model is not usable, if there is a voice to say it with.
+    /// <para>
+    /// The whole point of the item is that a misconfigured provider currently presents as
+    /// silence, and silence is indistinguishable from a model with nothing to say
+    /// (list.md Phase 5). Called after the panel is up so the same message is on screen.
+    /// </para>
+    /// </summary>
+    public async Task AnnounceStartupProblemsAsync()
+    {
+        if (StartupError is { } settingsError)
+        {
+            Voice.EnterState(Core.Audio.LoopState.Failed);
+            await Voice.AnnounceAsync($"My settings could not be loaded. {settingsError}")
+                .ConfigureAwait(false);
+            return;
+        }
+
+        if (!LlmAvailability.CanAttemptModelTurn && LlmAvailability.Reason is { } reason)
+        {
+            Voice.EnterState(Core.Audio.LoopState.Unsure);
+            await Voice.AnnounceAsync(
+                $"I have no language model right now. {reason} I can still answer from my own capabilities.")
+                .ConfigureAwait(false);
+        }
+    }
+
+    private EdgeNeuralTtsProvider? _tts;
+
+    private string? _openDevice;
+
     private void OnSettingsChanged(SettingsChanged change)
     {
         if (change.Key.StartsWith("llm.", StringComparison.OrdinalIgnoreCase))
         {
             ApplyLlmSettings();
+        }
+        else if (change.Key.StartsWith("speech.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplySpeechSettings();
         }
     }
 
@@ -331,6 +476,14 @@ public sealed class AppHost : IDisposable
     public void Dispose()
     {
         Settings.Changed -= OnSettingsChanged;
+
+        // Stop making noise before tearing anything down. Disposing the sink under a playing
+        // clip is how an exit ends in a buzz rather than in silence.
+        Audio.Silence();
+        Audio.Dispose();
+        _audioSink.Dispose();
+        _tts?.Dispose();
+
         _loggerFactory.Dispose();
         Log.CloseAndFlush();
     }
