@@ -2,8 +2,9 @@ namespace D47.Core.Updates;
 
 /// <summary>
 /// A released version parsed from a git tag such as "v0.1.0" (release.yml's whole tagging
-/// scheme). Comparison is plain major.minor.patch - the project has never tagged a
-/// pre-release, so there is no suffix grammar to get wrong.
+/// scheme). Comparison is plain major.minor.patch; anything after a '+' or '-' is discarded
+/// rather than given comparison meaning, since the project has never tagged a pre-release and
+/// the only suffix seen in practice is the SDK's own build-metadata SHA.
 /// </summary>
 public readonly record struct ReleaseVersion(int Major, int Minor, int Patch) : IComparable<ReleaseVersion>
 {
