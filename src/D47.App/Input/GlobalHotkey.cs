@@ -14,161 +14,268 @@ namespace D47.App.Input;
 /// (list.md Phase 5).
 /// </para>
 /// <para>
+/// The registration lives on a message-only window with its own pump thread, owned here.
+/// Avalonia 12 exposes no public route into a window's WndProc (11's
+/// <c>Win32Properties.AddWndProcHookCallback</c> went internal), and it turns out not to be
+/// wanted anyway: a message-only window keeps the key alive when the main window is minimised
+/// or not yet created, which is the exact condition the key exists for.
+/// </para>
+/// <para>
 /// <c>RegisterHotKey</c>, deliberately, and never a <c>WH_KEYBOARD_LL</c> hook. A low-level
-/// keyboard hook is a global input chokepoint: a stall in d47 becomes a stall in the Commander's
-/// controls, mid-fight. The same rule governs key injection (architecture.md D4), and it applies
-/// at least as strongly to reading keys as to sending them.
+/// keyboard hook is a global input chokepoint: a stall in d47 becomes a stall in the
+/// Commander's controls, mid-fight. The same rule governs key injection (architecture.md D4),
+/// and it applies at least as strongly to reading keys as to sending them.
 /// </para>
 /// </summary>
 public sealed class GlobalHotkey : IDisposable
 {
     private const int WmHotkey = 0x0312;
+    private const int WmApp = 0x8000;
 
-    [Flags]
-    private enum Modifiers : uint
-    {
-        None = 0,
-        Alt = 0x0001,
-        Control = 0x0002,
-        Shift = 0x0004,
-        Win = 0x0008,
+    /// <summary>Posted to the pump window to run a register/unregister on its own thread.</summary>
+    private const int WmApplyBinding = WmApp + 1;
 
-        /// <summary>Stops the registration auto-repeating while the key is held.</summary>
-        NoRepeat = 0x4000,
-    }
+    private const int WmQuitPump = WmApp + 2;
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool RegisterHotKey(nint hWnd, int id, uint fsModifiers, uint vk);
+    private const uint ModAlt = 0x0001;
+    private const uint ModControl = 0x0002;
+    private const uint ModShift = 0x0004;
+    private const uint ModWin = 0x0008;
+    private const uint ModNoRepeat = 0x4000;
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnregisterHotKey(nint hWnd, int id);
+    private static readonly nint HwndMessage = -3;
 
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
-    private readonly Dictionary<int, Action> _actions = [];
+    private readonly Thread _pump;
+    private readonly ManualResetEventSlim _windowReady = new();
+
+    // Kept in fields so the GC cannot collect a delegate the OS still calls into.
+    private readonly WndProc _wndProc;
 
     private nint _window;
-    private int _nextId = 1;
+    private Action? _onPressed;
+    private (uint Modifiers, uint Key)? _wanted;
+    private bool _registered;
+    private ManualResetEventSlim? _applied;
+    private bool _applyResult;
+    private bool _disposed;
 
-    public GlobalHotkey(ILogger logger) => _logger = logger;
+    private static int _instances;
 
-    /// <summary>
-    /// The window whose message loop receives the notifications. Supplied once the panel exists,
-    /// because a registration needs a window handle even though the key itself is system-wide.
-    /// </summary>
-    public void AttachTo(nint windowHandle)
+    private delegate nint WndProc(nint hWnd, uint msg, nint wParam, nint lParam);
+
+    public GlobalHotkey(ILogger logger)
     {
-        lock (_gate)
-        {
-            _window = windowHandle;
-        }
+        _logger = logger;
+        _wndProc = HandleMessage;
+
+        // One background thread whose only job is this window's message loop. It spends its
+        // life blocked in GetMessage, costing nothing.
+        _pump = new Thread(RunPump) { IsBackground = true, Name = "d47-hotkey-pump" };
+        _pump.Start();
     }
 
     /// <summary>
-    /// Binds a gesture, replacing whatever was bound before. Returns false when the combination
-    /// is already taken by another application — which is worth reporting rather than swallowing,
-    /// since the symptom otherwise is a key that simply does nothing.
+    /// Binds a gesture system-wide, replacing whatever was bound before. Returns false when the
+    /// gesture cannot be parsed, has no modifier, or is already held by another application —
+    /// each reported, because the symptom of a swallowed failure is a key that does nothing.
     /// </summary>
     public bool Bind(string? gesture, Action onPressed)
     {
+        if (!_windowReady.Wait(TimeSpan.FromSeconds(5)))
+        {
+            _logger.LogError("The hotkey pump never came up; the silence key is not registered");
+            return false;
+        }
+
         lock (_gate)
         {
-            UnbindAll();
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
-            if (string.IsNullOrWhiteSpace(gesture) || _window == 0)
+            _onPressed = onPressed;
+            _wanted = null;
+
+            if (!string.IsNullOrWhiteSpace(gesture))
+            {
+                KeyGesture parsed;
+
+                try
+                {
+                    parsed = KeyGesture.Parse(gesture);
+                }
+                catch (Exception ex)
+                {
+                    // A hand-edited settings file can contain anything. An unparseable gesture
+                    // is an unbound key, not a crash.
+                    _logger.LogWarning(ex, "Could not parse the global hotkey {Gesture}", gesture);
+                    return false;
+                }
+
+                var modifiers = ModNoRepeat;
+                if (parsed.KeyModifiers.HasFlag(KeyModifiers.Control)) modifiers |= ModControl;
+                if (parsed.KeyModifiers.HasFlag(KeyModifiers.Alt)) modifiers |= ModAlt;
+                if (parsed.KeyModifiers.HasFlag(KeyModifiers.Shift)) modifiers |= ModShift;
+                if (parsed.KeyModifiers.HasFlag(KeyModifiers.Meta)) modifiers |= ModWin;
+
+                // A bare key registered system-wide would take that key away from every other
+                // application, including the game. Refused rather than obeyed.
+                if ((modifiers & ~ModNoRepeat) == 0)
+                {
+                    _logger.LogWarning(
+                        "Refusing to bind {Gesture} globally: a system-wide key needs a modifier",
+                        gesture);
+                    return false;
+                }
+
+                if (VirtualKeyOf(parsed.Key) is not { } virtualKey)
+                {
+                    _logger.LogWarning("{Key} has no virtual-key code d47 knows", parsed.Key);
+                    return false;
+                }
+
+                _wanted = (modifiers, virtualKey);
+            }
+
+            // RegisterHotKey binds to the calling thread, so the actual call has to happen on
+            // the pump. Post, then wait for it to report back — registration is instant.
+            _applied = new ManualResetEventSlim();
+            PostMessage(_window, WmApplyBinding, 0, 0);
+        }
+
+        var applied = _applied;
+
+        if (applied is null || !applied.Wait(TimeSpan.FromSeconds(5)))
+        {
+            _logger.LogError("The hotkey pump did not answer; the silence key state is unknown");
+            return false;
+        }
+
+        lock (_gate)
+        {
+            _applied = null;
+
+            if (_wanted is null)
             {
                 return false;
             }
 
-            KeyGesture parsed;
-
-            try
+            if (_applyResult)
             {
-                parsed = KeyGesture.Parse(gesture);
+                _logger.LogInformation("{Gesture} is bound system-wide", gesture);
             }
-            catch (Exception ex)
-            {
-                // A hand-edited settings file can contain anything. An unparseable gesture is
-                // an unbound key, not a crash on startup.
-                _logger.LogWarning(ex, "Could not parse the global hotkey {Gesture}", gesture);
-                return false;
-            }
-
-            var modifiers = Modifiers.NoRepeat;
-            if (parsed.KeyModifiers.HasFlag(KeyModifiers.Control)) modifiers |= Modifiers.Control;
-            if (parsed.KeyModifiers.HasFlag(KeyModifiers.Alt)) modifiers |= Modifiers.Alt;
-            if (parsed.KeyModifiers.HasFlag(KeyModifiers.Shift)) modifiers |= Modifiers.Shift;
-            if (parsed.KeyModifiers.HasFlag(KeyModifiers.Meta)) modifiers |= Modifiers.Win;
-
-            // A bare key would be registered system-wide, which would take that key away from
-            // every other application including the game. Refused rather than obeyed.
-            if ((modifiers & ~Modifiers.NoRepeat) == 0)
-            {
-                _logger.LogWarning(
-                    "Refusing to bind {Gesture} globally: a system-wide key needs a modifier", gesture);
-                return false;
-            }
-
-            if (VirtualKeyOf(parsed.Key) is not { } virtualKey)
-            {
-                _logger.LogWarning("{Key} has no virtual-key code d47 knows", parsed.Key);
-                return false;
-            }
-
-            var id = _nextId++;
-
-            if (!RegisterHotKey(_window, id, (uint)modifiers, virtualKey))
+            else
             {
                 _logger.LogWarning(
                     "{Gesture} could not be registered system-wide; another application likely holds it",
                     gesture);
-                return false;
             }
 
-            _actions[id] = onPressed;
-            _logger.LogInformation("{Gesture} is bound system-wide", gesture);
-            return true;
+            return _applyResult;
         }
     }
 
-    /// <summary>
-    /// Handles a window message. Returns true when it was ours.
-    /// <para>
-    /// The action runs on the message-loop thread on purpose: silencing is a queue operation
-    /// with no work in it, so dispatching it somewhere else would add latency to the one thing
-    /// whose whole point is being immediate.
-    /// </para>
-    /// </summary>
-    public bool HandleMessage(int message, nint wParam)
+    private void RunPump()
     {
-        if (message != WmHotkey)
+        // The class and window are created on this thread, so WM_HOTKEY and our WM_APP
+        // messages are delivered to this thread's queue and handled in HandleMessage. The
+        // class name is per-instance, not per-process: RegisterClassW refuses a name that is
+        // already registered, and the app funnelling through one instance is a fact about the
+        // app rather than something this class gets to assume.
+        var className = "d47HotkeyPump-" + Environment.ProcessId + "-" + Interlocked.Increment(ref _instances);
+        var wc = new WNDCLASSW { lpfnWndProc = _wndProc, lpszClassName = className };
+
+        if (RegisterClassW(ref wc) == 0)
         {
-            return false;
+            _logger.LogError("Could not register the hotkey window class (win32 {Error})", Marshal.GetLastWin32Error());
+            _windowReady.Set();
+            return;
         }
 
-        Action? action;
+        _window = CreateWindowExW(
+            0, className, "d47 hotkey sink", 0, 0, 0, 0, 0, HwndMessage, 0, 0, 0);
 
-        lock (_gate)
+        if (_window == 0)
         {
-            _actions.TryGetValue((int)wParam, out action);
+            _logger.LogError("Could not create the hotkey window (win32 {Error})", Marshal.GetLastWin32Error());
+            _windowReady.Set();
+            return;
         }
 
-        action?.Invoke();
-        return action is not null;
+        _windowReady.Set();
+
+        while (GetMessageW(out var msg, 0, 0, 0) > 0)
+        {
+            TranslateMessage(ref msg);
+            DispatchMessageW(ref msg);
+        }
+    }
+
+    private nint HandleMessage(nint hWnd, uint msg, nint wParam, nint lParam)
+    {
+        switch (msg)
+        {
+            case WmHotkey:
+            {
+                Action? onPressed;
+
+                lock (_gate)
+                {
+                    onPressed = _onPressed;
+                }
+
+                // Run on this thread rather than dispatched: silencing is a queue operation
+                // with no work in it, and the whole point is being immediate.
+                onPressed?.Invoke();
+                return 0;
+            }
+
+            case WmApplyBinding:
+            {
+                lock (_gate)
+                {
+                    if (_registered)
+                    {
+                        UnregisterHotKey(_window, 1);
+                        _registered = false;
+                    }
+
+                    _applyResult = _wanted is { } wanted
+                                   && RegisterHotKey(_window, 1, wanted.Modifiers, wanted.Key);
+                    _registered = _applyResult;
+                    _applied?.Set();
+                }
+
+                return 0;
+            }
+
+            case WmQuitPump:
+                // Explicit teardown rather than relying on thread exit to reap the window:
+                // the OS does clean up eventually, but "eventually" is exactly the window in
+                // which a restarting d47 finds its own key still held by its previous self.
+                lock (_gate)
+                {
+                    if (_registered)
+                    {
+                        UnregisterHotKey(_window, 1);
+                        _registered = false;
+                    }
+                }
+
+                DestroyWindow(hWnd);
+                PostQuitMessage(0);
+                return 0;
+
+            default:
+                return DefWindowProcW(hWnd, msg, wParam, lParam);
+        }
     }
 
     /// <summary>
     /// Avalonia's <see cref="Key"/> to the Windows virtual-key code <c>RegisterHotKey</c> wants.
-    /// <para>
-    /// Avalonia has no equivalent of WPF's <c>KeyInterop</c>, and the enum's numeric values are
-    /// its own rather than the VK constants, so the mapping is written out. Ranges are computed
-    /// because they are contiguous in both; the rest are named. A key that is missing here is
-    /// reported as unbindable rather than silently registered as the wrong key — which would be
-    /// the worse failure, since the Commander would be pressing something that does something
-    /// else.
-    /// </para>
+    /// Written out because Avalonia's enum values are its own, not the VK constants. A key
+    /// missing here is reported as unbindable rather than silently registered as the wrong key —
+    /// the worse failure, since the Commander would be pressing something that does something else.
     /// </summary>
     private static uint? VirtualKeyOf(Key key) => key switch
     {
@@ -205,22 +312,87 @@ public sealed class GlobalHotkey : IDisposable
         _ => null,
     };
 
-    private void UnbindAll()
-    {
-        foreach (var id in _actions.Keys)
-        {
-            UnregisterHotKey(_window, id);
-        }
-
-        _actions.Clear();
-    }
-
     public void Dispose()
     {
         lock (_gate)
         {
-            UnbindAll();
-            _window = 0;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+
+            if (_window != 0)
+            {
+                PostMessage(_window, WmQuitPump, 0, 0);
+            }
         }
+
+        // The pump unblocks on the quit message; hotkey registrations die with the window.
+        _pump.Join(TimeSpan.FromSeconds(2));
+        _windowReady.Dispose();
     }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct WNDCLASSW
+    {
+        public uint style;
+        [MarshalAs(UnmanagedType.FunctionPtr)] public WndProc lpfnWndProc;
+        public int cbClsExtra;
+        public int cbWndExtra;
+        public nint hInstance;
+        public nint hIcon;
+        public nint hCursor;
+        public nint hbrBackground;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? lpszMenuName;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpszClassName;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MSG
+    {
+        public nint hwnd;
+        public uint message;
+        public nint wParam;
+        public nint lParam;
+        public uint time;
+        public int ptX;
+        public int ptY;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern ushort RegisterClassW(ref WNDCLASSW lpWndClass);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern nint CreateWindowExW(
+        uint dwExStyle, string lpClassName, string lpWindowName, uint dwStyle,
+        int x, int y, int nWidth, int nHeight, nint hWndParent, nint hMenu, nint hInstance, nint lpParam);
+
+    [DllImport("user32.dll")]
+    private static extern int GetMessageW(out MSG lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+
+    [DllImport("user32.dll")]
+    private static extern bool TranslateMessage(ref MSG lpMsg);
+
+    [DllImport("user32.dll")]
+    private static extern nint DispatchMessageW(ref MSG lpMsg);
+
+    [DllImport("user32.dll")]
+    private static extern nint DefWindowProcW(nint hWnd, uint msg, nint wParam, nint lParam);
+
+    [DllImport("user32.dll")]
+    private static extern void PostQuitMessage(int nExitCode);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool RegisterHotKey(nint hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool UnregisterHotKey(nint hWnd, int id);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool DestroyWindow(nint hWnd);
 }

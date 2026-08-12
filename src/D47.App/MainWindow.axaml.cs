@@ -38,12 +38,7 @@ public partial class MainWindow : Window
 
     private readonly GlobalHotkey _shutUp;
 
-    // UNFINISHED: RegisterHotKey delivers WM_HOTKEY to the window's message loop, and
-    // Avalonia 12 does not expose Win32Properties.AddWndProcHookCallback the way Avalonia 11
-    // did, so there is currently no route from that message to _shutUp.HandleMessage. Until
-    // there is, the key is deliberately NOT registered: a registered key with nothing listening
-    // is a stop button that does nothing, which is the exact failure this capability exists to
-    // prevent. Silencing from the panel and from the keyword router both work today.
+
 
     protected override async void OnLoaded(RoutedEventArgs e)
     {
@@ -281,14 +276,21 @@ public partial class MainWindow : Window
     /// </summary>
     private void BindShutUp()
     {
-        if (_host is null || TryGetPlatformHandle()?.Handle is not { } handle)
+        if (_host is null)
         {
             return;
         }
 
-        _shutUp.AttachTo(handle);
+        var gesture = _host.Settings.Current.Speech.ShutUpHotkey;
 
-        // See the note above: not registered until the WM_HOTKEY route exists.
+        if (!_shutUp.Bind(gesture, _host.Audio.Silence) && !string.IsNullOrWhiteSpace(gesture))
+        {
+            // Reported rather than swallowed: the symptom of a failed registration is a key
+            // that does nothing, which reads as d47 ignoring the Commander.
+            ErrorText.Text = $"The silence hotkey {gesture} could not be registered system-wide. " +
+                             "Another application is probably holding it — pick another in Settings.";
+            ErrorBanner.IsVisible = true;
+        }
     }
 
     private static string DescribeTurn(TurnResult result, SpendTracker spend)
