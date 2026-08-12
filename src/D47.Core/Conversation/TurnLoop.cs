@@ -117,8 +117,13 @@ public sealed class TurnLoop(
 
     public string? AboutMe { get; set; }
 
-    /// <summary>Live game state for the next turn, supplied by the caller from the journal.</summary>
-    public string? LiveGameState { get; set; }
+    /// <summary>
+    /// Live game state for the turn about to run. A source rather than a value: the tick loop
+    /// is folding journal events continuously, so anything assigned here would be as old as the
+    /// last time somebody remembered to assign it. Asked once per turn, at the moment the
+    /// prompt is built.
+    /// </summary>
+    public Func<string?>? LiveGameState { get; set; }
 
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
@@ -226,7 +231,7 @@ public sealed class TurnLoop(
                 Persona = Persona,
                 AboutMe = AboutMe,
                 History = [.. _history, new ConversationMessage(ConversationRole.User, input)],
-                LiveGameState = LiveGameState,
+                LiveGameState = LiveGameState?.Invoke(),
             },
         };
 

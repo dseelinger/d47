@@ -7,10 +7,19 @@ namespace D47.Core.Journal;
 /// when it changes, and feeds every event through <see cref="GameStateStore"/>. Owns no
 /// thread and no timer — it is <see cref="Poll"/>, called at whatever cadence the caller
 /// chooses, exactly like <see cref="JournalReader"/> underneath it.
+/// <para>
+/// It also polls the two on-foot inventory files, which sit in the same folder but are state
+/// rather than a log: Elite rewrites them in place instead of appending. Same folder, same
+/// cadence, same <see cref="Poll"/> — the difference is entirely inside
+/// <see cref="SuitInventoryReader"/>.
+/// </para>
 /// </summary>
 public sealed class JournalSpine(string directory, GameStateStore gameState, ILoggerFactory loggerFactory)
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<JournalSpine>();
+
+    private readonly SuitInventoryReader _suit =
+        new(directory, loggerFactory.CreateLogger<SuitInventoryReader>());
 
     private JournalReader? _reader;
 
@@ -42,6 +51,14 @@ public sealed class JournalSpine(string directory, GameStateStore gameState, ILo
         foreach (var journalEvent in events)
         {
             gameState.Apply(journalEvent);
+        }
+
+        // After the events, so the Commander whose locker this is has been established by them
+        // on the very first poll. The files carry no identity of their own — they belong to
+        // whoever is playing, which only the journal can say.
+        if (_suit.Poll() && gameState.Active is { } active)
+        {
+            active.Suit = _suit.Current;
         }
 
         return events;
