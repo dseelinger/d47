@@ -7,7 +7,8 @@ title: Installing d47
 d47 ships as one file. There is no installer, no runtime prerequisite, and nothing that
 asks for administrator rights.
 
-1. Download `d47.exe` from the [releases page](https://github.com/dseelinger/d47/releases).
+1. Download `d47.exe` from the [v0.1.0 release](https://github.com/dseelinger/d47/releases/tag/v0.1.0)
+   (or the [releases page](https://github.com/dseelinger/d47/releases) for the latest build).
 2. Put it wherever you like — a folder you own, not `Program Files`.
 3. Run it.
 
