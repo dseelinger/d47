@@ -31,7 +31,7 @@ jobs:
 
       - name: Checksum
         shell: bash
-        working-directory: src/D47.App/bin/Release/net10.0/win-x64/publish
+        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
         run: sha256sum d47.exe | tee d47.exe.sha256
 
       # Unsigned with a published checksum, per architecture.md §9.
@@ -40,5 +40,5 @@ jobs:
           name: d47 ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            src/D47.App/bin/Release/net10.0/win-x64/publish/d47.exe
-            src/D47.App/bin/Release/net10.0/win-x64/publish/d47.exe.sha256
+            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.exe
+            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.exe.sha256

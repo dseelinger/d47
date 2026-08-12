@@ -55,4 +55,19 @@ Each of these is cheap to break by accident and expensive to fix later.
 
 ## Build
 
-No code yet. Scaffolding is the next step — update this section when it lands.
+```
+dotnet build          # net10.0-windows, warnings are errors
+dotnet test           # includes the Core dependency boundary and the docs gate
+dotnet publish src/D47.App -c Release      # one ~50 MB self-contained d47.exe, no flags needed
+```
+
+Release is a tag: `git tag v0.1.0 && git push --tags` publishes, checksums and creates the
+GitHub Release. Publish settings live in `D47.App.csproj` so local and CI cannot diverge.
+
+Two gates run as tests rather than as CI steps, so they cannot drift from the code:
+`CoreDependencyTests` asserts Core references no UI, hardware or provider assembly, and
+`DocumentationGateTests` asserts every registered capability has a page under
+`docs/capabilities/` that quotes its current tool schema. Change a tool's schema and the
+docs test tells you what to paste.
+
+Everything the app writes goes to `data/` beside the executable — never `%APPDATA%`.

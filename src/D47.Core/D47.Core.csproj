@@ -1,9 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <!--
+<Project Sdk="Microsoft.NET.Sdk"><!--
     Core depends on nothing: no UI, no hardware, no providers. This is what makes the
     replay harness possible (architecture.md §3, §8) and it is asserted by
     CoreHasNoForbiddenDependencies in D47.Core.Tests, not just documented here.
   -->
 
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
+  </ItemGroup>
 </Project>

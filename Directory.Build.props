@@ -2,7 +2,9 @@
 
   <!-- One place for anything every project shares. Add to this rather than to a csproj. -->
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Windows-only by design: DPAPI, SendInput, the journal paths and OpenVR all assume it
+         (architecture.md §1). Declared once here so individual call sites need no annotation. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

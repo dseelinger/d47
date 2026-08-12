@@ -2,11 +2,48 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="D47.App.MainWindow"
         Title="d47"
-        Width="720" Height="420"
+        Width="760" Height="520"
         WindowStartupLocation="CenterScreen">
-  <StackPanel Margin="40" Spacing="10" VerticalAlignment="Center">
-    <TextBlock Text="d47" FontSize="46" FontWeight="Light" />
-    <TextBlock Text="Directive 47 — Optimize Inferior Systems" Opacity="0.7" />
-    <TextBlock x:Name="BuildLine" Opacity="0.4" FontSize="12" />
-  </StackPanel>
+
+  <DockPanel Margin="28">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="2">
+      <TextBlock Text="d47" FontSize="34" FontWeight="Light" />
+      <TextBlock Text="Directive 47 — Optimize Inferior Systems" FontSize="13" Opacity="0.6" />
+      <TextBlock x:Name="VersionLine" FontSize="11" Opacity="0.35" />
+    </StackPanel>
+
+    <!-- Settings that failed to load are said out loud, not swallowed. -->
+    <Border x:Name="ErrorBanner"
+            DockPanel.Dock="Top"
+            IsVisible="False"
+            Margin="0,18,0,0"
+            Padding="12"
+            CornerRadius="4"
+            Background="#33FF5555"
+            BorderBrush="#88FF5555"
+            BorderThickness="1">
+      <SelectableTextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="12" />
+    </Border>
+
+    <StackPanel DockPanel.Dock="Top" Margin="0,22,0,8" Spacing="2">
+      <TextBlock Text="diagnostics / get_app_status"
+                 FontFamily="Cascadia Mono,Consolas,monospace"
+                 FontSize="12"
+                 Opacity="0.55" />
+      <TextBlock Text="Output below is a real tool call through the capability registry."
+                 FontSize="11"
+                 Opacity="0.35" />
+    </StackPanel>
+
+    <Border Background="#14FFFFFF" CornerRadius="4" Padding="14">
+      <ScrollViewer>
+        <SelectableTextBlock x:Name="StatusText"
+                             FontFamily="Cascadia Mono,Consolas,monospace"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+      </ScrollViewer>
+    </Border>
+
+  </DockPanel>
 </Window>

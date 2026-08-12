@@ -1,0 +1,43 @@
+namespace D47.Core.Capabilities;
+
+/// <summary>How a capability presents itself on the panel.</summary>
+public sealed record CapabilityDisplay
+{
+    public string? PanelTitle { get; init; }
+
+    public int Order { get; init; } = 100;
+
+    public bool ShowOnPanel { get; init; } = true;
+}
+
+/// <summary>
+/// One capability, declared once at startup and never mutated (architecture.md §5 D5). Tool
+/// schemas, settings rows, spoken help, the keyword router's vocabulary and the docs CI gate
+/// are all projections of this — not parallel structures.
+/// </summary>
+public sealed record CapabilityDescriptor
+{
+    /// <summary>
+    /// Stable kebab-case slug. Doubles as the documentation page filename, so it is a
+    /// filename and a URL as well as an identity.
+    /// </summary>
+    public required string Id { get; init; }
+
+    public required string Group { get; init; }
+
+    public required string Name { get; init; }
+
+    /// <summary>One line. This is what spoken help reads out.</summary>
+    public required string Summary { get; init; }
+
+    public IReadOnlyList<string> Examples { get; init; } = [];
+
+    /// <summary>Vocabulary for the model-free keyword router.</summary>
+    public IReadOnlyList<string> Keywords { get; init; } = [];
+
+    public IReadOnlyList<ToolDefinition> Tools { get; init; } = [];
+
+    public IReadOnlyList<SettingRow> Settings { get; init; } = [];
+
+    public CapabilityDisplay Display { get; init; } = new();
+}

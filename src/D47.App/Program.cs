@@ -5,12 +5,17 @@ namespace D47.App;
 internal static class Program
 {
     [STAThread]
-    public static void Main(string[] args) =>
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        using var host = AppHost.Start();
+        Build(host).StartWithClassicDesktopLifetime(args);
+    }
 
-    // Referenced by name by the Avalonia designer; keep the signature.
-    public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
+    /// <summary>Parameterless overload the Avalonia designer resolves by name.</summary>
+    public static AppBuilder BuildAvaloniaApp() => Build(host: null);
+
+    private static AppBuilder Build(AppHost? host) =>
+        AppBuilder.Configure(() => new App(host))
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
