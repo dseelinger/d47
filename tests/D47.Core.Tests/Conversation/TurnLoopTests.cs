@@ -10,8 +10,7 @@ namespace D47.Core.Tests.Conversation;
 public class TurnLoopTests
 {
     private static CapabilityRegistry BuiltinRegistry(TempInstall install, GameStateStore? gameState = null) =>
-        CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, new FakeVerbosityControl(), gameState ?? new GameStateStore(), "1.0.0-test"));
+        TestSurface.For(install, gameState).Registry;
 
     private static TurnLoop Build(
         CapabilityRegistry registry,

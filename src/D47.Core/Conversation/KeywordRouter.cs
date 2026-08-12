@@ -5,6 +5,9 @@ namespace D47.Core.Conversation;
 
 public sealed record KeywordMatch(string CapabilityId, string ToolName);
 
+/// <summary>A settings row a declared phrase asked for, and the value that phrase means.</summary>
+public sealed record SettingCommandMatch(string CapabilityId, SettingRow Row, string? Value, string Phrase);
+
 /// <summary>
 /// The model-free command path (list.md Phase 3, "Ship's AI Unsure"). It exists for three
 /// separate reasons, and it would be worth building for any one of them:
@@ -64,6 +67,48 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
 
         return null;
     }
+
+    /// <summary>
+    /// Matches a settings command phrase — the model-free way to reach a protected row.
+    /// <para>
+    /// Tried before <see cref="Match"/> because it is the more specific claim: a phrase declared
+    /// against a row means one row and one value, with nothing inferred.
+    /// </para>
+    /// <para>
+    /// The whole utterance has to be the phrase, not merely contain it, and that is one notch
+    /// stricter than <see cref="Match"/> on purpose. Asking "what does personality off actually
+    /// change" is a question about a setting, not an instruction to change it, and this is the
+    /// one router path that writes. A miss costs a fall-through to the model; a false positive
+    /// silently changes something nobody asked about. Variants are declared per row rather than
+    /// inferred here, because stripping politeness words is guessing by another name.
+    /// </para>
+    /// </summary>
+    public SettingCommandMatch? MatchSetting(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        var utterance = Utterance(input);
+
+        return (
+            from capability in registry.All
+            from row in capability.Descriptor.Settings
+            from command in row.Commands
+            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// One utterance, reduced to what was said: no surrounding punctuation, no doubled spaces,
+    /// and apostrophes normalised the same way <see cref="ContainsPhrase"/> normalises them.
+    /// </summary>
+    private static string Utterance(string text) =>
+        string.Join(' ', Normalise(text).Split(
+            [' ', '\t', '\r', '\n', '.', ',', '!', '?', ';', ':'],
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
     /// <summary>
     /// True when the phrase appears in the text bounded by word edges, so "docked" does not match

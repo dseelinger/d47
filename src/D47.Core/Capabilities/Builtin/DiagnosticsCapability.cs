@@ -1,4 +1,5 @@
 using System.Text;
+using D47.Core.Configuration;
 using D47.Core.Diagnostics;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +21,14 @@ public static class DiagnosticsCapability
     public static readonly IReadOnlyList<string> LogLevelNames =
         Enum.GetNames<LogLevel>();
 
-    public static CapabilityDescriptor Create(AppPaths paths, ILogVerbosityControl verbosity, string version)
+    /// <summary>The settings row a subsystem's level lives in. One key, whoever is asking.</summary>
+    public static string LevelRowFor(string subsystem) => $"logging.subsystems.{subsystem.ToLowerInvariant()}";
+
+    public static CapabilityDescriptor Create(
+        AppPaths paths,
+        ILogVerbosityControl verbosity,
+        SettingsService settings,
+        string version)
     {
         return new CapabilityDescriptor
         {
@@ -79,7 +87,7 @@ public static class DiagnosticsCapability
                             AllowedValues = LogLevelNames,
                         },
                     ],
-                    Handler = (arguments, _) => Task.FromResult(SetVerbosity(arguments, verbosity)),
+                    Handler = (arguments, _) => Task.FromResult(SetVerbosity(arguments, settings)),
                 },
             ],
             Settings = BuildSettingRows(),
@@ -104,7 +112,13 @@ public static class DiagnosticsCapability
         return report.ToString().TrimEnd();
     }
 
-    private static ToolResult SetVerbosity(ToolArguments arguments, ILogVerbosityControl verbosity)
+    /// <summary>
+    /// Writes the settings row rather than the level switch directly. The row is the one path:
+    /// it persists the change and, through the verbosity control's subscription, makes it live
+    /// on the next log line. A tool that set only the switch would look identical from the
+    /// outside and be forgotten at the next restart.
+    /// </summary>
+    private static ToolResult SetVerbosity(ToolArguments arguments, SettingsService settings)
     {
         // The registry has already checked both values against the declared vocabularies, so
         // anything failing here is a genuine mismatch rather than a bad model guess.
@@ -120,8 +134,11 @@ public static class DiagnosticsCapability
             return ToolResult.Error($"'{levelName}' is not a log level.");
         }
 
-        verbosity.Set(subsystem, level);
-        return ToolResult.Ok($"{subsystem} logging is now at {level}.");
+        var applied = settings.Apply(LevelRowFor(subsystem), level.ToString(), SettingsCaller.Model);
+
+        return applied.Ok
+            ? ToolResult.Ok($"{subsystem} logging is now at {level}.")
+            : ToolResult.Error(applied.Message);
     }
 
     private static IReadOnlyList<SettingRow> BuildSettingRows()
@@ -136,6 +153,15 @@ public static class DiagnosticsCapability
                 Kind = SettingKind.Choice,
                 Choices = LogLevelNames,
                 DefaultDisplay = nameof(LogLevel.Information),
+                DocsAnchor = "default-log-level",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Logging.Default.ToString(),
+                    Write = (s, v) => s with
+                    {
+                        Logging = s.Logging with { Default = ParseLevel(v) ?? LogLevel.Information },
+                    },
+                },
             },
         };
 
@@ -143,14 +169,40 @@ public static class DiagnosticsCapability
         // There is no second list to keep in step.
         rows.AddRange(Subsystems.All.Select(subsystem => new SettingRow
         {
-            Key = $"logging.subsystems.{subsystem.ToLowerInvariant()}",
+            Key = LevelRowFor(subsystem),
             Label = $"{subsystem} log level",
             Help = $"Minimum level for the {subsystem} subsystem. Changes apply immediately.",
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
             DefaultDisplay = "(default)",
+            DocsAnchor = "subsystem-log-levels",
+            Binding = new SettingBinding
+            {
+                // Absent from the dictionary is the "no override" state, which is what the
+                // placeholder advertises — so clearing the row removes the entry rather than
+                // writing the default level back as if it had been chosen.
+                Read = s => s.Logging.Subsystems.TryGetValue(subsystem, out var level) ? level.ToString() : null,
+                Write = (s, v) =>
+                {
+                    var levels = new Dictionary<string, LogLevel>(s.Logging.Subsystems, StringComparer.Ordinal);
+
+                    if (ParseLevel(v) is { } level)
+                    {
+                        levels[subsystem] = level;
+                    }
+                    else
+                    {
+                        levels.Remove(subsystem);
+                    }
+
+                    return s with { Logging = s.Logging with { Subsystems = levels } };
+                },
+            },
         }));
 
         return rows;
     }
+
+    private static LogLevel? ParseLevel(string? value) =>
+        Enum.TryParse<LogLevel>(value, ignoreCase: true, out var level) ? level : null;
 }

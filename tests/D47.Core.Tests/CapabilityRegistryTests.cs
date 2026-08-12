@@ -174,15 +174,13 @@ public class CapabilityRegistryTests
 
 public class DiagnosticsCapabilityTests
 {
+    // The whole surface, not the one capability: the verbosity tool writes a settings row, so
+    // the row table and the level switches both have to be wired the way the app wires them.
     private static (CapabilityRegistry Registry, FakeVerbosityControl Verbosity) Build(TempInstall install)
     {
-        var verbosity = new FakeVerbosityControl();
-        var registry = CapabilityRegistry.Build(
-        [
-            DiagnosticsCapability.Create(install.Paths, verbosity, "1.2.3-test"),
-        ]);
+        var surface = TestSurface.For(install);
 
-        return (registry, verbosity);
+        return (surface.Registry, surface.Verbosity);
     }
 
     [Fact]
@@ -194,7 +192,7 @@ public class DiagnosticsCapabilityTests
         var result = await registry.Invoke("get_app_status", ToolArguments.Empty);
 
         Assert.False(result.IsError);
-        Assert.Contains("1.2.3-test", result.Content, StringComparison.Ordinal);
+        Assert.Contains(TestSurface.Version, result.Content, StringComparison.Ordinal);
         Assert.Contains(install.Paths.Data, result.Content, StringComparison.Ordinal);
     }
 

@@ -50,11 +50,7 @@ public class ToolSchemaDeterminismTests
         using var install = new TempInstall();
 
         static IReadOnlyDictionary<string, string> SchemasFor(TempInstall install) =>
-            CapabilityRegistry
-                .Build([DiagnosticsCapability.Create(install.Paths, new FakeVerbosityControl(), "1.0.0")])
-                .All
-                .Single()
-                .ToolSchemas;
+            TestSurface.For(install).Registry.Find(DiagnosticsCapability.Id)!.ToolSchemas;
 
         var first = SchemasFor(install);
         var second = SchemasFor(install);

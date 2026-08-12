@@ -60,6 +60,19 @@ public sealed class LlmAvailabilityState
         }
     }
 
+    /// <summary>
+    /// Called when the provider itself is rebuilt — a key stored, an endpoint changed, the
+    /// provider set to none. A settings change has to be able to turn the model capability on
+    /// as well as off, or "apply without a restart" would be true in only one direction
+    /// (list.md Phase 4).
+    /// </summary>
+    public void SetProviderConfigured(bool configured, string? reason = null)
+    {
+        Current = configured ? LlmAvailability.Available : LlmAvailability.NotConfigured;
+        Reason = configured ? null : reason ?? "No language model provider is configured.";
+        _turnsUntilProbe = 0;
+    }
+
     public void MarkAvailable()
     {
         Current = LlmAvailability.Available;

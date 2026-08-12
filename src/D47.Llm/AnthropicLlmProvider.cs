@@ -42,9 +42,16 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     private readonly AnthropicClient _client;
 
-    public AnthropicLlmProvider(string apiKey)
+    /// <summary>
+    /// <paramref name="baseUrl"/> is null for Anthropic's own endpoint. A value points at
+    /// something else speaking the same protocol — a gateway or a proxy — which is a setting
+    /// the Commander can change without restarting d47 (list.md Phase 4).
+    /// </summary>
+    public AnthropicLlmProvider(string apiKey, string? baseUrl = null)
     {
-        _client = new AnthropicClient { ApiKey = apiKey };
+        _client = string.IsNullOrWhiteSpace(baseUrl)
+            ? new AnthropicClient { ApiKey = apiKey }
+            : new AnthropicClient { ApiKey = apiKey, BaseUrl = baseUrl };
     }
 
     public string Id => "anthropic";

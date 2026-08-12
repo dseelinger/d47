@@ -100,14 +100,13 @@ public class DocumentationGateTests
             $"Documentation pages with no registered capability: {string.Join(", ", orphans)}");
     }
 
-    private static CapabilityRegistry Registry()
-    {
-        // A throwaway install: the gate cares about identity and schemas, neither of which
-        // depends on where the app happens to be installed.
-        var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-docs-gate"));
-        return CapabilityRegistry.Build(
-            BuiltinCapabilities.All(paths, new FakeVerbosityControl(), new GameStateStore(), "0.0.0"));
-    }
+    private static CapabilityRegistry Registry() => Surface().Registry;
+
+    /// <summary>
+    /// A throwaway install: the gate cares about identity, schemas and settings rows, none of
+    /// which depends on where the app happens to be installed.
+    /// </summary>
+    private static TestSurface Surface() => TestSurface.For(new TempInstall());
 
     private static string RepositoryRoot()
     {

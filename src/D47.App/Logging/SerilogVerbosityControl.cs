@@ -1,4 +1,3 @@
-using D47.Core.Configuration;
 using D47.Core.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Serilog.Core;
@@ -41,18 +40,7 @@ public sealed class SerilogVerbosityControl : ILogVerbosityControl
         _switches[canonical].MinimumLevel = ToEventLevel(level);
     }
 
-    /// <summary>Applies levels loaded from settings. Absent subsystems fall back to the default.</summary>
-    public void Apply(LoggingSettings settings)
-    {
-        Default.MinimumLevel = ToEventLevel(settings.Default);
-
-        foreach (var subsystem in Subsystems.All)
-        {
-            _switches[subsystem].MinimumLevel = settings.Subsystems.TryGetValue(subsystem, out var level)
-                ? ToEventLevel(level)
-                : ToEventLevel(settings.Default);
-        }
-    }
+    public void SetDefault(LogLevel level) => Default.MinimumLevel = ToEventLevel(level);
 
     private static LogEventLevel ToEventLevel(LogLevel level) => level switch
     {

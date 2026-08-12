@@ -58,8 +58,7 @@ public class EffortRouterTests
 public class KeywordRouterTests
 {
     private static CapabilityRegistry Registry(TempInstall install, GameStateStore? gameState = null) =>
-        CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, new FakeVerbosityControl(), gameState ?? new GameStateStore(), "1.0.0"));
+        TestSurface.For(install, gameState).Registry;
 
     [Theory]
     [InlineData("where am I", "journal")]

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
@@ -8,6 +9,13 @@ public enum TurnRoute
 {
     /// <summary>Answered by the model-free keyword router. No provider was contacted.</summary>
     KeywordRouter,
+
+    /// <summary>
+    /// A settings change made by the model-free router. Its own route because it is the one
+    /// path by which a protected setting can be reached by voice (architecture.md §7), and a
+    /// path like that should be legible in the transcript rather than filed under something else.
+    /// </summary>
+    SettingCommand,
 
     /// <summary>Answered by the language model.</summary>
     Model,
@@ -70,13 +78,24 @@ public sealed class TurnLoop(
     PriceTable prices,
     ILogger<TurnLoop> logger,
     ILlmProvider? provider = null,
-    string? model = null)
+    string? model = null,
+    SettingsService? settings = null)
 {
     private readonly List<ConversationMessage> _history = [];
 
     private string? _lastModelUsed;
 
     public IReadOnlyList<ConversationMessage> History => _history;
+
+    /// <summary>
+    /// The provider answering turns, or null for none. Settable because a key or an endpoint
+    /// can change mid-session and the next turn has to use it — "apply every setting without a
+    /// restart" reaches in here (list.md Phase 4).
+    /// </summary>
+    public ILlmProvider? Provider { get; set; } = provider;
+
+    /// <summary>The pinned model, or null for the provider's own default.</summary>
+    public string? Model { get; set; } = model;
 
     /// <summary>The persona block, or null for "personality off". Never reaches the guardrails.</summary>
     public string? Persona { get; set; }
@@ -92,7 +111,31 @@ public sealed class TurnLoop(
     {
         availability.BeginTurn();
 
-        // 1. The model-free path first, always.
+        // 1. A declared settings phrase is the most specific thing an input can be, and the one
+        //    path allowed to reach a protected row without hands on the panel.
+        if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
+        {
+            yield return new TurnEvent.Routed(TurnRoute.SettingCommand, Effort: null);
+
+            var applied = settings.Apply(settingCommand.Row.Key, settingCommand.Value, SettingsCaller.KeywordRouter);
+
+            logger.LogInformation(
+                "Keyword router applied {Key} from the phrase \"{Phrase}\": {Status}",
+                settingCommand.Row.Key,
+                settingCommand.Phrase,
+                applied.Status);
+
+            yield return new TurnEvent.TextDelta(applied.Message);
+            yield return new TurnEvent.Completed(new TurnResult(
+                applied.Ok ? TurnOutcome.Answered : TurnOutcome.Failed,
+                TurnRoute.SettingCommand,
+                applied.Message,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
+        // 2. The rest of the model-free path, before anything reaches a provider.
         if (keywordRouter.Match(input) is { } match)
         {
             yield return new TurnEvent.Routed(TurnRoute.KeywordRouter, Effort: null);
@@ -114,8 +157,12 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        // 2. The model, if there is one to ask.
-        if (provider is null || !availability.CanAttemptModelTurn)
+        // 3. The model, if there is one to ask.
+        // Captured once: the property can be swapped by a settings change between turns, and a
+        // turn should run against the provider it started with.
+        var activeProvider = Provider;
+
+        if (activeProvider is null || !availability.CanAttemptModelTurn)
         {
             var reason = availability.Reason ?? "No language model provider is configured.";
             logger.LogInformation("No model available for this turn: {Reason}", reason);
@@ -131,7 +178,7 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        await foreach (var turnEvent in RunModelTurnAsync(input, provider, cancellationToken)
+        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, cancellationToken)
                            .ConfigureAwait(false))
         {
             yield return turnEvent;
@@ -143,7 +190,7 @@ public sealed class TurnLoop(
         ILlmProvider activeProvider,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var chosenModel = model ?? activeProvider.DefaultModel;
+        var chosenModel = Model ?? activeProvider.DefaultModel;
         var effort = EffortRouter.ChooseFor(input);
 
         // A cold prefix is only sanctioned on the first turn and after a model change. Anything

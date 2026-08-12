@@ -5,6 +5,7 @@ using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Diagnostics;
 using D47.Core.Journal;
 using D47.Llm;
 using Microsoft.Extensions.Logging;
@@ -20,12 +21,13 @@ namespace D47.App;
 public sealed class AppHost : IDisposable
 {
     private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<AppHost> _logger;
 
     private AppHost(
         AppPaths paths,
         ILoggerFactory loggerFactory,
         SerilogVerbosityControl verbosity,
-        D47Settings settings,
+        SettingsService settings,
         SecretStore secrets,
         GameStateStore gameState,
         JournalSpine journal,
@@ -39,6 +41,7 @@ public sealed class AppHost : IDisposable
     {
         Paths = paths;
         _loggerFactory = loggerFactory;
+        _logger = loggerFactory.CreateLogger<AppHost>();
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
@@ -57,7 +60,11 @@ public sealed class AppHost : IDisposable
 
     public SerilogVerbosityControl Verbosity { get; }
 
-    public D47Settings Settings { get; }
+    /// <summary>
+    /// The settings surface. Everything that changes a setting goes through here, whichever
+    /// surface asked, which is what makes the protected set enforceable in one place.
+    /// </summary>
+    public SettingsService Settings { get; }
 
     public SecretStore Secrets { get; }
 
@@ -105,11 +112,12 @@ public sealed class AppHost : IDisposable
 
         logger.LogInformation("d47 {Version} starting; data folder {Data}", version, paths.Data);
 
-        var settings = new D47Settings();
+        var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
+        var loaded = new D47Settings();
         string? startupError = null;
         try
         {
-            settings = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>()).Load();
+            loaded = store.Load();
         }
         catch (SettingsLoadException ex)
         {
@@ -117,12 +125,17 @@ public sealed class AppHost : IDisposable
             logger.LogCritical(ex, "Settings could not be loaded; continuing on defaults");
         }
 
-        verbosity.Apply(settings.Logging);
+        verbosity.Apply(loaded.Logging);
 
         var secrets = new SecretStore(
             paths,
             new DpapiSecretProtector(),
             loggerFactory.CreateLogger<SecretStore>());
+
+        var settings = new SettingsService(store, secrets, loaded, loggerFactory.CreateLogger<SettingsService>());
+
+        // From here a level change is live wherever it came from — panel, tool or settings file.
+        verbosity.FollowSettings(settings);
 
         var journalDirectory = ResolveJournalDirectory();
         var gameState = new GameStateStore();
@@ -138,7 +151,17 @@ public sealed class AppHost : IDisposable
             journalDirectory,
             journal.CurrentFile ?? "(none found)");
 
-        var capabilities = CapabilityRegistry.Build(BuiltinCapabilities.All(paths, verbosity, gameState, version));
+        // Availability and spend exist before the registry because capabilities report on them;
+        // the provider itself is built afterwards, from settings, by ApplyLlmSettings.
+        var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
+        var spend = new SpendTracker();
+
+        var capabilities = CapabilityRegistry.Build(
+            BuiltinCapabilities.All(paths, verbosity, gameState, settings, llmAvailability, spend, version));
+
+        // The one late-bound edge in the composition: descriptors declare the settings rows and
+        // some descriptors read settings, so the row table is supplied once the registry exists.
+        settings.Bind(capabilities);
 
         logger.LogInformation(
             "Registered {Count} capabilities exposing {ToolCount} tools",
@@ -147,20 +170,6 @@ public sealed class AppHost : IDisposable
 
         var updates = new UpdateChecker(loggerFactory.CreateLogger<UpdateChecker>());
 
-        // The provider is built only if there is a key to build it with. No key is not an error
-        // state: it produces a null provider, which the turn loop reads as "the model capability
-        // is off" and routes around (list.md Phase 3, "Capabilities as state, not guard").
-        ILlmProvider? provider = null;
-        if (!string.Equals(settings.Llm.Provider, "none", StringComparison.OrdinalIgnoreCase)
-            && ResolveAnthropicKey(secrets) is { } resolved)
-        {
-            provider = new AnthropicLlmProvider(resolved.Key);
-            logger.LogInformation("Anthropic provider configured from {Source}", resolved.Source);
-        }
-
-        var llmAvailability = new LlmAvailabilityState(provider is not null);
-        var spend = new SpendTracker();
-
         var turns = new TurnLoop(
             capabilities,
             new KeywordRouter(capabilities),
@@ -168,19 +177,9 @@ public sealed class AppHost : IDisposable
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<TurnLoop>(),
-            provider,
-            settings.Llm.Model)
-        {
-            AboutMe = settings.Llm.AboutMe,
-        };
+            settings: settings);
 
-        logger.LogInformation(
-            "Conversation ready; model {State} ({Provider}/{Model})",
-            llmAvailability.Current,
-            provider?.Id ?? "none",
-            settings.Llm.Model ?? provider?.DefaultModel ?? "none");
-
-        return new AppHost(
+        var host = new AppHost(
             paths,
             loggerFactory,
             verbosity,
@@ -195,6 +194,14 @@ public sealed class AppHost : IDisposable
             spend,
             version,
             startupError);
+
+        host.ApplyLlmSettings();
+
+        // From here on, a setting takes effect because it changed — not because something was
+        // restarted (list.md Phase 4, "Apply every setting without a restart").
+        settings.Changed += host.OnSettingsChanged;
+
+        return host;
     }
 
     /// <summary>
@@ -204,18 +211,94 @@ public sealed class AppHost : IDisposable
     public const string AnthropicApiKeySecret = "anthropic.apiKey";
 
     /// <summary>
-    /// The secret store is the real home for the key, but nothing can write to it until the
-    /// settings surface exists in Phase 4 — so the environment variable is the interim way to
-    /// configure a model at all. The store wins when both are present.
+    /// Rebuilds everything downstream of the language model settings: the provider itself, the
+    /// pinned model, the standing About Me text, and whether the model capability is on at all.
+    /// Called at startup and again whenever one of those settings changes, so the two paths
+    /// cannot drift.
+    /// </summary>
+    private void ApplyLlmSettings()
+    {
+        var current = Settings.Current;
+        var selected = LlmProviderCatalog.Selected(current.Llm.Provider);
+
+        ILlmProvider? provider = null;
+        string? reason = null;
+
+        if (selected.Id == LlmProviderCatalog.NoneId)
+        {
+            reason = "No language model is selected — that is a setting, not a fault.";
+        }
+        else if (ResolveKey(selected) is { } resolved)
+        {
+            provider = selected.Id switch
+            {
+                LlmProviderCatalog.AnthropicId => new AnthropicLlmProvider(resolved.Key, current.Llm.Endpoint),
+                _ => null,
+            };
+
+            if (provider is null)
+            {
+                reason = $"d47 has no client for {selected.Name} yet.";
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "{Provider} configured from {Source}, endpoint {Endpoint}",
+                    selected.Name,
+                    resolved.Source,
+                    current.Llm.Endpoint ?? selected.DefaultEndpoint ?? "(provider default)");
+            }
+        }
+        else
+        {
+            reason = $"No {selected.Name} API key is stored. Add one in Settings.";
+        }
+
+        Turns.Provider = provider;
+        Turns.Model = current.Llm.Model;
+        Turns.AboutMe = current.Llm.AboutMe;
+
+        // The persona block itself arrives in Phase 11; this is the switch it will read.
+        if (!current.Llm.PersonalityEnabled)
+        {
+            Turns.Persona = null;
+        }
+
+        LlmAvailability.SetProviderConfigured(provider is not null, reason);
+    }
+
+    private void OnSettingsChanged(SettingsChanged change)
+    {
+        if (change.Key.StartsWith("llm.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyLlmSettings();
+        }
+    }
+
+    /// <summary>
+    /// The secret store is the real home for a key. The environment variable stays supported
+    /// as the way to run d47 from a shell that already has one, and the store wins when both
+    /// are present.
     /// <para>
     /// Only the <em>source</em> is ever logged, never the key.
     /// </para>
     /// </summary>
-    private static (string Key, string Source)? ResolveAnthropicKey(SecretStore secrets)
+    private (string Key, string Source)? ResolveKey(LlmProviderInfo provider)
     {
-        if (secrets.TryGet(AnthropicApiKeySecret, out var stored))
+        if (provider.KeySecretName is not { } name)
+        {
+            return null;
+        }
+
+        if (Secrets.TryGet(name, out var stored))
         {
             return (stored, "the secret store");
+        }
+
+        // Only Anthropic has a conventional environment variable worth honouring.
+        if (provider.Id != LlmProviderCatalog.AnthropicId)
+        {
+            return null;
         }
 
         var fromEnvironment = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
@@ -236,6 +319,7 @@ public sealed class AppHost : IDisposable
 
     public void Dispose()
     {
+        Settings.Changed -= OnSettingsChanged;
         _loggerFactory.Dispose();
         Log.CloseAndFlush();
     }
