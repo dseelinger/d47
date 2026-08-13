@@ -408,6 +408,12 @@ public partial class SettingsView : UserControl
         }
     }
 
+    /// <summary>
+    /// The width a compact row's control is built to. Used as the floor for the control column
+    /// so a narrow panel shrinks the caption rather than clipping the control itself.
+    /// </summary>
+    private const double StandardControlWidth = 190;
+
     private RowView BuildRow(CapabilityDescriptor capability, SettingRow row)
     {
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -488,10 +494,31 @@ public partial class SettingsView : UserControl
         {
             // Label and help on the left, the control on the right — the layout every settings
             // surface a Commander already knows uses for one-glance rows.
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,16,Auto") };
+            //
+            // The control column is a bounded share of the row rather than Auto. Auto asks the
+            // control how wide it would like to be and gives it that, which is fine until a
+            // choice label is a sentence: "Small (English only) - more accurate, slower - about
+            // 466 MB to download" took 543 of 582 pixels and left the help text wrapping one
+            // character per line. Three-fifths to the words, two-fifths to the control, and the
+            // control right-aligned inside its share so short ones - a toggle, a stepper - sit
+            // exactly where they did before.
+            var grid = new Grid
+            {
+                ColumnDefinitions =
+                [
+                    new ColumnDefinition(3, GridUnitType.Star),
+                    new ColumnDefinition(16, GridUnitType.Pixel),
+
+                    // The floor is the width the controls are already built to; below it the
+                    // caption yields instead, which is the lesser of the two bad narrow cases.
+                    new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
+                ],
+            };
+
             Grid.SetColumn(caption, 0);
             Grid.SetColumn(control, 2);
             control.VerticalAlignment = VerticalAlignment.Center;
+            control.HorizontalAlignment = HorizontalAlignment.Right;
             grid.Children.Add(caption);
             grid.Children.Add(control);
             body = grid;
@@ -586,7 +613,7 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildComboBox(SettingRow row, TextBlock message)
     {
-        var combo = new ComboBox { MinWidth = 190, HorizontalAlignment = HorizontalAlignment.Right };
+        var combo = new ComboBox { MinWidth = StandardControlWidth, HorizontalAlignment = HorizontalAlignment.Right };
 
         var choices = row.Choices;
 
@@ -626,6 +653,15 @@ public partial class SettingsView : UserControl
                     .FirstOrDefault() ?? -1;
 
             combo.SelectedIndex = found < 0 ? (clearable ? 0 : -1) : found + offset;
+
+            // The column is bounded, so a label written as a sentence - the speech models state
+            // their size and speed - is clipped at the closed control. The tip is where the rest
+            // of it still lives without the row having to be as wide as its longest choice.
+            ToolTip.SetTip(
+                combo,
+                combo.SelectedIndex >= 0 && combo.SelectedIndex < items.Count
+                    ? items[combo.SelectedIndex]
+                    : null);
         }, true);
     }
 
@@ -636,7 +672,7 @@ public partial class SettingsView : UserControl
         var chevron = new TextBlock { Text = "⌄", FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var layout = new DockPanel { MinWidth = 190 };
+        var layout = new DockPanel { MinWidth = StandardControlWidth };
         DockPanel.SetDock(chevron, Dock.Right);
         layout.Children.Add(chevron);
         layout.Children.Add(value);
