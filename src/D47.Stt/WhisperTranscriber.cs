@@ -28,6 +28,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     private WhisperFactory? _factory;
     private WhisperProcessor? _processor;
     private string? _loadedFrom;
+    private bool _disposed;
 
     public WhisperTranscriber(ILogger<WhisperTranscriber> logger)
     {
@@ -64,6 +65,12 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// </summary>
     public bool Load(string modelPath, string modelId, bool useGpu)
     {
+        if (_disposed)
+        {
+            Unavailable = "The transcriber has been shut down.";
+            return false;
+        }
+
         _one.Wait();
 
         try
@@ -73,7 +80,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                 return true;
             }
 
-            Unload();
+            UnloadCore();
 
             if (!File.Exists(modelPath))
             {
@@ -117,7 +124,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                     : $"The model could not be loaded: {ex.Message}";
 
                 _logger.LogError(ex, "Could not load {Model}", modelId);
-                Unload();
+                UnloadCore();
                 return false;
             }
         }
@@ -214,7 +221,35 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         return trimmed;
     }
 
-    private void Unload()
+    /// <summary>
+    /// Drops the loaded model and goes back to not-ready, ready to <see cref="Load"/> again.
+    /// <para>
+    /// This is what "no model is selected" means, and it is deliberately not
+    /// <see cref="Dispose"/>: the host owns one transcriber for the life of the process and
+    /// merely opens and closes it as the setting changes. Disposing on a settings change and
+    /// then being asked to load again is how the object ends up unusable while still referenced.
+    /// </para>
+    /// </summary>
+    public void Unload()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _one.Wait();
+
+        try
+        {
+            UnloadCore();
+        }
+        finally
+        {
+            _one.Release();
+        }
+    }
+
+    private void UnloadCore()
     {
         _processor?.Dispose();
         _processor = null;
@@ -227,13 +262,24 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         UsingGpu = false;
     }
 
+    /// <summary>
+    /// Teardown, once, at the end of the process. Idempotent: a second call is a no-op rather
+    /// than an <see cref="ObjectDisposedException"/> out of the semaphore.
+    /// </summary>
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
         _one.Wait();
 
         try
         {
-            Unload();
+            UnloadCore();
         }
         finally
         {
