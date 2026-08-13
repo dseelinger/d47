@@ -296,12 +296,15 @@ public sealed class SettingsService
                 return normalised is not null;
 
             case SettingKind.Number:
-                if (!long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+                // Float rather than Integer, and the row's own format on the way out. A row
+                // that wants whole numbers declares a step of 1 and gets exactly what it got
+                // before; a row whose value is a fraction can finally hold one.
+                if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
                 {
                     return false;
                 }
 
-                normalised = number.ToString(CultureInfo.InvariantCulture);
+                normalised = number.ToString(row.NumberFormat, CultureInfo.InvariantCulture);
                 return true;
 
             case SettingKind.Choice:

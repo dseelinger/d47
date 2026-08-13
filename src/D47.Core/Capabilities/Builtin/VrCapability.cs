@@ -18,6 +18,16 @@ public static class VrCapability
 
     public const string StateKey = "vr.state";
 
+    public const string ModeKey = "vr.mode";
+
+    /// <summary>The surface a placement row belongs to, as it appears in the key.</summary>
+    public const string PanelSlot = "panel";
+
+    public const string MiniSlot = "mini";
+
+    /// <summary>The lock row's key for a surface. One spelling, so a caller cannot invent another.</summary>
+    public static string LockKey(string slot) => $"vr.{slot}.lock";
+
     public const string CaptionsEnabledKey = "vr.captions.enabled";
 
     public const string CaptionSizeKey = "vr.captions.size";
@@ -42,6 +52,13 @@ public static class VrCapability
     public sealed record HeadsetSurface
     {
         public required Func<(VrState State, string? Reason, string? Adapter)> Report { get; init; }
+
+        /// <summary>
+        /// Snaps every world-locked surface back to the current head pose as a group. Returns
+        /// how many moved, so saying "nothing to re-anchor" is a real answer rather than
+        /// silence that looks like a failure.
+        /// </summary>
+        public required Func<int> Reanchor { get; init; }
     }
 
     public static CapabilityDescriptor Create(SettingsService settings, HeadsetSurface headset) => new()
@@ -84,6 +101,29 @@ public static class VrCapability
                     new SettingCommandPhrase("headset overlay off", "false"),
                 ],
             },
+            new SettingRow
+            {
+                Key = ModeKey,
+                Label = "Panel content",
+                Help = "Full shows everything the desktop window does. Mini reduces what is on the panel "
+                       + "rather than shrinking it - it is the same panel showing less, not a smaller copy.",
+                Kind = SettingKind.Choice,
+                Choices = ["full", "mini"],
+                DocsAnchor = "mode",
+                AppliesWhen = s => s.Vr.Enabled,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Vr.Mode,
+                    Write = (s, v) => s with { Vr = s.Vr with { Mode = v == "mini" ? "mini" : "full" } },
+                },
+                Commands =
+                [
+                    new SettingCommandPhrase("mini panel", "mini"),
+                    new SettingCommandPhrase("full panel", "full"),
+                ],
+            },
+            .. Placement(PanelSlot, "Panel", s => s.Vr.Panel, (s, v) => s with { Vr = s.Vr with { Panel = v } }),
+            .. Placement(MiniSlot, "Mini panel", s => s.Vr.Mini, (s, v) => s with { Vr = s.Vr with { Mini = v } }),
             CaptionRow(
                 CaptionsEnabledKey,
                 "Captions",
@@ -122,7 +162,7 @@ public static class VrCapability
                 + "a caption sits over a starfield and a station's floodlights, and a box you "
                 + "cannot see through is a hole cut in the cockpit.",
                 SettingKind.Number,
-                s => s.Vr.Captions.BackgroundOpacity.ToString("0.00", CultureInfo.InvariantCulture),
+                s => s.Vr.Captions.BackgroundOpacity.ToString("0.##", CultureInfo.InvariantCulture),
                 (s, v) => s with
                 {
                     Vr = s.Vr with
@@ -136,7 +176,8 @@ public static class VrCapability
                         },
                     },
                 },
-                "background"),
+                "background",
+                step: 0.02),
             CaptionRow(
                 CaptionSpeedKey,
                 "Reading speed",
@@ -173,6 +214,117 @@ public static class VrCapability
     };
 
     /// <summary>
+    /// The six knobs <em>Overlay Positioning &amp; Look</em> names, plus the lock, for one
+    /// surface. Generated rather than written twice: the panel and the mini panel want the same
+    /// controls over different values, and two hand-written copies are two things to keep in
+    /// step.
+    /// <para>
+    /// Every one of them maps onto exactly one call into SteamVR, which is what keeps the
+    /// settings surface honest about what it is changing.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<SettingRow> Placement(
+        string slot,
+        string what,
+        Func<Configuration.D47Settings, VrSurfaceSettings> read,
+        Func<Configuration.D47Settings, VrSurfaceSettings, Configuration.D47Settings> write)
+    {
+        SettingRow Row(
+            string name,
+            string label,
+            string help,
+            SettingKind kind,
+            Func<VrSurfaceSettings, string?> get,
+            Func<VrSurfaceSettings, string?, VrSurfaceSettings> set,
+            IReadOnlyList<string>? choices = null,
+            double step = 1) => new()
+        {
+            Step = step,
+            Key = $"vr.{slot}.{name}",
+            Label = label,
+            Help = help,
+            Kind = kind,
+            Choices = choices ?? [],
+            DocsAnchor = $"{slot}-{name}",
+            Group = $"{what} placement",
+            GroupHelp = $"Where the {what.ToLowerInvariant()} sits and what it looks like. You can also just "
+                        + "reach out and grab it with a controller, which is what the numbers are here for "
+                        + "when you would rather not.",
+            AppliesWhen = s => s.Vr.Enabled,
+            Binding = new SettingBinding
+            {
+                Read = s => get(read(s)),
+                Write = (s, v) => write(s, set(read(s), v)),
+            },
+        };
+
+        yield return Row(
+            "lock",
+            $"{what} locking",
+            "Head-locked follows you and is always in view. World-locked stays where you put it, which is "
+            + "what re-anchoring exists to undo when the cockpit moves out from under it.",
+            SettingKind.Choice,
+            v => v.Lock,
+            (v, x) => v with { Lock = x == "world" ? "world" : "head" },
+            ["head", "world"]);
+
+        yield return Row(
+            "distance",
+            "Distance",
+            "Metres in front of you. Head-locked only - a surface you have put down is wherever you put it.",
+            SettingKind.Number,
+            v => Number(v.Distance),
+            (v, x) => v with { Distance = Parse(x, v.Distance) },
+            step: 0.05);
+
+        yield return Row(
+            "size",
+            "Size",
+            "How wide the quad is, in metres. Height follows from the panel's proportions, because SteamVR "
+            + "takes a width and derives the rest.",
+            SettingKind.Number,
+            v => Number(v.Width),
+            (v, x) => v with { Width = Parse(x, v.Width) },
+            step: 0.05);
+
+        yield return Row(
+            "curve",
+            "Curvature",
+            "0 is flat and 1 is wrapped right around you. This is the whole of curved versus flat: a number "
+            + "reaching zero rather than a second mode, because a mode is a thing that can disagree with it.",
+            SettingKind.Number,
+            v => Number(v.Curvature),
+            (v, x) => v with { Curvature = Parse(x, v.Curvature) },
+            step: 0.05);
+
+        yield return Row(
+            "opacity",
+            "Opacity",
+            "How solid the surface is, from 0.1 to 1.",
+            SettingKind.Number,
+            v => Number(v.Opacity),
+            (v, x) => v with { Opacity = Parse(x, v.Opacity) },
+            step: 0.05);
+
+        yield return Row(
+            "scale",
+            "Scale",
+            "How large the panel is drawn, as a percentage. Distinct from mini mode: this changes the size "
+            + "of everything on the panel, mini changes how much of it there is.",
+            SettingKind.Choice,
+            v => v.Zoom.ToString(CultureInfo.InvariantCulture),
+            (v, x) => v with { Zoom = Interface.ZoomLadder.Snap((int)Parse(x, v.Zoom)) },
+            [.. Interface.ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))]);
+    }
+
+    private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static double Parse(string? value, double fallback) =>
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : fallback;
+
+    /// <summary>
     /// The caption rows, which all share one group so the explanation is stated once instead of
     /// four times, and all of which are absent when the overlays are off - a row that does not
     /// apply is absent rather than disabled, because a greyed-out control still asserts the
@@ -186,12 +338,14 @@ public static class VrCapability
         Func<Configuration.D47Settings, string?> read,
         Func<Configuration.D47Settings, string?, Configuration.D47Settings> write,
         string anchor,
-        IReadOnlyList<string>? choices = null) => new()
+        IReadOnlyList<string>? choices = null,
+        double step = 1) => new()
     {
         Key = key,
         Label = label,
         Help = help,
         Kind = kind,
+        Step = step,
         Choices = choices ?? [],
         DocsAnchor = anchor,
         Group = "Captions",

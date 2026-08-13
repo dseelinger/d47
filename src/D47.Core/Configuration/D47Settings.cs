@@ -54,6 +54,23 @@ public sealed record VrSettings
     public bool Enabled { get; init; } = true;
 
     /// <summary>
+    /// Which content set the panel is showing: "full" or "mini". A value rather than a second
+    /// surface, because the checklist is explicit that mini is a mode of the same panel.
+    /// </summary>
+    public string Mode { get; init; } = "full";
+
+    /// <summary>Where the full panel sits and what it looks like.</summary>
+    public VrSurfaceSettings Panel { get; init; } = new();
+
+    /// <summary>
+    /// And the mini one, separately. Not a scaled copy of the row above: the two modes have
+    /// different reasons to exist, so a Commander who parks mini out at the edge of vision and
+    /// keeps the full panel in front of them is doing the expected thing rather than fighting
+    /// a shared setting.
+    /// </summary>
+    public VrSurfaceSettings Mini { get; init; } = VrSurfaceSettings.Mini();
+
+    /// <summary>
     /// The caption layer. Its own block because captions are their own overlay, and because
     /// everything on it is something the caption standard leaves to the viewer - nothing here
     /// is a number the standard fixes.
@@ -308,6 +325,20 @@ public sealed record HotkeySettings
     public string? OpenSettings { get; init; } = "Ctrl+OemComma";
 
     public string? FocusAsk { get; init; } = "Ctrl+L";
+
+    /// <summary>
+    /// Snaps every world-locked headset surface back in front of the Commander (list.md
+    /// Phase 9, "Re-anchor the panels").
+    /// <para>
+    /// System-wide rather than window-scoped, and that is the whole point of it: the case this
+    /// exists for is Elite holding the foreground with the panels drifted out of position, so a
+    /// gesture that needs d47 focused is a gesture that does not work when it is wanted.
+    /// </para>
+    /// <para>
+    /// Protected, like every hotkey row.
+    /// </para>
+    /// </summary>
+    public string? Reanchor { get; init; } = "Ctrl+Alt+R";
 }
 
 public sealed record UpdateSettings

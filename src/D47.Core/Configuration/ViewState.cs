@@ -49,6 +49,31 @@ public sealed record ViewState
         return !startCollapsed;
     }
 
+    /// <summary>
+    /// Where each world-locked headset surface was put down, keyed by surface slot, and where
+    /// the head was when it was put there (list.md Phase 9, "Re-anchor the panels").
+    /// <para>
+    /// Here rather than in settings for the same reason the window's position is. <em>Choosing</em>
+    /// to have a surface world-locked is a setting - it is a preference, it has a default worth
+    /// documenting, and it belongs on a row. Where the Commander's hand happened to leave it is
+    /// not; it is seven numbers nobody would ever type, and nothing should fail loudly because
+    /// they could not be read.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, SurfaceAnchor> VrAnchors { get; init; } =
+        new Dictionary<string, SurfaceAnchor>(StringComparer.Ordinal);
+
+    /// <summary>Records a surface having been put somewhere.</summary>
+    public ViewState With(string slot, SurfaceAnchor anchor)
+    {
+        var next = new Dictionary<string, SurfaceAnchor>(VrAnchors, StringComparer.Ordinal)
+        {
+            [slot] = anchor,
+        };
+
+        return this with { VrAnchors = next };
+    }
+
     /// <summary>Records where the main window was left.</summary>
     public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
 
@@ -70,6 +95,21 @@ public sealed record ViewState
 
         return next;
     }
+}
+
+/// <summary>
+/// A surface that has been put down: where it went, and where the head was when it did.
+/// <para>
+/// Both together, because one without the other is a placement re-anchor cannot undo. The
+/// second pose is the whole reason re-anchoring can preserve a layout rather than stacking
+/// every panel in the same place.
+/// </para>
+/// </summary>
+public sealed record SurfaceAnchor
+{
+    public required PoseSettings Placed { get; init; }
+
+    public required PoseSettings PlacedAgainst { get; init; }
 }
 
 /// <summary>

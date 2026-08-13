@@ -46,6 +46,7 @@ public static class BuiltinCapabilities
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
+        ReanchorCapability.Create(headset),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];
