@@ -95,11 +95,12 @@ public sealed class VrHost : IDisposable
         SettingsService settings,
         ViewStateStore viewState,
         TickLoop tick,
-        ILoggerFactory loggers)
+        ILoggerFactory loggers,
+        D47.Core.Interface.AvatarLibrary? avatars = null)
     {
         VrHost? self = null;
 
-        var panel = new VrPanelSurface(model, settings, slot => self?.AnchorFor(slot));
+        var panel = new VrPanelSurface(model, settings, slot => self?.AnchorFor(slot), avatars);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

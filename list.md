@@ -108,7 +108,7 @@
   - [x] Say when the persona has changed - New persona acknowledges when it has been picked. If it changes before its acknowledgement has completed speaking, it stops and the next one starts. Speech, as always, may be interrupted by the commander.
   - [x] Personality on/off - Plain answers with no persona, flavor, or ambient remarks. The anti-invention guardrails must survive the persona being switched off, so they cannot live inside the persona's prompt block.
   - [x] Commander's About Me - A Commander-provided prompt stored between sessions and personas so that the LLM remembers basic facts about the commander.
-  - [ ] Ship's AI Avatar - Per-state avatar imagery on the panel. Animated formats supported.
+  - [x] Ship's AI Avatar - Per-state avatar imagery on the panel. Animated formats supported.
   - [x] ElevenLabs - First offered, paid voice provider alongside the free Edge Neural voices, chosen per role, so a Commander with a key hears it and nothing else changes. Other providers may be added later in development. Differences between providers, such as speed, is maintained on a per-provider basis.
   - [x] #33 Pair a default voice to each persona - At first startup, lazy-load available voices (Edge neural defaults to "en-" voices). Using LLM (if available), a sensible voice is chosen for each persona based on the persona's prompt (or custom prompt) in the background, so picking a character does not also mean auditioning potentially hundreds of voices.
   - [x] Ambient Voice - In-character ambient lines motivated by live game state, varied (by LLM if available, otherwise by initially the 10 generated stock phrases per game state covered).

@@ -36,7 +36,7 @@ public partial class App(AppHost? host) : Application
         if (host is not null)
         {
             host.Vr = Headset.VrHost.Start(
-                host.Panel, host.Audio, host.Settings, host.ViewState, host.Tick, host.Loggers);
+                host.Panel, host.Audio, host.Settings, host.ViewState, host.Tick, host.Loggers, host.Avatars);
         }
 
         base.OnFrameworkInitializationCompleted();

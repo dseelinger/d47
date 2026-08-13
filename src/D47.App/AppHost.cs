@@ -189,6 +189,12 @@ public sealed class AppHost : IDisposable
     /// <summary>Which Guardian core is aboard, and what it remembers (list.md Phase 11).</summary>
     public PersonaHost Personas { get; }
 
+    /// <summary>
+    /// The Commander's own per-state avatar frames, if they have supplied any. Null until
+    /// startup has scanned for them, and empty for almost everyone — the panel draws its own.
+    /// </summary>
+    public D47.Core.Interface.AvatarLibrary? Avatars { get; private set; }
+
     /// <summary>Whether the model is usable right now, and why not when it isn't.</summary>
     public LlmAvailabilityState LlmAvailability { get; }
 
@@ -634,6 +640,16 @@ public sealed class AppHost : IDisposable
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;
         turns.UseTranscript(personas.Transcript);
+
+        // The avatar's own imagery, if the Commander has dropped any in. Scanned once at
+        // startup; the drawn face is what every state falls back to, so an empty data/avatar is
+        // the normal case rather than a missing asset.
+        host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
+
+        // The face follows the loop. Posted to the UI thread because the states arrive from the
+        // turn's own thread and from the audio path, and neither is the one that draws.
+        voice.StateEntered += state => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => host.Panel.LoopState = state);
 
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();

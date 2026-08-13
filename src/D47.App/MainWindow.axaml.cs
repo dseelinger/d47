@@ -68,6 +68,12 @@ public partial class MainWindow : Window
         Title = $"Directive 47 — {BuildInfo.Semantic}";
 
         Panel.DataContext = _model;
+
+        // The Commander's own frames, where they have supplied them. Handed to the view rather
+        // than looked up by it: the view is instantiated by the headset overlay too, and a
+        // control that read the data folder for itself would be a control that knows where it
+        // is installed.
+        Panel.Avatar.Library = host?.Avatars;
         _model.AskRequested += () => _ = AskAsync();
         _model.SettingsRequested += OpenSettings;
         _model.HelpRequested += () => Process.Start(

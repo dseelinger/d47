@@ -98,6 +98,53 @@ Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of
 protected setting, so a model that could rebind one could hand itself a way in it is not allowed
 to have. See [Settings](settings.md).
 
+## The ship AI's face {#avatar}
+
+Top left of the panel, and in the headset too. One look per stage of a turn, so you can tell what
+Directive 47 is doing without reading anything — which in a cockpit is the point.
+
+| Stage | What it shows |
+|---|---|
+| `idle` | A closed ring. Nothing in flight. |
+| `listening` | An open mouth. The microphone is on. |
+| `transcribing` | Three rising bars — sound becoming words. |
+| `thinking` | Four blocks around a gap, the Guardian motif, working. |
+| `speaking` | A widening wave. |
+| `answered` | A tick. |
+| `unsure` | A question mark, drawn rather than typed. |
+| `failed` | A cross. |
+
+They differ in shape as well as colour, so they read in greyscale — colour is never the only
+signal. Colour comes from your theme, so switching theme repaints the face with everything else.
+
+Each one breathes: a slow opacity cycle, faster while a turn is running and very slow at rest.
+Nothing here jitters, because a companion's face that jitters is a companion that looks anxious.
+
+### Using your own
+
+Drop image files into `data/avatar/<state>/` beside the executable — the same shape the audio
+cues use, so if you have already customised those you know this one.
+
+```text
+data/avatar/thinking/01.png
+data/avatar/thinking/02.png
+data/avatar/thinking/03.png
+```
+
+- **One folder per state, and replacing one leaves the rest alone.** Your `thinking` frames do
+  not turn off the drawn `idle`.
+- **More than one file in a folder animates**, cycling in filename order at four frames a second.
+  That is how an animated avatar is supported: as a sequence of stills.
+- `.png`, `.jpg`, `.bmp` and `.webp`. **Not `.gif` or `.svg`** — Directive 47 decodes neither, and
+  offering a format that silently never renders would be worse than not offering it.
+- An empty, unreadable or corrupt file is skipped, and a state with nothing usable falls back to
+  the drawn face rather than showing a broken box.
+
+The shipped faces are drawn rather than supplied as images, and that is not only an aesthetic
+choice: one widget tree renders to both the window and the headset, so an animation made of
+decoded frames would need something advancing it on two surfaces — and it would put an image
+decoder in a dependency graph that has stayed clear of them since the first release.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

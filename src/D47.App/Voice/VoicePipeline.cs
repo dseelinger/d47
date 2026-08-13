@@ -204,8 +204,17 @@ public sealed class VoicePipeline(
         await AnnounceAsync(announcement.Text, announcement.Channel, voice).ConfigureAwait(false);
     }
 
-    public void EnterState(LoopState state) =>
+    /// <summary>
+    /// Raised as the loop moves. The cues have marked these states audibly since Phase 5; this
+    /// is the same states, for the surfaces that show a face (list.md Phase 11).
+    /// </summary>
+    public event Action<LoopState>? StateEntered;
+
+    public void EnterState(LoopState state)
+    {
         arbiter.EnterState(state, cues, Bed, CuesEnabled, BedEnabled);
+        StateEntered?.Invoke(state);
+    }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
 }

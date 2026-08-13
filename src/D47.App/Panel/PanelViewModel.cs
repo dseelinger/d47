@@ -50,6 +50,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string _askText = string.Empty;
     private bool _canAsk = true;
     private string _transcriptText = string.Empty;
+    private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -76,6 +77,21 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     {
         get => _transcriptText;
         private set => Set(ref _transcriptText, value);
+    }
+
+    /// <summary>
+    /// Where the conversation loop is (list.md Phase 11, "Ship's AI Avatar"). The panel has
+    /// always had these states audibly, one cue each; this is the same states, visible.
+    /// <para>
+    /// On the view model rather than on the view, like everything else here, because the
+    /// desktop window and the headset overlay each instantiate a view against this one model —
+    /// a state owned by one of them would make the other a guest (list.md Phase 9).
+    /// </para>
+    /// </summary>
+    public D47.Core.Audio.LoopState LoopState
+    {
+        get => _loopState;
+        set => Set(ref _loopState, value);
     }
 
     public string TurnLine
