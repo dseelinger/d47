@@ -5,6 +5,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.Vr;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -31,32 +32,24 @@ public class VrPanelRasterTests
     public void TheHeadsetIsHandedPixelsRatherThanAnEmptyQuad()
     {
         var (surface, width, height) = Rasterised(out var buffer);
+        var opaque = 0;
 
-        try
+        unsafe
         {
-            var opaque = 0;
+            var bytes = (byte*)buffer.Address;
 
-            unsafe
+            // Every fourth byte is alpha in Bgra8888.
+            for (var i = 3; i < width * height * 4; i += 4)
             {
-                var bytes = (byte*)buffer;
-
-                // Every fourth byte is alpha in Bgra8888.
-                for (var i = 3; i < width * height * 4; i += 4)
+                if (bytes[i] != 0)
                 {
-                    if (bytes[i] != 0)
-                    {
-                        opaque++;
-                    }
+                    opaque++;
                 }
             }
+        }
 
-            Assert.Equal(width * height, opaque);
-            Assert.Equal((1024, 640), surface.Size);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(buffer);
-        }
+        Assert.Equal(width * height, opaque);
+        Assert.Equal((1024, 640), surface.Size);
     }
 
     /// <summary>
@@ -69,37 +62,79 @@ public class VrPanelRasterTests
     public void WhatItDrawsIsThePanelAndNotJustItsBackground()
     {
         var (_, width, height) = Rasterised(out var buffer);
+        var distinct = new HashSet<uint>();
 
-        try
+        unsafe
         {
-            var distinct = new HashSet<uint>();
+            var pixels = (uint*)buffer.Address;
 
-            unsafe
+            for (var i = 0; i < width * height; i++)
             {
-                var pixels = (uint*)buffer;
+                distinct.Add(pixels[i]);
 
-                for (var i = 0; i < width * height; i++)
+                if (distinct.Count > 8)
                 {
-                    distinct.Add(pixels[i]);
-
-                    if (distinct.Count > 8)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
+        }
 
-            // A background and nothing else is one or two colours. Text, the avatar ring, the
-            // accent on the send button and the ask box border are many more.
-            Assert.True(
-                distinct.Count > 8,
-                $"The submitted texture has only {distinct.Count} distinct colours, which is a "
-                + "blank quad rather than a rendered panel.");
-        }
-        finally
+        // A background and nothing else is one or two colours. Text, the avatar ring, the
+        // accent on the send button and the ask box border are many more.
+        Assert.True(
+            distinct.Count > 8,
+            $"The submitted buffer has only {distinct.Count} distinct colours, which is a "
+            + "blank quad rather than a rendered panel.");
+    }
+
+    /// <summary>
+    /// The real panel, through the real buffer, arriving in the channel order the runtime
+    /// reads — the whole path from a styled widget tree to the bytes <c>SetOverlayRaw</c>
+    /// takes, with the conversion in the middle of it.
+    /// <para>
+    /// Asserted against the panel's own pixels rather than a synthetic pattern, because the
+    /// failure being guarded is one where every call still succeeds. A panel handed over
+    /// unconverted is a panel in the headset with the Elite theme's orange rendered blue,
+    /// which is exactly the kind of wrong that gets remembered as "working".
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void WhatTheRuntimeIsHandedIsThePanelInRgba()
+    {
+        var (_, width, height) = Rasterised(out var buffer);
+
+        var drawn = new byte[width * height * 4];
+        Marshal.Copy(buffer.Address, drawn, 0, drawn.Length);
+
+        buffer.ToRgba();
+
+        var handed = new byte[drawn.Length];
+        Marshal.Copy(buffer.Address, handed, 0, handed.Length);
+
+        var accent = 0;
+
+        for (var p = 0; p < width * height; p++)
         {
-            Marshal.FreeHGlobal(buffer);
+            var at = p * 4;
+
+            Assert.Equal(drawn[at + 2], handed[at]);
+            Assert.Equal(drawn[at + 1], handed[at + 1]);
+            Assert.Equal(drawn[at], handed[at + 2]);
+            Assert.Equal(drawn[at + 3], handed[at + 3]);
+
+            // Red well clear of blue, in the first byte, where RGBA says red lives. The theme's
+            // accent is orange; if the conversion were skipped this counts nothing, because
+            // the first byte would still be the blue channel.
+            if (handed[at] > 160 && handed[at + 2] < 80)
+            {
+                accent++;
+            }
         }
+
+        Assert.True(
+            accent > 100,
+            $"Only {accent} pixels of the submitted buffer read as the theme's orange accent, "
+            + "which is what a panel handed over with red and blue swapped looks like.");
     }
 
     /// <summary>
@@ -115,10 +150,11 @@ public class VrPanelRasterTests
     }
 
     /// <summary>
-    /// Rasterises through the same call the runtime makes, into the same shape of buffer, so
-    /// nothing about the real path is stubbed out.
+    /// Rasterises through the same call the runtime makes, into the same buffer the runtime
+    /// hands OpenVR, so nothing about the real path is stubbed out. Left as the rasteriser
+    /// wrote it — BGRA, unconverted — because that is what the runtime has at this point.
     /// </summary>
-    private static (VrPanelSurface Surface, int Width, int Height) Rasterised(out IntPtr buffer)
+    private static (VrPanelSurface Surface, int Width, int Height) Rasterised(out VrPixels buffer)
     {
         var (settings, _, _) = TestSurface.Create();
 
@@ -133,10 +169,9 @@ public class VrPanelRasterTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var (width, height) = surface.Size;
-        var rowBytes = width * 4;
 
-        buffer = Marshal.AllocHGlobal(rowBytes * height);
-        surface.Draw(buffer, rowBytes);
+        buffer = new VrPixels(width, height);
+        surface.Draw(buffer.Address, buffer.RowBytes);
 
         return (surface, width, height);
     }

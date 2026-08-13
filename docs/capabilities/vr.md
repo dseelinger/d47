@@ -143,8 +143,7 @@ rather than of the caption.
 ### Headset {#state}
 
 Not a setting but a state, shown next to the switch — because *switched off* and *SteamVR is not
-running* look identical from the outside unless something says which. When a session is up it
-also names the graphics adapter the overlay is drawn on.
+running* look identical from the outside unless something says which.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
@@ -183,8 +182,9 @@ mini    640 x 280 px   at 0.34 m wide
 the middle and the cockpit was behind it rather than around it.
 
 The panel is a second instantiation of the same view definition bound to the same view model,
-rasterised offscreen into a shared Direct3D texture. About 0.75 ms a frame measured live against
-SteamVR, of which the rasterise is 0.30 ms, and only when something changed.
+rasterised offscreen into a plain pixel buffer and submitted with `SetOverlayRaw`. About 0.75 ms
+a frame measured live against SteamVR, of which the rasterise is 0.30 ms, and only when something
+changed.
 
 **The trigger only.** A controller reports its grip and other buttons through the same channel,
 so treating them all as a press means the grip that grabs the panel also clicks whatever the ray
@@ -194,10 +194,15 @@ controllers for its own laser and hands back mouse events.
 silently, and an `IVRInput` action manifest was built twice in two separate projects, accepted by
 SteamVR, and never went live.
 
-**The graphics device is created on the adapter SteamVR names**, via
-`IVRSystem.GetDXGIOutputInfo`, rather than the system default. On a hybrid-graphics machine the
-default can be the integrated GPU, and a texture created there is a cross-adapter share SteamVR
-will reject or slow-path — a failure that only happens on somebody else's computer.
+**The pixels go over as raw bytes rather than as a texture.** A shared Direct3D texture was the
+original route, and it left the overlays invisible in the headset while SteamVR reported them
+visible — with every call returning success, the copy proven correct by test, and the rasterise
+proven correct by writing a live session's first frame to `data/vr-PanelFull.png` and looking at
+it. `SetOverlayRaw` hands OpenVR a buffer and lets it do the upload, which removes the graphics
+device, the adapter match and the share flag along with the fault. Two things it has to get
+right, both of which come out as a wrong picture rather than an error: the buffer is RGBA where
+Avalonia rasterises BGRA, and its rows carry no padding, because `SetOverlayRaw` derives the
+stride from the width.
 
 Caption line breaks go after punctuation, or before a conjunction or preposition, bottom-heavy
 where nothing else decides it; when those compete the syntactic break wins. Captions are never

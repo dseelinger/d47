@@ -26,7 +26,7 @@ public interface IVrSurfaceSource
     SurfacePlacement Placement { get; }
 
     /// <summary>
-    /// The pixel size it wants. A change reallocates the textures, which is why it is asked
+    /// The pixel size it wants. A change reallocates the buffer, which is why it is asked
     /// rather than fixed: mini is a smaller image, not the same image hung nearer.
     /// </summary>
     (int Width, int Height) Size { get; }
@@ -38,7 +38,11 @@ public interface IVrSurfaceSource
     /// </summary>
     bool IsDirty { get; }
 
-    /// <summary>Rasterises into the mapped staging texture, straight, with no intermediate copy.</summary>
+    /// <summary>
+    /// Rasterises straight into the buffer the runtime will hand OpenVR, with no intermediate
+    /// copy. BGRA, which is what the rasteriser produces; the conversion to the RGBA the raw
+    /// path reads happens on the way out, in <see cref="VrPixels.ToRgba"/>.
+    /// </summary>
     void Draw(IntPtr destination, int rowBytes);
 
     /// <summary>Told where the head is, so a head-locked surface can work out where it goes.</summary>
@@ -87,17 +91,13 @@ public sealed class SteamVrRuntime(
 
     private DateTimeOffset _now;
     private DateTimeOffset _lastDescribed;
-    private readonly Dictionary<VrSurface, VrTexture> _textures = [];
+    private readonly Dictionary<VrSurface, VrPixels> _buffers = [];
 
     private CVRSystem? _system;
-    private VrDevice? _device;
     private bool _claimed;
 
     /// <summary>The last head pose read. Null before the first serve.</summary>
     public VrPose? Head { get; private set; }
-
-    /// <summary>Which adapter the device landed on, for the diagnostics page.</summary>
-    public string? Adapter => _device?.AdapterName;
 
     public VrStart Start()
     {
@@ -133,7 +133,7 @@ public sealed class SteamVrRuntime(
 
     public bool Serve(DateTimeOffset now)
     {
-        if (_system is null || _device is null)
+        if (_system is null)
         {
             return false;
         }
@@ -169,12 +169,7 @@ public sealed class SteamVrRuntime(
 
     public void Stop()
     {
-        foreach (var texture in _textures.Values)
-        {
-            texture.Dispose();
-        }
-
-        _textures.Clear();
+        _buffers.Clear();
 
         foreach (var overlay in _overlays.Values)
         {
@@ -188,9 +183,6 @@ public sealed class SteamVrRuntime(
         _complaints.Clear();
         _served.Clear();
         _lastDescribed = default;
-
-        _device?.Dispose();
-        _device = null;
 
         if (_system is not null)
         {
@@ -317,15 +309,7 @@ public sealed class SteamVrRuntime(
             _overlays[key] = overlay;
         }
 
-        var wanted = -1;
-        _system.GetDXGIOutputInfo(ref wanted);
-        _device = VrDevice.Create(wanted);
-
-        logger.LogInformation(
-            "Headset overlays are up on {Adapter} (SteamVR asked for DXGI adapter {Wanted}, device landed on {Landed})",
-            _device.AdapterName,
-            wanted,
-            _device.AdapterIndex);
+        logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
 
         return VrStart.Started;
     }
@@ -401,22 +385,21 @@ public sealed class SteamVrRuntime(
         var placement = source.Placement.Sane();
         var (width, height) = source.Size;
 
-        if (!_textures.TryGetValue(source.Surface, out var texture))
+        if (!_buffers.TryGetValue(source.Surface, out var pixels))
         {
-            texture = new VrTexture(_device!, width, height);
-            _textures[source.Surface] = texture;
+            pixels = new VrPixels(width, height);
+            _buffers[source.Surface] = pixels;
         }
         else
         {
-            texture.Resize(width, height);
+            pixels.Resize(width, height);
         }
 
         if (source.IsDirty)
         {
-            var (address, rowBytes) = texture.Map();
-            source.Draw(address, rowBytes);
-            texture.Commit();
-            overlay.Submit(texture.NativePointer);
+            source.Draw(pixels.Address, pixels.RowBytes);
+            pixels.ToRgba();
+            overlay.Submit(pixels.Address, pixels.Width, pixels.Height);
         }
 
         // Head-locked rides the headset; only something put down in the room needs a room

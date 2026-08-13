@@ -51,7 +51,7 @@ public static class VrCapability
     /// </summary>
     public sealed record HeadsetSurface
     {
-        public required Func<(VrState State, string? Reason, string? Adapter)> Report { get; init; }
+        public required Func<(VrState State, string? Reason)> Report { get; init; }
 
         /// <summary>
         /// Snaps every world-locked surface back to the current head pose as a group. Returns
@@ -363,13 +363,11 @@ public static class VrCapability
             return "The headset overlays are switched off.";
         }
 
-        var (state, reason, adapter) = headset.Report();
+        var (state, reason) = headset.Report();
 
         return state switch
         {
-            VrState.Active => adapter is null
-                ? "Showing in the headset."
-                : $"Showing in the headset, rendering on {adapter}.",
+            VrState.Active => "Showing in the headset.",
             VrState.Connecting => reason ?? "Looking for a headset.",
             _ => reason ?? "No SteamVR runtime is installed on this machine.",
         };
