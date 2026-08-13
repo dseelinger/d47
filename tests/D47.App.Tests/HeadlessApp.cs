@@ -26,5 +26,16 @@ public class TestAppBuilder
 /// </summary>
 public class HeadlessApp : Application
 {
-    public override void Initialize() => Styles.Add(new FluentTheme());
+    public override void Initialize()
+    {
+        Styles.Add(new FluentTheme());
+
+        // The same scale App.axaml merges. Without it every surface that names a role fails to
+        // resolve it, which is a load-time throw rather than a wrong size.
+        Resources.MergedDictionaries.Add(
+            new Avalonia.Markup.Xaml.Styling.ResourceInclude((Uri?)null)
+            {
+                Source = new Uri("avares://d47/Theming/TypeScale.axaml"),
+            });
+    }
 }

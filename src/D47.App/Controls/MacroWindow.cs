@@ -40,7 +40,7 @@ public sealed class MacroWindow : Window
     private readonly TextBlock _problems = new()
     {
         TextWrapping = TextWrapping.Wrap,
-        FontSize = 11,
+        FontSize = TypeScale.Secondary,
         IsVisible = false,
     };
 
@@ -72,7 +72,7 @@ public sealed class MacroWindow : Window
         var header = new TextBlock
         {
             Text = $"Saved to {store.Path}. This is the same file you can edit by hand.",
-            FontSize = 11,
+            FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
         Themed(header, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -147,7 +147,7 @@ public sealed class MacroWindow : Window
             var empty = new TextBlock
             {
                 Text = "No macros yet. A macro is a name and a list of ship actions to run in order.",
-                FontSize = 12,
+                FontSize = TypeScale.Body,
                 TextWrapping = TextWrapping.Wrap,
             };
             Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -166,7 +166,7 @@ public sealed class MacroWindow : Window
         var name = new TextBox { Text = macro.Name, Width = 260 };
         name.TextChanged += (_, _) => macro.Name = name.Text ?? string.Empty;
 
-        var remove = new Button { Content = "Remove", Padding = new Thickness(10, 2), FontSize = 11 };
+        var remove = new Button { Content = "Remove", Padding = new Thickness(10, 2), FontSize = TypeScale.Body };
         remove.Click += (_, _) =>
         {
             _macros.Remove(macro);
@@ -184,7 +184,7 @@ public sealed class MacroWindow : Window
         {
             Content = "Add a step",
             Padding = new Thickness(10, 2),
-            FontSize = 11,
+            FontSize = TypeScale.Body,
             Margin = new Thickness(0, 6, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             IsEnabled = macro.Steps.Count < Macro.MaxSteps,
@@ -241,13 +241,13 @@ public sealed class MacroWindow : Window
         };
         pause.ValueChanged += (_, _) => step.PauseMs = (int)(pause.Value ?? 0);
 
-        var up = new Button { Content = "↑", Padding = new Thickness(8, 2), FontSize = 11 };
+        var up = new Button { Content = "↑", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
         up.Click += (_, _) => Move(macro, step, -1);
 
-        var down = new Button { Content = "↓", Padding = new Thickness(8, 2), FontSize = 11 };
+        var down = new Button { Content = "↓", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
         down.Click += (_, _) => Move(macro, step, +1);
 
-        var drop = new Button { Content = "✕", Padding = new Thickness(8, 2), FontSize = 11 };
+        var drop = new Button { Content = "✕", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
         drop.Click += (_, _) =>
         {
             macro.Steps.Remove(step);

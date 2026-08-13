@@ -173,7 +173,7 @@ public partial class SettingsView : UserControl
         var chevron = new TextBlock
         {
             Text = content.IsVisible ? "▾" : "▸",
-            FontSize = 11,
+            FontSize = TypeScale.Body,
             Width = 14,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -182,7 +182,7 @@ public partial class SettingsView : UserControl
         var heading = new TextBlock
         {
             Text = title,
-            FontSize = 13,
+            FontSize = TypeScale.Subheading,
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -198,7 +198,7 @@ public partial class SettingsView : UserControl
         var docs = new Button
         {
             Content = "?",
-            FontSize = 10,
+            FontSize = TypeScale.Secondary,
             Padding = new Thickness(5, 0),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
@@ -260,7 +260,7 @@ public partial class SettingsView : UserControl
         var heading = new TextBlock
         {
             Text = group,
-            FontSize = 13,
+            FontSize = TypeScale.Body,
             FontWeight = FontWeight.Medium,
         };
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
@@ -278,7 +278,7 @@ public partial class SettingsView : UserControl
 
         if (!string.IsNullOrWhiteSpace(help))
         {
-            var note = new TextBlock { Text = help, FontSize = 11, TextWrapping = TextWrapping.Wrap };
+            var note = new TextBlock { Text = help, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
             Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
             stack.Children.Add(note);
         }
@@ -300,7 +300,7 @@ public partial class SettingsView : UserControl
         var text = new TextBlock
         {
             Text = title,
-            FontSize = 12,
+            FontSize = TypeScale.Body,
             Margin = new Thickness(8, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -516,7 +516,7 @@ public partial class SettingsView : UserControl
         var label = new TextBlock
         {
             Text = row.Label,
-            FontSize = 13,
+            FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextKey);
@@ -526,7 +526,7 @@ public partial class SettingsView : UserControl
         {
             // Said on the row rather than only in the docs: a Commander who asks d47 to change
             // this and gets refused should already know why.
-            var tag = new TextBlock { Text = "protected", FontSize = 10, VerticalAlignment = VerticalAlignment.Center };
+            var tag = new TextBlock { Text = "protected", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
             Themed(tag, TextBlock.ForegroundProperty, ThemeManager.AccentMutedKey);
 
             var pill = new Border
@@ -546,7 +546,7 @@ public partial class SettingsView : UserControl
         var help = new TextBlock
         {
             Text = row.Help,
-            FontSize = 11,
+            FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 2, 0, 0),
             TextWrapping = TextWrapping.Wrap,
             IsVisible = !string.IsNullOrWhiteSpace(row.Help),
@@ -555,7 +555,7 @@ public partial class SettingsView : UserControl
 
         var message = new TextBlock
         {
-            FontSize = 11,
+            FontSize = TypeScale.Secondary,
             IsVisible = false,
             Margin = new Thickness(0, 4, 0, 0),
             TextWrapping = TextWrapping.Wrap,
@@ -665,7 +665,7 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildInfo(SettingRow row)
     {
-        var text = new SelectableTextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap };
+        var text = new SelectableTextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
         Themed(text, SelectableTextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var inset = new Border
@@ -695,7 +695,7 @@ public partial class SettingsView : UserControl
         {
             Name = "OpenCoverage",
             Content = "Show the list",
-            FontSize = 11,
+            FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
@@ -725,7 +725,7 @@ public partial class SettingsView : UserControl
         {
             Name = "OpenMacros",
             Content = "Edit macros",
-            FontSize = 11,
+            FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
@@ -773,6 +773,14 @@ public partial class SettingsView : UserControl
     private (Control, Action, bool) BuildComboBox(SettingRow row, TextBlock message)
     {
         var combo = new ComboBox { MinWidth = StandardControlWidth, HorizontalAlignment = HorizontalAlignment.Right };
+
+        // The closed box shows what fits in a fifth of the row, and some of these labels carry
+        // the part that matters on the end of them: a speech model not on disk reads as
+        // "Small (English only) - more accu", which is indistinguishable from one already
+        // installed. The column cannot be widened enough to hold it without starving the
+        // caption, so the whole label is on the tooltip.
+        combo.SelectionChanged += (_, _) =>
+            ToolTip.SetTip(combo, combo.SelectedItem as string);
 
         var choices = row.Choices;
 
@@ -826,9 +834,9 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildPickerButton(SettingRow row, TextBlock message)
     {
-        var value = new TextBlock { FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+        var value = new TextBlock { FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
 
-        var chevron = new TextBlock { Text = "⌄", FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
+        var chevron = new TextBlock { Text = "⌄", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var layout = new DockPanel { MinWidth = StandardControlWidth };
@@ -949,7 +957,7 @@ public partial class SettingsView : UserControl
         // and eleven-point grey after two buttons is where an answer goes to be missed. Same
         // shape as the "protected" tag on a row heading, so it reads as a state rather than as
         // a remark.
-        var state = new TextBlock { FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
+        var state = new TextBlock { FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
 
         var badge = new Border
         {

@@ -40,7 +40,7 @@ public sealed class AboutWindow : Window
         var name = new TextBlock
         {
             Text = "Directive 47",
-            FontSize = 17,
+            FontSize = TypeScale.Heading,
             FontWeight = FontWeight.Medium,
         };
 
@@ -101,13 +101,13 @@ public sealed class AboutWindow : Window
     /// <summary>A labelled, selectable fact.</summary>
     private static Control Field(string label, string value)
     {
-        var caption = new TextBlock { Text = label, FontSize = 11 };
+        var caption = new TextBlock { Text = label, FontSize = TypeScale.Secondary };
         Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var text = new SelectableTextBlock
         {
             Text = value,
-            FontSize = 12,
+            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
         };
 

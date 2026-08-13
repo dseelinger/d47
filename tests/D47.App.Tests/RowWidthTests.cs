@@ -83,6 +83,34 @@ public class RowWidthTests
         window.Close();
     }
 
+    /// <summary>
+    /// The whole label is reachable even though the closed box cannot hold it.
+    /// <para>
+    /// Reported from a running build: the Commander read "Small (English only) — more accu" and
+    /// concluded a model was installed. The end of that label is "— about 466 MB to download",
+    /// which is the half that says it is not. The control column is two fifths of the row and
+    /// cannot be widened enough to hold it without starving the caption, so the tooltip carries
+    /// what the box clips.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWholeChoiceLabelIsOnTheTooltipWhenTheBoxClipsIt()
+    {
+        var window = OpenWith(LongestLabel);
+
+        var combo = CompactRowFor(window, "Speech model")
+            .GetVisualDescendants()
+            .OfType<ComboBox>()
+            .First();
+
+        var tip = ToolTip.GetTip(combo) as string;
+
+        Assert.False(string.IsNullOrWhiteSpace(tip), "The combo box carries no tooltip.");
+        Assert.Contains("to download", tip, StringComparison.Ordinal);
+
+        window.Close();
+    }
+
     private static SettingsWindow OpenWith(string model)
     {
         var (settings, viewState, paths) = TestSurface.Create();
