@@ -40,7 +40,12 @@ public static class TestSurface
     public static string CaptureDirectory => Captures.Value;
 
     /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
-    public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create()
+    /// <param name="coverage">
+    /// A hand-testing coverage summary, which is what makes the Diagnostics coverage row exist
+    /// at all. Null on every normal run, and on every test that is not about that row.
+    /// </param>
+    public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
+        Func<string>? coverage = null)
     {
         var root = Directory.CreateTempSubdirectory("d47-app-tests").FullName;
         var paths = new AppPaths(root);
@@ -81,7 +86,8 @@ public static class TestSurface
             {
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test.", null),
                 Reanchor = () => 0,
-            }));
+            },
+            coverage));
 
         built = registry;
 

@@ -20,10 +20,19 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>Binds the hosted view. Public for the headless UI tests, which host it the same way.</summary>
-    public void Attach(SettingsService settings, ViewStateStore viewState, AppPaths paths) =>
-        View.Attach(settings, viewState, paths);
+    public void Attach(
+        SettingsService settings,
+        ViewStateStore viewState,
+        AppPaths paths,
+        Func<D47.Core.Coverage.CoverageReport>? coverage = null) =>
+        View.Attach(settings, viewState, paths, coverage);
 
-    public static void Show(Window owner, SettingsService settings, ViewStateStore viewState, AppPaths paths)
+    public static void Show(
+        Window owner,
+        SettingsService settings,
+        ViewStateStore viewState,
+        AppPaths paths,
+        Func<D47.Core.Coverage.CoverageReport>? coverage = null)
     {
         if (_open is not null)
         {
@@ -32,7 +41,7 @@ public partial class SettingsWindow : Window
         }
 
         var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
+        window.Attach(settings, viewState, paths, coverage);
 
         // The same widget tree, so the same zoom. A level that applied to the panel and not to
         // settings would be a level the Commander has to discover the edge of.
