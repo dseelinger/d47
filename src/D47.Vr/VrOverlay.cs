@@ -32,6 +32,7 @@ public sealed class VrOverlay : IDisposable
     private const uint SortOrder = 100;
 
     private readonly ulong _handle;
+    private readonly Action<string>? _refused;
 
     private VrPose? _appliedPose;
     private float _appliedWidth = float.NaN;
@@ -43,10 +44,31 @@ public sealed class VrOverlay : IDisposable
     private bool _pointing;
     private bool _held;
 
-    private VrOverlay(ulong handle, string key)
+    private VrOverlay(ulong handle, string key, Action<string>? refused)
     {
         _handle = handle;
         Key = key;
+        _refused = refused;
+    }
+
+    /// <summary>
+    /// Reports a call the runtime turned down, and answers whether it went through.
+    /// <para>
+    /// Every one of these used to be discarded. An overlay whose texture SteamVR refused is not
+    /// a blank overlay, it is an overlay with nothing in it — indistinguishable, from inside a
+    /// headset, from one that was never shown, and equally silent from outside one. Nothing on
+    /// this path is loud enough to be found by looking at it.
+    /// </para>
+    /// </summary>
+    private bool Went(EVROverlayError error, string what)
+    {
+        if (error == EVROverlayError.None)
+        {
+            return true;
+        }
+
+        _refused?.Invoke($"{what} on '{Key}' was refused: {error}");
+        return false;
     }
 
     public string Key { get; }
@@ -59,7 +81,7 @@ public sealed class VrOverlay : IDisposable
     /// identity for one quad, so the only way to be told it is in use is that something else
     /// already has it — and that something is almost always another copy of d47.
     /// </summary>
-    public static VrOverlay? Create(string key, string name, out VrStart failure)
+    public static VrOverlay? Create(string key, string name, out VrStart failure, Action<string>? refused = null)
     {
         ulong handle = 0;
         var created = OpenVR.Overlay.CreateOverlay(key, name, ref handle);
@@ -78,7 +100,7 @@ public sealed class VrOverlay : IDisposable
             return null;
         }
 
-        var overlay = new VrOverlay(handle, key);
+        var overlay = new VrOverlay(handle, key, refused);
 
         // The handle exists from the moment CreateOverlay succeeded, so a failure after this
         // point still has a quad to give back. Without this, a refused call would leave one in
@@ -140,7 +162,7 @@ public sealed class VrOverlay : IDisposable
             eColorSpace = EColorSpace.Auto,
         };
 
-        OpenVR.Overlay.SetOverlayTexture(_handle, ref handed);
+        Went(OpenVR.Overlay.SetOverlayTexture(_handle, ref handed), "Setting the texture");
     }
 
     /// <summary>Places the quad in the tracking universe, if it is not already there.</summary>
@@ -151,32 +173,41 @@ public sealed class VrOverlay : IDisposable
             return;
         }
 
-        _appliedPose = pose;
         var matrix = VrMatrix.ToOpenVr(pose);
-        OpenVR.Overlay.SetOverlayTransformAbsolute(
-            _handle,
-            ETrackingUniverseOrigin.TrackingUniverseSeated,
-            ref matrix);
+
+        // Latched only once it went through, here and below. Recording a value the runtime
+        // refused means never trying it again — the quad keeps whatever it had, and the
+        // "nothing is pushed unless it changed" optimisation quietly becomes "nothing is
+        // pushed".
+        if (Went(
+            OpenVR.Overlay.SetOverlayTransformAbsolute(
+                _handle,
+                ETrackingUniverseOrigin.TrackingUniverseSeated,
+                ref matrix),
+            "Placing the quad"))
+        {
+            _appliedPose = pose;
+        }
     }
 
     public void Look(float widthMetres, float curvature, float opacity)
     {
-        if (!Same(_appliedWidth, widthMetres))
+        if (!Same(_appliedWidth, widthMetres)
+            && Went(OpenVR.Overlay.SetOverlayWidthInMeters(_handle, widthMetres), "Setting the width"))
         {
             _appliedWidth = widthMetres;
-            OpenVR.Overlay.SetOverlayWidthInMeters(_handle, widthMetres);
         }
 
-        if (!Same(_appliedCurvature, curvature))
+        if (!Same(_appliedCurvature, curvature)
+            && Went(OpenVR.Overlay.SetOverlayCurvature(_handle, curvature), "Setting the curvature"))
         {
             _appliedCurvature = curvature;
-            OpenVR.Overlay.SetOverlayCurvature(_handle, curvature);
         }
 
-        if (!Same(_appliedAlpha, opacity))
+        if (!Same(_appliedAlpha, opacity)
+            && Went(OpenVR.Overlay.SetOverlayAlpha(_handle, opacity), "Setting the opacity"))
         {
             _appliedAlpha = opacity;
-            OpenVR.Overlay.SetOverlayAlpha(_handle, opacity);
         }
     }
 
@@ -187,15 +218,16 @@ public sealed class VrOverlay : IDisposable
             return;
         }
 
-        _shown = shown;
+        // Latched after the call, not before. Recording it as shown and then being refused left
+        // an overlay that was never shown and would never be asked again, because every later
+        // tick saw the state it wanted and returned.
+        var went = shown
+            ? Went(OpenVR.Overlay.ShowOverlay(_handle), "Showing the quad")
+            : Went(OpenVR.Overlay.HideOverlay(_handle), "Hiding the quad");
 
-        if (shown)
+        if (went)
         {
-            OpenVR.Overlay.ShowOverlay(_handle);
-        }
-        else
-        {
-            OpenVR.Overlay.HideOverlay(_handle);
+            _shown = shown;
         }
     }
 
