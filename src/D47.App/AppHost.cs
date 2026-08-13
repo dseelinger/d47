@@ -1302,6 +1302,13 @@ public sealed class AppHost : IDisposable
     private Func<NavRoute>? _route;
 
     /// <summary>
+    /// A model that was selected without being on disk, waiting for the selection to be cleared
+    /// and the offer raised. Held across the body of one apply so the write happens once, at
+    /// the end, rather than re-entering the method that noticed.
+    /// </summary>
+    private WhisperModel? _clearSelectionFor;
+
+    /// <summary>
     /// Rebuilds everything downstream of the listening settings: the device, the key, the gate
     /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
     /// drift (list.md Phase 4, "Apply every setting without a restart").
@@ -1347,16 +1354,42 @@ public sealed class AppHost : IDisposable
         }
         else if (WhisperModels.Find(listening.Model) is { } wanted)
         {
-            // Selected but not on disk. Asked for rather than fetched: the whole point of the
-            // consent gate is that this moment is where the Commander is given the choice.
-            _logger.LogInformation("{Model} is selected but not installed", wanted.Id);
-            ModelNeeded?.Invoke(wanted);
+            // Selected but not on disk, which is a state d47 no longer keeps. A settings row
+            // naming a model that cannot be loaded is a row asserting something untrue, and it
+            // read as "the model is fine, the microphone must be broken" for three sessions
+            // while every utterance came back "no speech model is loaded".
+            //
+            // So the selection follows the disk: it drops to none, and the wanting of it moves
+            // to the offer, which the panel keeps up until it is answered. Accepting installs
+            // the model and selects it; declining leaves an honest none.
+            _logger.LogInformation(
+                "{Model} is selected but not installed; clearing the selection and offering it",
+                wanted.Id);
+
+            _transcriber.Unload();
+            _clearSelectionFor = wanted;
         }
         else
         {
             // Unload, not Dispose: this runs on every listening.* change, and the host keeps
             // one transcriber for the life of the process.
             _transcriber.Unload();
+        }
+
+        // Deferred to the end, because writing a setting raises Changed, which re-enters this
+        // method: doing it above would run the microphone and key work twice on one apply.
+        if (_clearSelectionFor is { } offer)
+        {
+            _clearSelectionFor = null;
+
+            Settings.Replace(
+                ListeningCapability.ModelKey,
+                current => current with
+                {
+                    Listening = current.Listening with { Model = WhisperModels.NoneId },
+                });
+
+            ModelNeeded?.Invoke(offer);
         }
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
