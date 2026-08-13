@@ -11,7 +11,9 @@ using D47.App.Input;
 using D47.App.Theming;
 using D47.Core;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Coverage;
 
 namespace D47.App.Settings;
 
@@ -43,6 +45,12 @@ public partial class SettingsView : UserControl
     private ViewState _viewState = new();
     private AppPaths? _paths;
 
+    /// <summary>
+    /// Where the hand-testing coverage record stands, when this process was asked to keep one.
+    /// Null on every normal run, which is what keeps the row's button absent rather than dead.
+    /// </summary>
+    private Func<CoverageReport>? _coverage;
+
     /// <summary>True while controls are being written from settings rather than read from.</summary>
     private bool _refreshing;
 
@@ -57,12 +65,17 @@ public partial class SettingsView : UserControl
     /// Binds the view to a live settings service. Called once; the view then follows the
     /// service rather than being told when to update.
     /// </summary>
-    public void Attach(SettingsService settings, ViewStateStore viewState, AppPaths paths)
+    public void Attach(
+        SettingsService settings,
+        ViewStateStore viewState,
+        AppPaths paths,
+        Func<CoverageReport>? coverage = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
         _viewState = viewState.Load();
         _paths = paths;
+        _coverage = coverage;
 
         StorageLine.Text =
             $"Saved as you go, to {paths.SettingsFile}. Keys are encrypted separately in secrets.json, "
@@ -599,6 +612,11 @@ public partial class SettingsView : UserControl
     {
         switch (row.Kind)
         {
+            // The one row that offers a window instead of a value. Ninety-odd lines inline
+            // would be ninety-odd lines to scroll past to reach the rest of Diagnostics.
+            case SettingKind.Info when row.Key == DiagnosticsCapability.CoverageKey && _coverage is not null:
+                return BuildCoverage(row);
+
             case SettingKind.Info:
                 return BuildInfo(row);
 
@@ -641,6 +659,41 @@ public partial class SettingsView : UserControl
         Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
 
         return (inset, () => text.Text = row.Binding!.Read(_settings!.Current), false);
+    }
+
+    /// <summary>
+    /// The coverage summary, plus the way into the whole list.
+    /// <para>
+    /// The button is built only when this process is recording, so on a normal run it is absent
+    /// rather than present and doing nothing. In VR it is present and does nothing, because
+    /// there is no <see cref="TopLevel"/> to own a dialog — the same way the About button
+    /// behaves on that surface, and only ever seen by someone who set the variable.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildCoverage(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenCoverage",
+            Content = "Show the list",
+            FontSize = 11,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_coverage is not null && TopLevel.GetTopLevel(this) is Window owner)
+            {
+                await new Controls.CoverageWindow(_coverage()).ShowDialog(owner);
+            }
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
     }
 
     private (Control, Action, bool) BuildToggle(SettingRow row, TextBlock message)
