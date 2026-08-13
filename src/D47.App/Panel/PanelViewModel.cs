@@ -7,10 +7,14 @@ namespace D47.App.Panel;
 /// <summary>
 /// How much of itself the panel is showing (list.md Phase 9, "TheApp's panel works in VR").
 /// <para>
-/// Mini is a mode, not a surface. The checklist is specific about this: not a separate window,
-/// not a scaled-down copy, a reduced content set on the same panel. Which is why it is a value
-/// on the view model rather than a second view — a second view is exactly the thing that would
-/// let the two disagree.
+/// Mini is a mode, not a surface: not a separate window, not a scaled-down copy, a reduced
+/// content set on the same panel.
+/// </para>
+/// <para>
+/// It lives on the <see cref="PanelView"/> rather than on the view model, and the difference
+/// matters. The two surfaces share one model, so a mode held there would put the desktop
+/// window into mini the moment the headset went into it. What is shared is the content; how
+/// much of it a given surface shows is a property of that surface.
 /// </para>
 /// </summary>
 public enum PanelMode
@@ -45,7 +49,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private bool _updateBusy;
     private string _askText = string.Empty;
     private bool _canAsk = true;
-    private PanelMode _mode = PanelMode.Full;
     private string _transcriptText = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -88,7 +91,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             if (Set(ref _errorText, value))
             {
                 Raise(nameof(HasError));
-                Raise(nameof(ShowError));
             }
         }
     }
@@ -103,7 +105,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             if (Set(ref _updateText, value))
             {
                 Raise(nameof(HasUpdate));
-                Raise(nameof(ShowUpdate));
             }
         }
     }
@@ -142,36 +143,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         get => _canAsk;
         set => Set(ref _canAsk, value);
     }
-
-    public PanelMode Mode
-    {
-        get => _mode;
-        set
-        {
-            if (Set(ref _mode, value))
-            {
-                Raise(nameof(IsFull));
-                Raise(nameof(ShowError));
-                Raise(nameof(ShowUpdate));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Bound by the parts of the panel that mini does without. A positive property rather than
-    /// a converter over the enum, because a binding that has to be read backwards is a binding
-    /// that gets inverted by accident.
-    /// </summary>
-    public bool IsFull => _mode == PanelMode.Full;
-
-    /// <summary>
-    /// Whether the error banner is on screen. Two conditions rather than one, and derived here
-    /// rather than combined in a binding: a banner has to be both wanted and welcome, and an
-    /// expression that says so in XAML is an expression no test can reach.
-    /// </summary>
-    public bool ShowError => HasError && IsFull;
-
-    public bool ShowUpdate => HasUpdate && IsFull;
 
     /// <summary>Adds to the transcript. The only way it grows.</summary>
     public void Append(string text)

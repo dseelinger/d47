@@ -440,6 +440,20 @@ Specific consequences for Phase 9:
 visible surface, because there is no window in the VR path at all. Minimise-safety is a
 property of the design rather than something to defend.
 
+> **Amended by Phase 9.** The sentence above is true of what this spike rendered and false of
+> the real panel. `PanelView` is a `UserControl`, which is a *templated* control: its template
+> comes from a control theme, control themes arrive through styling, and styling only runs for
+> an element attached to a logical tree with a root. Detached, the real panel measures 0x0,
+> materialises **one** visual against 51 hosted, and rasterises as an empty rectangle — no
+> exception, no warning. `DynamicResource` fails the same way, so every themed brush resolves
+> to unset. This spike's tree avoided both by being hand-built out of borders and text blocks
+> carrying literal brushes.
+>
+> The production surface therefore hosts the view in a `Window` that is constructed and never
+> shown (`OffscreenSurface`). The conclusion survives — minimise-safety is still structural,
+> because a window that is never shown has no state to be minimised — but the reason is
+> different from the one written here. See architecture.md D1.
+
 ---
 
 ## Running the spike

@@ -118,6 +118,29 @@ public sealed record SettingRow
     /// </summary>
     public string? DocsAnchor { get; init; }
 
+    /// <summary>
+    /// How much one step of a <see cref="SettingKind.Number"/> row is worth, and — because it
+    /// is the only thing that could — how many decimal places the value has.
+    /// <para>
+    /// It defaults to 1, which is what a count wants. A row whose value is a fraction has to
+    /// say so: without this, "number" meant "whole number", and a speaking rate documented as
+    /// "1.2 is a fifth faster" rejected 1.2 because nothing had ever told the surface that
+    /// tenths existed.
+    /// </para>
+    /// </summary>
+    public double Step { get; init; } = 1;
+
+    /// <summary>
+    /// How this row's number is written, derived from its step rather than declared twice. A
+    /// format and a step that disagree is a value that changes every time it is read back.
+    /// </summary>
+    public string NumberFormat => Step switch
+    {
+        >= 1 => "0",
+        >= 0.1 => "0.#",
+        _ => "0.##",
+    };
+
     /// <summary>Phrases the model-free router accepts for this row. Usually empty.</summary>
     public IReadOnlyList<SettingCommandPhrase> Commands { get; init; } = [];
 

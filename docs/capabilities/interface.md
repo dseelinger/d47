@@ -141,6 +141,18 @@ that needs it rather than being built here for nothing to use.
 protected setting, so a model that could rebind one could hand itself a caller it is not
 allowed to be. See [Settings](settings.md#the-protected-rule).
 
+### Re-anchor the headset panels {#reanchor}
+
+Snaps every world-locked headset panel back in front of you. Bound to `Ctrl+Alt+R` out of the
+box, and **registered system-wide** rather than scoped to d47's window — unlike the two rows
+above.
+
+That is the whole point of it. The case it exists for is Elite holding the foreground with the
+panels drifted somewhere you cannot aim at, so a gesture that needs d47 focused is a gesture
+that does not work when it is wanted. See [Re-anchor](reanchor.md).
+
+Protected, on the same grounds as every other hotkey row.
+
 ### Focus the ask box {#focus-ask}
 
 Puts the cursor in the ask box from anywhere in the main window. Bound to `Ctrl+L` out of the

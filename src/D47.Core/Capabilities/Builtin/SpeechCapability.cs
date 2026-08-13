@@ -151,6 +151,10 @@ public static class SpeechCapability
                 Label = "Speaking rate",
                 Help = "1.0 is the voice's natural pace. 1.2 is a fifth faster.",
                 Kind = SettingKind.Number,
+
+                // Fifths, because that is the unit the help text is written in. Without a step
+                // this row rejected the exact value it offers as an example.
+                Step = 0.05,
                 DefaultDisplay = "1.0",
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "rate",

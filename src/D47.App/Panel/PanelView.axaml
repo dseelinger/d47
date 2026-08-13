@@ -23,7 +23,7 @@
   -->
   <DockPanel Margin="24,16,24,24">
 
-    <DockPanel x:Name="Header" DockPanel.Dock="Top" IsVisible="{Binding IsFull}">
+    <DockPanel x:Name="Header" DockPanel.Dock="Top">
       <!--
         A gear, not a labelled button: this is reached once a session and every desktop app of
         the last decade puts one here, so the convention carries it without spending a word of
@@ -52,10 +52,13 @@
            past for the rest of the session was not worth the panel's best space. -->
     </DockPanel>
 
+    <!-- Both banners in one region, so mini hides them with one line and each still decides
+         for itself whether it has anything to say. -->
+    <StackPanel x:Name="Banners" DockPanel.Dock="Top">
+
     <!-- Settings that failed to load are said out loud, not swallowed. -->
     <Border x:Name="ErrorBanner"
-            DockPanel.Dock="Top"
-            IsVisible="{Binding ShowError}"
+            IsVisible="{Binding HasError}"
             Margin="0,14,0,0"
             Padding="12"
             CornerRadius="4"
@@ -71,8 +74,7 @@
 
     <!-- Hidden until a background check finds a newer release; never blocks startup. -->
     <Border x:Name="UpdateBanner"
-            DockPanel.Dock="Top"
-            IsVisible="{Binding ShowUpdate}"
+            IsVisible="{Binding HasUpdate}"
             Margin="0,14,0,0"
             Padding="12"
             CornerRadius="4"
@@ -95,8 +97,10 @@
       </DockPanel>
     </Border>
 
+    </StackPanel>
+
     <!-- Ask box. Enter sends; the button is for discoverability. -->
-    <Border x:Name="AskRow" DockPanel.Dock="Bottom" Margin="0,14,0,0" IsVisible="{Binding IsFull}">
+    <Border x:Name="AskRow" DockPanel.Dock="Bottom" Margin="0,14,0,0">
       <DockPanel>
         <!-- The send glyph, drawn in-repo like the gear. The label is gone because a paper
              aeroplane next to a text box needs no caption anywhere a Commander has been. -->

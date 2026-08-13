@@ -33,6 +33,7 @@ public partial class MainWindow : Window
 {
     private readonly AppHost? _host;
     private readonly GlobalHotkey _shutUp;
+    private readonly GlobalHotkey _reanchor;
     private readonly PanelViewModel _model;
 
     private AvailableUpdate? _availableUpdate;
@@ -51,9 +52,11 @@ public partial class MainWindow : Window
         // instantiation of the same view to it, and a model owned by the window would make
         // the overlay a guest of a surface that can be closed.
         _model = host?.Panel ?? new PanelViewModel();
-        _shutUp = new GlobalHotkey(
-            host?.Loggers.CreateLogger<GlobalHotkey>()
-            ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance);
+        var hotkeyLogger = host?.Loggers.CreateLogger<GlobalHotkey>()
+                           ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance;
+
+        _shutUp = new GlobalHotkey(hotkeyLogger);
+        _reanchor = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -126,6 +129,7 @@ public partial class MainWindow : Window
 
         DescribeHotkeys();
         BindShutUp();
+        BindReanchor();
 
         // Spoken input runs the same turn as typed input, deliberately. A second path would be
         // a second place for the in-flight gate, the interrupt vocabulary and the cancellation
@@ -146,6 +150,11 @@ public partial class MainWindow : Window
             if (change.Key == SpeechCapability.ShutUpHotkeyKey)
             {
                 BindShutUp();
+            }
+
+            if (change.Key == InterfaceCapability.ReanchorHotkeyKey)
+            {
+                BindReanchor();
             }
         });
 
@@ -413,6 +422,31 @@ public partial class MainWindow : Window
             // Reported rather than swallowed: the symptom of a failed registration is a key
             // that does nothing, which reads as d47 ignoring the Commander.
             _model.ErrorText = $"The silence hotkey {gesture} could not be registered system-wide. " +
+                               "Another application is probably holding it — pick another in Settings.";
+        }
+    }
+
+    /// <summary>
+    /// Registers the system-wide re-anchor key (list.md Phase 9, "Re-anchor the panels").
+    /// <para>
+    /// System-wide for the same reason the silence key is, and more so: the case it exists for
+    /// is Elite holding the foreground with the panels drifted somewhere the Commander cannot
+    /// aim at. A gesture that needs d47 focused is a gesture that does not work when it is
+    /// wanted, and reaching for the panel is exactly what a drifted panel prevents.
+    /// </para>
+    /// </summary>
+    private void BindReanchor()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var gesture = _host.Settings.Current.Hotkeys.Reanchor;
+
+        if (!_reanchor.Bind(gesture, () => _host.Vr?.Reanchor()) && !string.IsNullOrWhiteSpace(gesture))
+        {
+            _model.ErrorText = $"The re-anchor hotkey {gesture} could not be registered system-wide. " +
                                "Another application is probably holding it — pick another in Settings.";
         }
     }

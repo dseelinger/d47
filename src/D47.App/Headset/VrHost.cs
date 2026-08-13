@@ -1,6 +1,8 @@
+using System.Numerics;
 using Avalonia.Threading;
 using D47.App.Panel;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Ticking;
 using D47.Core.Vr;
@@ -24,6 +26,8 @@ namespace D47.App.Headset;
 public sealed class VrHost : IDisposable
 {
     private readonly SettingsService _settings;
+    private readonly ViewStateStore _viewState;
+    private readonly Dictionary<string, SurfaceAnchor> _anchors;
     private readonly VrLifecycle _lifecycle;
     private readonly SteamVrRuntime _runtime;
     private readonly VrPanelSurface _panel;
@@ -35,6 +39,14 @@ public sealed class VrHost : IDisposable
     private bool _disposed;
 
     /// <summary>
+    /// The frozen offset between the hand and the panel, while the panel is being carried.
+    /// Null the rest of the time, which is nearly always.
+    /// </summary>
+    private Matrix4x4? _carrying;
+
+    private uint _carryingHand;
+
+    /// <summary>
     /// The last time a tick supplied. Captions arrive on the audio thread, which has no
     /// business reading the clock and no business being the one to decide what time it is —
     /// Core's rule about injected time does not stop applying because the caller is ours.
@@ -43,6 +55,7 @@ public sealed class VrHost : IDisposable
 
     private VrHost(
         SettingsService settings,
+        ViewStateStore viewState,
         VrPanelSurface panel,
         VrCaptionSurface captions,
         CaptionLayer layer,
@@ -51,6 +64,8 @@ public sealed class VrHost : IDisposable
         ILogger<VrHost> logger)
     {
         _settings = settings;
+        _viewState = viewState;
+        _anchors = new Dictionary<string, SurfaceAnchor>(viewState.Load().VrAnchors, StringComparer.Ordinal);
         _panel = panel;
         _captions = captions;
         _layer = layer;
@@ -78,18 +93,21 @@ public sealed class VrHost : IDisposable
         PanelViewModel model,
         AudioArbiter audio,
         SettingsService settings,
+        ViewStateStore viewState,
         TickLoop tick,
         ILoggerFactory loggers)
     {
-        var panel = new VrPanelSurface(model, PlacementFor);
+        VrHost? self = null;
+
+        var panel = new VrPanelSurface(model, settings, slot => self?.AnchorFor(slot));
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
         var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
-        var host = new VrHost(
-            settings, panel, captions, layer, runtime, lifecycle, loggers.CreateLogger<VrHost>());
+        var host = self = new VrHost(
+            settings, viewState, panel, captions, layer, runtime, lifecycle, loggers.CreateLogger<VrHost>());
 
         host.Configure();
         settings.Changed += _ => Dispatcher.UIThread.Post(host.Configure);
@@ -104,6 +122,55 @@ public sealed class VrHost : IDisposable
         return host;
     }
 
+    /// <summary>
+    /// Snaps every world-locked surface back to the current head pose, as a group.
+    /// <para>
+    /// As a group is the whole point. Elite's recenter turns the cockpit, so putting the
+    /// panels back means turning them all by the same amount — a per-surface "put it back
+    /// where it started" stacks them in front of the Commander, which is a different feature
+    /// and not one anybody asked for (list.md Phase 9).
+    /// </para>
+    /// <para>
+    /// Returns how many moved, so "there is nothing to re-anchor" is a real answer rather than
+    /// silence that looks like a failure.
+    /// </para>
+    /// </summary>
+    public int Reanchor()
+    {
+        if (_runtime.Head is not { } head)
+        {
+            return 0;
+        }
+
+        var moved = 0;
+
+        foreach (var slot in _anchors.Keys.ToArray())
+        {
+            var anchor = _anchors[slot];
+
+            _anchors[slot] = Anchor(
+                VrPlacementMath.Reanchored(anchor.Placed.ToPose(), anchor.PlacedAgainst.ToPose(), head),
+                head);
+
+            moved++;
+        }
+
+        if (moved > 0)
+        {
+            Remember();
+            _panel.Invalidate();
+            _logger.LogInformation("Re-anchored {Count} world-locked surface(s)", moved);
+        }
+
+        return moved;
+    }
+
+    /// <summary>Where a surface was put down, if it has been. Read by the panel each serve.</summary>
+    public (VrPose Placed, VrPose Against)? AnchorFor(string slot) =>
+        _anchors.TryGetValue(slot, out var anchor)
+            ? (anchor.Placed.ToPose(), anchor.PlacedAgainst.ToPose())
+            : null;
+
     public void Dispose()
     {
         _disposed = true;
@@ -112,16 +179,6 @@ public sealed class VrHost : IDisposable
         _captions.Dispose();
         _panel.Dispose();
     }
-
-    /// <summary>
-    /// The placement each panel mode opens at. Settings take this over in the phase's last
-    /// merge; these are the numbers a previous implementation arrived at by looking, which is
-    /// a better starting point than round ones — 1.4 m across read as enormous, close to fifty
-    /// degrees of view, with the cockpit behind the panel rather than around it.
-    /// </summary>
-    private static SurfacePlacement PlacementFor(PanelMode mode) => mode == PanelMode.Mini
-        ? new SurfacePlacement { WidthMetres = 0.34f, DistanceMetres = 0.9f, DropMetres = -0.30f }
-        : new SurfacePlacement { WidthMetres = 1.1f, DistanceMetres = 1.1f, DropMetres = -0.25f };
 
     /// <summary>
     /// What is audible, turned into captions. A clip carrying a caption starts one; nothing
@@ -143,8 +200,9 @@ public sealed class VrHost : IDisposable
 
     private void Configure()
     {
-        var captions = _settings.Current.Vr.Captions;
-        _captions.Configure(captions);
+        _captions.Configure(_settings.Current.Vr.Captions);
+        _panel.Configure();
+        _panel.ApplyMode();
     }
 
     private void OnTick(TickContext context)
@@ -191,6 +249,11 @@ public sealed class VrHost : IDisposable
         try
         {
             _lifecycle.Tick(now);
+
+            if (_lifecycle.State == VrState.Active)
+            {
+                Carry();
+            }
         }
         catch (Exception ex)
         {
@@ -200,5 +263,111 @@ public sealed class VrHost : IDisposable
             _logger.LogError(ex, "The headset path threw; the session will be rebuilt");
             _lifecycle.Stop();
         }
+    }
+
+    /// <summary>
+    /// Grab-to-move. The pointer is the only controller input an overlay application gets —
+    /// SteamVR takes the controllers to drive its own laser and hands back mouse events — so
+    /// this is the trigger, arriving as a button, over a quad the ray is on.
+    /// </summary>
+    private void Carry()
+    {
+        var overlay = _runtime.OverlayFor(_panel.Surface);
+
+        if (overlay is null || _runtime.Head is not { } head)
+        {
+            return;
+        }
+
+        var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
+
+        if (!overlay.Pointer.Held)
+        {
+            if (_carrying is not null)
+            {
+                // Written once, on release. A drag is thirty poses a second and the settings
+                // store writes a whole file atomically; persisting each one would be a
+                // hundred file writes to record one gesture.
+                _carrying = null;
+                Remember();
+                _logger.LogDebug("The panel was put down");
+            }
+
+            return;
+        }
+
+        // Which hand is doing it is not on the event: trackedDeviceIndex on an overlay mouse
+        // event has been measured as the invalid index against two tracked controllers. So it
+        // is recovered by casting each hand's ray at the quad and taking the nearest hit,
+        // which only has to tell one hand from the other.
+        if (Pointing(overlay) is not { } pointing)
+        {
+            return;
+        }
+
+        if (_carrying is null)
+        {
+            _carrying = VrPlacementMath.Grab(pointing.Pose, _panel.Placement.Where(head));
+            _carryingHand = pointing.Device;
+
+            // Picking it up means putting it somewhere, so it becomes world-locked. The
+            // setting follows the action rather than gating it: a Commander who has physically
+            // carried the panel across the cockpit has said where they want it, and a
+            // head-locked surface that sprang back would be d47 arguing with them.
+            _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+            return;
+        }
+
+        // A second hand pressing mid-carry does not steal the panel, and the carrying hand
+        // losing tracking drops it where it was rather than following a pose nobody has.
+        if (_carryingHand != pointing.Device)
+        {
+            return;
+        }
+
+        _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, pointing.Pose), head);
+        _panel.Invalidate();
+    }
+
+    private static SurfaceAnchor Anchor(VrPose placed, VrPose head) => new()
+    {
+        Placed = PoseSettings.From(placed),
+        PlacedAgainst = PoseSettings.From(head),
+    };
+
+    /// <summary>
+    /// Read-modify-write against the file rather than against a snapshot, because the settings
+    /// window writes card collapse state into the same store while this is running.
+    /// </summary>
+    private void Remember()
+    {
+        var state = _viewState.Load();
+
+        foreach (var (slot, anchor) in _anchors)
+        {
+            state = state.With(slot, anchor);
+        }
+
+        _viewState.Save(state);
+    }
+
+    private (uint Device, VrPose Pose)? Pointing(VrOverlay overlay)
+    {
+        (uint Device, VrPose Pose)? nearest = null;
+        var closest = float.MaxValue;
+
+        foreach (var (device, pose) in _runtime.Controllers())
+        {
+            // A controller points along its own -Z, which is OpenVR's convention and not ours.
+            var along = Vector3.Transform(-Vector3.UnitZ, pose.Facing);
+
+            if (overlay.IntersectedBy(pose.Position, along) is { } distance && distance < closest)
+            {
+                closest = distance;
+                nearest = (device, pose);
+            }
+        }
+
+        return nearest;
     }
 }

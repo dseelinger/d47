@@ -467,6 +467,7 @@ public sealed class AppHost : IDisposable
                     Report = () => self?.Vr is { } vr
                         ? (vr.State, vr.Reason, vr.Adapter)
                         : (Core.Vr.VrState.Connecting, "Looking for a headset.", null),
+                    Reanchor = () => self?.Vr?.Reanchor() ?? 0,
                 },
                 coverage is null ? null : () => coverage.Report().Summary));
 

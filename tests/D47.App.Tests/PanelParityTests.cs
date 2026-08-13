@@ -94,13 +94,17 @@ public class PanelParityTests
         using var surface = new OffscreenSurface(view, new PixelSize(1024, 640));
         surface.Render();
 
-        var rows = new[] { "Header", "AskRow", "ErrorBanner" }
+        var rows = new[] { "Header", "AskRow", "Banners" }
             .Select(name => Named(view, name))
             .ToArray();
 
         Assert.All(rows, row => Assert.True(row.IsVisible));
 
-        model.Mode = PanelMode.Mini;
+        // The banner itself stays "visible" in mini: its own visibility is about whether there
+        // is an error, and the region's is about the mode. Two reasons, two properties.
+        Assert.True(Named(view, "ErrorBanner").IsVisible);
+
+        view.Mode = PanelMode.Mini;
 
         // Resized as well as re-rendered, because mini is a smaller image and not the same
         // image hung nearer: apparent text size in a headset is pixels and metres together.
