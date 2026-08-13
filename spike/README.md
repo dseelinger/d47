@@ -8,6 +8,7 @@ be deleted once the answer is written down.
 |---|---|---|
 | `OverlaySpike` | Can Avalonia reach a SteamVR overlay through a shared D3D11 texture? | [docs/spikes/vr-texture.md](../docs/spikes/vr-texture.md) |
 | `RefBypassProbe` | Can Avalonia 12's reference-assembly guard be bypassed? | same |
+| `HotasProbe` | Can a desktop process read HOTAS switch positions, and what identifies a device? | [docs/spikes/hotas-switch-read.md](../docs/spikes/hotas-switch-read.md) |
 | `tools/ApiDump` | What does an assembly actually expose? | supporting tool |
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
