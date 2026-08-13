@@ -52,14 +52,20 @@
               Data="M 9.59,4.16 L 10.19,1.15 L 13.81,1.15 L 14.41,4.16 L 15.84,4.75 L 18.40,3.05 L 20.95,5.60 L 19.25,8.16 L 19.84,9.59 L 22.85,10.19 L 22.85,13.81 L 19.84,14.41 L 19.25,15.84 L 20.95,18.40 L 18.40,20.95 L 15.84,19.25 L 14.41,19.84 L 13.81,22.85 L 10.19,22.85 L 9.59,19.84 L 8.16,19.25 L 5.60,20.95 L 3.05,18.40 L 4.75,15.84 L 4.16,14.41 L 1.15,13.81 L 1.15,10.19 L 4.16,9.59 L 4.75,8.16 L 3.05,5.60 L 5.60,3.05 L 8.16,4.75 Z M 12.00,8.00 A 4.0,4.0 0 1 1 11.99,8.00 Z" />
       </Button>
       <!--
-        Help, beside the gear. A "?" rather than an authored glyph because that is already what
-        every settings row uses for the same job - the short form in the app, the long form on
-        the site - and inventing a second visual language for one button would be a button the
-        Commander has to learn. The gear keeps the corner; this sits inboard of it.
+        Help, beside the gear, and drawn rather than typed. A "?" set as text was a character in
+        a font: lighter than the gear beside it, and sitting on a baseline rather than in the
+        middle of its box, so it read as smaller and hung high. This is the same 24-unit
+        coordinate space as the gear above, scaled into the same 17-pixel box from a button with
+        the same padding, so the two line up by construction rather than by adjustment.
+
+        Stroked rather than filled, because thickness is the property being matched and a stroke
+        states it directly. The dot is a zero-length segment with a round cap - a line from a
+        point to itself, drawn as a disc exactly as wide as the stroke, which keeps it in step
+        with the hook for free.
       -->
       <Button x:Name="HelpButton"
               DockPanel.Dock="Right"
-              Padding="9,4"
+              Padding="9"
               VerticalAlignment="Top"
               CornerRadius="4"
               Background="Transparent"
@@ -68,10 +74,14 @@
               Click="OnHelpClick"
               PointerEntered="OnHelpPointerEntered"
               PointerExited="OnHelpPointerExited">
-        <TextBlock x:Name="HelpGlyph"
-                   Text="?"
-                   FontSize="16"
-                   Foreground="{DynamicResource D47.TextMuted}" />
+        <Path x:Name="HelpGlyph"
+              Width="17" Height="17"
+              Stretch="Uniform"
+              Stroke="{DynamicResource D47.TextMuted}"
+              StrokeThickness="2.8"
+              StrokeLineCap="Round"
+              StrokeJoin="Round"
+              Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
       </Button>
 
       <!-- Nothing on the left. The build was here and has moved: the short version to the title
