@@ -28,6 +28,13 @@ namespace D47.App.Tests;
 /// </summary>
 public class SettingsSurfaceTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public SettingsSurfaceTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     private static SettingsWindow Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         // FollowSettings, not a one-shot Apply: the theme captures below change the setting
@@ -83,8 +90,8 @@ public class SettingsSurfaceTests
     public void EveryThemeRendersToACapture()
     {
         var (settings, viewState, paths) = TestSurface.Create();
-        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
-        Directory.CreateDirectory(output);
+        var output = TestSurface.CaptureDirectory;
+        _output.WriteLine($"Captures: {output}");
 
         var window = Open(settings, viewState, paths);
 
@@ -140,8 +147,8 @@ public class SettingsSurfaceTests
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
-        Directory.CreateDirectory(output);
+        var output = TestSurface.CaptureDirectory;
+        _output.WriteLine($"Captures: {output}");
         frame.Save(
             Path.Combine(output, "main-window.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());

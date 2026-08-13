@@ -19,6 +19,26 @@ namespace D47.App.Tests;
 /// </summary>
 public static class TestSurface
 {
+    /// <summary>
+    /// Where the render captures land. Unique per test run, because the path used to be a fixed
+    /// folder and two runs at once — a second session in a worktree, or a rerun started before
+    /// the first finished — then wrote over each other's PNGs and left a set nobody could trust.
+    /// The timestamp sorts, the process id disambiguates two runs in the same second, and both
+    /// capture tests share the one directory so a run's output stays together.
+    /// </summary>
+    private static readonly Lazy<string> Captures = new(() =>
+    {
+        var run = Path.Combine(
+            Path.GetTempPath(),
+            "d47-ui-captures",
+            $"{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}");
+        Directory.CreateDirectory(run);
+        return run;
+    });
+
+    /// <summary>This run's capture folder, created on first use.</summary>
+    public static string CaptureDirectory => Captures.Value;
+
     /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create()
     {

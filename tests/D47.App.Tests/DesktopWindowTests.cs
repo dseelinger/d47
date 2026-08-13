@@ -161,8 +161,7 @@ public class DesktopWindowTests
         var zoom = ZoomHost.Attach(window, settings);
         window.Show();
 
-        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
-        Directory.CreateDirectory(output);
+        var output = TestSurface.CaptureDirectory;
 
         foreach (var level in new[] { 50, 100, 150, 200 })
         {

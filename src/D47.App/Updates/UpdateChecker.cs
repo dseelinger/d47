@@ -17,6 +17,15 @@ public sealed class UpdateChecker
 {
     private const string LatestReleaseUrl = "https://api.github.com/repos/dseelinger/d47/releases/latest";
 
+    /// <summary>
+    /// The only URL shape the "an update is available" button will hand to the shell. Both the
+    /// version and the link come out of a network response, and the link is opened with
+    /// UseShellExecute - which resolves anything, not just http - so an API that is redirected,
+    /// spoofed or simply wrong is otherwise one click away from starting an arbitrary program.
+    /// Pinning the prefix bounds the worst case to "the wrong page of this repository".
+    /// </summary>
+    private const string ReleaseUrlPrefix = "https://github.com/dseelinger/d47/";
+
     private static readonly HttpClient Http = CreateClient();
 
     private readonly ILogger<UpdateChecker> _logger;
@@ -55,12 +64,19 @@ public sealed class UpdateChecker
                 ? urlProperty.GetString()
                 : null;
 
-            if (!ReleaseVersion.TryParse(tag, out var latest) || string.IsNullOrWhiteSpace(url))
+            if (!ReleaseVersion.TryParse(tag, out var latest))
             {
                 return null;
             }
 
-            return latest.IsNewerThan(current) ? new AvailableUpdate(latest.ToString(), url) : null;
+            if (!IsTrustedReleaseUrl(url))
+            {
+                // Fails closed: no prompt at all rather than a prompt that opens somewhere else.
+                _logger.LogWarning("Update check ignored a release whose link was not a {Prefix} URL", ReleaseUrlPrefix);
+                return null;
+            }
+
+            return latest.IsNewerThan(current) ? new AvailableUpdate(latest.ToString(), url!) : null;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
@@ -68,6 +84,17 @@ public sealed class UpdateChecker
             return null;
         }
     }
+
+    /// <summary>
+    /// True only for a release page on this repository. The prefix carries the scheme, the host
+    /// and the repository in one comparison - the authority ends at the first slash, so a
+    /// lookalike host cannot satisfy it - and the parse rejects a response that is not a
+    /// well-formed absolute URL at all.
+    /// </summary>
+    internal static bool IsTrustedReleaseUrl(string? url) =>
+        url is not null
+        && url.StartsWith(ReleaseUrlPrefix, StringComparison.Ordinal)
+        && Uri.TryCreate(url, UriKind.Absolute, out _);
 
     private static HttpClient CreateClient()
     {
