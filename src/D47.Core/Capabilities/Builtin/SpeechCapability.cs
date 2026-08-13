@@ -160,7 +160,11 @@ public static class SpeechCapability
                 DocsAnchor = "rate",
                 Binding = new SettingBinding
                 {
-                    Read = s => s.Speech.Rate.ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture),
+                    // The same format the row's step derives, not a second one. A read format
+                    // that disagrees with the written one makes every whole-number rate look
+                    // like a change: "1" is written, "1.0" is read back, and the unchanged
+                    // check never fires, so the settings file is rewritten on every apply.
+                    Read = s => s.Speech.Rate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { Rate = ParseRate(v) },

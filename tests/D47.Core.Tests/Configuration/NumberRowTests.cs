@@ -43,6 +43,31 @@ public class NumberRowTests
         Assert.Equal("4", settings.Read(CalloutCapability.RouteEveryKey));
     }
 
+    /// <summary>
+    /// A row reads back exactly what it wrote. Anything else means the unchanged check never
+    /// fires — the value is written, a differently formatted one is read back, and the two
+    /// never compare equal, so every apply persists the file again and announces a change
+    /// that did not happen.
+    /// </summary>
+    [Theory]
+    [InlineData("1")]
+    [InlineData("1.2")]
+    [InlineData("0.75")]
+    public void ApplyingTheSameRateTwiceIsAChangeOnceAndNotTwice(string rate)
+    {
+        using var install = new TempInstall();
+        var settings = TestSurface.For(install).Settings;
+
+        Assert.True(settings.Apply(SpeechCapability.RateKey, rate, SettingsCaller.Panel).Ok);
+
+        // Read back as written, so asking for it again is recognised as asking for what is
+        // already there. "1" is Unchanged even the first time, because 1.0 is the default.
+        Assert.Equal(rate, settings.Read(SpeechCapability.RateKey));
+        Assert.Equal(
+            SettingApplyStatus.Unchanged,
+            settings.Apply(SpeechCapability.RateKey, rate, SettingsCaller.Panel).Status);
+    }
+
     [Fact]
     public void SomethingThatIsNotANumberIsStillRefused()
     {
