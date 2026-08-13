@@ -13,8 +13,9 @@
     checklist is protecting is satisfied either way - there is no second UI codebase and no
     path where the VR surface is a screenshot of the desktop one (architecture.md D1).
 
-    Nothing here knows about a window. That is what makes the overlay path minimise-safe:
-    there is no TopLevel in it to be minimised.
+    Nothing here knows about a window. That is what makes the overlay path minimise-safe: the
+    window the VR surface hosts this in is constructed and never shown, so there is no window
+    state for a minimise to put it in.
 
     Mini is a mode of this panel, not another one. The rows mini does without bind IsFull.
 

@@ -42,8 +42,11 @@ Each of these is cheap to break by accident and expensive to fix later.
 - **Binds are read-only.** Never write the Commander's bindings file.
 - **"One widget tree renders to both surfaces" is shorthand.** It means one view definition
   instantiated twice against one view model — a `Visual` belongs to exactly one visual tree,
-  so the framework will not do the literal thing. The VR path involves no window and no
-  `TopLevel` at all, which is what makes minimise-safety structural. See architecture.md D1.
+  so the framework will not do the literal thing. The VR path hosts its copy in a `Window`
+  that is constructed and never shown — a real `UserControl` is templated, and detached from a
+  logical tree it rasterises as an empty quad with no error. Minimise-safety does not rest on
+  there being no window; it rests on the VR path never depending on the state of the window the
+  Commander can see. See architecture.md D1, amended in Phase 9.
 - **All audio goes through the one arbiter**, which exposes the render reference tap from day one.
 - **No telemetry.** Permissive licenses only, no copyleft — verify the transitive graph, not
   just direct references.

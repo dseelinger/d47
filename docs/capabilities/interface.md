@@ -71,7 +71,7 @@ looks exactly like the app failing to start.
 
 ### Open settings {#open-settings}
 
-Opens the settings window. `F10` out of the box.
+Opens the settings window. `Ctrl+,` out of the box.
 
 Press the combination to bind it: the row listens for one and stores what it heard, so there is
 no list of key names to learn and no way to type one that does not exist. Clear it to leave the

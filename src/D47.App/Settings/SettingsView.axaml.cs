@@ -683,9 +683,8 @@ public partial class SettingsView : UserControl
     /// The coverage summary, plus the way into the whole list.
     /// <para>
     /// The button is built only when this process is recording, so on a normal run it is absent
-    /// rather than present and doing nothing. In VR it is present and does nothing, because
-    /// there is no <see cref="TopLevel"/> to own a dialog — the same way the About button
-    /// behaves on that surface, and only ever seen by someone who set the variable.
+    /// rather than present and doing nothing. The settings surface has no VR host to worry
+    /// about — only the panel is rendered to the headset — so the dialog always has an owner.
     /// </para>
     /// </summary>
     private (Control, Action, bool) BuildCoverage(SettingRow row)

@@ -57,7 +57,7 @@ public class PanelParityTests
     /// than something to defend (architecture.md D1, as amended in Phase 9).
     /// </summary>
     [AvaloniaFact]
-    public void ThePanelRendersWithNoWindowAndNoTopLevel()
+    public void ThePanelRendersWithNothingShownOnTheDesktop()
     {
         var model = new PanelViewModel();
         model.Append("Rendered by a surface with nothing on screen to show for it.");
