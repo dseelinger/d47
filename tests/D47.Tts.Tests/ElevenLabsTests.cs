@@ -1,3 +1,4 @@
+using System.Net;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -175,4 +176,41 @@ public class ElevenLabsLiveTests
         Assert.DoesNotContain("it answered", failure.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("not-a-voice-id", failure.Message, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// A refusal about the voice is told apart from a refusal about anything else, because only
+    /// the first is one d47 repairs by itself.
+    /// <para>
+    /// Reported from a running build: an Edge voice id survived a switch to this provider, and
+    /// the answer — "an invalid ID has been received: 'en-US-RogerNeural'" — arrived on every
+    /// sentence of every turn on every launch. It is the id in the message that makes that one
+    /// unmistakable, and the status it comes with that makes the general case decidable.
+    /// </para>
+    /// </summary>
+    [Theory]
+
+    // The voice is validated ahead of the key, so a bad one is a 400 rather than the 404 you
+    // would guess. Verified against the live API.
+    [InlineData(HttpStatusCode.BadRequest, null, TtsFault.VoiceRejected)]
+    [InlineData(HttpStatusCode.NotFound, null, TtsFault.VoiceRejected)]
+
+    // The service naming the id back is about the voice whatever it arrives as.
+    [InlineData(HttpStatusCode.UnprocessableEntity,
+        "An invalid ID has been received: 'en-US-RogerNeural'. Make sure to provide a correct one.",
+        TtsFault.VoiceRejected)]
+
+    // And these are not. Discarding a good voice on the way to reporting a key or a balance
+    // would leave the Commander two things to fix instead of one.
+    [InlineData(HttpStatusCode.Unauthorized, "Invalid API key", TtsFault.Unknown)]
+    [InlineData(HttpStatusCode.PaymentRequired, "quota exceeded", TtsFault.Unknown)]
+    [InlineData(HttpStatusCode.TooManyRequests, null, TtsFault.Unknown)]
+    [InlineData(HttpStatusCode.InternalServerError, null, TtsFault.Unknown)]
+    public void OnlyARefusalAboutTheVoiceIsOneToActOn(
+        HttpStatusCode status,
+        string? said,
+        TtsFault expected)
+    {
+        Assert.Equal(expected, ElevenLabsTtsProvider.FaultFor(status, said, "en-US-RogerNeural"));
+    }
+
 }

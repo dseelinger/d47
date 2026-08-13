@@ -20,7 +20,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
 {
     private readonly AudioArbiter _arbiter;
     private readonly ITtsProvider _tts;
-    private readonly VoiceSelection _voice;
+
+    /// <summary>
+    /// The voice in force. Not readonly, because a voice the provider refuses is dropped for
+    /// the rest of the turn rather than sent again for every remaining sentence.
+    /// </summary>
+    private VoiceSelection _voice;
     private readonly string _group;
     private readonly ILogger _logger;
 
@@ -69,6 +74,13 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// than a failure handler (list.md Phase 3, "Capabilities as state, not guard").
     /// </summary>
     public event Action<string>? SynthesisFailed;
+
+    /// <summary>
+    /// Raised with a voice id the provider refused, once per pipeline. Whoever chose it is
+    /// expected to stop choosing it — the id is in settings, and a voice that fails once fails
+    /// every sentence of every turn until something writes it out of there.
+    /// </summary>
+    public event Action<string>? VoiceRejected;
 
     /// <summary>How many sentences failed to render. Zero on a healthy turn.</summary>
     public int Failures => Volatile.Read(ref _failures);
@@ -128,6 +140,63 @@ public sealed class SpeechPipeline : IAsyncDisposable
         catch (OperationCanceledException)
         {
             // Abandoned. Not a failure — somebody asked for silence.
+            return null;
+        }
+        catch (TtsException ex) when (ex.Fault == TtsFault.VoiceRejected && Forget() is { } refused)
+        {
+            // The one failure d47 can do something about. A voice the provider will not accept
+            // is not a bad sentence, it is a bad setting, and sending it again for every
+            // remaining sentence turns one wrong value into a silent turn.
+            _logger.LogWarning(
+                "{Voice} was refused; dropping it and letting the provider choose. {Because}",
+                refused,
+                ex.Message);
+
+            VoiceRejected?.Invoke(refused);
+
+            return await SpeakWithoutAVoiceAsync(sentence).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Interlocked.Increment(ref _failures);
+            _logger.LogWarning(ex, "Could not synthesise a sentence; it will not be spoken");
+            SynthesisFailed?.Invoke(ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Drops the voice, and answers what it was — or null if it has already been dropped, which
+    /// is what stops several sentences failing at once from each raising the same complaint.
+    /// </summary>
+    private string? Forget()
+    {
+        var refused = Interlocked.Exchange(ref _voice, _voice with { VoiceId = null }).VoiceId;
+
+        return string.IsNullOrEmpty(refused) ? null : refused;
+    }
+
+    /// <summary>
+    /// The same sentence again with no voice named, so the provider falls back to its own.
+    /// <para>
+    /// Edge has a default and will speak. ElevenLabs has none — an account's voice list is its
+    /// own, so it refuses rather than guessing — and answers with "no voice has been chosen",
+    /// which is the sentence the Commander actually needs and not the one they were getting.
+    /// Either way the failure stops being permanent.
+    /// </para>
+    /// </summary>
+    private async Task<Spoken?> SpeakWithoutAVoiceAsync(string sentence)
+    {
+        try
+        {
+            var clip = await _tts
+                .SynthesizeAsync(sentence, _voice, _abandon.Token)
+                .ConfigureAwait(false);
+
+            return new Spoken(sentence, clip);
+        }
+        catch (OperationCanceledException)
+        {
             return null;
         }
         catch (Exception ex)

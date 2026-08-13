@@ -187,7 +187,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new TtsException(await DescribeAsync(response, text, cancellationToken).ConfigureAwait(false));
+                var (reason, fault) = await DescribeAsync(response, text, voiceId, cancellationToken)
+                    .ConfigureAwait(false);
+
+                throw new TtsException(reason, fault: fault);
             }
 
             var pcm = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -232,13 +235,23 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// the key, so a request with both wrong reports the voice. A mapping table alone would have
     /// answered "it answered 400" there, which tells the Commander nothing at all.
     /// </para>
+    /// <para>
+    /// That same verified behaviour is what the fault is read from. A 400 or a 404 is about the
+    /// voice — 400 because the voice is validated first, 404 because the id is not on this
+    /// account — and so is any answer whose message quotes the id back, which is what "an
+    /// invalid ID has been received: 'en-US-RogerNeural'" is. A voice d47 can see is refused is
+    /// a voice d47 can stop using; every other reason here is one only the Commander can act on.
+    /// </para>
     /// </summary>
-    private static async Task<string> DescribeAsync(
+    private static async Task<(string Reason, TtsFault Fault)> DescribeAsync(
         HttpResponseMessage response,
         string text,
+        string voiceId,
         CancellationToken cancellationToken)
     {
-        var reason = await MessageFromBodyAsync(response, cancellationToken).ConfigureAwait(false)
+        var said = await MessageFromBodyAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var reason = said
                      ?? response.StatusCode switch
                      {
                          HttpStatusCode.Unauthorized => "the API key was rejected",
@@ -249,8 +262,30 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                          _ => $"it answered {(int)response.StatusCode}",
                      };
 
-        return $"ElevenLabs could not speak \"{Excerpt(text)}\": {reason}.";
+        return (
+            $"ElevenLabs could not speak \"{Excerpt(text)}\": {reason}.",
+            FaultFor(response.StatusCode, said, voiceId));
     }
+
+    /// <summary>
+    /// Whether a refusal was about the voice, and so whether d47 should stop using it.
+    /// <para>
+    /// A 400 or a 404 is: 400 because the voice is validated ahead of the key, 404 because the
+    /// id is not on this account. So is any answer whose message quotes the id back, which is
+    /// what "an invalid ID has been received: 'en-US-RogerNeural'" is — and that one is worth
+    /// matching on its own, because the status it arrives with is not worth relying on.
+    /// </para>
+    /// <para>
+    /// Everything else stays <see cref="TtsFault.Unknown"/> on purpose. A rejected key, an empty
+    /// account and a rate limit are all things only the Commander can act on, and discarding a
+    /// perfectly good voice on the way to telling them would be a second fault to recover from.
+    /// </para>
+    /// </summary>
+    internal static TtsFault FaultFor(HttpStatusCode status, string? said, string voiceId) =>
+        status is HttpStatusCode.BadRequest or HttpStatusCode.NotFound
+        || said?.Contains(voiceId, StringComparison.Ordinal) == true
+            ? TtsFault.VoiceRejected
+            : TtsFault.Unknown;
 
     /// <summary>
     /// The <c>detail.message</c> ElevenLabs puts in an error body, or null when there is not one

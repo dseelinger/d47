@@ -38,7 +38,7 @@ public class VoicesAreProviderScopedTests
     [Fact]
     public void SwitchingProviderDropsTheShipsVoiceAndBothNamedRoles()
     {
-        var after = SpeechCapability.WithoutChosenVoices(Chosen());
+        var after = SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
 
         Assert.Null(after.Speech.Voice);
         Assert.Null(after.Speech.CarrierCaptainVoice);
@@ -52,7 +52,7 @@ public class VoicesAreProviderScopedTests
     [Fact]
     public void SwitchingProviderDropsEveryPersonaPairing()
     {
-        var after = SpeechCapability.WithoutChosenVoices(Chosen());
+        var after = SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
 
         Assert.Empty(after.Persona.Voices);
     }
@@ -65,7 +65,7 @@ public class VoicesAreProviderScopedTests
     public void PairingIsAllowedToRunAgainForTheNewProvider()
     {
         Assert.True(Chosen().Persona.VoicesPaired);
-        Assert.False(SpeechCapability.WithoutChosenVoices(Chosen()).Persona.VoicesPaired);
+        Assert.False(SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId).Persona.VoicesPaired);
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ public class VoicesAreProviderScopedTests
             },
         };
 
-        var after = SpeechCapability.WithoutChosenVoices(before);
+        var after = SpeechCapability.WithoutChosenVoices(before, SpeechCapability.ElevenLabsId);
 
         Assert.Equal(before.Speech.Rate, after.Speech.Rate);
         Assert.Equal(before.Speech.OutputDevice, after.Speech.OutputDevice);
@@ -110,7 +110,7 @@ public class VoicesAreProviderScopedTests
     {
         var fresh = new D47Settings();
 
-        var after = SpeechCapability.WithoutChosenVoices(fresh);
+        var after = SpeechCapability.WithoutChosenVoices(fresh, SpeechCapability.ElevenLabsId);
 
         Assert.Null(after.Speech.Voice);
         Assert.Empty(after.Persona.Voices);
