@@ -176,6 +176,25 @@ public sealed record SettingRow
     public string? DefaultDisplayFor(D47Settings settings) =>
         DefaultDisplaySource?.Invoke(settings) ?? DefaultDisplay;
 
+    /// <summary>
+    /// The default as a bare phrase, with any brackets it was declared inside removed.
+    /// <para>
+    /// Rows disagree about this and always will: some read naturally as an aside — "(the
+    /// provider's default)" — and some are a value, like a model name. Every surface then frames
+    /// it its own way, so the ones that arrived bracketed came out doubled: "Use the default
+    /// ((the provider's default))" on the picker, "(the provider's default) (default)" on the
+    /// row. Stripping here means each surface can bracket unconditionally and be right.
+    /// </para>
+    /// </summary>
+    public string? BareDefaultFor(D47Settings settings)
+    {
+        var shown = DefaultDisplayFor(settings);
+
+        return shown is { Length: > 1 } && shown[0] == '(' && shown[^1] == ')'
+            ? shown[1..^1]
+            : shown;
+    }
+
     public string LabelForChoice(string choice) => ChoiceLabel?.Invoke(choice) ?? choice;
 
     /// <summary>

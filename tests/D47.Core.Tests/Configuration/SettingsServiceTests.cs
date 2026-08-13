@@ -196,14 +196,46 @@ public class SettingsServiceTests
     {
         // A model id belongs to its endpoint's namespace. Carrying one across is a stale
         // selection that fails at the first turn (list.md Phase 4).
+        //
+        // Driven through the row's own binding rather than through Apply, because no shipped
+        // provider currently offers the endpoint row: Anthropic has one address and no reason to
+        // accept another, so the row does not apply and Apply would refuse it. The guarantee
+        // still has to hold for the OpenAI-shaped providers this row exists for, and a guarantee
+        // that stops being exercised the moment its only caller goes away is one that rots
+        // quietly until somebody needs it.
         using var install = new TempInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
-        surface.Settings.Apply(ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
+        Assert.Equal("claude-opus-5", surface.Settings.Current.Llm.Model);
 
-        Assert.Null(surface.Settings.Current.Llm.Model);
-        Assert.Empty(surface.Settings.Find(ConversationCapability.ModelKey)!.ChoicesFor(surface.Settings.Current));
+        var endpoint = surface.Settings.Find(ConversationCapability.EndpointKey);
+        Assert.NotNull(endpoint);
+
+        var moved = endpoint.Binding!.Write!(surface.Settings.Current, "https://gateway.example/v1");
+
+        Assert.Null(moved.Llm.Model);
+        Assert.Empty(surface.Settings.Find(ConversationCapability.ModelKey)!.ChoicesFor(moved));
+    }
+
+    /// <summary>
+    /// Having an address and being pointable at another are different facts. Offering a
+    /// Commander a protected text box to retype "https://api.anthropic.com" into is a setting
+    /// that can only be got wrong.
+    /// </summary>
+    [Fact]
+    public void TheEndpointRowDoesNotApplyToAProviderWithNowhereElseToPoint()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(
+            ConversationCapability.ProviderKey, LlmProviderCatalog.AnthropicId, SettingsCaller.Panel);
+
+        var endpoint = surface.Settings.Find(ConversationCapability.EndpointKey);
+
+        Assert.NotNull(endpoint);
+        Assert.False(endpoint.Applies(surface.Settings.Current));
     }
 
     [Fact]

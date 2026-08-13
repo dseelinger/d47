@@ -38,6 +38,16 @@ public sealed record LlmProviderInfo
 
     public bool HasEndpoint => DefaultEndpoint is not null;
 
+    /// <summary>
+    /// Whether pointing this provider somewhere else is a thing anyone would do. Having a
+    /// default endpoint is not the same question: Anthropic has one address and no reason to
+    /// accept another, so offering the Commander a box to retype it is a protected setting that
+    /// can only be got wrong. The providers this exists for are the OpenAI-shaped ones, where
+    /// the same protocol is spoken by a dozen different implementations and the endpoint is how
+    /// you choose between them.
+    /// </summary>
+    public bool AcceptsCustomEndpoint { get; init; }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>
