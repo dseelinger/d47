@@ -147,10 +147,14 @@ public static class ListeningCapability
             {
                 Key = ModeKey,
                 Label = "Key behaviour",
-                Help = "Hold to talk, or press once to start and again to stop.",
+                Help = "Press and hold to talk, or press once to start and again to stop.",
                 Kind = SettingKind.Choice,
                 Choices = [HoldMode, ToggleMode],
-                ChoiceLabel = id => id == HoldMode ? "Hold to talk" : "Toggle on and off",
+
+                // "Press to talk (PTT)" rather than "Hold to talk": PTT is what this is called
+                // everywhere else a Commander has met it, and a name they already know beats a
+                // more literal one they have to map onto it.
+                ChoiceLabel = id => id == HoldMode ? "Press to talk (PTT)" : "Toggle on and off",
                 DefaultDisplay = "hold",
                 DocsAnchor = "mode",
                 AppliesWhen = s => s.Listening.PushToTalkKey is not null,
