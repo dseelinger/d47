@@ -37,8 +37,8 @@ Real output, with Anthropic configured and update checks on:
 Language model → https://api.anthropic.com
   Anthropic is selected. Your question, d47's reply so far, the guardrails, the persona and your About Me text, and the game state d47 assembled from your journal — system, body, station and docking state — are sent to the endpoint below on every turn the model answers. Journal files themselves are never uploaded.
 
-Update check → api.github.com
-  One request for the latest release tag at startup. Nothing about you goes with it — no key, no journal content, and no identifier beyond the request itself.
+Update check → api.github.com, and github.com if you accept an update
+  One request for the latest release tag at startup. Nothing about you goes with it — no key, no journal content, and no identifier beyond the request itself. Accepting an offered update downloads that release from github.com and replaces d47 with it; nothing is downloaded unless you ask for it.
 
 Diagnostics and logs → nothing sent
   Logs are written beside the executable and never uploaded. There is no analytics endpoint, no metrics endpoint and no crash reporter.
@@ -65,7 +65,7 @@ what it recognises, the journal spine keeps reading, and every input path stays 
 ### Check for updates at startup {#update-check}
 
 One request to `api.github.com` for the latest release tag, made once at startup. Off means
-d47 makes no network call of its own.
+d47 makes no network call of its own, and offers no update to install.
 
 **Protected.** This row decides whether anything leaves at all, so it is unreachable from the
 tool surface — a model that could switch egress back on is a model that could be told to by
@@ -98,6 +98,17 @@ key stored — selected-but-inert sends nothing.
 ### Update check {#egress-updates}
 
 `api.github.com`, once at startup, controlled by the row above.
+
+Accepting an offered update adds a second transfer: the build itself, fetched from
+`https://github.com/dseelinger/d47/releases/download/...`, which redirects to GitHub's asset
+storage — so the bytes arrive from `objects.githubusercontent.com`. It is a download and not an
+upload; nothing about you goes with it either. It only ever happens when you press **Update
+now**, and d47 refuses any URL that is not an asset on a release of this repository.
+
+The download is checked against the `d47.exe.sha256` published beside it and deleted rather
+than run if it does not match. That catches a truncated transfer or a mirror serving something
+else. It is **not** a signature: the hash and the bytes come from the same server, so it cannot
+detect a compromised GitHub. The same caveat applies to the speech models.
 
 ### Diagnostics and logs {#egress-diagnostics}
 

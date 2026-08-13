@@ -4,8 +4,28 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App.Updates;
 
-/// <summary>A release newer than the one currently running.</summary>
-public sealed record AvailableUpdate(string Version, string ReleaseUrl);
+/// <summary>
+/// A release newer than the one currently running.
+/// </summary>
+/// <param name="Version">The tag, without its leading v.</param>
+/// <param name="ReleaseUrl">The page, opened when installing in place is not possible.</param>
+/// <param name="DownloadUrl">
+/// The executable itself. Null when the release does not carry one under a URL that belongs to
+/// this repository, which downgrades the offer to "open the page" rather than trusting it.
+/// </param>
+/// <param name="ChecksumUrl">
+/// The published sha256 sidecar. Null on the same terms, and a download without one is refused
+/// rather than installed unverified.
+/// </param>
+public sealed record AvailableUpdate(
+    string Version,
+    string ReleaseUrl,
+    string? DownloadUrl = null,
+    string? ChecksumUrl = null)
+{
+    /// <summary>Whether this can be installed in place, or only opened in a browser.</summary>
+    public bool CanInstall => DownloadUrl is not null && ChecksumUrl is not null;
+}
 
 /// <summary>
 /// Checks GitHub Releases for a build newer than the one currently running (list.md Phase 17,
@@ -25,6 +45,17 @@ public sealed class UpdateChecker
     /// Pinning the prefix bounds the worst case to "the wrong page of this repository".
     /// </summary>
     private const string ReleaseUrlPrefix = "https://github.com/dseelinger/d47/";
+
+    /// <summary>
+    /// Where a release asset legitimately lives. Held to the same standard as the page above and
+    /// then some: this one names bytes that will be run as a program, so an asset offered from
+    /// anywhere else is ignored rather than fetched.
+    /// </summary>
+    private const string DownloadUrlPrefix = "https://github.com/dseelinger/d47/releases/download/";
+
+    /// <summary>The published executable, and the checksum published beside it.</summary>
+    private const string ExecutableAsset = "d47.exe";
+    private const string ChecksumAsset = "d47.exe.sha256";
 
     private static readonly HttpClient Http = CreateClient();
 
@@ -76,7 +107,16 @@ public sealed class UpdateChecker
                 return null;
             }
 
-            return latest.IsNewerThan(current) ? new AvailableUpdate(latest.ToString(), url!) : null;
+            if (!latest.IsNewerThan(current))
+            {
+                return null;
+            }
+
+            return new AvailableUpdate(
+                latest.ToString(),
+                url!,
+                AssetUrl(document.RootElement, ExecutableAsset),
+                AssetUrl(document.RootElement, ChecksumAsset));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
@@ -94,6 +134,40 @@ public sealed class UpdateChecker
     internal static bool IsTrustedReleaseUrl(string? url) =>
         url is not null
         && url.StartsWith(ReleaseUrlPrefix, StringComparison.Ordinal)
+        && Uri.TryCreate(url, UriKind.Absolute, out _);
+
+    /// <summary>
+    /// The download URL of one named asset, or null if the release does not carry it under a
+    /// URL on this repository. Null is a downgrade to the browser, never a reason to error.
+    /// </summary>
+    private static string? AssetUrl(JsonElement release, string name)
+    {
+        if (!release.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var asset in assets.EnumerateArray())
+        {
+            var assetName = asset.TryGetProperty("name", out var n) ? n.GetString() : null;
+
+            if (!string.Equals(assetName, name, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var url = asset.TryGetProperty("browser_download_url", out var u) ? u.GetString() : null;
+
+            return IsTrustedDownloadUrl(url) ? url : null;
+        }
+
+        return null;
+    }
+
+    /// <summary>True only for an asset published on a release of this repository.</summary>
+    internal static bool IsTrustedDownloadUrl(string? url) =>
+        url is not null
+        && url.StartsWith(DownloadUrlPrefix, StringComparison.Ordinal)
         && Uri.TryCreate(url, UriKind.Absolute, out _);
 
     private static HttpClient CreateClient()
