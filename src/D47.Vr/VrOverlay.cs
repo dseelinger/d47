@@ -35,6 +35,7 @@ public sealed class VrOverlay : IDisposable
     private readonly Action<string>? _refused;
 
     private VrPose? _appliedPose;
+    private VrPose? _appliedHeadOffset;
     private float _appliedWidth = float.NaN;
     private float _appliedCurvature = float.NaN;
     private float _appliedAlpha = float.NaN;
@@ -175,6 +176,38 @@ public sealed class VrOverlay : IDisposable
         Went(OpenVR.Overlay.SetOverlayTexture(_handle, ref handed), "Setting the texture");
     }
 
+    /// <summary>
+    /// Hangs the quad off the headset itself, which is what head-locked means to OpenVR.
+    /// <para>
+    /// Written once rather than every frame, and with no tracking universe in it at all. The
+    /// absolute path had d47 setting a transform in the seated universe and SteamVR reporting
+    /// it back in the standing one — a mismatch across the boundary that no amount of correct
+    /// arithmetic on this side can be sure of, because both sides look right in isolation.
+    /// Letting the runtime carry the quad removes the question rather than answering it, and
+    /// removes a per-frame head read and transform write with it.
+    /// </para>
+    /// </summary>
+    public void PlaceOnHead(VrPose offset)
+    {
+        if (_appliedHeadOffset is { } applied && Close(applied, offset))
+        {
+            return;
+        }
+
+        var matrix = VrMatrix.ToOpenVr(offset);
+
+        if (Went(
+            OpenVR.Overlay.SetOverlayTransformTrackedDeviceRelative(
+                _handle,
+                OpenVR.k_unTrackedDeviceIndex_Hmd,
+                ref matrix),
+            "Hanging the quad off the headset"))
+        {
+            _appliedHeadOffset = offset;
+            _appliedPose = null;
+        }
+    }
+
     /// <summary>Places the quad in the tracking universe, if it is not already there.</summary>
     public void PlaceAbsolute(VrPose pose)
     {
@@ -197,6 +230,7 @@ public sealed class VrOverlay : IDisposable
             "Placing the quad"))
         {
             _appliedPose = pose;
+            _appliedHeadOffset = null;
         }
     }
 

@@ -419,9 +419,18 @@ public sealed class SteamVrRuntime(
             overlay.Submit(texture.NativePointer);
         }
 
+        // Head-locked rides the headset; only something put down in the room needs a room
+        // position. Splitting them is what keeps the tracking universe out of the common case.
         var where = placement.Where(Head ?? VrPose.Origin);
 
-        overlay.PlaceAbsolute(where);
+        if (placement.RidesTheHead)
+        {
+            overlay.PlaceOnHead(placement.AgainstTheHead());
+        }
+        else
+        {
+            overlay.PlaceAbsolute(where);
+        }
         overlay.Look(placement.WidthMetres, placement.Curvature, placement.Opacity);
         overlay.Show(true);
         overlay.PumpEvents();

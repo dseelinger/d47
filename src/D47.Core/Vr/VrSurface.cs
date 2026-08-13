@@ -106,6 +106,28 @@ public sealed record SurfacePlacement
     /// never been put down falls back to its head-locked position, so the first thing the
     /// Commander sees is a panel in front of them rather than one at the origin behind them.
     /// </summary>
+    /// <summary>
+    /// Whether this surface rides the head rather than sitting in the room. A world-locked
+    /// surface that has never been put down still rides it, which is what puts the first panel
+    /// a Commander ever sees in front of them.
+    /// </summary>
+    public bool RidesTheHead => Lock != SurfaceLock.WorldLocked || Placed is null;
+
+    /// <summary>
+    /// Where this surface sits relative to the head itself, for a runtime that can hang an
+    /// overlay off the headset rather than being told a room position every frame.
+    /// <para>
+    /// The same arithmetic as <see cref="Where"/> against a head at the origin, because that is
+    /// what "relative to the head" means. Having it separately is what lets the placement leave
+    /// the tracking universe out of it altogether.
+    /// </para>
+    /// </summary>
+    public VrPose AgainstTheHead() => VrPlacementMath.HeadLocked(
+        VrPose.Origin,
+        DistanceMetres,
+        DropMetres,
+        PitchDegrees * MathF.PI / 180f);
+
     public VrPose Where(VrPose head)
     {
         if (Lock == SurfaceLock.WorldLocked && Placed is { } placed)
