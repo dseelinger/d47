@@ -29,6 +29,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
+    /// <summary>The hired NPC pilots on the books (list.md Phase 11, "Ship Crew").</summary>
+    public ShipCrew Crew { get; private set; } = ShipCrew.Empty;
+
     /// <summary>
     /// On-foot inventory. Set from the two files Elite writes rather than folded from events,
     /// so it is assigned by the spine rather than by <see cref="Apply"/>.
@@ -48,5 +51,10 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Fleet = Fleet.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
+
+        // After Ship, so an assignment is tied to the hull the Commander is actually in rather
+        // than the one they were in a moment ago. Elite's CrewAssign names no ship at all, so
+        // this is the only thing that can tie the two together.
+        Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeName ?? Ship.Type);
     }
 }

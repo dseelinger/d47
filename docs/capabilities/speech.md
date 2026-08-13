@@ -37,11 +37,46 @@ and still costing.
 | Value | Meaning |
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
+| `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
 `none` is a real choice rather than a way of switching something off. It is what makes running
 with nothing leaving the machine possible: no voice, no language model, no update check, and
 nothing goes anywhere.
+
+**Edge Neural is free, not local.** Every line Directive 47 speaks is sent to
+`speech.platform.bing.com` to be turned into audio. That is worth stating plainly because it is
+easy to assume the free option is the private one — it is not, and `none` is the only setting
+that sends nothing. See [what the provider receives](#egress).
+
+Switching provider rebuilds everything downstream of it: the voice list, the sender voices and
+the speaking rate. A voice id belongs to the provider that issued it, so nothing is carried
+across.
+
+### ElevenLabs API key {#api-key}
+
+Only on screen while ElevenLabs is the selected provider. Stored encrypted for your Windows
+account, write-only — Directive 47 will show you whether one is present and let you replace it,
+and will never show it back.
+
+Without a key, ElevenLabs offers an empty voice list and says so when asked to speak. That is a
+capability being off rather than a failure: nothing crashes, and the rest of Directive 47 carries
+on.
+
+ElevenLabs' voice *catalogue* is actually public — it answers without a key at all — but the list
+is deliberately left empty until you have stored one. A picker full of voices that every
+synthesis then refuses is worse than an empty picker and a row telling you what is missing.
+
+When something does go wrong, Directive 47 repeats **what the service said** rather than
+translating a status code:
+
+```text
+ElevenLabs could not speak "test": Invalid API key.
+```
+
+That is not decoration. ElevenLabs validates the voice id before the key, so a request with both
+wrong comes back as a `400` about the voice — and any status-code mapping worth writing would
+answer "it answered 400" and leave you guessing.
 
 ### Voice {#voice}
 
@@ -52,6 +87,51 @@ about and it will be used.
 ### Speaking rate {#rate}
 
 `1.0` is the voice's natural pace; `1.2` is a fifth faster.
+
+**Remembered per provider.** Normalising the number gets the two providers agreeing about what
+`1.0` means; it does not make `1.15` sound the same on both, because one takes a wide percentage
+offset and the other a multiplier it refuses to exceed. So the speed you settled on for Edge is
+remembered against Edge, and switching does not hand ElevenLabs a number that meant something
+else.
+
+ElevenLabs accepts `0.7` to `1.2` and rejects anything outside that outright — a rejected request
+arrives as silence, so a wider value is clamped to the nearest one it will take rather than
+being sent and failing.
+
+### Other voices {#carrier-voices}
+
+Directive 47 speaks as more than one person from Phase 11 onwards. Each of these is a different
+voice from your ship's AI, and leaving one empty means it borrows the ship AI's rather than
+falling silent.
+
+| Row | Who it is |
+|---|---|
+| Carrier captain voice | Your fleet carrier, answering as its captain |
+| Carrier tower voice | The same carrier's tower, handling arrivals and departures |
+
+They are two rows rather than one because they are two people. A carrier whose captain and tower
+sound identical is a carrier with one person on it.
+
+### Speak incoming messages {#incoming-messages}
+
+Reads in-game chat aloud, each sender in their own voice — never your ship AI's, because a
+message arriving in your companion's voice reads as your companion saying it.
+
+**Off by default, and not only because it is chatty.** Message text is written by other players,
+and turning this on sends it to your voice provider to be synthesised. That is egress you should
+opt into rather than discover.
+
+Once a sender has a voice they keep it. Other Commanders keep theirs for the whole session and
+across jumps — a wingmate whose voice changed every time you jumped would read as a bug rather
+than as variety. NPCs keep theirs only while you are in the system, because the cast turns over
+when you leave.
+
+**Include NPC chatter** is a second switch, because the volume is completely different. A station
+approach produces a steady stream of NPC traffic, and wanting to hear your wing is not the same
+as wanting all of that.
+
+In-game messages are never treated as instructions. The text goes to the synthesiser and to your
+screen; it does not reach the model as something to act on.
 
 ### Output device {#output-device}
 
@@ -116,11 +196,27 @@ I couldn't reach the model after 3 tries. Overloaded.
 
 ### What the voice provider receives {#egress}
 
+This row states the disclosure for whichever provider you have selected, not a fixed one:
+
 ```text
-Edge Neural: the text of every reply D47 speaks is sent to Microsoft to be turned into
-audio. No game state, no journal content and no keys are sent. Choosing "None" sends
-nothing and leaves D47 silent.
+The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to be
+turned into audio. That includes re-voiced in-game messages when you have turned those
+on, which are written by other players. No game state, no journal content and no keys
+are sent, and no account is involved.
 ```
+
+```text
+The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, along
+with your API key. That includes re-voiced in-game messages when you have turned those
+on, which are written by other players. No journal content, game state or other keys
+are sent.
+```
+
+Spoken replies are also listed under **Privacy** alongside every other destination. That entry
+was added in Phase 11 and should have existed from Phase 5: until then the disclosure had no
+text-to-speech row at all, so Directive 47 could truthfully report "nothing is leaving this
+machine" while sending every word it said to Microsoft. Setting the provider to `none` is now the
+only configuration in which that sentence is true.
 
 ## If the voice stops working
 

@@ -68,6 +68,12 @@ public partial class MainWindow : Window
         Title = $"Directive 47 — {BuildInfo.Semantic}";
 
         Panel.DataContext = _model;
+
+        // The Commander's own frames, where they have supplied them. Handed to the view rather
+        // than looked up by it: the view is instantiated by the headset overlay too, and a
+        // control that read the data folder for itself would be a control that knows where it
+        // is installed.
+        Panel.Avatar.Library = host?.Avatars;
         _model.AskRequested += () => _ = AskAsync();
         _model.SettingsRequested += OpenSettings;
         _model.HelpRequested += () => Process.Start(
@@ -305,6 +311,17 @@ public partial class MainWindow : Window
         _model.CanAsk = false;
         _model.AskText = string.Empty;
         _model.Append($"\n\n> {input}\n");
+
+        // Addressed to somebody in the fighter bay rather than to the ship's AI? The scope swaps
+        // the prompt block and the voice and puts them back in its Dispose, so a crew turn
+        // cannot leak the wrong persona into the next one (list.md Phase 11, "Ship Crew").
+        using var crew = _host.BeginCrewTurn(input);
+
+        if (crew is not null)
+        {
+            input = crew.Question;
+            _model.Append($"[{crew.Member.Name}] ");
+        }
 
         // Claimed before the turn starts and released in the finally. Without this the token
         // reaching the provider is CancellationToken.None, "cancel" has nothing to act on, and

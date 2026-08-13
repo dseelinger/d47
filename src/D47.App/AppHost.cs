@@ -17,6 +17,7 @@ using D47.Core.Diagnostics;
 using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Listening;
+using D47.Core.Persona;
 using D47.Core.Ticking;
 using D47.Llm;
 using D47.Stt;
@@ -54,6 +55,7 @@ public sealed class AppHost : IDisposable
         UpdateChecker updates,
         UpdateInstaller installer,
         TurnLoop turns,
+        PersonaHost personas,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
         WasapiAudioSink audioSink,
@@ -86,6 +88,7 @@ public sealed class AppHost : IDisposable
         Updates = updates;
         Installer = installer;
         Turns = turns;
+        Personas = personas;
         LlmAvailability = llmAvailability;
         Spend = spend;
         _audioSink = audioSink;
@@ -182,6 +185,15 @@ public sealed class AppHost : IDisposable
 
     /// <summary>One turn of conversation, whichever path answers it.</summary>
     public TurnLoop Turns { get; }
+
+    /// <summary>Which Guardian core is aboard, and what it remembers (list.md Phase 11).</summary>
+    public PersonaHost Personas { get; }
+
+    /// <summary>
+    /// The Commander's own per-state avatar frames, if they have supplied any. Null until
+    /// startup has scanned for them, and empty for almost everyone — the panel draws its own.
+    /// </summary>
+    public D47.Core.Interface.AvatarLibrary? Avatars { get; private set; }
 
     /// <summary>Whether the model is usable right now, and why not when it isn't.</summary>
     public LlmAvailabilityState LlmAvailability { get; }
@@ -450,6 +462,11 @@ public sealed class AppHost : IDisposable
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
+        // Built before the registry, because the persona capability declares settings rows from
+        // it and which rows exist has to be settled before registration — descriptors are
+        // registered once and never mutated (architecture.md D5).
+        var personas = new PersonaHost(PersonaCatalog.Resolve(settings.Current.Persona.Id));
+
         // The help capability answers from the registry it is itself registered in, so the
         // accessor is filled in immediately after Build. A Func rather than a mutable property
         // on the descriptor: descriptors are registered once and never mutated (architecture.md
@@ -536,6 +553,7 @@ public sealed class AppHost : IDisposable
                     ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
                 },
                 macros,
+                personas,
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -603,6 +621,7 @@ public sealed class AppHost : IDisposable
             updates,
             installer,
             turns,
+            personas,
             llmAvailability,
             spend,
             audioSink,
@@ -617,6 +636,21 @@ public sealed class AppHost : IDisposable
             transcriber,
             version,
             startupError);
+
+        // Before ApplyLlmSettings, which reads the persona block it points the loop at.
+        personas.Changed += host.OnPersonaChanged;
+        turns.UseTranscript(personas.Transcript);
+
+        // The avatar's own imagery, if the Commander has dropped any in. Scanned once at
+        // startup; the drawn face is what every state falls back to, so an empty data/avatar is
+        // the normal case rather than a missing asset.
+        host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
+
+        // The face follows the loop. Set straight onto the view model from whichever thread the
+        // state arrived on: a view model is affine to nothing, and the view marshals — which is
+        // the rule the transcript scroll already follows, so the avatar does not get a second
+        // one of its own.
+        voice.StateEntered += state => host.Panel.LoopState = state;
 
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();
@@ -668,6 +702,11 @@ public sealed class AppHost : IDisposable
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
+        // NPC voices are scoped to the system, so something has to notice the system changing.
+        // Sampled on the tick rather than hooked to a journal event, because the state store is
+        // already folding those and a second reader would be a second thing to keep in step.
+        tick.Add("voice-scope", _ => host.FollowSystemForVoices());
+
         // After the callouts, so a honk that reports why it did not fire is spoken in the same
         // order it was decided relative to everything else this tick.
         tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
@@ -697,7 +736,22 @@ public sealed class AppHost : IDisposable
             // Capacity comes from the derived grade table. Elite reports it nowhere, so this is
             // the one place d47 carries game data — generated from the canonical id list rather
             // than written, and answering null for anything it does not recognise.
-            .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf });
+            .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf })
+
+            // Phase 11. The carrier speaks for itself; incoming chat speaks for whoever sent
+            // it. Both are announcements in somebody else's voice rather than d47's, which is
+            // what Announcement.Voice exists to carry.
+            .Add(new CarrierCallout())
+            .Add(new AmbientCallout())
+            .Add(new IncomingMessages
+            {
+                Enabled = () => settings.Speech.SpeakIncomingMessages,
+                IncludeNpcs = () => settings.Speech.SpeakNpcMessages,
+            });
+
+        // Elite echoes what you send back to you on the channel it went out on. Without this,
+        // dictating into wing chat means hearing yourself read back in a stranger's voice.
+        // Filled in on the tick rather than here, because the journal has not been read yet.
 
         ApplyCalloutSettings(engine, settings);
         return engine;
@@ -718,6 +772,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("long-jump", callouts.LongJump);
         engine.SetEnabled("arrival", callouts.Arrival);
         engine.SetEnabled("materials", callouts.Materials);
+        engine.SetEnabled("ambient", callouts.Ambient);
 
         foreach (var callout in engine.Callouts)
         {
@@ -733,6 +788,15 @@ public sealed class AppHost : IDisposable
 
                 case ArrivalCallout arrival:
                     arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+
+                case AmbientCallout ambient:
+                    ambient.Interval = TimeSpan.FromMinutes(callouts.AmbientMinutes);
+
+                    // Silent while personality is off. The checklist puts "no ambient remarks"
+                    // in that item's own acceptance criteria, which makes this the one callout
+                    // the personality switch reaches.
+                    ambient.Enabled = () => settings.Callouts.Ambient && settings.Llm.PersonalityEnabled;
                     break;
             }
         }
@@ -792,11 +856,11 @@ public sealed class AppHost : IDisposable
         Turns.Model = current.Llm.Model;
         Turns.AboutMe = current.Llm.AboutMe;
 
-        // The persona block itself arrives in Phase 11; this is the switch it will read.
-        if (!current.Llm.PersonalityEnabled)
-        {
-            Turns.Persona = null;
-        }
+        // Position 3 of the assembled prompt, and null when personality is off. Null rather
+        // than a neutral block on purpose: "off" is position 3 being absent, and the guardrails
+        // at position 2 are untouched either way, which is the property that whole arrangement
+        // exists to guarantee (architecture.md §6).
+        Turns.Persona = Personas.RenderBlock(current.Llm.PersonalityEnabled);
 
         LlmAvailability.SetProviderConfigured(provider is not null, reason);
     }
@@ -818,12 +882,75 @@ public sealed class AppHost : IDisposable
         _voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Label ?? id;
 
+    /// <summary>
+    /// One voice per core, chosen once and written to settings (list.md Phase 11, #33).
+    /// <para>
+    /// Guarded by a flag rather than by "are there pairings yet", so a Commander who cleared
+    /// every pairing by hand does not have them silently regenerated on the next launch. Runs
+    /// after the voice list arrives and never blocks anything: picking a character must not wait
+    /// on a model being reachable.
+    /// </para>
+    /// </summary>
+    private async Task PairPersonaVoicesAsync()
+    {
+        if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var paired = await VoicePairing.ChooseAsync(
+                _voices,
+                Settings.Current.Persona.Voices,
+                Turns.Provider,
+                Turns.Model,
+                Spend,
+                PriceTable.Default,
+                _logger).ConfigureAwait(false);
+
+            Settings.Replace("persona.voices", current => current with
+            {
+                Persona = current.Persona with { Voices = paired, VoicesPaired = true },
+            });
+
+            // The core aboard may have just acquired a voice, and nothing else will notice.
+            ApplySpeechSettings();
+        }
+        catch (Exception ex)
+        {
+            // Pairing is a convenience. Failing it means the picker still works and every core
+            // uses the ship AI's voice, which is exactly where this started.
+            _logger.LogWarning(ex, "Could not pair voices to personas");
+        }
+    }
+
     private async Task LoadVoicesAsync(ITtsProvider provider)
     {
         try
         {
             _voices = await provider.ListVoicesAsync().ConfigureAwait(false);
             _logger.LogInformation("The voice list has {Count} voices", _voices.Count);
+
+            // The pool a re-voiced sender is drawn from. English-locale voices only, where the
+            // provider tags a locale at all: Edge offers several hundred across every language
+            // it supports, and drawing a wingmate's voice from all of them means most Commanders
+            // hear their wing in a language they do not speak. ElevenLabs tags an accent rather
+            // than a locale, so nothing is filtered out there and the whole account is the pool.
+            Cast.Pool =
+            [
+                .. _voices
+                    .Where(voice => voice.Locale.Length == 0
+                                    || voice.Locale.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+                    .Select(voice => voice.Id),
+            ];
+
+            _logger.LogInformation("{Count} voices are available for re-voiced senders", Cast.Pool.Count);
+
+            // Pairing a voice to each core needs the list, so it starts once the list arrives
+            // rather than at startup. Background and best-effort: picking a character must never
+            // wait on it (list.md Phase 11, #33).
+            _ = PairPersonaVoicesAsync();
         }
         catch (Exception ex)
         {
@@ -833,27 +960,149 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// When the core currently aboard became the core currently aboard, and what the ship's
+    /// ledger looked like then. Both exist for one thing: a core reselected after time away
+    /// opens with its reaction to the discontinuity rather than with a switch-in bark, and
+    /// neither the elapsed time nor the delta can be reconstructed after the fact.
+    /// </summary>
+    private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
+
+    private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
+        new(StringComparer.Ordinal);
+
+    private void ApplyPersonaSettings()
+    {
+        var outgoing = Personas.Current;
+
+        // Remembered before the switch, because after it there is nothing left to measure
+        // against. Keyed by the core leaving, not the one arriving.
+        _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
+
+        var incoming = PersonaCatalog.Resolve(Settings.Current.Persona.Id);
+        var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
+
+        var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
+        var delta = seen.At == default
+            ? null
+            : TelemetryDelta.Between(seen.Session, GameState.Active?.Session, GameState.Active);
+
+        if (!Personas.Apply(Settings.Current.Persona, away, delta))
+        {
+            // The name may still have changed underneath an unchanged core, and that is part of
+            // the persona block, so the prompt is rebuilt either way.
+            Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+            return;
+        }
+
+        _personaSelectedAt = DateTimeOffset.Now;
+
+        // Each core owns its transcript, handed over by reference so the turns land in it
+        // directly. This is the line that makes the isolation model real rather than stated:
+        // without it, a core would reference something it could only have learned while another
+        // was active (guardian-personas.md).
+        Turns.UseTranscript(Personas.Transcript);
+        Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+    }
+
+    /// <summary>
+    /// The new core, saying it is here. Runs off the event rather than inline in
+    /// <see cref="ApplyPersonaSettings"/>, because a gap reaction asks the model for a line and
+    /// a settings change must not block on a network round trip.
+    /// </summary>
+    private void OnPersonaChanged(PersonaChanged change)
+    {
+        _logger.LogInformation(
+            "Persona changed from {Previous} to {Current} ({Arrival})",
+            change.Previous?.Name ?? "(none)",
+            change.Current.Name,
+            change.Arrival);
+
+        _ = Task.Run(async () =>
+        {
+            var line = change.Current.Intro;
+
+            if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
+            {
+                // Authored fallback first, so there is always something to say; the model only
+                // ever replaces it.
+                line = change.Current.Return;
+
+                var generated = await FlavourTurn.AskAsync(
+                    Turns.Provider,
+                    Turns.Model,
+                    Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
+                    "You have just been switched back on after "
+                    + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
+                    + "reacting to the missing time, exactly as your character would. Do not greet "
+                    + "the Commander formally and do not offer a list of what you can do.",
+                    gap.TelemetryDelta,
+                    Spend,
+                    PriceTable.Default,
+                    _logger).ConfigureAwait(false);
+
+                if (generated is not null)
+                {
+                    line = generated;
+                }
+            }
+
+            await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
+        });
+    }
+
     private void ApplySpeechSettings()
     {
         var speech = Settings.Current.Speech;
+        var provider = TtsProviderCatalog.Selected(speech.Provider);
 
-        if (speech.Provider == SpeechCapability.NoneId)
+        // Rebuilt when the provider changes, not merely when there is none yet. A voice id
+        // belongs to the provider that issued it, so carrying a client — or a voice list, or a
+        // table of sender assignments — across a switch keeps ids that no longer resolve.
+        if (!string.Equals(_ttsProviderId, provider.Id, StringComparison.Ordinal))
         {
-            _tts?.Dispose();
+            // Through the interface, so this stays correct for a provider that needs no
+            // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
+            // audio seam, and whether an implementation holds an HTTP handle is its own business.
+            (_tts as IDisposable)?.Dispose();
             _tts = null;
-        }
-        else if (_tts is null)
-        {
-            _tts = new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>());
+            _voices = [];
+            Cast.Reset();
+            _ttsProviderId = provider.Id;
 
-            // Fetched once, in the background. The picker asks synchronously and the list comes
-            // over the network, so it is cached rather than requested on open — and not awaited,
-            // because a settings change must not wait on a provider being reachable.
-            _ = LoadVoicesAsync(_tts);
+            _tts = provider.Id switch
+            {
+                SpeechCapability.EdgeId =>
+                    new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>()),
+
+                SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
+                    () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
+                    _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
+
+                _ => null,
+            };
+
+            if (_tts is not null)
+            {
+                // Fetched once, in the background. The picker asks synchronously and the list
+                // comes over the network, so it is cached rather than requested on open — and
+                // not awaited, because a settings change must not wait on a provider being
+                // reachable.
+                _ = LoadVoicesAsync(_tts);
+            }
         }
 
         Voice.Tts = _tts;
-        Voice.Voice = new VoiceSelection(speech.Voice, speech.Rate);
+
+        // Everyone d47 can speak as, filled in from settings. The ship AI's voice is the
+        // Commander's explicit choice if they made one, then the voice paired to the persona
+        // aboard (#33), then the provider's own default.
+        Cast.Rate = SpeechCapability.RateFor(Settings.Current);
+        Cast.DefaultVoice = speech.Voice ?? PairedVoiceForCurrentPersona();
+        Cast.Assign(VoiceRole.CarrierCaptain, speech.CarrierCaptainVoice);
+        Cast.Assign(VoiceRole.TowerControl, speech.TowerVoice);
+
+        Voice.Voice = Cast.For(VoiceRole.ShipAi);
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
         Voice.Bed = speech.ThinkingBed;
@@ -1052,7 +1301,33 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
-    private EdgeNeuralTtsProvider? _tts;
+    /// <summary>
+    /// The voice provider in use. Typed as the seam rather than as Edge's implementation, which
+    /// is the point of the seam — Phase 11's paid provider arrives without anything above this
+    /// line noticing (architecture.md §2).
+    /// </summary>
+    private ITtsProvider? _tts;
+
+    /// <summary>
+    /// Which provider <see cref="_tts"/> is. Tracked rather than inferred, because "is it null"
+    /// answered "does one need building" only while there was exactly one to build.
+    /// </summary>
+    private string? _ttsProviderId;
+
+    /// <summary>
+    /// Everyone d47 can speak as (list.md Phase 11). Not a second audio path: it decides which
+    /// voice a line is synthesised in, and the line still goes through the one arbiter, because
+    /// separate paths per voice are how a line gets spoken in the wrong one (architecture.md D7).
+    /// </summary>
+    public VoiceCast Cast { get; } = new();
+
+    /// <summary>
+    /// The voice paired to the core currently aboard, or null if none has been (#33). Read at
+    /// the moment it is needed rather than cached, because the pairing runs in the background
+    /// after startup and the Commander may change core before it finishes.
+    /// </summary>
+    private string? PairedVoiceForCurrentPersona() =>
+        Settings.Current.Persona.Voices.GetValueOrDefault(Personas.Current.Id);
 
     /// <summary>
     /// What the selected provider offers, cached. Empty until the first fetch returns, which is
@@ -1130,6 +1405,197 @@ public sealed class AppHost : IDisposable
     /// returns immediately — the speaking itself happens on the thread pool, because the tick
     /// must never block on synthesis.
     /// </summary>
+    /// <summary>
+    /// One announcement, in whoever's voice it belongs to.
+    /// <para>
+    /// Everything Phase 8 produces is the ship's AI, so this resolved to one voice until Phase
+    /// 11. Now a re-voiced message carries a sender and a carrier line carries a role, and the
+    /// lookup for both lives here — the callout knows whose line it is, the cast knows what
+    /// that person sounds like, and neither has to know about the other.
+    /// </para>
+    /// </summary>
+    private async Task SayAsync(Announcement announcement)
+    {
+        var voice = announcement.Speaker is { Length: > 0 } speaker
+            ? Cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            : Cast.For(announcement.Voice);
+
+        await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// How long a carrier line may spend being written before the authored one is used instead.
+    /// Tight on purpose: this is decoration on a callout queue that also carries warnings, and
+    /// the authored line is already correct.
+    /// </summary>
+    private static readonly TimeSpan FlavourBudget = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// The same announcement, said in character, when there is a model to ask and it is one of
+    /// the lines the checklist wants varied (list.md Phase 11: "with varied LLM arrival and
+    /// departure responses").
+    /// <para>
+    /// Only the carrier's own lines. A danger callout is never rewritten by a model: those fire
+    /// on the event and say exactly what happened, and "shields are down" is not a line that
+    /// benefits from personality (list.md Phase 8).
+    /// </para>
+    /// </summary>
+    private async Task<Announcement> VaryAsync(Announcement announcement)
+    {
+        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
+        {
+            return announcement;
+        }
+
+        using var budget = new CancellationTokenSource(FlavourBudget);
+
+        // An ambient remark is the core's own, so it gets the persona block and the live game
+        // state. The carrier's two roles are other people entirely and get neither.
+        var (persona, instruction, state) = announcement switch
+        {
+            { Key: var key } when key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal) =>
+            (
+                Personas.RenderBlock(personalityEnabled: true),
+                "Make one short unprompted remark about where the Commander is right now — you are "
+                + $"{AmbientLines.Describe(SituationOf(key))}. Nothing has happened; this is you "
+                + "filling a quiet moment in character. One or two sentences. Do not ask a question, "
+                + "do not offer help, and do not comment on the Commander's decisions.",
+                Turns.LiveGameState?.Invoke()
+            ),
+
+            { Voice: VoiceRole.CarrierCaptain or VoiceRole.TowerControl } =>
+            (
+                // No persona block: this is not the ship's AI speaking. Handing a Guardian core
+                // the carrier's lines would put one of them in two places at once, which is the
+                // one thing the isolation model cannot survive.
+                $"You are {(announcement.Voice == VoiceRole.CarrierCaptain
+                    ? "the captain of the Commander's fleet carrier"
+                    : "the tower controller aboard the Commander's fleet carrier")}. You are a "
+                + "professional, not a character — brief, competent and human. One short sentence. "
+                + "Never mention being an AI.",
+                $"Say this in your own words, once: \"{announcement.Text}\"",
+                (string?)null
+            ),
+
+            _ => (null, null, null),
+        };
+
+        if (instruction is null)
+        {
+            return announcement;
+        }
+
+        var line = await FlavourTurn.AskAsync(
+            Turns.Provider,
+            Turns.Model,
+            persona,
+            instruction,
+            state,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            budget.Token).ConfigureAwait(false);
+
+        return line is null ? announcement : announcement with { Text = line };
+    }
+
+    /// <summary>
+    /// Which situation an ambient announcement was about, from its key. Carried on the key
+    /// rather than read back off the callout, because a batch may hold more than one and the
+    /// callout only remembers the last.
+    /// </summary>
+    private static AmbientSituation SituationOf(string key) =>
+        Enum.TryParse<AmbientSituation>(key[AmbientCallout.KeyPrefix.Length..], ignoreCase: true, out var situation)
+            ? situation
+            : AmbientSituation.None;
+
+    /// <summary>
+    /// A turn the Commander addressed to a crew member. Swaps the prompt block and the voice for
+    /// the duration and puts the ship's AI back afterwards, which is why it is a scope rather
+    /// than two calls somebody has to remember to pair.
+    /// </summary>
+    public sealed class CrewTurn(AppHost host, CrewAddressed addressed, string? persona, VoiceSelection voice)
+        : IDisposable
+    {
+        /// <summary>What to ask, with the name taken off the front.</summary>
+        public string Question { get; } =
+            addressed.Question.Length == 0 ? "The Commander is trying to get your attention." : addressed.Question;
+
+        public CrewMember Member => addressed.Member;
+
+        public void Dispose()
+        {
+            host.Turns.Persona = persona;
+            host.Voice.Voice = voice;
+        }
+    }
+
+    /// <summary>
+    /// Whether this input was addressed to somebody in the fighter bay rather than to the ship's
+    /// AI, and if so, everything needed to answer as them (list.md Phase 11, "Ship Crew").
+    /// <para>
+    /// Matched model-free against the names the journal reports, so no round trip is spent
+    /// working out who a round trip is for, and so this works with no model at all — in which
+    /// case the turn falls through to the keyword router as it always did, and the crew member
+    /// simply has nothing to say.
+    /// </para>
+    /// </summary>
+    public CrewTurn? BeginCrewTurn(string input)
+    {
+        if (GameState.Active?.Crew is not { Any: true } crew
+            || CrewAddressing.Match(input, crew) is not { } addressed)
+        {
+            return null;
+        }
+
+        var persona = Turns.Persona;
+        var voice = Voice.Voice;
+
+        _logger.LogInformation("Turn addressed to crew member {Name}", addressed.Member.Name);
+
+        // Not a Guardian core. The crew are human pilots hired at a station, and handing one of
+        // them a persona block would put a core in two places at once.
+        Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
+        Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
+
+        return new CrewTurn(this, addressed, persona, voice);
+    }
+
+    private string? _voiceScopeSystem;
+
+    /// <summary>
+    /// Drops the NPC voice assignments when the Commander arrives somewhere new. The cast turns
+    /// over on a jump; a wingmate does not (list.md Phase 11, "Voices stick").
+    /// </summary>
+    private void FollowSystemForVoices()
+    {
+        // The Commander's own name, so their own messages are not read back to them. Set here
+        // because the journal header is what supplies it, and that has not been read at startup.
+        if (GameState.Active?.Identity.Name is { Length: > 0 } commander)
+        {
+            foreach (var callout in Callouts.Callouts.OfType<IncomingMessages>())
+            {
+                callout.CommanderName = commander;
+            }
+        }
+
+        var system = GameState.Active?.Location.StarSystem;
+
+        if (system is null || string.Equals(system, _voiceScopeSystem, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // Not on the first sample. Startup is not an arrival, and there is nothing assigned yet
+        // to drop.
+        if (_voiceScopeSystem is not null)
+        {
+            Cast.EnteredSystem();
+        }
+
+        _voiceScopeSystem = system;
+    }
+
     private void SpeakPendingCallouts()
     {
         var pending = Callouts.Drain();
@@ -1141,15 +1607,25 @@ public sealed class AppHost : IDisposable
 
         _ = Task.Run(async () =>
         {
+            // Varied before the lock is taken, never while holding it. This is a network round
+            // trip, and the batch behind it is where a danger callout would be waiting — an
+            // alert queued behind a carrier saying hello is an alert that arrives late.
+            var lines = new List<Announcement>(pending.Count);
+
+            foreach (var announcement in pending)
+            {
+                lines.Add(await VaryAsync(announcement).ConfigureAwait(false));
+            }
+
             // One at a time, and in order. A previous batch still being spoken holds this one
             // until it finishes rather than talking over it.
             await _speaking.WaitAsync().ConfigureAwait(false);
 
             try
             {
-                foreach (var announcement in pending)
+                foreach (var announcement in lines)
                 {
-                    await Voice.AnnounceAsync(announcement).ConfigureAwait(false);
+                    await SayAsync(announcement).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -1185,6 +1661,10 @@ public sealed class AppHost : IDisposable
         else if (change.Key.StartsWith("listening.", StringComparison.OrdinalIgnoreCase))
         {
             ApplyListeningSettings();
+        }
+        else if (change.Key.StartsWith("persona.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyPersonaSettings();
         }
     }
 
@@ -1348,6 +1828,7 @@ public sealed class AppHost : IDisposable
         CoverageRecorder?.Save();
 
         Settings.Changed -= OnSettingsChanged;
+        Personas.Changed -= OnPersonaChanged;
 
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.
@@ -1369,7 +1850,7 @@ public sealed class AppHost : IDisposable
         Audio.Silence();
         Audio.Dispose();
         _audioSink.Dispose();
-        _tts?.Dispose();
+        (_tts as IDisposable)?.Dispose();
 
         _loggerFactory.Dispose();
         Log.CloseAndFlush();

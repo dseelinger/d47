@@ -136,18 +136,50 @@ public sealed class VoicePipeline(
     /// misconfigured — silence there is indistinguishable from a model with nothing to say
     /// (list.md Phase 5) — and for every Phase 8 callout.
     /// </summary>
-    public async Task AnnounceAsync(string text, AudioChannel channel = AudioChannel.Speech)
+    public async Task AnnounceAsync(
+        string text,
+        AudioChannel channel = AudioChannel.Speech,
+        VoiceSelection? voice = null,
+        string group = "announcement")
     {
         if (Tts is not { } provider)
         {
             return;
         }
 
+        // The voice is a parameter rather than always the ship AI's, because Phase 11 has
+        // several things to say that are not the ship AI speaking — a re-voiced in-game
+        // message, a carrier's tower, a crew member. They still go through this one path and
+        // this one arbiter: separate paths per voice are how a line gets spoken in the wrong
+        // one (architecture.md D7).
         await using var speech = new SpeechPipeline(
-            arbiter, provider, Voice, "announcement", loggers.CreateLogger<SpeechPipeline>(), channel);
+            arbiter, provider, voice ?? Voice, group, loggers.CreateLogger<SpeechPipeline>(), channel);
 
         speech.Push(text);
         await speech.CompleteAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The group a persona's introduction or gap reaction is spoken in. Its own group so a
+    /// second switch can drop the first acknowledgement mid-word — which is the requirement:
+    /// "if it changes before its acknowledgement has completed speaking, it stops and the next
+    /// one starts" (list.md Phase 11).
+    /// </summary>
+    private const string PersonaGroup = "persona-acknowledgement";
+
+    /// <summary>
+    /// A newly selected core, acknowledging that it has been picked.
+    /// <para>
+    /// Not urgent, so it does not silence the queue — a callout already in flight outranks a
+    /// companion saying hello. It does supersede the <em>previous</em> acknowledgement, and
+    /// like all speech the Commander can cut it off outright.
+    /// </para>
+    /// </summary>
+    public async Task AcknowledgePersonaAsync(string text, VoiceSelection? voice = null)
+    {
+        arbiter.DropGroup(PersonaGroup);
+
+        await AnnounceAsync(text, AudioChannel.Speech, voice, PersonaGroup).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -159,20 +191,30 @@ public sealed class VoicePipeline(
     /// normally and wait their turn.
     /// </para>
     /// </summary>
-    public async Task AnnounceAsync(Announcement announcement)
+    public async Task AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
     {
         if (announcement.Urgency == CalloutUrgency.Urgent)
         {
             arbiter.Silence();
         }
 
-        _logger.LogDebug("Speaking callout {Key}", announcement.Key);
+        _logger.LogDebug(
+            "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
-        await AnnounceAsync(announcement.Text, announcement.Channel).ConfigureAwait(false);
+        await AnnounceAsync(announcement.Text, announcement.Channel, voice).ConfigureAwait(false);
     }
 
-    public void EnterState(LoopState state) =>
+    /// <summary>
+    /// Raised as the loop moves. The cues have marked these states audibly since Phase 5; this
+    /// is the same states, for the surfaces that show a face (list.md Phase 11).
+    /// </summary>
+    public event Action<LoopState>? StateEntered;
+
+    public void EnterState(LoopState state)
+    {
         arbiter.EnterState(state, cues, Bed, CuesEnabled, BedEnabled);
+        StateEntered?.Invoke(state);
+    }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
 }

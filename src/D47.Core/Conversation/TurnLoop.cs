@@ -97,8 +97,9 @@ public sealed class TurnLoop(
     SettingsService? settings = null,
     ITurnClock? clock = null)
 {
-    private readonly List<ConversationMessage> _history = [];
     private readonly ITurnClock _clock = clock ?? SystemTurnClock.Instance;
+
+    private List<ConversationMessage> _history = [];
 
     private string? _lastModelUsed;
 
@@ -109,6 +110,19 @@ public sealed class TurnLoop(
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
     public IReadOnlyList<ConversationMessage> History => _history;
+
+    /// <summary>
+    /// Points the loop at a different transcript. This is how separate memory per persona works
+    /// (guardian-personas.md): each core owns a list, the host hands over the incoming one, and
+    /// nothing is copied — a copy that is one turn stale is a core remembering a conversation
+    /// that did not happen.
+    /// <para>
+    /// The list is appended to in place, so the caller keeps hold of it and gets the turns back
+    /// for free. Swapping mid-turn is not supported and does not need to be: a switch is a
+    /// settings change, and settings changes are applied between turns.
+    /// </para>
+    /// </summary>
+    public void UseTranscript(List<ConversationMessage> transcript) => _history = transcript;
 
     /// <summary>
     /// The provider answering turns, or null for none. Settable because a key or an endpoint

@@ -36,6 +36,8 @@ public static class CalloutCapability
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
+    public const string AmbientKey = "callouts.ambient";
+    public const string AmbientMinutesKey = "callouts.ambientMinutes";
 
     public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
     {
@@ -160,7 +162,38 @@ public static class CalloutCapability
                 "materials",
                 s => s.Callouts.Materials,
                 (s, v) => s with { Callouts = s.Callouts with { Materials = v } }),
+
+            Toggle(
+                AmbientKey,
+                "Ambient remarks",
+                "The occasional in-character observation about where you are, said because nothing has happened.",
+                "ambient",
+                "ambient remarks",
+                s => s.Callouts.Ambient,
+                (s, v) => s with { Callouts = s.Callouts with { Ambient = v } }),
         ]);
+
+        rows.Add(new SettingRow
+        {
+            Key = AmbientMinutesKey,
+            Label = "At most one ambient remark every",
+            Help = "In minutes. Lower is a talkative companion; higher is a quiet one; 0 silences them.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "15",
+            DocsAnchor = "ambient",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.AmbientMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with { AmbientMinutes = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutes)
+                        && minutes >= 0
+                            ? Math.Min(minutes, 240)
+                            : 15 },
+                },
+            },
+        });
 
         rows.Add(new SettingRow
         {

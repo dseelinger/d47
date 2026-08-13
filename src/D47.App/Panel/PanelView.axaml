@@ -85,10 +85,18 @@
               Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
       </Button>
 
-      <!-- Nothing on the left. The build was here and has moved: the short version to the title
-           bar, which is on screen anyway, and the exact one to the About dialog, which is where
-           a forty-character commit hash belongs. A line the Commander reads once and then reads
-           past for the rest of the session was not worth the panel's best space. -->
+      <!--
+        The ship AI's face, on the left, where the build line used to be. It earns that space in
+        a way a version string never did: it is the one thing on the panel that says what D47 is
+        doing right now without the Commander reading anything, which is the whole point in a
+        cockpit. Drawn rather than decoded — see AvatarView for why that is not an aesthetic
+        choice — and present in mini too, since a reduced content set is exactly where a glance
+        has to carry more.
+      -->
+      <panel:AvatarView x:Name="Avatar"
+                        DockPanel.Dock="Left"
+                        VerticalAlignment="Top"
+                        Margin="0,0,10,0" />
     </DockPanel>
 
     <!-- Both banners in one region, so mini hides them with one line and each still decides

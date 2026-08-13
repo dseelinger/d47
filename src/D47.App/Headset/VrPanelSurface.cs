@@ -46,13 +46,19 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public VrPanelSurface(
         PanelViewModel model,
         SettingsService settings,
-        Func<string, (VrPose Placed, VrPose Against)?> anchor)
+        Func<string, (VrPose Placed, VrPose Against)?> anchor,
+        D47.Core.Interface.AvatarLibrary? avatars = null)
     {
         _model = model;
         _settings = settings;
         _anchor = anchor;
 
         _view = new PanelView { DataContext = model };
+
+        // The Commander's own avatar frames reach the headset copy too. One widget tree renders
+        // to both surfaces, and a face the window has and the headset does not would be exactly
+        // the parity the one-widget-tree item exists to protect.
+        _view.Avatar.Library = avatars;
 
         // The same scaling host the desktop window zooms with, for the same reason: a render
         // transform would draw the panel larger and let the surface clip it, where a layout

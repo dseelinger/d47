@@ -138,6 +138,36 @@ and not by anything the model calls. Directive 47 reads in-game messages from an
 and a model that could disable the interdiction warning is one that could be told to by the
 Commander doing the interdicting.
 
+### Ambient remarks {#ambient}
+
+The occasional in-character observation about where you are, said because *nothing* has
+happened. Everything else on this page speaks because something did.
+
+Three rules keep it from being noise. It waits out an interval — fifteen minutes out of the box.
+It waits for the situation to have settled for ninety seconds rather than firing on the
+transition, because Status.json flips several times a minute during an approach and a remark
+about being docked that arrives as you are lifting off is worse than silence. And it never
+remarks on the same situation twice running.
+
+Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
+SRV, and on foot.
+
+With a language model configured, the core aboard writes its own line and it is genuinely theirs
+— Chart will tell you about the sky, the Quartermaster about what the run cost. Without one,
+there are ten written lines per situation, shared across all eleven cores rather than one set
+each. That is consistent rather than a compromise: with no model there is no persona flavour
+anywhere else either.
+
+```text
+The drive note has not changed in some minutes. That is what it sounds like when it is right.
+```
+
+**Switching personality off silences these entirely**, which is the one place that switch
+reaches a callout. It is in that item's own acceptance criteria: plain answers, no flavour, no
+ambient remarks.
+
+Set the interval to `0` if you want the switch without finding the switch.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

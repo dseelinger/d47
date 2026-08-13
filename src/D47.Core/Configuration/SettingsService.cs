@@ -189,6 +189,45 @@ public sealed class SettingsService
     public bool HasSecret(string? secretName) =>
         secretName is not null && _secrets.Has(secretName);
 
+    /// <summary>
+    /// Writes settings that are not a row.
+    /// <para>
+    /// Every setting a Commander can change is a row, and rows are how the protected rule, the
+    /// validation and the picker all work — so this is deliberately not a general escape hatch.
+    /// It exists for derived state that lives in the settings file because it must survive a
+    /// restart, but that nobody types: the voice paired to each persona is the case (list.md
+    /// Phase 11, #33), chosen in the background from a list the Commander never sees.
+    /// </para>
+    /// <para>
+    /// It still saves and still announces, under <paramref name="reason"/>, so a subscriber
+    /// rebuilding from a change cannot miss one of these.
+    /// </para>
+    /// </summary>
+    public void Replace(string reason, Func<D47Settings, D47Settings> change)
+    {
+        var next = change(Current);
+
+        if (next == Current)
+        {
+            return;
+        }
+
+        try
+        {
+            _store.Save(next);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Losing a derived value is survivable — it is derived. Losing the app over it is not.
+            _logger.LogError(ex, "Could not persist {Reason}", reason);
+            return;
+        }
+
+        Current = next;
+        _logger.LogInformation("Stored {Reason}", reason);
+        Changed?.Invoke(new SettingsChanged(reason, next));
+    }
+
     public SettingApplyResult Apply(string key, string? value, SettingsCaller caller)
     {
         var result = ApplyCore(key, value, caller);

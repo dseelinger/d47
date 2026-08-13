@@ -476,6 +476,12 @@ public class EgressDisclosureTests
         {
             Llm = new LlmSettings { Provider = LlmProviderCatalog.NoneId },
             Updates = new UpdateSettings { CheckOnStartup = false },
+
+            // The voice provider counts. Edge Neural is free, not local — every line D47 speaks
+            // goes to speech.platform.bing.com to be turned into audio. Until Phase 11 the
+            // disclosure had no text-to-speech entry at all, so this assertion used to pass with
+            // Edge selected, which meant it was asserting something untrue.
+            Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
         };
 
         Assert.All(EgressDisclosure.For(settings, llmKeyPresent: false), entry => Assert.False(entry.Active));

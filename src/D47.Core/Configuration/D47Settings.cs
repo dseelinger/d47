@@ -36,6 +36,50 @@ public sealed record D47Settings
     public VrSettings Vr { get; init; } = new();
 
     public ActionSettings Actions { get; init; } = new();
+
+    public PersonaSettings Persona { get; init; } = new();
+}
+
+/// <summary>
+/// Which companion character is aboard (list.md Phase 11).
+/// <para>
+/// Its own block rather than a field on <see cref="LlmSettings"/>, because the persona is not
+/// a property of the model. It picks the prompt block, it picks the voice, and it picks the
+/// transcript — and two of those three still mean something with the provider set to "none".
+/// </para>
+/// </summary>
+public sealed record PersonaSettings
+{
+    /// <summary>
+    /// A core id from <see cref="D47.Core.Persona.PersonaCatalog"/>. An id d47 no longer ships
+    /// resolves to the default rather than failing the load: this is a stale value in a known
+    /// key, not the unknown-key case the loader exists to catch.
+    /// </summary>
+    public string Id { get; init; } = D47.Core.Persona.PersonaCatalog.DefaultId;
+
+    /// <summary>
+    /// What the Commander calls the ship's AI. Null means the persona's own name, which is why
+    /// this is nullable rather than defaulted to a string: a name stored here would stop
+    /// following the persona the moment they switched core, and "defaults to the persona's
+    /// name" is the whole of the requirement.
+    /// </summary>
+    public string? ShipName { get; init; }
+
+    /// <summary>
+    /// The voice paired to each core, keyed by persona id (list.md Phase 11, #33). Written by
+    /// the background pairing at first startup and by the Commander choosing one by hand;
+    /// nothing distinguishes the two, on purpose, because a pairing the Commander has
+    /// overridden should never be quietly re-derived.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Voices { get; init; } =
+        new Dictionary<string, string>();
+
+    /// <summary>
+    /// Whether the background voice pairing has run. A flag rather than "is
+    /// <see cref="Voices"/> empty", because a Commander who cleared every pairing by hand
+    /// should not have them silently regenerated on the next launch.
+    /// </summary>
+    public bool VoicesPaired { get; init; }
 }
 
 /// <summary>
@@ -222,6 +266,23 @@ public sealed record CalloutSettings
     /// since where someone considers home is not something any journal event reports.
     /// </summary>
     public string? HomeSystem { get; init; }
+
+    /// <summary>
+    /// In-character remarks about where the Commander is, said because nothing has happened
+    /// rather than because something has (list.md Phase 11, "Ambient Voice").
+    /// <para>
+    /// On, because a companion that only ever answers questions is a search box with a voice.
+    /// The interval is what makes that tolerable.
+    /// </para>
+    /// </summary>
+    public bool Ambient { get; init; } = true;
+
+    /// <summary>
+    /// The shortest gap between two ambient remarks, in minutes. 0 silences them, which is the
+    /// same as turning <see cref="Ambient"/> off and is offered because a Commander reaching for
+    /// "less" will reach for this row rather than the switch.
+    /// </summary>
+    public int AmbientMinutes { get; init; } = 15;
 }
 
 public sealed record LlmSettings
@@ -273,8 +334,53 @@ public sealed record SpeechSettings
     /// <summary>
     /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
     /// because providers disagree about both the units and the range (list.md Phase 11).
+    /// <para>
+    /// The rate you like in general. <see cref="ProviderRates"/> is "except on this one".
+    /// </para>
     /// </summary>
     public double Rate { get; init; } = 1.0;
+
+    /// <summary>
+    /// Speaking rate per provider, keyed by provider id, overriding <see cref="Rate"/> where
+    /// present (list.md Phase 11: "Differences between providers, such as speed, is maintained
+    /// on a per-provider basis").
+    /// <para>
+    /// Normalising at the seam gets the <em>units</em> agreeing; it does not make 1.15 sound
+    /// the same on two different synthesisers, and it cannot — one has a wide percentage offset
+    /// and the other a multiplier it refuses to exceed. So the value the Commander settled on
+    /// for one provider is remembered against that provider, and switching does not carry a
+    /// number that meant something else.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, double> ProviderRates { get; init; } =
+        new Dictionary<string, double>();
+
+    /// <summary>
+    /// The voice a fleet carrier answers in, or null for the ship AI's (list.md Phase 11,
+    /// "Carrier Captain").
+    /// </summary>
+    public string? CarrierCaptainVoice { get; init; }
+
+    /// <summary>And its tower, separately, because they are two people.</summary>
+    public string? TowerVoice { get; init; }
+
+    /// <summary>
+    /// Whether in-game messages are spoken aloud, re-voiced (list.md Phase 11, "Speak incoming
+    /// messages in another voice").
+    /// <para>
+    /// Off by default, and not only because it is chatty. Message text is written by other
+    /// players and turning this on sends it to a third-party synthesiser — that is egress the
+    /// Commander should opt into rather than discover.
+    /// </para>
+    /// </summary>
+    public bool SpeakIncomingMessages { get; init; }
+
+    /// <summary>
+    /// Whether NPC chatter is included when messages are spoken. Its own switch because the
+    /// volume is completely different: a station approach produces a steady stream of NPC
+    /// traffic, and a Commander who wants to hear their wing does not necessarily want that.
+    /// </summary>
+    public bool SpeakNpcMessages { get; init; }
 
     /// <summary>
     /// The output device id, or null for the system default. An id rather than a name because

@@ -49,6 +49,7 @@ public partial class PanelView : UserControl
             if (_bound is not null)
             {
                 _bound.TranscriptAppended -= ScrollToEnd;
+                _bound.PropertyChanged -= OnModelChanged;
             }
 
             _bound = DataContext as PanelViewModel;
@@ -56,6 +57,13 @@ public partial class PanelView : UserControl
             if (_bound is not null)
             {
                 _bound.TranscriptAppended += ScrollToEnd;
+
+                // The avatar follows the loop state. Subscribed per instance rather than bound
+                // in XAML because the control takes a state rather than exposing a settable
+                // property — it has frames to load and an animation to swap, and doing that
+                // from a setter the binding engine drives is how you get both on every tick.
+                _bound.PropertyChanged += OnModelChanged;
+                Avatar.Show(_bound.LoopState);
             }
         };
     }
@@ -67,6 +75,27 @@ public partial class PanelView : UserControl
     }
 
     private PanelViewModel? Model => DataContext as PanelViewModel;
+
+    private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(PanelViewModel.LoopState) || _bound is null)
+        {
+            return;
+        }
+
+        // Marshalled here for the same reason ScrollToEnd is, and following the same rule: the
+        // view owns thread affinity, so a new caller does not have to learn it separately. Loop
+        // states are raised from the turn's own thread and from the audio path, and neither is
+        // the one that owns these controls. Posted only when it has to be.
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Avatar.Show(_bound.LoopState);
+            return;
+        }
+
+        var state = _bound.LoopState;
+        Dispatcher.UIThread.Post(() => Avatar.Show(state));
+    }
 
     /// <summary>The gear, so a host can hang a tooltip naming the bound gesture on it.</summary>
     public Control SettingsAffordance => SettingsButton;
