@@ -66,7 +66,7 @@ public static class VrCapability
         Id = Id,
         Group = "Interface",
         Name = "Headset",
-        Summary = "Show d47 in the headset as a SteamVR overlay, over Elite, in your own cockpit.",
+        Summary = "Show D47 in the headset as a SteamVR overlay, over Elite, in your own cockpit.",
         Examples = ["is the headset connected", "turn the headset overlay off"],
         Keywords = ["headset status", "vr status", "is the headset connected"],
         Display = new CapabilityDisplay { PanelTitle = "Headset", Order = 45 },
@@ -76,7 +76,7 @@ public static class VrCapability
             {
                 Name = "get_headset_status",
                 Description =
-                    "Report whether d47 is showing in the headset, and if not, why not.",
+                    "Report whether D47 is showing in the headset, and if not, why not.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(settings, headset))),
             },
         ],
@@ -85,9 +85,9 @@ public static class VrCapability
             new SettingRow
             {
                 Key = EnabledKey,
-                Label = "Show d47 in the headset",
+                Label = "Show D47 in the headset",
                 Help = "Off leaves SteamVR alone entirely. On costs nothing on a machine with no headset — "
-                       + "d47 looks for one, does not find one, and says so.",
+                       + "D47 looks for one, does not find one, and says so.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "enabled",
                 Binding = new SettingBinding
@@ -127,7 +127,7 @@ public static class VrCapability
             CaptionRow(
                 CaptionsEnabledKey,
                 "Captions",
-                "Everything d47 says, written under it in the headset. They place themselves, "
+                "Everything D47 says, written under it in the headset. They place themselves, "
                 + "they clear themselves, and they cannot be moved - a caption you can drag "
                 + "somewhere you will not see it is not a caption.",
                 SettingKind.Toggle,
@@ -204,7 +204,7 @@ public static class VrCapability
             {
                 Key = StateKey,
                 Label = "Headset",
-                Help = "What d47 can currently see. Not a setting — a state, reported where the switch is, "
+                Help = "What D47 can currently see. Not a setting — a state, reported where the switch is, "
                        + "because \"it is off\" and \"SteamVR is not running\" look identical from the outside.",
                 Kind = SettingKind.Info,
                 DocsAnchor = "state",
@@ -349,7 +349,7 @@ public static class VrCapability
         Choices = choices ?? [],
         DocsAnchor = anchor,
         Group = "Captions",
-        GroupHelp = "What d47 says, written under it, following the closed-caption standard: "
+        GroupHelp = "What D47 says, written under it, following the closed-caption standard: "
                     + "at most forty-two characters a line, a rolling three-line window, and a "
                     + "dwell timed from the end of speech rather than the start of it.",
         AppliesWhen = s => s.Vr.Enabled,

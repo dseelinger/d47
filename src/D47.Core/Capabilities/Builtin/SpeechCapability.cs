@@ -116,7 +116,7 @@ public static class SpeechCapability
             {
                 Key = ProviderKey,
                 Label = "Voice provider",
-                Help = "Where spoken replies are synthesised. \"None\" leaves d47 silent; cues still play.",
+                Help = "Where spoken replies are synthesised. \"None\" leaves D47 silent; cues still play.",
                 Kind = SettingKind.Choice,
                 Choices = [EdgeId, NoneId],
                 ChoiceLabel = id => id == EdgeId ? "Edge Neural (free)" : "None — do not speak",
@@ -175,7 +175,7 @@ public static class SpeechCapability
             {
                 Key = OutputDeviceKey,
                 Label = "Output device",
-                Help = "Where d47 speaks. Defaults to whatever Windows is using.",
+                Help = "Where D47 speaks. Defaults to whatever Windows is using.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the system default)",
                 AllowsFreeText = true,
@@ -192,7 +192,7 @@ public static class SpeechCapability
             {
                 Key = CuesKey,
                 Label = "Loop-state cues",
-                Help = "A short sound as d47 starts listening, starts thinking, and finishes.",
+                Help = "A short sound as D47 starts listening, starts thinking, and finishes.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "cues",
@@ -221,7 +221,7 @@ public static class SpeechCapability
             {
                 Key = BedKey,
                 Label = "Thinking bed sound",
-                Help = "Which loop plays while d47 works.",
+                Help = "Which loop plays while D47 works.",
                 Kind = SettingKind.Choice,
 
                 // The shipped set, read from the library. A literal list here would be a
@@ -242,7 +242,7 @@ public static class SpeechCapability
                 Key = ShutUpHotkeyKey,
                 Label = "Stop speaking",
                 Help =
-                    "Silences d47 instantly, from anywhere — including while Elite has the foreground. " +
+                    "Silences D47 instantly, from anywhere — including while Elite has the foreground. " +
                     "Press the key combination to bind it.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "(unbound)",
@@ -268,7 +268,7 @@ public static class SpeechCapability
                 Group = "When a turn fails",
                 GroupHelp =
                     "A turn that stalls is answered out loud rather than left as silence, which is " +
-                    "otherwise indistinguishable from d47 having ignored you.",
+                    "otherwise indistinguishable from D47 having ignored you.",
                 DocsAnchor = "retry",
                 Binding = new SettingBinding
                 {
@@ -359,9 +359,9 @@ public static class SpeechCapability
     /// documentation gate can read it without referencing a provider (list.md Phase 4).
     /// </summary>
     public const string EdgeEgress =
-        "Edge Neural: the text of every reply d47 speaks is sent to Microsoft to be turned into " +
+        "Edge Neural: the text of every reply D47 speaks is sent to Microsoft to be turned into " +
         "audio. No game state, no journal content and no keys are sent. Choosing \"None\" sends " +
-        "nothing and leaves d47 silent.";
+        "nothing and leaves D47 silent.";
 
     /// <summary>
     /// The settings-to-policy conversion, in one place so the panel, the file and the turn loop

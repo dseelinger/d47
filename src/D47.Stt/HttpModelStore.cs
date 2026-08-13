@@ -32,7 +32,7 @@ public sealed class HttpModelStore : IModelStore, IDisposable
             Timeout = Timeout.InfiniteTimeSpan,
         };
 
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47");
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd("D47");
     }
 
     public string Directory { get; }

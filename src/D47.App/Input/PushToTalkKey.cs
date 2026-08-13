@@ -90,7 +90,7 @@ public sealed class PushToTalkKey(ILogger<PushToTalkKey> logger)
 
         if (VirtualKeys.Of(parsed.Key) is not { } key)
         {
-            logger.LogWarning("{Key} has no virtual-key code d47 knows", parsed.Key);
+            logger.LogWarning("{Key} has no virtual-key code D47 knows", parsed.Key);
             return false;
         }
 

@@ -130,7 +130,7 @@ public sealed class GlobalHotkey : IDisposable
 
                 if (VirtualKeyOf(parsed.Key) is not { } virtualKey)
                 {
-                    _logger.LogWarning("{Key} has no virtual-key code d47 knows", parsed.Key);
+                    _logger.LogWarning("{Key} has no virtual-key code D47 knows", parsed.Key);
                     return false;
                 }
 
@@ -193,7 +193,7 @@ public sealed class GlobalHotkey : IDisposable
         }
 
         _window = CreateWindowExW(
-            0, className, "d47 hotkey sink", 0, 0, 0, 0, 0, HwndMessage, 0, 0, 0);
+            0, className, "D47 hotkey sink", 0, 0, 0, 0, 0, HwndMessage, 0, 0, 0);
 
         if (_window == 0)
         {

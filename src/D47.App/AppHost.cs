@@ -287,7 +287,7 @@ public sealed class AppHost : IDisposable
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
-        logger.LogInformation("d47 {Version} starting; data folder {Data}", version, paths.Data);
+        logger.LogInformation("D47 {Version} starting; data folder {Data}", version, paths.Data);
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
         var loaded = new D47Settings();
@@ -383,7 +383,7 @@ public sealed class AppHost : IDisposable
         {
             // No audio output is a capability being off, not a startup failure. d47 stays
             // fully usable in text (list.md Phase 3, "Capabilities as state, not guard").
-            logger.LogError(ex, "No audio output could be opened; d47 will be silent");
+            logger.LogError(ex, "No audio output could be opened; D47 will be silent");
         }
 
         // Listening. The microphone runs continuously into the gate and the gate decides which
@@ -443,7 +443,7 @@ public sealed class AppHost : IDisposable
                 cancellation,
                 callouts,
                 () => built ?? throw new InvalidOperationException(
-                    "Spoken help was asked what d47 can do before the registry finished building."),
+                    "Spoken help was asked what D47 can do before the registry finished building."),
                 new ListeningCapability.ListeningSurface
                 {
                     InputDevices = () => [.. WasapiMicrophone.Devices().Select(device => device.Id)],
@@ -684,7 +684,7 @@ public sealed class AppHost : IDisposable
 
             if (provider is null)
             {
-                reason = $"d47 has no client for {selected.Name} yet.";
+                reason = $"D47 has no client for {selected.Name} yet.";
             }
             else
             {

@@ -119,7 +119,7 @@ public sealed class VrLifecycle(IVrRuntime runtime, ILogger<VrLifecycle> logger)
             {
                 // Logged at warning rather than error: SteamVR being closed under us is a
                 // thing the Commander did, not a thing that went wrong.
-                logger.LogWarning("The headset session ended; d47 will look for it again");
+                logger.LogWarning("The headset session ended; D47 will look for it again");
                 runtime.Stop();
                 Enter(VrState.Connecting, "The headset session ended.");
                 _lastAttempt = now;
@@ -174,7 +174,7 @@ public sealed class VrLifecycle(IVrRuntime runtime, ILogger<VrLifecycle> logger)
         if (_saidOnce != reason)
         {
             _saidOnce = reason;
-            logger.LogInformation("No headset yet, and d47 will keep looking: {Reason}", reason);
+            logger.LogInformation("No headset yet, and D47 will keep looking: {Reason}", reason);
         }
 
         Enter(
@@ -187,7 +187,7 @@ public sealed class VrLifecycle(IVrRuntime runtime, ILogger<VrLifecycle> logger)
         VrStartOutcome.NoRuntime => "No SteamVR runtime is installed on this machine.",
         VrStartOutcome.NotReady => "SteamVR is not running, or no headset is present yet.",
         VrStartOutcome.AlreadyOwned =>
-            "Another copy of d47 already owns the headset overlays. Close it.",
+            "Another copy of D47 already owns the headset overlays. Close it.",
         _ => "The headset session could not be started.",
     };
 

@@ -70,6 +70,8 @@ public partial class MainWindow : Window
         Panel.DataContext = _model;
         _model.AskRequested += () => _ = AskAsync();
         _model.SettingsRequested += OpenSettings;
+        _model.HelpRequested += () => Process.Start(
+            new ProcessStartInfo(DocsSite.Root) { UseShellExecute = true });
         _model.UpdateAccepted += OnUpdateAccepted;
         _model.UpdateDismissed += () => _model.UpdateText = null;
 
@@ -495,7 +497,7 @@ public partial class MainWindow : Window
         }
 
         _availableUpdate = update;
-        _model.UpdateText = $"d47 {update.Version} is available — you're on {host.Version}.";
+        _model.UpdateText = $"D47 {update.Version} is available — you're on {host.Version}.";
     }
 
     /// <summary>
@@ -522,10 +524,10 @@ public partial class MainWindow : Window
         }
 
         _model.UpdateBusy = true;
-        _model.UpdateText = $"Downloading d47 {update.Version}…";
+        _model.UpdateText = $"Downloading D47 {update.Version}…";
 
         var progress = new Progress<double>(fraction =>
-            _model.UpdateText = $"Downloading d47 {update.Version} — {fraction:P0}");
+            _model.UpdateText = $"Downloading D47 {update.Version} — {fraction:P0}");
 
         var (file, failure) = await _host.Installer
             .DownloadAsync(update, progress, CancellationToken.None);
@@ -537,7 +539,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _model.UpdateText = $"Installing d47 {update.Version}…";
+        _model.UpdateText = $"Installing D47 {update.Version}…";
 
         if (Environment.ProcessPath is not { } running
             || !_host.Installer.TrySwap(running, file))
@@ -593,7 +595,7 @@ public partial class MainWindow : Window
 
         var wanted = await new ConfirmWindow(
             "Add to the Start Menu?",
-            $"d47 runs from {executable} and does not install itself. A Start Menu entry means "
+            $"D47 runs from {executable} and does not install itself. A Start Menu entry means "
             + "you can find it by name instead of by remembering where you put it. It is one "
             + "shortcut, for you only, and you can delete it like any other.",
             confirmLabel: "Add it",
@@ -613,7 +615,7 @@ public partial class MainWindow : Window
                 executable,
                 _host.Loggers.CreateLogger<MainWindow>()))
         {
-            _model.Append("I could not add the Start Menu entry. You can still run d47 from where it is.");
+            _model.Append("I could not add the Start Menu entry. You can still run D47 from where it is.");
         }
     }
 
@@ -635,9 +637,9 @@ public partial class MainWindow : Window
     private static string Explain(UpdateFailure? failure) => failure switch
     {
         UpdateFailure.ChecksumMismatch =>
-            "The download did not match the checksum published with it, so d47 did not run it.",
+            "The download did not match the checksum published with it, so D47 did not run it.",
         UpdateFailure.CouldNotReplace =>
-            "d47 could not replace itself where it is installed.",
+            "D47 could not replace itself where it is installed.",
         UpdateFailure.NothingToInstall =>
             "This release has no installable build attached.",
         _ => "The download did not finish.",

@@ -84,7 +84,7 @@ public static class ListeningCapability
             {
                 Name = "get_listening_status",
                 Description =
-                    "Report whether d47 can hear the Commander: the microphone in use, whether audio is "
+                    "Report whether D47 can hear the Commander: the microphone in use, whether audio is "
                     + "flowing, the push-to-talk key, whether a transcription model is loaded, and whether "
                     + "that key collides with an Elite Dangerous binding.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(settings.Current, surface))),
@@ -97,8 +97,8 @@ public static class ListeningCapability
                 Key = DeviceKey,
                 Label = "Microphone",
                 Help =
-                    "Which input d47 listens on. Leaving this unset uses the system default, which is the "
-                    + "one setting whose failure looks like d47 simply not hearing you.",
+                    "Which input D47 listens on. Leaving this unset uses the system default, which is the "
+                    + "one setting whose failure looks like D47 simply not hearing you.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the system default)",
                 AllowsFreeText = false,
@@ -122,10 +122,10 @@ public static class ListeningCapability
                 Key = PushToTalkKeyKey,
                 Label = "Push-to-talk key",
                 Help =
-                    "Held, d47 listens. Unset means d47 never opens the microphone — which is the default, "
+                    "Held, D47 listens. Unset means D47 never opens the microphone — which is the default, "
                     + "because a microphone that opens on a key nobody chose is a microphone opening by surprise.",
                 Kind = SettingKind.Hotkey,
-                DefaultDisplay = "(not set — d47 does not listen)",
+                DefaultDisplay = "(not set — D47 does not listen)",
                 DocsAnchor = "push-to-talk-key",
 
                 // Protected: rebinding or clearing this is removing the Commander's way of
@@ -218,7 +218,7 @@ public static class ListeningCapability
                 Help =
                     "Faster, but in VR the GPU is already the scarce resource — a large model there "
                     + "shows up as dropped frames and reprojection rather than as a speech problem. "
-                    + "Needs the CUDA runtime; d47 says so rather than quietly using the CPU.",
+                    + "Needs the CUDA runtime; D47 says so rather than quietly using the CPU.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "gpu",
@@ -262,7 +262,7 @@ public static class ListeningCapability
 
     /// <summary>
     /// The whole listening picture in one answer, including the double-bind check. Reported
-    /// together because "d47 cannot hear me" has five possible causes and the Commander should
+    /// together because "D47 cannot hear me" has five possible causes and the Commander should
     /// not have to guess which one it is.
     /// </summary>
     public static string Describe(D47Settings settings, ListeningSurface surface)

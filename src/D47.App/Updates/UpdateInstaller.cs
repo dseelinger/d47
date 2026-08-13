@@ -99,7 +99,7 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
                 return (null, UpdateFailure.ChecksumMismatch);
             }
 
-            logger.LogInformation("Downloaded and verified d47 {Version}", update.Version);
+            logger.LogInformation("Downloaded and verified D47 {Version}", update.Version);
             return (destination, null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
@@ -158,7 +158,7 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
                 // sitting next to where it belongs under a different name.
                 logger.LogCritical(
                     restore,
-                    "d47 could not be restored to {Path}; it is at {Retired}",
+                    "D47 could not be restored to {Path}; it is at {Retired}",
                     runningExecutable,
                     retired);
             }

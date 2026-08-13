@@ -28,7 +28,7 @@ public static class PrivacyCapability
             Id = Id,
             Group = "Foundation",
             Name = "Privacy",
-            Summary = "State exactly what d47 is sending off this machine right now, and to whom.",
+            Summary = "State exactly what D47 is sending off this machine right now, and to whom.",
             Examples =
             [
                 "what are you sending",
@@ -51,7 +51,7 @@ public static class PrivacyCapability
                 {
                     Name = "get_data_egress",
                     Description =
-                        "List every destination d47 can send to, whether it is active with the current settings, "
+                        "List every destination D47 can send to, whether it is active with the current settings, "
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(settings.Current, KeyPresent()))),
@@ -69,7 +69,7 @@ public static class PrivacyCapability
             {
                 Key = UpdateCheckKey,
                 Label = "Check for updates at startup",
-                Help = "One request to GitHub for the latest release tag. Off means d47 makes no network call of its own.",
+                Help = "One request to GitHub for the latest release tag. Off means D47 makes no network call of its own.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "update-check",
@@ -103,7 +103,7 @@ public static class PrivacyCapability
             Group = "What leaves this machine",
             GroupHelp =
                 "Read-only, and computed from the settings as they stand right now — not a "
-                + "description of what d47 could do in general.",
+                + "description of what D47 could do in general.",
             Kind = SettingKind.Info,
             DocsAnchor = $"egress-{id}",
             Binding = new SettingBinding

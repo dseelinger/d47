@@ -28,7 +28,7 @@ public static class InterfaceCapability
         Id = Id,
         Group = "Interface",
         Name = "Interface",
-        Summary = "Choose d47's theme and the keys that reach it.",
+        Summary = "Choose D47's theme and the keys that reach it.",
         Examples = ["change the theme in settings", "rebind the settings hotkey"],
         Display = new CapabilityDisplay { PanelTitle = "Interface", Order = 40 },
         Settings =

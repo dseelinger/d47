@@ -117,7 +117,7 @@ public class VrLifecycleTests
         lifecycle.Tick(Start);
 
         Assert.Equal(VrState.Connecting, lifecycle.State);
-        Assert.Contains("Another copy of d47", lifecycle.Reason ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("Another copy of D47", lifecycle.Reason ?? string.Empty, StringComparison.Ordinal);
     }
 
     [Fact]

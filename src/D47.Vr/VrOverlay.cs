@@ -68,7 +68,7 @@ public sealed class VrOverlay : IDisposable
         {
             failure = new VrStart(
                 VrStartOutcome.AlreadyOwned,
-                "Another copy of d47 already owns the headset overlays. Close it.");
+                "Another copy of D47 already owns the headset overlays. Close it.");
             return null;
         }
 

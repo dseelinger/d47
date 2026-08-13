@@ -64,7 +64,7 @@ public static partial class BindsResolver
         if (preset is null)
         {
             logger.LogInformation(
-                "No StartPreset file under {Directory}; d47 cannot say which binds are active",
+                "No StartPreset file under {Directory}; D47 cannot say which binds are active",
                 bindingsDirectory);
 
             return EliteBinds.None;

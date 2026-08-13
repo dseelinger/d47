@@ -42,7 +42,7 @@ public static class DiagnosticsCapability
             Id = Id,
             Group = "Foundation",
             Name = "Diagnostics",
-            Summary = "Report where d47 keeps its files, and turn a subsystem's logging up or down without a restart.",
+            Summary = "Report where D47 keeps its files, and turn a subsystem's logging up or down without a restart.",
             Examples =
             [
                 "what's your status",
@@ -75,7 +75,7 @@ public static class DiagnosticsCapability
                 {
                     Name = "get_app_status",
                     Description =
-                        "Report d47's version, where it keeps its writable files, and the current log level of every subsystem.",
+                        "Report D47's version, where it keeps its writable files, and the current log level of every subsystem.",
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version))),
                 },
                 new ToolDefinition
@@ -112,7 +112,8 @@ public static class DiagnosticsCapability
     private static string DescribeStatus(AppPaths paths, ILogVerbosityControl verbosity, string version)
     {
         var report = new StringBuilder();
-        report.AppendLine($"d47 {version}");
+        // The full name, because this line is the report's heading rather than prose in it.
+        report.AppendLine($"Directive 47 {version}");
         report.AppendLine($"Installed at: {paths.InstallRoot}");
         report.AppendLine($"Writable data: {paths.Data}");
         report.AppendLine($"Logs: {paths.Logs}");
