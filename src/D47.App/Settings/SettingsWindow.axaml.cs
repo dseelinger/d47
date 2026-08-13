@@ -24,15 +24,19 @@ public partial class SettingsWindow : Window
         SettingsService settings,
         ViewStateStore viewState,
         AppPaths paths,
-        Func<D47.Core.Coverage.CoverageReport>? coverage = null) =>
-        View.Attach(settings, viewState, paths, coverage);
+        Func<D47.Core.Coverage.CoverageReport>? coverage = null,
+        D47.Core.Actions.MacroStore? macros = null,
+        IReadOnlyList<string>? reservedPhrases = null) =>
+        View.Attach(settings, viewState, paths, coverage, macros, reservedPhrases);
 
     public static void Show(
         Window owner,
         SettingsService settings,
         ViewStateStore viewState,
         AppPaths paths,
-        Func<D47.Core.Coverage.CoverageReport>? coverage = null)
+        Func<D47.Core.Coverage.CoverageReport>? coverage = null,
+        D47.Core.Actions.MacroStore? macros = null,
+        IReadOnlyList<string>? reservedPhrases = null)
     {
         if (_open is not null)
         {
@@ -41,7 +45,7 @@ public partial class SettingsWindow : Window
         }
 
         var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths, coverage);
+        window.Attach(settings, viewState, paths, coverage, macros, reservedPhrases);
 
         // The same widget tree, so the same zoom. A level that applied to the panel and not to
         // settings would be a level the Commander has to discover the edge of.

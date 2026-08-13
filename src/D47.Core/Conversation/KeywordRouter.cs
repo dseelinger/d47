@@ -8,6 +8,22 @@ public sealed record KeywordMatch(string CapabilityId, string ToolName);
 /// <summary>A settings row a declared phrase asked for, and the value that phrase means.</summary>
 public sealed record SettingCommandMatch(string CapabilityId, SettingRow Row, string? Value, string Phrase);
 
+/// <summary>
+/// A phrase that is not in any descriptor, because whoever wrote it was the Commander.
+/// <para>
+/// Macros are the case and, for now, the only one. Descriptors are registered once and never
+/// mutated, which is what keeps tool schemas byte-identical across turns — so a vocabulary the
+/// Commander edits at runtime cannot live in one. It does not need to: a macro name never
+/// enters a schema, so the caching rule is untouched by letting the router consult a second,
+/// changeable source.
+/// </para>
+/// </summary>
+public sealed record DynamicCommand(
+    string Phrase,
+    string CapabilityId,
+    string ToolName,
+    IReadOnlyDictionary<string, string> Arguments);
+
 /// <summary>A tool a declared phrase asked for, and the arguments that phrase means.</summary>
 public sealed record ToolCommandMatch(
     string CapabilityId,
@@ -30,7 +46,9 @@ public sealed record ToolCommandMatch(
 /// second list to keep in step.
 /// </para>
 /// </summary>
-public sealed class KeywordRouter(CapabilityRegistry registry)
+public sealed class KeywordRouter(
+    CapabilityRegistry registry,
+    Func<IEnumerable<DynamicCommand>>? dynamicCommands = null)
 {
     /// <summary>
     /// Matches the capability whose declared keyword phrase appears in the input as a whole
@@ -191,6 +209,26 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
         }
 
         var utterance = Utterance(input);
+
+        // The Commander's own phrases first. A macro named after a phrase d47 already uses is
+        // refused when it loads, so there is nothing to shadow here — and being first means a
+        // macro name is matched as a whole rather than losing to a longer built-in phrase that
+        // happens to contain it.
+        var dynamic = (
+            from command in dynamicCommands?.Invoke() ?? []
+            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            orderby command.Phrase.Length descending
+            select new ToolCommandMatch(
+                command.CapabilityId,
+                command.ToolName,
+                new ToolArguments(command.Arguments),
+                command.Phrase))
+            .FirstOrDefault();
+
+        if (dynamic is not null)
+        {
+            return dynamic;
+        }
 
         return (
             from capability in registry.All

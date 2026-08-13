@@ -212,6 +212,15 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public EliteBinds Binds { get; }
 
+    /// <summary>The Commander's macros. The panel's editor writes through this, not past it.</summary>
+    public MacroStore Macros { get; private set; } = null!;
+
+    /// <summary>
+    /// Every phrase d47 already answers to, so the macro editor can refuse one that would
+    /// shadow a built-in command. Computed once: the registry is immutable.
+    /// </summary>
+    public IReadOnlyList<string> ReservedPhrases { get; private set; } = [];
+
     /// <summary>
     /// Speech models on disk, and the consent-gated way to fetch one. Exposed because the
     /// settings surface is what asks the Commander, and only a surface can ask.
@@ -434,6 +443,11 @@ public sealed class AppHost : IDisposable
 
         bindsRef = () => binds;
 
+        // The Commander's own macros, beside the executable like everything else d47 writes.
+        // Re-read on the tick, so a macro edited in a text editor is live without a restart.
+        var macros = new MacroStore(
+            Path.Combine(paths.Data, "macros.json"), loggerFactory.CreateLogger<MacroStore>());
+
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
         // The help capability answers from the registry it is itself registered in, so the
@@ -521,6 +535,7 @@ public sealed class AppHost : IDisposable
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
                     ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
                 },
+                macros,
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -544,7 +559,7 @@ public sealed class AppHost : IDisposable
             installer.CleanUpRetired(runningExecutable);
         }
 
-        var router = new KeywordRouter(capabilities);
+        var router = new KeywordRouter(capabilities, () => MacroCapability.Phrases(macros));
 
         var turns = new TurnLoop(
             capabilities,
@@ -563,7 +578,7 @@ public sealed class AppHost : IDisposable
             // byte of the cached prefix.
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
-                ActionCapabilities.Describe(actionSurface)),
+                Join(ActionCapabilities.Describe(actionSurface), MacroCapability.Live(macros))),
         };
 
         var host = self = new AppHost(
@@ -606,6 +621,9 @@ public sealed class AppHost : IDisposable
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
 
+        host.Macros = macros;
+        host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
+
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
 
@@ -639,6 +657,10 @@ public sealed class AppHost : IDisposable
         // Registered after the priming tick above, which is belt and braces: the engine already
         // refuses to queue anything while priming, so there is nothing here to drain from the
         // backlog even if this ran first.
+        // Registered here rather than beside the journal readers because it needs both the
+        // store and the finished registry, and neither exists that early.
+        tick.Add("macros", _ => macros.Poll(PhrasesAlreadyTaken(capabilities)));
+
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // After the callouts, so a honk that reports why it did not fire is spoken in the same
@@ -1263,6 +1285,23 @@ public sealed class AppHost : IDisposable
 
         return sawTheFile ? false : null;
     }
+
+    /// <summary>
+    /// Every phrase d47 already answers to. A macro may not take one of these, because a macro
+    /// called "gear down" would shadow a phrase that already means something and the Commander
+    /// would have no way to tell which one ran.
+    /// </summary>
+    private static IReadOnlyList<string> PhrasesAlreadyTaken(CapabilityRegistry? registry) =>
+        registry is null
+            ? []
+            : [
+                .. registry.All.SelectMany(c => c.Descriptor.Keywords),
+                .. registry.All.SelectMany(c => c.Descriptor.InterruptKeywords),
+                .. registry.All.SelectMany(c => c.Descriptor.Tools).SelectMany(t => t.Commands)
+                    .Select(command => command.Phrase),
+                .. registry.All.SelectMany(c => c.Descriptor.Settings).SelectMany(row => row.Commands)
+                    .Select(command => command.Phrase),
+            ];
 
     private static IReadOnlyList<string> EliteInstallations()
     {

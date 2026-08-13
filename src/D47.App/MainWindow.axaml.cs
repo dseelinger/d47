@@ -259,7 +259,9 @@ public partial class MainWindow : Window
                 _host.Settings,
                 _host.ViewState,
                 _host.Paths,
-                _host.CoverageRecorder is { } recorder ? recorder.Report : null);
+                _host.CoverageRecorder is { } recorder ? recorder.Report : null,
+                _host.Macros,
+                _host.ReservedPhrases);
         }
     }
 

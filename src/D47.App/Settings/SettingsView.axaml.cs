@@ -51,6 +51,15 @@ public partial class SettingsView : UserControl
     /// </summary>
     private Func<CoverageReport>? _coverage;
 
+    private D47.Core.Actions.MacroStore? _macros;
+
+    /// <summary>
+    /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
+    /// one. Supplied rather than derived here: the settings surface only knows the
+    /// capabilities that declare rows, and a phrase can come from one that does not.
+    /// </summary>
+    private IReadOnlyList<string> _reserved = [];
+
     /// <summary>True while controls are being written from settings rather than read from.</summary>
     private bool _refreshing;
 
@@ -69,13 +78,17 @@ public partial class SettingsView : UserControl
         SettingsService settings,
         ViewStateStore viewState,
         AppPaths paths,
-        Func<CoverageReport>? coverage = null)
+        Func<CoverageReport>? coverage = null,
+        D47.Core.Actions.MacroStore? macros = null,
+        IReadOnlyList<string>? reservedPhrases = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
         _viewState = viewState.Load();
         _paths = paths;
         _coverage = coverage;
+        _macros = macros;
+        _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
             $"Saved as you go, to {paths.SettingsFile}. Keys are encrypted separately in secrets.json, "
@@ -617,6 +630,11 @@ public partial class SettingsView : UserControl
             case SettingKind.Info when row.Key == DiagnosticsCapability.CoverageKey && _coverage is not null:
                 return BuildCoverage(row);
 
+            // The other row that offers a window instead of a value. A macro is a small
+            // program, and a program does not fit in a settings row.
+            case SettingKind.Info when row.Key == MacroCapability.ListKey && _macros is not null:
+                return BuildMacros(row);
+
             case SettingKind.Info:
                 return BuildInfo(row);
 
@@ -689,6 +707,42 @@ public partial class SettingsView : UserControl
             {
                 await new Controls.CoverageWindow(_coverage()).ShowDialog(owner);
             }
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// The macro summary, plus the way into the editor. Built the same way the coverage row is,
+    /// and for the same reason: the thing behind the button does not belong inline.
+    /// </summary>
+    private (Control, Action, bool) BuildMacros(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenMacros",
+            Content = "Edit macros",
+            FontSize = 11,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_macros is null || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.MacroWindow(_macros) { ReservedPhrases = _reserved }.ShowDialog(owner);
+
+            // The editor writes the file; this is what puts the new summary on the row without
+            // waiting for something else to notice.
+            refresh();
         };
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };

@@ -35,6 +35,7 @@ public static class BuiltinCapabilities
         Builtin.ActionSurface actions,
         Func<string> autonomous,
         Builtin.NavigationSurface navigation,
+        Actions.MacroStore macros,
 
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
@@ -54,6 +55,7 @@ public static class BuiltinCapabilities
         AutonomousCapability.Create(autonomous),
         NavigationCapability.Create(navigation),
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
+        MacroCapability.Create(macros, actions),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

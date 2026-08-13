@@ -90,6 +90,7 @@ public static class TestSurface
             ActionSurface.Inert,
             () => "No autonomous actions in a headless test.",
             NavigationSurface.Inert,
+            new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), NullLogger<D47.Core.Actions.MacroStore>.Instance),
             coverage));
 
         built = registry;

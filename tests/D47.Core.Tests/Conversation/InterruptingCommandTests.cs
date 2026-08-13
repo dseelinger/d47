@@ -39,7 +39,10 @@ public class InterruptingCommandTests
             TestSurface.NoHeadset(),
             ActionSurface.Inert,
             () => "No autonomous actions in a test.",
-            NavigationSurface.Inert));
+            NavigationSurface.Inert,
+            new D47.Core.Actions.MacroStore(
+                Path.Combine(install.Paths.Data, "macros.json"),
+                NullLogger<D47.Core.Actions.MacroStore>.Instance)));
 
         built = registry;
 
@@ -194,7 +197,10 @@ public class InterruptingCommandTests
             TestSurface.NoHeadset(),
             ActionSurface.Inert,
             () => "No autonomous actions in a test.",
-            NavigationSurface.Inert));
+            NavigationSurface.Inert,
+            new D47.Core.Actions.MacroStore(
+                Path.Combine(install.Paths.Data, "macros.json"),
+                NullLogger<D47.Core.Actions.MacroStore>.Instance)));
 
         built = registry;
 
@@ -235,7 +241,10 @@ public class InterruptingCommandTests
             TestSurface.NoHeadset(),
             ActionSurface.Inert,
             () => "No autonomous actions in a test.",
-            NavigationSurface.Inert));
+            NavigationSurface.Inert,
+            new D47.Core.Actions.MacroStore(
+                Path.Combine(install.Paths.Data, "macros.json"),
+                NullLogger<D47.Core.Actions.MacroStore>.Instance)));
 
         built = registry;
 

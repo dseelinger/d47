@@ -178,7 +178,10 @@ public sealed class TestSurface
             NoHeadset(),
             D47.Core.Capabilities.Builtin.ActionSurface.Inert,
             () => "No autonomous actions in a test.",
-            D47.Core.Capabilities.Builtin.NavigationSurface.Inert));
+            D47.Core.Capabilities.Builtin.NavigationSurface.Inert,
+            new D47.Core.Actions.MacroStore(
+                Path.Combine(install.Paths.Data, "macros.json"),
+                NullLogger<D47.Core.Actions.MacroStore>.Instance)));
 
         built = registry;
 
