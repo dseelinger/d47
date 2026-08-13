@@ -782,7 +782,9 @@ public sealed class AppHost : IDisposable
         }
         else
         {
-            _transcriber.Dispose();
+            // Unload, not Dispose: this runs on every listening.* change, and the host keeps
+            // one transcriber for the life of the process.
+            _transcriber.Unload();
         }
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
@@ -790,8 +792,10 @@ public sealed class AppHost : IDisposable
         if (!bound)
         {
             // No key, no microphone. d47 opening an input device it will never read from is
-            // exactly the surprise the unset default exists to avoid.
-            _microphone.Dispose();
+            // exactly the surprise the unset default exists to avoid. Closed rather than
+            // disposed, for the same reason as the transcriber above — the Commander can bind a
+            // key later, and that has to reopen the device rather than fail.
+            _microphone.Close();
             return;
         }
 

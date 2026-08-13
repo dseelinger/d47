@@ -191,6 +191,30 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
         gate.Abandon();
     }
 
+    /// <summary>
+    /// Closes the device and stays reusable, which is what "push-to-talk is unbound" means.
+    /// <para>
+    /// Deliberately not <see cref="Dispose"/>: the host owns one microphone for the life of the
+    /// process and opens and closes it as the key is bound and unbound. Disposing on a settings
+    /// change left the object permanently unusable while still referenced, so binding a key
+    /// after starting with none threw out of <see cref="Open"/>.
+    /// </para>
+    /// </summary>
+    public void Close()
+    {
+        lock (_lifecycle)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            Stop();
+            _openDevice = null;
+            Unavailable = null;
+        }
+    }
+
     private void Stop()
     {
         IsCapturing = false;
