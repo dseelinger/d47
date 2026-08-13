@@ -54,6 +54,18 @@ public static class ListeningCapability
 
         /// <summary>Which speech models are already on disk, so the row can mark them.</summary>
         public required Func<IReadOnlyList<string>> InstalledModels { get; init; }
+
+        /// <summary>
+        /// A stored key as a Commander would write it: <c>[</c> rather than <c>Oem4</c>.
+        /// <para>
+        /// Injected because the printable form belongs to the input toolkit and Core does not
+        /// reference one. The settings row has rendered it properly since the alias trap was
+        /// found - several of those values carry two names and <c>ToString</c> picks whichever
+        /// it finds first - and this is what stops the spoken and written status disagreeing
+        /// with the panel about which key the Commander is holding.
+        /// </para>
+        /// </summary>
+        public Func<string, string>? KeyLabel { get; init; }
     }
 
     public static CapabilityDescriptor Create(SettingsService settings, ListeningSurface surface) => new()
@@ -289,10 +301,12 @@ public static class ListeningCapability
 
         if (listening.PushToTalkKey is { } key)
         {
-            report.AppendLine(
-                $"Push-to-talk: {key} ({(listening.Mode == ToggleMode ? "toggle" : "hold")}).");
+            var printed = surface.KeyLabel?.Invoke(key) ?? key;
 
-            foreach (var line in DescribeCollision(key, surface))
+            report.AppendLine(
+                $"Push-to-talk: {printed} ({(listening.Mode == ToggleMode ? "toggle" : "hold")}).");
+
+            foreach (var line in DescribeCollision(key, printed, surface))
             {
                 report.AppendLine(line);
             }
@@ -316,7 +330,12 @@ public static class ListeningCapability
     /// has no symptom other than not working — in one direction or the other, depending on
     /// which application sees the key first — so the collision is stated outright.
     /// </summary>
-    private static IEnumerable<string> DescribeCollision(string key, ListeningSurface surface)
+    /// <summary>
+    /// The Elite collision, in the Commander's spelling. <paramref name="key"/> is the stored
+    /// form and is what the binds are searched by; <paramref name="printed"/> is what is said
+    /// back, because a Commander told their <c>Oem4</c> collides has to work out what that is.
+    /// </summary>
+    private static IEnumerable<string> DescribeCollision(string key, string printed, ListeningSurface surface)
     {
         var binds = surface.Binds();
 
@@ -331,14 +350,14 @@ public static class ListeningCapability
 
         if (collisions.Count == 0)
         {
-            yield return $"No Elite binding uses {key} in the {binds.PresetName} preset.";
+            yield return $"No Elite binding uses {printed} in the {binds.PresetName} preset.";
             yield break;
         }
 
         var actions = string.Join(", ", collisions.Select(binding => binding.Action).Distinct());
 
         yield return
-            $"Warning: {key} is also bound in Elite ({binds.PresetName}) to {actions}. "
+            $"Warning: {printed} is also bound in Elite ({binds.PresetName}) to {actions}. "
             + "One of the two will not work, and neither will say so — pick another key for one of them.";
     }
 

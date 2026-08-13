@@ -536,6 +536,11 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds,
                     InstalledModels = () => models.Installed(),
+
+                    // So the status says "[" where the settings row already does. Several of
+                    // these values carry two names and ToString picks whichever it finds
+                    // first, which is how a correctly bound key reported itself as "Oem4".
+                    KeyLabel = Input.Gestures.Describe,
                 },
                 // Late-bound for the same reason spoken help's registry accessor is: the
                 // headset path needs a dispatcher and a widget tree, so it does not exist
