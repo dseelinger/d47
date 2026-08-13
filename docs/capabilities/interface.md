@@ -99,6 +99,24 @@ Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of
 protected setting, so a model that could rebind one could hand itself a way in it is not allowed
 to have. See [Settings](settings.md).
 
+## The transcript {#transcript}
+
+The big text area is one of three pages, chosen by the tabs along the top of it.
+
+**Conversation** is you and the ship's AI, and nothing else. It is what opens.
+
+**Technical** is the same with the diagnostics left in — the version banner, where things are
+installed, whether the language model came up. This is what the panel used to show all the time.
+
+**Log file** is today's log, read when you open the page rather than tailed continuously: a log
+nobody is looking at is not worth a file read per tick, and one you *are* looking at is open
+because something already went wrong. Switch away and back to re-read it.
+
+Which page you are on belongs to the surface you are looking at, not to the transcript. The
+desktop window can sit on the log while the headset panel shows the conversation — same
+transcript underneath, and each surface decides how much of it to show. The mini headset panel
+has no tabs at all, being the transcript's tail and the provenance line and nothing else.
+
 ## The ship AI's face {#avatar}
 
 Top left of the panel, and in the headset too. One look per stage of a turn, so you can tell what

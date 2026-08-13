@@ -1,0 +1,61 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    A tab, and it has to read as one rather than as a button or a link.
+
+    What makes the difference is not the label, it is the join. A selected tab shares its
+    background with the panel below it and has no border along the edge they meet, so the two
+    read as one shape with a notch cut out of the top. An unselected tab keeps that bottom
+    border and sits on a recessed background, so it reads as being behind the panel rather than
+    beside it. Buttons all sit on the same plane as each other and links have no plane at all;
+    this is the only detail that says "these are pages of the thing underneath".
+
+    Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
+    mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
+    The template throws away the bullet entirely - what is left is the geometry above.
+  -->
+  <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+    <Setter Property="Padding" Value="14,7" />
+
+    <!-- Negative bottom margin is what lands the tab on the panel's top border rather than
+         above it. Without the overlap there is a hairline between them and the join reads as
+         two separate controls that happen to be touching. -->
+    <Setter Property="Margin" Value="0,0,3,-1" />
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="Shape"
+                Background="{DynamicResource D47.SurfaceAlt}"
+                BorderBrush="{DynamicResource D47.Border}"
+                BorderThickness="1"
+                CornerRadius="4,4,0,0">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            Padding="{TemplateBinding Padding}"
+                            Foreground="{TemplateBinding Foreground}"
+                            VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+    </Style>
+
+    <!-- Selected: same fill as the panel, and no border where they meet. -->
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Style Selector="^ /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.Surface}" />
+        <Setter Property="BorderThickness" Value="1,1,1,0" />
+      </Style>
+    </Style>
+
+  </ControlTheme>
+
+</ResourceDictionary>

@@ -22,6 +22,14 @@
     Colour by role, never by literal: every brush is a theme resource, so switching theme
     repaints this without it knowing a theme exists (list.md Phase 4).
   -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://d47/Panel/TranscriptTabs.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
   <DockPanel Margin="24,16,24,24">
 
     <!--
@@ -185,15 +193,45 @@
                Foreground="{DynamicResource D47.TextMuted}"
                TextWrapping="Wrap" />
 
+    <!--
+      Which page of the transcript this surface is showing. On the view rather than on the view
+      model, for the same reason PanelMode is: both surfaces bind one model, so a page held
+      there would send the headset to the log file the moment the window went to it. The model
+      owns the content; how much of it a given surface shows is that surface's business.
+    -->
+    <StackPanel x:Name="TranscriptTabs"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                Margin="0,16,0,0">
+      <RadioButton x:Name="ConversationTab"
+                   Theme="{StaticResource D47.Tab}"
+                   GroupName="TranscriptPage"
+                   IsChecked="True"
+                   Content="Conversation"
+                   IsCheckedChanged="OnPageTabChecked" />
+      <RadioButton x:Name="TechnicalTab"
+                   Theme="{StaticResource D47.Tab}"
+                   GroupName="TranscriptPage"
+                   Content="Technical"
+                   IsCheckedChanged="OnPageTabChecked" />
+      <RadioButton x:Name="LogTab"
+                   Theme="{StaticResource D47.Tab}"
+                   GroupName="TranscriptPage"
+                   Content="Log file"
+                   IsCheckedChanged="OnPageTabChecked" />
+    </StackPanel>
+
+    <!-- Top-left corner square, because a tab is sitting on it. Rounding it there would leave
+         a visible notch between the first tab and the panel it belongs to. -->
     <Border Background="{DynamicResource D47.Surface}"
             BorderBrush="{DynamicResource D47.Border}"
             BorderThickness="1"
-            CornerRadius="4"
+            CornerRadius="0,4,4,4"
             Padding="14"
-            Margin="0,16,0,0">
+            Margin="0,0,0,0">
       <ScrollViewer x:Name="TranscriptScroller">
         <SelectableTextBlock x:Name="Transcript"
-                             Text="{Binding TranscriptText}"
+                             Text="{Binding ConversationText}"
                              FontFamily="Cascadia Mono,Consolas,monospace"
                              FontSize="12"
                              TextWrapping="Wrap" />
