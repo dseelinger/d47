@@ -166,6 +166,31 @@ public partial class SettingsView : UserControl
         headerRow.Children.Add(chevron);
         headerRow.Children.Add(heading);
 
+        // One per card, not one per row. Every row in a card linked to that card's page, so a
+        // card of nine rows carried nine question marks that went to the same place — noise
+        // that made the one useful link harder to see rather than easier.
+        var docs = new Button
+        {
+            Content = "?",
+            FontSize = 10,
+            Padding = new Thickness(5, 0),
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
+
+        Themed(docs, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+        ToolTip.SetTip(docs, $"Open the setup guide for {title}");
+
+        docs.Click += (_, _) => OpenDocs(section.Capability);
+
+        // Stops the click reaching the header underneath, which would collapse the card the
+        // Commander just asked to read about.
+        docs.PointerPressed += (_, e) => e.Handled = true;
+
+        headerRow.Children.Add(docs);
+
         var header = new Border
         {
             Padding = new Thickness(14, 11),
@@ -203,15 +228,26 @@ public partial class SettingsView : UserControl
 
     private Control BuildGroupHeading(string group, string? help)
     {
+        // Full text colour at the row-label size, not muted at help-text size. Set the way it
+        // was, "While thinking" was the same weight and colour as the sentence under the row
+        // above it, so it read as a stray remark rather than as the name of what follows.
         var heading = new TextBlock
         {
             Text = group,
-            FontSize = 11,
+            FontSize = 13,
             FontWeight = FontWeight.Medium,
         };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
 
-        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 0) };
+        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 4) };
+
+        // The rule goes above the heading. Below it, the line separated the heading from the
+        // rows it introduces and tied it to the ones before — which is the opposite of what a
+        // heading does.
+        var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 10) };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
+
+        stack.Children.Add(rule);
         stack.Children.Add(heading);
 
         if (!string.IsNullOrWhiteSpace(help))
@@ -220,10 +256,6 @@ public partial class SettingsView : UserControl
             Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
             stack.Children.Add(note);
         }
-
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 8, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
-        stack.Children.Add(rule);
 
         return stack;
     }
@@ -458,22 +490,6 @@ public partial class SettingsView : UserControl
             header.Children.Add(pill);
         }
 
-        // One link per row, to that row's own section of that capability's page. In-app help is
-        // the short form; the page is the long form (list.md Phase 4).
-        var docs = new Button
-        {
-            Content = "?",
-            FontSize = 10,
-            Padding = new Thickness(5, 0),
-            MinWidth = 0,
-            VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-        };
-        Themed(docs, Button.ForegroundProperty, ThemeManager.TextMutedKey);
-        ToolTip.SetTip(docs, "Open the setup guide for this setting");
-        docs.Click += (_, _) => OpenDocs(capability, row);
-        header.Children.Add(docs);
 
         var help = new TextBlock
         {
@@ -984,9 +1000,9 @@ public partial class SettingsView : UserControl
         return result.Ok;
     }
 
-    private static void OpenDocs(CapabilityDescriptor capability, SettingRow row)
+    private static void OpenDocs(CapabilityDescriptor capability)
     {
-        Process.Start(new ProcessStartInfo(DocsSite.Capability(capability.Id, row.DocsAnchor))
+        Process.Start(new ProcessStartInfo(DocsSite.Capability(capability.Id))
         {
             UseShellExecute = true,
         });
