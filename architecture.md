@@ -140,7 +140,13 @@ File handle: open with `FileShare.ReadWrite | FileShare.Delete` — Elite holds 
 
 **Consequence — the copy is a CPU roundtrip, and that is fine.** Avalonia rasterises to a `RenderTargetBitmap`, `CopyPixels` writes straight into a mapped D3D11 staging texture, and `CopyResource` moves it to the shared texture. Zero-copy GPU→GPU is *not* reachable: Avalonia 12 closes `ITopLevelImpl` and the platform render surfaces to external implementation via reference-assembly guards, `RenderTargetBitmap` is a CPU raster surface, and `ICompositionGpuInterop` is import-only. Measured at panel size (1024×640), the whole end-to-end frame costs **0.75 ms live against SteamVR** — of which the Skia rasterise is 0.30 ms and the copy itself is 0.05 ms. At 4–10 Hz that is under 1% of one core, so the roundtrip is a non-issue rather than a compromise, and the fast path is not worth reaching for.
 
-**Consequence — no window is involved in the VR path at all.** The rendered `Visual` never has a `TopLevel`. This is what closes *Keep working when the main window is minimized*: minimise-safety is structural rather than something to defend. It also means animations have no clock — anything moving on the VR panel must be driven by the tick loop, which is the intended view-model-driven model anyway.
+**Consequence — the VR path needs a window, and never shows it.** *Amended in Phase 9; the spike's claim was true of what the spike rendered and false of a real view.* The spike proved a detached `Visual` rasterises correctly, using a hand-built tree of borders and text blocks carrying literal brushes. A real view is neither. A `UserControl` is a **templated** control: its template comes from a control theme, control themes arrive through styling, and styling only runs for an element attached to a logical tree with a root. Detached, the real panel measures to 0x0, materialises **one** visual against 51 hosted, and rasterises as an empty rectangle — no exception, no warning, just a blank quad in the headset. `DynamicResource` fails the same way and for the same reason: the lookup walks the logical tree and there is none, so every themed brush resolves to unset.
+
+So the offscreen surface hosts the view in a `Window` that is **constructed and never shown** (`OffscreenSurface`). It has no desktop presence, no taskbar entry, and nothing the Commander can reach.
+
+Minimise-safety is unaffected, and it is worth being precise about why, because the original wording put the weight in the wrong place. It never really rested on there being no window; it rests on the VR path not depending on the state of the window the Commander *can* see. A window that is never shown has no state to depend on. What the spike genuinely closed stands: there is no capture of a desktop surface anywhere in the chain, and the VR panel is a peer of the window rather than a picture of it.
+
+It also means animations have no clock — anything moving on the VR panel must be driven by the tick loop, which is the intended view-model-driven model anyway.
 
 **Two things to get right in Phase 9**, both from the spike: create the D3D11 device on the adapter SteamVR reports via `IVRSystem.GetDXGIOutputInfo` rather than passing `null` (it happened to resolve correctly on the spike machine, but on a hybrid-graphics machine the default can be the iGPU, and a cross-adapter share will be rejected or slow-pathed); and render only on change, since the panel is view-model-driven and the measured cost is a worst case rather than a target.
 
@@ -148,15 +154,31 @@ File handle: open with `FileShare.ReadWrite | FileShare.Delete` — Elite holds 
 
 Elite renders through OpenVR. `XR_EXTX_overlay` is barely implemented across runtimes. `IVROverlay` composites out-of-process, which is also what keeps TheApp clear of anything resembling game injection.
 
-Three overlay handles, not one:
+Two overlay handles, not three. *Amended in Phase 9.*
 
 | Handle | Locking | Input |
 |---|---|---|
-| Main panel | Head- or world-locked, per *VR Panel locking* | Laser pointer optional |
-| Mini panel | Same transform family | — |
+| Panel | Head- or world-locked, per *VR Panel locking*. `Full` and `Mini` are content modes of it, each with its own placement | Pointer, for grab-to-move |
 | Captions | Head-locked, fixed | None — output only |
 
-Captions are a separate handle precisely so *Overlay Positioning & Look* cannot accidentally apply to them.
+The original table gave mini its own handle. *TheApp's panel works in VR* is explicit that "Mini is a mode of the same panel — a reduced content set — not a separate surface or a scaled-down copy", and that line is the acceptance criterion, so mini is a mode on the view model and the two modes share one handle and one quad. They do **not** share a size: apparent text size in a headset is the texture's pixel count and the quad's width in metres together, so mini is a smaller image at a smaller width, not the same image hung nearer. Each mode therefore carries its own placement, which is what the "same transform family" row was reaching for.
+
+Captions stay a separate handle precisely so *Overlay Positioning & Look* cannot accidentally apply to them.
+
+**The pointer is the only controller input an overlay gets, and it arrives as mouse events.** This is settled, expensively, by three prior implementations. `IVRSystem.GetControllerState` returns false for controllers that are connected and tracking, silently. An `IVRInput` action manifest was built twice in two separate projects, accepted by SteamVR, reported as bound by `GetActionBindingInfo`, and never went live — `IsInputAvailable` false while `IsSteamVRDrawingControllers` was true. The reason is that an overlay which asks to be pointed at gives up its controllers: SteamVR takes them to drive its own laser, and what comes back is pointer events and nothing else. So:
+
+- `SetOverlayInputMethod(handle, VROverlayInputMethod.Mouse)` and `SetOverlayFlag(handle, MakeOverlaysInteractiveIfVisible, true)`. Without the flag the overlay is a picture and the ray passes through it, silently.
+- `SetOverlayMouseScale` in the units the rest of the system uses, re-applied on **every** size change, or the quad reports positions against the size it used to be.
+- OpenVR counts mouse Y from the **bottom**; everything else counts from the top. Unflipped, the panel works perfectly upside down.
+- Only the trigger. Other buttons arrive through the same channel, so the grip that grabs the panel would otherwise also press whatever the ray was over.
+- Pointer and held state must be **latched**: the runtime reports transitions, not state, and a hand held still sends nothing. `VREvent_FocusLeave` clears both, or a Commander who aims away mid-drag never gets the button-up and carries the panel for the rest of the session.
+- `trackedDeviceIndex` on an overlay mouse event is **not** the hand — measured as `k_unTrackedDeviceIndexInvalid` against tracked devices 1 and 2. Which hand grabbed is recovered by casting each controller's aim ray at the overlay and taking the nearest hit.
+
+**Grabbing is one frozen offset.** `offset = hand⁻¹ · overlay` at the press, `overlay = hand · offset` every frame after, always measured from the grab origin rather than accumulated from the last answer — accumulating makes the overlay's speed a function of how often it is asked, which reads as broken tracking rather than as wrong arithmetic. Nothing re-faces the panel at the Commander while it is held: a panel forced upright and square cannot be tilted to read from below, which is most of what moving one is for.
+
+**Conventions, each of which is invisible until it is not.** `HmdMatrix34_t` is column-vector where `System.Numerics.Matrix4x4` is row-vector, so the rotation transposes on the crossing — and the error is invisible for any placement square to the view, so the test that matters rotates on all three axes. An overlay quad faces its own **+Z**; a controller and the head face **-Z**. A tracked pose is only real if `bPoseIsValid` **and** `bDeviceIsConnected`: an all-zero device slot converts to a perfectly valid-looking unit quaternion at the origin, so an unchecked slot is a grabbed panel dragged to the Commander's feet the moment a controller sleeps. Quaternions out of a tracking runtime drift off unit length over a session and are normalised at the boundary.
+
+**Lifecycle, beyond what the state machine already says.** `VR_Init` is called once per process and nothing in OpenVR refuses a second call, so the refusal lives in our code. `EVROverlayError.KeyInUse` means another copy of d47 owns the key, not a generic failure, so overlay keys are claimed before anything expensive is built. Recovery from a mid-session SteamVR restart rebuilds every handle rather than repairing any — the first refused call unwinds, the session is dropped, and the next poll starts clean. `ClearOverlayTexture` precedes `DestroyOverlay`, because an overlay outliving the device that owns its image leaves SteamVR querying a destroyed one.
 
 **Lifecycle.** SteamVR may start after TheApp, exit under it, or restart mid-session. The overlay subsystem is a state machine (`Unavailable → Connecting → Active`) polled from the tick loop, and every handle is re-created on reconnect. *Order agnostic Overlay* is this state machine; there is no initialization ordering to get right.
 

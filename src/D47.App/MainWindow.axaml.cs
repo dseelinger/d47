@@ -3,10 +3,10 @@ using System.Text;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using D47.App.Panel;
 using D47.App.Settings;
 using D47.App.Updates;
 using D47.App.Windowing;
-using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Input;
 using D47.Core.Capabilities;
@@ -18,12 +18,26 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App;
 
+/// <summary>
+/// The desktop host for <see cref="PanelView"/>. What is left here is what genuinely belongs
+/// to a window: gestures scoped to it, dialogs parented by it, a hotkey registration that
+/// needs its handle, and navigating away from it.
+/// <para>
+/// Everything the panel shows and does moved to <see cref="PanelViewModel"/>, which the VR
+/// overlay binds a second instantiation of the same view to (list.md Phase 9, "TheApp's panel
+/// works in VR"). The split is what makes the windowed surface unable to be more functional
+/// than the headset one — not a rule anybody has to remember, just where the code is.
+/// </para>
+/// </summary>
 public partial class MainWindow : Window
 {
     private readonly AppHost? _host;
-    private readonly StringBuilder _transcript = new();
+    private readonly GlobalHotkey _shutUp;
+    private readonly PanelViewModel _model = new();
+
     private AvailableUpdate? _availableUpdate;
     private bool _turnInFlight;
+    private bool _downloading;
 
     public MainWindow() : this(host: null)
     {
@@ -38,6 +52,12 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
+        Panel.DataContext = _model;
+        _model.AskRequested += () => _ = AskAsync();
+        _model.SettingsRequested += OpenSettings;
+        _model.UpdateAccepted += OnUpdateAccepted;
+        _model.UpdateDismissed += () => _model.UpdateText = null;
+
         if (host is not null)
         {
             // Both before the window is shown. Sizing after the fact is a visible resize, and
@@ -47,9 +67,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private readonly GlobalHotkey _shutUp;
-
-
+    /// <summary>
+    /// What the panel is showing. Exposed so the VR overlay binds its own instantiation of
+    /// <see cref="PanelView"/> to the same one rather than building a second.
+    /// </summary>
+    public PanelViewModel Model => _model;
 
     protected override async void OnLoaded(RoutedEventArgs e)
     {
@@ -57,11 +79,11 @@ public partial class MainWindow : Window
 
         if (_host is null)
         {
-            Transcript.Text = "No host: the window is running under the designer.";
+            _model.Append("No host: the window is running under the designer.");
             return;
         }
 
-        VersionLine.Text = $"Optimize Inferior Systems  ·  build {_host.Version}";
+        _model.VersionLine = $"Optimize Inferior Systems  ·  build {_host.Version}";
 
         var errors = new List<string>();
         if (_host.StartupError is { } startupError)
@@ -72,7 +94,7 @@ public partial class MainWindow : Window
         // The Phase 1 claim is that a request produces a real tool call that runs and returns a
         // result. This is that call, dispatched by name through the registry.
         var status = await _host.Capabilities.InvokeAsync("get_app_status", ToolArguments.Empty);
-        Append(status.Content);
+        _model.Append(status.Content);
 
         if (status.IsError)
         {
@@ -82,15 +104,14 @@ public partial class MainWindow : Window
         // Say plainly whether the model is available. Silence here is indistinguishable from a
         // model with nothing to say, and the keyword router still answers either way.
         var availability = _host.LlmAvailability;
-        Append(availability.Current == LlmAvailability.Available
+        _model.Append(availability.Current == LlmAvailability.Available
             ? "\nLanguage model: ready."
             : $"\nLanguage model: unavailable. {availability.Reason} " +
               "Keyword commands still work — try \"where am I\" or \"status\".");
 
         if (errors.Count > 0)
         {
-            ErrorText.Text = string.Join(Environment.NewLine, errors);
-            ErrorBanner.IsVisible = true;
+            _model.ErrorText = string.Join(Environment.NewLine, errors);
         }
 
         DescribeHotkeys();
@@ -102,7 +123,7 @@ public partial class MainWindow : Window
         // whichever way they said it (list.md Phase 6).
         _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            AskBox.Text = text;
+            _model.AskText = text;
             _ = AskAsync();
         });
 
@@ -118,7 +139,7 @@ public partial class MainWindow : Window
             }
         });
 
-        AskBox.Focus();
+        Panel.FocusAsk();
 
         // Said aloud as well as shown, because a misconfigured provider otherwise presents as
         // silence, and silence is indistinguishable from a model with nothing to say
@@ -151,8 +172,7 @@ public partial class MainWindow : Window
             else if (Matches(_host.Settings.Current.Hotkeys.FocusAsk, e))
             {
                 e.Handled = true;
-                AskBox.Focus();
-                AskBox.SelectAll();
+                Panel.FocusAsk();
             }
         }
 
@@ -194,17 +214,9 @@ public partial class MainWindow : Window
         // Read from settings rather than hardcoded, so rebinding the gesture updates the tip
         // instead of leaving a "Ctrl+," that quietly became a lie.
         ToolTip.SetTip(
-            SettingsButton,
+            Panel.SettingsAffordance,
             open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");
     }
-
-    private void OnSettingsClick(object? sender, RoutedEventArgs e) => OpenSettings();
-
-    private void OnSettingsPointerEntered(object? sender, PointerEventArgs e) =>
-        SettingsGlyph.Fill = this.FindResource("D47.Accent") as IBrush;
-
-    private void OnSettingsPointerExited(object? sender, PointerEventArgs e) =>
-        SettingsGlyph.Fill = this.FindResource("D47.TextMuted") as IBrush;
 
     private void OpenSettings()
     {
@@ -214,17 +226,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnAskBoxKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            e.Handled = true;
-            _ = AskAsync();
-        }
-    }
-
-    private void OnAskClick(object? sender, RoutedEventArgs e) => _ = AskAsync();
-
     private async Task AskAsync()
     {
         if (_host is null)
@@ -232,7 +233,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var input = AskBox.Text?.Trim();
+        var input = _model.AskText?.Trim();
         if (string.IsNullOrEmpty(input))
         {
             return;
@@ -250,9 +251,9 @@ public partial class MainWindow : Window
         if ((_turnInFlight || _host.Audio.IsSpeaking)
             && _host.Router.MatchInterrupting(input) is { } interrupting)
         {
-            AskBox.Text = string.Empty;
+            _model.AskText = string.Empty;
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
-            Append($"\n\n> {input}\n{stopped.Content}");
+            _model.Append($"\n\n> {input}\n{stopped.Content}");
             return;
         }
 
@@ -262,9 +263,9 @@ public partial class MainWindow : Window
         }
 
         _turnInFlight = true;
-        AskButton.IsEnabled = false;
-        AskBox.Text = string.Empty;
-        Append($"\n\n> {input}\n");
+        _model.CanAsk = false;
+        _model.AskText = string.Empty;
+        _model.Append($"\n\n> {input}\n");
 
         // Claimed before the turn starts and released in the finally. Without this the token
         // reaching the provider is CancellationToken.None, "cancel" has nothing to act on, and
@@ -284,22 +285,22 @@ public partial class MainWindow : Window
                     switch (turnEvent)
                     {
                         case TurnEvent.Routed routed:
-                            TurnLine.Text = routed.Effort is { } effort
+                            _model.TurnLine = routed.Effort is { } effort
                                 ? $"routed: {routed.Route}, effort {effort}"
                                 : $"routed: {routed.Route}";
                             break;
 
                         case TurnEvent.TextDelta text:
-                            Append(text.Text);
+                            _model.Append(text.Text);
                             break;
 
                         case TurnEvent.Retrying retry:
-                            TurnLine.Text =
+                            _model.TurnLine =
                                 $"retrying ({retry.Attempt}/{retry.Of}) in {retry.Wait.TotalSeconds:0.#}s — {retry.Because}";
                             break;
 
                         case TurnEvent.Completed completed:
-                            TurnLine.Text = DescribeTurn(completed.Result, _host.Spend);
+                            _model.TurnLine = DescribeTurn(completed.Result, _host.Spend);
                             break;
                     }
                 });
@@ -308,13 +309,13 @@ public partial class MainWindow : Window
         {
             // A turn that throws is a bug, not a provider failure — provider failures arrive as
             // events. Surface it rather than losing it.
-            Append($"\n[turn failed: {ex.Message}]");
+            _model.Append($"\n[turn failed: {ex.Message}]");
         }
         finally
         {
             _turnInFlight = false;
-            AskButton.IsEnabled = true;
-            AskBox.Focus();
+            _model.CanAsk = true;
+            Panel.FocusAsk();
         }
     }
 
@@ -342,7 +343,7 @@ public partial class MainWindow : Window
             // this one, so the callback already arrives on the UI thread. Posting again would be
             // a second hop for no reason.
             var progress = new Progress<ModelProgress>(report =>
-                TurnLine.Text = $"Downloading {report.ModelId}: {report.Fraction:P0}");
+                _model.TurnLine = $"Downloading {report.ModelId}: {report.Fraction:P0}");
 
             var result = await _host.InstallModelAsync(
                 model,
@@ -358,7 +359,7 @@ public partial class MainWindow : Window
                 },
                 progress);
 
-            TurnLine.Text = result.Outcome switch
+            _model.TurnLine = result.Outcome switch
             {
                 ModelInstall.Installed => $"{model.Id} is installed. I can understand you now.",
                 ModelInstall.AlreadyPresent => $"{model.Id} was already installed.",
@@ -371,8 +372,7 @@ public partial class MainWindow : Window
             {
                 // A failed download is worth the banner rather than a status line that scrolls
                 // away: without a model, holding the key produces nothing and looks like a bug.
-                ErrorText.Text = TurnLine.Text;
-                ErrorBanner.IsVisible = true;
+                _model.ErrorText = _model.TurnLine;
             }
         }
         finally
@@ -380,8 +380,6 @@ public partial class MainWindow : Window
             _downloading = false;
         }
     }
-
-    private bool _downloading;
 
     /// <summary>
     /// Registers the system-wide silence key.
@@ -404,9 +402,8 @@ public partial class MainWindow : Window
         {
             // Reported rather than swallowed: the symptom of a failed registration is a key
             // that does nothing, which reads as d47 ignoring the Commander.
-            ErrorText.Text = $"The silence hotkey {gesture} could not be registered system-wide. " +
-                             "Another application is probably holding it — pick another in Settings.";
-            ErrorBanner.IsVisible = true;
+            _model.ErrorText = $"The silence hotkey {gesture} could not be registered system-wide. " +
+                               "Another application is probably holding it — pick another in Settings.";
         }
     }
 
@@ -440,13 +437,6 @@ public partial class MainWindow : Window
         return line.ToString();
     }
 
-    private void Append(string text)
-    {
-        _transcript.Append(text);
-        Transcript.Text = _transcript.ToString();
-        TranscriptScroller.ScrollToEnd();
-    }
-
     private async Task CheckForUpdateAsync(AppHost host)
     {
         var update = await host.Updates.CheckAsync(host.Version, CancellationToken.None);
@@ -456,11 +446,10 @@ public partial class MainWindow : Window
         }
 
         _availableUpdate = update;
-        UpdateText.Text = $"d47 {update.Version} is available — you're on {host.Version}.";
-        UpdateBanner.IsVisible = true;
+        _model.UpdateText = $"d47 {update.Version} is available — you're on {host.Version}.";
     }
 
-    private void OnUpdateNowClick(object? sender, RoutedEventArgs e)
+    private void OnUpdateAccepted()
     {
         if (_availableUpdate is null)
         {
@@ -472,6 +461,4 @@ public partial class MainWindow : Window
         Process.Start(new ProcessStartInfo(_availableUpdate.ReleaseUrl) { UseShellExecute = true });
         Close();
     }
-
-    private void OnUpdateLaterClick(object? sender, RoutedEventArgs e) => UpdateBanner.IsVisible = false;
 }
