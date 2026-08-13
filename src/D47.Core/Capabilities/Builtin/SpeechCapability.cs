@@ -160,7 +160,11 @@ public static class SpeechCapability
                 DocsAnchor = "rate",
                 Binding = new SettingBinding
                 {
-                    Read = s => s.Speech.Rate.ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture),
+                    // The same format the row's step derives, not a second one. A read format
+                    // that disagrees with the written one makes every whole-number rate look
+                    // like a change: "1" is written, "1.0" is read back, and the unchanged
+                    // check never fires, so the settings file is rewritten on every apply.
+                    Read = s => s.Speech.Rate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { Rate = ParseRate(v) },
@@ -280,6 +284,10 @@ public static class SpeechCapability
                 Key = RetryWaitKey,
                 Label = "Wait between attempts",
                 Kind = SettingKind.Number,
+
+                // Half-seconds. The value has always been a double and the row has always read
+                // it back to a tenth; without a step it could only ever hold whole ones.
+                Step = 0.5,
                 Help = "Seconds before the first retry. Later waits grow according to the shape below.",
                 DefaultDisplay = "2",
                 Group = "When a turn fails",
@@ -318,6 +326,7 @@ public static class SpeechCapability
                 Key = TurnTimeoutKey,
                 Label = "Give up after",
                 Kind = SettingKind.Number,
+                Step = 0.5,
                 Help = "Seconds one attempt may run before it counts as failed.",
                 DefaultDisplay = "45",
                 Group = "When a turn fails",
