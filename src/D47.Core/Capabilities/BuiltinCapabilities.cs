@@ -33,6 +33,7 @@ public static class BuiltinCapabilities
         ListeningCapability.ListeningSurface listening,
         VrCapability.HeadsetSurface headset,
         Builtin.ActionSurface actions,
+        Func<string> autonomous,
 
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
@@ -49,6 +50,7 @@ public static class BuiltinCapabilities
         VrCapability.Create(settings, headset),
         ReanchorCapability.Create(headset),
         .. ActionCapabilities.All(actions),
+        AutonomousCapability.Create(autonomous),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

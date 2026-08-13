@@ -7,6 +7,7 @@ using D47.App.Voice;
 using D47.Audio;
 using D47.Core.Audio;
 using D47.Core;
+using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
@@ -317,6 +318,12 @@ public sealed class AppHost : IDisposable
         var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
 
         var journalDirectory = ResolveJournalDirectory();
+        // Assigned once the bindings have been resolved, below. A holder rather than a
+        // reordering: the journal readers have to be built before the tick loop, and the binds
+        // are read after the audio devices, and neither of those orders is negotiable for a
+        // lambda's benefit.
+        Func<EliteBinds>? bindsRef = null;
+
         var gameState = new GameStateStore();
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
 
@@ -327,6 +334,14 @@ public sealed class AppHost : IDisposable
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
         var callouts = BuildCallouts(loaded, loggerFactory);
+
+        // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
+        // until its own row is switched on, which is why the runner reads the setting per tick
+        // rather than being told once at construction.
+        var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
+            .Add(new HonkOnArrival(
+                () => settings.Current.Actions.HonkOnArrival,
+                () => bindsRef!()));
 
         // The ~4-10 Hz loop from architecture.md §4. Registration order is load-bearing: the
         // journal and the two state files are read first, so the callouts examining them see
@@ -339,13 +354,16 @@ public sealed class AppHost : IDisposable
             status.Poll();
             route.Poll();
 
-            callouts.Tick(new CalloutContext(
+            var calloutContext = new CalloutContext(
                 context.Now,
                 IsPriming: context.IsFirst,
                 gameState.Active,
                 status.Current,
                 route.Current,
-                events));
+                events);
+
+            callouts.Tick(calloutContext);
+            autonomous.Tick(calloutContext);
         });
 
         // Primed synchronously before anything reads game state, so a journal already on disk
@@ -413,6 +431,8 @@ public sealed class AppHost : IDisposable
             BindsResolver.DefaultBindingsDirectory(),
             EliteInstallations(),
             loggerFactory.CreateLogger<AppHost>());
+
+        bindsRef = () => binds;
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
@@ -493,6 +513,7 @@ public sealed class AppHost : IDisposable
                     Input = gameInput,
                     Enabled = () => settings.Current.Actions.Keyboard,
                 },
+                () => AutonomousCapability.Describe(autonomous),
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -612,6 +633,10 @@ public sealed class AppHost : IDisposable
         // refuses to queue anything while priming, so there is nothing here to drain from the
         // backlog even if this ran first.
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
+
+        // After the callouts, so a honk that reports why it did not fire is spoken in the same
+        // order it was decided relative to everything else this tick.
+        tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
 
         // Last, so every subscriber registered during composition is in place before the first
         // timer-driven tick — and so a failure above happens against a loop that never started
@@ -1001,6 +1026,70 @@ public sealed class AppHost : IDisposable
     /// smaller list rather than a dead end.
     /// </summary>
     private IReadOnlyList<VoiceInfo> _voices = [];
+
+    /// <summary>
+    /// One autonomous action at a time. The honk holds a key for six seconds, and two of them
+    /// overlapping would interleave their presses on one keyboard.
+    /// </summary>
+    private readonly SemaphoreSlim _acting = new(1, 1);
+
+    /// <summary>
+    /// Carries out whatever the autonomous actions decided this tick. Called from the tick
+    /// thread and returns immediately: the tick must never block, and this is the one caller
+    /// that would block it for six seconds if it did.
+    /// </summary>
+    private void CarryOutPendingActions(AutonomousActionRunner runner, IGameInput input)
+    {
+        var pending = runner.Drain();
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            await _acting.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var action in pending)
+                {
+                    if (action.Decision.Acts)
+                    {
+                        var result = await input.SendAsync(action.Decision.Steps).ConfigureAwait(false);
+
+                        _logger.LogInformation(
+                            "Autonomous action {Id} finished: {Outcome}", action.Id, result.Outcome);
+
+                        // Nobody asked for this, so nobody is watching for it to fail. A
+                        // refusal that stays in the log is one the Commander never learns about.
+                        if (!result.Sent)
+                        {
+                            await Voice.AnnounceAsync(new Announcement(
+                                action.Id, $"I could not use {action.Label}. {result.Reason}")).ConfigureAwait(false);
+                        }
+                    }
+
+                    if (action.Decision.Say is { } say)
+                    {
+                        await Voice.AnnounceAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An autonomous action could not be carried out");
+            }
+            finally
+            {
+                // Unconditional, like everywhere else that presses a key. An action interrupted
+                // part-way must not leave the fire button down (architecture.md D4).
+                input.ReleaseAll();
+                _acting.Release();
+            }
+        });
+    }
 
     /// <summary>
     /// Takes whatever the callouts queued this tick and says it. Called from the tick thread and

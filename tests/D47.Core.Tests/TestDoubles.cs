@@ -176,7 +176,8 @@ public sealed class TestSurface
             () => built!,
             SilentListening(),
             NoHeadset(),
-            D47.Core.Capabilities.Builtin.ActionSurface.Inert));
+            D47.Core.Capabilities.Builtin.ActionSurface.Inert,
+            () => "No autonomous actions in a test."));
 
         built = registry;
 

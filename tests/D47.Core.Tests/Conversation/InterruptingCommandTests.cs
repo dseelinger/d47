@@ -37,7 +37,8 @@ public class InterruptingCommandTests
             () => built!,
             TestSurface.SilentListening(),
             TestSurface.NoHeadset(),
-            ActionSurface.Inert));
+            ActionSurface.Inert,
+            () => "No autonomous actions in a test."));
 
         built = registry;
 
@@ -190,7 +191,8 @@ public class InterruptingCommandTests
             () => built!,
             TestSurface.SilentListening(),
             TestSurface.NoHeadset(),
-            ActionSurface.Inert));
+            ActionSurface.Inert,
+            () => "No autonomous actions in a test."));
 
         built = registry;
 
@@ -229,7 +231,8 @@ public class InterruptingCommandTests
             () => built!,
             TestSurface.SilentListening(),
             TestSurface.NoHeadset(),
-            ActionSurface.Inert));
+            ActionSurface.Inert,
+            () => "No autonomous actions in a test."));
 
         built = registry;
 

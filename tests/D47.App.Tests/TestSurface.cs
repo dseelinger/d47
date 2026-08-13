@@ -88,6 +88,7 @@ public static class TestSurface
                 Reanchor = () => 0,
             },
             ActionSurface.Inert,
+            () => "No autonomous actions in a headless test.",
             coverage));
 
         built = registry;
