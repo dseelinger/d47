@@ -685,6 +685,11 @@ public sealed class AppHost : IDisposable
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
+        // NPC voices are scoped to the system, so something has to notice the system changing.
+        // Sampled on the tick rather than hooked to a journal event, because the state store is
+        // already folding those and a second reader would be a second thing to keep in step.
+        tick.Add("voice-scope", _ => host.FollowSystemForVoices());
+
         // After the callouts, so a honk that reports why it did not fire is spoken in the same
         // order it was decided relative to everything else this tick.
         tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
@@ -714,7 +719,21 @@ public sealed class AppHost : IDisposable
             // Capacity comes from the derived grade table. Elite reports it nowhere, so this is
             // the one place d47 carries game data — generated from the canonical id list rather
             // than written, and answering null for anything it does not recognise.
-            .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf });
+            .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf })
+
+            // Phase 11. The carrier speaks for itself; incoming chat speaks for whoever sent
+            // it. Both are announcements in somebody else's voice rather than d47's, which is
+            // what Announcement.Voice exists to carry.
+            .Add(new CarrierCallout())
+            .Add(new IncomingMessages
+            {
+                Enabled = () => settings.Speech.SpeakIncomingMessages,
+                IncludeNpcs = () => settings.Speech.SpeakNpcMessages,
+            });
+
+        // Elite echoes what you send back to you on the channel it went out on. Without this,
+        // dictating into wing chat means hearing yourself read back in a stranger's voice.
+        // Filled in on the tick rather than here, because the journal has not been read yet.
 
         ApplyCalloutSettings(engine, settings);
         return engine;
@@ -835,12 +854,75 @@ public sealed class AppHost : IDisposable
         _voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Label ?? id;
 
+    /// <summary>
+    /// One voice per core, chosen once and written to settings (list.md Phase 11, #33).
+    /// <para>
+    /// Guarded by a flag rather than by "are there pairings yet", so a Commander who cleared
+    /// every pairing by hand does not have them silently regenerated on the next launch. Runs
+    /// after the voice list arrives and never blocks anything: picking a character must not wait
+    /// on a model being reachable.
+    /// </para>
+    /// </summary>
+    private async Task PairPersonaVoicesAsync()
+    {
+        if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var paired = await VoicePairing.ChooseAsync(
+                _voices,
+                Settings.Current.Persona.Voices,
+                Turns.Provider,
+                Turns.Model,
+                Spend,
+                PriceTable.Default,
+                _logger).ConfigureAwait(false);
+
+            Settings.Replace("persona.voices", current => current with
+            {
+                Persona = current.Persona with { Voices = paired, VoicesPaired = true },
+            });
+
+            // The core aboard may have just acquired a voice, and nothing else will notice.
+            ApplySpeechSettings();
+        }
+        catch (Exception ex)
+        {
+            // Pairing is a convenience. Failing it means the picker still works and every core
+            // uses the ship AI's voice, which is exactly where this started.
+            _logger.LogWarning(ex, "Could not pair voices to personas");
+        }
+    }
+
     private async Task LoadVoicesAsync(ITtsProvider provider)
     {
         try
         {
             _voices = await provider.ListVoicesAsync().ConfigureAwait(false);
             _logger.LogInformation("The voice list has {Count} voices", _voices.Count);
+
+            // The pool a re-voiced sender is drawn from. English-locale voices only, where the
+            // provider tags a locale at all: Edge offers several hundred across every language
+            // it supports, and drawing a wingmate's voice from all of them means most Commanders
+            // hear their wing in a language they do not speak. ElevenLabs tags an accent rather
+            // than a locale, so nothing is filtered out there and the whole account is the pool.
+            Cast.Pool =
+            [
+                .. _voices
+                    .Where(voice => voice.Locale.Length == 0
+                                    || voice.Locale.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+                    .Select(voice => voice.Id),
+            ];
+
+            _logger.LogInformation("{Count} voices are available for re-voiced senders", Cast.Pool.Count);
+
+            // Pairing a voice to each core needs the list, so it starts once the list arrives
+            // rather than at startup. Background and best-effort: picking a character must never
+            // wait on it (list.md Phase 11, #33).
+            _ = PairPersonaVoicesAsync();
         }
         catch (Exception ex)
         {
@@ -1295,6 +1377,110 @@ public sealed class AppHost : IDisposable
     /// returns immediately — the speaking itself happens on the thread pool, because the tick
     /// must never block on synthesis.
     /// </summary>
+    /// <summary>
+    /// One announcement, in whoever's voice it belongs to.
+    /// <para>
+    /// Everything Phase 8 produces is the ship's AI, so this resolved to one voice until Phase
+    /// 11. Now a re-voiced message carries a sender and a carrier line carries a role, and the
+    /// lookup for both lives here — the callout knows whose line it is, the cast knows what
+    /// that person sounds like, and neither has to know about the other.
+    /// </para>
+    /// </summary>
+    private async Task SayAsync(Announcement announcement)
+    {
+        var voice = announcement.Speaker is { Length: > 0 } speaker
+            ? Cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            : Cast.For(announcement.Voice);
+
+        await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// How long a carrier line may spend being written before the authored one is used instead.
+    /// Tight on purpose: this is decoration on a callout queue that also carries warnings, and
+    /// the authored line is already correct.
+    /// </summary>
+    private static readonly TimeSpan FlavourBudget = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// The same announcement, said in character, when there is a model to ask and it is one of
+    /// the lines the checklist wants varied (list.md Phase 11: "with varied LLM arrival and
+    /// departure responses").
+    /// <para>
+    /// Only the carrier's own lines. A danger callout is never rewritten by a model: those fire
+    /// on the event and say exactly what happened, and "shields are down" is not a line that
+    /// benefits from personality (list.md Phase 8).
+    /// </para>
+    /// </summary>
+    private async Task<Announcement> VaryAsync(Announcement announcement)
+    {
+        if (announcement.Voice is not (VoiceRole.CarrierCaptain or VoiceRole.TowerControl)
+            || Turns.Provider is null
+            || !Settings.Current.Llm.PersonalityEnabled)
+        {
+            return announcement;
+        }
+
+        var who = announcement.Voice == VoiceRole.CarrierCaptain
+            ? "the captain of the Commander's fleet carrier"
+            : "the tower controller aboard the Commander's fleet carrier";
+
+        using var budget = new CancellationTokenSource(FlavourBudget);
+
+        var line = await FlavourTurn.AskAsync(
+            Turns.Provider,
+            Turns.Model,
+
+            // No persona block: this is not the ship's AI speaking. Handing a Guardian core the
+            // carrier's lines would put one of them in two places at once, which is the one
+            // thing the isolation model cannot survive.
+            persona: $"You are {who}. You are a professional, not a character — brief, competent "
+                     + "and human. One short sentence. Never mention being an AI.",
+            $"Say this in your own words, once: \"{announcement.Text}\"",
+            gameState: null,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            budget.Token).ConfigureAwait(false);
+
+        return line is null ? announcement : announcement with { Text = line };
+    }
+
+    private string? _voiceScopeSystem;
+
+    /// <summary>
+    /// Drops the NPC voice assignments when the Commander arrives somewhere new. The cast turns
+    /// over on a jump; a wingmate does not (list.md Phase 11, "Voices stick").
+    /// </summary>
+    private void FollowSystemForVoices()
+    {
+        // The Commander's own name, so their own messages are not read back to them. Set here
+        // because the journal header is what supplies it, and that has not been read at startup.
+        if (GameState.Active?.Identity.Name is { Length: > 0 } commander)
+        {
+            foreach (var callout in Callouts.Callouts.OfType<IncomingMessages>())
+            {
+                callout.CommanderName = commander;
+            }
+        }
+
+        var system = GameState.Active?.Location.StarSystem;
+
+        if (system is null || string.Equals(system, _voiceScopeSystem, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // Not on the first sample. Startup is not an arrival, and there is nothing assigned yet
+        // to drop.
+        if (_voiceScopeSystem is not null)
+        {
+            Cast.EnteredSystem();
+        }
+
+        _voiceScopeSystem = system;
+    }
+
     private void SpeakPendingCallouts()
     {
         var pending = Callouts.Drain();
@@ -1306,15 +1492,25 @@ public sealed class AppHost : IDisposable
 
         _ = Task.Run(async () =>
         {
+            // Varied before the lock is taken, never while holding it. This is a network round
+            // trip, and the batch behind it is where a danger callout would be waiting — an
+            // alert queued behind a carrier saying hello is an alert that arrives late.
+            var lines = new List<Announcement>(pending.Count);
+
+            foreach (var announcement in pending)
+            {
+                lines.Add(await VaryAsync(announcement).ConfigureAwait(false));
+            }
+
             // One at a time, and in order. A previous batch still being spoken holds this one
             // until it finishes rather than talking over it.
             await _speaking.WaitAsync().ConfigureAwait(false);
 
             try
             {
-                foreach (var announcement in pending)
+                foreach (var announcement in lines)
                 {
-                    await Voice.AnnounceAsync(announcement).ConfigureAwait(false);
+                    await SayAsync(announcement).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)

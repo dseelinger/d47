@@ -45,4 +45,29 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
 
     public AudioChannel Channel =>
         Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert : AudioChannel.Speech;
+
+    /// <summary>
+    /// Who says it. Defaults to the ship's AI, which is what every Phase 8 callout is —
+    /// d47 speaking. Phase 11 adds announcements that are somebody else talking: a re-voiced
+    /// in-game message, a carrier's tower. Carried here rather than resolved by the caller
+    /// because the callout is the only thing that knows whose line it is.
+    /// </summary>
+    public Audio.VoiceRole Voice { get; init; } = Audio.VoiceRole.ShipAi;
+
+    /// <summary>
+    /// The individual speaking, when the role has more than one member — the name of the
+    /// Commander or NPC whose message this is. Null for the ship AI and for the carrier roles,
+    /// which have exactly one member each.
+    /// <para>
+    /// Untrusted: another Commander chose this text. It is used to look up a voice and to label
+    /// the line on the panel, and it never reaches the model.
+    /// </para>
+    /// </summary>
+    public string? Speaker { get; init; }
+
+    /// <summary>
+    /// Whether <see cref="Speaker"/> is a player rather than an NPC. Decides which scope their
+    /// voice assignment lives in: players survive hyperspace, NPCs do not (list.md Phase 11).
+    /// </summary>
+    public bool SpeakerIsPlayer { get; init; }
 }

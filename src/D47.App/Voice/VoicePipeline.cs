@@ -191,16 +191,17 @@ public sealed class VoicePipeline(
     /// normally and wait their turn.
     /// </para>
     /// </summary>
-    public async Task AnnounceAsync(Announcement announcement)
+    public async Task AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
     {
         if (announcement.Urgency == CalloutUrgency.Urgent)
         {
             arbiter.Silence();
         }
 
-        _logger.LogDebug("Speaking callout {Key}", announcement.Key);
+        _logger.LogDebug(
+            "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
-        await AnnounceAsync(announcement.Text, announcement.Channel).ConfigureAwait(false);
+        await AnnounceAsync(announcement.Text, announcement.Channel, voice).ConfigureAwait(false);
     }
 
     public void EnterState(LoopState state) =>
