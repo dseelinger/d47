@@ -181,7 +181,8 @@ public sealed class TestSurface
             D47.Core.Capabilities.Builtin.NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
-                NullLogger<D47.Core.Actions.MacroStore>.Instance)));
+                NullLogger<D47.Core.Actions.MacroStore>.Instance),
+            new D47.Core.Persona.PersonaHost()));
 
         built = registry;
 

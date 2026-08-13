@@ -36,6 +36,50 @@ public sealed record D47Settings
     public VrSettings Vr { get; init; } = new();
 
     public ActionSettings Actions { get; init; } = new();
+
+    public PersonaSettings Persona { get; init; } = new();
+}
+
+/// <summary>
+/// Which companion character is aboard (list.md Phase 11).
+/// <para>
+/// Its own block rather than a field on <see cref="LlmSettings"/>, because the persona is not
+/// a property of the model. It picks the prompt block, it picks the voice, and it picks the
+/// transcript — and two of those three still mean something with the provider set to "none".
+/// </para>
+/// </summary>
+public sealed record PersonaSettings
+{
+    /// <summary>
+    /// A core id from <see cref="D47.Core.Persona.PersonaCatalog"/>. An id d47 no longer ships
+    /// resolves to the default rather than failing the load: this is a stale value in a known
+    /// key, not the unknown-key case the loader exists to catch.
+    /// </summary>
+    public string Id { get; init; } = D47.Core.Persona.PersonaCatalog.DefaultId;
+
+    /// <summary>
+    /// What the Commander calls the ship's AI. Null means the persona's own name, which is why
+    /// this is nullable rather than defaulted to a string: a name stored here would stop
+    /// following the persona the moment they switched core, and "defaults to the persona's
+    /// name" is the whole of the requirement.
+    /// </summary>
+    public string? ShipName { get; init; }
+
+    /// <summary>
+    /// The voice paired to each core, keyed by persona id (list.md Phase 11, #33). Written by
+    /// the background pairing at first startup and by the Commander choosing one by hand;
+    /// nothing distinguishes the two, on purpose, because a pairing the Commander has
+    /// overridden should never be quietly re-derived.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Voices { get; init; } =
+        new Dictionary<string, string>();
+
+    /// <summary>
+    /// Whether the background voice pairing has run. A flag rather than "is
+    /// <see cref="Voices"/> empty", because a Commander who cleared every pairing by hand
+    /// should not have them silently regenerated on the next launch.
+    /// </summary>
+    public bool VoicesPaired { get; init; }
 }
 
 /// <summary>

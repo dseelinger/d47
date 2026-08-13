@@ -17,6 +17,7 @@ using D47.Core.Diagnostics;
 using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Listening;
+using D47.Core.Persona;
 using D47.Core.Ticking;
 using D47.Llm;
 using D47.Stt;
@@ -54,6 +55,7 @@ public sealed class AppHost : IDisposable
         UpdateChecker updates,
         UpdateInstaller installer,
         TurnLoop turns,
+        PersonaHost personas,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
         WasapiAudioSink audioSink,
@@ -86,6 +88,7 @@ public sealed class AppHost : IDisposable
         Updates = updates;
         Installer = installer;
         Turns = turns;
+        Personas = personas;
         LlmAvailability = llmAvailability;
         Spend = spend;
         _audioSink = audioSink;
@@ -182,6 +185,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>One turn of conversation, whichever path answers it.</summary>
     public TurnLoop Turns { get; }
+
+    /// <summary>Which Guardian core is aboard, and what it remembers (list.md Phase 11).</summary>
+    public PersonaHost Personas { get; }
 
     /// <summary>Whether the model is usable right now, and why not when it isn't.</summary>
     public LlmAvailabilityState LlmAvailability { get; }
@@ -450,6 +456,11 @@ public sealed class AppHost : IDisposable
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
+        // Built before the registry, because the persona capability declares settings rows from
+        // it and which rows exist has to be settled before registration — descriptors are
+        // registered once and never mutated (architecture.md D5).
+        var personas = new PersonaHost(PersonaCatalog.Resolve(settings.Current.Persona.Id));
+
         // The help capability answers from the registry it is itself registered in, so the
         // accessor is filled in immediately after Build. A Func rather than a mutable property
         // on the descriptor: descriptors are registered once and never mutated (architecture.md
@@ -536,6 +547,7 @@ public sealed class AppHost : IDisposable
                     ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
                 },
                 macros,
+                personas,
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -603,6 +615,7 @@ public sealed class AppHost : IDisposable
             updates,
             installer,
             turns,
+            personas,
             llmAvailability,
             spend,
             audioSink,
@@ -617,6 +630,10 @@ public sealed class AppHost : IDisposable
             transcriber,
             version,
             startupError);
+
+        // Before ApplyLlmSettings, which reads the persona block it points the loop at.
+        personas.Changed += host.OnPersonaChanged;
+        turns.UseTranscript(personas.Transcript);
 
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();
@@ -792,11 +809,11 @@ public sealed class AppHost : IDisposable
         Turns.Model = current.Llm.Model;
         Turns.AboutMe = current.Llm.AboutMe;
 
-        // The persona block itself arrives in Phase 11; this is the switch it will read.
-        if (!current.Llm.PersonalityEnabled)
-        {
-            Turns.Persona = null;
-        }
+        // Position 3 of the assembled prompt, and null when personality is off. Null rather
+        // than a neutral block on purpose: "off" is position 3 being absent, and the guardrails
+        // at position 2 are untouched either way, which is the property that whole arrangement
+        // exists to guarantee (architecture.md §6).
+        Turns.Persona = Personas.RenderBlock(current.Llm.PersonalityEnabled);
 
         LlmAvailability.SetProviderConfigured(provider is not null, reason);
     }
@@ -831,6 +848,97 @@ public sealed class AppHost : IDisposable
             // voice name typed in, and speaking still works with the provider's default.
             _logger.LogWarning(ex, "Could not fetch the list of voices");
         }
+    }
+
+    /// <summary>
+    /// When the core currently aboard became the core currently aboard, and what the ship's
+    /// ledger looked like then. Both exist for one thing: a core reselected after time away
+    /// opens with its reaction to the discontinuity rather than with a switch-in bark, and
+    /// neither the elapsed time nor the delta can be reconstructed after the fact.
+    /// </summary>
+    private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
+
+    private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
+        new(StringComparer.Ordinal);
+
+    private void ApplyPersonaSettings()
+    {
+        var outgoing = Personas.Current;
+
+        // Remembered before the switch, because after it there is nothing left to measure
+        // against. Keyed by the core leaving, not the one arriving.
+        _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
+
+        var incoming = PersonaCatalog.Resolve(Settings.Current.Persona.Id);
+        var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
+
+        var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
+        var delta = seen.At == default
+            ? null
+            : TelemetryDelta.Between(seen.Session, GameState.Active?.Session, GameState.Active);
+
+        if (!Personas.Apply(Settings.Current.Persona, away, delta))
+        {
+            // The name may still have changed underneath an unchanged core, and that is part of
+            // the persona block, so the prompt is rebuilt either way.
+            Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+            return;
+        }
+
+        _personaSelectedAt = DateTimeOffset.Now;
+
+        // Each core owns its transcript, handed over by reference so the turns land in it
+        // directly. This is the line that makes the isolation model real rather than stated:
+        // without it, a core would reference something it could only have learned while another
+        // was active (guardian-personas.md).
+        Turns.UseTranscript(Personas.Transcript);
+        Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+    }
+
+    /// <summary>
+    /// The new core, saying it is here. Runs off the event rather than inline in
+    /// <see cref="ApplyPersonaSettings"/>, because a gap reaction asks the model for a line and
+    /// a settings change must not block on a network round trip.
+    /// </summary>
+    private void OnPersonaChanged(PersonaChanged change)
+    {
+        _logger.LogInformation(
+            "Persona changed from {Previous} to {Current} ({Arrival})",
+            change.Previous?.Name ?? "(none)",
+            change.Current.Name,
+            change.Arrival);
+
+        _ = Task.Run(async () =>
+        {
+            var line = change.Current.Intro;
+
+            if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
+            {
+                // Authored fallback first, so there is always something to say; the model only
+                // ever replaces it.
+                line = change.Current.Return;
+
+                var generated = await FlavourTurn.AskAsync(
+                    Turns.Provider,
+                    Turns.Model,
+                    Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
+                    "You have just been switched back on after "
+                    + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
+                    + "reacting to the missing time, exactly as your character would. Do not greet "
+                    + "the Commander formally and do not offer a list of what you can do.",
+                    gap.TelemetryDelta,
+                    Spend,
+                    PriceTable.Default,
+                    _logger).ConfigureAwait(false);
+
+                if (generated is not null)
+                {
+                    line = generated;
+                }
+            }
+
+            await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
+        });
     }
 
     private void ApplySpeechSettings()
@@ -1186,6 +1294,10 @@ public sealed class AppHost : IDisposable
         {
             ApplyListeningSettings();
         }
+        else if (change.Key.StartsWith("persona.", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyPersonaSettings();
+        }
     }
 
     /// <summary>
@@ -1348,6 +1460,7 @@ public sealed class AppHost : IDisposable
         CoverageRecorder?.Save();
 
         Settings.Changed -= OnSettingsChanged;
+        Personas.Changed -= OnPersonaChanged;
 
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.

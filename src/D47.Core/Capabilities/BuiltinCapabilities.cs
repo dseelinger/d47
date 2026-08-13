@@ -36,6 +36,7 @@ public static class BuiltinCapabilities
         Func<string> autonomous,
         Builtin.NavigationSurface navigation,
         Actions.MacroStore macros,
+        Persona.PersonaHost personas,
 
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
@@ -45,6 +46,7 @@ public static class BuiltinCapabilities
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
+        PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
         ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),

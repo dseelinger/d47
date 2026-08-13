@@ -103,11 +103,11 @@
   - [x] Macros - Named multi-step voice-triggered sequences, validated against closed vocabularies and the action allowlist. Invocation is by voice; authoring is not, because composing a new action sequence is the one input whose vocabulary cannot be closed in advance. This is the exception to "every setting can be set by voice."
 
 - [ ] **Phase 11 — Persona and voices**
-  - [ ] Personas - Pre-built companion characters the Commander can choose between. Guardian Flavored.
-  - [ ] Ship AI Naming - Defaults to Persona's name, but may be set by the commander.
-  - [ ] Say when the persona has changed - New persona acknowledges when it has been picked. If it changes before its acknowledgement has completed speaking, it stops and the next one starts. Speech, as always, may be interrupted by the commander.
-  - [ ] Personality on/off - Plain answers with no persona, flavor, or ambient remarks. The anti-invention guardrails must survive the persona being switched off, so they cannot live inside the persona's prompt block.
-  - [ ] Commander's About Me - A Commander-provided prompt stored between sessions and personas so that the LLM remembers basic facts about the commander.
+  - [x] Personas - Pre-built companion characters the Commander can choose between. Guardian Flavored.
+  - [x] Ship AI Naming - Defaults to Persona's name, but may be set by the commander.
+  - [x] Say when the persona has changed - New persona acknowledges when it has been picked. If it changes before its acknowledgement has completed speaking, it stops and the next one starts. Speech, as always, may be interrupted by the commander.
+  - [x] Personality on/off - Plain answers with no persona, flavor, or ambient remarks. The anti-invention guardrails must survive the persona being switched off, so they cannot live inside the persona's prompt block.
+  - [x] Commander's About Me - A Commander-provided prompt stored between sessions and personas so that the LLM remembers basic facts about the commander.
   - [ ] Ship's AI Avatar - Per-state avatar imagery on the panel. Animated formats supported.
   - [ ] ElevenLabs - First offered, paid voice provider alongside the free Edge Neural voices, chosen per role, so a Commander with a key hears it and nothing else changes. Other providers may be added later in development. Differences between providers, such as speed, is maintained on a per-provider basis.
   - [ ] #33 Pair a default voice to each persona - At first startup, lazy-load available voices (Edge neural defaults to "en-" voices). Using LLM (if available), a sensible voice is chosen for each persona based on the persona's prompt (or custom prompt) in the background, so picking a character does not also mean auditioning potentially hundreds of voices.
