@@ -300,13 +300,32 @@ public sealed class VrOverlay : IDisposable
         var width = 0f;
         OpenVR.Overlay.GetOverlayWidthInMeters(_handle, ref width);
 
-        var universe = ETrackingUniverseOrigin.TrackingUniverseSeated;
+        // Asked which kind first. A quad hung off the headset answers WrongTransformType to the
+        // absolute getter, which is how the diagnostic went blind the moment the placement it
+        // was written for stopped being the one in use.
+        var kind = VROverlayTransformType.VROverlayTransform_Absolute;
+        OpenVR.Overlay.GetOverlayTransformType(_handle, ref kind);
+
         var held = new HmdMatrix34_t();
-        var got = OpenVR.Overlay.GetOverlayTransformAbsolute(_handle, ref universe, ref held);
+        var where = "";
+        EVROverlayError got;
+
+        if (kind == VROverlayTransformType.VROverlayTransform_TrackedDeviceRelative)
+        {
+            uint device = 0;
+            got = OpenVR.Overlay.GetOverlayTransformTrackedDeviceRelative(_handle, ref device, ref held);
+            where = $"riding device {device}";
+        }
+        else
+        {
+            var universe = ETrackingUniverseOrigin.TrackingUniverseSeated;
+            got = OpenVR.Overlay.GetOverlayTransformAbsolute(_handle, ref universe, ref held);
+            where = $"universe={universe}";
+        }
 
         if (got != EVROverlayError.None)
         {
-            return $"visible={visible} alpha={alpha:0.00} width={width:0.00} transform=<{got}>";
+            return $"visible={visible} alpha={alpha:0.00} width={width:0.00} {kind} transform=<{got}>";
         }
 
         var pose = VrMatrix.ToPose(held);
@@ -314,7 +333,7 @@ public sealed class VrOverlay : IDisposable
             -System.Numerics.Vector3.UnitZ,
             pose.Orientation);
 
-        return $"visible={visible} alpha={alpha:0.00} width={width:0.00}m universe={universe} "
+        return $"visible={visible} alpha={alpha:0.00} width={width:0.00}m {where} "
                + $"at ({pose.Position.X:0.00}, {pose.Position.Y:0.00}, {pose.Position.Z:0.00}) "
                + $"facing ({forward.X:0.00}, {forward.Y:0.00}, {forward.Z:0.00})";
     }
