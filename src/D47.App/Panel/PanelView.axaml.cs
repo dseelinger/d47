@@ -99,10 +99,10 @@ public partial class PanelView : UserControl
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
 
     private void OnHelpPointerEntered(object? sender, PointerEventArgs e) =>
-        HelpGlyph.Foreground = this.FindResource("D47.Accent") as IBrush;
+        HelpGlyph.Stroke = this.FindResource("D47.Accent") as IBrush;
 
     private void OnHelpPointerExited(object? sender, PointerEventArgs e) =>
-        HelpGlyph.Foreground = this.FindResource("D47.TextMuted") as IBrush;
+        HelpGlyph.Stroke = this.FindResource("D47.TextMuted") as IBrush;
 
     private void OnAskClick(object? sender, RoutedEventArgs e) => Model?.Ask();
 
