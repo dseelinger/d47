@@ -52,6 +52,13 @@ public sealed record VrSettings
     /// has SteamVR installed for something else and does not want d47 in it.
     /// </summary>
     public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// The caption layer. Its own block because captions are their own overlay, and because
+    /// everything on it is something the caption standard leaves to the viewer - nothing here
+    /// is a number the standard fixes.
+    /// </summary>
+    public Vr.CaptionSettings Captions { get; init; } = new();
 }
 
 /// <summary>

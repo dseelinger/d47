@@ -93,6 +93,61 @@ Also reachable without the panel:
 "headset overlay off"
 ```
 
+### Captions {#captions}
+
+Everything d47 says, written under it. They place themselves, they clear themselves, and they
+cannot be moved — which is why they are their own overlay quad rather than part of the panel:
+a caption you can drag somewhere you will not see it is not a caption, and the placement
+settings must not be able to reach them by accident.
+
+They follow the closed-caption standard, and the numbers are asserted by test rather than
+claimed here:
+
+```text
+42 characters   the most on one line
+ 2 lines        the most for one thing said
+ 3 lines        the rolling window
+20 per second   reading speed, which decides the dwell
+5/6 s .. 7 s    the shortest and longest a caption stays up
+```
+
+Two of those are worth spelling out. The **three-line window** is not a contradiction of the
+two-line maximum: two lines is the most one utterance occupies, three is the most on screen at
+once, which is the roll-up form live captioning has always used. And the dwell is **timed from
+the end of speech**, not from the start — nobody is reading along with a voice they can hear,
+they are catching the last line after it has gone.
+
+Line breaks go after punctuation, or before a conjunction or preposition, and the result is
+bottom-heavy where nothing else decides it. When those compete, the syntactic break wins: the
+standard treats the shape as a preference and the break points as where a break belongs.
+
+Captions are driven by what is *audible* rather than by what was generated, because the audio
+arbiter is the one thing that knows what is actually coming out of the speaker. That is what
+keeps them in step with a reply that got interrupted — say "shut up" and the captions go with
+the voice, because a caption still sitting there after a silence command is d47 visibly not
+having stopped.
+
+### Caption size {#size}
+
+`small`, `medium` or `large`. Three sizes rather than a number, because a caption is either
+legible at a glance or it is not and there is nothing useful between two adjacent values.
+
+### Caption background {#background}
+
+How solid the box behind the text is, from 0.2 to 1, defaulting to 0.78.
+
+A caption sits over a starfield, a station's floodlights and the cockpit's own instruments.
+Text with nothing behind it is unreadable against half of those, which is why broadcast
+captioning has always put it on a box — and why the box is not fully solid, because one that
+you cannot see through is a hole cut in the cockpit. The text stays fully opaque whatever this
+is set to; only the box fades.
+
+### Reading speed {#speed}
+
+Characters a second: `20` is the standard's adult rate, `17` its children's rate, and `12` is
+offered because reading speed is the one thing about a caption that is a property of the reader
+rather than of the caption.
+
 ### Headset {#state}
 
 Not a setting — a state, reported where the switch is, because *it is switched off* and

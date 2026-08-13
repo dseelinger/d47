@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using D47.App.Panel;
+using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Ticking;
 using D47.Core.Vr;
@@ -26,20 +27,33 @@ public sealed class VrHost : IDisposable
     private readonly VrLifecycle _lifecycle;
     private readonly SteamVrRuntime _runtime;
     private readonly VrPanelSurface _panel;
+    private readonly VrCaptionSurface _captions;
+    private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
 
     private int _pending;
     private bool _disposed;
 
+    /// <summary>
+    /// The last time a tick supplied. Captions arrive on the audio thread, which has no
+    /// business reading the clock and no business being the one to decide what time it is —
+    /// Core's rule about injected time does not stop applying because the caller is ours.
+    /// </summary>
+    private DateTimeOffset _now = DateTimeOffset.MinValue;
+
     private VrHost(
         SettingsService settings,
         VrPanelSurface panel,
+        VrCaptionSurface captions,
+        CaptionLayer layer,
         SteamVrRuntime runtime,
         VrLifecycle lifecycle,
         ILogger<VrHost> logger)
     {
         _settings = settings;
         _panel = panel;
+        _captions = captions;
+        _layer = layer;
         _runtime = runtime;
         _lifecycle = lifecycle;
         _logger = logger;
@@ -62,15 +76,29 @@ public sealed class VrHost : IDisposable
     /// </summary>
     public static VrHost Start(
         PanelViewModel model,
+        AudioArbiter audio,
         SettingsService settings,
         TickLoop tick,
         ILoggerFactory loggers)
     {
         var panel = new VrPanelSurface(model, PlacementFor);
-        var runtime = new SteamVrRuntime([panel], loggers.CreateLogger<SteamVrRuntime>());
+        var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
+        var captions = new VrCaptionSurface(layer);
+
+        var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
-        var host = new VrHost(settings, panel, runtime, lifecycle, loggers.CreateLogger<VrHost>());
+        var host = new VrHost(
+            settings, panel, captions, layer, runtime, lifecycle, loggers.CreateLogger<VrHost>());
+
+        host.Configure();
+        settings.Changed += _ => Dispatcher.UIThread.Post(host.Configure);
+
+        // Captions are driven by what is audible rather than by what was generated, which is
+        // what keeps them in step with a reply that got interrupted, superseded or dropped:
+        // the arbiter is the one place that knows what is actually coming out of the speaker.
+        audio.ActivityChanged += activity => Dispatcher.UIThread.Post(() => host.Heard(activity));
+        audio.Silenced += () => Dispatcher.UIThread.Post(layer.Silence);
 
         tick.Add("vr", host.OnTick);
         return host;
@@ -81,6 +109,7 @@ public sealed class VrHost : IDisposable
         _disposed = true;
         _lifecycle.Stop();
         _runtime.Stop();
+        _captions.Dispose();
         _panel.Dispose();
     }
 
@@ -93,6 +122,30 @@ public sealed class VrHost : IDisposable
     private static SurfacePlacement PlacementFor(PanelMode mode) => mode == PanelMode.Mini
         ? new SurfacePlacement { WidthMetres = 0.34f, DistanceMetres = 0.9f, DropMetres = -0.30f }
         : new SurfacePlacement { WidthMetres = 1.1f, DistanceMetres = 1.1f, DropMetres = -0.25f };
+
+    /// <summary>
+    /// What is audible, turned into captions. A clip carrying a caption starts one; nothing
+    /// audible ends the last one and starts its dwell.
+    /// </summary>
+    private void Heard(AudioActivity activity)
+    {
+        if (activity.Caption is { Length: > 0 } caption)
+        {
+            _layer.Say(caption, _now);
+            return;
+        }
+
+        if (activity.Channel is null)
+        {
+            _layer.Quiet(_now);
+        }
+    }
+
+    private void Configure()
+    {
+        var captions = _settings.Current.Vr.Captions;
+        _captions.Configure(captions);
+    }
 
     private void OnTick(TickContext context)
     {
@@ -130,7 +183,10 @@ public sealed class VrHost : IDisposable
             return;
         }
 
+        _now = now;
         _panel.Enabled = true;
+        _captions.Enabled = _settings.Current.Vr.Captions.Enabled;
+        _layer.Tick(now);
 
         try
         {
