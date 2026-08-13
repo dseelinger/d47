@@ -74,6 +74,12 @@ public sealed class SteamVrRuntime(
     private static int _sessionClaimed;
 
     private readonly Dictionary<string, VrOverlay> _overlays = new(StringComparer.Ordinal);
+
+    /// <summary>Complaints already reported, so a refusal ten times a second is logged once.</summary>
+    private readonly HashSet<string> _complaints = [];
+
+    /// <summary>Surfaces that have been served at least once, so the report is not per frame.</summary>
+    private readonly HashSet<VrSurface> _served = [];
     private readonly Dictionary<VrSurface, VrTexture> _textures = [];
 
     private CVRSystem? _system;
@@ -167,6 +173,11 @@ public sealed class SteamVrRuntime(
         }
 
         _overlays.Clear();
+
+        // A rebuilt session is a new session, and it has to be able to say so — otherwise the
+        // one that recovered looks exactly like the one that never reported anything.
+        _complaints.Clear();
+        _served.Clear();
 
         _device?.Dispose();
         _device = null;
@@ -285,7 +296,7 @@ public sealed class SteamVrRuntime(
                 continue;
             }
 
-            var overlay = VrOverlay.Create(key, name, out var failure);
+            var overlay = VrOverlay.Create(key, name, out var failure, Refused);
 
             if (overlay is null)
             {
@@ -344,6 +355,24 @@ public sealed class SteamVrRuntime(
         return VrMatrix.Real(poses[OpenVR.k_unTrackedDeviceIndex_Hmd]);
     }
 
+    /// <summary>
+    /// Says what the runtime turned down, once per distinct complaint.
+    /// <para>
+    /// These calls happen ten times a second, so an unfiltered log would be the same line
+    /// thousands of times and unreadable exactly when it is needed. Every one of them used to
+    /// be discarded entirely, which is worse: an overlay refusing its texture and an overlay
+    /// nobody asked to show look identical from inside a headset, and neither leaves a trace
+    /// outside one.
+    /// </para>
+    /// </summary>
+    private void Refused(string what)
+    {
+        if (_complaints.Add(what))
+        {
+            logger.LogWarning("SteamVR refused an overlay call. {What}", what);
+        }
+    }
+
     private bool Serve(IVrSurfaceSource source)
     {
         var overlay = OverlayFor(source.Surface);
@@ -380,10 +409,31 @@ public sealed class SteamVrRuntime(
             overlay.Submit(texture.NativePointer);
         }
 
-        overlay.PlaceAbsolute(placement.Where(Head ?? VrPose.Origin));
+        var where = placement.Where(Head ?? VrPose.Origin);
+
+        overlay.PlaceAbsolute(where);
         overlay.Look(placement.WidthMetres, placement.Curvature, placement.Opacity);
         overlay.Show(true);
         overlay.PumpEvents();
+
+        // Once per surface per session. "The overlays are up" says the quads were created, not
+        // that anything was ever put in one or that it went anywhere a Commander could look —
+        // and when the answer is "I see nothing at all", those are the only two questions left.
+        if (_served.Add(source.Surface))
+        {
+            logger.LogInformation(
+                "{Surface} is up: {Width}x{Height} at ({X:0.00}, {Y:0.00}, {Z:0.00}), "
+                + "{Metres:0.00}m wide, opacity {Opacity:0.00}, head {Head}",
+                source.Surface,
+                width,
+                height,
+                where.Position.X,
+                where.Position.Y,
+                where.Position.Z,
+                placement.WidthMetres,
+                placement.Opacity,
+                Head is null ? "not tracking" : "tracking");
+        }
 
         return true;
     }
