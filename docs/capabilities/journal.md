@@ -2,8 +2,6 @@
 title: Journal
 ---
 
-# Journal
-
 **Group:** Foundation
 **Capability id:** `journal`
 

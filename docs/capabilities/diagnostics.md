@@ -2,8 +2,6 @@
 title: Diagnostics
 ---
 
-# Diagnostics
-
 **Group:** Foundation
 **Capability id:** `diagnostics`
 

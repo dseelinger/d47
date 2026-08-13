@@ -33,11 +33,18 @@ public sealed class SingleInstance : IDisposable
     /// separate because taking a lock and bringing someone else's window to the front are not
     /// the same act and only one of them is safe to do in a test.
     /// </summary>
-    public static SingleInstance? Claim()
+    public static SingleInstance? Claim() => Claim(Name);
+
+    /// <summary>
+    /// Claims a named slot. The name is a parameter so a test can claim one of its own: the
+    /// real name is per-user and process-wide, so a test that used it would fail for the honest
+    /// reason that the Commander has d47 open — which is exactly when tests get run.
+    /// </summary>
+    internal static SingleInstance? Claim(string name)
     {
         // Created rather than opened, so the first copy to start is the one that owns it and
         // there is no window in which neither does.
-        var mutex = new Mutex(initiallyOwned: true, Name, out var mine);
+        var mutex = new Mutex(initiallyOwned: true, name, out var mine);
 
         if (mine)
         {

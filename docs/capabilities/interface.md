@@ -2,8 +2,6 @@
 title: Interface
 ---
 
-# Interface
-
 **Group:** Interface
 **Capability id:** `interface`
 

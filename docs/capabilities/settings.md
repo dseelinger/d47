@@ -2,8 +2,6 @@
 title: Settings
 ---
 
-# Settings
-
 **Group:** Foundation
 **Capability id:** `settings`
 

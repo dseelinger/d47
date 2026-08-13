@@ -2,8 +2,6 @@
 title: Re-anchor
 ---
 
-# Re-anchor
-
 **Group:** Interface
 **Capability id:** `reanchor`
 

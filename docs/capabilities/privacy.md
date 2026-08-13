@@ -2,8 +2,6 @@
 title: Privacy
 ---
 
-# Privacy
-
 **Group:** Foundation
 **Capability id:** `privacy`
 
