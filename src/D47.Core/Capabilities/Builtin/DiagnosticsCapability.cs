@@ -157,6 +157,13 @@ public static class DiagnosticsCapability
             : ToolResult.Error(applied.Message);
     }
 
+    /// <summary>
+    /// The hand-testing coverage row, named because the settings surface recognises it: it is
+    /// the one row that offers a window rather than a value, and a magic string in the view
+    /// would be a second place for the key to be wrong.
+    /// </summary>
+    public const string CoverageKey = "diagnostics.coverage";
+
     private static IReadOnlyList<SettingRow> BuildSettingRows(Func<string>? coverage)
     {
         var rows = new List<SettingRow>
@@ -228,7 +235,7 @@ public static class DiagnosticsCapability
             // invariant holds either way, because which rows exist is decided before startup.
             rows.Add(new SettingRow
             {
-                Key = "diagnostics.coverage",
+                Key = CoverageKey,
                 Label = "Exercised by hand",
                 Help =
                     "Which tools and settings rows have actually been driven in the running app, and "

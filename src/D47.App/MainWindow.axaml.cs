@@ -254,7 +254,12 @@ public partial class MainWindow : Window
     {
         if (_host is not null)
         {
-            SettingsWindow.Show(this, _host.Settings, _host.ViewState, _host.Paths);
+            SettingsWindow.Show(
+                this,
+                _host.Settings,
+                _host.ViewState,
+                _host.Paths,
+                _host.CoverageRecorder is { } recorder ? recorder.Report : null);
         }
     }
 
