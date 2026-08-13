@@ -235,7 +235,8 @@ public static class DiagnosticsCapability
                     + "which have changed since they last were. Recorded because D47_COVERAGE is set; "
                     + "the full list is written to data/coverage.md.",
                 Kind = SettingKind.Info,
-                Group = "Exercised by hand",
+                // No Group. The card already carries this heading, and a group whose name is
+                // its only row's label prints the same words twice.
 
                 // No DocsAnchor on purpose. This is a workbench aid rather than something a
                 // Commander configures, so it gets no section in the public capability page;
