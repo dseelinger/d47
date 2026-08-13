@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:headset="clr-namespace:D47.App.Headset"
+             x:Class="D47.App.Headset.CaptionView"
+             x:DataType="headset:CaptionViewModel"
+             Background="Transparent">
+
+  <!--
+    The caption layer, and nothing else is on this quad. Transparent everywhere the box is not,
+    so the cockpit shows through: a caption sits over a starfield, a station's floodlights and
+    the ship's own instruments, and this is the only surface d47 draws that is mostly nothing.
+
+    Deliberately not themed. Every other surface takes its colour from the palette; a caption
+    takes it from the caption standard, which is white-ish text on a dark box and has been
+    since teletext. A themed caption would be an amber caption in the Elite palette, which is
+    the one thing broadcast captioning has never done.
+
+    Not quite white and not quite opaque, both on purpose. Pure white on black rings at this
+    contrast, and a fully opaque box is a hole cut in the cockpit.
+  -->
+  <Border HorizontalAlignment="Center"
+          VerticalAlignment="Bottom"
+          CornerRadius="6"
+          Padding="28,16"
+          IsVisible="{Binding HasLines}">
+
+    <!-- The opacity belongs to the brush, not to the border. On the border it would take the
+         text down with it, and a caption that is only three quarters there is a caption that
+         is harder to read than a solid one - which is the opposite of what the box is for. -->
+    <Border.Background>
+      <SolidColorBrush Color="#000000" Opacity="{Binding BackgroundOpacity}" />
+    </Border.Background>
+
+    <ItemsControl ItemsSource="{Binding Lines}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="x:String">
+          <TextBlock Text="{Binding}"
+                     TextAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Foreground="#F2F2F2"
+                     FontFamily="Segoe UI,Inter,sans-serif"
+                     FontWeight="SemiBold"
+                     FontSize="{Binding $parent[ItemsControl].((headset:CaptionViewModel)DataContext).FontSize}" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </Border>
+</UserControl>

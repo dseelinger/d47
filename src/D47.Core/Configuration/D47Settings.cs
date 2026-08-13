@@ -32,6 +32,33 @@ public sealed record D47Settings
     public CalloutSettings Callouts { get; init; } = new();
 
     public ListeningSettings Listening { get; init; } = new();
+
+    public VrSettings Vr { get; init; } = new();
+}
+
+/// <summary>
+/// The headset (list.md Phase 9).
+/// <para>
+/// There is no "is a headset present" setting and there never will be: that is a state d47
+/// discovers and reports, not a thing the Commander configures. This is only whether they want
+/// the overlays at all, plus how the surfaces are placed once there is somewhere to place them.
+/// </para>
+/// </summary>
+public sealed record VrSettings
+{
+    /// <summary>
+    /// On by default, which costs nothing on a machine with no headset: the runtime is looked
+    /// for, not found, and the state machine reports Unavailable. Off is for the Commander who
+    /// has SteamVR installed for something else and does not want d47 in it.
+    /// </summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// The caption layer. Its own block because captions are their own overlay, and because
+    /// everything on it is something the caption standard leaves to the viewer - nothing here
+    /// is a number the standard fixes.
+    /// </summary>
+    public Vr.CaptionSettings Captions { get; init; } = new();
 }
 
 /// <summary>

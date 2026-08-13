@@ -31,6 +31,10 @@ public static class BuiltinCapabilities
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
         ListeningCapability.ListeningSurface listening,
+        VrCapability.HeadsetSurface headset,
+
+        // Optional and therefore last: null in every normal run, and the diagnostics card then
+        // carries no coverage row at all.
         Func<string>? coverage = null) =>
     [
         HelpCapability.Create(registry),
@@ -41,6 +45,7 @@ public static class BuiltinCapabilities
         ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
+        VrCapability.Create(settings, headset),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

@@ -128,6 +128,20 @@ public sealed class AppHost : IDisposable
     public TickLoop Tick { get; }
 
     /// <summary>
+    /// What the panel is showing. Owned here rather than by the window, because it is app
+    /// state: the desktop window and the headset overlay each instantiate a view against it,
+    /// and a model owned by one of them would make the other a guest (list.md Phase 9).
+    /// </summary>
+    public Panel.PanelViewModel Panel { get; } = new();
+
+    /// <summary>
+    /// The headset path, once Avalonia has come up. Null before that and on a run where the
+    /// framework never initialises — it needs a dispatcher and a widget tree, neither of which
+    /// exists when this host is built.
+    /// </summary>
+    public Headset.VrHost? Vr { get; set; }
+
+    /// <summary>
     /// What d47 says without being asked (list.md Phase 8). Exposed because the panel drains it:
     /// the tick that produces an announcement must not block on synthesising it.
     /// </summary>
@@ -394,6 +408,10 @@ public sealed class AppHost : IDisposable
         // D5), and that rule is what keeps tool schemas byte-identical across turns.
         CapabilityRegistry? built = null;
 
+        // The same late-binding trick, for the same reason: the headset path is built after
+        // Avalonia comes up, which is after this.
+        AppHost? self = null;
+
         // Off unless D47_COVERAGE=1. Created before the registry because when it is on it adds a
         // row, and which rows exist has to be settled before registration — descriptors are
         // registered once and never mutated.
@@ -437,6 +455,16 @@ public sealed class AppHost : IDisposable
                     Binds = () => binds,
                     InstalledModels = () => models.Installed(),
                 },
+                // Late-bound for the same reason spoken help's registry accessor is: the
+                // headset path needs a dispatcher and a widget tree, so it does not exist
+                // yet. What the capability reports before then is the truth anyway - d47 is
+                // still looking.
+                new VrCapability.HeadsetSurface
+                {
+                    Report = () => self?.Vr is { } vr
+                        ? (vr.State, vr.Reason, vr.Adapter)
+                        : (Core.Vr.VrState.Connecting, "Looking for a headset.", null),
+                },
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -477,7 +505,7 @@ public sealed class AppHost : IDisposable
             LiveGameState = () => Situation.Describe(gameState.Active),
         };
 
-        var host = new AppHost(
+        var host = self = new AppHost(
             paths,
             router,
             cancellation,
@@ -1028,6 +1056,10 @@ public sealed class AppHost : IDisposable
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.
         _ticking?.Dispose();
+
+        // After the tick, so a serve cannot land on a destroyed overlay handle. A quad nobody
+        // gave back stays floating in the cockpit after the app that put it there has gone.
+        Vr?.Dispose();
         _speaking.Dispose();
 
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
