@@ -65,8 +65,18 @@ dotnet test           # includes the Core dependency boundary and the docs gate
 dotnet publish src/D47.App -c Release      # one ~64 MB self-contained d47.exe, no flags needed
 ```
 
-Release is a tag: `git tag v0.1.0 && git push --tags` publishes, checksums and creates the
-GitHub Release. Publish settings live in `D47.App.csproj` so local and CI cannot diverge.
+Release is a tag: `git tag -s v0.1.0 -m "what changed"` then `git push origin v0.1.0`
+publishes, checksums and creates the GitHub Release. Publish settings live in
+`D47.App.csproj` so local and CI cannot diverge.
+
+**A published tag never moves.** Tags are signed and annotated, and once one is pushed and a
+Release is built from it, that tag is a receipt for one exact `d47.exe` and the checksum
+beside it — and the update checker compares a running build's version against it. Retagging
+makes one version number mean two different binaries, which is the one thing a version number
+exists not to do. Fixes ship as the next patch release; releasing is one command, so there is
+never a reason to reuse a number. This also means `dotnet test -c Release` has to pass
+*before* tagging: the release workflow runs it, and a failed run leaves a published tag with
+no Release behind it, which costs a version number to correct.
 
 Two gates run as tests rather than as CI steps, so they cannot drift from the code:
 `CoreDependencyTests` asserts Core references no UI, hardware or provider assembly, and
