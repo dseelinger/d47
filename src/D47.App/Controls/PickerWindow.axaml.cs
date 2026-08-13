@@ -76,6 +76,8 @@ public partial class PickerWindow : Window
             : "Type to filter";
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
+        // Bracketed unconditionally, because what arrives here is the bare phrase — see
+        // SettingRow.BareDefaultFor, which is why this cannot say "((the provider's default))".
         DefaultButton.Content = $"Use the default ({_request.DefaultDisplay})";
 
         ApplyFilter();

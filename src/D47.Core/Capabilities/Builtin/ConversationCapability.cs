@@ -112,7 +112,12 @@ public static class ConversationCapability
         if (provider.Id != LlmProviderCatalog.NoneId)
         {
             report.AppendLine($"Model: {settings.Llm.Model ?? provider.DefaultModel ?? "(provider default)"}");
-            report.AppendLine($"Endpoint: {settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? "(provider default)"}");
+            // Only when it is not the provider's own. "Endpoint: https://api.anthropic.com" is a
+            // line that tells the Commander where Anthropic is, which they knew.
+            if (settings.Llm.Endpoint is { Length: > 0 } chosen)
+            {
+                report.AppendLine($"Endpoint: {chosen}");
+            }
         }
 
         report.AppendLine($"Availability: {availability.Current}{(availability.Reason is { } why ? $" — {why}" : "")}");
@@ -178,7 +183,7 @@ public static class ConversationCapability
                 DefaultDisplaySource = s => LlmProviderCatalog.Selected(s.Llm.Provider).DefaultEndpoint,
                 DocsAnchor = "endpoint",
                 Protected = true,
-                AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).HasEndpoint,
+                AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).AcceptsCustomEndpoint,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Llm.Endpoint,

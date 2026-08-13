@@ -439,6 +439,11 @@ public sealed class AppHost : IDisposable
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => WasapiAudioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
+
+                    // Late-bound like the headset surface below, and for the same reason: the
+                    // list is fetched from the provider over the network after this point.
+                    Voices = () => self?.VoiceIds() ?? [],
+                    VoiceLabel = id => self?.VoiceLabelFor(id) ?? id,
                 },
                 cancellation,
                 callouts,
@@ -719,6 +724,32 @@ public sealed class AppHost : IDisposable
     /// again on any change, so the two paths cannot drift (list.md Phase 4, "Apply every
     /// setting without a restart").
     /// </summary>
+    /// <summary>The ids the voice picker offers.</summary>
+    internal IReadOnlyList<string> VoiceIds() => [.. _voices.Select(voice => voice.Id)];
+
+    /// <summary>
+    /// How the picker labels one — "Ava — Female, en-US" rather than the raw id. Falls back to
+    /// the id, so a voice the Commander typed themselves still shows as what they typed.
+    /// </summary>
+    internal string VoiceLabelFor(string id) =>
+        _voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+            ?.Label ?? id;
+
+    private async Task LoadVoicesAsync(ITtsProvider provider)
+    {
+        try
+        {
+            _voices = await provider.ListVoicesAsync().ConfigureAwait(false);
+            _logger.LogInformation("The voice list has {Count} voices", _voices.Count);
+        }
+        catch (Exception ex)
+        {
+            // No list is a capability being partly off, not a failure: the row still accepts a
+            // voice name typed in, and speaking still works with the provider's default.
+            _logger.LogWarning(ex, "Could not fetch the list of voices");
+        }
+    }
+
     private void ApplySpeechSettings()
     {
         var speech = Settings.Current.Speech;
@@ -731,6 +762,11 @@ public sealed class AppHost : IDisposable
         else if (_tts is null)
         {
             _tts = new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>());
+
+            // Fetched once, in the background. The picker asks synchronously and the list comes
+            // over the network, so it is cached rather than requested on open — and not awaited,
+            // because a settings change must not wait on a provider being reachable.
+            _ = LoadVoicesAsync(_tts);
         }
 
         Voice.Tts = _tts;
@@ -915,6 +951,13 @@ public sealed class AppHost : IDisposable
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
     private EdgeNeuralTtsProvider? _tts;
+
+    /// <summary>
+    /// What the selected provider offers, cached. Empty until the first fetch returns, which is
+    /// the honest answer in the meantime: the picker allows a typed value, so an empty list is a
+    /// smaller list rather than a dead end.
+    /// </summary>
+    private IReadOnlyList<VoiceInfo> _voices = [];
 
     /// <summary>
     /// Takes whatever the callouts queued this tick and says it. Called from the tick thread and

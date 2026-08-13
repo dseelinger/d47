@@ -2,72 +2,66 @@
 title: Re-anchor
 ---
 
-**Group:** Interface
-**Capability id:** `reanchor`
+Puts your world-locked headset panels back in front of you.
 
-Puts the world-locked headset panels back in front of you.
+## Ask for it
 
-## Why this exists
+> "re-anchor"
+> "put the panels back"
+> "recentre the panels"
 
-Elite's in-game recenter moves the cockpit without telling SteamVR. Your world-locked panels
-stay exactly where they were, in a world that has quietly rotated underneath them — and there
-is no event to hook, because from SteamVR's point of view nothing happened.
+Or press **Ctrl+Alt+R**, which works anywhere — including with Elite in the foreground.
 
-So there is nothing to detect and nothing to correct automatically. What there is, is a
-Commander who can see that their panels are in the wrong place and would like them back.
+## When you need it
 
-## It moves them as a group
+Elite's in-game recenter moves your cockpit without telling SteamVR. Your world-locked panels
+stay exactly where they were, in a world that has quietly rotated underneath them.
 
-Every world-locked surface gets the same delta, so their positions relative to each other
-survive. That is the difference between re-anchoring and resetting: a per-surface "put it back
-where it started" stacks them all in the same place in front of you, which is a different
-feature and not one anybody asked for.
+Nothing can detect that and put it right on your behalf: from SteamVR's point of view, nothing
+happened. What can happen is you noticing your panels are in the wrong place and asking for them
+back.
 
-Only the yaw and the position are inherited. If you happened to be looking at your feet when
-you triggered it, that is not an instruction to tip every panel forward and hang them over your
-knees.
+## What it does to them
 
-Head-locked surfaces and the caption layer are unaffected — they were never anywhere to drift
-from.
+Every world-locked panel moves together, so their arrangement relative to each other survives.
+That is the difference between re-anchoring and resetting — putting each one back where it
+started would stack them all in the same spot in front of you.
 
-## Three ways to reach it, and never only one
+Only your facing and position are used. If you happened to be looking at your feet when you
+triggered it, that is not an instruction to tip every panel forward and hang them over your knees.
 
-```text
-the hotkey       Ctrl+Alt+R out of the box, system-wide
-by voice         "re-anchor", "put the panels back", "recentre the panels"
-the tool         reanchor_headset_surfaces
-```
+Head-locked panels and the captions are untouched. They follow you already, so they were never
+anywhere to drift from.
 
-The hotkey is registered system-wide rather than scoped to D47's window, and that is the whole
-point of it: the case this exists for is Elite holding the foreground, so a gesture that needs
-D47 focused is a gesture that does not work when it is wanted.
-
-The voice route goes through the model-free keyword router, so it works with no provider
-configured — a drifted panel is not a thing that should need an API key to fix.
-
-Notice that none of the three is the panel itself. A drifted panel is precisely the case where
-you cannot aim at it.
-
-## Tools
-
-### `reanchor_headset_surfaces`
-
-Snaps every world-locked headset panel back in front of the Commander, keeping their positions
-relative to each other. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-It says how many moved, so "there is nothing to re-anchor" is a real answer rather than silence
+It tells you how many moved, so "there was nothing to re-anchor" is an answer rather than silence
 that looks like a failure:
 
 ```text
 Re-anchored 2 surfaces, keeping their layout.
 ```
 
-## Why it is its own capability
+## Never only from the panel
 
-The keyword router reaches a capability's first argument-free tool. A capability owning both
-"how is the headset" and "put the panels back" could therefore only be asked one of them
-without a model in the path — and this is the one that has to work with no model at all.
+The hotkey works system-wide rather than only when Directive 47 has focus, and the spoken route
+needs no model configured. Both matter for the same reason: a drifted panel is exactly the case
+where you cannot aim at the panel, and the moment you want this is the moment Elite is holding
+the foreground.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `reanchor_headset_surfaces`
+
+Snaps every world-locked headset panel back in front of the Commander, preserving their relative
+layout. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+This is its own capability rather than part of the headset one because the keyword router reaches
+a capability's first argument-free tool. A capability owning both "how is the headset" and "put
+the panels back" could only be asked one of them without a model in the path — and this is the
+one that has to work with no model at all.
+
+</details>

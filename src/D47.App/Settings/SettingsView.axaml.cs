@@ -635,7 +635,7 @@ public partial class SettingsView : UserControl
         var items = new List<string>();
         if (clearable)
         {
-            items.Add(row.DefaultDisplay is null ? "(default)" : $"(default: {row.DefaultDisplay})");
+            items.Add(row.BareDefaultFor(_settings!.Current) is { } bare ? $"(default: {bare})" : "(default)");
         }
 
         items.AddRange(choices.Select(row.LabelForChoice));
@@ -708,7 +708,7 @@ public partial class SettingsView : UserControl
         {
             var current = _settings!.Read(row.Key);
             value.Text = current is null
-                ? $"{row.DefaultDisplayFor(_settings.Current) ?? "not set"} (default)"
+                ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
                 : row.LabelForChoice(current);
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
         }, true);
@@ -796,8 +796,21 @@ public partial class SettingsView : UserControl
             Width = 280,
         };
 
+        // A pill rather than a muted sentence at the end of the row. Whether a key is stored is
+        // the single thing this row is asked, usually at the moment something is not working,
+        // and eleven-point grey after two buttons is where an answer goes to be missed. Same
+        // shape as the "protected" tag on a row heading, so it reads as a state rather than as
+        // a remark.
         var state = new TextBlock { FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
-        Themed(state, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var badge = new Border
+        {
+            Padding = new Thickness(8, 2),
+            CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = state,
+        };
 
         var store = new Button { Content = "Store" };
         var clear = new Button { Content = "Clear" };
@@ -822,10 +835,29 @@ public partial class SettingsView : UserControl
         panel.Children.Add(box);
         panel.Children.Add(store);
         panel.Children.Add(clear);
-        panel.Children.Add(state);
+        panel.Children.Add(badge);
 
         return (panel, () =>
-            state.Text = _settings!.HasSecret(row.SecretName) ? "A key is stored." : "No key stored.", false);
+        {
+            var stored = _settings!.HasSecret(row.SecretName);
+
+            state.Text = stored ? "Key stored" : "No key";
+
+            // Accent for stored and muted for not, so the two states differ in colour as well as
+            // in wording — the row is read at a glance far more often than it is read.
+            Themed(
+                state,
+                TextBlock.ForegroundProperty,
+                stored ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
+
+            Themed(
+                badge,
+                Border.BorderBrushProperty,
+                stored ? ThemeManager.AccentKey : ThemeManager.BorderKey);
+
+            // And the box stops inviting a first key once there is one to replace.
+            box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
+        }, false);
     }
 
     private (Control, Action, bool) BuildHotkey(SettingRow row, TextBlock message)
@@ -866,7 +898,7 @@ public partial class SettingsView : UserControl
             Choices = row.ChoicesFor(_settings.Current),
             Describe = row.ChoiceLabel,
             Current = _settings.Read(row.Key),
-            DefaultDisplay = row.IsClearable ? row.DefaultDisplayFor(_settings.Current) : null,
+            DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
             AllowsFreeText = row.AllowsFreeText,
         });
 
