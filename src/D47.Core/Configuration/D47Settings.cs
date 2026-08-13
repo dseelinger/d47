@@ -62,6 +62,20 @@ public sealed record ActionSettings
     /// on its own row, and protected — the first member of the autonomous-action category.
     /// </summary>
     public bool HonkOnArrival { get; init; }
+
+    /// <summary>
+    /// Whether d47 may drive the galaxy map to plot a course. Separate from
+    /// <see cref="Keyboard"/> because it is best-effort by nature — it depends on the map's
+    /// focus and layout — and a Commander may reasonably want spoken flight controls without
+    /// wanting something opening their map and typing into it.
+    /// </summary>
+    public bool AutoPlot { get; init; }
+
+    /// <summary>
+    /// Whether d47 may type into Elite's chat. Its own row because it is the only thing here
+    /// other people can see, and because it cannot be taken back.
+    /// </summary>
+    public bool Chat { get; init; }
 }
 
 /// <summary>

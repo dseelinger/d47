@@ -514,6 +514,13 @@ public sealed class AppHost : IDisposable
                     Enabled = () => settings.Current.Actions.Keyboard,
                 },
                 () => AutonomousCapability.Describe(autonomous),
+                new NavigationSurface
+                {
+                    Clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>()),
+                    Actions = actionSurface,
+                    AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
+                    ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
+                },
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -1204,6 +1211,58 @@ public sealed class AppHost : IDisposable
             (var only, null) => only,
             var (both, and) => both + Environment.NewLine + Environment.NewLine + and,
         };
+
+    /// <summary>
+    /// Whether a route to the named system appeared after a plotting attempt.
+    /// <para>
+    /// In the app rather than in Core because it waits, and no Core component reads the clock.
+    /// It polls the reader directly rather than joining the tick loop: this is a question with
+    /// a beginning and an end, asked by one caller, and a tick subscriber for it would outlive
+    /// the question by the rest of the session.
+    /// </para>
+    /// <para>
+    /// Null rather than false when the file never becomes readable at all — "I cannot tell" and
+    /// "it did not work" send the Commander to different places.
+    /// </para>
+    /// </summary>
+    private static async Task<bool?> ConfirmPlot(
+        NavRouteReader route,
+        string system,
+        CancellationToken cancellationToken)
+    {
+        // Elite writes NavRoute.json as the route is accepted, which is quick, but the map
+        // animates first. Six seconds is long enough to cover that and short enough that a
+        // Commander waiting on the answer has not already looked.
+        var deadline = DateTimeOffset.Now + TimeSpan.FromSeconds(6);
+        var sawTheFile = false;
+
+        while (DateTimeOffset.Now < deadline)
+        {
+            route.Poll();
+
+            if (route.Current.ReadAt is not null)
+            {
+                sawTheFile = true;
+
+                if (route.Current.Hops.Count > 0 &&
+                    string.Equals(route.Current.Hops[^1].StarSystem, system, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+        }
+
+        return sawTheFile ? false : null;
+    }
 
     private static IReadOnlyList<string> EliteInstallations()
     {

@@ -22,7 +22,7 @@ exists for the moments when both hands are busy.
 
 "Galaxy map" and "system map" open them, and that is all they do here. Plotting a course inside
 the galaxy map is its own thing, because it depends on where the map's focus happens to be and on
-what language your game is in — see [the galaxy map page](galaxy-map.md) for why the clipboard is
+what language your game is in — see [Navigation](navigation.md) for why the clipboard is
 the route that actually works.
 
 On Elite's own default keyboard preset both maps ship **unbound**. If you have never touched your

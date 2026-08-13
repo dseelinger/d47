@@ -89,6 +89,7 @@ public static class TestSurface
             },
             ActionSurface.Inert,
             () => "No autonomous actions in a headless test.",
+            NavigationSurface.Inert,
             coverage));
 
         built = registry;
