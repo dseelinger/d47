@@ -1,0 +1,303 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using D47.Core.Audio;
+using Microsoft.Extensions.Logging;
+
+namespace D47.Tts;
+
+/// <summary>
+/// The paid voices (list.md Phase 11, "ElevenLabs").
+/// <para>
+/// The whole requirement is that a Commander with a key hears it and nothing else changes.
+/// That is what <see cref="ITtsProvider"/> already guaranteed — this class exists entirely
+/// below that line, and the arbiter, the sentence splitter, the caption timing and every
+/// caller are untouched by its arrival.
+/// </para>
+/// <para>
+/// Audio is requested as <c>pcm_24000</c> rather than MP3, for the same reason Edge's raw
+/// output was preferred: no decoder in the dependency graph, and the identical 2× upsample to
+/// the arbiter's 48 kHz. Unlike Edge this is a documented, supported API, so a failure here is
+/// a real failure worth reporting rather than a sign that an undocumented endpoint moved.
+/// </para>
+/// </summary>
+public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
+{
+    private const string BaseUrl = "https://api.elevenlabs.io/v1";
+
+    /// <summary>
+    /// The name this provider's key is stored under. Matches the shape the LLM providers use,
+    /// so the secret store holds one kind of thing.
+    /// </summary>
+    public const string KeySecretName = "elevenlabs.apiKey";
+
+    public const string ProviderId = "elevenlabs";
+
+    /// <summary>
+    /// The multilingual model. Named rather than left to the service's default so that a
+    /// change on their side is not a change in what the Commander hears, and because the speed
+    /// control this provider exposes is a property of the model generation rather than of the
+    /// account.
+    /// </summary>
+    public const string DefaultModel = "eleven_multilingual_v2";
+
+    /// <summary>
+    /// What leaves the machine. Stated here so the settings row and the documentation page read
+    /// it from one place (list.md Phase 4, "Say what each provider receives").
+    /// </summary>
+    public const string EgressDisclosure =
+        "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, along " +
+        "with your API key. That includes re-voiced in-game messages when you have turned those " +
+        "on, which are written by other players. No journal content, game state or other keys " +
+        "are sent. Selecting a different voice provider stops all of it.";
+
+    /// <summary>
+    /// ElevenLabs accepts a speaking rate between these, and rejects the request outright
+    /// outside them rather than clamping. d47's own rate is normalised around 1.0 with a wider
+    /// range than this, so the conversion clamps — a Commander who set 1.6 for Edge gets this
+    /// provider's fastest rather than an error and silence.
+    /// </summary>
+    public const double MinimumSpeed = 0.7;
+
+    public const double MaximumSpeed = 1.2;
+
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
+    private readonly ILogger<ElevenLabsTtsProvider> _logger;
+    private readonly HttpClient _http;
+    private readonly bool _ownsHttp;
+    private readonly Func<string?> _key;
+
+    private IReadOnlyList<VoiceInfo>? _voices;
+
+    /// <param name="key">
+    /// Asked for rather than held, because a key can be added or replaced mid-session and the
+    /// next line has to use it — "apply every setting without a restart" reaches in here
+    /// (list.md Phase 4). Null means no key is stored yet, which is a capability being off
+    /// rather than an error to raise.
+    /// </param>
+    public ElevenLabsTtsProvider(
+        Func<string?> key,
+        ILogger<ElevenLabsTtsProvider> logger,
+        HttpClient? http = null)
+    {
+        _key = key;
+        _logger = logger;
+        _http = http ?? new HttpClient();
+        _ownsHttp = http is null;
+    }
+
+    public string Id => ProviderId;
+
+    public string Name => "ElevenLabs";
+
+    public async Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(CancellationToken cancellationToken = default)
+    {
+        if (_voices is { } cached)
+        {
+            return cached;
+        }
+
+        if (_key() is not { Length: > 0 } key)
+        {
+            // No key is not a failure to log loudly. The picker's contract is that an empty
+            // list still lets the Commander keep the current value or type one (list.md Phase 4).
+            _logger.LogDebug("No ElevenLabs key is stored, so no voices can be listed");
+            return [];
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/voices");
+            request.Headers.Add("xi-api-key", key);
+
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var listed = await response.Content
+                .ReadFromJsonAsync<VoiceListResponse>(Json, cancellationToken)
+                .ConfigureAwait(false);
+
+            _voices =
+            [
+                .. (listed?.Voices ?? [])
+                    .Where(voice => voice.VoiceId is not null)
+                    .Select(voice => new VoiceInfo(
+                        voice.VoiceId!,
+                        voice.Name ?? voice.VoiceId!,
+
+                        // ElevenLabs voices are not locale-tagged the way Edge's are — the
+                        // model is multilingual and a voice carries an accent rather than a
+                        // locale. The accent label is the nearest true thing, and the picker
+                        // renders it in the same slot.
+                        voice.Labels?.GetValueOrDefault("accent") ?? "multilingual",
+                        voice.Labels?.GetValueOrDefault("gender"))),
+            ];
+
+            _logger.LogInformation("ElevenLabs offers {Count} voices", _voices.Count);
+            return _voices;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Could not list ElevenLabs voices");
+            return [];
+        }
+    }
+
+    public async Task<AudioClip> SynthesizeAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        if (_key() is not { Length: > 0 } key)
+        {
+            throw new TtsException("No ElevenLabs API key is stored. Add one in Settings.");
+        }
+
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            // Deliberately not a hardcoded fallback voice id. Edge can default to a named voice
+            // because its catalogue is fixed and public; an ElevenLabs account's voice list is
+            // its own, so guessing an id here would fail as a 404 that reads like an outage.
+            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.");
+        }
+
+        var url = $"{BaseUrl}/text-to-speech/{Uri.EscapeDataString(voiceId)}?output_format=pcm_24000";
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("xi-api-key", key);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+            request.Content = JsonContent.Create(
+                new SynthesisRequest
+                {
+                    Text = text,
+                    ModelId = DefaultModel,
+                    VoiceSettings = new VoiceSettings { Speed = SpeedFor(voice.Rate) },
+                },
+                options: Json);
+
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new TtsException(await DescribeAsync(response, text, cancellationToken).ConfigureAwait(false));
+            }
+
+            var pcm = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+            if (pcm.Length == 0)
+            {
+                throw new TtsException($"ElevenLabs returned no audio for \"{Excerpt(text)}\".");
+            }
+
+            return new AudioClip(text, PcmUpsample.Double(pcm), AudioFormat.Standard);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException($"ElevenLabs could not speak \"{Excerpt(text)}\": {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// d47's normalised rate to this provider's speed. The conversion is the entire reason
+    /// <see cref="VoiceSelection.Rate"/> is normalised rather than stored in provider units:
+    /// Edge takes a percentage offset with a wide range, this takes a multiplier with a narrow
+    /// one, and a settings value that meant either depending on what was selected would be a
+    /// value that changed meaning underneath the Commander.
+    /// </summary>
+    internal static double SpeedFor(double rate) => Math.Clamp(rate, MinimumSpeed, MaximumSpeed);
+
+    /// <summary>
+    /// The service's own error text where it gives one, because "401" is not something a
+    /// Commander can act on and "your key is not authorised for this voice" is.
+    /// </summary>
+    private static async Task<string> DescribeAsync(
+        HttpResponseMessage response,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        var reason = response.StatusCode switch
+        {
+            HttpStatusCode.Unauthorized => "the API key was rejected",
+            HttpStatusCode.Forbidden => "the API key is not allowed to use that voice or model",
+            HttpStatusCode.NotFound => "that voice id is not on this account",
+            HttpStatusCode.TooManyRequests => "the account is rate limited",
+            HttpStatusCode.PaymentRequired => "the account is out of characters",
+            _ => $"it answered {(int)response.StatusCode}",
+        };
+
+        var detail = string.Empty;
+
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (body is { Length: > 0 and < 500 })
+            {
+                detail = $" ({body.Trim()})";
+            }
+        }
+        catch
+        {
+            // The status is the useful half; a body that will not read does not change it.
+        }
+
+        return $"ElevenLabs could not speak \"{Excerpt(text)}\": {reason}{detail}.";
+    }
+
+    private static string Excerpt(string text) => text.Length <= 40 ? text : text[..40] + "…";
+
+    private sealed record VoiceListResponse
+    {
+        public List<ElevenVoice>? Voices { get; init; }
+    }
+
+    private sealed record ElevenVoice
+    {
+        [JsonPropertyName("voice_id")]
+        public string? VoiceId { get; init; }
+
+        public string? Name { get; init; }
+
+        public Dictionary<string, string>? Labels { get; init; }
+    }
+
+    private sealed record SynthesisRequest
+    {
+        public required string Text { get; init; }
+
+        [JsonPropertyName("model_id")]
+        public required string ModelId { get; init; }
+
+        [JsonPropertyName("voice_settings")]
+        public required VoiceSettings VoiceSettings { get; init; }
+    }
+
+    private sealed record VoiceSettings
+    {
+        public required double Speed { get; init; }
+    }
+
+    public void Dispose()
+    {
+        if (_ownsHttp)
+        {
+            _http.Dispose();
+        }
+    }
+}

@@ -317,8 +317,53 @@ public sealed record SpeechSettings
     /// <summary>
     /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
     /// because providers disagree about both the units and the range (list.md Phase 11).
+    /// <para>
+    /// The rate you like in general. <see cref="ProviderRates"/> is "except on this one".
+    /// </para>
     /// </summary>
     public double Rate { get; init; } = 1.0;
+
+    /// <summary>
+    /// Speaking rate per provider, keyed by provider id, overriding <see cref="Rate"/> where
+    /// present (list.md Phase 11: "Differences between providers, such as speed, is maintained
+    /// on a per-provider basis").
+    /// <para>
+    /// Normalising at the seam gets the <em>units</em> agreeing; it does not make 1.15 sound
+    /// the same on two different synthesisers, and it cannot — one has a wide percentage offset
+    /// and the other a multiplier it refuses to exceed. So the value the Commander settled on
+    /// for one provider is remembered against that provider, and switching does not carry a
+    /// number that meant something else.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, double> ProviderRates { get; init; } =
+        new Dictionary<string, double>();
+
+    /// <summary>
+    /// The voice a fleet carrier answers in, or null for the ship AI's (list.md Phase 11,
+    /// "Carrier Captain").
+    /// </summary>
+    public string? CarrierCaptainVoice { get; init; }
+
+    /// <summary>And its tower, separately, because they are two people.</summary>
+    public string? TowerVoice { get; init; }
+
+    /// <summary>
+    /// Whether in-game messages are spoken aloud, re-voiced (list.md Phase 11, "Speak incoming
+    /// messages in another voice").
+    /// <para>
+    /// Off by default, and not only because it is chatty. Message text is written by other
+    /// players and turning this on sends it to a third-party synthesiser — that is egress the
+    /// Commander should opt into rather than discover.
+    /// </para>
+    /// </summary>
+    public bool SpeakIncomingMessages { get; init; }
+
+    /// <summary>
+    /// Whether NPC chatter is included when messages are spoken. Its own switch because the
+    /// volume is completely different: a station approach produces a steady stream of NPC
+    /// traffic, and a Commander who wants to hear their wing does not necessarily want that.
+    /// </summary>
+    public bool SpeakNpcMessages { get; init; }
 
     /// <summary>
     /// The output device id, or null for the system default. An id rather than a name because

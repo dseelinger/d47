@@ -33,10 +33,23 @@ public static class SpeechCapability
     public const string RetryBackoffKey = "speech.retryBackoff";
     public const string TurnTimeoutKey = "speech.turnTimeout";
     public const string EgressKey = "speech.egress";
+    public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
+    public const string TowerVoiceKey = "speech.towerVoice";
+    public const string SpeakIncomingKey = "speech.speakIncomingMessages";
+    public const string SpeakNpcKey = "speech.speakNpcMessages";
 
-    /// <summary>The provider ids the settings row offers. "none" is a first-class choice.</summary>
-    public const string NoneId = "none";
-    public const string EdgeId = "edge";
+    /// <summary>The secret row key for a voice provider's API key. One row per provider needing one.</summary>
+    public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
+
+    /// <summary>
+    /// The provider ids the settings row offers. "none" is a first-class choice. Kept as
+    /// constants because call sites compare against them, but the list itself now comes from
+    /// <see cref="TtsProviderCatalog"/> so a provider cannot be offered by one row and unknown
+    /// to another.
+    /// </summary>
+    public const string NoneId = TtsProviderCatalog.NoneId;
+    public const string EdgeId = TtsProviderCatalog.EdgeId;
+    public const string ElevenLabsId = TtsProviderCatalog.ElevenLabsId;
 
     /// <summary>
     /// Everything the arbiter needs from the outside world, supplied by the app. Passed as
@@ -110,16 +123,21 @@ public static class SpeechCapability
                 },
             },
         ],
-        Settings =
-        [
+        Settings = Rows(surface),
+    };
+
+    private static IReadOnlyList<SettingRow> Rows(SpeechSurface surface)
+    {
+        var rows = new List<SettingRow>
+        {
             new SettingRow
             {
                 Key = ProviderKey,
                 Label = "Voice provider",
                 Help = "Where spoken replies are synthesised. \"None\" leaves D47 silent; cues still play.",
                 Kind = SettingKind.Choice,
-                Choices = [EdgeId, NoneId],
-                ChoiceLabel = id => id == EdgeId ? "Edge Neural (free)" : "None — do not speak",
+                Choices = [.. TtsProviderCatalog.All.Select(p => p.Id)],
+                ChoiceLabel = id => TtsProviderCatalog.Selected(id).Label,
                 DocsAnchor = "provider",
                 Binding = new SettingBinding
                 {
@@ -149,7 +167,7 @@ public static class SpeechCapability
             {
                 Key = RateKey,
                 Label = "Speaking rate",
-                Help = "1.0 is the voice's natural pace. 1.2 is a fifth faster.",
+                Help = "1.0 is the voice's natural pace. 1.2 is a fifth faster. Remembered per provider.",
                 Kind = SettingKind.Number,
 
                 // Fifths, because that is the unit the help text is written in. Without a step
@@ -164,10 +182,92 @@ public static class SpeechCapability
                     // that disagrees with the written one makes every whole-number rate look
                     // like a change: "1" is written, "1.0" is read back, and the unchanged
                     // check never fires, so the settings file is rewritten on every apply.
-                    Read = s => s.Speech.Rate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
+                    Read = s => RateFor(s).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
+                    Write = (s, v) => WriteRate(s, v),
+                },
+            },
+            new SettingRow
+            {
+                Key = CarrierCaptainVoiceKey,
+                Label = "Carrier captain voice",
+                Help = "Who answers for your fleet carrier. Empty uses the ship AI's voice.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(the ship AI's voice)",
+                AllowsFreeText = true,
+                ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
+
+                // Only on offer to a Commander who has one. A row for a carrier you do not own
+                // is a control that can only be got wrong, and the journal already knows.
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                GroupHelp =
+                    "Who else D47 speaks as. Each of these is a different person from your ship's AI, "
+                    + "and they never borrow its voice unless you leave them empty.",
+                DocsAnchor = "carrier-voices",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.CarrierCaptainVoice,
+                    Write = (s, v) => s with { Speech = s.Speech with { CarrierCaptainVoice = v } },
+                },
+            },
+            new SettingRow
+            {
+                Key = TowerVoiceKey,
+                Label = "Carrier tower voice",
+                Help = "Who handles arrivals and departures. A different person from the captain.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(the ship AI's voice)",
+                AllowsFreeText = true,
+                ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "carrier-voices",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.TowerVoice,
+                    Write = (s, v) => s with { Speech = s.Speech with { TowerVoice = v } },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakIncomingKey,
+                Label = "Speak incoming messages",
+                Help = "Read in-game chat aloud, each sender in their own voice. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakIncomingMessages ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { Rate = ParseRate(v) },
+                        Speech = s.Speech with { SpeakIncomingMessages = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakNpcKey,
+                Label = "Include NPC chatter",
+                Help = "Also speak messages from NPCs. A station approach produces a lot of these.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+
+                // Only meaningful once messages are being spoken at all, so it is absent rather
+                // than greyed out until then — a disabled control still asserts the setting exists.
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakNpcMessages ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakNpcMessages = v is not "false" and not null },
                     },
                 },
             },
@@ -349,22 +449,45 @@ public static class SpeechCapability
                 Key = EgressKey,
                 Label = "What the voice provider receives",
                 Kind = SettingKind.Info,
-                Help = EdgeEgress,
-                AppliesWhen = s => s.Speech.Provider != NoneId,
+
+                // The selected provider's own words, not Edge's. This row used to state Edge's
+                // disclosure unconditionally, which was true while Edge was the only provider
+                // and becomes a false statement the moment a second one is selectable.
+                Help = "Exactly what leaves this machine to be spoken, for the provider you have selected.",
                 DocsAnchor = "egress",
-                Binding = new SettingBinding { Read = _ => EdgeEgress },
+                Binding = new SettingBinding
+                {
+                    Read = s => TtsProviderCatalog.Selected(s.Speech.Provider).Egress,
+                },
             },
-        ],
-    };
+        };
+
+        // One key row per provider that needs one, rather than a single row whose secret name
+        // shifts underneath it. Each declares when it applies, so only the selected provider's
+        // key is on screen — the same shape the language-model capability uses.
+        rows.AddRange(
+            from provider in TtsProviderCatalog.All
+            where provider.NeedsKey
+            select new SettingRow
+            {
+                Key = KeyRowFor(provider),
+                Label = $"{provider.Name} API key",
+                Help = "Stored encrypted for this Windows account. Write-only: D47 will never show it back to you.",
+                Kind = SettingKind.Secret,
+                SecretName = provider.KeySecretName,
+                DocsAnchor = "api-key",
+                AppliesWhen = s => string.Equals(s.Speech.Provider, provider.Id, StringComparison.OrdinalIgnoreCase),
+            });
+
+        return rows;
+    }
 
     /// <summary>
-    /// Stated here rather than in the provider assembly so Core owns the disclosure and the
-    /// documentation gate can read it without referencing a provider (list.md Phase 4).
+    /// Kept as the name the rest of the app already imports, now reading from the one place the
+    /// disclosures live (<see cref="TtsProviderCatalog"/>) rather than asserting Edge's text as
+    /// though it were every provider's.
     /// </summary>
-    public const string EdgeEgress =
-        "Edge Neural: the text of every reply D47 speaks is sent to Microsoft to be turned into " +
-        "audio. No game state, no journal content and no keys are sent. Choosing \"None\" sends " +
-        "nothing and leaves D47 silent.";
+    public static string EdgeEgress => TtsProviderCatalog.Edge.Egress;
 
     /// <summary>
     /// The settings-to-policy conversion, in one place so the panel, the file and the turn loop
@@ -380,7 +503,46 @@ public static class SpeechCapability
         AttemptTimeout = TimeSpan.FromSeconds(speech.TurnTimeoutSeconds),
     };
 
-    private static double ParseRate(string? value) => ParseDouble(value, 1.0, 0.5, 2.0);
+    /// <summary>
+    /// The rate in force: this provider's own if it has one, otherwise the general one. Read
+    /// through here by the row and by the app, so the two cannot disagree about which value is
+    /// actually being spoken at.
+    /// </summary>
+    public static double RateFor(D47Settings settings)
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+
+        var rate = settings.Speech.ProviderRates.TryGetValue(provider.Id, out var own)
+            ? own
+            : settings.Speech.Rate;
+
+        // Clamped to what the selected provider will actually accept, so a value carried over
+        // from a provider with a wider range degrades to this one's fastest rather than being
+        // rejected as a request and arriving as silence.
+        return Math.Clamp(rate, provider.MinimumRate, provider.MaximumRate);
+    }
+
+    /// <summary>
+    /// Writes the rate against the provider it was chosen for, never as the general one. The
+    /// general value stays whatever a fresh install had, so clearing a provider's override
+    /// falls back to something sensible rather than to the last provider's number.
+    /// </summary>
+    private static D47Settings WriteRate(D47Settings settings, string? value)
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var rates = new Dictionary<string, double>(settings.Speech.ProviderRates, StringComparer.OrdinalIgnoreCase);
+
+        if (value is null)
+        {
+            rates.Remove(provider.Id);
+        }
+        else
+        {
+            rates[provider.Id] = ParseDouble(value, settings.Speech.Rate, provider.MinimumRate, provider.MaximumRate);
+        }
+
+        return settings with { Speech = settings.Speech with { ProviderRates = rates } };
+    }
 
     private static double ParseDouble(string? value, double fallback, double min, double max) =>
         double.TryParse(value, System.Globalization.NumberStyles.Float,

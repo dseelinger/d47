@@ -146,30 +146,9 @@ internal static class EdgeProtocol
     }
 
     /// <summary>
-    /// 24 kHz to the arbiter's 48 kHz. An exact 2× ratio, so each output pair is the original
-    /// sample and the midpoint to the next — linear interpolation, which for speech is
-    /// inaudible against the alternative and costs one pass.
+    /// 24 kHz to the arbiter's 48 kHz. Delegated rather than implemented here: the second
+    /// provider needs the identical conversion, and it should not have to reach into a class
+    /// named after Microsoft's wire format to get at it.
     /// </summary>
-    public static byte[] Upsample(ReadOnlySpan<byte> pcm)
-    {
-        var samples = pcm.Length / 2;
-        var output = new byte[samples * 4];
-
-        for (var i = 0; i < samples; i++)
-        {
-            var current = (short)(pcm[i * 2] | (pcm[(i * 2) + 1] << 8));
-            var next = i + 1 < samples
-                ? (short)(pcm[(i + 1) * 2] | (pcm[((i + 1) * 2) + 1] << 8))
-                : current;
-
-            var midpoint = (short)((current + next) / 2);
-
-            output[i * 4] = (byte)current;
-            output[(i * 4) + 1] = (byte)(current >> 8);
-            output[(i * 4) + 2] = (byte)midpoint;
-            output[(i * 4) + 3] = (byte)(midpoint >> 8);
-        }
-
-        return output;
-    }
+    public static byte[] Upsample(ReadOnlySpan<byte> pcm) => PcmUpsample.Double(pcm);
 }

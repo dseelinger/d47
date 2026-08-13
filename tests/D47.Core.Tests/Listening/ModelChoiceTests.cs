@@ -127,6 +127,9 @@ public class ModelChoiceTests
             Llm = new LlmSettings { Provider = Core.Conversation.LlmProviderCatalog.NoneId },
             Updates = new UpdateSettings { CheckOnStartup = false },
             Listening = new ListeningSettings { Model = WhisperModels.NoneId },
+
+            // Every provider off means the voice one too: Edge Neural is free, not local.
+            Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

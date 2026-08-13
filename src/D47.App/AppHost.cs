@@ -944,24 +944,55 @@ public sealed class AppHost : IDisposable
     private void ApplySpeechSettings()
     {
         var speech = Settings.Current.Speech;
+        var provider = TtsProviderCatalog.Selected(speech.Provider);
 
-        if (speech.Provider == SpeechCapability.NoneId)
+        // Rebuilt when the provider changes, not merely when there is none yet. A voice id
+        // belongs to the provider that issued it, so carrying a client — or a voice list, or a
+        // table of sender assignments — across a switch keeps ids that no longer resolve.
+        if (!string.Equals(_ttsProviderId, provider.Id, StringComparison.Ordinal))
         {
-            _tts?.Dispose();
+            // Through the interface, so this stays correct for a provider that needs no
+            // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
+            // audio seam, and whether an implementation holds an HTTP handle is its own business.
+            (_tts as IDisposable)?.Dispose();
             _tts = null;
-        }
-        else if (_tts is null)
-        {
-            _tts = new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>());
+            _voices = [];
+            Cast.Reset();
+            _ttsProviderId = provider.Id;
 
-            // Fetched once, in the background. The picker asks synchronously and the list comes
-            // over the network, so it is cached rather than requested on open — and not awaited,
-            // because a settings change must not wait on a provider being reachable.
-            _ = LoadVoicesAsync(_tts);
+            _tts = provider.Id switch
+            {
+                SpeechCapability.EdgeId =>
+                    new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>()),
+
+                SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
+                    () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
+                    _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
+
+                _ => null,
+            };
+
+            if (_tts is not null)
+            {
+                // Fetched once, in the background. The picker asks synchronously and the list
+                // comes over the network, so it is cached rather than requested on open — and
+                // not awaited, because a settings change must not wait on a provider being
+                // reachable.
+                _ = LoadVoicesAsync(_tts);
+            }
         }
 
         Voice.Tts = _tts;
-        Voice.Voice = new VoiceSelection(speech.Voice, speech.Rate);
+
+        // Everyone d47 can speak as, filled in from settings. The ship AI's voice is the
+        // Commander's explicit choice if they made one, then the voice paired to the persona
+        // aboard (#33), then the provider's own default.
+        Cast.Rate = SpeechCapability.RateFor(Settings.Current);
+        Cast.DefaultVoice = speech.Voice ?? PairedVoiceForCurrentPersona();
+        Cast.Assign(VoiceRole.CarrierCaptain, speech.CarrierCaptainVoice);
+        Cast.Assign(VoiceRole.TowerControl, speech.TowerVoice);
+
+        Voice.Voice = Cast.For(VoiceRole.ShipAi);
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
         Voice.Bed = speech.ThinkingBed;
@@ -1160,7 +1191,33 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
-    private EdgeNeuralTtsProvider? _tts;
+    /// <summary>
+    /// The voice provider in use. Typed as the seam rather than as Edge's implementation, which
+    /// is the point of the seam — Phase 11's paid provider arrives without anything above this
+    /// line noticing (architecture.md §2).
+    /// </summary>
+    private ITtsProvider? _tts;
+
+    /// <summary>
+    /// Which provider <see cref="_tts"/> is. Tracked rather than inferred, because "is it null"
+    /// answered "does one need building" only while there was exactly one to build.
+    /// </summary>
+    private string? _ttsProviderId;
+
+    /// <summary>
+    /// Everyone d47 can speak as (list.md Phase 11). Not a second audio path: it decides which
+    /// voice a line is synthesised in, and the line still goes through the one arbiter, because
+    /// separate paths per voice are how a line gets spoken in the wrong one (architecture.md D7).
+    /// </summary>
+    public VoiceCast Cast { get; } = new();
+
+    /// <summary>
+    /// The voice paired to the core currently aboard, or null if none has been (#33). Read at
+    /// the moment it is needed rather than cached, because the pairing runs in the background
+    /// after startup and the Commander may change core before it finishes.
+    /// </summary>
+    private string? PairedVoiceForCurrentPersona() =>
+        Settings.Current.Persona.Voices.GetValueOrDefault(Personas.Current.Id);
 
     /// <summary>
     /// What the selected provider offers, cached. Empty until the first fetch returns, which is
@@ -1482,7 +1539,7 @@ public sealed class AppHost : IDisposable
         Audio.Silence();
         Audio.Dispose();
         _audioSink.Dispose();
-        _tts?.Dispose();
+        (_tts as IDisposable)?.Dispose();
 
         _loggerFactory.Dispose();
         Log.CloseAndFlush();

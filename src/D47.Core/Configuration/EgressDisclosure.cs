@@ -41,6 +41,15 @@ public static class EgressDisclosure
     public const string SpeechModels = "models";
 
     /// <summary>
+    /// Synthesising a spoken line. Added in Phase 11 alongside the second provider, and it
+    /// should have been here from Phase 5 — every voice provider d47 has is a network service,
+    /// so a set that claimed to be exhaustive while omitting the one that sends every word D47
+    /// says was not exhaustive. architecture.md §7 names it and list.md Phase 4 asks for it by
+    /// name ("reply text to a paid TTS").
+    /// </summary>
+    public const string TextToSpeech = "tts";
+
+    /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
     /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
     /// storage, so the bytes land from objects.githubusercontent.com. Named in full rather than
@@ -51,7 +60,7 @@ public static class EgressDisclosure
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
-        [LanguageModel, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
+        [LanguageModel, TextToSpeech, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
 
     /// <summary>
     /// The heading for a disclosure. Fixed, because it labels a settings row and rows are
@@ -62,6 +71,7 @@ public static class EgressDisclosure
     {
         LanguageModel => "Language model",
         UpdateCheck => "Update check",
+        TextToSpeech => "Spoken replies",
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
@@ -71,6 +81,7 @@ public static class EgressDisclosure
     public static EgressEntry Entry(string id, D47Settings settings, bool llmKeyPresent) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
+        TextToSpeech => TextToSpeechEntry(settings),
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(
                 UpdateCheck,
@@ -119,6 +130,20 @@ public static class EgressDisclosure
 
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
+
+    /// <summary>
+    /// What the selected voice provider receives. Active whenever one is selected, because that
+    /// is the setting that causes the transfer — every line D47 speaks goes out, so there is no
+    /// weaker state than "a provider is chosen".
+    /// </summary>
+    private static EgressEntry TextToSpeechEntry(D47Settings settings)
+    {
+        var provider = Audio.TtsProviderCatalog.Selected(settings.Speech.Provider);
+
+        return provider.Speaks
+            ? new EgressEntry(TextToSpeech, NameOf(TextToSpeech), provider.Destination, provider.Egress, Active: true)
+            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), provider.Egress);
+    }
 
     public static IReadOnlyList<EgressEntry> For(D47Settings settings, bool llmKeyPresent) =>
         [.. Ids.Select(id => Entry(id, settings, llmKeyPresent))];
