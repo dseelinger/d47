@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
 using D47.Core;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.App.Controls;
 
@@ -48,6 +49,25 @@ public sealed class AboutWindow : Window
         var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
+        // The permanent way in. The first-run prompt is a convenience; without this, declining
+        // it once would make the decision irreversible, which is a poor property for an offer.
+        var addToStartMenu = new Button
+        {
+            Name = "AddToStartMenu",
+            Content = "Add to Start Menu",
+            IsVisible = !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
+        };
+
+        addToStartMenu.Click += (_, _) =>
+        {
+            var added = Environment.ProcessPath is { } executable
+                        && StartMenuShortcut.TryCreate(
+                            StartMenuShortcut.DefaultPath, executable, NullLogger.Instance);
+
+            addToStartMenu.Content = added ? "Added" : "Could not add it";
+            addToStartMenu.IsEnabled = false;
+        };
+
         Content = new StackPanel
         {
             Margin = new Thickness(24),
@@ -58,11 +78,19 @@ public sealed class AboutWindow : Window
                 Field("Version", BuildInfo.Semantic),
                 Field("Build", BuildInfo.Full),
                 Field("Data folder", paths.Data),
-                new StackPanel
+                new DockPanel
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Children = { close },
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            [DockPanel.DockProperty] = Dock.Right,
+                            Orientation = Orientation.Horizontal,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            Children = { close },
+                        },
+                        addToStartMenu,
+                    },
                 },
             },
         };

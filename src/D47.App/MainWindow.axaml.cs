@@ -172,6 +172,11 @@ public partial class MainWindow : Window
         {
             _ = CheckForUpdateAsync(_host);
         }
+
+        // Last, and awaited rather than fired and forgotten: it is modal, so it must not appear
+        // over a panel that is still assembling itself. Returns immediately on every run after
+        // the first.
+        await OfferStartMenuEntryAsync();
     }
 
     /// <summary>
@@ -552,6 +557,72 @@ public partial class MainWindow : Window
         // which is what keeps a taskbar pin pointing at the new one.
         Process.Start(new ProcessStartInfo(running) { UseShellExecute = true });
         Close();
+    }
+
+    /// <summary>
+    /// Offers a Start Menu entry, once, on the first run that does not already have one.
+    /// <para>
+    /// d47 does not install — one file the Commander put wherever they put it — so without this
+    /// the program is only findable by remembering where that was. Asked rather than assumed,
+    /// because writing into someone's Start Menu uninvited is what the no-installer choice was
+    /// avoiding in the first place. Asked <em>once</em>: the answer is recorded either way, so a
+    /// no stays no.
+    /// </para>
+    /// </summary>
+    private async Task OfferStartMenuEntryAsync()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        // Read fresh and written back immediately, never cached: WindowPlacementMemory writes
+        // the same file, and two holders of a stale copy is how one of them loses its changes.
+        if (_host.ViewState.Load().StartMenuOffered)
+        {
+            return;
+        }
+
+        // Nothing to offer if there is one already — a Commander who made one by hand should
+        // never see this.
+        if (StartMenuShortcut.Exists() || Environment.ProcessPath is not { } executable)
+        {
+            MarkOffered();
+            return;
+        }
+
+        var wanted = await new ConfirmWindow(
+            "Add to the Start Menu?",
+            $"d47 runs from {executable} and does not install itself. A Start Menu entry means "
+            + "you can find it by name instead of by remembering where you put it. It is one "
+            + "shortcut, for you only, and you can delete it like any other.",
+            confirmLabel: "Add it",
+            declineLabel: "No thanks").AskAsync(this);
+
+        // Recorded before acting, so failing to write the shortcut does not turn into the
+        // question coming back every launch.
+        MarkOffered();
+
+        if (!wanted)
+        {
+            return;
+        }
+
+        if (!StartMenuShortcut.TryCreate(
+                StartMenuShortcut.DefaultPath,
+                executable,
+                _host.Loggers.CreateLogger<MainWindow>()))
+        {
+            _model.Append("I could not add the Start Menu entry. You can still run d47 from where it is.");
+        }
+    }
+
+    private void MarkOffered()
+    {
+        if (_host is not null)
+        {
+            _host.ViewState.Save(_host.ViewState.Load() with { StartMenuOffered = true });
+        }
     }
 
     private void OpenReleasePage(AvailableUpdate update, string reason)

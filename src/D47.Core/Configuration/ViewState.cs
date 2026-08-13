@@ -24,6 +24,18 @@ public sealed record ViewState
     public WindowPlacement? MainWindow { get; init; }
 
     /// <summary>
+    /// Whether the Commander has been asked about a Start Menu entry. Recorded whichever way
+    /// they answered, because "no" has to stick — an offer that returns every launch is not an
+    /// offer, it is nagging.
+    /// <para>
+    /// Here rather than in settings for the same reason the window's position is: there is
+    /// nothing to configure, no default worth documenting, and being unable to read it should
+    /// cost one repeated question rather than a loud failure.
+    /// </para>
+    /// </summary>
+    public bool StartMenuOffered { get; init; }
+
+    /// <summary>
     /// Capability ids the Commander expanded. Kept separately from the collapsed list because
     /// a card can start collapsed by default: without this, expanding one would be
     /// indistinguishable from never having touched it, and it would close again next time.
