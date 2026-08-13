@@ -150,6 +150,12 @@ public sealed class AppHost : IDisposable
 
     public UpdateChecker Updates { get; }
 
+    /// <summary>
+    /// Records what has been exercised by hand, when this process was asked to. Null — and
+    /// therefore absent from the panel too — in every normal run.
+    /// </summary>
+    public D47.App.Coverage.CoverageRecorder? CoverageRecorder { get; private set; }
+
     /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
     public UpdateInstaller Installer { get; }
 
@@ -388,6 +394,14 @@ public sealed class AppHost : IDisposable
         // D5), and that rule is what keeps tool schemas byte-identical across turns.
         CapabilityRegistry? built = null;
 
+        // Off unless D47_COVERAGE=1. Created before the registry because when it is on it adds a
+        // row, and which rows exist has to be settled before registration — descriptors are
+        // registered once and never mutated.
+        var coverage = D47.App.Coverage.CoverageRecorder.Create(
+            paths,
+            () => DateTimeOffset.Now,
+            loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -422,7 +436,8 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds,
                     InstalledModels = () => models.Installed(),
-                }));
+                },
+                coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
 
@@ -501,6 +516,9 @@ public sealed class AppHost : IDisposable
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
+
+        host.CoverageRecorder = coverage;
+        coverage?.Follow(capabilities, settings);
 
         // Captured audio becomes words on the thread pool, never on the audio thread that
         // produced it. Whisper on a CPU takes hundreds of milliseconds for a short clip; doing
@@ -1003,6 +1021,8 @@ public sealed class AppHost : IDisposable
 
     public void Dispose()
     {
+        CoverageRecorder?.Save();
+
         Settings.Changed -= OnSettingsChanged;
 
         // The loop stops before anything it polls is torn down, so a tick cannot land on a

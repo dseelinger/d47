@@ -85,3 +85,8 @@ Two gates run as tests rather than as CI steps, so they cannot drift from the co
 docs test tells you what to paste.
 
 Everything the app writes goes to `data/` beside the executable — never `%APPDATA%`.
+
+`D47_COVERAGE=1` records which tools and settings rows have actually been driven in the
+running app, and which have changed since they last were, to `data/coverage.md`. A workbench
+aid for knowing what is left to try by hand — off, and entirely absent from the surface,
+unless that variable is set.
