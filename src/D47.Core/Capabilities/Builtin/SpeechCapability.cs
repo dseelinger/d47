@@ -504,6 +504,43 @@ public static class SpeechCapability
     };
 
     /// <summary>
+    /// The same settings with every chosen voice dropped, for use when the speech provider
+    /// changes.
+    /// <para>
+    /// A voice id is only meaningful to the provider that issued it. Carried across a switch
+    /// they are not preferences that happen to be stale, they are identifiers for a service
+    /// that has never heard of them — ElevenLabs answers <c>en-US-RogerNeural</c> with "an
+    /// invalid ID has been received", and every sentence fails while the cues, which need no
+    /// voice, keep playing. That reads as d47 choosing to be quiet.
+    /// </para>
+    /// <para>
+    /// The persona pairings go with them, and <c>VoicesPaired</c> is cleared so they are chosen
+    /// again from the new provider's list. Leaving that flag set was how eleven cores kept
+    /// pointing at voices that had stopped existing.
+    /// </para>
+    /// <para>
+    /// Dropped rather than remembered per provider, which is what <see cref="SpeechSettings
+    /// .ProviderRates"/> does for the rate. Voices are a larger structure — the ship's, two
+    /// named roles and one per core — and the fix for a Commander who cannot hear anything
+    /// should not wait on a schema that can hold all of it twice.
+    /// </para>
+    /// </summary>
+    public static D47Settings WithoutChosenVoices(D47Settings settings) => settings with
+    {
+        Speech = settings.Speech with
+        {
+            Voice = null,
+            CarrierCaptainVoice = null,
+            TowerVoice = null,
+        },
+        Persona = settings.Persona with
+        {
+            Voices = new Dictionary<string, string>(StringComparer.Ordinal),
+            VoicesPaired = false,
+        },
+    };
+
+    /// <summary>
     /// The rate in force: this provider's own if it has one, otherwise the general one. Read
     /// through here by the row and by the app, so the two cannot disagree about which value is
     /// actually being spoken at.

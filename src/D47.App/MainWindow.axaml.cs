@@ -135,6 +135,15 @@ public partial class MainWindow : Window
             _model.ErrorText = string.Join(Environment.NewLine, errors);
         }
 
+        // A voice companion that cannot speak has to say so. This event was raised and nobody
+        // was listening, so a provider rejecting every sentence — a voice id belonging to the
+        // provider selected before this one, say — looked exactly like d47 having nothing to
+        // say. The cues still played, which made it read as a deliberate silence.
+        //
+        // Posted, because synthesis fails on whichever thread was doing the synthesising.
+        _host.Voice.SynthesisFailed += reason => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.ErrorText = reason);
+
         DescribeHotkeys();
         BindShutUp();
         BindReanchor();

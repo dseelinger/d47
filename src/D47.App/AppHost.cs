@@ -925,6 +925,28 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>Whether the selected provider has whatever credential it needs, if it needs one.</summary>
+    private bool HasKeyFor(TtsProviderInfo provider) =>
+        provider.KeySecretName is not { } secret || Secrets.Has(secret);
+
+    /// <summary>
+    /// Drops every voice chosen while <paramref name="previous"/> was selected.
+    /// <para>
+    /// A voice id is only meaningful to the provider that issued it, so these are not settings
+    /// that survive a switch — they are settings that belong to a provider no longer in use.
+    /// Clearing <c>VoicesPaired</c> as well is what lets the pairing run again against the new
+    /// provider's list; leaving it set was how eleven cores kept pointing at voices that had
+    /// stopped existing.
+    /// </para>
+    /// </summary>
+    private void ForgetVoicesChosenFor(string previous)
+    {
+        _logger.LogInformation(
+            "Switched away from {Previous}; clearing the voices chosen for it", previous);
+
+        Settings.Replace(SpeechCapability.ProviderKey, SpeechCapability.WithoutChosenVoices);
+    }
+
     private async Task LoadVoicesAsync(ITtsProvider provider)
     {
         try
@@ -1061,6 +1083,19 @@ public sealed class AppHost : IDisposable
         // table of sender assignments — across a switch keeps ids that no longer resolve.
         if (!string.Equals(_ttsProviderId, provider.Id, StringComparison.Ordinal))
         {
+            // The same rule applied to what is written down, not only to what is in memory.
+            // Resetting the cast dropped the stale ids from this process and left them in
+            // settings, so the next line put them straight back: switching from Edge to
+            // ElevenLabs sent "en-US-RogerNeural" to an API that had never heard of it, and
+            // every sentence failed while the cues, which need no voice, kept playing.
+            //
+            // Only on an actual switch. _ttsProviderId is null on the first call of the
+            // process, and clearing then would wipe the Commander's choices on every launch.
+            if (_ttsProviderId is not null)
+            {
+                ForgetVoicesChosenFor(_ttsProviderId);
+            }
+
             // Through the interface, so this stays correct for a provider that needs no
             // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
             // audio seam, and whether an implementation holds an HTTP handle is its own business.
@@ -1091,6 +1126,16 @@ public sealed class AppHost : IDisposable
                 _ = LoadVoicesAsync(_tts);
             }
         }
+        else if (_tts is not null && HasKeyFor(provider) != _ttsKeyPresent)
+        {
+            // A key arriving is the other thing that changes what the provider can tell us, and
+            // it does not change the provider. Selecting ElevenLabs before pasting the key
+            // fetched an empty list and nothing refetched it, so the picker stayed empty until
+            // the app was restarted — with the key sitting right there in the row above it.
+            _ = LoadVoicesAsync(_tts);
+        }
+
+        _ttsKeyPresent = HasKeyFor(provider);
 
         Voice.Tts = _tts;
 
@@ -1313,6 +1358,9 @@ public sealed class AppHost : IDisposable
     /// answered "does one need building" only while there was exactly one to build.
     /// </summary>
     private string? _ttsProviderId;
+
+    /// <summary>Whether the selected provider had its key last time speech settings were applied.</summary>
+    private bool _ttsKeyPresent;
 
     /// <summary>
     /// Everyone d47 can speak as (list.md Phase 11). Not a second audio path: it decides which
