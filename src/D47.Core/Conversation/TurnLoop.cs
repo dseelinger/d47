@@ -133,6 +133,20 @@ public sealed class TurnLoop(
     /// </summary>
     public Func<string?>? LiveGameState { get; set; }
 
+    /// <summary>
+    /// The mode the Commander is in, for choosing the tool profile. A source rather than a
+    /// value for the same reason <see cref="LiveGameState"/> is: it changes several times a
+    /// minute underneath this.
+    /// </summary>
+    public Func<Input.ControlContext>? ToolContext { get; set; }
+
+    /// <summary>
+    /// Whether the Commander has allowed d47 to press keys. When they have not, no action tool
+    /// ships in any mode — advertising a tool that will refuse every call is paying for a
+    /// refusal on every turn.
+    /// </summary>
+    public Func<bool>? ActionsEnabled { get; set; }
+
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -258,10 +272,19 @@ public sealed class TurnLoop(
             Effort = effort,
             Prompt = new PromptAssembly
             {
-                // Tools are not advertised yet: nothing here executes a tool_use block, and
-                // advertising a tool the loop would silently drop is worse than not offering it.
-                // The ordering is in place and tested so Phase 10 only has to fill position 1.
-                Tools = [],
+                // Which tools ship is a choice between pre-declared profiles, never between
+                // individual tools (list.md Phase 10) — a per-turn set would rewrite position 1
+                // and invalidate the whole cached prefix. The profile is quantized by mode, so
+                // a Commander who stays in supercruise pays for one cache entry and reads it.
+                //
+                // Gated on the provider actually being able to execute a tool_use reply.
+                // Advertising a tool the loop would silently drop is worse than not offering
+                // it: the model then tells the Commander it has done something that never
+                // happened. False everywhere today, so this ships nothing yet.
+                Tools = activeProvider.CapabilitiesFor(chosenModel).SupportsToolCalls
+                    ? ToolProfiles.For(capabilities, ToolContext?.Invoke() ?? Input.ControlContext.None,
+                        ActionsEnabled?.Invoke() ?? false).Tools
+                    : [],
                 Persona = Persona,
                 AboutMe = AboutMe,
                 History = [.. _history, new ConversationMessage(ConversationRole.User, input)],

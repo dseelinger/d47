@@ -576,6 +576,11 @@ public sealed class AppHost : IDisposable
             // Both halves sit at prompt position 7, below the cache breakpoint, which is what
             // lets the reachable action set change several times a minute without touching a
             // byte of the cached prefix.
+            // The mode picks the profile; the setting decides whether any action tool ships at
+            // all. Both asked per turn, because both change underneath this.
+            ToolContext = () => actionSurface.Context,
+            ActionsEnabled = () => settings.Current.Actions.Keyboard,
+
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
                 Join(ActionCapabilities.Describe(actionSurface), MacroCapability.Live(macros))),

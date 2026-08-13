@@ -25,6 +25,21 @@ public sealed record LlmProviderCapabilities
     /// dependent: 512 tokens on Claude Opus 5, 1024 on Opus 4.8 and Sonnet 5.
     /// </summary>
     public required int MinimumCacheablePrefixTokens { get; init; }
+
+    /// <summary>
+    /// Whether this endpoint can be sent tool definitions <em>and</em> have its
+    /// <c>tool_use</c> replies executed and fed back. Both halves, deliberately: advertising a
+    /// tool the turn loop would silently drop is worse than not offering it, because the model
+    /// then tells the Commander it has done something that never happened.
+    /// <para>
+    /// False everywhere today. The profile machinery that decides <em>which</em> tools would
+    /// ship is complete and tested (see <see cref="ToolProfiles"/>); what is missing is the
+    /// agentic half — parsing tool_use blocks out of the stream, running them and appending
+    /// tool_result. This flag is what connects the two, and it slots into "capabilities as
+    /// state" like every other thing an endpoint may or may not do.
+    /// </para>
+    /// </summary>
+    public bool SupportsToolCalls { get; init; }
 }
 
 public sealed record LlmUsage(
