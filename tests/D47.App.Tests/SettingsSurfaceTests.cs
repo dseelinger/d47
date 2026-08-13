@@ -28,6 +28,30 @@ namespace D47.App.Tests;
 /// </summary>
 public class SettingsSurfaceTests
 {
+    /// <summary>
+    /// Where the render captures land. Unique per test run, because the path used to be a fixed
+    /// folder and two runs at once — a second session in a worktree, or a rerun started before
+    /// the first finished — then wrote over each other's PNGs and left a set nobody could trust.
+    /// The timestamp sorts, the process id disambiguates two runs in the same second, and both
+    /// capture tests share the one directory so a run's output stays together.
+    /// </summary>
+    private static readonly Lazy<string> CaptureDirectory = new(() =>
+    {
+        var run = Path.Combine(
+            Path.GetTempPath(),
+            "d47-ui-captures",
+            $"{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}");
+        Directory.CreateDirectory(run);
+        return run;
+    });
+
+    private readonly ITestOutputHelper _output;
+
+    public SettingsSurfaceTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
     private static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Surface()
     {
@@ -129,8 +153,8 @@ public class SettingsSurfaceTests
     public void EveryThemeRendersToACapture()
     {
         var (settings, viewState, paths) = Surface();
-        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
-        Directory.CreateDirectory(output);
+        var output = CaptureDirectory.Value;
+        _output.WriteLine($"Captures: {output}");
 
         var window = Open(settings, viewState, paths);
 
@@ -186,8 +210,8 @@ public class SettingsSurfaceTests
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
-        Directory.CreateDirectory(output);
+        var output = CaptureDirectory.Value;
+        _output.WriteLine($"Captures: {output}");
         frame.Save(
             Path.Combine(output, "main-window.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
