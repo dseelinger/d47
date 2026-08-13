@@ -44,6 +44,23 @@ public sealed record CapabilityDescriptor
     public IReadOnlyList<string> Keywords { get; init; } = [];
 
     /// <summary>
+    /// Phrases that only mean anything when they were spoken.
+    /// <para>
+    /// "Can you hear me" is the case. Said into a microphone it is a question about the
+    /// microphone and the report is the right answer; typed into the ask box it is a
+    /// conversational opener, and answering it with a hardware summary is answering about the
+    /// channel the Commander did not use. The words are identical and the intent is not, so the
+    /// only thing that can tell them apart is how they arrived.
+    /// </para>
+    /// <para>
+    /// Kept apart from <see cref="Keywords"/> rather than flagged inside it, for the same reason
+    /// <see cref="InterruptKeywords"/> is: a list whose entries mean different things depending
+    /// on a flag is a list that gets read wrong.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> SpokenKeywords { get; init; } = [];
+
+    /// <summary>
     /// Phrases that only mean anything while there is something to interrupt.
     /// <para>
     /// Kept apart from <see cref="Keywords"/> so that a word too broad to be a general command

@@ -25,6 +25,20 @@ public sealed class VoicePipeline(
 
     private int _turnNumber;
 
+    /// <summary>
+    /// The state the loop is showing. Held here so the settle back to idle knows whether there
+    /// is anything to settle from - a state that is already idle must not re-announce itself.
+    /// </summary>
+    private LoopState _state = LoopState.Idle;
+
+    /// <summary>
+    /// Whether this turn was spoken aloud. An answer that was just said out loud does not also
+    /// need a chime saying an answer happened, and the chime lands after the speech because the
+    /// arbiter is a queue - so what the Commander hears is the reply, a pause, and then a noise
+    /// about the reply they already heard.
+    /// </summary>
+    private bool _spoke;
+
     /// <summary>The provider, or null when no voice is configured. Swapped on a settings change.</summary>
     public ITtsProvider? Tts { get; set; }
 
@@ -69,6 +83,7 @@ public sealed class VoicePipeline(
 
         try
         {
+            _spoke = false;
             EnterState(LoopState.Thinking);
 
             await foreach (var turnEvent in turn.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -83,6 +98,7 @@ public sealed class VoicePipeline(
                         // bed stops the moment there are words rather than when the turn ends.
                         if (speech is null && Tts is { } provider)
                         {
+                            _spoke = true;
                             speech = new SpeechPipeline(
                                 arbiter, provider, Voice, group, loggers.CreateLogger<SpeechPipeline>());
                             speech.SynthesisFailed += OnSynthesisFailed;
@@ -128,13 +144,17 @@ public sealed class VoicePipeline(
             // A cancelled turn lands on Idle rather than Failed: nothing went wrong, the
             // Commander called it off, and a failure cue would be d47 complaining about being
             // told to stop.
-            EnterState(result?.Outcome switch
+            var settled = result?.Outcome switch
             {
                 TurnOutcome.Answered => LoopState.Answered,
                 TurnOutcome.Unsure => LoopState.Unsure,
                 TurnOutcome.Failed => LoopState.Failed,
                 _ => cancellationToken.IsCancellationRequested ? LoopState.Idle : LoopState.Failed,
-            });
+            };
+
+            // Answered and spoken needs no chime. Unsure and Failed keep theirs: those say
+            // something the reply itself did not.
+            EnterState(settled, cue: !(settled == LoopState.Answered && _spoke));
         }
 
         return result;
@@ -222,10 +242,50 @@ public sealed class VoicePipeline(
     /// </summary>
     public event Action<LoopState>? StateEntered;
 
-    public void EnterState(LoopState state)
+    public void EnterState(LoopState state) => EnterState(state, cue: true);
+
+    /// <summary>
+    /// Moves the loop, optionally without its cue.
+    /// <para>
+    /// The cue is suppressible rather than removed because it is only redundant when the same
+    /// news arrived by voice a moment earlier. With speech switched off, the chime is the only
+    /// thing that says the turn finished, and list.md Phase 5 (#20) asks for one per state.
+    /// </para>
+    /// </summary>
+    public void EnterState(LoopState state, bool cue)
     {
-        arbiter.EnterState(state, cues, Bed, CuesEnabled, BedEnabled);
+        arbiter.EnterState(state, cues, Bed, CuesEnabled && cue, BedEnabled);
+        _state = state;
         StateEntered?.Invoke(state);
+    }
+
+    /// <summary>
+    /// Returns the loop to idle once nothing is audible any more.
+    /// <para>
+    /// The face used to stop on the tick and stay there, because <see cref="LoopState.Answered"/>
+    /// was terminal and nothing ever left it - so "the last turn succeeded" and "d47 is doing
+    /// something right now" looked identical, which is the one distinction a loop-state icon
+    /// exists to make. Settling on the arbiter going quiet rather than on the turn returning is
+    /// deliberate: the turn returns while the reply is still being spoken.
+    /// </para>
+    /// <para>
+    /// No cue, because arriving at rest is not news.
+    /// </para>
+    /// </summary>
+    public void Settle(AudioActivity activity)
+    {
+        if (activity.Channel is not null || activity.BedPlaying)
+        {
+            return;
+        }
+
+        if (_state is LoopState.Idle or LoopState.Listening or LoopState.Transcribing or LoopState.Thinking)
+        {
+            return;
+        }
+
+        _state = LoopState.Idle;
+        StateEntered?.Invoke(LoopState.Idle);
     }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);

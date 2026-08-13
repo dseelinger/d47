@@ -70,12 +70,19 @@ public static class ListeningCapability
         ],
         Keywords =
         [
-            "can you hear me",
-            "are you listening",
             "what microphone",
             "which microphone",
             "push to talk",
             "is my key bound twice",
+        ],
+
+        // Only when spoken. Typed, these are conversation - a Commander who types "can you hear
+        // me" is opening a conversation, and answering with a hardware summary answers about
+        // the channel they did not use.
+        SpokenKeywords =
+        [
+            "can you hear me",
+            "are you listening",
         ],
         Display = new CapabilityDisplay { PanelTitle = "Listening", Order = 32 },
         Tools =
