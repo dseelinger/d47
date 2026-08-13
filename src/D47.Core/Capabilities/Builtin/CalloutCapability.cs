@@ -1,4 +1,5 @@
 using D47.Core.Callouts;
+using System.Globalization;
 using D47.Core.Configuration;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -191,19 +192,26 @@ public static class CalloutCapability
             Label = "A jump is long after",
             Help = "In seconds, measured from entering hyperspace rather than from starting the jump.",
             Kind = SettingKind.Number,
+            Step = 0.5,
             DefaultDisplay = "20",
             DocsAnchor = "long-jump-threshold",
             AppliesWhen = s => s.Callouts is { Enabled: true, LongJump: true },
             Binding = new SettingBinding
             {
-                Read = s => s.Callouts.LongJumpSeconds.ToString("0.#"),
+                // Invariant on both sides. The store parses and formats invariantly, so a
+                // row reading in the machine's own culture is a row that turns 20.5 into 205
+                // on any Commander whose decimal separator is a comma - and into nothing at
+                // all on the way back.
+                Read = s => s.Callouts.LongJumpSeconds.ToString("0.#", CultureInfo.InvariantCulture),
                 Write = (s, v) => s with
                 {
                     Callouts = s.Callouts with
                     {
-                        LongJumpSeconds = double.TryParse(v, out var seconds) && seconds > 0
-                            ? seconds
-                            : s.Callouts.LongJumpSeconds,
+                        LongJumpSeconds =
+                            double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+                            && seconds > 0
+                                ? seconds
+                                : s.Callouts.LongJumpSeconds,
                     },
                 },
             },

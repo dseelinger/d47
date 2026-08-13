@@ -284,6 +284,10 @@ public static class SpeechCapability
                 Key = RetryWaitKey,
                 Label = "Wait between attempts",
                 Kind = SettingKind.Number,
+
+                // Half-seconds. The value has always been a double and the row has always read
+                // it back to a tenth; without a step it could only ever hold whole ones.
+                Step = 0.5,
                 Help = "Seconds before the first retry. Later waits grow according to the shape below.",
                 DefaultDisplay = "2",
                 Group = "When a turn fails",
@@ -322,6 +326,7 @@ public static class SpeechCapability
                 Key = TurnTimeoutKey,
                 Label = "Give up after",
                 Kind = SettingKind.Number,
+                Step = 0.5,
                 Help = "Seconds one attempt may run before it counts as failed.",
                 DefaultDisplay = "45",
                 Group = "When a turn fails",
