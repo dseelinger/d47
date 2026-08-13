@@ -28,52 +28,6 @@ namespace D47.App.Tests;
 /// </summary>
 public class SettingsSurfaceTests
 {
-    /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
-    private static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Surface()
-    {
-        var root = Directory.CreateTempSubdirectory("d47-app-tests").FullName;
-        var paths = new AppPaths(root);
-        paths.EnsureCreated();
-
-        var store = new SettingsStore(paths, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(paths, new NoopProtector(), NullLogger<SecretStore>.Instance);
-        var settings = new SettingsService(store, secrets, store.Load(), NullLogger<SettingsService>.Instance);
-
-        CapabilityRegistry? built = null;
-
-        var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            paths,
-            new NoopVerbosity(),
-            new GameStateStore(),
-            settings,
-            new LlmAvailabilityState(providerConfigured: false),
-            new SpendTracker(),
-            "1.0.0-uitest",
-            new SpeechCapability.SpeechSurface
-            {
-                Silence = () => { },
-                Beds = [.. CueLibrary.Load().BedNames],
-            },
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!,
-            new ListeningCapability.ListeningSurface
-            {
-                InputDevices = () => [],
-                DeviceLabel = id => id,
-                CaptureState = () => (false, "No microphone in a headless test."),
-                TranscriberState = () => (false, null, "No transcriber in a headless test."),
-                Binds = () => EliteBinds.None,
-                InstalledModels = () => [],
-            }));
-
-        built = registry;
-
-        settings.Bind(registry);
-
-        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths);
-    }
-
     private static SettingsWindow Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         // FollowSettings, not a one-shot Apply: the theme captures below change the setting
@@ -91,7 +45,7 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void TheSettingsWindowOpensWithEveryRegisteredSection()
     {
-        var (settings, viewState, paths) = Surface();
+        var (settings, viewState, paths) = TestSurface.Create();
 
         var window = Open(settings, viewState, paths);
 
@@ -106,7 +60,7 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void AChangeMadeInCoreIsReflectedWithoutRebuildingTheView()
     {
-        var (settings, viewState, paths) = Surface();
+        var (settings, viewState, paths) = TestSurface.Create();
         var window = Open(settings, viewState, paths);
 
         // A change from any caller — here the keyword-router path — announces itself and the
@@ -128,7 +82,7 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void EveryThemeRendersToACapture()
     {
-        var (settings, viewState, paths) = Surface();
+        var (settings, viewState, paths) = TestSurface.Create();
         var output = Path.Combine(Path.GetTempPath(), "d47-ui-captures");
         Directory.CreateDirectory(output);
 
@@ -173,7 +127,7 @@ public class SettingsSurfaceTests
     [AvaloniaFact]
     public void TheMainWindowRenders()
     {
-        var (settings, _, _) = Surface();
+        var (settings, _, _) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(settings.Current.Ui.Theme);
@@ -204,30 +158,5 @@ public class SettingsSurfaceTests
     {
         Assert.NotNull(new MainWindow(host: null).Icon);
         Assert.NotNull(new SettingsWindow().Icon);
-    }
-
-    private sealed class NoopProtector : ISecretProtector
-    {
-        public byte[] Protect(byte[] plaintext) => plaintext;
-
-        public bool TryUnprotect(byte[] ciphertext, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out byte[]? plaintext)
-        {
-            plaintext = ciphertext;
-            return true;
-        }
-    }
-
-    private sealed class NoopVerbosity : D47.Core.Diagnostics.ILogVerbosityControl
-    {
-        private readonly Dictionary<string, LogLevel> _levels =
-            D47.Core.Diagnostics.Subsystems.All.ToDictionary(s => s, _ => LogLevel.Information, StringComparer.Ordinal);
-
-        public IReadOnlyDictionary<string, LogLevel> Levels => _levels;
-
-        public void Set(string subsystem, LogLevel level) => _levels[subsystem] = level;
-
-        public void SetDefault(LogLevel level)
-        {
-        }
     }
 }

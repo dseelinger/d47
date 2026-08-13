@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using D47.App.Settings;
 using D47.App.Updates;
+using D47.App.Windowing;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Input;
@@ -36,6 +37,14 @@ public partial class MainWindow : Window
             ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance);
 
         InitializeComponent();
+
+        if (host is not null)
+        {
+            // Both before the window is shown. Sizing after the fact is a visible resize, and
+            // wrapping the content after the first layout pass is a visible reflow.
+            WindowPlacementMemory.Attach(this, host.ViewState);
+            ZoomHost.Attach(this, host.Settings);
+        }
     }
 
     private readonly GlobalHotkey _shutUp;
