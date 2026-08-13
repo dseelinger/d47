@@ -155,23 +155,71 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
 
             // Drained here rather than on a timer: the resampler is pull-based, and this
             // callback is the only thing that knows new input arrived.
-            var bytes = new byte[4096];
-            var samples = new float[bytes.Length / sizeof(float)];
-
-            int read;
-
-            while ((read = _resampler.Read(bytes, 0, bytes.Length)) > 0)
-            {
-                var count = read / sizeof(float);
-                Buffer.BlockCopy(bytes, 0, samples, 0, read);
-                gate.Write(samples.AsSpan(0, count));
-            }
+            Drain(
+                _resampler,
+                OutputBytesFor(e.BytesRecorded, _incoming.WaveFormat, _resampler.WaveFormat),
+                gate);
         }
         catch (Exception ex)
         {
             // This is a real-time callback. It must never throw into NAudio's capture thread,
             // which would stop recording silently and leave push-to-talk looking broken.
             logger.LogError(ex, "Dropping a capture buffer");
+        }
+    }
+
+    /// <summary>
+    /// How many bytes of resampled audio the input just handed over is worth. Both formats are
+    /// linear PCM, so the byte rates convert exactly and no rounding accumulates across calls -
+    /// the remainder is left in the buffer and collected by the next callback.
+    /// </summary>
+    internal static long OutputBytesFor(int inputBytes, WaveFormat input, WaveFormat output) =>
+        (long)inputBytes * output.AverageBytesPerSecond / input.AverageBytesPerSecond;
+
+    /// <summary>
+    /// Moves <paramref name="budget"/> bytes from the resampler into the gate.
+    /// <para>
+    /// <b>The budget is the whole point.</b> This loop used to run until Read returned zero,
+    /// which never happens: the source is a <see cref="BufferedWaveProvider"/>, and those default
+    /// to ReadFully, meaning a read with nothing buffered returns a full buffer of silence rather
+    /// than nothing. So the first captured buffer put this callback into an endless loop on
+    /// NAudio's capture thread, pouring manufactured silence into the gate for as long as d47
+    /// ran. The ring buffer hid it while the gate was shut; holding the key produced utterances
+    /// thousands of seconds long; and stopping capture then hung, because disposing a
+    /// <see cref="WasapiCapture"/> joins the capture thread and that thread was never coming
+    /// back. Reading only what was actually put in is what ends the loop.
+    /// </para>
+    /// </summary>
+    internal static void Drain(IWaveProvider resampler, long budget, ListenGate gate)
+    {
+        var bytes = new byte[4096];
+        var samples = new float[bytes.Length / sizeof(float)];
+
+        while (budget > 0)
+        {
+            var wanted = (int)Math.Min(budget, bytes.Length);
+
+            // Whole samples only; a partial float would be split across two writes and land in
+            // the gate as a click.
+            wanted -= wanted % sizeof(float);
+
+            if (wanted == 0)
+            {
+                return;
+            }
+
+            var read = resampler.Read(bytes, 0, wanted);
+
+            if (read <= 0)
+            {
+                return;
+            }
+
+            var count = read / sizeof(float);
+            Buffer.BlockCopy(bytes, 0, samples, 0, count * sizeof(float));
+            gate.Write(samples.AsSpan(0, count));
+
+            budget -= read;
         }
     }
 
