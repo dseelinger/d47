@@ -40,6 +40,13 @@ public sealed class VoicePipeline(
     public event Action<string>? SynthesisFailed;
 
     /// <summary>
+    /// Raised with a voice id the provider refused, so it can be written out of settings. Every
+    /// pipeline this one opens is wired to it, including the one-off lines: a refused voice is a
+    /// stored value, and which sentence happened to hit it first says nothing about it.
+    /// </summary>
+    public event Action<string>? VoiceRejected;
+
+    /// <summary>
     /// Consumes a turn's events, making each one audible as it arrives. Returns the completed
     /// result so the caller does not have to watch the stream twice.
     /// </summary>
@@ -79,6 +86,7 @@ public sealed class VoicePipeline(
                             speech = new SpeechPipeline(
                                 arbiter, provider, Voice, group, loggers.CreateLogger<SpeechPipeline>());
                             speech.SynthesisFailed += OnSynthesisFailed;
+                            speech.VoiceRejected += OnVoiceRejected;
                         }
 
                         arbiter.StopBed();
@@ -110,6 +118,7 @@ public sealed class VoicePipeline(
             if (speech is not null)
             {
                 speech.SynthesisFailed -= OnSynthesisFailed;
+                speech.VoiceRejected -= OnVoiceRejected;
                 await speech.DisposeAsync().ConfigureAwait(false);
             }
 
@@ -154,6 +163,9 @@ public sealed class VoicePipeline(
         // one (architecture.md D7).
         await using var speech = new SpeechPipeline(
             arbiter, provider, voice ?? Voice, group, loggers.CreateLogger<SpeechPipeline>(), channel);
+
+        speech.SynthesisFailed += OnSynthesisFailed;
+        speech.VoiceRejected += OnVoiceRejected;
 
         speech.Push(text);
         await speech.CompleteAsync().ConfigureAwait(false);
@@ -217,4 +229,6 @@ public sealed class VoicePipeline(
     }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
+
+    private void OnVoiceRejected(string voiceId) => VoiceRejected?.Invoke(voiceId);
 }

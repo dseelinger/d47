@@ -15,6 +15,123 @@ public class SpeechPipelineTests
     private static SpeechPipeline Pipeline(AudioArbiter arbiter, ITtsProvider tts, string group = "turn-1") =>
         new(arbiter, tts, VoiceSelection.Default, group, NullLogger.Instance);
 
+    /// <summary>
+    /// A voice the provider refuses is dropped and the sentence spoken anyway.
+    /// <para>
+    /// Reported from a running build: a voice chosen while a different provider was selected
+    /// stayed in settings across the switch, and every sentence of every turn was sent with it
+    /// and refused. The cues need no voice and kept playing, so a provider that could not say
+    /// one word read as d47 choosing to be quiet.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task AVoiceTheProviderRefusesIsDroppedAndTheSentenceIsStillSpoken()
+    {
+        var (arbiter, sink) = Build();
+        var tts = new FakeTtsProvider { Refuses = "en-US-RogerNeural" };
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            tts,
+            new VoiceSelection("en-US-RogerNeural"),
+            "turn-1",
+            NullLogger.Instance);
+
+        pipeline.Push("You are in Sol. ");
+        await pipeline.CompleteAsync();
+
+        Assert.Equal("You are in Sol.", sink.Started[0].Clip.Name);
+        Assert.Equal([("en-US-RogerNeural"), null], tts.Voices);
+    }
+
+    /// <summary>
+    /// And the id is handed out, because the repair is in settings rather than here. The
+    /// pipeline lives for one turn; without this the next turn reads the same stored value and
+    /// fails the same way, forever.
+    /// </summary>
+    [Fact]
+    public async Task TheRefusedVoiceIsReportedSoItCanBeWrittenOutOfSettings()
+    {
+        var (arbiter, _) = Build();
+        var tts = new FakeTtsProvider { Refuses = "en-US-RogerNeural" };
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            tts,
+            new VoiceSelection("en-US-RogerNeural"),
+            "turn-1",
+            NullLogger.Instance);
+
+        var reported = new List<string>();
+        pipeline.VoiceRejected += reported.Add;
+
+        pipeline.Push("You are in Sol. ");
+        await pipeline.CompleteAsync();
+
+        Assert.Equal(["en-US-RogerNeural"], reported);
+    }
+
+    /// <summary>
+    /// Once for the turn, not once per sentence. Sentences render concurrently, so a reply of
+    /// six would otherwise raise six complaints about one setting and send the refused voice
+    /// five more times after it was known to be bad.
+    /// </summary>
+    [Fact]
+    public async Task ALongReplyComplainsAboutTheVoiceOnce()
+    {
+        var (arbiter, _) = Build();
+        var tts = new FakeTtsProvider { Refuses = "en-US-RogerNeural" };
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            tts,
+            new VoiceSelection("en-US-RogerNeural"),
+            "turn-1",
+            NullLogger.Instance);
+
+        var reported = new List<string>();
+        pipeline.VoiceRejected += reported.Add;
+
+        pipeline.Push("First. Second. Third. Fourth. ");
+        await pipeline.CompleteAsync();
+
+        Assert.Single(reported);
+
+        // Sent once and never again. The count is the point: four sentences each carrying a
+        // voice already known to be refused is the behaviour this replaced.
+        Assert.Single(tts.Voices, voice => voice == "en-US-RogerNeural");
+
+        // And nothing was lost on the way. Every sentence spoke, on the fallback voice.
+        Assert.Equal(0, pipeline.Failures);
+    }
+
+    /// <summary>
+    /// A provider that is simply down is not treated as a voice problem: the sentence is lost,
+    /// the failure is reported as a failure, and nothing is written out of settings over it.
+    /// </summary>
+    [Fact]
+    public async Task AProviderThatIsDownIsNotMistakenForABadVoice()
+    {
+        var (arbiter, _) = Build();
+        var tts = new FakeTtsProvider { FailOn = "Sol" };
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            tts,
+            new VoiceSelection("en-US-RogerNeural"),
+            "turn-1",
+            NullLogger.Instance);
+
+        var reported = new List<string>();
+        pipeline.VoiceRejected += reported.Add;
+
+        pipeline.Push("You are in Sol. ");
+        await pipeline.CompleteAsync();
+
+        Assert.Empty(reported);
+        Assert.Equal(1, pipeline.Failures);
+    }
+
     [Fact]
     public async Task SpeechStartsAtTheFirstSentenceRatherThanAtEndOfTurn()
     {

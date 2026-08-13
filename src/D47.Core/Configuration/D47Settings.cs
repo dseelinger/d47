@@ -332,6 +332,27 @@ public sealed record SpeechSettings
     public string? Voice { get; init; }
 
     /// <summary>
+    /// Which provider the stored voices were chosen from — this one's, the two named roles',
+    /// and every persona pairing.
+    /// <para>
+    /// A voice id is only meaningful to the provider that issued it, and without this there is
+    /// nothing in the file that says which one that was. d47 used to notice a mismatch only by
+    /// watching the provider change while it was running, which left a settings file that was
+    /// <em>already</em> mismatched — written by an older build, or by a switch that never
+    /// reached the check — failing every sentence on every launch, forever, with no way to
+    /// recover from the panel: the voice picker's choices come from the new provider's list,
+    /// and a rejected key makes that list empty.
+    /// </para>
+    /// <para>
+    /// Null means a file written before this was recorded. Trusted rather than cleared, because
+    /// clearing on a guess would throw away the choices of every Commander whose file was fine;
+    /// a genuine mismatch is caught at the seam instead, by <see cref="Audio.TtsFault
+    /// .VoiceRejected"/>.
+    /// </para>
+    /// </summary>
+    public string? VoicesProvider { get; init; }
+
+    /// <summary>
     /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
     /// because providers disagree about both the units and the range (list.md Phase 11).
     /// <para>

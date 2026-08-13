@@ -21,7 +21,32 @@ public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
     public static readonly VoiceSelection Default = new(VoiceId: null);
 }
 
-public sealed class TtsException(string message, Exception? inner = null) : Exception(message, inner);
+/// <summary>
+/// What kind of thing went wrong, where the difference changes what d47 should do about it.
+/// <para>
+/// Deliberately not a mapping of every provider's error taxonomy. The one distinction that
+/// earns a type is <see cref="VoiceRejected"/>, because it is the only failure d47 can repair
+/// by itself — everything else is for the Commander to read and act on.
+/// </para>
+/// </summary>
+public enum TtsFault
+{
+    /// <summary>Something went wrong and the message is the whole of what is known.</summary>
+    Unknown,
+
+    /// <summary>
+    /// The provider will not accept the voice it was given. Either it never issued that id — a
+    /// voice chosen while a different provider was selected — or the voice has since been
+    /// removed from the account. Both mean the id is worth forgetting rather than retrying.
+    /// </summary>
+    VoiceRejected,
+}
+
+public sealed class TtsException(string message, Exception? inner = null, TtsFault fault = TtsFault.Unknown)
+    : Exception(message, inner)
+{
+    public TtsFault Fault { get; } = fault;
+}
 
 /// <summary>
 /// Text to audio. The seam exists for the same reason <see cref="Conversation.ILlmProvider"/>

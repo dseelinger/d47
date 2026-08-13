@@ -25,6 +25,16 @@ public sealed class FakeTtsProvider : ITtsProvider
     /// <summary>Sentences containing this throw, standing in for a provider that is down.</summary>
     public string? FailOn { get; init; }
 
+    /// <summary>
+    /// A voice this provider will not accept, standing in for one issued by a different
+    /// provider or since deleted. Named voices other than this one are fine, and no voice at
+    /// all is always fine — which is what makes the fallback observable.
+    /// </summary>
+    public string? Refuses { get; init; }
+
+    /// <summary>Every voice it was asked for, in order, including the null after a refusal.</summary>
+    public List<string?> Voices { get; } = [];
+
     public int Cancelled { get; private set; }
 
     public Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(CancellationToken cancellationToken = default) =>
@@ -40,6 +50,7 @@ public sealed class FakeTtsProvider : ITtsProvider
         lock (_lock)
         {
             Requested.Add(text);
+            Voices.Add(voice.VoiceId);
 
             if (Gated)
             {
@@ -67,6 +78,13 @@ public sealed class FakeTtsProvider : ITtsProvider
         if (FailOn is { } marker && text.Contains(marker, StringComparison.Ordinal))
         {
             throw new TtsException($"the fake provider was told to fail on \"{marker}\"");
+        }
+
+        if (Refuses is { } unwanted && string.Equals(voice.VoiceId, unwanted, StringComparison.Ordinal))
+        {
+            throw new TtsException(
+                $"an invalid ID has been received: '{unwanted}'",
+                fault: TtsFault.VoiceRejected);
         }
 
         // Length proportional to the text, so a duration assertion means something.

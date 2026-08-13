@@ -652,6 +652,11 @@ public sealed class AppHost : IDisposable
         // one of its own.
         voice.StateEntered += state => host.Panel.LoopState = state;
 
+        // A voice the provider refuses is written out of settings rather than merely skipped for
+        // the turn it broke. Subscribed before the first ApplySpeechSettings, because a stored
+        // voice can be refused on the very first thing d47 says.
+        voice.VoiceRejected += host.ForgetTheVoice;
+
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();
         host.ApplyListeningSettings();
@@ -925,6 +930,47 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Makes the stored voices and the selected provider agree, and answers the speech settings
+    /// that result.
+    /// <para>
+    /// Asked on every apply rather than only when the provider is seen to change, which is the
+    /// difference that matters: the old check watched <c>_ttsProviderId</c>, and that is null on
+    /// the first call of the process, so a settings file that was already mismatched was trusted
+    /// on every launch and every sentence failed forever. The file now says which provider its
+    /// voices came from, so the question can be asked of the file instead of of the process.
+    /// </para>
+    /// <para>
+    /// A file with nothing recorded is stamped rather than cleared. It was written before d47
+    /// recorded this, and its voices are as likely to be right as wrong - throwing them away on
+    /// a guess would cost every Commander whose file was fine, while the one whose file is not
+    /// is repaired at the seam the moment a voice is actually refused.
+    /// </para>
+    /// </summary>
+    private SpeechSettings ReconcileVoicesWithProvider()
+    {
+        var speech = Settings.Current.Speech;
+        var selected = TtsProviderCatalog.Selected(speech.Provider).Id;
+
+        if (string.Equals(speech.VoicesProvider, selected, StringComparison.Ordinal))
+        {
+            return speech;
+        }
+
+        if (speech.VoicesProvider is { } chosenFor)
+        {
+            ForgetVoicesChosenFor(chosenFor, selected);
+        }
+        else
+        {
+            Settings.Replace(
+                SpeechCapability.ProviderKey,
+                current => current with { Speech = current.Speech with { VoicesProvider = selected } });
+        }
+
+        return Settings.Current.Speech;
+    }
+
     /// <summary>Whether the selected provider has whatever credential it needs, if it needs one.</summary>
     private bool HasKeyFor(TtsProviderInfo provider) =>
         provider.KeySecretName is not { } secret || Secrets.Has(secret);
@@ -939,12 +985,35 @@ public sealed class AppHost : IDisposable
     /// stopped existing.
     /// </para>
     /// </summary>
-    private void ForgetVoicesChosenFor(string previous)
+    private void ForgetVoicesChosenFor(string previous, string now)
     {
         _logger.LogInformation(
-            "Switched away from {Previous}; clearing the voices chosen for it", previous);
+            "The stored voices were chosen for {Previous} and {Now} is selected; clearing them",
+            previous,
+            now);
 
-        Settings.Replace(SpeechCapability.ProviderKey, SpeechCapability.WithoutChosenVoices);
+        Settings.Replace(
+            SpeechCapability.ProviderKey,
+            current => SpeechCapability.WithoutChosenVoices(current, now));
+    }
+
+    /// <summary>
+    /// Drops one voice the provider refused, everywhere it is written down.
+    /// <para>
+    /// The pipeline stops using it for the turn it failed on; this is what stops it coming back
+    /// on the next one. A voice that fails once fails every sentence forever, because nothing
+    /// else in d47 ever revisits a value the Commander is assumed to have chosen on purpose.
+    /// </para>
+    /// </summary>
+    private void ForgetTheVoice(string voiceId)
+    {
+        _logger.LogInformation("{Voice} was refused by the provider; removing it", voiceId);
+
+        Settings.Replace(
+            SpeechCapability.ProviderKey,
+            current => SpeechCapability.WithoutTheVoice(current, voiceId));
+
+        ApplySpeechSettings();
     }
 
     private async Task LoadVoicesAsync(ITtsProvider provider)
@@ -1075,7 +1144,7 @@ public sealed class AppHost : IDisposable
 
     private void ApplySpeechSettings()
     {
-        var speech = Settings.Current.Speech;
+        var speech = ReconcileVoicesWithProvider();
         var provider = TtsProviderCatalog.Selected(speech.Provider);
 
         // Rebuilt when the provider changes, not merely when there is none yet. A voice id
@@ -1083,19 +1152,6 @@ public sealed class AppHost : IDisposable
         // table of sender assignments — across a switch keeps ids that no longer resolve.
         if (!string.Equals(_ttsProviderId, provider.Id, StringComparison.Ordinal))
         {
-            // The same rule applied to what is written down, not only to what is in memory.
-            // Resetting the cast dropped the stale ids from this process and left them in
-            // settings, so the next line put them straight back: switching from Edge to
-            // ElevenLabs sent "en-US-RogerNeural" to an API that had never heard of it, and
-            // every sentence failed while the cues, which need no voice, kept playing.
-            //
-            // Only on an actual switch. _ttsProviderId is null on the first call of the
-            // process, and clearing then would wipe the Commander's choices on every launch.
-            if (_ttsProviderId is not null)
-            {
-                ForgetVoicesChosenFor(_ttsProviderId);
-            }
-
             // Through the interface, so this stays correct for a provider that needs no
             // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
             // audio seam, and whether an implementation holds an HTTP handle is its own business.

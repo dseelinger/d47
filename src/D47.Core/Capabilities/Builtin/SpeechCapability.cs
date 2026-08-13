@@ -519,19 +519,26 @@ public static class SpeechCapability
     /// pointing at voices that had stopped existing.
     /// </para>
     /// <para>
+    /// <paramref name="chosenFor"/> is the provider now selected, stamped on the way through so
+    /// the file says which provider its voices belong to. Without it the agreement could only be
+    /// checked by watching the switch happen, which is no help to a file that arrives already
+    /// mismatched — see <see cref="SpeechSettings.VoicesProvider"/>.
+    /// </para>
+    /// <para>
     /// Dropped rather than remembered per provider, which is what <see cref="SpeechSettings
     /// .ProviderRates"/> does for the rate. Voices are a larger structure — the ship's, two
     /// named roles and one per core — and the fix for a Commander who cannot hear anything
     /// should not wait on a schema that can hold all of it twice.
     /// </para>
     /// </summary>
-    public static D47Settings WithoutChosenVoices(D47Settings settings) => settings with
+    public static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) => settings with
     {
         Speech = settings.Speech with
         {
             Voice = null,
             CarrierCaptainVoice = null,
             TowerVoice = null,
+            VoicesProvider = chosenFor,
         },
         Persona = settings.Persona with
         {
@@ -539,6 +546,39 @@ public static class SpeechCapability
             VoicesPaired = false,
         },
     };
+
+    /// <summary>
+    /// The same settings with one voice id removed from every place that could hold it.
+    /// <para>
+    /// For a voice the provider itself refused. Unlike a provider switch this is not "these all
+    /// belong to somebody else" — the rest of the choices are fine and only this one has stopped
+    /// working, so only this one goes. It can be sitting in the ship AI's slot, either named
+    /// role, or any number of persona pairings, and leaving a copy anywhere means the next turn
+    /// that reaches that copy fails exactly as before.
+    /// </para>
+    /// </summary>
+    public static D47Settings WithoutTheVoice(D47Settings settings, string voiceId) => settings with
+    {
+        Speech = settings.Speech with
+        {
+            Voice = Unless(settings.Speech.Voice, voiceId),
+            CarrierCaptainVoice = Unless(settings.Speech.CarrierCaptainVoice, voiceId),
+            TowerVoice = Unless(settings.Speech.TowerVoice, voiceId),
+        },
+        Persona = settings.Persona with
+        {
+            Voices = settings.Persona.Voices
+                .Where(pair => !string.Equals(pair.Value, voiceId, StringComparison.Ordinal))
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal),
+
+            // Left as it was. The pairing ran and its result is still mostly good; re-running it
+            // would replace every core's voice because one of them stopped resolving.
+            VoicesPaired = settings.Persona.VoicesPaired,
+        },
+    };
+
+    private static string? Unless(string? held, string? unwanted) =>
+        string.Equals(held, unwanted, StringComparison.Ordinal) ? null : held;
 
     /// <summary>
     /// The rate in force: this provider's own if it has one, otherwise the general one. Read

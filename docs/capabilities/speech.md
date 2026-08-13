@@ -53,6 +53,16 @@ Switching provider rebuilds everything downstream of it: the voice list, the sen
 the speaking rate. A voice id belongs to the provider that issued it, so nothing is carried
 across.
 
+Which provider your stored voices came from is written down alongside them, and checked on every
+launch rather than only when the switch happens. A settings file that already disagreed — written
+by an older build, or by a switch that never reached the check — used to be trusted on startup,
+and every sentence failed forever with nothing you could do about it from this panel: the voice
+picker offers what the *new* provider lists, and a rejected key makes that list empty.
+
+And if a voice is refused anyway — deleted from the account, or a mismatch nothing recorded —
+Directive 47 drops that one voice, says the sentence in the provider's own default, and stops
+using the refused id. One voice going bad no longer costs you the reply.
+
 ### ElevenLabs API key {#api-key}
 
 Only on screen while ElevenLabs is the selected provider. Stored encrypted for your Windows
