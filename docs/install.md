@@ -59,10 +59,19 @@ data\
 ## Update checks
 
 On startup, d47 asks GitHub's public releases API for the latest tag and compares it against
-its own version. If a newer build exists, a banner offers **Update now**, which opens the
-release page in your browser and closes d47 so the new `d47.exe` can be saved over this one.
-Offline or GitHub unreachable is treated as "no update" — startup never waits on it and never
-fails because of it.
+its own version. If a newer build exists, a banner offers **Update now**.
+
+**Update now** downloads that release's `d47.exe`, checks it against the `d47.exe.sha256`
+published beside it, renames the running build to `d47.exe.old`, puts the new one in its place
+and starts it. The old file is deleted the next time d47 starts. If any step fails — no build
+attached, the download did not finish, the checksum did not match, or the folder d47 lives in
+needs elevation to write — it says which, and opens the release page so you can do it by hand.
+
+Nothing is downloaded unless you press the button, and d47 will only fetch a URL that is an
+asset on a release of this repository.
+
+Offline or GitHub unreachable is treated as "no update" — startup never waits on the check and
+never fails because of it.
 
 ## What leaves the machine
 
@@ -74,6 +83,8 @@ you:
 
 - **The update check** described above — a GET with no Commander data, no journal data and
   nothing identifying. Switch it off in Settings and d47 makes no network call of its own.
+  Pressing **Update now** on the banner it raises adds one more: downloading that release from
+  GitHub. That is a download rather than an upload, and it happens only when you press it.
 - **A speech model download**, and only if you ask for one. No model is selected by default.
   Choosing one asks first, states the real size and the host it comes from, and downloads
   nothing until you agree. Once the file is on disk, transcription runs entirely on this

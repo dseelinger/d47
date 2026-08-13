@@ -449,16 +449,76 @@ public partial class MainWindow : Window
         _model.UpdateText = $"d47 {update.Version} is available — you're on {host.Version}.";
     }
 
-    private void OnUpdateAccepted()
+    /// <summary>
+    /// Downloads the new build, verifies it, puts it where this one is and starts it
+    /// (list.md Phase 17: "the user is given an opportunity to exit, install it, and restart").
+    /// <para>
+    /// Every failure ends at the release page rather than at a dead end — the Commander asked to
+    /// be updated, and the browser is the path that always works. The reason is said out loud
+    /// first, because "it opened a web page" is otherwise indistinguishable from this having
+    /// been what d47 meant to do.
+    /// </para>
+    /// </summary>
+    private async void OnUpdateAccepted()
     {
-        if (_availableUpdate is null)
+        if (_availableUpdate is not { } update || _host is null)
         {
             return;
         }
 
-        // Opens the release page for a manual download; d47 exits so the new build can overwrite
-        // this running exe on the Commander's next launch (list.md Phase 17).
-        Process.Start(new ProcessStartInfo(_availableUpdate.ReleaseUrl) { UseShellExecute = true });
+        if (!update.CanInstall)
+        {
+            OpenReleasePage(update, "This release has no installable build attached.");
+            return;
+        }
+
+        _model.UpdateBusy = true;
+        _model.UpdateText = $"Downloading d47 {update.Version}…";
+
+        var progress = new Progress<double>(fraction =>
+            _model.UpdateText = $"Downloading d47 {update.Version} — {fraction:P0}");
+
+        var (file, failure) = await _host.Installer
+            .DownloadAsync(update, progress, CancellationToken.None);
+
+        if (file is null)
+        {
+            _model.UpdateBusy = false;
+            OpenReleasePage(update, Explain(failure));
+            return;
+        }
+
+        _model.UpdateText = $"Installing d47 {update.Version}…";
+
+        if (Environment.ProcessPath is not { } running
+            || !_host.Installer.TrySwap(running, file))
+        {
+            _model.UpdateBusy = false;
+            OpenReleasePage(update, Explain(UpdateFailure.CouldNotReplace));
+            return;
+        }
+
+        // Started before this one exits, so the Commander sees d47 come back rather than
+        // watching it vanish and having to find it again.
+        Process.Start(new ProcessStartInfo(running) { UseShellExecute = true });
         Close();
     }
+
+    private void OpenReleasePage(AvailableUpdate update, string reason)
+    {
+        _model.UpdateText = $"{reason} Opening the release page.";
+
+        Process.Start(new ProcessStartInfo(update.ReleaseUrl) { UseShellExecute = true });
+    }
+
+    private static string Explain(UpdateFailure? failure) => failure switch
+    {
+        UpdateFailure.ChecksumMismatch =>
+            "The download did not match the checksum published with it, so d47 did not run it.",
+        UpdateFailure.CouldNotReplace =>
+            "d47 could not replace itself where it is installed.",
+        UpdateFailure.NothingToInstall =>
+            "This release has no installable build attached.",
+        _ => "The download did not finish.",
+    };
 }
