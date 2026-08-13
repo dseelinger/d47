@@ -179,6 +179,12 @@ public partial class MainWindow : Window
         // over a panel that is still assembling itself. Returns immediately on every run after
         // the first.
         await OfferStartMenuEntryAsync();
+
+        // And now that this window is listening for it, ask again about a speech model that is
+        // selected but not on disk. The offer made while the host was starting had nobody to
+        // reach, and choosing the same model again is an unchanged value that raises nothing —
+        // so without this the question is asked once, into an empty room, and never again.
+        _host.AnnounceModelNeeded();
     }
 
     /// <summary>

@@ -853,6 +853,25 @@ public sealed class AppHost : IDisposable
     /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
     /// drift (list.md Phase 4, "Apply every setting without a restart").
     /// </summary>
+    /// <summary>
+    /// Re-offers a speech model that is selected but not on disk, now that there is a surface to
+    /// ask on.
+    /// <para>
+    /// The offer is raised while listening settings are applied, and that happens once during
+    /// <see cref="Start"/> — before any window exists to have subscribed. So the offer a fresh
+    /// launch makes went to nobody, and re-picking the same model in settings is an unchanged
+    /// value, which raises nothing. The Commander was left holding a key that captured audio
+    /// nothing could read, with no way back to the question.
+    /// </para>
+    /// </summary>
+    public void AnnounceModelNeeded()
+    {
+        if (WhisperModels.AwaitingDownload(Settings.Current.Listening.Model, Models) is { } model)
+        {
+            ModelNeeded?.Invoke(model);
+        }
+    }
+
     private void ApplyListeningSettings()
     {
         var listening = Settings.Current.Listening;
