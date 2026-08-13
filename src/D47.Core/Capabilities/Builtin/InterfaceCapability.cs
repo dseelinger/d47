@@ -121,6 +121,10 @@ public static class InterfaceCapability
         DefaultDisplay = "(unbound)",
         DocsAnchor = anchor,
         Protected = true,
+
+        // The factory already knew this; the row did not. Saying so is what lets a bare key be
+        // refused as it is pressed rather than failing to register afterwards.
+        SystemWide = systemWide,
         Binding = new SettingBinding { Read = read, Write = write },
     };
 }

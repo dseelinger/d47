@@ -248,6 +248,9 @@ public static class SpeechCapability
                 DefaultDisplay = "(unbound)",
                 DocsAnchor = "shut-up",
 
+                // Claimed from the whole system, so a bare key is refused as it is bound.
+                SystemWide = true,
+
                 // Protected for the same reason every hotkey row is: a model that can unbind
                 // the Commander's stop button has removed the one control that outranks it
                 // (architecture.md §7).
