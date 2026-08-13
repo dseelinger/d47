@@ -87,6 +87,7 @@ public static class TestSurface
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test.", null),
                 Reanchor = () => 0,
             },
+            ActionSurface.Inert,
             coverage));
 
         built = registry;

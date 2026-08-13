@@ -395,6 +395,17 @@ public sealed class AppHost : IDisposable
         var microphone = new WasapiMicrophone(gate, loggerFactory.CreateLogger<WasapiMicrophone>());
         var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
 
+        // The only thing that presses a key in the game (architecture.md D4). Built here so
+        // there is exactly one, because release_all has to be able to let go of everything and
+        // a second injector would hold keys the first one knows nothing about.
+        var eliteWindow = new EliteWindow(loggerFactory.CreateLogger<EliteWindow>());
+        var gameInput = new ScancodeInjector(eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>());
+
+        // Declared here and assigned inside the registry build below, so the capabilities and
+        // the prompt's game-state block are looking at one surface rather than two that could
+        // disagree about what is reachable.
+        ActionSurface actionSurface;
+
         // Read once at startup. The bindings file changes only when the Commander edits their
         // controls, which they cannot do while d47 is the foreground window, so re-reading it
         // ten times a second would be polling for an event that cannot happen.
@@ -474,6 +485,14 @@ public sealed class AppHost : IDisposable
                         : (Core.Vr.VrState.Connecting, "Looking for a headset.", null),
                     Reanchor = () => self?.Vr?.Reanchor() ?? 0,
                 },
+                actionSurface = new ActionSurface
+                {
+                    Binds = () => binds,
+
+                    Status = () => status.Current,
+                    Input = gameInput,
+                    Enabled = () => settings.Current.Actions.Keyboard,
+                },
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -511,7 +530,12 @@ public sealed class AppHost : IDisposable
             // Asked once per turn rather than assigned, so the state the model sees is the state
             // as of the moment the prompt was built — not as of whenever something last pushed
             // it in. The tick loop is folding events continuously underneath this.
-            LiveGameState = () => Situation.Describe(gameState.Active),
+            // Both halves sit at prompt position 7, below the cache breakpoint, which is what
+            // lets the reachable action set change several times a minute without touching a
+            // byte of the cached prefix.
+            LiveGameState = () => Join(
+                Situation.Describe(gameState.Active),
+                ActionCapabilities.Describe(actionSurface)),
         };
 
         var host = self = new AppHost(
@@ -1078,6 +1102,20 @@ public sealed class AppHost : IDisposable
     /// possibly empty: d47 does not require an Elite install to be locatable, and a Commander
     /// on a custom preset never needs one (architecture.md D4, trap 2).
     /// </summary>
+    /// <summary>
+    /// Joins the two halves of the game-state block, dropping whichever is absent. Both are
+    /// null when there is nothing to say, and a heading with nothing under it still costs
+    /// tokens on every turn.
+    /// </summary>
+    private static string? Join(string? situation, string? actions) =>
+        (situation, actions) switch
+        {
+            (null, null) => null,
+            (null, var only) => only,
+            (var only, null) => only,
+            var (both, and) => both + Environment.NewLine + Environment.NewLine + and,
+        };
+
     private static IReadOnlyList<string> EliteInstallations()
     {
         var candidates = new List<string?>

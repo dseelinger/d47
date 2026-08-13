@@ -34,6 +34,34 @@ public sealed record D47Settings
     public ListeningSettings Listening { get; init; } = new();
 
     public VrSettings Vr { get; init; } = new();
+
+    public ActionSettings Actions { get; init; } = new();
+}
+
+/// <summary>
+/// Acting on the game (list.md Phase 10).
+/// <para>
+/// Two switches with deliberately different shapes. <see cref="Keyboard"/> is one decision
+/// covering every spoken command, because a Commander who wants voice control of their ship
+/// wants it for the ship rather than per key. The autonomous actions are the opposite: each is
+/// off on its own row, because an action that fires a game input on a journal event with
+/// nobody asking is a different category and the checklist gives the category its rule before
+/// the second member of it exists.
+/// </para>
+/// </summary>
+public sealed record ActionSettings
+{
+    /// <summary>
+    /// Whether spoken commands may send key bindings to Elite at all. Off until the Commander
+    /// says otherwise, and protected from the model.
+    /// </summary>
+    public bool Keyboard { get; init; }
+
+    /// <summary>
+    /// Whether the discovery scanner fires by itself on arriving in a system. Off by default,
+    /// on its own row, and protected — the first member of the autonomous-action category.
+    /// </summary>
+    public bool HonkOnArrival { get; init; }
 }
 
 /// <summary>

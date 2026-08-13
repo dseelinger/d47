@@ -8,6 +8,13 @@ public sealed record KeywordMatch(string CapabilityId, string ToolName);
 /// <summary>A settings row a declared phrase asked for, and the value that phrase means.</summary>
 public sealed record SettingCommandMatch(string CapabilityId, SettingRow Row, string? Value, string Phrase);
 
+/// <summary>A tool a declared phrase asked for, and the arguments that phrase means.</summary>
+public sealed record ToolCommandMatch(
+    string CapabilityId,
+    string ToolName,
+    ToolArguments Arguments,
+    string Phrase);
+
 /// <summary>
 /// The model-free command path (list.md Phase 3, "Ship's AI Unsure"). It exists for three
 /// separate reasons, and it would be worth building for any one of them:
@@ -154,6 +161,48 @@ public sealed class KeywordRouter(CapabilityRegistry registry)
             from command in row.Commands
             where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
             select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Matches a tool command phrase — the model-free way to act on the game (list.md Phase 10).
+    /// <para>
+    /// This is the closed grammar <see cref="Match"/> says it is waiting for. A tool with
+    /// required parameters is unreachable there because filling arguments from free text is
+    /// guessing; here nothing is filled from anything. The phrase and its arguments were both
+    /// written down together, so matching the phrase is the whole of the inference.
+    /// </para>
+    /// <para>
+    /// Whole-utterance, like <see cref="MatchSetting"/> and one notch stricter than
+    /// <see cref="Match"/>, because this path acts rather than answers. "Can you put the gear
+    /// down while docked" is a question about the gear; treating it as an instruction would
+    /// press a key nobody asked for. A miss falls through to the model, which is cheap; a false
+    /// positive flies the ship.
+    /// </para>
+    /// <para>
+    /// Longest phrase first, so "next fire group" is not shadowed by "fire group".
+    /// </para>
+    /// </summary>
+    public ToolCommandMatch? MatchToolCommand(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        var utterance = Utterance(input);
+
+        return (
+            from capability in registry.All
+            from tool in capability.Descriptor.Tools
+            from command in tool.Commands
+            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            orderby command.Phrase.Length descending
+            select new ToolCommandMatch(
+                capability.Descriptor.Id,
+                tool.Name,
+                new ToolArguments(command.Arguments),
+                command.Phrase))
             .FirstOrDefault();
     }
 

@@ -42,6 +42,23 @@ public sealed record ToolResult
 
 public delegate Task<ToolResult> ToolHandler(ToolArguments arguments, CancellationToken cancellationToken);
 
+/// <summary>
+/// A phrase that reaches one tool with one fixed set of arguments — the closed grammar the
+/// keyword router was always going to need (list.md Phase 10, "Control flight and navigation by
+/// voice").
+/// <para>
+/// Nothing is extracted from what the Commander said. The phrase is declared, the arguments are
+/// declared beside it, and the router either matches the whole utterance or does not. That is
+/// what separates this from a router guessing at arguments: "gear down" does not mean d47 parsed
+/// "gear", it means somebody wrote down that this phrase performs this action.
+/// </para>
+/// <para>
+/// Deliberately not part of the tool's schema. The model never sees these, so adding a phrase
+/// cannot change a byte of the cached prefix (architecture.md §6).
+/// </para>
+/// </summary>
+public sealed record ToolCommandPhrase(string Phrase, IReadOnlyDictionary<string, string> Arguments);
+
 public sealed record ToolDefinition
 {
     public required string Name { get; init; }
@@ -65,6 +82,13 @@ public sealed record ToolDefinition
     /// </para>
     /// </summary>
     public bool Interrupting { get; init; }
+
+    /// <summary>
+    /// Phrases the model-free router accepts for this tool, each carrying the arguments it
+    /// means. Usually empty: a tool with required parameters is otherwise unreachable without a
+    /// model, and for most tools that is correct.
+    /// </summary>
+    public IReadOnlyList<ToolCommandPhrase> Commands { get; init; } = [];
 
     public required ToolHandler Handler { get; init; }
 }

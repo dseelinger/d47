@@ -17,6 +17,14 @@ public enum TurnRoute
     /// </summary>
     SettingCommand,
 
+    /// <summary>
+    /// A game action performed by the model-free router from a declared phrase. Its own route
+    /// for the same reason <see cref="SettingCommand"/> is: this is the path that presses a key
+    /// in the Commander's ship without a model in it, and a path like that should be legible in
+    /// the transcript rather than filed under something else.
+    /// </summary>
+    ActionCommand,
+
     /// <summary>Answered by the language model.</summary>
     Model,
 
@@ -155,7 +163,33 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        // 2. The rest of the model-free path, before anything reaches a provider.
+        // 2. A declared action phrase. Above the general router because it is more specific,
+        //    and above the model because "gear down" should not cost a network round trip at
+        //    the moment the Commander is landing.
+        if (keywordRouter.MatchToolCommand(input) is { } toolCommand)
+        {
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var actioned = await capabilities
+                .InvokeAsync(toolCommand.ToolName, toolCommand.Arguments, cancellationToken)
+                .ConfigureAwait(false);
+
+            logger.LogInformation(
+                "Keyword router performed {Tool} from the phrase \"{Phrase}\"",
+                toolCommand.ToolName,
+                toolCommand.Phrase);
+
+            yield return new TurnEvent.TextDelta(actioned.Content);
+            yield return new TurnEvent.Completed(new TurnResult(
+                actioned.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                actioned.Content,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
+        // 3. The rest of the model-free path, before anything reaches a provider.
         if (keywordRouter.Match(input) is { } match)
         {
             yield return new TurnEvent.Routed(TurnRoute.KeywordRouter, Effort: null);
@@ -177,7 +211,7 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        // 3. The model, if there is one to ask.
+        // 4. The model, if there is one to ask.
         // Captured once: the property can be swapped by a settings change between turns, and a
         // turn should run against the provider it started with.
         var activeProvider = Provider;

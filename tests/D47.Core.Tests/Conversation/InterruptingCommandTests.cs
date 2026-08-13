@@ -36,7 +36,8 @@ public class InterruptingCommandTests
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
             TestSurface.SilentListening(),
-            TestSurface.NoHeadset()));
+            TestSurface.NoHeadset(),
+            ActionSurface.Inert));
 
         built = registry;
 
@@ -188,7 +189,8 @@ public class InterruptingCommandTests
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
             TestSurface.SilentListening(),
-            TestSurface.NoHeadset()));
+            TestSurface.NoHeadset(),
+            ActionSurface.Inert));
 
         built = registry;
 
@@ -226,7 +228,8 @@ public class InterruptingCommandTests
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
             TestSurface.SilentListening(),
-            TestSurface.NoHeadset()));
+            TestSurface.NoHeadset(),
+            ActionSurface.Inert));
 
         built = registry;
 

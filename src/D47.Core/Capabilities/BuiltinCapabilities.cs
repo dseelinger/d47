@@ -32,6 +32,7 @@ public static class BuiltinCapabilities
         Func<CapabilityRegistry> registry,
         ListeningCapability.ListeningSurface listening,
         VrCapability.HeadsetSurface headset,
+        Builtin.ActionSurface actions,
 
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
@@ -47,6 +48,7 @@ public static class BuiltinCapabilities
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
         ReanchorCapability.Create(headset),
+        .. ActionCapabilities.All(actions),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

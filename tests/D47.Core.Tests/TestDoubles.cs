@@ -175,7 +175,8 @@ public sealed class TestSurface
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,
             SilentListening(),
-            NoHeadset()));
+            NoHeadset(),
+            D47.Core.Capabilities.Builtin.ActionSurface.Inert));
 
         built = registry;
 
