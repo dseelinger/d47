@@ -2,9 +2,6 @@
 title: Listening
 ---
 
-**Group:** Voice
-**Capability id:** `listening`
-
 Hearing the Commander: the microphone, the push-to-talk key, and whether that key collides with
 something Elite is already using.
 
@@ -12,33 +9,11 @@ Hold the key, speak, release, and the words run the same turn as if they had bee
 Transcription is Whisper, running locally on a model file the Commander chose and agreed to
 download. **No audio and no transcript ever leaves the machine.**
 
-## Try it
+## Ask for it
 
 > "can you hear me"
 > "what microphone are you using"
 > "is my push to talk key bound twice"
-
-## Tool
-
-### `get_listening_status`
-
-Read-only. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-```text
-Microphone: Yeti Nano, capturing.
-Push-to-talk: CapsLock (hold).
-Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. One of the two
-will not work, and neither will say so — pick another key for one of them.
-Transcription: base.en loaded.
-```
-
-Everything is reported together on purpose. "D47 cannot hear me" has five possible causes — no
-key bound, no device, the device gone away, the key colliding with Elite, no model loaded — and
-the Commander should not have to guess which one it is.
 
 ## Push-to-talk is one gate policy over a continuous stream
 
@@ -255,3 +230,28 @@ a confident wrong word, which is worse than producing nothing.
 
 A stuck key is closed at a 60-second ceiling, and that audio is **kept** rather than discarded —
 the Commander said something, and it is better transcribed late than lost.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `get_listening_status`
+
+Read-only. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+```text
+Microphone: Yeti Nano, capturing.
+Push-to-talk: CapsLock (hold).
+Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. One of the two
+will not work, and neither will say so — pick another key for one of them.
+Transcription: base.en loaded.
+```
+
+Everything is reported together on purpose. "D47 cannot hear me" has five possible causes — no
+key bound, no device, the device gone away, the key colliding with Elite, no model loaded — and
+the Commander should not have to guess which one it is.
+
+</details>

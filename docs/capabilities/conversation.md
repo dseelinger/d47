@@ -2,79 +2,14 @@
 title: Language model
 ---
 
-**Group:** Conversation
-**Capability id:** `conversation`
-
 Which model answers, where it lives, and what the session has cost. This capability owns the
 settings that decide whether D47 talks to anything outside this machine at all.
 
-## Try it
+## Ask for it
 
 > "which model are you using"
 > "what has this session cost"
 > "personality off"
-
-## Tools
-
-### `cancel_turn`
-
-Abandons the turn currently running: stops speaking, tears down the provider stream, and stops
-spending. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-**Cancelling is not the same as silencing, and the difference is billed.** `stop_speaking` stops
-the mouth — the queue is flushed and the sentence is cut off — but the model carries on
-generating into a void that is still charged for. `cancel_turn` ends the work itself.
-
-| You say | What stops |
-|---|---|
-| "stop" | The speaking. The turn keeps running. |
-| "cancel", "never mind" | The speaking, the model, and the spend. |
-
-Like `stop_speaking`, this is marked **interrupting**: it is answered while a turn is in flight
-rather than queued behind it, because a turn in flight is the only thing it has to act on. And
-like `stop`, bare `cancel` is kept out of the general command vocabulary and only consulted when
-there is actually something to cancel — it is too common a verb to claim outright.
-
-One honest limit: the tokens already generated before you cancelled were already billed by the
-provider, and D47 cannot see the usage figures for a stream it tore down. So a cancelled turn
-records nothing in the running spend total, which slightly under-reports what the session
-actually cost. Cancelling saves the generation that had not happened yet, not the generation that
-had.
-
-### `get_model_status`
-
-Reports the selected provider and model, whether it is reachable right now, and the session's
-running spend. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-Real output:
-
-```text
-Provider: Anthropic
-Model: claude-opus-5
-Endpoint: https://api.anthropic.com
-Availability: Available
-Personality: on
-Session so far: 3 turn(s), $0.0412
-```
-
-With no key stored, the same tool says so rather than going quiet:
-
-```text
-Provider: Anthropic
-Model: claude-opus-5
-Endpoint: https://api.anthropic.com
-Availability: NotConfigured — No Anthropic API key is stored. Add one in Settings.
-Personality: on
-Session so far: 0 turn(s), $0.0000
-```
 
 ## Settings
 
@@ -152,3 +87,68 @@ Standing context about you, sent with every turn and kept between sessions. It s
 cached prefix, so editing it costs one cold prefix on the next turn and nothing after that.
 
 It is sent to the provider. See [Privacy](privacy.md).
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `cancel_turn`
+
+Abandons the turn currently running: stops speaking, tears down the provider stream, and stops
+spending. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+**Cancelling is not the same as silencing, and the difference is billed.** `stop_speaking` stops
+the mouth — the queue is flushed and the sentence is cut off — but the model carries on
+generating into a void that is still charged for. `cancel_turn` ends the work itself.
+
+| You say | What stops |
+|---|---|
+| "stop" | The speaking. The turn keeps running. |
+| "cancel", "never mind" | The speaking, the model, and the spend. |
+
+Like `stop_speaking`, this is marked **interrupting**: it is answered while a turn is in flight
+rather than queued behind it, because a turn in flight is the only thing it has to act on. And
+like `stop`, bare `cancel` is kept out of the general command vocabulary and only consulted when
+there is actually something to cancel — it is too common a verb to claim outright.
+
+One honest limit: the tokens already generated before you cancelled were already billed by the
+provider, and D47 cannot see the usage figures for a stream it tore down. So a cancelled turn
+records nothing in the running spend total, which slightly under-reports what the session
+actually cost. Cancelling saves the generation that had not happened yet, not the generation that
+had.
+
+### `get_model_status`
+
+Reports the selected provider and model, whether it is reachable right now, and the session's
+running spend. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Real output:
+
+```text
+Provider: Anthropic
+Model: claude-opus-5
+Endpoint: https://api.anthropic.com
+Availability: Available
+Personality: on
+Session so far: 3 turn(s), $0.0412
+```
+
+With no key stored, the same tool says so rather than going quiet:
+
+```text
+Provider: Anthropic
+Model: claude-opus-5
+Endpoint: https://api.anthropic.com
+Availability: NotConfigured — No Anthropic API key is stored. Add one in Settings.
+Personality: on
+Session so far: 0 turn(s), $0.0000
+```
+
+</details>
