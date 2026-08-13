@@ -53,6 +53,7 @@
     <ProjectReference Include="..\D47.Llm\D47.Llm.csproj" />
     <ProjectReference Include="..\D47.Stt\D47.Stt.csproj" />
     <ProjectReference Include="..\D47.Tts\D47.Tts.csproj" />
+    <ProjectReference Include="..\D47.Vr\D47.Vr.csproj" />
   </ItemGroup>
 
   <!--

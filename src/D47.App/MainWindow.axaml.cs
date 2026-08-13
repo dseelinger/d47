@@ -33,7 +33,7 @@ public partial class MainWindow : Window
 {
     private readonly AppHost? _host;
     private readonly GlobalHotkey _shutUp;
-    private readonly PanelViewModel _model = new();
+    private readonly PanelViewModel _model;
 
     private AvailableUpdate? _availableUpdate;
     private bool _turnInFlight;
@@ -46,6 +46,11 @@ public partial class MainWindow : Window
     public MainWindow(AppHost? host)
     {
         _host = host;
+
+        // The host's model, not one of this window's own. The headset overlay binds a second
+        // instantiation of the same view to it, and a model owned by the window would make
+        // the overlay a guest of a surface that can be closed.
+        _model = host?.Panel ?? new PanelViewModel();
         _shutUp = new GlobalHotkey(
             host?.Loggers.CreateLogger<GlobalHotkey>()
             ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance);

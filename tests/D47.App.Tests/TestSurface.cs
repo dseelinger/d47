@@ -76,6 +76,10 @@ public static class TestSurface
                 TranscriberState = () => (false, null, "No transcriber in a headless test."),
                 Binds = () => EliteBinds.None,
                 InstalledModels = () => [],
+            },
+            new VrCapability.HeadsetSurface
+            {
+                Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test.", null),
             }));
 
         built = registry;

@@ -1,0 +1,17 @@
+# Valve's generated openvr_api.cs, vendored verbatim (architecture.md D2). Silenced by folder
+# rather than edited into compliance: editing it is what would make the next refresh from
+# ValveSoftware/openvr a merge instead of a copy. Nothing else lives in here.
+root = false
+
+[*.cs]
+dotnet_diagnostic.CS0169.severity = none
+dotnet_diagnostic.CS0414.severity = none
+dotnet_diagnostic.CS0649.severity = none
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8605.severity = none
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CA1416.severity = none
