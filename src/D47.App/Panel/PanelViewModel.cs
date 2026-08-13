@@ -26,6 +26,44 @@ public enum PanelMode
 }
 
 /// <summary>
+/// Which page of the transcript a surface is showing.
+/// <para>
+/// A property of the surface, exactly like <see cref="PanelMode"/> and for the same reason: the
+/// two surfaces bind one model, so a page held there would send the headset to the log file the
+/// moment the window went to it. The model owns the content; each surface picks its page.
+/// </para>
+/// </summary>
+public enum TranscriptPage
+{
+    /// <summary>The Commander and the ship's AI, and nothing else.</summary>
+    Conversation,
+
+    /// <summary>The same, with the diagnostics left in. What the panel always used to show.</summary>
+    Technical,
+
+    /// <summary>Today's log file, read when this page is opened.</summary>
+    Log,
+}
+
+/// <summary>
+/// What kind of line this is, which is the whole basis of the conversation/technical split.
+/// <para>
+/// Decided by the caller at the moment it writes, because that is the only place that knows.
+/// The transcript used to be one string and the distinction was not recoverable from it: a
+/// version banner and a reply are both text, and no amount of pattern-matching afterwards tells
+/// them apart without guessing at somebody's prose.
+/// </para>
+/// </summary>
+public enum TranscriptKind
+{
+    /// <summary>The Commander and the ship's AI. The default, so the streaming path is untouched.</summary>
+    Conversation,
+
+    /// <summary>Diagnostics, provenance, availability - true, useful, and not the conversation.</summary>
+    Technical,
+}
+
+/// <summary>
 /// What the panel shows, independent of where it is being shown.
 /// <para>
 /// This is the half of "one widget tree renders to both surfaces" that the framework will
@@ -42,7 +80,19 @@ public enum PanelMode
 /// </summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
 {
-    private readonly StringBuilder _transcript = new();
+    /// <summary>
+    /// The transcript in order, split into runs of one kind. A run rather than one buffer per
+    /// kind, because order across kinds has to survive: a technical line written between two
+    /// replies belongs between them, and two buffers cannot say that.
+    /// <para>
+    /// Appended to the last run when the kind matches, which is what keeps a streamed reply -
+    /// one call per delta - from becoming one run per token.
+    /// </para>
+    /// </summary>
+    private readonly List<(TranscriptKind Kind, StringBuilder Text)> _runs = [];
+
+    private string _conversationText = string.Empty;
+    private string _logText = string.Empty;
     private string _turnLine = string.Empty;
     private string? _errorText;
     private string? _updateText;
@@ -73,10 +123,56 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     public event Action? UpdateDismissed;
 
+    /// <summary>Everything, in order. The transcript as it has always been.</summary>
     public string TranscriptText
     {
         get => _transcriptText;
         private set => Set(ref _transcriptText, value);
+    }
+
+    /// <summary>The conversation alone, with the diagnostics taken out.</summary>
+    public string ConversationText
+    {
+        get => _conversationText;
+        private set => Set(ref _conversationText, value);
+    }
+
+    /// <summary>
+    /// Today's log file, as of the last <see cref="RefreshLog"/>. Empty until something asks.
+    /// </summary>
+    public string LogText
+    {
+        get => _logText;
+        private set => Set(ref _logText, value);
+    }
+
+    /// <summary>
+    /// Where <see cref="LogText"/> comes from. A function rather than a path, so this stays a
+    /// view model that knows nothing about a disk and a test can hand it a string.
+    /// </summary>
+    public Func<string>? LogSource { get; set; }
+
+    /// <summary>
+    /// Re-reads the log. Called when a surface switches to it and when the Commander asks
+    /// again - a log nobody is looking at is not worth a file read per tick.
+    /// </summary>
+    public void RefreshLog()
+    {
+        if (LogSource is not { } read)
+        {
+            LogText = "No log file is being written.";
+            return;
+        }
+
+        try
+        {
+            LogText = read();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The log is a diagnostic. Failing to show it must not be a second fault to chase.
+            LogText = $"The log could not be read: {ex.Message}";
+        }
     }
 
     /// <summary>
@@ -162,11 +258,27 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _canAsk, value);
     }
 
-    /// <summary>Adds to the transcript. The only way it grows.</summary>
-    public void Append(string text)
+    /// <summary>
+    /// Adds to the transcript. The only way it grows.
+    /// <para>
+    /// <paramref name="kind"/> defaults to <see cref="TranscriptKind.Conversation"/> so the
+    /// streaming reply path - one call per delta - reads exactly as it did, and only the
+    /// callers writing diagnostics have to say so.
+    /// </para>
+    /// </summary>
+    public void Append(string text, TranscriptKind kind = TranscriptKind.Conversation)
     {
-        _transcript.Append(text);
-        TranscriptText = _transcript.ToString();
+        if (_runs.Count == 0 || _runs[^1].Kind != kind)
+        {
+            _runs.Add((kind, new StringBuilder()));
+        }
+
+        _runs[^1].Text.Append(text);
+
+        TranscriptText = string.Concat(_runs.Select(run => run.Text.ToString()));
+        ConversationText = string.Concat(
+            _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(run => run.Text.ToString()));
+
         TranscriptAppended?.Invoke();
     }
 

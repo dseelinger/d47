@@ -83,6 +83,10 @@ public partial class MainWindow : Window
 
         if (host is not null)
         {
+            // The log page reads through this rather than knowing a path, so the view model
+            // stays free of a disk and a test can hand it a string.
+            _model.LogSource = () => Logging.LogTail.Read(host.Paths.Logs);
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             WindowPlacementMemory.Attach(this, host.ViewState);
@@ -102,7 +106,7 @@ public partial class MainWindow : Window
 
         if (_host is null)
         {
-            _model.Append("No host: the window is running under the designer.");
+            _model.Append("No host: the window is running under the designer.", TranscriptKind.Technical);
             return;
         }
 
@@ -115,7 +119,7 @@ public partial class MainWindow : Window
         // The Phase 1 claim is that a request produces a real tool call that runs and returns a
         // result. This is that call, dispatched by name through the registry.
         var status = await _host.Capabilities.InvokeAsync("get_app_status", ToolArguments.Empty);
-        _model.Append(status.Content);
+        _model.Append(status.Content, TranscriptKind.Technical);
 
         if (status.IsError)
         {
@@ -125,10 +129,12 @@ public partial class MainWindow : Window
         // Say plainly whether the model is available. Silence here is indistinguishable from a
         // model with nothing to say, and the keyword router still answers either way.
         var availability = _host.LlmAvailability;
-        _model.Append(availability.Current == LlmAvailability.Available
-            ? "\nLanguage model: ready."
-            : $"\nLanguage model: unavailable. {availability.Reason} " +
-              "Keyword commands still work — try \"where am I\" or \"status\".");
+        _model.Append(
+            availability.Current == LlmAvailability.Available
+                ? "\nLanguage model: ready."
+                : $"\nLanguage model: unavailable. {availability.Reason} " +
+                  "Keyword commands still work — try \"where am I\" or \"status\".",
+            TranscriptKind.Technical);
 
         if (errors.Count > 0)
         {
@@ -663,7 +669,9 @@ public partial class MainWindow : Window
                 executable,
                 _host.Loggers.CreateLogger<MainWindow>()))
         {
-            _model.Append("I could not add the Start Menu entry. You can still run D47 from where it is.");
+            _model.Append(
+                "I could not add the Start Menu entry. You can still run D47 from where it is.",
+                TranscriptKind.Technical);
         }
     }
 

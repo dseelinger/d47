@@ -28,6 +28,13 @@ public partial class PanelView : UserControl
     public static readonly StyledProperty<PanelMode> ModeProperty =
         AvaloniaProperty.Register<PanelView, PanelMode>(nameof(Mode));
 
+    /// <summary>
+    /// Which page of the transcript this instantiation is showing. Also a property of the
+    /// surface: the window can be reading the log while the headset shows the conversation.
+    /// </summary>
+    public static readonly StyledProperty<TranscriptPage> PageProperty =
+        AvaloniaProperty.Register<PanelView, TranscriptPage>(nameof(Page));
+
     private PanelViewModel? _bound;
 
     public PanelView()
@@ -40,6 +47,9 @@ public partial class PanelView : UserControl
         // wrong, and those are different reasons.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyMode());
         ApplyMode();
+
+        PageProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyPage());
+        ApplyPage();
 
         // Scroll position belongs to a rendered surface rather than to the text, so each
         // instance answers this for itself: the window and the overlay can be scrolled to
@@ -72,6 +82,12 @@ public partial class PanelView : UserControl
     {
         get => GetValue(ModeProperty);
         set => SetValue(ModeProperty, value);
+    }
+
+    public TranscriptPage Page
+    {
+        get => GetValue(PageProperty);
+        set => SetValue(PageProperty, value);
     }
 
     private PanelViewModel? Model => DataContext as PanelViewModel;
@@ -114,6 +130,58 @@ public partial class PanelView : UserControl
         Header.IsVisible = full;
         Banners.IsVisible = full;
         AskRow.IsVisible = full;
+
+        // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs
+        // go with the rest of the chrome. A surface with 640x280 to spend does not spend it on
+        // three page selectors.
+        TranscriptTabs.IsVisible = full;
+    }
+
+    /// <summary>
+    /// Points the transcript at the page this surface is showing, and checks the tab that says
+    /// so - which keeps a page set in code and a page set by a click on one path.
+    /// </summary>
+    private void ApplyPage()
+    {
+        var tab = Page switch
+        {
+            TranscriptPage.Technical => TechnicalTab,
+            TranscriptPage.Log => LogTab,
+            _ => ConversationTab,
+        };
+
+        tab.IsChecked = true;
+
+        // Read when the page is opened rather than on a timer. A log nobody is looking at is
+        // not worth a file read per tick, and one being looked at is being looked at because
+        // something has already gone wrong.
+        if (Page == TranscriptPage.Log)
+        {
+            _bound?.RefreshLog();
+        }
+
+        Transcript.Bind(
+            TextBlock.TextProperty,
+            new Avalonia.Data.Binding(Page switch
+            {
+                TranscriptPage.Technical => nameof(PanelViewModel.TranscriptText),
+                TranscriptPage.Log => nameof(PanelViewModel.LogText),
+                _ => nameof(PanelViewModel.ConversationText),
+            }));
+    }
+
+    private void OnPageTabChecked(object? sender, RoutedEventArgs e)
+    {
+        // Fires for the tab being cleared as well as the one being set, and only the set one
+        // says anything about which page to show.
+        if (sender is not RadioButton { IsChecked: true } tab)
+        {
+            return;
+        }
+
+        Page = tab == TechnicalTab ? TranscriptPage.Technical
+            : tab == LogTab ? TranscriptPage.Log
+            : TranscriptPage.Conversation;
     }
 
     /// <summary>
