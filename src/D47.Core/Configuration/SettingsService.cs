@@ -216,6 +216,19 @@ public sealed class SettingsService
                     : $"'{value}' is not a valid {row.Label}.");
         }
 
+        // Said here rather than discovered later. A system-wide key with no modifier cannot be
+        // registered — it would take that key from every other application, the game included —
+        // and refusing it on the row that was just pressed puts the reason in front of the
+        // Commander who pressed it, rather than on a panel sitting behind the settings window.
+        if (row.Kind == SettingKind.Hotkey && row.SystemWide
+            && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Rejected,
+                $"{row.Label} works everywhere, so it needs a modifier — try Ctrl, Alt or Shift with "
+                + "it. On its own, that key would stop working in every other application, Elite included.");
+        }
+
         if (string.Equals(row.Binding!.Read(Current), normalised, StringComparison.Ordinal))
         {
             return new SettingApplyResult(SettingApplyStatus.Unchanged, $"{row.Label} is already {Describe(normalised)}.");

@@ -101,6 +101,22 @@ public sealed record SettingRow
     /// </summary>
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
 
+    /// <summary>
+    /// Whether this hotkey is claimed from the whole system rather than from d47's own window.
+    /// <para>
+    /// A system-wide gesture with no modifier takes that key away from every other application,
+    /// including the game — bind <kbd>]</kbd> and you could no longer type <kbd>]</kbd> anywhere.
+    /// The binder has always refused those; declaring it here is what lets the refusal happen on
+    /// the row the Commander just pressed, instead of arriving later as a message on a panel
+    /// behind the settings window, about a value that was stored anyway.
+    /// </para>
+    /// <para>
+    /// False for push-to-talk, which is polled rather than registered — a bare key is the normal
+    /// arrangement there, and that difference is the whole reason this is a property of the row.
+    /// </para>
+    /// </summary>
+    public bool SystemWide { get; init; }
+
     /// <summary>How the value is read and written. Null only for <see cref="Kind"/> Secret.</summary>
     public SettingBinding? Binding { get; init; }
 

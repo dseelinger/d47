@@ -428,8 +428,9 @@ public partial class MainWindow : Window
         {
             // Reported rather than swallowed: the symptom of a failed registration is a key
             // that does nothing, which reads as d47 ignoring the Commander.
-            _model.ErrorText = $"The silence hotkey {gesture} could not be registered system-wide. " +
-                               "Another application is probably holding it — pick another in Settings.";
+            _model.ErrorText =
+                $"The silence hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
+                "Another application is probably holding it — pick another in Settings.";
         }
     }
 
@@ -453,8 +454,9 @@ public partial class MainWindow : Window
 
         if (!_reanchor.Bind(gesture, () => _host.Vr?.Reanchor()) && !string.IsNullOrWhiteSpace(gesture))
         {
-            _model.ErrorText = $"The re-anchor hotkey {gesture} could not be registered system-wide. " +
-                               "Another application is probably holding it — pick another in Settings.";
+            _model.ErrorText =
+                $"The re-anchor hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
+                "Another application is probably holding it — pick another in Settings.";
         }
     }
 
