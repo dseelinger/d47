@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using D47.App.Panel;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -33,6 +34,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private static readonly PixelSize Mini = new(640, 280);
 
     private readonly PanelViewModel _model;
+    private readonly string? _dumpTo;
+
+    private bool _kept;
     private readonly SettingsService _settings;
     private readonly Func<string, (VrPose Placed, VrPose Against)?> _anchor;
     private readonly PanelView _view;
@@ -47,8 +51,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         PanelViewModel model,
         SettingsService settings,
         Func<string, (VrPose Placed, VrPose Against)?> anchor,
-        D47.Core.Interface.AvatarLibrary? avatars = null)
+        D47.Core.Interface.AvatarLibrary? avatars = null,
+        string? dumpTo = null)
     {
+        _dumpTo = dumpTo;
+
         _model = model;
         _settings = settings;
         _anchor = anchor;
@@ -128,9 +135,47 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         var (width, height) = Size;
         _offscreen.Resize(new PixelSize(width, height));
-        _offscreen.Render();
+        var rendered = _offscreen.Render();
         _offscreen.CopyInto(destination, rowBytes);
         _dirty = false;
+
+        Keep(rendered);
+    }
+
+    /// <summary>
+    /// Writes the first frame of a session to <c>data/</c>, so what the headset was handed can
+    /// be looked at rather than reasoned about.
+    /// <para>
+    /// The rasterise is covered by a test, but that test runs on Avalonia's headless platform
+    /// and this runs on Win32 against a window that is never shown. That difference is the last
+    /// thing between the two that has never been observed in a real build, and every other
+    /// explanation for an overlay SteamVR reports as visible has been wrong.
+    /// </para>
+    /// <para>
+    /// Once per session and overwritten each time, so it stays one small file rather than a
+    /// stream of them, and it never touches the frame path after the first.
+    /// </para>
+    /// </summary>
+    private void Keep(RenderTargetBitmap rendered)
+    {
+        if (_kept || _dumpTo is not { } folder)
+        {
+            return;
+        }
+
+        _kept = true;
+
+        try
+        {
+            rendered.Save(
+                Path.Combine(folder, $"vr-{Surface}.png"),
+                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A diagnostic must never be why a frame fails.
+            _ = ex;
+        }
     }
 
     /// <summary>
