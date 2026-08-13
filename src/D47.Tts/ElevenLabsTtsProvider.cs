@@ -223,41 +223,71 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     internal static double SpeedFor(double rate) => Math.Clamp(rate, MinimumSpeed, MaximumSpeed);
 
     /// <summary>
-    /// The service's own error text where it gives one, because "401" is not something a
-    /// Commander can act on and "your key is not authorised for this voice" is.
+    /// What went wrong, in words a Commander can act on.
+    /// <para>
+    /// <b>The service's own message is preferred over anything mapped from the status code</b>,
+    /// because it is consistently the more useful of the two and the status code is consistently
+    /// not what you would guess. Verified against the live API: an invalid key is a 401
+    /// ("Invalid API key"), but a bad voice id is a <em>400</em> — the voice is validated before
+    /// the key, so a request with both wrong reports the voice. A mapping table alone would have
+    /// answered "it answered 400" there, which tells the Commander nothing at all.
+    /// </para>
     /// </summary>
     private static async Task<string> DescribeAsync(
         HttpResponseMessage response,
         string text,
         CancellationToken cancellationToken)
     {
-        var reason = response.StatusCode switch
-        {
-            HttpStatusCode.Unauthorized => "the API key was rejected",
-            HttpStatusCode.Forbidden => "the API key is not allowed to use that voice or model",
-            HttpStatusCode.NotFound => "that voice id is not on this account",
-            HttpStatusCode.TooManyRequests => "the account is rate limited",
-            HttpStatusCode.PaymentRequired => "the account is out of characters",
-            _ => $"it answered {(int)response.StatusCode}",
-        };
+        var reason = await MessageFromBodyAsync(response, cancellationToken).ConfigureAwait(false)
+                     ?? response.StatusCode switch
+                     {
+                         HttpStatusCode.Unauthorized => "the API key was rejected",
+                         HttpStatusCode.Forbidden => "the API key is not allowed to use that voice or model",
+                         HttpStatusCode.NotFound => "that voice id is not on this account",
+                         HttpStatusCode.TooManyRequests => "the account is rate limited",
+                         HttpStatusCode.PaymentRequired => "the account is out of characters",
+                         _ => $"it answered {(int)response.StatusCode}",
+                     };
 
-        var detail = string.Empty;
+        return $"ElevenLabs could not speak \"{Excerpt(text)}\": {reason}.";
+    }
 
+    /// <summary>
+    /// The <c>detail.message</c> ElevenLabs puts in an error body, or null when there is not one
+    /// to read. Never throws: this runs while already reporting a failure, and a failure to
+    /// describe a failure must not replace it.
+    /// </summary>
+    private static async Task<string?> MessageFromBodyAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
-            if (body is { Length: > 0 and < 500 })
+            if (body is not { Length: > 0 and < 4000 })
             {
-                detail = $" ({body.Trim()})";
+                return null;
             }
-        }
-        catch
-        {
-            // The status is the useful half; a body that will not read does not change it.
-        }
 
-        return $"ElevenLabs could not speak \"{Excerpt(text)}\": {reason}{detail}.";
+            using var document = JsonDocument.Parse(body);
+
+            if (document.RootElement.TryGetProperty("detail", out var detail)
+                && detail.ValueKind == JsonValueKind.Object
+                && detail.TryGetProperty("message", out var message)
+                && message.GetString() is { Length: > 0 } stated)
+            {
+                return stated.TrimEnd('.');
+            }
+
+            return null;
+        }
+        catch (Exception)
+        {
+            // A body that will not read or will not parse. The status-code mapping is the
+            // fallback and is why this returns null rather than raising.
+            return null;
+        }
     }
 
     private static string Excerpt(string text) => text.Length <= 40 ? text : text[..40] + "…";

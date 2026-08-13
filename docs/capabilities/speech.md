@@ -63,6 +63,21 @@ Without a key, ElevenLabs offers an empty voice list and says so when asked to s
 capability being off rather than a failure: nothing crashes, and the rest of Directive 47 carries
 on.
 
+ElevenLabs' voice *catalogue* is actually public — it answers without a key at all — but the list
+is deliberately left empty until you have stored one. A picker full of voices that every
+synthesis then refuses is worse than an empty picker and a row telling you what is missing.
+
+When something does go wrong, Directive 47 repeats **what the service said** rather than
+translating a status code:
+
+```text
+ElevenLabs could not speak "test": Invalid API key.
+```
+
+That is not decoration. ElevenLabs validates the voice id before the key, so a request with both
+wrong comes back as a `400` about the voice — and any status-code mapping worth writing would
+answer "it answered 400" and leave you guessing.
+
 ### Voice {#voice}
 
 Which voice speaks. The list comes from the provider, so it is what that provider actually offers

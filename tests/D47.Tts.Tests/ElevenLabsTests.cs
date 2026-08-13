@@ -134,17 +134,45 @@ public class ElevenLabsLiveTests
             string.IsNullOrWhiteSpace(Key),
             "set D47_ELEVENLABS_KEY to run tests that contact ElevenLabs");
 
-        var provider = new ElevenLabsTtsProvider(
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+        // A real voice id with a wrong key, which is the only way to test the key at all:
+        // ElevenLabs validates the voice id *first*, so a request with both wrong comes back as
+        // a 400 about the voice and says nothing about the key. The first version of this test
+        // passed a made-up id and was quietly asserting nothing.
+        using var real = Provider();
+        var voices = await real.ListVoicesAsync(timeout.Token);
+        Assert.NotEmpty(voices);
+
+        using var wrongKey = new ElevenLabsTtsProvider(
             () => "sk_definitely_not_a_real_key",
             NullLogger<ElevenLabsTtsProvider>.Instance);
 
-        using var _ = provider;
+        var failure = await Assert.ThrowsAsync<TtsException>(
+            () => wrongKey.SynthesizeAsync("test", new VoiceSelection(voices[0].Id), timeout.Token));
+
+        // "401" is not something a Commander can act on. The service says "Invalid API key",
+        // which is, and that is what the provider now surfaces in preference to its own mapping.
+        Assert.Contains("API key", failure.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ABadVoiceIdIsReportedAsTheVoiceRatherThanAsAStatusCode()
+    {
+        Assert.SkipWhen(
+            string.IsNullOrWhiteSpace(Key),
+            "set D47_ELEVENLABS_KEY to run tests that contact ElevenLabs");
+
+        using var provider = Provider();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         var failure = await Assert.ThrowsAsync<TtsException>(
-            () => provider.SynthesizeAsync("test", new VoiceSelection("any-voice-id"), timeout.Token));
+            () => provider.SynthesizeAsync("test", new VoiceSelection("not-a-voice-id"), timeout.Token));
 
-        // "401" is not something a Commander can act on; "the API key was rejected" is.
-        Assert.Contains("key", failure.Message, StringComparison.OrdinalIgnoreCase);
+        // This is the case that exposed the bug: ElevenLabs answers 400 here, so every
+        // status-code mapping worth writing produces "it answered 400" and the Commander is
+        // left guessing. The service's own message names the id and says what to do.
+        Assert.DoesNotContain("it answered", failure.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("not-a-voice-id", failure.Message, StringComparison.Ordinal);
     }
 }
