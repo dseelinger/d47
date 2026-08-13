@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -27,9 +28,18 @@ public class DesktopWindowTests
 
         ZoomHost.Attach(window, settings);
 
+        // Inside a horizontally scrolling viewport, which is what makes zoom browser-like:
+        // enlarging past the window's width scrolls sideways rather than squeezing the layout
+        // into what is left. Vertical scrolling is deliberately left to whatever inside the
+        // window already does it.
+        var viewport = Assert.IsType<ScrollViewer>(window.Content);
+
+        Assert.Equal(ScrollBarVisibility.Auto, viewport.HorizontalScrollBarVisibility);
+        Assert.Equal(ScrollBarVisibility.Disabled, viewport.VerticalScrollBarVisibility);
+
         // A render transform would scale the finished picture and let the window clip it. A
         // layout transform re-runs measure and arrange, which is what makes text rewrap.
-        Assert.IsType<LayoutTransformControl>(window.Content);
+        Assert.IsType<LayoutTransformControl>(viewport.Content);
     }
 
     [AvaloniaFact]

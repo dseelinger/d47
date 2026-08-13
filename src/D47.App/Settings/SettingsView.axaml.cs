@@ -360,6 +360,32 @@ public partial class SettingsView : UserControl
     /// Highlights the section the panel is actually showing — the topmost card still in view —
     /// rather than the last one clicked (list.md Phase 4, "Settings Nav Menu").
     /// </summary>
+    /// <summary>
+    /// The card column tracks the viewport, between a floor and a ceiling.
+    /// <para>
+    /// Set in code because neither bound alone does it. MaxWidth on its own let zoom squeeze a
+    /// row to 197 pixels — at 175% in a 900-pixel window there is only that much to lay out in —
+    /// and at that width a row cannot hold its caption beside its control, so the caption
+    /// collapsed and the control drew over it. MinWidth on its own, with scrolling enabled, made
+    /// the scroll viewer measure with infinite width, so the cards took their maximum at every
+    /// window size and scrolled sideways when they never needed to.
+    /// </para>
+    /// <para>
+    /// Below the floor the panel scrolls. A scrollbar is a worse answer than fitting and a much
+    /// better one than two controls in the same place.
+    /// </para>
+    /// </summary>
+    private void OnScrollerSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        const double Floor = 420;
+        const double Ceiling = 700;
+
+        // The margin the cards are laid out with, both sides.
+        var available = e.NewSize.Width - 56;
+
+        Cards.Width = Math.Clamp(available, Floor, Ceiling);
+    }
+
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (_sections.Count == 0)

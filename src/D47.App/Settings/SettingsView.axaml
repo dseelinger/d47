@@ -12,7 +12,12 @@
     card is topmost in view (list.md Phase 4, "Settings Nav Menu"). Nav items are built in
     code from the same sections the cards are - there is no second list.
   -->
-  <Grid ColumnDefinitions="224,*">
+  <!--
+    The page has a width below which it stops working: the nav, plus a card column wide enough to
+    hold a caption beside its control. Narrower than this the window scrolls sideways rather than
+    squeezing, which is what a browser does and what zoom needs.
+  -->
+  <Grid ColumnDefinitions="224,*" MinWidth="700">
 
     <Border Grid.Column="0"
             Background="{DynamicResource D47.Background}"
@@ -57,21 +62,37 @@
                   FontSize="11"
                   Padding="10,4"
                   Click="OnAboutClick" />
+          <!--
+            One line, trimmed, with the whole thing on the tooltip. Wrapped, it was the footer's
+            fill child: the buttons took what they needed and this took the rest, which at a high
+            zoom in a small window was about one word wide and forty lines tall. It is a path to
+            refer to rather than to read, so losing the end of it costs nothing that hovering
+            does not give back.
+          -->
           <TextBlock x:Name="StorageLine"
                      FontSize="11"
                      VerticalAlignment="Center"
-                     TextWrapping="Wrap"
+                     TextWrapping="NoWrap"
+                     TextTrimming="CharacterEllipsis"
                      Foreground="{DynamicResource D47.TextMuted}" />
         </DockPanel>
       </Border>
 
+      <!--
+        Horizontal scrolling is on, and the cards have a floor as well as a ceiling. Zoom shrinks
+        the space the panel is laid out in - at 175% in a 900-pixel window a row gets 197 - and
+        below about 420 a row cannot hold its caption and its control side by side. Without a
+        floor the caption was squeezed to nothing and the control drew over it; with one, the
+        row keeps its shape and the panel scrolls. A scrollbar is a worse answer than fitting
+        and a better one than two controls in the same place.
+      -->
       <ScrollViewer x:Name="Scroller"
                     ScrollChanged="OnScrollChanged"
-                    HorizontalScrollBarVisibility="Disabled">
+                    SizeChanged="OnScrollerSizeChanged"
+                    HorizontalScrollBarVisibility="Auto">
         <StackPanel x:Name="Cards"
                     Margin="28,20,28,28"
                     Spacing="14"
-                    MaxWidth="700"
                     HorizontalAlignment="Left" />
       </ScrollViewer>
 
