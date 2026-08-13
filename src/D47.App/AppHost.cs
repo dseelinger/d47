@@ -725,6 +725,7 @@ public sealed class AppHost : IDisposable
             // it. Both are announcements in somebody else's voice rather than d47's, which is
             // what Announcement.Voice exists to carry.
             .Add(new CarrierCallout())
+            .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Speech.SpeakIncomingMessages,
@@ -754,6 +755,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("long-jump", callouts.LongJump);
         engine.SetEnabled("arrival", callouts.Arrival);
         engine.SetEnabled("materials", callouts.Materials);
+        engine.SetEnabled("ambient", callouts.Ambient);
 
         foreach (var callout in engine.Callouts)
         {
@@ -769,6 +771,15 @@ public sealed class AppHost : IDisposable
 
                 case ArrivalCallout arrival:
                     arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+
+                case AmbientCallout ambient:
+                    ambient.Interval = TimeSpan.FromMinutes(callouts.AmbientMinutes);
+
+                    // Silent while personality is off. The checklist puts "no ambient remarks"
+                    // in that item's own acceptance criteria, which makes this the one callout
+                    // the personality switch reaches.
+                    ambient.Enabled = () => settings.Callouts.Ambient && settings.Llm.PersonalityEnabled;
                     break;
             }
         }
@@ -1414,30 +1425,55 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private async Task<Announcement> VaryAsync(Announcement announcement)
     {
-        if (announcement.Voice is not (VoiceRole.CarrierCaptain or VoiceRole.TowerControl)
-            || Turns.Provider is null
-            || !Settings.Current.Llm.PersonalityEnabled)
+        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
         {
             return announcement;
         }
 
-        var who = announcement.Voice == VoiceRole.CarrierCaptain
-            ? "the captain of the Commander's fleet carrier"
-            : "the tower controller aboard the Commander's fleet carrier";
-
         using var budget = new CancellationTokenSource(FlavourBudget);
+
+        // An ambient remark is the core's own, so it gets the persona block and the live game
+        // state. The carrier's two roles are other people entirely and get neither.
+        var (persona, instruction, state) = announcement switch
+        {
+            { Key: var key } when key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal) =>
+            (
+                Personas.RenderBlock(personalityEnabled: true),
+                "Make one short unprompted remark about where the Commander is right now — you are "
+                + $"{AmbientLines.Describe(SituationOf(key))}. Nothing has happened; this is you "
+                + "filling a quiet moment in character. One or two sentences. Do not ask a question, "
+                + "do not offer help, and do not comment on the Commander's decisions.",
+                Turns.LiveGameState?.Invoke()
+            ),
+
+            { Voice: VoiceRole.CarrierCaptain or VoiceRole.TowerControl } =>
+            (
+                // No persona block: this is not the ship's AI speaking. Handing a Guardian core
+                // the carrier's lines would put one of them in two places at once, which is the
+                // one thing the isolation model cannot survive.
+                $"You are {(announcement.Voice == VoiceRole.CarrierCaptain
+                    ? "the captain of the Commander's fleet carrier"
+                    : "the tower controller aboard the Commander's fleet carrier")}. You are a "
+                + "professional, not a character — brief, competent and human. One short sentence. "
+                + "Never mention being an AI.",
+                $"Say this in your own words, once: \"{announcement.Text}\"",
+                (string?)null
+            ),
+
+            _ => (null, null, null),
+        };
+
+        if (instruction is null)
+        {
+            return announcement;
+        }
 
         var line = await FlavourTurn.AskAsync(
             Turns.Provider,
             Turns.Model,
-
-            // No persona block: this is not the ship's AI speaking. Handing a Guardian core the
-            // carrier's lines would put one of them in two places at once, which is the one
-            // thing the isolation model cannot survive.
-            persona: $"You are {who}. You are a professional, not a character — brief, competent "
-                     + "and human. One short sentence. Never mention being an AI.",
-            $"Say this in your own words, once: \"{announcement.Text}\"",
-            gameState: null,
+            persona,
+            instruction,
+            state,
             Spend,
             PriceTable.Default,
             _logger,
@@ -1445,6 +1481,16 @@ public sealed class AppHost : IDisposable
 
         return line is null ? announcement : announcement with { Text = line };
     }
+
+    /// <summary>
+    /// Which situation an ambient announcement was about, from its key. Carried on the key
+    /// rather than read back off the callout, because a batch may hold more than one and the
+    /// callout only remembers the last.
+    /// </summary>
+    private static AmbientSituation SituationOf(string key) =>
+        Enum.TryParse<AmbientSituation>(key[AmbientCallout.KeyPrefix.Length..], ignoreCase: true, out var situation)
+            ? situation
+            : AmbientSituation.None;
 
     private string? _voiceScopeSystem;
 

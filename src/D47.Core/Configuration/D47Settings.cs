@@ -266,6 +266,23 @@ public sealed record CalloutSettings
     /// since where someone considers home is not something any journal event reports.
     /// </summary>
     public string? HomeSystem { get; init; }
+
+    /// <summary>
+    /// In-character remarks about where the Commander is, said because nothing has happened
+    /// rather than because something has (list.md Phase 11, "Ambient Voice").
+    /// <para>
+    /// On, because a companion that only ever answers questions is a search box with a voice.
+    /// The interval is what makes that tolerable.
+    /// </para>
+    /// </summary>
+    public bool Ambient { get; init; } = true;
+
+    /// <summary>
+    /// The shortest gap between two ambient remarks, in minutes. 0 silences them, which is the
+    /// same as turning <see cref="Ambient"/> off and is offered because a Commander reaching for
+    /// "less" will reach for this row rather than the switch.
+    /// </summary>
+    public int AmbientMinutes { get; init; } = 15;
 }
 
 public sealed record LlmSettings
