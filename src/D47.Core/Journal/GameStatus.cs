@@ -13,11 +13,19 @@ public enum StatusFlags : uint
     None = 0,
     Docked = 1u << 0,
     Landed = 1u << 1,
+    LandingGearDown = 1u << 2,
     ShieldsUp = 1u << 3,
     Supercruise = 1u << 4,
+    FlightAssistOff = 1u << 5,
     HardpointsDeployed = 1u << 6,
+    InWing = 1u << 7,
+    LightsOn = 1u << 8,
     CargoScoopDeployed = 1u << 9,
+    SilentRunning = 1u << 10,
     ScoopingFuel = 1u << 11,
+    SrvHandbrake = 1u << 12,
+    SrvTurretView = 1u << 13,
+    SrvDriveAssist = 1u << 15,
     FsdMassLocked = 1u << 16,
     FsdCharging = 1u << 17,
     FsdCooldown = 1u << 18,
@@ -28,12 +36,40 @@ public enum StatusFlags : uint
     /// <summary>Elite sets this above 100% heat.</summary>
     Overheating = 1u << 20,
 
+    HasLatLong = 1u << 21,
     InDanger = 1u << 22,
     BeingInterdicted = 1u << 23,
     InMainShip = 1u << 24,
     InFighter = 1u << 25,
     InSrv = 1u << 26,
+
+    /// <summary>Analysis mode rather than combat mode. The scanners only fire in this one.</summary>
+    AnalysisMode = 1u << 27,
+
+    NightVision = 1u << 28,
     FsdJump = 1u << 30,
+    SrvHighBeam = 1u << 31,
+}
+
+/// <summary>
+/// Odyssey's second bitfield. Only <see cref="OnFoot"/> is named: it is the bit that decides
+/// whether the Commander is in a ship at all, which the first bitfield cannot answer — it
+/// reports <see cref="StatusFlags.InMainShip"/> for a Commander standing next to their ship.
+/// </summary>
+[Flags]
+public enum StatusFlags2 : uint
+{
+    None = 0,
+    OnFoot = 1u << 0,
+    InTaxi = 1u << 1,
+    InMulticrew = 1u << 2,
+    OnFootInStation = 1u << 3,
+    OnFootOnPlanet = 1u << 4,
+    GlideMode = 1u << 12,
+    OnFootInHangar = 1u << 13,
+    OnFootSocialSpace = 1u << 14,
+    OnFootExterior = 1u << 15,
+    BreathableAtmosphere = 1u << 16,
 }
 
 /// <summary>
@@ -52,8 +88,16 @@ public sealed record GameStatus
 
     public StatusFlags Flags { get; init; }
 
-    /// <summary>Odyssey's second bitfield, kept whole — nothing reads it yet.</summary>
+    /// <summary>Odyssey's second bitfield. See <see cref="StatusFlags2"/>.</summary>
     public uint Flags2 { get; init; }
+
+    public bool Has2(StatusFlags2 flag) => ((StatusFlags2)Flags2 & flag) == flag;
+
+    /// <summary>
+    /// On foot, which is the one mode question the first bitfield cannot answer: it keeps
+    /// reporting <see cref="StatusFlags.InMainShip"/> for a Commander who has got out.
+    /// </summary>
+    public bool OnFoot => Has2(StatusFlags2.OnFoot);
 
     public double? FuelMain { get; init; }
 

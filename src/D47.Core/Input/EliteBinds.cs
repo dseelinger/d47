@@ -62,6 +62,15 @@ public sealed record EliteBinds
     public bool IsKnown => SourceFile is not null;
 
     /// <summary>
+    /// Every slot bound to one Elite action, in file order. Usually none or one; two when the
+    /// Commander has filled both Primary and Secondary, which is common on a HOTAS setup where
+    /// the stick holds one and the keyboard holds the other.
+    /// </summary>
+    public IReadOnlyList<EliteBinding> For(string action) =>
+        [.. Bindings.Where(binding =>
+            string.Equals(binding.Action, action, StringComparison.OrdinalIgnoreCase))];
+
+    /// <summary>
     /// Every action a keyboard gesture is already bound to. This is the question the
     /// push-to-talk key has to ask: a key Elite is already using has no symptom beyond the
     /// binding quietly not working, in one direction or the other.
