@@ -38,7 +38,7 @@ public class TurnRetryTests
         TurnResult? result = null;
 
         await foreach (var turnEvent in loop.RunAsync(
-                           "tell me about hyperspace physics", TestContext.Current.CancellationToken))
+                           "tell me about hyperspace physics", cancellationToken: TestContext.Current.CancellationToken))
         {
             events.Add(turnEvent);
 

@@ -3,6 +3,16 @@ using D47.Core.Capabilities;
 
 namespace D47.Core.Conversation;
 
+/// <summary>How an input reached d47. Some phrases only mean what they say when spoken.</summary>
+public enum InputSource
+{
+    /// <summary>The ask box. The default, because everything that is not the microphone is this.</summary>
+    Typed,
+
+    /// <summary>Transcribed from the microphone.</summary>
+    Spoken,
+}
+
 public sealed record KeywordMatch(string CapabilityId, string ToolName);
 
 /// <summary>A settings row a declared phrase asked for, and the value that phrase means.</summary>
@@ -67,7 +77,16 @@ public sealed class KeywordRouter(
     /// closed vocabularies in Phase 6.
     /// </para>
     /// </summary>
-    public KeywordMatch? Match(string input)
+    /// <summary>
+    /// The phrases in play for an input that arrived this way. The spoken-only set is added
+    /// rather than substituted: everything matchable by typing is matchable by speaking.
+    /// </summary>
+    private static IEnumerable<string> Vocabulary(CapabilityDescriptor descriptor, InputSource source) =>
+        source == InputSource.Spoken
+            ? descriptor.Keywords.Concat(descriptor.SpokenKeywords)
+            : descriptor.Keywords;
+
+    public KeywordMatch? Match(string input, InputSource source = InputSource.Typed)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -76,7 +95,7 @@ public sealed class KeywordRouter(
 
         var candidates =
             from capability in registry.All
-            from keyword in capability.Descriptor.Keywords
+            from keyword in Vocabulary(capability.Descriptor, source)
             where ContainsPhrase(input, keyword)
             orderby keyword.Length descending
             select capability;

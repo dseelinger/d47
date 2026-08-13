@@ -243,6 +243,13 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Heard;
 
     /// <summary>
+    /// Raised with something d47 is saying that no turn produced, so the transcript can carry
+    /// it too. What d47 says out loud and what the Commander can read afterwards should not be
+    /// two different sets: a line that was only ever spoken is a line nobody can go back to.
+    /// </summary>
+    public event Action<string>? Said;
+
+    /// <summary>
     /// Raised when a selected speech model is not on disk. A surface answers it by asking the
     /// Commander and calling <see cref="InstallModelAsync"/>.
     /// <para>
@@ -413,6 +420,11 @@ public sealed class AppHost : IDisposable
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
         var voice = new VoicePipeline(audio, cues, loggerFactory);
+
+        // The loop settles back to idle when the arbiter goes quiet rather than when the turn
+        // returns, because the turn returns while the reply is still being spoken. Wired here
+        // because VoicePipeline has a primary constructor and cannot subscribe from one.
+        audio.ActivityChanged += voice.Settle;
 
         try
         {
@@ -1240,7 +1252,10 @@ public sealed class AppHost : IDisposable
             _logger.LogInformation(
                 "Heard {Seconds:0.#}s but no speech model is loaded", utterance.Duration.TotalSeconds);
 
-            _ = Voice.AnnounceAsync("I heard you, but I have no speech model loaded to understand it.");
+            const string Cannot = "I heard you, but I have no speech model loaded to understand it.";
+
+            _ = Voice.AnnounceAsync(Cannot);
+            Said?.Invoke(Cannot);
             return;
         }
 

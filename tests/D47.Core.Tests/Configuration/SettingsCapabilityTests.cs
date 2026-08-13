@@ -167,7 +167,7 @@ public class SettingCommandRoutingTests
             settings: surface.Settings);
 
         TurnResult? result = null;
-        await foreach (var turnEvent in loop.RunAsync("stop checking for updates", TestContext.Current.CancellationToken))
+        await foreach (var turnEvent in loop.RunAsync("stop checking for updates", cancellationToken: TestContext.Current.CancellationToken))
         {
             if (turnEvent is TurnEvent.Completed completed)
             {

@@ -121,7 +121,7 @@ public class TurnCancellationTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
         {
-            await foreach (var turnEvent in loop.RunAsync("tell me about hyperspace physics", source.Token))
+            await foreach (var turnEvent in loop.RunAsync("tell me about hyperspace physics", cancellationToken: source.Token))
             {
                 // Cancel once it is genuinely under way, which is the real-world case: the
                 // Commander hears it start and calls it off.

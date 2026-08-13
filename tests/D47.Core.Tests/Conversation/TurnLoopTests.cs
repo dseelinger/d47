@@ -42,7 +42,7 @@ public class TurnLoopTests
         var text = new System.Text.StringBuilder();
         TurnResult? result = null;
 
-        await foreach (var turnEvent in loop.RunAsync(input, TestContext.Current.CancellationToken))
+        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
         {
             switch (turnEvent)
             {

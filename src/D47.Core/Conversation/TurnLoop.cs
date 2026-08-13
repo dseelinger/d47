@@ -163,6 +163,7 @@ public sealed class TurnLoop(
 
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
+        InputSource source = InputSource.Typed,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         availability.BeginTurn();
@@ -218,7 +219,7 @@ public sealed class TurnLoop(
         }
 
         // 3. The rest of the model-free path, before anything reaches a provider.
-        if (keywordRouter.Match(input) is { } match)
+        if (keywordRouter.Match(input, source) is { } match)
         {
             yield return new TurnEvent.Routed(TurnRoute.KeywordRouter, Effort: null);
 

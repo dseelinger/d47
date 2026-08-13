@@ -85,12 +85,33 @@ public sealed class SteamVrRuntime(
     /// <summary>Surfaces that have been served at least once, so the report is not per frame.</summary>
     private readonly HashSet<VrSurface> _served = [];
 
-    /// <summary>How often the runtime is asked to describe itself. Often enough to watch it
-    /// follow a head, rare enough to read.</summary>
-    private static readonly TimeSpan DescribeEvery = TimeSpan.FromSeconds(5);
+    /// <summary>
+    /// The last thing each surface said about itself, and when it said it. A read-back
+    /// identical to the one before it is not news, and printing it anyway is how the one that
+    /// <em>is</em> news gets missed.
+    /// </summary>
+    private readonly Dictionary<VrSurface, (string Text, DateTimeOffset When)> _described = [];
+
+    /// <summary>
+    /// The floor between two read-backs for one surface, changed or not. <c>Serve</c> runs at
+    /// 10 Hz, so a value that merely jittered would write ten lines a second - which is the
+    /// fault being fixed here, only faster.
+    /// </summary>
+    private static readonly TimeSpan DescribeAtMost = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// How often the runtime is asked to describe itself when nothing about it has changed.
+    /// <para>
+    /// Was five seconds, which is right while hunting an invisible overlay and wrong every
+    /// other minute of a session: it wrote seven hundred identical lines an hour and buried
+    /// everything else in the file. The read-back stays - going blind is what made the Phase 12
+    /// fault cost a day - but it is now driven by the answer changing, with this as the
+    /// heartbeat that proves the session is still being served.
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan DescribeEvery = TimeSpan.FromMinutes(5);
 
     private DateTimeOffset _now;
-    private DateTimeOffset _lastDescribed;
     private readonly Dictionary<VrSurface, VrPixels> _buffers = [];
 
     private CVRSystem? _system;
@@ -182,7 +203,7 @@ public sealed class SteamVrRuntime(
         // one that recovered looks exactly like the one that never reported anything.
         _complaints.Clear();
         _served.Clear();
-        _lastDescribed = default;
+        _described.Clear();
 
         if (_system is not null)
         {
@@ -423,12 +444,20 @@ public sealed class SteamVrRuntime(
         // which was true and did not help: the panel was still invisible, and three theories
         // reasoning from what d47 sent were all wrong. This is SteamVR's own account of what it
         // is holding, including whether it thinks the overlay is visible at all.
-        if (_now - _lastDescribed >= DescribeEvery)
-        {
-            _lastDescribed = _now;
+        // On change, and otherwise on a slow heartbeat. What is worth reading is the moment the
+        // runtime starts saying something different - visible going false, a width the Commander
+        // did not set, a transform that stopped tracking - and that is invisible in a wall of
+        // identical lines.
+        var described = overlay.Describe();
+        var seen = _described.TryGetValue(source.Surface, out var last);
+        var changed = !seen || !string.Equals(last.Text, described, StringComparison.Ordinal);
+        var since = seen ? _now - last.When : TimeSpan.MaxValue;
 
-            logger.LogInformation(
-                "{Surface}: {State}", source.Surface, overlay.Describe());
+        if (since >= (changed ? DescribeAtMost : DescribeEvery))
+        {
+            _described[source.Surface] = (described, _now);
+
+            logger.LogInformation("{Surface}: {State}", source.Surface, described);
         }
 
         // Once per surface per session. "The overlays are up" says the quads were created, not

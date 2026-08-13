@@ -38,6 +38,13 @@ public partial class MainWindow : Window
 
     private AvailableUpdate? _availableUpdate;
     private bool _turnInFlight;
+
+    /// <summary>
+    /// Whether the input waiting in the ask box got there by being spoken. Set by the
+    /// transcriber's handler and cleared as the turn starts, because it describes one input
+    /// rather than the window.
+    /// </summary>
+    private bool _spoken;
     private bool _downloading;
 
     public MainWindow() : this(host: null)
@@ -160,9 +167,18 @@ public partial class MainWindow : Window
         // whichever way they said it (list.md Phase 6).
         _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            // Spoken and typed run the same turn - the Commander expects "where am I" to mean
+            // the same thing either way - but the router is told which it was, because a couple
+            // of phrases only mean what they say when they arrived through a microphone.
+            _spoken = true;
             _model.AskText = text;
             _ = AskAsync();
         });
+
+        // Anything d47 says without a turn behind it still belongs in the transcript, so what
+        // was heard and what can be read back are the same set.
+        _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append($"\n{text}\n"));
 
         _host.ModelNeeded += model => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _ = OfferModelDownloadAsync(model));
@@ -294,6 +310,12 @@ public partial class MainWindow : Window
         }
 
         var input = _model.AskText?.Trim();
+
+        // Taken once, whether or not this turn goes ahead, so a discarded input cannot leave
+        // the next typed one looking spoken.
+        var source = _spoken ? InputSource.Spoken : InputSource.Typed;
+        _spoken = false;
+
         if (string.IsNullOrEmpty(input))
         {
             return;
@@ -350,7 +372,7 @@ public partial class MainWindow : Window
             // is what lets speech start at the first sentence boundary rather than at end of
             // turn (list.md Phase 5).
             await _host.Voice.RunAsync(
-                _host.Turns.RunAsync(input, cancelling.Token),
+                _host.Turns.RunAsync(input, source, cancelling.Token),
                 turnEvent =>
                 {
                     switch (turnEvent)
@@ -387,7 +409,11 @@ public partial class MainWindow : Window
             // which made a reproducible crash look like it had happened nowhere.
             _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
 
-            _model.Append($"\n[turn failed: {ex.Message}]");
+            // One voice. The conversation gets a sentence in the same register as everything
+            // else D47 says, and the part that is only useful to somebody debugging goes to the
+            // page for that — a bracketed exception message is not a reply to anybody.
+            _model.Append("\nI couldn't answer that. The details are on the Technical page.");
+            _model.Append($"\n[turn failed: {ex.Message}]", TranscriptKind.Technical);
         }
         finally
         {

@@ -34,11 +34,20 @@
                 BorderBrush="{DynamicResource D47.Border}"
                 BorderThickness="1"
                 CornerRadius="4,4,0,0">
-          <ContentPresenter x:Name="PART_ContentPresenter"
-                            Content="{TemplateBinding Content}"
-                            Padding="{TemplateBinding Padding}"
-                            Foreground="{TemplateBinding Foreground}"
-                            VerticalAlignment="Center" />
+          <Panel>
+            <!-- The highlight on the current tab. A bar along the top edge rather than a
+                 different fill, because the fill is already carrying the join to the panel
+                 below and cannot say two things at once. -->
+            <Border x:Name="Marker"
+                    Height="2"
+                    VerticalAlignment="Top"
+                    Background="Transparent" />
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              VerticalAlignment="Center" />
+          </Panel>
         </Border>
       </ControlTemplate>
     </Setter>
@@ -47,12 +56,21 @@
       <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
     </Style>
 
-    <!-- Selected: same fill as the panel, and no border where they meet. -->
+    <!--
+      The current tab: same fill as the panel, no border where they meet, an accent bar along
+      the top, and the label at full strength rather than muted. The join alone says which page
+      the panel is showing; the accent is what makes it findable at a glance, which is the whole
+      job of a selected tab in a headset at a metre.
+    -->
     <Style Selector="^:checked">
       <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
       <Style Selector="^ /template/ Border#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Surface}" />
         <Setter Property="BorderThickness" Value="1,1,1,0" />
+      </Style>
+      <Style Selector="^ /template/ Border#Marker">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
       </Style>
     </Style>
 
