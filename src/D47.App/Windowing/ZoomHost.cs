@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -59,10 +60,19 @@ public sealed class ZoomHost
             // straight to the new parent throws rather than reparenting.
             window.Content = null;
 
-            window.Content = new LayoutTransformControl
+            // Browser-like: zooming past the window's width scrolls sideways rather than
+            // squeezing the layout into what is left. Horizontal only — vertical is left to
+            // whatever inside the window already scrolls, so a transcript still scrolls itself
+            // and the settings footer stays put at the bottom.
+            window.Content = new ScrollViewer
             {
-                LayoutTransform = host._scale,
-                Child = content,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = new LayoutTransformControl
+                {
+                    LayoutTransform = host._scale,
+                    Child = content,
+                },
             };
         }
 
