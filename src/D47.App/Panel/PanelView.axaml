@@ -46,14 +46,10 @@
               Fill="{DynamicResource D47.TextMuted}"
               Data="M 9.59,4.16 L 10.19,1.15 L 13.81,1.15 L 14.41,4.16 L 15.84,4.75 L 18.40,3.05 L 20.95,5.60 L 19.25,8.16 L 19.84,9.59 L 22.85,10.19 L 22.85,13.81 L 19.84,14.41 L 19.25,15.84 L 20.95,18.40 L 18.40,20.95 L 15.84,19.25 L 14.41,19.84 L 13.81,22.85 L 10.19,22.85 L 9.59,19.84 L 8.16,19.25 L 5.60,20.95 L 3.05,18.40 L 4.75,15.84 L 4.16,14.41 L 1.15,13.81 L 1.15,10.19 L 4.16,9.59 L 4.75,8.16 L 3.05,5.60 L 5.60,3.05 L 8.16,4.75 Z M 12.00,8.00 A 4.0,4.0 0 1 1 11.99,8.00 Z" />
       </Button>
-      <!-- One quiet line. The name is in the window chrome and the version is the first thing
-           the transcript prints, so repeating either here would spend the panel's best space on
-           what the Commander already knows. -->
-      <TextBlock x:Name="VersionLine"
-                 Text="{Binding VersionLine}"
-                 FontSize="11"
-                 VerticalAlignment="Center"
-                 Foreground="{DynamicResource D47.TextMuted}" />
+      <!-- Nothing on the left. The build was here and has moved: the short version to the title
+           bar, which is on screen anyway, and the exact one to the About dialog, which is where
+           a forty-character commit hash belongs. A line the Commander reads once and then reads
+           past for the rest of the session was not worth the panel's best space. -->
     </DockPanel>
 
     <!-- Both banners in one region, so mini hides them with one line and each still decides

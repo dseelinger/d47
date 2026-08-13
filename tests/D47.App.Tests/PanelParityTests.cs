@@ -60,7 +60,6 @@ public class PanelParityTests
     public void ThePanelRendersWithNoWindowAndNoTopLevel()
     {
         var model = new PanelViewModel();
-        model.VersionLine = "Optimize Inferior Systems  ·  build 0.0.0-parity";
         model.Append("Rendered by a surface with nothing on screen to show for it.");
         model.TurnLine = "routed: keyword";
 
@@ -87,7 +86,6 @@ public class PanelParityTests
     public void MiniModeDropsContentRatherThanShrinkingTheRendering()
     {
         var model = new PanelViewModel();
-        model.VersionLine = "build 0.0.0-parity";
         model.ErrorText = "Something to hide in mini.";
         model.Append("Fixture Anchorage, 12.4 ly.");
         model.TurnLine = "routed: keyword";

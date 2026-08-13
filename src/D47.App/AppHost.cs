@@ -173,6 +173,12 @@ public sealed class AppHost : IDisposable
     /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
     public UpdateInstaller Installer { get; }
 
+    /// <summary>
+    /// Gives up this process's claim on being the only d47, so the build replacing it can start
+    /// before this one has finished exiting. Set by the composition root; null under a test.
+    /// </summary>
+    public Action? ReleaseSingleInstance { get; set; }
+
     /// <summary>One turn of conversation, whichever path answers it.</summary>
     public TurnLoop Turns { get; }
 
@@ -273,10 +279,7 @@ public sealed class AppHost : IDisposable
         var paths = AppPaths.BesideExecutable();
         paths.EnsureCreated();
 
-        var version = Assembly.GetEntryAssembly()
-                          ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                          ?.InformationalVersion
-                      ?? "unknown";
+        var version = BuildInfo.Full;
 
         // Logging first, so everything below has somewhere to report a failure.
         var verbosity = new SerilogVerbosityControl();

@@ -43,8 +43,6 @@ public enum PanelMode
 public sealed class PanelViewModel : INotifyPropertyChanged
 {
     private readonly StringBuilder _transcript = new();
-
-    private string _versionLine = string.Empty;
     private string _turnLine = string.Empty;
     private string? _errorText;
     private string? _updateText;
@@ -71,12 +69,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public event Action? UpdateAccepted;
 
     public event Action? UpdateDismissed;
-
-    public string VersionLine
-    {
-        get => _versionLine;
-        set => Set(ref _versionLine, value);
-    }
 
     public string TranscriptText
     {
