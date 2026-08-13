@@ -100,8 +100,21 @@ public sealed class CoverageRecorder
     {
         _inventory = CoverageInventory.Of(registry);
 
-        registry.ToolInvoked += name => Record(CoverageKind.Tool, name);
-        settings.Changed += change => Record(CoverageKind.Setting, change.Key);
+        registry.ToolInvoked += invocation => Record(
+            CoverageKind.Tool,
+            invocation.Tool,
+            invocation.Succeeded ? CoverageOutcome.Ok : CoverageOutcome.Failed);
+
+        // Applied rather than Changed: a row set to the value it already had, or refused a bad
+        // value, was still driven by hand, and Changed does not fire for either. Changed also
+        // never fires when a save fails, which is the one outcome most worth seeing here.
+        settings.Applied += applied =>
+        {
+            if (OutcomeOf(applied.Status) is { } outcome)
+            {
+                Record(CoverageKind.Setting, applied.Key, outcome);
+            }
+        };
 
         _logger.LogInformation("Coverage: {Summary}", Report().Summary);
     }
@@ -132,13 +145,32 @@ public sealed class CoverageRecorder
         }
     }
 
-    private void Record(string kind, string id)
+    /// <summary>
+    /// How an apply reads as coverage, or null when it is not evidence of anything.
+    /// </summary>
+    private static CoverageOutcome? OutcomeOf(SettingApplyStatus status) => status switch
+    {
+        // The change was valid and could not be saved. The one outcome worth going back to.
+        SettingApplyStatus.Failed => CoverageOutcome.Failed,
+
+        // Refused is the protected rule holding, which means the model can never be evidence
+        // that a protected row has been driven — only the panel, a hotkey or the keyword
+        // router can be. Marking it green would report a row as tested that nobody has
+        // touched. UnknownKey names no row at all.
+        SettingApplyStatus.Refused or SettingApplyStatus.UnknownKey => null,
+
+        // Applied, Unchanged and Rejected all mean the row was driven and answered. Rejected
+        // is validation working, the same reading as a refused tool argument.
+        _ => CoverageOutcome.Ok,
+    };
+
+    private void Record(string kind, string id, CoverageOutcome outcome)
     {
         var item = _inventory.FirstOrDefault(i => i.Kind == kind && i.Id == id);
 
         if (item is not null)
         {
-            _ledger.Record(item, _now());
+            _ledger.Record(item, _now(), outcome);
         }
     }
 

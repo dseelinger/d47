@@ -141,6 +141,152 @@ public class CapabilityRegistryTests
         Assert.Contains("the scoop is jammed", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The announcement is what the coverage record is built from, and "it ran" and "it ran and
+    /// worked" are different answers. Announcing on entry, as this used to, could only ever
+    /// give the first one.
+    /// </summary>
+    [Fact]
+    public async Task AToolThatWorkedIsAnnouncedAsSucceeded()
+    {
+        var registry = CapabilityRegistry.Build([Descriptor()]);
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.Invoke("do_thing", ToolArguments.Empty);
+
+        Assert.Equal([new ToolInvocation("do_thing", true)], announced);
+    }
+
+    [Fact]
+    public async Task AHandlerThatThrewIsAnnouncedAsFailed()
+    {
+        var registry = CapabilityRegistry.Build(
+        [
+            Descriptor(handler: (_, _) => throw new InvalidOperationException("the scoop is jammed")),
+        ]);
+
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.Invoke("do_thing", ToolArguments.Empty);
+
+        Assert.Equal([new ToolInvocation("do_thing", false)], announced);
+    }
+
+    /// <summary>
+    /// A handler is allowed to report failure without throwing, and that reads the same to the
+    /// model — so it has to read the same here.
+    /// </summary>
+    [Fact]
+    public async Task AHandlerThatReturnedAnErrorIsAnnouncedAsFailed()
+    {
+        var registry = CapabilityRegistry.Build(
+        [
+            Descriptor(handler: (_, _) => Task.FromResult(ToolResult.Error("no journal yet"))),
+        ]);
+
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.Invoke("do_thing", ToolArguments.Empty);
+
+        Assert.Equal([new ToolInvocation("do_thing", false)], announced);
+    }
+
+    /// <summary>
+    /// The distinction the whole outcome rests on. A hallucinated parameter is the registry's
+    /// guard holding, not the capability breaking — the same reading as a rejected settings
+    /// value — so it must not paint the tool as failing.
+    /// </summary>
+    [Theory]
+    [InlineData("imaginary")]
+    [InlineData("choice")]
+    public async Task ARefusedArgumentIsAnnouncedAsSucceededBecauseTheGuardHeld(string parameter)
+    {
+        var registry = CapabilityRegistry.Build(
+        [
+            Descriptor(parameters:
+            [
+                new ToolParameter
+                {
+                    Name = "choice",
+                    Type = ToolParameterType.String,
+                    Description = "One of a closed set.",
+                    AllowedValues = ["one", "two"],
+                },
+            ]),
+        ]);
+
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        var result = await registry.Invoke(
+            "do_thing",
+            new ToolArguments(new Dictionary<string, string> { [parameter] = "three" }));
+
+        Assert.True(result.IsError);
+        Assert.Equal([new ToolInvocation("do_thing", true)], announced);
+    }
+
+    /// <summary>Nothing in the inventory to attribute it to, so nothing is claimed about it.</summary>
+    [Fact]
+    public async Task AnUnknownToolIsNotAnnouncedAtAll()
+    {
+        var registry = CapabilityRegistry.Build([Descriptor()]);
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.Invoke("nonexistent", ToolArguments.Empty);
+
+        Assert.Empty(announced);
+    }
+
+    /// <summary>
+    /// An interrupted call is not a verdict on the tool. Recording it either way would be a
+    /// claim the run never made.
+    /// </summary>
+    [Fact]
+    public async Task ACancelledCallAnnouncesNothing()
+    {
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        var registry = CapabilityRegistry.Build(
+        [
+            Descriptor(handler: (_, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                return Task.FromResult(ToolResult.Ok("done"));
+            }),
+        ]);
+
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => registry.InvokeAsync("do_thing", ToolArguments.Empty, cancelled.Token));
+
+        Assert.Empty(announced);
+    }
+
+    /// <summary>
+    /// Once per call, not once per return path. A tool announced twice would be a tool whose
+    /// second announcement could overwrite the first outcome with the wrong one.
+    /// </summary>
+    [Fact]
+    public async Task AToolIsAnnouncedExactlyOncePerCall()
+    {
+        var registry = CapabilityRegistry.Build([Descriptor()]);
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.Invoke("do_thing", ToolArguments.Empty);
+        await registry.Invoke("do_thing", ToolArguments.Empty);
+
+        Assert.Equal(2, announced.Count);
+    }
+
     [Fact]
     public void DuplicateCapabilityIdFailsAtStartup()
     {

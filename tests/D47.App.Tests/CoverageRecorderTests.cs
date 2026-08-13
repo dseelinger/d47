@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using D47.App.Coverage;
 using D47.Core;
 using D47.Core.Capabilities;
@@ -30,8 +31,8 @@ public class CoverageRecorderTests
         probe.Recorder.Follow(probe.Registry, probe.Settings);
 
         var before = probe.Recorder.Report();
-        Assert.Equal(2, before.Total);
-        Assert.Equal(2, before.Never);
+        Assert.Equal(4, before.Total);
+        Assert.Equal(4, before.Never);
 
         await probe.Registry.InvokeAsync(
             "probe_tool",
@@ -88,8 +89,75 @@ public class CoverageRecorderTests
         Assert.Contains("probe_tool", report, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The outcome has to survive the whole path — registry, event, recorder, ledger — or the
+    /// report shows a green line for something that threw every time it was tried.
+    /// </summary>
+    [Fact]
+    public async Task AToolThatThrewIsRecordedAsFailed()
+    {
+        var probe = new Probe();
+        probe.Recorder.Follow(probe.Registry, probe.Settings);
+
+        var result = await probe.Registry.InvokeAsync(
+            "probe_breaks",
+            new ToolArguments(new Dictionary<string, string>()),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+
+        var line = LineFor(probe.Recorder.Report(), CoverageKind.Tool, "probe_breaks");
+
+        Assert.Equal(CoverageStatus.Exercised, line.Status);
+        Assert.Equal(CoverageOutcome.Failed, line.Outcome);
+    }
+
+    /// <summary>
+    /// A row set to a value it will not take was still driven by hand, and the validation
+    /// saying no is the validation working — the same reading as a refused tool argument.
+    /// Changed never fires for it, which is why the recorder follows Applied instead.
+    /// </summary>
+    [Fact]
+    public void ARejectedValueStillCountsAsHavingDrivenTheRow()
+    {
+        var probe = new Probe();
+        probe.Recorder.Follow(probe.Registry, probe.Settings);
+
+        Assert.Equal(
+            SettingApplyStatus.Rejected,
+            probe.Settings.Apply("probe.protectedRow", "not a number", SettingsCaller.Panel).Status);
+
+        var line = LineFor(probe.Recorder.Report(), CoverageKind.Setting, "probe.protectedRow");
+
+        Assert.Equal(CoverageStatus.Exercised, line.Status);
+        Assert.Equal(CoverageOutcome.Ok, line.Outcome);
+    }
+
+    /// <summary>
+    /// The model can never be evidence that a protected row has been driven — only the panel, a
+    /// hotkey or the keyword router can be. Recording a refusal as coverage would report a row
+    /// as tested that nobody has touched, which is the one thing this record must not do.
+    /// </summary>
+    [Fact]
+    public void ARefusedModelAttemptOnAProtectedRowIsNotCoverage()
+    {
+        var probe = new Probe();
+        probe.Recorder.Follow(probe.Registry, probe.Settings);
+
+        Assert.Equal(
+            SettingApplyStatus.Refused,
+            probe.Settings.Apply("probe.protectedRow", "2", SettingsCaller.Model).Status);
+
+        Assert.Equal(
+            CoverageStatus.Never,
+            LineFor(probe.Recorder.Report(), CoverageKind.Setting, "probe.protectedRow").Status);
+    }
+
     private static CoverageStatus StatusOf(CoverageReport report, string kind, string id) =>
-        report.Lines.Single(line => line.Item.Kind == kind && line.Item.Id == id).Status;
+        LineFor(report, kind, id).Status;
+
+    private static CoverageLine LineFor(CoverageReport report, string kind, string id) =>
+        report.Lines.Single(line => line.Item.Kind == kind && line.Item.Id == id);
 
     /// <summary>One capability carrying exactly one tool and one row.</summary>
     private sealed class Probe
@@ -123,6 +191,12 @@ public class CoverageRecorderTests
                             Description = "Does nothing, observably.",
                             Handler = (_, _) => Task.FromResult(ToolResult.Ok("done")),
                         },
+                        new ToolDefinition
+                        {
+                            Name = "probe_breaks",
+                            Description = "Throws, observably.",
+                            Handler = (_, _) => throw new InvalidOperationException("the scoop is jammed"),
+                        },
                     ],
                     Settings =
                     [
@@ -136,6 +210,25 @@ public class CoverageRecorderTests
                             {
                                 Read = s => s.Ui.Theme,
                                 Write = (s, v) => s with { Ui = s.Ui with { Theme = v ?? "elite" } },
+                            },
+                        },
+                        new SettingRow
+                        {
+                            Key = "probe.protectedRow",
+                            Label = "A protected row",
+                            Help = "Reachable from the panel, never from the model.",
+                            Kind = SettingKind.Number,
+                            Protected = true,
+                            Binding = new SettingBinding
+                            {
+                                Read = s => s.Ui.ZoomPercent.ToString(CultureInfo.InvariantCulture),
+                                Write = (s, v) => s with
+                                {
+                                    Ui = s.Ui with
+                                    {
+                                        ZoomPercent = int.TryParse(v, out var percent) ? percent : 100,
+                                    },
+                                },
                             },
                         },
                     ],

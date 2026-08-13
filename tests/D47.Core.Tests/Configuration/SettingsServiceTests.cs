@@ -57,6 +57,88 @@ public class SettingsServiceTests
         Assert.Equal([InterfaceCapability.ThemeKey], announced);
     }
 
+    /// <summary>
+    /// Changed means "a change was persisted, go and re-read". Applied means "somebody tried
+    /// this row, here is how it went" — including the tries that changed nothing, which is the
+    /// difference that makes it worth having a second event rather than a wider first one.
+    /// </summary>
+    [Fact]
+    public void EveryAttemptIsAnnouncedWithItsStatusIncludingTheOnesThatChangedNothing()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var announced = new List<SettingApplied>();
+        surface.Settings.Applied += announced.Add;
+
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Dark, SettingsCaller.Panel);
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Dark, SettingsCaller.Panel);
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, "sparkly", SettingsCaller.Panel);
+
+        Assert.Equal(
+            [
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Applied),
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Unchanged),
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Rejected),
+            ],
+            announced);
+    }
+
+    /// <summary>
+    /// The outcome most worth seeing, and the one Changed can never carry: a valid value that
+    /// could not be written. Changed must stay silent, or every subscriber re-reads state after
+    /// a save that did not happen.
+    /// </summary>
+    [Fact]
+    public void AFailedSaveIsAnnouncedAsAppliedButNotAsChanged()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var applied = new List<SettingApplied>();
+        var changed = new List<string>();
+        surface.Settings.Applied += applied.Add;
+        surface.Settings.Changed += change => changed.Add(change.Key);
+
+        // A directory sitting where the pending write wants to put a file. The store writes to
+        // a ".writing" sibling and moves it into place, so this is the write failing rather
+        // than anything about the value.
+        Directory.CreateDirectory(install.Paths.SettingsFile + ".writing");
+
+        var result = surface.Settings.Apply(
+            InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Failed, result.Status);
+        Assert.Equal([new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Failed)], applied);
+        Assert.Empty(changed);
+    }
+
+    /// <summary>
+    /// Keys are matched case-insensitively, so "Ui.Theme" and "ui.theme" are one row. Both
+    /// events announce the row's own spelling, or a subscriber matching against the registry
+    /// would miss whichever one it was not expecting.
+    /// </summary>
+    [Fact]
+    public void BothEventsAnnounceTheRowsOwnKeyNotTheCallersSpelling()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var applied = new List<string>();
+        var changed = new List<string>();
+        surface.Settings.Applied += a => applied.Add(a.Key);
+        surface.Settings.Changed += c => changed.Add(c.Key);
+
+        var shouted = InterfaceCapability.ThemeKey.ToUpperInvariant();
+        Assert.NotEqual(InterfaceCapability.ThemeKey, shouted);
+
+        var result = surface.Settings.Apply(shouted, ThemeCatalog.Guardian, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal([InterfaceCapability.ThemeKey], applied);
+        Assert.Equal([InterfaceCapability.ThemeKey], changed);
+    }
+
     [Fact]
     public void AnUnknownKeyIsNamedRatherThanIgnored()
     {

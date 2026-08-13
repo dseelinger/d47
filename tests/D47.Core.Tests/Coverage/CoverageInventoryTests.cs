@@ -30,6 +30,63 @@ public class CoverageInventoryTests
             [.. rows.Order()]);
     }
 
+    /// <summary>
+    /// Every line links to its capability's help page, and the id is what builds that URL. An
+    /// item that could not name its capability would be a line with nowhere to go.
+    /// </summary>
+    [Fact]
+    public void EveryItemNamesTheCapabilityItCameFrom()
+    {
+        using var install = new TempInstall();
+        var registry = TestSurface.For(install).Registry;
+
+        var inventory = CoverageInventory.Of(registry);
+        var known = registry.All.Select(c => c.Descriptor.Id).ToHashSet(StringComparer.Ordinal);
+
+        Assert.All(inventory, item => Assert.Contains(item.CapabilityId, known));
+
+        // And it is the capability that actually declared it, not merely some real id.
+        var declared = registry.All
+            .SelectMany(c => c.Descriptor.Tools.Select(t => (Id: t.Name, Capability: c.Descriptor.Id)))
+            .ToDictionary(x => x.Id, x => x.Capability, StringComparer.Ordinal);
+
+        Assert.All(
+            inventory.Where(i => i.Kind == CoverageKind.Tool),
+            item => Assert.Equal(declared[item.Id], item.CapabilityId));
+    }
+
+    /// <summary>
+    /// The capability id is identity, not definition. Folding it into the fingerprint would
+    /// have marked every already-recorded item stale the day it was added, telling a Commander
+    /// to re-test the whole app for a change nothing about the app actually made.
+    /// </summary>
+    [Fact]
+    public void TheCapabilityIdIsNotPartOfTheFingerprint()
+    {
+        static string FingerprintUnder(string capabilityId) =>
+            CoverageInventory.Of(CapabilityRegistry.Build(
+            [
+                new CapabilityDescriptor
+                {
+                    Id = capabilityId,
+                    Group = "Foundation",
+                    Name = "Probe",
+                    Summary = "A capability that exists to carry one tool.",
+                    Tools =
+                    [
+                        new ToolDefinition
+                        {
+                            Name = "probe_tool",
+                            Description = "Does nothing, observably.",
+                            Handler = (_, _) => Task.FromResult(ToolResult.Ok("done")),
+                        },
+                    ],
+                },
+            ])).Single().Fingerprint;
+
+        Assert.Equal(FingerprintUnder("probe"), FingerprintUnder("somewhere-else"));
+    }
+
     /// <summary>Nothing is exercised on a machine that has never run d47.</summary>
     [Fact]
     public void AFreshLedgerReportsTheWholeAppAsUntouched()

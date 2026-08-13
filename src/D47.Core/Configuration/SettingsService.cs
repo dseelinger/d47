@@ -51,6 +51,10 @@ public sealed record SettingApplyResult(SettingApplyStatus Status, string Messag
 
 public sealed record SettingsChanged(string Key, D47Settings Settings);
 
+/// <summary>One attempt to set a row, and what came of it — including the attempts that
+/// changed nothing.</summary>
+public sealed record SettingApplied(string Key, SettingApplyStatus Status);
+
 /// <summary>One capability's rows, in the order the capability declared them.</summary>
 public sealed record SettingsSection(CapabilityDescriptor Capability, IReadOnlyList<SettingRow> Rows);
 
@@ -95,6 +99,21 @@ public sealed class SettingsService
     /// thread; a UI subscriber marshals for itself.
     /// </summary>
     public event Action<SettingsChanged>? Changed;
+
+    /// <summary>
+    /// Raised after every attempt to set a row, whatever came of it.
+    /// <para>
+    /// Separate from <see cref="Changed"/> on purpose. That one means "a change was persisted,
+    /// go and re-read what you care about", and subscribers act on it; widening it to carry
+    /// failures would have them re-reading state after a save that did not happen. This one
+    /// carries no state at all — only what was attempted and how it went.
+    /// </para>
+    /// <para>
+    /// Exists for the coverage recorder, which is off unless asked for; nothing in the shipped
+    /// path subscribes.
+    /// </para>
+    /// </summary>
+    public event Action<SettingApplied>? Applied;
 
     public IReadOnlyList<SettingsSection> Sections =>
         _sections ?? throw new InvalidOperationException(
@@ -171,6 +190,19 @@ public sealed class SettingsService
         secretName is not null && _secrets.Has(secretName);
 
     public SettingApplyResult Apply(string key, string? value, SettingsCaller caller)
+    {
+        var result = ApplyCore(key, value, caller);
+
+        // Announced under the row's own key rather than the caller's spelling of it. Keys are
+        // matched case-insensitively, so "Listening.Ptt" and "listening.ptt" are one row, and a
+        // subscriber matching against the registry would otherwise miss whichever one it was
+        // not expecting.
+        Applied?.Invoke(new SettingApplied(Find(key)?.Key ?? key, result.Status));
+
+        return result;
+    }
+
+    private SettingApplyResult ApplyCore(string key, string? value, SettingsCaller caller)
     {
         if (Find(key) is not { } row)
         {
@@ -249,7 +281,9 @@ public sealed class SettingsService
 
         Current = next;
         _logger.LogInformation("{Caller} set {Key} to {Value}", caller, key, Describe(normalised));
-        Changed?.Invoke(new SettingsChanged(key, next));
+        // row.Key, not key, for the same reason Applied uses it — and matching what the two
+        // other raise sites already do.
+        Changed?.Invoke(new SettingsChanged(row.Key, next));
 
         return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Describe(normalised)}.");
     }
