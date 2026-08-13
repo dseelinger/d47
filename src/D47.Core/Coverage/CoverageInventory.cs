@@ -15,6 +15,13 @@ namespace D47.Core.Coverage;
 /// tools or changing one of its rows, so counting it separately would be counting the same act
 /// twice. Corner cases are deliberately out of scope — this answers "have I been here at all".
 /// </para>
+/// <para>
+/// Each item carries the id of the capability it came from, which is what lets a line link to
+/// that capability's help page. It is deliberately <em>not</em> part of the fingerprint: the
+/// fingerprint is of the thing's own definition, and folding identity into it would have marked
+/// every previously recorded item stale the day this was added, for no change a Commander could
+/// see.
+/// </para>
 /// </summary>
 public static class CoverageInventory
 {
@@ -37,6 +44,7 @@ public static class CoverageInventory
         capability.Descriptor.Tools.Select(tool => new CoverageItem(
             CoverageKind.Tool,
             tool.Name,
+            capability.Descriptor.Id,
             $"{capability.Descriptor.Name} - {tool.Name}",
             CoverageLedger.Fingerprint(string.Join(
                 "",
@@ -48,6 +56,7 @@ public static class CoverageInventory
         capability.Descriptor.Settings.Select(row => new CoverageItem(
             CoverageKind.Setting,
             row.Key,
+            capability.Descriptor.Id,
             $"{capability.Descriptor.Name} - {row.Label}",
             CoverageLedger.Fingerprint(Definition(row))));
 

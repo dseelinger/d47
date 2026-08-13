@@ -19,6 +19,18 @@ public sealed class RegisteredCapability
 
 public sealed class CapabilityRegistrationException(string message) : Exception(message);
 
+/// <summary>One tool call and how it went.</summary>
+/// <param name="Succeeded">
+/// Whether the capability's own handler came back clean.
+/// <para>
+/// A call refused before the handler ran — an unknown parameter, a missing required one, a
+/// value outside a closed vocabulary — counts as succeeded, because that is the registry's
+/// validation doing its job rather than the capability failing. It is the same reading as
+/// <c>SettingApplyStatus.Rejected</c> on a settings row: the guard held.
+/// </para>
+/// </param>
+public sealed record ToolInvocation(string Tool, bool Succeeded);
+
 /// <summary>
 /// The single source for capabilities (architecture.md §5 D5). Built once at startup from
 /// descriptors and never mutated afterwards, because immutability is what keeps tool schemas
@@ -113,10 +125,16 @@ public sealed partial class CapabilityRegistry
     public RegisteredCapability? Find(string id) => _byId.GetValueOrDefault(id);
 
     /// <summary>
-    /// Raised with the tool's name whenever one is invoked. Exists for the coverage recorder,
+    /// Raised once per tool call, after the outcome is known. Exists for the coverage recorder,
     /// which is off unless asked for; nothing in the shipped path subscribes.
+    /// <para>
+    /// Deliberately after the fact rather than on entry: "it ran" and "it ran and worked" are
+    /// different answers, and only the second one tells a person by hand whether to go back to
+    /// it. A cancelled turn announces nothing at all, because an interrupted call is not a
+    /// verdict on the tool.
+    /// </para>
     /// </summary>
-    public event Action<string>? ToolInvoked;
+    public event Action<ToolInvocation>? ToolInvoked;
 
     /// <summary>How often a capability has been invoked this session.</summary>
     public int UseCountOf(string capabilityId)
@@ -153,8 +171,40 @@ public sealed partial class CapabilityRegistry
             _uses[id] = _uses.GetValueOrDefault(id, 0) + 1;
         }
 
-        ToolInvoked?.Invoke(toolName);
+        if (Invalid(toolName, tool, arguments) is { } refusal)
+        {
+            // Announced, and announced clean: the tool was reached for, and what stopped the
+            // call was the guard rather than the capability.
+            ToolInvoked?.Invoke(new ToolInvocation(toolName, Succeeded: true));
+            return refusal;
+        }
 
+        ToolResult result;
+
+        try
+        {
+            result = await tool.Handler(arguments, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            result = ToolResult.Error($"{toolName} failed: {ex.Message}");
+        }
+
+        ToolInvoked?.Invoke(new ToolInvocation(toolName, !result.IsError));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Why this call cannot be made, or null if it can. Split out so the invoke path has one
+    /// place it announces the outcome from, rather than one per way of being wrong.
+    /// </summary>
+    private static ToolResult? Invalid(string toolName, ToolDefinition tool, ToolArguments arguments)
+    {
         foreach (var parameter in tool.Parameters)
         {
             var present = arguments.TryGetString(parameter.Name, out var value);
@@ -180,18 +230,7 @@ public sealed partial class CapabilityRegistry
             }
         }
 
-        try
-        {
-            return await tool.Handler(arguments, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Error($"{toolName} failed: {ex.Message}");
-        }
+        return null;
     }
 
     [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]

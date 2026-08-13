@@ -18,9 +18,33 @@ public static class CoverageKind
 /// invariant already guarantees is byte-identical across runs. When this changes, the thing
 /// changed, and having exercised the old one says nothing about the new one.
 /// </param>
-public sealed record CoverageItem(string Kind, string Id, string Name, string Fingerprint)
+public sealed record CoverageItem(
+    string Kind,
+    string Id,
+    string CapabilityId,
+    string Name,
+    string Fingerprint)
 {
     public string Key => $"{Kind}:{Id}";
+}
+
+/// <summary>
+/// How it went the last time it was exercised.
+/// <para>
+/// <c>Ok</c> is deliberately the zero value, so a coverage.json written before outcomes
+/// existed loads as "it ran and nothing said otherwise" rather than as a failure nobody saw.
+/// </para>
+/// </summary>
+public enum CoverageOutcome
+{
+    /// <summary>It ran and came back clean.</summary>
+    Ok,
+
+    /// <summary>
+    /// It ran and reported failure. Not a crash — a capability failing is a state, not a
+    /// crash — but a state worth going back to, which is the whole point of recording it.
+    /// </summary>
+    Failed,
 }
 
 /// <summary>Where one inventory item stands.</summary>
@@ -37,7 +61,18 @@ public enum CoverageStatus
 }
 
 /// <summary>One inventory item and where it stands.</summary>
-public sealed record CoverageLine(CoverageItem Item, CoverageStatus Status, DateTimeOffset? LastSeen);
+/// <param name="Outcome">
+/// Null when it has never been exercised, because there is no outcome to report — which is a
+/// different thing from having run without complaint.
+/// </param>
+public sealed record CoverageLine(
+    CoverageItem Item,
+    CoverageStatus Status,
+    CoverageOutcome? Outcome,
+    DateTimeOffset? LastSeen)
+{
+    public bool Failed => Outcome == CoverageOutcome.Failed;
+}
 
 /// <summary>What has been exercised and what has not, as of one moment.</summary>
 public sealed record CoverageReport(IReadOnlyList<CoverageLine> Lines)
@@ -50,13 +85,22 @@ public sealed record CoverageReport(IReadOnlyList<CoverageLine> Lines)
 
     public int Never => Lines.Count(l => l.Status == CoverageStatus.Never);
 
+    /// <summary>
+    /// How many came back with an error the last time they ran. Not part of the
+    /// exercised/stale/never split — those three partition the inventory, and a failure is
+    /// something that happened to a line already counted in one of them.
+    /// </summary>
+    public int Failed => Lines.Count(l => l.Failed);
+
     /// <summary>The one-line answer: how much of the app has been driven by hand.</summary>
     public string Summary => Total == 0
         ? "Nothing is registered to cover."
         : $"{Exercised} of {Total} exercised"
           + (Stale > 0 ? $", {Stale} changed since" : string.Empty)
           + (Never > 0 ? $", {Never} never" : string.Empty)
-          + ".";
+          + "."
+          // Its own sentence, so the count is never read as a share of the ones before it.
+          + (Failed > 0 ? $" {Failed} came back with an error." : string.Empty);
 
     /// <summary>
     /// The whole thing, for reading in a file rather than squinting at a panel row. Ordered by
@@ -72,16 +116,20 @@ public sealed record CoverageReport(IReadOnlyList<CoverageLine> Lines)
         text.AppendLine($"As of {now:yyyy-MM-dd HH:mm}. {Summary}");
         text.AppendLine();
 
-        Section(text, "Never exercised", CoverageStatus.Never);
-        Section(text, "Changed since you last exercised them", CoverageStatus.Stale);
-        Section(text, "Exercised", CoverageStatus.Exercised);
+        // Failures first, and excluded from the sections below so nothing is listed twice.
+        // Something that ran and reported an error is a stronger call to action than something
+        // that was never tried at all.
+        Section(text, "Came back with an error", l => l.Failed);
+        Section(text, "Never exercised", l => !l.Failed && l.Status == CoverageStatus.Never);
+        Section(text, "Changed since you last exercised them", l => !l.Failed && l.Status == CoverageStatus.Stale);
+        Section(text, "Exercised", l => !l.Failed && l.Status == CoverageStatus.Exercised);
 
         return text.ToString();
     }
 
-    private void Section(StringBuilder text, string heading, CoverageStatus status)
+    private void Section(StringBuilder text, string heading, Func<CoverageLine, bool> include)
     {
-        var lines = Lines.Where(l => l.Status == status)
+        var lines = Lines.Where(include)
             .OrderBy(l => l.Item.Kind, StringComparer.Ordinal)
             .ThenBy(l => l.Item.Id, StringComparer.Ordinal)
             .ToList();
@@ -148,11 +196,18 @@ public sealed class CoverageLedger
     /// fingerprint at exercise time is the whole mechanism: a later comparison against the
     /// current one is what turns "I tested that" into "I tested what it used to be".
     /// </summary>
-    public void Record(CoverageItem item, DateTimeOffset now)
+    /// <param name="outcome">
+    /// Required rather than defaulted. A call site that forgot to say how it went would record
+    /// a silent green, which is the one answer this whole record exists to stop being guessed.
+    /// </param>
+    public void Record(CoverageItem item, DateTimeOffset now, CoverageOutcome outcome)
     {
         lock (_lock)
         {
-            _marks[item.Key] = new CoverageMark(item.Fingerprint, now);
+            // Last write wins, in both directions: something fixed since it last failed goes
+            // green again, and something that has started failing goes red however long it
+            // worked before.
+            _marks[item.Key] = new CoverageMark(item.Fingerprint, now, outcome);
             Dirty = true;
         }
     }
@@ -171,14 +226,14 @@ public sealed class CoverageLedger
                 {
                     if (!_marks.TryGetValue(item.Key, out var mark))
                     {
-                        return new CoverageLine(item, CoverageStatus.Never, null);
+                        return new CoverageLine(item, CoverageStatus.Never, null, null);
                     }
 
                     var status = string.Equals(mark.Fingerprint, item.Fingerprint, StringComparison.Ordinal)
                         ? CoverageStatus.Exercised
                         : CoverageStatus.Stale;
 
-                    return new CoverageLine(item, status, mark.When);
+                    return new CoverageLine(item, status, mark.Outcome, mark.When);
                 }),
             ]);
         }
@@ -192,5 +247,12 @@ public sealed class CoverageLedger
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(definition)))[..16];
 }
 
-/// <summary>One recorded exercise: what it looked like, and when.</summary>
-public sealed record CoverageMark(string Fingerprint, DateTimeOffset When);
+/// <summary>One recorded exercise: what it looked like, when, and how it went.</summary>
+/// <param name="Outcome">
+/// Defaulted so a record written before outcomes existed deserialises rather than throwing.
+/// It lands on <see cref="CoverageOutcome.Ok"/> either way, since that is also the zero value.
+/// </param>
+public sealed record CoverageMark(
+    string Fingerprint,
+    DateTimeOffset When,
+    CoverageOutcome Outcome = CoverageOutcome.Ok);
