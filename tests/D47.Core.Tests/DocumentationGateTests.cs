@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using D47.Core.Journal;
 using Xunit;
 
@@ -9,7 +11,7 @@ namespace D47.Core.Tests;
 /// (list.md Phase 1, "Every capability has a documentation page"). It lives as a test so CI
 /// needs no separate step that could drift from the capability list.
 /// </summary>
-public class DocumentationGateTests
+public partial class DocumentationGateTests
 {
     private const string CapabilityDocsFolder = "docs/capabilities";
 
@@ -113,6 +115,89 @@ public class DocumentationGateTests
     }
 
     private static CapabilityRegistry Registry() => Surface().Registry;
+
+    /// <summary>
+    /// Every gesture a page offers as the out-of-the-box default is one a Commander will try,
+    /// and one that no longer exists is worse than no documentation at all — they will conclude
+    /// the feature is broken rather than that the page is.
+    /// <para>
+    /// Checked as a set rather than page-by-page: it needs no map from a sentence to a settings
+    /// key, which would be a second thing to keep in step. A gesture that is nobody's default
+    /// is the bug, whichever page it is on. This is how <c>F10</c> survived on the settings
+    /// hotkey long after the default became <c>Ctrl+,</c>.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryDocumentedDefaultGestureIsSomethingTheAppActuallyShips()
+    {
+        var shipped = ShippedGestures();
+
+        var documented = Directory
+            .EnumerateFiles(Path.Combine(RepositoryRoot(), "docs"), "*.md", SearchOption.AllDirectories)
+            .SelectMany(file => DefaultGesturesIn(File.ReadAllText(file))
+                .Select(gesture => (File: Path.GetFileName(file), Gesture: gesture)))
+            .ToList();
+
+        Assert.NotEmpty(documented);
+
+        var wrong = documented
+            .Where(mention => !shipped.Contains(mention.Gesture))
+            .Select(mention => $"{mention.File} offers '{mention.Gesture}'")
+            .ToList();
+
+        Assert.True(
+            wrong.Count == 0,
+            $"Documented as the default, but nothing ships it: {string.Join("; ", wrong)}. "
+            + $"The defaults are: {string.Join(", ", shipped.Order())}.");
+    }
+
+    /// <summary>
+    /// The gestures a fresh install actually starts with, in the spelling a Commander sees
+    /// rather than the one the settings file stores.
+    /// </summary>
+    private static HashSet<string> ShippedGestures()
+    {
+        var settings = new D47Settings();
+
+        return
+        [
+            .. new[]
+            {
+                settings.Hotkeys.OpenSettings,
+                settings.Hotkeys.FocusAsk,
+                settings.Hotkeys.Reanchor,
+                settings.Speech.ShutUpHotkey,
+                settings.Listening.PushToTalkKey,
+            }
+            .Where(gesture => !string.IsNullOrWhiteSpace(gesture))
+            .Select(Readable!),
+        ];
+    }
+
+    /// <summary>
+    /// "Ctrl+OemComma" is Avalonia's spelling and "Ctrl+," is the Commander's. The pages are
+    /// written in the second, so the comparison has to be too.
+    /// </summary>
+    private static string Readable(string gesture) => gesture
+        .Replace("OemComma", ",", StringComparison.Ordinal)
+        .Replace("OemPeriod", ".", StringComparison.Ordinal)
+        .Replace("OemQuestion", "/", StringComparison.Ordinal)
+        .Replace("OemPlus", "=", StringComparison.Ordinal)
+        .Replace("OemMinus", "-", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Gestures a page names as the default, in either voice the pages use: `Ctrl+L` out of the
+    /// box, or **Ctrl+Alt+R** out of the box. Only that phrasing, because a page may mention a
+    /// key for other reasons — the paste that navigation.md sends to Elite is not a default of
+    /// d47's and is not one to check.
+    /// </summary>
+    private static IEnumerable<string> DefaultGesturesIn(string page) =>
+        DefaultGesturePattern()
+            .Matches(page)
+            .Select(match => match.Groups["gesture"].Value);
+
+    [GeneratedRegex(@"[`*]{1,2}(?<gesture>[A-Za-z0-9+,./=\-]+)[`*]{1,2},? (?:out of the box|by default)")]
+    private static partial Regex DefaultGesturePattern();
 
     /// <summary>
     /// A throwaway install: the gate cares about identity, schemas and settings rows, none of
