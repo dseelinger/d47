@@ -20,6 +20,17 @@ namespace D47.App.Tests;
 /// Needs a real D3D11 device but no headset and no SteamVR, so it runs anywhere the build does.
 /// </para>
 /// </summary>
+[CollectionDefinition("gpu", DisableParallelization = true)]
+public class GpuCollection;
+
+/// <summary>
+/// Run on its own. These create a real D3D11 device on the same adapter the headless Avalonia
+/// tests are rendering on, and under the full suite — never alone — the read-back came back
+/// entirely transparent about one run in eight. Alone it passed twelve times out of twelve, so
+/// what is being measured there is the harness rather than the copy, and a gate that fails one
+/// run in eight for a reason unrelated to the thing it guards is worse than no gate.
+/// </summary>
+[Collection("gpu")]
 public class VrTextureCopyTests
 {
     private const int Width = 64;
