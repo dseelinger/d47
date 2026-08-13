@@ -2,29 +2,111 @@
 title: Interface
 ---
 
-How D47 looks, and which keys reach it.
+How Directive 47 looks, and which keys reach it.
 
-This capability registers no tools. A descriptor declares a capability's whole surface, and
-this one's surface is settings rows — giving the model a way to repaint the app or rebind a
-gesture would be reach added for the sake of symmetry.
+There is nothing to ask for here — this one is all settings. The model cannot repaint the app or
+rebind your keys, and was never given a way to.
 
 ## Settings
 
 ### Theme {#theme}
 
-Colour lives in exactly one place: a resource dictionary per theme, keyed by role rather than
-by colour. No view hardcodes a literal, which is what makes a fifth theme a file rather than a
-sweep through every screen.
-
-| Id | What it looks like |
+| Choice | What it looks like |
 |---|---|
 | `elite` | Amber on near-black. The default, and the one that matches the cockpit. |
 | `dark` | Neutral dark. No colour opinion. |
 | `light` | Neutral light, for a desktop that is not in a dark room. |
 | `guardian` | Guardian teal and gold. |
-| `elite-palette` | Elite, recoloured by your own HUD matrix. |
+| `elite-palette` | Elite, recoloured to match your own HUD. |
 
-The roles a theme defines:
+#### Matching your HUD
+
+`elite-palette` reads the colour matrix Elite applies to its own HUD and uses it on Directive
+47's amber palette, so the panel comes out the same colour as your cockpit — teal, white,
+whatever you have set — without borrowing anything from the game.
+
+It reads this file and never writes it:
+
+```text
+%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Graphics\GraphicsConfigurationOverride.xml
+```
+
+If you have not set a HUD colour, or the file was written by a HUD mod in a shape Directive 47
+does not recognise, the theme falls back to plain `elite` — which is what it would have looked
+like anyway. Your game configuration is yours; Directive 47 is a guest in it.
+
+### Zoom {#zoom}
+
+How large the panel is drawn, from 50% to 300%. The gestures are the ones your browser already
+taught you:
+
+```text
+Ctrl + scroll wheel     one step per notch
+Ctrl + plus             one step larger
+Ctrl + minus            one step smaller
+Ctrl + 0                back to 100%
+```
+
+The steps are a browser's too:
+
+```text
+50  67  75  80  90  100  110  125  150  175  200  250  300
+```
+
+This makes the whole panel larger rather than just the letters, so spacing and layout grow with
+the text instead of the text growing inside a layout that stayed put. If the window is too narrow
+for the panel at that size, it scrolls sideways — the same thing a browser does — rather than
+crushing rows into each other.
+
+It applies to the settings window too, and the level survives a restart like the theme does.
+
+### Window size and position
+
+Not something to set. The window opens at a size that fits the screen it opens on, and after
+that it opens where you left it.
+
+If a remembered position would put the window on a monitor you have since unplugged, it is
+ignored and the window comes back on a screen you have — a window you cannot reach with the mouse
+looks exactly like the app failing to start.
+
+### Open settings {#open-settings}
+
+Opens the settings window. `F10` out of the box.
+
+Press the combination to bind it: the row listens for one and stores what it heard, so there is
+no list of key names to learn and no way to type one that does not exist. Clear it to leave the
+action unbound.
+
+This one works while Directive 47 has focus.
+
+### Re-anchor the headset panels {#reanchor}
+
+Puts your world-locked headset panels back in front of you. `Ctrl+Alt+R` out of the box, and it
+works **anywhere** — including with Elite in the foreground, which is the only time you want it.
+See [Re-anchor](reanchor.md).
+
+A key that works everywhere needs a modifier with it. On its own it would stop working in every
+other application, so a bare key is refused when you press it, with a note saying so.
+
+### Focus the ask box {#focus-ask}
+
+Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box.
+
+---
+
+**The model cannot change any of these rows.** A bound key is one of the ways to reach a
+protected setting, so a model that could rebind one could hand itself a way in it is not allowed
+to have. See [Settings](settings.md).
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+This capability registers no tools. A descriptor declares a capability's whole surface, and this
+one's surface is settings rows — giving the model a way to repaint the app or rebind a gesture
+would be reach added for the sake of symmetry.
+
+Colour lives in one resource dictionary per theme, keyed by role rather than by colour, so no
+view hardcodes a literal and a sixth theme is a file rather than a sweep through every screen:
 
 ```text
 D47.Background      the window behind everything
@@ -39,17 +121,9 @@ D47.Danger          the error banner
 D47.Info            the update banner
 ```
 
-#### The Elite colour scheme theme
-
-`elite-palette` reads the matrix Elite Dangerous applies to its own HUD, from:
-
-```text
-%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Graphics\GraphicsConfigurationOverride.xml
-```
-
-The file holds a 3x3 matrix — each output channel is the dot product of one row with the
-source colour, which is how a Commander's HUD ends up teal or white without the game shipping
-a teal or white palette:
+The HUD override file holds a 3x3 matrix — each output channel is the dot product of one row
+with the source colour, which is how a Commander's HUD ends up teal without the game shipping a
+teal palette:
 
 ```xml
 <GraphicsConfig>
@@ -64,91 +138,14 @@ a teal or white palette:
 </GraphicsConfig>
 ```
 
-D47 applies that matrix to its own Elite palette, so the panel picks up the cockpit's colour
-without borrowing the game's assets.
+Zoom is a layout transform rather than a font-size change: it re-runs measure and arrange at the
+new scale, so text rewraps and padding grows with it. The zoomed content sits in a horizontally
+scrolling viewport, so enlarging past the window's width scrolls rather than squeezing — below
+about 420 points a settings row cannot hold its caption beside its control, and the caption was
+squeezed to nothing while the control drew over it.
 
-Read-only and fail-soft, for the same reason the binds parser is read-only: this is your game
-configuration and D47 is a guest in it. A file that is missing, hand-edited, or written by a
-HUD mod resolves to "no matrix", and the theme falls back to plain `elite` — which is what it
-would have looked like anyway.
+The opening size is clamped to 90% of the working area of the screen the window appears on —
+90% rather than 100% because a window filling the work area exactly reads as maximised. Size and
+position live in `view-state.json` beside the executable and fail quietly if unreadable.
 
-### Zoom {#zoom}
-
-How large the panel is drawn, from 50% to 300%. Four gestures, borrowed wholesale:
-
-```text
-Ctrl + scroll wheel     one level per notch
-Ctrl + plus             one level larger
-Ctrl + minus            one level smaller
-Ctrl + 0                back to 100%
-```
-
-Every browser has already taught you those, which is the entire argument for them — a panel
-that invents its own zoom gesture is a panel you have to be told about. The levels are
-Chrome's ladder, for the same reason:
-
-```text
-50  67  75  80  90  100  110  125  150  175  200  250  300
-```
-
-This scales the rendered panel, not the text. The difference shows up at 200%: a font-size
-change would grow the letters inside a layout that stayed where it was, and everything would
-collide. A layout transform re-runs measure and arrange at the new scale, so text rewraps,
-padding grows with it, and the panel at 200% is the panel — just larger.
-
-It applies to the settings window too, because that is the same widget tree. A zoom that
-stopped at the panel's edge would be a zoom with a boundary you have to learn.
-
-The level is a setting rather than view state, so it survives a restart the way the theme
-does, and the settings row above is the same value the gestures write.
-
-### Window size and position
-
-Not a settings row — there is nothing to choose. The window opens at a size that fits the
-screen it opens on, and after that it opens where you left it.
-
-The default of 820x640 is device-independent pixels, so Windows scales it: at 150% that is
-1230x960 real pixels, which is nearly the whole usable height of a 1080p display and taller
-than a 1366x768 laptop screen outright. The default was chosen at 100% and never checked
-against a work area that had been scaled underneath it. So the opening size is clamped to 90%
-of the working area of the screen it actually appears on — 90% rather than 100% because a
-window filling the work area exactly reads as maximised.
-
-Size and position are then remembered like a collapsed settings card is: in `view-state.json`
-beside the executable, failing quietly if it cannot be read. A remembered position is only
-honoured if enough of the window would land on a screen that still exists — restoring onto a
-monitor that has since been unplugged is a window you cannot reach with the mouse, and the
-symptom looks exactly like the app failing to start.
-
-### Open settings {#open-settings}
-
-Opens the settings window. Bound to `F10` out of the box.
-
-Press the combination to bind it: the row listens for one gesture and stores what it heard,
-so there is no list of key names to learn and no way to type one that does not exist. Clear it
-to leave the action unbound.
-
-Binding happens in the main window only. The gesture is window-scoped — a hotkey that works
-while Elite has the foreground needs a system-wide registration, which arrives with the phase
-that needs it rather than being built here for nothing to use.
-
-**Protected**, like every hotkey row. A gesture is one of the three callers that can reach a
-protected setting, so a model that could rebind one could hand itself a caller it is not
-allowed to be. See [Settings](settings.md#the-protected-rule).
-
-### Re-anchor the headset panels {#reanchor}
-
-Snaps every world-locked headset panel back in front of you. Bound to `Ctrl+Alt+R` out of the
-box, and **registered system-wide** rather than scoped to D47's window — unlike the two rows
-above.
-
-That is the whole point of it. The case it exists for is Elite holding the foreground with the
-panels drifted somewhere you cannot aim at, so a gesture that needs D47 focused is a gesture
-that does not work when it is wanted. See [Re-anchor](reanchor.md).
-
-Protected, on the same grounds as every other hotkey row.
-
-### Focus the ask box {#focus-ask}
-
-Puts the cursor in the ask box from anywhere in the main window. Bound to `Ctrl+L` out of the
-box, and protected on the same grounds.
+</details>

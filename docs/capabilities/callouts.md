@@ -2,200 +2,18 @@
 title: Callouts
 ---
 
-What D47 says without being asked: danger, fuel, route progress, arrivals and material
-milestones. Everything here fires from the journal and the state files Elite writes, on the tick
-loop, with no model in the path.
+What Directive 47 says without being asked: danger, fuel, route progress, arrivals and material
+milestones.
 
-**These fire on the event, never at the model's discretion.** That is the checklist's own wording
-and it is the whole design. An alert routed through a turn arrives after the model has finished
-thinking, which for an interdiction is after it is over. Nothing here consults the language
-model, and nothing in the journal can talk a warning out of firing — which matters, because
-journal content is untrusted input (architecture.md §7).
+All of it comes from the files Elite already writes, as they change. Nothing here waits on the
+language model, so a warning arrives when the thing happens rather than after something has
+finished thinking about it — which for an interdiction is after it is over.
 
 ## Ask for it
 
 > "what are you watching for"
 > "stop calling things out"
 > "start calling things out"
-
-## What gets called out
-
-### Danger {#danger}
-
-Interdiction, shields down, hull damage, overheating, and a full cargo hold.
-
-Two sources, deliberately. The journal reports **transitions** — shields went down, hull was
-hit — and `Status.json` reports **conditions** — shields are *still* down, fuel is *still* low. A
-warning built on events alone goes quiet the moment the game stops repeating itself; one built on
-conditions alone cannot tell a new emergency from an ongoing one.
-
-Conditions are announced on the edge into the condition, not while it holds. `Status.json` is
-rewritten several times a second, so announcing on the level would be a warning per tick.
-
-Submitting to an interdiction is a choice the Commander made, and is not announced back to them
-as an emergency.
-
-### Fuel and range {#fuel}
-
-The low-fuel warning is the easy half. The half that matters is the one the checklist names:
-**the next star on the route is unscoopable and the one after it is out of range.** That is not a
-low-fuel condition — the tank can be nearly full when it becomes true — and it is invisible until
-the Commander is already sitting at a brown dwarf with no way out.
-
-```text
-Route warning. Hyades Sector DB-X d1-112 is class T and cannot be scooped, and the jump beyond
-it is 61.2 light years against a maximum range of 52.3. Replot before you jump.
-```
-
-Every figure behind that sentence was reported by the game: hop coordinates and star classes from
-`NavRoute.json`, the jump range from the `Loadout` event, the fuel level from `Status.json`, and
-fuel actually burned per jump averaged from the `FSDJump` events already seen this session. A
-figure derived from what happened beats one derived from a formula, and neither is a lookup.
-
-The warning is unconditional rather than something the model may decide is not worth mentioning.
-
-### Route progress {#route}
-
-Jumps remaining, the next system, and hazards ahead — read from the route file Elite writes
-locally, so no route-planning service is involved.
-
-```text
-14 jumps remaining. Next is Wredguia WD-K d8-30, scoopable.
-Ahead on the route: Praea Euq QI-T d3-3 (a neutron star).
-```
-
-A hazard on the *very next* jump is said whether or not this was a reporting jump. Arriving
-unprepared at a neutron star is the failure this exists to prevent, and "every 5 jumps" would
-land on it four times out of five.
-
-**Scoopable-star ambiguity is resolved rather than guessed**, which the checklist asks for
-explicitly. The KGBFOAM mnemonic is a rule about a star's first letter, and applying it as a
-first-letter test gets two cases wrong in opposite directions: Herbig `AeBe` stars begin with A
-and are *not* scoopable, while `K_OrangeGiant` and the other giant and supergiant variants carry
-a suffix and *are*. A class D47 does not recognise is reported as unknown rather than as
-unscoopable — routing a Commander around a star that would have refuelled them is its own kind
-of harm.
-
-### Long jumps {#long-jump}
-
-Flavour during a longer-than-normal hyperspace jump.
-
-Fired once hyperspace has **actually been entered**, not on the jump being initiated. That
-distinction is the item's own wording and it matters: `StartJump` is written while the FSD is
-still charging, and a Commander who throttles up and cancels never enters hyperspace at all.
-Only `JumpType: "Hyperspace"` counts — the same event says `"Supercruise"` far more often.
-
-### Arrivals {#arrival}
-
-Your home system, where your carrier is, ships stored where you have just arrived, and stations
-that offer engineering.
-
-**No table of engineer bases or notable stations is shipped.** A hardcoded list of which engineer
-lives where is game data that goes stale on every update and that D47 has no source for;
-inventing one would be exactly the confident wrong answer the guardrails exist to prevent.
-Engineering is recognised from the station's own advertised services in the `Docked` event, which
-also means it keeps working when a new engineer is added.
-
-### Material milestones {#materials}
-
-The first unit of a material, then 25/50/75%, a running count above 75%, and full.
-
-**The tracker is primed from the session backlog at startup**, which the checklist calls out and
-which is why the tick loop marks its first tick. Without it, starting D47 after Elite means every
-material already gathered counts as a "first unit" the moment the backlog is read, and the real
-milestones never fire because they have already been passed silently.
-
-### Where the capacity comes from
-
-Elite reports material capacity **nowhere** — not in a journal event, not in `Status.json`, not
-in the inventory snapshot. The game simply stops accepting more. Capacity is set by the
-material's grade, and the grade is not in the journal either.
-
-So the percentage milestones need a table, and the only question was what kind. A hand-written
-table of ~130 grades would be exactly the confidently-invented game data the guardrails exist to
-prevent: a wrong entry surfaces as a milestone announced at the wrong number, which is
-indistinguishable from the feature working.
-
-The shipped table is **derived, not written**. `tools/gen-material-grades.py` generates
-`MaterialGrades.g.cs` from [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `material.csv` — the
-canonical community-maintained id list that Coriolis and EDEngineer are built on. The generator
-is not part of the build and the app never runs it or reaches the network for it; its output is
-committed, and it is rerun when Frontier adds or reclassifies a material.
-
-That distinction is not academic. The first draft of the tests asserted Antimony was grade 5,
-from memory. The derived table said grade 4, and it was right: raw materials come in categories
-of four graded 1–4, so no raw material is grade 5 at all. A written-out table would have shipped
-that error, and it would have surfaced as a milestone firing at the wrong count — with nothing
-anywhere reporting a problem. The category progression is now a test in its own right.
-
-The grade-to-capacity rule — 300/250/200/150/100 for grades 1–5 — lives beside the generated
-table rather than in it. It is five numbers that do not change when Frontier adds a material, so
-regenerating the table must not be able to disturb it.
-
-A material the table does not recognise — one added by a game update this table predates —
-answers "unknown", and its percentage milestones stay silent rather than being announced against
-a number nobody checked. The first-unit milestone needs no capacity and works either way.
-
-## Settings
-
-### Speak without being asked {#enabled}
-
-Off means D47 only ever answers. Every warning stops with it; everything else keeps running.
-
-Reachable by voice through the model-free keyword router — "stop calling things out", "enable
-callouts" — because a protected row still has to be settable without hands on the panel.
-
-### Route progress interval {#route-interval}
-
-In jumps. The checklist makes this a setting because the right answer depends entirely on the
-route: every 5 jumps is reassuring on a 20-jump trip and unbearable on a 300-jump one. `0`
-silences the progress line while leaving the hazard warnings on.
-
-### Long jump threshold {#long-jump-threshold}
-
-In seconds, defaulting to the 20 the checklist specifies, and measured from entering hyperspace
-rather than from starting the jump.
-
-### Home system {#home-system}
-
-Named for the arrival callout. There is no default: where someone considers home is not something
-any journal event reports.
-
-## How a synchronous tick produces speech
-
-The tick loop is synchronous and must not block — a subscriber that waits on the network stalls
-push-to-talk edge detection and every callout behind it. So a callout does not speak. It returns
-an `Announcement`, the engine queues it, and the app drains that queue onto the thread pool.
-
-Announcements are spoken one at a time and in the order they were queued. Two callouts landing on
-the same tick and synthesised concurrently would arrive in whichever order the network happened
-to return them, and "shields are down" is not interchangeable with "route complete".
-
-An urgent callout silences the queue before speaking rather than joining it, on the
-`Alert` channel that sits above `Speech` in the one audio arbiter (architecture.md D7). That is
-the difference between a warning and a remark: an interdiction announced after D47 finishes
-reading out a commodity list has arrived after the interdiction.
-
-## Repetition
-
-A condition-based warning is true on hundreds of consecutive ticks at 10 Hz. Each announcement
-therefore carries a cooldown keyed by what it is about, so "low fuel" is said once every couple
-of minutes rather than ten times a second. The keys are coarse enough that a repeat is
-suppressed and specific enough that a different warning is not.
-
-A callout that throws is logged and skipped, and the callouts after it still run. One broken
-callout must not silence the rest, and must certainly not take the danger warnings down with it.
-
-<details markdown="1">
-<summary>The tool surface, for contributors</summary>
-
-### `get_callouts`
-
-Read-only. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
 
 ```text
 I speak up about:
@@ -209,11 +27,158 @@ Route progress every 5 jumps.
 Home system is Shinrarta Dezhra.
 ```
 
-**The model can ask what D47 is watching for; it cannot switch a warning off.** Every toggle
-below is a protected settings row — reachable from the panel, from a hotkey and through the
-model-free keyword router, and not from the tool surface. This is the trust boundary rather than
-caution: anything the model can call, a hostile in-game message can attempt to invoke, and a
-model that can disable the interdiction warning is one that can be told to by the Commander
-doing the interdicting.
+## What it speaks up about
+
+### Danger {#danger}
+
+Interdiction, shields down, hull damage, overheating, and a full cargo hold.
+
+Said once as it happens rather than repeatedly while it lasts — your shields going down is news;
+your shields still being down half a second later is not. Submitting to an interdiction was your
+decision and is not read back to you as an emergency.
+
+An urgent warning cuts in rather than waiting its turn. A warning that arrives after Directive 47
+has finished reading you a commodity list has arrived too late to be one.
+
+### Fuel and range {#fuel}
+
+Low fuel is the easy half. The half that matters is this one:
+
+```text
+Route warning. Hyades Sector DB-X d1-112 is class T and cannot be scooped, and the jump beyond
+it is 61.2 light years against a maximum range of 52.3. Replot before you jump.
+```
+
+That is not a low-fuel warning — your tank can be nearly full when it becomes true — and without
+it the first you know is when you are parked at a brown dwarf with no way out.
+
+Every number in it came from your own game: the route and star classes from the route file, your
+jump range from your ship's loadout, your fuel from the status file, and how much you actually
+burn per jump averaged from the jumps you have already made this session. Nothing is looked up
+anywhere.
+
+### Route progress {#route}
+
+Jumps remaining, what is next, and what is coming:
+
+```text
+14 jumps remaining. Next is Wredguia WD-K d8-30, scoopable.
+Ahead on the route: Praea Euq QI-T d3-3 (a neutron star).
+```
+
+A hazard on the *very next* jump is always mentioned, whether or not it was a reporting jump.
+Arriving unprepared at a neutron star is the thing this exists to prevent, and every-five-jumps
+would miss it four times out of five.
+
+Whether a star can be scooped is worked out properly rather than from the first letter of its
+class. The KGBFOAM rule gets two cases wrong in opposite directions, and both matter: Herbig AeBe
+stars start with A and cannot be scooped, while orange giants carry a suffix and can. A class
+Directive 47 does not recognise is called unknown rather than unscoopable — routing you around a
+star that would have refuelled you is its own kind of harm.
+
+### Long jumps {#long-jump}
+
+A little conversation during a longer-than-usual jump. It starts once you are actually in
+hyperspace, not when the drive begins charging — throttle up and cancel and you will hear
+nothing.
+
+### Arrivals {#arrival}
+
+Your home system, where your carrier is, ships you have stored where you have just arrived, and
+stations that offer engineering.
+
+**There is no built-in list of which engineer lives where.** That kind of list goes stale every
+game update, and inventing one is exactly the confident wrong answer Directive 47 is built not to
+give. Engineering is recognised from what the station itself advertises when you dock — which
+also means it keeps working when a new engineer is added.
+
+### Material milestones {#materials}
+
+Your first unit of a material, then a quarter, half and three-quarters full, a running count
+after that, and full.
+
+Start Directive 47 after Elite and it catches up on the session so far first, so materials you
+already had do not all announce themselves as firsts.
+
+Elite never reports how much of a material you can carry — the game simply stops accepting more —
+so the percentages come from a table of material grades built from the community-maintained id
+list that Coriolis and EDEngineer use, rather than from anyone's memory. A material too new for
+that table still announces your first unit; the percentages stay quiet rather than being counted
+against a number nobody checked.
+
+## Settings
+
+### Speak without being asked {#enabled}
+
+Off means Directive 47 only ever answers. Every warning above stops with it; everything else
+keeps running.
+
+> "stop calling things out"
+> "start calling things out"
+
+### Route progress interval {#route-interval}
+
+In jumps. The right answer depends entirely on the trip: every 5 jumps is reassuring over 20 and
+unbearable over 300. Set it to `0` to silence the progress line while keeping the hazard warnings.
+
+### Long jump threshold {#long-jump-threshold}
+
+In seconds, counted from entering hyperspace.
+
+### Home system {#home-system}
+
+Where you consider home, for the arrival callout. There is no default — no journal event reports
+that.
+
+---
+
+**The model can ask what Directive 47 is watching for; it cannot switch a warning off.** Every
+toggle here is changeable from the panel, by a bound key, or by saying one of the phrases above —
+and not by anything the model calls. Directive 47 reads in-game messages from anyone in range,
+and a model that could disable the interdiction warning is one that could be told to by the
+Commander doing the interdicting.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `get_callouts`
+
+Read-only. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Two sources feed the warnings, deliberately. The journal reports **transitions** — shields went
+down, hull was hit — and `Status.json` reports **conditions** — shields are *still* down. A
+warning built on events alone goes quiet the moment the game stops repeating itself; one built on
+conditions alone cannot tell a new emergency from an ongoing one. Conditions announce on the edge
+into the condition, because `Status.json` is rewritten several times a second and announcing on
+the level would be a warning per tick.
+
+The material grade table is **derived, not written**. `tools/gen-material-grades.py` generates
+`MaterialGrades.g.cs` from [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `material.csv`. The
+generator is not part of the build and the app never runs it or reaches the network for it; its
+output is committed and regenerated when Frontier adds or reclassifies a material. This is not
+academic: the first draft of the tests asserted Antimony was grade 5, from memory. The derived
+table said grade 4, and it was right — raw materials come in categories of four graded 1–4, so no
+raw material is grade 5 at all. A hand-written table would have shipped that error, and it would
+have surfaced as a milestone firing at the wrong count with nothing reporting a problem.
+
+The grade-to-capacity rule — 300/250/200/150/100 for grades 1–5 — lives beside the generated
+table rather than in it: five numbers that do not change when Frontier adds a material, so
+regenerating cannot disturb them.
+
+The tick loop is synchronous and must not block, so a callout does not speak. It returns an
+`Announcement`, the engine queues it, and the app drains that queue onto the thread pool.
+Announcements are spoken one at a time in the order queued — two synthesised concurrently would
+arrive in whichever order the network returned them, and "shields are down" is not
+interchangeable with "route complete". An urgent one silences the queue before speaking, on the
+`Alert` channel above `Speech` in the one audio arbiter.
+
+Condition-based warnings carry a cooldown keyed by what they are about, coarse enough that a
+repeat is suppressed and specific enough that a different warning is not. A callout that throws
+is logged and skipped and the rest still run: one broken callout must not take the danger
+warnings down with it.
 
 </details>
