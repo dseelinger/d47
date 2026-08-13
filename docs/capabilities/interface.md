@@ -54,9 +54,10 @@ The steps are a browser's too:
 ```
 
 This makes the whole panel larger rather than just the letters, so spacing and layout grow with
-the text instead of the text growing inside a layout that stayed put. If the window is too narrow
-for the panel at that size, it scrolls sideways — the same thing a browser does — rather than
-crushing rows into each other.
+the text instead of the text growing inside a layout that stayed put. The panel reflows to the
+window at every level — text rewraps, the same thing a browser does — and only scrolls sideways
+when what it is showing has a real minimum width it cannot go below, which the settings rows do
+and the transcript does not.
 
 It applies to the settings window too, and the level survives a restart like the theme does.
 
@@ -187,11 +188,22 @@ teal palette:
 
 Zoom is a layout transform rather than a font-size change: it re-runs measure and arrange at the
 new scale, so text rewraps and padding grows with it. The zoomed content sits in a horizontally
-scrolling viewport, so enlarging past the window's width scrolls rather than squeezing — below
-about 420 points a settings row cannot hold its caption beside its control, and the caption was
-squeezed to nothing while the control drew over it.
+scrolling viewport, and the content is constrained to that viewport's width divided by the scale
+— which is what gives the layout a width to wrap against at all. A scroll viewer that may scroll
+sideways measures its child with *infinite* width, and without the constraint nothing below it
+ever wraps: the transcript became one line as long as the longest thing D47 had said, and the
+window could be dragged wider forever without reaching the end of it.
 
-The opening size is clamped to 90% of the working area of the screen the window appears on —
+Sideways scrolling is what is left for content that genuinely will not fit: the settings grid
+holds a minimum of 700 points, because below about 420 a row cannot keep its caption beside its
+control and the caption was squeezed to nothing while the control drew over it. A minimum beats
+the viewport constraint, so those rows push the scrollbar back out; the transcript, which has no
+minimum, simply rewraps.
+
+The opening size is a proportion of the working area of the screen the window appears on — 55% of
+its width and 75% of its height, floored so a small screen still gets a readable window — rather
+than a fixed size written down once against somebody else's monitor. It is then clamped to 90% of
+that working area —
 90% rather than 100% because a window filling the work area exactly reads as maximised. Size and
 position live in `view-state.json` beside the executable and fail quietly if unreadable.
 

@@ -95,4 +95,67 @@ public class WindowFitTests
 
         Assert.Equal(onTheSecond, WindowFit.Reposition(onTheSecond, screens));
     }
+
+    /// <summary>
+    /// The opening size is a proportion of the screen rather than a length written down once.
+    /// <para>
+    /// Reported at 0.5.7 alongside the wrapping fault: a fixed 820x640 is a size chosen against
+    /// one screen at one scale factor. On a 4K panel it opens as a postage stamp; at 150% it is
+    /// 1230x960 real pixels, most of the usable height of the display it was picked on.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(1920, 1040)]
+    [InlineData(3840, 2120)]
+    [InlineData(2560, 1400)]
+    public void TheOpeningSizeIsAProportionOfWhateverScreenItLandsOn(double width, double height)
+    {
+        var (openWidth, openHeight) = WindowFit.Opening(width, height);
+
+        Assert.Equal(width * WindowFit.DefaultWidthFraction, openWidth, 3);
+        Assert.Equal(height * WindowFit.DefaultHeightFraction, openHeight, 3);
+    }
+
+    /// <summary>
+    /// And never so small that the panel stops making sense. A proportion of a small screen is
+    /// still a window somebody has to read.
+    /// </summary>
+    [Fact]
+    public void ASmallScreenStillGetsAReadableWindow()
+    {
+        var (width, height) = WindowFit.Opening(1024, 600);
+
+        Assert.True(width >= Math.Min(WindowFit.MinimumWidth, 1024 * WindowFit.Fraction));
+        Assert.True(height <= 600 * WindowFit.Fraction);
+    }
+
+    /// <summary>
+    /// The minimum never wins over the screen. A window wider than the display it opens on is
+    /// the bug this whole type exists for, and a floor written to protect legibility would
+    /// reintroduce it on the smallest screens if it were allowed to.
+    /// </summary>
+    [Theory]
+    [InlineData(480, 320)]
+    [InlineData(800, 480)]
+    public void TheFloorNeverMakesTheWindowBiggerThanTheScreen(double width, double height)
+    {
+        var (openWidth, openHeight) = WindowFit.Opening(width, height);
+
+        Assert.True(openWidth <= width * WindowFit.Fraction);
+        Assert.True(openHeight <= height * WindowFit.Fraction);
+    }
+
+    /// <summary>
+    /// A screen that will not say how big it is gets something rather than nothing, for the
+    /// same reason <see cref="WindowFit.Clamp"/> leaves a size alone in that case.
+    /// </summary>
+    [Fact]
+    public void AnUnreportedScreenStillOpensAWindowWithAreaInIt()
+    {
+        var (width, height) = WindowFit.Opening(0, 0);
+
+        Assert.True(width > 0);
+        Assert.True(height > 0);
+    }
+
 }

@@ -58,10 +58,19 @@ public sealed class WindowPlacementMemory
 
         var scale = remembered is null && zoom is not null ? ZoomLadder.ScaleOf(zoom()) : 1.0;
 
-        var width = remembered?.Width > 0 ? remembered.Width : window.Width * scale;
-        var height = remembered?.Height > 0 ? remembered.Height : window.Height * scale;
-
         var screen = ScreenFor(window, remembered);
+
+        // The opening size is a proportion of the screen in front of the Commander, not a
+        // number in the XAML. The XAML's own Width and Height stay as the answer for a machine
+        // that will not say how big its screens are, which is the only case left.
+        var (openWidth, openHeight) = screen is not null
+            ? WindowFit.Opening(
+                screen.WorkingArea.Width / screen.Scaling,
+                screen.WorkingArea.Height / screen.Scaling)
+            : (window.Width, window.Height);
+
+        var width = remembered?.Width > 0 ? remembered.Width : openWidth * scale;
+        var height = remembered?.Height > 0 ? remembered.Height : openHeight * scale;
 
         if (screen is not null)
         {
