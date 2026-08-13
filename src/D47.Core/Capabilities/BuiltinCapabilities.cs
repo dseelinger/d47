@@ -30,10 +30,11 @@ public static class BuiltinCapabilities
         Conversation.TurnCancellation cancellation,
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
-        ListeningCapability.ListeningSurface listening) =>
+        ListeningCapability.ListeningSurface listening,
+        Func<string>? coverage = null) =>
     [
         HelpCapability.Create(registry),
-        DiagnosticsCapability.Create(paths, verbosity, settings, version),
+        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         SpeechCapability.Create(speech),

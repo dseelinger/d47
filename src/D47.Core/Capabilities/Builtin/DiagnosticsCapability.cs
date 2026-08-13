@@ -24,11 +24,18 @@ public static class DiagnosticsCapability
     /// <summary>The settings row a subsystem's level lives in. One key, whoever is asking.</summary>
     public static string LevelRowFor(string subsystem) => $"logging.subsystems.{subsystem.ToLowerInvariant()}";
 
+    /// <param name="coverage">
+    /// What has been exercised by hand, when this process was asked to record that. Null in
+    /// every normal run, and the row is then not registered at all — so the descriptor a
+    /// Commander gets has no trace of it. Passed in rather than read from the environment here,
+    /// because Core does not go looking at the world.
+    /// </param>
     public static CapabilityDescriptor Create(
         AppPaths paths,
         ILogVerbosityControl verbosity,
         SettingsService settings,
-        string version)
+        string version,
+        Func<string>? coverage = null)
     {
         return new CapabilityDescriptor
         {
@@ -98,7 +105,7 @@ public static class DiagnosticsCapability
                     Handler = (arguments, _) => Task.FromResult(SetVerbosity(arguments, settings)),
                 },
             ],
-            Settings = BuildSettingRows(),
+            Settings = BuildSettingRows(coverage),
         };
     }
 
@@ -149,7 +156,7 @@ public static class DiagnosticsCapability
             : ToolResult.Error(applied.Message);
     }
 
-    private static IReadOnlyList<SettingRow> BuildSettingRows()
+    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<string>? coverage)
     {
         var rows = new List<SettingRow>
         {
@@ -212,6 +219,29 @@ public static class DiagnosticsCapability
                 },
             },
         }));
+
+        if (coverage is not null)
+        {
+            // Registered only when this process was asked to record coverage, so the descriptor
+            // is byte-identical to a normal run's otherwise — the registered-once-never-mutated
+            // invariant holds either way, because which rows exist is decided before startup.
+            rows.Add(new SettingRow
+            {
+                Key = "diagnostics.coverage",
+                Label = "Exercised by hand",
+                Help =
+                    "Which tools and settings rows have actually been driven in the running app, and "
+                    + "which have changed since they last were. Recorded because D47_COVERAGE is set; "
+                    + "the full list is written to data/coverage.md.",
+                Kind = SettingKind.Info,
+                Group = "Exercised by hand",
+
+                // No DocsAnchor on purpose. This is a workbench aid rather than something a
+                // Commander configures, so it gets no section in the public capability page;
+                // the help button falls back to the diagnostics page itself.
+                Binding = new SettingBinding { Read = _ => coverage() },
+            });
+        }
 
         return rows;
     }
