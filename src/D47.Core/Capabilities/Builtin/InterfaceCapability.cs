@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Interface;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -13,6 +14,8 @@ public static class InterfaceCapability
     public const string Id = "interface";
 
     public const string ThemeKey = "ui.theme";
+
+    public const string ZoomKey = "ui.zoom";
 
     public const string OpenSettingsHotkeyKey = "hotkeys.openSettings";
 
@@ -43,6 +46,28 @@ public static class InterfaceCapability
                     Write = (s, v) => s with { Ui = s.Ui with { Theme = v ?? ThemeCatalog.Elite } },
                 },
             },
+            new SettingRow
+            {
+                Key = ZoomKey,
+                Label = "Zoom",
+                Help = "How large the panel is drawn. Ctrl and the scroll wheel, Ctrl+plus, "
+                       + "Ctrl+minus, and Ctrl+0 for 100% do the same thing from the panel itself.",
+                Kind = SettingKind.Choice,
+                Choices = [.. ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))],
+                ChoiceLabel = value => ZoomLadder.Describe(Parse(value)),
+                DocsAnchor = "zoom",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.ZoomPercent.ToString(CultureInfo.InvariantCulture),
+                    // Snapped rather than validated: the gestures write rungs, and anything
+                    // else reaching here came from a hand-edited file or a tool call, where
+                    // "nearest level" is a better answer than "setting silently ignored".
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with { ZoomPercent = ZoomLadder.Snap(Parse(v)) },
+                    },
+                },
+            },
             HotkeyRow(
                 OpenSettingsHotkeyKey,
                 "Open settings",
@@ -57,6 +82,11 @@ public static class InterfaceCapability
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
         ],
     };
+
+    private static int Parse(string? value) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var percent)
+            ? percent
+            : ZoomLadder.Default;
 
     /// <summary>
     /// Every hotkey row is protected. A gesture is one of the three callers that can reach a

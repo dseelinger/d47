@@ -16,6 +16,14 @@ public sealed record ViewState
     public IReadOnlyList<string> CollapsedCards { get; init; } = [];
 
     /// <summary>
+    /// Where the main window was left, or null if it has never been moved or resized
+    /// (list.md Phase 9, "Open at a size that fits the screen"). Here rather than in settings
+    /// for the same reason a collapsed card is: it has no default worth documenting and
+    /// nothing should fail loudly because it could not be read.
+    /// </summary>
+    public WindowPlacement? MainWindow { get; init; }
+
+    /// <summary>
     /// Capability ids the Commander expanded. Kept separately from the collapsed list because
     /// a card can start collapsed by default: without this, expanding one would be
     /// indistinguishable from never having touched it, and it would close again next time.
@@ -41,6 +49,9 @@ public sealed record ViewState
         return !startCollapsed;
     }
 
+    /// <summary>Records where the main window was left.</summary>
+    public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
+
     /// <summary>Records a card's new state as an explicit choice.</summary>
     public ViewState With(string capabilityId, bool expanded) => this with
     {
@@ -59,6 +70,28 @@ public sealed record ViewState
 
         return next;
     }
+}
+
+/// <summary>
+/// How the window was left: size and position in device-independent pixels, plus whether it
+/// was maximised. Restoring a maximised window at its restored size is a papercut nobody
+/// reports and everybody notices, so the flag travels with the numbers.
+/// <para>
+/// Position is nullable because "never moved" and "moved to 0,0" are different states, and
+/// only the second one should override the platform centring the window.
+/// </para>
+/// </summary>
+public sealed record WindowPlacement
+{
+    public double Width { get; init; }
+
+    public double Height { get; init; }
+
+    public double? X { get; init; }
+
+    public double? Y { get; init; }
+
+    public bool Maximized { get; init; }
 }
 
 /// <summary>
