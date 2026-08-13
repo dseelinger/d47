@@ -64,6 +64,14 @@ public static class WhisperModels
     /// <summary>What a fresh install selects: small, English, and good enough for a short clip.</summary>
     public const string DefaultId = "base.en";
 
+    /// <summary>
+    /// The model the Commander has chosen but has not got, or null when there is nothing
+    /// outstanding. Both halves matter: "none" is a choice rather than a pending question, and a
+    /// model already on disk is not one either.
+    /// </summary>
+    public static WhisperModel? AwaitingDownload(string? selected, IModelStore store) =>
+        Find(selected) is { } model && !store.IsInstalled(model) ? model : null;
+
     public static WhisperModel? Find(string? id) =>
         id is null ? null : All.FirstOrDefault(model => model.Id == id);
 
