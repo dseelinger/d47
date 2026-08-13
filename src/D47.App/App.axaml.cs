@@ -29,6 +29,15 @@ public partial class App(AppHost? host) : Application
             desktop.MainWindow = new MainWindow(host);
         }
 
+        // After the framework is up, because the headset path rasterises a widget tree and
+        // needs a dispatcher to do it on. Unconditional: a machine with no headset gets the
+        // same code path and the Unavailable state, rather than a branch that only runs for
+        // Commanders who have one (list.md Phase 9, "Order agnostic Overlay").
+        if (host is not null)
+        {
+            host.Vr = Headset.VrHost.Start(host.Panel, host.Settings, host.Tick, host.Loggers);
+        }
+
         base.OnFrameworkInitializationCompleted();
     }
 }

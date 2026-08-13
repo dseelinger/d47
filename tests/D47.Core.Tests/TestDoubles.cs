@@ -174,7 +174,8 @@ public sealed class TestSurface
             install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,
-            SilentListening()));
+            SilentListening(),
+            NoHeadset()));
 
         built = registry;
 
@@ -188,6 +189,16 @@ public sealed class TestSurface
         return new TestSurface(
             install.Paths, store, secrets, service, registry, state, availability, spend, verbosity);
     }
+
+    /// <summary>
+    /// The headset surface on a machine with none. Unavailable rather than Connecting, because
+    /// a test that never reaches a runtime should read as a machine that has none rather than
+    /// as one still looking.
+    /// </summary>
+    public static Capabilities.Builtin.VrCapability.HeadsetSurface NoHeadset() => new()
+    {
+        Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a test.", null),
+    };
 
     /// <summary>
     /// The speech capability's surface with no sound card behind it. The bed names still come

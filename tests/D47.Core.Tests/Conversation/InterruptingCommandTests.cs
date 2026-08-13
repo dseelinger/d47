@@ -35,7 +35,8 @@ public class InterruptingCommandTests
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
-            TestSurface.SilentListening()));
+            TestSurface.SilentListening(),
+            TestSurface.NoHeadset()));
 
         built = registry;
 
@@ -186,7 +187,8 @@ public class InterruptingCommandTests
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
-            TestSurface.SilentListening()));
+            TestSurface.SilentListening(),
+            TestSurface.NoHeadset()));
 
         built = registry;
 
@@ -223,7 +225,8 @@ public class InterruptingCommandTests
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
-            TestSurface.SilentListening()));
+            TestSurface.SilentListening(),
+            TestSurface.NoHeadset()));
 
         built = registry;
 

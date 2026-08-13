@@ -30,7 +30,8 @@ public static class BuiltinCapabilities
         Conversation.TurnCancellation cancellation,
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
-        ListeningCapability.ListeningSurface listening) =>
+        ListeningCapability.ListeningSurface listening,
+        VrCapability.HeadsetSurface headset) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version),
@@ -40,6 +41,7 @@ public static class BuiltinCapabilities
         ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
+        VrCapability.Create(settings, headset),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];
