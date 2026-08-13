@@ -33,6 +33,10 @@ public partial class SettingsWindow : Window
 
         var window = new SettingsWindow();
         window.Attach(settings, viewState, paths);
+
+        // The same widget tree, so the same zoom. A level that applied to the panel and not to
+        // settings would be a level the Commander has to discover the edge of.
+        Windowing.ZoomHost.Attach(window, settings);
         window.Closed += (_, _) => _open = null;
 
         _open = window;

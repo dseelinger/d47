@@ -249,6 +249,17 @@ public sealed record UiSettings
     /// Phase 4, "Themes").
     /// </summary>
     public string Theme { get; init; } = "elite";
+
+    /// <summary>
+    /// How large the panel is drawn, as a percentage (list.md Phase 9, "Zoom the desktop
+    /// window"). A setting rather than view state, because the checklist puts it alongside the
+    /// theme: it is how the Commander wants d47 to look, not how they happened to leave a card.
+    /// <para>
+    /// Snapped to <see cref="Interface.ZoomLadder"/> on read, so a hand-edited 137 becomes 125
+    /// rather than a level no gesture can step off.
+    /// </para>
+    /// </summary>
+    public int ZoomPercent { get; init; } = Interface.ZoomLadder.Default;
 }
 
 /// <summary>

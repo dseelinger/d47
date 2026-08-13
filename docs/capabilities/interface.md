@@ -77,6 +77,54 @@ configuration and d47 is a guest in it. A file that is missing, hand-edited, or 
 HUD mod resolves to "no matrix", and the theme falls back to plain `elite` — which is what it
 would have looked like anyway.
 
+### Zoom {#zoom}
+
+How large the panel is drawn, from 50% to 300%. Four gestures, borrowed wholesale:
+
+```text
+Ctrl + scroll wheel     one level per notch
+Ctrl + plus             one level larger
+Ctrl + minus            one level smaller
+Ctrl + 0                back to 100%
+```
+
+Every browser has already taught you those, which is the entire argument for them — a panel
+that invents its own zoom gesture is a panel you have to be told about. The levels are
+Chrome's ladder, for the same reason:
+
+```text
+50  67  75  80  90  100  110  125  150  175  200  250  300
+```
+
+This scales the rendered panel, not the text. The difference shows up at 200%: a font-size
+change would grow the letters inside a layout that stayed where it was, and everything would
+collide. A layout transform re-runs measure and arrange at the new scale, so text rewraps,
+padding grows with it, and the panel at 200% is the panel — just larger.
+
+It applies to the settings window too, because that is the same widget tree. A zoom that
+stopped at the panel's edge would be a zoom with a boundary you have to learn.
+
+The level is a setting rather than view state, so it survives a restart the way the theme
+does, and the settings row above is the same value the gestures write.
+
+### Window size and position
+
+Not a settings row — there is nothing to choose. The window opens at a size that fits the
+screen it opens on, and after that it opens where you left it.
+
+The default of 820x640 is device-independent pixels, so Windows scales it: at 150% that is
+1230x960 real pixels, which is nearly the whole usable height of a 1080p display and taller
+than a 1366x768 laptop screen outright. The default was chosen at 100% and never checked
+against a work area that had been scaled underneath it. So the opening size is clamped to 90%
+of the working area of the screen it actually appears on — 90% rather than 100% because a
+window filling the work area exactly reads as maximised.
+
+Size and position are then remembered like a collapsed settings card is: in `view-state.json`
+beside the executable, failing quietly if it cannot be read. A remembered position is only
+honoured if enough of the window would land on a screen that still exists — restoring onto a
+monitor that has since been unplugged is a window you cannot reach with the mouse, and the
+symptom looks exactly like the app failing to start.
+
 ### Open settings {#open-settings}
 
 Opens the settings window. Bound to `F10` out of the box.
