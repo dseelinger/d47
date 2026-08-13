@@ -80,6 +80,13 @@ public sealed class SteamVrRuntime(
 
     /// <summary>Surfaces that have been served at least once, so the report is not per frame.</summary>
     private readonly HashSet<VrSurface> _served = [];
+
+    /// <summary>How often the runtime is asked to describe itself. Often enough to watch it
+    /// follow a head, rare enough to read.</summary>
+    private static readonly TimeSpan DescribeEvery = TimeSpan.FromSeconds(5);
+
+    private DateTimeOffset _now;
+    private DateTimeOffset _lastDescribed;
     private readonly Dictionary<VrSurface, VrTexture> _textures = [];
 
     private CVRSystem? _system;
@@ -131,6 +138,8 @@ public sealed class SteamVrRuntime(
             return false;
         }
 
+        _now = now;
+
         if (!PumpSystem())
         {
             return false;
@@ -178,6 +187,7 @@ public sealed class SteamVrRuntime(
         // one that recovered looks exactly like the one that never reported anything.
         _complaints.Clear();
         _served.Clear();
+        _lastDescribed = default;
 
         _device?.Dispose();
         _device = null;
@@ -415,6 +425,19 @@ public sealed class SteamVrRuntime(
         overlay.Look(placement.WidthMetres, placement.Curvature, placement.Opacity);
         overlay.Show(true);
         overlay.PumpEvents();
+
+        // Read back from the runtime every few seconds while the session is up, rather than
+        // once. A single sample said the quad was placed a metre in front of a tracking head,
+        // which was true and did not help: the panel was still invisible, and three theories
+        // reasoning from what d47 sent were all wrong. This is SteamVR's own account of what it
+        // is holding, including whether it thinks the overlay is visible at all.
+        if (_now - _lastDescribed >= DescribeEvery)
+        {
+            _lastDescribed = _now;
+
+            logger.LogInformation(
+                "{Surface}: {State}", source.Surface, overlay.Describe());
+        }
 
         // Once per surface per session. "The overlays are up" says the quads were created, not
         // that anything was ever put in one or that it went anywhere a Commander could look —

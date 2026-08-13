@@ -242,6 +242,50 @@ public sealed class VrOverlay : IDisposable
     }
 
     /// <summary>
+    /// What SteamVR says about this quad, read back rather than remembered.
+    /// <para>
+    /// Everything else on this path reports what was sent. Three separate theories about why a
+    /// correctly placed, correctly textured, unrefused overlay was invisible were all wrong,
+    /// and each was wrong because it reasoned from what d47 asked for. This asks the runtime
+    /// what it is actually holding — whether it considers the quad visible at all, what alpha
+    /// and width it kept, which universe the transform is in, and which way the quad faces.
+    /// </para>
+    /// <para>
+    /// A quad is single-sided. Facing is the one property that is invisible in every log so far
+    /// and would explain a panel that appears only while a moving controller carries it, so the
+    /// forward vector is reported alongside the position.
+    /// </para>
+    /// </summary>
+    public string Describe()
+    {
+        var visible = OpenVR.Overlay.IsOverlayVisible(_handle);
+
+        var alpha = 0f;
+        OpenVR.Overlay.GetOverlayAlpha(_handle, ref alpha);
+
+        var width = 0f;
+        OpenVR.Overlay.GetOverlayWidthInMeters(_handle, ref width);
+
+        var universe = ETrackingUniverseOrigin.TrackingUniverseSeated;
+        var held = new HmdMatrix34_t();
+        var got = OpenVR.Overlay.GetOverlayTransformAbsolute(_handle, ref universe, ref held);
+
+        if (got != EVROverlayError.None)
+        {
+            return $"visible={visible} alpha={alpha:0.00} width={width:0.00} transform=<{got}>";
+        }
+
+        var pose = VrMatrix.ToPose(held);
+        var forward = System.Numerics.Vector3.Transform(
+            -System.Numerics.Vector3.UnitZ,
+            pose.Orientation);
+
+        return $"visible={visible} alpha={alpha:0.00} width={width:0.00}m universe={universe} "
+               + $"at ({pose.Position.X:0.00}, {pose.Position.Y:0.00}, {pose.Position.Z:0.00}) "
+               + $"facing ({forward.X:0.00}, {forward.Y:0.00}, {forward.Z:0.00})";
+    }
+
+    /// <summary>
     /// Drains the event queue and updates the latched pointer state.
     /// <para>
     /// Latched, because SteamVR reports transitions rather than state: a hand held still sends
