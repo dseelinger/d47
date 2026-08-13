@@ -2,9 +2,6 @@
 title: Callouts
 ---
 
-**Group:** Voice
-**Capability id:** `callouts`
-
 What D47 says without being asked: danger, fuel, route progress, arrivals and material
 milestones. Everything here fires from the journal and the state files Elite writes, on the tick
 loop, with no model in the path.
@@ -15,40 +12,11 @@ thinking, which for an interdiction is after it is over. Nothing here consults t
 model, and nothing in the journal can talk a warning out of firing — which matters, because
 journal content is untrusted input (architecture.md §7).
 
-## Try it
+## Ask for it
 
 > "what are you watching for"
 > "stop calling things out"
 > "start calling things out"
-
-## Tool
-
-### `get_callouts`
-
-Read-only. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-```text
-I speak up about:
-  danger: on
-  fuel: on
-  route: on
-  long-jump: on
-  arrival: on
-  materials: on
-Route progress every 5 jumps.
-Home system is Shinrarta Dezhra.
-```
-
-**The model can ask what D47 is watching for; it cannot switch a warning off.** Every toggle
-below is a protected settings row — reachable from the panel, from a hotkey and through the
-model-free keyword router, and not from the tool surface. This is the trust boundary rather than
-caution: anything the model can call, a hostile in-game message can attempt to invoke, and a
-model that can disable the interdiction warning is one that can be told to by the Commander
-doing the interdicting.
 
 ## What gets called out
 
@@ -217,3 +185,35 @@ suppressed and specific enough that a different warning is not.
 
 A callout that throws is logged and skipped, and the callouts after it still run. One broken
 callout must not silence the rest, and must certainly not take the danger warnings down with it.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `get_callouts`
+
+Read-only. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+```text
+I speak up about:
+  danger: on
+  fuel: on
+  route: on
+  long-jump: on
+  arrival: on
+  materials: on
+Route progress every 5 jumps.
+Home system is Shinrarta Dezhra.
+```
+
+**The model can ask what D47 is watching for; it cannot switch a warning off.** Every toggle
+below is a protected settings row — reachable from the panel, from a hotkey and through the
+model-free keyword router, and not from the tool surface. This is the trust boundary rather than
+caution: anything the model can call, a hostile in-game message can attempt to invoke, and a
+model that can disable the interdiction warning is one that can be told to by the Commander
+doing the interdicting.
+
+</details>

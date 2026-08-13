@@ -2,9 +2,6 @@
 title: Interface
 ---
 
-**Group:** Interface
-**Capability id:** `interface`
-
 How D47 looks, and which keys reach it.
 
 This capability registers no tools. A descriptor declares a capability's whole surface, and

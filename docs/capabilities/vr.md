@@ -2,9 +2,6 @@
 title: Headset
 ---
 
-**Group:** Interface
-**Capability id:** `vr`
-
 D47 in the headset, as a SteamVR overlay drawn over Elite in your own cockpit.
 
 It is an *overlay* application, never a scene one. That is what lets it sit alongside the game
@@ -65,16 +62,6 @@ functional than the headset one.
 The whole render-and-upload chain costs about 0.75 ms a frame measured live against SteamVR, of
 which the rasterise is 0.30 ms — under one per cent of one core at the rate the panel updates.
 And it only runs when something changed.
-
-## Tools
-
-### `get_headset_status`
-
-Reports whether D47 is showing in the headset, and if not, why not. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
 
 ## Settings
 
@@ -293,3 +280,16 @@ only ever happens on somebody else's computer.
 **Nothing is drawn or sent unless it changed.** The panel is driven by its view model, so a
 tick with nothing new costs one boolean. A transform pushed every frame would also fight the one
 you are currently dragging it to.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
+
+### `get_headset_status`
+
+Reports whether D47 is showing in the headset, and if not, why not. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+</details>
