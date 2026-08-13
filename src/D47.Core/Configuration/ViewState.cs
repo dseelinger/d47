@@ -24,6 +24,18 @@ public sealed record ViewState
     public WindowPlacement? MainWindow { get; init; }
 
     /// <summary>
+    /// Where the settings window was left. Its own slot rather than sharing the main window's:
+    /// they are different shapes with different content, and one number for both would mean
+    /// resizing either one moved the other.
+    /// <para>
+    /// One property per window rather than a dictionary, for the same reason the hotkeys are
+    /// one property per action — an unknown window name in a hand-edited file should be
+    /// rejected like any other unknown key, and a dictionary would take it silently.
+    /// </para>
+    /// </summary>
+    public WindowPlacement? SettingsWindow { get; init; }
+
+    /// <summary>
     /// Whether the Commander has been asked about a Start Menu entry. Recorded whichever way
     /// they answered, because "no" has to stick — an offer that returns every launch is not an
     /// offer, it is nagging.
@@ -87,7 +99,16 @@ public sealed record ViewState
     }
 
     /// <summary>Records where the main window was left.</summary>
-    public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
+    /// <summary>Records a window's placement in its own slot.</summary>
+    public ViewState With(WindowSlot slot, WindowPlacement placement) => slot switch
+    {
+        WindowSlot.Settings => this with { SettingsWindow = placement },
+        _ => this with { MainWindow = placement },
+    };
+
+    /// <summary>The placement remembered for one window, or null if it has never been moved.</summary>
+    public WindowPlacement? PlacementOf(WindowSlot slot) =>
+        slot == WindowSlot.Settings ? SettingsWindow : MainWindow;
 
     /// <summary>Records a card's new state as an explicit choice.</summary>
     public ViewState With(string capabilityId, bool expanded) => this with
@@ -133,6 +154,13 @@ public sealed record SurfaceAnchor
 /// only the second one should override the platform centring the window.
 /// </para>
 /// </summary>
+/// <summary>Which window a remembered placement belongs to.</summary>
+public enum WindowSlot
+{
+    Main,
+    Settings,
+}
+
 public sealed record WindowPlacement
 {
     public double Width { get; init; }

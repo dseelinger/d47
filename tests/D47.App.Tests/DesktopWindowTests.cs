@@ -153,6 +153,134 @@ public class DesktopWindowTests
     }
 
     /// <summary>
+    /// Through the real entry point, because the memory is worth nothing if the thing that
+    /// opens the window does not attach it — which is exactly what was wrong: the settings
+    /// window asked for its declared size on every launch, clamped by nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSettingsWindowRemembersItsSizeThroughTheWayItIsActuallyOpened()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new D47.App.Theming.ThemeManager(
+            Avalonia.Application.Current!,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<D47.App.Theming.ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var owner = new Window { Width = 400, Height = 300 };
+        owner.Show();
+
+        D47.App.Settings.SettingsWindow.Show(owner, settings, viewState, paths);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var panel = owner.OwnedWindows.OfType<D47.App.Settings.SettingsWindow>().Single();
+
+        panel.Width = 1024;
+        panel.Height = 768;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        panel.Close();
+
+        var remembered = viewState.Load().SettingsWindow;
+
+        Assert.NotNull(remembered);
+        Assert.Equal(1024, remembered.Width);
+        Assert.Equal(768, remembered.Height);
+
+        owner.Close();
+    }
+
+    /// <summary>
+    /// The settings window remembers separately. Sharing the main window's numbers would mean
+    /// resizing one silently resized the other, and they are different shapes with different
+    /// content.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheTwoWindowsRememberTheirOwnSizes()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        var main = new Window { Width = 820, Height = 640 };
+        WindowPlacementMemory.Attach(main, viewState, WindowSlot.Main);
+        main.Show();
+        main.Width = 600;
+        main.Height = 500;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        main.Close();
+
+        var panel = new Window { Width = 1180, Height = 880 };
+        WindowPlacementMemory.Attach(panel, viewState, WindowSlot.Settings);
+        panel.Show();
+        panel.Width = 1000;
+        panel.Height = 900;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        panel.Close();
+
+        var state = viewState.Load();
+
+        Assert.Equal(600, state.MainWindow!.Width);
+        Assert.Equal(500, state.MainWindow.Height);
+        Assert.Equal(1000, state.SettingsWindow!.Width);
+        Assert.Equal(900, state.SettingsWindow.Height);
+    }
+
+    /// <summary>
+    /// Maximised has to survive too, and it is the state a Commander is most likely to leave a
+    /// settings window in.
+    /// </summary>
+    [AvaloniaFact]
+    public void ClosingMaximisedRemembersMaximised()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        var window = new Window { Width = 1180, Height = 880 };
+        WindowPlacementMemory.Attach(window, viewState, WindowSlot.Settings);
+        window.Show();
+
+        window.WindowState = WindowState.Maximized;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        window.Close();
+
+        var remembered = viewState.Load().SettingsWindow;
+
+        Assert.NotNull(remembered);
+        Assert.True(remembered.Maximized);
+
+        // And the normal-state size it had before is what it restores to, not the maximised
+        // rectangle — otherwise maximising once leaves a window that cannot be un-maximised
+        // back to a size the Commander chose.
+        Assert.Equal(1180, remembered.Width);
+        Assert.Equal(880, remembered.Height);
+    }
+
+    /// <summary>
+    /// Zoom scrolls the window horizontally rather than reflowing the layout, so at 125% the
+    /// content is a quarter wider than the default was chosen for and clips on every launch.
+    /// The default follows the zoom; a size the Commander chose does not.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheDefaultSizeFollowsTheZoomButARememberedOneDoesNot()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        var fresh = new Window { Width = 800, Height = 600 };
+        WindowPlacementMemory.Attach(fresh, viewState, WindowSlot.Settings, () => 125);
+
+        Assert.Equal(1000, fresh.Width);
+        Assert.Equal(750, fresh.Height);
+
+        viewState.Save(viewState.Load() with
+        {
+            SettingsWindow = new WindowPlacement { Width = 900, Height = 700 },
+        });
+
+        var chosen = new Window { Width = 800, Height = 600 };
+        WindowPlacementMemory.Attach(chosen, viewState, WindowSlot.Settings, () => 125);
+
+        Assert.Equal(900, chosen.Width);
+        Assert.Equal(700, chosen.Height);
+    }
+
+    /// <summary>
     /// One capture per interesting level, for a human to look at. The claim being checked by
     /// eye is that spacing scales with the text rather than the text growing inside a layout
     /// that stayed put.

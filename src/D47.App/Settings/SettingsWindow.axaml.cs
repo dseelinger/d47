@@ -45,7 +45,15 @@ public partial class SettingsWindow : Window
 
         // The same widget tree, so the same zoom. A level that applied to the panel and not to
         // settings would be a level the Commander has to discover the edge of.
-        Windowing.ZoomHost.Attach(window, settings);
+        var zoom = Windowing.ZoomHost.Attach(window, settings);
+
+        // Opens at a size that fits the screen and remembers where it was left, the same as the
+        // main window. Without this it asked for its declared size unconditionally: 720 tall is
+        // more than the work area of a 1080p screen at 150% scaling, so the window opened taller
+        // than the desktop and the last rows were unreachable. Attached before Show, because
+        // resizing afterwards is a visible jump.
+        Windowing.WindowPlacementMemory.Attach(
+            window, viewState, D47.Core.Configuration.WindowSlot.Settings, () => zoom.Percent);
         window.Closed += (_, _) => _open = null;
 
         _open = window;

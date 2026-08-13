@@ -20,13 +20,19 @@ public sealed class WindowPlacementMemory
 {
     private readonly Window _window;
     private readonly ViewStateStore _store;
+    private readonly WindowSlot _slot;
 
     private WindowPlacement _last;
 
-    private WindowPlacementMemory(Window window, ViewStateStore store, WindowPlacement seed)
+    private WindowPlacementMemory(
+        Window window,
+        ViewStateStore store,
+        WindowSlot slot,
+        WindowPlacement seed)
     {
         _window = window;
         _store = store;
+        _slot = slot;
         _last = seed;
     }
 
@@ -35,13 +41,25 @@ public sealed class WindowPlacementMemory
     /// watching. Call before the window is shown: setting the size afterwards is a visible
     /// resize, which reads as the app changing its mind.
     /// </summary>
-    public static WindowPlacementMemory Attach(Window window, ViewStateStore store)
+    /// <param name="zoom">
+    /// The zoom level the surface will be drawn at, when it has one. Zoom scrolls the window
+    /// horizontally rather than reflowing the layout (list.md Phase 9), so at 125% the content
+    /// is a quarter wider than at 100% and a default chosen at 100% clips on every launch.
+    /// Only the unremembered default scales: a size the Commander chose is a size they chose.
+    /// </param>
+    public static WindowPlacementMemory Attach(
+        Window window,
+        ViewStateStore store,
+        WindowSlot slot = WindowSlot.Main,
+        Func<int>? zoom = null)
     {
         var state = store.Load();
-        var remembered = state.MainWindow;
+        var remembered = state.PlacementOf(slot);
 
-        var width = remembered?.Width > 0 ? remembered.Width : window.Width;
-        var height = remembered?.Height > 0 ? remembered.Height : window.Height;
+        var scale = remembered is null && zoom is not null ? ZoomLadder.ScaleOf(zoom()) : 1.0;
+
+        var width = remembered?.Width > 0 ? remembered.Width : window.Width * scale;
+        var height = remembered?.Height > 0 ? remembered.Height : window.Height * scale;
 
         var screen = ScreenFor(window, remembered);
 
@@ -84,6 +102,7 @@ public sealed class WindowPlacementMemory
         var memory = new WindowPlacementMemory(
             window,
             store,
+            slot,
             new WindowPlacement
             {
                 Width = width,
@@ -152,6 +171,6 @@ public sealed class WindowPlacementMemory
         // Read-modify-write against the file rather than against a snapshot taken at startup:
         // the settings window writes card collapse state into the same store while this window
         // is open, and saving a stale copy here would quietly undo it.
-        _store.Save(_store.Load().With(_last));
+        _store.Save(_store.Load().With(_slot, _last));
     }
 }
