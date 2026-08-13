@@ -48,6 +48,15 @@
                   FontSize="11"
                   Padding="10,4"
                   Click="OnOpenDataFolderClick" />
+          <!-- Beside the data folder because both answer "where is this thing and what is it",
+               and one click from the gear is close enough for something read once. -->
+          <Button x:Name="AboutButton"
+                  DockPanel.Dock="Right"
+                  Content="About"
+                  Margin="0,0,8,0"
+                  FontSize="11"
+                  Padding="10,4"
+                  Click="OnAboutClick" />
           <TextBlock x:Name="StorageLine"
                      FontSize="11"
                      VerticalAlignment="Center"

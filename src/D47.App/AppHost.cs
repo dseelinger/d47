@@ -273,10 +273,7 @@ public sealed class AppHost : IDisposable
         var paths = AppPaths.BesideExecutable();
         paths.EnsureCreated();
 
-        var version = Assembly.GetEntryAssembly()
-                          ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                          ?.InformationalVersion
-                      ?? "unknown";
+        var version = BuildInfo.Full;
 
         // Logging first, so everything below has somewhere to report a failure.
         var verbosity = new SerilogVerbosityControl();

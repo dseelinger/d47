@@ -57,6 +57,13 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
+        // The version lives in the chrome that is on screen anyway, and it is set here rather
+        // than on load because it does not depend on the host - a window with no version in its
+        // title, however briefly, is a window that cannot answer the one question a title bar is
+        // good at. Short form only: the commit hash is in the About dialog, where forty
+        // characters can be read and copied rather than merely occupying the chrome.
+        Title = $"Directive 47 — {BuildInfo.Semantic}";
+
         Panel.DataContext = _model;
         _model.AskRequested += () => _ = AskAsync();
         _model.SettingsRequested += OpenSettings;
@@ -87,8 +94,6 @@ public partial class MainWindow : Window
             _model.Append("No host: the window is running under the designer.");
             return;
         }
-
-        _model.VersionLine = $"Optimize Inferior Systems  ·  build {_host.Version}";
 
         var errors = new List<string>();
         if (_host.StartupError is { } startupError)

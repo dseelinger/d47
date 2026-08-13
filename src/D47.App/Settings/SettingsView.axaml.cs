@@ -379,6 +379,18 @@ public partial class SettingsView : UserControl
     }
 
     /// <summary>
+    /// What this build is. Modal on the settings window rather than free-floating, so it cannot
+    /// be lost behind the app that raised it.
+    /// </summary>
+    private async void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        if (_paths is not null && TopLevel.GetTopLevel(this) is Window owner)
+        {
+            await new Controls.AboutWindow(_paths).ShowDialog(owner);
+        }
+    }
+
+    /// <summary>
     /// Re-reads every row from settings. Cheaper than rebuilding and, more importantly, it does
     /// not pull the control out from under whatever has focus.
     /// </summary>
