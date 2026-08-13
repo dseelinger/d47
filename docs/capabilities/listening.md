@@ -2,8 +2,6 @@
 title: Listening
 ---
 
-# Listening
-
 **Group:** Voice
 **Capability id:** `listening`
 

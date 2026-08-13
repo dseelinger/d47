@@ -2,8 +2,6 @@
 title: Help
 ---
 
-# Help
-
 **Group:** Foundation
 **Capability id:** `help`
 

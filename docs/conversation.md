@@ -2,8 +2,6 @@
 title: Talking to Directive 47
 ---
 
-# Talking to Directive 47
-
 Type a question into D47's window and press Enter. What happens next depends on which path can
 answer it, and D47 tells you which one did.
 

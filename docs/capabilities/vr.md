@@ -2,8 +2,6 @@
 title: Headset
 ---
 
-# Headset
-
 **Group:** Interface
 **Capability id:** `vr`
 

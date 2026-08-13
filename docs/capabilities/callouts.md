@@ -2,8 +2,6 @@
 title: Callouts
 ---
 
-# Callouts
-
 **Group:** Voice
 **Capability id:** `callouts`
 

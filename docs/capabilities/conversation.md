@@ -2,8 +2,6 @@
 title: Language model
 ---
 
-# Language model
-
 **Group:** Conversation
 **Capability id:** `conversation`
 

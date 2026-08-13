@@ -2,8 +2,6 @@
 title: Speech
 ---
 
-# Speech
-
 **Group:** Voice
 **Capability id:** `speech`
 

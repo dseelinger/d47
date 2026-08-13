@@ -1,8 +1,9 @@
 ---
-title: Directive 47
+# The site is called Directive 47, so the home page cannot also be: the header already
+# carries the name, and repeating it puts "Directive 47 | Directive 47" in the browser tab
+# and a nav entry beside a logo that already links here.
+title: Overview
 ---
-
-# Directive 47
 
 *Directive 47: Optimize Inferior Systems.*
 
