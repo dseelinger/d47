@@ -2,35 +2,134 @@
 title: Speech
 ---
 
-**Group:** Voice
-**Capability id:** `speech`
+Everything Directive 47 makes audible: spoken replies, the short sound that marks each stage of a
+turn, the quiet loop while it works, and the one command that outranks all of them.
 
-Everything D47 makes audible: spoken replies, the short cue that marks each state of the
-conversation loop, the quiet bed under a working turn, and the one control that outranks all of
-them.
-
-Every audible thing goes through a single priority queue. Ducking, interruption, supersede and
-caption timing are properties of that queue rather than four separate mechanisms that would have
-to agree with each other. That is also why silence is instant: stopping is a queue operation, not
-a feature layered on top of one.
-
-The endpoint changed under D47 once already, in August 2026: it began requiring a browser
-`muid` cookie and a current Chromium version string (403 without them), and it dropped its
-raw-PCM output formats, so audio now arrives as 24 kHz mono MP3 and is decoded through
-Windows' own ACM codec. If the voice ever stops working again, run the live diagnostic to
-tell "the endpoint moved" apart from "D47 broke":
-
-```text
-D47_TTS_LIVE=1 dotnet test tests/D47.Tts.Tests
-```
-
-## Try it
+## Stopping it
 
 > "stop"
 > "shut up"
 > "be quiet"
 
-## Tool
+Or press the stop key, **Ctrl+Alt+X** out of the box, which works from anywhere — including with
+Elite in the foreground.
+
+**"stop" is the one to reach for.** One syllable, four letters. An interrupt is judged on how fast
+you can say it, and everything else here is a longer way of saying the same thing.
+
+Silence is immediate: whatever is queued is dropped, the current sentence is cut off mid-word, and
+anything still being synthesised is abandoned rather than allowed to arrive a moment later and
+speak into the silence it was meant to end. It never waits for the model, for a turn to finish, or
+for Directive 47 to have focus.
+
+Bare "stop" only counts while there is something to interrupt. Idle, it stays out of the way — a
+common verb that hijacked every sentence containing it would be unusable, and you may well want
+that word for something of your own later. The longer phrases work whether or not it is speaking.
+
+If you want it to stop *working* rather than stop talking, that is
+[cancelling the turn](conversation.md#cancel_turn) — stopping the voice leaves the turn running,
+and still costing.
+
+## Settings
+
+### Voice provider {#provider}
+
+| Value | Meaning |
+|---|---|
+| `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
+| `none` | Do not speak. The cues and the thinking loop still play. |
+
+`none` is a real choice rather than a way of switching something off. It is what makes running
+with nothing leaving the machine possible: no voice, no language model, no update check, and
+nothing goes anywhere.
+
+### Voice {#voice}
+
+Which voice speaks. The list comes from the provider, so it is what that provider actually offers
+rather than a list written into Directive 47. You can also type a voice name it does not know
+about and it will be used.
+
+### Speaking rate {#rate}
+
+`1.0` is the voice's natural pace; `1.2` is a fifth faster.
+
+### Output device {#output-device}
+
+Where Directive 47 speaks, defaulting to whatever Windows is using. Change it and it moves
+immediately. If a device is unplugged it falls back to the default rather than going quiet.
+
+It shares the device rather than taking it over — the game is what matters on that output.
+
+### Loop-state cues {#cues}
+
+One short sound per stage, so you can tell what it is doing without looking.
+
+| Stage | Sound |
+|---|---|
+| `idle` | A soft falling fourth — nothing in flight. |
+| `listening` | A rising fourth. The microphone is open. |
+| `transcribing` | Two quick ticks. |
+| `thinking` | A single low tick, followed by the loop below. |
+| `speaking` | A brief high blip. |
+| `answered` | A rising fifth. |
+| `unsure` | A falling minor third — it does not know, which is different from failing. |
+| `failed` | A falling whole tone. |
+
+### Thinking bed {#thinking-bed}
+
+A quiet loop while a turn runs, so a slow answer sounds like Directive 47 working rather than
+Directive 47 ignoring you. It drops under the speech instead of stopping, and it ends the moment
+the first words arrive rather than when the turn does.
+
+Two are included: `thinking-hum` and `thinking-pulse`.
+
+### Stop speaking {#shut-up}
+
+The key that silences it, described above. Bound system-wide rather than only when Directive 47
+has focus, because the moment you want it is the moment Elite is in front.
+
+**The model cannot change this row.** It can be changed from the panel, by hotkey, or by voice —
+but not by anything the model calls. A model able to unbind your stop button has removed the one
+control that outranks it.
+
+### When a turn fails {#retry}
+
+A turn that stalls is answered out loud rather than left as silence, because silence is
+indistinguishable from having been ignored.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| Attempts | `3` | Total tries, not retries. `1` means do not retry. |
+| Wait between attempts | `2` | Seconds before the first retry. |
+| Backoff | `sequential` | `sequential` adds the base each time (2s, 4s, 6s); `logarithmic` grows but slows down. |
+| Give up after | `45` | Seconds one attempt may run before it counts as failed. |
+
+Two things are never retried: a failure that already produced words, since there is no un-saying
+them, and a configuration mistake like a bad model name, which will fail the same way next time
+and only spends your silence.
+
+When the attempts run out, it tells you:
+
+```text
+I couldn't reach the model after 3 tries. Overloaded.
+```
+
+### What the voice provider receives {#egress}
+
+```text
+Edge Neural: the text of every reply D47 speaks is sent to Microsoft to be turned into
+audio. No game state, no journal content and no keys are sent. Choosing "None" sends
+nothing and leaves D47 silent.
+```
+
+## If the voice stops working
+
+Edge Neural is a free service that Directive 47 does not control, and it can change without
+warning. If speech stops while everything else keeps working, that is the first thing to suspect.
+Switching the voice provider to `none` leaves the rest of the app fully usable in the meantime.
+
+<details markdown="1">
+<summary>The tool surface, for contributors</summary>
 
 ### `stop_speaking`
 
@@ -40,94 +139,24 @@ Takes no arguments.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-This is the only part of the speech capability the model can reach. Changing the voice, the
-output device or the cue settings is not exposed as a tool: a model able to make itself harder to
-hear has no request that needs it. Stopping is the exception, because it is the one thing the
-Commander must always be able to ask for.
+The only part of this capability the model can reach. Changing the voice, the output device or the
+cue settings is deliberately not exposed: a model able to make itself harder to hear has no
+request that needs it. Stopping is the exception, because it is the one thing the Commander must
+always be able to ask for.
 
-If you want the model to stop *working* rather than just stop talking, that is
-[`cancel_turn`](conversation.md#cancel_turn) on the language-model capability — `stop` leaves the
-turn running and still billing.
+It is the only tool marked **interrupting**, which is what lets it answer while a turn is running.
+Every surface refuses ordinary input during a turn so a second question cannot trample the first,
+and a silence command is only ever wanted while a turn is in flight — so a surface asks the
+registry what may interrupt *before* it applies that gate. Getting that order wrong is invisible
+in normal use and total in the one case that matters.
 
-**`stop` is the one to reach for.** One syllable, four letters — an interrupt is judged on how
-fast it can be said, and everything else here is a longer way to say the same thing.
+Text is escaped before it reaches the provider. That is a security control rather than tidiness: a
+Commander can name a ship anything, journal content is untrusted, and an unescaped name containing
+markup would otherwise close the speech element and choose the voice for the rest of the sentence.
 
-Bare `stop` is deliberately kept out of the general command vocabulary, because a bare common
-verb hijacks any sentence containing it — the same rule that keeps `where` and `system` out of
-the location commands. It is only consulted while D47 actually has something to interrupt:
-mid-sentence it has one plausible meaning, and idle it stays available to anything else that
-might want it, Commander-named macros most of all. Context is the disambiguator, so context is
-the gate. The longer phrases —
-`shut up`, `stop talking` — are unambiguous on their own and work whether or not D47 is speaking.
-
-Asking for silence never has to reach the model at all. These are keyword
-phrases, so the model-free router answers them; and the hotkey below reaches the same queue
-operation with nothing in between. A spoken stop request that had to wait for a model would be
-gated behind the very thing it is trying to interrupt.
-
-It is also the only tool marked **interrupting**, which is what lets it answer while a turn is
-still running. Every surface has to refuse ordinary input during a turn — otherwise a second
-question tramples the first — and a silence command is only ever wanted while a turn is in
-flight. So a surface asks the registry what may interrupt *before* it applies that gate, rather
-than after. Getting that order wrong is invisible in normal use and total in the one case that
-matters: the command does nothing, precisely when it is needed.
-
-## Settings
-
-### Voice provider {#provider}
-
-Where spoken replies are synthesised.
-
-| Value | Meaning |
-|---|---|
-| `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
-| `none` | Do not speak. Cues and the bed still play. |
-
-`none` is a first-class choice rather than a way of turning something off. It is what makes
-local-only operation reachable: with no voice provider, no language model and no update check,
-nothing leaves the machine at all.
-
-### Voice {#voice}
-
-Which voice speaks. The list is fetched from the selected provider, so it reflects what that
-provider actually offers rather than a list baked into D47. An unrecognised value is still
-accepted — the picker's contract is that an empty list lets you keep the current value or type
-one.
-
-### Speaking rate {#rate}
-
-`1.0` is the voice's natural pace; `1.2` is a fifth faster. Held normalised and converted at the
-provider boundary, because providers disagree about both the units and the range.
-
-### Output device {#output-device}
-
-Where D47 speaks, defaulting to whatever Windows is using. Stored as a device id rather than a
-name, because a friendly name is not stable across driver updates. Changing it reopens the device
-immediately; a device that has been unplugged falls back to the default rather than going silent.
-
-D47 opens the device in shared mode and never takes exclusive hold of it. The game is what matters
-on that output.
-
-### Loop-state cues {#cues}
-
-One short sound per state of the conversation loop.
-
-| State | Sound |
-|---|---|
-| `idle` | A soft falling fourth — back to nothing in flight. |
-| `listening` | A rising fourth. The microphone is open. |
-| `transcribing` | Two quick ticks. |
-| `thinking` | A single low tick, followed by the bed. |
-| `speaking` | A brief high blip. |
-| `answered` | A rising fifth. |
-| `unsure` | A falling minor third — an explicit "unsure", which is a state rather than an error. |
-| `failed` | A falling whole tone. |
-
-The cue file is named for the state it belongs to, and D47 checks the shipped set against the list
-of states at startup. A state added in code without a cue committed alongside it fails immediately,
-with the state named — rather than going wrong as one state that silently never makes a sound.
-
-The shipped cues are generated and reproducible:
+The shipped cues are generated and reproducible, and the set is checked against the list of states
+at startup — a state added in code without a cue committed alongside it fails immediately, with
+the state named, rather than silently never making a sound:
 
 ```text
 $ python tools/gen-cues.py
@@ -143,68 +172,15 @@ beds/thinking-hum.wav                         3.00s
 beds/thinking-pulse.wav                       2.40s
 ```
 
-### Thinking bed {#thinking-bed}
+Both beds loop seamlessly, which is arithmetic rather than luck: the carrier and its amplitude
+modulation each complete a whole number of cycles over the buffer, so the last sample joins the
+first with no step. Getting that wrong produces a tick once per loop, which sounds like a broken
+sound card rather than a broken table of numbers.
 
-A quiet loop while a turn runs, so that a slow answer is audibly D47 working rather than D47
-having ignored you. It ducks under speech instead of stopping, and it stops the moment the first
-words arrive — not when the turn ends.
-
-Two are shipped: `thinking-hum` and `thinking-pulse`. Both loop seamlessly, which is arithmetic
-rather than luck — the carrier and its amplitude modulation each complete a whole number of cycles
-over the buffer, so the last sample joins the first with no step. Getting that wrong produces a
-tick once per loop, which sounds like a broken sound card rather than a broken table of numbers.
-
-### Stop speaking {#shut-up}
-
-Silences D47 instantly: the queue is flushed, the current sentence is cut off mid-word, and any
-sentence still being synthesised is abandoned rather than allowed to arrive a moment later and
-speak into the silence it was supposed to end.
-
-The binding is system-wide, not window-scoped. The case this exists for is Elite holding the
-foreground, and a key that only works when D47 has focus is gated by definition. This one is never
-gated — not behind a turn completing, not behind the model, not behind focus.
-
-This row is **protected**: it can be changed from the panel, by hotkey, or through the model-free
-keyword router, but never through a tool the model can call. A model able to unbind the
-Commander's stop button has removed the one control that outranks it.
-
-### When a turn fails {#retry}
-
-A turn that stalls is answered out loud rather than left as silence, because silence is
-indistinguishable from D47 having ignored you.
-
-| Setting | Default | Meaning |
-|---|---|---|
-| Attempts | `3` | Total tries, not retries. `1` disables retrying. |
-| Wait between attempts | `2` | Seconds before the first retry. |
-| Backoff | `sequential` | `sequential` adds the base each time (2s, 4s, 6s); `logarithmic` grows but decelerates. |
-| Give up after | `45` | Seconds one attempt may run before it counts as failed. |
-
-Two rules shape what actually gets retried:
-
-- **A failure that already produced words is never retried.** Streamed text has usually been
-  spoken already, and there is no such thing as un-saying it.
-- **A configuration failure is never retried.** A bad model name fails identically next time, so
-  waiting on it only spends the Commander's silence. Only transient failures are worth a retry.
-
-When the attempts run out, D47 says so in the current voice:
+To tell "the endpoint moved" apart from "Directive 47 broke", run the live diagnostic:
 
 ```text
-I couldn't reach the model after 3 tries. Overloaded.
+D47_TTS_LIVE=1 dotnet test tests/D47.Tts.Tests
 ```
 
-A provider that simply hangs is the case the timeout exists for. Left alone it produces no events
-at all — not an error, just a turn that never ends — and that is the worst thing this app can do,
-because the Commander cannot tell it apart from having been ignored.
-
-### What the voice provider receives {#egress}
-
-```text
-Edge Neural: the text of every reply d47 speaks is sent to Microsoft to be turned into
-audio. No game state, no journal content and no keys are sent. Choosing "None" sends
-nothing and leaves d47 silent.
-```
-
-Text is escaped before it is sent. That is a security control rather than tidiness: a Commander can
-name a ship anything, journal content is untrusted, and an unescaped name containing markup would
-otherwise close the speech element and choose the voice for the rest of the sentence.
+</details>
