@@ -31,10 +31,14 @@ public static class BuiltinCapabilities
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
         ListeningCapability.ListeningSurface listening,
-        VrCapability.HeadsetSurface headset) =>
+        VrCapability.HeadsetSurface headset,
+
+        // Optional and therefore last: null in every normal run, and the diagnostics card then
+        // carries no coverage row at all.
+        Func<string>? coverage = null) =>
     [
         HelpCapability.Create(registry),
-        DiagnosticsCapability.Create(paths, verbosity, settings, version),
+        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         SpeechCapability.Create(speech),

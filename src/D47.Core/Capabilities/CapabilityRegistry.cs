@@ -112,6 +112,12 @@ public sealed partial class CapabilityRegistry
 
     public RegisteredCapability? Find(string id) => _byId.GetValueOrDefault(id);
 
+    /// <summary>
+    /// Raised with the tool's name whenever one is invoked. Exists for the coverage recorder,
+    /// which is off unless asked for; nothing in the shipped path subscribes.
+    /// </summary>
+    public event Action<string>? ToolInvoked;
+
     /// <summary>How often a capability has been invoked this session.</summary>
     public int UseCountOf(string capabilityId)
     {
@@ -146,6 +152,8 @@ public sealed partial class CapabilityRegistry
             var id = found.Capability.Descriptor.Id;
             _uses[id] = _uses.GetValueOrDefault(id, 0) + 1;
         }
+
+        ToolInvoked?.Invoke(toolName);
 
         foreach (var parameter in tool.Parameters)
         {
