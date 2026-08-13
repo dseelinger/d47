@@ -532,8 +532,8 @@ public sealed class AppHost : IDisposable
                 new VrCapability.HeadsetSurface
                 {
                     Report = () => self?.Vr is { } vr
-                        ? (vr.State, vr.Reason, vr.Adapter)
-                        : (Core.Vr.VrState.Connecting, "Looking for a headset.", null),
+                        ? (vr.State, vr.Reason)
+                        : (Core.Vr.VrState.Connecting, "Looking for a headset."),
                     Reanchor = () => self?.Vr?.Reanchor() ?? 0,
                 },
                 actionSurface = new ActionSurface

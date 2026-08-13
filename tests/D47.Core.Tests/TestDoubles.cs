@@ -204,7 +204,7 @@ public sealed class TestSurface
     /// </summary>
     public static Capabilities.Builtin.VrCapability.HeadsetSurface NoHeadset() => new()
     {
-        Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a test.", null),
+        Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a test."),
         Reanchor = () => 0,
     };
 

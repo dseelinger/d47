@@ -78,9 +78,6 @@ public sealed class VrHost : IDisposable
 
     public string? Reason => _lifecycle.Reason;
 
-    /// <summary>Which adapter the graphics device landed on. Null until a session is up.</summary>
-    public string? Adapter => _runtime.Adapter;
-
     /// <summary>
     /// Builds the headset path and subscribes it to the tick loop.
     /// <para>

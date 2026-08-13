@@ -110,6 +110,13 @@ public sealed class VrOverlay : IDisposable
         {
             OpenVR.Overlay.SetOverlaySortOrder(handle, SortOrder);
 
+            // The rasteriser hands over premultiplied alpha, so the compositor is told to
+            // expect it. Invisible on the panel, which is opaque and where premultiplied and
+            // straight are the same bytes; it is the caption quad — text over a translucent
+            // box over a cockpit — where getting this wrong shows up, as a dark fringe around
+            // every glyph rather than as anything that reports itself.
+            OpenVR.Overlay.SetOverlayFlag(handle, VROverlayFlags.IsPremultiplied, true);
+
             // Off by default, and this is the reason: the flag sorts the quad with the
             // *non-scene* overlays, which is the class SteamVR's dashboard belongs to. It was
             // added to settle the panel against SteamVR's own menu, keyboard and notifications
@@ -164,17 +171,20 @@ public sealed class VrOverlay : IDisposable
         OpenVR.Overlay.SetOverlayMouseScale(_handle, ref scale);
     }
 
-    public void Submit(IntPtr texture)
-    {
-        var handed = new Texture_t
-        {
-            handle = texture,
-            eType = ETextureType.DirectX,
-            eColorSpace = EColorSpace.Auto,
-        };
-
-        Went(OpenVR.Overlay.SetOverlayTexture(_handle, ref handed), "Setting the texture");
-    }
+    /// <summary>
+    /// Puts pixels on the quad, as raw RGBA the runtime uploads itself.
+    /// <para>
+    /// The buffer has to outlive nothing: OpenVR copies what it is given before returning,
+    /// which is what makes handing it a plain address safe at all. It does have to be RGBA and
+    /// unpadded by the time it arrives — see <see cref="VrPixels.ToRgba"/> and
+    /// <see cref="VrPixels.RowBytes"/>, both of which fail as a wrong-looking picture rather
+    /// than as an error.
+    /// </para>
+    /// </summary>
+    public void Submit(IntPtr pixels, int width, int height) =>
+        Went(
+            OpenVR.Overlay.SetOverlayRaw(_handle, pixels, (uint)width, (uint)height, 4),
+            "Setting the pixels");
 
     /// <summary>
     /// Hangs the quad off the headset itself, which is what head-locked means to OpenVR.
