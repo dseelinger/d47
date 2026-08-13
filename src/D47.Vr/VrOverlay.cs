@@ -109,10 +109,20 @@ public sealed class VrOverlay : IDisposable
         {
             OpenVR.Overlay.SetOverlaySortOrder(handle, SortOrder);
 
-            // Settles it against SteamVR's own menu, keyboard and notifications, which are
-            // drawn as a class ordinary overlays sit behind. Without it the panel is perfectly
-            // legible right up until anything of SteamVR's appears, and then it is behind it.
-            OpenVR.Overlay.SetOverlayFlag(handle, VROverlayFlags.SortWithNonSceneOverlays, true);
+            // Off by default, and this is the reason: the flag sorts the quad with the
+            // *non-scene* overlays, which is the class SteamVR's dashboard belongs to. It was
+            // added to settle the panel against SteamVR's own menu, keyboard and notifications
+            // — without it the panel is legible right up until anything of SteamVR's appears
+            // and then it is behind it — but a panel that is only composited alongside the
+            // dashboard is a panel that vanishes the moment the dashboard is dismissed, which
+            // is worse than losing an argument about z-order.
+            //
+            // Set D47_VR_SORT=nonscene to put it back, so the two can be compared in one
+            // session rather than one build each.
+            if (Environment.GetEnvironmentVariable("D47_VR_SORT") == "nonscene")
+            {
+                OpenVR.Overlay.SetOverlayFlag(handle, VROverlayFlags.SortWithNonSceneOverlays, true);
+            }
         }
         catch
         {
