@@ -1508,6 +1508,58 @@ public sealed class AppHost : IDisposable
             ? situation
             : AmbientSituation.None;
 
+    /// <summary>
+    /// A turn the Commander addressed to a crew member. Swaps the prompt block and the voice for
+    /// the duration and puts the ship's AI back afterwards, which is why it is a scope rather
+    /// than two calls somebody has to remember to pair.
+    /// </summary>
+    public sealed class CrewTurn(AppHost host, CrewAddressed addressed, string? persona, VoiceSelection voice)
+        : IDisposable
+    {
+        /// <summary>What to ask, with the name taken off the front.</summary>
+        public string Question { get; } =
+            addressed.Question.Length == 0 ? "The Commander is trying to get your attention." : addressed.Question;
+
+        public CrewMember Member => addressed.Member;
+
+        public void Dispose()
+        {
+            host.Turns.Persona = persona;
+            host.Voice.Voice = voice;
+        }
+    }
+
+    /// <summary>
+    /// Whether this input was addressed to somebody in the fighter bay rather than to the ship's
+    /// AI, and if so, everything needed to answer as them (list.md Phase 11, "Ship Crew").
+    /// <para>
+    /// Matched model-free against the names the journal reports, so no round trip is spent
+    /// working out who a round trip is for, and so this works with no model at all — in which
+    /// case the turn falls through to the keyword router as it always did, and the crew member
+    /// simply has nothing to say.
+    /// </para>
+    /// </summary>
+    public CrewTurn? BeginCrewTurn(string input)
+    {
+        if (GameState.Active?.Crew is not { Any: true } crew
+            || CrewAddressing.Match(input, crew) is not { } addressed)
+        {
+            return null;
+        }
+
+        var persona = Turns.Persona;
+        var voice = Voice.Voice;
+
+        _logger.LogInformation("Turn addressed to crew member {Name}", addressed.Member.Name);
+
+        // Not a Guardian core. The crew are human pilots hired at a station, and handing one of
+        // them a persona block would put a core in two places at once.
+        Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
+        Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
+
+        return new CrewTurn(this, addressed, persona, voice);
+    }
+
     private string? _voiceScopeSystem;
 
     /// <summary>

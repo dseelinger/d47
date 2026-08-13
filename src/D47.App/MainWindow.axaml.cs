@@ -312,6 +312,17 @@ public partial class MainWindow : Window
         _model.AskText = string.Empty;
         _model.Append($"\n\n> {input}\n");
 
+        // Addressed to somebody in the fighter bay rather than to the ship's AI? The scope swaps
+        // the prompt block and the voice and puts them back in its Dispose, so a crew turn
+        // cannot leak the wrong persona into the next one (list.md Phase 11, "Ship Crew").
+        using var crew = _host.BeginCrewTurn(input);
+
+        if (crew is not null)
+        {
+            input = crew.Question;
+            _model.Append($"[{crew.Member.Name}] ");
+        }
+
         // Claimed before the turn starts and released in the finally. Without this the token
         // reaching the provider is CancellationToken.None, "cancel" has nothing to act on, and
         // a runaway turn keeps generating — and billing — with no way to call it off.

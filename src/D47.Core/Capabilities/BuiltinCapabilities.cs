@@ -45,6 +45,7 @@ public static class BuiltinCapabilities
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
+        CrewCapability.Create(() => gameState.Active),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),

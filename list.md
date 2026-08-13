@@ -102,7 +102,7 @@
   - [x] Send/Receive messages to another commander or commanders - Dictate into Elite's chat: local, wing, system.
   - [x] Macros - Named multi-step voice-triggered sequences, validated against closed vocabularies and the action allowlist. Invocation is by voice; authoring is not, because composing a new action sequence is the one input whose vocabulary cannot be closed in advance. This is the exception to "every setting can be set by voice."
 
-- [ ] **Phase 11 — Persona and voices**
+- [x] **Phase 11 — Persona and voices**
   - [x] Personas - Pre-built companion characters the Commander can choose between. Guardian Flavored.
   - [x] Ship AI Naming - Defaults to Persona's name, but may be set by the commander.
   - [x] Say when the persona has changed - New persona acknowledges when it has been picked. If it changes before its acknowledgement has completed speaking, it stops and the next one starts. Speech, as always, may be interrupted by the commander.
@@ -115,7 +115,7 @@
   - [x] Speak incoming messages in another voice - Re-voice in-game communications so they do not arrive in the ship AI's own voice.
   - [x] Voices "stick" - Once a voice has been chosen for a sender it stays with them. NPC identities are scoped to the system, since the cast turns over on a jump. Player Commanders are scoped to the session and survive hyperspace, because a wingmate whose voice changes on every jump reads as a bug rather than as variety.
   - [x] Carrier Captain - If a player owns a Fleet Carrier, they can choose dedicated voices for the Captain and Tower Control, with varied LLM arrival and departure responses.
-  - [ ] Ship Crew - Multi-character roleplay with invisible crew (aside from the Ship's AI) on the conversation path, with per-ship rosters drawn from the real fleet and hired NPC pilots imported from the journal with their roles. Crew is addressable and responsive via LLM.
+  - [x] Ship Crew - Multi-character roleplay with invisible crew (aside from the Ship's AI) on the conversation path, with per-ship rosters drawn from the real fleet and hired NPC pilots imported from the journal with their roles. Crew is addressable and responsive via LLM.
 
 - [ ] **Phase 12 — Soundscape**
   - [ ] #96 Ambient audio mixer - Per-category levels and mute, plus how each category ducks against speech.
