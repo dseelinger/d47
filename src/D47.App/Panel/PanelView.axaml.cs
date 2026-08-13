@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 
 namespace D47.App.Panel;
 
@@ -86,7 +87,33 @@ public partial class PanelView : UserControl
         AskRow.IsVisible = full;
     }
 
-    private void ScrollToEnd() => TranscriptScroller.ScrollToEnd();
+    /// <summary>
+    /// Follows the transcript, from whichever thread grew it.
+    /// <para>
+    /// A turn's events do not arrive on the UI thread. <c>VoicePipeline</c> consumes them with
+    /// <c>ConfigureAwait(false)</c>, so once the first network await has suspended, every delta
+    /// after it is delivered on a thread pool thread — and a scroll viewer is thread-affine, so
+    /// calling it there threw and took the whole turn down with it. The reply was already on
+    /// screen when it happened, because the transcript is written before this is raised.
+    /// </para>
+    /// <para>
+    /// The view marshals rather than the model, because thread affinity is the view's property:
+    /// a view model is not affine to anything, and every other caller of <c>Append</c> — the VR
+    /// surface, callouts — gets the same protection for free.
+    /// </para>
+    /// </summary>
+    private void ScrollToEnd()
+    {
+        // Posted only when it has to be. Marshalling unconditionally would put the scroll behind
+        // the append that caused it even on the UI thread, which is a visible lag for nothing.
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            TranscriptScroller.ScrollToEnd();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(TranscriptScroller.ScrollToEnd);
+    }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e) => Model?.OpenSettings();
 
