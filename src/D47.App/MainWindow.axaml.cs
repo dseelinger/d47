@@ -508,8 +508,14 @@ public partial class MainWindow : Window
             return;
         }
 
+        // The successor starts before this one has exited, so the slot has to be handed over
+        // first or it would find d47 "already running" and close itself — an accepted update
+        // that looks like the app simply quitting.
+        _host.ReleaseSingleInstance?.Invoke();
+
         // Started before this one exits, so the Commander sees d47 come back rather than
-        // watching it vanish and having to find it again.
+        // watching it vanish and having to find it again. Same path as the build it replaces,
+        // which is what keeps a taskbar pin pointing at the new one.
         Process.Start(new ProcessStartInfo(running) { UseShellExecute = true });
         Close();
     }
