@@ -204,6 +204,11 @@ GPU is opt-in and defaults off when a headset is present — see *STT Model Choi
 
 Virtual joystick drivers (vJoy, ViGEmBus) were considered and rejected: a kernel driver contradicts "per-user install, no elevation" and is a support burden disproportionate to the benefit.
 
+**Two deliberate widenings of “scancodes only”, added in Phase 10, each with its reason. Neither touches the three rules above.**
+
+1. **Mouse buttons go through the same `SendInput` call.** Elite’s own default keyboard preset, `KeyboardMouseOnly`, binds `PrimaryFire` to `Mouse_1` and `SecondaryFire` to `Mouse_2` — and the discovery scanner has no binding of its own, because it fires as a fire-group weapon. A keyboard-only injector therefore cannot honk on the setup most Commanders start with, which would make *TheApp honks when you arrive in a system* ship inert on a default install. Buttons are subject to the same foreground check and the same unconditional `release_all()`.
+2. **Chat text uses `KEYEVENTF_UNICODE`.** A scancode is a physical key position, and the character it produces depends on the Commander’s keyboard layout: sending a system name by scancode types something else entirely on AZERTY. Unicode injection is layout-independent and Elite’s chat field accepts it. This applies to *text* only — every binding, action and macro step still goes as a scancode, because that is what DirectInput reads.
+
 Binds are **read-only**. The parser produces a map of action → device + key, which feeds both *Know which actions the Commander can actually reach* and *Report a key that is bound twice*. TheApp never writes the Commander's bindings.
 
 **Resolving which file to read is the part that is easy to get wrong.** There are three traps, and the naive version of this walks into all of them:
