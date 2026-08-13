@@ -4,7 +4,7 @@
         x:Class="D47.App.Settings.SettingsWindow"
         Title="Directive 47 — Settings"
         Icon="/Assets/directive-47.ico"
-        Width="900" Height="720"
+        Width="1180" Height="880"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource D47.Background}">
 
