@@ -646,10 +646,11 @@ public sealed class AppHost : IDisposable
         // the normal case rather than a missing asset.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
 
-        // The face follows the loop. Posted to the UI thread because the states arrive from the
-        // turn's own thread and from the audio path, and neither is the one that draws.
-        voice.StateEntered += state => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => host.Panel.LoopState = state);
+        // The face follows the loop. Set straight onto the view model from whichever thread the
+        // state arrived on: a view model is affine to nothing, and the view marshals — which is
+        // the rule the transcript scroll already follows, so the avatar does not get a second
+        // one of its own.
+        voice.StateEntered += state => host.Panel.LoopState = state;
 
         host.ApplyLlmSettings();
         host.ApplySpeechSettings();

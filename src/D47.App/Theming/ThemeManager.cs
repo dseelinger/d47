@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -41,11 +42,15 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     {
         Apply(settings.Current.Ui.Theme);
 
+        // Posted, because a settings change does not arrive on the UI thread. Every setting is
+        // settable by voice, and a tool handler runs on whatever thread the turn is on, so
+        // "switch to the dark theme" repainted the application's brushes from a thread that
+        // does not own them. ZoomHost already posts for exactly this reason.
         settings.Changed += change =>
         {
             if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase))
             {
-                Apply(change.Settings.Ui.Theme);
+                Dispatcher.UIThread.Post(() => Apply(change.Settings.Ui.Theme));
             }
         };
     }

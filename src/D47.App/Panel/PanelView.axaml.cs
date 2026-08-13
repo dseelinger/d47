@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 
 namespace D47.App.Panel;
 
@@ -77,10 +78,23 @@ public partial class PanelView : UserControl
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PanelViewModel.LoopState) && _bound is not null)
+        if (e.PropertyName != nameof(PanelViewModel.LoopState) || _bound is null)
+        {
+            return;
+        }
+
+        // Marshalled here for the same reason ScrollToEnd is, and following the same rule: the
+        // view owns thread affinity, so a new caller does not have to learn it separately. Loop
+        // states are raised from the turn's own thread and from the audio path, and neither is
+        // the one that owns these controls. Posted only when it has to be.
+        if (Dispatcher.UIThread.CheckAccess())
         {
             Avatar.Show(_bound.LoopState);
+            return;
         }
+
+        var state = _bound.LoopState;
+        Dispatcher.UIThread.Post(() => Avatar.Show(state));
     }
 
     /// <summary>The gear, so a host can hang a tooltip naming the bound gesture on it.</summary>
@@ -102,7 +116,33 @@ public partial class PanelView : UserControl
         AskRow.IsVisible = full;
     }
 
-    private void ScrollToEnd() => TranscriptScroller.ScrollToEnd();
+    /// <summary>
+    /// Follows the transcript, from whichever thread grew it.
+    /// <para>
+    /// A turn's events do not arrive on the UI thread. <c>VoicePipeline</c> consumes them with
+    /// <c>ConfigureAwait(false)</c>, so once the first network await has suspended, every delta
+    /// after it is delivered on a thread pool thread — and a scroll viewer is thread-affine, so
+    /// calling it there threw and took the whole turn down with it. The reply was already on
+    /// screen when it happened, because the transcript is written before this is raised.
+    /// </para>
+    /// <para>
+    /// The view marshals rather than the model, because thread affinity is the view's property:
+    /// a view model is not affine to anything, and every other caller of <c>Append</c> — the VR
+    /// surface, callouts — gets the same protection for free.
+    /// </para>
+    /// </summary>
+    private void ScrollToEnd()
+    {
+        // Posted only when it has to be. Marshalling unconditionally would put the scroll behind
+        // the append that caused it even on the UI thread, which is a visible lag for nothing.
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            TranscriptScroller.ScrollToEnd();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(TranscriptScroller.ScrollToEnd);
+    }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e) => Model?.OpenSettings();
 
