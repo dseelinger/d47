@@ -7,9 +7,9 @@ title: Help
 **Group:** Foundation
 **Capability id:** `help`
 
-What d47 can actually do, answered from its own capability registry.
+What D47 can actually do, answered from its own capability registry.
 
-**The model is never asked what d47 can do.** That is the whole point of this capability, and it
+**The model is never asked what D47 can do.** That is the whole point of this capability, and it
 is not a stylistic preference. A model asked to describe its own abilities produces a fluent,
 confident, partly invented list, and the Commander has no way to tell which half is which — they
 find out when they ask for something that does not exist. The registry already holds every
@@ -57,7 +57,7 @@ Callouts: Speak up about danger, fuel, route progress and arrivals without waiti
 ```
 
 Asking for a group that does not exist names the real ones rather than saying no. A Commander who
-asked for the wrong group wants the right one, and this is the moment d47 knows both:
+asked for the wrong group wants the right one, and this is the moment D47 knows both:
 
 ```text
 I have no group called "Navigation". I have: Foundation, Conversation, Voice, Interface.

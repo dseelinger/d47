@@ -22,7 +22,7 @@ Spike code lives in [`spike/OverlaySpike`](../../spike/OverlaySpike). It is deli
 | CPU roundtrip cost at panel size | ✅ measured: **0.41 ms/frame**, ~0.4 % of one core at 10 Hz |
 
 The question behind the question — *is a CPU roundtrip acceptable?* — is answered
-emphatically. At the d47 panel size and 4–10 Hz, the entire render-and-upload chain costs
+emphatically. At the D47 panel size and 4–10 Hz, the entire render-and-upload chain costs
 **less than half a percent of one core**. The zero-copy path would be optimising something
 that is already three orders of magnitude below the frame budget.
 
@@ -82,7 +82,7 @@ still satisfies the constraint (there is no second UI codebase, and mini mode re
 template selection), but it is a different thing from what the phrase literally says.
 
 Animations are also not free here: with no `TopLevel` there is no clock driving
-transitions, so anything moving must be driven by the tick loop. For d47 that is the
+transitions, so anything moving must be driven by the tick loop. For D47 that is the
 intended model anyway — the panel is view-model-driven at 4–10 Hz.
 
 ### 2. Shared D3D11 texture
@@ -108,7 +108,7 @@ Paired with a `Dynamic` staging texture that the CPU writes and the GPU copies f
 ### 3. The overlay sequence
 
 `OpenVR.Init` with `VRApplication_Overlay` — *not* `VRApplication_Scene`. This is what keeps
-d47 out of anything resembling game injection, and it is what lets the overlay coexist with
+D47 out of anything resembling game injection, and it is what lets the overlay coexist with
 Elite and with other overlay apps:
 
 ```csharp
@@ -386,7 +386,7 @@ counter incrementing. Two things this settles that the machine could not:
 ### Still untested
 
 - **Transparency.** `ILockedFramebuffer.AlphaFormat` reports `Premul` and the spike uses an
-  opaque background, so premultiplied-alpha compositing was never exercised. If the d47
+  opaque background, so premultiplied-alpha compositing was never exercised. If the D47
   panel wants a transparent or translucent background, that is a real unknown and cheap to
   test — change `PanelView`'s background to a semi-transparent brush and look again.
 - **Multiple concurrent overlay handles.** D2 calls for three (main, mini, captions); the

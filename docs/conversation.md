@@ -1,11 +1,11 @@
 ---
-title: Talking to d47
+title: Talking to Directive 47
 ---
 
-# Talking to d47
+# Talking to Directive 47
 
-Type a question into d47's window and press Enter. What happens next depends on which path can
-answer it, and d47 tells you which one did.
+Type a question into D47's window and press Enter. What happens next depends on which path can
+answer it, and D47 tells you which one did.
 
 ## Two paths, in a fixed order
 
@@ -21,7 +21,7 @@ by voice only through the router.
 | Language model | Anything else | Yes |
 | Neither | No keyword matched and no model is available | No |
 
-The third row is not an error. It produces an **unsure** turn: d47 says it doesn't know and
+The third row is not an error. It produces an **unsure** turn: D47 says it doesn't know and
 tells you what it can still do. That is a real answer, and the reason there is no separate
 failure handler to write.
 
@@ -42,7 +42,7 @@ Fixture is in Fixture Reach.
 
 ## Configuring a model
 
-d47 keeps API keys in a DPAPI-encrypted store scoped to your Windows account. The settings
+D47 keeps API keys in a DPAPI-encrypted store scoped to your Windows account. The settings
 surface that writes to it arrives in a later phase, so for now the key comes from an
 environment variable:
 
@@ -55,7 +55,7 @@ written to the log — never the key itself.
 
 ## What each turn reports
 
-Under the transcript, d47 prints one line of provenance per turn:
+Under the transcript, D47 prints one line of provenance per turn:
 
 ```text
 Answered via Model, effort Medium, 1420 in (1180 cached), 96 out, $0.0031 this turn, $0.0142 session
@@ -75,7 +75,7 @@ turn of a session and after a model change.
 
 ## Effort is chosen per turn
 
-d47 gauges how hard to think from the question itself, rather than making you pick a level and
+D47 gauges how hard to think from the question itself, rather than making you pick a level and
 live with it:
 
 | Question shape | Effort |

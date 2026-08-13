@@ -8,7 +8,7 @@ title: Language model
 **Capability id:** `conversation`
 
 Which model answers, where it lives, and what the session has cost. This capability owns the
-settings that decide whether d47 talks to anything outside this machine at all.
+settings that decide whether D47 talks to anything outside this machine at all.
 
 ## Try it
 
@@ -42,7 +42,7 @@ like `stop`, bare `cancel` is kept out of the general command vocabulary and onl
 there is actually something to cancel — it is too common a verb to claim outright.
 
 One honest limit: the tokens already generated before you cancelled were already billed by the
-provider, and d47 cannot see the usage figures for a stream it tore down. So a cancelled turn
+provider, and D47 cannot see the usage figures for a stream it tore down. So a cancelled turn
 records nothing in the running spend total, which slightly under-reports what the session
 actually cost. Cancelling saves the generation that had not happened yet, not the generation that
 had.
@@ -86,7 +86,7 @@ A control that is present but dead still asserts that the setting exists.
 
 ### Provider {#provider}
 
-Which language model answers. The choices come from d47's provider catalogue:
+Which language model answers. The choices come from D47's provider catalogue:
 
 | Id | What it is |
 |---|---|
@@ -101,12 +101,12 @@ namespace, and carrying one across is how a stale selection ends up failing at t
 
 ### Endpoint {#endpoint}
 
-Points d47 at something else speaking the same protocol — a gateway, a proxy, a local
+Points D47 at something else speaking the same protocol — a gateway, a proxy, a local
 shim. Leave it empty for the provider's own endpoint, which is what the placeholder shows.
 
 **Protected**, for the same reason as the provider row.
 
-Changing the endpoint clears the model, and the model picker's list empties: d47 knows which
+Changing the endpoint clears the model, and the model picker's list empties: D47 knows which
 models live at `api.anthropic.com`, and it has no idea what lives at yours. The picker still
 lets you type one — that is its fail-soft contract, not a special case for this row.
 
@@ -116,13 +116,13 @@ Which model at that endpoint. Empty means the provider's default (`claude-opus-5
 a placeholder rather than filled in as a value, so "I have not chosen" stays distinguishable
 from "I chose the default".
 
-The offered list is every model d47 can price, so anything picked from it keeps the running
+The offered list is every model D47 can price, so anything picked from it keeps the running
 total honest. A model typed by hand is accepted and priced as unknown rather than as free.
 
 ### API key {#api-key}
 
 Stored encrypted with DPAPI for your Windows account, in `data/secrets.json` beside the
-executable. **Write-only**: d47 can tell you whether a key is present and can replace it, and
+executable. **Write-only**: D47 can tell you whether a key is present and can replace it, and
 there is no path — panel, tool or log — that reads one back out.
 
 Secrets are refused for the model caller unconditionally, whether or not the row is also

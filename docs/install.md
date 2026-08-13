@@ -1,16 +1,16 @@
 ---
-title: Installing d47
+title: Installing Directive 47
 ---
 
 # Installing and verifying a build
 
-d47 ships as one file. There is no installer, no runtime prerequisite, and nothing that
+D47 ships as one file. There is no installer, no runtime prerequisite, and nothing that
 asks for administrator rights.
 
 1. Download `d47.exe` from the
    [latest release](https://github.com/dseelinger/d47/releases/latest) — or pick a specific
    build from the [releases page](https://github.com/dseelinger/d47/releases).
-2. Put it in a folder you own — **not** `Program Files`. d47 never asks for administrator
+2. Put it in a folder you own — **not** `Program Files`. D47 never asks for administrator
    rights, so it could not write there anyway; and everything it saves goes in a `data`
    folder beside the executable, so it needs somewhere you can write.
 3. Run it.
@@ -24,7 +24,7 @@ narrower and more useful:
 
 - No .NET runtime needs to be installed first.
 - No elevation, ever.
-- Everything d47 writes lives in a `data` folder beside the executable. Move the folder,
+- Everything D47 writes lives in a `data` folder beside the executable. Move the folder,
   and your settings and secrets move with it.
 
 First launch is slower than later ones, because that native extraction happens once.
@@ -58,7 +58,7 @@ data\
 
 ## Finding it again
 
-d47 does not install itself. It is one file you put wherever you want it, and everything it
+D47 does not install itself. It is one file you put wherever you want it, and everything it
 writes lives in `data/` beside that file — copy the folder and the whole thing comes with it.
 
 The cost of that is a program you can only reach by remembering where you left it, so the
@@ -69,22 +69,22 @@ again; **Settings → About → Add to Start Menu** is there if you change your 
 The shortcut points at the file rather than at a copy of it, so an in-place update leaves it
 pointing at the new build — the same reason a pinned taskbar icon keeps working.
 
-Only one d47 runs at a time. Starting a second one raises the copy you already have instead,
+Only one D47 runs at a time. Starting a second one raises the copy you already have instead,
 whichever version that is: two copies would mean two journal readers, two microphones and two
 writers over one `data/` folder.
 
 ## Update checks
 
-On startup, d47 asks GitHub's public releases API for the latest tag and compares it against
+On startup, D47 asks GitHub's public releases API for the latest tag and compares it against
 its own version. If a newer build exists, a banner offers **Update now**.
 
 **Update now** downloads that release's `d47.exe`, checks it against the `d47.exe.sha256`
 published beside it, renames the running build to `d47.exe.old`, puts the new one in its place
-and starts it. The old file is deleted the next time d47 starts. If any step fails — no build
-attached, the download did not finish, the checksum did not match, or the folder d47 lives in
+and starts it. The old file is deleted the next time D47 starts. If any step fails — no build
+attached, the download did not finish, the checksum did not match, or the folder D47 lives in
 needs elevation to write — it says which, and opens the release page so you can do it by hand.
 
-Nothing is downloaded unless you press the button, and d47 will only fetch a URL that is an
+Nothing is downloaded unless you press the button, and D47 will only fetch a URL that is an
 asset on a release of this repository.
 
 Offline or GitHub unreachable is treated as "no update" — startup never waits on the check and
@@ -95,11 +95,11 @@ never fails because of it.
 Nothing about you or your game. There is no analytics, no metrics endpoint and no crash
 reporter.
 
-Out of the box d47 makes two kinds of outbound request, and neither carries anything about
+Out of the box D47 makes two kinds of outbound request, and neither carries anything about
 you:
 
 - **The update check** described above — a GET with no Commander data, no journal data and
-  nothing identifying. Switch it off in Settings and d47 makes no network call of its own.
+  nothing identifying. Switch it off in Settings and D47 makes no network call of its own.
   Pressing **Update now** on the banner it raises adds one more: downloading that release from
   GitHub. That is a download rather than an upload, and it happens only when you press it.
 - **A speech model download**, and only if you ask for one. No model is selected by default.
@@ -110,10 +110,10 @@ you:
 Providers that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web
 search — are each enabled individually and each states what it transmits.
 
-You never have to take this page's word for any of it. d47 computes the answer from your
+You never have to take this page's word for any of it. D47 computes the answer from your
 current settings: ask it *"what are you sending"*, or open the **Privacy and egress** section
 of Settings. A page can go stale; that report cannot.
 
 `secrets.json` is encrypted with Windows DPAPI scoped to your user account. Copying it to
-another machine or another account leaves it undecryptable, and d47 treats an unreadable
+another machine or another account leaves it undecryptable, and D47 treats an unreadable
 secret as that capability being switched off rather than as an error.

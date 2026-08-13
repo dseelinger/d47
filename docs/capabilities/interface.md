@@ -7,7 +7,7 @@ title: Interface
 **Group:** Interface
 **Capability id:** `interface`
 
-How d47 looks, and which keys reach it.
+How D47 looks, and which keys reach it.
 
 This capability registers no tools. A descriptor declares a capability's whole surface, and
 this one's surface is settings rows — giving the model a way to repaint the app or rebind a
@@ -69,11 +69,11 @@ a teal or white palette:
 </GraphicsConfig>
 ```
 
-d47 applies that matrix to its own Elite palette, so the panel picks up the cockpit's colour
+D47 applies that matrix to its own Elite palette, so the panel picks up the cockpit's colour
 without borrowing the game's assets.
 
 Read-only and fail-soft, for the same reason the binds parser is read-only: this is your game
-configuration and d47 is a guest in it. A file that is missing, hand-edited, or written by a
+configuration and D47 is a guest in it. A file that is missing, hand-edited, or written by a
 HUD mod resolves to "no matrix", and the theme falls back to plain `elite` — which is what it
 would have looked like anyway.
 
@@ -144,11 +144,11 @@ allowed to be. See [Settings](settings.md#the-protected-rule).
 ### Re-anchor the headset panels {#reanchor}
 
 Snaps every world-locked headset panel back in front of you. Bound to `Ctrl+Alt+R` out of the
-box, and **registered system-wide** rather than scoped to d47's window — unlike the two rows
+box, and **registered system-wide** rather than scoped to D47's window — unlike the two rows
 above.
 
 That is the whole point of it. The case it exists for is Elite holding the foreground with the
-panels drifted somewhere you cannot aim at, so a gesture that needs d47 focused is a gesture
+panels drifted somewhere you cannot aim at, so a gesture that needs D47 focused is a gesture
 that does not work when it is wanted. See [Re-anchor](reanchor.md).
 
 Protected, on the same grounds as every other hotkey row.

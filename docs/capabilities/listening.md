@@ -38,14 +38,14 @@ will not work, and neither will say so — pick another key for one of them.
 Transcription: base.en loaded.
 ```
 
-Everything is reported together on purpose. "d47 cannot hear me" has five possible causes — no
+Everything is reported together on purpose. "D47 cannot hear me" has five possible causes — no
 key bound, no device, the device gone away, the key colliding with Elite, no model loaded — and
 the Commander should not have to guess which one it is.
 
 ## Push-to-talk is one gate policy over a continuous stream
 
-The microphone runs whenever d47 runs, into a small ring buffer. The gate decides which part of
-that stream was speech addressed to d47. That is the checklist's own wording and it is load
+The microphone runs whenever D47 runs, into a small ring buffer. The gate decides which part of
+that stream was speech addressed to D47. That is the checklist's own wording and it is load
 bearing in two directions: continuous listening and a wake word become later *policies* over the
 same buffer rather than a rewrite, and "toggle instead of hold" is already just a value rather
 than a second mechanism.
@@ -60,12 +60,12 @@ else.
 no release edge, and push-to-talk is defined by its release edge. It is not a candidate.
 
 A `WH_KEYBOARD_LL` hook has both edges and is **forbidden**: it is a global input chokepoint, so
-a stall in d47 becomes a stall in the Commander's controls mid-fight (architecture.md D4, rule
+a stall in D47 becomes a stall in the Commander's controls mid-fight (architecture.md D4, rule
 1). That rule is written about injecting keys and applies at least as strongly to reading them.
 
 Raw Input with `RIDEV_INPUTSINK` would work — both edges, event-driven, delivered to a background
 window, and *not* a hook, so D4 rule 1 survives. It was rejected on privacy: `RIDEV_INPUTSINK`
-delivers **every keystroke on the system** to d47's window, including passwords typed into other
+delivers **every keystroke on the system** to D47's window, including passwords typed into other
 applications. Receiving the Commander's entire keyboard and discarding it is a worse posture than
 reading one key, for an app whose repository is public and whose selling point is that nothing
 leaves the machine.
@@ -104,12 +104,12 @@ The checklist is specific about why this row exists: a blank selection produces 
 and a turn reporting no speech detected, with nothing indicating why. When the chosen device is
 gone, the status answer names it rather than reporting generic silence.
 
-A missing microphone is a capability being off, not a startup failure — d47 stays fully usable
+A missing microphone is a capability being off, not a startup failure — D47 stays fully usable
 typed.
 
 ### Push-to-talk key {#push-to-talk-key-setting}
 
-Unset by default, and unset means d47 never opens the microphone. A microphone that opens on a
+Unset by default, and unset means D47 never opens the microphone. A microphone that opens on a
 key nobody chose is a microphone opening by surprise.
 
 Unlike the silence key, this does **not** require a modifier: push-to-talk on a bare key is the
@@ -128,7 +128,7 @@ Hold to talk, or press once to start and again to stop. Same gate, different pol
 
 ### Speech model {#model}
 
-Which Whisper model turns speech into words. **`none` is the default**, and a real choice: d47
+Which Whisper model turns speech into words. **`none` is the default**, and a real choice: D47
 captures audio and says plainly that it cannot understand it. A default that downloaded several
 hundred megabytes at first launch would be exactly what the consent gate exists to prevent,
 arranged by the default rather than by a bug.
@@ -147,7 +147,7 @@ hardest kind of setting to diagnose: the symptom appears somewhere entirely unco
 cause. A short push-to-talk clip on the small English models absorbs CPU inference fine, which is
 what makes CPU a sensible default rather than a compromise.
 
-The GPU path needs the CUDA runtime present. When it is not, d47 **says so** and leaves
+The GPU path needs the CUDA runtime present. When it is not, D47 **says so** and leaves
 transcription unavailable rather than quietly falling back to the CPU — a GPU toggle that
 silently does nothing is the same undiagnosable class of problem in the other direction.
 
@@ -162,21 +162,21 @@ The request is raised from the composition root rather than from the settings pa
 however the model came to be selected — the panel, the keyword router, or a hand-edited settings
 file. A consent prompt that only one surface knows to show is a surface that can be gone around.
 
-Before asking, d47 makes one metadata request to find out what the file actually is:
+Before asking, D47 makes one metadata request to find out what the file actually is:
 
 ```text
 Download the Base (English only) — the usual choice speech model? 141.1 MB from huggingface.co,
 saved to your data folder. d47 will verify the download against the checksum the host published.
 ```
 
-That size is the one the host reported, not an estimate written into d47 — a hardcoded figure is
-a number d47 asserts about a file it has never seen, and it goes stale the first time the model
+That size is the one the host reported, not an estimate written into D47 — a hardcoded figure is
+a number D47 asserts about a file it has never seen, and it goes stale the first time the model
 is republished. Where the host publishes no checksum, the prompt says so rather than claiming a
 verification that is not happening.
 
 The download is hashed as it lands and verified before the file is moved into place. A mismatch
 is **discarded**, not kept: a model that does not match its published hash is either a truncated
-transfer or something d47 should not load, and both answers are "do not use this file". The
+transfer or something D47 should not load, and both answers are "do not use this file". The
 write is atomic — a half-downloaded model under its real name is one that loads and then fails
 mid-transcription.
 
@@ -215,7 +215,7 @@ stall capture and drop the next utterance.
 
 A transcript that is entirely a bracketed annotation — `[BLANK_AUDIO]`, `(wind blowing)` — is
 treated as silence. Those are descriptions of the audio rather than things the Commander said,
-and handing one to the turn loop as a question is how d47 ends up answering the sound of a fan.
+and handing one to the turn loop as a question is how D47 ends up answering the sound of a fan.
 
 ## Reporting a key that is bound twice
 
@@ -240,7 +240,7 @@ Gestures are normalised before comparing, so `Ctrl+Alt+X` from the settings file
 Not having read the binds produces silence rather than an all-clear: never having looked is not
 the same as having looked and found nothing.
 
-**Binds are read-only.** d47 never writes the Commander's bindings file.
+**Binds are read-only.** D47 never writes the Commander's bindings file.
 
 ## What is captured, and what happens to it
 
