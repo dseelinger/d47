@@ -224,6 +224,34 @@ public sealed class SteamVrRuntime(
 
     private VrStart Bring()
     {
+        // Asked before VR_Init, and this is the whole point of asking: VR_Init *starts SteamVR*
+        // if it is not already running. An overlay companion attaching to a session the
+        // Commander opened is one thing; one that launches SteamVR on a machine whose headset is
+        // switched off is quite another - it takes over the desktop, fails to find a headset,
+        // and on a retry loop does it again every few seconds until SteamVR gives up with a
+        // critical error. Neither check touches the compositor and neither one starts anything.
+        //
+        // "Order agnostic" means d47 tolerates SteamVR arriving later, not that d47 is what
+        // makes it arrive.
+        // Released on the way out, like every other path that leaves without a session: Start
+        // claims the one-session slot before calling this, and a return that skipped the release
+        // would make the next retry report that a session is already running.
+        if (!SteamVrIsRunning())
+        {
+            Release();
+            return new VrStart(
+                VrStartOutcome.NotReady,
+                "SteamVR is not running. d47 will attach when you start it.");
+        }
+
+        if (!OpenVR.IsHmdPresent())
+        {
+            Release();
+            return new VrStart(
+                VrStartOutcome.NotReady,
+                "No headset is switched on. d47 will attach when one appears.");
+        }
+
         var error = EVRInitError.None;
         _system = OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
 
@@ -358,6 +386,29 @@ public sealed class SteamVrRuntime(
         overlay.PumpEvents();
 
         return true;
+    }
+
+    /// <summary>
+    /// Whether a SteamVR session already exists to attach to. Asked of the process list rather
+    /// than of OpenVR, because every OpenVR call that would answer it authoritatively is one
+    /// that starts the thing being asked about.
+    /// <para>
+    /// <c>vrserver</c> rather than <c>vrmonitor</c>: the monitor window is the visible half and
+    /// can be closed while the session lives, so it answers a slightly different question.
+    /// </para>
+    /// </summary>
+    private static bool SteamVrIsRunning()
+    {
+        try
+        {
+            return System.Diagnostics.Process.GetProcessesByName("vrserver").Length > 0;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or SystemException)
+        {
+            // Cannot enumerate processes. Answering "no" keeps the safe behaviour - waiting -
+            // rather than starting SteamVR on a guess.
+            return false;
+        }
     }
 
     private void Release()
