@@ -41,7 +41,7 @@ public sealed class CoverageWindow : Window
         {
             Name = "CoverageSummary",
             Text = report.Summary,
-            FontSize = 12,
+            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
         };
 
@@ -112,7 +112,7 @@ public sealed class CoverageWindow : Window
         var title = new TextBlock
         {
             Text = $"{heading} ({lines.Count})",
-            FontSize = 12,
+            FontSize = TypeScale.Subheading,
             FontWeight = FontWeight.Medium,
         };
 
@@ -160,7 +160,7 @@ public sealed class CoverageWindow : Window
                 { Status: CoverageStatus.Stale } => "changed",
                 _ => "never",
             },
-            FontSize = 10,
+            FontSize = TypeScale.Small,
             Width = 52,
             VerticalAlignment = VerticalAlignment.Center,
 
@@ -178,7 +178,7 @@ public sealed class CoverageWindow : Window
         var name = new TextBlock
         {
             Text = line.Item.Name,
-            FontSize = 11,
+            FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -191,7 +191,7 @@ public sealed class CoverageWindow : Window
         var when = new TextBlock
         {
             Text = line.LastSeen is { } seen ? seen.ToString("yyyy-MM-dd") : string.Empty,
-            FontSize = 10,
+            FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0),
         };
@@ -204,7 +204,7 @@ public sealed class CoverageWindow : Window
         {
             Name = "CoverageHelp",
             Content = "?",
-            FontSize = 10,
+            FontSize = TypeScale.Secondary,
             Padding = new Thickness(7, 1),
             VerticalAlignment = VerticalAlignment.Center,
             [ToolTip.TipProperty] = DocsSite.Capability(line.Item.CapabilityId),
@@ -246,7 +246,7 @@ public sealed class CoverageWindow : Window
         var heading = new TextBlock
         {
             Text = text,
-            FontSize = 17,
+            FontSize = TypeScale.Heading,
             FontWeight = FontWeight.Medium,
         };
 

@@ -26,11 +26,11 @@
       <DockPanel Margin="12,20,12,16">
         <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="10,0,10,16">
           <TextBlock Text="Settings"
-                     FontSize="17"
+                     FontSize="{StaticResource D47.Type.Heading}"
                      FontWeight="Medium"
                      Foreground="{DynamicResource D47.Text}" />
           <TextBlock Text="Changes apply as you make them."
-                     FontSize="11"
+                     FontSize="{StaticResource D47.Type.Secondary}"
                      TextWrapping="Wrap"
                      Foreground="{DynamicResource D47.TextMuted}" />
         </StackPanel>
@@ -50,7 +50,7 @@
           <Button x:Name="OpenDataFolder"
                   DockPanel.Dock="Right"
                   Content="Open data folder"
-                  FontSize="11"
+                  FontSize="{StaticResource D47.Type.Body}"
                   Padding="10,4"
                   Click="OnOpenDataFolderClick" />
           <!-- Beside the data folder because both answer "where is this thing and what is it",
@@ -59,7 +59,7 @@
                   DockPanel.Dock="Right"
                   Content="About"
                   Margin="0,0,8,0"
-                  FontSize="11"
+                  FontSize="{StaticResource D47.Type.Body}"
                   Padding="10,4"
                   Click="OnAboutClick" />
           <!--
@@ -70,7 +70,7 @@
             does not give back.
           -->
           <TextBlock x:Name="StorageLine"
-                     FontSize="11"
+                     FontSize="{StaticResource D47.Type.Secondary}"
                      VerticalAlignment="Center"
                      TextWrapping="NoWrap"
                      TextTrimming="CharacterEllipsis"

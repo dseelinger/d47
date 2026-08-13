@@ -18,7 +18,7 @@
   <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
     <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
     <Setter Property="Padding" Value="14,7" />
 

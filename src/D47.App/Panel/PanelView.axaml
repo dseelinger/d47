@@ -123,7 +123,7 @@
       <SelectableTextBlock x:Name="ErrorText"
                            Text="{Binding ErrorText}"
                            TextWrapping="Wrap"
-                           FontSize="12"
+                           FontSize="{StaticResource D47.Type.Body}"
                            Foreground="{DynamicResource D47.Danger}" />
     </Border>
 
@@ -147,7 +147,7 @@
         <TextBlock x:Name="UpdateText"
                    Text="{Binding UpdateText}"
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{StaticResource D47.Type.Body}"
                    VerticalAlignment="Center" />
       </DockPanel>
     </Border>
@@ -189,7 +189,7 @@
                DockPanel.Dock="Bottom"
                Margin="0,10,0,0"
                FontFamily="Cascadia Mono,Consolas,monospace"
-               FontSize="11"
+               FontSize="{StaticResource D47.Type.Secondary}"
                Foreground="{DynamicResource D47.TextMuted}"
                TextWrapping="Wrap" />
 
@@ -233,7 +233,7 @@
         <SelectableTextBlock x:Name="Transcript"
                              Text="{Binding ConversationText}"
                              FontFamily="Cascadia Mono,Consolas,monospace"
-                             FontSize="12"
+                             FontSize="{StaticResource D47.Type.Body}"
                              TextWrapping="Wrap" />
       </ScrollViewer>
     </Border>
