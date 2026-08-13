@@ -10,10 +10,10 @@ verify a build](https://dseelinger.github.io/d47/install.html).
 
 ## Status
 
-Phase 1 (foundation) is complete: settings and secret stores, logging with runtime
-per-subsystem verbosity, the capability registry, and the documentation gate. See
-[list.md](list.md) for the full plan and [architecture.md](architecture.md) for how it is
-built and why.
+Phases 1-9 are complete: the foundation, the journal spine, typed and spoken conversation,
+the settings surface, speaking and listening, game knowledge, proactive callouts, and the
+SteamVR overlay. Phase 10 (acting on the game) is next. See [list.md](list.md) for the full
+plan and [architecture.md](architecture.md) for how it is built and why.
 
 ## Building
 

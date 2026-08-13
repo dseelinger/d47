@@ -56,6 +56,23 @@ data\
     d47-20260812.jsonl   the same events as newline-delimited JSON
 ```
 
+## Finding it again
+
+d47 does not install itself. It is one file you put wherever you want it, and everything it
+writes lives in `data/` beside that file — copy the folder and the whole thing comes with it.
+
+The cost of that is a program you can only reach by remembering where you left it, so the
+first run offers to add a Start Menu entry. It is one shortcut, for your account only, needs
+no elevation, and you can delete it like any other. Decline it and you will not be asked
+again; **Settings → About → Add to Start Menu** is there if you change your mind.
+
+The shortcut points at the file rather than at a copy of it, so an in-place update leaves it
+pointing at the new build — the same reason a pinned taskbar icon keeps working.
+
+Only one d47 runs at a time. Starting a second one raises the copy you already have instead,
+whichever version that is: two copies would mean two journal readers, two microphones and two
+writers over one `data/` folder.
+
 ## Update checks
 
 On startup, d47 asks GitHub's public releases API for the latest tag and compares it against
