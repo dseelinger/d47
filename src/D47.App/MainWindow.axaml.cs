@@ -348,6 +348,13 @@ public partial class MainWindow : Window
         {
             // A turn that throws is a bug, not a provider failure — provider failures arrive as
             // events. Surface it rather than losing it.
+            //
+            // Logged as well as shown, and with the stack trace. The panel gets one line of
+            // message, and the logs are the first thing read on a bug report — a cross-thread
+            // failure here left the log with nothing in it at all, not even at Information,
+            // which made a reproducible crash look like it had happened nowhere.
+            _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
+
             _model.Append($"\n[turn failed: {ex.Message}]");
         }
         finally
