@@ -7,7 +7,7 @@ title: Callouts
 **Group:** Voice
 **Capability id:** `callouts`
 
-What d47 says without being asked: danger, fuel, route progress, arrivals and material
+What D47 says without being asked: danger, fuel, route progress, arrivals and material
 milestones. Everything here fires from the journal and the state files Elite writes, on the tick
 loop, with no model in the path.
 
@@ -45,7 +45,7 @@ Route progress every 5 jumps.
 Home system is Shinrarta Dezhra.
 ```
 
-**The model can ask what d47 is watching for; it cannot switch a warning off.** Every toggle
+**The model can ask what D47 is watching for; it cannot switch a warning off.** Every toggle
 below is a protected settings row — reachable from the panel, from a hotkey and through the
 model-free keyword router, and not from the tool surface. This is the trust boundary rather than
 caution: anything the model can call, a hostile in-game message can attempt to invoke, and a
@@ -106,7 +106,7 @@ land on it four times out of five.
 explicitly. The KGBFOAM mnemonic is a rule about a star's first letter, and applying it as a
 first-letter test gets two cases wrong in opposite directions: Herbig `AeBe` stars begin with A
 and are *not* scoopable, while `K_OrangeGiant` and the other giant and supergiant variants carry
-a suffix and *are*. A class d47 does not recognise is reported as unknown rather than as
+a suffix and *are*. A class D47 does not recognise is reported as unknown rather than as
 unscoopable — routing a Commander around a star that would have refuelled them is its own kind
 of harm.
 
@@ -125,7 +125,7 @@ Your home system, where your carrier is, ships stored where you have just arrive
 that offer engineering.
 
 **No table of engineer bases or notable stations is shipped.** A hardcoded list of which engineer
-lives where is game data that goes stale on every update and that d47 has no source for;
+lives where is game data that goes stale on every update and that D47 has no source for;
 inventing one would be exactly the confident wrong answer the guardrails exist to prevent.
 Engineering is recognised from the station's own advertised services in the `Docked` event, which
 also means it keeps working when a new engineer is added.
@@ -135,7 +135,7 @@ also means it keeps working when a new engineer is added.
 The first unit of a material, then 25/50/75%, a running count above 75%, and full.
 
 **The tracker is primed from the session backlog at startup**, which the checklist calls out and
-which is why the tick loop marks its first tick. Without it, starting d47 after Elite means every
+which is why the tick loop marks its first tick. Without it, starting D47 after Elite means every
 material already gathered counts as a "first unit" the moment the backlog is read, and the real
 milestones never fire because they have already been passed silently.
 
@@ -174,7 +174,7 @@ a number nobody checked. The first-unit milestone needs no capacity and works ei
 
 ### Speak without being asked {#enabled}
 
-Off means d47 only ever answers. Every warning stops with it; everything else keeps running.
+Off means D47 only ever answers. Every warning stops with it; everything else keeps running.
 
 Reachable by voice through the model-free keyword router — "stop calling things out", "enable
 callouts" — because a protected row still has to be settable without hands on the panel.
@@ -207,7 +207,7 @@ to return them, and "shields are down" is not interchangeable with "route comple
 
 An urgent callout silences the queue before speaking rather than joining it, on the
 `Alert` channel that sits above `Speech` in the one audio arbiter (architecture.md D7). That is
-the difference between a warning and a remark: an interdiction announced after d47 finishes
+the difference between a warning and a remark: an interdiction announced after D47 finishes
 reading out a commodity list has arrived after the interdiction.
 
 ## Repetition

@@ -1,8 +1,8 @@
 ---
-title: d47
+title: Directive 47
 ---
 
-# d47
+# Directive 47
 
 *Directive 47: Optimize Inferior Systems.*
 
@@ -16,19 +16,19 @@ page that explains it.
 ## General help
 
 - [Installing and verifying a build](install.md)
-- [Talking to d47](conversation.md) — the two answer paths, running with no model, and what each turn reports
+- [Talking to Directive 47](conversation.md) — the two answer paths, running with no model, and what each turn reports
 
 ## Capabilities
 
-Every capability d47 registers has a page here. That is enforced by a test rather than by
+Every capability D47 registers has a page here. That is enforced by a test rather than by
 habit — CI fails if a registered capability has no page, or if its page does not quote the
 capability's real tool schema.
 
 | Capability | Group | What it does |
 |---|---|---|
-| [Diagnostics](capabilities/diagnostics.md) | Foundation | Report where d47 keeps its files, and change a subsystem's log level without a restart. |
+| [Diagnostics](capabilities/diagnostics.md) | Foundation | Report where D47 keeps its files, and change a subsystem's log level without a restart. |
 | [Journal](capabilities/journal.md) | Foundation | Report the Commander's current system, body and docking state from the journal. |
 | [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
-| [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach d47. |
+| [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach D47. |
 | [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |
 | [Settings](capabilities/settings.md) | Foundation | What a tool call may change, and the protected set that no model can reach. |

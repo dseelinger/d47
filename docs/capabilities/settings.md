@@ -9,7 +9,7 @@ title: Settings
 
 The model's view of the settings surface — deliberately smaller than yours.
 
-Every d47 setting is changeable from the panel with no hand-editing, and takes effect
+Every D47 setting is changeable from the panel with no hand-editing, and takes effect
 immediately. This capability is about the *other* callers: what a tool call may change, and
 what it may not.
 
@@ -19,7 +19,7 @@ Protection is a property of the caller, not of the modality. The same row is rea
 the settings panel, from a bound hotkey and from the model-free keyword router, and is
 unreachable from anything the model can invoke.
 
-That asymmetry is not fussiness. d47 feeds the model text it did not author — journal entries
+That asymmetry is not fussiness. D47 feeds the model text it did not author — journal entries
 carrying another Commander's chosen ship name, in-game messages from anyone in range, and
 later web and INARA results. Anything the model can call, a hostile message can attempt to
 invoke. A guard the model can flip is not a guard.
@@ -100,7 +100,7 @@ Model is now (default).
 ```
 
 On a protected row, the refusal names where the setting lives rather than pretending it does
-not exist — you asking d47 to change your provider deserves an answer, and the refusal is the
+not exist — you asking D47 to change your provider deserves an answer, and the refusal is the
 safety property, not the silence:
 
 ```text
@@ -121,7 +121,7 @@ are one setting rather than three.
 | Secret | Write-only, and never through a tool |
 
 A choice row can declare that values outside its list are legitimate — the model row does,
-because an endpoint d47 has never seen still has model names. Every other choice row refuses
+because an endpoint D47 has never seen still has model names. Every other choice row refuses
 what it cannot offer, and says what it can:
 
 ```text

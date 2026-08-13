@@ -7,24 +7,24 @@ title: Headset
 **Group:** Interface
 **Capability id:** `vr`
 
-d47 in the headset, as a SteamVR overlay drawn over Elite in your own cockpit.
+D47 in the headset, as a SteamVR overlay drawn over Elite in your own cockpit.
 
 It is an *overlay* application, never a scene one. That is what lets it sit alongside the game
-instead of displacing it, and it is also what keeps d47 clear of anything resembling game
+instead of displacing it, and it is also what keeps D47 clear of anything resembling game
 injection — it never owns the frame loop, never hooks the game, and never touches Elite's
 process. Elite renders through OpenVR, which is why this is OpenVR and not OpenXR.
 
 ## The order does not matter
 
-SteamVR before d47, d47 before SteamVR, SteamVR restarted halfway through an evening — none of
-those is an ordering you should have to know about. d47 asks for a session every five seconds
+SteamVR before D47, D47 before SteamVR, SteamVR restarted halfway through an evening — none of
+those is an ordering you should have to know about. D47 asks for a session every five seconds
 while it does not have one, and rebuilds every surface when it gets one.
 
 Three states, and the difference between the first two matters:
 
 | State | What it means |
 |---|---|
-| `Unavailable` | No SteamVR runtime is installed. Nothing to wait for, and d47 keeps asking anyway in case one arrives. |
+| `Unavailable` | No SteamVR runtime is installed. Nothing to wait for, and D47 keeps asking anyway in case one arrives. |
 | `Connecting` | A runtime is installed but not usable yet — SteamVR is not running, or it is running and there is no headset. |
 | `Active` | The session is up and the surfaces exist. |
 
@@ -72,7 +72,7 @@ And it only runs when something changed.
 
 ### `get_headset_status`
 
-Reports whether d47 is showing in the headset, and if not, why not. Takes no arguments.
+Reports whether D47 is showing in the headset, and if not, why not. Takes no arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -80,11 +80,11 @@ Reports whether d47 is showing in the headset, and if not, why not. Takes no arg
 
 ## Settings
 
-### Show d47 in the headset {#enabled}
+### Show Directive 47 in the headset {#enabled}
 
-On by default. That costs nothing on a machine with no headset: d47 looks for a runtime, does
+On by default. That costs nothing on a machine with no headset: D47 looks for a runtime, does
 not find one, and reports `Unavailable`. Off leaves SteamVR alone entirely, which is for the
-Commander who has it installed for something else and does not want d47 in it.
+Commander who has it installed for something else and does not want D47 in it.
 
 Also reachable without the panel:
 
@@ -133,7 +133,7 @@ angled to sit beside you, which is most of what moving one is for.
 
 Picking it up makes it world-locked, because picking something up and putting it somewhere is
 what world-locked means. The setting follows the action rather than gating it — a head-locked
-panel that sprang back to your face after you carried it across the cockpit would be d47
+panel that sprang back to your face after you carried it across the cockpit would be D47
 arguing with you.
 
 Two details that are not obvious and are load-bearing:
@@ -224,7 +224,7 @@ See [Scale](#panel-scale).
 
 ### Captions {#captions}
 
-Everything d47 says, written under it. They place themselves, they clear themselves, and they
+Everything D47 says, written under it. They place themselves, they clear themselves, and they
 cannot be moved — which is why they are their own overlay quad rather than part of the panel:
 a caption you can drag somewhere you will not see it is not a caption, and the placement
 settings must not be able to reach them by accident.
@@ -253,7 +253,7 @@ standard treats the shape as a preference and the break points as where a break 
 Captions are driven by what is *audible* rather than by what was generated, because the audio
 arbiter is the one thing that knows what is actually coming out of the speaker. That is what
 keeps them in step with a reply that got interrupted — say "shut up" and the captions go with
-the voice, because a caption still sitting there after a silence command is d47 visibly not
+the voice, because a caption still sitting there after a silence command is D47 visibly not
 having stopped.
 
 ### Caption size {#size}

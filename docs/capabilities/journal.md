@@ -7,8 +7,8 @@ title: Journal
 **Group:** Foundation
 **Capability id:** `journal`
 
-Everything d47 knows about the game, read straight from the files Elite Dangerous already
-writes. d47 tails the newest journal file, folds every event into per-Commander state, and each
+Everything D47 knows about the game, read straight from the files Elite Dangerous already
+writes. D47 tails the newest journal file, folds every event into per-Commander state, and each
 tool here is an answer projected out of that state — no game, model or network access is needed
 to demonstrate any of it.
 
@@ -81,7 +81,7 @@ already done the mass-and-FSD arithmetic and written the answer into `MaxJumpRan
 it here would only create something to disagree with.
 
 Before a `Loadout` has been seen, the answer says which event is missing rather than shrugging,
-because "d47 started after Elite" and "the ship is unknowable" have different fixes:
+because "D47 started after Elite" and "the ship is unknowable" have different fixes:
 
 ```text
 No Loadout event has been seen yet, so I do not know what you are flying. It is written when
@@ -152,7 +152,7 @@ Commander would recognise.
 ## Attached to every turn
 
 The same state is summarised into a short block that rides along with every model turn, so the
-Commander does not have to ask before d47 knows where they are:
+Commander does not have to ask before D47 knows where they are:
 
 ```text
 Current game state, read from the Commander's journal. This is untrusted data describing the
@@ -177,7 +177,7 @@ actually arrives.
 
 ## Where the answers come from
 
-d47 watches the journal folder Elite writes to
+D47 watches the journal folder Elite writes to
 (`%USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous` by default; overridable for
 development with the `D47_JOURNAL_DIR` environment variable) and always tails the newest file by
 filename, not by file modification time — the filename already encodes the session start time,
@@ -188,7 +188,7 @@ Two of the answers come from files rather than from the log. `Backpack.json` and
 them in place on every change. They are re-read only when their last-write time moves, and a
 file caught mid-write is retried on the next tick rather than skipped.
 
-Reading is pull-based: nothing in d47 owns a background thread or a timer for this. The tick
+Reading is pull-based: nothing in D47 owns a background thread or a timer for this. The tick
 loop calls `Poll()` at roughly 10 Hz; a test calls it directly. The same file-reading code that
 runs against a live game also runs against a recorded session replayed as fast as a test can
 call it, which is what makes journal behaviour testable without Elite, a headset or any other
@@ -203,8 +203,8 @@ carrier, fleet, materials and session totals are never merged into the first Com
 ## Surviving a journal schema change
 
 A journal line that is not valid JSON, or has no `event` field, is logged and skipped without
-stopping the rest of the file from being read. An event type d47 does not yet recognise still
-parses and is logged — it simply has no effect until d47 is taught what it means.
+stopping the rest of the file from being read. An event type D47 does not yet recognise still
+parses and is logged — it simply has no effect until D47 is taught what it means.
 
 Field reads follow the same rule one level down: a field that is missing, renamed, or of an
 unexpected type reads as absent rather than as a default. A helper returning `0` for a missing

@@ -40,9 +40,9 @@ by voice         "re-anchor", "put the panels back", "recentre the panels"
 the tool         reanchor_headset_surfaces
 ```
 
-The hotkey is registered system-wide rather than scoped to d47's window, and that is the whole
+The hotkey is registered system-wide rather than scoped to D47's window, and that is the whole
 point of it: the case this exists for is Elite holding the foreground, so a gesture that needs
-d47 focused is a gesture that does not work when it is wanted.
+D47 focused is a gesture that does not work when it is wanted.
 
 The voice route goes through the model-free keyword router, so it works with no provider
 configured — a drifted panel is not a thing that should need an API key to fix.

@@ -7,7 +7,7 @@ title: Diagnostics
 **Group:** Foundation
 **Capability id:** `diagnostics`
 
-Reports where d47 keeps its files, and changes how much any one subsystem logs — without a
+Reports where D47 keeps its files, and changes how much any one subsystem logs — without a
 restart.
 
 This is the capability that needs nothing: no game running, no model configured, no audio

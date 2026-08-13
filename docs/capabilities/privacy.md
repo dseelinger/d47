@@ -7,7 +7,7 @@ title: Privacy
 **Group:** Foundation
 **Capability id:** `privacy`
 
-Exactly what d47 sends off this machine, to whom, and whether it is sending it right now.
+Exactly what D47 sends off this machine, to whom, and whether it is sending it right now.
 
 This page is the long form of the disclosure rows on the settings panel. Both read the same
 list, so neither can drift from the other, and both describe the settings as they stand rather
@@ -22,7 +22,7 @@ than as they were documented.
 
 ### `get_data_egress`
 
-Lists every destination d47 can send to, whether it is active with the current settings, and
+Lists every destination D47 can send to, whether it is active with the current settings, and
 what is sent there. Takes no arguments.
 
 ```json
@@ -65,7 +65,7 @@ what it recognises, the journal spine keeps reading, and every input path stays 
 ### Check for updates at startup {#update-check}
 
 One request to `api.github.com` for the latest release tag, made once at startup. Off means
-d47 makes no network call of its own, and offers no update to install.
+D47 makes no network call of its own, and offers no update to install.
 
 **Protected.** This row decides whether anything leaves at all, so it is unreachable from the
 tool surface — a model that could switch egress back on is a model that could be told to by
@@ -81,7 +81,7 @@ that writes, so a sentence that merely mentions a phrase gets an answer, not a c
 
 ## Disclosures
 
-The four rows below are read-only. They are not something you set; they are something d47
+The four rows below are read-only. They are not something you set; they are something D47
 says, and they sit next to the settings that change them rather than in a document nobody
 opens. The row headings are fixed; the text under each is computed from your current settings.
 
@@ -89,7 +89,7 @@ opens. The row headings are fixed; the text under each is computed from your cur
 
 The only destination that receives anything derived from your gameplay. What goes: the turn
 text, the conversation so far, the guardrails, the persona, your About Me text, and the game
-state d47 assembled from the journal. What does not go: journal files, your key, or anything
+state D47 assembled from the journal. What does not go: journal files, your key, or anything
 about your machine.
 
 Reads as inactive when the provider is `none`, and also when a provider is selected but has no
@@ -103,7 +103,7 @@ Accepting an offered update adds a second transfer: the build itself, fetched fr
 `https://github.com/dseelinger/d47/releases/download/...`, which redirects to GitHub's asset
 storage — so the bytes arrive from `objects.githubusercontent.com`. It is a download and not an
 upload; nothing about you goes with it either. It only ever happens when you press **Update
-now**, and d47 refuses any URL that is not an asset on a release of this repository.
+now**, and D47 refuses any URL that is not an asset on a release of this repository.
 
 The download is checked against the `d47.exe.sha256` published beside it and deleted rather
 than run if it does not match. That catches a truncated transfer or a mirror serving something

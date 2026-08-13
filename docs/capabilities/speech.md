@@ -7,7 +7,7 @@ title: Speech
 **Group:** Voice
 **Capability id:** `speech`
 
-Everything d47 makes audible: spoken replies, the short cue that marks each state of the
+Everything D47 makes audible: spoken replies, the short cue that marks each state of the
 conversation loop, the quiet bed under a working turn, and the one control that outranks all of
 them.
 
@@ -16,11 +16,11 @@ caption timing are properties of that queue rather than four separate mechanisms
 to agree with each other. That is also why silence is instant: stopping is a queue operation, not
 a feature layered on top of one.
 
-The endpoint changed under d47 once already, in August 2026: it began requiring a browser
+The endpoint changed under D47 once already, in August 2026: it began requiring a browser
 `muid` cookie and a current Chromium version string (403 without them), and it dropped its
 raw-PCM output formats, so audio now arrives as 24 kHz mono MP3 and is decoded through
 Windows' own ACM codec. If the voice ever stops working again, run the live diagnostic to
-tell "the endpoint moved" apart from "d47 broke":
+tell "the endpoint moved" apart from "D47 broke":
 
 ```text
 D47_TTS_LIVE=1 dotnet test tests/D47.Tts.Tests
@@ -56,11 +56,11 @@ fast it can be said, and everything else here is a longer way to say the same th
 
 Bare `stop` is deliberately kept out of the general command vocabulary, because a bare common
 verb hijacks any sentence containing it — the same rule that keeps `where` and `system` out of
-the location commands. It is only consulted while d47 actually has something to interrupt:
+the location commands. It is only consulted while D47 actually has something to interrupt:
 mid-sentence it has one plausible meaning, and idle it stays available to anything else that
 might want it, Commander-named macros most of all. Context is the disambiguator, so context is
 the gate. The longer phrases —
-`shut up`, `stop talking` — are unambiguous on their own and work whether or not d47 is speaking.
+`shut up`, `stop talking` — are unambiguous on their own and work whether or not D47 is speaking.
 
 Asking for silence never has to reach the model at all. These are keyword
 phrases, so the model-free router answers them; and the hotkey below reaches the same queue
@@ -92,7 +92,7 @@ nothing leaves the machine at all.
 ### Voice {#voice}
 
 Which voice speaks. The list is fetched from the selected provider, so it reflects what that
-provider actually offers rather than a list baked into d47. An unrecognised value is still
+provider actually offers rather than a list baked into D47. An unrecognised value is still
 accepted — the picker's contract is that an empty list lets you keep the current value or type
 one.
 
@@ -103,11 +103,11 @@ provider boundary, because providers disagree about both the units and the range
 
 ### Output device {#output-device}
 
-Where d47 speaks, defaulting to whatever Windows is using. Stored as a device id rather than a
+Where D47 speaks, defaulting to whatever Windows is using. Stored as a device id rather than a
 name, because a friendly name is not stable across driver updates. Changing it reopens the device
 immediately; a device that has been unplugged falls back to the default rather than going silent.
 
-d47 opens the device in shared mode and never takes exclusive hold of it. The game is what matters
+D47 opens the device in shared mode and never takes exclusive hold of it. The game is what matters
 on that output.
 
 ### Loop-state cues {#cues}
@@ -125,7 +125,7 @@ One short sound per state of the conversation loop.
 | `unsure` | A falling minor third — an explicit "unsure", which is a state rather than an error. |
 | `failed` | A falling whole tone. |
 
-The cue file is named for the state it belongs to, and d47 checks the shipped set against the list
+The cue file is named for the state it belongs to, and D47 checks the shipped set against the list
 of states at startup. A state added in code without a cue committed alongside it fails immediately,
 with the state named — rather than going wrong as one state that silently never makes a sound.
 
@@ -147,7 +147,7 @@ beds/thinking-pulse.wav                       2.40s
 
 ### Thinking bed {#thinking-bed}
 
-A quiet loop while a turn runs, so that a slow answer is audibly d47 working rather than d47
+A quiet loop while a turn runs, so that a slow answer is audibly D47 working rather than D47
 having ignored you. It ducks under speech instead of stopping, and it stops the moment the first
 words arrive — not when the turn ends.
 
@@ -158,12 +158,12 @@ tick once per loop, which sounds like a broken sound card rather than a broken t
 
 ### Stop speaking {#shut-up}
 
-Silences d47 instantly: the queue is flushed, the current sentence is cut off mid-word, and any
+Silences D47 instantly: the queue is flushed, the current sentence is cut off mid-word, and any
 sentence still being synthesised is abandoned rather than allowed to arrive a moment later and
 speak into the silence it was supposed to end.
 
 The binding is system-wide, not window-scoped. The case this exists for is Elite holding the
-foreground, and a key that only works when d47 has focus is gated by definition. This one is never
+foreground, and a key that only works when D47 has focus is gated by definition. This one is never
 gated — not behind a turn completing, not behind the model, not behind focus.
 
 This row is **protected**: it can be changed from the panel, by hotkey, or through the model-free
@@ -173,7 +173,7 @@ Commander's stop button has removed the one control that outranks it.
 ### When a turn fails {#retry}
 
 A turn that stalls is answered out loud rather than left as silence, because silence is
-indistinguishable from d47 having ignored you.
+indistinguishable from D47 having ignored you.
 
 | Setting | Default | Meaning |
 |---|---|---|
@@ -189,7 +189,7 @@ Two rules shape what actually gets retried:
 - **A configuration failure is never retried.** A bad model name fails identically next time, so
   waiting on it only spends the Commander's silence. Only transient failures are worth a retry.
 
-When the attempts run out, d47 says so in the current voice:
+When the attempts run out, D47 says so in the current voice:
 
 ```text
 I couldn't reach the model after 3 tries. Overloaded.

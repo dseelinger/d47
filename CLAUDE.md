@@ -69,6 +69,10 @@ Release is a tag: `git tag -s v0.1.0 -m "what changed"` then `git push origin v0
 publishes, checksums and creates the GitHub Release. Publish settings live in
 `D47.App.csproj` so local and CI cannot diverge.
 
+**A completed phase is always a minor release.** Finishing a phase in `list.md` means the
+next tag is `0.<minor+1>.0`, not another patch — the version is how a Commander tells "some
+fixes landed" from "there is a whole capability here now". Fixes between phases are patches.
+
 **A published tag never moves.** Tags are signed and annotated, and once one is pushed and a
 Release is built from it, that tag is a receipt for one exact `d47.exe` and the checksum
 beside it — and the update checker compares a running build's version against it. Retagging
