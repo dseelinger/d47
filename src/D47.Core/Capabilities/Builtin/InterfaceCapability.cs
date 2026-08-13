@@ -21,6 +21,8 @@ public static class InterfaceCapability
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
 
+    public const string ReanchorHotkeyKey = "hotkeys.reanchor";
+
     public static CapabilityDescriptor Create() => new()
     {
         Id = Id,
@@ -80,6 +82,13 @@ public static class InterfaceCapability
                 "focus-ask",
                 s => s.Hotkeys.FocusAsk,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
+            HotkeyRow(
+                ReanchorHotkeyKey,
+                "Re-anchor the headset panels",
+                "reanchor",
+                s => s.Hotkeys.Reanchor,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { Reanchor = v } },
+                systemWide: true),
         ],
     };
 
@@ -98,11 +107,16 @@ public static class InterfaceCapability
         string label,
         string anchor,
         Func<Configuration.D47Settings, string?> read,
-        Func<Configuration.D47Settings, string?, Configuration.D47Settings> write) => new()
+        Func<Configuration.D47Settings, string?, Configuration.D47Settings> write,
+        bool systemWide = false) => new()
     {
         Key = key,
         Label = label,
-        Help = "Press the key combination to bind it. Clear it to leave the action unbound.",
+        Help = "Press the key combination to bind it. Clear it to leave the action unbound."
+               + (systemWide
+                   ? " Registered system-wide, so it works while Elite has the foreground - which is "
+                     + "the only time it is wanted."
+                   : string.Empty),
         Kind = SettingKind.Hotkey,
         DefaultDisplay = "(unbound)",
         DocsAnchor = anchor,

@@ -705,10 +705,11 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildNumber(SettingRow row, TextBlock message)
     {
+        // Both from the row, so the control cannot offer a precision the store will not keep.
         var number = new NumericUpDown
         {
-            Increment = 1,
-            FormatString = "0",
+            Increment = (decimal)row.Step,
+            FormatString = row.NumberFormat,
             MinWidth = 130,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
@@ -717,7 +718,10 @@ public partial class SettingsView : UserControl
         {
             if (!_refreshing)
             {
-                Apply(row, e.NewValue?.ToString("0"), message);
+                Apply(
+                    row,
+                    e.NewValue?.ToString(row.NumberFormat, System.Globalization.CultureInfo.InvariantCulture),
+                    message);
             }
         };
 

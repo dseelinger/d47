@@ -93,6 +93,135 @@ Also reachable without the panel:
 "headset overlay off"
 ```
 
+### Panel content {#mode}
+
+`full` or `mini`. Mini is a mode of the same panel — a reduced content set, not a smaller copy:
+the gear, the banners and the ask box go, and the transcript stays. Say "mini panel" or "full
+panel" to switch it.
+
+It is also a genuinely smaller image at a smaller width, because apparent text size in a
+headset is the texture's pixel count and the quad's width in metres together. The two modes
+therefore carry their own placements, which is why the rows below appear twice: a Commander who
+parks mini out at the edge of vision and keeps the full panel in front of them is doing the
+expected thing rather than fighting a shared setting.
+
+## Placement
+
+Six knobs per surface. Each one maps onto exactly one call into SteamVR, which is what keeps
+this page honest about what it is changing:
+
+| Row | What it does |
+|---|---|
+| Locking | Head-locked follows you; world-locked stays where you put it |
+| Distance | Metres in front of you, head-locked only |
+| Size | `SetOverlayWidthInMeters` — height follows from the panel's proportions |
+| Curvature | `SetOverlayCurvature`, 0 flat to 1 wrapped |
+| Opacity | `SetOverlayAlpha` |
+| Scale | How large the content is drawn, on the desktop zoom's ladder |
+
+You can also just reach out and take hold of the panel. The numbers are here for when you would
+rather not.
+
+### Grabbing it {#grab}
+
+Point a controller at the panel and pull the trigger, and it comes with you — position and
+orientation together, so it feels attached rather than dragged. Let go and it stays.
+
+Nothing turns it to face you while it is held. That was tried in a previous implementation of
+this and it is wrong: a panel forced upright and square cannot be tilted to read from below or
+angled to sit beside you, which is most of what moving one is for.
+
+Picking it up makes it world-locked, because picking something up and putting it somewhere is
+what world-locked means. The setting follows the action rather than gating it — a head-locked
+panel that sprang back to your face after you carried it across the cockpit would be d47
+arguing with you.
+
+Two details that are not obvious and are load-bearing:
+
+- **The trigger only.** A controller reports its grip and its other buttons through the same
+  channel, so treating them all as a press means the grip that grabs the panel also clicks
+  whatever the ray was over.
+- **The pointer is the only controller input an overlay gets.** SteamVR takes the controllers
+  to drive its own laser and hands back mouse events. `IVRSystem.GetControllerState` returns
+  false for controllers that are connected and tracking, silently, and an `IVRInput` action
+  manifest was built twice in two separate projects, accepted by SteamVR, and never went live.
+  This is not a shortcut; it is the road that exists.
+
+### Panel locking {#panel-lock}
+
+Head-locked or world-locked, per surface.
+
+Head-locked follows you and is always in view, which is what you want for something you glance
+at. World-locked stays where you put it, which is what you want for something that lives in a
+particular corner of the cockpit — and it is what [re-anchoring](reanchor.md) exists to rescue
+when Elite's recenter moves the cockpit out from under it.
+
+Choosing world-locked implies re-anchor is bound and reachable off-panel, which it is: a
+system-wide hotkey and a model-free voice phrase, neither of which needs you to be able to aim
+at the panel.
+
+### Distance {#panel-distance}
+
+Metres in front of you, for a head-locked surface. A surface you have put down is wherever you
+put it.
+
+### Size {#panel-size}
+
+How wide the quad is, in metres. SteamVR takes a width and derives the height from the
+texture's proportions, so there is no height to set.
+
+1.4 m was tried first in a previous implementation and read as enormous: at this distance that
+is close to fifty degrees of view, so the panel filled the middle and the cockpit was behind it
+rather than around it. The default is 1.1 m.
+
+### Curvature {#panel-curve}
+
+0 is flat and 1 is wrapped right around you.
+
+This is the whole of *panels can switch between curved and flat*: a number reaching zero rather
+than a second mode, because a mode is a thing that can disagree with the number. Captions are
+never curved and have no row — two short lines in the middle of the view have no far edges to
+bring closer, so a curved caption is a caption bent for no reason.
+
+### Opacity {#panel-opacity}
+
+How solid the surface is, from 0.1 to 1.
+
+### Scale {#panel-scale}
+
+How large the panel is drawn, as a percentage, on the same ladder the desktop window zooms
+with — and by the same mechanism, a layout transform rather than a font size, so text rewraps
+and spacing grows with it.
+
+Distinct from mini mode, and the distinction is the point: this changes the size of everything
+on the panel, mini changes how much of it there is. Zooming a panel you cannot read makes it
+readable; switching to mini gives you less to read.
+
+### Mini panel locking {#mini-lock}
+
+The same six rows again, for the mini panel, because the two modes have different reasons to
+exist. See [Panel locking](#panel-lock).
+
+### Mini distance {#mini-distance}
+
+See [Distance](#panel-distance).
+
+### Mini size {#mini-size}
+
+See [Size](#panel-size). The mini default is 0.34 m — it is meant to sit at the edge of vision.
+
+### Mini curvature {#mini-curve}
+
+See [Curvature](#panel-curve).
+
+### Mini opacity {#mini-opacity}
+
+See [Opacity](#panel-opacity).
+
+### Mini scale {#mini-scale}
+
+See [Scale](#panel-scale).
+
 ### Captions {#captions}
 
 Everything d47 says, written under it. They place themselves, they clear themselves, and they

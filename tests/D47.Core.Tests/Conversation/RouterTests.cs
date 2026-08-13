@@ -124,7 +124,14 @@ public class KeywordRouterTests
     /// "status", "system" and "where" emphatically do not. Adding to this list should feel like a
     /// decision, which is the point of having the list rather than dropping the rule.
     /// </summary>
-    private static readonly string[] JustifiedSingleWords = ["diagnostics"];
+    /// <summary>
+    /// Single words that are safe because nobody says them by accident. "re-anchor" and
+    /// "reanchor" are here because the alternative is worse than the risk: the case the
+    /// command exists for is a Commander whose panels have drifted somewhere they cannot aim
+    /// at, so it has to be short enough to say without thinking, and neither spelling turns up
+    /// in a sentence about anything else.
+    /// </summary>
+    private static readonly string[] JustifiedSingleWords = ["diagnostics", "re-anchor", "reanchor"];
 
     [Fact]
     public void KeywordsAreNeverBareCommonWords()

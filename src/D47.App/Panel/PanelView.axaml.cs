@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -18,11 +19,26 @@ namespace D47.App.Panel;
 /// </summary>
 public partial class PanelView : UserControl
 {
+    /// <summary>
+    /// How much of the panel this instantiation shows. A property of the surface rather than of
+    /// the content, so the desktop window can be full while the headset is mini and both are
+    /// still showing the same transcript.
+    /// </summary>
+    public static readonly StyledProperty<PanelMode> ModeProperty =
+        AvaloniaProperty.Register<PanelView, PanelMode>(nameof(Mode));
+
     private PanelViewModel? _bound;
 
     public PanelView()
     {
         InitializeComponent();
+
+        // Set in code rather than bound, because what mini hides is three named regions and a
+        // binding for each would be three expressions no test can reach. The content inside
+        // them still binds - a banner is hidden in mini and also hidden when there is nothing
+        // wrong, and those are different reasons.
+        ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyMode());
+        ApplyMode();
 
         // Scroll position belongs to a rendered surface rather than to the text, so each
         // instance answers this for itself: the window and the overlay can be scrolled to
@@ -43,6 +59,12 @@ public partial class PanelView : UserControl
         };
     }
 
+    public PanelMode Mode
+    {
+        get => GetValue(ModeProperty);
+        set => SetValue(ModeProperty, value);
+    }
+
     private PanelViewModel? Model => DataContext as PanelViewModel;
 
     /// <summary>The gear, so a host can hang a tooltip naming the bound gesture on it.</summary>
@@ -53,6 +75,15 @@ public partial class PanelView : UserControl
     {
         AskBox.Focus();
         AskBox.SelectAll();
+    }
+
+    private void ApplyMode()
+    {
+        var full = Mode == PanelMode.Full;
+
+        Header.IsVisible = full;
+        Banners.IsVisible = full;
+        AskRow.IsVisible = full;
     }
 
     private void ScrollToEnd() => TranscriptScroller.ScrollToEnd();

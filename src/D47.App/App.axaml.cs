@@ -35,7 +35,8 @@ public partial class App(AppHost? host) : Application
         // Commanders who have one (list.md Phase 9, "Order agnostic Overlay").
         if (host is not null)
         {
-            host.Vr = Headset.VrHost.Start(host.Panel, host.Audio, host.Settings, host.Tick, host.Loggers);
+            host.Vr = Headset.VrHost.Start(
+                host.Panel, host.Audio, host.Settings, host.ViewState, host.Tick, host.Loggers);
         }
 
         base.OnFrameworkInitializationCompleted();
