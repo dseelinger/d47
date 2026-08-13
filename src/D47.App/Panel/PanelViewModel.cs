@@ -66,6 +66,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Raised when a view's gear was used. Only the desktop window answers it.</summary>
     public event Action? SettingsRequested;
 
+    public event Action? HelpRequested;
+
     public event Action? UpdateAccepted;
 
     public event Action? UpdateDismissed;
@@ -162,6 +164,13 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public void Ask() => AskRequested?.Invoke();
 
     public void OpenSettings() => SettingsRequested?.Invoke();
+
+    /// <summary>
+    /// The Commander asked for the documentation. Raised rather than acted on, for the same
+    /// reason opening settings is: this view is instantiated by the headset overlay too, and a
+    /// panel that launched a browser would be a panel that knows what a desktop is.
+    /// </summary>
+    public void OpenHelp() => HelpRequested?.Invoke();
 
     public void AcceptUpdate() => UpdateAccepted?.Invoke();
 

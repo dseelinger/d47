@@ -24,7 +24,7 @@ public static class SettingsCapability
             Id = Id,
             Group = "Foundation",
             Name = "Settings",
-            Summary = "List the settings d47 may change on your behalf, read one, or change one.",
+            Summary = "List the settings D47 may change on your behalf, read one, or change one.",
             Examples =
             [
                 "what settings can you change",

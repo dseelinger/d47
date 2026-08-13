@@ -78,7 +78,7 @@ public static class EgressDisclosure
                 GitHubReleasesEndpoint,
                 "One request for the latest release tag at startup. Nothing about you goes with it — no key, "
                 + "no journal content, and no identifier beyond the request itself. Accepting an offered "
-                + "update downloads that release from github.com and replaces d47 with it; nothing is "
+                + "update downloads that release from github.com and replaces D47 with it; nothing is "
                 + "downloaded unless you ask for it.",
                 Active: true)
             : EgressEntry.Silent(
@@ -97,7 +97,7 @@ public static class EgressDisclosure
                 SpeechModels,
                 NameOf(SpeechModels),
                 Listening.WhisperModels.Host,
-                $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, d47 "
+                $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, D47 "
                 + "asks the host how big it is, shows you that figure, and downloads nothing until you agree. "
                 + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
                 + "Once downloaded, transcription runs entirely on this machine.",

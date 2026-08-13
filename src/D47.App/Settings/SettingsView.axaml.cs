@@ -34,7 +34,6 @@ namespace D47.App.Settings;
 /// </summary>
 public partial class SettingsView : UserControl
 {
-    private const string DocsBaseUrl = "https://dseelinger.github.io/d47/capabilities";
 
     private readonly List<SectionView> _sections = [];
     private readonly List<RowView> _rows = [];
@@ -955,9 +954,7 @@ public partial class SettingsView : UserControl
 
     private static void OpenDocs(CapabilityDescriptor capability, SettingRow row)
     {
-        var anchor = row.DocsAnchor is { } value ? $"#{value}" : string.Empty;
-
-        Process.Start(new ProcessStartInfo($"{DocsBaseUrl}/{capability.Id}.html{anchor}")
+        Process.Start(new ProcessStartInfo(DocsSite.Capability(capability.Id, row.DocsAnchor))
         {
             UseShellExecute = true,
         });

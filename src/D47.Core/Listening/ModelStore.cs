@@ -23,8 +23,8 @@ public sealed record ModelOffer(WhisperModel Model, long Bytes, string? Sha256)
         $"Download the {Model.Label} speech model? "
         + $"{Megabytes:0.#} MB from {WhisperModels.Host}, saved to your data folder. "
         + (Sha256 is null
-            ? "The host published no checksum for it, so d47 can only check that the download completed."
-            : "d47 will verify the download against the checksum the host published.");
+            ? "The host published no checksum for it, so D47 can only check that the download completed."
+            : "D47 will verify the download against the checksum the host published.");
 }
 
 /// <summary>How a download ended.</summary>

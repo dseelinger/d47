@@ -8,7 +8,7 @@
   <!--
     The caption layer, and nothing else is on this quad. Transparent everywhere the box is not,
     so the cockpit shows through: a caption sits over a starfield, a station's floodlights and
-    the ship's own instruments, and this is the only surface d47 draws that is mostly nothing.
+    the ship's own instruments, and this is the only surface D47 draws that is mostly nothing.
 
     Deliberately not themed. Every other surface takes its colour from the palette; a caption
     takes it from the caption standard, which is white-ish text on a dark box and has been

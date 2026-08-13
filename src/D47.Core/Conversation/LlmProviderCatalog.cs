@@ -82,8 +82,8 @@ public static class LlmProviderCatalog
             DefaultModel = "claude-opus-5",
             Models = ["claude-opus-5", "claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5", "claude-fable-5"],
             Egress =
-                "Your question, d47's reply so far, the guardrails, the persona and your About Me text, and the " +
-                "game state d47 assembled from your journal — system, body, station and docking state — are sent " +
+                "Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the " +
+                "game state D47 assembled from your journal — system, body, station and docking state — are sent " +
                 "to the endpoint below on every turn the model answers. Journal files themselves are never uploaded.",
         },
     ];

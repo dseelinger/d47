@@ -69,7 +69,7 @@ public static class CalloutCapability
             {
                 Name = "get_callouts",
                 Description =
-                    "List the things d47 announces without being asked, and whether each one is currently on.",
+                    "List the things D47 announces without being asked, and whether each one is currently on.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(describe())),
             },
         ],
@@ -84,7 +84,7 @@ public static class CalloutCapability
             {
                 Key = EnabledKey,
                 Label = "Speak without being asked",
-                Help = "Off means d47 only ever answers. Every warning below stops with it.",
+                Help = "Off means D47 only ever answers. Every warning below stops with it.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "enabled",
@@ -257,7 +257,7 @@ public static class CalloutCapability
         Kind = SettingKind.Toggle,
         DefaultDisplay = "on",
         DocsAnchor = anchor,
-        Group = "What d47 speaks up about",
+        Group = "What D47 speaks up about",
         GroupHelp =
             "Each one is separately switchable, because finding route progress chatty is not a "
             + "reason to lose the interdiction warning.",

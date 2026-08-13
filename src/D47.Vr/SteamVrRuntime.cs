@@ -61,9 +61,9 @@ public sealed class SteamVrRuntime(
     private static readonly IReadOnlyDictionary<VrSurface, (string Key, string Name)> Keys =
         new Dictionary<VrSurface, (string, string)>
         {
-            [VrSurface.PanelFull] = ("com.dseelinger.d47.panel", "d47"),
-            [VrSurface.PanelMini] = ("com.dseelinger.d47.panel", "d47"),
-            [VrSurface.Captions] = ("com.dseelinger.d47.captions", "d47 captions"),
+            [VrSurface.PanelFull] = ("com.dseelinger.D47.panel", "D47"),
+            [VrSurface.PanelMini] = ("com.dseelinger.D47.panel", "D47"),
+            [VrSurface.Captions] = ("com.dseelinger.D47.captions", "D47 captions"),
         };
 
     /// <summary>
@@ -241,7 +241,7 @@ public sealed class SteamVrRuntime(
             Release();
             return new VrStart(
                 VrStartOutcome.NotReady,
-                "SteamVR is not running. d47 will attach when you start it.");
+                "SteamVR is not running. D47 will attach when you start it.");
         }
 
         if (!OpenVR.IsHmdPresent())
@@ -249,7 +249,7 @@ public sealed class SteamVrRuntime(
             Release();
             return new VrStart(
                 VrStartOutcome.NotReady,
-                "No headset is switched on. d47 will attach when one appears.");
+                "No headset is switched on. D47 will attach when one appears.");
         }
 
         var error = EVRInitError.None;

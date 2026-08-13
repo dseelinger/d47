@@ -190,7 +190,7 @@ public sealed class SettingsService
         if (row.Kind == SettingKind.Info)
         {
             return new SettingApplyResult(
-                SettingApplyStatus.Refused, $"'{row.Label}' is something d47 reports, not something you set.");
+                SettingApplyStatus.Refused, $"'{row.Label}' is something D47 reports, not something you set.");
         }
 
         if (!row.Applies(Current))

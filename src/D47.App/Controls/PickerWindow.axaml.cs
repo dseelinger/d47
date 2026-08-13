@@ -115,7 +115,7 @@ public partial class PickerWindow : Window
 
         EmptyHint.IsVisible = matches.Length == 0;
         EmptyHint.Text = _request.Choices.Count == 0
-            ? "There is nothing to offer here — d47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
+            ? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
             : $"Nothing matches \"{filter}\". {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
         // A closed vocabulary means the typed text is a filter and nothing else, so there has to

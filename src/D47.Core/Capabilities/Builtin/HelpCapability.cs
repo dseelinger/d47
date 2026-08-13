@@ -31,7 +31,7 @@ public static class HelpCapability
         Id = Id,
         Group = "Foundation",
         Name = "Help",
-        Summary = "Say what d47 can actually do, projected from the capability registry rather than invented.",
+        Summary = "Say what D47 can actually do, projected from the capability registry rather than invented.",
         Examples =
         [
             "what can you do",
@@ -58,8 +58,8 @@ public static class HelpCapability
             {
                 Name = "get_capabilities",
                 Description =
-                    "List what d47 can do, from its own capability registry. Use this instead of describing "
-                    + "d47's abilities from memory — this is the only accurate source, and anything not "
+                    "List what D47 can do, from its own capability registry. Use this instead of describing "
+                    + "D47's abilities from memory — this is the only accurate source, and anything not "
                     + "listed here does not exist.",
                 Parameters =
                 [

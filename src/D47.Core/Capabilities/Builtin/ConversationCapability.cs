@@ -218,7 +218,7 @@ public static class ConversationCapability
             {
                 Key = KeyRowFor(provider),
                 Label = $"{provider.Name} API key",
-                Help = "Stored encrypted for this Windows account. Write-only: d47 will never show it back to you.",
+                Help = "Stored encrypted for this Windows account. Write-only: D47 will never show it back to you.",
                 Kind = SettingKind.Secret,
                 SecretName = provider.KeySecretName,
                 DocsAnchor = "api-key",
