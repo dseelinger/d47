@@ -1,7 +1,8 @@
 name: release
 
-# Tag and push is the whole release process:
-#   git tag v0.1.0 && git push --tags
+# Tag and push is the whole release process. Signed and annotated, and a published tag never
+# moves — see CLAUDE.md:
+#   git tag -s v0.1.0 -m "what changed" && git push origin v0.1.0
 on:
   push:
     tags: ['v*']

@@ -51,6 +51,7 @@ public sealed class AppHost : IDisposable
         CalloutEngine callouts,
         CapabilityRegistry capabilities,
         UpdateChecker updates,
+        UpdateInstaller installer,
         TurnLoop turns,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
@@ -82,6 +83,7 @@ public sealed class AppHost : IDisposable
         Callouts = callouts;
         Capabilities = capabilities;
         Updates = updates;
+        Installer = installer;
         Turns = turns;
         LlmAvailability = llmAvailability;
         Spend = spend;
@@ -147,6 +149,9 @@ public sealed class AppHost : IDisposable
     public TurnCancellation Cancellation { get; }
 
     public UpdateChecker Updates { get; }
+
+    /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
+    public UpdateInstaller Installer { get; }
 
     /// <summary>One turn of conversation, whichever path answers it.</summary>
     public TurnLoop Turns { get; }
@@ -431,6 +436,14 @@ public sealed class AppHost : IDisposable
             capabilities.ToolNames.Count());
 
         var updates = new UpdateChecker(loggerFactory.CreateLogger<UpdateChecker>());
+        var installer = new UpdateInstaller(paths, loggerFactory.CreateLogger<UpdateInstaller>());
+
+        // The moment the retired build is no longer the running image is startup, so this is the
+        // first chance to delete what a previous update left behind.
+        if (Environment.ProcessPath is { } runningExecutable)
+        {
+            installer.CleanUpRetired(runningExecutable);
+        }
 
         var router = new KeywordRouter(capabilities);
 
@@ -464,6 +477,7 @@ public sealed class AppHost : IDisposable
             callouts,
             capabilities,
             updates,
+            installer,
             turns,
             llmAvailability,
             spend,

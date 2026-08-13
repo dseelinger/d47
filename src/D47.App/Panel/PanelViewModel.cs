@@ -44,6 +44,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string _turnLine = string.Empty;
     private string? _errorText;
     private string? _updateText;
+    private bool _updateBusy;
     private string _askText = string.Empty;
     private bool _canAsk = true;
     private PanelMode _mode = PanelMode.Full;
@@ -116,6 +117,26 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     public bool HasUpdate => !string.IsNullOrEmpty(_updateText);
+
+    /// <summary>
+    /// An update is being fetched or installed. The toast stays up and says what is happening,
+    /// but its buttons go away: "Update now" a second time would start a second download, and
+    /// "Later" cannot un-download the one already running.
+    /// </summary>
+    public bool UpdateBusy
+    {
+        get => _updateBusy;
+        set
+        {
+            if (Set(ref _updateBusy, value))
+            {
+                Raise(nameof(UpdateActionable));
+            }
+        }
+    }
+
+    /// <summary>Whether the toast's buttons are shown.</summary>
+    public bool UpdateActionable => !_updateBusy;
 
     public string AskText
     {

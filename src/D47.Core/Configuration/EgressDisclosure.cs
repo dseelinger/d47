@@ -40,7 +40,14 @@ public static class EgressDisclosure
     /// <summary>Fetching a speech model, which is the only transfer d47 makes on request.</summary>
     public const string SpeechModels = "models";
 
-    public const string GitHubReleasesEndpoint = "api.github.com";
+    /// <summary>
+    /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
+    /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
+    /// storage, so the bytes land from objects.githubusercontent.com. Named in full rather than
+    /// summarised as "GitHub": a disclosure that hides a host behind a brand is not a disclosure.
+    /// </summary>
+    public const string GitHubReleasesEndpoint =
+        "api.github.com, and github.com if you accept an update";
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
@@ -70,7 +77,9 @@ public static class EgressDisclosure
                 NameOf(UpdateCheck),
                 GitHubReleasesEndpoint,
                 "One request for the latest release tag at startup. Nothing about you goes with it — no key, "
-                + "no journal content, and no identifier beyond the request itself.",
+                + "no journal content, and no identifier beyond the request itself. Accepting an offered "
+                + "update downloads that release from github.com and replaces d47 with it; nothing is "
+                + "downloaded unless you ask for it.",
                 Active: true)
             : EgressEntry.Silent(
                 UpdateCheck, NameOf(UpdateCheck), "The startup update check is off, so nothing is requested."),
