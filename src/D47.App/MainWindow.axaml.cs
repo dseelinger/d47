@@ -47,6 +47,9 @@ public partial class MainWindow : Window
     private bool _spoken;
     private bool _downloading;
 
+    /// <summary>The model the panel is currently offering, so its buttons know what they mean.</summary>
+    private WhisperModel? _offered;
+
     public MainWindow() : this(host: null)
     {
     }
@@ -181,7 +184,24 @@ public partial class MainWindow : Window
             () => _model.Append($"\n{text}\n"));
 
         _host.ModelNeeded += model => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _ = OfferModelDownloadAsync(model));
+            () => OfferModelDownload(model));
+
+        _model.ModelDownloadAccepted += () =>
+        {
+            if (_offered is { } wanted)
+            {
+                _ = DownloadModelAsync(wanted);
+            }
+        };
+
+        _model.ModelDownloadDismissed += () =>
+        {
+            _host.Loggers.CreateLogger<MainWindow>().LogInformation(
+                "The speech model offer was dismissed");
+
+            _model.ModelText = null;
+            _offered = null;
+        };
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();
@@ -432,7 +452,38 @@ public partial class MainWindow : Window
     /// their choice would be answering for them.
     /// </para>
     /// </summary>
-    private async Task OfferModelDownloadAsync(WhisperModel model)
+    /// <summary>
+    /// Puts the offer on the panel, where it stays until it is answered.
+    /// <para>
+    /// It used to open a modal here and nowhere else. That asked the question once per launch,
+    /// on whichever display this window happened to be on, and a Commander whose window sat on
+    /// a second monitor was never asked at all - three sessions of "no speech model is loaded"
+    /// with the 466 MB that would fix it one click away and nothing saying so.
+    /// </para>
+    /// </summary>
+    private void OfferModelDownload(WhisperModel model)
+    {
+        if (_host is null || _downloading)
+        {
+            return;
+        }
+
+        _offered = model;
+        _model.ModelBusy = false;
+
+        // Stated from what d47 already knows rather than from a HEAD request, so the offer is
+        // on screen immediately and does not depend on the host being reachable to be readable.
+        // InstallModelAsync still describes it authoritatively before a byte is fetched.
+        _model.ModelText =
+            $"{model.Label} is not downloaded. About {model.ApproximateMegabytes} MB from "
+            + $"{WhisperModels.Host}, saved to your data folder, verified against the published "
+            + "checksum. Until then D47 hears you but cannot turn it into words.";
+
+        _host.Loggers.CreateLogger<MainWindow>().LogInformation(
+            "Offering {Model} on the panel", model.Id);
+    }
+
+    private async Task DownloadModelAsync(WhisperModel model)
     {
         if (_host is null || _downloading)
         {
@@ -440,6 +491,10 @@ public partial class MainWindow : Window
         }
 
         _downloading = true;
+        _model.ModelBusy = true;
+
+        var log = _host.Loggers.CreateLogger<MainWindow>();
+        log.LogInformation("Downloading {Model}", model.Id);
 
         try
         {
@@ -449,19 +504,21 @@ public partial class MainWindow : Window
             var progress = new Progress<ModelProgress>(report =>
                 _model.TurnLine = $"Downloading {report.ModelId}: {report.Fraction:P0}");
 
-            var result = await _host.InstallModelAsync(
-                model,
-                async offer =>
-                {
-                    var dialog = new ConfirmWindow(
-                        "Download a speech model",
-                        offer.ConsentPrompt(),
-                        "Download",
-                        "Not now");
+            // Already consented: the banner carried the size, the host and the checksum
+            // promise, and the Commander pressed Download against that text.
+            var result = await _host.InstallModelAsync(model, _ => Task.FromResult(true), progress);
 
-                    return await dialog.AskAsync(this);
-                },
-                progress);
+            log.LogInformation("{Model} download ended as {Outcome}", model.Id, result.Outcome);
+
+            // Selecting it is what the download was for, and it happens only now that the file
+            // is on disk - which is the whole rule: the setting names a model d47 can load.
+            if (result.Outcome is ModelInstall.Installed or ModelInstall.AlreadyPresent)
+            {
+                _host.Settings.Apply(
+                    ListeningCapability.ModelKey,
+                    model.Id,
+                    SettingsCaller.Panel);
+            }
 
             _model.TurnLine = result.Outcome switch
             {
@@ -482,6 +539,12 @@ public partial class MainWindow : Window
         finally
         {
             _downloading = false;
+            _model.ModelBusy = false;
+
+            // Gone either way. Installed, it is answered; failed, the error banner carries it,
+            // and an offer that stays up would invite the same download again.
+            _model.ModelText = null;
+            _offered = null;
         }
     }
 

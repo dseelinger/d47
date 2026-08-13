@@ -97,6 +97,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string? _errorText;
     private string? _updateText;
     private bool _updateBusy;
+    private string? _modelText;
+    private bool _modelBusy;
     private string _askText = string.Empty;
     private bool _canAsk = true;
     private string _transcriptText = string.Empty;
@@ -122,6 +124,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public event Action? UpdateAccepted;
 
     public event Action? UpdateDismissed;
+
+    /// <summary>The Commander agreed to the download, having read what it costs.</summary>
+    public event Action? ModelDownloadAccepted;
+
+    public event Action? ModelDownloadDismissed;
 
     /// <summary>Everything, in order. The transcript as it has always been.</summary>
     public string TranscriptText
@@ -245,6 +252,46 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Whether the toast's buttons are shown.</summary>
     public bool UpdateActionable => !_updateBusy;
 
+    /// <summary>
+    /// The speech model that is selected but not on disk, stated with its size and where it
+    /// comes from - the consent text itself, not a pointer to it.
+    /// <para>
+    /// A banner rather than only a dialog, because this is a <em>state</em> and not an event.
+    /// The offer used to be a modal raised once per launch, parented to the desktop window; a
+    /// Commander whose window was on a second display got the question asked where they were
+    /// not looking, three sessions running, while the panel said only "no speech model is
+    /// loaded" and never that one was a click away.
+    /// </para>
+    /// </summary>
+    public string? ModelText
+    {
+        get => _modelText;
+        set
+        {
+            if (Set(ref _modelText, value))
+            {
+                Raise(nameof(HasModelOffer));
+            }
+        }
+    }
+
+    public bool HasModelOffer => !string.IsNullOrEmpty(_modelText);
+
+    /// <summary>Downloading. Same reason as <see cref="UpdateBusy"/>: the buttons go away.</summary>
+    public bool ModelBusy
+    {
+        get => _modelBusy;
+        set
+        {
+            if (Set(ref _modelBusy, value))
+            {
+                Raise(nameof(ModelActionable));
+            }
+        }
+    }
+
+    public bool ModelActionable => !_modelBusy;
+
     public string AskText
     {
         get => _askText;
@@ -301,6 +348,10 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public void OpenHelp() => HelpRequested?.Invoke();
 
     public void AcceptUpdate() => UpdateAccepted?.Invoke();
+
+    public void AcceptModelDownload() => ModelDownloadAccepted?.Invoke();
+
+    public void DismissModelDownload() => ModelDownloadDismissed?.Invoke();
 
     public void DismissUpdate() => UpdateDismissed?.Invoke();
 
