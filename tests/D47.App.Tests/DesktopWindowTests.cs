@@ -236,6 +236,10 @@ public class DesktopWindowTests
         WindowPlacementMemory.Attach(window, viewState, WindowSlot.Settings);
         window.Show();
 
+        // Whatever it opened at, which is a proportion of the screen rather than the numbers
+        // above: this test is about what maximising does to the memory, not about the default.
+        var normal = (window.Width, window.Height);
+
         window.WindowState = WindowState.Maximized;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         window.Close();
@@ -248,14 +252,17 @@ public class DesktopWindowTests
         // And the normal-state size it had before is what it restores to, not the maximised
         // rectangle — otherwise maximising once leaves a window that cannot be un-maximised
         // back to a size the Commander chose.
-        Assert.Equal(1180, remembered.Width);
-        Assert.Equal(880, remembered.Height);
+        Assert.Equal(normal, (remembered.Width, remembered.Height));
     }
 
     /// <summary>
-    /// Zoom scrolls the window horizontally rather than reflowing the layout, so at 125% the
-    /// content is a quarter wider than the default was chosen for and clips on every launch.
-    /// The default follows the zoom; a size the Commander chose does not.
+    /// Bigger text wants a bigger window to put it in, so the opening size follows the zoom.
+    /// A size the Commander chose does not: that one is not a guess to be improved on.
+    /// <para>
+    /// The base it scales is a proportion of the screen, not a number in the XAML — which is
+    /// why this reads the proportion rather than a literal. A fixed default is a default
+    /// chosen against somebody else's monitor.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void TheDefaultSizeFollowsTheZoomButARememberedOneDoesNot()
@@ -265,8 +272,23 @@ public class DesktopWindowTests
         var fresh = new Window { Width = 800, Height = 600 };
         WindowPlacementMemory.Attach(fresh, viewState, WindowSlot.Settings, () => 125);
 
-        Assert.Equal(1000, fresh.Width);
-        Assert.Equal(750, fresh.Height);
+        var screen = fresh.Screens!.Primary ?? fresh.Screens.All[0];
+        var (openWidth, openHeight) = WindowFit.Opening(
+            screen.WorkingArea.Width / screen.Scaling,
+            screen.WorkingArea.Height / screen.Scaling);
+
+        var (expectedWidth, expectedHeight) = WindowFit.Clamp(
+            openWidth * 1.25,
+            openHeight * 1.25,
+            screen.WorkingArea.Width / screen.Scaling,
+            screen.WorkingArea.Height / screen.Scaling);
+
+        Assert.Equal(expectedWidth, fresh.Width, 3);
+        Assert.Equal(expectedHeight, fresh.Height, 3);
+
+        // And it is genuinely larger than the unzoomed opening size, or the assertion above
+        // would pass on a clamp that had swallowed the zoom entirely.
+        Assert.True(fresh.Width > openWidth);
 
         viewState.Save(viewState.Load() with
         {

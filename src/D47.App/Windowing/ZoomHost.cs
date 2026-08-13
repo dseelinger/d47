@@ -33,6 +33,9 @@ public sealed class ZoomHost
     private readonly SettingsService _settings;
     private readonly ScaleTransform _scale = new();
 
+    private ScrollViewer? _viewport;
+    private Control? _content;
+
     private ZoomHost(SettingsService settings)
     {
         _settings = settings;
@@ -60,11 +63,11 @@ public sealed class ZoomHost
             // straight to the new parent throws rather than reparenting.
             window.Content = null;
 
-            // Browser-like: zooming past the window's width scrolls sideways rather than
-            // squeezing the layout into what is left. Horizontal only — vertical is left to
-            // whatever inside the window already scrolls, so a transcript still scrolls itself
-            // and the settings footer stays put at the bottom.
-            window.Content = new ScrollViewer
+            // Horizontal only — vertical is left to whatever inside the window already
+            // scrolls, so a transcript still scrolls itself and the settings footer stays put
+            // at the bottom. The sideways scroll is the escape hatch for content with a real
+            // minimum width, not the normal case: see FitToViewport.
+            var viewport = new ScrollViewer
             {
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -74,6 +77,22 @@ public sealed class ZoomHost
                     Child = content,
                 },
             };
+
+            host._viewport = viewport;
+            host._content = content;
+
+            // A ScrollViewer that can scroll sideways measures its child with infinite width,
+            // and everything downstream believes it. That is what this has to undo on every
+            // viewport change.
+            viewport.PropertyChanged += (_, change) =>
+            {
+                if (change.Property == ScrollViewer.ViewportProperty)
+                {
+                    host.FitToViewport();
+                }
+            };
+
+            window.Content = viewport;
         }
 
         host.ApplyCurrent();
@@ -113,6 +132,44 @@ public sealed class ZoomHost
         var factor = ZoomLadder.ScaleOf(Percent);
         _scale.ScaleX = factor;
         _scale.ScaleY = factor;
+
+        FitToViewport();
+    }
+
+    /// <summary>
+    /// Gives the layout a width to lay out against, which the scrolling host otherwise takes
+    /// away.
+    /// <para>
+    /// <b>This is what makes the panel responsive at all.</b> A <see cref="ScrollViewer"/> with
+    /// horizontal scrolling enabled measures its child with infinite available width — that is
+    /// what "may scroll sideways" means to a measure pass — so <c>TextWrapping="Wrap"</c> below
+    /// it has nothing to wrap against and never wraps. The transcript becomes one line as long
+    /// as the longest thing said, the content is as wide as that line, and the window is a
+    /// window you can drag wider forever without ever seeing the end of the sentence. Reported
+    /// as "at 100% zoom the main window doesn't fit in HD", which is the visible half of it.
+    /// </para>
+    /// <para>
+    /// Divided by the scale because the constraint belongs on the *unscaled* layout: at 150%
+    /// the child is laid out at two thirds of the viewport and then drawn half again as large,
+    /// which is a browser's text zoom — bigger text, rewrapped, still inside the window. What
+    /// survives is the sideways scroll for content that genuinely will not fit, since a child
+    /// with a MinWidth above this simply exceeds it and the scrollbar comes back.
+    /// </para>
+    /// </summary>
+    private void FitToViewport()
+    {
+        if (_viewport is null || _content is null)
+        {
+            return;
+        }
+
+        var available = _viewport.Viewport.Width;
+
+        // Before the first layout pass there is no viewport to fit. Constraining to zero would
+        // measure the panel at nothing at all, which is not a smaller panel but an absent one.
+        _content.MaxWidth = available > 0
+            ? available / ZoomLadder.ScaleOf(Percent)
+            : double.PositiveInfinity;
     }
 
     private void OnWheel(object? sender, PointerWheelEventArgs e)

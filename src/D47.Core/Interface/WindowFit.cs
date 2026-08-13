@@ -67,6 +67,54 @@ public static class WindowFit
     }
 
     /// <summary>
+    /// How much of the working area a window with nothing remembered opens at.
+    /// <para>
+    /// Narrower than it is tall in proportion, because the panel is a column of text and a
+    /// transcript wider than about ninety characters is harder to read rather than easier -
+    /// the extra width buys nothing and costs the eye the return sweep.
+    /// </para>
+    /// </summary>
+    public const double DefaultWidthFraction = 0.55;
+
+    public const double DefaultHeightFraction = 0.75;
+
+    /// <summary>
+    /// Never narrower than this, whatever the screen says. A proportion of a small screen is
+    /// still a window somebody has to read, and the panel has a header, an ask box and a send
+    /// button that stop making sense side by side below roughly this.
+    /// </summary>
+    public const double MinimumWidth = 640;
+
+    public const double MinimumHeight = 480;
+
+    /// <summary>
+    /// The size to open at when nothing is remembered, as a proportion of the work area rather
+    /// than a number written down once.
+    /// <para>
+    /// A fixed default is a default chosen against one screen. 820x640 was picked at 100% on a
+    /// 1080p display: on a 4K panel it opens as a postage stamp in the corner, and at 150%
+    /// scaling it is 1230x960 real pixels, which is most of the usable height of the screen it
+    /// was chosen on. Neither is a size anybody would choose for the screen it lands on, and
+    /// both come from the same mistake - a length in a file where a proportion belongs.
+    /// </para>
+    /// <para>
+    /// Still clamped by <see cref="Clamp"/> afterwards, which stays the guard for a remembered
+    /// size arriving from a bigger screen than the one in front of the Commander now.
+    /// </para>
+    /// </summary>
+    public static (double Width, double Height) Opening(double workAreaWidth, double workAreaHeight)
+    {
+        if (workAreaWidth <= 0 || workAreaHeight <= 0)
+        {
+            return (MinimumWidth, MinimumHeight);
+        }
+
+        return (
+            Math.Min(Math.Max(workAreaWidth * DefaultWidthFraction, MinimumWidth), workAreaWidth * Fraction),
+            Math.Min(Math.Max(workAreaHeight * DefaultHeightFraction, MinimumHeight), workAreaHeight * Fraction));
+    }
+
+    /// <summary>
     /// The position to restore a remembered window at, or null to let the platform centre it.
     /// <para>
     /// A remembered position is only honoured if enough of the window would land on a screen
