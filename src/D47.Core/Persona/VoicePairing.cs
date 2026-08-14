@@ -135,6 +135,56 @@ public static class VoicePairing
     }
 
     /// <summary>
+    /// The pairings, less any that gives a core a voice of the wrong gender (list.md Phase 11,
+    /// #33).
+    /// <para>
+    /// A pairing is never re-derived, because nothing distinguishes one the Commander chose from
+    /// one an earlier pass made — but that rule protects a <em>choice</em>, and a core written
+    /// as a man speaking in a woman's voice is not one. It is this pass having answered before
+    /// the gender was stated to it. Dropped rather than replaced, so the core is paired again by
+    /// the path that pairs every other unpaired core, with a model, in the ordinary way.
+    /// </para>
+    /// <para>
+    /// A voice this provider does not offer is left alone. It may be another provider's, and
+    /// which pairings belong to the provider in force is a question with an owner already.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> WithoutMiscastVoices(
+        IReadOnlyDictionary<string, string> paired,
+        IReadOnlyList<VoiceInfo> voices,
+        ILogger? logger = null)
+    {
+        var byId = new Dictionary<string, VoiceInfo>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var voice in voices)
+        {
+            byId[voice.Id] = voice;
+        }
+
+        var kept = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var (personaId, voiceId) in paired)
+        {
+            if (byId.TryGetValue(voiceId, out var voice)
+                && PersonaCatalog.Knows(personaId)
+                && !PersonaCatalog.Resolve(personaId).VoiceHint.Admits(voice.Gender))
+            {
+                logger?.LogInformation(
+                    "Dropping the voice {Voice} paired to {Persona}: the core is written {Gender}",
+                    voiceId,
+                    personaId,
+                    PersonaCatalog.Resolve(personaId).VoiceHint.Gender);
+
+                continue;
+            }
+
+            kept[personaId] = voiceId;
+        }
+
+        return kept.Count == paired.Count ? paired : kept;
+    }
+
+    /// <summary>
     /// A voice for one core, asked for at the moment it is needed — the Commander has just
     /// selected a core that has none (list.md Phase 11, #33).
     /// <para>
@@ -159,7 +209,13 @@ public static class VoicePairing
         CancellationToken cancellationToken = default)
     {
         var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var offered = voices.Where(voice => !used.Contains(voice.Id)).ToArray();
+
+        // Filtered rather than checked afterwards, because this path asks about one core and so
+        // can. A core written as a man is not offered a woman's voice at all, which is a
+        // narrower question for the model and one it cannot get wrong.
+        var offered = voices
+            .Where(voice => !used.Contains(voice.Id) && persona.VoiceHint.Admits(voice.Gender))
+            .ToArray();
 
         // A named default is not a judgement, so it is answered here rather than asked of a
         // model — and answered even when there is none.
@@ -216,6 +272,8 @@ public static class VoicePairing
         var request = new System.Text.StringBuilder();
         request.AppendLine(
             "Pick the most fitting voice for each character below, from the voice list. "
+            + "Each character states the gender its voice must have; that part is not a "
+            + "judgement call and an answer that ignores it is discarded. "
             + "Answer with one line per character, exactly `id = voiceId`, and nothing else. "
             + "Use each voice at most once. If none fits, leave that character out.");
         request.AppendLine();
@@ -231,7 +289,11 @@ public static class VoicePairing
 
         foreach (var persona in unpaired)
         {
-            request.AppendLine($"  {persona.Id} — {persona.VoiceHint.Description}");
+            var gender = persona.VoiceHint.Gender == VoiceGender.Unspecified
+                ? string.Empty
+                : $"{persona.VoiceHint.Gender.ToString().ToLowerInvariant()} voice. ";
+
+            request.AppendLine($"  {persona.Id} — {gender}{persona.VoiceHint.Description}");
         }
 
         var answer = await FlavourTurn.AskAsync(
@@ -273,12 +335,29 @@ public static class VoicePairing
             // Both halves checked against what was actually offered. A model that invents a
             // voice id would otherwise write a pairing that fails at the first line spoken —
             // the same anti-invention rule the guardrails state, enforced rather than asked for.
-            if (PersonaCatalog.Knows(personaId)
-                && byId.ContainsKey(voiceId)
-                && !chosen.ContainsValue(voiceId))
+            if (!PersonaCatalog.Knows(personaId)
+                || !byId.TryGetValue(voiceId, out var voice)
+                || chosen.ContainsValue(voice.Id))
             {
-                chosen[personaId] = byId[voiceId].Id;
+                continue;
             }
+
+            // The stated gender, enforced rather than asked for — the same rule as the voice
+            // id itself. This pass puts every core in one prompt, so it cannot hand each of
+            // them a filtered list the way the lazy path does; a miscast answer is dropped
+            // instead, and that core is paired properly the next time it is selected.
+            if (!PersonaCatalog.Resolve(personaId).VoiceHint.Admits(voice.Gender))
+            {
+                logger?.LogInformation(
+                    "Not pairing {Persona} to {Voice}: the core is written {Gender}",
+                    personaId,
+                    voice.Id,
+                    PersonaCatalog.Resolve(personaId).VoiceHint.Gender);
+
+                continue;
+            }
+
+            chosen[personaId] = voice.Id;
         }
 
         return chosen;

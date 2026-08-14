@@ -151,6 +151,51 @@ public class VoicePairingTests
         Assert.Empty(paired);
     }
 
+    /// <summary>
+    /// Ten of the eleven cores are written as men and one as a woman, and a voice of the wrong
+    /// gender is not a near miss — it is a different character saying the lines. The model is
+    /// told which is which and its answer is checked against it, because it has been observed
+    /// weighing "a fussy, over-articulated man" against an accent and preferring the accent.
+    /// </summary>
+    [Fact]
+    public async Task ACoreWrittenAsAManIsNotGivenAWomansVoice()
+    {
+        var paired = await VoicePairing.ChooseAsync(
+            Voices(),
+            Nothing(),
+            FakeLlmProvider.Answering(
+                "analyst-prime = en-US-AriaNeural\ncora = en-GB-SoniaNeural\nwarden = en-GB-RyanNeural"),
+            model: "claude-opus-5",
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("analyst-prime", paired.Keys);
+        Assert.Equal("en-GB-SoniaNeural", paired["cora"]);
+        Assert.Equal("en-GB-RyanNeural", paired["warden"]);
+    }
+
+    /// <summary>
+    /// A provider that says nothing about gender must not end up offering nothing. The check
+    /// refuses a contradiction; silence is not one.
+    /// </summary>
+    [Fact]
+    public async Task AVoiceTheProviderDoesNotLabelIsStillOffered()
+    {
+        var paired = await VoicePairing.ChooseAsync(
+            [new("some-voice", "Unlabelled", "en-GB")],
+            Nothing(),
+            FakeLlmProvider.Answering("analyst-prime = some-voice"),
+            model: "claude-opus-5",
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal("some-voice", paired["analyst-prime"]);
+    }
+
     [Fact]
     public async Task ANamedDefaultDoesNotDisplaceAChoiceAlreadyMade()
     {
@@ -258,5 +303,67 @@ public class LazyVoicePairingTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(voice);
+    }
+}
+
+/// <summary>
+/// The pairings written before the pass was told which cores are men (list.md Phase 11, #33).
+/// <para>
+/// A pairing is otherwise never re-derived, because a hand-picked one is indistinguishable from
+/// a derived one — but that rule protects a choice, and a core written as a man speaking in a
+/// woman's voice is the pairing pass having answered a question it was not asked. It is dropped
+/// once, so the ordinary path chooses again.
+/// </para>
+/// </summary>
+public class MiscastVoicesAreDroppedTests
+{
+    private static IReadOnlyList<VoiceInfo> Voices() =>
+    [
+        new("en-US-AriaNeural", "Aria", "en-US", "Female"),
+        new("en-GB-RyanNeural", "Ryan", "en-GB", "Male"),
+        new("unlabelled", "Nobody Says", "en-GB"),
+    ];
+
+    private static Dictionary<string, string> Paired(params (string Persona, string Voice)[] pairs) =>
+        pairs.ToDictionary(pair => pair.Persona, pair => pair.Voice, StringComparer.Ordinal);
+
+    [Fact]
+    public void AManSpeakingInAWomansVoiceLosesIt()
+    {
+        var kept = VoicePairing.WithoutMiscastVoices(
+            Paired(("analyst-prime", "en-US-AriaNeural")), Voices());
+
+        Assert.Empty(kept);
+    }
+
+    [Fact]
+    public void EveryOtherPairingSurvives()
+    {
+        // Including the core the miscast one sat beside: this drops a pairing, it does not
+        // re-run the pairing.
+        var kept = VoicePairing.WithoutMiscastVoices(
+            Paired(
+                ("analyst-prime", "en-US-AriaNeural"),
+                ("cora", "en-US-AriaNeural"),
+                ("warden", "en-GB-RyanNeural"),
+                ("kex", "unlabelled")),
+            Voices());
+
+        Assert.Equal("en-US-AriaNeural", kept["cora"]);
+        Assert.Equal("en-GB-RyanNeural", kept["warden"]);
+        Assert.Equal("unlabelled", kept["kex"]);
+        Assert.DoesNotContain("analyst-prime", kept.Keys);
+    }
+
+    [Fact]
+    public void AVoiceThisProviderDoesNotOfferIsLeftAlone()
+    {
+        // It is another provider's, and which pairings belong to the provider in force is a
+        // question that already has an owner. Answering it here would clear a Commander's
+        // ElevenLabs cast the first time they looked at Edge.
+        var kept = VoicePairing.WithoutMiscastVoices(
+            Paired(("analyst-prime", "XrExE9yKIg1WjnnlVkGX")), Voices());
+
+        Assert.Equal("XrExE9yKIg1WjnnlVkGX", kept["analyst-prime"]);
     }
 }

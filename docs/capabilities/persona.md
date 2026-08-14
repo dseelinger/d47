@@ -96,12 +96,22 @@ all and the core keeps the one already in force. Directive 47 does not guess fro
 the version that did handed every core a confident miscast. Configure a model later and the next
 core you select is paired properly.
 
+**Gender is not part of the judgement.** Ten of the eleven cores are written as men and Cora as
+a woman, and the model is told so rather than left to infer it from the description — a voice of
+the wrong gender is not a near miss, it is a different character reading the lines. A voice your
+provider labels as contradicting the core is refused, and one it does not label either way is
+allowed, so an account that says nothing about gender still gets a full list to choose from.
+
 One exception, because it is not a judgement: on ElevenLabs, **Warden** takes **George** — warm,
 captivating storyteller, male, British — with or without a model.
 
 The voice sits on the [Voice row](speech.md#voice) in Speech, and that row is the core aboard's.
 Change it and you have chosen that core's voice; nothing re-derives it afterwards. Clear it and
 the next selection picks again.
+
+Once — and only on a settings file written before the gender was stated to the pairing — any
+core left speaking in the wrong gender has that pairing dropped, so the next time you select it
+a voice is chosen properly. Anything you set by hand after that stands, whatever it is.
 
 ## Settings
 

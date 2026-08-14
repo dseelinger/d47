@@ -993,8 +993,39 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Drops any pairing that has a core speaking in the wrong gender, once, so the ordinary
+    /// pairing path can choose it again.
+    /// <para>
+    /// Only with a model configured, and the flag is only stamped then. Dropping a voice with
+    /// nothing able to choose a replacement would leave that core on the provider's own default
+    /// — which is a voice nobody picked, and is not an improvement on a voice picked badly.
+    /// </para>
+    /// </summary>
+    private void RepairMiscastVoices()
+    {
+        if (Settings.Current.Persona.VoicesGenderChecked || Turns.Provider is null)
+        {
+            return;
+        }
+
+        Settings.Replace("persona.voices", current => current with
+        {
+            Persona = current.Persona with
+            {
+                Voices = VoicePairing.WithoutMiscastVoices(current.Persona.Voices, _voices, _logger),
+                VoicesGenderChecked = true,
+            },
+        });
+    }
+
     private async Task PairPersonaVoicesAsync()
     {
+        if (_voices.Count > 0)
+        {
+            RepairMiscastVoices();
+        }
+
         if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
         {
             // The pass has run, but it may have run in a session with no model configured and

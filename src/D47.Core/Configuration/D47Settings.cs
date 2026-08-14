@@ -93,6 +93,18 @@ public sealed record PersonaSettings
     /// should not have them silently regenerated on the next launch.
     /// </summary>
     public bool VoicesPaired { get; init; }
+
+    /// <summary>
+    /// Whether the pairings have been checked against the gender each core is written with.
+    /// <para>
+    /// Once, and then never again. The pairing pass ran for a while without being told which
+    /// cores are men, and a file written in that time can hold a core speaking in the wrong
+    /// voice — but a file is also where a Commander's own choice lives, and re-deciding that on
+    /// every launch is the one thing <see cref="Voices"/> promises not to do. So the repair is a
+    /// flag: it runs on a file that has not had it, and a choice made afterwards stands forever.
+    /// </para>
+    /// </summary>
+    public bool VoicesGenderChecked { get; init; }
 }
 
 /// <summary>

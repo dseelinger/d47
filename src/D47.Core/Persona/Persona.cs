@@ -119,4 +119,49 @@ public sealed record Persona(
 /// </para>
 /// </summary>
 /// <param name="Description">Given to the model when it is asked to choose a voice.</param>
-public sealed record VoiceHint(string Description);
+/// <param name="Gender">
+/// Whether this core reads as a man or a woman. Stated apart from the description because it is
+/// the one part of the description that is not a judgement: the rest is prose for a model to
+/// weigh, and a core whose every line is written for a man is not better cast by something that
+/// weighed "man" against an accent and preferred the accent.
+/// </param>
+public sealed record VoiceHint(string Description, VoiceGender Gender = VoiceGender.Unspecified)
+{
+    /// <summary>
+    /// Whether a voice the provider labels this way may speak for this core.
+    /// <para>
+    /// Anything the provider leaves unlabelled, or labels in terms this does not read, is
+    /// admitted. A silent provider is not evidence of a mismatch, and refusing on it would leave
+    /// a Commander whose account says nothing about gender with no voices at all — which is the
+    /// failure this exists to prevent, arrived at from the other side.
+    /// </para>
+    /// </summary>
+    public bool Admits(string? providerGender) =>
+        Gender == VoiceGender.Unspecified
+        || Read(providerGender) is not { } labelled
+        || labelled == Gender;
+
+    private static VoiceGender? Read(string? gender) => gender?.Trim().ToLowerInvariant() switch
+    {
+        "male" or "m" or "man" => VoiceGender.Male,
+        "female" or "f" or "woman" => VoiceGender.Female,
+        _ => null,
+    };
+}
+
+/// <summary>
+/// Which of a provider's voices can speak for a core. A constraint on the pairing rather than a
+/// preference: eleven cores are written as men and one as a woman, and hearing the wrong one is
+/// not a near miss, it is the wrong character.
+/// </summary>
+public enum VoiceGender
+{
+    /// <summary>Unstated. Every voice on offer is admitted.</summary>
+    Unspecified,
+
+    /// <summary>Only voices the provider labels male.</summary>
+    Male,
+
+    /// <summary>Only voices the provider labels female.</summary>
+    Female,
+}
