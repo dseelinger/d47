@@ -1,28 +1,33 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using D47.App.Panel;
+using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
+using D47.App.Settings;
+using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Listening;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>
-/// The speech model setting names a model D47 can actually load, or none.
+/// Choosing a speech model fetches it, on the row that was used to choose it.
 /// <para>
-/// Reported from a running build across three sessions: the settings row read
-/// "Small (English only)" while every utterance came back "I heard you, but I have no speech
-/// model loaded to understand it." The row was asserting something untrue, which reads as
-/// "the model is fine, the microphone must be broken" — and the offer to fix it was a modal
-/// raised once per launch, parented to a window that was on another display.
+/// Reported from a running build: the model could not be selected at all — it snapped back to
+/// "None — do not transcribe" every time. The rule that a setting may only name a model on
+/// disk was doing that correctly, and the offer to put one there was a banner on the main
+/// window, which is the window the settings dialog is covering. A question asked behind the
+/// thing that asked it.
 /// </para>
 /// </summary>
 public class ModelSelectionFollowsTheDiskTests
 {
     /// <summary>
-    /// The predicate the rule rests on: a named model that is not on disk is one still awaiting
-    /// a download, which is what the host reads to clear the selection and raise the offer.
+    /// The predicate the startup rule rests on: a named model that is not on disk is one still
+    /// awaiting a download.
     /// </summary>
     [Fact]
     public void AModelThatIsNotOnDiskIsStillAwaitingItsDownload()
@@ -32,80 +37,125 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>
-    /// The offer states what it costs and where it comes from, because the banner is the
-    /// consent — there is no second dialog behind it to carry the terms.
+    /// Selecting one that is not installed downloads it, and the setting is written only once
+    /// the file is there — so the row can never name a model D47 cannot load.
     /// </summary>
     [AvaloniaFact]
-    public void TheOfferOnThePanelCarriesTheTermsOfTheDownload()
+    public void ChoosingAModelFetchesItAndThenSelectsIt()
     {
-        var model = new PanelViewModel
+        var asked = new List<string>();
+
+        var (window, settings) = Open((model, _) =>
         {
-            ModelText =
-                "Small (English only) — more accurate, slower is not downloaded. About 466 MB from "
-                + "huggingface.co, saved to your data folder, verified against the published checksum.",
-        };
+            asked.Add(model.Id);
+            return Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null));
+        });
 
-        Assert.True(model.HasModelOffer);
-        Assert.Contains("466 MB", model.ModelText!, StringComparison.Ordinal);
-        Assert.Contains("huggingface.co", model.ModelText!, StringComparison.Ordinal);
-    }
+        Choose(window, "small.en");
 
-    /// <summary>The offer is answerable, and answering it takes it away.</summary>
-    [AvaloniaFact]
-    public void AnsweringTheOfferClearsIt()
-    {
-        var model = new PanelViewModel { ModelText = "Small is not downloaded. About 466 MB." };
-
-        var accepted = 0;
-        var dismissed = 0;
-        model.ModelDownloadAccepted += () => accepted++;
-        model.ModelDownloadDismissed += () => dismissed++;
-
-        model.AcceptModelDownload();
-        model.DismissModelDownload();
-
-        Assert.Equal(1, accepted);
-        Assert.Equal(1, dismissed);
-    }
-
-    /// <summary>
-    /// While it downloads the buttons go away: pressing Download twice would start a second
-    /// fetch, and "Not now" cannot un-fetch the one already running.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheOffersButtonsGoAwayWhileItIsDownloading()
-    {
-        var model = new PanelViewModel { ModelText = "Small is not downloaded." };
-
-        Assert.True(model.ModelActionable);
-
-        model.ModelBusy = true;
-
-        Assert.False(model.ModelActionable);
-        Assert.True(model.HasModelOffer);
-    }
-
-    /// <summary>The banner is on the panel, so both surfaces show it rather than one window.</summary>
-    [AvaloniaFact]
-    public void TheOfferIsOnThePanelRatherThanInAWindow()
-    {
-        var panel = new PanelView
-        {
-            DataContext = new PanelViewModel { ModelText = "Small is not downloaded. About 466 MB." },
-        };
-
-        var window = new Window { Width = 900, Height = 560, Content = panel };
-        window.Show();
-
-        var bounds = new Rect(0, 0, 900, 560);
-        window.Measure(bounds.Size);
-        window.Arrange(bounds);
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        Assert.True(panel.GetControl<Border>("ModelBanner").IsVisible);
+        Assert.Equal(["small.en"], asked);
+        Assert.Equal("small.en", settings.Current.Listening.Model);
 
         window.Close();
     }
+
+    /// <summary>A download that does not happen leaves the setting where it was.</summary>
+    [AvaloniaFact]
+    public void AFailedDownloadDoesNotBecomeASelection()
+    {
+        var (window, settings) = Open((_, _) =>
+            Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "the host refused")));
+
+        Choose(window, "small.en");
+
+        Assert.Equal(WhisperModels.NoneId, settings.Current.Listening.Model);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The row narrates. A download is neither instant nor visible, and the panel otherwise
+    /// speaks only on failure.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRowSaysWhatWentWrongWhereItWasChosen()
+    {
+        var (window, _) = Open((_, _) =>
+            Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "the host refused")));
+
+        Choose(window, "small.en");
+
+        // Searched from the window: a row's message line is a sibling of its three-column grid
+        // rather than a child of it, and what is being asserted is that it is said on the
+        // surface the choice was made on - not which panel holds the text block.
+        var said = window
+            .GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(text => text.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains(said, text => text.Contains("the host refused", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    /// <summary>And it has somewhere to show progress, under the control that starts it.</summary>
+    [AvaloniaFact]
+    public void TheModelRowCarriesAProgressBar()
+    {
+        var (window, _) = Open((_, _) =>
+            Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null)));
+
+        Assert.NotEmpty(Row(window).GetVisualDescendants().OfType<ProgressBar>());
+
+        window.Close();
+    }
+
+    private static (SettingsWindow Window, SettingsService Settings) Open(
+        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>> download)
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var window = new SettingsWindow();
+        window.Attach(settings, viewState, paths, downloadModel: download);
+        window.Show();
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return (window, settings);
+    }
+
+    private static void Choose(SettingsWindow window, string modelId)
+    {
+        var combo = Row(window).GetVisualDescendants().OfType<ComboBox>().First();
+
+        // By label rather than by index: the list carries a clear item above the choices when
+        // the row is clearable, so an index into the choices is not an index into the box.
+        var wanted = combo.Items
+            .Select((item, i) => (Text: item as string ?? string.Empty, Index: i))
+            .First(pair => pair.Text.StartsWith(WhisperModels.LabelOf(modelId), StringComparison.Ordinal))
+            .Index;
+
+        combo.SelectedIndex = wanted;
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>
+    /// The compact row itself, which is the three-column grid - not the first grid in the tree
+    /// that happens to contain the words, which is the whole surface.
+    /// </summary>
+    private static Grid Row(SettingsWindow window) =>
+        window
+            .GetVisualDescendants()
+            .OfType<Grid>()
+            .Where(grid => grid.ColumnDefinitions.Count == 3)
+            .First(grid => grid.GetVisualDescendants()
+                .OfType<TextBlock>()
+                .Any(text => text.Text == "Speech model"));
 
     private sealed class NoModels : IModelStore
     {

@@ -45,10 +45,6 @@ public partial class MainWindow : Window
     /// rather than the window.
     /// </summary>
     private bool _spoken;
-    private bool _downloading;
-
-    /// <summary>The model the panel is currently offering, so its buttons know what they mean.</summary>
-    private WhisperModel? _offered;
 
     public MainWindow() : this(host: null)
     {
@@ -183,25 +179,10 @@ public partial class MainWindow : Window
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n"));
 
-        _host.ModelNeeded += model => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => OfferModelDownload(model));
-
-        _model.ModelDownloadAccepted += () =>
-        {
-            if (_offered is { } wanted)
-            {
-                _ = DownloadModelAsync(wanted);
-            }
-        };
-
-        _model.ModelDownloadDismissed += () =>
-        {
-            _host.Loggers.CreateLogger<MainWindow>().LogInformation(
-                "The speech model offer was dismissed");
-
-            _model.ModelText = null;
-            _offered = null;
-        };
+        // Only logged here. The offer itself lives on the settings row that triggers it -
+        // a banner on this window is a question asked behind the dialog that asked it.
+        _host.ModelNeeded += model => _host.Loggers.CreateLogger<MainWindow>().LogInformation(
+            "{Model} is selected but not installed; the selection has been cleared", model.Id);
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();
@@ -318,7 +299,13 @@ public partial class MainWindow : Window
                 _host.Paths,
                 _host.CoverageRecorder is { } recorder ? recorder.Report : null,
                 _host.Macros,
-                _host.ReservedPhrases);
+                _host.ReservedPhrases,
+
+                // Consent is the selection itself: the choice states its size in the list, and
+                // the row shows what it is doing while it does it. Answering in the settings
+                // window is the point - the offer used to appear on the main window, which is
+                // the window the settings dialog is covering.
+                (model, progress) => _host.InstallModelAsync(model, _ => Task.FromResult(true), progress));
         }
     }
 
@@ -452,102 +439,6 @@ public partial class MainWindow : Window
     /// their choice would be answering for them.
     /// </para>
     /// </summary>
-    /// <summary>
-    /// Puts the offer on the panel, where it stays until it is answered.
-    /// <para>
-    /// It used to open a modal here and nowhere else. That asked the question once per launch,
-    /// on whichever display this window happened to be on, and a Commander whose window sat on
-    /// a second monitor was never asked at all - three sessions of "no speech model is loaded"
-    /// with the 466 MB that would fix it one click away and nothing saying so.
-    /// </para>
-    /// </summary>
-    private void OfferModelDownload(WhisperModel model)
-    {
-        if (_host is null || _downloading)
-        {
-            return;
-        }
-
-        _offered = model;
-        _model.ModelBusy = false;
-
-        // Stated from what d47 already knows rather than from a HEAD request, so the offer is
-        // on screen immediately and does not depend on the host being reachable to be readable.
-        // InstallModelAsync still describes it authoritatively before a byte is fetched.
-        _model.ModelText =
-            $"{model.Label} is not downloaded. About {model.ApproximateMegabytes} MB from "
-            + $"{WhisperModels.Host}, saved to your data folder, verified against the published "
-            + "checksum. Until then D47 hears you but cannot turn it into words.";
-
-        _host.Loggers.CreateLogger<MainWindow>().LogInformation(
-            "Offering {Model} on the panel", model.Id);
-    }
-
-    private async Task DownloadModelAsync(WhisperModel model)
-    {
-        if (_host is null || _downloading)
-        {
-            return;
-        }
-
-        _downloading = true;
-        _model.ModelBusy = true;
-
-        var log = _host.Loggers.CreateLogger<MainWindow>();
-        log.LogInformation("Downloading {Model}", model.Id);
-
-        try
-        {
-            // Progress<T> captures the synchronisation context it was constructed on, which is
-            // this one, so the callback already arrives on the UI thread. Posting again would be
-            // a second hop for no reason.
-            var progress = new Progress<ModelProgress>(report =>
-                _model.TurnLine = $"Downloading {report.ModelId}: {report.Fraction:P0}");
-
-            // Already consented: the banner carried the size, the host and the checksum
-            // promise, and the Commander pressed Download against that text.
-            var result = await _host.InstallModelAsync(model, _ => Task.FromResult(true), progress);
-
-            log.LogInformation("{Model} download ended as {Outcome}", model.Id, result.Outcome);
-
-            // Selecting it is what the download was for, and it happens only now that the file
-            // is on disk - which is the whole rule: the setting names a model d47 can load.
-            if (result.Outcome is ModelInstall.Installed or ModelInstall.AlreadyPresent)
-            {
-                _host.Settings.Apply(
-                    ListeningCapability.ModelKey,
-                    model.Id,
-                    SettingsCaller.Panel);
-            }
-
-            _model.TurnLine = result.Outcome switch
-            {
-                ModelInstall.Installed => $"{model.Id} is installed. I can understand you now.",
-                ModelInstall.AlreadyPresent => $"{model.Id} was already installed.",
-                ModelInstall.Declined => $"{model.Id} was not downloaded.",
-                ModelInstall.ChecksumMismatch => result.Detail ?? "The download did not verify.",
-                _ => result.Detail ?? $"{model.Id} could not be downloaded.",
-            };
-
-            if (result.Outcome is ModelInstall.Failed or ModelInstall.ChecksumMismatch)
-            {
-                // A failed download is worth the banner rather than a status line that scrolls
-                // away: without a model, holding the key produces nothing and looks like a bug.
-                _model.ErrorText = _model.TurnLine;
-            }
-        }
-        finally
-        {
-            _downloading = false;
-            _model.ModelBusy = false;
-
-            // Gone either way. Installed, it is answered; failed, the error banner carries it,
-            // and an offer that stays up would invite the same download again.
-            _model.ModelText = null;
-            _offered = null;
-        }
-    }
-
     /// <summary>
     /// Registers the system-wide silence key.
     /// <para>

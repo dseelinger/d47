@@ -191,12 +191,6 @@ public partial class PanelView : UserControl
         ApplyPage();
     }
 
-    private void OnModelDownloadClick(object? sender, RoutedEventArgs e) =>
-        (DataContext as PanelViewModel)?.AcceptModelDownload();
-
-    private void OnModelLaterClick(object? sender, RoutedEventArgs e) =>
-        (DataContext as PanelViewModel)?.DismissModelDownload();
-
     private void OnPageTabChecked(object? sender, RoutedEventArgs e)
     {
         // Fires for the tab being cleared as well as the one being set, and only the set one

@@ -152,36 +152,6 @@
       </DockPanel>
     </Border>
 
-    <!--
-      A speech model is selected but not on disk. A banner rather than only a dialog, because
-      this is a state and not an event: the modal was raised once per launch and parented to
-      this window, so a Commander whose window sat on a second display was asked where they
-      were not looking - three sessions running - while the panel said only that no model was
-      loaded. The text is the consent itself: what it costs and where it comes from.
-    -->
-    <Border x:Name="ModelBanner"
-            IsVisible="{Binding HasModelOffer}"
-            Margin="0,14,0,0"
-            Padding="12"
-            CornerRadius="4"
-            Background="{DynamicResource D47.SurfaceAlt}"
-            BorderBrush="{DynamicResource D47.Info}"
-            BorderThickness="1">
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right"
-                    Orientation="Horizontal"
-                    Spacing="8"
-                    IsVisible="{Binding ModelActionable}">
-          <Button x:Name="ModelDownloadButton" Content="Download" Click="OnModelDownloadClick" />
-          <Button x:Name="ModelLaterButton" Content="Not now" Click="OnModelLaterClick" />
-        </StackPanel>
-        <TextBlock x:Name="ModelText"
-                   Text="{Binding ModelText}"
-                   TextWrapping="Wrap"
-                   FontSize="{StaticResource D47.Type.Body}"
-                   VerticalAlignment="Center" />
-      </DockPanel>
-    </Border>
 
     </StackPanel>
 

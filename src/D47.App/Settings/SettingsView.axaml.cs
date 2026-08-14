@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -80,8 +81,10 @@ public partial class SettingsView : UserControl
         AppPaths paths,
         Func<CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
-        IReadOnlyList<string>? reservedPhrases = null)
+        IReadOnlyList<string>? reservedPhrases = null,
+        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null)
     {
+        _downloadModel = downloadModel;
         _settings = settings;
         _viewStateStore = viewState;
         _viewState = viewState.Load();
@@ -509,6 +512,15 @@ public partial class SettingsView : UserControl
     /// </summary>
     private const double StandardControlWidth = 190;
 
+    /// <summary>
+    /// Fetches a speech model, reporting progress. Supplied by the window that has a host
+    /// behind it; null under the designer and in a test that is not about downloading.
+    /// </summary>
+    private Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? _downloadModel;
+
+    /// <summary>One download at a time, and the row that is showing it.</summary>
+    private bool _downloadingModel;
+
     private RowView BuildRow(CapabilityDescriptor capability, SettingRow row)
     {
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -799,6 +811,20 @@ public partial class SettingsView : UserControl
 
         var offset = clearable ? 1 : 0;
 
+        // Only one row downloads anything, so only one row carries a progress bar. Built here
+        // rather than in a generic slot because a bar every row could show is a bar every row
+        // has to explain.
+        var downloads = string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal);
+
+        var bar = new ProgressBar
+        {
+            Height = 3,
+            Minimum = 0,
+            Maximum = 1,
+            IsVisible = false,
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+
         combo.SelectionChanged += (_, _) =>
         {
             if (_refreshing || combo.SelectedIndex < 0)
@@ -806,10 +832,27 @@ public partial class SettingsView : UserControl
                 return;
             }
 
-            Apply(row, clearable && combo.SelectedIndex == 0 ? null : choices[combo.SelectedIndex - offset], message);
+            var chosen = clearable && combo.SelectedIndex == 0
+                ? null
+                : choices[combo.SelectedIndex - offset];
+
+            // One handler with a branch rather than two handlers. Two raced: the first applied
+            // the value and refreshed the controls, and the refresh guard then swallowed the
+            // second - so the download never started and the row snapped back to none.
+            if (downloads)
+            {
+                _ = FetchModelAsync(row, chosen, bar, message);
+                return;
+            }
+
+            Apply(row, chosen, message);
         };
 
-        return (combo, () =>
+        Control control = downloads
+            ? new StackPanel { Children = { combo, bar } }
+            : combo;
+
+        return (control, () =>
         {
             var value = _settings!.Read(row.Key);
             var found = value is null
@@ -830,6 +873,84 @@ public partial class SettingsView : UserControl
                     ? items[combo.SelectedIndex]
                     : null);
         }, true);
+    }
+
+    /// <summary>
+    /// Applies a speech model choice, downloading it first if it is not on disk.
+    /// <para>
+    /// Selecting is the consent: the choice states its size in the list it was chosen from, and
+    /// the row shows what it is doing while it does it. The offer used to be a banner on the
+    /// main window, which is the window this dialog is covering - a question asked behind the
+    /// thing that asked it.
+    /// </para>
+    /// <para>
+    /// The setting is written only once the file is there, so a row can never name a model d47
+    /// cannot load. A refusal or a failure puts it back to none and says why on the row.
+    /// </para>
+    /// </summary>
+    private async Task FetchModelAsync(SettingRow row, string? chosen, ProgressBar bar, TextBlock message)
+    {
+        if (_downloadingModel)
+        {
+            return;
+        }
+
+        var model = WhisperModels.Find(chosen);
+
+        // None, or no downloader behind this view: an ordinary setting with nothing to fetch.
+        if (model is null || _downloadModel is null)
+        {
+            Apply(row, chosen, message);
+            return;
+        }
+
+        _downloadingModel = true;
+
+        bar.Value = 0;
+        bar.IsVisible = true;
+
+        Note(message, $"Fetching {model.Label} - about {model.ApproximateMegabytes} MB.");
+
+        try
+        {
+            // A model already on disk comes straight back as AlreadyPresent, so there is no
+            // need to ask the store separately whether this is a download at all.
+            var progress = new Progress<ModelProgress>(report => bar.Value = report.Fraction);
+            var result = await _downloadModel(model, progress);
+
+            if (result.Outcome is ModelInstall.Installed or ModelInstall.AlreadyPresent)
+            {
+                // Written only now that the file is there, so the row can never name a model
+                // d47 cannot load.
+                Apply(row, chosen, message);
+                Note(message, $"{model.Label} is ready.");
+                return;
+            }
+
+            Refresh();
+            Note(message, result.Detail ?? $"{model.Id} was not downloaded.");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+        {
+            Refresh();
+            Note(message, $"{model.Id} could not be downloaded: {ex.Message}");
+        }
+        finally
+        {
+            _downloadingModel = false;
+            bar.IsVisible = false;
+        }
+    }
+
+    /// <summary>
+    /// Says something on the row itself. <see cref="Apply"/> speaks only on failure, because a
+    /// change that worked is visible in the control that made it - but a download is neither
+    /// instant nor visible, so it has to narrate.
+    /// </summary>
+    private static void Note(TextBlock message, string text)
+    {
+        message.Text = text;
+        message.IsVisible = true;
     }
 
     private (Control, Action, bool) BuildPickerButton(SettingRow row, TextBlock message)
