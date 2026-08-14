@@ -472,7 +472,7 @@ public class SettingsSurfaceShapeTests
 public class EgressDisclosureTests
 {
     [Fact]
-    public void WithNoProviderNothingIsLeaving()
+    public void WithEveryDestinationOffTheCountIsZeroAndNoRowIsActive()
     {
         var settings = new D47Settings
         {
@@ -485,15 +485,22 @@ public class EgressDisclosureTests
             // Edge selected, which meant it was asserting something untrue.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
 
-            // So does the speech model, now that a fresh install selects one. The file is not
-            // fetched until the Commander accepts the offer, but a selection that *can* cause a
-            // transfer is what the download row reports — so "nothing is leaving" is one more
-            // opt-out than it used to be, and saying so here is the point of the row.
+            // So does the speech model, now that a fresh install selects one and fetches it.
+            // A selection that can cause a transfer is what the download row reports, so
+            // reaching zero active rows takes one more opt-out than it used to.
             Listening = new ListeningSettings { Model = Core.Listening.WhisperModels.NoneId },
         };
 
-        Assert.All(EgressDisclosure.For(settings, llmKeyPresent: false), entry => Assert.False(entry.Active));
-        Assert.Contains("Nothing is leaving", EgressDisclosure.Describe(settings, false), StringComparison.Ordinal);
+        var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
+        var described = EgressDisclosure.Describe(settings, false);
+
+        Assert.All(entries, entry => Assert.False(entry.Active));
+        Assert.Contains($"0 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
+
+        // Counted, never claimed. The zero case used to get a sentence of its own — "Nothing is
+        // leaving this machine right now" — which reads as a property of d47 rather than of
+        // these settings, and is the kind of promise a later feature has to be designed around.
+        Assert.DoesNotContain("Nothing is leaving", described, StringComparison.Ordinal);
     }
 
     [Fact]

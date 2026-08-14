@@ -156,9 +156,14 @@ public static class EgressDisclosure
 
         var report = new System.Text.StringBuilder();
 
-        report.AppendLine(active == 0
-            ? "Nothing is leaving this machine right now."
-            : $"{active} of {entries.Count} destinations are active right now.");
+        // One sentence shape for every case, including none. The zero case used to get its own
+        // line — "Nothing is leaving this machine right now" — and a blanket claim is a worse
+        // answer than a count even when it is true: it invites being read as a property of d47
+        // rather than of these settings at this moment, and it is the sentence a future feature
+        // then has to be designed around rather than merely disclosed in. The rows below say
+        // what each destination is doing; that is the disclosure, and it does not need a slogan
+        // on top of it.
+        report.AppendLine($"{active} of {entries.Count} destinations are active right now.");
 
         foreach (var entry in entries)
         {

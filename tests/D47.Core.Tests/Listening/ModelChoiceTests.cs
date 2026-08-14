@@ -116,11 +116,11 @@ public class ModelChoiceTests
     }
 
     [Fact]
-    public void LocalOnlyOperationIsStillReachableWithListeningConfigured()
+    public void EveryDestinationCanStillBeTurnedOffWithListeningConfigured()
     {
-        // Every provider off, but a model already chosen: the disclosure has to be able to say
-        // nothing is leaving once the model is on disk, or "local-only" stops being reachable
-        // the moment the Commander wants to talk to d47.
+        // Every provider off, with listening set up: reaching zero active destinations has to
+        // stay possible, or turning everything off stops being reachable the moment the
+        // Commander wants to talk to d47.
         var settings = new D47Settings
         {
             Llm = new LlmSettings { Provider = Core.Conversation.LlmProviderCatalog.NoneId },
@@ -134,7 +134,9 @@ public class ModelChoiceTests
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
 
         Assert.DoesNotContain(entries, entry => entry.Active);
-        Assert.Contains("Nothing is leaving this machine", EgressDisclosure.Describe(settings, false));
+        Assert.Contains(
+            $"0 of {entries.Count} destinations are active",
+            EgressDisclosure.Describe(settings, false));
     }
 
     [Fact]
