@@ -15,6 +15,8 @@ public static class PersonaCapability
 
     public const string ShipNameKey = "persona.shipName";
 
+    public const string IntroductionsKey = "persona.introductions";
+
     public static CapabilityDescriptor Create(PersonaHost host, SettingsService settings) => new()
     {
         Id = Id,
@@ -33,6 +35,20 @@ public static class PersonaCapability
         Display = new CapabilityDisplay { PanelTitle = "Persona", Order = 12 },
         Tools =
         [
+            // First, and that is load-bearing rather than tidy: the keyword router answers with
+            // a capability's first tool that needs no arguments, and every phrase this
+            // capability declares — "who are you", "which core", "who am I talking to" — is a
+            // question about identity with a one-sentence answer. It used to answer them with
+            // the report below, so asking a companion its name got an active-persona line, a
+            // personality-switch line, and eleven cores it might have been instead.
+            new ToolDefinition
+            {
+                Name = "state_identity",
+                Description =
+                    "Answer who you are. The name the Commander calls this ship's AI, in one "
+                    + "sentence, and nothing else — no status, no list of what else is available.",
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok($"I am {host.ShipName}.")),
+            },
             new ToolDefinition
             {
                 Name = "describe_persona",
@@ -100,7 +116,38 @@ public static class PersonaCapability
                 Write = (s, v) => s with { Persona = s.Persona with { ShipName = Blank(v) } },
             },
         },
+        new SettingRow
+        {
+            Key = IntroductionsKey,
+            Label = "Introductions",
+            Help =
+                "A core introduces itself the first time you pick it after d47 starts, and reacts "
+                + "to the gap every time after that. Forgetting puts every core back to its "
+                + "introduction, which otherwise costs a restart.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "introductions",
+            PressLabel = "Forget introductions",
+            Press = host.ForgetIntroductions,
+
+            // Info, so the model cannot reach it — same reason the persona row above is
+            // protected, and here it comes free rather than as a flag.
+            Binding = new SettingBinding { Read = _ => Introductions(host) },
+        },
     ];
+
+    /// <summary>
+    /// What the introductions row states. Names the cores rather than counting them, because
+    /// the question a Commander has in front of this button is which ones are spent.
+    /// </summary>
+    private static string Introductions(PersonaHost host)
+    {
+        var introduced = host.Introduced;
+
+        return introduced.Count == 0
+            ? "No core has introduced itself yet. Every one of them still has its first line waiting."
+            : $"Already introduced: {string.Join(", ", introduced.Select(p => p.Name))}. "
+              + "Selecting one of those again gets its gap reaction instead.";
+    }
 
     /// <summary>
     /// The closed phrase set that reaches this row without a model. Spelled out per core rather

@@ -149,18 +149,30 @@ public static class SpeechCapability
             {
                 Key = VoiceKey,
                 Label = "Voice",
-                Help = "Which voice speaks. The list comes from the selected provider.",
+                Help =
+                    "Which voice the core aboard speaks in. Kept per core, so switching persona "
+                    + "switches voice. The list comes from the selected provider.",
                 Kind = SettingKind.Choice,
+                // Still the provider's default, which is what a core with no voice stored
+                // actually gets. What is per core is the value, not the fallback.
                 DefaultDisplay = "(the provider's default)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
+
+                // Per core, not one voice for the app. This row used to write a single value
+                // that beat every pairing, so a Commander who chose a voice once heard it from
+                // all eleven cores forever — the pairing was computed, stored, and never
+                // reached. What they choose here is that core's voice, which is what
+                // PersonaSettings.Voices has always said it holds: "written by the background
+                // pairing at first startup and by the Commander choosing one by hand; nothing
+                // distinguishes the two, on purpose".
                 Binding = new SettingBinding
                 {
-                    Read = s => s.Speech.Voice,
-                    Write = (s, v) => s with { Speech = s.Speech with { Voice = v } },
+                    Read = s => ShipVoiceFor(s, s.Persona.Id),
+                    Write = WriteVoiceForCoreAboard,
                 },
             },
             new SettingRow
@@ -604,6 +616,53 @@ public static class SpeechCapability
     /// general value stays whatever a fresh install had, so clearing a provider's override
     /// falls back to something sensible rather than to the last provider's number.
     /// </summary>
+    /// <summary>
+    /// Which voice the ship's AI speaks in with a given core aboard: that core's, then the one
+    /// value a settings file written before voices were kept per core still holds, then nothing
+    /// — which the provider answers with its own default.
+    /// <para>
+    /// Read by the Voice row and by the app that does the speaking, so the row cannot show one
+    /// voice while another is heard. That is not hypothetical: the row and the speaking path
+    /// disagreed for the whole of Phase 11, and the pairing lost.
+    /// </para>
+    /// </summary>
+    public static string? ShipVoiceFor(D47Settings settings, string personaId) =>
+        settings.Persona.Voices.GetValueOrDefault(personaId) ?? settings.Speech.Voice;
+
+    /// <summary>
+    /// Stores a chosen voice against the core aboard, and clears the one global choice that used
+    /// to shadow every pairing.
+    /// <para>
+    /// Cleared rather than left, because a value that is only read when the core aboard has no
+    /// pairing is a value that reappears the moment one is removed — the Commander would clear
+    /// this row to be offered a voice they picked under a different core, months ago.
+    /// </para>
+    /// <para>
+    /// Clearing the row removes the pairing rather than writing an empty one, which is what
+    /// makes "let d47 choose again" expressible: the next selection of this core has nothing
+    /// stored and asks for one.
+    /// </para>
+    /// </summary>
+    private static D47Settings WriteVoiceForCoreAboard(D47Settings settings, string? value)
+    {
+        var voices = new Dictionary<string, string>(settings.Persona.Voices, StringComparer.Ordinal);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            voices.Remove(settings.Persona.Id);
+        }
+        else
+        {
+            voices[settings.Persona.Id] = value.Trim();
+        }
+
+        return settings with
+        {
+            Speech = settings.Speech with { Voice = null },
+            Persona = settings.Persona with { Voices = voices },
+        };
+    }
+
     private static D47Settings WriteRate(D47Settings settings, string? value)
     {
         var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);

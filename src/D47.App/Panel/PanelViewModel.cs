@@ -64,6 +64,12 @@ public enum TranscriptKind
 }
 
 /// <summary>
+/// A stretch of transcript drawn one way. <paramref name="Marker"/> is the panel noting
+/// something about the conversation — the core changing — rather than a line of it.
+/// </summary>
+public sealed record TranscriptSegment(string Text, bool Marker);
+
+/// <summary>
 /// What the panel shows, independent of where it is being shown.
 /// <para>
 /// This is the half of "one widget tree renders to both surfaces" that the framework will
@@ -89,7 +95,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// one call per delta - from becoming one run per token.
     /// </para>
     /// </summary>
-    private readonly List<(TranscriptKind Kind, StringBuilder Text)> _runs = [];
+    private readonly List<(TranscriptKind Kind, bool Marker, StringBuilder Text)> _runs = [];
 
     private string _conversationText = string.Empty;
     private string _logText = string.Empty;
@@ -266,11 +272,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// callers writing diagnostics have to say so.
     /// </para>
     /// </summary>
-    public void Append(string text, TranscriptKind kind = TranscriptKind.Conversation)
+    public void Append(string text, TranscriptKind kind = TranscriptKind.Conversation, bool marker = false)
     {
-        if (_runs.Count == 0 || _runs[^1].Kind != kind)
+        if (_runs.Count == 0 || _runs[^1].Kind != kind || _runs[^1].Marker != marker)
         {
-            _runs.Add((kind, new StringBuilder()));
+            _runs.Add((kind, marker, new StringBuilder()));
         }
 
         _runs[^1].Text.Append(text);
@@ -281,6 +287,42 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         TranscriptAppended?.Invoke();
     }
+
+    /// <summary>
+    /// Notes something that happened to the conversation rather than something said in it — the
+    /// core changing under it being the case this exists for.
+    /// <para>
+    /// It is a conversation line, not a technical one: which core answered is what the lines
+    /// around it mean, so a transcript that omits the switch reads as one companion changing
+    /// character mid-page. Bracketed and coloured because it is the panel speaking about the
+    /// conversation and not a voice in it, and a reader should be able to tell those apart at a
+    /// metre in a headset without reading either.
+    /// </para>
+    /// </summary>
+    public void Mark(string text) =>
+        Append($"\n[{text}]\n", TranscriptKind.Conversation, marker: true);
+
+    /// <summary>
+    /// A page's content, in order, split where its emphasis changes. The view renders these
+    /// rather than one string, because a run that is marked has to be drawn differently and a
+    /// string cannot carry that.
+    /// <para>
+    /// The strings above are still the content of record — every test and both capture paths
+    /// read them — and these are the same characters, cut where the drawing changes.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<TranscriptSegment> Segments(TranscriptPage page) => page switch
+    {
+        TranscriptPage.Log => [new TranscriptSegment(LogText, Marker: false)],
+        TranscriptPage.Technical =>
+            [.. _runs.Select(run => new TranscriptSegment(run.Text.ToString(), run.Marker))],
+        _ =>
+        [
+            .. _runs
+                .Where(run => run.Kind == TranscriptKind.Conversation)
+                .Select(run => new TranscriptSegment(run.Text.ToString(), run.Marker))
+        ],
+    };
 
     /// <summary>The last <paramref name="lines"/> lines, for a surface with less room than a window.</summary>
     public string Tail(int lines)

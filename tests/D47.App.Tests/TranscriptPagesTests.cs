@@ -198,7 +198,7 @@ public class TranscriptPagesTests
     }
 
     private static string Shown(PanelView panel) =>
-        panel.GetControl<SelectableTextBlock>("Transcript").Text ?? string.Empty;
+        PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript"));
 
     private static PanelView Laid(PanelView panel)
     {

@@ -199,6 +199,10 @@ public partial class MainWindow : Window
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n"));
 
+        // And what happened to the conversation rather than in it - the core changing under it.
+        // Marked rather than appended, so it reads as the panel and not as whoever is aboard.
+        _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
+
         // Only logged here. The offer itself lives on the settings row that triggers it -
         // a banner on this window is a question asked behind the dialog that asked it.
         _host.ModelNeeded += model => _host.Loggers.CreateLogger<MainWindow>().LogInformation(

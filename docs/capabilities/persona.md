@@ -67,11 +67,41 @@ dark against the stars and finds it restful that something can still be known pr
 notices that something was running in this ship that was not him, and he is right, and nobody
 will confirm it.
 
+The Conversation tab marks the switch on its own line, in the accent colour, before whatever the
+new core says:
+
+```text
+[Switched to Cora]
+```
+
+That is Directive 47 speaking about the conversation rather than a voice in it — without it, a
+transcript reads as one companion changing character mid-page.
+
 Switch again while one is still talking and it stops mid-word — the new one starts instead. Your
 stop key silences either of them, like anything else Directive 47 says.
 
 With no language model configured, each core has one written line for coming back. The variety
 is the model's contribution; the character is not.
+
+## Each core has its own voice {#voices}
+
+The first time you select a core, Directive 47 picks a voice for it from what your speech
+provider offers, matching the voice to the character rather than making you audition several
+hundred of them. It is chosen in the background, at the moment you pick that core, and the core's
+own first line is spoken in it.
+
+**A language model does the matching, or nothing does.** Reading "a clipped, precise woman"
+against a list of voice names is a judgement, so with no model configured no voice is chosen at
+all and the core keeps the one already in force. Directive 47 does not guess from voice names —
+the version that did handed every core a confident miscast. Configure a model later and the next
+core you select is paired properly.
+
+One exception, because it is not a judgement: on ElevenLabs, **Warden** takes **George** — warm,
+captivating storyteller, male, British — with or without a model.
+
+The voice sits on the [Voice row](speech.md#voice) in Speech, and that row is the core aboard's.
+Change it and you have chosen that core's voice; nothing re-derives it afterwards. Clear it and
+the next selection picks again.
 
 ## Settings
 
@@ -102,6 +132,22 @@ there was nobody left to say the whole thing to.
 This row *is* reachable by the model, unlike the one above. "Call yourself Fred" changes nothing
 anything depends on, and refusing it would be protecting you from a nickname.
 
+### Introductions
+
+A core introduces itself the first time you pick it after Directive 47 starts. Every time after
+that it reacts to the gap instead, which is the better line once you have heard the first one —
+and the wrong line when you are working through the cast and want to hear how each of them
+opens.
+
+**Forget introductions** puts all eleven back to their first line at once. Nothing else is
+touched: transcripts, voices and the core aboard stay exactly as they were. The row states which
+cores are spent before you press it, and states that none are afterwards.
+
+The core currently aboard is forgotten with the rest, but hearing it again means switching away
+and back — selecting the core that is already running is not a switch, and never has been.
+
+This row is not reachable by the model, for the same reason the persona row above is not.
+
 ## Personality off
 
 The [conversation](conversation.md) capability has a **Personality** switch. Off gives plain
@@ -114,6 +160,20 @@ name only.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
+
+### `state_identity`
+
+Answers "who are you" with the name and nothing else — `I am Warden.`, or `I am Fred.` when you
+have named the ship's AI yourself. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Listed first on purpose. The keyword router answers with a capability's first tool that needs no
+arguments, and every phrase this capability declares is a question about identity — so this is
+the tool that answers them. It used to be the one below, which meant asking your companion its
+name got a status report and a list of the ten it was not.
 
 ### `describe_persona`
 

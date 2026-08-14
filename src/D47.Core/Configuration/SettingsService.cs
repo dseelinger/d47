@@ -164,6 +164,14 @@ public sealed class SettingsService
                 throw new CapabilityRegistrationException(
                     $"Settings row '{row.Key}' is a {row.Kind} row with nothing bound behind it.");
             }
+
+            // Same rule, for the button an Info row may carry: one with no words on it is a
+            // control the Commander cannot know the effect of until they press it.
+            if (row.Press is not null && string.IsNullOrWhiteSpace(row.PressLabel))
+            {
+                throw new CapabilityRegistrationException(
+                    $"Settings row '{row.Key}' offers a button with nothing written on it.");
+            }
         }
 
         _logger.LogInformation(

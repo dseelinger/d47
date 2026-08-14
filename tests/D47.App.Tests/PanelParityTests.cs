@@ -165,5 +165,15 @@ public class PanelParityTests
     private static string Text(IEnumerable<ILogical> tree) =>
         string.Join(
             "\n",
-            tree.OfType<SelectableTextBlock>().Where(block => block.IsVisible).Select(block => block.Text));
+            tree.OfType<SelectableTextBlock>().Where(block => block.IsVisible).Select(Shown));
+
+    /// <summary>
+    /// What a block is showing, whether it was given a string or runs. The transcript is written
+    /// as runs — a marked line is drawn differently from the conversation around it — and a
+    /// block using them leaves <c>Text</c> null.
+    /// </summary>
+    internal static string Shown(SelectableTextBlock block) =>
+        block.Inlines is { Count: > 0 } inlines
+            ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
+            : block.Text ?? string.Empty;
 }

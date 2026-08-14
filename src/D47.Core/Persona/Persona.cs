@@ -115,11 +115,8 @@ public sealed record Persona(
 /// Words rather than numbers on purpose: the thing being matched against is a list of voice
 /// names and locales from a provider that has never heard of this application, so anything
 /// numeric here would be a precision the other side of the comparison does not have. The model
-/// gets prose and the fallback ranking gets keywords, from one declaration.
+/// is given the prose and asked to judge.
 /// </para>
 /// </summary>
 /// <param name="Description">Given to the model when it is asked to choose a voice.</param>
-/// <param name="Keywords">
-/// Matched against voice names and metadata when there is no model to ask. Lowercase.
-/// </param>
-public sealed record VoiceHint(string Description, IReadOnlyList<string> Keywords);
+public sealed record VoiceHint(string Description);
