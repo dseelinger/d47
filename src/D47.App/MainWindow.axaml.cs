@@ -629,7 +629,7 @@ public partial class MainWindow : Window
 
         var wanted = await new ConfirmWindow(
             "Add to the Start Menu?",
-            $"D47 runs from {executable} and does not install itself. A Start Menu entry means "
+            $"D47 runs from {executable}. A Start Menu entry means "
             + "you can find it by name instead of by remembering where you put it. It is one "
             + "shortcut, for you only, and you can delete it like any other.",
             confirmLabel: "Add it",

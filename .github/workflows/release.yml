@@ -71,16 +71,34 @@ jobs:
         working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
         run: Compress-Archive -Path d47.exe, runtimes -DestinationPath d47.zip
 
-      - name: Checksum
-        shell: bash
-        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
-        run: sha256sum d47.zip | tee d47.zip.sha256
+      # The installer is the normal way in; the zip stays for portable use and is what the
+      # in-app updater fetches. Both come from the same publish output that just self-tested.
+      - name: Installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          & $iscc /DVersion=${{ steps.v.outputs.version }} installer\d47.iss
+          if ($LASTEXITCODE -ne 0) { throw "installer compile failed ($LASTEXITCODE)" }
 
-      # Unsigned with a published checksum, per architecture.md §9.
+      - name: Checksums
+        shell: bash
+        run: |
+          cd src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+          sha256sum d47.zip | tee d47.zip.sha256
+          cd "$GITHUB_WORKSPACE/installer"
+          sha256sum d47-setup.exe | tee d47-setup.exe.sha256
+
+      # Unsigned with published checksums, per architecture.md §9.
       - uses: softprops/action-gh-release@v2
         with:
           name: d47 ${{ github.ref_name }}
           generate_release_notes: true
           files: |
+            installer/d47-setup.exe
+            installer/d47-setup.exe.sha256
             src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip
             src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip.sha256
