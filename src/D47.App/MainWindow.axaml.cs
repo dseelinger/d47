@@ -66,6 +66,26 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
+        // The push-to-talk key must never reach a control in this window, and these tunnel so
+        // they run before the focused control rather than after it — a bubbling handler is too
+        // late, because the text box has already inserted the character by then.
+        //
+        // The key is polled, not hooked (architecture.md D4), so d47 does not consume it
+        // system-wide and Windows keeps delivering it to whatever has focus. Hold a
+        // push-to-talk bound to a printable key with the caret in the Ask box and the box fills
+        // with that character on auto-repeat. Suppressing it here is the trade the binding
+        // already implies: a key given to push-to-talk stops being a key that types inside
+        // d47's own panel. It is unaffected everywhere else, including the settings window,
+        // where capturing it is exactly how it gets rebound.
+        AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(KeyUpEvent, OnTunnelKeyUp, RoutingStrategies.Tunnel);
+        AddHandler(TextInputEvent, OnTunnelTextInput, RoutingStrategies.Tunnel);
+
+        if (host is not null)
+        {
+            PushToTalkGesture = () => host.Settings.Current.Listening.PushToTalkKey;
+        }
+
         // The version lives in the chrome that is on screen anyway, and it is set here rather
         // than on load because it does not depend on the host - a window with no version in its
         // title, however briefly, is a window that cannot answer the one question a title bar is
@@ -198,7 +218,11 @@ public partial class MainWindow : Window
             }
         });
 
-        Panel.FocusAsk();
+        // Deliberately not focusing the Ask box. A text field with the caret in it is a trap
+        // for a voice-first application: push-to-talk is a polled key that d47 does not consume,
+        // so holding it types into whatever has focus, and a Commander who bound "[" and held it
+        // got a line of "[[[[[[[[" instead of a transcript. Nothing is focused until the
+        // Commander asks for it — by clicking, tabbing, or the focus-ask hotkey.
 
         // Said aloud as well as shown, because a misconfigured provider otherwise presents as
         // silence, and silence is indistinguishable from a model with nothing to say
@@ -248,6 +272,49 @@ public partial class MainWindow : Window
 
         base.OnKeyDown(e);
     }
+
+    /// <summary>
+    /// Whether the push-to-talk key is down right now, as seen by this window rather than by
+    /// the ten-times-a-second poll. Text input carries no key, so suppressing the character
+    /// needs this rather than <c>PushToTalkKey.IsDown</c>, which can lag a keystroke.
+    /// </summary>
+    private bool _pushToTalkHeld;
+
+    private void OnTunnelKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (IsPushToTalk(e))
+        {
+            _pushToTalkHeld = true;
+            e.Handled = true;
+        }
+    }
+
+    private void OnTunnelKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (IsPushToTalk(e))
+        {
+            // Cleared even when the key is not matched as handled below, so a rebind while the
+            // key is held cannot leave text input suppressed for the rest of the session.
+            _pushToTalkHeld = false;
+            e.Handled = true;
+        }
+    }
+
+    private void OnTunnelTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (_pushToTalkHeld)
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// The bound push-to-talk gesture. A function rather than a read of the host so the
+    /// suppression can be driven in a headless test, which has no host to bind a key on.
+    /// </summary>
+    internal Func<string?> PushToTalkGesture { get; set; } = () => null;
+
+    private bool IsPushToTalk(KeyEventArgs e) => Matches(PushToTalkGesture(), e);
 
     /// <summary>
     /// Gestures are stored in the form <see cref="KeyGesture"/> writes, so an unparseable one is
@@ -426,7 +493,15 @@ public partial class MainWindow : Window
         {
             _turnInFlight = false;
             _model.CanAsk = true;
-            Panel.FocusAsk();
+
+            // Focus follows the way the turn was started. Typing another question after typing
+            // one is the obvious next move; after speaking, putting the caret in a text box is
+            // actively harmful, because the next thing the Commander does is hold the
+            // push-to-talk key and that key would land in the box.
+            if (source == InputSource.Typed)
+            {
+                Panel.FocusAsk();
+            }
         }
     }
 
