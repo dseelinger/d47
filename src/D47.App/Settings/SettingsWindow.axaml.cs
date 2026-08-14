@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.Core.Listening;
 using Avalonia.Input;
 using D47.Core;
 using D47.Core.Configuration;
@@ -26,8 +27,9 @@ public partial class SettingsWindow : Window
         AppPaths paths,
         Func<D47.Core.Coverage.CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
-        IReadOnlyList<string>? reservedPhrases = null) =>
-        View.Attach(settings, viewState, paths, coverage, macros, reservedPhrases);
+        IReadOnlyList<string>? reservedPhrases = null,
+        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null) =>
+        View.Attach(settings, viewState, paths, coverage, macros, reservedPhrases, downloadModel);
 
     public static void Show(
         Window owner,
@@ -36,7 +38,8 @@ public partial class SettingsWindow : Window
         AppPaths paths,
         Func<D47.Core.Coverage.CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
-        IReadOnlyList<string>? reservedPhrases = null)
+        IReadOnlyList<string>? reservedPhrases = null,
+        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null)
     {
         if (_open is not null)
         {
@@ -45,7 +48,7 @@ public partial class SettingsWindow : Window
         }
 
         var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths, coverage, macros, reservedPhrases);
+        window.Attach(settings, viewState, paths, coverage, macros, reservedPhrases, downloadModel);
 
         // The same widget tree, so the same zoom. A level that applied to the panel and not to
         // settings would be a level the Commander has to discover the edge of.
