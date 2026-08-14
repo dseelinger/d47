@@ -34,6 +34,13 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     private readonly Queue<string> _recentNativeLog = new();
     private const int RecentNativeLogLines = 48;
 
+    /// <summary>
+    /// The Whisper.net log subscription, held so <see cref="Dispose"/> can unhook it. The
+    /// provider's list is static: an undisposed subscription keeps a dead transcriber reachable
+    /// and still receiving every later instance's lines.
+    /// </summary>
+    private readonly IDisposable _nativeLogSubscription;
+
     private WhisperFactory? _factory;
     private WhisperProcessor? _processor;
     private string? _loadedFrom;
@@ -45,7 +52,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         // Whisper.net logs through its own sink. Routed into Serilog so a native-side problem
         // lands in the same file as everything else rather than on a console nobody is watching.
-        LogProvider.AddLogger((level, message) =>
+        _nativeLogSubscription = LogProvider.AddLogger((level, message) =>
         {
             var line = message?.TrimEnd();
 
@@ -334,6 +341,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         {
             _one.Release();
             _one.Dispose();
+            _nativeLogSubscription.Dispose();
         }
     }
 }
