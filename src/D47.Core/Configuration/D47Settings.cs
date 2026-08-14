@@ -268,7 +268,15 @@ public sealed record ListeningSettings
     /// </summary>
     public string? PushToTalkKey { get; init; } = "RightShift";
 
-    /// <summary>"hold" or "toggle".</summary>
+    /// <summary>
+    /// "hold", "toggle", "continuous" or "wake" — the gate policy (list.md Phase 6 and 13).
+    /// <para>
+    /// Protected, and this is the row where that matters most. The last two open the microphone
+    /// and keep it open; a model that can put d47 into one of them can start continuous capture
+    /// on the Commander's machine, and anything the model can call, a hostile in-game message
+    /// can attempt to invoke (architecture.md §7).
+    /// </para>
+    /// </summary>
     public string Mode { get; init; } = "hold";
 
     /// <summary>
@@ -301,6 +309,50 @@ public sealed record ListeningSettings
     /// </para>
     /// </summary>
     public bool UseGpu { get; init; }
+
+    /// <summary>
+    /// Subtract what d47 is playing from what the microphone hears (list.md Phase 13).
+    /// <para>
+    /// On, and on in every mode rather than only the hands-free ones. It is what makes talking
+    /// over d47 work at all on speakers, and push-to-talk benefits from that as much as
+    /// continuous listening does — a Commander who holds the key while a callout is being read
+    /// out is otherwise transcribing the callout.
+    /// </para>
+    /// </summary>
+    public bool EchoCancellation { get; init; } = true;
+
+    /// <summary>
+    /// Take the room out of the captured audio, which the same module does for free. It also
+    /// makes the voice-activity decision easier, since that decision is entirely about how far a
+    /// frame sits above the room.
+    /// </summary>
+    public bool NoiseSuppression { get; init; } = true;
+
+    /// <summary>
+    /// How far above the room a sound has to be before continuous listening calls it speech, in
+    /// decibels. The one number that trades opening on a cough against missing a quiet question.
+    /// </summary>
+    public int Sensitivity { get; init; } = 9;
+
+    /// <summary>
+    /// How long the quiet after a sentence has to run before the utterance is finished, in
+    /// milliseconds. Long enough that a Commander pausing mid-sentence is not cut in half.
+    /// </summary>
+    public int SilenceMilliseconds { get; init; } = 700;
+
+    /// <summary>
+    /// What d47 answers to in wake-word mode, comma-separated. Empty means the ship's AI name,
+    /// whatever the Commander currently has it set to — which is why this is empty rather than
+    /// defaulted to a string: a name stored here would stop following the one they chose, and
+    /// a wake word that is not what you call your ship's AI is a wake word nobody will say.
+    /// </summary>
+    public string? WakeWords { get; init; }
+
+    /// <summary>
+    /// How long d47 goes on listening after answering to its name with nothing after it, in
+    /// seconds. Zero means it does not — the name and the request have to arrive together.
+    /// </summary>
+    public int WakeWindowSeconds { get; init; } = 12;
 }
 
 /// <summary>

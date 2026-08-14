@@ -6,7 +6,8 @@ using NAudio.Wave;
 namespace D47.Audio;
 
 /// <summary>
-/// The microphone, running continuously into <see cref="ListenGate"/>.
+/// The microphone, running continuously into whatever <see cref="ICaptureSink"/> it was handed
+/// — the gate, or the echo canceller in front of it.
 /// <para>
 /// It runs whenever d47 is running rather than starting on key-down, which is what the
 /// checklist's "the key-down path awaits nothing before recording starts" requires: opening a
@@ -16,11 +17,13 @@ namespace D47.Audio;
 /// </para>
 /// <para>
 /// <b>Nothing captured here leaves the machine or is written to disk.</b> Audio goes into the
-/// gate's ring buffer, is overwritten within the pre-roll window unless the key is held, and
-/// reaches a transcriber only for the stretch the Commander actually asked for.
+/// gate's ring buffer, is overwritten within the pre-roll window unless the gate opens, and
+/// reaches a transcriber only for the stretch the Commander actually addressed to d47. That
+/// stays true of the hands-free modes Phase 13 adds: the detector decides which stretch, and
+/// everything it does not choose is overwritten exactly as before.
 /// </para>
 /// </summary>
-public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> logger) : IDisposable
+public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone> logger) : IDisposable
 {
     /// <summary>
     /// What Whisper wants: 16 kHz mono. Resampling once here means the gate, the ring buffer
@@ -198,7 +201,7 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
             Drain(
                 _resampler,
                 OutputBytesFor(e.BytesRecorded, _incoming.WaveFormat, _resampler.WaveFormat),
-                gate);
+                sink);
         }
         catch (Exception ex)
         {
@@ -230,7 +233,7 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
     /// back. Reading only what was actually put in is what ends the loop.
     /// </para>
     /// </summary>
-    internal static void Drain(IWaveProvider resampler, long budget, ListenGate gate)
+    internal static void Drain(IWaveProvider resampler, long budget, ICaptureSink sink)
     {
         var bytes = new byte[4096];
         var samples = new float[bytes.Length / sizeof(float)];
@@ -257,7 +260,7 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
 
             var count = read / sizeof(float);
             Buffer.BlockCopy(bytes, 0, samples, 0, count * sizeof(float));
-            gate.Write(samples.AsSpan(0, count));
+            sink.Write(samples.AsSpan(0, count));
 
             budget -= read;
         }
@@ -275,8 +278,9 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
         IsCapturing = false;
 
         // Anything the gate had open is now incomplete. Emitting a half-utterance would
-        // transcribe a sentence the Commander did not finish saying.
-        gate.Abandon();
+        // transcribe a sentence the Commander did not finish saying — and anything adapted to
+        // this device describes a microphone that is no longer the one being heard.
+        sink.Reset();
     }
 
     /// <summary>

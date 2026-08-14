@@ -126,6 +126,7 @@ public partial class PanelView : UserControl
                 // from a setter the binding engine drives is how you get both on every tick.
                 _bound.PropertyChanged += OnModelChanged;
                 Avatar.Show(_bound.LoopState);
+                ApplyMicrophone();
             }
 
             // The model handed over is rarely empty — the window binds one that has already
@@ -150,7 +151,7 @@ public partial class PanelView : UserControl
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(PanelViewModel.LoopState) || _bound is null)
+        if (_bound is null)
         {
             return;
         }
@@ -159,14 +160,93 @@ public partial class PanelView : UserControl
         // view owns thread affinity, so a new caller does not have to learn it separately. Loop
         // states are raised from the turn's own thread and from the audio path, and neither is
         // the one that owns these controls. Posted only when it has to be.
-        if (Dispatcher.UIThread.CheckAccess())
+        switch (e.PropertyName)
         {
-            Avatar.Show(_bound.LoopState);
+            case nameof(PanelViewModel.LoopState):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    Avatar.Show(_bound.LoopState);
+                    return;
+                }
+
+                var state = _bound.LoopState;
+                Dispatcher.UIThread.Post(() => Avatar.Show(state));
+                return;
+
+            case nameof(PanelViewModel.Microphone):
+            case nameof(PanelViewModel.MicrophoneDetail):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    ApplyMicrophone();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(ApplyMicrophone);
+                return;
+        }
+    }
+
+    /// <summary>
+    /// Draws what the microphone is doing (list.md Phase 13, "Show that the microphone is open").
+    /// <para>
+    /// Set in code rather than bound through three converters, for the same reason the chrome is:
+    /// one state decides four things about one control — the shape, the colour, the border and
+    /// the words — and four bindings would be four expressions no test can reach, which have to
+    /// agree with each other or the indicator says one thing and means another.
+    /// </para>
+    /// <para>
+    /// The three states are distinguished by shape before colour. <em>Open</em> is a filled
+    /// microphone in the accent, ringed by a border, and it is the only one that is: what is
+    /// arriving right now will be transcribed. <em>Armed</em> is the same shape hollow, in the
+    /// information colour, because d47 is deciding for itself and the Commander should be able
+    /// to see it doing so at a glance. <em>Idle</em> is muted grey and says outright that
+    /// nothing is being kept, which is the claim push-to-talk has always quietly made and never
+    /// shown.
+    /// </para>
+    /// </summary>
+    private void ApplyMicrophone()
+    {
+        if (_bound is null)
+        {
             return;
         }
 
-        var state = _bound.LoopState;
-        Dispatcher.UIThread.Post(() => Avatar.Show(state));
+        var state = _bound.Microphone;
+        var detail = _bound.MicrophoneDetail;
+
+        var (key, label) = state switch
+        {
+            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "Listening"),
+            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "Listening for you"),
+            _ => ("D47.TextMuted", "Microphone open, nothing kept"),
+        };
+
+        MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
+        MicrophoneLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));
+
+        // Filled only while it is open. A shape difference is what a glance reads first, and it
+        // is what still says "open" for a Commander who cannot tell the two colours apart.
+        if (state == D47.Core.Listening.MicrophoneState.Open)
+        {
+            MicrophoneGlyph.Bind(
+                Avalonia.Controls.Shapes.Shape.FillProperty, this.GetResourceObservable(key));
+
+            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
+        }
+        else
+        {
+            MicrophoneGlyph.Fill = null;
+            MicrophoneRow.BorderBrush = null;
+        }
+
+        MicrophoneLabel.Text = label;
+
+        // The detail — which key to hold, or which name to say — is a tooltip rather than more
+        // text on the row. It is one line of chrome on a panel meant to sit beside a running
+        // game, and the state is the part that has to be readable without stopping to read.
+        ToolTip.SetTip(
+            MicrophoneRow,
+            string.IsNullOrWhiteSpace(detail) ? label : $"{label} — {detail}");
     }
 
     /// <summary>
@@ -397,7 +477,10 @@ public partial class PanelView : UserControl
         // — so the ask line and the provenance line give way to it rather than sitting under it
         // saying nothing about a page with no turns on it.
         AskRow.IsVisible = full && !settings;
-        TurnLine.IsVisible = !settings;
+
+        // The provenance line and the microphone indicator together, because both are about the
+        // transcript and the settings page has no turns on it.
+        StatusRow.IsVisible = !settings;
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs
         // and the search box go with the rest of the chrome. A surface with 640x280 to spend

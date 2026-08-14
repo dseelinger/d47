@@ -35,6 +35,11 @@ jobs:
       # published exe and refuses the release if it cannot transcribe. Any ggml model proves
       # the natives load; tiny.en is the smallest, and the cache spares huggingface a 75 MB
       # download per release.
+      #
+      # Since Phase 13 it covers the second native too: webrtc-apm reaches a published build
+      # through the single-file bundle rather than through the loose folder Whisper needs, and a
+      # canceller that fails to start does not stop d47 — it quietly leaves hands-free listening
+      # half-duplex, which is exactly the sort of failure that ships.
       - name: Speech model for the self-test
         uses: actions/cache@v4
         with:

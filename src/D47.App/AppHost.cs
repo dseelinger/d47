@@ -64,6 +64,7 @@ public sealed class AppHost : IDisposable
         CueLibrary cues,
         VoicePipeline voice,
         ListenGate gate,
+        EchoCanceller echo,
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
         EliteBinds binds,
@@ -97,6 +98,7 @@ public sealed class AppHost : IDisposable
         Cues = cues;
         Voice = voice;
         Listening = gate;
+        Echo = echo;
         Binds = binds;
         _microphone = microphone;
         _pushToTalk = pushToTalk;
@@ -226,6 +228,20 @@ public sealed class AppHost : IDisposable
     /// the gate itself knows nothing about turns.
     /// </summary>
     public ListenGate Listening { get; }
+
+    /// <summary>
+    /// What removes d47's own voice from what the microphone hears (list.md Phase 13). Exposed
+    /// because whether it is actually running is a thing the listening status answers, and
+    /// "the setting is on" is not the same claim.
+    /// </summary>
+    public EchoCanceller Echo { get; }
+
+    /// <summary>
+    /// Whether an utterance was addressed to d47 at all, in wake-word mode. Lives on the host
+    /// rather than on the gate because it decides about words, not about audio — the gate has
+    /// already done its part by the time this is asked (see <see cref="WakeWordGate"/>).
+    /// </summary>
+    public WakeWordGate Wake { get; } = new();
 
     /// <summary>
     /// The Commander's Elite bindings, read once at startup. Read-only, and the same parse the
@@ -490,7 +506,24 @@ public sealed class AppHost : IDisposable
         var models = new HttpModelStore(paths, loggerFactory.CreateLogger<HttpModelStore>());
         var transcriber = new WhisperTranscriber(loggerFactory.CreateLogger<WhisperTranscriber>());
         var gate = new ListenGate(WasapiMicrophone.SampleRate, loggerFactory.CreateLogger<ListenGate>());
-        var microphone = new WasapiMicrophone(gate, loggerFactory.CreateLogger<WasapiMicrophone>());
+
+        // Between the microphone and the gate, consuming the arbiter's render reference tap
+        // rather than a loopback capture (list.md Phase 13, architecture.md D7). The tap has
+        // existed since Phase 5 with nothing subscribed to it, precisely so that this line
+        // could be added without opening the component every voice path depends on.
+        var echo = new EchoCanceller(
+            gate,
+            audioSink.ReferenceTap,
+            WasapiMicrophone.SampleRate,
+            loggerFactory.CreateLogger<EchoCanceller>());
+
+        // Whether d47 is currently audible, which the gate needs only when nothing is cancelling
+        // it: uncancelled, a hands-free mode with speakers is a loop where d47 hears itself,
+        // transcribes itself and answers itself. With the canceller running this changes nothing
+        // and the Commander can talk over it, which is the whole of Phase 13's first item.
+        audio.ActivityChanged += activity => gate.FarEndActive = activity.Channel is not null;
+
+        var microphone = new WasapiMicrophone(echo, loggerFactory.CreateLogger<WasapiMicrophone>());
         var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
 
         // The only thing that presses a key in the game (architecture.md D4). Built here so
@@ -591,6 +624,12 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds,
                     InstalledModels = () => models.Installed(),
+
+                    // What the gate policy is actually doing, which is the question a Commander
+                    // running hands free is asking when they ask this one (list.md Phase 13).
+                    Microphone = () => gate.State,
+                    EchoState = () => (echo.IsActive, echo.Unavailable),
+                    WakeWords = () => self?.Wake.Phrases ?? [],
 
                     // So the status says "[" where the settings row already does. Several of
                     // these values carry two names and ToString picks whichever it finds
@@ -702,6 +741,7 @@ public sealed class AppHost : IDisposable
             cues,
             voice,
             gate,
+            echo,
             microphone,
             pushToTalk,
             binds,
@@ -724,6 +764,16 @@ public sealed class AppHost : IDisposable
         // the rule the transcript scroll already follows, so the avatar does not get a second
         // one of its own.
         voice.StateEntered += state => host.Panel.LoopState = state;
+
+        // That the microphone is open, on both surfaces, as a property of the gate policy rather
+        // than of any one capability (list.md Phase 13). Set straight onto the view model from
+        // whichever thread the change arrived on, following the same rule the avatar does: a
+        // view model is affine to nothing and the view marshals.
+        gate.StateChanged += state => host.ShowMicrophone(state);
+
+        // Stated once at startup as well as on every change, because the opening state is the
+        // one a Commander sees for longest and nothing had raised an event yet.
+        host.ShowMicrophone(gate.State);
 
         // A voice the provider refuses is written out of settings rather than merely skipped for
         // the turn it broke. Subscribed before the first ApplySpeechSettings, because a stored
@@ -765,6 +815,16 @@ public sealed class AppHost : IDisposable
         tick.Add("push-to-talk", context =>
         {
             pushToTalk.Poll();
+
+            // Whether the device is actually delivering audio, which only it knows and which is
+            // half of what the panel's microphone indicator says. Sampled here rather than
+            // raised, because a device disappearing does not always announce itself.
+            gate.Capturing = microphone.IsCapturing;
+
+            // Where the hands-free gate opens and closes. The detector runs on the audio thread
+            // and records what it decided; this is the thread that acts on it, so a real-time
+            // callback never plays a cue or hands an utterance to a transcriber (list.md
+            // Phase 13, architecture.md §4).
             gate.Poll(context.Now);
         });
 
@@ -1436,6 +1496,11 @@ public sealed class AppHost : IDisposable
         // spoken in there and it is the line most worth hearing in the right voice.
         ApplySpeechSettings();
 
+        // And what d47 answers to, for the same reason and with the same failure if it is
+        // skipped: the wake word defaults to the ship's AI name, so a core switch that did not
+        // re-read it would leave a Commander calling the new core by the old one's name.
+        ApplyWakeWords();
+
         _logger.LogInformation(
             "Persona changed from {Previous} to {Current} ({Arrival})",
             change.Previous?.Name ?? "(none)",
@@ -1768,8 +1833,51 @@ public sealed class AppHost : IDisposable
                     clock.Value = DateTimeOffset.Now;
                 }
 
+                // The wake word, applied to the words rather than to the audio (list.md
+                // Phase 13). Outside wake-word mode the policy holds no phrases and admits
+                // everything, so push-to-talk and continuous listening take the same path
+                // through here and neither pays for a decision that has already been made.
+                var decision = Wake.Admit(transcription.Text, DateTimeOffset.Now);
+
+                if (decision.Outcome == WakeOutcome.Ignored)
+                {
+                    // Somebody in the room said something that was not to d47. Logged at debug
+                    // and nowhere else — this is the common case in wake-word mode, and a panel
+                    // that transcribed every conversation in earshot would be a panel nobody
+                    // would leave the mode switched on for.
+                    _logger.LogDebug("Not addressed to me: {Text}", transcription.Text);
+                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
+                    return;
+                }
+
+                if (decision.Outcome == WakeOutcome.Woken)
+                {
+                    // The name and nothing after it. Acknowledging is the point — a wake word
+                    // that answers nothing leaves the Commander waiting to find out whether it
+                    // heard — and the window is now open for whatever they were about to ask.
+                    _logger.LogInformation("Woken by name; listening for what follows");
+
+                    // The cue on its own rather than the loop state behind it. Entering
+                    // Listening would be accurate for as long as the window lasted and then
+                    // stuck: nothing settles out of that state, so a Commander who said the name
+                    // and then changed their mind would leave the face listening for the rest of
+                    // the session. What is actually waiting is the microphone, and the microphone
+                    // has its own indicator now (list.md Phase 13).
+                    if (Voice.CuesEnabled)
+                    {
+                        Audio.Enqueue(new Core.Audio.AudioRequest
+                        {
+                            Channel = Core.Audio.AudioChannel.Cue,
+                            Clip = Cues.For(Core.Audio.LoopState.Listening),
+                        });
+                    }
+
+                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
+                    return;
+                }
+
                 _logger.LogInformation("Heard: {Text}", transcription.Text);
-                Heard?.Invoke(transcription.Text);
+                Heard?.Invoke(decision.Text);
             }
             catch (Exception ex)
             {
@@ -1852,11 +1960,39 @@ public sealed class AppHost : IDisposable
     {
         var listening = Settings.Current.Listening;
 
-        Listening.Mode = listening.Mode == ListeningCapability.ToggleMode
-            ? ListenMode.Toggle
-            : ListenMode.PushToTalk;
+        Listening.Mode = listening.Mode switch
+        {
+            ListeningCapability.ToggleMode => ListenMode.Toggle,
+            ListeningCapability.ContinuousMode => ListenMode.VoiceActivity,
+            ListeningCapability.WakeMode => ListenMode.WakeWord,
+            _ => ListenMode.PushToTalk,
+        };
 
         Listening.PreRoll = TimeSpan.FromMilliseconds(listening.PreRollMilliseconds);
+        Listening.Voice.Sensitivity = listening.Sensitivity;
+        Listening.Voice.Hangover = TimeSpan.FromMilliseconds(listening.SilenceMilliseconds);
+
+        // Started before the microphone, so the first buffer off a freshly opened device is
+        // already going through it. Idempotent — a canceller already running is left alone
+        // rather than cycled, because throwing away a converged filter makes d47 audible to
+        // itself for a second every time an unrelated listening row is touched.
+        if (listening.EchoCancellation)
+        {
+            Echo.SuppressNoise = listening.NoiseSuppression;
+            Echo.Start();
+        }
+        else
+        {
+            Echo.Stop();
+        }
+
+        // From the canceller's live state rather than from the row that asked for it. A
+        // canceller that was turned on and failed to load its native library must not leave the
+        // gate believing d47's own voice is being subtracted — that belief is what decides
+        // whether hands-free listening stays open while d47 speaks.
+        Listening.EchoCancelled = Echo.IsActive;
+
+        ApplyWakeWords();
 
         // Rebinding while the key is held would leave the gate open with nothing able to close
         // it — the listening equivalent of a stranded key (architecture.md D4, rule 2).
@@ -1898,18 +2034,29 @@ public sealed class AppHost : IDisposable
         // exactly where the Commander put it.
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
+        var handsFree = ListeningCapability.IsHandsFree(listening.Mode);
 
-        if (!bound)
+        if (!bound && !handsFree)
         {
-            // No key, no microphone. d47 opening an input device it will never read from is
-            // exactly the surprise the unset default exists to avoid. Closed rather than
-            // disposed, for the same reason as the transcriber above — the Commander can bind a
-            // key later, and that has to reopen the device rather than fail.
+            // No key and nothing that opens the gate by itself, so no microphone. d47 opening an
+            // input device it will never read from is exactly the surprise the unset default
+            // exists to avoid. Closed rather than disposed, for the same reason as the
+            // transcriber above — the Commander can bind a key later, and that has to reopen the
+            // device rather than fail.
             _microphone.Close();
+            Listening.Capturing = false;
             return;
         }
 
         _microphone.Open(listening.InputDevice);
+        Listening.Capturing = _microphone.IsCapturing;
+
+        if (!bound)
+        {
+            // Hands free with no key bound is a legitimate configuration, and the collision
+            // check below has nothing to check.
+            return;
+        }
 
         if (Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
         {
@@ -1921,6 +2068,67 @@ public sealed class AppHost : IDisposable
                 Binds.PresetName,
                 string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
         }
+    }
+
+    /// <summary>
+    /// Puts what the microphone is doing in front of the Commander, on both surfaces.
+    /// <para>
+    /// The detail beside it is the gesture that would open the gate, which is a settings question
+    /// — so it is answered here rather than by the view, which reads no settings, or by the gate,
+    /// which knows about audio and not about keys.
+    /// </para>
+    /// </summary>
+    private void ShowMicrophone(MicrophoneState state)
+    {
+        Panel.Microphone = state;
+
+        var listening = Settings.Current.Listening;
+
+        Panel.MicrophoneDetail = state switch
+        {
+            MicrophoneState.Armed when listening.Mode == ListeningCapability.WakeMode =>
+                Wake.Phrases is { Count: > 0 } names
+                    ? $"say {names[0]} and D47 will listen"
+                    : "say D47's name and it will listen",
+
+            MicrophoneState.Armed => "D47 opens the microphone by itself when it hears you start",
+
+            MicrophoneState.Idle when listening.PushToTalkKey is { } key =>
+                $"audio is discarded within {listening.PreRollMilliseconds} ms unless you "
+                + $"{(listening.Mode == ListeningCapability.ToggleMode ? "press" : "hold")} "
+                + Input.Gestures.Describe(key),
+
+            _ => string.Empty,
+        };
+    }
+
+    /// <summary>
+    /// Points the wake-word policy at whatever d47 currently answers to.
+    /// <para>
+    /// Called from the listening settings and again whenever the core or the ship's AI name
+    /// changes, because an unset row means "the name the Commander gave their ship's AI" — and
+    /// a wake word that goes on being the previous core's name after a switch is a wake word
+    /// that stops working for a reason nothing on screen explains.
+    /// </para>
+    /// </summary>
+    private void ApplyWakeWords()
+    {
+        var listening = Settings.Current.Listening;
+
+        Wake.Window = TimeSpan.FromSeconds(listening.WakeWindowSeconds);
+
+        // Empty outside wake-word mode, which is what makes the policy inert rather than the
+        // callers having to know which mode is in force: with no phrases it admits everything,
+        // and admitting everything is precisely what continuous listening means.
+        if (listening.Mode != ListeningCapability.WakeMode)
+        {
+            Wake.Phrases = [];
+            return;
+        }
+
+        Wake.Phrases = listening.WakeWords is { Length: > 0 } spelled
+            ? [.. spelled.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)]
+            : [Personas.ShipName];
     }
 
     /// <summary>

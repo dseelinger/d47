@@ -32,7 +32,7 @@ These come from the checklist, not from taste. Each one eliminates otherwise-rea
 | VR compositing | **OpenVR** (`IVROverlay`) via `openvr_api` | BSD-3-Clause | Elite never calls OpenXR; SteamVR overlays composite over any VR app without touching its process. |
 | Speech-to-text | **Whisper.net** + `Whisper.net.Runtime` | MIT (whisper.cpp + ggml MIT) | No FFmpeg anywhere in the graph. |
 | Audio capture / render | **NAudio** (WASAPI) | MIT | Mic capture, resampling to 16 kHz mono, and the single output arbiter. |
-| Echo cancellation | **WebRTC AEC3** | BSD-3-Clause | Consumes the arbiter's render reference tap. |
+| Echo cancellation | **WebRTC AEC3**, via `SoundFlow.Extensions.WebRtc.Apm` | BSD-3-Clause native, MIT wrapper | Consumes the arbiter's render reference tap. The wrapper is the only .NET route to AEC3 on NuGet and drags `SoundFlow` along unused; NAudio still owns capture and render. Weighed in Phase 13 against hand-writing an adaptive filter and a delay estimator, which is a specialist's month and then a lifetime of speaker nonlinearity and two clocks. |
 | Text-to-speech | Edge Neural (free) / ElevenLabs (paid) | provider terms | Per-role selection; see *ElevenLabs*. |
 | LLM | **Anthropic SDK** (`Anthropic` NuGet) + an OpenAI-protocol client, default `claude-opus-5` | MIT (SDK) | Behind an `ILlmProvider` seam — OpenAI and third parties speaking its protocol are first-class; see §6. |
 | Logging | **Serilog** | Apache-2.0 | Two sinks: human-readable and structured JSON. |
@@ -61,7 +61,7 @@ graph TB
     end
 
     subgraph Voice["Audio"]
-        GATE[Gate Policy<br/>PTT / VAD / wake word]
+        GATE[Gate Policy<br/>PTT / toggle / VAD / wake word]
         STT[Whisper.net]
         ARB[Audio Arbiter<br/>one queue + reference tap]
         TTS[TTS Provider]
@@ -78,14 +78,13 @@ graph TB
     LLM[ILlmProvider<br/>Anthropic / OpenAI-protocol]
 
     J --> JR --> GS
-    MIC --> GATE --> STT --> TURN
+    MIC --> AEC --> GATE --> STT --> TURN
     GS --> TURN
     REG --> TURN
     TURN <--> LLM
     NET --> TURN
     TURN --> ARB --> TTS
     ARB -.render reference.-> AEC
-    AEC --> GATE
     ARB --> VR
     TURN --> KEY --> ELITE[Elite Dangerous]
     GS -->|proactive callouts| ARB
@@ -249,6 +248,8 @@ Writes go to a `.writing` sibling then `File.Move` with overwrite — atomic on 
 A single priority queue in front of WASAPI render. Every audible thing — speech, cues, thinking bed, music, ambience — enters through it. Ducking, interruption, supersede, and caption timing are all properties of the queue rather than separate mechanisms.
 
 The arbiter exposes a **render reference tap** from day one: a copy of the mixed output buffer, timestamp-aligned, for AEC3 to subtract from capture. Retrofitting this later means opening the one component every voice path depends on.
+
+*Collected in Phase 13.* It was one subscription, and the arbiter did not change. `EchoCanceller` sits between the microphone and the gate as an `ICaptureSink`, takes the tap on the render thread and capture on the capture thread — which is the arrangement the APM holds separate locks for — and is otherwise framing: WASAPI hands over whatever buffer size it likes on both sides and the module takes exactly 10 ms, with the remainder carried rather than padded, since padding tells a canceller the Commander stopped talking several times a second. The rejected alternative is worth recording beside FFmpeg and cloud STT: a **loopback capture** is a second WASAPI stream, opened on a device that may not be the one d47 is rendering to, arriving late with a clock of its own.
 
 `Shut up` is a queue operation (flush + stop current), not a feature layered on top. That is why it can be instant.
 
@@ -430,6 +431,9 @@ Two things that *are* observable and should not be traded away: no elevation, an
 | Writing the Commander's binds file | Read-only parse + guidance | ED caches binds; format is version-sensitive; silently rewriting a HOTAS config is unforgivable |
 | Per-turn dynamic tool selection | Closed profile enumeration | Destroys prompt caching on the exact turn caching starts to matter |
 | Separate audio path per voice | One arbiter | Separate paths per voice are how a line gets spoken in the wrong one |
+| Loopback capture as the AEC reference | The arbiter's render reference tap | A second WASAPI stream, possibly on a different device, arriving late with its own clock — where the tap is the exact buffer the mixer produced |
+| An acoustic wake-word model | Whisper plus the voice-activity gate | A second model to ship and download, and a vocabulary fixed at build time that could never be the name the Commander gave their ship's AI |
+| A neural VAD | Energy over an adaptive noise floor | Runs on every buffer on the audio thread; a Commander who finds it too eager turns one number. A model there is a second download for a decision Whisper re-checks a moment later |
 
 ---
 

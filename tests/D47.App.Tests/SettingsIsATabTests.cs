@@ -121,7 +121,12 @@ public class SettingsIsATabTests
         Assert.False(Named(view, "TranscriptPane").IsVisible);
         Assert.True(Named(view, "SettingsPane").IsVisible);
         Assert.False(Named(view, "AskRow").IsVisible);
-        Assert.False(Named(view, "TurnLine").IsVisible);
+
+        // Effectively rather than directly: the provenance line shares a row with the microphone
+        // indicator since Phase 13, and it is the row that is hidden. Asserting what is actually
+        // on screen is the claim this test is making anyway, and it survives the next time
+        // something moves.
+        Assert.False(Named(view, "TurnLine").IsEffectivelyVisible);
 
         // The header stays: the avatar and the help glyph are as true on this page as on any
         // other. What left it is the gear, which this tab replaces.

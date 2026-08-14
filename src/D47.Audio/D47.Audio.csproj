@@ -16,6 +16,19 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
+
+    <!--
+      WebRTC AEC3, which is what architecture.md §2 names for echo cancellation. The wrapper is
+      MIT and the native webrtc-apm it carries is BSD-3, so the licence constraint in §1 holds
+      through the graph rather than only at the top of it.
+
+      It pulls SoundFlow along as a transitive dependency and none of it is used: NAudio still
+      owns capture and render, and what is taken from this package is the four types around the
+      audio processing module. Weighed against the alternative — hand-writing an adaptive filter
+      and a delay estimator, then discovering what a speaker's nonlinearity and two clocks do to
+      it — a megabyte of unused engine is the cheap side of the trade.
+    -->
+    <PackageReference Include="SoundFlow.Extensions.WebRtc.Apm" Version="1.4.0" />
   </ItemGroup>
 
 </Project>

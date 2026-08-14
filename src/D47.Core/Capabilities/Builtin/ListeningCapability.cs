@@ -25,9 +25,28 @@ public static class ListeningCapability
     public const string ModelKey = "listening.model";
     public const string GpuKey = "listening.useGpu";
     public const string EgressKey = "listening.egress";
+    public const string EchoKey = "listening.echoCancellation";
+    public const string NoiseKey = "listening.noiseSuppression";
+    public const string SensitivityKey = "listening.sensitivity";
+    public const string SilenceKey = "listening.silence";
+    public const string WakeWordsKey = "listening.wakeWords";
+    public const string WakeWindowKey = "listening.wakeWindow";
 
     public const string HoldMode = "hold";
     public const string ToggleMode = "toggle";
+
+    /// <summary>Hands free: the gate opens when somebody talks (list.md Phase 13).</summary>
+    public const string ContinuousMode = "continuous";
+
+    /// <summary>Hands free, and only when spoken to by name.</summary>
+    public const string WakeMode = "wake";
+
+    /// <summary>
+    /// Whether a stored mode is one where d47 decides for itself when to listen. Answered here
+    /// rather than at each of the four call sites that need it, because a fifth mode should mean
+    /// editing one expression.
+    /// </summary>
+    public static bool IsHandsFree(string? mode) => mode is ContinuousMode or WakeMode;
 
     /// <summary>
     /// What the app supplies from outside Core: the devices, and the answers only the live
@@ -61,6 +80,26 @@ public static class ListeningCapability
 
         /// <summary>Whether a transcriber is loaded and ready to turn audio into words.</summary>
         public required Func<(bool Ready, string? Model, string? Reason)> TranscriberState { get; init; }
+
+        /// <summary>
+        /// What the microphone is doing right now, as the gate policy sees it. The one question
+        /// a Commander running hands free actually wants answered (list.md Phase 13).
+        /// </summary>
+        public Func<MicrophoneState>? Microphone { get; init; }
+
+        /// <summary>
+        /// Whether echo cancellation is actually running, and why not when it is not. Live state
+        /// rather than the settings row: a canceller that was asked for and failed to start is
+        /// exactly the case worth reporting, and the row would say it was on.
+        /// </summary>
+        public Func<(bool Active, string? Unavailable)>? EchoState { get; init; }
+
+        /// <summary>
+        /// What d47 currently answers to in wake-word mode. Supplied rather than read from
+        /// settings, because an empty row means "the ship's AI name" and only the host knows
+        /// what that has been set to.
+        /// </summary>
+        public Func<IReadOnlyList<string>>? WakeWords { get; init; }
 
         /// <summary>
         /// The Commander's Elite bindings, for the double-bind check. Read-only, and the same
@@ -190,24 +229,199 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = ModeKey,
-                Label = "Key behaviour",
-                Help = "Press and hold to talk, or press once to start and again to stop.",
+                Label = "How D47 decides you are talking to it",
+                Help =
+                    "Hold the key, press it to start and stop, or let D47 open the microphone itself — "
+                    + "either whenever you speak, or only when you say its name. The key still works in "
+                    + "all four.",
                 Kind = SettingKind.Choice,
-                Choices = [HoldMode, ToggleMode],
+                Choices = [HoldMode, ToggleMode, ContinuousMode, WakeMode],
 
                 // "Press to talk (PTT)" rather than "Hold to talk": PTT is what this is called
                 // everywhere else a Commander has met it, and a name they already know beats a
                 // more literal one they have to map onto it.
-                ChoiceLabel = id => id == HoldMode ? "Press to talk (PTT)" : "Toggle on and off",
+                ChoiceLabel = id => id switch
+                {
+                    ToggleMode => "Toggle on and off",
+                    ContinuousMode => "Listen whenever I speak",
+                    WakeMode => "Listen when I say its name",
+                    _ => "Press to talk (PTT)",
+                },
                 DefaultDisplay = "hold",
                 DocsAnchor = "mode",
-                AppliesWhen = s => s.Listening.PushToTalkKey is not null,
+
+                // Protected, and this is the row where that matters most. The last two open the
+                // microphone and keep it open, so a model that could set this could start
+                // continuous capture on the Commander's machine — and anything the model can
+                // call, a hostile in-game message can attempt to invoke (architecture.md §7).
+                // It stays reachable from the panel and from the model-free router.
+                Protected = true,
+                Commands =
+                [
+                    new SettingCommandPhrase("stop listening all the time", HoldMode),
+                    new SettingCommandPhrase("only listen when I hold the key", HoldMode),
+                    new SettingCommandPhrase("listen whenever I speak", ContinuousMode),
+                    new SettingCommandPhrase("listen for your name", WakeMode),
+                ],
                 Binding = new SettingBinding
                 {
                     Read = s => s.Listening.Mode,
                     Write = (s, v) => s with
                     {
-                        Listening = s.Listening with { Mode = v == ToggleMode ? ToggleMode : HoldMode },
+                        Listening = s.Listening with
+                        {
+                            Mode = v is ToggleMode or ContinuousMode or WakeMode ? v : HoldMode,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = EchoKey,
+                Label = "Cancel D47's own voice out of the microphone",
+                Help =
+                    "Subtracts what D47 is playing from what it hears, so you can talk over it on "
+                    + "speakers. Without this, hands-free listening goes deaf while D47 speaks rather "
+                    + "than risk answering itself.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                DocsAnchor = "echo-cancellation",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.EchoCancellation ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with { EchoCancellation = v is not "false" },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = NoiseKey,
+                Label = "Take the room out of what D47 hears",
+                Help =
+                    "Suppresses steady background noise — fans, a headset's own hiss — before the "
+                    + "speech model sees it.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                DocsAnchor = "noise-suppression",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.NoiseSuppression ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with { NoiseSuppression = v is not "false" },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SensitivityKey,
+                Label = "How much louder than the room speech has to be, in decibels",
+                Help =
+                    "Lower hears more and will open on a cough or a keyboard; higher waits until you "
+                    + "are clearly talking. D47 measures the room continuously, so this is a margin "
+                    + "above whatever your room happens to be, not a fixed loudness.",
+                Kind = SettingKind.Number,
+                Minimum = 3,
+                Maximum = 30,
+                DefaultDisplay = "9",
+                DocsAnchor = "sensitivity",
+                AppliesWhen = s => IsHandsFree(s.Listening.Mode),
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.Sensitivity.ToString(),
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            Sensitivity = int.TryParse(v, out var db) && db is >= 3 and <= 30
+                                ? db
+                                : s.Listening.Sensitivity,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SilenceKey,
+                Label = "Quiet that ends a sentence, in milliseconds",
+                Help =
+                    "How long you have to stop talking before D47 decides you have finished. Short "
+                    + "cuts you off mid-thought; long makes every answer wait for it.",
+                Kind = SettingKind.Number,
+                Step = 50,
+                Minimum = 200,
+                Maximum = 3000,
+                DefaultDisplay = "700",
+                DocsAnchor = "silence",
+                AppliesWhen = s => IsHandsFree(s.Listening.Mode),
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.SilenceMilliseconds.ToString(),
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            SilenceMilliseconds = int.TryParse(v, out var ms) && ms is >= 200 and <= 3000
+                                ? ms
+                                : s.Listening.SilenceMilliseconds,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = WakeWordsKey,
+                Label = "What D47 answers to",
+                Help =
+                    "Comma-separated. Leave it unset and D47 answers to whatever you call your ship's "
+                    + "AI, so renaming the core renames the wake word too. Add spellings if the speech "
+                    + "model keeps hearing the name as something else.",
+                Kind = SettingKind.Text,
+                DefaultDisplay = "(the ship's AI name)",
+                DefaultDisplaySource = _ => surface.WakeWords?.Invoke() is { Count: > 0 } names
+                    ? $"({string.Join(", ", names)})"
+                    : "(the ship's AI name)",
+                DocsAnchor = "wake-words",
+                AppliesWhen = s => s.Listening.Mode == WakeMode,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.WakeWords,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            WakeWords = string.IsNullOrWhiteSpace(v) ? null : v.Trim(),
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = WakeWindowKey,
+                Label = "Seconds D47 keeps listening after you say its name",
+                Help =
+                    "Say the name alone, D47 answers, and the next thing you say is the request — the "
+                    + "way you would address a person. Zero means the name and the request have to "
+                    + "arrive in the same breath.",
+                Kind = SettingKind.Number,
+                Minimum = 0,
+                Maximum = 60,
+                DefaultDisplay = "12",
+                DocsAnchor = "wake-window",
+                AppliesWhen = s => s.Listening.Mode == WakeMode,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.WakeWindowSeconds.ToString(),
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            WakeWindowSeconds = int.TryParse(v, out var seconds) && seconds is >= 0 and <= 60
+                                ? seconds
+                                : s.Listening.WakeWindowSeconds,
+                        },
                     },
                 },
             },
@@ -290,7 +504,12 @@ public static class ListeningCapability
                 Kind = SettingKind.Number,
                 DefaultDisplay = "500",
                 DocsAnchor = "pre-roll",
-                AppliesWhen = s => s.Listening.PushToTalkKey is not null,
+
+                // Applies in every mode. It was written for the polling delay on the key, and it
+                // covers the detector's onset delay in the hands-free modes for the same reason
+                // and by the same mechanism — the gate opens retroactively into the ring either
+                // way (list.md Phase 13).
+                AppliesWhen = s => s.Listening.PushToTalkKey is not null || IsHandsFree(s.Listening.Mode),
                 Binding = new SettingBinding
                 {
                     Read = s => s.Listening.PreRollMilliseconds.ToString(),
@@ -337,7 +556,7 @@ public static class ListeningCapability
 
         var faults = new StringBuilder();
 
-        if (listening.PushToTalkKey is null)
+        if (listening.PushToTalkKey is null && !IsHandsFree(listening.Mode))
         {
             faults.AppendLine(
                 "No push-to-talk key is set, so I never open the microphone. "
@@ -379,13 +598,38 @@ public static class ListeningCapability
             return $"Yes — I just heard you, on {device}.";
         }
 
+        return $"Yes — {device} is open and {model} is loaded. {HowToBeHeard(listening, surface)}";
+    }
+
+    /// <summary>
+    /// What the Commander should actually do to be heard, which is a different sentence in each
+    /// of the four modes. Stated rather than assumed, because "hold RightShift" is wrong advice
+    /// in three of them and it is the last line of the answer.
+    /// </summary>
+    private static string HowToBeHeard(ListeningSettings listening, ListeningSurface surface)
+    {
         var printedKey = listening.PushToTalkKey is { } key
             ? surface.KeyLabel?.Invoke(key) ?? key
             : null;
 
-        return
-            $"Yes — {device} is open and {model} is loaded. "
-            + $"Hold {printedKey} and say something.";
+        return listening.Mode switch
+        {
+            ContinuousMode => "Just talk — I open the microphone myself when I hear you start.",
+
+            WakeMode when surface.WakeWords?.Invoke() is { Count: > 0 } names =>
+                $"Say {names[0]}, and then whatever you want.",
+
+            WakeMode => "Say my name, and then whatever you want.",
+
+            ToggleMode when printedKey is not null => $"Press {printedKey} to start, and again to stop.",
+
+            _ when printedKey is not null => $"Hold {printedKey} and say something.",
+
+            // Hands free with no key bound is a legitimate configuration and the branches above
+            // cover it; this is the one that cannot happen, and says so rather than inventing a
+            // gesture.
+            _ => "No key is bound, so nothing opens the microphone.",
+        };
     }
 
     /// <summary>
@@ -404,6 +648,13 @@ public static class ListeningCapability
             ? $"Microphone: {DeviceName(listening.InputDevice, surface)}, capturing."
             : $"Microphone: not capturing. {unavailable ?? "No reason recorded."}");
 
+        report.AppendLine($"Gate: {ModeName(listening.Mode)}.");
+
+        if (surface.Microphone?.Invoke() is { } state)
+        {
+            report.AppendLine($"Right now: {StateName(state)}.");
+        }
+
         if (listening.PushToTalkKey is { } key)
         {
             var printed = surface.KeyLabel?.Invoke(key) ?? key;
@@ -416,9 +667,25 @@ public static class ListeningCapability
                 report.AppendLine(line);
             }
         }
+        else if (IsHandsFree(listening.Mode))
+        {
+            report.AppendLine("Push-to-talk: not set. I listen hands free instead.");
+        }
         else
         {
             report.AppendLine("Push-to-talk: not set, so I never open the microphone.");
+        }
+
+        if (listening.Mode == WakeMode && surface.WakeWords?.Invoke() is { Count: > 0 } names)
+        {
+            report.AppendLine($"I answer to: {string.Join(", ", names)}.");
+        }
+
+        if (surface.EchoState?.Invoke() is { } echo)
+        {
+            report.AppendLine(echo.Active
+                ? "Echo cancellation: running, so you can talk over me."
+                : $"Echo cancellation: off. {echo.Unavailable ?? "Not enabled."}");
         }
 
         var (ready, model, reason) = surface.TranscriberState();
@@ -429,6 +696,27 @@ public static class ListeningCapability
 
         return report.ToString();
     }
+
+    /// <summary>The gate policy in the Commander's terms rather than in the stored spelling.</summary>
+    public static string ModeName(string? mode) => mode switch
+    {
+        ToggleMode => "press once to start, again to stop",
+        ContinuousMode => "hands free, opening whenever you speak",
+        WakeMode => "hands free, opening when you say my name",
+        _ => "hold the key to talk",
+    };
+
+    /// <summary>
+    /// What the microphone is doing, said the way the panel's indicator says it. One wording for
+    /// the spoken answer and the drawn one, so they cannot disagree about what "armed" means.
+    /// </summary>
+    public static string StateName(MicrophoneState state) => state switch
+    {
+        MicrophoneState.Open => "the microphone is open and I am keeping what I hear",
+        MicrophoneState.Armed => "the microphone is open and I am waiting to hear you start",
+        MicrophoneState.Idle => "the microphone is open and nothing is being kept",
+        _ => "the microphone is closed",
+    };
 
     /// <summary>
     /// "Report a key that is bound twice" (list.md Phase 6). A double-bound push-to-talk key

@@ -183,15 +183,64 @@
       </DockPanel>
     </Border>
 
-    <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
-    <TextBlock x:Name="TurnLine"
-               Text="{Binding TurnLine}"
-               DockPanel.Dock="Bottom"
-               Margin="0,10,0,0"
-               FontFamily="Cascadia Mono,Consolas,monospace"
-               FontSize="{StaticResource D47.Type.Secondary}"
-               Foreground="{DynamicResource D47.TextMuted}"
-               TextWrapping="Wrap" />
+    <!--
+      The provenance line, and beside it the one thing on this panel that is about right now
+      rather than about the last turn: whether the microphone is open (list.md Phase 13).
+
+      It sits in this row rather than in the header because the header is what mini takes away,
+      and mini is the headset's normal state. "Continuous capture with no visible state is the
+      thing a user is right to distrust" does not become less true at a metre — so the indicator
+      lives in the one region both surfaces show in both modes.
+
+      Docked left of the turn line rather than under it: the two are read at different moments
+      and neither should push the other around as it changes length.
+    -->
+    <DockPanel x:Name="StatusRow" DockPanel.Dock="Bottom" Margin="0,10,0,0">
+
+      <Border x:Name="MicrophoneRow"
+              DockPanel.Dock="Left"
+              IsVisible="{Binding MicrophoneVisible}"
+              Margin="0,0,10,0"
+              Padding="7,2"
+              CornerRadius="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderThickness="1">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <!--
+            A microphone, drawn rather than typed, for the reason the help mark already is: a
+            glyph taken from a font is whatever weight that font happens to have, and it hangs
+            off a baseline instead of sitting in the middle of its box. A 24-unit coordinate
+            space scaled into a 13-pixel box lines up with the text beside it by construction.
+
+            Filled or hollow is the state, not just the colour, because a Commander glancing at
+            this in a headset is reading a shape before they read a hue - and because a colour
+            difference alone is not a difference for everybody.
+          -->
+          <Path x:Name="MicrophoneGlyph"
+                Width="13" Height="13"
+                VerticalAlignment="Center"
+                Stretch="Uniform"
+                StrokeThickness="2"
+                StrokeLineCap="Round"
+                StrokeJoin="Round"
+                Data="M 12,3 A 3,3 0 0 1 15,6 L 15,11 A 3,3 0 0 1 9,11 L 9,6 A 3,3 0 0 1 12,3 Z
+                      M 5.5,10.5 A 6.5,6.5 0 0 0 18.5,10.5 M 12,17 L 12,21" />
+          <TextBlock x:Name="MicrophoneLabel"
+                     VerticalAlignment="Center"
+                     FontSize="{StaticResource D47.Type.Small}" />
+        </StackPanel>
+      </Border>
+
+      <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
+      <TextBlock x:Name="TurnLine"
+                 Text="{Binding TurnLine}"
+                 VerticalAlignment="Center"
+                 FontFamily="Cascadia Mono,Consolas,monospace"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 Foreground="{DynamicResource D47.TextMuted}"
+                 TextWrapping="Wrap" />
+    </DockPanel>
 
     <!--
       Which page of the transcript this surface is showing. On the view rather than on the view

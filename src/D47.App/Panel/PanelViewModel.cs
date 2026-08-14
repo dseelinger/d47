@@ -119,6 +119,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private bool _canAsk = true;
     private string _transcriptText = string.Empty;
     private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
+    private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
+    private string _microphoneDetail = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -204,6 +206,47 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         get => _loopState;
         set => Set(ref _loopState, value);
     }
+
+    /// <summary>
+    /// What the microphone is doing (list.md Phase 13, "Show that the microphone is open").
+    /// <para>
+    /// On the view model rather than on either surface, and that is the requirement rather than
+    /// a convenience: the checklist asks for the state to be visible on the panel <em>and</em>
+    /// the VR surface, and the only way to guarantee those two agree is for there to be one
+    /// copy of it. A headset that showed the microphone shut while the window showed it open
+    /// would be worse than neither showing anything.
+    /// </para>
+    /// </summary>
+    public D47.Core.Listening.MicrophoneState Microphone
+    {
+        get => _microphone;
+        set
+        {
+            if (Set(ref _microphone, value))
+            {
+                Raise(nameof(MicrophoneVisible));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The rest of the sentence — which key to hold, or which name to say. Set by the host,
+    /// because what opens the gate is a settings question and this view model does not read
+    /// settings.
+    /// </summary>
+    public string MicrophoneDetail
+    {
+        get => _microphoneDetail;
+        set => Set(ref _microphoneDetail, value);
+    }
+
+    /// <summary>
+    /// Whether the indicator is drawn at all. Off means no device is open, and a row saying so
+    /// permanently would be a row about nothing — every other state is worth a Commander's
+    /// glance, including the idle one, because "the microphone is open and nothing is kept" is
+    /// a claim they are entitled to see made.
+    /// </summary>
+    public bool MicrophoneVisible => _microphone != D47.Core.Listening.MicrophoneState.Off;
 
     public string TurnLine
     {

@@ -60,6 +60,27 @@ able to say so.
 from them can reach the model as game state, which is disclosed under the language model above
 rather than twice.
 
+## Your microphone is not a destination
+
+It is worth saying plainly, because Phase 13 added hands-free listening and "the microphone is
+open all the time" is a sentence that deserves an answer rather than a shrug.
+
+**No audio ever leaves this machine, in any setting.** Speech becomes words through a model
+running on your own computer; there is no cloud transcription option and there is deliberately no
+row to turn one on. Audio is never written to disk either — it lives in a half-second ring buffer
+and is overwritten.
+
+What the hands-free settings change is what gets *kept*, locally, for long enough to transcribe.
+In push-to-talk that is only what you held the key for; in the two hands-free settings it is every
+stretch of speech in the room, and in wake-word mode the ones that were not addressed to Directive
+47 are discarded without reaching the transcript, the panel or the log. Both are off out of the
+box, the row that turns them on is [unreachable by the model](listening.md#mode), and the panel
+shows the microphone's state the whole time it is open — on the desktop and in the headset.
+
+The one thing that does cross the network for listening is the speech model file itself, fetched
+once from `huggingface.co`. It is listed on the settings surface for as long as a model is
+selected.
+
 ## Settings
 
 ### Check for updates at startup {#update-check}

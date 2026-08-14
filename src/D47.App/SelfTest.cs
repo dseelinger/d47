@@ -1,4 +1,5 @@
 using D47.App.Logging;
+using D47.Audio;
 using D47.Core;
 using D47.Core.Listening;
 using D47.Stt;
@@ -27,6 +28,14 @@ namespace D47.App;
 /// on disk first — a missing model is a failure here, not a skip, because a gate that can be
 /// skipped by forgetting a step is not a gate.
 /// </para>
+/// <para>
+/// Phase 13 added a second native to the same gate, for the same reason and against the same
+/// bug: <see cref="EchoCanceller"/> loads <c>webrtc-apm</c>, which reaches a published build
+/// through the single-file bundle's self-extraction rather than through the loose layout Whisper
+/// needs. Nothing in the automated tests can tell those two layouts apart, and a canceller that
+/// silently fails to start does not stop d47 — it just quietly leaves hands-free listening
+/// half-duplex, which is precisely the kind of failure that ships.
+/// </para>
 /// </summary>
 internal static class SelfTest
 {
@@ -37,6 +46,7 @@ internal static class SelfTest
     private const int LoadFailedExitCode = 2;
     private const int NoModelExitCode = 3;
     private const int ErrorsLoggedExitCode = 4;
+    private const int NativeLoadFailedExitCode = 5;
 
     public static int Run()
     {
@@ -83,6 +93,15 @@ internal static class SelfTest
                 ? string.Join(", ", Directory.EnumerateFiles(natives).Select(Path.GetFileName))
                 : "absent");
 
+        // Before the model lookup, because it is the cheaper of the two checks, it depends on no
+        // user data, and a machine missing the Visual C++ runtime fails here in a way that
+        // explains the transcriber's failure as well.
+        if (CheckEchoCancellation(loggers, logger) is { } echoFailure)
+        {
+            Report(echoFailure);
+            return NativeLoadFailedExitCode;
+        }
+
         var models = Path.Combine(paths.Data, "models");
 
         // The smallest, because any ggml file proves the natives load and the small ones prove
@@ -127,8 +146,69 @@ internal static class SelfTest
 
         Report(
             $"SELFTEST OK: {modelId} loaded and transcribed 1s of silence "
-            + $"in {heard.Elapsed.TotalMilliseconds:0} ms.");
+            + $"in {heard.Elapsed.TotalMilliseconds:0} ms, and echo cancellation loaded.");
         return PassedExitCode;
+    }
+
+    /// <summary>
+    /// Proves <c>webrtc-apm</c> loads and processes a frame in this layout, and returns null when
+    /// it does.
+    /// <para>
+    /// A frame rather than only a constructor, because the constructor is managed and the
+    /// P/Invoke is where a missing native actually surfaces. One 10 ms frame of silence through
+    /// the same <see cref="ICaptureSink.Write"/> the microphone uses is enough to reach it.
+    /// </para>
+    /// </summary>
+    private static string? CheckEchoCancellation(CountingLoggerFactory loggers, ILogger logger)
+    {
+        var reached = 0;
+
+        using var canceller = new EchoCanceller(
+            new Counting(() => reached++),
+            new NoRender(),
+            16_000,
+            loggers.CreateLogger<EchoCanceller>());
+
+        canceller.Start();
+
+        if (!canceller.IsActive)
+        {
+            return $@"SELFTEST FAIL: {canceller.Unavailable} See data\logs for what the loader probed.";
+        }
+
+        canceller.Write(new float[160]);
+
+        if (reached == 0)
+        {
+            return "SELFTEST FAIL: echo cancellation started but processed no audio.";
+        }
+
+        logger.LogInformation("Echo cancellation loaded and processed a frame");
+        return null;
+    }
+
+    /// <summary>A gate that only counts, for the frame above.</summary>
+    private sealed class Counting(Action onWrite) : ICaptureSink
+    {
+        public void Write(ReadOnlySpan<float> samples) => onWrite();
+
+        public void Reset()
+        {
+        }
+    }
+
+    /// <summary>
+    /// Nothing is playing during a self-test, so the reference never fires and the forward path
+    /// is what is being proved. Empty accessors rather than a field, so there is no event here
+    /// that is declared and never raised.
+    /// </summary>
+    private sealed class NoRender : D47.Core.Audio.IRenderReferenceTap
+    {
+        public event Action<D47.Core.Audio.RenderReferenceFrame>? Rendered
+        {
+            add { }
+            remove { }
+        }
     }
 
     /// <summary>
