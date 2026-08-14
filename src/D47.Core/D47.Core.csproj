@@ -12,8 +12,8 @@
 
   <!--
     The shipped cue set is embedded rather than copied beside the executable. 760 KB against
-    a ~50 MB single-file publish is nothing, and it keeps "one file the Commander downloads
-    and runs" literally true instead of true-apart-from-a-folder (architecture.md §9).
+    a ~50 MB publish is nothing, and it is one less loose file to keep beside the exe — the
+    Whisper natives already have to live there, but nothing else should (architecture.md §9).
 
     They live in Core because a WAV is bytes: parsing and asserting one cue per loop state
     needs no audio device, which is what lets CueLibrary be covered by Core's tests. The

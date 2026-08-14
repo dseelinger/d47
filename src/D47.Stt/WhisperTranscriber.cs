@@ -25,6 +25,22 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     private readonly ILogger<WhisperTranscriber> _logger;
     private readonly SemaphoreSlim _one = new(1, 1);
 
+    /// <summary>
+    /// The last things Whisper.net said, kept so a failed load can replay them at a level that
+    /// reaches the log file. The loader narrates every candidate path it probes — but at Debug,
+    /// below the default sink level, which is how "Native Library not found in default paths"
+    /// shipped for weeks with nobody able to see which paths those were.
+    /// </summary>
+    private readonly Queue<string> _recentNativeLog = new();
+    private const int RecentNativeLogLines = 48;
+
+    /// <summary>
+    /// The Whisper.net log subscription, held so <see cref="Dispose"/> can unhook it. The
+    /// provider's list is static: an undisposed subscription keeps a dead transcriber reachable
+    /// and still receiving every later instance's lines.
+    /// </summary>
+    private readonly IDisposable _nativeLogSubscription;
+
     private WhisperFactory? _factory;
     private WhisperProcessor? _processor;
     private string? _loadedFrom;
@@ -36,16 +52,31 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         // Whisper.net logs through its own sink. Routed into Serilog so a native-side problem
         // lands in the same file as everything else rather than on a console nobody is watching.
-        LogProvider.AddLogger((level, message) => _logger.Log(
-            level switch
+        _nativeLogSubscription = LogProvider.AddLogger((level, message) =>
+        {
+            var line = message?.TrimEnd();
+
+            lock (_recentNativeLog)
             {
-                WhisperLogLevel.Error => LogLevel.Error,
-                WhisperLogLevel.Warning => LogLevel.Warning,
-                WhisperLogLevel.Info => LogLevel.Debug,
-                _ => LogLevel.Trace,
-            },
-            "whisper: {Message}",
-            message?.TrimEnd()));
+                _recentNativeLog.Enqueue($"{level}: {line}");
+
+                while (_recentNativeLog.Count > RecentNativeLogLines)
+                {
+                    _recentNativeLog.Dequeue();
+                }
+            }
+
+            _logger.Log(
+                level switch
+                {
+                    WhisperLogLevel.Error => LogLevel.Error,
+                    WhisperLogLevel.Warning => LogLevel.Warning,
+                    WhisperLogLevel.Info => LogLevel.Debug,
+                    _ => LogLevel.Trace,
+                },
+                "whisper: {Message}",
+                line);
+        });
     }
 
     public string? Model { get; private set; }
@@ -88,6 +119,12 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                 return false;
             }
 
+            lock (_recentNativeLog)
+            {
+                // Emptied so a failure's replay is this load's story, not a previous call's.
+                _recentNativeLog.Clear();
+            }
+
             try
             {
                 _factory = WhisperFactory.FromPath(modelPath, new WhisperFactoryOptions
@@ -124,6 +161,25 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                     : $"The model could not be loaded: {ex.Message}";
 
                 _logger.LogError(ex, "Could not load {Model}", modelId);
+
+                string[] replay;
+
+                lock (_recentNativeLog)
+                {
+                    replay = [.. _recentNativeLog];
+                }
+
+                if (replay.Length > 0)
+                {
+                    // At Error, deliberately: these lines went out at Debug and below as they
+                    // happened, which the log file does not keep by default — and when a load
+                    // fails, which paths the native loader actually probed is the diagnosis.
+                    _logger.LogError(
+                        "What Whisper.net reported while {Model} failed to load:\n{Replay}",
+                        modelId,
+                        string.Join('\n', replay));
+                }
+
                 UnloadCore();
                 return false;
             }
@@ -285,6 +341,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         {
             _one.Release();
             _one.Dispose();
+            _nativeLogSubscription.Dispose();
         }
     }
 }

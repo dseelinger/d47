@@ -7,6 +7,15 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Before even the single-instance claim: the selftest is a headless plumbing check that
+        // a release workflow runs while a Commander's own d47 may be open, and it must neither
+        // fight that copy for the mutex nor surface it.
+        if (args.Contains(SelfTest.Flag, StringComparer.Ordinal))
+        {
+            Environment.ExitCode = SelfTest.Run();
+            return;
+        }
+
         // Before anything else, and before the host in particular: the host tails the journal,
         // opens the microphone and registers global hotkeys, none of which a second copy should
         // be doing. Claiming the slot first means a second copy costs a mutex and exits, rather

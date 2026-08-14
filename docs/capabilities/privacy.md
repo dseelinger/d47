@@ -59,8 +59,8 @@ is a download rather than an upload, nothing about you goes with it, and it only
 press the button. Directive 47 refuses any URL that is not an asset on a release of this
 repository.
 
-The download is checked against the `d47.exe.sha256` published beside it, and deleted rather than
-run if it does not match. That catches a truncated transfer or a mirror serving something else.
+The download is checked against the `d47.zip.sha256` published beside it, and deleted rather than
+unpacked if it does not match. That catches a truncated transfer or a mirror serving something else.
 It is **not** a signature: the hash and the bytes come from the same server, so it cannot detect a
 compromised GitHub. The same caveat applies to the speech models.
 

@@ -30,10 +30,51 @@ jobs:
       # Publish settings live in D47.App.csproj so this needs no flags.
       - run: dotnet publish src/D47.App -c Release -p:Version=${{ steps.v.outputs.version }}
 
+      # The published build is the one thing dotnet test never touches — that gap once shipped
+      # a transcriber that had never worked. The selftest loads a real speech model in the real
+      # published exe and refuses the release if it cannot transcribe. Any ggml model proves
+      # the natives load; tiny.en is the smallest, and the cache spares huggingface a 75 MB
+      # download per release.
+      - name: Speech model for the self-test
+        uses: actions/cache@v4
+        with:
+          path: .model-cache
+          key: whisper-ggml-tiny.en
+
+      - name: Fetch the speech model if not cached
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .model-cache/ggml-tiny.en.bin)) {
+            New-Item -ItemType Directory -Force .model-cache | Out-Null
+            Invoke-WebRequest https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin -OutFile .model-cache/ggml-tiny.en.bin
+          }
+
+      - name: Self-test the published build
+        timeout-minutes: 10
+        shell: pwsh
+        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        run: |
+          New-Item -ItemType Directory -Force data\models | Out-Null
+          Copy-Item (Join-Path $env:GITHUB_WORKSPACE '.model-cache\ggml-tiny.en.bin') data\models\
+          $p = Start-Process -FilePath .\d47.exe -ArgumentList '--selftest' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
+          Get-Content selftest.out, selftest.err
+          if ($p.ExitCode -ne 0) {
+            Get-Content data\logs\d47-*.log -ErrorAction SilentlyContinue | Select-Object -Last 80
+            exit $p.ExitCode
+          }
+
+      # The exe and the native libraries beside it, and nothing else — never data\, which the
+      # selftest just wrote. Whisper's loader probes runtimes\win-x64 on disk beside the exe,
+      # which is why a release is an archive rather than a bare executable.
+      - name: Package
+        shell: pwsh
+        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        run: Compress-Archive -Path d47.exe, runtimes -DestinationPath d47.zip
+
       - name: Checksum
         shell: bash
         working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
-        run: sha256sum d47.exe | tee d47.exe.sha256
+        run: sha256sum d47.zip | tee d47.zip.sha256
 
       # Unsigned with a published checksum, per architecture.md §9.
       - uses: softprops/action-gh-release@v2
@@ -41,5 +82,5 @@ jobs:
           name: d47 ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.exe
-            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.exe.sha256
+            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip
+            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip.sha256

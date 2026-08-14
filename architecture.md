@@ -405,6 +405,8 @@ The property that makes all of this work is that no Core component owns a thread
 
 Recommendation: **self-contained single-file publish, unsigned, with a published SHA-256**, and treat "statically linked" in the checklist as shorthand for "one file the Commander downloads and runs, no runtime prerequisite, no elevation." NativeAOT is worth revisiting once the native dependency set is stable, but making it a 0.1.0 blocker would trade a shipping date for a property no user can observe.
 
+**Amended after 0.5.13, for the same reason the table's first row warns about extraction.** Whisper.net's loader never sees the single-file bundle: it probes the disk for `runtimes\win-x64\whisper.dll` beside the executable and throws when the folder is absent — so a bundled whisper.dll is a whisper.dll that cannot be found, and transcription had never worked in any published build while working in every dev build. The natives now publish as loose files under `runtimes\win-x64\` (a csproj target marks them `ExcludeFromSingleFile`), the release artifact is `d47.zip` — the exe plus that folder — and the in-app updater downloads, verifies and swaps the set atomically-with-rollback rather than one file. COVAS++ reached the same layout independently, from PyInstaller's side of the same trade. The managed dependencies and the runtime stay inside the one exe; `d47.exe --selftest`, run by CI and the release workflow against the *published* output, is what keeps this class of gap from shipping silently again.
+
 Two things that *are* observable and should not be traded away: no elevation, and no runtime prerequisite.
 
 ---
