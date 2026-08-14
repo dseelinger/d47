@@ -42,6 +42,12 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
     /// <summary>Why capture is not running, when it is not.</summary>
     public string? Unavailable { get; private set; }
 
+    /// <summary>
+    /// The friendly name of the device currently open, for saying which one went quiet. Null
+    /// when nothing is open.
+    /// </summary>
+    public string? OpenDeviceName { get; private set; }
+
     /// <summary>The input devices offered, as id/name pairs for the settings picker.</summary>
     public static IReadOnlyList<(string Id, string Name)> Devices()
     {
@@ -137,6 +143,7 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
                 _capture.StartRecording();
 
                 _openDevice = deviceId;
+                OpenDeviceName = device.FriendlyName;
                 IsCapturing = true;
                 Unavailable = null;
 
@@ -278,6 +285,7 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
     private void Stop()
     {
         IsCapturing = false;
+        OpenDeviceName = null;
 
         if (_capture is { } capture)
         {
