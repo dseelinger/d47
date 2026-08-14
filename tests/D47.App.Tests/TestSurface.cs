@@ -47,7 +47,7 @@ public static class TestSurface
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
         Func<string>? coverage = null)
     {
-        var root = Directory.CreateTempSubdirectory("d47-app-tests").FullName;
+        var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
         paths.EnsureCreated();
 

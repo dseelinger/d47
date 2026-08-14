@@ -280,7 +280,7 @@ public class UpdateInstallerTests
 
     private static (UpdateInstaller Installer, string Folder) Installer()
     {
-        var root = Directory.CreateTempSubdirectory("d47-update-tests").FullName;
+        var root = TempFolders.Create("d47-update-tests");
         var paths = new AppPaths(root);
         paths.EnsureCreated();
 

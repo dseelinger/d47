@@ -28,7 +28,7 @@ public class UpdateLiveTests
         Assert.NotNull(update);
         Assert.True(update.CanInstall, "the published release carries both d47.zip and its checksum");
 
-        var root = Directory.CreateTempSubdirectory("d47-update-live").FullName;
+        var root = TempFolders.Create("d47-update-live");
         var paths = new AppPaths(root);
         paths.EnsureCreated();
 

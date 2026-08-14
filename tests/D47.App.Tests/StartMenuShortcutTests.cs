@@ -18,7 +18,7 @@ public class StartMenuShortcutTests
     [Fact]
     public void AShortcutIsWrittenPointingAtTheExecutable()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-shortcut-tests").FullName;
+        var folder = TempFolders.Create("d47-shortcut-tests");
 
         // A real file to point at; the shell resolves the target when the link is saved.
         var target = Path.Combine(folder, "d47.exe");
@@ -36,7 +36,7 @@ public class StartMenuShortcutTests
     [Fact]
     public void AMissingFolderIsCreatedRatherThanFailing()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-shortcut-tests").FullName;
+        var folder = TempFolders.Create("d47-shortcut-tests");
 
         var target = Path.Combine(folder, "d47.exe");
         File.WriteAllText(target, "not really an executable");
@@ -77,7 +77,7 @@ public class StartMenuShortcutTests
     [Fact]
     public void TheAnswerIsRememberedAcrossARestart()
     {
-        var root = Directory.CreateTempSubdirectory("d47-shortcut-state").FullName;
+        var root = TempFolders.Create("d47-shortcut-state");
         var paths = new D47.Core.AppPaths(root);
         paths.EnsureCreated();
 
@@ -97,7 +97,7 @@ public class StartMenuShortcutTests
     [Fact]
     public void RememberingTheAnswerKeepsTheRestOfTheViewState()
     {
-        var root = Directory.CreateTempSubdirectory("d47-shortcut-state").FullName;
+        var root = TempFolders.Create("d47-shortcut-state");
         var paths = new D47.Core.AppPaths(root);
         paths.EnsureCreated();
 

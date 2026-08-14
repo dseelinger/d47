@@ -164,7 +164,7 @@ public class CoverageRecorderTests
     {
         public Probe()
         {
-            Paths = new AppPaths(Directory.CreateTempSubdirectory("d47-coverage-tests").FullName);
+            Paths = new AppPaths(TempFolders.Create("d47-coverage-tests"));
             Paths.EnsureCreated();
 
             var store = new SettingsStore(Paths, NullLogger<SettingsStore>.Instance);
