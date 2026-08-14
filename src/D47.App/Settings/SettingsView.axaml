@@ -16,10 +16,15 @@
     The page has a width below which it stops working: the nav, plus a card column wide enough to
     hold a caption beside its control. Narrower than this the window scrolls sideways rather than
     squeezing, which is what a browser does and what zoom needs.
-  -->
-  <Grid ColumnDefinitions="224,*" MinWidth="700">
 
-    <Border Grid.Column="0"
+    Both numbers move with the width now that this is a page of the main window rather than a
+    window of its own that could open at 1180 — see OnRootSizeChanged for the floor the nav
+    collapses at and why.
+  -->
+  <Grid x:Name="Root" ColumnDefinitions="224,*" MinWidth="700" SizeChanged="OnRootSizeChanged">
+
+    <Border x:Name="Nav"
+            Grid.Column="0"
             Background="{DynamicResource D47.Background}"
             BorderBrush="{DynamicResource D47.Border}"
             BorderThickness="0,0,1,0">
@@ -54,7 +59,7 @@
                   Padding="10,4"
                   Click="OnOpenDataFolderClick" />
           <!-- Beside the data folder because both answer "where is this thing and what is it",
-               and one click from the gear is close enough for something read once. -->
+               and one click from the tab strip is close enough for something read once. -->
           <Button x:Name="AboutButton"
                   DockPanel.Dock="Right"
                   Content="About"

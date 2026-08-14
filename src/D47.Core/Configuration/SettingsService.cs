@@ -298,7 +298,7 @@ public sealed class SettingsService
         // Said here rather than discovered later. A system-wide key with no modifier cannot be
         // registered — it would take that key from every other application, the game included —
         // and refusing it on the row that was just pressed puts the reason in front of the
-        // Commander who pressed it, rather than on a panel sitting behind the settings window.
+        // Commander who pressed it, rather than somewhere they are not looking.
         if (row.Kind == SettingKind.Hotkey && row.SystemWide
             && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))
         {

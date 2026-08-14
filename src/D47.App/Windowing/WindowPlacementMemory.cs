@@ -20,19 +20,13 @@ public sealed class WindowPlacementMemory
 {
     private readonly Window _window;
     private readonly ViewStateStore _store;
-    private readonly WindowSlot _slot;
 
     private WindowPlacement _last;
 
-    private WindowPlacementMemory(
-        Window window,
-        ViewStateStore store,
-        WindowSlot slot,
-        WindowPlacement seed)
+    private WindowPlacementMemory(Window window, ViewStateStore store, WindowPlacement seed)
     {
         _window = window;
         _store = store;
-        _slot = slot;
         _last = seed;
     }
 
@@ -50,11 +44,10 @@ public sealed class WindowPlacementMemory
     public static WindowPlacementMemory Attach(
         Window window,
         ViewStateStore store,
-        WindowSlot slot = WindowSlot.Main,
         Func<int>? zoom = null)
     {
         var state = store.Load();
-        var remembered = state.PlacementOf(slot);
+        var remembered = state.MainWindow;
 
         var scale = remembered is null && zoom is not null ? ZoomLadder.ScaleOf(zoom()) : 1.0;
 
@@ -111,7 +104,6 @@ public sealed class WindowPlacementMemory
         var memory = new WindowPlacementMemory(
             window,
             store,
-            slot,
             new WindowPlacement
             {
                 Width = width,
@@ -178,8 +170,8 @@ public sealed class WindowPlacementMemory
         }
 
         // Read-modify-write against the file rather than against a snapshot taken at startup:
-        // the settings window writes card collapse state into the same store while this window
-        // is open, and saving a stale copy here would quietly undo it.
-        _store.Save(_store.Load().With(_slot, _last));
+        // the settings page writes card collapse state into the same store while this window is
+        // open, and saving a stale copy here would quietly undo it.
+        _store.Save(_store.Load().With(_last));
     }
 }

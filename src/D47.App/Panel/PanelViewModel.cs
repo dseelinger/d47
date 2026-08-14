@@ -26,7 +26,7 @@ public enum PanelMode
 }
 
 /// <summary>
-/// Which page of the transcript a surface is showing.
+/// Which page a surface is showing.
 /// <para>
 /// A property of the surface, exactly like <see cref="PanelMode"/> and for the same reason: the
 /// two surfaces bind one model, so a page held there would send the headset to the log file the
@@ -43,6 +43,18 @@ public enum TranscriptPage
 
     /// <summary>Today's log file, read when this page is opened.</summary>
     Log,
+
+    /// <summary>
+    /// The settings surface, in place of the transcript (list.md Phase 12, "Settings is a tab of
+    /// the main window, not a second window").
+    /// <para>
+    /// Named on the same enum as the three transcript pages because it occupies the same slot and
+    /// is chosen from the same strip. A surface that was never given a settings page cannot be
+    /// put on this one — which is how the headset keeps a 1180-pixel nav column out of a quad a
+    /// metre away without anybody having to remember to leave it out.
+    /// </para>
+    /// </summary>
+    Settings,
 }
 
 /// <summary>
@@ -119,9 +131,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     /// <summary>Raised when a view's send affordance was used. The host runs the turn.</summary>
     public event Action? AskRequested;
-
-    /// <summary>Raised when a view's gear was used. Only the desktop window answers it.</summary>
-    public event Action? SettingsRequested;
 
     public event Action? HelpRequested;
 
@@ -332,8 +341,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     public void Ask() => AskRequested?.Invoke();
-
-    public void OpenSettings() => SettingsRequested?.Invoke();
 
     /// <summary>
     /// The Commander asked for the documentation. Raised rather than acted on, for the same

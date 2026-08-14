@@ -33,14 +33,11 @@ public class IntroductionsRowTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
-        Assert.Contains("Cora, Kex", Disclosures(window));
+        Assert.Contains("Cora, Kex", Disclosures(host.View));
 
-        var forget = window.GetVisualDescendants()
+        var forget = host.View.GetVisualDescendants()
             .OfType<Button>()
             .Single(button => button.Name == "Press_persona_introductions");
 
@@ -48,13 +45,13 @@ public class IntroductionsRowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(personas.Introduced);
-        Assert.Contains("No core has introduced itself yet", Disclosures(window));
+        Assert.Contains("No core has introduced itself yet", Disclosures(host.View));
 
-        window.Close();
+        host.Close();
     }
 
-    private static string Disclosures(Visual window) =>
+    private static string Disclosures(Visual surface) =>
         string.Join(
             "\n",
-            window.GetVisualDescendants().OfType<SelectableTextBlock>().Select(block => block.Text));
+            surface.GetVisualDescendants().OfType<SelectableTextBlock>().Select(block => block.Text));
 }

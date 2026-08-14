@@ -39,33 +39,14 @@
     -->
     <DockPanel x:Name="Header" DockPanel.Dock="Top" LastChildFill="False">
       <!--
-        A gear, not a labelled button: this is reached once a session and every desktop app of
-        the last decade puts one here, so the convention carries it without spending a word of
-        the header on it. The geometry is authored in-repo rather than lifted from an icon set,
-        which keeps the licence graph as clean as the dependency graph.
-      -->
-      <Button x:Name="SettingsButton"
-              DockPanel.Dock="Right"
-              Padding="9"
-              VerticalAlignment="Top"
-              CornerRadius="4"
-              Background="Transparent"
-              BorderThickness="0"
-              Click="OnSettingsClick"
-              PointerEntered="OnSettingsPointerEntered"
-              PointerExited="OnSettingsPointerExited">
-        <Path x:Name="SettingsGlyph"
-              Width="17" Height="17"
-              Stretch="Uniform"
-              Fill="{DynamicResource D47.TextMuted}"
-              Data="M 9.59,4.16 L 10.19,1.15 L 13.81,1.15 L 14.41,4.16 L 15.84,4.75 L 18.40,3.05 L 20.95,5.60 L 19.25,8.16 L 19.84,9.59 L 22.85,10.19 L 22.85,13.81 L 19.84,14.41 L 19.25,15.84 L 20.95,18.40 L 18.40,20.95 L 15.84,19.25 L 14.41,19.84 L 13.81,22.85 L 10.19,22.85 L 9.59,19.84 L 8.16,19.25 L 5.60,20.95 L 3.05,18.40 L 4.75,15.84 L 4.16,14.41 L 1.15,13.81 L 1.15,10.19 L 4.16,9.59 L 4.75,8.16 L 3.05,5.60 L 5.60,3.05 L 8.16,4.75 Z M 12.00,8.00 A 4.0,4.0 0 1 1 11.99,8.00 Z" />
-      </Button>
-      <!--
-        Help, beside the gear, and drawn rather than typed. A "?" set as text was a character in
-        a font: lighter than the gear beside it, and sitting on a baseline rather than in the
-        middle of its box, so it read as smaller and hung high. This is the same 24-unit
-        coordinate space as the gear above, scaled into the same 17-pixel box from a button with
-        the same padding, so the two line up by construction rather than by adjustment.
+        Help. The gear used to sit beside it and no longer does: settings is a page of this panel
+        now, chosen from the tab strip below like every other page, and a second affordance
+        opening the same page would be a second thing to keep in step (list.md Phase 12).
+
+        Drawn rather than typed. A "?" set as text was a character in a font: lighter than the
+        glyph beside it, and sitting on a baseline rather than in the middle of its box, so it
+        read as smaller and hung high. This is a 24-unit coordinate space scaled into a
+        17-pixel box, so it lines up by construction rather than by adjustment.
 
         Stroked rather than filled, because thickness is the property being matched and a stroke
         states it directly. The dot is a zero-length segment with a round cap - a line from a
@@ -175,7 +156,7 @@
     <!-- Ask box. Enter sends; the button is for discoverability. -->
     <Border x:Name="AskRow" DockPanel.Dock="Bottom" Margin="0,14,0,0">
       <DockPanel>
-        <!-- The send glyph, drawn in-repo like the gear. The label is gone because a paper
+        <!-- The send glyph, drawn in-repo like the help mark. The label is gone because a paper
              aeroplane next to a text box needs no caption anywhere a Commander has been. -->
         <Button x:Name="AskButton"
                 DockPanel.Dock="Right"
@@ -242,26 +223,60 @@
                    Theme="{StaticResource D47.Tab}"
                    Content="Log file"
                    IsCheckedChanged="OnPageTabChecked" />
+      <!--
+        Hidden until a host says otherwise, and only the desktop window ever does. The headset
+        renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
+        so much as a wall - so the tab is absent there rather than present and asking to be
+        remembered about (list.md Phase 12).
+      -->
+      <RadioButton x:Name="SettingsTab"
+                   Theme="{StaticResource D47.Tab.Settings}"
+                   Content="Settings"
+                   IsVisible="False"
+                   IsCheckedChanged="OnPageTabChecked" />
     </StackPanel>
 
-    <!-- Top-left corner square, because a tab is sitting on it. Rounding it there would leave
-         a visible notch between the first tab and the panel it belongs to. -->
-    <Border Background="{DynamicResource D47.Surface}"
-            BorderBrush="{DynamicResource D47.Border}"
-            BorderThickness="1"
-            CornerRadius="0,4,4,4"
-            Padding="14"
-            Margin="0,0,0,0">
-      <ScrollViewer x:Name="TranscriptScroller">
-        <!-- No Text binding: the content is written as runs from code-behind, because a
-             marked line - the panel noting that the core changed - is drawn differently from
-             the conversation around it, and one string cannot carry that. -->
-        <SelectableTextBlock x:Name="Transcript"
-                             FontFamily="Cascadia Mono,Consolas,monospace"
-                             FontSize="{StaticResource D47.Type.Body}"
-                             TextWrapping="Wrap" />
-      </ScrollViewer>
-    </Border>
+    <!--
+      One slot, two pages. The transcript and the settings surface occupy the same place under
+      the strip and are swapped by which tab is checked, which is what makes settings a page of
+      this window rather than a second window.
+    -->
+    <Panel>
+      <!-- Top-left corner square, because a tab is sitting on it. Rounding it there would leave
+           a visible notch between the first tab and the panel it belongs to. -->
+      <Border x:Name="TranscriptPane"
+              Background="{DynamicResource D47.Surface}"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="1"
+              CornerRadius="0,4,4,4"
+              Padding="14"
+              Margin="0,0,0,0">
+        <ScrollViewer x:Name="TranscriptScroller">
+          <!-- No Text binding: the content is written as runs from code-behind, because a
+               marked line - the panel noting that the core changed - is drawn differently from
+               the conversation around it, and one string cannot carry that. -->
+          <SelectableTextBlock x:Name="Transcript"
+                               FontFamily="Cascadia Mono,Consolas,monospace"
+                               FontSize="{StaticResource D47.Type.Body}"
+                               TextWrapping="Wrap" />
+        </ScrollViewer>
+      </Border>
+
+      <!--
+        Filled on first selection by whatever the host handed to EnableSettings, and never at
+        all on a surface that was handed nothing. The fill is D47.Background rather than the
+        transcript's D47.Surface because the cards inside it are Surface, and a card the same
+        colour as the page it sits on is not a card - which is also why the Settings tab has a
+        control theme of its own for the join.
+      -->
+      <Border x:Name="SettingsPane"
+              IsVisible="False"
+              ClipToBounds="True"
+              Background="{DynamicResource D47.Background}"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="1"
+              CornerRadius="0,4,4,4" />
+    </Panel>
 
   </DockPanel>
 </UserControl>

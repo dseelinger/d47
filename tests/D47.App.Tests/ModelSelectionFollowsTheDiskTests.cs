@@ -45,25 +45,25 @@ public class ModelSelectionFollowsTheDiskTests
     {
         var asked = new List<string>();
 
-        var (window, settings) = Open((model, _) =>
+        var (host, settings) = Open((model, _) =>
         {
             asked.Add(model.Id);
             return Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null));
         });
 
-        Choose(window, "small.en");
+        Choose(host, "small.en");
 
         Assert.Equal(["small.en"], asked);
         Assert.Equal("small.en", settings.Current.Listening.Model);
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>A download that does not happen leaves the setting where it was.</summary>
     [AvaloniaFact]
     public void AFailedDownloadDoesNotBecomeASelection()
     {
-        var (window, settings) = Open((_, _) =>
+        var (host, settings) = Open((_, _) =>
             Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "the host refused")));
 
         // Whatever was selected before the attempt — the shipped default on a fresh surface —
@@ -71,12 +71,12 @@ public class ModelSelectionFollowsTheDiskTests
         // shipped default is free to move.
         var before = settings.Current.Listening.Model;
 
-        Choose(window, "small.en");
+        Choose(host, "small.en");
 
         Assert.Equal(before, settings.Current.Listening.Model);
         Assert.NotEqual("small.en", settings.Current.Listening.Model);
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -86,15 +86,15 @@ public class ModelSelectionFollowsTheDiskTests
     [AvaloniaFact]
     public void TheRowSaysWhatWentWrongWhereItWasChosen()
     {
-        var (window, _) = Open((_, _) =>
+        var (host, _) = Open((_, _) =>
             Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "the host refused")));
 
-        Choose(window, "small.en");
+        Choose(host, "small.en");
 
-        // Searched from the window: a row's message line is a sibling of its three-column grid
+        // Searched from the surface: a row's message line is a sibling of its three-column grid
         // rather than a child of it, and what is being asserted is that it is said on the
         // surface the choice was made on - not which panel holds the text block.
-        var said = window
+        var said = host.View
             .GetVisualDescendants()
             .OfType<TextBlock>()
             .Select(text => text.Text ?? string.Empty)
@@ -102,19 +102,19 @@ public class ModelSelectionFollowsTheDiskTests
 
         Assert.Contains(said, text => text.Contains("the host refused", StringComparison.Ordinal));
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>And it has somewhere to show progress, under the control that starts it.</summary>
     [AvaloniaFact]
     public void TheModelRowCarriesAProgressBar()
     {
-        var (window, _) = Open((_, _) =>
+        var (host, _) = Open((_, _) =>
             Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null)));
 
-        Assert.NotEmpty(Row(window).GetVisualDescendants().OfType<ProgressBar>());
+        Assert.NotEmpty(Row(host).GetVisualDescendants().OfType<ProgressBar>());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -125,9 +125,9 @@ public class ModelSelectionFollowsTheDiskTests
     public void TheChoiceIsDisabledWhileItDownloadsAndEnabledAfter()
     {
         var duringDownload = true;
-        SettingsWindow? opened = null;
+        SettingsHost? opened = null;
 
-        var (window, _) = Open((_, _) =>
+        var (host, _) = Open((_, _) =>
         {
             // Read from inside the download, which is the only moment the answer means
             // anything.
@@ -135,14 +135,14 @@ public class ModelSelectionFollowsTheDiskTests
             return Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null));
         });
 
-        opened = window;
+        opened = host;
 
-        Choose(window, "small.en");
+        Choose(host, "small.en");
 
         Assert.False(duringDownload, "The model could still be changed while it was downloading.");
-        Assert.True(Combo(window).IsEnabled, "The model could not be changed after the download.");
+        Assert.True(Combo(host).IsEnabled, "The model could not be changed after the download.");
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -153,14 +153,14 @@ public class ModelSelectionFollowsTheDiskTests
     [AvaloniaFact]
     public void NothingIsLeftOnTheRowAfterASuccessfulDownload()
     {
-        var (window, settings) = Open((_, _) =>
+        var (host, settings) = Open((_, _) =>
             Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null)));
 
-        Choose(window, "small.en");
+        Choose(host, "small.en");
 
         Assert.Equal("small.en", settings.Current.Listening.Model);
 
-        var said = window
+        var said = host.View
             .GetVisualDescendants()
             .OfType<TextBlock>()
             .Select(text => text.Text ?? string.Empty)
@@ -169,13 +169,13 @@ public class ModelSelectionFollowsTheDiskTests
         Assert.DoesNotContain(said, text => text.Contains("Fetching", StringComparison.Ordinal));
         Assert.DoesNotContain(said, text => text.Contains("466 MB.", StringComparison.Ordinal));
 
-        window.Close();
+        host.Close();
     }
 
-    private static ComboBox Combo(SettingsWindow window) =>
-        Row(window).GetVisualDescendants().OfType<ComboBox>().First();
+    private static ComboBox Combo(SettingsHost host) =>
+        Row(host).GetVisualDescendants().OfType<ComboBox>().First();
 
-    private static (SettingsWindow Window, SettingsService Settings) Open(
+    private static (SettingsHost Host, SettingsService Settings) Open(
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>> download)
     {
         var (settings, viewState, paths) = TestSurface.Create();
@@ -183,18 +183,12 @@ public class ModelSelectionFollowsTheDiskTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths, downloadModel: download);
-        window.Show();
-
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        return (window, settings);
+        return (SettingsHost.Open(settings, viewState, paths, downloadModel: download), settings);
     }
 
-    private static void Choose(SettingsWindow window, string modelId)
+    private static void Choose(SettingsHost host, string modelId)
     {
-        var combo = Row(window).GetVisualDescendants().OfType<ComboBox>().First();
+        var combo = Row(host).GetVisualDescendants().OfType<ComboBox>().First();
 
         // By label rather than by index: the list carries a clear item above the choices when
         // the row is clearable, so an index into the choices is not an index into the box.
@@ -212,8 +206,8 @@ public class ModelSelectionFollowsTheDiskTests
     /// The compact row itself, which is the three-column grid - not the first grid in the tree
     /// that happens to contain the words, which is the whole surface.
     /// </summary>
-    private static Grid Row(SettingsWindow window) =>
-        window
+    private static Grid Row(SettingsHost host) =>
+        host.View
             .GetVisualDescendants()
             .OfType<Grid>()
             .Where(grid => grid.ColumnDefinitions.Count == 3)

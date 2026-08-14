@@ -38,6 +38,19 @@ public partial class PanelView : UserControl
 
     private PanelViewModel? _bound;
 
+    /// <summary>
+    /// How the host builds the settings surface, when it gave one. Null on every surface that
+    /// was not handed one — which is what makes the headset's copy structurally unable to show
+    /// settings rather than merely unlikely to.
+    /// </summary>
+    private Func<Control>? _buildSettings;
+
+    /// <summary>
+    /// The page to come back to when settings are left. The one the Commander was reading, not
+    /// a fixed default: Escape out of settings should put back what Escape into them covered up.
+    /// </summary>
+    private TranscriptPage _lastTranscriptPage = TranscriptPage.Conversation;
+
     public PanelView()
     {
         InitializeComponent();
@@ -46,8 +59,7 @@ public partial class PanelView : UserControl
         // binding for each would be three expressions no test can reach. The content inside
         // them still binds - a banner is hidden in mini and also hidden when there is nothing
         // wrong, and those are different reasons.
-        ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyMode());
-        ApplyMode();
+        ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyChrome());
 
         PageProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyPage());
         ApplyPage();
@@ -122,8 +134,47 @@ public partial class PanelView : UserControl
         Dispatcher.UIThread.Post(() => Avatar.Show(state));
     }
 
-    /// <summary>The gear, so a host can hang a tooltip naming the bound gesture on it.</summary>
-    public Control SettingsAffordance => SettingsButton;
+    /// <summary>
+    /// The Settings tab, so a host can hang a tooltip naming the bound gesture on it. It is the
+    /// only way in now that the gear is gone, so the gesture is named where the affordance is.
+    /// </summary>
+    public Control SettingsAffordance => SettingsTab;
+
+    /// <summary>
+    /// Gives this surface a settings page, built by <paramref name="build"/> the first time it
+    /// is selected.
+    /// <para>
+    /// A capability of the host rather than of the view, and the asymmetry is the point: the
+    /// desktop window calls this and the headset never does, so an overlay sized for a quad a
+    /// metre away cannot be put on a surface that opens at 1180 pixels. Nobody has to remember
+    /// to leave it out, because leaving it out is the default (list.md Phase 12).
+    /// </para>
+    /// <para>
+    /// Deferred to first selection because building it means constructing ninety-odd rows from
+    /// the registry, and a Commander who never opens settings should not pay for them at
+    /// startup.
+    /// </para>
+    /// </summary>
+    public void EnableSettings(Func<Control> build)
+    {
+        _buildSettings = build;
+        SettingsTab.IsVisible = true;
+    }
+
+    /// <summary>
+    /// Leaves the settings page for the one it covered up, and says whether there was anything
+    /// to leave. The host binds Escape to it.
+    /// </summary>
+    public bool LeaveSettings()
+    {
+        if (Page != TranscriptPage.Settings)
+        {
+            return false;
+        }
+
+        Page = _lastTranscriptPage;
+        return true;
+    }
 
     /// <summary>Puts the cursor in the ask box. The host binds a gesture to it.</summary>
     public void FocusAsk()
@@ -132,18 +183,36 @@ public partial class PanelView : UserControl
         AskBox.SelectAll();
     }
 
-    private void ApplyMode()
+    /// <summary>
+    /// What this surface shows, computed from <see cref="Mode"/> and <see cref="Page"/> together.
+    /// <para>
+    /// One method rather than one per property, because the two decide the same set of regions
+    /// between them: the ask line is hidden in mini <em>and</em> on the settings page, and two
+    /// handlers each owning half of that is how one of them ends up putting a region back that
+    /// the other had just taken away.
+    /// </para>
+    /// </summary>
+    private void ApplyChrome()
     {
         var full = Mode == PanelMode.Full;
+        var settings = Page == TranscriptPage.Settings;
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
-        AskRow.IsVisible = full;
+
+        // The settings surface brings its own footer — the storage line, About, the data folder
+        // — so the ask line and the provenance line give way to it rather than sitting under it
+        // saying nothing about a page with no turns on it.
+        AskRow.IsVisible = full && !settings;
+        TurnLine.IsVisible = !settings;
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs
         // go with the rest of the chrome. A surface with 640x280 to spend does not spend it on
-        // three page selectors.
+        // four page selectors.
         TranscriptTabs.IsVisible = full;
+
+        TranscriptPane.IsVisible = !settings;
+        SettingsPane.IsVisible = settings;
     }
 
     /// <summary>
@@ -152,14 +221,37 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ApplyPage()
     {
+        // A surface that was never given a settings page cannot be put on one, whether by a
+        // stale property, a host that forgot to enable it, or a hand-edited state. It goes back
+        // to the page it was on rather than showing an empty pane.
+        if (Page == TranscriptPage.Settings && _buildSettings is null)
+        {
+            Page = _lastTranscriptPage;
+            return;
+        }
+
         var tab = Page switch
         {
             TranscriptPage.Technical => TechnicalTab,
             TranscriptPage.Log => LogTab,
+            TranscriptPage.Settings => SettingsTab,
             _ => ConversationTab,
         };
 
         tab.IsChecked = true;
+
+        if (Page != TranscriptPage.Settings)
+        {
+            _lastTranscriptPage = Page;
+        }
+
+        ApplyChrome();
+
+        if (Page == TranscriptPage.Settings)
+        {
+            BuildSettingsOnce();
+            return;
+        }
 
         // Read when the page is opened rather than on a timer. A log nobody is looking at is
         // not worth a file read per tick, and one being looked at is being looked at because
@@ -170,6 +262,16 @@ public partial class PanelView : UserControl
         }
 
         DrawTranscript();
+    }
+
+    private void BuildSettingsOnce()
+    {
+        if (SettingsPane.Child is not null || _buildSettings is not { } build)
+        {
+            return;
+        }
+
+        SettingsPane.Child = build();
     }
 
     /// <summary>
@@ -247,6 +349,7 @@ public partial class PanelView : UserControl
 
         Page = tab == TechnicalTab ? TranscriptPage.Technical
             : tab == LogTab ? TranscriptPage.Log
+            : tab == SettingsTab ? TranscriptPage.Settings
             : TranscriptPage.Conversation;
     }
 
@@ -277,14 +380,6 @@ public partial class PanelView : UserControl
 
         Dispatcher.UIThread.Post(TranscriptScroller.ScrollToEnd);
     }
-
-    private void OnSettingsClick(object? sender, RoutedEventArgs e) => Model?.OpenSettings();
-
-    private void OnSettingsPointerEntered(object? sender, PointerEventArgs e) =>
-        SettingsGlyph.Fill = this.FindResource("D47.Accent") as IBrush;
-
-    private void OnSettingsPointerExited(object? sender, PointerEventArgs e) =>
-        SettingsGlyph.Fill = this.FindResource("D47.TextMuted") as IBrush;
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
 

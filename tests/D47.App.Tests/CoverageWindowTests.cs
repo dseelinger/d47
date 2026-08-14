@@ -157,18 +157,15 @@ public class CoverageWindowTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths, recording ? Report : null);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths, recording ? Report : null);
 
-        var offered = window.GetVisualDescendants()
+        var offered = host.View.GetVisualDescendants()
             .OfType<Button>()
             .Any(button => button.Name == "OpenCoverage");
 
         Assert.Equal(recording, offered);
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -238,20 +235,17 @@ public class CoverageWindowTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths, Report);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths, Report);
 
-        var scroller = window.GetVisualDescendants().OfType<ScrollViewer>().First();
+        var scroller = host.View.GetVisualDescendants().OfType<ScrollViewer>().First();
         scroller.ScrollToEnd();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
+        host.Window.CaptureRenderedFrame()!.Save(
             Path.Combine(output, "coverage-row.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>

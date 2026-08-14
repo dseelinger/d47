@@ -108,7 +108,7 @@ public sealed record SettingRow
     /// including the game — bind <kbd>]</kbd> and you could no longer type <kbd>]</kbd> anywhere.
     /// The binder has always refused those; declaring it here is what lets the refusal happen on
     /// the row the Commander just pressed, instead of arriving later as a message on a panel
-    /// behind the settings window, about a value that was stored anyway.
+    /// behind the settings surface, about a value that was stored anyway.
     /// </para>
     /// <para>
     /// False for push-to-talk, which is polled rather than registered — a bare key is the normal

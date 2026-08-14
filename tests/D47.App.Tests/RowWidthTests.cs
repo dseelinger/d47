@@ -25,9 +25,9 @@ public class RowWidthTests
     [AvaloniaFact]
     public void ALongChoiceLabelDoesNotSqueezeOutTheCaption()
     {
-        var window = OpenWith(LongestLabel);
+        var host = OpenWith(LongestLabel);
 
-        var row = CompactRowFor(window, "Speech model");
+        var row = CompactRowFor(host, "Speech model");
 
         var caption = row.ColumnDefinitions[0].ActualWidth;
         var control = row.ColumnDefinitions[2].ActualWidth;
@@ -37,7 +37,7 @@ public class RowWidthTests
             caption > control,
             $"the caption keeps the larger share of the row, but got {caption:0} against {control:0}");
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -47,9 +47,9 @@ public class RowWidthTests
     [AvaloniaFact]
     public void NoCompactRowLetsItsControlTakeTheLargerShare()
     {
-        var window = OpenWith(LongestLabel);
+        var host = OpenWith(LongestLabel);
 
-        var laidOut = CompactRows(window).Where(row => row.Bounds.Width > 0).ToList();
+        var laidOut = CompactRows(host).Where(row => row.Bounds.Width > 0).ToList();
 
         Assert.NotEmpty(laidOut);
 
@@ -61,7 +61,7 @@ public class RowWidthTests
                 + $"{row.ColumnDefinitions[0].ActualWidth:0} to its caption");
         }
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -71,16 +71,16 @@ public class RowWidthTests
     [AvaloniaFact]
     public void TheSpeechModelRowRendersToACapture()
     {
-        var window = OpenWith(LongestLabel);
+        var host = OpenWith(LongestLabel);
 
-        CompactRowFor(window, "Speech model").BringIntoView();
+        CompactRowFor(host, "Speech model").BringIntoView();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
+        host.Window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "settings-speech-model.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -96,9 +96,9 @@ public class RowWidthTests
     [AvaloniaFact]
     public void TheWholeChoiceLabelIsOnTheTooltipWhenTheBoxClipsIt()
     {
-        var window = OpenWith(LongestLabel);
+        var host = OpenWith(LongestLabel);
 
-        var combo = CompactRowFor(window, "Speech model")
+        var combo = CompactRowFor(host, "Speech model")
             .GetVisualDescendants()
             .OfType<ComboBox>()
             .First();
@@ -108,30 +108,28 @@ public class RowWidthTests
         Assert.False(string.IsNullOrWhiteSpace(tip), "The combo box carries no tooltip.");
         Assert.Contains("to download", tip, StringComparison.Ordinal);
 
-        window.Close();
+        host.Close();
     }
 
-    private static SettingsWindow OpenWith(string model)
+    private static SettingsHost OpenWith(string model)
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply("listening.model", model, SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        return window;
+        return host;
     }
 
-    private static IEnumerable<Grid> CompactRows(SettingsWindow window) =>
-        window.GetVisualDescendants().OfType<Grid>().Where(grid => grid.ColumnDefinitions.Count == 3);
+    private static IEnumerable<Grid> CompactRows(SettingsHost host) =>
+        host.View.GetVisualDescendants().OfType<Grid>().Where(grid => grid.ColumnDefinitions.Count == 3);
 
-    private static Grid CompactRowFor(SettingsWindow window, string label) =>
-        CompactRows(window).First(grid =>
+    private static Grid CompactRowFor(SettingsHost host, string label) =>
+        CompactRows(host).First(grid =>
             grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 }

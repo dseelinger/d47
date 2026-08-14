@@ -439,6 +439,54 @@ public partial class SettingsView : UserControl
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
     }
 
+    /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
+    private const double NavWidth = 224;
+
+    private const double NavCollapsesBelow = 900;
+
+    /// <summary>
+    /// The floor with the nav and without it. The narrow one is the card floor of 420 plus the
+    /// 56 of margin the cards are laid out with — the least this page can be and still hold a
+    /// caption beside its control.
+    /// </summary>
+    private const double WideFloor = 700;
+
+    private const double NarrowFloor = 476;
+
+    /// <summary>Null until the first arrange, so the first pass always applies.</summary>
+    private bool? _navShown;
+
+    /// <summary>
+    /// Collapses the nav column on a narrow page, and brings it back on a wide one.
+    /// <para>
+    /// This is what let the settings window be retired rather than merely relocated. The surface
+    /// was a 224-pixel nav beside a 700-pixel minimum, opening at 1180; the panel window is 820
+    /// and is meant to sit beside a running game. Ported unchanged, the second window would not
+    /// have been removed so much as the first one made too big to keep on screen — so below 900
+    /// the nav goes and the cards take the whole width, which at the default size is the state
+    /// the Commander actually sees (list.md Phase 12).
+    /// </para>
+    /// <para>
+    /// Guarded on the state changing rather than run every pass, because the handler sets
+    /// <c>MinWidth</c> and a minimum that feeds its own size-changed event is a layout loop.
+    /// </para>
+    /// </summary>
+    private void OnRootSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        var show = e.NewSize.Width >= NavCollapsesBelow;
+
+        if (_navShown == show)
+        {
+            return;
+        }
+
+        _navShown = show;
+
+        Nav.IsVisible = show;
+        Root.ColumnDefinitions[0].Width = new GridLength(show ? NavWidth : 0);
+        Root.MinWidth = show ? WideFloor : NarrowFloor;
+    }
+
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (_sections.Count == 0)
@@ -489,8 +537,8 @@ public partial class SettingsView : UserControl
     }
 
     /// <summary>
-    /// What this build is. Modal on the settings window rather than free-floating, so it cannot
-    /// be lost behind the app that raised it.
+    /// What this build is. Modal on whatever window is hosting this surface rather than
+    /// free-floating, so it cannot be lost behind the app that raised it.
     /// </summary>
     private async void OnAboutClick(object? sender, RoutedEventArgs e)
     {
@@ -1396,7 +1444,13 @@ public partial class SettingsView : UserControl
 
         // Tunnelling: the gesture belongs to the binding, not to whatever control the click left
         // focused, so it has to be seen on the way down.
-        top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel);
+        //
+        // And handled events too. This is the same top level that carries the push-to-talk
+        // suppressor now that settings is a page of the main window rather than a window of its
+        // own — the suppressor tunnels first and marks the key handled, so without this the one
+        // rebind that could not be made is rebinding push-to-talk to the key it already holds,
+        // which is exactly the rebind somebody attempting it is most likely to try.
+        top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         try
         {

@@ -21,19 +21,14 @@ namespace D47.App.Tests;
 /// </summary>
 public class PickerButtonSaysItIsWorkingTests
 {
-    private static SettingsWindow Open()
+    private static SettingsHost Open()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        return window;
+        return SettingsHost.Open(settings, viewState, paths);
     }
 
     /// <summary>
@@ -43,14 +38,14 @@ public class PickerButtonSaysItIsWorkingTests
     [AvaloniaFact]
     public void ThePickerRowCarriesABusyGlyphThatStartsHidden()
     {
-        var window = Open();
+        var host = Open();
 
-        var glyphs = window.GetVisualDescendants().OfType<BusyGlyph>().ToList();
+        var glyphs = host.View.GetVisualDescendants().OfType<BusyGlyph>().ToList();
 
         Assert.NotEmpty(glyphs);
         Assert.All(glyphs, glyph => Assert.False(glyph.IsVisible));
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -60,12 +55,12 @@ public class PickerButtonSaysItIsWorkingTests
     [AvaloniaFact]
     public void TheMicrophoneRowHasOneBesideItsButton()
     {
-        var window = Open();
+        var host = Open();
 
         // Any panel, not a StackPanel specifically: this was one, until a horizontal StackPanel
         // turned out to measure its children with no width limit and let the button run out past
         // the column. Where the glyph sits is the requirement; which panel puts it there is not.
-        var row = window
+        var row = host.View
             .GetVisualDescendants()
             .OfType<Avalonia.Controls.Panel>()
             .FirstOrDefault(panel =>
@@ -79,6 +74,6 @@ public class PickerButtonSaysItIsWorkingTests
         Assert.IsType<Button>(row.Children[1]);
         Assert.Equal(Dock.Left, DockPanel.GetDock(row.Children[0]));
 
-        window.Close();
+        host.Close();
     }
 }

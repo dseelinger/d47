@@ -87,15 +87,12 @@ public class AboutTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
         Assert.Contains(
-            window.GetVisualDescendants().OfType<Button>(),
+            host.View.GetVisualDescendants().OfType<Button>(),
             button => button.Name == "AboutButton");
 
-        window.Close();
+        host.Close();
     }
 }

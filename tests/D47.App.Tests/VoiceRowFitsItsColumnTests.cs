@@ -48,8 +48,8 @@ public class VoiceRowFitsItsColumnTests
     [AvaloniaFact]
     public void TheVoiceRowsControlDoesNotRunPastItsColumn()
     {
-        var window = Open();
-        var row = RowFor(window, "Voice");
+        var host = Open();
+        var row = RowFor(host, "Voice");
         var column = row.ColumnDefinitions[2].ActualWidth;
 
         // The button, not the panel holding it. The panel was always the width of the column;
@@ -61,7 +61,7 @@ public class VoiceRowFitsItsColumnTests
             button.Bounds.Width <= column + Rounding,
             $"the control is {button.Bounds.Width:0} wide in a column of {column:0}");
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -71,9 +71,9 @@ public class VoiceRowFitsItsColumnTests
     [AvaloniaFact]
     public void NoCompactRowLetsItsControlRunPastItsColumn()
     {
-        var window = Open();
+        var host = Open();
 
-        var laidOut = window.GetVisualDescendants().OfType<Grid>()
+        var laidOut = host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => IsCompactRow(grid) && grid.Bounds.Width > 0)
             .ToList();
 
@@ -93,7 +93,7 @@ public class VoiceRowFitsItsColumnTests
             }
         }
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -103,43 +103,41 @@ public class VoiceRowFitsItsColumnTests
     [AvaloniaFact]
     public void TheWholeVoiceNameIsOnTheTooltip()
     {
-        var window = Open();
+        var host = Open();
 
-        var button = RowFor(window, "Voice").GetVisualDescendants().OfType<Button>().First();
+        var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>().First();
 
         Assert.Contains("Bill", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
 
-        window.Close();
+        host.Close();
     }
 
-    private static SettingsWindow Open()
+    private static SettingsHost Open()
     {
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply(SpeechCapability.VoiceKey, "bill", SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        return window;
+        return host;
     }
 
     private static string Caption(Grid row) =>
         row.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text ?? "unnamed";
 
-    private static Grid RowFor(SettingsWindow window, string label) =>
-        window.GetVisualDescendants().OfType<Grid>()
+    private static Grid RowFor(SettingsHost host, string label) =>
+        host.View.GetVisualDescendants().OfType<Grid>()
             .Where(IsCompactRow)
             .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 
     /// <summary>
     /// A compact settings row: words, a fixed gap, control. Three columns alone is not enough of
-    /// a description — the window has other three-column grids, and one of them holds a 16-pixel
+    /// a description — the surface has other three-column grids, and one of them holds a 16-pixel
     /// column of its own with something 474 pixels wide sitting in it quite legitimately.
     /// </summary>
     private static bool IsCompactRow(Grid grid) =>

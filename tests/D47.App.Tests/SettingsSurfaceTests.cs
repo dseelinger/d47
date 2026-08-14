@@ -35,40 +35,36 @@ public class SettingsSurfaceTests
         _output = output;
     }
 
-    private static SettingsWindow Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
+    private static SettingsHost Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         // FollowSettings, not a one-shot Apply: the theme captures below change the setting
         // and expect the palette to follow, exactly as the app wires it.
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-
-        return window;
+        return SettingsHost.Open(settings, viewState, paths);
     }
 
     [AvaloniaFact]
-    public void TheSettingsWindowOpensWithEveryRegisteredSection()
+    public void TheSettingsPageOpensWithEveryRegisteredSection()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
-        var window = Open(settings, viewState, paths);
+        var host = Open(settings, viewState, paths);
 
         // Rendering is the assertion that matters: measure, arrange and paint all ran over
         // every generated row without a control throwing.
-        var frame = window.CaptureRenderedFrame();
+        var frame = host.Window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        window.Close();
+        host.Close();
     }
 
     [AvaloniaFact]
     public void AChangeMadeInCoreIsReflectedWithoutRebuildingTheView()
     {
         var (settings, viewState, paths) = TestSurface.Create();
-        var window = Open(settings, viewState, paths);
+        var host = Open(settings, viewState, paths);
 
         // A change from any caller — here the keyword-router path — announces itself and the
         // open panel follows. No restart, and no save button anywhere on the surface.
@@ -76,9 +72,9 @@ public class SettingsSurfaceTests
         Assert.True(applied.Ok);
 
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        Assert.NotNull(window.CaptureRenderedFrame());
+        Assert.NotNull(host.Window.CaptureRenderedFrame());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -93,7 +89,7 @@ public class SettingsSurfaceTests
         var output = TestSurface.CaptureDirectory;
         _output.WriteLine($"Captures: {output}");
 
-        var window = Open(settings, viewState, paths);
+        var host = Open(settings, viewState, paths);
 
         foreach (var theme in D47.Core.Interface.ThemeCatalog.All)
         {
@@ -107,7 +103,7 @@ public class SettingsSurfaceTests
             settings.Apply("ui.theme", theme.Id, SettingsCaller.Panel);
             Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-            var frame = window.CaptureRenderedFrame();
+            var frame = host.Window.CaptureRenderedFrame();
             Assert.NotNull(frame);
             frame.Save(
                 Path.Combine(output, $"settings-{theme.Id}.png"),
@@ -116,15 +112,15 @@ public class SettingsSurfaceTests
 
         // The far end of the scroll, so the rows the first screenful hides — the picker, the
         // hotkey binders, the egress panels — get looked at too.
-        var scroller = window.GetVisualDescendants().OfType<ScrollViewer>().First();
+        var scroller = host.View.GetVisualDescendants().OfType<ScrollViewer>().First();
         scroller.ScrollToEnd();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
+        host.Window.CaptureRenderedFrame()!.Save(
             Path.Combine(output, "settings-bottom.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -159,11 +155,13 @@ public class SettingsSurfaceTests
     /// <summary>
     /// The mark is wired, not merely committed. An icon that silently stops being embedded
     /// looks like nothing at all until someone notices the taskbar has gone generic.
+    /// <para>
+    /// One window to check, since Phase 12: settings is a page of it rather than a second one.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void EveryWindowCarriesTheApplicationIcon()
+    public void TheWindowCarriesTheApplicationIcon()
     {
         Assert.NotNull(new MainWindow(host: null).Icon);
-        Assert.NotNull(new SettingsWindow().Icon);
     }
 }

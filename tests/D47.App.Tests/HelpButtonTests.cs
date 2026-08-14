@@ -10,12 +10,16 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The panel's way into the documentation site. The button lives on the panel, which the
-/// headset overlay instantiates too — so it asks rather than acts, exactly as the gear does.
+/// headset overlay instantiates too — so it asks rather than acts.
 /// </summary>
 public class HelpButtonTests
 {
+    /// <summary>
+    /// It is what is left in the header's right-hand corner. The gear stood beside it until
+    /// Phase 12 made settings a page of this window, chosen from the tab strip.
+    /// </summary>
     [AvaloniaFact]
-    public void TheHeaderCarriesAHelpButtonBesideTheGear()
+    public void TheHeaderCarriesAHelpButtonAndNoGear()
     {
         var window = new MainWindow(host: null);
         window.Show();
@@ -24,7 +28,7 @@ public class HelpButtonTests
         var buttons = window.GetVisualDescendants().OfType<Button>().Select(b => b.Name).ToList();
 
         Assert.Contains("HelpButton", buttons);
-        Assert.Contains("SettingsButton", buttons);
+        Assert.DoesNotContain("SettingsButton", buttons);
 
         window.Close();
     }
@@ -72,9 +76,9 @@ public class HelpButtonTests
             DocsSite.Capability("privacy"));
     }
 
-    /// <summary>Mini drops the header, so it drops both buttons with it.</summary>
+    /// <summary>Mini drops the header, so it drops the button with it.</summary>
     [AvaloniaFact]
-    public void MiniModeHidesItAlongWithTheGear()
+    public void MiniModeHidesItAlongWithTheRestOfTheHeader()
     {
         var view = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Mini };
         var window = new Window { Content = view };

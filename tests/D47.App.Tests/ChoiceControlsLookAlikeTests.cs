@@ -28,10 +28,10 @@ public class ChoiceControlsLookAlikeTests
     [AvaloniaFact]
     public void TheComboBoxAndThePickerButtonAreDressedTheSame()
     {
-        var window = Open();
+        var host = Open();
 
-        var combo = Row(window, "Provider").GetVisualDescendants().OfType<ComboBox>().First();
-        var button = PickerButtons(Row(window, "Model")).First();
+        var combo = Row(host, "Provider").GetVisualDescendants().OfType<ComboBox>().First();
+        var button = PickerButtons(Row(host, "Model")).First();
 
         foreach (var difference in Differences(combo, button))
         {
@@ -46,12 +46,12 @@ public class ChoiceControlsLookAlikeTests
     [AvaloniaFact]
     public void EveryChoiceControlOnTheSurfaceIsDressedTheSame()
     {
-        var window = Open();
+        var host = Open();
 
-        var combos = window.GetVisualDescendants().OfType<ComboBox>()
+        var combos = host.View.GetVisualDescendants().OfType<ComboBox>()
             .Where(control => control.Bounds.Height > 0).ToList();
 
-        var buttons = PickerButtons(window).Where(control => control.Bounds.Height > 0).ToList();
+        var buttons = PickerButtons(host.View).Where(control => control.Bounds.Height > 0).ToList();
 
         Assert.NotEmpty(combos);
         Assert.NotEmpty(buttons);
@@ -127,7 +127,7 @@ public class ChoiceControlsLookAlikeTests
             .Where(button => button.Content is DockPanel panel
                 && panel.Children.OfType<TextBlock>().Any(text => text.Text == "⌄"));
 
-    private static SettingsWindow Open()
+    private static SettingsHost Open()
     {
         var (settings, viewState, paths) = TestSurface.Create(
             voices: [new VoiceInfo("bill", "Bill - Wise, Mature, Balanced", "american", "male")]);
@@ -135,16 +135,11 @@ public class ChoiceControlsLookAlikeTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        return window;
+        return SettingsHost.Open(settings, viewState, paths);
     }
 
-    private static Grid Row(SettingsWindow window, string label) =>
-        window.GetVisualDescendants().OfType<Grid>()
+    private static Grid Row(SettingsHost host, string label) =>
+        host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.ColumnDefinitions[1].Width.IsAbsolute)
             .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 }

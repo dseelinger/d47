@@ -31,25 +31,22 @@ public class SecretRowTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
-        Assert.Contains("No key", Texts(window));
-        Assert.DoesNotContain("Key stored", Texts(window));
+        Assert.Contains("No key", Texts(host));
+        Assert.DoesNotContain("Key stored", Texts(host));
 
         settings.Apply("llm.anthropic.apiKey", "sk-not-a-real-key", SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Key stored", Texts(window));
+        Assert.Contains("Key stored", Texts(host));
 
         // And the box stops inviting a first key once there is one to replace.
         Assert.Contains(
-            window.GetVisualDescendants().OfType<TextBox>(),
+            host.View.GetVisualDescendants().OfType<TextBox>(),
             box => box.PlaceholderText == "Paste a new key to replace it");
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -76,14 +73,11 @@ public class SecretRowTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
-        Assert.DoesNotContain("Endpoint", Texts(window));
+        Assert.DoesNotContain("Endpoint", Texts(host));
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>
@@ -91,9 +85,9 @@ public class SecretRowTests
     /// the tree, so a test that walked the visual tree without asking about visibility would
     /// find every row that has ever existed and pass regardless.
     /// </summary>
-    private static List<string> Texts(SettingsWindow window) =>
+    private static List<string> Texts(SettingsHost host) =>
     [
-        .. window.GetVisualDescendants().OfType<TextBlock>()
+        .. host.View.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => block.IsEffectivelyVisible)
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0),
