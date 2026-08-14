@@ -841,7 +841,7 @@ public partial class SettingsView : UserControl
             // second - so the download never started and the row snapped back to none.
             if (downloads)
             {
-                _ = FetchModelAsync(row, chosen, bar, message);
+                _ = FetchModelAsync(row, chosen, combo, bar, message);
                 return;
             }
 
@@ -888,7 +888,12 @@ public partial class SettingsView : UserControl
     /// cannot load. A refusal or a failure puts it back to none and says why on the row.
     /// </para>
     /// </summary>
-    private async Task FetchModelAsync(SettingRow row, string? chosen, ProgressBar bar, TextBlock message)
+    private async Task FetchModelAsync(
+        SettingRow row,
+        string? chosen,
+        ComboBox combo,
+        ProgressBar bar,
+        TextBlock message)
     {
         if (_downloadingModel)
         {
@@ -905,6 +910,10 @@ public partial class SettingsView : UserControl
         }
 
         _downloadingModel = true;
+
+        // Shut while it runs. A second choice mid-download would either be ignored - which
+        // reads as a dead control - or start a second fetch over the first.
+        combo.IsEnabled = false;
 
         bar.Value = 0;
         bar.IsVisible = true;
@@ -923,7 +932,13 @@ public partial class SettingsView : UserControl
                 // Written only now that the file is there, so the row can never name a model
                 // d47 cannot load.
                 Apply(row, chosen, message);
-                Note(message, $"{model.Label} is ready.");
+
+                // Nothing left to say. The row speaks only when something went wrong - a
+                // change that worked is visible in the control that made it - and a line
+                // describing a finished download is a line the Commander has to dismiss by
+                // reading it.
+                message.IsVisible = false;
+                message.Text = null;
                 return;
             }
 
@@ -938,6 +953,7 @@ public partial class SettingsView : UserControl
         finally
         {
             _downloadingModel = false;
+            combo.IsEnabled = true;
             bar.IsVisible = false;
         }
     }

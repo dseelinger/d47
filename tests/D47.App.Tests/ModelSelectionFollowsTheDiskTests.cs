@@ -111,6 +111,64 @@ public class ModelSelectionFollowsTheDiskTests
         window.Close();
     }
 
+    /// <summary>
+    /// The choice is shut while the download runs. A second choice mid-fetch would either be
+    /// ignored - which reads as a dead control - or start a second download over the first.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheChoiceIsDisabledWhileItDownloadsAndEnabledAfter()
+    {
+        var duringDownload = true;
+        SettingsWindow? opened = null;
+
+        var (window, _) = Open((_, _) =>
+        {
+            // Read from inside the download, which is the only moment the answer means
+            // anything.
+            duringDownload = Combo(opened!).IsEnabled;
+            return Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null));
+        });
+
+        opened = window;
+
+        Choose(window, "small.en");
+
+        Assert.False(duringDownload, "The model could still be changed while it was downloading.");
+        Assert.True(Combo(window).IsEnabled, "The model could not be changed after the download.");
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// A finished download leaves nothing behind to read. The row speaks only when something
+    /// went wrong; a line describing a completed fetch is one the Commander has to dismiss by
+    /// reading it.
+    /// </summary>
+    [AvaloniaFact]
+    public void NothingIsLeftOnTheRowAfterASuccessfulDownload()
+    {
+        var (window, settings) = Open((_, _) =>
+            Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null)));
+
+        Choose(window, "small.en");
+
+        Assert.Equal("small.en", settings.Current.Listening.Model);
+
+        var said = window
+            .GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(text => text.Text ?? string.Empty)
+            .ToList();
+
+        Assert.DoesNotContain(said, text => text.Contains("Fetching", StringComparison.Ordinal));
+        Assert.DoesNotContain(said, text => text.Contains("466 MB.", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    private static ComboBox Combo(SettingsWindow window) =>
+        Row(window).GetVisualDescendants().OfType<ComboBox>().First();
+
     private static (SettingsWindow Window, SettingsService Settings) Open(
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>> download)
     {
