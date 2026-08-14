@@ -6,9 +6,9 @@ namespace D47.Core.Listening;
 /// <param name="Id">The settings value and the ggml file's stem — "base.en".</param>
 /// <param name="ApproximateMegabytes">
 /// For the settings row only, so a Commander comparing options sees the order of magnitude
-/// before committing to anything. <b>The consent prompt states the size the server actually
-/// reports</b>, not this — a figure written here would be a number d47 asserts about a file it
-/// has never seen.
+/// before choosing. <b>The size d47 reports while fetching is the one the host actually
+/// gave</b>, not this — a figure written here would be a number d47 asserts about a file it has
+/// never seen.
 /// </param>
 public sealed record WhisperModel(string Id, string Label, int ApproximateMegabytes)
 {
@@ -24,10 +24,11 @@ public sealed record WhisperModel(string Id, string Label, int ApproximateMegaby
 /// <summary>
 /// The models d47 offers, and where they come from.
 /// <para>
-/// Nothing here is downloaded until the Commander says so. A model arriving at first launch
-/// would be a several-hundred-megabyte transfer nobody asked for, from a host they were never
-/// told about — which is exactly the kind of thing the egress disclosure exists to make
-/// impossible to do quietly.
+/// A selected model that is not on disk is fetched — at first launch, or when the Commander
+/// picks a different one. The safeguards are that the selection is theirs, the size is on the
+/// row they choose from, and this host is named in the egress disclosure for as long as any
+/// model is selected. What the disclosure exists to prevent is a transfer nobody can see, not a
+/// transfer nobody had to approve twice.
 /// </para>
 /// </summary>
 public static class WhisperModels
@@ -61,8 +62,16 @@ public static class WhisperModels
         new("medium", "Medium (multilingual) — slow without a GPU", 1500),
     ];
 
-    /// <summary>What a fresh install selects: small, English, and good enough for a short clip.</summary>
-    public const string DefaultId = "base.en";
+    /// <summary>
+    /// What a fresh install selects: the smallest English model, and good enough for the short
+    /// push-to-talk clips this is actually asked to transcribe.
+    /// <para>
+    /// Being the shipped default makes this the one model most Commanders will ever download, so
+    /// it is the cheapest in the catalogue: the first launch fetches it without being asked, and
+    /// 75 MB is a defensible thing to spend on somebody's behalf where 1.5 GB would not be.
+    /// </para>
+    /// </summary>
+    public const string DefaultId = "tiny.en";
 
     /// <summary>
     /// The model the Commander has chosen but has not got, or null when there is nothing

@@ -45,6 +45,18 @@ public static class VirtualKeys
         Key.Right => 0x27,
         Key.Down => 0x28,
         Key.CapsLock => 0x14,
+
+        // The side-specific modifiers. They are here for push-to-talk, which is polled and
+        // therefore reads one code rather than registering a gesture: a Commander flying with
+        // both hands on a stick and throttle has a spare shift under a thumb and nothing else
+        // spare, and right shift is the default because of it. Sided codes rather than the
+        // generic 0x10/0x11/0x12, so holding the left one does not open the microphone.
+        Key.LeftShift => 0xA0,
+        Key.RightShift => 0xA1,
+        Key.LeftCtrl => 0xA2,
+        Key.RightCtrl => 0xA3,
+        Key.LeftAlt => 0xA4,
+        Key.RightAlt => 0xA5,
         Key.OemTilde => 0xC0,
         Key.OemMinus => 0xBD,
         Key.OemPlus => 0xBB,

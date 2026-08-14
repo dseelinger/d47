@@ -115,6 +115,29 @@ public partial class SettingsView : UserControl
     private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));
 
+    /// <summary>
+    /// Hangs the row's default on a control as a tooltip, in full.
+    /// <para>
+    /// A default is only useful if it says what it is, and the place it is shown is a
+    /// placeholder inside a control sized for values rather than for sentences — so
+    /// "(the system default - Virtual Desktop Audio)" arrives on screen as
+    /// "(the system default - Virtual Deskt...". The control keeps the short form and the
+    /// pointer gets the whole of it, which is the only way both fit.
+    /// </para>
+    /// <para>
+    /// Set on every refresh rather than once, because several defaults are computed from other
+    /// settings - the model's belongs to the selected provider, the ship AI name's to the core
+    /// aboard - and a tooltip written at build time would keep answering for a provider the
+    /// Commander has since changed.
+    /// </para>
+    /// </summary>
+    private void ShowDefaultOnHover(Control control, SettingRow row)
+    {
+        var shown = row.DefaultDisplayFor(_settings!.Current);
+
+        ToolTip.SetTip(control, string.IsNullOrWhiteSpace(shown) ? null : $"Default: {shown}");
+    }
+
     private void Build()
     {
         var settings = _settings ?? throw new InvalidOperationException("Attach() has not been called.");
@@ -912,10 +935,10 @@ public partial class SettingsView : UserControl
     /// <summary>
     /// Applies a speech model choice, downloading it first if it is not on disk.
     /// <para>
-    /// Selecting is the consent: the choice states its size in the list it was chosen from, and
-    /// the row shows what it is doing while it does it. The offer used to be a banner on the
-    /// main window, which is the window this dialog is covering - a question asked behind the
-    /// thing that asked it.
+    /// The choice is the go-ahead: it states its size in the list it was made from, and the row
+    /// shows what it is doing while it does it. There was a confirmation step, on the main
+    /// window - which is the window this dialog is covering, so it was a question asked behind
+    /// the thing that asked it.
     /// </para>
     /// <para>
     /// The setting is written only once the file is there, so a row can never name a model d47
@@ -1037,6 +1060,15 @@ public partial class SettingsView : UserControl
             value.Text = current is null
                 ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
                 : row.LabelForChoice(current);
+
+            // The button is one line in a column; a model id or a resolved device name is
+            // routinely longer than it. Chosen or defaulted, the whole string is on the pointer.
+            ToolTip.SetTip(button, current is null ? null : row.LabelForChoice(current));
+
+            if (current is null)
+            {
+                ShowDefaultOnHover(button, row);
+            }
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
         }, true);
     }
@@ -1067,6 +1099,7 @@ public partial class SettingsView : UserControl
         {
             number.Value = decimal.TryParse(_settings!.Read(row.Key), out var parsed) ? parsed : null;
             number.PlaceholderText = row.DefaultDisplayFor(_settings.Current);
+            ShowDefaultOnHover(number, row);
         }, true);
     }
 
@@ -1111,6 +1144,7 @@ public partial class SettingsView : UserControl
             // The default is a placeholder, never a value, so "I have not chosen" stays
             // distinguishable from "I chose the default" (list.md Phase 4).
             box.PlaceholderText = row.DefaultDisplayFor(_settings.Current) ?? string.Empty;
+            ShowDefaultOnHover(box, row);
         }, false);
     }
 

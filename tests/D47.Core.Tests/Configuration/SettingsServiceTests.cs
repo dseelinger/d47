@@ -262,14 +262,16 @@ public class SettingsServiceTests
         using var install = new TempInstall();
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(ConversationCapability.ModelKey, "claude-sonnet-5", SettingsCaller.Panel);
-        Assert.Equal("claude-sonnet-5", surface.Settings.Read(ConversationCapability.ModelKey));
+        // Set to something other than the default, so clearing is a visible change rather than
+        // a value that happens to match what the placeholder already advertised.
+        surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
+        Assert.Equal("claude-opus-5", surface.Settings.Read(ConversationCapability.ModelKey));
 
         surface.Settings.Apply(ConversationCapability.ModelKey, null, SettingsCaller.Panel);
 
         Assert.Null(surface.Settings.Read(ConversationCapability.ModelKey));
         Assert.Equal(
-            "claude-opus-5",
+            "claude-sonnet-5",
             surface.Settings.Find(ConversationCapability.ModelKey)!.DefaultDisplayFor(surface.Settings.Current));
     }
 
@@ -482,6 +484,12 @@ public class EgressDisclosureTests
             // disclosure had no text-to-speech entry at all, so this assertion used to pass with
             // Edge selected, which meant it was asserting something untrue.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
+
+            // So does the speech model, now that a fresh install selects one. The file is not
+            // fetched until the Commander accepts the offer, but a selection that *can* cause a
+            // transfer is what the download row reports — so "nothing is leaving" is one more
+            // opt-out than it used to be, and saying so here is the point of the row.
+            Listening = new ListeningSettings { Model = Core.Listening.WhisperModels.NoneId },
         };
 
         Assert.All(EgressDisclosure.For(settings, llmKeyPresent: false), entry => Assert.False(entry.Active));

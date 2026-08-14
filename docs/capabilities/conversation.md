@@ -16,7 +16,7 @@ at all.
 
 ```text
 Provider: Anthropic
-Model: claude-opus-5
+Model: claude-sonnet-5
 Availability: Available
 Personality: on
 Session so far: 3 turn(s), $0.0412
@@ -27,7 +27,7 @@ answers:
 
 ```text
 Provider: Anthropic
-Model: claude-opus-5
+Model: claude-sonnet-5
 Availability: NotConfigured — No Anthropic API key is stored. Add one in Settings.
 Personality: on
 Session so far: 0 turn(s), $0.0000
@@ -81,6 +81,10 @@ the provider's own address and has no idea what lives at yours. You can still ty
 
 Which model answers. Leave it empty for the provider's default, shown greyed out so "I have not
 chosen" stays distinguishable from "I chose that one".
+
+Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5**. A companion answering
+questions about a game in flight is not the work the Opus tiers are priced for, and the Opus
+models are the next entries in the list if you want one.
 
 The offered list is every model Directive 47 can price, so anything picked from it keeps the
 running cost honest. Type one by hand and it is accepted, but counted as unknown rather than as

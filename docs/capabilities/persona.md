@@ -132,6 +132,22 @@ there was nobody left to say the whole thing to.
 This row *is* reachable by the model, unlike the one above. "Call yourself Fred" changes nothing
 anything depends on, and refusing it would be protecting you from a nickname.
 
+### Keep Ship AI name on persona switch {#keep-ship-ai-name}
+
+On out of the box: the name you gave stays whoever is aboard, because naming your ship's AI names
+the *ship's* AI and eleven cores answering to it is the point.
+
+Turn it off for the other reading, which is equally coherent — these are eleven separate
+characters and a name belongs to the one you gave it to. Changing core then clears the name and
+the new core answers to its own.
+
+Off **clears** the name rather than keeping it and ignoring it, so the row above always says what
+you will actually be answered by. A stored name that no longer applies is how a panel ends up
+showing "Fred" while your companion says "I am Cora".
+
+The row only appears while there is a name to keep. With the name empty, every core already uses
+its own and there is nothing for this to decide.
+
 ### Introductions
 
 A core introduces itself the first time you pick it after Directive 47 starts. Every time after

@@ -32,18 +32,6 @@ The answer is computed from your settings as they stand at that moment. It is no
 of what Directive 47 could do in general, and it cannot go stale the way a page like this one
 can — which is why the answer is worth more than the page.
 
-## Running with nothing leaving at all
-
-Local-only is a setting, not an aspiration. Set the language model
-[provider](conversation.md#provider) to `none`, turn the update check off, and asking again gets:
-
-```text
-Nothing is leaving this machine right now.
-```
-
-Everything that can work without a network still does: spoken commands Directive 47 recognises
-on its own, the journal reading, and every way of asking it something.
-
 ## The four destinations
 
 **Language model** — the only one that receives anything from your gameplay. What goes: your

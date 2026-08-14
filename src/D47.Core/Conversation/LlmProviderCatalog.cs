@@ -89,8 +89,12 @@ public static class LlmProviderCatalog
             Summary = "Claude models, over the Anthropic Messages API.",
             KeySecretName = "anthropic.apiKey",
             DefaultEndpoint = "https://api.anthropic.com",
-            DefaultModel = "claude-opus-5",
-            Models = ["claude-opus-5", "claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5", "claude-fable-5"],
+            // The highest Sonnet, not the highest model. A companion answers short questions
+            // about a game while the Commander is flying, and the Opus tiers are priced for work
+            // that is harder than that — the Commander who wants one is one row away, and the
+            // list below is ordered so it is the first thing they see.
+            DefaultModel = "claude-sonnet-5",
+            Models = ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8", "claude-haiku-4-5", "claude-fable-5"],
             Egress =
                 "Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the " +
                 "game state D47 assembled from your journal — system, body, station and docking state — are sent " +

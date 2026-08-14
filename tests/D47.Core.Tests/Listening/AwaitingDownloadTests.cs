@@ -41,6 +41,26 @@ public class AwaitingDownloadTests
         Assert.Null(WhisperModels.AwaitingDownload(selected, new FakeStore()));
     }
 
+    /// <summary>
+    /// A fresh install has the shipped model selected and none of it on disk, which is what
+    /// makes the first launch fetch it. This is the assertion behind "d47 can hear you after one
+    /// download it starts itself": if the shipped default were ever unselected, or installed by
+    /// definition, the first launch would quietly do nothing.
+    /// </summary>
+    [Fact]
+    public void AFreshInstallHasTheDefaultModelOutstandingRatherThanInstalled()
+    {
+        var shipped = new D47.Core.Configuration.D47Settings().Listening.Model;
+        var pending = WhisperModels.AwaitingDownload(shipped, new FakeStore());
+
+        Assert.NotNull(pending);
+        Assert.Equal(shipped, pending.Id);
+
+        // And once it is on disk nothing is outstanding, so the fetch cannot repeat at every
+        // launch.
+        Assert.Null(WhisperModels.AwaitingDownload(shipped, new FakeStore(shipped)));
+    }
+
     private sealed class FakeStore(params string[] installed) : IModelStore
     {
         public string Directory => "nowhere";
@@ -58,9 +78,8 @@ public class AwaitingDownloadTests
 
         public Task<ModelInstallResult> InstallAsync(
             WhisperModel model,
-            Func<ModelOffer, Task<bool>> consent,
             IProgress<ModelProgress>? progress = null,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ModelInstallResult(ModelInstall.Declined));
+            Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "nothing is fetched in a test"));
     }
 }

@@ -166,10 +166,10 @@ public static class ListeningCapability
                 Key = PushToTalkKeyKey,
                 Label = "Push-to-talk key",
                 Help =
-                    "Held, D47 listens. Unset means D47 never opens the microphone — which is the default, "
-                    + "because a microphone that opens on a key nobody chose is a microphone opening by surprise.",
+                    "Held, D47 listens. Right shift out of the box, since that is what a Commander on a "
+                    + "stick and throttle has spare. Clear it and D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
-                DefaultDisplay = "(not set — D47 does not listen)",
+                DefaultDisplay = "RightShift",
                 DocsAnchor = "push-to-talk-key",
 
                 // Protected: rebinding or clearing this is removing the Commander's way of
@@ -239,7 +239,7 @@ public static class ListeningCapability
                         ? $"{label} — installed"
                         : $"{label} — about {size} MB to download";
                 },
-                DefaultDisplay = "none",
+                DefaultDisplay = WhisperModels.DefaultId,
                 DocsAnchor = "model",
                 Binding = new SettingBinding
                 {

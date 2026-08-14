@@ -7,12 +7,12 @@ using Microsoft.Extensions.Logging;
 namespace D47.Stt;
 
 /// <summary>
-/// Fetching ggml speech models over HTTPS, on demand and only with consent.
+/// Fetching ggml speech models over HTTPS, on demand.
 /// <para>
-/// <b>Nothing here runs unless the Commander asked for a model.</b> Not at startup, not on first
-/// listen, not to "warm up". The only network call that can happen without consent is
-/// <see cref="DescribeAsync"/>, which fetches the file's size and hash so the consent question
-/// can state facts — and even that only runs because somebody selected a model.
+/// <b>Nothing here runs unless a model is selected.</b> Not on a timer, not on first listen, not
+/// to "warm up" — every path into this class starts from the Commander's selection, including
+/// <see cref="DescribeAsync"/>, which fetches the file's size and published hash so the download
+/// that follows can be checked against something.
 /// </para>
 /// </summary>
 public sealed class HttpModelStore : IModelStore, IDisposable
@@ -115,7 +115,6 @@ public sealed class HttpModelStore : IModelStore, IDisposable
 
     public async Task<ModelInstallResult> InstallAsync(
         WhisperModel model,
-        Func<ModelOffer, Task<bool>> consent,
         IProgress<ModelProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -131,14 +130,6 @@ public sealed class HttpModelStore : IModelStore, IDisposable
             return new ModelInstallResult(
                 ModelInstall.Failed,
                 $"Could not reach {WhisperModels.Host} to ask about {model.Id}.");
-        }
-
-        // The gate. Everything above this line is metadata; everything below transfers
-        // hundreds of megabytes.
-        if (!await consent(offer).ConfigureAwait(false))
-        {
-            _logger.LogInformation("Download of {Model} declined; nothing was fetched", model.Id);
-            return new ModelInstallResult(ModelInstall.Declined);
         }
 
         System.IO.Directory.CreateDirectory(Directory);
@@ -225,7 +216,7 @@ public sealed class HttpModelStore : IModelStore, IDisposable
             if (ex is OperationCanceledException)
             {
                 _logger.LogInformation("Download of {Model} was cancelled", model.Id);
-                return new ModelInstallResult(ModelInstall.Declined, "The download was cancelled.");
+                return new ModelInstallResult(ModelInstall.Cancelled, "The download was cancelled.");
             }
 
             _logger.LogError(ex, "Could not download {Model}", model.Id);

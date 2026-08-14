@@ -126,10 +126,11 @@ you:
   nothing identifying. Switch it off in Settings and D47 makes no network call of its own.
   Pressing **Update now** on the banner it raises adds one more: downloading that release from
   GitHub. That is a download rather than an upload, and it happens only when you press it.
-- **A speech model download**, and only if you ask for one. No model is selected by default.
-  Choosing one asks first, states the real size and the host it comes from, and downloads
-  nothing until you agree. Once the file is on disk, transcription runs entirely on this
-  machine — no audio and no transcript ever leaves it.
+- **A speech model download** — once. D47 ships with the smallest English model selected and
+  fetches it from `huggingface.co` on first run, about 75 MB; choosing a different one fetches
+  that instead. Only the model file is transferred, nothing about you goes with the request, and
+  once it is on disk transcription runs entirely on this machine — no audio and no transcript
+  leaves it. Set the speech model to `none` if you would rather it fetched nothing.
 
 Providers that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web
 search — are each enabled individually and each states what it transmits.
