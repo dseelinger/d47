@@ -346,6 +346,16 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     public void DismissUpdate() => UpdateDismissed?.Invoke();
 
+    /// <summary>
+    /// The Commander has read the message and is done with it.
+    /// <para>
+    /// Cleared here rather than raised to the host, unlike the update banner: there is nothing to
+    /// decide and nobody else to tell. The next fault sets the text again and the banner comes
+    /// back with it, which is the property that makes this a dismiss rather than a mute.
+    /// </para>
+    /// </summary>
+    public void DismissError() => ErrorText = null;
+
     private bool Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))

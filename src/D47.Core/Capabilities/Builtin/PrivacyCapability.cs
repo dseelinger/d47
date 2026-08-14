@@ -44,7 +44,12 @@ public static class PrivacyCapability
                 "what do you send",
                 "privacy report",
             ],
-            Display = new CapabilityDisplay { PanelTitle = "Privacy and egress", Order = 50 },
+            // Last on the surface, below even Diagnostics. Not because it matters least — it is
+            // the section that answers what leaves the machine — but because it is a section a
+            // Commander goes to *deliberately* and reads, rather than one they pass through on
+            // the way to something else. Sitting it between Headset and Acting on its own put a
+            // page of reading in the middle of the rows people actually adjust.
+            Display = new CapabilityDisplay { PanelTitle = "Privacy and egress", Order = 95 },
             Tools =
             [
                 new ToolDefinition

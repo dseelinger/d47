@@ -111,7 +111,10 @@
          for itself whether it has anything to say. -->
     <StackPanel x:Name="Banners" DockPanel.Dock="Top">
 
-    <!-- Settings that failed to load are said out loud, not swallowed. -->
+    <!-- Settings that failed to load are said out loud, not swallowed. Dismissable, because a
+         fault the Commander has read and decided about should not go on taking a strip off the
+         top of the panel for the rest of the session — and the same fault arising again raises
+         it again, so dismissing hides a message rather than muting a problem. -->
     <Border x:Name="ErrorBanner"
             IsVisible="{Binding HasError}"
             Margin="0,14,0,0"
@@ -120,11 +123,25 @@
             Background="{DynamicResource D47.SurfaceAlt}"
             BorderBrush="{DynamicResource D47.Danger}"
             BorderThickness="1">
-      <SelectableTextBlock x:Name="ErrorText"
-                           Text="{Binding ErrorText}"
-                           TextWrapping="Wrap"
-                           FontSize="{StaticResource D47.Type.Body}"
-                           Foreground="{DynamicResource D47.Danger}" />
+      <DockPanel>
+        <Button x:Name="DismissErrorButton"
+                DockPanel.Dock="Right"
+                Margin="10,0,0,0"
+                Padding="7,1"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                BorderThickness="0"
+                Foreground="{DynamicResource D47.Danger}"
+                FontSize="{StaticResource D47.Type.Body}"
+                Content="&#x2715;"
+                ToolTip.Tip="Dismiss"
+                Click="OnDismissErrorClick" />
+        <SelectableTextBlock x:Name="ErrorText"
+                             Text="{Binding ErrorText}"
+                             TextWrapping="Wrap"
+                             FontSize="{StaticResource D47.Type.Body}"
+                             Foreground="{DynamicResource D47.Danger}" />
+      </DockPanel>
     </Border>
 
     <!-- Hidden until a background check finds a newer release; never blocks startup. -->

@@ -37,7 +37,7 @@ public static class CalloutCapability
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
     public const string AmbientKey = "callouts.ambient";
-    public const string AmbientMinutesKey = "callouts.ambientMinutes";
+    public const string AmbientSecondsKey = "callouts.ambientSeconds";
 
     public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
     {
@@ -175,22 +175,25 @@ public static class CalloutCapability
 
         rows.Add(new SettingRow
         {
-            Key = AmbientMinutesKey,
+            Key = AmbientSecondsKey,
             Label = "At most one ambient remark every",
-            Help = "In minutes. Lower is a talkative companion; higher is a quiet one; 0 silences them.",
+            Help = "In seconds. Lower is a talkative companion; higher is a quiet one; 0 silences them.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "15",
+            DefaultDisplay = "45",
             DocsAnchor = "ambient",
             AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true },
             Binding = new SettingBinding
             {
-                Read = s => s.Callouts.AmbientMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Read = s => s.Callouts.AmbientSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 Write = (s, v) => s with
                 {
-                    Callouts = s.Callouts with { AmbientMinutes = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutes)
-                        && minutes >= 0
-                            ? Math.Min(minutes, 240)
-                            : 15 },
+                    // Four hours is the ceiling, which is what the old row's 240 minutes was. A
+                    // value that will not parse falls back to the default rather than to zero,
+                    // since zero is the one value that means silence.
+                    Callouts = s.Callouts with { AmbientSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().AmbientSeconds },
                 },
             },
         });
@@ -199,9 +202,9 @@ public static class CalloutCapability
         {
             Key = RouteEveryKey,
             Label = "Report route progress every",
-            Help = "In jumps. Every 5 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
+            Help = "In jumps. Every 3 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "5",
+            DefaultDisplay = "3",
             DocsAnchor = "route-interval",
             AppliesWhen = s => s.Callouts is { Enabled: true, Route: true },
             Binding = new SettingBinding
@@ -226,7 +229,7 @@ public static class CalloutCapability
             Help = "In seconds, measured from entering hyperspace rather than from starting the jump.",
             Kind = SettingKind.Number,
             Step = 0.5,
-            DefaultDisplay = "20",
+            DefaultDisplay = "30",
             DocsAnchor = "long-jump-threshold",
             AppliesWhen = s => s.Callouts is { Enabled: true, LongJump: true },
             Binding = new SettingBinding

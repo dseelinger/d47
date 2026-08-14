@@ -726,6 +726,25 @@ public sealed class AppHost : IDisposable
         pushToTalk.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
         pushToTalk.Released += () => gate.KeyUp();
 
+        // That d47 is listening, said both ways. Both signals have existed since their own
+        // phases and neither was ever connected to anything: `listening.wav` ships in
+        // assets\cues, the avatar has a face for the state, and nothing in the app ever entered
+        // it — so holding push-to-talk, and worse, *toggling* it on, looked and sounded exactly
+        // like not holding it. The gate was built expecting this: Open() raises Started outside
+        // its lock precisely so a subscriber can play the cue.
+        gate.Started += () => host.Voice.EnterState(Core.Audio.LoopState.Listening);
+
+        // Only the discarded case. Captured fires before Ended and takes the loop into
+        // Transcribing itself, but a press too short to be speech captures nothing at all, so
+        // without this the loop would sit on Listening until the next thing to happen.
+        gate.Ended += reason =>
+        {
+            if (reason == UtteranceEnd.TooShort)
+            {
+                host.Voice.EnterState(Core.Audio.LoopState.Idle);
+            }
+        };
+
         // The async half of a synchronous tick. Callouts are produced on the tick thread, which
         // must not block, and spoken here on the thread pool — so a slow TTS synthesis cannot
         // stall push-to-talk edge detection or the journal poll behind it.
@@ -828,7 +847,7 @@ public sealed class AppHost : IDisposable
                     break;
 
                 case AmbientCallout ambient:
-                    ambient.Interval = TimeSpan.FromMinutes(callouts.AmbientMinutes);
+                    ambient.Interval = TimeSpan.FromSeconds(callouts.AmbientSeconds);
 
                     // Silent while personality is off. The checklist puts "no ambient remarks"
                     // in that item's own acceptance criteria, which makes this the one callout
@@ -1505,6 +1524,11 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void TranscribeAsync(Utterance utterance)
     {
+        // The microphone has closed and the words are being worked out. Its own state because it
+        // is its own wait — on a large model on the CPU it is the longest part of the loop, and
+        // an avatar still showing "listening" through it says the Commander should keep talking.
+        Voice.EnterState(Core.Audio.LoopState.Transcribing);
+
         if (!_transcriber.IsReady)
         {
             // Captured but not transcribable. Said once per utterance rather than silently
@@ -1516,6 +1540,10 @@ public sealed class AppHost : IDisposable
 
             _ = Voice.AnnounceAsync(Cannot);
             Said?.Invoke(Cannot);
+
+            // No cue: a sentence is about to be spoken saying the same thing, and a chime under
+            // it is d47 telling the Commander twice.
+            Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
             return;
         }
 
@@ -1539,6 +1567,7 @@ public sealed class AppHost : IDisposable
 
             _ = Voice.AnnounceAsync(problem);
             Said?.Invoke(problem);
+            Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
             return;
         }
 
@@ -1560,6 +1589,7 @@ public sealed class AppHost : IDisposable
                     // Distinguished from a failure: the model ran and heard nothing worth
                     // reporting, which a Commander who coughed should not be told is an error.
                     _logger.LogInformation("Nothing intelligible in {Seconds:0.#}s", utterance.Duration.TotalSeconds);
+                    Voice.EnterState(Core.Audio.LoopState.Idle);
                     return;
                 }
 
@@ -1574,6 +1604,7 @@ public sealed class AppHost : IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Could not transcribe an utterance");
+                Voice.EnterState(Core.Audio.LoopState.Failed);
             }
         });
     }

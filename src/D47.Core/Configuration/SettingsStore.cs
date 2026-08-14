@@ -85,6 +85,35 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
             },
         };
 
+        // The ambient interval was in minutes and is now in seconds. A file written before that
+        // carries the old key, so its value is converted rather than dropped, and cleared as it
+        // is converted so this happens once.
+        //
+        // A file still holding the old default is taken to have not chosen: fifteen minutes was
+        // what every file got without anybody asking for it, and carrying it forward would mean
+        // the new default reached nobody who had ever run d47. A value that differs is a
+        // decision and is kept, to the second.
+        if (settings.Callouts.AmbientMinutes is { } minutes)
+        {
+            const int WhatMinutesUsedToDefaultTo = 15;
+
+            settings = settings with
+            {
+                Callouts = settings.Callouts with
+                {
+                    AmbientSeconds = minutes == WhatMinutesUsedToDefaultTo
+                        ? new CalloutSettings().AmbientSeconds
+                        : minutes * 60,
+                    AmbientMinutes = null,
+                },
+            };
+
+            logger.LogInformation(
+                "The ambient interval is now in seconds; {Minutes} became {Seconds}",
+                minutes,
+                settings.Callouts.AmbientSeconds);
+        }
+
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
     }

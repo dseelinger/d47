@@ -23,7 +23,7 @@ I speak up about:
   long-jump: on
   arrival: on
   materials: on
-Route progress every 5 jumps.
+Route progress every 3 jumps.
 Home system is Shinrarta Dezhra.
 ```
 
@@ -118,7 +118,7 @@ keeps running.
 
 ### Route progress interval {#route-interval}
 
-In jumps. The right answer depends entirely on the trip: every 5 jumps is reassuring over 20 and
+In jumps. The right answer depends entirely on the trip: every 3 jumps is reassuring over 20 and
 unbearable over 300. Set it to `0` to silence the progress line while keeping the hazard warnings.
 
 ### Long jump threshold {#long-jump-threshold}
@@ -143,7 +143,8 @@ Commander doing the interdicting.
 The occasional in-character observation about where you are, said because *nothing* has
 happened. Everything else on this page speaks because something did.
 
-Three rules keep it from being noise. It waits out an interval — fifteen minutes out of the box.
+Three rules keep it from being noise. It waits out an interval — forty-five seconds out of the box,
+and in seconds rather than minutes because the interesting end of the range is finer than a minute.
 It waits for the situation to have settled for ninety seconds rather than firing on the
 transition, because Status.json flips several times a minute during an approach and a remark
 about being docked that arrives as you are lifting off is worse than silence. And it never

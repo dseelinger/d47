@@ -322,13 +322,13 @@ public sealed record CalloutSettings
     public bool Materials { get; init; } = true;
 
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
-    public int RouteEveryNJumps { get; init; } = 5;
+    public int RouteEveryNJumps { get; init; } = 3;
 
     /// <summary>
-    /// How long a hyperspace jump has to run before it is worth remarking on. The checklist
-    /// specifies 20 seconds as the default.
+    /// How long a hyperspace jump has to run before it is worth remarking on, measured from
+    /// entering hyperspace rather than from the jump being initiated.
     /// </summary>
-    public double LongJumpSeconds { get; init; } = 20;
+    public double LongJumpSeconds { get; init; } = 30;
 
     /// <summary>
     /// The Commander's home system. Null means no home callout — there is no sensible default,
@@ -347,11 +347,24 @@ public sealed record CalloutSettings
     public bool Ambient { get; init; } = true;
 
     /// <summary>
-    /// The shortest gap between two ambient remarks, in minutes. 0 silences them, which is the
+    /// The shortest gap between two ambient remarks, in seconds. 0 silences them, which is the
     /// same as turning <see cref="Ambient"/> off and is offered because a Commander reaching for
     /// "less" will reach for this row rather than the switch.
+    /// <para>
+    /// Seconds rather than minutes because minutes could not express the interesting end of the
+    /// range: the difference between a companion that speaks up now and then and one that never
+    /// shuts up is a minute and a half, and a row whose smallest step is a minute cannot be set
+    /// to it.
+    /// </para>
     /// </summary>
-    public int AmbientMinutes { get; init; } = 15;
+    public int AmbientSeconds { get; init; } = 45;
+
+    /// <summary>
+    /// What this row held when it was in minutes. Kept because unknown keys are rejected on
+    /// load — every file written before the change carries it — and read exactly once, by
+    /// <see cref="SettingsStore"/>, which converts it and clears it.
+    /// </summary>
+    public int? AmbientMinutes { get; init; }
 }
 
 public sealed record LlmSettings
