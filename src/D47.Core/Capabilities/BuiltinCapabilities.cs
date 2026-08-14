@@ -63,6 +63,7 @@ public static class BuiltinCapabilities
         GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
         RouteCapability.Create(routes, () => gameState.Active, settings),
         SpecificationCapability.Create(() => gameState.Active),
+        EngineerCapability.Create(() => gameState.Active),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),

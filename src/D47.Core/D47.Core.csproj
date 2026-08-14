@@ -34,6 +34,7 @@
   -->
   <ItemGroup>
     <EmbeddedResource Include="Knowledge\EliteSpecifications.tsv" LogicalName="D47.Core.EliteSpecifications" />
+    <EmbeddedResource Include="Knowledge\Engineers.tsv" LogicalName="D47.Core.Engineers" />
   </ItemGroup>
 
 </Project>

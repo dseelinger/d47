@@ -49,6 +49,18 @@ public static class Catalogue
             return loose;
         }
 
+        // Then without the bit in quotes. "Tod 'The Blaster' McQuinn" is how the id list spells
+        // him and "Tod McQuinn" is what a person says; nothing above joins those two.
+        var bare = Bare(wanted);
+
+        var nicknamed = catalogue.FirstOrDefault(name =>
+            string.Equals(Bare(name), bare, StringComparison.Ordinal));
+
+        if (nicknamed is not null)
+        {
+            return nicknamed;
+        }
+
         // Deliberately not the shortest containing name, nor the first: an ambiguous fragment has
         // no right answer, and picking one silently is how "gas giant" becomes "Class I gas
         // giant" and the Commander is told about the wrong thing with total confidence.
@@ -62,6 +74,41 @@ public static class Catalogue
 
     internal static string Relax(string text) =>
         new([.. text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant)]);
+
+    /// <summary>
+    /// Relaxed, with any quoted aside removed.
+    /// <para>
+    /// Only when the quotes pair up, which is the guard that matters: a lone apostrophe is a
+    /// possessive, and treating "Broo's Legacy" as an opening quote would swallow everything
+    /// after it and match the wrong thing with total confidence.
+    /// </para>
+    /// </summary>
+    private static string Bare(string text)
+    {
+        if (text.Count(IsQuote) is not (> 0 and var quotes) || quotes % 2 != 0)
+        {
+            return Relax(text);
+        }
+
+        var kept = new List<char>(text.Length);
+        var inside = false;
+
+        foreach (var character in text)
+        {
+            if (IsQuote(character))
+            {
+                inside = !inside;
+            }
+            else if (!inside)
+            {
+                kept.Add(character);
+            }
+        }
+
+        return Relax(new string([.. kept]));
+    }
+
+    private static bool IsQuote(char character) => character is '\'' or '‘' or '’' or '"';
 
     /// <summary>
     /// Names close enough to be worth offering back, best first.

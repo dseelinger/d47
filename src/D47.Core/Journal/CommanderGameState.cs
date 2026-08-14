@@ -29,6 +29,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
     public MaterialsInventory Materials { get; private set; } = MaterialsInventory.Empty;
 
+    /// <summary>How far along they are with each engineer.</summary>
+    public EngineerProgressState Engineers { get; private set; } = EngineerProgressState.Empty;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -54,6 +57,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Fleet = Fleet.Apply(journalEvent);
         Modules = Modules.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
+        Engineers = Engineers.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather
