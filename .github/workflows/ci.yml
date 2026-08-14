@@ -23,3 +23,36 @@ jobs:
       # The docs gate and the Core dependency boundary are both tests, so there is no
       # separate CI step to keep in sync with them.
       - run: dotnet test --no-build -c Release --logger "console;verbosity=normal"
+
+      # dotnet test runs against build output; dotnet publish lays files out differently, and
+      # that difference once shipped a transcriber that had never worked. The same selftest
+      # that gates a release runs here, so a publish-layout break fails the pull request that
+      # makes it rather than the release that ships it.
+      - run: dotnet publish src/D47.App -c Release
+
+      - name: Speech model for the self-test
+        uses: actions/cache@v4
+        with:
+          path: .model-cache
+          key: whisper-ggml-tiny.en
+
+      - name: Fetch the speech model if not cached
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .model-cache/ggml-tiny.en.bin)) {
+            New-Item -ItemType Directory -Force .model-cache | Out-Null
+            Invoke-WebRequest https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin -OutFile .model-cache/ggml-tiny.en.bin
+          }
+
+      - name: Self-test the published build
+        shell: pwsh
+        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        run: |
+          New-Item -ItemType Directory -Force data\models | Out-Null
+          Copy-Item (Join-Path $env:GITHUB_WORKSPACE '.model-cache\ggml-tiny.en.bin') data\models\
+          $p = Start-Process -FilePath .\d47.exe -ArgumentList '--selftest' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
+          Get-Content selftest.out, selftest.err
+          if ($p.ExitCode -ne 0) {
+            Get-Content data\logs\d47-*.log | Select-Object -Last 80
+            exit $p.ExitCode
+          }

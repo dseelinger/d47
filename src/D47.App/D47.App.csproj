@@ -78,6 +78,36 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    Whisper's natives ship as loose files under runtimes\win-x64\, never inside the
+    single-file bundle. Whisper.net's loader does not use normal native resolution: it
+    probes the disk for <exe dir>\runtimes\win-x64\whisper.dll (Directory.Exists +
+    File.Exists) and throws when the folder is not there. Bundled natives extract to a
+    temp folder the loader never probes, so a bundled whisper.dll is a whisper.dll that
+    cannot be found — transcription worked in dev builds, where this layout exists in
+    bin\, and failed in every published one. The other architectures' copies are dropped
+    outright: a win-x64 publish has no use for win-arm64 or win-x86 natives.
+  -->
+  <!--
+    The natives are None items in D47.Stt (Whisper.net.Runtime.targets), which reach this
+    project's publish through the child-project recursion in GetCopyToPublishDirectoryItems
+    and only become ResolvedFileToPublish in _ComputeCopyToPublishDirectoryItems — hence the
+    private-target hook; an SDK rename here fails loud in the selftest release gate.
+  -->
+  <Target Name="ShipWhisperNativesBesideTheExe" AfterTargets="_ComputeCopyToPublishDirectoryItems">
+    <ItemGroup>
+      <_WhisperNative
+          Include="@(ResolvedFileToPublish)"
+          Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').StartsWith('runtimes')) and $([System.String]::Copy('%(ResolvedFileToPublish.Filename)').Contains('whisper'))" />
+      <ResolvedFileToPublish Remove="@(_WhisperNative)" />
+      <ResolvedFileToPublish
+          Include="@(_WhisperNative)"
+          Condition="$([System.String]::Copy('%(_WhisperNative.RelativePath)').Contains('win-x64'))"
+          ExcludeFromSingleFile="true" />
+    </ItemGroup>
+    <Message Importance="high" Text="WHISPER-NATIVE: %(_WhisperNative.RelativePath)" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.1" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />

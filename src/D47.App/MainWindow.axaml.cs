@@ -563,10 +563,10 @@ public partial class MainWindow : Window
         var progress = new Progress<double>(fraction =>
             _model.UpdateText = $"Downloading D47 {update.Version} — {fraction:P0}");
 
-        var (file, failure) = await _host.Installer
+        var (payload, failure) = await _host.Installer
             .DownloadAsync(update, progress, CancellationToken.None);
 
-        if (file is null)
+        if (payload is null)
         {
             _model.UpdateBusy = false;
             OpenReleasePage(update, Explain(failure));
@@ -576,7 +576,7 @@ public partial class MainWindow : Window
         _model.UpdateText = $"Installing D47 {update.Version}…";
 
         if (Environment.ProcessPath is not { } running
-            || !_host.Installer.TrySwap(running, file))
+            || !_host.Installer.TrySwap(running, payload))
         {
             _model.UpdateBusy = false;
             OpenReleasePage(update, Explain(UpdateFailure.CouldNotReplace));
@@ -674,6 +674,8 @@ public partial class MainWindow : Window
     {
         UpdateFailure.ChecksumMismatch =>
             "The download did not match the checksum published with it, so D47 did not run it.",
+        UpdateFailure.BadArchive =>
+            "The download was not a D47 build, so D47 did not install it.",
         UpdateFailure.CouldNotReplace =>
             "D47 could not replace itself where it is installed.",
         UpdateFailure.NothingToInstall =>

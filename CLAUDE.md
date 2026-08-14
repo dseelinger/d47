@@ -65,7 +65,7 @@ Each of these is cheap to break by accident and expensive to fix later.
 ```
 dotnet build          # net10.0-windows, warnings are errors
 dotnet test           # includes the Core dependency boundary and the docs gate
-dotnet publish src/D47.App -c Release      # one ~64 MB self-contained d47.exe, no flags needed
+dotnet publish src/D47.App -c Release      # self-contained d47.exe + runtimes\ natives, no flags needed
 ```
 
 Release is a tag: `git tag -s v0.1.0 -m "what changed"` then `git push origin v0.1.0`

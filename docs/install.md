@@ -4,42 +4,41 @@ title: Installing Directive 47
 
 # Installing and verifying a build
 
-D47 ships as one file. There is no installer, no runtime prerequisite, and nothing that
+D47 ships as one zip. There is no installer, no runtime prerequisite, and nothing that
 asks for administrator rights.
 
-1. Download `d47.exe` from the
+1. Download `d47.zip` from the
    [latest release](https://github.com/dseelinger/d47/releases/latest) — or pick a specific
    build from the [releases page](https://github.com/dseelinger/d47/releases).
-2. Put it in a folder you own — **not** `Program Files`. D47 never asks for administrator
-   rights, so it could not write there anyway; and everything it saves goes in a `data`
-   folder beside the executable, so it needs somewhere you can write.
-3. Run it.
+2. Unpack it into a folder you own — **not** `Program Files`. D47 never asks for
+   administrator rights, so it could not write there anyway; and everything it saves goes
+   in a `data` folder beside the executable, so it needs somewhere you can write.
+3. Run `d47.exe`.
 
-## What "one file" does and does not mean
+## What is in the zip
 
-The build is a self-contained single-file publish: the .NET runtime and every managed
-dependency are inside the executable, and native libraries are extracted to a temporary
-folder on first run. It is not statically linked in the C sense. What you can rely on is
-narrower and more useful:
+One executable, and the speech-recognition native libraries in a `runtimes` folder beside
+it. The executable is a self-contained publish — the .NET runtime and every managed
+dependency are inside it — and the natives sit beside it as plain files because that is
+where their loader looks for them. Keep them together: `d47.exe` without its `runtimes`
+folder runs, but cannot transcribe. What you can rely on:
 
 - No .NET runtime needs to be installed first.
 - No elevation, ever.
-- Everything D47 writes lives in a `data` folder beside the executable. Move the folder,
-  and your settings and secrets move with it.
-
-First launch is slower than later ones, because that native extraction happens once.
+- Everything D47 writes lives in a `data` folder beside the executable. Move the whole
+  folder, and the program, your settings and your secrets all move together.
 
 ## Verifying the download
 
 Builds are unsigned, so Windows SmartScreen will likely warn on first run. Rather than ask
-you to trust that, every release publishes a SHA-256 alongside the executable. Compare it:
+you to trust that, every release publishes a SHA-256 alongside the archive. Compare it:
 
 ```powershell
-Get-FileHash .\d47.exe -Algorithm SHA256
+Get-FileHash .\d47.zip -Algorithm SHA256
 ```
 
-Match the result against `d47.exe.sha256` from the same release. If it differs, do not run
-the file.
+Match the result against `d47.zip.sha256` from the same release. If it differs, do not
+unpack the file.
 
 ## Where things are written
 
@@ -47,6 +46,8 @@ Everything is under `data`, beside the executable:
 
 ```text
 d47.exe
+runtimes\
+  win-x64\             speech-recognition natives — shipped in the zip, not downloaded
 data\
   settings.json        plain JSON, hand-editable, unknown keys rejected on load
   secrets.json         API keys, DPAPI-encrypted for your Windows account only
@@ -78,11 +79,18 @@ writers over one `data/` folder.
 On startup, D47 asks GitHub's public releases API for the latest tag and compares it against
 its own version. If a newer build exists, a banner offers **Update now**.
 
-**Update now** downloads that release's `d47.exe`, checks it against the `d47.exe.sha256`
-published beside it, renames the running build to `d47.exe.old`, puts the new one in its place
-and starts it. The old file is deleted the next time D47 starts. If any step fails — no build
-attached, the download did not finish, the checksum did not match, or the folder D47 lives in
-needs elevation to write — it says which, and opens the release page so you can do it by hand.
+**Update now** downloads that release's `d47.zip`, checks it against the `d47.zip.sha256`
+published beside it, and puts each file it contains where the running one is — the executable
+and the `runtimes` libraries both — renaming what it replaces to `.old` rather than
+overwriting it, then starts the new build. The `.old` files are deleted the next time D47
+starts, and a failure part-way puts everything back; you never end up with half an update. If
+any step fails — no build attached, the download did not finish, the checksum did not match,
+the archive was not a d47 build, or the folder D47 lives in needs elevation to write — it says
+which, and opens the release page so you can do it by hand.
+
+Builds older than v0.5.14 predate the zip and cannot install it; their update banner opens the
+release page instead, and moving up is the three download-unpack-run steps at the top of this
+page once more.
 
 Nothing is downloaded unless you press the button, and D47 will only fetch a URL that is an
 asset on a release of this repository.

@@ -10,8 +10,9 @@ namespace D47.App.Updates;
 /// <param name="Version">The tag, without its leading v.</param>
 /// <param name="ReleaseUrl">The page, opened when installing in place is not possible.</param>
 /// <param name="DownloadUrl">
-/// The executable itself. Null when the release does not carry one under a URL that belongs to
-/// this repository, which downgrades the offer to "open the page" rather than trusting it.
+/// The release archive — the executable and the native libraries that ship beside it. Null when
+/// the release does not carry one under a URL that belongs to this repository, which downgrades
+/// the offer to "open the page" rather than trusting it.
 /// </param>
 /// <param name="ChecksumUrl">
 /// The published sha256 sidecar. Null on the same terms, and a download without one is refused
@@ -53,9 +54,15 @@ public sealed class UpdateChecker
     /// </summary>
     private const string DownloadUrlPrefix = "https://github.com/dseelinger/d47/releases/download/";
 
-    /// <summary>The published executable, and the checksum published beside it.</summary>
-    private const string ExecutableAsset = "d47.exe";
-    private const string ChecksumAsset = "d47.exe.sha256";
+    /// <summary>
+    /// The published archive, and the checksum published beside it. An archive rather than a
+    /// bare exe since v0.5.14: Whisper's native libraries ship as loose files beside the
+    /// executable — their loader probes the disk, not the single-file bundle — so a release is
+    /// several files now, and updating only the exe would ship the bug class this replaced.
+    /// Builds older than that see no <c>d47.exe</c> asset and fall back to the release page.
+    /// </summary>
+    private const string ArchiveAsset = "d47.zip";
+    private const string ChecksumAsset = "d47.zip.sha256";
 
     private static readonly HttpClient Http = CreateClient();
 
@@ -115,7 +122,7 @@ public sealed class UpdateChecker
             return new AvailableUpdate(
                 latest.ToString(),
                 url!,
-                AssetUrl(document.RootElement, ExecutableAsset),
+                AssetUrl(document.RootElement, ArchiveAsset),
                 AssetUrl(document.RootElement, ChecksumAsset));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
