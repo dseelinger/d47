@@ -2,6 +2,7 @@ using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -536,6 +537,50 @@ public partial class SettingsView : UserControl
     private const double StandardControlWidth = 190;
 
     /// <summary>
+    /// The height every control that opens a list stands at, and the padding inside it.
+    /// <para>
+    /// Two numbers rather than each control's own, because the two implementations drifted the
+    /// moment they had separate ones: a combo box at 32 beside a picker button at 33, one padded
+    /// 12,5,0,7 and the other 11,6,11,6.
+    /// </para>
+    /// </summary>
+    private const double ChoiceHeight = 32;
+
+    private static readonly Thickness ChoicePadding = new(11, 6);
+
+    /// <summary>
+    /// One look for the two controls that open a list.
+    /// <para>
+    /// The picker button was dressed by hand to resemble the combo box beside it — "the default
+    /// button chrome reads as disabled next to a real combo, which is the opposite of the truth"
+    /// — and a resemblance maintained by hand is a resemblance that drifts. It had: the combo
+    /// carried Fluent's own fill and a 60%-white border while the button carried d47's surface
+    /// and a border two thirds darker, which on screen is a bright control beside a dim one.
+    /// </para>
+    /// <para>
+    /// Both are dressed from d47's palette here, so the theme moves them together. The one thing
+    /// this does not reach is the glyph: the combo's chevron is drawn by its template and the
+    /// button's is a character, and they are the same size and colour without being the same
+    /// shape. Nor does it reach the combo's pointer-over fill, which Fluent swaps from its own
+    /// resources — worth a look on the captures before deciding whether that needs answering too.
+    /// </para>
+    /// </summary>
+    private void DressAsAChoice(TemplatedControl control)
+    {
+        // Fixed rather than a floor. Both are one line of text and a glyph, and a floor let the
+        // button stand a pixel taller than the combo because the chevron character's line box is
+        // two pixels deeper than the label's — invisible on its own and obvious side by side.
+        control.Height = ChoiceHeight;
+        control.Padding = ChoicePadding;
+        control.BorderThickness = new Thickness(1);
+        control.CornerRadius = new CornerRadius(3);
+        control.FontSize = TypeScale.Body;
+
+        Themed(control, TemplatedControl.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(control, TemplatedControl.BorderBrushProperty, ThemeManager.BorderKey);
+    }
+
+    /// <summary>
     /// Fetches a speech model, reporting progress. Supplied by the window that has a host
     /// behind it; null under the designer and in a test that is not about downloading.
     /// </summary>
@@ -842,6 +887,7 @@ public partial class SettingsView : UserControl
     private (Control, Action, bool) BuildComboBox(SettingRow row, TextBlock message)
     {
         var combo = new ComboBox { MinWidth = StandardControlWidth, HorizontalAlignment = HorizontalAlignment.Right };
+        DressAsAChoice(combo);
 
         // The closed box shows what fits in a fifth of the row, and some of these labels carry
         // the part that matters on the end of them: a speech model not on disk reads as
@@ -1042,7 +1088,7 @@ public partial class SettingsView : UserControl
         var chevron = new TextBlock { Text = "⌄", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var layout = new DockPanel { MinWidth = StandardControlWidth };
+        var layout = new DockPanel();
         DockPanel.SetDock(chevron, Dock.Right);
         layout.Children.Add(chevron);
         layout.Children.Add(value);
@@ -1050,11 +1096,17 @@ public partial class SettingsView : UserControl
         var button = new Button
         {
             Content = layout,
-            Padding = new Thickness(11, 6),
-            BorderThickness = new Thickness(1),
+
+            // On the button, not on the panel inside it: the floor is what the control stands at
+            // beside a combo box, and a floor set inside the padding made the narrowest picker
+            // button 212 wide against the combo's 190.
+            MinWidth = StandardControlWidth,
             HorizontalAlignment = HorizontalAlignment.Right,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
         };
+
+        DressAsAChoice(button);
 
         // Said rather than left to be guessed at. Gathering what goes in the picker can mean
         // asking the machine for its capture devices or a provider for its voices, and a button
@@ -1067,11 +1119,6 @@ public partial class SettingsView : UserControl
             Margin = new Thickness(0, 0, 8, 0),
         };
         Themed(busy, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
-
-        // Dressed as the combo box beside it, because it does the same job. The default button
-        // chrome reads as disabled next to a real combo, which is the opposite of the truth.
-        Themed(button, Button.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Themed(button, Button.BorderBrushProperty, ThemeManager.BorderKey);
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
