@@ -71,6 +71,7 @@ internal sealed class SettingsHost
             return view;
         });
 
+        panel.EnableSearch();
         panel.Page = TranscriptPage.Settings;
 
         var window = new Window { Content = panel, Width = width, Height = height };

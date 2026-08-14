@@ -198,10 +198,62 @@
       there would send the headset to the log file the moment the window went to it. The model
       owns the content; how much of it a given surface shows is that surface's business.
     -->
-    <StackPanel x:Name="TranscriptTabs"
-                DockPanel.Dock="Top"
-                Orientation="Horizontal"
-                Margin="0,16,0,0">
+    <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
+
+      <!--
+        One search affordance for the surface, on the tab that is selected — not four features
+        bolted to four pages (list.md Phase 12). What a match does differs by page and that
+        difference is the design: the transcript pages highlight and step, and Settings filters,
+        so the count and the steppers are hidden where they would mean nothing.
+
+        Hidden until a host enables it, which only the desktop window does. Mini shows no strip
+        and the headset has no keyboard, and a search box the Commander cannot type into is
+        worse than no search at all.
+      -->
+      <StackPanel x:Name="SearchRow"
+                  DockPanel.Dock="Right"
+                  Orientation="Horizontal"
+                  Spacing="6"
+                  IsVisible="False"
+                  VerticalAlignment="Bottom"
+                  Margin="12,0,0,4">
+        <TextBox x:Name="SearchInput"
+                 Width="200"
+                 Height="28"
+                 Padding="8,3"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 VerticalContentAlignment="Center"
+                 PlaceholderText="Search this page"
+                 TextChanged="OnSearchChanged"
+                 KeyDown="OnSearchKeyDown" />
+        <TextBlock x:Name="SearchCount"
+                   VerticalAlignment="Center"
+                   IsVisible="False"
+                   FontSize="{StaticResource D47.Type.Secondary}"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+        <Button x:Name="SearchPrevious"
+                Content="&#x2039;"
+                Padding="8,0"
+                MinWidth="0"
+                Height="28"
+                IsVisible="False"
+                FontSize="{StaticResource D47.Type.Body}"
+                ToolTip.Tip="Previous match (Shift+Enter)"
+                Click="OnSearchPreviousClick" />
+        <Button x:Name="SearchNext"
+                Content="&#x203A;"
+                Padding="8,0"
+                MinWidth="0"
+                Height="28"
+                IsVisible="False"
+                FontSize="{StaticResource D47.Type.Body}"
+                ToolTip.Tip="Next match (Enter)"
+                Click="OnSearchNextClick" />
+      </StackPanel>
+
+      <StackPanel x:Name="TranscriptTabs"
+                  Orientation="Horizontal"
+                  VerticalAlignment="Bottom">
       <!--
         No GroupName, deliberately. Avalonia groups named radio buttons across the whole
         application rather than within a tree, and this view is instantiated twice - once by the
@@ -234,7 +286,9 @@
                    Content="Settings"
                    IsVisible="False"
                    IsCheckedChanged="OnPageTabChecked" />
-    </StackPanel>
+      </StackPanel>
+
+    </DockPanel>
 
     <!--
       One slot, two pages. The transcript and the settings surface occupy the same place under

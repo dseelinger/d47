@@ -51,6 +51,24 @@ public partial class PanelView : UserControl
     /// </summary>
     private TranscriptPage _lastTranscriptPage = TranscriptPage.Conversation;
 
+    /// <summary>What is being searched for on this surface. Empty when nothing is.</summary>
+    private string _query = string.Empty;
+
+    /// <summary>The hits in the current page, recomputed on every redraw.</summary>
+    private IReadOnlyList<D47.Core.Interface.SearchMatch> _matches = [];
+
+    /// <summary>
+    /// Which hit is current, and where it starts in the page.
+    /// <para>
+    /// The offset is the record and the index is derived from it. That is what keeps a hit found
+    /// in the live log found as lines arrive underneath: "the third match" becomes a different
+    /// piece of text the moment a line is appended, and "the match at character 4,812" does not.
+    /// </para>
+    /// </summary>
+    private int _hit = -1;
+
+    private int _hitOffset;
+
     public PanelView()
     {
         InitializeComponent();
@@ -61,8 +79,25 @@ public partial class PanelView : UserControl
         // wrong, and those are different reasons.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyChrome());
 
-        PageProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyPage());
+        PageProperty.Changed.AddClassHandler<PanelView>((view, change) =>
+        {
+            // The query belongs to the page and is dropped when the page changes. One string
+            // that filters here and highlights there is a control that behaves differently
+            // depending on where the Commander last clicked.
+            if (!Equals(change.OldValue, change.NewValue))
+            {
+                view.DropSearch();
+            }
+
+            view.ApplyPage();
+        });
+
         ApplyPage();
+
+        // Tunnelling, because both gestures belong to the surface rather than to whatever has
+        // focus: Ctrl+F has to reach the box from inside the ask box, and Escape has to be taken
+        // before the window decides there is nothing left to close.
+        AddHandler(KeyDownEvent, OnSurfaceKeyDown, RoutingStrategies.Tunnel);
 
         // Scroll position belongs to a rendered surface rather than to the text, so each
         // instance answers this for itself: the window and the overlay can be scrolled to
@@ -176,11 +211,169 @@ public partial class PanelView : UserControl
         return true;
     }
 
+    /// <summary>
+    /// Gives this surface the search box.
+    /// <para>
+    /// Enabled by the host, like the settings page and for the same reason: the desktop window
+    /// is the surface with a keyboard. Mini shows no strip at all and the headset has none, and
+    /// a search box the Commander cannot type into is worse than no search at all.
+    /// </para>
+    /// </summary>
+    public void EnableSearch() => SearchRow.IsVisible = true;
+
+    /// <summary>Puts the cursor in the search box. Ctrl+F does this; a host may too.</summary>
+    public void FocusSearch()
+    {
+        SearchInput.Focus();
+        SearchInput.SelectAll();
+    }
+
     /// <summary>Puts the cursor in the ask box. The host binds a gesture to it.</summary>
     public void FocusAsk()
     {
         AskBox.Focus();
         AskBox.SelectAll();
+    }
+
+    /// <summary>
+    /// Empties the search box and gives the page back, and says whether there was anything to
+    /// empty — so Escape with no query in it stays available to whatever else wants the key.
+    /// </summary>
+    public bool ClearSearch()
+    {
+        if (_query.Length == 0)
+        {
+            return false;
+        }
+
+        SearchInput.Text = string.Empty;
+
+        (Page == TranscriptPage.Settings ? SettingsPane.Child : Transcript)?.Focus();
+
+        return true;
+    }
+
+    private void OnSurfaceKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!SearchRow.IsVisible)
+        {
+            return;
+        }
+
+        if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            e.Handled = true;
+            FocusSearch();
+            return;
+        }
+
+        if (e.Key == Key.Escape && ClearSearch())
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Drops the query without moving focus. Used when the page changes, where there is nothing
+    /// to give back — the Commander is already looking somewhere else.
+    /// </summary>
+    private void DropSearch() => SearchInput.Text = string.Empty;
+
+    private void OnSearchChanged(object? sender, TextChangedEventArgs e)
+    {
+        _query = SearchInput.Text ?? string.Empty;
+
+        // A new query starts at the top of the page rather than near the last hit: the offset
+        // that was being tracked belongs to the string that is no longer being searched for.
+        _hitOffset = 0;
+
+        ApplySearch();
+    }
+
+    private void OnSearchKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        StepSearch(e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1);
+    }
+
+    private void OnSearchNextClick(object? sender, RoutedEventArgs e) => StepSearch(1);
+
+    private void OnSearchPreviousClick(object? sender, RoutedEventArgs e) => StepSearch(-1);
+
+    private void StepSearch(int by)
+    {
+        if (_matches.Count == 0)
+        {
+            return;
+        }
+
+        _hit = D47.Core.Interface.TextSearch.Step(_matches.Count, _hit, by);
+        _hitOffset = _matches[_hit].Start;
+
+        DrawTranscript();
+        ScrollToHit();
+    }
+
+    /// <summary>
+    /// Hands the query to whatever is showing. The panel holds one string and one gesture; what
+    /// a match <em>does</em> is the page's business.
+    /// </summary>
+    private void ApplySearch()
+    {
+        if (Page == TranscriptPage.Settings)
+        {
+            (SettingsPane.Child as IFilterablePage)?.Filter(_query);
+            ShowSearchProgress(stepping: false);
+            return;
+        }
+
+        DrawTranscript();
+    }
+
+    /// <summary>
+    /// The count and the steppers, which only mean something where a match highlights rather
+    /// than filters. On a filtered page, "3 of 17" describes rows that are already all on
+    /// screen, and a next button has nothing to step to.
+    /// </summary>
+    private void ShowSearchProgress(bool stepping)
+    {
+        SearchCount.IsVisible = stepping;
+        SearchNext.IsVisible = stepping;
+        SearchPrevious.IsVisible = stepping;
+
+        if (stepping)
+        {
+            SearchCount.Text = D47.Core.Interface.TextSearch.Describe(_matches.Count, _hit);
+        }
+    }
+
+    /// <summary>
+    /// Puts the current hit on screen.
+    /// <para>
+    /// Through the text layout rather than by asking a run where it is: an <c>Inline</c> has no
+    /// bounds of its own, and the layout is the one thing that knows where a character offset
+    /// landed once the text wrapped.
+    /// </para>
+    /// </summary>
+    private void ScrollToHit()
+    {
+        if (_hit < 0 || Transcript.TextLayout is not { } layout)
+        {
+            return;
+        }
+
+        var where = layout.HitTestTextPosition(_matches[_hit].Start);
+
+        // A third of the way down rather than at the very top, so the lines around the hit are
+        // visible: reading back a conversation means reading what was around it.
+        TranscriptScroller.Offset = new Vector(
+            TranscriptScroller.Offset.X,
+            Math.Max(0, where.Y - (TranscriptScroller.Viewport.Height / 3)));
     }
 
     /// <summary>
@@ -207,9 +400,9 @@ public partial class PanelView : UserControl
         TurnLine.IsVisible = !settings;
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs
-        // go with the rest of the chrome. A surface with 640x280 to spend does not spend it on
-        // four page selectors.
-        TranscriptTabs.IsVisible = full;
+        // and the search box go with the rest of the chrome. A surface with 640x280 to spend
+        // does not spend it on four page selectors.
+        TabStrip.IsVisible = full;
 
         TranscriptPane.IsVisible = !settings;
         SettingsPane.IsVisible = settings;
@@ -298,22 +491,115 @@ public partial class PanelView : UserControl
 
         if (_bound is null)
         {
+            _matches = [];
+            _hit = -1;
+            ShowSearchProgress(_query.Length > 0);
             return;
         }
 
-        foreach (var segment in _bound.Segments(Page))
-        {
-            var run = new Run(segment.Text);
+        var segments = _bound.Segments(Page);
 
-            if (segment.Marker)
+        // Matched against the page's text rather than against the controls, so the hits are the
+        // same set whether the page has been drawn yet or not — and so the current one can be
+        // re-resolved from its offset every time the log grows underneath it.
+        _matches = D47.Core.Interface.TextSearch.Find(
+            string.Concat(segments.Select(segment => segment.Text)),
+            _query);
+
+        _hit = D47.Core.Interface.TextSearch.Track(_matches, _hitOffset);
+
+        if (_hit >= 0)
+        {
+            _hitOffset = _matches[_hit].Start;
+        }
+
+        var at = 0;
+
+        foreach (var segment in segments)
+        {
+            foreach (var (text, match) in Split(segment.Text, at))
             {
-                run.Bind(
-                    Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                    this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-                run.FontWeight = FontWeight.SemiBold;
+                var run = new Run(text);
+
+                if (segment.Marker)
+                {
+                    run.Bind(
+                        Avalonia.Controls.Documents.TextElement.ForegroundProperty,
+                        this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+                    run.FontWeight = FontWeight.SemiBold;
+                }
+
+                if (match >= 0)
+                {
+                    // Every hit is marked and the current one is accented, which is what makes
+                    // stepping legible: the count says where you are in the set and the colour
+                    // says which one of them you are looking at.
+                    run.Bind(
+                        Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                        this.GetResourceObservable(match == _hit
+                            ? Theming.ThemeManager.AccentKey
+                            : Theming.ThemeManager.AccentMutedKey));
+
+                    if (match == _hit)
+                    {
+                        run.Bind(
+                            Avalonia.Controls.Documents.TextElement.ForegroundProperty,
+                            this.GetResourceObservable(Theming.ThemeManager.BackgroundKey));
+                    }
+                }
+
+                inlines.Add(run);
             }
 
-            inlines.Add(run);
+            at += segment.Text.Length;
+        }
+
+        ShowSearchProgress(_query.Length > 0);
+    }
+
+    /// <summary>
+    /// One segment, cut at the boundaries of any hits inside it, each piece carrying the index
+    /// of the hit it belongs to or -1.
+    /// <para>
+    /// Cut here rather than searched here: a hit can straddle two segments — a query spanning
+    /// the join between a marked line and the reply after it — and only offsets into the whole
+    /// page can say that. Each half is drawn highlighted in its own segment's style.
+    /// </para>
+    /// </summary>
+    private IEnumerable<(string Text, int Match)> Split(string text, int at)
+    {
+        var cursor = 0;
+
+        for (var i = 0; i < _matches.Count; i++)
+        {
+            var start = _matches[i].Start - at;
+            var end = _matches[i].End - at;
+
+            if (end <= cursor)
+            {
+                continue;
+            }
+
+            if (start >= text.Length)
+            {
+                break;
+            }
+
+            var from = Math.Max(start, cursor);
+            var to = Math.Min(end, text.Length);
+
+            if (from > cursor)
+            {
+                yield return (text[cursor..from], -1);
+            }
+
+            yield return (text[from..to], i);
+            cursor = to;
+        }
+
+        if (cursor < text.Length)
+        {
+            yield return (text[cursor..], -1);
         }
     }
 

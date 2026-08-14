@@ -36,7 +36,7 @@ namespace D47.App.Settings;
 /// Free text is only used where the value genuinely is free text.
 /// </para>
 /// </summary>
-public partial class SettingsView : UserControl
+public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 {
 
     private readonly List<SectionView> _sections = [];
@@ -147,26 +147,28 @@ public partial class SettingsView : UserControl
         NavItems.Children.Clear();
         _sections.Clear();
         _rows.Clear();
+        _collapsed.Clear();
         _activeSection = -1;
 
         foreach (var section in settings.Sections)
         {
             var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var card = BuildCard(section, title);
+            var (card, content) = BuildCard(section, title, _sections.Count);
 
             Cards.Children.Add(card);
 
             var nav = BuildNavItem(_sections.Count, title);
             NavItems.Children.Add(nav.Item);
 
-            _sections.Add(new SectionView(section.Capability.Id, title, card, nav.Item, nav.Bar, nav.Text));
+            _sections.Add(
+                new SectionView(section.Capability.Id, title, card, content, nav.Item, nav.Bar, nav.Text));
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
 
-    private Border BuildCard(SettingsSection section, string title)
+    private (Border Card, StackPanel Content) BuildCard(SettingsSection section, string title, int index)
     {
         var content = new StackPanel
         {
@@ -176,6 +178,11 @@ public partial class SettingsView : UserControl
             // collapses is worse than one that never remembered (list.md Phase 4).
             IsVisible = _viewState.IsExpanded(section.Capability.Id, section.Capability.Display.StartCollapsed),
         };
+
+        if (!content.IsVisible)
+        {
+            _collapsed.Add(index);
+        }
 
         string? currentGroup = null;
 
@@ -192,7 +199,7 @@ public partial class SettingsView : UserControl
                 currentGroup = null;
             }
 
-            var view = BuildRow(section.Capability, row);
+            var view = BuildRow(section.Capability, row) with { Section = index };
             _rows.Add(view);
             content.Children.Add(view.Container);
         }
@@ -256,6 +263,18 @@ public partial class SettingsView : UserControl
         {
             content.IsVisible = !content.IsVisible;
             chevron.Text = content.IsVisible ? "▾" : "▸";
+
+            // Recorded here as well as on disk, because a filter opens a card without being
+            // asked and has to put it back the way the Commander left it.
+            if (content.IsVisible)
+            {
+                _collapsed.Remove(index);
+            }
+            else
+            {
+                _collapsed.Add(index);
+            }
+
             RememberCollapse(section.Capability.Id, expanded: content.IsVisible);
         };
 
@@ -276,7 +295,7 @@ public partial class SettingsView : UserControl
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return card;
+        return (card, content);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -561,6 +580,8 @@ public partial class SettingsView : UserControl
 
         UpdateNavVisuals();
 
+        var showing = new int[_sections.Count];
+
         _refreshing = true;
         try
         {
@@ -568,15 +589,93 @@ public partial class SettingsView : UserControl
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (list.md Phase 4).
-                row.Container.IsVisible = row.Row.Applies(_settings.Current);
+                var shown = row.Row.Applies(_settings.Current) && Matches(row.Row);
+
+                row.Container.IsVisible = shown;
                 row.Refresh();
+
+                if (shown && row.Section >= 0)
+                {
+                    showing[row.Section]++;
+                }
             }
         }
         finally
         {
             _refreshing = false;
         }
+
+        ApplyFilterToCards(showing);
     }
+
+    /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
+    private string _query = string.Empty;
+
+    /// <summary>
+    /// Shows only the rows that match (list.md Phase 12, "Search whichever tab you are looking
+    /// at").
+    /// <para>
+    /// Settings filters where the transcript pages highlight, and the difference is the design
+    /// rather than an inconsistency: 92 rows across 14 sections is a haystack, and highlighting
+    /// in place in a haystack is a scroll hunt with extra colour.
+    /// </para>
+    /// </summary>
+    public void Filter(string? query)
+    {
+        var wanted = query?.Trim() ?? string.Empty;
+
+        if (string.Equals(_query, wanted, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _query = wanted;
+        Refresh();
+    }
+
+    /// <summary>
+    /// Label, help or key. The key is in there because it is what the documentation, the voice
+    /// router and a hand-edited settings file all call the row, so a Commander who arrived with
+    /// one of those in hand can paste it in.
+    /// </summary>
+    private bool Matches(SettingRow row) =>
+        _query.Length == 0
+        || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        || row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        || row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A card with nothing left in it goes, and so does its nav item — a sidebar still listing
+    /// fourteen sections when three of them hold anything is a sidebar that has stopped telling
+    /// the truth.
+    /// <para>
+    /// A filtered card is also opened, whatever the Commander last left it as, because a card
+    /// collapsed over the row that matched is a filter that hides its own answer. The remembered
+    /// state is not written while this happens, so clearing the query puts it back.
+    /// </para>
+    /// </summary>
+    private void ApplyFilterToCards(int[] showing)
+    {
+        var filtering = _query.Length > 0;
+
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            var section = _sections[i];
+            var holds = showing[i] > 0;
+
+            section.Card.IsVisible = !filtering || holds;
+            section.NavItem.IsVisible = !filtering || holds;
+
+            section.Content.IsVisible = filtering ? holds : !_collapsed.Contains(i);
+        }
+    }
+
+    /// <summary>
+    /// Which cards the Commander had shut when a filter opened them, so clearing it shuts them
+    /// again. Held here rather than re-read from the view state because a card collapsed in this
+    /// session and not yet written is still a card they collapsed.
+    /// </summary>
+    private readonly HashSet<int> _collapsed = [];
 
     /// <summary>
     /// The width a compact row's control is built to. Used as the floor for the control column
@@ -1504,9 +1603,14 @@ public partial class SettingsView : UserControl
         string CapabilityId,
         string Title,
         Border Card,
+        StackPanel Content,
         Border NavItem,
         Border NavBar,
         TextBlock NavText);
 
-    private sealed record RowView(SettingRow Row, Control Container, Action Refresh);
+    private sealed record RowView(SettingRow Row, Control Container, Action Refresh)
+    {
+        /// <summary>Which card this row is in, so a filter can hide a card that has emptied.</summary>
+        public int Section { get; init; } = -1;
+    }
 }

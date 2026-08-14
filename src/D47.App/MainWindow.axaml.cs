@@ -120,6 +120,11 @@ public partial class MainWindow : Window
             // is handed nothing and therefore has no Settings tab (list.md Phase 12).
             Panel.EnableSettings(BuildSettingsPage);
 
+            // And the same window is the one with a keyboard, so it is the one that gets a
+            // search box. Two calls rather than one, because they are two affordances — but they
+            // are made from the same line of the same file, which is where "desktop only" lives.
+            Panel.EnableSearch();
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             WindowPlacementMemory.Attach(this, host.ViewState);
