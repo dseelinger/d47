@@ -442,6 +442,24 @@ public class NamedVoicesAreRestoredTests
         Assert.Equal("XrExE9yKIg1WjnnlVkGX", put["cora"]);
     }
 
+    /// <summary>
+    /// Found on a real file: the Commander picked George for Warden by hand, so the repair saw
+    /// the pairing it wanted and skipped the entry — leaving the core that had been given George
+    /// by the model still holding it. Two cores, one voice, which is the thing the pairing exists
+    /// to prevent.
+    /// </summary>
+    [Fact]
+    public void TheOtherCoreLosesItEvenWhenWardenAlreadyHasIt()
+    {
+        var put = VoicePairing.WithNamedDefaultsRestored(
+            Paired(("warden", "JBFqnCBsd6RMkjVDRZzb"), ("mender", "JBFqnCBsd6RMkjVDRZzb")),
+            Voices(),
+            "elevenlabs");
+
+        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
+        Assert.DoesNotContain("mender", put.Keys);
+    }
+
     [Fact]
     public void APairingAlreadyRightIsLeftExactlyAlone()
     {

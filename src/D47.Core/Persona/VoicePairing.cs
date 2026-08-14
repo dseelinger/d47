@@ -209,16 +209,19 @@ public static class VoicePairing
                 continue;
             }
 
-            // Held by anyone: the point is to take it back off them. Only the core it is named
-            // for is excluded, and only so a pairing already right is left exactly alone.
-            var held = put.GetValueOrDefault(persona);
-
-            if (TheVoiceCalled(name, voices, persona, []) is not { } wanted || wanted.Id == held)
+            if (TheVoiceCalled(name, voices, persona, []) is not { } wanted)
             {
                 continue;
             }
 
-            foreach (var other in put.Where(pair => pair.Value == wanted.Id).Select(pair => pair.Key).ToArray())
+            // Taken off everyone else whether or not the named core already holds it. Skipping
+            // the whole entry when it was already right left two cores on one voice: the
+            // Commander had picked this one by hand for the core it belongs to, which is the
+            // one case where the core that should lose it is the only thing left to do.
+            foreach (var other in put
+                .Where(pair => pair.Value == wanted.Id && pair.Key != persona)
+                .Select(pair => pair.Key)
+                .ToArray())
             {
                 logger?.LogInformation(
                     "Taking {Voice} off {Persona}: it is {Named}'s named default", wanted.Id, other, persona);
@@ -226,9 +229,13 @@ public static class VoicePairing
                 put.Remove(other);
             }
 
-            logger?.LogInformation("Restoring {Persona} to {Voice}, its named default", persona, wanted.Id);
-            put[persona] = wanted.Id;
-            moved = true;
+            if (put.GetValueOrDefault(persona) != wanted.Id)
+            {
+                logger?.LogInformation("Restoring {Persona} to {Voice}, its named default", persona, wanted.Id);
+                put[persona] = wanted.Id;
+            }
+
+            moved = moved || put.Count != paired.Count || put[persona] != paired.GetValueOrDefault(persona);
         }
 
         return moved ? put : paired;
