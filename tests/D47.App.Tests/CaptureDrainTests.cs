@@ -1,6 +1,7 @@
 using D47.Audio;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
+using NAudio.MediaFoundation;
 using NAudio.Wave;
 using Xunit;
 
@@ -88,6 +89,83 @@ public class CaptureDrainTests
     {
         Assert.Equal(4000L, WasapiMicrophone.OutputBytesFor(12000, Device, Wanted));
         Assert.Equal(0L, WasapiMicrophone.OutputBytesFor(0, Device, Wanted));
+    }
+
+    /// <summary>
+    /// The signal reaches the gate intact, rather than as a fragment followed by silence.
+    /// <para>
+    /// This is the second bug ReadFully caused. The first was the endless loop the budget
+    /// fixed; this one is quieter and worse. A read for more than has been buffered comes back
+    /// padded with manufactured silence, the resampler converts that silence as if it were
+    /// signal, and a second of continuous speech reached the gate as 10 ms of speech and 990 ms
+    /// of nothing. Whisper still recognised the loudest surviving words, so it presented as
+    /// "it cuts off the last thing I say" — audio present, transcript thin — rather than as a
+    /// microphone that plainly did not work.
+    /// </para>
+    /// <para>
+    /// Constant DC is the probe because any near-zero sample in the output is then provably
+    /// fabricated. Both channel counts run: a stereo capture device is the common case and the
+    /// downmix is where a channel-conversion bug would hide.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void TheSignalArrivesWholeRatherThanPaddedWithSilence(int channels)
+    {
+        MediaFoundationApi.Startup();
+
+        var deviceFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, channels);
+
+        // Configured exactly as WasapiMicrophone configures it; ReadFully is the property
+        // under test, so this mirrors the real one rather than sharing it.
+        var incoming = new BufferedWaveProvider(deviceFormat)
+        {
+            DiscardOnBufferOverflow = true,
+            BufferDuration = TimeSpan.FromSeconds(2),
+            ReadFully = false,
+        };
+
+        using var resampler = new MediaFoundationResampler(incoming, Wanted) { ResamplerQuality = 60 };
+
+        var gate = new ListenGate(WasapiMicrophone.SampleRate, NullLogger<ListenGate>.Instance)
+        {
+            PreRoll = TimeSpan.Zero,
+            MinimumLength = TimeSpan.Zero,
+        };
+
+        gate.KeyDown(DateTimeOffset.UnixEpoch);
+
+        const int FramesPerCallback = 480;   // 10 ms at 48 kHz, as a capture device delivers
+        var loud = new float[FramesPerCallback * channels];
+        Array.Fill(loud, 0.5f);
+
+        var chunk = new byte[loud.Length * sizeof(float)];
+        Buffer.BlockCopy(loud, 0, chunk, 0, chunk.Length);
+
+        for (var callback = 0; callback < 100; callback++)
+        {
+            incoming.AddSamples(chunk, 0, chunk.Length);
+
+            WasapiMicrophone.Drain(
+                resampler,
+                WasapiMicrophone.OutputBytesFor(chunk.Length, deviceFormat, resampler.WaveFormat),
+                gate);
+        }
+
+        float[] captured = [];
+        gate.Captured += utterance => captured = utterance.Samples;
+        gate.KeyUp();
+
+        var fabricated = captured.Count(sample => MathF.Abs(sample) < 0.01f);
+
+        Assert.True(
+            captured.Length > WasapiMicrophone.SampleRate * 0.9,
+            $"a second of audio should arrive as a second, not {captured.Length / 16000.0:0.00}s");
+
+        Assert.True(
+            fabricated == 0,
+            $"{fabricated / 16.0:0.#} ms of the second reached the gate as silence that was never spoken");
     }
 
     private static ListenGate Gate()

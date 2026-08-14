@@ -113,6 +113,18 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
                 {
                     DiscardOnBufferOverflow = true,
                     BufferDuration = TimeSpan.FromSeconds(2),
+
+                    // The other half of the ReadFully story, and the more damaging half. With
+                    // it left on, a read for more than has been buffered returns the shortfall
+                    // as manufactured silence rather than admitting it is short — and the
+                    // resampler cannot tell fabricated silence from a Commander who stopped
+                    // talking, so it converts it and passes it on as signal. Measured: a second
+                    // of unbroken tone reached the gate as 10 ms of tone and 990 ms of silence.
+                    // Whisper still found the loudest words in what survived, which is why this
+                    // looked like "it cuts off the end of what I say" rather than like a broken
+                    // microphone. Off, a short read returns what there is, the drain stops on it,
+                    // and the remainder is collected by the next callback.
+                    ReadFully = false,
                 };
 
                 _resampler = new MediaFoundationResampler(
