@@ -208,7 +208,15 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public AudioArbiter Audio { get; }
 
-    public CueLibrary Cues { get; }
+    /// <summary>
+    /// The cues, beds and ambience currently loaded — the shipped set plus whatever is in
+    /// <c>data/audio/</c>.
+    /// <para>
+    /// Replaced rather than mutated when the folder changes, so anything mid-playback keeps the
+    /// clip it already holds and a reload can never cut a sentence (list.md Phase 12).
+    /// </para>
+    /// </summary>
+    public CueLibrary Cues { get; private set; }
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -257,6 +265,24 @@ public sealed class AppHost : IDisposable
     /// voice, why the next line sounds like somebody else.
     /// </summary>
     public event Action<string>? Noted;
+
+    /// <summary>
+    /// Raised true when a core has been chosen and has not yet worked out what to say, and
+    /// false when it has (list.md Phase 12, "Anything that might take a moment says it is
+    /// working").
+    /// <para>
+    /// A gap reaction spends a model round trip before the new core's first word, which from the
+    /// settings row looks exactly like nothing happening. Raised from whichever thread the
+    /// switch is being resolved on, so a subscriber that touches controls has to post.
+    /// </para>
+    /// </summary>
+    public event Action<bool>? PersonaSettling;
+
+    /// <summary>
+    /// Raised when the Commander's audio folder was re-read and the library replaced. The
+    /// settings surface listens, so a bed dropped in appears without a restart.
+    /// </summary>
+    public event Action? AudioReloaded;
 
     /// <summary>
     /// Downloads a model and loads it. Called by the settings row when the Commander picks one;
@@ -415,19 +441,37 @@ public sealed class AppHost : IDisposable
         var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
         var spend = new SpendTracker();
 
+        // Late-bound, because several things built here have to read something that does not
+        // exist until the host does — the voice list, the headset report, and now the cue
+        // library, which is replaced whenever the Commander drops a file into data/audio.
+        AppHost? self = null;
+
         // Audio comes up before the registry because the speech capability's settings rows read
-        // the shipped bed names and the device list from it. The sink is opened here rather than
-        // lazily so a machine with no working output says so once, at startup, instead of on the
-        // first turn the Commander was hoping to hear.
-        var cues = CueLibrary.Load();
+        // the bed names and the device list from it. The sink is opened here rather than lazily
+        // so a machine with no working output says so once, at startup, instead of on the first
+        // turn the Commander was hoping to hear.
+        //
+        // The Commander's own folder is a second source beside the embedded one, drop-ins winning
+        // by name (list.md Phase 12, "Custom Sound Cues"). Nothing here holds the resulting
+        // library: everything that plays a cue asks the host for the current one, so a rebuild is
+        // one assignment rather than a set of references to chase.
+        var drops = new FolderAudioSource(paths.Audio, loggerFactory.CreateLogger<FolderAudioSource>());
+        var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
+        var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
-        var voice = new VoicePipeline(audio, cues, loggerFactory);
+        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory);
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn
         // returns, because the turn returns while the reply is still being spoken. Wired here
         // because VoicePipeline has a primary constructor and cannot subscribe from one.
         audio.ActivityChanged += voice.Settle;
+
+        // A track ending is how the next one is asked for. The arbiter reports the end and
+        // nothing more: which track comes next is a question about situations and shuffling,
+        // and a queue that answered it would be a queue that knows what a station is.
+        audio.MusicFinished += () => self?.PlayNextTrack();
 
         try
         {
@@ -488,10 +532,6 @@ public sealed class AppHost : IDisposable
         // D5), and that rule is what keeps tool schemas byte-identical across turns.
         CapabilityRegistry? built = null;
 
-        // The same late-binding trick, for the same reason: the headset path is built after
-        // Avalonia comes up, which is after this.
-        AppHost? self = null;
-
         // When the Commander was last understood. Written by the turn path once the host
         // exists, read by the listening capability, so it is a box rather than a field.
         var heardAt = new StrongBox<DateTimeOffset?>(null);
@@ -516,7 +556,8 @@ public sealed class AppHost : IDisposable
                 new SpeechCapability.SpeechSurface
                 {
                     Silence = audio.Silence,
-                    Beds = [.. cues.BedNames],
+                    Beds = () => [.. (self?.Cues ?? cues).BedNames],
+                    BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => WasapiAudioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -585,6 +626,7 @@ public sealed class AppHost : IDisposable
                 },
                 macros,
                 personas,
+                () => (self?.Cues ?? cues).DescribeDrops(),
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;
@@ -692,6 +734,9 @@ public sealed class AppHost : IDisposable
         host.ApplySpeechSettings();
         host.ApplyListeningSettings();
 
+        // The mixer as the file left it, before anything is audible.
+        audio.Mix = loaded.Audio;
+
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
@@ -757,6 +802,17 @@ public sealed class AppHost : IDisposable
         tick.Add("macros", _ => macros.Poll(PhrasesAlreadyTaken(capabilities)));
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
+
+        // Ambience follows the situation Status.json states, sampled on the tick rather than
+        // hooked to a journal event: docked, supercruise and on foot are conditions rather than
+        // things that happen, and the file is already being read here every tick.
+        tick.Add("ambience", _ => host.FollowSituation(status.Current));
+
+        // And the folder those tracks came from, which the Commander can add to while d47 is
+        // running (list.md Phase 12, "Pick up dropped-in audio without a restart"). The same
+        // shape the journal reader uses, and for the same reason: nothing here owns a thread or
+        // a file watcher, so the tick drives it in production and a test calls Poll directly.
+        tick.Add("audio-folder", context => host.RescanAudio(context, drops, cueLogger));
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         // Sampled on the tick rather than hooked to a journal event, because the state store is
@@ -1311,6 +1367,18 @@ public sealed class AppHost : IDisposable
     /// opens with its reaction to the discontinuity rather than with a switch-in bark, and
     /// neither the elapsed time nor the delta can be reconstructed after the fact.
     /// </summary>
+    /// <summary>
+    /// Which situation the ambience is playing for, and which track is next. Held here because
+    /// it is the only thing that spans ticks; everything it decides is a pure function of the
+    /// situation and the library (list.md Phase 12).
+    /// </summary>
+    private readonly Ambience _ambience = new();
+
+    /// <summary>How often the drop-in folder is looked at. See <see cref="RescanAudio"/>.</summary>
+    private static readonly TimeSpan AudioScanEvery = TimeSpan.FromSeconds(2);
+
+    private TimeSpan _sinceAudioScan = TimeSpan.Zero;
+
     private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
 
     private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
@@ -1382,35 +1450,51 @@ public sealed class AppHost : IDisposable
 
         _ = Task.Run(async () =>
         {
-            // Before a word is spoken, because the first thing a core says is the thing most
-            // worth hearing in its own voice.
-            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+            // The Commander chose a core on a settings row and nothing has happened yet: the
+            // voice has to be fetched and, on a gap, a model has to be asked for a line. Said on
+            // the row they touched, because a Commander who clicked there does not look
+            // elsewhere (list.md Phase 12).
+            PersonaSettling?.Invoke(true);
 
             var line = change.Current.Intro;
 
-            if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
+            try
             {
-                // Authored fallback first, so there is always something to say; the model only
-                // ever replaces it.
-                line = change.Current.Return;
+                // Before a word is spoken, because the first thing a core says is the thing most
+                // worth hearing in its own voice.
+                await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
 
-                var generated = await FlavourTurn.AskAsync(
-                    Turns.Provider,
-                    Turns.Model,
-                    Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
-                    "You have just been switched back on after "
-                    + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
-                    + "reacting to the missing time, exactly as your character would. Do not greet "
-                    + "the Commander formally and do not offer a list of what you can do.",
-                    gap.TelemetryDelta,
-                    Spend,
-                    PriceTable.Default,
-                    _logger).ConfigureAwait(false);
-
-                if (generated is not null)
+                if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
                 {
-                    line = generated;
+                    // Authored fallback first, so there is always something to say; the model
+                    // only ever replaces it.
+                    line = change.Current.Return;
+
+                    var generated = await FlavourTurn.AskAsync(
+                        Turns.Provider,
+                        Turns.Model,
+                        Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
+                        "You have just been switched back on after "
+                        + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
+                        + "reacting to the missing time, exactly as your character would. Do not greet "
+                        + "the Commander formally and do not offer a list of what you can do.",
+                        gap.TelemetryDelta,
+                        Spend,
+                        PriceTable.Default,
+                        _logger).ConfigureAwait(false);
+
+                    if (generated is not null)
+                    {
+                        line = generated;
+                    }
                 }
+            }
+            finally
+            {
+                // Cleared before the line is said rather than after it has been spoken aloud:
+                // what the row was waiting for is d47 having something to say, and a row still
+                // marked busy while the core is talking is a row describing the wrong thing.
+                PersonaSettling?.Invoke(false);
             }
 
             // Anything d47 says without a turn behind it still belongs in the transcript, so
@@ -1424,6 +1508,92 @@ public sealed class AppHost : IDisposable
 
             await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
         });
+    }
+
+    /// <summary>
+    /// Re-reads <c>data/audio/</c> when something in it has changed.
+    /// <para>
+    /// Throttled, because a scan is a directory enumeration and the loop runs at 10 Hz — six
+    /// hundred of them a minute to notice a file that arrives twice a session is a cost with no
+    /// buyer. Measured against the time the tick was given rather than against the clock, so it
+    /// stays right if the period changes and the replay harness still runs it at 100x.
+    /// </para>
+    /// <para>
+    /// A rebuild swaps the library reference. Anything mid-playback holds the clip it was handed
+    /// rather than the library it came from, so a reload can never cut a sentence — which is the
+    /// property that lets this run on a timer at all.
+    /// </para>
+    /// </summary>
+    private void RescanAudio(TickContext context, FolderAudioSource drops, ILogger<CueLibrary> logger)
+    {
+        _sinceAudioScan += context.Since;
+
+        if (_sinceAudioScan < AudioScanEvery)
+        {
+            return;
+        }
+
+        _sinceAudioScan = TimeSpan.Zero;
+
+        if (!drops.Poll())
+        {
+            return;
+        }
+
+        Cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+
+        _logger.LogInformation(
+            "Reloaded the audio folder: {Count} file(s) picked up, {Skipped} skipped",
+            Cues.CustomCount,
+            Cues.Skipped.Count);
+
+        // The rows that read the library — the bed picker's choices and the row saying what was
+        // found — have no other way to know. The picker asks at the moment it is opened and is
+        // already right; the disclosure is read on a refresh, and this is the refresh.
+        AudioReloaded?.Invoke();
+    }
+
+    /// <summary>
+    /// The ambience layer, following what the Commander is doing (list.md Phase 12).
+    /// <para>
+    /// Called every tick and almost always does nothing: <see cref="Ambience.Enter"/> answers
+    /// false unless the situation actually changed, and a situation changes a handful of times
+    /// an hour. Starting a track on a change rather than checking whether one is playing is what
+    /// keeps this from restarting the music every hundred milliseconds.
+    /// </para>
+    /// </summary>
+    private void FollowSituation(D47.Core.Journal.GameStatus status)
+    {
+        if (!_ambience.Enter(Situations.For(status)))
+        {
+            return;
+        }
+
+        // The old situation's track does not play out over the new one. Arriving at a station is
+        // the moment the docking music is wanted, not thirty seconds later.
+        Audio.StopMusic();
+        PlayNextTrack();
+    }
+
+    /// <summary>
+    /// Starts the next ambience track, or leaves it quiet.
+    /// <para>
+    /// Quiet is the normal answer: d47 ships with no music at all, so every Commander who has not
+    /// dropped any into <c>data/audio/music</c> is here. Muted is quiet too, and checked here
+    /// rather than left to a gain of zero — a track nobody can hear is still a file being decoded.
+    /// </para>
+    /// </summary>
+    private void PlayNextTrack()
+    {
+        if (Audio.Mix.Music.Muted)
+        {
+            return;
+        }
+
+        if (_ambience.Next(Cues) is { } track)
+        {
+            Audio.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = track });
+        }
     }
 
     private void ApplySpeechSettings()
@@ -2146,6 +2316,25 @@ public sealed class AppHost : IDisposable
             if (change.Key.Equals(SpeechCapability.VoiceKey, StringComparison.OrdinalIgnoreCase))
             {
                 _ = EnsureVoiceForCurrentPersonaAsync();
+            }
+        }
+        else if (change.Key.StartsWith("audio.", StringComparison.OrdinalIgnoreCase))
+        {
+            // Straight onto the arbiter, which re-levels whatever is already playing. A mixer
+            // that only took effect on the next clip would be a mixer the Commander cannot hear
+            // themselves using.
+            Audio.Mix = Settings.Current.Audio;
+
+            // Muting the ambience stops it rather than playing it at nothing, and unmuting it
+            // starts a track rather than waiting for the next time the Commander docks — which
+            // could be an hour, and reads as a switch that did not work.
+            if (Settings.Current.Audio.Music.Muted)
+            {
+                Audio.StopMusic();
+            }
+            else if (!Audio.Activity.MusicPlaying)
+            {
+                PlayNextTrack();
             }
         }
         else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))

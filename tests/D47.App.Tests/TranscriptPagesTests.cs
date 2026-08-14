@@ -147,8 +147,10 @@ public class TranscriptPagesTests
         var full = Laid(new PanelView { DataContext = Said(), Mode = PanelMode.Full });
         var mini = Laid(new PanelView { DataContext = Said(), Mode = PanelMode.Mini });
 
-        Assert.True(full.GetControl<StackPanel>("TranscriptTabs").IsVisible);
-        Assert.False(mini.GetControl<StackPanel>("TranscriptTabs").IsVisible);
+        // The whole strip, tabs and search box together: a surface with 640x280 to spend does
+        // not spend it on four page selectors and a text field.
+        Assert.True(full.GetControl<DockPanel>("TabStrip").IsVisible);
+        Assert.False(mini.GetControl<DockPanel>("TabStrip").IsVisible);
     }
 
     /// <summary>

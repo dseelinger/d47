@@ -19,7 +19,7 @@ public class LoopSettlesToIdleTests
     private static (VoicePipeline Voice, AudioArbiter Arbiter, List<LoopState> Seen) Build()
     {
         var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
-        var voice = new VoicePipeline(arbiter, CueLibrary.Load(), NullLoggerFactory.Instance);
+        var voice = new VoicePipeline(arbiter, CueLibrary.Load, NullLoggerFactory.Instance);
         var seen = new List<LoopState>();
 
         arbiter.ActivityChanged += voice.Settle;

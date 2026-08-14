@@ -181,7 +181,7 @@ public class VrSurfaceTests
     }
 
     [AvaloniaFact]
-    public void MiniHidesTheGearTheBannersAndTheAskBoxAndKeepsTheTranscript()
+    public void MiniHidesTheHeaderTheBannersAndTheAskBoxAndKeepsTheTranscript()
     {
         var model = new PanelViewModel();
         model.Append("Fixture Anchorage, 12.4 ly.");
@@ -213,13 +213,9 @@ public class VrSurfaceTests
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<Theming.ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var window = new Settings.SettingsWindow();
-        window.Attach(settings, viewState, paths);
-        window.Show();
+        var host = SettingsHost.Open(settings, viewState, paths);
 
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        var scroller = window.GetVisualDescendants().OfType<ScrollViewer>().First();
+        var scroller = host.View.GetVisualDescendants().OfType<ScrollViewer>().First();
         // Inside the scroller, so this is the card's heading and not the nav item of the same
         // name in the sidebar — which sits at the top and would scroll nowhere.
         var card = scroller.GetVisualDescendants()
@@ -232,14 +228,14 @@ public class VrSurfaceTests
 
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var frame = window.CaptureRenderedFrame();
+        var frame = host.Window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
         frame.Save(
             Path.Combine(TestSurface.CaptureDirectory, "settings-headset.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
-        window.Close();
+        host.Close();
     }
 
     /// <summary>

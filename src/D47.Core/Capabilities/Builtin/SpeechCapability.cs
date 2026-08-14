@@ -72,8 +72,21 @@ public static class SpeechCapability
 
         public Func<string, string>? VoiceLabel { get; init; }
 
-        /// <summary>Bed names as shipped. Read from the cue library, never a literal list.</summary>
-        public required IReadOnlyList<string> Beds { get; init; }
+        /// <summary>
+        /// Bed names — shipped and dropped in. Read from the cue library, never a literal list.
+        /// <para>
+        /// A function rather than a list, because the library is rebuilt when the Commander drops
+        /// a file into <c>data/audio/beds</c> and a list captured at startup would go on offering
+        /// the set that existed then (list.md Phase 12).
+        /// </para>
+        /// </summary>
+        public required Func<IReadOnlyList<string>> Beds { get; init; }
+
+        /// <summary>
+        /// How a bed reads on the row. Marks a Commander's own as theirs, so a drop-in is
+        /// distinguishable from what d47 ships with rather than merely present alongside it.
+        /// </summary>
+        public Func<string, string>? BedLabel { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()
@@ -347,9 +360,12 @@ public static class SpeechCapability
                 Help = "Which loop plays while D47 works.",
                 Kind = SettingKind.Choice,
 
-                // The shipped set, read from the library. A literal list here would be a
-                // second place for a name to be wrong (list.md Phase 5, #20).
-                Choices = surface.Beds,
+                // Read from the library rather than listed here, which would be a second place
+                // for a name to be wrong (list.md Phase 5, #20) — and asked for each time it is
+                // opened rather than captured, so a bed dropped into data/audio/beds is offered
+                // without a restart (list.md Phase 12).
+                ChoiceSource = _ => surface.Beds(),
+                ChoiceLabel = surface.BedLabel,
                 DefaultDisplay = CueLibrary.DefaultBed,
                 AppliesWhen = s => s.Speech.ThinkingBedEnabled,
                 Group = "While thinking",

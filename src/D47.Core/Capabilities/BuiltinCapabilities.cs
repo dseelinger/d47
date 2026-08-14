@@ -38,6 +38,10 @@ public static class BuiltinCapabilities
         Actions.MacroStore macros,
         Persona.PersonaHost personas,
 
+        // What was found in the Commander's own audio folder, and what was skipped. Null under
+        // the designer and in a test that is not about it, and the row is then absent.
+        Func<string>? audioDrops = null,
+
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
         Func<string>? coverage = null) =>
@@ -49,6 +53,7 @@ public static class BuiltinCapabilities
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
+        AudioCapability.Create(audioDrops),
         ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),

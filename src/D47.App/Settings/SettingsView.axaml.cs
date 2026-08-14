@@ -36,7 +36,7 @@ namespace D47.App.Settings;
 /// Free text is only used where the value genuinely is free text.
 /// </para>
 /// </summary>
-public partial class SettingsView : UserControl
+public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 {
 
     private readonly List<SectionView> _sections = [];
@@ -147,26 +147,28 @@ public partial class SettingsView : UserControl
         NavItems.Children.Clear();
         _sections.Clear();
         _rows.Clear();
+        _collapsed.Clear();
         _activeSection = -1;
 
         foreach (var section in settings.Sections)
         {
             var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var card = BuildCard(section, title);
+            var (card, content) = BuildCard(section, title, _sections.Count);
 
             Cards.Children.Add(card);
 
             var nav = BuildNavItem(_sections.Count, title);
             NavItems.Children.Add(nav.Item);
 
-            _sections.Add(new SectionView(section.Capability.Id, title, card, nav.Item, nav.Bar, nav.Text));
+            _sections.Add(
+                new SectionView(section.Capability.Id, title, card, content, nav.Item, nav.Bar, nav.Text));
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
 
-    private Border BuildCard(SettingsSection section, string title)
+    private (Border Card, StackPanel Content) BuildCard(SettingsSection section, string title, int index)
     {
         var content = new StackPanel
         {
@@ -176,6 +178,11 @@ public partial class SettingsView : UserControl
             // collapses is worse than one that never remembered (list.md Phase 4).
             IsVisible = _viewState.IsExpanded(section.Capability.Id, section.Capability.Display.StartCollapsed),
         };
+
+        if (!content.IsVisible)
+        {
+            _collapsed.Add(index);
+        }
 
         string? currentGroup = null;
 
@@ -192,7 +199,7 @@ public partial class SettingsView : UserControl
                 currentGroup = null;
             }
 
-            var view = BuildRow(section.Capability, row);
+            var view = BuildRow(section.Capability, row) with { Section = index };
             _rows.Add(view);
             content.Children.Add(view.Container);
         }
@@ -256,6 +263,18 @@ public partial class SettingsView : UserControl
         {
             content.IsVisible = !content.IsVisible;
             chevron.Text = content.IsVisible ? "▾" : "▸";
+
+            // Recorded here as well as on disk, because a filter opens a card without being
+            // asked and has to put it back the way the Commander left it.
+            if (content.IsVisible)
+            {
+                _collapsed.Remove(index);
+            }
+            else
+            {
+                _collapsed.Add(index);
+            }
+
             RememberCollapse(section.Capability.Id, expanded: content.IsVisible);
         };
 
@@ -276,7 +295,7 @@ public partial class SettingsView : UserControl
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return card;
+        return (card, content);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -439,6 +458,54 @@ public partial class SettingsView : UserControl
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
     }
 
+    /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
+    private const double NavWidth = 224;
+
+    private const double NavCollapsesBelow = 900;
+
+    /// <summary>
+    /// The floor with the nav and without it. The narrow one is the card floor of 420 plus the
+    /// 56 of margin the cards are laid out with — the least this page can be and still hold a
+    /// caption beside its control.
+    /// </summary>
+    private const double WideFloor = 700;
+
+    private const double NarrowFloor = 476;
+
+    /// <summary>Null until the first arrange, so the first pass always applies.</summary>
+    private bool? _navShown;
+
+    /// <summary>
+    /// Collapses the nav column on a narrow page, and brings it back on a wide one.
+    /// <para>
+    /// This is what let the settings window be retired rather than merely relocated. The surface
+    /// was a 224-pixel nav beside a 700-pixel minimum, opening at 1180; the panel window is 820
+    /// and is meant to sit beside a running game. Ported unchanged, the second window would not
+    /// have been removed so much as the first one made too big to keep on screen — so below 900
+    /// the nav goes and the cards take the whole width, which at the default size is the state
+    /// the Commander actually sees (list.md Phase 12).
+    /// </para>
+    /// <para>
+    /// Guarded on the state changing rather than run every pass, because the handler sets
+    /// <c>MinWidth</c> and a minimum that feeds its own size-changed event is a layout loop.
+    /// </para>
+    /// </summary>
+    private void OnRootSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        var show = e.NewSize.Width >= NavCollapsesBelow;
+
+        if (_navShown == show)
+        {
+            return;
+        }
+
+        _navShown = show;
+
+        Nav.IsVisible = show;
+        Root.ColumnDefinitions[0].Width = new GridLength(show ? NavWidth : 0);
+        Root.MinWidth = show ? WideFloor : NarrowFloor;
+    }
+
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (_sections.Count == 0)
@@ -489,8 +556,8 @@ public partial class SettingsView : UserControl
     }
 
     /// <summary>
-    /// What this build is. Modal on the settings window rather than free-floating, so it cannot
-    /// be lost behind the app that raised it.
+    /// What this build is. Modal on whatever window is hosting this surface rather than
+    /// free-floating, so it cannot be lost behind the app that raised it.
     /// </summary>
     private async void OnAboutClick(object? sender, RoutedEventArgs e)
     {
@@ -503,8 +570,15 @@ public partial class SettingsView : UserControl
     /// <summary>
     /// Re-reads every row from settings. Cheaper than rebuilding and, more importantly, it does
     /// not pull the control out from under whatever has focus.
+    /// <para>
+    /// Public because a row can go stale without any setting having changed: the disclosure
+    /// naming what was found in <c>data/audio/</c> is read from the cue library, and the library
+    /// is rebuilt when the Commander drops a file in (list.md Phase 12). Every other caller
+    /// arrives through <see cref="SettingsService.Changed"/>, which is why this is the only one
+    /// that has to ask.
+    /// </para>
     /// </summary>
-    private void Refresh()
+    public void Refresh()
     {
         if (_settings is null)
         {
@@ -513,6 +587,8 @@ public partial class SettingsView : UserControl
 
         UpdateNavVisuals();
 
+        var showing = new int[_sections.Count];
+
         _refreshing = true;
         try
         {
@@ -520,15 +596,93 @@ public partial class SettingsView : UserControl
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (list.md Phase 4).
-                row.Container.IsVisible = row.Row.Applies(_settings.Current);
+                var shown = row.Row.Applies(_settings.Current) && Matches(row.Row);
+
+                row.Container.IsVisible = shown;
                 row.Refresh();
+
+                if (shown && row.Section >= 0)
+                {
+                    showing[row.Section]++;
+                }
             }
         }
         finally
         {
             _refreshing = false;
         }
+
+        ApplyFilterToCards(showing);
     }
+
+    /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
+    private string _query = string.Empty;
+
+    /// <summary>
+    /// Shows only the rows that match (list.md Phase 12, "Search whichever tab you are looking
+    /// at").
+    /// <para>
+    /// Settings filters where the transcript pages highlight, and the difference is the design
+    /// rather than an inconsistency: 92 rows across 14 sections is a haystack, and highlighting
+    /// in place in a haystack is a scroll hunt with extra colour.
+    /// </para>
+    /// </summary>
+    public void Filter(string? query)
+    {
+        var wanted = query?.Trim() ?? string.Empty;
+
+        if (string.Equals(_query, wanted, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _query = wanted;
+        Refresh();
+    }
+
+    /// <summary>
+    /// Label, help or key. The key is in there because it is what the documentation, the voice
+    /// router and a hand-edited settings file all call the row, so a Commander who arrived with
+    /// one of those in hand can paste it in.
+    /// </summary>
+    private bool Matches(SettingRow row) =>
+        _query.Length == 0
+        || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        || row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        || row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A card with nothing left in it goes, and so does its nav item — a sidebar still listing
+    /// fourteen sections when three of them hold anything is a sidebar that has stopped telling
+    /// the truth.
+    /// <para>
+    /// A filtered card is also opened, whatever the Commander last left it as, because a card
+    /// collapsed over the row that matched is a filter that hides its own answer. The remembered
+    /// state is not written while this happens, so clearing the query puts it back.
+    /// </para>
+    /// </summary>
+    private void ApplyFilterToCards(int[] showing)
+    {
+        var filtering = _query.Length > 0;
+
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            var section = _sections[i];
+            var holds = showing[i] > 0;
+
+            section.Card.IsVisible = !filtering || holds;
+            section.NavItem.IsVisible = !filtering || holds;
+
+            section.Content.IsVisible = filtering ? holds : !_collapsed.Contains(i);
+        }
+    }
+
+    /// <summary>
+    /// Which cards the Commander had shut when a filter opened them, so clearing it shuts them
+    /// again. Held here rather than re-read from the view state because a card collapsed in this
+    /// session and not yet written is still a card they collapsed.
+    /// </summary>
+    private readonly HashSet<int> _collapsed = [];
 
     /// <summary>
     /// The width a compact row's control is built to. Used as the floor for the control column
@@ -694,7 +848,56 @@ public partial class SettingsView : UserControl
         container.Children.Add(body);
         container.Children.Add(message);
 
-        return new RowView(row, container, refresh);
+        return new RowView(row, container, refresh) { Control = control, Body = body };
+    }
+
+    /// <summary>
+    /// Says that a row is waiting on something that is not happening in this class — the gap
+    /// reaction spends a model round trip between the Commander picking a core and that core
+    /// saying its first word, and the affordance they touched is this row.
+    /// <para>
+    /// The glyph is made on the first call rather than built with every row: it animates
+    /// whenever it is in the tree, visible or not, so ninety-odd of them waiting to be needed
+    /// would be ninety-odd animations running for the life of the surface.
+    /// </para>
+    /// </summary>
+    public void ShowBusy(string key, bool busy)
+    {
+        if (_rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))
+            is not { } view)
+        {
+            return;
+        }
+
+        if (busy && view.Busy is null && view.Body is Grid grid)
+        {
+            // In the spacer column between the caption and the control, which is 16 wide and
+            // holds nothing — so the glyph lands beside the control that was touched without
+            // taking a pixel from either side of it.
+            var glyph = new BusyGlyph
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            Themed(glyph, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
+
+            Grid.SetColumn(glyph, 1);
+            grid.Children.Add(glyph);
+
+            view.Busy = glyph;
+        }
+
+        if (view.Busy is not null)
+        {
+            view.Busy.IsVisible = busy;
+        }
+
+        // Shut while it runs, like every other affordance that is working: picking a second core
+        // before the first one has spoken queues a second round trip behind the first.
+        if (view.Control is not null)
+        {
+            view.Control.IsEnabled = !busy;
+        }
     }
 
     /// <summary>
@@ -1159,6 +1362,12 @@ public partial class SettingsView : UserControl
             FormatString = row.NumberFormat,
             MinWidth = 130,
             HorizontalAlignment = HorizontalAlignment.Right,
+
+            // The row's own range where it declares one, so a stepper never offers a click that
+            // the store is only going to clamp away — an arrow that appears to do nothing reads
+            // as a broken control rather than as a value already at its limit.
+            Minimum = row.Minimum is { } low ? (decimal)low : decimal.MinValue,
+            Maximum = row.Maximum is { } high ? (decimal)high : decimal.MaxValue,
         };
 
         number.ValueChanged += (_, e) =>
@@ -1329,36 +1538,36 @@ public partial class SettingsView : UserControl
             return;
         }
 
-        // Shut and spinning until the list is up. Both are cleared in the finally, because a
-        // picker that throws on its way open must not leave the row unusable.
-        button.IsEnabled = false;
-        busy.IsVisible = true;
+        // The work is "until the list is on screen", not "until the Commander has chosen": what
+        // can take a moment is asking the machine for its capture devices or a provider for its
+        // voices, and once the picker is up it is modal and speaks for itself.
+        var listed = new TaskCompletionSource();
 
-        try
-        {
-            var result = await PickerWindow.ShowAsync(
-                owner,
-                new PickerRequest
-                {
-                    Prompt = row.Label,
-                    Help = row.Help,
-                    Choices = row.ChoicesFor(_settings.Current),
-                    Describe = row.ChoiceLabel,
-                    Current = _settings.Read(row.Key),
-                    DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
-                    AllowsFreeText = row.AllowsFreeText,
-                },
-                onListed: () => busy.IsVisible = false);
-
-            if (result is not null)
+        var picking = PickerWindow.ShowAsync(
+            owner,
+            new PickerRequest
             {
-                Apply(row, result.Value, message);
-            }
-        }
-        finally
+                Prompt = row.Label,
+                Help = row.Help,
+                Choices = row.ChoicesFor(_settings.Current),
+                Describe = row.ChoiceLabel,
+                Current = _settings.Read(row.Key),
+                DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
+                AllowsFreeText = row.AllowsFreeText,
+            },
+            onListed: () => listed.TrySetResult());
+
+        // A picker that throws on its way open never lists, and a glyph waiting for a list that
+        // is not coming spins forever on a row nobody can use.
+        _ = picking.ContinueWith(_ => listed.TrySetResult(), TaskScheduler.Default);
+
+        // Hand-rolled here until Phase 12: shut, spinning, and two numbers nobody else shared.
+        // The rule was always the general one, so it is stated in one place now.
+        await Busy.While(button, busy, () => listed.Task);
+
+        if (await picking is { } result)
         {
-            busy.IsVisible = false;
-            button.IsEnabled = true;
+            Apply(row, result.Value, message);
         }
 
         button.Focus();
@@ -1396,7 +1605,13 @@ public partial class SettingsView : UserControl
 
         // Tunnelling: the gesture belongs to the binding, not to whatever control the click left
         // focused, so it has to be seen on the way down.
-        top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel);
+        //
+        // And handled events too. This is the same top level that carries the push-to-talk
+        // suppressor now that settings is a page of the main window rather than a window of its
+        // own — the suppressor tunnels first and marks the key handled, so without this the one
+        // rebind that could not be made is rebinding push-to-talk to the key it already holds,
+        // which is exactly the rebind somebody attempting it is most likely to try.
+        top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         try
         {
@@ -1450,9 +1665,23 @@ public partial class SettingsView : UserControl
         string CapabilityId,
         string Title,
         Border Card,
+        StackPanel Content,
         Border NavItem,
         Border NavBar,
         TextBlock NavText);
 
-    private sealed record RowView(SettingRow Row, Control Container, Action Refresh);
+    private sealed record RowView(SettingRow Row, Control Container, Action Refresh)
+    {
+        /// <summary>Which card this row is in, so a filter can hide a card that has emptied.</summary>
+        public int Section { get; init; } = -1;
+
+        /// <summary>The control the Commander touches, so a slow answer can shut it.</summary>
+        public Control? Control { get; init; }
+
+        /// <summary>The row's layout, which is a three-column grid where the row is compact.</summary>
+        public Control? Body { get; init; }
+
+        /// <summary>Made the first time this row has something slow to say. See ShowBusy.</summary>
+        public BusyGlyph? Busy { get; set; }
+    }
 }

@@ -75,8 +75,12 @@ public partial class MainWindow : Window
         // push-to-talk bound to a printable key with the caret in the Ask box and the box fills
         // with that character on auto-repeat. Suppressing it here is the trade the binding
         // already implies: a key given to push-to-talk stops being a key that types inside
-        // d47's own panel. It is unaffected everywhere else, including the settings window,
-        // where capturing it is exactly how it gets rebound.
+        // d47's own panel. It is unaffected everywhere else.
+        //
+        // Settings is a page of this window now rather than a window of its own, so this runs
+        // over the hotkey binder too — which is why the binder listens with handledEventsToo,
+        // or rebinding push-to-talk to the key push-to-talk already holds would be the one
+        // rebind it could not make.
         AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnTunnelKeyUp, RoutingStrategies.Tunnel);
         AddHandler(TextInputEvent, OnTunnelTextInput, RoutingStrategies.Tunnel);
@@ -101,7 +105,6 @@ public partial class MainWindow : Window
         // is installed.
         Panel.Avatar.Library = host?.Avatars;
         _model.AskRequested += () => _ = AskAsync();
-        _model.SettingsRequested += OpenSettings;
         _model.HelpRequested += () => Process.Start(
             new ProcessStartInfo(DocsSite.Root) { UseShellExecute = true });
         _model.UpdateAccepted += OnUpdateAccepted;
@@ -113,9 +116,21 @@ public partial class MainWindow : Window
             // stays free of a disk and a test can hand it a string.
             _model.LogSource = () => Logging.LogTail.Read(host.Paths.Logs);
 
+            // The window that can show settings says so; the headset's copy of this same view
+            // is handed nothing and therefore has no Settings tab (list.md Phase 12).
+            Panel.EnableSettings(BuildSettingsPage);
+
+            // And the same window is the one with a keyboard, so it is the one that gets a
+            // search box. Two calls rather than one, because they are two affordances — but they
+            // are made from the same line of the same file, which is where "desktop only" lives.
+            Panel.EnableSearch();
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             WindowPlacementMemory.Attach(this, host.ViewState);
+
+            // One zoom host, on the one window. The settings surface is inside this widget tree
+            // now, so it scales with everything else rather than needing a host of its own.
             ZoomHost.Attach(this, host.Settings);
         }
     }
@@ -265,6 +280,16 @@ public partial class MainWindow : Window
             }
         }
 
+        // Escape leaves the settings page for the one it covered up. Answered here rather than
+        // by the page itself, because this is the level that knows there is nothing else for an
+        // unhandled Escape to close now that settings is not a window — and it runs last, so
+        // anything with a better claim on the key (a picker, a search box with a query in it)
+        // has already taken it.
+        if (e.Key == Key.Escape && !e.Handled && Panel.LeaveSettings())
+        {
+            e.Handled = true;
+        }
+
         base.OnKeyDown(e);
     }
 
@@ -350,12 +375,24 @@ public partial class MainWindow : Window
             open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");
     }
 
-    private void OpenSettings()
+    private void OpenSettings() => Panel.Page = TranscriptPage.Settings;
+
+    /// <summary>
+    /// The settings surface, built the first time the tab is selected.
+    /// <para>
+    /// A <see cref="UserControl"/> handed to the panel rather than a window shown over it. Every
+    /// dialog it opens takes its owner from <c>TopLevel.GetTopLevel(this)</c>, so About, the
+    /// picker, the macro editor and the confirm all re-parent onto this window without knowing
+    /// anything changed.
+    /// </para>
+    /// </summary>
+    private Control BuildSettingsPage()
     {
+        var view = new SettingsView();
+
         if (_host is not null)
         {
-            SettingsWindow.Show(
-                this,
+            view.Attach(
                 _host.Settings,
                 _host.ViewState,
                 _host.Paths,
@@ -366,7 +403,20 @@ public partial class MainWindow : Window
                 // The choice is the go-ahead: it states its size in the list it was made from,
                 // and the row shows what it is doing while it does it.
                 (model, progress) => _host.InstallModelAsync(model, progress));
+
+            // The gap reaction happens in the host, on whatever thread resolved the switch, and
+            // the affordance it belongs to is a row on this surface. Joined here because this is
+            // the one place that holds both.
+            _host.PersonaSettling += settling => Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => view.ShowBusy(PersonaCapability.PersonaKey, settling));
+
+            // A file dropped into data/audio rebuilds the cue library without any setting having
+            // changed, so the row that says what was found has no other way to know. Posted
+            // because the rescan runs on the tick thread (list.md Phase 12).
+            _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
         }
+
+        return view;
     }
 
     private async Task AskAsync()

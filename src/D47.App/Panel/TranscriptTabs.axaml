@@ -82,4 +82,21 @@
 
   </ControlTheme>
 
+  <!--
+    The Settings tab, which is the same tab with one thing changed.
+    <para/>
+    The join is the whole idiom: a selected tab shares the fill of the page below it. The three
+    transcript pages are D47.Surface and the settings page is D47.Background - it has to be,
+    because its cards are Surface and a card the colour of its page is not a card - so a single
+    checked fill cannot serve both. Everything else about a tab is inherited, so the two strips
+    cannot drift apart in padding, weight, marker or hover.
+  -->
+  <ControlTheme x:Key="D47.Tab.Settings" TargetType="RadioButton" BasedOn="{StaticResource D47.Tab}">
+    <Style Selector="^:checked">
+      <Style Selector="^ /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.Background}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
 </ResourceDictionary>

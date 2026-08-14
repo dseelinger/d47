@@ -167,7 +167,7 @@ public sealed class AvatarView : UserControl
     /// One distinctive centre per state, so they are told apart at a glance and in greyscale —
     /// colour is never the only signal. Authored here in a 24-unit space rather than lifted from
     /// an icon set, which keeps the licence graph as clean as the dependency graph, the same
-    /// reasoning as the gear and the question mark already on this panel.
+    /// reasoning as the question mark already on this panel.
     /// </summary>
     private static Geometry GeometryFor(LoopState state) => Geometry.Parse(PathFor(state));
 

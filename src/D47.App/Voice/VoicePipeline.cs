@@ -16,9 +16,14 @@ namespace D47.App.Voice;
 /// ordering are all properties of <see cref="AudioArbiter"/>.
 /// </para>
 /// </summary>
+/// <param name="cues">
+/// Asked for each time rather than held, because the library is rebuilt when the Commander drops
+/// a file into <c>data/audio/</c> and a reference captured at startup would go on playing the set
+/// that existed then (list.md Phase 12, "Pick up dropped-in audio without a restart").
+/// </param>
 public sealed class VoicePipeline(
     AudioArbiter arbiter,
-    CueLibrary cues,
+    Func<CueLibrary> cues,
     ILoggerFactory loggers)
 {
     private readonly ILogger<VoicePipeline> _logger = loggers.CreateLogger<VoicePipeline>();
@@ -254,7 +259,7 @@ public sealed class VoicePipeline(
     /// </summary>
     public void EnterState(LoopState state, bool cue)
     {
-        arbiter.EnterState(state, cues, Bed, CuesEnabled && cue, BedEnabled);
+        arbiter.EnterState(state, cues(), Bed, CuesEnabled && cue, BedEnabled);
         _state = state;
         StateEntered?.Invoke(state);
     }

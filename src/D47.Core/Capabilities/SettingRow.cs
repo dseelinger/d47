@@ -108,7 +108,7 @@ public sealed record SettingRow
     /// including the game — bind <kbd>]</kbd> and you could no longer type <kbd>]</kbd> anywhere.
     /// The binder has always refused those; declaring it here is what lets the refusal happen on
     /// the row the Commander just pressed, instead of arriving later as a message on a panel
-    /// behind the settings window, about a value that was stored anyway.
+    /// behind the settings surface, about a value that was stored anyway.
     /// </para>
     /// <para>
     /// False for push-to-talk, which is polled rather than registered — a bare key is the normal
@@ -145,6 +145,19 @@ public sealed record SettingRow
     /// </para>
     /// </summary>
     public double Step { get; init; } = 1;
+
+    /// <summary>
+    /// The ends of a number row's range, where it has them. Null means unbounded.
+    /// <para>
+    /// Declared rather than only enforced in the setter, because two things need to know: the
+    /// stepper the panel builds, which should not offer a click that will be clamped away, and
+    /// the number-row gate, which steps every row by one and has to step <em>down</em> from a row
+    /// that is already sitting at its ceiling. A level of 1 is not a row that cannot move.
+    /// </para>
+    /// </summary>
+    public double? Minimum { get; init; }
+
+    public double? Maximum { get; init; }
 
     /// <summary>
     /// How this row's number is written, derived from its step rather than declared twice. A
