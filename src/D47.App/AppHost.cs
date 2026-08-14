@@ -1264,6 +1264,29 @@ public sealed class AppHost : IDisposable
             return;
         }
 
+        if (utterance.IsSilent)
+        {
+            // Not "nothing intelligible" — nothing at all arrived. Almost always the input
+            // device: Windows defaults to whatever it likes, and a virtual endpoint from VR or
+            // streaming software delivers a stream of zeroes that looks exactly like a working
+            // microphone right up until a turn quietly produces nothing. Named rather than
+            // guessed at, because the Commander cannot see which device d47 opened.
+            var device = _microphone.OpenDeviceName ?? "the selected microphone";
+
+            _logger.LogWarning(
+                "Captured {Seconds:0.#}s of digital silence from {Device}; it is sending no audio",
+                utterance.Duration.TotalSeconds,
+                device);
+
+            var problem =
+                $"I heard nothing at all — {device} is not sending any audio. "
+                + "Check it is not muted, or pick a different microphone in Settings.";
+
+            _ = Voice.AnnounceAsync(problem);
+            Said?.Invoke(problem);
+            return;
+        }
+
         _ = Task.Run(async () =>
         {
             try

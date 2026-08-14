@@ -18,6 +18,37 @@ public enum ListenMode
 public sealed record Utterance(float[] Samples, int SampleRate)
 {
     public TimeSpan Duration => TimeSpan.FromSeconds((double)Samples.Length / SampleRate);
+
+    /// <summary>The loudest sample in it. Zero means nothing arrived at all.</summary>
+    public float Peak
+    {
+        get
+        {
+            var peak = 0f;
+
+            foreach (var sample in Samples)
+            {
+                peak = MathF.Max(peak, MathF.Abs(sample));
+            }
+
+            return peak;
+        }
+    }
+
+    /// <summary>
+    /// Whether the device delivered no signal whatsoever, as distinct from a Commander who was
+    /// quiet. This is a different fault with a different fix, and telling them apart is the
+    /// whole point: a virtual or muted input device is selected far more often than anyone
+    /// expects — Windows will happily default to one — and it produces a stream of digital
+    /// zeroes that transcribes to nothing, which otherwise reports as "nothing intelligible"
+    /// and reads as though the Commander mumbled.
+    /// <para>
+    /// The threshold is far below anything a live microphone produces over a whole utterance:
+    /// even a silent room in front of an open mic carries self-noise orders of magnitude above
+    /// this. Reaching it means the samples are zeroes or very near it for the entire capture.
+    /// </para>
+    /// </summary>
+    public bool IsSilent => Peak < 0.0001f;
 }
 
 /// <summary>Why an utterance ended, which decides whether it is worth transcribing.</summary>
