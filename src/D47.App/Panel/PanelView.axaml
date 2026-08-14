@@ -234,20 +234,25 @@
                 DockPanel.Dock="Top"
                 Orientation="Horizontal"
                 Margin="0,16,0,0">
+      <!--
+        No GroupName, deliberately. Avalonia groups named radio buttons across the whole
+        application rather than within a tree, and this view is instantiated twice - once by the
+        window, once by the headset overlay. A shared name put both strips in one group, so the
+        overlay's tabs unchecked the window's as they were built, and the window opened with no
+        tab highlighted until it was clicked. Nameless, they group by their parent panel, which
+        is one strip per surface - which is what a tab strip is.
+      -->
       <RadioButton x:Name="ConversationTab"
                    Theme="{StaticResource D47.Tab}"
-                   GroupName="TranscriptPage"
                    IsChecked="True"
                    Content="Conversation"
                    IsCheckedChanged="OnPageTabChecked" />
       <RadioButton x:Name="TechnicalTab"
                    Theme="{StaticResource D47.Tab}"
-                   GroupName="TranscriptPage"
                    Content="Technical"
                    IsCheckedChanged="OnPageTabChecked" />
       <RadioButton x:Name="LogTab"
                    Theme="{StaticResource D47.Tab}"
-                   GroupName="TranscriptPage"
                    Content="Log file"
                    IsCheckedChanged="OnPageTabChecked" />
     </StackPanel>

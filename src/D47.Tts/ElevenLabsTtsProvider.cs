@@ -36,6 +36,26 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     public const string ProviderId = "elevenlabs";
 
     /// <summary>
+    /// How many syntheses this provider will have in flight at once, across everything in the
+    /// process.
+    /// <para>
+    /// The account has a concurrency limit - the cheapest tiers allow five - and d47 renders a
+    /// reply's sentences <em>concurrently</em> on purpose, so the second is usually ready before
+    /// the first has finished playing. A six-sentence reply therefore asked for six at once and
+    /// the account refused the tail of it, which arrived as a red banner and a sentence the
+    /// Commander never heard. Callouts, crew lines and re-voiced comms all share the same
+    /// account, so the gate has to be here rather than in any one pipeline.
+    /// </para>
+    /// <para>
+    /// Three rather than five: it is under the smallest published limit with room for a callout
+    /// to overtake a reply, and the latency it buys is almost all in the first sentence anyway.
+    /// </para>
+    /// </summary>
+    private const int MaxConcurrent = 3;
+
+    private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
+
+    /// <summary>
     /// The multilingual model. Named rather than left to the service's default so that a
     /// change on their side is not a change in what the Commander hears, and because the speed
     /// control this provider exposes is a property of the model generation rather than of the
@@ -169,6 +189,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
         var url = $"{BaseUrl}/text-to-speech/{Uri.EscapeDataString(voiceId)}?output_format=pcm_24000";
 
+        // Queued rather than refused. Waiting a moment for a slot is a sentence that arrives
+        // late; going ahead without one is a sentence that never arrives at all.
+        await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
+
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -213,6 +237,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         catch (Exception ex)
         {
             throw new TtsException($"ElevenLabs could not speak \"{Excerpt(text)}\": {ex.Message}", ex);
+        }
+        finally
+        {
+            _inFlight.Release();
         }
     }
 
@@ -360,6 +388,8 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
     public void Dispose()
     {
+        _inFlight.Dispose();
+
         if (_ownsHttp)
         {
             _http.Dispose();

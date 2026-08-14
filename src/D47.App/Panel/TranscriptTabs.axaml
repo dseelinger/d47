@@ -39,7 +39,7 @@
                  different fill, because the fill is already carrying the join to the panel
                  below and cannot say two things at once. -->
             <Border x:Name="Marker"
-                    Height="2"
+                    Height="3"
                     VerticalAlignment="Top"
                     Background="Transparent" />
             <ContentPresenter x:Name="PART_ContentPresenter"
@@ -63,7 +63,13 @@
       job of a selected tab in a headset at a metre.
     -->
     <Style Selector="^:checked">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <!--
+        The label takes the accent as well as the bar. A 2px rule and a weight change was the
+        first attempt and it was reported as no highlight at all, twice - correctly, because a
+        thing you have to look for is not highlighted. This is the same idiom the settings
+        sidebar already uses for its current section: accent bar, accent text.
+      -->
+      <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Style Selector="^ /template/ Border#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Surface}" />
