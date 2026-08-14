@@ -1175,6 +1175,15 @@ public sealed class AppHost : IDisposable
                 }
             }
 
+            // Anything d47 says without a turn behind it still belongs in the transcript, so
+            // that what was heard and what can be read back are the same set. A core's first
+            // words are the one line most worth having there: it is the only thing that core
+            // has ever said, and a conversation whose opening is missing starts mid-thought.
+            //
+            // Raised before the await, so it appears as the line begins rather than after it
+            // has finished being spoken — the same ordering as every other announcement.
+            Said?.Invoke(line);
+
             await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
         });
     }
