@@ -31,6 +31,7 @@ capability's real tool schema.
 | [Journal](capabilities/journal.md) | Foundation | Report the Commander's current system, body and docking state from the journal. |
 | [Galaxy search](capabilities/galaxy.md) | Knowledge | Look up systems, stations and bodies, and work out how far apart two of them are. |
 | [Route planning](capabilities/routes.md) | Knowledge | Plot a neutron route, a Road to Riches loop, or a trade run. |
+| [Specifications](capabilities/specifications.md) | Knowledge | What a hull or a module can do, from a table built out of the community's own data. |
 | [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
 | [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach D47. |
 | [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |
