@@ -32,11 +32,11 @@ public sealed record LlmProviderCapabilities
     /// tool the turn loop would silently drop is worse than not offering it, because the model
     /// then tells the Commander it has done something that never happened.
     /// <para>
-    /// False everywhere today. The profile machinery that decides <em>which</em> tools would
-    /// ship is complete and tested (see <see cref="ToolProfiles"/>); what is missing is the
-    /// agentic half — parsing tool_use blocks out of the stream, running them and appending
-    /// tool_result. This flag is what connects the two, and it slots into "capabilities as
-    /// state" like every other thing an endpoint may or may not do.
+    /// True on Anthropic since Phase 14, which built the agentic half — tool_use blocks parsed
+    /// out of the stream, run against the registry, and fed back as tool_result. It stays a
+    /// per-provider flag rather than becoming an assumption, because the next endpoint to arrive
+    /// will need the same two halves and may only have one; it slots into "capabilities as
+    /// state" like everything else an endpoint may or may not do.
     /// </para>
     /// </summary>
     public bool SupportsToolCalls { get; init; }
@@ -64,6 +64,13 @@ public enum LlmStopReason
 
     /// <summary>The model declined. Surfaces as an unsure turn, not as an error.</summary>
     Refusal,
+
+    /// <summary>
+    /// The model stopped because it wants a tool run. Not an ending: the turn loop executes what
+    /// was asked for and calls the provider again with the results, and only the completion after
+    /// that is an answer.
+    /// </summary>
+    ToolUse,
 }
 
 /// <summary>
@@ -84,6 +91,17 @@ public abstract record LlmStreamEvent
 
     /// <summary>A fragment of summarised reasoning, when the endpoint returns any.</summary>
     public sealed record ThinkingDelta(string Text) : LlmStreamEvent;
+
+    /// <summary>
+    /// The model has asked for a tool, with its arguments fully assembled.
+    /// <para>
+    /// Emitted once per call, when the block is complete rather than as it arrives. The
+    /// arguments stream in as JSON fragments that are not parseable until the last one lands, so
+    /// there is nothing a partial event could carry that a caller could act on — and a tool run
+    /// half a call early is the one mistake this design must not make possible.
+    /// </para>
+    /// </summary>
+    public sealed record ToolUse(string Id, string Name, string InputJson) : LlmStreamEvent;
 
     public sealed record Completed(LlmUsage Usage, LlmStopReason StopReason) : LlmStreamEvent;
 

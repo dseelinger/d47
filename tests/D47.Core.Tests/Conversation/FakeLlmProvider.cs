@@ -24,12 +24,16 @@ public sealed class FakeLlmProvider : ILlmProvider
 
     public string DefaultModel { get; init; } = "claude-opus-5";
 
+    /// <summary>Whether this endpoint advertises tools and executes tool_use replies.</summary>
+    public bool ToolCalls { get; init; }
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
         SupportsThinkingEffort = true,
         SupportsOperatorSystemMessages = true,
         MinimumCacheablePrefixTokens = 512,
+        SupportsToolCalls = ToolCalls,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -53,6 +57,71 @@ public sealed class FakeLlmProvider : ILlmProvider
         new(
             new LlmStreamEvent.TextDelta(reply),
             new LlmStreamEvent.Completed(usage ?? LlmUsage.None, LlmStopReason.Completed));
+}
+
+/// <summary>
+/// A provider scripted per round rather than per session — the shape an agentic turn needs,
+/// where one turn is several requests and each has its own reply. Running out of scripts is a
+/// failure rather than a silent repeat: a turn that called more rounds than the test wrote is
+/// the bug the test was trying to catch.
+/// </summary>
+public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent>[] rounds) : ILlmProvider
+{
+    private readonly List<LlmRequest> _requests = [];
+
+    public IReadOnlyList<LlmRequest> Requests => _requests;
+
+    public int CallCount => _requests.Count;
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Rounds";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+        SupportsToolCalls = true,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var round = _requests.Count;
+        _requests.Add(request);
+
+        if (round >= rounds.Length)
+        {
+            throw new InvalidOperationException(
+                $"The turn asked for round {round + 1}, but only {rounds.Length} were scripted.");
+        }
+
+        foreach (var streamEvent in rounds[round])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>One round that asks for a tool, then rounds that keep asking for the same one.</summary>
+    public static IReadOnlyList<LlmStreamEvent> Calling(string id, string tool, string inputJson) =>
+    [
+        new LlmStreamEvent.ToolUse(id, tool, inputJson),
+        new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.ToolUse),
+    ];
+
+    public static IReadOnlyList<LlmStreamEvent> Saying(string text, LlmUsage? usage = null) =>
+    [
+        new LlmStreamEvent.TextDelta(text),
+        new LlmStreamEvent.Completed(usage ?? LlmUsage.None, LlmStopReason.Completed),
+    ];
 }
 
 /// <summary>A provider that throws rather than reporting. Still just a failed turn.</summary>

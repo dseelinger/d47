@@ -40,6 +40,19 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             ["claude-haiku-4-5"] = 4096,
         };
 
+    /// <summary>
+    /// How many content blocks may pass before an intermediate cache breakpoint is spent. Set
+    /// below the API's 20-block lookback with room to spare: a breakpoint placed exactly at the
+    /// limit is one block of drift away from finding nothing (architecture.md §6).
+    /// </summary>
+    private const int BlocksPerBreakpoint = 15;
+
+    /// <summary>
+    /// The per-request breakpoint budget. One is always spent on the system block, which is why
+    /// the count starts at one rather than zero.
+    /// </summary>
+    private const int MaxBreakpoints = 4;
+
     private readonly AnthropicClient _client;
 
     /// <summary>
@@ -66,6 +79,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         SupportsThinkingEffort = true,
         SupportsOperatorSystemMessages = OperatorSystemMessageModels.Contains(model),
         MinimumCacheablePrefixTokens = MinimumCacheablePrefix.GetValueOrDefault(model, 1024),
+        SupportsToolCalls = true,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -76,6 +90,13 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
         var usage = LlmUsage.None;
         var stopReason = LlmStopReason.Completed;
+
+        // A tool call arrives in pieces: content_block_start names it, a run of input_json_delta
+        // carries its arguments as JSON fragments, and content_block_stop ends it. Nothing is
+        // parseable until the last fragment lands, so the call is assembled here and emitted
+        // whole — running a tool on a half-built argument object is the one mistake this must
+        // not make possible.
+        var building = new Dictionary<long, PendingToolCall>();
 
         var stream = _client.Messages.CreateStreaming(parameters, cancellationToken).GetAsyncEnumerator(cancellationToken);
 
@@ -128,6 +149,26 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 {
                     yield return new LlmStreamEvent.ThinkingDelta(thinking!.Thinking);
                 }
+                else if (blockDelta.Delta.TryPickInputJson(out var inputJson)
+                         && building.TryGetValue(blockDelta.Index, out var pending))
+                {
+                    pending.Input.Append(inputJson!.PartialJson);
+                }
+            }
+            else if (streamEvent.TryPickContentBlockStart(out var blockStart)
+                     && blockStart!.ContentBlock.TryPickToolUse(out var toolUse))
+            {
+                building[blockStart.Index] = new PendingToolCall(toolUse!.ID, toolUse.Name);
+            }
+            else if (streamEvent.TryPickContentBlockStop(out var blockStop)
+                     && building.Remove(blockStop!.Index, out var call))
+            {
+                // Empty input is "{}", not "". A tool with no parameters produces no
+                // input_json_delta at all, and an empty string is not a JSON object — the
+                // argument parser would read it as malformed and drop a call that was fine.
+                var input = call.Input.Length == 0 ? "{}" : call.Input.ToString();
+
+                yield return new LlmStreamEvent.ToolUse(call.Id, call.Name, input);
             }
             else if (streamEvent.TryPickStart(out var start))
             {
@@ -151,13 +192,76 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         var capabilities = CapabilitiesFor(request.Model);
 
         var messages = new List<MessageParam>();
+
+        // Each cache breakpoint walks back at most 20 content blocks looking for a prior entry,
+        // and one agentic turn produces a tool_use and a tool_result per call — so a multi-tool
+        // exchange can push the last breakpoint out of reach, after which the next turn silently
+        // re-bills the entire prefix (architecture.md §6). Counting blocks and spending a
+        // breakpoint before that happens is the mitigation.
+        var blocksSinceBreakpoint = 0;
+        var breakpointsSpent = 1;
+
         foreach (var turn in prompt.History)
         {
-            messages.Add(new MessageParam
+            var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
+
+            // An ordinary text turn stays an ordinary string on the wire. Not an optimisation:
+            // a text-only session must serialise exactly as it did before tools existed, or
+            // every cache entry written by a previous version is invalidated by the upgrade.
+            if (turn.Content is [ConversationContent.Text only])
             {
-                Role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User,
-                Content = turn.Text,
-            });
+                messages.Add(new MessageParam { Role = role, Content = only.Value });
+                blocksSinceBreakpoint++;
+                continue;
+            }
+
+            var blocks = new List<ContentBlockParam>();
+
+            foreach (var part in turn.Content)
+            {
+                blocksSinceBreakpoint++;
+
+                switch (part)
+                {
+                    case ConversationContent.Text text:
+                        blocks.Add(new TextBlockParam { Text = text.Value });
+                        break;
+
+                    case ConversationContent.ToolUse call:
+                        blocks.Add(new ToolUseBlockParam
+                        {
+                            ID = call.Id,
+                            Name = call.Name,
+                            Input = Parse(call.InputJson),
+                        });
+                        break;
+
+                    case ConversationContent.ToolResult result:
+                        // The breakpoint goes on a tool result rather than anywhere else,
+                        // because tool results are what make a turn long enough to need one.
+                        var spendHere = blocksSinceBreakpoint >= BlocksPerBreakpoint
+                                        && breakpointsSpent < MaxBreakpoints
+                                        && ReferenceEquals(part, turn.Content[^1]);
+
+                        blocks.Add(new ToolResultBlockParam
+                        {
+                            ToolUseID = result.ToolUseId,
+                            Content = result.Content,
+                            IsError = result.IsError,
+                            CacheControl = spendHere ? new CacheControlEphemeral() : null,
+                        });
+
+                        if (spendHere)
+                        {
+                            breakpointsSpent++;
+                            blocksSinceBreakpoint = 0;
+                        }
+
+                        break;
+                }
+            }
+
+            messages.Add(new MessageParam { Role = role, Content = blocks });
         }
 
         // Live game state goes after the cached history either way. The role it arrives under is
@@ -185,6 +289,12 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             Model = request.Model,
             MaxTokens = request.MaxOutputTokens,
 
+            // Position 1, serialised before everything else. The advertisement arrives already
+            // canonicalised by ToolSchemaWriter, and it is passed through as raw JSON rather
+            // than reassembled here — a second serializer with its own opinion about key order
+            // is exactly the "non-deterministic serialization" §6 warns breaks byte-identity.
+            Tools = [.. prompt.Tools.Select(Translate)],
+
             // The cache breakpoint. Everything above it — guardrails, persona, About Me — is
             // stable across turns; everything in Messages below it changes every turn.
             System = new List<TextBlockParam>
@@ -205,6 +315,54 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         };
     }
 
+    /// <summary>
+    /// A tool call being assembled from the stream. The id and name arrive first, on
+    /// content_block_start; the arguments follow as JSON fragments that mean nothing until the
+    /// last one has landed.
+    /// </summary>
+    private sealed class PendingToolCall(string id, string name)
+    {
+        public string Id { get; } = id;
+
+        public string Name { get; } = name;
+
+        public System.Text.StringBuilder Input { get; } = new();
+    }
+
+    /// <summary>
+    /// The advertisement as the API wants it. The schema is handed over as the exact bytes
+    /// <see cref="D47.Core.Capabilities.ToolSchemaWriter"/> produced, which is what keeps a
+    /// profile byte-identical every time it ships.
+    /// </summary>
+    private static ToolUnion Translate(ToolAdvertisement tool) => new Tool
+    {
+        Name = tool.Name,
+        Description = tool.Description,
+        InputSchema = InputSchema.FromRawUnchecked(Parse(tool.InputSchemaJson)),
+    };
+
+    /// <summary>
+    /// A JSON object as the SDK's raw property bag, preserving the order it was written in.
+    /// </summary>
+    private static Dictionary<string, System.Text.Json.JsonElement> Parse(string json)
+    {
+        var properties = new Dictionary<string, System.Text.Json.JsonElement>(StringComparer.Ordinal);
+
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+
+        if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                // Cloned because the document is disposed on the way out of this method, and an
+                // un-cloned JsonElement is a window onto buffers that go with it.
+                properties[property.Name] = property.Value.Clone();
+            }
+        }
+
+        return properties;
+    }
+
     private static Effort Translate(CoreConversation.ThinkingEffort effort) => effort switch
     {
         CoreConversation.ThinkingEffort.Low => Effort.Low,
@@ -218,6 +376,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     {
         "refusal" => LlmStopReason.Refusal,
         "max_tokens" => LlmStopReason.MaxTokens,
+        "tool_use" => LlmStopReason.ToolUse,
         _ => LlmStopReason.Completed,
     };
 

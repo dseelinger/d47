@@ -73,6 +73,21 @@ public abstract record TurnEvent
     /// </summary>
     public sealed record Retrying(int Attempt, int Of, TimeSpan Wait, string Because) : TurnEvent;
 
+    /// <summary>
+    /// A tool the model asked for is about to run. Emitted before the call rather than after,
+    /// because the gap is the point: a lookup that reaches a network can take seconds, and a
+    /// surface with nothing to show during it is indistinguishable from a hang — the same
+    /// reasoning as <see cref="Retrying"/>.
+    /// </summary>
+    public sealed record ToolStarted(string Tool) : TurnEvent;
+
+    /// <summary>
+    /// A tool the model asked for has finished. <paramref name="Succeeded"/> is the handler's own
+    /// verdict, not the turn's: a tool that failed is a fact the model is told about and usually
+    /// works around, so this is transcript material rather than a turn outcome.
+    /// </summary>
+    public sealed record ToolFinished(string Tool, bool Succeeded) : TurnEvent;
+
     public sealed record Completed(TurnResult Result) : TurnEvent;
 }
 
@@ -108,6 +123,19 @@ public sealed class TurnLoop(
     /// next turn without a restart (list.md Phase 4).
     /// </summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
+
+    /// <summary>
+    /// How many times in one turn the model may ask for tools and be answered.
+    /// <para>
+    /// A stop, not a tuning knob. Each round is a billed request, and a model that answers every
+    /// tool result with another tool call would spend the Commander's money in a loop with
+    /// nothing to show for it. Generous enough that no honest question reaches it — "the nearest
+    /// station selling this module" is two or three — and low enough that a loop is caught while
+    /// it is still cheap. Reaching it ends the tool rounds and asks for an answer in words,
+    /// rather than failing the turn: the model usually has enough by then to say something true.
+    /// </para>
+    /// </summary>
+    public int MaxToolRounds { get; set; } = 8;
 
     public IReadOnlyList<ConversationMessage> History => _history;
 
@@ -281,51 +309,207 @@ public sealed class TurnLoop(
         var coldPrefixExpected = _lastModelUsed != chosenModel;
         _lastModelUsed = chosenModel;
 
-        var request = new LlmRequest
-        {
-            Model = chosenModel,
-            Effort = effort,
-            Prompt = new PromptAssembly
-            {
-                // Which tools ship is a choice between pre-declared profiles, never between
-                // individual tools (list.md Phase 10) — a per-turn set would rewrite position 1
-                // and invalidate the whole cached prefix. The profile is quantized by mode, so
-                // a Commander who stays in supercruise pays for one cache entry and reads it.
-                //
-                // Gated on the provider actually being able to execute a tool_use reply.
-                // Advertising a tool the loop would silently drop is worse than not offering
-                // it: the model then tells the Commander it has done something that never
-                // happened. False everywhere today, so this ships nothing yet.
-                Tools = activeProvider.CapabilitiesFor(chosenModel).SupportsToolCalls
-                    ? ToolProfiles.For(capabilities, ToolContext?.Invoke() ?? Input.ControlContext.None,
-                        ActionsEnabled?.Invoke() ?? false).Tools
-                    : [],
-                Persona = Persona,
-                AboutMe = AboutMe,
-                History = [.. _history, new ConversationMessage(ConversationRole.User, input)],
-                LiveGameState = LiveGameState?.Invoke(),
-            },
-        };
+        // Which tools ship is a choice between pre-declared profiles, never between individual
+        // tools (list.md Phase 10) — a per-turn set would rewrite position 1 and invalidate the
+        // whole cached prefix. The profile is quantized by mode, so a Commander who stays in
+        // supercruise pays for one cache entry and reads it.
+        //
+        // Gated on the provider actually being able to execute a tool_use reply. Advertising a
+        // tool the loop would silently drop is worse than not offering it: the model then tells
+        // the Commander it has done something that never happened.
+        var advertised = activeProvider.CapabilitiesFor(chosenModel).SupportsToolCalls
+            ? ToolProfiles.For(
+                capabilities,
+                ToolContext?.Invoke() ?? Input.ControlContext.None,
+                ActionsEnabled?.Invoke() ?? false).Tools
+            : [];
+
+        // What this turn has said so far, tool rounds included. Kept apart from _history until
+        // the turn succeeds, so a turn that fails commits nothing — a half-written exchange
+        // ending in a tool call nobody answered is worse than no memory of it at all.
+        List<ConversationMessage> pending = [new ConversationMessage(ConversationRole.User, input)];
 
         yield return new TurnEvent.Routed(TurnRoute.Model, effort);
 
-        var reply = new System.Text.StringBuilder();
         var usage = LlmUsage.None;
+        var answer = string.Empty;
         var stopReason = LlmStopReason.Completed;
-        string? failure = null;
+
+        for (var round = 1; ; round++)
+        {
+            // The last round is offered no tools at all. That is what turns the ceiling into an
+            // answer rather than a cutoff: a model that cannot call anything else says what it
+            // has, and the Commander gets a reply instead of silence with a bill behind it.
+            var lastRound = round > MaxToolRounds;
+
+            var request = new LlmRequest
+            {
+                Model = chosenModel,
+                Effort = effort,
+                Prompt = new PromptAssembly
+                {
+                    Tools = lastRound ? [] : advertised,
+                    Persona = Persona,
+                    AboutMe = AboutMe,
+                    History = [.. _history, .. pending],
+                    LiveGameState = LiveGameState?.Invoke(),
+                },
+            };
+
+            var outcome = new RoundOutcome();
+
+            await foreach (var turnEvent in RunRoundAsync(request, activeProvider, outcome, cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            if (outcome.Failure is not null)
+            {
+                // Said out loud in the current voice, because the alternative is silence, and
+                // silence here is indistinguishable from a model with nothing to say.
+                var text = Retry.Attempts > 1
+                    ? $"I couldn't reach the model after {Retry.Attempts} tries. {outcome.Failure}"
+                    : $"I couldn't reach the model just then. {outcome.Failure}";
+
+                yield return new TurnEvent.TextDelta(text);
+                yield return new TurnEvent.Completed(new TurnResult(
+                    TurnOutcome.Failed, TurnRoute.Model, text, effort, Cost: null));
+                yield break;
+            }
+
+            // Every round is a billed request, so usage accumulates across the whole turn.
+            // Reporting only the last one would price an eight-call lookup as though it were a
+            // single question, which is the number the Commander is least able to check.
+            usage = Add(usage, outcome.Usage);
+            answer = outcome.Reply.ToString().Trim();
+            stopReason = outcome.StopReason;
+
+            if (outcome.ToolUses.Count == 0)
+            {
+                break;
+            }
+
+            // The assistant's own turn, carrying the calls it asked for. It has to go back
+            // verbatim next round: a tool_result with no tool_use above it is a protocol error,
+            // not a recoverable one.
+            var asked = new List<ConversationContent>();
+
+            if (answer.Length > 0)
+            {
+                asked.Add(new ConversationContent.Text(answer));
+            }
+
+            asked.AddRange(outcome.ToolUses);
+            pending.Add(new ConversationMessage(ConversationRole.Assistant, asked));
+
+            var results = new List<ConversationContent>();
+
+            foreach (var call in outcome.ToolUses)
+            {
+                yield return new TurnEvent.ToolStarted(call.Name);
+
+                var result = await capabilities
+                    .InvokeAsync(call.Name, ToolArguments.FromJson(call.InputJson), cancellationToken)
+                    .ConfigureAwait(false);
+
+                logger.LogInformation(
+                    "Model called {Tool} in round {Round}: {Status}",
+                    call.Name,
+                    round,
+                    result.IsError ? "error" : "ok");
+
+                yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
+
+                results.Add(new ConversationContent.ToolResult(call.Id, result.Content, result.IsError));
+            }
+
+            pending.Add(new ConversationMessage(ConversationRole.User, results));
+        }
+
+        availability.MarkAvailable();
+
+        var price = prices.For(activeProvider.Id, chosenModel);
+        var cost = price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true);
+        spend.Record(cost, coldPrefixExpected);
+
+        // A refusal is an unsure turn, not an error: the model declined, which is a real answer
+        // about what it will do rather than a fault in the pipeline.
+        var turnOutcome = stopReason == LlmStopReason.Refusal || answer.Length == 0
+            ? TurnOutcome.Unsure
+            : TurnOutcome.Answered;
+
+        if (turnOutcome == TurnOutcome.Answered)
+        {
+            // The tool rounds are committed too, not just the question and the answer. The model
+            // is shown its own calls and what came back, so a follow-up question lands in a
+            // conversation that accounts for how the last one was answered.
+            _history.AddRange(pending);
+            _history.Add(new ConversationMessage(ConversationRole.Assistant, answer));
+        }
+
+        logger.LogInformation(
+            "Model turn {Outcome} at {Effort} effort; {Input} in ({CacheRead} cached), {Output} out, {Cost}",
+            turnOutcome,
+            effort,
+            usage.TotalInputTokens,
+            usage.CacheReadInputTokens,
+            usage.OutputTokens,
+            cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
+
+        yield return new TurnEvent.Completed(new TurnResult(turnOutcome, TurnRoute.Model, answer, effort, cost));
+    }
+
+    /// <summary>
+    /// What one round of the model turn produced. A mutable carrier rather than a return value
+    /// because the round streams: the events have to reach the caller as they arrive, so the
+    /// method is an iterator, and an iterator cannot also return a result.
+    /// </summary>
+    private sealed class RoundOutcome
+    {
+        public System.Text.StringBuilder Reply { get; } = new();
+
+        public List<ConversationContent.ToolUse> ToolUses { get; } = [];
+
+        public LlmUsage Usage { get; set; } = LlmUsage.None;
+
+        public LlmStopReason StopReason { get; set; } = LlmStopReason.Completed;
+
+        public string? Failure { get; set; }
+    }
+
+    private static LlmUsage Add(LlmUsage running, LlmUsage round) => new(
+        running.InputTokens + round.InputTokens,
+        running.OutputTokens + round.OutputTokens,
+        running.CacheCreationInputTokens + round.CacheCreationInputTokens,
+        running.CacheReadInputTokens + round.CacheReadInputTokens);
+
+    /// <summary>
+    /// One request to the provider, retried where retrying is honest.
+    /// <para>
+    /// Retry lives here rather than around the whole turn because of one asymmetry: once a word
+    /// has been streamed it has probably already been spoken, and there is no such thing as
+    /// un-saying it. So an attempt that produced text is never retried, however transient the
+    /// failure that ended it looked (list.md Phase 5). A tool call is not subject to that rule —
+    /// nothing has run yet when the round ends, because execution is the caller's job — so a
+    /// round that failed part-way through assembling calls is safe to attempt again.
+    /// </para>
+    /// </summary>
+    private async IAsyncEnumerable<TurnEvent> RunRoundAsync(
+        LlmRequest request,
+        ILlmProvider activeProvider,
+        RoundOutcome outcome,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         var transient = false;
 
-        // Retry lives here rather than around the whole turn because of one asymmetry: once a
-        // word has been streamed it has probably already been spoken, and there is no such
-        // thing as un-saying it. So an attempt that produced text is never retried, however
-        // transient the failure that ended it looked (list.md Phase 5).
         for (var attempt = 1; attempt <= Math.Max(1, Retry.Attempts); attempt++)
         {
             if (attempt > 1)
             {
                 var wait = Retry.WaitBefore(attempt);
 
-                yield return new TurnEvent.Retrying(attempt, Retry.Attempts, wait, failure ?? "no answer");
+                yield return new TurnEvent.Retrying(attempt, Retry.Attempts, wait, outcome.Failure ?? "no answer");
                 logger.LogInformation(
                     "Retrying the model turn, attempt {Attempt} of {Total}, after {Wait}",
                     attempt,
@@ -335,10 +519,11 @@ public sealed class TurnLoop(
                 await _clock.DelayAsync(wait, cancellationToken).ConfigureAwait(false);
             }
 
-            reply.Clear();
-            usage = LlmUsage.None;
-            stopReason = LlmStopReason.Completed;
-            failure = null;
+            outcome.Reply.Clear();
+            outcome.ToolUses.Clear();
+            outcome.Usage = LlmUsage.None;
+            outcome.StopReason = LlmStopReason.Completed;
+            outcome.Failure = null;
             transient = false;
             var spokeThisAttempt = false;
 
@@ -348,7 +533,7 @@ public sealed class TurnLoop(
                 switch (streamEvent)
                 {
                     case LlmStreamEvent.TextDelta text:
-                        reply.Append(text.Text);
+                        outcome.Reply.Append(text.Text);
                         spokeThisAttempt = true;
                         yield return new TurnEvent.TextDelta(text.Text);
                         break;
@@ -357,13 +542,18 @@ public sealed class TurnLoop(
                         yield return new TurnEvent.ThinkingDelta(thinking.Text);
                         break;
 
+                    case LlmStreamEvent.ToolUse toolUse:
+                        outcome.ToolUses.Add(
+                            new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
+                        break;
+
                     case LlmStreamEvent.Completed completed:
-                        usage = completed.Usage;
-                        stopReason = completed.StopReason;
+                        outcome.Usage = completed.Usage;
+                        outcome.StopReason = completed.StopReason;
                         break;
 
                     case LlmStreamEvent.Failed failed:
-                        failure = failed.Message;
+                        outcome.Failure = failed.Message;
                         transient = failed.Transient;
                         availability.MarkFailed(failed.Message, failed.Transient);
                         logger.LogWarning(
@@ -376,56 +566,11 @@ public sealed class TurnLoop(
 
             // A configuration failure will fail identically next time, so retrying it only
             // spends the Commander's silence. Only transient failures are worth waiting on.
-            if (failure is null || spokeThisAttempt || !transient)
+            if (outcome.Failure is null || spokeThisAttempt || !transient)
             {
                 break;
             }
         }
-
-        if (failure is not null)
-        {
-            // Said out loud in the current voice, because the alternative is silence, and
-            // silence here is indistinguishable from a model with nothing to say.
-            var text = Retry.Attempts > 1
-                ? $"I couldn't reach the model after {Retry.Attempts} tries. {failure}"
-                : $"I couldn't reach the model just then. {failure}";
-
-            yield return new TurnEvent.TextDelta(text);
-            yield return new TurnEvent.Completed(new TurnResult(
-                TurnOutcome.Failed, TurnRoute.Model, text, effort, Cost: null));
-            yield break;
-        }
-
-        availability.MarkAvailable();
-
-        var price = prices.For(activeProvider.Id, chosenModel);
-        var cost = price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true);
-        spend.Record(cost, coldPrefixExpected);
-
-        var answer = reply.ToString().Trim();
-
-        // A refusal is an unsure turn, not an error: the model declined, which is a real answer
-        // about what it will do rather than a fault in the pipeline.
-        var outcome = stopReason == LlmStopReason.Refusal || answer.Length == 0
-            ? TurnOutcome.Unsure
-            : TurnOutcome.Answered;
-
-        if (outcome == TurnOutcome.Answered)
-        {
-            _history.Add(new ConversationMessage(ConversationRole.User, input));
-            _history.Add(new ConversationMessage(ConversationRole.Assistant, answer));
-        }
-
-        logger.LogInformation(
-            "Model turn {Outcome} at {Effort} effort; {Input} in ({CacheRead} cached), {Output} out, {Cost}",
-            outcome,
-            effort,
-            usage.TotalInputTokens,
-            usage.CacheReadInputTokens,
-            usage.OutputTokens,
-            cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
-
-        yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Model, answer, effort, cost));
     }
 
     /// <summary>
