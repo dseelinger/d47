@@ -73,6 +73,30 @@ public sealed class PersonaHost
     /// <summary>The core aboard. Never null — "personality off" is a prompt decision, not an empty seat.</summary>
     public Persona Current { get; private set; }
 
+    /// <summary>
+    /// The cores that have already introduced themselves, in catalog order. Exposed because the
+    /// panel offers to forget them, and an offer to clear something has to be able to say what
+    /// there is to clear.
+    /// </summary>
+    public IReadOnlyList<Persona> Introduced =>
+        [.. PersonaCatalog.All.Where(p => _introduced.Contains(p.Id))];
+
+    /// <summary>
+    /// Forgets every introduction at once, so the next selection of any core is its authored
+    /// intro again rather than a gap reaction.
+    /// <para>
+    /// The alternative was restarting d47, which is what hearing a second core's opening line
+    /// used to cost. It clears the whole set rather than one core because the thing being
+    /// checked is the cast, not a member of it.
+    /// </para>
+    /// <para>
+    /// Includes the core currently aboard, but hearing that one again still means switching
+    /// away and back: selecting the core that is already running is not a switch and raises
+    /// nothing, which is the same rule that stops an unrelated settings edit re-introducing it.
+    /// </para>
+    /// </summary>
+    public void ForgetIntroductions() => _introduced.Clear();
+
     /// <summary>Raised after the switch, with everything the surface needs to speak about it.</summary>
     public event Action<PersonaChanged>? Changed;
 

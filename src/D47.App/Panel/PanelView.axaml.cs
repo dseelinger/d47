@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -58,6 +59,7 @@ public partial class PanelView : UserControl
         {
             if (_bound is not null)
             {
+                _bound.TranscriptAppended -= DrawTranscript;
                 _bound.TranscriptAppended -= ScrollToEnd;
                 _bound.PropertyChanged -= OnModelChanged;
             }
@@ -66,6 +68,9 @@ public partial class PanelView : UserControl
 
             if (_bound is not null)
             {
+                // Drawn before the scroll, because scrolling to the end of text that has not
+                // been written yet lands one append behind.
+                _bound.TranscriptAppended += DrawTranscript;
                 _bound.TranscriptAppended += ScrollToEnd;
 
                 // The avatar follows the loop state. Subscribed per instance rather than bound
@@ -75,6 +80,10 @@ public partial class PanelView : UserControl
                 _bound.PropertyChanged += OnModelChanged;
                 Avatar.Show(_bound.LoopState);
             }
+
+            // The model handed over is rarely empty — the window binds one that has already
+            // been written to — and nothing else would redraw until the next append.
+            DrawTranscript();
         };
     }
 
@@ -160,14 +169,50 @@ public partial class PanelView : UserControl
             _bound?.RefreshLog();
         }
 
-        Transcript.Bind(
-            TextBlock.TextProperty,
-            new Avalonia.Data.Binding(Page switch
+        DrawTranscript();
+    }
+
+    /// <summary>
+    /// Writes the current page into the transcript block, as one run per stretch that is drawn
+    /// the same way.
+    /// <para>
+    /// Runs rather than a bound string, which is what this was. A marked line — the panel
+    /// noting that the core changed — has to be drawn differently from the conversation around
+    /// it, and one <c>Text</c> binding has no way to say that. The colour is taken as a
+    /// resource observable rather than read once, so a marker written under one theme is still
+    /// the accent after the Commander switches to another.
+    /// </para>
+    /// </summary>
+    private void DrawTranscript()
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(DrawTranscript);
+            return;
+        }
+
+        var inlines = Transcript.Inlines ??= [];
+        inlines.Clear();
+
+        if (_bound is null)
+        {
+            return;
+        }
+
+        foreach (var segment in _bound.Segments(Page))
+        {
+            var run = new Run(segment.Text);
+
+            if (segment.Marker)
             {
-                TranscriptPage.Technical => nameof(PanelViewModel.TranscriptText),
-                TranscriptPage.Log => nameof(PanelViewModel.LogText),
-                _ => nameof(PanelViewModel.ConversationText),
-            }));
+                run.Bind(
+                    Avalonia.Controls.Documents.TextElement.ForegroundProperty,
+                    this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+                run.FontWeight = FontWeight.SemiBold;
+            }
+
+            inlines.Add(run);
+        }
     }
 
     /// <summary>

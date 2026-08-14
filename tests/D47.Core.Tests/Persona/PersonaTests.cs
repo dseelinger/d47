@@ -34,7 +34,6 @@ public class PersonaCatalogTests
             Assert.False(string.IsNullOrWhiteSpace(persona.Intro), persona.Id);
             Assert.False(string.IsNullOrWhiteSpace(persona.Return), persona.Id);
             Assert.False(string.IsNullOrWhiteSpace(persona.VoiceHint.Description), persona.Id);
-            Assert.NotEmpty(persona.VoiceHint.Keywords);
         }
     }
 
@@ -197,6 +196,43 @@ public class PersonaHostTests
 
         Assert.Equal(PersonaArrival.Introduction, last!.Arrival);
         Assert.Null(last.Gap);
+    }
+
+    [Fact]
+    public void ForgettingIntroductionsPutsEveryCoreBackToItsFirstLine()
+    {
+        // The alternative was restarting d47 to hear a second core's opening line, which is
+        // what this exists to replace. All of them at once: the thing being checked is the
+        // cast, not a member of it.
+        var host = new PersonaHost();
+        var arrivals = new List<PersonaArrival>();
+        host.Changed += change => arrivals.Add(change.Arrival);
+
+        host.Apply(Choose("cora"));
+        host.Apply(Choose("kex"));
+        Assert.Equal(["Cora", "Kex"], host.Introduced.Select(p => p.Name));
+
+        host.ForgetIntroductions();
+        Assert.Empty(host.Introduced);
+
+        // Both introduce again, even though each is a return with an elapsed time that would
+        // otherwise have earned a gap reaction.
+        host.Apply(Choose("cora"), TimeSpan.FromHours(2), "14 jumps");
+        host.Apply(Choose("kex"), TimeSpan.FromHours(2), "14 jumps");
+
+        Assert.Equal(
+            [
+                PersonaArrival.Introduction,
+                PersonaArrival.Introduction,
+                PersonaArrival.Introduction,
+                PersonaArrival.Introduction,
+            ],
+            arrivals);
+
+        // And the gap reaction comes back on the next return, rather than the forgetting
+        // having disabled it.
+        host.Apply(Choose("cora"), TimeSpan.FromHours(2), "14 jumps");
+        Assert.Equal(PersonaArrival.Gap, arrivals[^1]);
     }
 
     [Fact]

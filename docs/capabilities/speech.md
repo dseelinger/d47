@@ -90,9 +90,17 @@ answer "it answered 400" and leave you guessing.
 
 ### Voice {#voice}
 
-Which voice speaks. The list comes from the provider, so it is what that provider actually offers
-rather than a list written into Directive 47. You can also type a voice name it does not know
-about and it will be used.
+Which voice the core aboard speaks in. The list comes from the provider, so it is what that
+provider actually offers rather than a list written into Directive 47. You can also type a voice
+name it does not know about and it will be used.
+
+**This row belongs to the core aboard, not to the app.** Choose a voice while Cora is running and
+it is Cora's; switch to Kex and the row shows his. That is the same store the
+[per-core pairing](persona.md#voices) writes, so choosing by hand and being paired one are the
+same act — and a voice you picked yourself is never re-derived.
+
+Clearing it removes that core's voice rather than storing an empty one, which is how you ask for
+another to be chosen: the next time you select that core, Directive 47 picks again.
 
 ### Speaking rate {#rate}
 

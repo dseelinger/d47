@@ -44,8 +44,14 @@ public static class TestSurface
     /// A hand-testing coverage summary, which is what makes the Diagnostics coverage row exist
     /// at all. Null on every normal run, and on every test that is not about that row.
     /// </param>
+    /// <param name="personas">
+    /// The core host the persona rows read and the introductions row clears. Passed in only by
+    /// a test that needs to see the state on both sides of that button; every other caller gets
+    /// a fresh one, as the composition root does.
+    /// </param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
-        Func<string>? coverage = null)
+        Func<string>? coverage = null,
+        D47.Core.Persona.PersonaHost? personas = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -91,7 +97,7 @@ public static class TestSurface
             () => "No autonomous actions in a headless test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost(),
+            personas ?? new D47.Core.Persona.PersonaHost(),
             coverage));
 
         built = registry;

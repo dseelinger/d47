@@ -251,6 +251,14 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Said;
 
     /// <summary>
+    /// Raised with something that happened to the conversation rather than something said in
+    /// it — the core changing under it being the case this exists for. Separate from
+    /// <see cref="Said"/> because nothing speaks this: it is the panel noting, in its own
+    /// voice, why the next line sounds like somebody else.
+    /// </summary>
+    public event Action<string>? Noted;
+
+    /// <summary>
     /// Raised when a selected speech model is not on disk. A surface answers it by asking the
     /// Commander and calling <see cref="InstallModelAsync"/>.
     /// <para>
@@ -933,10 +941,80 @@ public sealed class AppHost : IDisposable
     /// on a model being reachable.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// A voice for the core aboard, chosen now if it has none (list.md Phase 11, #33).
+    /// <para>
+    /// The lazy half of the pairing, and the half that answers what a Commander actually
+    /// notices: selecting a core they have never used should sound like that core, not like the
+    /// last one. The pass at startup covers the cast in one call, but it only ran once and only
+    /// with whatever was configured at the time — no model, no key, no voice list yet — and a
+    /// core it missed had no second chance before this.
+    /// </para>
+    /// <para>
+    /// Awaited by the caller rather than fired off, because the point is the line that is about
+    /// to be spoken. With no model and no named default it returns immediately, having written
+    /// nothing: choosing a voice for a character is a judgement, and d47 does not guess at one.
+    /// </para>
+    /// </summary>
+    private async Task EnsureVoiceForCurrentPersonaAsync()
+    {
+        var persona = Personas.Current;
+
+        if (_voices.Count == 0 || Settings.Current.Persona.Voices.ContainsKey(persona.Id))
+        {
+            return;
+        }
+
+        try
+        {
+            var voice = await VoicePairing.ChooseOneAsync(
+                persona,
+                _voices,
+                Settings.Current.Persona.Voices.Values,
+                Turns.Provider,
+                Turns.Model,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id).ConfigureAwait(false);
+
+            if (voice is null)
+            {
+                return;
+            }
+
+            Settings.Replace("persona.voices", current => current with
+            {
+                Persona = current.Persona with
+                {
+                    Voices = new Dictionary<string, string>(current.Persona.Voices, StringComparer.Ordinal)
+                    {
+                        [persona.Id] = voice,
+                    },
+                },
+            });
+
+            // Nothing else will notice: the pairing is not a settings row, and the core aboard
+            // has just acquired the voice it is about to speak in.
+            ApplySpeechSettings();
+        }
+        catch (Exception ex)
+        {
+            // A convenience, exactly like the pass at startup. Failing it means this core speaks
+            // in the voice already in force, which is where it started.
+            _logger.LogWarning(ex, "Could not choose a voice for {Persona}", persona.Id);
+        }
+    }
+
     private async Task PairPersonaVoicesAsync()
     {
         if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
         {
+            // The pass has run, but it may have run in a session with no model configured and
+            // left the core aboard with nothing. Asking now costs nothing when it already has
+            // one, and is the difference between hearing the right voice this launch and
+            // hearing it after the next switch.
+            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
             return;
         }
 
@@ -949,8 +1027,13 @@ public sealed class AppHost : IDisposable
                 Turns.Model,
                 Spend,
                 PriceTable.Default,
-                _logger).ConfigureAwait(false);
+                _logger,
+                TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id).ConfigureAwait(false);
 
+            // Flagged as run even when no model was configured and only the named defaults were
+            // written. The flag says this pass has happened, and the cores it could not answer
+            // for are picked up one at a time as they are selected — which is the path that
+            // works whenever the model arrives, rather than only at the next launch.
             Settings.Replace("persona.voices", current => current with
             {
                 Persona = current.Persona with { Voices = paired, VoicesPaired = true },
@@ -1146,8 +1229,18 @@ public sealed class AppHost : IDisposable
             change.Current.Name,
             change.Arrival);
 
+        // Ahead of the line the new core is about to say, and outside the task below, so the
+        // transcript reads in the order it happened: the switch, then the first thing said
+        // after it. A gap reaction can take a model round trip to resolve, and the mark should
+        // not wait behind it.
+        Noted?.Invoke($"Switched to {change.Current.Name}");
+
         _ = Task.Run(async () =>
         {
+            // Before a word is spoken, because the first thing a core says is the thing most
+            // worth hearing in its own voice.
+            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+
             var line = change.Current.Intro;
 
             if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
@@ -1241,11 +1334,18 @@ public sealed class AppHost : IDisposable
 
         Voice.Tts = _tts;
 
-        // Everyone d47 can speak as, filled in from settings. The ship AI's voice is the
-        // Commander's explicit choice if they made one, then the voice paired to the persona
-        // aboard (#33), then the provider's own default.
+        // Everyone d47 can speak as, filled in from settings. The ship AI's voice is the one
+        // paired to the core aboard (#33), then whatever was chosen before voices were kept per
+        // core, then the provider's own default.
+        //
+        // The pairing wins, and it did not use to. A Commander who had ever picked a voice by
+        // hand pinned every core to it: the pairing was computed, stored, shown, and never
+        // reached, so switching character changed everything about the companion except the one
+        // thing you hear. `Speech.Voice` is now the fallback for a core with no pairing, and the
+        // Voice row writes the core aboard — which is what PersonaSettings.Voices always said it
+        // held.
         Cast.Rate = SpeechCapability.RateFor(Settings.Current);
-        Cast.DefaultVoice = speech.Voice ?? PairedVoiceForCurrentPersona();
+        Cast.DefaultVoice = SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id);
         Cast.Assign(VoiceRole.CarrierCaptain, speech.CarrierCaptainVoice);
         Cast.Assign(VoiceRole.TowerControl, speech.TowerVoice);
 
@@ -1534,14 +1634,6 @@ public sealed class AppHost : IDisposable
     /// separate paths per voice are how a line gets spoken in the wrong one (architecture.md D7).
     /// </summary>
     public VoiceCast Cast { get; } = new();
-
-    /// <summary>
-    /// The voice paired to the core currently aboard, or null if none has been (#33). Read at
-    /// the moment it is needed rather than cached, because the pairing runs in the background
-    /// after startup and the Commander may change core before it finishes.
-    /// </summary>
-    private string? PairedVoiceForCurrentPersona() =>
-        Settings.Current.Persona.Voices.GetValueOrDefault(Personas.Current.Id);
 
     /// <summary>
     /// What the selected provider offers, cached. Empty until the first fetch returns, which is

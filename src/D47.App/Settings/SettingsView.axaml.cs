@@ -647,6 +647,12 @@ public partial class SettingsView : UserControl
             case SettingKind.Info when row.Key == MacroCapability.ListKey && _macros is not null:
                 return BuildMacros(row);
 
+            // An Info row that also clears the state it describes. Rendered from the row
+            // rather than special-cased by key like the two above, because what is behind
+            // this button is a method rather than a window the App has to own.
+            case SettingKind.Info when row.Press is not null:
+                return BuildPressable(row);
+
             case SettingKind.Info:
                 return BuildInfo(row);
 
@@ -689,6 +695,34 @@ public partial class SettingsView : UserControl
         Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
 
         return (inset, () => text.Text = row.Binding!.Read(_settings!.Current), false);
+    }
+
+    /// <summary>
+    /// A disclosure with the button that clears it. Refreshed on the press, so the row states
+    /// the new answer rather than leaving the Commander to wonder whether anything happened.
+    /// </summary>
+    private (Control, Action, bool) BuildPressable(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var press = new Button
+        {
+            Name = $"Press_{row.Key.Replace('.', '_')}",
+            Content = row.PressLabel,
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        press.Click += (_, _) =>
+        {
+            row.Press!();
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, press } };
+
+        return (stack, refresh, false);
     }
 
     /// <summary>

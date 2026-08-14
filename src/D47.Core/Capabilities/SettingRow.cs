@@ -161,6 +161,21 @@ public sealed record SettingRow
     public IReadOnlyList<SettingCommandPhrase> Commands { get; init; } = [];
 
     /// <summary>
+    /// The one thing an <see cref="SettingKind.Info"/> row may do besides state a value: a
+    /// button that clears the state the row describes.
+    /// <para>
+    /// Info rather than a kind of its own, because what this renders is still a disclosure —
+    /// the button is how the Commander answers it. It also puts the action on the right side
+    /// of the trust boundary for free: <see cref="Configuration.SettingsService.Apply"/>
+    /// refuses Info rows outright, so nothing reachable from the tool surface can press this.
+    /// </para>
+    /// </summary>
+    public Action? Press { get; init; }
+
+    /// <summary>What the <see cref="Press"/> button says. Required when there is one.</summary>
+    public string? PressLabel { get; init; }
+
+    /// <summary>
     /// Whether the value is a paragraph rather than a line. Only About Me so far, and only
     /// the control's height depends on it.
     /// </summary>

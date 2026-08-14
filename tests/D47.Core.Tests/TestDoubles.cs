@@ -153,7 +153,8 @@ public sealed class TestSurface
     public static TestSurface For(
         TempInstall install,
         GameStateStore? gameState = null,
-        D47Settings? settings = null)
+        D47Settings? settings = null,
+        D47.Core.Persona.PersonaHost? personas = null)
     {
         var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
@@ -182,7 +183,7 @@ public sealed class TestSurface
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost()));
+            personas ?? new D47.Core.Persona.PersonaHost()));
 
         built = registry;
 

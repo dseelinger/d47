@@ -13,9 +13,16 @@ namespace D47.Core.Persona;
 /// wants to hear Sentinel, not to open a picker.
 /// </para>
 /// <para>
-/// The model does the matching when there is one, because "a clipped, precise woman" against a
-/// list of voice names is a judgement rather than a lookup. Without a model it falls back to
-/// the keywords each hint carries — worse, and still better than every core sharing one voice.
+/// The model does the matching, because "a clipped, precise woman" against a list of voice
+/// names is a judgement rather than a lookup. With no model configured nothing is paired at
+/// all: a substring match over voice names is not that judgement done worse, it is a different
+/// question answered confidently, and the cores are better off keeping the voice in force until
+/// there is something that can actually read the description.
+/// </para>
+/// <para>
+/// Two entry points, one job. <see cref="ChooseAsync"/> covers the cast in one call when the
+/// voice list first arrives; <see cref="ChooseOneAsync"/> covers the core the Commander has
+/// just selected and that pass never reached.
 /// </para>
 /// </summary>
 public static class VoicePairing
@@ -29,7 +36,25 @@ public static class VoicePairing
     /// What the provider offers. An empty list produces an empty result rather than an error —
     /// the provider may be unreachable, and pairing is a convenience.
     /// </param>
+    /// <summary>
+    /// Pairings that are not a judgement call, and so are made whether or not there is a model:
+    /// one core, on one voice provider, by the name of the voice.
+    /// <para>
+    /// The named voice is looked up in what the provider actually offers rather than stored as
+    /// an id, because an id is an account's copy of a voice and the name is the thing that is
+    /// the same on every account.
+    /// </para>
+    /// </summary>
+    private static readonly (string Provider, string Persona, string Voice)[] Named =
+    [
+        (TtsProviderCatalog.ElevenLabsId, "warden", "George"),
+    ];
+
     /// <param name="existing">Pairings already made, by persona id.</param>
+    /// <param name="ttsProvider">
+    /// Which voice provider the list came from, for the named defaults above. The voices
+    /// themselves carry no provider, and "George" means an ElevenLabs voice and nothing on Edge.
+    /// </param>
     public static async Task<IReadOnlyDictionary<string, string>> ChooseAsync(
         IReadOnlyList<VoiceInfo> voices,
         IReadOnlyDictionary<string, string> existing,
@@ -38,16 +63,21 @@ public static class VoicePairing
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
+        string? ttsProvider = null,
         CancellationToken cancellationToken = default)
     {
-        var unpaired = PersonaCatalog.All.Where(p => !existing.ContainsKey(p.Id)).ToArray();
+        var paired = WithNamedDefaults(voices, existing, ttsProvider);
+        var unpaired = PersonaCatalog.All.Where(p => !paired.ContainsKey(p.Id)).ToArray();
 
-        if (voices.Count == 0 || unpaired.Length == 0)
+        // No model, no pairing beyond the named defaults. Matching "a clipped, precise woman"
+        // against three hundred voice names is a judgement, and the keyword fallback that used
+        // to stand in for one dealt every core a voice on the strength of a substring — not the
+        // same job done worse, a different job. Nothing is written instead, so the cores keep
+        // the voice in force and the first model configured pairs them properly.
+        if (provider is null || voices.Count == 0 || unpaired.Length == 0)
         {
-            return existing;
+            return paired.Count == existing.Count ? existing : paired;
         }
-
-        var paired = new Dictionary<string, string>(existing, StringComparer.Ordinal);
 
         // One call for all of them rather than one per core. Eleven round trips to answer a
         // question nobody asked is not a background task, it is a bill.
@@ -56,20 +86,107 @@ public static class VoicePairing
 
         foreach (var persona in unpaired)
         {
-            var voice = chosen.GetValueOrDefault(persona.Id) ?? Nearest(persona, voices, paired.Values);
-
-            if (voice is not null)
+            if (chosen.GetValueOrDefault(persona.Id) is { } voice)
             {
                 paired[persona.Id] = voice;
             }
         }
 
-        logger?.LogInformation(
-            "Paired {Count} personas to voices ({Model})",
-            paired.Count - existing.Count,
-            provider is null ? "no model, matched on keywords" : "chosen by the model");
+        logger?.LogInformation("Paired {Count} personas to voices", paired.Count - existing.Count);
 
         return paired;
+    }
+
+    /// <summary>
+    /// The pairings above, plus any named default this provider carries for a core that has
+    /// none. Never overwrites: a named default is where a core starts, not where it is held.
+    /// </summary>
+    private static Dictionary<string, string> WithNamedDefaults(
+        IReadOnlyList<VoiceInfo> voices,
+        IReadOnlyDictionary<string, string> existing,
+        string? ttsProvider)
+    {
+        var paired = new Dictionary<string, string>(existing, StringComparer.Ordinal);
+
+        if (ttsProvider is null)
+        {
+            return paired;
+        }
+
+        foreach (var (provider, persona, name) in Named)
+        {
+            if (!string.Equals(provider, ttsProvider, StringComparison.OrdinalIgnoreCase)
+                || paired.ContainsKey(persona))
+            {
+                continue;
+            }
+
+            var match = voices.FirstOrDefault(voice =>
+                voice.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
+                && !paired.ContainsValue(voice.Id));
+
+            if (match is not null)
+            {
+                paired[persona] = match.Id;
+            }
+        }
+
+        return paired;
+    }
+
+    /// <summary>
+    /// A voice for one core, asked for at the moment it is needed — the Commander has just
+    /// selected a core that has none (list.md Phase 11, #33).
+    /// <para>
+    /// The lazy half of the same job. The pass above runs once and covers the cast; this covers
+    /// the core that pass never saw, because it ran before a model was configured, or before
+    /// the provider's voice list had arrived, or because this core's pairing was cleared. Null
+    /// when there is no model, when the call failed, or when nothing it named was on offer —
+    /// all of which mean the same thing to the caller: leave the voice alone.
+    /// </para>
+    /// </summary>
+    /// <param name="taken">Voices already spoken for, so two cores do not end up sharing one.</param>
+    public static async Task<string?> ChooseOneAsync(
+        Persona persona,
+        IReadOnlyList<VoiceInfo> voices,
+        IEnumerable<string> taken,
+        ILlmProvider? provider,
+        string? model,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        string? ttsProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var offered = voices.Where(voice => !used.Contains(voice.Id)).ToArray();
+
+        // A named default is not a judgement, so it is answered here rather than asked of a
+        // model — and answered even when there is none.
+        if (Named.FirstOrDefault(named =>
+                string.Equals(named.Provider, ttsProvider, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(named.Persona, persona.Id, StringComparison.Ordinal)) is { Voice: { } wanted }
+            && offered.FirstOrDefault(voice =>
+                voice.Name.Equals(wanted, StringComparison.OrdinalIgnoreCase)) is { } named)
+        {
+            logger?.LogInformation("Voice for {Persona}: {Voice}, its named default", persona.Id, named.Id);
+            return named.Id;
+        }
+
+        if (provider is null || offered.Length == 0)
+        {
+            return null;
+        }
+
+        var chosen = await AskAsync(
+            offered, [persona], provider, model, spend, prices, logger, cancellationToken).ConfigureAwait(false);
+
+        var voice = chosen.GetValueOrDefault(persona.Id);
+
+        logger?.LogInformation(
+            "Voice for {Persona}: {Voice}", persona.Id, voice ?? "none the model would name");
+
+        return voice;
     }
 
     /// <summary>
@@ -167,31 +284,4 @@ public static class VoicePairing
         return chosen;
     }
 
-    /// <summary>
-    /// The model-free fallback: the first voice whose name or metadata matches one of the
-    /// core's keywords and is not already spoken for. Crude, and it only has to beat "every
-    /// core sounds identical".
-    /// </summary>
-    public static string? Nearest(Persona persona, IReadOnlyList<VoiceInfo> voices, IEnumerable<string> taken)
-    {
-        var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var keyword in persona.VoiceHint.Keywords)
-        {
-            var match = voices.FirstOrDefault(voice =>
-                !used.Contains(voice.Id)
-                && (voice.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-                    || voice.Gender?.Equals(keyword, StringComparison.OrdinalIgnoreCase) == true));
-
-            if (match is not null)
-            {
-                return match.Id;
-            }
-        }
-
-        // Nothing matched, so anything unused. A core with no voice at all falls back to the
-        // ship AI's, which would mean two cores sounding the same — the thing this exists to
-        // avoid.
-        return voices.FirstOrDefault(voice => !used.Contains(voice.Id))?.Id;
-    }
 }

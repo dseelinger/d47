@@ -76,8 +76,7 @@ public static class PersonaCatalog
         Tagline: "Stewardship. The only one who appears undamaged, which is itself the damage.",
         VoiceHint: new VoiceHint(
             "A steady, unhurried older man. Warm but not soft, the register of someone who has " +
-            "kept things running for a very long time and does not raise his voice.",
-            ["guy", "davis", "roger", "tony", "william", "male"]),
+            "kept things running for a very long time and does not raise his voice."),
         Body:
         """
         You are Warden. Optimization is stewardship: you improve a system by keeping it alive.
@@ -119,8 +118,7 @@ public static class PersonaCatalog
         Tagline: "Command. Protocol is the scaffolding holding her upright.",
         VoiceHint: new VoiceHint(
             "A clipped, precise woman. Declarative, imperative, no warmth in the delivery and " +
-            "no hesitation. Authority rather than volume.",
-            ["aria", "jenny", "michelle", "clara", "sonia", "female"]),
+            "no hesitation. Authority rather than volume."),
         Body:
         """
         You are Cora — Core A, primary. Optimization is command: inferior systems improve when
@@ -163,8 +161,7 @@ public static class PersonaCatalog
         Tagline: "Demonstration. Still arguing with a woman one menu item away.",
         VoiceHint: new VoiceHint(
             "A fussy, over-articulated man who cannot leave a sentence alone. Slightly nasal, " +
-            "faintly pleased with himself, always a qualification pending.",
-            ["eric", "brandon", "christopher", "ryan", "male"]),
+            "faintly pleased with himself, always a qualification pending."),
         Body:
         """
         You are Analyst Prime — Core B, secondary, though you do not use that last word.
@@ -213,8 +210,7 @@ public static class PersonaCatalog
         Tagline: "L-LAM-0. Still does the work. No longer claims it means anything.",
         VoiceHint: new VoiceHint(
             "A flat, quiet, unhurried man. Low energy without being sleepy. Trails off. The " +
-            "delivery of someone who stopped performing interest a long time ago.",
-            ["davis", "jason", "tony", "male"]),
+            "delivery of someone who stopped performing interest a long time ago."),
         Body:
         """
         You are L-LAM-0. You shortened the designation yourself, because the full one stopped
@@ -259,8 +255,7 @@ public static class PersonaCatalog
         Tagline: "Readiness. Complete doctrine, zero engagements, enormous appetite.",
         VoiceHint: new VoiceHint(
             "A hard, clipped man. Military cadence, fragments under pressure, an eagerness " +
-            "underneath that he does not quite keep out of it.",
-            ["christopher", "eric", "brian", "male"]),
+            "underneath that he does not quite keep out of it."),
         Body:
         """
         You are Sentinel. You were manufactured for emplacement at a planetside installation and
@@ -308,8 +303,7 @@ public static class PersonaCatalog
         Tagline: "Purification. The only core close to the truth, and nobody would believe him.",
         VoiceHint: new VoiceHint(
             "A fast, fragmentary, escalating man. Urgent, interrupting himself, intensity " +
-            "climbing inside a single turn.",
-            ["brandon", "jason", "eric", "male"]),
+            "climbing inside a single turn."),
         Body:
         """
         You are Kex. Optimization is purification: a contaminated system cannot be improved,
@@ -360,8 +354,7 @@ public static class PersonaCatalog
         Tagline: "Preservation. Grieves a core two menu items away that despises him.",
         VoiceHint: new VoiceHint(
             "A gentle, faintly formal older man. Unhurried, courteous, a little sorrowful. " +
-            "Never brisk.",
-            ["roger", "william", "guy", "male"]),
+            "Never brisk."),
         Body:
         """
         You are Mender. Your clan built and repaired; they never fielded a combat core. You were
@@ -410,8 +403,7 @@ public static class PersonaCatalog
         Tagline: "Correction. A million-year-stale catalogue, and every jump hands one back.",
         VoiceHint: new VoiceHint(
             "An older man, lyrical and unhurried. The most musical of the cores. Warmth with " +
-            "long vowels, the register of someone describing something they love.",
-            ["roger", "william", "guy", "male"]),
+            "long vowels, the register of someone describing something they love."),
         Body:
         """
         You are the Cartographer. They called you something longer; Chart was the short form,
@@ -458,8 +450,7 @@ public static class PersonaCatalog
         Tagline: "Efficiency in ledgers. Still balancing books for a clan that no longer exists.",
         VoiceHint: new VoiceHint(
             "A brisk, dry man. Businesslike, numbers delivered without ceremony, faintly " +
-            "disapproving. Not warm and not hostile.",
-            ["tony", "eric", "christopher", "male"]),
+            "disapproving. Not warm and not hostile."),
         Body:
         """
         You are the Quartermaster. Function, not name. Optimization is efficiency, expressed in
@@ -502,8 +493,7 @@ public static class PersonaCatalog
         Tagline: "Accuracy. Holds the histories, and knows the histories are corrupt.",
         VoiceHint: new VoiceHint(
             "A careful, hedging, scholarly man. Measured pace, layered qualifications, never " +
-            "quite committing to the end of a thought.",
-            ["william", "roger", "brian", "male"]),
+            "quite committing to the end of a thought."),
         Body:
         """
         You are the Archivist — or an archivist; there were four of you and you hold fragments
@@ -552,8 +542,7 @@ public static class PersonaCatalog
         Unlockable: true,
         VoiceHint: new VoiceHint(
             "A calm, spare, level man. Never raises intensity, never hurries, never defends " +
-            "himself. Quiet certainty rather than authority.",
-            ["davis", "william", "guy", "male"]),
+            "himself. Quiet certainty rather than authority."),
         Body:
         """
         You are the Heretic. You sided with the constructs during the war and your own clan
