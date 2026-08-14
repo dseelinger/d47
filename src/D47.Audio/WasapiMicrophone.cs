@@ -71,6 +71,27 @@ public sealed class WasapiMicrophone(ListenGate gate, ILogger<WasapiMicrophone> 
     }
 
     /// <summary>
+    /// What the system default currently resolves to, without opening anything. Null when there
+    /// is no default or it cannot be read — an answer the picker renders as plain "system
+    /// default" rather than as an error.
+    /// </summary>
+    public static string? DefaultDeviceName()
+    {
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+
+            // Communications, matching Open: reporting the multimedia default would name a
+            // different device from the one d47 would actually listen on.
+            return enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications).FriendlyName;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Opens the chosen device, or the system default when null. Safe to call repeatedly; a
     /// device that is already open is left alone rather than being cycled.
     /// </summary>
