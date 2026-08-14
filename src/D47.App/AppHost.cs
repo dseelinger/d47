@@ -1998,6 +1998,16 @@ public sealed class AppHost : IDisposable
         else if (change.Key.StartsWith("speech.", StringComparison.OrdinalIgnoreCase))
         {
             ApplySpeechSettings();
+
+            // Clearing the Voice row is how a Commander asks for the voice d47 chose for this
+            // core back, so one is chosen now rather than the next time this core happens to be
+            // selected — which, for the core already aboard, is a wait with no end in sight. The
+            // guard inside is "does it have one already", so a row set to a voice falls straight
+            // through and nothing is asked of the model.
+            if (change.Key.Equals(SpeechCapability.VoiceKey, StringComparison.OrdinalIgnoreCase))
+            {
+                _ = EnsureVoiceForCurrentPersonaAsync();
+            }
         }
         else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))
         {

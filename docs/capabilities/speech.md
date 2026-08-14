@@ -99,7 +99,10 @@ it is Cora's; switch to Kex and the row shows his. That is the same store the
 same act — and a voice you picked yourself is never re-derived.
 
 Clearing it removes that core's voice rather than storing an empty one, which is how you ask for
-another to be chosen: the next time you select that core, Directive 47 picks again.
+the voice Directive 47 would have chosen: it picks again immediately, for the core aboard, and
+the picker's **Use the default** button is that same act under a name. With no model configured
+there is nothing to pick with, so clearing it leaves that core on the provider's own default —
+which is what the button says in that case, because it is a different outcome.
 
 ### Speaking rate {#rate}
 

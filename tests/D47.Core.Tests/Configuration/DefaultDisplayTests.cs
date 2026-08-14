@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
@@ -22,8 +23,18 @@ public class DefaultDisplayTests
         var voice = surface.Settings.Find(SpeechCapability.VoiceKey);
         Assert.NotNull(voice);
 
-        // Named as far as it can be: d47 cannot know which voice a provider picks when asked
-        // for nothing, but it can say whose default is being talked about.
+        // With a model configured, clearing this row is the way back to the voice d47 chose for
+        // this core, and that is what the row has to say it does.
+        Assert.Equal("(the voice d47 picks for this core)", voice.DefaultDisplayFor(surface.Settings.Current));
+        Assert.Equal("the voice d47 picks for this core", voice.BareDefaultFor(surface.Settings.Current));
+
+        // With no model there is nothing to pick with, so it really is the provider's own
+        // default — named as far as it can be: d47 cannot know which voice a provider chooses
+        // when asked for nothing, but it can say whose default is being talked about.
+        surface.Settings.Replace(
+            ConversationCapability.ProviderKey,
+            current => current with { Llm = current.Llm with { Provider = LlmProviderCatalog.NoneId } });
+
         Assert.Equal("(Edge Neural's own default voice)", voice.DefaultDisplayFor(surface.Settings.Current));
         Assert.Equal("Edge Neural's own default voice", voice.BareDefaultFor(surface.Settings.Current));
     }

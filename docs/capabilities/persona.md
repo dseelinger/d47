@@ -106,12 +106,15 @@ One exception, because it is not a judgement: on ElevenLabs, **Warden** takes **
 captivating storyteller, male, British — with or without a model.
 
 The voice sits on the [Voice row](speech.md#voice) in Speech, and that row is the core aboard's.
-Change it and you have chosen that core's voice; nothing re-derives it afterwards. Clear it and
-the next selection picks again.
+Change it and you have chosen that core's voice; nothing re-derives it afterwards.
+
+**Clearing it is the way back.** A core you have given a voice by hand keeps it forever, so the
+row's **Use the default** button is how you undo that: the pairing is dropped and a voice is
+chosen for that core again, there and then, without you having to switch away and back.
 
 Once — and only on a settings file written before the gender was stated to the pairing — any
-core left speaking in the wrong gender has that pairing dropped, so the next time you select it
-a voice is chosen properly. Anything you set by hand after that stands, whatever it is.
+core left speaking in the wrong gender has that pairing dropped, so a voice is chosen for it
+properly. Anything you set by hand after that stands, whatever it is.
 
 ## Settings
 

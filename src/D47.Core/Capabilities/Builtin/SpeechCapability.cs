@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -151,17 +152,21 @@ public static class SpeechCapability
                 Label = "Voice",
                 Help =
                     "Which voice the core aboard speaks in. Kept per core, so switching persona "
-                    + "switches voice. The list comes from the selected provider.",
+                    + "switches voice. The list comes from the selected provider, and clearing "
+                    + "the row has d47 choose for this core again.",
                 Kind = SettingKind.Choice,
-                // Still the provider's default, which is what a core with no voice stored
-                // actually gets. What is per core is the value, not the fallback.
-                // Named as far as it can be. d47 does not know which voice ElevenLabs or Edge
-                // picks when asked for nothing, so the honest limit is whose default it is —
-                // which at least tells the Commander where to go and look. A row that says only
-                // "(the default)" is a row answering a question with the question.
-                DefaultDisplaySource = s =>
-                    $"({TtsProviderCatalog.Selected(s.Speech.Provider).Name}'s own default voice)",
-                DefaultDisplay = "(the provider's default)",
+
+                // Two different answers, because clearing this row does two different things.
+                // With a model, it is the way back to the voice d47 chose for this core: the
+                // pairing is dropped and one is chosen again, here, now. With no model there is
+                // nothing to choose with, so it really is the provider's own default — named as
+                // far as it can be, since d47 does not know which voice Edge or ElevenLabs picks
+                // when asked for nothing, and a row that says only "(the default)" is a row
+                // answering a question with the question.
+                DefaultDisplaySource = s => s.Llm.Provider == LlmProviderCatalog.NoneId
+                    ? $"({TtsProviderCatalog.Selected(s.Speech.Provider).Name}'s own default voice)"
+                    : "(the voice d47 picks for this core)",
+                DefaultDisplay = "(the voice d47 picks for this core)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
