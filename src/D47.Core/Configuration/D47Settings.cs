@@ -48,6 +48,29 @@ public sealed record D47Settings
     public ActionSettings Actions { get; init; } = new();
 
     public PersonaSettings Persona { get; init; } = new();
+
+    public KnowledgeSettings Knowledge { get; init; } = new();
+}
+
+/// <summary>
+/// Looking things up outside this machine (list.md Phase 14).
+/// <para>
+/// Its own block rather than a flag on <see cref="LlmSettings"/>, because these destinations are
+/// not the model's. A Commander can run a local model and still want the galaxy search, or run a
+/// cloud model and want nothing else leaving — and a setting that bundled them could express
+/// neither.
+/// </para>
+/// </summary>
+public sealed record KnowledgeSettings
+{
+    /// <summary>
+    /// Whether d47 may reach the galaxy search. Off by default, which is the deliberate choice:
+    /// this is the first capability whose answers come from a third party, and a fresh install
+    /// should not start talking to one before the Commander has seen it in the disclosure and
+    /// said yes. Off is a capability that is off, not an error — the tool says so and the turn
+    /// carries on (list.md Phase 3).
+    /// </summary>
+    public bool GalaxySearch { get; init; }
 }
 
 /// <summary>

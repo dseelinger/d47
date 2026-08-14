@@ -577,6 +577,9 @@ public sealed class AppHost : IDisposable
             () => DateTimeOffset.Now,
             loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
 
+        var galaxy = new D47.Knowledge.SpanshGalaxyService(
+            loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -666,7 +669,12 @@ public sealed class AppHost : IDisposable
                 macros,
                 personas,
                 () => (self?.Cues ?? cues).DescribeDrops(),
-                coverage is null ? null : () => coverage.Report().Summary));
+                coverage is null ? null : () => coverage.Report().Summary,
+
+                // Constructed unconditionally and gated by its setting rather than by whether it
+                // exists: the row that turns it on has to work without a restart, and a service
+                // built only when the setting was already true could not (list.md Phase 4).
+                galaxy));
 
         built = capabilities;
 

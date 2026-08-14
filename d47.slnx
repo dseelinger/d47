@@ -3,6 +3,7 @@
     <Project Path="src/D47.App/D47.App.csproj" />
     <Project Path="src/D47.Audio/D47.Audio.csproj" />
     <Project Path="src/D47.Core/D47.Core.csproj" />
+    <Project Path="src/D47.Knowledge/D47.Knowledge.csproj" />
     <Project Path="src/D47.Llm/D47.Llm.csproj" />
     <Project Path="src/D47.Stt/D47.Stt.csproj" />
     <Project Path="src/D47.Tts/D47.Tts.csproj" />
@@ -11,6 +12,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/D47.App.Tests/D47.App.Tests.csproj" />
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />
+    <Project Path="tests/D47.Knowledge.Tests/D47.Knowledge.Tests.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
   </Folder>
 </Solution>

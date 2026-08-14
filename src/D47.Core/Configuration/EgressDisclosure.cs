@@ -50,6 +50,12 @@ public static class EgressDisclosure
     public const string TextToSpeech = "tts";
 
     /// <summary>
+    /// Looking something up in the galaxy. Added in Phase 14 with the first capability whose
+    /// answers come from off this machine.
+    /// </summary>
+    public const string GalaxySearch = "galaxy";
+
+    /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
     /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
     /// storage, so the bytes land from objects.githubusercontent.com. Named in full rather than
@@ -60,7 +66,7 @@ public static class EgressDisclosure
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
-        [LanguageModel, TextToSpeech, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
+        [LanguageModel, TextToSpeech, GalaxySearch, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
 
     /// <summary>
     /// The heading for a disclosure. Fixed, because it labels a settings row and rows are
@@ -72,6 +78,7 @@ public static class EgressDisclosure
         LanguageModel => "Language model",
         UpdateCheck => "Update check",
         TextToSpeech => "Spoken replies",
+        GalaxySearch => "Galaxy search",
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
@@ -82,6 +89,21 @@ public static class EgressDisclosure
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         TextToSpeech => TextToSpeechEntry(settings),
+
+        GalaxySearch => settings.Knowledge.GalaxySearch
+            ? new EgressEntry(
+                GalaxySearch,
+                NameOf(GalaxySearch),
+                "spansh.co.uk",
+                "System names you ask about, and the filters of a search — an allegiance, a distance, an "
+                + "economy. Where you are goes with it whenever a question is relative to you, because "
+                + "\"the nearest high tech system\" cannot be asked without saying where from. No key, no "
+                + "identifier, and nothing from your journal beyond the system name itself.",
+                Active: true)
+            : EgressEntry.Silent(
+                GalaxySearch,
+                NameOf(GalaxySearch),
+                "Galaxy search is off, so no system name and no search leaves this machine."),
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(
                 UpdateCheck,

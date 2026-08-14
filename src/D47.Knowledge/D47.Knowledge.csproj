@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    External data services, behind Core's knowledge seams. Separate from Core because Core
+    depends on nothing and this is an HTTP client, and separate from D47.Llm because a galaxy
+    lookup and a model turn fail differently and are configured differently.
+
+    No package references: the whole client is HttpClient and System.Text.Json.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    The request builder and the response projection are internal — nothing outside should be
+    composing Spansh's filter objects — but they are exactly the parts that can be wrong with
+    no network involved, so the tests reach them directly.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.Knowledge.Tests" />
+  </ItemGroup>
+
+</Project>

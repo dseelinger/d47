@@ -44,12 +44,19 @@ public static class BuiltinCapabilities
 
         // Optional and therefore last: null in every normal run, and the diagnostics card then
         // carries no coverage row at all.
-        Func<string>? coverage = null) =>
+        Func<string>? coverage = null,
+
+        // Null where nothing composed one — under the designer, and in a test that is not about
+        // it. The capability still registers either way, so its settings row and its
+        // documentation page exist; its tools report that they cannot act, which is what a
+        // capability being off looks like rather than one being absent (list.md Phase 3).
+        Knowledge.IGalaxyService? galaxy = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
+        GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
