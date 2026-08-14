@@ -98,8 +98,10 @@ public static class EgressDisclosure
                 "System names you ask about, and the filters of a search — an allegiance, a distance, an "
                 + "economy, a module you want to buy, a body type or a mining material. Where you are goes "
                 + "with it whenever a question is relative to you, because "
-                + "\"the nearest high tech system\" cannot be asked without saying where from. No key, no "
-                + "identifier, and nothing from your journal beyond the system name itself.",
+                + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
+                + "route also sends your ship's jump range and, for a trade run, the station you are docked "
+                + "at, how much your hold carries and the figure you gave to trade with — your actual "
+                + "balance is never read or sent. No key, no identifier, and nothing else from your journal.",
                 Active: true)
             : EgressEntry.Silent(
                 GalaxySearch,

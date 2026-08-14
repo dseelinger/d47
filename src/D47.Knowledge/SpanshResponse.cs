@@ -75,6 +75,169 @@ internal static class SpanshResponse
             stations);
     }
 
+    /// <summary>
+    /// A plotted neutron or long-range route.
+    /// <para>
+    /// The first waypoint of a plot is the system it started from, carrying zero jumps. It is
+    /// dropped: "here are your waypoints — Sol, then…" is a line about where the Commander
+    /// already is, and every count downstream would be one too high.
+    /// </para>
+    /// </summary>
+    public static PlottedRoute? ReadRoute(JsonElement result)
+    {
+        if (result.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var waypoints = new List<RouteWaypoint>();
+        var totalJumps = 0;
+
+        foreach (var jump in result.Items("system_jumps"))
+        {
+            var jumps = jump.Int("jumps") ?? 0;
+            totalJumps += jumps;
+
+            if (jumps == 0)
+            {
+                continue;
+            }
+
+            waypoints.Add(new RouteWaypoint(
+                String(jump, "system") ?? "an unnamed system",
+                jumps,
+                Number(jump, "distance_left"),
+                Boolean(jump, "neutron_star")));
+        }
+
+        return new PlottedRoute(
+            String(result, "source_system") ?? "where you are",
+            String(result, "destination_system") ?? "the destination",
+            Number(result, "distance") ?? 0,
+            totalJumps,
+            waypoints);
+    }
+
+    /// <summary>
+    /// A Road to Riches route. Stops with nothing to scan are dropped — the plotter includes the
+    /// origin, and a loop includes the return leg, both of which come back with an empty body
+    /// list and would read as "stop here and scan nothing".
+    /// </summary>
+    public static RichesRoute? ReadRiches(JsonElement result)
+    {
+        if (result.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var stops = new List<RichesStop>();
+
+        foreach (var stop in result.EnumerateArray())
+        {
+            var bodies = new List<RichesBody>();
+
+            foreach (var body in stop.Items("bodies"))
+            {
+                bodies.Add(new RichesBody(
+                    String(body, "name") ?? "an unnamed body",
+                    String(body, "subtype"))
+                {
+                    MappingValue = Integer(body, "estimated_mapping_value"),
+                    DistanceToArrival = Number(body, "distance_to_arrival"),
+                    Terraformable = Boolean(body, "is_terraformable"),
+                });
+            }
+
+            if (bodies.Count > 0)
+            {
+                stops.Add(new RichesStop(
+                    String(stop, "name") ?? "an unnamed system",
+                    stop.Int("jumps") ?? 0,
+                    bodies));
+            }
+        }
+
+        return new RichesRoute(stops);
+    }
+
+    public static TradeRoute? ReadTrade(JsonElement result)
+    {
+        if (result.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var hops = new List<TradeHop>();
+
+        foreach (var hop in result.EnumerateArray())
+        {
+            var source = hop.Object("source");
+            var destination = hop.Object("destination");
+
+            if (source is not { } from || destination is not { } to)
+            {
+                continue;
+            }
+
+            var commodities = new List<TradeCommodity>();
+
+            foreach (var commodity in hop.Items("commodities"))
+            {
+                commodities.Add(new TradeCommodity(
+                    String(commodity, "name") ?? "an unnamed commodity",
+                    commodity.Int("amount") ?? 0,
+                    Integer(commodity, "total_profit") ?? 0));
+            }
+
+            hops.Add(new TradeHop(
+                String(from, "system") ?? "an unnamed system",
+                String(from, "station") ?? "an unnamed station",
+                String(to, "system") ?? "an unnamed system",
+                String(to, "station") ?? "an unnamed station")
+            {
+                Distance = Number(hop, "distance"),
+                DistanceToArrival = Number(to, "distance_to_arrival"),
+                TotalProfit = Integer(hop, "total_profit") ?? 0,
+                CumulativeProfit = Integer(hop, "cumulative_profit") ?? 0,
+                Commodities = commodities,
+
+                // Seconds since the epoch rather than a timestamp string, unlike every other
+                // date this service returns.
+                MarketSeen = Integer(to, "market_updated_at") is { } seconds
+                    ? DateTimeOffset.FromUnixTimeSeconds(seconds)
+                    : null,
+            });
+        }
+
+        return new TradeRoute(hops);
+    }
+
+    /// <summary>
+    /// Array members, or empty. The journal namespace has its own copy of this idea for the same
+    /// reason: an absent list and an empty one mean the same thing at every call site.
+    /// </summary>
+    private static IEnumerable<JsonElement> Items(this JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Array
+            ? value.EnumerateArray()
+            : [];
+
+    private static JsonElement? Object(this JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Object
+            ? value
+            : null;
+
+    private static int? Int(this JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number
+        && value.TryGetInt32(out var number)
+            ? number
+            : null;
+
     public static BodySearchResult ReadBodies(JsonDocument document)
     {
         var root = document.RootElement;

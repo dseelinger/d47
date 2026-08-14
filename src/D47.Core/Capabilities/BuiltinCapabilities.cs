@@ -50,13 +50,18 @@ public static class BuiltinCapabilities
         // it. The capability still registers either way, so its settings row and its
         // documentation page exist; its tools report that they cannot act, which is what a
         // capability being off looks like rather than one being absent (list.md Phase 3).
-        Knowledge.IGalaxyService? galaxy = null) =>
+        Knowledge.IGalaxyService? galaxy = null,
+
+        // Same story as the galaxy service, and the same host behind it — but a different
+        // protocol, so a different seam (see RouteCapability).
+        Knowledge.IRouteService? routes = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
+        RouteCapability.Create(routes, () => gameState.Active, settings),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),

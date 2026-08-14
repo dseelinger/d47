@@ -580,6 +580,9 @@ public sealed class AppHost : IDisposable
         var galaxy = new D47.Knowledge.SpanshGalaxyService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>());
 
+        var routePlanner = new D47.Knowledge.SpanshRouteService(
+            loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -674,7 +677,8 @@ public sealed class AppHost : IDisposable
                 // Constructed unconditionally and gated by its setting rather than by whether it
                 // exists: the row that turns it on has to work without a restart, and a service
                 // built only when the setting was already true could not (list.md Phase 4).
-                galaxy));
+                galaxy,
+                routePlanner));
 
         built = capabilities;
 

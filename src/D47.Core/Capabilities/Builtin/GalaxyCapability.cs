@@ -311,9 +311,10 @@ public static class GalaxyCapability
                 Key = EnabledKey,
                 Label = "Look things up in the galaxy",
                 Help =
-                    "Lets d47 answer questions about star systems by asking spansh.co.uk. "
-                    + "System names you ask about, and where you are when the question is relative to you, "
-                    + "leave this machine. Off by default; see Privacy for exactly what is sent.",
+                    "Lets d47 answer questions about star systems, stations and bodies, and plot routes, "
+                    + "by asking spansh.co.uk. System names you ask about, and where you are when the "
+                    + "question is relative to you, leave this machine. Off by default; see Privacy for "
+                    + "exactly what is sent.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "look-things-up-in-the-galaxy",
