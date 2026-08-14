@@ -23,6 +23,16 @@ public sealed record D47Settings
 
     public SpeechSettings Speech { get; init; } = new();
 
+    /// <summary>
+    /// Per-category level, mute and ducking (list.md Phase 12, "#96 Ambient audio mixer").
+    /// <para>
+    /// The arbiter's own record rather than a settings-shaped copy of it. Two records that have
+    /// to agree about five categories and three numbers each is two records that eventually
+    /// disagree, and the thing they would disagree about is how loud d47 is.
+    /// </para>
+    /// </summary>
+    public Audio.AudioMix Audio { get; init; } = new();
+
     public UiSettings Ui { get; init; } = new();
 
     public HotkeySettings Hotkeys { get; init; } = new();

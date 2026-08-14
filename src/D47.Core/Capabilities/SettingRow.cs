@@ -147,6 +147,19 @@ public sealed record SettingRow
     public double Step { get; init; } = 1;
 
     /// <summary>
+    /// The ends of a number row's range, where it has them. Null means unbounded.
+    /// <para>
+    /// Declared rather than only enforced in the setter, because two things need to know: the
+    /// stepper the panel builds, which should not offer a click that will be clamped away, and
+    /// the number-row gate, which steps every row by one and has to step <em>down</em> from a row
+    /// that is already sitting at its ceiling. A level of 1 is not a row that cannot move.
+    /// </para>
+    /// </summary>
+    public double? Minimum { get; init; }
+
+    public double? Maximum { get; init; }
+
+    /// <summary>
     /// How this row's number is written, derived from its step rather than declared twice. A
     /// format and a step that disagree is a value that changes every time it is read back.
     /// </summary>

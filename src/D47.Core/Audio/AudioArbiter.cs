@@ -13,17 +13,29 @@ public enum AudioChannel
     /// </summary>
     Bed = 0,
 
+    /// <summary>
+    /// Situational ambience (list.md Phase 12, "Ambient music"). The second background layer,
+    /// beside the bed and not in the serial queue either — a loop that took its turn at the head
+    /// of a queue would never give it back, and two of them would never give it back twice.
+    /// <para>
+    /// Ranked at the bottom with the bed. Neither ever enters the queue, so the number decides
+    /// nothing today; it says what it would mean if one ever did, and "music outranks an alert"
+    /// is not a sentence this enum should be able to make.
+    /// </para>
+    /// </summary>
+    Music = 1,
+
     /// <summary>A short non-speech marker. Loop-state cues (#20) are these.</summary>
-    Cue = 1,
+    Cue = 2,
 
     /// <summary>An answer, spoken.</summary>
-    Speech = 2,
+    Speech = 3,
 
     /// <summary>
     /// A journal-triggered danger callout (list.md Phase 8). Outranks speech because an alert
     /// that waits for the current sentence to finish is not an alert.
     /// </summary>
-    Alert = 3,
+    Alert = 4,
 }
 
 /// <summary>One thing to make audible.</summary>
@@ -72,12 +84,6 @@ public sealed record AudioActivity(AudioChannel? Channel, string? Caption, bool 
 /// </summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
 {
-    /// <summary>
-    /// How far the bed drops under speech. Enough to stay present as evidence the turn is
-    /// still running, quiet enough not to compete with the words.
-    /// </summary>
-    private const float DuckedBedGain = 0.35f;
-
     private readonly Lock _gate = new();
     private readonly List<Pending> _queue = [];
 
@@ -85,6 +91,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private Playing? _current;
     private Playing? _bed;
     private bool _subscribed;
+    private AudioMix _mix = AudioMix.Default;
 
     private sealed record Pending(long Id, AudioRequest Request);
 
@@ -108,6 +115,35 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             lock (_gate)
             {
                 return Snapshot();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Per-category level, mute and ducking (list.md Phase 12, "#96 Ambient audio mixer").
+    /// <para>
+    /// Set rather than injected, because it follows a settings row and the arbiter outlives
+    /// every value of it. Assigning re-levels whatever is playing rather than waiting for the
+    /// next clip: a category turned down while it is audible has to go quiet now, or the control
+    /// reads as having done nothing.
+    /// </para>
+    /// </summary>
+    public AudioMix Mix
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _mix;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _mix = value;
+                Relevel();
             }
         }
     }
@@ -320,10 +356,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         var id = _nextId++;
         _bed = new Playing(id, request);
-        sink.Play(new PlaybackRequest(id, request.Clip, Loop: true, Gain: BedGain()));
+        sink.Play(new PlaybackRequest(id, request.Clip, Loop: true, Gain: GainFor(AudioChannel.Bed)));
     }
 
-    /// <summary>Start the head of the queue if nothing is playing, and re-level the bed either way.</summary>
+    /// <summary>Start the head of the queue if nothing is playing, and re-level the rest either way.</summary>
     private void Pump()
     {
         if (_current is null && _queue.Count > 0)
@@ -331,21 +367,51 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             var next = _queue[0];
             _queue.RemoveAt(0);
             _current = new Playing(next.Id, next.Request);
-            sink.Play(new PlaybackRequest(next.Id, next.Request.Clip, next.Request.Loop, Gain: 1f));
+            sink.Play(new PlaybackRequest(
+                next.Id,
+                next.Request.Clip,
+                next.Request.Loop,
+                GainFor(next.Request.Channel)));
         }
 
+        Relevel();
+    }
+
+    /// <summary>
+    /// Re-states the gain of everything already playing. Called whenever the answer can have
+    /// changed: something started, something finished, or the Commander moved a level.
+    /// </summary>
+    private void Relevel()
+    {
         if (_bed is { } bed)
         {
-            sink.SetGain(bed.Id, BedGain());
+            sink.SetGain(bed.Id, GainFor(AudioChannel.Bed));
+        }
+
+        if (_current is { } playing)
+        {
+            sink.SetGain(playing.Id, GainFor(playing.Request.Channel));
         }
     }
 
     /// <summary>
-    /// Ducking is a consequence of what is playing, recomputed rather than tracked. A duck
-    /// held as its own boolean is a duck that eventually gets stuck on.
+    /// What a category plays at right now: its level, muted or not, times its duck factor when
+    /// something is being said over it.
+    /// <para>
+    /// Ducking is a consequence of what is playing, recomputed rather than tracked. A duck held
+    /// as its own boolean is a duck that eventually gets stuck on — which is why this generalises
+    /// the bed's old <c>BedGain</c> rather than adding a second mechanism beside it.
+    /// </para>
     /// </summary>
-    private float BedGain() =>
-        _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert ? DuckedBedGain : 1f;
+    private float GainFor(AudioChannel channel)
+    {
+        var speaking = _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert;
+
+        // Nothing ducks under itself. Speech and alerts are what everything else yields to, and
+        // an alert that dropped its own level while it was the thing playing would be an alert
+        // quietening itself.
+        return _mix.For(channel).GainWhile(speaking && AudioMix.Ducks(channel));
+    }
 
     private void OnSinkFinished(long playbackId)
     {

@@ -87,7 +87,18 @@ public class NumberRowGateTests
         }
 
         var from = double.Parse(settings.Read(key)!, NumberStyles.Float, CultureInfo.InvariantCulture);
-        var stepped = (from + row.Step).ToString(row.NumberFormat, CultureInfo.InvariantCulture);
+
+        // Up, unless the row is already sitting at its ceiling — a level defaulting to 1 out of
+        // 1 is a row that can move, and only one of the two directions says so.
+        var target = from + row.Step <= (row.Maximum ?? double.PositiveInfinity)
+            ? from + row.Step
+            : from - row.Step;
+
+        Assert.True(
+            target >= (row.Minimum ?? double.NegativeInfinity),
+            $"{key}: a range of {row.Minimum} to {row.Maximum} is narrower than one step of {row.Step}");
+
+        var stepped = target.ToString(row.NumberFormat, CultureInfo.InvariantCulture);
 
         var applied = settings.Apply(key, stepped, SettingsCaller.Panel);
 

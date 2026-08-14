@@ -49,6 +49,7 @@ public static class BuiltinCapabilities
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
+        AudioCapability.Create(),
         ListeningCapability.Create(settings, listening),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),

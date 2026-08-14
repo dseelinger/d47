@@ -1355,6 +1355,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             FormatString = row.NumberFormat,
             MinWidth = 130,
             HorizontalAlignment = HorizontalAlignment.Right,
+
+            // The row's own range where it declares one, so a stepper never offers a click that
+            // the store is only going to clamp away — an arrow that appears to do nothing reads
+            // as a broken control rather than as a value already at its limit.
+            Minimum = row.Minimum is { } low ? (decimal)low : decimal.MinValue,
+            Maximum = row.Maximum is { } high ? (decimal)high : decimal.MaxValue,
         };
 
         number.ValueChanged += (_, e) =>

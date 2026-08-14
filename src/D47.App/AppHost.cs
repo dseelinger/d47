@@ -704,6 +704,9 @@ public sealed class AppHost : IDisposable
         host.ApplySpeechSettings();
         host.ApplyListeningSettings();
 
+        // The mixer as the file left it, before anything is audible.
+        audio.Mix = loaded.Audio;
+
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
@@ -2175,6 +2178,13 @@ public sealed class AppHost : IDisposable
             {
                 _ = EnsureVoiceForCurrentPersonaAsync();
             }
+        }
+        else if (change.Key.StartsWith("audio.", StringComparison.OrdinalIgnoreCase))
+        {
+            // Straight onto the arbiter, which re-levels whatever is already playing. A mixer
+            // that only took effect on the next clip would be a mixer the Commander cannot hear
+            // themselves using.
+            Audio.Mix = Settings.Current.Audio;
         }
         else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))
         {
