@@ -409,6 +409,11 @@ public partial class MainWindow : Window
             // the one place that holds both.
             _host.PersonaSettling += settling => Avalonia.Threading.Dispatcher.UIThread.Post(
                 () => view.ShowBusy(PersonaCapability.PersonaKey, settling));
+
+            // A file dropped into data/audio rebuilds the cue library without any setting having
+            // changed, so the row that says what was found has no other way to know. Posted
+            // because the rescan runs on the tick thread (list.md Phase 12).
+            _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
         }
 
         return view;

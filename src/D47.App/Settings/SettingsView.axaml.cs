@@ -570,8 +570,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>
     /// Re-reads every row from settings. Cheaper than rebuilding and, more importantly, it does
     /// not pull the control out from under whatever has focus.
+    /// <para>
+    /// Public because a row can go stale without any setting having changed: the disclosure
+    /// naming what was found in <c>data/audio/</c> is read from the cue library, and the library
+    /// is rebuilt when the Commander drops a file in (list.md Phase 12). Every other caller
+    /// arrives through <see cref="SettingsService.Changed"/>, which is why this is the only one
+    /// that has to ask.
+    /// </para>
     /// </summary>
-    private void Refresh()
+    public void Refresh()
     {
         if (_settings is null)
         {
