@@ -88,6 +88,34 @@ only symptom of a wrong sample rate is a cue that never plays:
 Skipped: stereo-bed: it is 48000 Hz / 2ch; audio must be 48000 Hz mono 16-bit.
 ```
 
+## Ambience
+
+`music/<situation>/*.wav` is a background layer of its own, with its own level and its own
+ducking, separate from the cues and the thinking bed. There are five situations, and they are the
+five Elite's `Status.json` can state without anyone guessing:
+
+| Folder | When |
+|---|---|
+| `docked` | Docked at a station or an outpost. |
+| `supercruise` | In supercruise. |
+| `normal-space` | In a ship, a fighter or an SRV, and neither of the above — including landed. |
+| `on-foot` | Out of the ship. |
+| `general` | Anything else, and the fallback for a situation with no files of its own. |
+
+There is no `combat` folder and no `exploring` folder. Neither is something the game reports, and
+a situation D47 has to infer is a situation that plays the wrong music at the worst moment.
+
+Tracks are shuffled within a folder and the whole folder plays before any of them repeats — you
+did not number your files, and hearing the same one every time you dock is what happens if D47
+plays them in name order. A situation with nothing in it falls back to `general`; `general` with
+nothing in it is quiet, which is what every Commander gets until they drop something in. D47
+ships with no music of its own.
+
+Changing situation stops the old track rather than letting it play out: arriving at a station is
+the moment the docking music is wanted, not thirty seconds later. Muting the category stops it,
+and unmuting starts one — a switch whose effect waits for the next time you dock is a switch that
+reads as broken.
+
 ## Not reachable by the model
 
 There is no tool here. Directive 47 cannot turn its own voice down, and it cannot turn the danger

@@ -65,16 +65,19 @@ public sealed class CueLibrary
 
     private readonly IReadOnlyDictionary<LoopState, AudioClip> _cues;
     private readonly IReadOnlyDictionary<string, AudioClip> _beds;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> _music;
     private readonly IReadOnlySet<string> _custom;
 
     private CueLibrary(
         IReadOnlyDictionary<LoopState, AudioClip> cues,
         IReadOnlyDictionary<string, AudioClip> beds,
+        IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> music,
         IReadOnlySet<string> custom,
         IReadOnlyList<string> skipped)
     {
         _cues = cues;
         _beds = beds;
+        _music = music;
         _custom = custom;
         Skipped = skipped;
     }
@@ -121,6 +124,7 @@ public sealed class CueLibrary
     {
         var cues = new Dictionary<LoopState, AudioClip>();
         var beds = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
+        var music = new Dictionary<string, List<AudioClip>>(StringComparer.OrdinalIgnoreCase);
         var custom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var skipped = new List<string>();
         var unclaimed = new List<string>();
@@ -172,6 +176,40 @@ public sealed class CueLibrary
                         Claim(custom, stem, source);
                     }
                 }
+                else if (resource.StartsWith(MusicPrefix, StringComparison.Ordinal))
+                {
+                    // "<situation>.<track>". Split at the first dot only, because a track name is
+                    // whatever the Commander called their file and may well hold more of them.
+                    var rest = resource[MusicPrefix.Length..];
+                    var dot = rest.IndexOf('.', StringComparison.Ordinal);
+
+                    if (dot <= 0)
+                    {
+                        continue;
+                    }
+
+                    var situation = rest[..dot];
+                    var stem = rest[(dot + 1)..];
+
+                    if (!Situations.All.Contains(situation, StringComparer.OrdinalIgnoreCase))
+                    {
+                        skipped.Add(
+                            $"music/{situation}/{stem}.wav is in no situation D47 knows — expected one of "
+                            + $"{string.Join(", ", Situations.All)}.");
+                        continue;
+                    }
+
+                    if (TryRead(source, resource, stem, skipped) is { } track)
+                    {
+                        if (!music.TryGetValue(situation, out var tracks))
+                        {
+                            music[situation] = tracks = [];
+                        }
+
+                        tracks.Add(track);
+                        Claim(custom, $"{situation}/{stem}", source);
+                    }
+                }
             }
         }
 
@@ -200,7 +238,15 @@ public sealed class CueLibrary
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
         }
 
-        return new CueLibrary(cues, beds, custom, skipped);
+        return new CueLibrary(
+            cues,
+            beds,
+            music.ToDictionary(
+                entry => entry.Key,
+                entry => (IReadOnlyList<AudioClip>)entry.Value,
+                StringComparer.OrdinalIgnoreCase),
+            custom,
+            skipped);
     }
 
     /// <summary>
@@ -223,6 +269,17 @@ public sealed class CueLibrary
     }
 
     public AudioClip For(LoopState state) => _cues[state];
+
+    /// <summary>
+    /// The ambience tracks for one situation, in the order the folder was read. Empty is the
+    /// normal answer: d47 ships with no music at all, so every Commander who has not dropped any
+    /// in is here, and empty means quiet rather than broken.
+    /// </summary>
+    public IReadOnlyList<AudioClip> Music(string situation) =>
+        _music.TryGetValue(situation, out var tracks) ? tracks : [];
+
+    /// <summary>Every situation that actually has something in it. The diagnostics row reads this.</summary>
+    public IReadOnlyCollection<string> MusicSituations => (IReadOnlyCollection<string>)_music.Keys;
 
     public AudioClip Bed(string? name) =>
         name is not null && _beds.TryGetValue(name, out var clip) ? clip : _beds[DefaultBed];

@@ -63,7 +63,16 @@ public sealed record AudioRequest
 }
 
 /// <summary>What the arbiter is doing right now.</summary>
-public sealed record AudioActivity(AudioChannel? Channel, string? Caption, bool BedPlaying);
+/// <param name="MusicPlaying">
+/// Defaulted, so a caller that predates the ambience layer still constructs one of these. The
+/// panel and the caption layer read the first three; nothing yet reads this one, and it is here
+/// because a snapshot that omits half the background is a snapshot that will be wrong later.
+/// </param>
+public sealed record AudioActivity(
+    AudioChannel? Channel,
+    string? Caption,
+    bool BedPlaying,
+    bool MusicPlaying = false);
 
 /// <summary>
 /// The one queue in front of every audible thing (architecture.md D7). Speech, cues, the
@@ -76,10 +85,11 @@ public sealed record AudioActivity(AudioChannel? Channel, string? Caption, bool 
 /// against a null sink with no audio device present (architecture.md §8).
 /// </para>
 /// <para>
-/// The bed is the one thing not in the serial queue. It is a background layer with its own
-/// slot, because a loop that took its turn at the head of a queue would never give it back.
-/// It still enters through here and is still stopped by <see cref="Silence"/>, so "everything
-/// audible goes through one arbiter" holds.
+/// The bed and the music are the two things not in the serial queue. Each is a background layer
+/// with its own slot, because a loop that took its turn at the head of a queue would never give
+/// it back — and two of them sharing one slot would be one of them cutting the other off every
+/// time a turn started. They still enter through here and are still stopped by
+/// <see cref="Silence"/>, so "everything audible goes through one arbiter" holds.
 /// </para>
 /// </summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
@@ -90,6 +100,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private long _nextId = 1;
     private Playing? _current;
     private Playing? _bed;
+    private Playing? _music;
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
 
@@ -107,6 +118,13 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>Raised whenever what is audible changes. The caption layer and the panel read this.</summary>
     public event Action<AudioActivity>? ActivityChanged;
+
+    /// <summary>
+    /// Raised when an ambience track reached its end on its own. The host answers with the next
+    /// one — track selection is not the arbiter's business, and a queue that picked its own music
+    /// would be a queue that knows what a situation is.
+    /// </summary>
+    public event Action? MusicFinished;
 
     public AudioActivity Activity
     {
@@ -187,6 +205,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             if (request.Channel == AudioChannel.Bed)
             {
                 StartBed(request);
+                activity = Snapshot();
+            }
+            else if (request.Channel == AudioChannel.Music)
+            {
+                StartMusic(request);
                 activity = Snapshot();
             }
             else
@@ -273,11 +296,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            hadSomething = _current is not null || _bed is not null || _queue.Count > 0;
+            hadSomething = _current is not null || _bed is not null || _music is not null || _queue.Count > 0;
 
             _queue.Clear();
             _current = null;
             _bed = null;
+
+            // Silence is silence. Music is a background layer rather than something d47 is
+            // saying, but a Commander who asked for quiet asked for quiet.
+            _music = null;
             sink.StopAll();
             activity = Snapshot();
         }
@@ -328,6 +355,29 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>
+    /// Stops the ambience without touching anything else. Called when the situation changes, and
+    /// when there is nothing to play for the one the Commander has moved into.
+    /// </summary>
+    public void StopMusic()
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            if (_music is null)
+            {
+                return;
+            }
+
+            sink.Stop(_music.Id);
+            _music = null;
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
     public void StopBed()
     {
         AudioActivity activity;
@@ -359,6 +409,22 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         sink.Play(new PlaybackRequest(id, request.Clip, Loop: true, Gain: GainFor(AudioChannel.Bed)));
     }
 
+    /// <summary>
+    /// One track, in the music slot. Not looped, whatever the request says: a track that looped
+    /// would never finish, and finishing is how the next one is asked for.
+    /// </summary>
+    private void StartMusic(AudioRequest request)
+    {
+        if (_music is not null)
+        {
+            sink.Stop(_music.Id);
+        }
+
+        var id = _nextId++;
+        _music = new Playing(id, request);
+        sink.Play(new PlaybackRequest(id, request.Clip, Loop: false, Gain: GainFor(AudioChannel.Music)));
+    }
+
     /// <summary>Start the head of the queue if nothing is playing, and re-level the rest either way.</summary>
     private void Pump()
     {
@@ -386,6 +452,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (_bed is { } bed)
         {
             sink.SetGain(bed.Id, GainFor(AudioChannel.Bed));
+        }
+
+        if (_music is { } music)
+        {
+            sink.SetGain(music.Id, GainFor(AudioChannel.Music));
         }
 
         if (_current is { } playing)
@@ -416,26 +487,41 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private void OnSinkFinished(long playbackId)
     {
         AudioActivity activity;
+        var trackEnded = false;
 
         lock (_gate)
         {
-            // A completion for something already stopped is normal: Silence and supersede both
-            // race the sink by design, and the loser is this callback.
-            if (_current?.Id != playbackId)
+            if (_music?.Id == playbackId)
             {
+                _music = null;
+                trackEnded = true;
+                activity = Snapshot();
+            }
+            else if (_current?.Id == playbackId)
+            {
+                _current = null;
+                Pump();
+                activity = Snapshot();
+            }
+            else
+            {
+                // A completion for something already stopped is normal: Silence and supersede
+                // both race the sink by design, and the loser is this callback.
                 return;
             }
-
-            _current = null;
-            Pump();
-            activity = Snapshot();
         }
 
         ActivityChanged?.Invoke(activity);
+
+        // Outside the lock, because the answer to it is another Enqueue.
+        if (trackEnded)
+        {
+            MusicFinished?.Invoke();
+        }
     }
 
     private AudioActivity Snapshot() =>
-        new(_current?.Request.Channel, _current?.Request.Caption, _bed is not null);
+        new(_current?.Request.Channel, _current?.Request.Caption, _bed is not null, _music is not null);
 
     public void Dispose()
     {

@@ -462,6 +462,11 @@ public sealed class AppHost : IDisposable
         // because VoicePipeline has a primary constructor and cannot subscribe from one.
         audio.ActivityChanged += voice.Settle;
 
+        // A track ending is how the next one is asked for. The arbiter reports the end and
+        // nothing more: which track comes next is a question about situations and shuffling,
+        // and a queue that answered it would be a queue that knows what a station is.
+        audio.MusicFinished += () => self?.PlayNextTrack();
+
         try
         {
             audioSink.Open(loaded.Speech.OutputDevice);
@@ -791,6 +796,11 @@ public sealed class AppHost : IDisposable
         tick.Add("macros", _ => macros.Poll(PhrasesAlreadyTaken(capabilities)));
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
+
+        // Ambience follows the situation Status.json states, sampled on the tick rather than
+        // hooked to a journal event: docked, supercruise and on foot are conditions rather than
+        // things that happen, and the file is already being read here every tick.
+        tick.Add("ambience", _ => host.FollowSituation(status.Current));
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         // Sampled on the tick rather than hooked to a journal event, because the state store is
@@ -1345,6 +1355,13 @@ public sealed class AppHost : IDisposable
     /// opens with its reaction to the discontinuity rather than with a switch-in bark, and
     /// neither the elapsed time nor the delta can be reconstructed after the fact.
     /// </summary>
+    /// <summary>
+    /// Which situation the ambience is playing for, and which track is next. Held here because
+    /// it is the only thing that spans ticks; everything it decides is a pure function of the
+    /// situation and the library (list.md Phase 12).
+    /// </summary>
+    private readonly Ambience _ambience = new();
+
     private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
 
     private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
@@ -1474,6 +1491,49 @@ public sealed class AppHost : IDisposable
 
             await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
         });
+    }
+
+    /// <summary>
+    /// The ambience layer, following what the Commander is doing (list.md Phase 12).
+    /// <para>
+    /// Called every tick and almost always does nothing: <see cref="Ambience.Enter"/> answers
+    /// false unless the situation actually changed, and a situation changes a handful of times
+    /// an hour. Starting a track on a change rather than checking whether one is playing is what
+    /// keeps this from restarting the music every hundred milliseconds.
+    /// </para>
+    /// </summary>
+    private void FollowSituation(D47.Core.Journal.GameStatus status)
+    {
+        if (!_ambience.Enter(Situations.For(status)))
+        {
+            return;
+        }
+
+        // The old situation's track does not play out over the new one. Arriving at a station is
+        // the moment the docking music is wanted, not thirty seconds later.
+        Audio.StopMusic();
+        PlayNextTrack();
+    }
+
+    /// <summary>
+    /// Starts the next ambience track, or leaves it quiet.
+    /// <para>
+    /// Quiet is the normal answer: d47 ships with no music at all, so every Commander who has not
+    /// dropped any into <c>data/audio/music</c> is here. Muted is quiet too, and checked here
+    /// rather than left to a gain of zero — a track nobody can hear is still a file being decoded.
+    /// </para>
+    /// </summary>
+    private void PlayNextTrack()
+    {
+        if (Audio.Mix.Music.Muted)
+        {
+            return;
+        }
+
+        if (_ambience.Next(Cues) is { } track)
+        {
+            Audio.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = track });
+        }
     }
 
     private void ApplySpeechSettings()
@@ -2204,6 +2264,18 @@ public sealed class AppHost : IDisposable
             // that only took effect on the next clip would be a mixer the Commander cannot hear
             // themselves using.
             Audio.Mix = Settings.Current.Audio;
+
+            // Muting the ambience stops it rather than playing it at nothing, and unmuting it
+            // starts a track rather than waiting for the next time the Commander docks — which
+            // could be an hour, and reads as a switch that did not work.
+            if (Settings.Current.Audio.Music.Muted)
+            {
+                Audio.StopMusic();
+            }
+            else if (!Audio.Activity.MusicPlaying)
+            {
+                PlayNextTrack();
+            }
         }
         else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))
         {
