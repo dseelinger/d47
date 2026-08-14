@@ -1029,7 +1029,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void RestoreNamedVoices()
     {
-        if (Settings.Current.Persona.VoicesNamedChecked || Turns.Provider is null)
+        if (Settings.Current.Persona.VoicesRepaired >= VoicePairing.RepairRevision || Turns.Provider is null)
         {
             return;
         }
@@ -1043,7 +1043,7 @@ public sealed class AppHost : IDisposable
                     _voices,
                     TtsProviderCatalog.Selected(current.Speech.Provider).Id,
                     _logger),
-                VoicesNamedChecked = true,
+                VoicesRepaired = VoicePairing.RepairRevision,
             },
         });
     }
@@ -1271,6 +1271,17 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void OnPersonaChanged(PersonaChanged change)
     {
+        // The ship's voice is the core aboard's, so it has to be re-read when the core changes.
+        // Nothing else did it: the cast is filled in by ApplySpeechSettings, which runs when a
+        // speech row changes, and selecting a core is not one — so the voice in force was
+        // whichever core was aboard when the app started, for every core, forever. The lazy
+        // pairing hid it, because the one path that did re-read the cast was the write a core
+        // with *no* voice triggers, and that stops happening as soon as all eleven have one.
+        //
+        // Synchronous and ahead of the task below, because the first thing this core says is
+        // spoken in there and it is the line most worth hearing in the right voice.
+        ApplySpeechSettings();
+
         _logger.LogInformation(
             "Persona changed from {Previous} to {Current} ({Arrival})",
             change.Previous?.Name ?? "(none)",

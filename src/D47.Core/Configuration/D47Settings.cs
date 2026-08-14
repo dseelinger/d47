@@ -107,16 +107,29 @@ public sealed record PersonaSettings
     public bool VoicesGenderChecked { get; init; }
 
     /// <summary>
-    /// Whether the pairings have been checked against the named defaults — the handful of cores
-    /// whose voice is a lookup rather than a judgement.
-    /// <para>
-    /// Once, on the same terms as <see cref="VoicesGenderChecked"/> and for the same reason: the
-    /// lookup failed on any account that appends a descriptor to a voice's name, which is a
-    /// whole class of file holding a voice nobody chose in a slot that was never the model's to
-    /// fill. A choice made after the repair stands.
-    /// </para>
+    /// Superseded by <see cref="VoicesRepaired"/>, and kept because unknown keys are rejected on
+    /// load: every file written between v0.6.2 and v0.6.4 carries this, and removing the
+    /// property would refuse those files rather than ignore the value. Nothing reads it.
     /// </summary>
     public bool VoicesNamedChecked { get; init; }
+
+    /// <summary>
+    /// Which revision of the named-default repair this file has had.
+    /// <para>
+    /// A number rather than a flag, because the flag could not say the one thing that turned out
+    /// to matter: the repair itself shipped wrong. v0.6.2 stamped "done" on files it had only
+    /// half-repaired — it moved the named voice onto the core it belongs to but left it on
+    /// whoever else was holding it — and v0.6.3 corrected the repair to a file that would never
+    /// run it again. A revision lets a corrected repair reach the files the broken one stamped,
+    /// and costs nothing on a file that is already right.
+    /// </para>
+    /// <para>
+    /// Bumped only when a repair is corrected or added, never as routine: each bump re-decides
+    /// something the Commander may have decided differently, which is the cost that makes this a
+    /// number to raise deliberately rather than a version to keep in step with the app's.
+    /// </para>
+    /// </summary>
+    public int VoicesRepaired { get; init; }
 }
 
 /// <summary>

@@ -28,6 +28,13 @@ namespace D47.Core.Persona;
 public static class VoicePairing
 {
     /// <summary>
+    /// The revision of the named-default repair this build carries. A file stamped with less
+    /// than this gets the repair once more; see <see cref="D47.Core.Configuration.PersonaSettings.VoicesRepaired"/>
+    /// for why a number and not a flag.
+    /// </summary>
+    public const int RepairRevision = 1;
+
+    /// <summary>
     /// A voice for each core that does not already have one. Never overwrites an existing
     /// pairing: a Commander who chose a voice by hand should not have it re-derived on the next
     /// launch, and nothing here distinguishes their choice from an earlier run of this.
