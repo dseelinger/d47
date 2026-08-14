@@ -279,6 +279,12 @@ public sealed class AppHost : IDisposable
     public event Action<bool>? PersonaSettling;
 
     /// <summary>
+    /// Raised when the Commander's audio folder was re-read and the library replaced. The
+    /// settings surface listens, so a bed dropped in appears without a restart.
+    /// </summary>
+    public event Action? AudioReloaded;
+
+    /// <summary>
     /// Downloads a model and loads it. Called by the settings row when the Commander picks one;
     /// the choice is the go-ahead, and the size was on the row they chose from.
     /// </summary>
@@ -801,6 +807,12 @@ public sealed class AppHost : IDisposable
         // hooked to a journal event: docked, supercruise and on foot are conditions rather than
         // things that happen, and the file is already being read here every tick.
         tick.Add("ambience", _ => host.FollowSituation(status.Current));
+
+        // And the folder those tracks came from, which the Commander can add to while d47 is
+        // running (list.md Phase 12, "Pick up dropped-in audio without a restart"). The same
+        // shape the journal reader uses, and for the same reason: nothing here owns a thread or
+        // a file watcher, so the tick drives it in production and a test calls Poll directly.
+        tick.Add("audio-folder", context => host.RescanAudio(context, drops, cueLogger));
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         // Sampled on the tick rather than hooked to a journal event, because the state store is
@@ -1362,6 +1374,11 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private readonly Ambience _ambience = new();
 
+    /// <summary>How often the drop-in folder is looked at. See <see cref="RescanAudio"/>.</summary>
+    private static readonly TimeSpan AudioScanEvery = TimeSpan.FromSeconds(2);
+
+    private TimeSpan _sinceAudioScan = TimeSpan.Zero;
+
     private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
 
     private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
@@ -1491,6 +1508,49 @@ public sealed class AppHost : IDisposable
 
             await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
         });
+    }
+
+    /// <summary>
+    /// Re-reads <c>data/audio/</c> when something in it has changed.
+    /// <para>
+    /// Throttled, because a scan is a directory enumeration and the loop runs at 10 Hz — six
+    /// hundred of them a minute to notice a file that arrives twice a session is a cost with no
+    /// buyer. Measured against the time the tick was given rather than against the clock, so it
+    /// stays right if the period changes and the replay harness still runs it at 100x.
+    /// </para>
+    /// <para>
+    /// A rebuild swaps the library reference. Anything mid-playback holds the clip it was handed
+    /// rather than the library it came from, so a reload can never cut a sentence — which is the
+    /// property that lets this run on a timer at all.
+    /// </para>
+    /// </summary>
+    private void RescanAudio(TickContext context, FolderAudioSource drops, ILogger<CueLibrary> logger)
+    {
+        _sinceAudioScan += context.Since;
+
+        if (_sinceAudioScan < AudioScanEvery)
+        {
+            return;
+        }
+
+        _sinceAudioScan = TimeSpan.Zero;
+
+        if (!drops.Poll())
+        {
+            return;
+        }
+
+        Cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+
+        _logger.LogInformation(
+            "Reloaded the audio folder: {Count} file(s) picked up, {Skipped} skipped",
+            Cues.CustomCount,
+            Cues.Skipped.Count);
+
+        // The rows that read the library — the bed picker's choices and the row saying what was
+        // found — have no other way to know. The picker asks at the moment it is opened and is
+        // already right; the disclosure is read on a refresh, and this is the refresh.
+        AudioReloaded?.Invoke();
     }
 
     /// <summary>
