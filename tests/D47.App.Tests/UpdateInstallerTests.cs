@@ -190,6 +190,53 @@ public class UpdateInstallerTests
         Assert.False(File.Exists(install.Whisper + UpdateInstaller.RetiredSuffix));
     }
 
+    /// <summary>
+    /// The Commander may have renamed the exe — it was "one file you put wherever you want
+    /// it" for thirteen releases. The archive's d47.exe goes where the running executable
+    /// actually is, whatever it is called there, rather than landing beside it by name.
+    /// </summary>
+    [Fact]
+    public void ARenamedExecutableIsStillTheOneReplaced()
+    {
+        var (installer, folder) = Installer();
+
+        var install = Directory.CreateDirectory(Path.Combine(folder, "install")).FullName;
+        var exe = Path.Combine(install, "commander.exe");
+        File.WriteAllText(exe, "the old build");
+
+        Assert.True(installer.TrySwap(exe, Payload(folder, "the new build")));
+
+        Assert.Equal("the new build", File.ReadAllText(exe));
+        Assert.False(File.Exists(Path.Combine(install, "d47.exe")));
+    }
+
+    /// <summary>
+    /// The narrowest rollback case: a retirement succeeds and the move-in then fails —
+    /// antivirus holding the staged file, say. The retirement must be undone even though its
+    /// replacement never arrived, or the file survives only as .old — which the next
+    /// startup's cleanup deletes, and for the exe that is deleting the only copy.
+    /// </summary>
+    [Fact]
+    public void AMoveThatFailsAfterItsRetirementRollsTheRetirementBack()
+    {
+        var (installer, folder) = Installer();
+
+        var install = InstalledBuild(folder, "the old build");
+        var payload = Payload(folder, "the new build");
+
+        // Held open without delete sharing: its destination retires, then the move-in fails.
+        using (File.Open(
+                   Path.Combine(payload, "runtimes", "win-x64", "whisper.dll"),
+                   FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.False(installer.TrySwap(install.Exe, payload));
+        }
+
+        Assert.Equal("the old build", File.ReadAllText(install.Whisper));
+        Assert.False(File.Exists(install.Whisper + UpdateInstaller.RetiredSuffix));
+        Assert.Equal("the old build", File.ReadAllText(install.Exe));
+    }
+
     /// <summary>Startup clears what the previous update left, once it is no longer running.</summary>
     [Fact]
     public void StartupRemovesTheRetiredBuildAndAnyStagedDownload()

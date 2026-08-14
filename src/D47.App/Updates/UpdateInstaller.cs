@@ -149,6 +149,10 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
         {
             logger.LogError(ex, "The downloaded archive could not be unpacked");
             Discard(archive);
+
+            // A half-written payload is dead weight — and on a full disk, it is sitting on
+            // the very space whose absence just failed the extraction.
+            TryDeleteFolder(payload);
             return null;
         }
 
@@ -183,14 +187,17 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
     internal bool TrySwap(string runningExecutable, string payloadFolder)
     {
         var installRoot = Path.GetDirectoryName(Path.GetFullPath(runningExecutable))!;
-        var exeName = Path.GetFileName(runningExecutable);
 
         var shipped = Directory.EnumerateFiles(payloadFolder, "*", SearchOption.AllDirectories)
             .Select(file => Path.GetRelativePath(payloadFolder, file))
-            .OrderBy(rel => string.Equals(rel, exeName, StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+            .OrderBy(rel => string.Equals(rel, ExecutableName, StringComparison.OrdinalIgnoreCase) ? 1 : 0)
             .ToList();
 
-        // What has been done, so it can be undone. Source is null for a bare retirement.
+        // What has been done, so it can be undone. A replacement is two entries — the
+        // retirement, then the move-in — pushed separately, so a move that fails after its
+        // retirement succeeded still gets that retirement undone. One entry pushed after
+        // both would strand the displaced file at .old on exactly that failure, where the
+        // next startup's cleanup deletes it — for the exe, deleting the only copy.
         var done = new Stack<(string Destination, string? Source, string? Retired)>();
 
         try
@@ -203,14 +210,24 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
             foreach (var rel in shipped)
             {
                 var source = Path.Combine(payloadFolder, rel);
-                var destination = Path.Combine(installRoot, rel);
+
+                // The archive's d47.exe goes where the running executable actually is,
+                // whatever the Commander may have renamed it to; everything else keeps its
+                // archive-relative place beside it. Matching on the archive name rather
+                // than the running name is what keeps a renamed install updatable.
+                var destination = string.Equals(rel, ExecutableName, StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetFullPath(runningExecutable)
+                    : Path.Combine(installRoot, rel);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
 
-                var retired = File.Exists(destination) ? Retire(destination) : null;
+                if (File.Exists(destination))
+                {
+                    done.Push((destination, null, Retire(destination)));
+                }
 
                 File.Move(source, destination);
-                done.Push((destination, source, retired));
+                done.Push((destination, source, null));
             }
 
             return true;
@@ -305,10 +322,13 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
             var installRoot = Path.GetDirectoryName(Path.GetFullPath(runningExecutable))!;
             var removed = false;
 
+            // File by file, each surviving the others' failures: the first start after an
+            // update overlaps the outgoing build, whose d47.exe.old is still a running
+            // image and undeletable until next time. That one locked file must not spare
+            // the retired libraries and the staging sweep below it.
             foreach (var retired in RetiredFiles(runningExecutable, installRoot))
             {
-                File.Delete(retired);
-                removed = true;
+                removed |= TryDelete(retired);
             }
 
             if (removed)
@@ -324,12 +344,12 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
                              .Where(file => file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
                                             || file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))
                 {
-                    File.Delete(stale);
+                    TryDelete(stale);
                 }
 
                 foreach (var payload in Directory.EnumerateDirectories(StagingFolder, "d47-*"))
                 {
-                    Directory.Delete(payload, recursive: true);
+                    TryDeleteFolder(payload);
                 }
             }
         }
@@ -337,6 +357,20 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
         {
             // Leftovers are untidy, not broken. Never a reason to fail a startup.
             logger.LogDebug(ex, "Could not remove a file left by a previous update");
+        }
+    }
+
+    private bool TryDelete(string file)
+    {
+        try
+        {
+            File.Delete(file);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogDebug(ex, "Could not remove {File} yet; the next start will try again", file);
+            return false;
         }
     }
 

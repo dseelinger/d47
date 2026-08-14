@@ -50,6 +50,7 @@ jobs:
           }
 
       - name: Self-test the published build
+        timeout-minutes: 10
         shell: pwsh
         working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
         run: |
@@ -58,7 +59,7 @@ jobs:
           $p = Start-Process -FilePath .\d47.exe -ArgumentList '--selftest' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
           Get-Content selftest.out, selftest.err
           if ($p.ExitCode -ne 0) {
-            Get-Content data\logs\d47-*.log | Select-Object -Last 80
+            Get-Content data\logs\d47-*.log -ErrorAction SilentlyContinue | Select-Object -Last 80
             exit $p.ExitCode
           }
 

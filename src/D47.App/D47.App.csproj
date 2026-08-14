@@ -105,7 +105,9 @@
           Condition="$([System.String]::Copy('%(_WhisperNative.RelativePath)').Contains('win-x64'))"
           ExcludeFromSingleFile="true" />
     </ItemGroup>
-    <Message Importance="high" Text="WHISPER-NATIVE: %(_WhisperNative.RelativePath)" />
+    <!-- Only what actually ships: the dropped arm64/x86 copies would read as shipped too. -->
+    <Message Importance="high" Text="WHISPER-NATIVE beside the exe: %(_WhisperNative.RelativePath)"
+             Condition="$([System.String]::Copy('%(_WhisperNative.RelativePath)').Contains('win-x64'))" />
   </Target>
 
   <ItemGroup>

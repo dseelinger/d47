@@ -23,5 +23,6 @@ dotnet test
 dotnet publish src/D47.App -c Release
 ```
 
-Requires the .NET 10 SDK. Publish produces one self-contained `d47.exe` with no runtime
-prerequisite; releases are cut by tagging `vX.Y.Z`.
+Requires the .NET 10 SDK. Publish produces a self-contained `d47.exe` with Whisper's
+native libraries beside it under `runtimes\` — the pair ships together as `d47.zip`, with
+no runtime prerequisite; releases are cut by tagging `vX.Y.Z`.

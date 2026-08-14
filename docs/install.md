@@ -59,8 +59,10 @@ data\
 
 ## Finding it again
 
-D47 does not install itself. It is one file you put wherever you want it, and everything it
-writes lives in `data/` beside that file — copy the folder and the whole thing comes with it.
+D47 does not install itself. It is the folder you unpacked, wherever you put it — the exe,
+its `runtimes` libraries, and everything it writes in `data/` beside them. Copy that folder
+and the whole thing, program and state, comes with it; move only `d47.exe` and it leaves its
+ears behind.
 
 The cost of that is a program you can only reach by remembering where you left it, so the
 first run offers to add a Start Menu entry. It is one shortcut, for your account only, needs
