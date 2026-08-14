@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Input;
 using D47.App.Logging;
@@ -289,6 +290,13 @@ public sealed class AppHost : IDisposable
 
     private readonly WasapiMicrophone _microphone;
 
+    /// <summary>
+    /// When the Commander was last heard and understood. The evidence behind answering "can you
+    /// hear me?" with a demonstration rather than an inventory of device state. A box because
+    /// the listening surface closes over it during composition, before this object exists.
+    /// </summary>
+    private StrongBox<DateTimeOffset?>? _heardAt;
+
     private readonly PushToTalkKey _pushToTalk;
 
     public string Version { get; }
@@ -489,6 +497,10 @@ public sealed class AppHost : IDisposable
         // Avalonia comes up, which is after this.
         AppHost? self = null;
 
+        // When the Commander was last understood. Written by the turn path once the host
+        // exists, read by the listening capability, so it is a box rather than a field.
+        var heardAt = new StrongBox<DateTimeOffset?>(null);
+
         // Off unless D47_COVERAGE=1. Created before the registry because when it is on it adds a
         // row, and which rows exist has to be settled before registration — descriptors are
         // registered once and never mutated.
@@ -529,6 +541,13 @@ public sealed class AppHost : IDisposable
                     DeviceLabel = id => WasapiMicrophone.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
                     CaptureState = () => (microphone.IsCapturing, microphone.Unavailable),
+                    DefaultDeviceName = WasapiMicrophone.DefaultDeviceName,
+
+                    // The demonstration beats any assertion about device state: if words
+                    // arrived recently, hearing works, and that is the answer. Boxed because
+                    // the surface is built before the host exists, the same late-binding the
+                    // route accessor uses.
+                    SinceHeard = () => heardAt.Value is { } heard ? DateTimeOffset.Now - heard : null,
 
                     TranscriberState = () => (
                         transcriber.IsReady,
@@ -697,6 +716,7 @@ public sealed class AppHost : IDisposable
         // rather than owning it — proper-noun biasing wants the systems the Commander is about
         // to arrive in, and those are only in the route file.
         host._route = () => route.Current;
+        host._heardAt = heardAt;
 
         // Push-to-talk, sampled here rather than hooked. This is the whole reason the tick runs
         // at 10 Hz rather than 4: the period is the worst-case delay before a key-down is seen,
@@ -1155,6 +1175,15 @@ public sealed class AppHost : IDisposable
                 }
             }
 
+            // Anything d47 says without a turn behind it still belongs in the transcript, so
+            // that what was heard and what can be read back are the same set. A core's first
+            // words are the one line most worth having there: it is the only thing that core
+            // has ever said, and a conversation whose opening is missing starts mid-thought.
+            //
+            // Raised before the await, so it appears as the line begins rather than after it
+            // has finished being spoken — the same ordering as every other announcement.
+            Said?.Invoke(line);
+
             await Voice.AcknowledgePersonaAsync(line).ConfigureAwait(false);
         });
     }
@@ -1306,6 +1335,11 @@ public sealed class AppHost : IDisposable
                     // reporting, which a Commander who coughed should not be told is an error.
                     _logger.LogInformation("Nothing intelligible in {Seconds:0.#}s", utterance.Duration.TotalSeconds);
                     return;
+                }
+
+                if (_heardAt is { } clock)
+                {
+                    clock.Value = DateTimeOffset.Now;
                 }
 
                 _logger.LogInformation("Heard: {Text}", transcription.Text);

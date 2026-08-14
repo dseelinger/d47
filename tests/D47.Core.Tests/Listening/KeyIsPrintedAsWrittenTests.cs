@@ -40,7 +40,9 @@ public class KeyIsPrintedAsWrittenTests
     [Fact]
     public void ThePushToTalkKeyIsReportedInItsPrintableForm()
     {
-        var text = ListeningCapability.Describe(Bound(), Surface(key => key == "Oem4" ? "[" : key));
+        // The unconditional inventory, which is where the key and the all-clear now live;
+        // Describe answers a Commander's question and says neither when nothing is wrong.
+        var text = ListeningCapability.DescribeInDetail(Bound(), Surface(key => key == "Oem4" ? "[" : key));
 
         Assert.Contains("Push-to-talk: [ (hold).", text, StringComparison.Ordinal);
 
@@ -63,7 +65,7 @@ public class KeyIsPrintedAsWrittenTests
     {
         Assert.Contains(
             "Push-to-talk: Oem4 (hold).",
-            ListeningCapability.Describe(Bound(), Surface(label: null)),
+            ListeningCapability.DescribeInDetail(Bound(), Surface(label: null)),
             StringComparison.Ordinal);
     }
 }

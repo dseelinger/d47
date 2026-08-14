@@ -20,7 +20,7 @@ public class WhisperTranscriberTests
         using var transcriber = new WhisperTranscriber(log);
 
         var garbage = Path.Combine(
-            Directory.CreateTempSubdirectory("d47-stt-tests").FullName, "ggml-garbage.bin");
+            TempFolders.Create("d47-stt-tests"), "ggml-garbage.bin");
         File.WriteAllText(garbage, "not a ggml model");
 
         try

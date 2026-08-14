@@ -40,6 +40,22 @@ public static class ListeningCapability
 
         public required Func<string, string> DeviceLabel { get; init; }
 
+        /// <summary>
+        /// What "the system default" actually resolves to right now, or null when that cannot
+        /// be determined. Named everywhere the default is offered or reported, because the
+        /// default is the one choice a Commander makes without seeing what they chose — and on
+        /// a machine with VR or streaming software installed it is routinely a virtual endpoint
+        /// that delivers silence. A picker that says only "System default" hides exactly the
+        /// fact needed to spot that.
+        /// </summary>
+        public Func<string?>? DefaultDeviceName { get; init; }
+
+        /// <summary>
+        /// How long ago the Commander was last heard and understood, or null if never. Supplied
+        /// as an age rather than a timestamp because Core reads no clock.
+        /// </summary>
+        public Func<TimeSpan?>? SinceHeard { get; init; }
+
         /// <summary>Whether audio is actually flowing, and why not when it is not.</summary>
         public required Func<(bool Capturing, string? Unavailable)> CaptureState { get; init; }
 
@@ -120,6 +136,15 @@ public static class ListeningCapability
                     + "one setting whose failure looks like D47 simply not hearing you.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the system default)",
+
+                // Names the device the default actually resolves to. Unset is the shipped
+                // state, so this is what a Commander sees before they have chosen anything —
+                // and Windows will hand that slot to a virtual endpoint from VR or streaming
+                // software without mentioning it, which then presents as d47 not hearing them
+                // at all. The placeholder is the only place that fact can be seen.
+                DefaultDisplaySource = _ => surface.DefaultDeviceName?.Invoke() is { Length: > 0 } resolved
+                    ? $"(the system default — {resolved})"
+                    : "(the system default)",
                 AllowsFreeText = false,
                 ChoiceSource = _ => surface.InputDevices(),
                 ChoiceLabel = id => surface.DeviceLabel(id),
@@ -284,11 +309,91 @@ public static class ListeningCapability
     };
 
     /// <summary>
-    /// The whole listening picture in one answer, including the double-bind check. Reported
-    /// together because "D47 cannot hear me" has five possible causes and the Commander should
-    /// not have to guess which one it is.
+    /// Answers "can you hear me?" — as a question, not as a status page.
+    /// <para>
+    /// The keyword that reaches this is a Commander asking something with a yes or a no in it,
+    /// and when everything is working the honest answer is one word plus the evidence for it.
+    /// Leading with an inventory of the microphone, the key, the mode and the binding table
+    /// makes the reader do the diagnosis d47 has already done, and does it every time including
+    /// the overwhelming majority of times nothing is wrong.
+    /// </para>
+    /// <para>
+    /// <b>Asked by voice, the question answers itself.</b> The words only exist because they
+    /// were heard, so the demonstration is better than any assertion about device state — which
+    /// is why a recent transcription is reported first and the rest is dropped.
+    /// </para>
+    /// <para>
+    /// The detail is not lost, it is conditional: every fault below is stated in full, with the
+    /// thing to do about it, because <em>that</em> is when a Commander needs to know which of
+    /// the five causes it is. <see cref="DescribeInDetail"/> keeps the unconditional inventory
+    /// for a diagnostics surface, where a reader has asked for exactly that.
+    /// </para>
     /// </summary>
     public static string Describe(D47Settings settings, ListeningSurface surface)
+    {
+        var listening = settings.Listening;
+        var (capturing, unavailable) = surface.CaptureState();
+        var (ready, model, reason) = surface.TranscriberState();
+
+        var faults = new StringBuilder();
+
+        if (listening.PushToTalkKey is null)
+        {
+            faults.AppendLine(
+                "No push-to-talk key is set, so I never open the microphone. "
+                + "Set one in Settings and I will listen while you hold it.");
+        }
+
+        if (!capturing)
+        {
+            faults.AppendLine(
+                $"The microphone is not capturing. {unavailable ?? "No reason was recorded."}");
+        }
+
+        if (!ready)
+        {
+            faults.AppendLine(
+                $"I cannot turn audio into words. {reason ?? "No speech model is loaded."}");
+        }
+
+        // A collision has no symptom other than one of the two silently not working, so it is
+        // said whenever it exists — even when everything else is healthy.
+        if (listening.PushToTalkKey is { } bound
+            && CollisionWarning(bound, surface.KeyLabel?.Invoke(bound) ?? bound, surface) is { } collision)
+        {
+            faults.AppendLine(collision);
+        }
+
+        if (faults.Length > 0)
+        {
+            return $"No — not properly.\n{faults.ToString().TrimEnd()}";
+        }
+
+        var device = DeviceName(listening.InputDevice, surface);
+
+        // "Just now" is the strongest possible evidence and needs no qualification. The window
+        // is generous because the answer is about whether hearing works at all, not about
+        // precisely when it last did.
+        if (surface.SinceHeard?.Invoke() is { } age && age < TimeSpan.FromMinutes(2))
+        {
+            return $"Yes — I just heard you, on {device}.";
+        }
+
+        var printedKey = listening.PushToTalkKey is { } key
+            ? surface.KeyLabel?.Invoke(key) ?? key
+            : null;
+
+        return
+            $"Yes — {device} is open and {model} is loaded. "
+            + $"Hold {printedKey} and say something.";
+    }
+
+    /// <summary>
+    /// The unconditional inventory: every part of the listening path whether or not it is
+    /// working. For a diagnostics surface, where the whole point is to see the state of things
+    /// that are fine. <see cref="Describe"/> is what answers a Commander who asked a question.
+    /// </summary>
+    public static string DescribeInDetail(D47Settings settings, ListeningSurface surface)
     {
         var report = new StringBuilder();
         var listening = settings.Listening;
@@ -337,30 +442,64 @@ public static class ListeningCapability
     /// </summary>
     private static IEnumerable<string> DescribeCollision(string key, string printed, ListeningSurface surface)
     {
+        if (CollisionWarning(key, printed, surface) is { } warning)
+        {
+            yield return warning;
+            yield break;
+        }
+
+        var binds = surface.Binds();
+
+        // The all-clear belongs only to the detailed inventory. Silence rather than a false
+        // all-clear when the binds were never read: not having looked is not the same as
+        // having looked and found nothing.
+        if (binds.IsKnown)
+        {
+            yield return $"No Elite binding uses {printed} in the {binds.PresetName} preset.";
+        }
+    }
+
+    /// <summary>
+    /// The collision, or null when there is not one. Separated from the all-clear because a
+    /// warning is worth interrupting a Commander for and a clean result is not.
+    /// </summary>
+    private static string? CollisionWarning(string key, string printed, ListeningSurface surface)
+    {
         var binds = surface.Binds();
 
         if (!binds.IsKnown)
         {
-            // Silence rather than a false all-clear. Not having read the binds is not the same
-            // as having read them and found nothing.
-            yield break;
+            return null;
         }
 
         var collisions = binds.Using(key);
 
         if (collisions.Count == 0)
         {
-            yield return $"No Elite binding uses {printed} in the {binds.PresetName} preset.";
-            yield break;
+            return null;
         }
 
         var actions = string.Join(", ", collisions.Select(binding => binding.Action).Distinct());
 
-        yield return
+        return
             $"Warning: {printed} is also bound in Elite ({binds.PresetName}) to {actions}. "
             + "One of the two will not work, and neither will say so — pick another key for one of them.";
     }
 
-    private static string DeviceName(string? id, ListeningSurface surface) =>
-        id is { Length: > 0 } ? surface.DeviceLabel(id) : "the system default";
+    /// <summary>
+    /// The device in the Commander's terms. An explicit choice is named; the default is named
+    /// <em>and</em> resolved, so "the system default" never stands alone as the one answer that
+    /// cannot be acted on.
+    /// </summary>
+    private static string DeviceName(string? id, ListeningSurface surface)
+    {
+        if (id is { Length: > 0 })
+        {
+            return surface.DeviceLabel(id);
+        }
+
+        return surface.DefaultDeviceName?.Invoke() is { Length: > 0 } resolved
+            ? $"the system default ({resolved})"
+            : "the system default";
+    }
 }
