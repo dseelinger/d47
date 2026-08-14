@@ -1,3 +1,5 @@
+using D47.Core.Audio;
+
 namespace D47.Core;
 
 /// <summary>
@@ -14,6 +16,7 @@ public sealed class AppPaths
         InstallRoot = Path.GetFullPath(installRoot);
         Data = Path.Combine(InstallRoot, DataFolderName);
         Logs = Path.Combine(Data, "logs");
+        Audio = Path.Combine(Data, "audio");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
@@ -29,6 +32,13 @@ public sealed class AppPaths
     public string InstallRoot { get; }
     public string Data { get; }
     public string Logs { get; }
+
+    /// <summary>
+    /// Where the Commander drops their own cues, beds and ambience (list.md Phase 12). Created
+    /// whether or not anything is in it, so the convention is discoverable by opening the data
+    /// folder rather than by reading the documentation.
+    /// </summary>
+    public string Audio { get; }
     public string SettingsFile { get; }
     public string SecretsFile { get; }
 
@@ -39,5 +49,11 @@ public sealed class AppPaths
     {
         Directory.CreateDirectory(Data);
         Directory.CreateDirectory(Logs);
+
+        // The three drop-in folders by name, empty. A convention nobody can see is a convention
+        // nobody uses, and "make a folder called beds" is a step to get wrong.
+        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.CuesFolder));
+        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.BedsFolder));
+        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder));
     }
 }

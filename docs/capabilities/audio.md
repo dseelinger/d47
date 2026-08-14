@@ -60,6 +60,34 @@ Moving a level re-levels whatever is playing at that moment rather than waiting 
 clip. Turn the bed down while a turn is running and it goes quiet under your hand, which is the
 only way to set a level by ear.
 
+## Your own sounds
+
+Drop 16-bit mono 48 kHz `.wav` files into `data/audio` beside the executable. The folders are
+made for you on first run, so opening the data folder is enough to find out what goes where:
+
+```text
+data/audio/
+  cues/<loop-state>.wav      replaces a shipped sound cue
+  beds/<name>.wav            adds a thinking bed to the picker
+  music/<situation>/*.wav    ambience — see below
+```
+
+A cue file is named for the loop state it belongs to: `idle`, `listening`, `transcribing`,
+`thinking`, `speaking`, `answered`, `unsure`, `failed`. A bed file is named whatever you like, and
+the name is what appears in the **Thinking bed sound** picker, marked as yours.
+
+Files are picked up while D47 is running. Drop one in and it appears in the picker without a
+restart, and a reload never cuts a clip that is already playing.
+
+A file that will not load is skipped rather than fatal, and the **Your own audio** row says which
+one and why — a skipped file is silent in exactly the way a missing one is, so without that the
+only symptom of a wrong sample rate is a cue that never plays:
+
+```text
+2 files picked up from data/audio.
+Skipped: stereo-bed: it is 48000 Hz / 2ch; audio must be 48000 Hz mono 16-bit.
+```
+
 ## Not reachable by the model
 
 There is no tool here. Directive 47 cannot turn its own voice down, and it cannot turn the danger

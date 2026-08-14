@@ -80,7 +80,7 @@ public static class TestSurface
             new SpeechCapability.SpeechSurface
             {
                 Silence = () => { },
-                Beds = [.. CueLibrary.Load().BedNames],
+                Beds = () => [.. CueLibrary.Load().BedNames],
                 Voices = () => [.. (voices ?? []).Select(voice => voice.Id)],
                 VoiceLabel = id => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
             },
@@ -106,7 +106,7 @@ public static class TestSurface
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
-            coverage));
+            coverage: coverage));
 
         built = registry;
 

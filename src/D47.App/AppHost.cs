@@ -208,7 +208,15 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public AudioArbiter Audio { get; }
 
-    public CueLibrary Cues { get; }
+    /// <summary>
+    /// The cues, beds and ambience currently loaded — the shipped set plus whatever is in
+    /// <c>data/audio/</c>.
+    /// <para>
+    /// Replaced rather than mutated when the folder changes, so anything mid-playback keeps the
+    /// clip it already holds and a reload can never cut a sentence (list.md Phase 12).
+    /// </para>
+    /// </summary>
+    public CueLibrary Cues { get; private set; }
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -427,14 +435,27 @@ public sealed class AppHost : IDisposable
         var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
         var spend = new SpendTracker();
 
+        // Late-bound, because several things built here have to read something that does not
+        // exist until the host does — the voice list, the headset report, and now the cue
+        // library, which is replaced whenever the Commander drops a file into data/audio.
+        AppHost? self = null;
+
         // Audio comes up before the registry because the speech capability's settings rows read
-        // the shipped bed names and the device list from it. The sink is opened here rather than
-        // lazily so a machine with no working output says so once, at startup, instead of on the
-        // first turn the Commander was hoping to hear.
-        var cues = CueLibrary.Load();
+        // the bed names and the device list from it. The sink is opened here rather than lazily
+        // so a machine with no working output says so once, at startup, instead of on the first
+        // turn the Commander was hoping to hear.
+        //
+        // The Commander's own folder is a second source beside the embedded one, drop-ins winning
+        // by name (list.md Phase 12, "Custom Sound Cues"). Nothing here holds the resulting
+        // library: everything that plays a cue asks the host for the current one, so a rebuild is
+        // one assignment rather than a set of references to chase.
+        var drops = new FolderAudioSource(paths.Audio, loggerFactory.CreateLogger<FolderAudioSource>());
+        var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
+        var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
-        var voice = new VoicePipeline(audio, cues, loggerFactory);
+        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory);
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn
         // returns, because the turn returns while the reply is still being spoken. Wired here
@@ -500,10 +521,6 @@ public sealed class AppHost : IDisposable
         // D5), and that rule is what keeps tool schemas byte-identical across turns.
         CapabilityRegistry? built = null;
 
-        // The same late-binding trick, for the same reason: the headset path is built after
-        // Avalonia comes up, which is after this.
-        AppHost? self = null;
-
         // When the Commander was last understood. Written by the turn path once the host
         // exists, read by the listening capability, so it is a box rather than a field.
         var heardAt = new StrongBox<DateTimeOffset?>(null);
@@ -528,7 +545,8 @@ public sealed class AppHost : IDisposable
                 new SpeechCapability.SpeechSurface
                 {
                     Silence = audio.Silence,
-                    Beds = [.. cues.BedNames],
+                    Beds = () => [.. (self?.Cues ?? cues).BedNames],
+                    BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => WasapiAudioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -597,6 +615,7 @@ public sealed class AppHost : IDisposable
                 },
                 macros,
                 personas,
+                () => (self?.Cues ?? cues).DescribeDrops(),
                 coverage is null ? null : () => coverage.Report().Summary));
 
         built = capabilities;

@@ -47,7 +47,14 @@ public static class AudioCapability
 
     private static string Slug(AudioChannel channel) => channel.ToString().ToLowerInvariant();
 
-    public static CapabilityDescriptor Create() => new()
+    /// <summary>The drop-in folder row's key.</summary>
+    public const string DropsKey = "audio.drops";
+
+    /// <param name="drops">
+    /// What was picked up from <c>data/audio/</c> and what was skipped, in words. Null where
+    /// there is no folder to describe — under the designer, and in a test that is not about it.
+    /// </param>
+    public static CapabilityDescriptor Create(Func<string>? drops = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -58,7 +65,30 @@ public static class AudioCapability
             PanelTitle = "Audio mixer",
             StartCollapsed = true,
         },
-        Settings = [.. Enum.GetValues<AudioChannel>().SelectMany(RowsFor)],
+        Settings =
+        [
+            .. Enum.GetValues<AudioChannel>().SelectMany(RowsFor),
+            .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops)],
+        ],
+    };
+
+    /// <summary>
+    /// What d47 found in the Commander's own folder — and, more to the point, what it could not
+    /// use. A file that was skipped is silent in exactly the way a file that is missing is, so
+    /// without this the only symptom of a wrong sample rate is a cue that never plays.
+    /// </summary>
+    private static SettingRow DropsRow(Func<string> drops) => new()
+    {
+        Key = DropsKey,
+        Label = "Your own audio",
+        Help = "Drop 16-bit mono 48 kHz .wav files into data/audio: cues/<state>.wav replaces a "
+               + "sound cue, beds/<name>.wav adds a thinking bed, and music/<situation>/*.wav is "
+               + "ambience. They are picked up without a restart.",
+        Kind = SettingKind.Info,
+        Group = "Your own audio",
+        GroupHelp = "What D47 found beside the set it ships with.",
+        DocsAnchor = "drop-in-folder",
+        Binding = new SettingBinding { Read = _ => drops() },
     };
 
     private static IEnumerable<SettingRow> RowsFor(AudioChannel channel)

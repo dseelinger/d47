@@ -218,7 +218,7 @@ public sealed class TestSurface
         Action? onSilence = null) => new()
     {
         Silence = onSilence ?? (() => { }),
-        Beds = [.. D47.Core.Audio.CueLibrary.Load().BedNames],
+        Beds = () => [.. D47.Core.Audio.CueLibrary.Load().BedNames],
     };
 
     /// <summary>
