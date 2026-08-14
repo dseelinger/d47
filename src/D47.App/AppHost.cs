@@ -235,8 +235,8 @@ public sealed class AppHost : IDisposable
     public IReadOnlyList<string> ReservedPhrases { get; private set; } = [];
 
     /// <summary>
-    /// Speech models on disk, and the consent-gated way to fetch one. Exposed because the
-    /// settings surface is what asks the Commander, and only a surface can ask.
+    /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
+    /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
     public IModelStore Models { get; }
 
@@ -259,29 +259,16 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Noted;
 
     /// <summary>
-    /// Raised when a selected speech model is not on disk. A surface answers it by asking the
-    /// Commander and calling <see cref="InstallModelAsync"/>.
-    /// <para>
-    /// Raised from here rather than from the settings panel so it fires however the model came
-    /// to be selected — the panel, the keyword router, or a hand-edited settings file. A
-    /// consent prompt that only one surface knows to show is a surface that can be gone around.
-    /// </para>
-    /// </summary>
-    public event Action<WhisperModel>? ModelNeeded;
-
-    /// <summary>
-    /// Downloads a model, having asked. Nothing is fetched unless <paramref name="consent"/>
-    /// returns true, and the offer it is given carries the real size and host rather than an
-    /// estimate.
+    /// Downloads a model and loads it. Called by the settings row when the Commander picks one;
+    /// the choice is the go-ahead, and the size was on the row they chose from.
     /// </summary>
     public async Task<ModelInstallResult> InstallModelAsync(
         WhisperModel model,
-        Func<ModelOffer, Task<bool>> consent,
         IProgress<ModelProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
         var result = await Models
-            .InstallAsync(model, consent, progress, cancellationToken)
+            .InstallAsync(model, progress, cancellationToken)
             .ConfigureAwait(false);
 
         if (result.Success)
@@ -1459,36 +1446,68 @@ public sealed class AppHost : IDisposable
     private Func<NavRoute>? _route;
 
     /// <summary>
-    /// A model that was selected without being on disk, waiting for the selection to be cleared
-    /// and the offer raised. Held across the body of one apply so the write happens once, at
-    /// the end, rather than re-entering the method that noticed.
+    /// The model currently being fetched, or null. One at a time: applying listening settings
+    /// happens on every change, and a second fetch of the same file over the first is bytes
+    /// nobody asked for.
     /// </summary>
-    private WhisperModel? _clearSelectionFor;
+    private string? _fetching;
+
+    /// <summary>
+    /// Downloads a selected model that is not on disk, then loads it.
+    /// <para>
+    /// The selection is the go-ahead — the same rule the settings row follows when the
+    /// Commander picks one there. The size and the host are still stated: on that row, and in
+    /// the egress disclosure, which reports the speech-model destination whenever a model is
+    /// selected rather than only while bytes are moving.
+    /// </para>
+    /// <para>
+    /// Failure is a log line and nothing else. A Commander asking "can you hear me" is already
+    /// told that no speech model is loaded, which is the answer they can act on; an
+    /// announcement about a background transfer is noise on the panel. The next settings change
+    /// or the next launch tries again.
+    /// </para>
+    /// </summary>
+    private async Task FetchModelAsync(WhisperModel model)
+    {
+        if (Interlocked.CompareExchange(ref _fetching, model.Id, null) is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await Models.InstallAsync(model).ConfigureAwait(false);
+
+            if (result.Success)
+            {
+                _logger.LogInformation("{Model} downloaded", model.Id);
+
+                // Re-applied rather than loaded directly, so a file arriving goes through the
+                // one path that knows what loading a model entails.
+                ApplyListeningSettings();
+                return;
+            }
+
+            _logger.LogWarning(
+                "{Model} could not be downloaded: {Detail}",
+                model.Id,
+                result.Detail ?? "no detail given");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "{Model} could not be downloaded", model.Id);
+        }
+        finally
+        {
+            _fetching = null;
+        }
+    }
 
     /// <summary>
     /// Rebuilds everything downstream of the listening settings: the device, the key, the gate
     /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
     /// drift (list.md Phase 4, "Apply every setting without a restart").
     /// </summary>
-    /// <summary>
-    /// Re-offers a speech model that is selected but not on disk, now that there is a surface to
-    /// ask on.
-    /// <para>
-    /// The offer is raised while listening settings are applied, and that happens once during
-    /// <see cref="Start"/> — before any window exists to have subscribed. So the offer a fresh
-    /// launch makes went to nobody, and re-picking the same model in settings is an unchanged
-    /// value, which raises nothing. The Commander was left holding a key that captured audio
-    /// nothing could read, with no way back to the question.
-    /// </para>
-    /// </summary>
-    public void AnnounceModelNeeded()
-    {
-        if (WhisperModels.AwaitingDownload(Settings.Current.Listening.Model, Models) is { } model)
-        {
-            ModelNeeded?.Invoke(model);
-        }
-    }
-
     private void ApplyListeningSettings()
     {
         var listening = Settings.Current.Listening;
@@ -1509,22 +1528,20 @@ public sealed class AppHost : IDisposable
         {
             _transcriber.Load(path, model.Id, listening.UseGpu);
         }
-        else if (WhisperModels.Find(listening.Model) is { } wanted)
+        else if (WhisperModels.AwaitingDownload(listening.Model, Models) is { } wanted)
         {
-            // Selected but not on disk, which is a state d47 no longer keeps. A settings row
-            // naming a model that cannot be loaded is a row asserting something untrue, and it
-            // read as "the model is fine, the microphone must be broken" for three sessions
-            // while every utterance came back "no speech model is loaded".
+            // Selected but not on disk, so fetch it. The selection stays where it is while that
+            // happens: it is what the Commander asked for, and a row that drops to none because
+            // the file has not arrived yet describes the disk rather than the choice.
             //
-            // So the selection follows the disk: it drops to none, and the wanting of it moves
-            // to the offer, which the panel keeps up until it is answered. Accepting installs
-            // the model and selects it; declining leaves an honest none.
-            _logger.LogInformation(
-                "{Model} is selected but not installed; clearing the selection and offering it",
-                wanted.Id);
+            // Fetched rather than offered. The offer was the wrong shape for the one case that
+            // matters — a fresh install, where the answer is always yes and the question is a
+            // step between the Commander and a working microphone. Choosing a model on the
+            // settings row has never asked either; this makes the two paths agree.
+            _logger.LogInformation("{Model} is selected but not installed; fetching it", wanted.Id);
 
             _transcriber.Unload();
-            _clearSelectionFor = wanted;
+            _ = FetchModelAsync(wanted);
         }
         else
         {
@@ -1535,19 +1552,10 @@ public sealed class AppHost : IDisposable
 
         // Deferred to the end, because writing a setting raises Changed, which re-enters this
         // method: doing it above would run the microphone and key work twice on one apply.
-        if (_clearSelectionFor is { } offer)
-        {
-            _clearSelectionFor = null;
-
-            Settings.Replace(
-                ListeningCapability.ModelKey,
-                current => current with
-                {
-                    Listening = current.Listening with { Model = WhisperModels.NoneId },
-                });
-
-            ModelNeeded?.Invoke(offer);
-        }
+        // Nothing deferred here any more. The selection used to be rewritten at the end of this
+        // method — cleared to none so it could be re-offered — and a write raises Changed, which
+        // re-enters here; the fetch above needs no such thing, because it leaves the setting
+        // exactly where the Commander put it.
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
 

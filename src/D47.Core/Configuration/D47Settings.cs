@@ -66,6 +66,19 @@ public sealed record PersonaSettings
     public string? ShipName { get; init; }
 
     /// <summary>
+    /// Whether a name the Commander gave the ship's AI survives a change of core.
+    /// <para>
+    /// On, because a Commander who named their ship's AI named the <em>ship's</em> AI: the name
+    /// is a property of their ship in their fiction, and eleven cores answering to it is the
+    /// point. Off is the other reading, equally coherent — the cores are separate characters and
+    /// a name belongs to the one it was given to — and it clears the name on the switch rather
+    /// than keeping it and ignoring it, because a row showing "Fred" while the answer is "I am
+    /// Cora" is the shape of bug this codebase has already fixed once.
+    /// </para>
+    /// </summary>
+    public bool KeepShipName { get; init; } = true;
+
+    /// <summary>
     /// The voice paired to each core, keyed by persona id (list.md Phase 11, #33). Written by
     /// the background pairing at first startup and by the Commander choosing one by hand;
     /// nothing distinguishes the two, on purpose, because a pairing the Commander has
@@ -185,15 +198,28 @@ public sealed record ListeningSettings
     public string? InputDevice { get; init; }
 
     /// <summary>
-    /// Hold to talk. Null means d47 never listens, which is a legitimate configuration and the
-    /// default until the Commander picks a key — a microphone that opens on a key nobody chose
-    /// is a microphone opening by surprise.
+    /// Hold to talk. Null means d47 never listens, which stays a legitimate configuration —
+    /// clearing the row is how a Commander asks for it.
+    /// <para>
+    /// Bound out of the box, to right shift. The opposite used to be the default, on the
+    /// argument that a microphone opening on a key nobody chose is a microphone opening by
+    /// surprise. What that reasoning missed is what the unbound state actually costs: a voice
+    /// companion that cannot hear anything until the Commander finds a settings row, which is
+    /// the whole product not working on first run. The surprise is bounded and the miss is not
+    /// — nothing is captured unless the key is held, and nothing is transcribed at all until a
+    /// speech model is installed, which is still a deliberate choice the Commander makes.
+    /// </para>
+    /// <para>
+    /// Right shift because of where the Commander's hands are: on a stick and a throttle, with
+    /// a spare thumb and not much else. It is polled as a sided code, so the left shift they
+    /// are already using for something in the game is not this.
+    /// </para>
     /// <para>
     /// Protected: a model that can rebind or unbind the Commander's microphone key has taken
     /// away how they talk to it.
     /// </para>
     /// </summary>
-    public string? PushToTalkKey { get; init; }
+    public string? PushToTalkKey { get; init; } = "RightShift";
 
     /// <summary>"hold" or "toggle".</summary>
     public string Mode { get; init; } = "hold";
@@ -206,11 +232,17 @@ public sealed record ListeningSettings
     public int PreRollMilliseconds { get; init; } = 500;
 
     /// <summary>
-    /// Which Whisper model transcribes. "none" is the default and a real choice: d47 captures
-    /// audio and says it cannot turn it into words, which is honest, whereas silently
-    /// downloading several hundred megabytes at first launch is not.
+    /// Which Whisper model transcribes. The smallest English one on a fresh install; "none"
+    /// stays a real choice, and is where the selection sits until the download is accepted.
+    /// <para>
+    /// This is a selection, not a download. Nothing is fetched at launch: a selected model that
+    /// is not on disk clears itself back to "none" and becomes the offer on the panel, stating
+    /// the size and the host, and the file arrives only if the Commander says yes. So the
+    /// default is the question being asked rather than the answer being assumed — which is the
+    /// difference between proposing 75 MB and taking it.
+    /// </para>
     /// </summary>
-    public string Model { get; init; } = Listening.WhisperModels.NoneId;
+    public string Model { get; init; } = Listening.WhisperModels.DefaultId;
 
     /// <summary>
     /// Run inference on the GPU. Off by default and deliberately so.

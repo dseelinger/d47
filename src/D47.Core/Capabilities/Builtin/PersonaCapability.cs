@@ -15,6 +15,8 @@ public static class PersonaCapability
 
     public const string ShipNameKey = "persona.shipName";
 
+    public const string KeepShipNameKey = "persona.keepShipName";
+
     public const string IntroductionsKey = "persona.introductions";
 
     public static CapabilityDescriptor Create(PersonaHost host, SettingsService settings) => new()
@@ -88,10 +90,7 @@ public static class PersonaCapability
             Binding = new SettingBinding
             {
                 Read = s => s.Persona.Id,
-                Write = (s, v) => s with
-                {
-                    Persona = s.Persona with { Id = PersonaCatalog.Knows(v) ? v! : PersonaCatalog.DefaultId },
-                },
+                Write = WriteCoreAboard,
             },
         },
         new SettingRow
@@ -114,6 +113,34 @@ public static class PersonaCapability
             {
                 Read = s => s.Persona.ShipName,
                 Write = (s, v) => s with { Persona = s.Persona with { ShipName = Blank(v) } },
+            },
+        },
+        new SettingRow
+        {
+            Key = KeepShipNameKey,
+            Label = "Keep Ship AI name on persona switch",
+            Help =
+                "On, the name above stays whoever is aboard. Off, changing core clears it and "
+                + "the new core answers to its own name.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "On",
+            DocsAnchor = "keep-ship-ai-name",
+
+            // Only applies when there is a name to keep. A switch about what happens to a value
+            // that does not exist is a row asking a question with no stakes, and the row above
+            // is right there saying the name is the core's own.
+            AppliesWhen = s => !string.IsNullOrWhiteSpace(s.Persona.ShipName),
+
+            // Not protected, for the reason the name itself is not: the worst a hostile message
+            // can achieve here is that a nickname does or does not survive a switch it cannot
+            // make, since the row that changes core is protected.
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.KeepShipName ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Persona = s.Persona with { KeepShipName = v is null || bool.TryParse(v, out var on) && on },
+                },
             },
         },
         new SettingRow
@@ -176,6 +203,35 @@ public static class PersonaCapability
             yield return new SettingCommandPhrase($"be {bare}", persona.Id);
             yield return new SettingCommandPhrase($"become {bare}", persona.Id);
         }
+    }
+
+    /// <summary>
+    /// Puts a core aboard, and takes the ship AI's name with it or leaves it behind, according
+    /// to the row above.
+    /// <para>
+    /// Here rather than in the app, because every way of changing core — the panel, the hotkey,
+    /// the model-free keyword router — writes this row, and a rule enforced beside one of those
+    /// callers is a rule the other two do not follow.
+    /// </para>
+    /// <para>
+    /// Only on an actual change. Writing the core that is already aboard is not a switch, and
+    /// stripping the name for it would mean an unrelated settings edit could quietly rename the
+    /// Commander's companion.
+    /// </para>
+    /// </summary>
+    private static D47Settings WriteCoreAboard(D47Settings settings, string? value)
+    {
+        var incoming = PersonaCatalog.Knows(value) ? value! : PersonaCatalog.DefaultId;
+        var switching = !string.Equals(incoming, settings.Persona.Id, StringComparison.Ordinal);
+
+        return settings with
+        {
+            Persona = settings.Persona with
+            {
+                Id = incoming,
+                ShipName = switching && !settings.Persona.KeepShipName ? null : settings.Persona.ShipName,
+            },
+        };
     }
 
     private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

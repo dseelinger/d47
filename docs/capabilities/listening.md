@@ -5,8 +5,9 @@ title: Listening
 Talking to Directive 47 instead of typing at it. Hold a key, speak, let go, and what you said is
 handled exactly as if you had typed it.
 
-**No audio and no transcript ever leaves your machine.** Speech is turned into words by a model
-running on your own computer, on a file you chose and agreed to download.
+**No audio and no transcript leaves your machine.** Speech is turned into words by a model
+running on your own computer. The model file itself is downloaded once, from `huggingface.co`;
+after that, nothing about your speech goes anywhere.
 
 ## Ask for it
 
@@ -30,13 +31,13 @@ you should not have to guess which.
 
 Three things, in this order:
 
-**1. Bind a key.** Nothing is bound out of the box, and nothing bound means the microphone is
-never opened at all. A microphone that opens on a key nobody chose is a microphone opening by
-surprise.
+**1. Bind a key.** Already done — **right shift**, out of the box. Clear the row if you would
+rather Directive 47 never opened the microphone at all.
 
-**2. Download a speech model.** Also nothing by default. Directive 47 will capture your voice and
-tell you plainly that it cannot understand it until you pick one. Choosing one asks first, and
-tells you the real size and where it comes from before anything is fetched.
+**2. Download a speech model.** Also already done, or under way. Directive 47 ships with **Tiny
+(English only)** selected and fetches it from `huggingface.co` the first time it starts — about
+75 MB, once. Until it lands, Directive 47 captures your voice and tells you plainly that it
+cannot understand it yet.
 
 **3. Check the key is yours alone.** If Elite is already using it, say so is exactly what
 Directive 47 does — see below.
@@ -71,10 +72,18 @@ usable typed.
 
 ### Push-to-talk key {#push-to-talk-key}
 
-The key you hold to talk. Unset by default.
+The key you hold to talk. **Right shift out of the box** — a Commander on a stick and throttle has
+a spare thumb and not much else, and it is the right-hand shift specifically, so the left one you
+may already be using in the game is not this.
+
+Clear the row and Directive 47 never opens the microphone. That was the old default, and it meant
+a voice companion that could not hear anything until you found this row.
+
+Nothing is captured unless the key is held.
 
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
-push-to-talk, which is exactly why the collision check above matters.
+push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
+something in Elite on your setup, the status report above says so by name.
 
 **The model cannot change this.** A model that could unbind your microphone key has taken away
 how you talk to it.
@@ -89,9 +98,17 @@ start and again to stop.
 Which Whisper model turns your speech into words. The row marks which are already on disk and
 what the others would cost to fetch, so you can see which choices are already paid for.
 
-`none` is the default and a real choice, not an oversight. A default that downloaded several
-hundred megabytes the first time you opened the app would be exactly the surprise the consent
-prompt exists to prevent.
+**Tiny (English only)** is what a fresh install has selected — the smallest one, and enough for
+the short push-to-talk clips this is actually asked to transcribe. Move up to Base or Small if
+you want the accuracy and can spend the download.
+
+**Choosing a model downloads it.** Selecting one you do not have starts the transfer there and
+then, with the size and progress on the row; the same thing happens at startup for a model that
+is selected and missing. The choice is the go-ahead — the size is on the row before you make it,
+and `huggingface.co` is listed under [Privacy](privacy.md) for as long as a model is selected.
+
+`none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
+turn what it heard into words.
 
 ### Running on the GPU {#gpu}
 
@@ -109,25 +126,19 @@ same undiagnosable problem in the other direction.
 
 ## Downloading a model {#download}
 
-**Nothing is downloaded without you agreeing, and nothing is downloaded at startup.** Choosing a
-model you do not have asks first:
+A selected model that is not on disk is fetched — at startup, or the moment you choose it. There
+is no prompt to answer: the selection is the go-ahead, the size is on the row before you make the
+choice, and the shipped default is the smallest model in the list.
 
-```text
-Download the Base (English only) — the usual choice speech model? 141.1 MB from huggingface.co,
-saved to your data folder. D47 will verify the download against the checksum the host published.
-```
+The download is checked against the checksum `huggingface.co` publishes for the file, as it
+arrives, and thrown away rather than kept if it does not match: a file that fails its checksum is
+either a broken transfer or something that should not be loaded, and both answers are the same.
+The size Directive 47 reports is the one the host actually gave, not a figure written into the
+app that would go stale the first time a model was republished.
 
-The size is the one the host actually reported, not a figure written into Directive 47 that would
-go stale the first time the model was republished. The dialog defaults to **no**, and closing it
-counts as declining.
-
-Declining leaves your choice alone — you may want it later, and silently undoing what you picked
-would be answering for you. It asks again next time you start, so a model you meant to fetch is
-never stranded.
-
-The download is checked against the published checksum as it arrives and thrown away if it does
-not match, rather than being kept: a file that fails its checksum is either a broken transfer or
-something that should not be loaded, and both answers are the same.
+If the download fails — no network, the host refusing — the selection stays where it is and
+Directive 47 says it has no speech model loaded when you ask. It tries again the next time it
+starts. Choose `none` if you would rather it stopped trying.
 
 ## It knows what things are called
 
@@ -198,10 +209,10 @@ controls has no file under `Options\Bindings\` at all. Version suffixes compare 
 segment, so `4.10` sorts above `4.2`. Gestures are normalised before comparing, so `Ctrl+Alt+X`
 and `LeftControl+LeftAlt+X` are the same key.
 
-The consent request is raised from the composition root rather than the settings panel, so it
-fires however the model came to be selected — and re-raised once a window exists to receive it,
-because the startup request would otherwise reach nobody. The download is hashed as it lands and
-the write is atomic; a half-downloaded model under its real name loads and then fails
+The fetch is started from the composition root rather than the settings panel, so it happens
+however the model came to be selected — the panel, the keyword router, or a hand-edited settings
+file — and one at a time, since listening settings are applied on every change. The download is
+hashed as it lands and the write is atomic; a half-downloaded model under its real name loads and then fails
 mid-transcription. Transcription runs on the thread pool, never the audio thread. A transcript
 that is entirely a bracketed annotation — `[BLANK_AUDIO]`, `(wind blowing)` — is treated as
 silence. Rebinding while the key is held forces a release first, or the gate stays open with

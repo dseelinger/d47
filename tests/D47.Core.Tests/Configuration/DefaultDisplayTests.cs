@@ -22,8 +22,10 @@ public class DefaultDisplayTests
         var voice = surface.Settings.Find(SpeechCapability.VoiceKey);
         Assert.NotNull(voice);
 
-        Assert.Equal("(the provider's default)", voice.DefaultDisplayFor(surface.Settings.Current));
-        Assert.Equal("the provider's default", voice.BareDefaultFor(surface.Settings.Current));
+        // Named as far as it can be: d47 cannot know which voice a provider picks when asked
+        // for nothing, but it can say whose default is being talked about.
+        Assert.Equal("(Edge Neural's own default voice)", voice.DefaultDisplayFor(surface.Settings.Current));
+        Assert.Equal("Edge Neural's own default voice", voice.BareDefaultFor(surface.Settings.Current));
     }
 
     [Fact]
@@ -35,7 +37,7 @@ public class DefaultDisplayTests
         var model = surface.Settings.Find(ConversationCapability.ModelKey);
         Assert.NotNull(model);
 
-        Assert.Equal("claude-opus-5", model.BareDefaultFor(surface.Settings.Current));
+        Assert.Equal("claude-sonnet-5", model.BareDefaultFor(surface.Settings.Current));
     }
 
     /// <summary>

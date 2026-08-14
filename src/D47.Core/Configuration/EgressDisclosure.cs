@@ -95,7 +95,7 @@ public static class EgressDisclosure
             : EgressEntry.Silent(
                 UpdateCheck, NameOf(UpdateCheck), "The startup update check is off, so nothing is requested."),
 
-        // On demand and only with consent. The row reads active when a model is selected,
+        // On demand. The row reads active when a model is selected,
         // because that is the setting that can cause a transfer — not because one is happening
         // right now. A disclosure that only lit up mid-download would tell the Commander
         // nothing they could act on beforehand.
@@ -109,7 +109,7 @@ public static class EgressDisclosure
                 NameOf(SpeechModels),
                 Listening.WhisperModels.Host,
                 $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, D47 "
-                + "asks the host how big it is, shows you that figure, and downloads nothing until you agree. "
+                + "downloads it from this host — once, and only the model file. "
                 + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
                 + "Once downloaded, transcription runs entirely on this machine.",
                 Active: true),

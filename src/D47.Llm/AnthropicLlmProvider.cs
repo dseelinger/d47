@@ -58,7 +58,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     public string DisplayName => "Anthropic";
 
-    public string DefaultModel => "claude-opus-5";
+    public string DefaultModel => "claude-sonnet-5";
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {

@@ -155,6 +155,12 @@ public static class SpeechCapability
                 Kind = SettingKind.Choice,
                 // Still the provider's default, which is what a core with no voice stored
                 // actually gets. What is per core is the value, not the fallback.
+                // Named as far as it can be. d47 does not know which voice ElevenLabs or Edge
+                // picks when asked for nothing, so the honest limit is whose default it is —
+                // which at least tells the Commander where to go and look. A row that says only
+                // "(the default)" is a row answering a question with the question.
+                DefaultDisplaySource = s =>
+                    $"({TtsProviderCatalog.Selected(s.Speech.Provider).Name}'s own default voice)",
                 DefaultDisplay = "(the provider's default)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],

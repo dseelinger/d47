@@ -203,10 +203,6 @@ public partial class MainWindow : Window
         // Marked rather than appended, so it reads as the panel and not as whoever is aboard.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
 
-        // Only logged here. The offer itself lives on the settings row that triggers it -
-        // a banner on this window is a question asked behind the dialog that asked it.
-        _host.ModelNeeded += model => _host.Loggers.CreateLogger<MainWindow>().LogInformation(
-            "{Model} is selected but not installed; the selection has been cleared", model.Id);
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();
@@ -246,11 +242,6 @@ public partial class MainWindow : Window
         // the first.
         await OfferStartMenuEntryAsync();
 
-        // And now that this window is listening for it, ask again about a speech model that is
-        // selected but not on disk. The offer made while the host was starting had nobody to
-        // reach, and choosing the same model again is an unchanged value that raises nothing —
-        // so without this the question is asked once, into an empty room, and never again.
-        _host.AnnounceModelNeeded();
     }
 
     /// <summary>
@@ -372,11 +363,9 @@ public partial class MainWindow : Window
                 _host.Macros,
                 _host.ReservedPhrases,
 
-                // Consent is the selection itself: the choice states its size in the list, and
-                // the row shows what it is doing while it does it. Answering in the settings
-                // window is the point - the offer used to appear on the main window, which is
-                // the window the settings dialog is covering.
-                (model, progress) => _host.InstallModelAsync(model, _ => Task.FromResult(true), progress));
+                // The choice is the go-ahead: it states its size in the list it was made from,
+                // and the row shows what it is doing while it does it.
+                (model, progress) => _host.InstallModelAsync(model, progress));
         }
     }
 

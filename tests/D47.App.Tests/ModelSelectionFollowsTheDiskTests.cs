@@ -66,9 +66,15 @@ public class ModelSelectionFollowsTheDiskTests
         var (window, settings) = Open((_, _) =>
             Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "the host refused")));
 
+        // Whatever was selected before the attempt — the shipped default on a fresh surface —
+        // rather than a literal, because "where it was" is the property under test and the
+        // shipped default is free to move.
+        var before = settings.Current.Listening.Model;
+
         Choose(window, "small.en");
 
-        Assert.Equal(WhisperModels.NoneId, settings.Current.Listening.Model);
+        Assert.Equal(before, settings.Current.Listening.Model);
+        Assert.NotEqual("small.en", settings.Current.Listening.Model);
 
         window.Close();
     }
@@ -232,9 +238,8 @@ public class ModelSelectionFollowsTheDiskTests
 
         public Task<ModelInstallResult> InstallAsync(
             WhisperModel model,
-            Func<ModelOffer, Task<bool>> consent,
             IProgress<ModelProgress>? progress = null,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ModelInstallResult(ModelInstall.Declined, null));
+            Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "nothing is fetched in a test"));
     }
 }

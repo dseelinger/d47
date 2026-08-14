@@ -7,19 +7,29 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>
-/// The model catalogue, the consent wording and the egress disclosure. Nothing here touches the
+/// The model catalogue and the egress disclosure. Nothing here touches the
 /// network — which is the point: the interesting behaviour is what d47 does <em>before</em> it
 /// would fetch anything.
 /// </summary>
 public class ModelChoiceTests
 {
     [Fact]
-    public void NoModelIsSelectedOnAFreshInstall()
+    public void TheSmallestEnglishModelIsSelectedOnAFreshInstall()
     {
-        // A default that downloaded several hundred megabytes at first launch would be the
-        // thing the consent gate exists to prevent, arranged by the default rather than by a
-        // bug.
-        Assert.Equal(WhisperModels.NoneId, new D47Settings().Listening.Model);
+        // A fresh install selects this and fetches it on first launch, so the choice of which
+        // model ships is the choice of what every new Commander downloads without being asked.
+        // That is the reason for the two assertions below: whatever it is, it has to be an
+        // English model and the cheapest one in the catalogue.
+        Assert.Equal("tiny.en", new D47Settings().Listening.Model);
+        Assert.Equal(WhisperModels.DefaultId, new D47Settings().Listening.Model);
+
+        // The shipped selection is one d47 can actually fetch, and it is the cheapest download
+        // in the catalogue — a default nobody edits should be the smallest thing that works.
+        var model = WhisperModels.Find(new D47Settings().Listening.Model);
+
+        Assert.NotNull(model);
+        Assert.True(model.EnglishOnly);
+        Assert.Equal(WhisperModels.All.Min(m => m.ApproximateMegabytes), model.ApproximateMegabytes);
     }
 
     [Fact]
@@ -62,36 +72,20 @@ public class ModelChoiceTests
         Assert.False(WhisperModels.Find("base")!.EnglishOnly);
     }
 
-    [Fact]
-    public void TheConsentPromptStatesTheRealSizeAndTheHost()
-    {
-        var offer = new ModelOffer(WhisperModels.Find("base.en")!, 147_951_465, "abc123");
-        var prompt = offer.ConsentPrompt();
-
-        // What, how big, from where — in one sentence, because a consent prompt nobody reads
-        // is not consent. The size is the one the host reported, not the catalogue's estimate.
-        Assert.Contains("141.1 MB", prompt);
-        Assert.Contains(WhisperModels.Host, prompt);
-        Assert.Contains("verify", prompt);
-    }
-
-    [Fact]
-    public void AnOfferWithNoPublishedChecksumSaysSoRatherThanImplyingOne()
-    {
-        var offer = new ModelOffer(WhisperModels.Find("tiny.en")!, 77_000_000, Sha256: null);
-
-        // Claiming verification that is not happening is worse than admitting it is not.
-        Assert.Contains("no checksum", offer.ConsentPrompt(), StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("will verify", offer.ConsentPrompt());
-    }
-
     // ---- Egress ---------------------------------------------------------------------------
 
     [Fact]
     public void NoModelSelectedMeansTheDownloadRowIsInactive()
     {
+        // Explicitly none, which is a Commander's choice rather than the shipped default — a
+        // fresh install selects the smallest model, so the row is live until that is answered.
+        var chosenNone = new D47Settings
+        {
+            Listening = new ListeningSettings { Model = WhisperModels.NoneId },
+        };
+
         var entry = EgressDisclosure.Entry(
-            EgressDisclosure.SpeechModels, new D47Settings(), llmKeyPresent: false);
+            EgressDisclosure.SpeechModels, chosenNone, llmKeyPresent: false);
 
         Assert.False(entry.Active);
         Assert.Contains("nothing", entry.Line, StringComparison.OrdinalIgnoreCase);
@@ -112,8 +106,13 @@ public class ModelChoiceTests
         // that only lit up mid-download would tell the Commander nothing they could act on.
         Assert.True(entry.Active);
         Assert.Equal(WhisperModels.Host, entry.Destination);
-        Assert.Contains("until you agree", entry.What);
+        Assert.Contains("downloads it from this host", entry.What);
         Assert.Contains("entirely on this machine", entry.What);
+
+        // The row states what actually happens. It used to say the download waits for the
+        // Commander to agree, and kept saying it after the selection became the go-ahead — a
+        // privacy disclosure describing a prompt that no longer appears.
+        Assert.DoesNotContain("until you agree", entry.What);
     }
 
     [Fact]
@@ -170,7 +169,10 @@ public class ModelChoiceTests
 
         // A row that does not apply is absent rather than disabled — a greyed-out control still
         // asserts the setting exists.
-        Assert.False(row.Applies(new D47Settings()));
+        Assert.False(row.Applies(new D47Settings
+        {
+            Listening = new ListeningSettings { Model = WhisperModels.NoneId },
+        }));
         Assert.True(row.Applies(new D47Settings
         {
             Listening = new ListeningSettings { Model = "base.en" },

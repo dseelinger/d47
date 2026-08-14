@@ -40,9 +40,8 @@ and still costing.
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
-`none` is a real choice rather than a way of switching something off. It is what makes running
-with nothing leaving the machine possible: no voice, no language model, no update check, and
-nothing goes anywhere.
+`none` is a real choice rather than a way of switching something off: Directive 47 stays useful
+without a voice, and the cues and the thinking loop still play.
 
 **Edge Neural is free, not local.** Every line Directive 47 speaks is sent to
 `speech.platform.bing.com` to be turned into audio. That is worth stating plainly because it is
@@ -232,9 +231,8 @@ are sent.
 
 Spoken replies are also listed under **Privacy** alongside every other destination. That entry
 was added in Phase 11 and should have existed from Phase 5: until then the disclosure had no
-text-to-speech row at all, so Directive 47 could truthfully report "nothing is leaving this
-machine" while sending every word it said to Microsoft. Setting the provider to `none` is now the
-only configuration in which that sentence is true.
+text-to-speech row at all, so every word Directive 47 said went to Microsoft without appearing
+anywhere in the list of what leaves this machine.
 
 ## If the voice stops working
 
