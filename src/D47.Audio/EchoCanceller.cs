@@ -230,9 +230,7 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
     /// </summary>
     public void Write(ReadOnlySpan<float> samples)
     {
-        var apm = _apm;
-
-        if (apm is null || !IsActive)
+        if (_apm is null || !IsActive)
         {
             _next.Write(samples);
             return;
@@ -241,6 +239,7 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
         var frame = _captureFrame[0];
         var at = 0;
         Exception? failure = null;
+        AudioProcessingModule? attempted = null;
 
         while (at < samples.Length)
         {
@@ -269,6 +268,8 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
                         continue;
                     }
 
+                    attempted = live;
+
                     var result = live.ProcessStream(_captureFrame, _captureIn!, _captureOut!, _cleanFrame);
 
                     _next.Write(result == ApmError.NoError ? _cleanFrame[0] : frame);
@@ -289,14 +290,24 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
 
         if (failure is not null)
         {
-            Fail(failure);
+            Fail(failure, attempted);
         }
     }
 
     public void Reset()
     {
-        _captureHeld = 0;
-        _renderHeld = 0;
+        // Under the processing lock because these are not this thread's counters alone:
+        // _renderHeld indexes the render thread's part-filled frame, and Release zeroes both.
+        // The capture thread is the only caller, and that is not the same as being the only
+        // writer.
+        lock (_processing)
+        {
+            _captureHeld = 0;
+            _renderHeld = 0;
+        }
+
+        // Outside it, because nothing downstream of the gate belongs behind a lock whose whole
+        // job is to keep two audio threads out of a native module.
         _next.Reset();
     }
 
@@ -305,8 +316,8 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
     /// <para>
     /// Called on the WASAPI render thread, concurrently with <see cref="Write"/> on the capture
     /// thread. That is the arrangement the APM is built for — it holds separate render and
-    /// capture locks internally — and it is why neither of these two methods takes a lock of its
-    /// own around the processing.
+    /// capture locks internally — so the only reason this one serialises against the capture
+    /// side is the disposal, which is what <see cref="_processing"/> already explains.
     /// </para>
     /// <para>
     /// The tap carries 16-bit PCM because that is what an <see cref="AudioClip"/> is; it is
@@ -316,23 +327,30 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
     /// </summary>
     private void OnRendered(RenderReferenceFrame reference)
     {
-        var apm = _apm;
-
-        if (apm is null || !IsActive)
+        if (_apm is null || !IsActive)
         {
             return;
         }
 
         Exception? failure = null;
+        AudioProcessingModule? attempted = null;
 
         try
         {
             lock (_processing)
             {
-                if (_apm is null)
+                // The module read inside the lock is the one that gets called — never one
+                // glimpsed outside it. Between that glimpse and here a Stop and a Start can both
+                // have run, and finding the field non-null again says nothing about the handle
+                // this thread was holding: that one has been freed. Calling through it is the
+                // access violation the lock exists to prevent, which is why Write has always
+                // re-read and why this does now too.
+                if (_apm is not { } live)
                 {
                     return;
                 }
+
+                attempted = live;
 
                 Reshape(reference.Format);
 
@@ -358,7 +376,7 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
                     }
 
                     _renderHeld = 0;
-                    apm.ProcessReverseStream(_renderFrame, _renderIn!, _renderOut!, _renderOutFrame);
+                    live.ProcessReverseStream(_renderFrame, _renderIn!, _renderOut!, _renderOutFrame);
                 }
             }
         }
@@ -370,7 +388,7 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
 
         if (failure is not null)
         {
-            Fail(failure);
+            Fail(failure, attempted);
         }
     }
 
@@ -415,12 +433,28 @@ public sealed class EchoCanceller : ICaptureSink, IDisposable
     /// Gives up cleanly after a failure at runtime. The microphone keeps working and the panel
     /// says why the cancellation stopped, rather than the Commander finding out by being told
     /// d47 answered itself.
+    /// <para>
+    /// The failure belongs to a module rather than to this class, which is what
+    /// <paramref name="module"/> is for. An audio thread reaches here after leaving the
+    /// processing lock, and a Stop and a Start can both have run in between — so the canceller
+    /// now running may be a different one that has done nothing wrong. Tearing that one down
+    /// reports a fault the Commander has already cleared, and because
+    /// <c>ApplyListeningSettings</c> reads <see cref="IsActive"/> immediately after
+    /// <see cref="Start"/>, it also leaves the gate with the wrong answer about whether d47's
+    /// own voice is being subtracted — the one belief that decides whether hands-free listening
+    /// stays open while d47 speaks.
+    /// </para>
     /// </summary>
-    private void Fail(Exception ex)
+    private void Fail(Exception ex, AudioProcessingModule? module)
     {
         lock (_lifecycle)
         {
-            if (!IsActive)
+            // _apm is only ever written by Start, Stop, Release and Dispose, all of which hold
+            // this lock for their whole run — so holding it here is what makes the comparison
+            // mean anything. A null module cannot match a running one, which is the right
+            // answer for the only path that reaches here without one: a canceller that was
+            // already stopped has nothing left to give up.
+            if (!IsActive || !ReferenceEquals(_apm, module))
             {
                 return;
             }

@@ -41,8 +41,16 @@ public class EchoCancellationTests
                 pcm[(i * 2) + 1] = (byte)(value >> 8);
             }
 
-            Rendered?.Invoke(new RenderReferenceFrame(0, pcm, new AudioFormat(RenderRate, channels)));
+            Play(pcm, new AudioFormat(RenderRate, channels));
         }
+
+        /// <summary>
+        /// The same thing from PCM the caller already holds, for the test that plays millions of
+        /// frames. <see cref="Play(float[], int)"/> allocates a buffer and a format per call,
+        /// which at that rate measures the garbage collector rather than the canceller.
+        /// </summary>
+        public void Play(byte[] pcm, AudioFormat format) =>
+            Rendered?.Invoke(new RenderReferenceFrame(0, pcm, format));
     }
 
     /// <summary>Collects what came out the far side, which is what the gate would have seen.</summary>
@@ -55,6 +63,59 @@ public class EchoCancellationTests
         public void Write(ReadOnlySpan<float> samples) => Samples.AddRange(samples);
 
         public void Reset() => Resets++;
+    }
+
+    /// <summary>
+    /// Counts instead of collecting, for the one test that runs the capture path flat out.
+    /// <para>
+    /// <see cref="Collector"/> keeps every sample, which is what the tests that measure
+    /// cancellation need and is exactly wrong for a loop with no rate limit on it. Measured, the
+    /// timed version of the stop-path test below took this host to six gigabytes on its own, all
+    /// of it list growth on the large object heap. Alone that passes; inside a full run, sharing
+    /// a process with the rest of the suite and a machine with the other two test assemblies, it
+    /// is a spike big enough to fail on memory rather than on the thing under test — which is a
+    /// flake that reproduces nowhere, because running the test by itself is what makes room for
+    /// it. What this test needs to know is only that audio kept flowing.
+    /// </para>
+    /// </summary>
+    private sealed class Counter : ICaptureSink
+    {
+        /// <summary>Written on the capture thread and read once it has been joined.</summary>
+        public long Samples { get; private set; }
+
+        public void Write(ReadOnlySpan<float> samples) => Samples += samples.Length;
+
+        public void Reset()
+        {
+        }
+    }
+
+    /// <summary>
+    /// Throws on the first frame and behaves after that, standing in for the module failing
+    /// once at runtime. It is the only seam available for that: the APM itself has no way to be
+    /// asked to fail, and the gate is called from inside the same processing the module is.
+    /// </summary>
+    private sealed class Faulty : ICaptureSink
+    {
+        private bool _thrown;
+
+        public int Samples { get; private set; }
+
+        public void Write(ReadOnlySpan<float> samples)
+        {
+            if (!_thrown)
+            {
+                _thrown = true;
+
+                throw new InvalidOperationException("the gate fell over");
+            }
+
+            Samples += samples.Length;
+        }
+
+        public void Reset()
+        {
+        }
     }
 
     /// <summary>
@@ -171,7 +232,7 @@ public class EchoCancellationTests
             (EchoOnly[^samples..], NearOnly[^samples..]);
     }
 
-    private static EchoCanceller Build(Tap tap, Collector gate) =>
+    private static EchoCanceller Build(Tap tap, ICaptureSink gate) =>
         new(gate, tap, CaptureRate, NullLogger<EchoCanceller>.Instance);
 
     /// <summary>
@@ -351,52 +412,124 @@ public class EchoCancellationTests
     /// enough that an unsynchronised version fails loudly here rather than quietly on a
     /// Commander's machine, at the one moment they touched a settings row.
     /// </para>
+    /// <para>
+    /// Which is why it is counted rather than timed, and why the two audio loops are threads
+    /// rather than <c>Task.Run</c>. A fixed stretch of wall clock is a different amount of
+    /// driving on every machine and almost none on a loaded one, and thread pool work items
+    /// queued behind the rest of the suite may not be scheduled inside that stretch at all — so
+    /// the timed version could pass in a full run having never once put the two threads in the
+    /// module together. Dedicated threads are also what the real thing has: WASAPI's capture
+    /// and render callbacks are threads, not pool work.
+    /// </para>
     /// </summary>
     [Fact]
-    public async Task StoppingWhileAudioIsFlowingDoesNotTakeTheProcessDown()
+    public void StoppingWhileAudioIsFlowingDoesNotTakeTheProcessDown()
     {
+        // Enough start/stop cycles to have hit the window many times over, and few enough that
+        // the whole thing is about a second. The original ran for a fixed two seconds, which on
+        // this machine was roughly twice this and on a slow one would have been a fraction.
+        const int Cycles = 2_000;
+
         var tap = new Tap();
-        var gate = new Collector();
+        var gate = new Counter();
         using var canceller = Build(tap, gate);
         canceller.Start();
 
-        using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        using var stop = new CancellationTokenSource();
 
-        var capture = Task.Run(
-            () =>
+        var captures = 0L;
+        var renders = 0L;
+
+        var capture = new Thread(() =>
+        {
+            var samples = new float[160];
+
+            while (!stop.IsCancellationRequested)
             {
-                var samples = new float[160];
+                canceller.Write(samples);
+                captures++;
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "capture",
+        };
 
-                while (!stop.IsCancellationRequested)
-                {
-                    canceller.Write(samples);
-                }
-            },
-            TestContext.Current.CancellationToken);
+        // One buffer and one format, reused. The render loop runs millions of times and every
+        // allocation in it is garbage the canceller did not ask for.
+        var pcm = new byte[RenderRate / 100 * 2 * sizeof(short)];
+        var format = new AudioFormat(RenderRate, 2);
 
-        var render = Task.Run(
-            () =>
+        var render = new Thread(() =>
+        {
+            while (!stop.IsCancellationRequested)
             {
-                var samples = new float[RenderRate / 100 * 2];
+                tap.Play(pcm, format);
+                renders++;
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "render",
+        };
 
-                while (!stop.IsCancellationRequested)
-                {
-                    tap.Play(samples, channels: 2);
-                }
-            },
-            TestContext.Current.CancellationToken);
+        capture.Start();
+        render.Start();
 
         // The settings thread, doing what applying a listening row does.
-        while (!stop.IsCancellationRequested)
+        for (var cycle = 0; cycle < Cycles; cycle++)
         {
             canceller.Stop();
             canceller.Start();
         }
 
-        await Task.WhenAll(capture, render);
+        stop.Cancel();
 
-        Assert.True(canceller.IsActive);
-        Assert.NotEmpty(gate.Samples);
+        // Joined with a deadline rather than waited on, because a thread that never comes back
+        // is one of the two failures being guarded against: Stop takes the lifecycle lock and
+        // then the processing lock, and anything that ever takes them the other way round hangs
+        // here instead of hanging a Commander's machine.
+        Assert.True(capture.Join(TimeSpan.FromSeconds(10)), "The capture thread never came back.");
+        Assert.True(render.Join(TimeSpan.FromSeconds(10)), "The render thread never came back.");
+
+        // The race was actually driven, rather than the test having measured an arrangement that
+        // never happened. Without this the assertions below all pass on a machine that scheduled
+        // neither loop.
+        Assert.True(captures > 0, "The capture thread never ran, so nothing was driven.");
+        Assert.True(renders > 0, "The render thread never ran, so nothing was driven.");
+
+        Assert.True(canceller.IsActive, canceller.Unavailable ?? "The canceller did not survive.");
+        Assert.True(gate.Samples > 0, "No audio reached the gate while the canceller was cycled.");
+    }
+
+    /// <summary>
+    /// A failure at runtime gives up cleanly: the canceller stops, says why, and the microphone
+    /// keeps working. Paired with the stop-path test above, which is where the other half of
+    /// this lives — a failure is scoped to the module it happened on, so one arriving late for a
+    /// module that Stop already discarded must not take down the one that replaced it.
+    /// </summary>
+    [Fact]
+    public void AFailureAtRuntimeStopsTheCancellerWithoutTakingTheMicrophone()
+    {
+        var tap = new Tap();
+        var gate = new Faulty();
+        using var canceller = Build(tap, gate);
+        canceller.Start();
+
+        Assert.True(canceller.IsActive, canceller.Unavailable ?? "The canceller did not start.");
+
+        var frame = CaptureRate / 100;
+
+        canceller.Write(new float[frame]);
+
+        Assert.False(canceller.IsActive);
+        Assert.Contains("the gate fell over", canceller.Unavailable);
+
+        // Still passing capture through, untouched, which is the whole point of giving up rather
+        // than throwing into the capture thread.
+        canceller.Write(new float[frame]);
+
+        Assert.Equal(frame * 2, gate.Samples);
     }
 
     [Fact]
