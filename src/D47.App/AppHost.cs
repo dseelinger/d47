@@ -994,29 +994,90 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Drops any pairing that has a core speaking in the wrong gender, once, so the ordinary
-    /// pairing path can choose it again.
-    /// <para>
-    /// Only with a model configured, and the flag is only stamped then. Dropping a voice with
-    /// nothing able to choose a replacement would leave that core on the provider's own default
-    /// — which is a voice nobody picked, and is not an improvement on a voice picked badly.
-    /// </para>
+    /// Drops any pairing that has a core speaking in the wrong gender, once, and gives that core
+    /// another voice in the same breath.
     /// </summary>
-    private void RepairMiscastVoices()
+    private async Task RepairMiscastVoicesAsync()
     {
         if (Settings.Current.Persona.VoicesGenderChecked || Turns.Provider is null)
         {
             return;
         }
 
+        var before = Settings.Current.Persona.Voices;
+
+        var (voices, complete) = await WithReplacementsAsync(
+            before,
+            VoicePairing.WithoutMiscastVoices(before, _voices, _logger)).ConfigureAwait(false);
+
         Settings.Replace("persona.voices", current => current with
         {
             Persona = current.Persona with
             {
-                Voices = VoicePairing.WithoutMiscastVoices(current.Persona.Voices, _voices, _logger),
-                VoicesGenderChecked = true,
+                Voices = voices,
+                VoicesGenderChecked = complete,
             },
         });
+
+        ApplySpeechSettings();
+    }
+
+    /// <summary>
+    /// One repair's result, with a voice chosen for every core the repair took one off.
+    /// <para>
+    /// A repair that only takes away is a repair that can leave a core unable to speak: a core
+    /// with no pairing has no voice, and ElevenLabs has no default to fall back on — it refuses
+    /// the sentence and the panel says so in red. That is what "Mender gives George back" became
+    /// on a running build, in the window between the repair and the Commander switching the
+    /// model off.
+    /// </para>
+    /// <para>
+    /// When nothing can be chosen, the core keeps what it had: two cores sharing a voice, or one
+    /// speaking in the wrong gender, are both smaller faults than one that cannot speak at all.
+    /// The caller is told the repair did not finish so it leaves the mark off and finishes on the
+    /// first launch that can.
+    /// </para>
+    /// </summary>
+    private async Task<(IReadOnlyDictionary<string, string> Voices, bool Complete)> WithReplacementsAsync(
+        IReadOnlyDictionary<string, string> before,
+        IReadOnlyDictionary<string, string> after)
+    {
+        if (ReferenceEquals(after, before))
+        {
+            return (after, true);
+        }
+
+        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id;
+        var repaired = new Dictionary<string, string>(after, StringComparer.Ordinal);
+        var complete = true;
+
+        foreach (var id in before.Keys.Where(id => !after.ContainsKey(id)))
+        {
+            var voice = await VoicePairing.ChooseOneAsync(
+                PersonaCatalog.Resolve(id),
+                _voices,
+                repaired.Values,
+                Turns.Provider,
+                Turns.Model,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                provider).ConfigureAwait(false);
+
+            if (voice is null)
+            {
+                _logger.LogInformation(
+                    "Leaving {Persona} on {Voice}: nothing else could be chosen for it", id, before[id]);
+
+                repaired[id] = before[id];
+                complete = false;
+                continue;
+            }
+
+            _logger.LogInformation("{Persona} takes {Voice} instead", id, voice);
+        }
+
+        return (repaired, complete);
     }
 
     /// <summary>
@@ -1027,33 +1088,39 @@ public sealed class AppHost : IDisposable
     /// does, so it runs on the same terms as the other and under its own flag.
     /// </para>
     /// </summary>
-    private void RestoreNamedVoices()
+    private async Task RestoreNamedVoicesAsync()
     {
         if (Settings.Current.Persona.VoicesRepaired >= VoicePairing.RepairRevision || Turns.Provider is null)
         {
             return;
         }
 
+        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id;
+        var before = Settings.Current.Persona.Voices;
+
+        var (voices, complete) = await WithReplacementsAsync(
+            before,
+            VoicePairing.WithNamedDefaultsRestored(before, _voices, provider, _logger)).ConfigureAwait(false);
+
         Settings.Replace("persona.voices", current => current with
         {
             Persona = current.Persona with
             {
-                Voices = VoicePairing.WithNamedDefaultsRestored(
-                    current.Persona.Voices,
-                    _voices,
-                    TtsProviderCatalog.Selected(current.Speech.Provider).Id,
-                    _logger),
-                VoicesRepaired = VoicePairing.RepairRevision,
+                Voices = voices,
+                VoicesRepaired = complete ? VoicePairing.RepairRevision : current.Persona.VoicesRepaired,
             },
         });
+
+        // The core aboard may have just changed voice, and nothing else will notice.
+        ApplySpeechSettings();
     }
 
     private async Task PairPersonaVoicesAsync()
     {
         if (_voices.Count > 0)
         {
-            RepairMiscastVoices();
-            RestoreNamedVoices();
+            await RepairMiscastVoicesAsync().ConfigureAwait(false);
+            await RestoreNamedVoicesAsync().ConfigureAwait(false);
         }
 
         if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
