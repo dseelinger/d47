@@ -1047,14 +1047,33 @@ public partial class SettingsView : UserControl
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
         };
 
+        // Said rather than left to be guessed at. Gathering what goes in the picker can mean
+        // asking the machine for its capture devices or a provider for its voices, and a button
+        // that looks unchanged for a second reads as a button that did not take the click — so
+        // it is shut, and something moves next to it, until the list is on screen.
+        var busy = new BusyGlyph
+        {
+            IsVisible = false,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0),
+        };
+        Themed(busy, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
+
         // Dressed as the combo box beside it, because it does the same job. The default button
         // chrome reads as disabled next to a real combo, which is the opposite of the truth.
         Themed(button, Button.BackgroundProperty, ThemeManager.SurfaceAltKey);
         Themed(button, Button.BorderBrushProperty, ThemeManager.BorderKey);
 
-        button.Click += async (_, _) => await ChooseAsync(row, button, message);
+        button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
-        return (button, () =>
+        var withBusy = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { busy, button },
+        };
+
+        return (withBusy, () =>
         {
             var current = _settings!.Read(row.Key);
             value.Text = current is null
@@ -1245,27 +1264,43 @@ public partial class SettingsView : UserControl
         }, true);
     }
 
-    private async Task ChooseAsync(SettingRow row, Button button, TextBlock message)
+    private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, TextBlock message)
     {
         if (_settings is null || TopLevel.GetTopLevel(this) is not Window owner)
         {
             return;
         }
 
-        var result = await PickerWindow.ShowAsync(owner, new PickerRequest
-        {
-            Prompt = row.Label,
-            Help = row.Help,
-            Choices = row.ChoicesFor(_settings.Current),
-            Describe = row.ChoiceLabel,
-            Current = _settings.Read(row.Key),
-            DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
-            AllowsFreeText = row.AllowsFreeText,
-        });
+        // Shut and spinning until the list is up. Both are cleared in the finally, because a
+        // picker that throws on its way open must not leave the row unusable.
+        button.IsEnabled = false;
+        busy.IsVisible = true;
 
-        if (result is not null)
+        try
         {
-            Apply(row, result.Value, message);
+            var result = await PickerWindow.ShowAsync(
+                owner,
+                new PickerRequest
+                {
+                    Prompt = row.Label,
+                    Help = row.Help,
+                    Choices = row.ChoicesFor(_settings.Current),
+                    Describe = row.ChoiceLabel,
+                    Current = _settings.Read(row.Key),
+                    DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
+                    AllowsFreeText = row.AllowsFreeText,
+                },
+                onListed: () => busy.IsVisible = false);
+
+            if (result is not null)
+            {
+                Apply(row, result.Value, message);
+            }
+        }
+        finally
+        {
+            busy.IsVisible = false;
+            button.IsEnabled = true;
         }
 
         button.Focus();

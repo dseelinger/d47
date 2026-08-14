@@ -370,9 +370,11 @@ TheApp feeds the model text it did not author. Enumerated:
 
 Guardrails are static prompt material in the cached region. They cannot be stripped by a budget setting, an effort setting, or a persona change, because none of those touch that block.
 
-Egress is enumerated per provider and disclosed — see *Say what each provider receives*. Local-only operation (keyword router, **voice provider set to none**, no INARA key, no web search) is a reachable configuration, and the logging subsystem sends nothing regardless.
+Egress is enumerated per provider and disclosed — see *Say what each provider receives*. Every destination can be turned off, and the logging subsystem sends nothing regardless.
 
-> **Amended in Phase 11.** This sentence used to list *Edge TTS* as part of local-only operation. It is not: Edge Neural is `speech.platform.bing.com`, and every line d47 speaks is sent there to be turned into audio. The free provider is free, not local. The correction matters because the disclosure had no text-to-speech entry at all until Phase 11 added the second provider — so d47 could truthfully render "nothing is leaving this machine" while shipping every spoken word to Microsoft. `EgressDisclosure.TextToSpeech` is now part of the enumerated set, and the only silent configuration is the voice provider set to none.
+> **Amended in Phase 12.** This used to promise *local-only operation* as a named, supported configuration, and d47 reported "Nothing is leaving this machine right now" when it held. Both are gone. The disclosure now counts destinations rather than making a claim about the machine, for two reasons. A blanket sentence reads as a property of d47 rather than of these settings at this moment — and as a promise it prices every later feature against itself: a speech model that downloads when selected, a first-run fetch, anything that reaches a network for a reason the Commander would want, all arrive as violations of a slogan rather than as rows in a list. What the disclosure owes the Commander is that nothing reaches a network without appearing in it, which is a property of the enumeration and survives every feature added to it.
+
+> **Amended in Phase 11.** This sentence used to list *Edge TTS* as part of local-only operation. It is not: Edge Neural is `speech.platform.bing.com`, and every line d47 speaks is sent there to be turned into audio. The free provider is free, not local. The correction matters because the disclosure had no text-to-speech entry at all until Phase 11 added the second provider — so every spoken word went to Microsoft without appearing anywhere in the enumeration, which is the one thing this section exists to prevent. `EgressDisclosure.TextToSpeech` is now part of the enumerated set.
 
 ---
 

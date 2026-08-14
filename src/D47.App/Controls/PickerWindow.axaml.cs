@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 namespace D47.App.Controls;
 
@@ -55,12 +57,39 @@ public partial class PickerWindow : Window
         InitializeComponent();
     }
 
-    public static async Task<PickerResult?> ShowAsync(Window owner, PickerRequest request)
+    /// <param name="onListed">
+    /// Called once the picker is on screen with its list built. The caller is a settings row
+    /// that has disabled its own button and put a spinner beside it; this is what tells it to
+    /// stop, because "working" ends when the Commander can see the list, not when they have
+    /// finished choosing from it.
+    /// </param>
+    public static async Task<PickerResult?> ShowAsync(
+        Window owner,
+        PickerRequest request,
+        Action? onListed = null)
+    {
+        var picker = For(request);
+
+        if (onListed is not null)
+        {
+            picker.Opened += (_, _) => onListed();
+        }
+
+        return await picker.ShowDialog<PickerResult?>(owner);
+    }
+
+    /// <summary>
+    /// A bound picker that has not been shown. Public for the headless UI tests, which drive it
+    /// the same way <see cref="ShowAsync"/> does — a modal dialog cannot be inspected from the
+    /// thread that opened it, and what is worth asserting here is what the Commander is looking
+    /// at before they touch anything.
+    /// </summary>
+    public static PickerWindow For(PickerRequest request)
     {
         var picker = new PickerWindow { _request = request };
         picker.Bind();
 
-        return await picker.ShowDialog<PickerResult?>(owner);
+        return picker;
     }
 
     private void Bind()
@@ -70,25 +99,42 @@ public partial class PickerWindow : Window
         HelpText.Text = _request.Help ?? string.Empty;
         HelpText.IsVisible = !string.IsNullOrWhiteSpace(_request.Help);
 
-        FilterBox.Text = _request.Current ?? string.Empty;
+        // Empty, not the current value. Pre-filling it put the stored value in the box, and a
+        // stored value is an id: a Commander opening the microphone picker was shown
+        // "{0.0.1.00000000}.{a711ffd8-...}" and a list filtered down to the one device that id
+        // matched, with every other microphone on the machine hidden behind text they did not
+        // type. The current value is still selected below, so Enter with no typing keeps it.
+        FilterBox.Text = string.Empty;
         FilterBox.PlaceholderText = _request.AllowsFreeText
             ? "Type to filter, or type a value of your own"
             : "Type to filter";
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
+
         // Bracketed unconditionally, because what arrives here is the bare phrase — see
         // SettingRow.BareDefaultFor, which is why this cannot say "((the provider's default))".
-        DefaultButton.Content = $"Use the default ({_request.DefaultDisplay})";
+        // The label is trimmed to the button and repeated on the tooltip, because a resolved
+        // default names a device and device names are long.
+        var useDefault = $"Use the default ({_request.DefaultDisplay})";
+
+        DefaultButtonText.Text = useDefault;
+        ToolTip.SetTip(DefaultButton, useDefault);
 
         ApplyFilter();
 
         // Selecting the current value means Enter with no typing keeps what you had, which is
-        // the least surprising thing a picker opened by accident can do.
+        // the least surprising thing a picker opened by accident can do — and it is the only
+        // thing showing what is selected now, since the box above no longer says.
         Choices.SelectedIndex = _request.Current is null
             ? -1
             : Array.FindIndex(
                 _visible.ToArray(),
                 value => string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase));
+
+        if (Choices.SelectedIndex >= 0)
+        {
+            Choices.ScrollIntoView(Choices.SelectedIndex);
+        }
 
         Opened += (_, _) =>
         {
@@ -182,7 +228,25 @@ public partial class PickerWindow : Window
 
     private void OnAcceptClick(object? sender, RoutedEventArgs e) => Accept();
 
-    private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e) => Accept();
+    /// <summary>
+    /// One click takes it. A list of things to choose from is not a file manager: the second
+    /// click is a step nobody is asking for, and every picker a Commander has met this decade —
+    /// a command palette, a browser's address bar, a phone's share sheet — commits on the first
+    /// one. Cancel and Escape are the way out, and re-opening and picking again is the undo.
+    /// <para>
+    /// Only when the click landed on a row. A click on the empty space below the last item
+    /// leaves the selection alone, and accepting there would take a value the Commander did not
+    /// point at. The keyboard path is unchanged: arrows move, Enter or <b>Use this</b> takes it.
+    /// </para>
+    /// </summary>
+    private void OnChoiceTapped(object? sender, TappedEventArgs e)
+    {
+        if (e.Source is Visual source
+            && source.FindAncestorOfType<ListBoxItem>(includeSelf: true) is not null)
+        {
+            Accept();
+        }
+    }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(null);
 

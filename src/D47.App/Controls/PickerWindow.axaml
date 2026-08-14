@@ -41,16 +41,31 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="0,10,0,0">
-        <Button x:Name="DefaultButton" Content="Use the default" Click="OnUseDefaultClick" IsVisible="False" />
         <Button Content="Cancel" Click="OnCancelClick" />
         <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
       </StackPanel>
+
+      <!-- Its own row, stretched to the list rather than sized to its content. What goes in it
+           is a resolved default - "(the system default - Microphone (Virtual Desktop Audio))" -
+           and in one right-aligned row with the other two it grew the row past the window and
+           pushed Cancel and Use this off the left edge, which left the picker with no visible
+           way out. Stretched and trimmed it cannot do that whatever the string turns out to be;
+           the pointer gets the whole of it. -->
+      <Button x:Name="DefaultButton"
+              DockPanel.Dock="Bottom"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Left"
+              Margin="0,10,0,0"
+              IsVisible="False"
+              Click="OnUseDefaultClick">
+        <TextBlock x:Name="DefaultButtonText" TextTrimming="CharacterEllipsis" />
+      </Button>
 
       <ListBox x:Name="Choices"
                Background="{DynamicResource D47.SurfaceAlt}"
                BorderBrush="{DynamicResource D47.Border}"
                BorderThickness="1"
-               DoubleTapped="OnChoiceDoubleTapped"
+               Tapped="OnChoiceTapped"
                KeyDown="OnFilterKeyDown" />
 
     </DockPanel>
