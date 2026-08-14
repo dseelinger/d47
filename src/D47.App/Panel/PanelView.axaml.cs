@@ -170,6 +170,27 @@ public partial class PanelView : UserControl
             }));
     }
 
+    /// <summary>
+    /// Re-asserts the page once this view is actually on screen.
+    /// <para>
+    /// Set in the constructor as well, and that should be enough. It was not: a Commander
+    /// reported the window opening with no tab marked at all until one was clicked, and this
+    /// view is built, reparented by the zoom host, and instantiated a second time by the
+    /// headset before any of it is shown - all before the strip is ever rendered. Rather than
+    /// guess which of those drops it, the page is stated again at the one moment that is
+    /// definitely after all of them.
+    /// </para>
+    /// <para>
+    /// Cheap and idempotent: it checks the tab that is already meant to be checked and rebinds
+    /// the transcript to the property it is already bound to.
+    /// </para>
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        ApplyPage();
+    }
+
     private void OnModelDownloadClick(object? sender, RoutedEventArgs e) =>
         (DataContext as PanelViewModel)?.AcceptModelDownload();
 

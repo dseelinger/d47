@@ -151,6 +151,52 @@ public class TranscriptPagesTests
         Assert.False(mini.GetControl<StackPanel>("TranscriptTabs").IsVisible);
     }
 
+    /// <summary>
+    /// Both surfaces open with a tab highlighted.
+    /// <para>
+    /// Reported from a running build: the window opened with no tab marked at all, and only
+    /// showed one once it was clicked. Avalonia groups named radio buttons across the whole
+    /// application rather than within a tree, and this view is instantiated twice - once by the
+    /// window and once by the headset overlay - so the second strip built unchecked the first.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TwoSurfacesEachKeepTheirOwnCheckedTab()
+    {
+        var model = Said();
+
+        // Built in the order the app builds them: the window, then the headset overlay.
+        var window = Laid(new PanelView { DataContext = model });
+        var headset = Laid(new PanelView { DataContext = model });
+
+        Assert.Equal(
+            true,
+            window.GetControl<RadioButton>("ConversationTab").IsChecked);
+
+        Assert.Equal(
+            true,
+            headset.GetControl<RadioButton>("ConversationTab").IsChecked);
+    }
+
+    /// <summary>
+    /// And moving one surface's page leaves the other where it was, which is the same
+    /// independence seen from the other side.
+    /// </summary>
+    [AvaloniaFact]
+    public void MovingOneSurfacesPageLeavesTheOtherAlone()
+    {
+        var model = Said();
+
+        var window = Laid(new PanelView { DataContext = model });
+        var headset = Laid(new PanelView { DataContext = model });
+
+        window.GetControl<RadioButton>("LogTab").IsChecked = true;
+
+        Assert.Equal(TranscriptPage.Log, window.Page);
+        Assert.Equal(TranscriptPage.Conversation, headset.Page);
+        Assert.Equal(true, headset.GetControl<RadioButton>("ConversationTab").IsChecked);
+    }
+
     private static string Shown(PanelView panel) =>
         panel.GetControl<SelectableTextBlock>("Transcript").Text ?? string.Empty;
 
