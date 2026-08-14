@@ -103,7 +103,10 @@ provider labels as contradicting the core is refused, and one it does not label 
 allowed, so an account that says nothing about gender still gets a full list to choose from.
 
 One exception, because it is not a judgement: on ElevenLabs, **Warden** takes **George** — warm,
-captivating storyteller, male, British — with or without a model.
+captivating storyteller, male, British — with or without a model. Accounts name that voice
+differently — "George" on one, "George - Warm, Captivating Storyteller" on another — and both are
+recognised. A file where Warden ended up on something else because the name did not match is put
+right once, and whichever core was holding George gives it back and is paired again.
 
 The voice sits on the [Voice row](speech.md#voice) in Speech, and that row is the core aboard's.
 Change it and you have chosen that core's voice; nothing re-derives it afterwards.

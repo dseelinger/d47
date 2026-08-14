@@ -1028,7 +1028,16 @@ public partial class SettingsView : UserControl
 
     private (Control, Action, bool) BuildPickerButton(SettingRow row, TextBlock message)
     {
-        var value = new TextBlock { FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
+        // Trimmed, because the column is a fifth of a row and a voice name is whatever the
+        // provider's account calls it — "Bill - Wise, Mature, Balanced — male, american" is one
+        // of 473 real ones. Untrimmed it is not the text that overflows, it is the button: it
+        // asks for the width of the whole string and gets it.
+        var value = new TextBlock
+        {
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
 
         var chevron = new TextBlock { Text = "⌄", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -1066,12 +1075,14 @@ public partial class SettingsView : UserControl
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
-        var withBusy = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { busy, button },
-        };
+        // A DockPanel rather than a horizontal StackPanel, which is the other half of the same
+        // bug: a StackPanel measures along its own direction with no limit at all, so the button
+        // was told it could be as wide as it liked and believed it. The row's column had already
+        // been settled at two fifths, and the button ran out past it and past the panel edge.
+        var withBusy = new DockPanel { HorizontalAlignment = HorizontalAlignment.Right };
+        DockPanel.SetDock(busy, Dock.Left);
+        withBusy.Children.Add(busy);
+        withBusy.Children.Add(button);
 
         return (withBusy, () =>
         {

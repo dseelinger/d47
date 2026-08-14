@@ -105,6 +105,18 @@ public sealed record PersonaSettings
     /// </para>
     /// </summary>
     public bool VoicesGenderChecked { get; init; }
+
+    /// <summary>
+    /// Whether the pairings have been checked against the named defaults — the handful of cores
+    /// whose voice is a lookup rather than a judgement.
+    /// <para>
+    /// Once, on the same terms as <see cref="VoicesGenderChecked"/> and for the same reason: the
+    /// lookup failed on any account that appends a descriptor to a voice's name, which is a
+    /// whole class of file holding a voice nobody chose in a slot that was never the model's to
+    /// fill. A choice made after the repair stands.
+    /// </para>
+    /// </summary>
+    public bool VoicesNamedChecked { get; init; }
 }
 
 /// <summary>

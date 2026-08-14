@@ -62,9 +62,12 @@ public class PickerButtonSaysItIsWorkingTests
     {
         var window = Open();
 
+        // Any panel, not a StackPanel specifically: this was one, until a horizontal StackPanel
+        // turned out to measure its children with no width limit and let the button run out past
+        // the column. Where the glyph sits is the requirement; which panel puts it there is not.
         var row = window
             .GetVisualDescendants()
-            .OfType<StackPanel>()
+            .OfType<Avalonia.Controls.Panel>()
             .FirstOrDefault(panel =>
                 panel.Children.OfType<BusyGlyph>().Any() && panel.Children.OfType<Button>().Any());
 
@@ -74,6 +77,7 @@ public class PickerButtonSaysItIsWorkingTests
         // end of a control whose width follows its contents.
         Assert.IsType<BusyGlyph>(row.Children[0]);
         Assert.IsType<Button>(row.Children[1]);
+        Assert.Equal(Dock.Left, DockPanel.GetDock(row.Children[0]));
 
         window.Close();
     }

@@ -49,9 +49,15 @@ public static class TestSurface
     /// a test that needs to see the state on both sides of that button; every other caller gets
     /// a fresh one, as the composition root does.
     /// </param>
+    /// <param name="voices">
+    /// What the speech provider offers. Empty on every normal run, as a headless test has no
+    /// provider — passed in by the tests about the Voice row, which cannot say anything about a
+    /// row with nothing in it.
+    /// </param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
         Func<string>? coverage = null,
-        D47.Core.Persona.PersonaHost? personas = null)
+        D47.Core.Persona.PersonaHost? personas = null,
+        IReadOnlyList<VoiceInfo>? voices = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -75,6 +81,8 @@ public static class TestSurface
             {
                 Silence = () => { },
                 Beds = [.. CueLibrary.Load().BedNames],
+                Voices = () => [.. (voices ?? []).Select(voice => voice.Id)],
+                VoiceLabel = id => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),

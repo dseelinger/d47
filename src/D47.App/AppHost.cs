@@ -1019,11 +1019,41 @@ public sealed class AppHost : IDisposable
         });
     }
 
+    /// <summary>
+    /// Puts every named default back where the table says it goes, once.
+    /// <para>
+    /// Unlike the gender repair this one needs no model — it moves a voice this provider is
+    /// already offering onto the core named for it — but a core it takes a voice <em>off</em>
+    /// does, so it runs on the same terms as the other and under its own flag.
+    /// </para>
+    /// </summary>
+    private void RestoreNamedVoices()
+    {
+        if (Settings.Current.Persona.VoicesNamedChecked || Turns.Provider is null)
+        {
+            return;
+        }
+
+        Settings.Replace("persona.voices", current => current with
+        {
+            Persona = current.Persona with
+            {
+                Voices = VoicePairing.WithNamedDefaultsRestored(
+                    current.Persona.Voices,
+                    _voices,
+                    TtsProviderCatalog.Selected(current.Speech.Provider).Id,
+                    _logger),
+                VoicesNamedChecked = true,
+            },
+        });
+    }
+
     private async Task PairPersonaVoicesAsync()
     {
         if (_voices.Count > 0)
         {
             RepairMiscastVoices();
+            RestoreNamedVoices();
         }
 
         if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)

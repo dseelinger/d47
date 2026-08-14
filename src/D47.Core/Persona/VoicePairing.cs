@@ -121,17 +121,117 @@ public static class VoicePairing
                 continue;
             }
 
-            var match = voices.FirstOrDefault(voice =>
-                voice.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
-                && !paired.ContainsValue(voice.Id));
-
-            if (match is not null)
+            if (TheVoiceCalled(name, voices, persona, paired.Values) is { } match)
             {
                 paired[persona] = match.Id;
             }
         }
 
         return paired;
+    }
+
+    /// <summary>
+    /// The voice a named default means, in what this provider actually offers.
+    /// <para>
+    /// Not an equality test, because a voice's name is not only its name. The same George is
+    /// "George" on one ElevenLabs account and "George - Warm, Captivating Storyteller" on
+    /// another, and an exact match found neither on the second one — so Warden, whose voice is
+    /// the one pairing in d47 that is not a judgement call, quietly went to the model along with
+    /// everyone else and George was handed to whoever asked next. The descriptor is dropped and
+    /// the name in front of it is compared.
+    /// </para>
+    /// <para>
+    /// Which does mean a default named for a voice whose own name contains a dash would not be
+    /// found. No named default does, the exact name is tried first, and the alternative is the
+    /// failure above — silent, and indistinguishable from the model having chosen.
+    /// </para>
+    /// </summary>
+    private static VoiceInfo? TheVoiceCalled(
+        string name,
+        IReadOnlyList<VoiceInfo> voices,
+        string persona,
+        IEnumerable<string> taken)
+    {
+        var spokenFor = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var free = voices
+            .Where(voice =>
+                !spokenFor.Contains(voice.Id)
+                && PersonaCatalog.Resolve(persona).VoiceHint.Admits(voice.Gender))
+            .ToArray();
+
+        return free.FirstOrDefault(voice => voice.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            ?? free.FirstOrDefault(voice => WithoutDescriptor(voice.Name).Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The name in front of whatever an account has appended to it.</summary>
+    private static string WithoutDescriptor(string name)
+    {
+        var cut = name.IndexOfAny(['-', '–', '—', '(', ',']);
+
+        return (cut < 0 ? name : name[..cut]).Trim();
+    }
+
+    /// <summary>
+    /// The pairings, with every named default this provider carries put where it belongs
+    /// (list.md Phase 11, #33).
+    /// <para>
+    /// The same repair as <see cref="WithoutMiscastVoices"/> and for the same reason: a named
+    /// default is not a judgement, so a core holding something else in its place is this pass
+    /// having failed rather than a Commander having chosen. It failed for a whole class of
+    /// account — see <see cref="TheVoiceCalled"/> — and every file written by one of those holds
+    /// the wrong voice for Warden with no way back to the right one.
+    /// </para>
+    /// <para>
+    /// Whoever else was holding that voice loses it, because two cores cannot share one and the
+    /// core that has a claim on this one is named in the table. Theirs is dropped rather than
+    /// replaced, which puts them through the ordinary pairing again.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> WithNamedDefaultsRestored(
+        IReadOnlyDictionary<string, string> paired,
+        IReadOnlyList<VoiceInfo> voices,
+        string? ttsProvider,
+        ILogger? logger = null)
+    {
+        if (ttsProvider is null)
+        {
+            return paired;
+        }
+
+        var put = new Dictionary<string, string>(paired, StringComparer.Ordinal);
+        var moved = false;
+
+        foreach (var (provider, persona, name) in Named)
+        {
+            if (!string.Equals(provider, ttsProvider, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // Held by anyone: the point is to take it back off them. Only the core it is named
+            // for is excluded, and only so a pairing already right is left exactly alone.
+            var held = put.GetValueOrDefault(persona);
+
+            if (TheVoiceCalled(name, voices, persona, []) is not { } wanted || wanted.Id == held)
+            {
+                continue;
+            }
+
+            foreach (var other in put.Where(pair => pair.Value == wanted.Id).Select(pair => pair.Key).ToArray())
+            {
+                logger?.LogInformation(
+                    "Taking {Voice} off {Persona}: it is {Named}'s named default", wanted.Id, other, persona);
+
+                put.Remove(other);
+            }
+
+            logger?.LogInformation("Restoring {Persona} to {Voice}, its named default", persona, wanted.Id);
+            put[persona] = wanted.Id;
+            moved = true;
+        }
+
+        return moved ? put : paired;
     }
 
     /// <summary>
@@ -222,8 +322,7 @@ public static class VoicePairing
         if (Named.FirstOrDefault(named =>
                 string.Equals(named.Provider, ttsProvider, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(named.Persona, persona.Id, StringComparison.Ordinal)) is { Voice: { } wanted }
-            && offered.FirstOrDefault(voice =>
-                voice.Name.Equals(wanted, StringComparison.OrdinalIgnoreCase)) is { } named)
+            && TheVoiceCalled(wanted, offered, persona.Id, []) is { } named)
         {
             logger?.LogInformation("Voice for {Persona}: {Voice}, its named default", persona.Id, named.Id);
             return named.Id;

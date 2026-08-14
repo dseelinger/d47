@@ -132,6 +132,31 @@ public class VoicePairingTests
         Assert.Equal("warden", paired.Keys.Single());
     }
 
+    /// <summary>
+    /// The account this was found on names its voices "George - Warm, Captivating Storyteller",
+    /// and an exact match found nothing — so the one pairing that is not a judgement call went
+    /// to the model with all the others, and George was handed to whoever it liked.
+    /// </summary>
+    [Fact]
+    public async Task WardenStillTakesGeorgeWhenTheAccountAppendsADescriptor()
+    {
+        var paired = await VoicePairing.ChooseAsync(
+            [
+                new("pqHfZKP75CvOlQylNhV4", "Bill - Wise, Mature, Balanced", "american", "male"),
+                new("JBFqnCBsd6RMkjVDRZzb", "George - Warm, Captivating Storyteller", "british", "male"),
+            ],
+            Nothing(),
+            provider: null,
+            model: null,
+            spend: null,
+            prices: null,
+            logger: null,
+            ttsProvider: "elevenlabs",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", paired["warden"]);
+    }
+
     [Fact]
     public async Task ANamedDefaultBelongsToItsOwnProviderAndToNoOther()
     {
@@ -365,5 +390,73 @@ public class MiscastVoicesAreDroppedTests
             Paired(("analyst-prime", "XrExE9yKIg1WjnnlVkGX")), Voices());
 
         Assert.Equal("XrExE9yKIg1WjnnlVkGX", kept["analyst-prime"]);
+    }
+}
+
+/// <summary>
+/// The named defaults, on a file where one of them did not take (list.md Phase 11, #33).
+/// <para>
+/// Warden on ElevenLabs is a lookup, not a judgement — so a file with Warden on something else
+/// and George on another core is this pass having failed, which it did on every account that
+/// appends a descriptor to a voice name. Repaired once, like the gender check, and a choice made
+/// afterwards stands.
+/// </para>
+/// </summary>
+public class NamedVoicesAreRestoredTests
+{
+    private static IReadOnlyList<VoiceInfo> Voices() =>
+    [
+        new("pqHfZKP75CvOlQylNhV4", "Bill - Wise, Mature, Balanced", "american", "male"),
+        new("JBFqnCBsd6RMkjVDRZzb", "George - Warm, Captivating Storyteller", "british", "male"),
+        new("XrExE9yKIg1WjnnlVkGX", "Matilda - Warm, Professional", "american", "female"),
+    ];
+
+    private static Dictionary<string, string> Paired(params (string Persona, string Voice)[] pairs) =>
+        pairs.ToDictionary(pair => pair.Persona, pair => pair.Voice, StringComparer.Ordinal);
+
+    [Fact]
+    public void WardenIsPutBackOnGeorge()
+    {
+        var put = VoicePairing.WithNamedDefaultsRestored(
+            Paired(("warden", "pqHfZKP75CvOlQylNhV4")), Voices(), "elevenlabs");
+
+        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
+    }
+
+    [Fact]
+    public void TheCoreThatHadGeorgeLosesItAndIsPairedAgain()
+    {
+        // Dropped rather than swapped: two cores cannot share a voice, and the one with no claim
+        // on this one goes back through the ordinary pairing rather than being handed Warden's
+        // cast-off by a rule that was never asked to choose for it.
+        var put = VoicePairing.WithNamedDefaultsRestored(
+            Paired(
+                ("warden", "pqHfZKP75CvOlQylNhV4"),
+                ("mender", "JBFqnCBsd6RMkjVDRZzb"),
+                ("cora", "XrExE9yKIg1WjnnlVkGX")),
+            Voices(),
+            "elevenlabs");
+
+        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
+        Assert.DoesNotContain("mender", put.Keys);
+        Assert.Equal("XrExE9yKIg1WjnnlVkGX", put["cora"]);
+    }
+
+    [Fact]
+    public void APairingAlreadyRightIsLeftExactlyAlone()
+    {
+        var already = Paired(("warden", "JBFqnCBsd6RMkjVDRZzb"), ("cora", "XrExE9yKIg1WjnnlVkGX"));
+
+        Assert.Same(already, VoicePairing.WithNamedDefaultsRestored(already, Voices(), "elevenlabs"));
+    }
+
+    [Fact]
+    public void AnotherProvidersFileIsNotTouched()
+    {
+        // "George" means an ElevenLabs voice. On Edge there is no named default at all, so there
+        // is nothing here to restore and nothing to take off anyone.
+        var edge = Paired(("warden", "en-GB-RyanNeural"));
+
+        Assert.Same(edge, VoicePairing.WithNamedDefaultsRestored(edge, Voices(), "edge"));
     }
 }
