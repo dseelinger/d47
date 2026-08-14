@@ -37,6 +37,8 @@ public static class GalaxyCapability
             "how far is Colonia",
             "find a high tech system within 30 light years",
             "what's the nearest Federation system",
+            "where's the nearest Earth-like world",
+            "find me a painite hotspot",
         ],
 
         // No keywords. Every question this answers carries the thing being asked about, and a
@@ -201,6 +203,105 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "find_body",
+                Description =
+                    "Find the nearest planets, moons or stars matching some criteria. Answers three kinds "
+                    + "of question from one index: where the nearest Earth-like world or neutron star is, "
+                    + "where there is something to sample on a surface, and which ring to mine. Names are "
+                    + "matched against the real catalogue, and one that is not in it is refused with "
+                    + "suggestions rather than reported as 'there is no such thing'.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "body_type",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "The kind of body, by name — for example \"Earth-like world\", \"Neutron Star\", "
+                            + "\"Water world\" or \"Class I gas giant\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "signal",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A signal on the body's surface: \"Biological\", \"Geological\", \"Human\", "
+                            + "\"Guardian\" or \"Thargoid\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "signal_count",
+                        Type = ToolParameterType.Integer,
+                        Description =
+                            "Exactly how many of that signal — not a minimum. Leave it out unless the "
+                            + "Commander asked for a specific number.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "hotspot",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A mining hotspot material in one of the body's rings — for example \"Painite\", "
+                            + "\"Low Temperature Diamonds\" or \"Void Opal\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "hotspot_count",
+                        Type = ToolParameterType.Integer,
+                        Description =
+                            "Exactly how many overlapping hotspots of that material — not a minimum. "
+                            + "A double or triple hotspot is 2 or 3.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "ring_type",
+                        Type = ToolParameterType.String,
+                        Description = "Ring composition.",
+                        AllowedValues = BodyCatalogue.RingTypes,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "reserve_level",
+                        Type = ToolParameterType.String,
+                        Description = "How rich the rings are.",
+                        AllowedValues = BodyCatalogue.ReserveLevels,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "landable",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only bodies that can be landed on.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "terraformable",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only terraforming candidates, which are worth far more to map.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "The system to search out from. Defaults to where the Commander is now.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "How far to look, in light years. Defaults to 50.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "limit",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many to return, 1 to 20. Defaults to 5.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    FindBodyAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
             },
         ],
         Settings =
@@ -394,6 +495,207 @@ public static class GalaxyCapability
         catch (GalaxyUnavailableException ex)
         {
             return ToolResult.Error(ex.Message);
+        }
+    }
+
+    private static async Task<ToolResult> FindBodyAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear
+            : currentSystem();
+
+        if (string.IsNullOrWhiteSpace(near))
+        {
+            return ToolResult.Error(
+                "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        arguments.TryGetString("body_type", out var bodyType);
+        arguments.TryGetString("signal", out var signal);
+        arguments.TryGetString("hotspot", out var hotspot);
+        arguments.TryGetString("ring_type", out var ringType);
+        arguments.TryGetString("reserve_level", out var reserveLevel);
+
+        if (!BodyQuery.TryParse(
+                near,
+                bodyType,
+                signal,
+                Count(arguments, "signal_count"),
+                hotspot,
+                Count(arguments, "hotspot_count"),
+                ringType,
+                reserveLevel,
+                Flag(arguments, "landable"),
+                Flag(arguments, "terraformable"),
+                Distance(arguments, "max_distance"),
+                arguments.TryGetInt32("limit", out var limit) ? limit : 5,
+                out var query,
+                out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        try
+        {
+            var result = await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return ToolResult.Ok(Describe(result, query));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// A boolean argument as three states rather than two. Absent has to stay distinguishable
+    /// from false: "landable" left out means either, and false means specifically the ones that
+    /// cannot be landed on, which is a search nobody meant to make by omission.
+    /// </summary>
+    private static bool? Flag(ToolArguments arguments, string name) =>
+        arguments.Values.ContainsKey(name) && arguments.TryGetBoolean(name, out var value) ? value : null;
+
+    private static int? Count(ToolArguments arguments, string name) =>
+        arguments.TryGetInt32(name, out var value) ? value : null;
+
+    private static double? Distance(ToolArguments arguments, string name) =>
+        arguments.Values.TryGetValue(name, out var raw)
+        && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : null;
+
+    /// <summary>
+    /// Body results as prose, and it reads differently depending on what was asked.
+    /// <para>
+    /// A ring question gets the hotspots and how old the report is; a surface question gets the
+    /// signals. Printing both every time would bury the answer under the other question's
+    /// evidence — a mining search returning eight lines of biological signal counts is worse than
+    /// no answer, because the Commander has to read it to find that out.
+    /// </para>
+    /// </summary>
+    private static string Describe(BodySearchResult result, BodyQuery query)
+    {
+        if (result.Bodies.Count == 0)
+        {
+            return $"Nothing within {query.MaxDistance:N0} light years matches that.";
+        }
+
+        var report = new StringBuilder();
+
+        report.Append(result.Total == result.Bodies.Count
+            ? $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched"
+            : $"{result.Total} bodies matched; here are the nearest {result.Bodies.Count}");
+
+        if (result.Reference is not null)
+        {
+            report.Append($", measured from {result.Reference}");
+        }
+
+        report.AppendLine(".");
+
+        foreach (var body in result.Bodies)
+        {
+            report.AppendLine();
+            report.Append($"{body.Name} in {body.SystemName}");
+
+            if (body.Distance is not null)
+            {
+                report.Append($" — {body.Distance.Value.ToString("N2", CultureInfo.InvariantCulture)} ly");
+            }
+
+            if (body.DistanceToArrival is not null)
+            {
+                report.Append(
+                    $", {body.DistanceToArrival.Value.ToString("N0", CultureInfo.InvariantCulture)} ls from arrival");
+            }
+
+            var facts = new List<string>();
+
+            if (body.Subtype is not null)
+            {
+                facts.Add(body.Subtype);
+            }
+
+            if (body.IsLandable)
+            {
+                facts.Add("landable");
+            }
+
+            if (body.TerraformingState is not null and not "Not terraformable")
+            {
+                facts.Add(body.TerraformingState.ToLowerInvariant());
+            }
+
+            if (query.IsAboutRings && body.ReserveLevel is not null)
+            {
+                facts.Add($"{body.ReserveLevel.ToLowerInvariant()} reserves");
+            }
+
+            if (facts.Count > 0)
+            {
+                report.Append($"; {string.Join(", ", facts)}");
+            }
+
+            if (query.IsAboutRings)
+            {
+                DescribeRings(report, body, query.RingSignal);
+            }
+            else if (body.Signals.Count > 0)
+            {
+                report.Append("; " + string.Join(
+                    ", ",
+                    body.Signals.Select(signal => $"{signal.Count} {signal.Kind.ToLowerInvariant()}")));
+            }
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static void DescribeRings(StringBuilder report, BodySummary body, string? wanted)
+    {
+        foreach (var ring in body.Rings)
+        {
+            // Only the rings that carry what was asked for. A metal-rich ring with no Painite in
+            // it is not part of the answer to "where is Painite", and listing it invites the
+            // Commander to fly to the wrong one of two rings around the same planet.
+            var hotspots = wanted is null
+                ? ring.Hotspots
+                : [.. ring.Hotspots.Where(hotspot =>
+                    string.Equals(hotspot.Material, wanted, StringComparison.OrdinalIgnoreCase))];
+
+            if (hotspots.Count == 0)
+            {
+                continue;
+            }
+
+            report.AppendLine();
+            report.Append($"  {ring.Name}");
+
+            if (ring.Type is not null)
+            {
+                report.Append($" ({ring.Type})");
+            }
+
+            report.Append(": " + string.Join(
+                ", ",
+                hotspots.Select(hotspot => $"{hotspot.Count} {hotspot.Material}")));
+
+            // Hotspots are crowd-reported like outfitting stock, and a report nobody has refreshed
+            // since the last balance pass is a claim about a ring rather than a fact about one.
+            if (ring.SignalsSeen is { } seen)
+            {
+                report.Append($", reported {seen:yyyy-MM-dd}");
+            }
         }
     }
 

@@ -79,6 +79,13 @@ public interface IGalaxyService
     /// Stations selling a named module or ship, nearest first (list.md Phase 14, "Find Nearest").
     /// </summary>
     Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Bodies matching some criteria, nearest first — the body and signal half of "Find Nearest".
+    /// One call answers three questions that look unrelated and are the same index: where the
+    /// nearest Earth-like world is, where there is something to sample, and which ring to mine.
+    /// </summary>
+    Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken);
 }
 
 /// <summary>

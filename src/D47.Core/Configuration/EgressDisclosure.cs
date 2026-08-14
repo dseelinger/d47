@@ -96,7 +96,8 @@ public static class EgressDisclosure
                 NameOf(GalaxySearch),
                 "spansh.co.uk",
                 "System names you ask about, and the filters of a search — an allegiance, a distance, an "
-                + "economy. Where you are goes with it whenever a question is relative to you, because "
+                + "economy, a module you want to buy, a body type or a mining material. Where you are goes "
+                + "with it whenever a question is relative to you, because "
                 + "\"the nearest high tech system\" cannot be asked without saying where from. No key, no "
                 + "identifier, and nothing from your journal beyond the system name itself.",
                 Active: true)

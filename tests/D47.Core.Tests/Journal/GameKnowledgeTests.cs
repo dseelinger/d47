@@ -298,6 +298,102 @@ public class GameKnowledgeTests
         Assert.Equal("Deciat", fleet.SnapshotSystem);
     }
 
+    // ---- Stored modules -------------------------------------------------------------------
+
+    private const string StoredModules =
+        """
+        {"timestamp":"3311-01-01T00:01:00Z","event":"StoredModules","MarketID":128666762,
+         "StationName":"Jameson Memorial","StarSystem":"Shinrarta Dezhra",
+         "Items":[
+           {"Name":"$hpt_beamlaser_fixed_medium_name;","Name_Localised":"Beam Laser","StorageSlot":56,
+            "StarSystem":"Shinrarta Dezhra","MarketID":128666762,"TransferCost":0,"TransferTime":0},
+           {"Name":"$int_powerplant_size6_class5_name;","StorageSlot":8,"StarSystem":"Deciat",
+            "MarketID":128674535,"TransferCost":58000,"TransferTime":3600,
+            "EngineerModifications":"PowerPlant_Boosted","Level":5,"Hot":true},
+           {"Name":"$int_shieldgenerator_size5_class5_strong_name;","Name_Localised":"Prismatic Shield Generator",
+            "StorageSlot":9,"InTransit":true}]}
+        """;
+
+    [Fact]
+    public void StoredModulesSplitIntoWhatIsHereAndWhatIsNot()
+    {
+        var store = Fold(StoredModules).Modules;
+
+        Assert.True(store.IsKnown);
+        Assert.Equal("Shinrarta Dezhra", store.SnapshotSystem);
+        Assert.Equal("Jameson Memorial", store.SnapshotStation);
+
+        var here = Assert.Single(store.Here);
+        Assert.Equal("Beam Laser", here.Name);
+        Assert.Equal("Jameson Memorial", here.StationName);
+
+        // The remote one and the in-transit one are both "not here", which is the distinction a
+        // Commander standing at an outfitting screen actually needs.
+        Assert.Equal(2, store.Elsewhere.Count);
+    }
+
+    [Fact]
+    public void AModuleWithNoLocalisedNameKeepsTheSymbolsWordsRatherThanInventingOne()
+    {
+        var store = Fold(StoredModules).Modules;
+
+        var powerPlant = Assert.Single(store.Modules, module => module.StarSystem == "Deciat");
+
+        // Ugly and true. Making up "6A Power Plant" here would be inventing game data from a
+        // string, and a wrong guess is indistinguishable from the feature working.
+        Assert.Equal("int powerplant size6 class5", powerPlant.Name);
+        Assert.Equal("PowerPlant Boosted", powerPlant.Engineering);
+        Assert.Equal(5, powerPlant.EngineeringGrade);
+        Assert.True(powerPlant.Hot);
+        Assert.Contains("hot", powerPlant.Describe(), StringComparison.Ordinal);
+        Assert.Contains("grade 5", powerPlant.Describe(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnInTransitModuleBelongsToNoSystem()
+    {
+        var store = Fold(StoredModules).Modules;
+
+        // It has left one station and not arrived at the next, so listing it under either would
+        // send the Commander somewhere it is not.
+        Assert.DoesNotContain("Shinrarta Dezhra", store.Systems.Where(s => s == "unknown"));
+        Assert.Equal(["Deciat", "Shinrarta Dezhra"], store.Systems);
+    }
+
+    [Fact]
+    public void AFreshStoredModulesSnapshotReplacesTheStore()
+    {
+        var store = Fold(
+            StoredModules,
+            """{"timestamp":"3311-01-01T02:00:00Z","event":"StoredModules","StationName":"Farseer Inc","StarSystem":"Deciat","Items":[{"Name":"$int_fuelscoop_size5_class5_name;","Name_Localised":"Fuel Scoop","StarSystem":"Deciat"}]}""")
+            .Modules;
+
+        // Merging would keep modules that have since been sold or fitted, and the failure that
+        // causes is a Commander flying somewhere to collect something that is not there.
+        Assert.Single(store.Modules);
+        Assert.Equal("Deciat", store.SnapshotSystem);
+    }
+
+    [Fact]
+    public void MatchingAStoredModuleTakesAFragmentOfItsName()
+    {
+        var store = Fold(StoredModules).Modules;
+
+        Assert.Single(store.Matching("shield"));
+        Assert.Single(store.Matching("BEAM"));
+        Assert.Empty(store.Matching("interdictor"));
+        Assert.Empty(store.Matching("  "));
+    }
+
+    [Fact]
+    public void NoStoredModulesEventMeansNotSeenRatherThanNothingStored()
+    {
+        // Written on docking somewhere with outfitting, so silence before that is missing
+        // evidence — the same distinction the fleet list draws.
+        Assert.False(Fold().Modules.IsKnown);
+        Assert.Empty(Fold().Modules.Modules);
+    }
+
     // ---- Materials ----------------------------------------------------------------------
 
     [Fact]

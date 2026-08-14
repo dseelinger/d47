@@ -58,4 +58,66 @@ public class JournalCapabilityTests
 
         Assert.Equal("Fixture is in Fixture Nebula Point, docked at Fixture Outpost.", result.Content);
     }
+
+    private const string StoredModules =
+        """
+        {"timestamp":"2026-01-01T00:00:02Z","event":"StoredModules","StationName":"Fixture Outpost",
+         "StarSystem":"Fixture Nebula Point",
+         "Items":[
+           {"Name":"$hpt_beamlaser_fixed_medium_name;","Name_Localised":"Beam Laser",
+            "StarSystem":"Fixture Nebula Point","TransferCost":0},
+           {"Name":"$int_shieldgenerator_size5_class5_name;","Name_Localised":"Shield Generator",
+            "StarSystem":"Fixture Depot","TransferCost":58000,"TransferTime":3600}]}
+        """;
+
+    private static CapabilityRegistry WithStoredModules()
+    {
+        var gameState = new GameStateStore();
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+        Apply(gameState, StoredModules);
+
+        return CapabilityRegistry.Build([JournalCapability.Create(gameState)]);
+    }
+
+    [Fact]
+    public async Task StoredModulesAreGroupedByWhereTheyAreWithWhatFetchingThemCosts()
+    {
+        var result = await WithStoredModules()
+            .InvokeAsync("get_stored_modules", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        // Grouped, because the question underneath is "can I fit it here or must I fetch it" —
+        // and the transfer cost is the number that answers it.
+        Assert.Contains("Fixture Nebula Point (where you are):", result.Content, StringComparison.Ordinal);
+        Assert.Contains("58,000 cr to transfer, 60 minutes", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AskingForOneModuleNarrowsTheListAndSaysHowMuchWasLeftOut()
+    {
+        var result = await WithStoredModules().InvokeAsync(
+            "get_stored_modules",
+            ToolArguments.FromJson("""{"module":"interdictor"}"""),
+            TestContext.Current.CancellationToken);
+
+        // "Nothing matches" on its own reads as an empty store. The total is what tells the
+        // Commander the difference between the two.
+        Assert.Contains("Nothing in storage matches 'interdictor'", result.Content, StringComparison.Ordinal);
+        Assert.Contains("2 modules are stored in total", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WithNoStoredModulesEventTheAnswerNamesTheEventItIsWaitingFor()
+    {
+        var gameState = new GameStateStore();
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+
+        var result = await CapabilityRegistry.Build([JournalCapability.Create(gameState)])
+            .InvokeAsync("get_stored_modules", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        // "No modules in storage" would be a claim about the Commander's property that nothing
+        // has established. This says which event would establish it.
+        Assert.Contains("dock at a station with outfitting", result.Content, StringComparison.Ordinal);
+    }
 }

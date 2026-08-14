@@ -47,6 +47,32 @@ Currently flying Bold Endeavour, a Anaconda.
   Shinrarta Dezhra: Mule (python)
 ```
 
+**What is in module storage**, grouped by where it is, because the question underneath is nearly
+always "can I fit it here, or do I have to fetch it":
+
+```text
+3 modules in storage, as of 3311-01-01 00:01 UTC.
+
+Deciat:
+  int powerplant size6 class5 (PowerPlant Boosted, grade 5), hot — 58,000 cr to transfer, 60 minutes
+
+Shinrarta Dezhra (where you are):
+  Beam Laser
+
+In transit: Prismatic Shield Generator.
+```
+
+Ask for one thing and it narrows to it — `get_stored_modules` takes a fragment, so "have I got a
+shield anywhere" works without the full catalogue name.
+
+This is your own storage read off disk, and it is a different question from where a module can be
+*bought*: that one is [galaxy search](galaxy.md) and it leaves the machine. This one works with
+the galaxy search switched off, which is what a fresh install is.
+
+Where Elite writes no readable name, Directive 47 keeps the symbol's words rather than inventing a
+friendly one — `int powerplant size6 class5` above is ugly and true, and a guessed "6A Power
+Plant" would be indistinguishable from the feature working.
+
 **What you are carrying**, by category, with the top holdings rather than all of them — a full
 list is over a hundred lines and no answer to a spoken question:
 
@@ -84,6 +110,10 @@ you enter the game or change your outfitting.
 
 ```text
 I have no ship list yet — it is written when you dock at a station with a shipyard.
+```
+
+```text
+I have no module storage list yet — it is written when you dock at a station with outfitting.
 ```
 
 Carrier events only ever reach the owner's journal, so having seen none is genuinely ambiguous
@@ -131,14 +161,25 @@ worse than a missing one.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-Every tool here takes no arguments — each reports on the Commander currently being tailed — so
-they share a schema:
+All but one take no arguments — each reports on the Commander currently being tailed — so they
+share a schema:
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
 `get_location`, `get_ship`, `get_fleet`, `get_materials` and `get_session_summary`.
+
+`get_stored_modules` takes an optional fragment to narrow the list:
+
+```json
+{"type":"object","properties":{"module":{"type":"string","description":"Narrow the list to stored modules whose name contains this \u2014 for example \u0022shield\u0022 or \u0022Frame Shift Drive\u0022. Leave it out for the whole store."}},"required":[],"additionalProperties":false}
+```
+
+`StoredModules`, like `StoredShips`, is a complete snapshot rather than a delta, so the store is
+replaced wholesale on each one. Merging would keep modules that have since been sold or fitted,
+and the failure that causes is a Commander flying somewhere to collect something that is not
+there.
 
 D47 watches the journal folder Elite writes to
 (`%USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous` by default; overridable for

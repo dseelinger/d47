@@ -129,6 +129,51 @@ Getting a position out of a name takes one search: there is no lookup-by-name en
 so d47 names the system as a *search reference* and reads back the coordinates the service
 resolved it to.
 
+### `find_body`
+
+The nearest planets, moons and stars matching some criteria.
+
+```json
+{"type":"object","properties":{"body_type":{"type":"string","description":"The kind of body, by name \u2014 for example \u0022Earth-like world\u0022, \u0022Neutron Star\u0022, \u0022Water world\u0022 or \u0022Class I gas giant\u0022."},"hotspot":{"type":"string","description":"A mining hotspot material in one of the body\u0027s rings \u2014 for example \u0022Painite\u0022, \u0022Low Temperature Diamonds\u0022 or \u0022Void Opal\u0022."},"hotspot_count":{"type":"integer","description":"Exactly how many overlapping hotspots of that material \u2014 not a minimum. A double or triple hotspot is 2 or 3."},"landable":{"type":"boolean","description":"Only bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Defaults to 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Defaults to 50."},"near":{"type":"string","description":"The system to search out from. Defaults to where the Commander is now."},"reserve_level":{"type":"string","description":"How rich the rings are.","enum":["Common","Depleted","Low","Major","Pristine"]},"ring_type":{"type":"string","description":"Ring composition.","enum":["Icy","Metal Rich","Metallic","Rocky"]},"signal":{"type":"string","description":"A signal on the body\u0027s surface: \u0022Biological\u0022, \u0022Geological\u0022, \u0022Human\u0022, \u0022Guardian\u0022 or \u0022Thargoid\u0022."},"signal_count":{"type":"integer","description":"Exactly how many of that signal \u2014 not a minimum. Leave it out unless the Commander asked for a specific number."},"terraformable":{"type":"boolean","description":"Only terraforming candidates, which are worth far more to map."}},"required":[],"additionalProperties":false}
+```
+
+One index answers three questions that sound unrelated:
+
+- **where the nearest Earth-like world is** — or neutron star, or water world, for a jump or a
+  payday
+- **where there is something on a surface** — biological and geological signals, and how many
+- **which ring to mine** — a hotspot material, how many overlap, the ring's composition and how
+  rich its reserves are
+
+Body types are matched, not listed. There are 61 of them, so the same reasoning applies as for
+module names — and the matcher takes a **unique fragment** as well as a spelling: "earth-like"
+names exactly one subtype and is what a person says. "gas giant" names six, so it is refused with
+the candidates rather than answered about whichever one came first.
+
+Two things about this search were measured and are worth knowing before changing it.
+
+**The signal filter has a third wire shape**, different from both the system filters and the
+station module group. It is `{"name":{"value":["Biological"]},"count":2}` — a choice member beside
+a **bare number**. The obvious spelling, `{"Biological":{"min":"1","max":"40"}}`, is accepted and
+ignored: within 20 light years of Sol it returned the unfiltered 1,315 bodies, exactly as a
+misspelled key did.
+
+**A signal count is exact, not a minimum.** Asking for 1 returned 41 bodies, 2 returned 14, 3
+returned none and 4 returned 2 — not a decreasing series, and every result carried precisely the
+number asked for. So the schema says "exactly how many" rather than "at least", because a "three
+or more" that quietly meant "exactly three" would be a wrong answer that reads like a right one.
+
+`distance_to_arrival` is **not** offered as a filter: the service ignores it. Setting it to 0-10
+light seconds returned the same 1,315 bodies as no filter at all. It is read off each result and
+reported, because how far in-system a body sits is half of how far away it is — but it cannot
+narrow a search, and offering it as though it could would be the silent-ignore failure with d47's
+name on it.
+
+Hotspots carry the date they were reported, for the same reason outfitting stock does. They are
+crowd-sourced, and only the rings holding what you asked for are listed — a metal-rich ring with
+no Painite in it is not part of the answer to "where is Painite", and naming it invites a trip to
+the wrong one of two rings around the same planet.
+
 ## Notes for anyone reading the code
 
 There is no published API for this service; the endpoints are reverse-engineered by every third

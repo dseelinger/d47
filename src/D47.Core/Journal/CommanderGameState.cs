@@ -24,6 +24,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Every other ship they own, and where.</summary>
     public FleetRegistry Fleet { get; private set; } = FleetRegistry.Empty;
 
+    /// <summary>Every module they have in storage, and where.</summary>
+    public ModuleStore Modules { get; private set; } = ModuleStore.Empty;
+
     public MaterialsInventory Materials { get; private set; } = MaterialsInventory.Empty;
 
     /// <summary>Since they entered the game.</summary>
@@ -49,6 +52,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Ship = Ship.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         Fleet = Fleet.Apply(journalEvent);
+        Modules = Modules.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
 

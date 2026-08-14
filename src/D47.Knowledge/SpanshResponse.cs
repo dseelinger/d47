@@ -75,6 +75,87 @@ internal static class SpanshResponse
             stations);
     }
 
+    public static BodySearchResult ReadBodies(JsonDocument document)
+    {
+        var root = document.RootElement;
+
+        var bodies = new List<BodySummary>();
+
+        if (root.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var result in results.EnumerateArray())
+            {
+                bodies.Add(ReadBody(result));
+            }
+        }
+
+        return new BodySearchResult(
+            ReadReference(root),
+            root.TryGetProperty("count", out var count) && count.TryGetInt32(out var total) ? total : bodies.Count,
+            bodies);
+    }
+
+    private static BodySummary ReadBody(JsonElement element) => new()
+    {
+        Name = String(element, "name") ?? "an unnamed body",
+        SystemName = String(element, "system_name") ?? "an unnamed system",
+        Distance = Number(element, "distance"),
+        DistanceToArrival = Number(element, "distance_to_arrival"),
+        Subtype = String(element, "subtype"),
+        IsLandable = Boolean(element, "is_landable"),
+        TerraformingState = String(element, "terraforming_state"),
+        ReserveLevel = String(element, "reserve_level"),
+        MappingValue = Integer(element, "estimated_mapping_value"),
+        Signals = ReadSignals(element),
+        Rings = ReadRings(element),
+    };
+
+    /// <summary>
+    /// The signal counts, dropped into pairs. Read defensively for the same reason everything
+    /// else here is: a signal whose entry has no name is skipped rather than becoming a blank
+    /// line in something a Commander is about to hear read aloud.
+    /// </summary>
+    private static IReadOnlyList<(string Kind, int Count)> ReadSignals(JsonElement element)
+    {
+        if (!element.TryGetProperty("signals", out var signals) || signals.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var read = new List<(string, int)>();
+
+        foreach (var signal in signals.EnumerateArray())
+        {
+            if (String(signal, "name") is { } name)
+            {
+                read.Add((name, (int)(Integer(signal, "count") ?? 0)));
+            }
+        }
+
+        return read;
+    }
+
+    private static IReadOnlyList<RingSummary> ReadRings(JsonElement element)
+    {
+        if (!element.TryGetProperty("rings", out var rings) || rings.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var read = new List<RingSummary>();
+
+        foreach (var ring in rings.EnumerateArray())
+        {
+            read.Add(new RingSummary(String(ring, "name") ?? "an unnamed ring", String(ring, "type"))
+            {
+                Hotspots = ReadSignals(ring),
+                SignalsSeen = Timestamp(ring, "signals_updated_at"),
+            });
+        }
+
+        return read;
+    }
+
     private static StationSummary ReadStation(JsonElement element) => new()
     {
         Name = String(element, "name") ?? "an unnamed station",

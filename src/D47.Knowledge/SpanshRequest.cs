@@ -174,6 +174,114 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>
+    /// The body search body.
+    /// <para>
+    /// A <em>third</em> group shape, and the one that punishes guessing hardest. Signals are
+    /// <c>signals: {"name":{"value":["Biological"]},"count":2}</c> — a choice member beside a
+    /// <b>bare number</b>, not a range object. Measured on 2026-08-14: the range spelling
+    /// <c>{"Biological":{"min":"1","max":"40"}}</c> returned the unfiltered 1,315 bodies within
+    /// 20 light years of Sol, exactly as a bogus key did, while <c>count</c> written as a range
+    /// returned zero every time. Written as a number it matches <em>exactly</em> that many — 1
+    /// gave 41 bodies, 2 gave 14, 3 gave none and 4 gave 2, each carrying precisely the count
+    /// asked for.
+    /// </para>
+    /// <para>
+    /// Rings are the plain choice shape, <c>rings: {"value":["Icy"]}</c>. The group spelling that
+    /// works for modules and signals — <c>{"type":{"value":["Icy"]}}</c> — is a 500 here, which is
+    /// at least a loud failure rather than a quiet one.
+    /// </para>
+    /// </summary>
+    public static string Bodies(BodyQuery query)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("distance");
+            writer.WriteString("min", "0");
+            writer.WriteString("max", Number(query.MaxDistance));
+            writer.WriteEndObject();
+
+            WriteChoice(writer, "subtype", query.Subtype);
+            WriteChoice(writer, "rings", query.RingType);
+            WriteChoice(writer, "reserve_level", query.ReserveLevel);
+
+            if (query.Landable is { } landable)
+            {
+                WriteChoice(writer, "is_landable", landable ? "true" : "false");
+            }
+
+            if (query.Terraformable is { } terraformable)
+            {
+                // Not a boolean of its own: the service models this as a state, and "not
+                // terraformable" is one of its four values rather than the absence of the filter.
+                WriteChoice(writer, "terraforming_state", terraformable ? "Terraformable" : "Not terraformable");
+            }
+
+            WriteSignals(writer, "signals", query.Signal, query.SignalCount);
+            WriteSignals(writer, "ring_signals", query.RingSignal, query.RingSignalCount);
+
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+            writer.WriteStartObject();
+            writer.WriteStartObject("distance");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", query.Size);
+            writer.WriteNumber("page", 0);
+
+            if (query.ReferenceSystem is not null)
+            {
+                writer.WriteString("reference_system", query.ReferenceSystem);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    private static void WriteChoice(Utf8JsonWriter writer, string name, string? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        writer.WriteStartObject(name);
+        writer.WriteStartArray("value");
+        writer.WriteStringValue(value);
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static void WriteSignals(Utf8JsonWriter writer, string group, string? name, int? count)
+    {
+        if (name is null)
+        {
+            return;
+        }
+
+        writer.WriteStartObject(group);
+        WriteGroupMember(writer, "name", name);
+
+        if (count is not null)
+        {
+            // A number, not a range object. The range spelling is accepted and answers nothing.
+            writer.WriteNumber("count", count.Value);
+        }
+
+        writer.WriteEndObject();
+    }
+
     private static void WriteGroupMember(Utf8JsonWriter writer, string name, string value)
     {
         writer.WriteStartObject(name);

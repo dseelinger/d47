@@ -60,6 +60,8 @@ public static class JournalCapability
                 "what ships do i own",
                 "my ships",
                 "my fleet",
+                "stored modules",
+                "module storage",
                 "what materials",
                 "my materials",
                 "my backpack",
@@ -94,6 +96,27 @@ public static class JournalCapability
                         "List the ships the Commander owns and which system each one is stored in, plus their "
                         + "fleet carrier and its location if they have one.",
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeFleet(gameState))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_stored_modules",
+                    Description =
+                        "List the modules the Commander has in storage and which system each one is in, "
+                        + "with what transferring it would cost. Answered from the journal, so it says what "
+                        + "they already own — not where a module can be bought.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "module",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "Narrow the list to stored modules whose name contains this — for example "
+                                + "\"shield\" or \"Frame Shift Drive\". Leave it out for the whole store.",
+                        },
+                    ],
+                    Handler = (arguments, _) => Task.FromResult(
+                        ToolResult.Ok(DescribeStoredModules(gameState, arguments))),
                 },
                 new ToolDefinition
                 {
@@ -338,6 +361,104 @@ public static class JournalCapability
 
         return report.ToString().TrimEnd();
     }
+
+    /// <summary>
+    /// What is in module storage, grouped by where it is.
+    /// <para>
+    /// Grouped by system rather than listed flat because the question underneath is almost always
+    /// "can I fit it here or do I have to fetch it", and a flat list of forty modules makes the
+    /// Commander do that sorting in their head. The transfer cost rides along for the same
+    /// reason: it is the number that decides the answer.
+    /// </para>
+    /// </summary>
+    private static string DescribeStoredModules(GameStateStore gameState, ToolArguments arguments)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var store = active.Modules;
+
+        if (!store.IsKnown)
+        {
+            // The same shape of answer the fleet gives, and true for the same reason: the event
+            // is written on docking somewhere with outfitting, so silence before that is missing
+            // evidence rather than an empty store.
+            return "I have no module storage list yet — it is written when you dock at a station with outfitting.";
+        }
+
+        var wanted = arguments.TryGetString("module", out var fragment) && !string.IsNullOrWhiteSpace(fragment)
+            ? fragment.Trim()
+            : null;
+
+        var modules = wanted is null ? store.Modules : store.Matching(wanted);
+
+        if (modules.Count == 0)
+        {
+            return wanted is null
+                ? "No modules in storage."
+                : $"Nothing in storage matches '{wanted}'. {store.Modules.Count} module"
+                  + $"{(store.Modules.Count == 1 ? " is" : "s are")} stored in total.";
+        }
+
+        var report = new StringBuilder();
+
+        report.Append(wanted is null
+            ? $"{modules.Count} module{(modules.Count == 1 ? "" : "s")} in storage"
+            : $"{modules.Count} stored module{(modules.Count == 1 ? "" : "s")} match '{wanted}'");
+
+        report.AppendLine(store.TakenAt is { } taken
+            ? $", as of {taken:yyyy-MM-dd HH:mm} UTC."
+            : ".");
+
+        foreach (var group in modules
+                     .Where(module => !module.InTransit)
+                     .GroupBy(module => module.StarSystem, StringComparer.OrdinalIgnoreCase)
+                     .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var here = store.SnapshotSystem is not null
+                       && string.Equals(group.Key, store.SnapshotSystem, StringComparison.OrdinalIgnoreCase);
+
+            report.AppendLine();
+            report.AppendLine(here ? $"{group.Key} (where you are):" : $"{group.Key}:");
+
+            foreach (var module in group)
+            {
+                report.Append($"  {module.Describe()}");
+
+                if (!here && module.TransferCost is > 0)
+                {
+                    report.Append($" — {module.TransferCost.Value:N0} cr to transfer");
+
+                    if (module.TransferTime is > 0)
+                    {
+                        report.Append($", {Duration(module.TransferTime.Value)}");
+                    }
+                }
+
+                report.AppendLine();
+            }
+        }
+
+        var moving = modules.Where(module => module.InTransit).ToArray();
+
+        if (moving.Length > 0)
+        {
+            report.AppendLine();
+            report.AppendLine("In transit: " + string.Join(", ", moving.Select(module => module.Describe())) + ".");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>A transfer time in words. Seconds are never the useful unit here.</summary>
+    private static string Duration(int seconds) => seconds switch
+    {
+        < 90 => $"{seconds} seconds",
+        < 5400 => $"{Math.Round(seconds / 60.0)} minutes",
+        _ => $"{Math.Round(seconds / 3600.0, 1)} hours",
+    };
 
     private static string DescribeMaterials(GameStateStore gameState)
     {

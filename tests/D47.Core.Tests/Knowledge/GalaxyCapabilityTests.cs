@@ -47,6 +47,20 @@ public class GalaxyCapabilityTests
                 ? Task.FromException<StationSearchResult>(Throws)
                 : Task.FromResult(Stations);
         }
+
+        public BodyQuery? LastBodyQuery { get; private set; }
+
+        public BodySearchResult Bodies { get; set; } =
+            new("Sol", 1, [new BodySummary { Name = "Earth", SystemName = "Sol" }]);
+
+        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        {
+            LastBodyQuery = query;
+
+            return Throws is not null
+                ? Task.FromException<BodySearchResult>(Throws)
+                : Task.FromResult(Bodies);
+        }
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
@@ -320,5 +334,185 @@ public class GalaxyCapabilityTests
 
         Assert.True(result.IsError);
         Assert.Contains("where the Commander is", result.Content, StringComparison.Ordinal);
+    }
+
+    // ---- Bodies and signals ---------------------------------------------------------------
+
+    [Fact]
+    public async Task ABodyTypeIsMatchedFromWhatAPersonWouldActuallySay()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        // "Earth-like" names exactly one subtype, so the unique-fragment pass takes it. Nobody
+        // says "Earth-like world" out loud.
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "earth-like")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Earth-like world", galaxy.LastBodyQuery?.Subtype);
+    }
+
+    [Fact]
+    public async Task AnAmbiguousBodyTypeIsRefusedWithTheCandidatesRatherThanPickingOne()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        // "gas giant" names six subtypes. Picking one silently is how a Commander is told about
+        // the wrong thing with total confidence.
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "gas giant")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("Class I gas giant", result.Content, StringComparison.Ordinal);
+        Assert.Null(galaxy.LastBodyQuery);
+    }
+
+    [Fact]
+    public async Task ABodySearchWithNoFiltersIsRefusedRatherThanMatchingEveryBody()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        var result = await registry.InvokeAsync("find_body", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Null(galaxy.LastBodyQuery);
+    }
+
+    [Fact]
+    public async Task ASignalCountWithNoSignalToCountIsRefused()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        // The service's `count` member means nothing without a `name` beside it — sent alone it
+        // returned zero results rather than being ignored, which would read as "nowhere".
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("signal_count", "3")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("which surface signal", result.Content, StringComparison.Ordinal);
+        Assert.Null(galaxy.LastBodyQuery);
+    }
+
+    [Fact]
+    public async Task LeavingLandableOutIsNotTheSameAsAskingForUnlandableBodies()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "Water world")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(galaxy.LastBodyQuery?.Landable);
+
+        await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "Water world"), ("landable", "false")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(galaxy.LastBodyQuery?.Landable);
+    }
+
+    [Fact]
+    public async Task AHotspotAnswerCarriesTheRingsAndHowOldTheReportIs()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        galaxy.Bodies = new BodySearchResult(
+            "Sol",
+            1,
+            [
+                new BodySummary
+                {
+                    Name = "Barnard's Star 5",
+                    SystemName = "Barnard's Star",
+                    Distance = 5.95,
+                    ReserveLevel = "Depleted",
+                    Rings =
+                    [
+                        new RingSummary("Barnard's Star 5 A Ring", "Metal Rich")
+                        {
+                            Hotspots = [("Painite", 2), ("Platinum", 1)],
+                            SignalsSeen = new DateTimeOffset(2026, 8, 11, 0, 0, 0, TimeSpan.Zero),
+                        },
+                        new RingSummary("Barnard's Star 5 B Ring", "Icy") { Hotspots = [("Tritium", 1)] },
+                    ],
+                },
+            ]);
+
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("hotspot", "painite")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("2 Painite", result.Content, StringComparison.Ordinal);
+        Assert.Contains("reported 2026-08-11", result.Content, StringComparison.Ordinal);
+        Assert.Contains("depleted reserves", result.Content, StringComparison.Ordinal);
+
+        // The other ring around the same planet has no Painite in it, and naming it invites the
+        // Commander to fly to the wrong one.
+        Assert.DoesNotContain("B Ring", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASurfaceSearchReportsSignalsRatherThanRings()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+
+        galaxy.Bodies = new BodySearchResult(
+            "Sol",
+            1,
+            [
+                new BodySummary
+                {
+                    Name = "Luhman 16 B 3",
+                    SystemName = "Luhman 16",
+                    Distance = 6.5,
+                    IsLandable = true,
+                    Signals = [("Biological", 4), ("Geological", 2)],
+                    Rings = [new RingSummary("Luhman 16 B 3 A Ring", "Icy") { Hotspots = [("Tritium", 1)] }],
+                },
+            ]);
+
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("signal", "biological")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains("4 biological", result.Content, StringComparison.Ordinal);
+        Assert.Contains("landable", result.Content, StringComparison.Ordinal);
+
+        // A body search about surfaces should not spend its answer on the other question's rings.
+        Assert.DoesNotContain("A Ring", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ABodySearchIsOffWithTheRestOfTheGalaxySearch()
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install, enabled: false);
+
+        var result = await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "Neutron Star")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("switched off", result.Content, StringComparison.Ordinal);
+        Assert.Null(galaxy.LastBodyQuery);
     }
 }

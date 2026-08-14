@@ -79,6 +79,17 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         return SpanshResponse.ReadStations(document!);
     }
 
+    public async Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(SpanshRequest.Bodies(query), Encoding.UTF8, "application/json");
+        using var document = await SendAsync(
+            () => _http.PostAsync("api/bodies/search", content, cancellationToken),
+            "the body search",
+            cancellationToken).ConfigureAwait(false);
+
+        return SpanshResponse.ReadBodies(document!);
+    }
+
     public async Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
     {
         var origin = await CoordinatesAsync(from, cancellationToken).ConfigureAwait(false);
