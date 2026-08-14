@@ -442,7 +442,7 @@ public partial class PanelView : UserControl
 
         if (Page == TranscriptPage.Settings)
         {
-            BuildSettingsOnce();
+            _ = BuildSettingsOnceAsync();
             return;
         }
 
@@ -451,20 +451,48 @@ public partial class PanelView : UserControl
         // something has already gone wrong.
         if (Page == TranscriptPage.Log)
         {
-            _bound?.RefreshLog();
+            _ = ReadLogAsync();
+            return;
         }
 
         DrawTranscript();
     }
 
-    private void BuildSettingsOnce()
+    /// <summary>
+    /// Reads the log, saying so on the tab if it takes long enough to be worth saying.
+    /// <para>
+    /// Off the UI thread, which it was not: a log file is whatever length this session has made
+    /// it, and reading one on the thread that draws is how a click on a tab becomes a frozen
+    /// window. Announcing it is the other half — this reads a file off disk, and a tab that
+    /// looks unchanged for a second reads as a tab that did not take the click.
+    /// </para>
+    /// </summary>
+    private async Task ReadLogAsync()
+    {
+        await Controls.Busy.While(LogTab, LogBusy, () => Task.Run(() => _bound?.RefreshLog()));
+
+        // After the read rather than before, or the page draws the log it had last time and
+        // then redraws — which is a visible flicker on the one page opened to read something.
+        DrawTranscript();
+    }
+
+    private async Task BuildSettingsOnceAsync()
     {
         if (SettingsPane.Child is not null || _buildSettings is not { } build)
         {
             return;
         }
 
-        SettingsPane.Child = build();
+        // No glyph, deliberately. Constructing controls has to happen on the thread that draws
+        // them, so nothing can animate while it runs — a spinner here would be a spinner that
+        // is painted after the work it describes has finished. What this call site takes from
+        // the helper is the other half of it: the tab is shut while it builds, so a second click
+        // on a surface that has not come back yet cannot start a second copy of the same build.
+        await Controls.Busy.While(SettingsTab, glyph: null, () =>
+        {
+            SettingsPane.Child = build();
+            return Task.CompletedTask;
+        });
     }
 
     /// <summary>

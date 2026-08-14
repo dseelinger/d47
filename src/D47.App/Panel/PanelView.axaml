@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:panel="clr-namespace:D47.App.Panel"
+             xmlns:controls="clr-namespace:D47.App.Controls"
              x:Class="D47.App.Panel.PanelView"
              x:DataType="panel:PanelViewModel"
              Background="{DynamicResource D47.Background}"
@@ -271,10 +272,23 @@
                    Theme="{StaticResource D47.Tab}"
                    Content="Technical"
                    IsCheckedChanged="OnPageTabChecked" />
+      <!--
+        This tab reads a file off disk before it can show anything, so it carries the glyph that
+        says so. On the tab, because the affordance that was touched is the thing that shows it:
+        a Commander who clicked here does not look elsewhere (list.md Phase 12). It is on the
+        panel rather than on the window, so the headset's copy of this view gets it too.
+      -->
       <RadioButton x:Name="LogTab"
                    Theme="{StaticResource D47.Tab}"
-                   Content="Log file"
-                   IsCheckedChanged="OnPageTabChecked" />
+                   IsCheckedChanged="OnPageTabChecked">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <TextBlock Text="Log file" VerticalAlignment="Center" />
+          <controls:BusyGlyph x:Name="LogBusy"
+                              IsVisible="False"
+                              VerticalAlignment="Center"
+                              Stroke="{DynamicResource D47.Accent}" />
+        </StackPanel>
+      </RadioButton>
       <!--
         Hidden until a host says otherwise, and only the desktop window ever does. The headset
         renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
@@ -283,8 +297,8 @@
       -->
       <RadioButton x:Name="SettingsTab"
                    Theme="{StaticResource D47.Tab.Settings}"
-                   Content="Settings"
                    IsVisible="False"
+                   Content="Settings"
                    IsCheckedChanged="OnPageTabChecked" />
       </StackPanel>
 

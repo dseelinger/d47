@@ -841,7 +841,56 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         container.Children.Add(body);
         container.Children.Add(message);
 
-        return new RowView(row, container, refresh);
+        return new RowView(row, container, refresh) { Control = control, Body = body };
+    }
+
+    /// <summary>
+    /// Says that a row is waiting on something that is not happening in this class — the gap
+    /// reaction spends a model round trip between the Commander picking a core and that core
+    /// saying its first word, and the affordance they touched is this row.
+    /// <para>
+    /// The glyph is made on the first call rather than built with every row: it animates
+    /// whenever it is in the tree, visible or not, so ninety-odd of them waiting to be needed
+    /// would be ninety-odd animations running for the life of the surface.
+    /// </para>
+    /// </summary>
+    public void ShowBusy(string key, bool busy)
+    {
+        if (_rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))
+            is not { } view)
+        {
+            return;
+        }
+
+        if (busy && view.Busy is null && view.Body is Grid grid)
+        {
+            // In the spacer column between the caption and the control, which is 16 wide and
+            // holds nothing — so the glyph lands beside the control that was touched without
+            // taking a pixel from either side of it.
+            var glyph = new BusyGlyph
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            Themed(glyph, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
+
+            Grid.SetColumn(glyph, 1);
+            grid.Children.Add(glyph);
+
+            view.Busy = glyph;
+        }
+
+        if (view.Busy is not null)
+        {
+            view.Busy.IsVisible = busy;
+        }
+
+        // Shut while it runs, like every other affordance that is working: picking a second core
+        // before the first one has spoken queues a second round trip behind the first.
+        if (view.Control is not null)
+        {
+            view.Control.IsEnabled = !busy;
+        }
     }
 
     /// <summary>
@@ -1476,36 +1525,36 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
-        // Shut and spinning until the list is up. Both are cleared in the finally, because a
-        // picker that throws on its way open must not leave the row unusable.
-        button.IsEnabled = false;
-        busy.IsVisible = true;
+        // The work is "until the list is on screen", not "until the Commander has chosen": what
+        // can take a moment is asking the machine for its capture devices or a provider for its
+        // voices, and once the picker is up it is modal and speaks for itself.
+        var listed = new TaskCompletionSource();
 
-        try
-        {
-            var result = await PickerWindow.ShowAsync(
-                owner,
-                new PickerRequest
-                {
-                    Prompt = row.Label,
-                    Help = row.Help,
-                    Choices = row.ChoicesFor(_settings.Current),
-                    Describe = row.ChoiceLabel,
-                    Current = _settings.Read(row.Key),
-                    DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
-                    AllowsFreeText = row.AllowsFreeText,
-                },
-                onListed: () => busy.IsVisible = false);
-
-            if (result is not null)
+        var picking = PickerWindow.ShowAsync(
+            owner,
+            new PickerRequest
             {
-                Apply(row, result.Value, message);
-            }
-        }
-        finally
+                Prompt = row.Label,
+                Help = row.Help,
+                Choices = row.ChoicesFor(_settings.Current),
+                Describe = row.ChoiceLabel,
+                Current = _settings.Read(row.Key),
+                DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
+                AllowsFreeText = row.AllowsFreeText,
+            },
+            onListed: () => listed.TrySetResult());
+
+        // A picker that throws on its way open never lists, and a glyph waiting for a list that
+        // is not coming spins forever on a row nobody can use.
+        _ = picking.ContinueWith(_ => listed.TrySetResult(), TaskScheduler.Default);
+
+        // Hand-rolled here until Phase 12: shut, spinning, and two numbers nobody else shared.
+        // The rule was always the general one, so it is stated in one place now.
+        await Busy.While(button, busy, () => listed.Task);
+
+        if (await picking is { } result)
         {
-            busy.IsVisible = false;
-            button.IsEnabled = true;
+            Apply(row, result.Value, message);
         }
 
         button.Focus();
@@ -1612,5 +1661,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         /// <summary>Which card this row is in, so a filter can hide a card that has emptied.</summary>
         public int Section { get; init; } = -1;
+
+        /// <summary>The control the Commander touches, so a slow answer can shut it.</summary>
+        public Control? Control { get; init; }
+
+        /// <summary>The row's layout, which is a three-column grid where the row is compact.</summary>
+        public Control? Body { get; init; }
+
+        /// <summary>Made the first time this row has something slow to say. See ShowBusy.</summary>
+        public BusyGlyph? Busy { get; set; }
     }
 }

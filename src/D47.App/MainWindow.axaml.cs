@@ -403,6 +403,12 @@ public partial class MainWindow : Window
                 // The choice is the go-ahead: it states its size in the list it was made from,
                 // and the row shows what it is doing while it does it.
                 (model, progress) => _host.InstallModelAsync(model, progress));
+
+            // The gap reaction happens in the host, on whatever thread resolved the switch, and
+            // the affordance it belongs to is a row on this surface. Joined here because this is
+            // the one place that holds both.
+            _host.PersonaSettling += settling => Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => view.ShowBusy(PersonaCapability.PersonaKey, settling));
         }
 
         return view;

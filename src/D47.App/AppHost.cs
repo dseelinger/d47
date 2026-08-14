@@ -259,6 +259,18 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Noted;
 
     /// <summary>
+    /// Raised true when a core has been chosen and has not yet worked out what to say, and
+    /// false when it has (list.md Phase 12, "Anything that might take a moment says it is
+    /// working").
+    /// <para>
+    /// A gap reaction spends a model round trip before the new core's first word, which from the
+    /// settings row looks exactly like nothing happening. Raised from whichever thread the
+    /// switch is being resolved on, so a subscriber that touches controls has to post.
+    /// </para>
+    /// </summary>
+    public event Action<bool>? PersonaSettling;
+
+    /// <summary>
     /// Downloads a model and loads it. Called by the settings row when the Commander picks one;
     /// the choice is the go-ahead, and the size was on the row they chose from.
     /// </summary>
@@ -1382,35 +1394,51 @@ public sealed class AppHost : IDisposable
 
         _ = Task.Run(async () =>
         {
-            // Before a word is spoken, because the first thing a core says is the thing most
-            // worth hearing in its own voice.
-            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+            // The Commander chose a core on a settings row and nothing has happened yet: the
+            // voice has to be fetched and, on a gap, a model has to be asked for a line. Said on
+            // the row they touched, because a Commander who clicked there does not look
+            // elsewhere (list.md Phase 12).
+            PersonaSettling?.Invoke(true);
 
             var line = change.Current.Intro;
 
-            if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
+            try
             {
-                // Authored fallback first, so there is always something to say; the model only
-                // ever replaces it.
-                line = change.Current.Return;
+                // Before a word is spoken, because the first thing a core says is the thing most
+                // worth hearing in its own voice.
+                await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
 
-                var generated = await FlavourTurn.AskAsync(
-                    Turns.Provider,
-                    Turns.Model,
-                    Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
-                    "You have just been switched back on after "
-                    + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
-                    + "reacting to the missing time, exactly as your character would. Do not greet "
-                    + "the Commander formally and do not offer a list of what you can do.",
-                    gap.TelemetryDelta,
-                    Spend,
-                    PriceTable.Default,
-                    _logger).ConfigureAwait(false);
-
-                if (generated is not null)
+                if (change is { Arrival: PersonaArrival.Gap, Gap: { } gap })
                 {
-                    line = generated;
+                    // Authored fallback first, so there is always something to say; the model
+                    // only ever replaces it.
+                    line = change.Current.Return;
+
+                    var generated = await FlavourTurn.AskAsync(
+                        Turns.Provider,
+                        Turns.Model,
+                        Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
+                        "You have just been switched back on after "
+                        + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
+                        + "reacting to the missing time, exactly as your character would. Do not greet "
+                        + "the Commander formally and do not offer a list of what you can do.",
+                        gap.TelemetryDelta,
+                        Spend,
+                        PriceTable.Default,
+                        _logger).ConfigureAwait(false);
+
+                    if (generated is not null)
+                    {
+                        line = generated;
+                    }
                 }
+            }
+            finally
+            {
+                // Cleared before the line is said rather than after it has been spoken aloud:
+                // what the row was waiting for is d47 having something to say, and a row still
+                // marked busy while the core is talking is a row describing the wrong thing.
+                PersonaSettling?.Invoke(false);
             }
 
             // Anything d47 says without a turn behind it still belongs in the transcript, so
