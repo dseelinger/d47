@@ -432,3 +432,6 @@ FodyWeavers.xsd
 # (architecture.md §8) - the blanket *.log rule above must not swallow them.
 !tests/fixtures/**/*.log
 
+
+# The compiled installer is a build output, not source; the release workflow builds it.
+installer/*.exe

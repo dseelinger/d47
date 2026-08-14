@@ -4,41 +4,52 @@ title: Installing Directive 47
 
 # Installing and verifying a build
 
-D47 ships as one zip. There is no installer, no runtime prerequisite, and nothing that
-asks for administrator rights.
+Download **`d47-setup.exe`** from the
+[latest release](https://github.com/dseelinger/d47/releases/latest) and run it. There is no
+runtime prerequisite, and it never asks for administrator rights.
 
-1. Download `d47.zip` from the
-   [latest release](https://github.com/dseelinger/d47/releases/latest) — or pick a specific
-   build from the [releases page](https://github.com/dseelinger/d47/releases).
-2. Unpack it into a folder you own — **not** `Program Files`. D47 never asks for
-   administrator rights, so it could not write there anyway; and everything it saves goes
-   in a `data` folder beside the executable, so it needs somewhere you can write.
-3. Run `d47.exe`.
+It installs for your account only, into `%LOCALAPPDATA%\Programs\d47`, and appears in
+Add/Remove Programs like anything else. Running a newer installer upgrades the existing
+install in place rather than leaving two copies behind.
 
-## What is in the zip
+## The portable zip
 
-One executable, and the speech-recognition native libraries in a `runtimes` folder beside
-it. The executable is a self-contained publish — the .NET runtime and every managed
-dependency are inside it — and the natives sit beside it as plain files because that is
-where their loader looks for them. Keep them together: `d47.exe` without its `runtimes`
-folder runs, but cannot transcribe. What you can rely on:
+`d47.zip` is published beside the installer for anyone who would rather not install: unpack
+it into a folder you own — **not** `Program Files`, which D47 could not write to without
+elevation it never asks for — and run `d47.exe`.
+
+Either way the layout is the same: one executable, plus the speech-recognition native
+libraries in a `runtimes` folder beside it. The executable is a self-contained publish, with
+the .NET runtime and every managed dependency inside it; the natives sit beside it as plain
+files because that is where their loader looks. **Keep them together** — `d47.exe` without
+its `runtimes` folder starts fine but cannot transcribe a word.
+
+What you can rely on, installed or portable:
 
 - No .NET runtime needs to be installed first.
 - No elevation, ever.
 - Everything D47 writes lives in a `data` folder beside the executable. Move the whole
   folder, and the program, your settings and your secrets all move together.
 
+## Uninstalling
+
+Uninstall from Add/Remove Programs. It removes the program and asks — once — whether to
+delete your `data` folder as well. Answering no keeps your settings, your saved keys and any
+speech models you downloaded, so a later install picks up where you left off. The default is
+to keep them.
+
 ## Verifying the download
 
-Builds are unsigned, so Windows SmartScreen will likely warn on first run. Rather than ask
-you to trust that, every release publishes a SHA-256 alongside the archive. Compare it:
+Builds are unsigned, so Windows SmartScreen will likely warn — on the installer as readily as
+on the executable. Rather than ask you to trust that, every release publishes a SHA-256
+beside each download. Compare whichever you took:
 
 ```powershell
-Get-FileHash .\d47.zip -Algorithm SHA256
+Get-FileHash .\d47-setup.exe -Algorithm SHA256
 ```
 
-Match the result against `d47.zip.sha256` from the same release. If it differs, do not
-unpack the file.
+Match the result against `d47-setup.exe.sha256` from the same release — or `d47.zip.sha256`
+if you took the zip. If it differs, do not run or unpack the file.
 
 ## Where things are written
 
@@ -47,7 +58,7 @@ Everything is under `data`, beside the executable:
 ```text
 d47.exe
 runtimes\
-  win-x64\             speech-recognition natives — shipped in the zip, not downloaded
+  win-x64\             speech-recognition natives — shipped with the build, not downloaded
 data\
   settings.json        plain JSON, hand-editable, unknown keys rejected on load
   secrets.json         API keys, DPAPI-encrypted for your Windows account only
@@ -59,13 +70,16 @@ data\
 
 ## Finding it again
 
-D47 does not install itself. It is the folder you unpacked, wherever you put it — the exe,
-its `runtimes` libraries, and everything it writes in `data/` beside them. Copy that folder
+The installer adds a Start Menu entry, so this section is mostly for the portable zip.
+
+Either way D47 is just the folder it lives in — the exe, its `runtimes` libraries, and
+everything it writes in `data/` beside them. Copy that folder
 and the whole thing, program and state, comes with it; move only `d47.exe` and it leaves its
 ears behind.
 
 The cost of that is a program you can only reach by remembering where you left it, so the
-first run offers to add a Start Menu entry. It is one shortcut, for your account only, needs
+first run offers to add a Start Menu entry — unless the installer already made one, in which
+case it stays quiet. It is one shortcut, for your account only, needs
 no elevation, and you can delete it like any other. Decline it and you will not be asked
 again; **Settings → About → Add to Start Menu** is there if you change your mind.
 
