@@ -19,7 +19,9 @@ for one.
 
 **They are community goal rewards** (section 6). The module appears in `StoredModules` at the
 awarding station, at `BuyPrice: 0`, **32 seconds** after `CommunityGoalReward` — which is the
-acquisition event this spike first reported as missing.
+acquisition event this spike first reported as missing. **Merc Coin is a second route to the same
+module** (section 8), sold through Operations to Commanders who missed the goal, so both stories
+end at one blueprint and d47 needs to tell neither apart.
 
 ## 1. No module event carries engineering at the moment of acquisition
 
@@ -37,7 +39,10 @@ engineered module in storage from an unengineered one, and can name its blueprin
 just gets no modifiers and no engineer. That is a capability nothing in Phase 14 currently uses.
 
 **This was first written as "the acquisition predates the corpus", and that was wrong** — see
-section 6. It is right that no *module* event carries engineering at the moment of acquisition,
+section 6. Note the scope: what follows is measured on the community goal route, the only one in
+these files. Section 8 establishes a second route, buying the same module with Merc Coin, and this
+corpus contains no instance of it — whether *that* transaction writes an event naming the module
+is unmeasured here. It is right that no *module* event carries engineering at the moment of acquisition,
 which is what d47 needs. It was wrong that the acquisition is missing: it is there, in a shape
 nothing about modules would lead you to look for.
 
@@ -104,14 +109,16 @@ Coriolis is decisive about the rack, and its shape is the whole answer:
 blueprint with an empty ingredient list is not something a Commander gathers for, and Expanded
 Capacity Cargo Rack is a module you acquire rather than a modification you apply.
 
-## 5. Engineered further on top — consistent with no, not proven
+## 5. Engineered further on top — no, and the corpus was the weakest reason why
 
 Of the 10 slots that ever held a sentinel module, **0 ever changed engineering state**, and **0
 `EngineerCraft` events landed on any of them**. That is the whole of the direct evidence, and it
 is the weak kind: it says this Commander never tried.
 
-The structural argument is stronger for the rack than the corpus is. **No source lists any cargo
-rack blueprint**, so there is nothing to apply to one by any route. For the power distributor the
+The structural argument is stronger for the rack than the corpus is, and section 8 confirms it
+from outside: **no source lists any cargo rack blueprint**, so there is nothing to apply to one by
+any route, and the community says plainly that cargo racks cannot be engineered normally and have
+no experimental effect to receive. For the power distributor the
 opposite holds — `int_powerdistributor_size4_class5` was crafted 105 times in this corpus under
 `PowerDistributor_HighFrequency` and `PowerDistributor_PriorityEngines` — so that module type is
 plainly engineerable and the sentinel one was probably re-rollable. Settling it needs a Commander
@@ -188,6 +195,49 @@ carries `fighterbay_size5_class1`, `_size6_`, `_size7_` and no `fighterbaymk2` a
 Commander flying one gets the symbol fallback today — exactly the armour gap Step 6 found and
 closed, still open for this module.
 
+## 8. Merc Coin, settled at source rather than in the journal
+
+**The journal cannot answer this and never will**: Merc Coin appears nowhere in 692,631 events
+because this Commander has not done Operations. Absence here is absence of evidence about one
+machine's play history, which is the mistake this repository has now made six times. So it was
+read at source instead, on 2026-08-15.
+
+**Merc Coin buys these same modules.** It is earned by completing Operations and spends on ship
+modules and engineering blueprints; the module side is described by players as a way to obtain
+modules **previously handed out as community goal rewards** — a second acquisition route to the
+same thing, offered to Commanders who missed the goal. That makes the two stories one story.
+
+**One figure cross-checks cleanly, from a source with no connection to the other.** The community
+describes the rack as pre-engineered with the Expanded Cargo Rack grade 5 blueprint for
+**+34.4% cargo capacity**. Coriolis, read independently in section 4, gives
+`"cargo": [0.344, 0.344]`. Two unrelated sources, the same number — which is worth more than
+either on its own.
+
+**It also settles section 5's open question**, in the direction the structural argument pointed:
+cargo racks cannot be engineered through the normal system at all, and no experimental effect
+exists to apply to one. That is what "EDEngineer lists no cargo rack blueprint under any name" was
+already saying about the data; it is now said about the game. Frontier's own issue tracker
+separately carries a report of class-5 Merc racks not upgrading to grade 5 properly while class-6
+racks do, so the edges are rough enough that this is worth re-reading before anything is built on
+it.
+
+**Provenance, kept separate, because the item insisted on it** — it points out that the word
+*pre-engineered* came from a community write-up rather than from Frontier. The currency's purpose
+and the modules' properties above are **community documentation** (Fandom, Steam discussions,
+Frontier forums), not Frontier's own product wording; only the upgrade-bug report is on Frontier's
+own tracker. Nothing in sections 1 to 7 depends on any of it: those are measurements, and this
+section is corroboration that arrived from outside.
+
+> This is exactly the gap `list.md` describes Step 10's web search as existing to fill — "the
+> honest escape hatch for the things engineering help refuses to assert". The spike needed it one
+> commit after building it.
+
+**Sources:** [Cargo Rack — Elite Dangerous Wiki](https://elite-dangerous.fandom.com/wiki/Cargo_Rack),
+[Cargo Rack Merc Engineering (Steam)](https://steamcommunity.com/app/359320/discussions/0/568165608207886319/),
+[New community goal, pre-engineered cargo rack reward (Steam)](https://steamcommunity.com/app/359320/discussions/0/596288556263300605/),
+[Engineered Cargo Racks (Frontier Forums)](https://forums.frontier.co.uk/threads/engineered-cargo-racks.573473/),
+[Merc updated cargo rack issues grade 5 (Frontier issue tracker)](https://issues.frontierstore.net/issue-detail/86823).
+
 ## What this changes
 
 - **The premise holds.** Nothing here needs a second reading path: a pre-engineered module is a
@@ -205,6 +255,10 @@ closed, still open for this module.
   hard-coded pair of names and not adopting coriolis's recipes over EDEngineer's.
 - **`EngineerModifications` on stored modules is unclaimed ground** — section 1 above. Answering
   "which of my stored modules are engineered, and to what" needs no new source and no new table.
+- **Merc Coin needs no further chasing.** Section 8 settles it at source: it buys the same
+  modules the goals hand out. Two acquisition routes, one blueprint, one detector — the section 7
+  flag covers both without knowing which route a module took, which is just as well, because the
+  journal shows the route only for one of them.
 - **It joins up with community goals**, the last open item in Phase 14. The journal half of that
   item already reads `CommunityGoal` events; section 6 shows the same events explain where a
   module a Commander cannot make came from. A goal that pays out in modules is worth saying so
