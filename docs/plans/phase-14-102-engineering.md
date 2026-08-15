@@ -280,6 +280,13 @@ the live schema.
 > `EliteSpecifications` **has no armour rows at all**, 0 of 982, so 1,725 of the 20,526 engineered
 > modules fall back to their symbol; all 17 distinct symbols are `<ship>_armour_<grade>` bulkheads.
 > That is a Phase 7 table gap this step surfaced rather than caused.
+>
+> > **Closed the same day**, on a branch of its own: armour is filed per hull rather than under
+> > `modules/`, so the generator never walked it, and FDevIDs had all 241 rows in the `ship` column
+> > it was already reading. Re-measured against the same corpus afterwards: **0 of 20,526 fall back
+> > now**, and `mandalay_armour_grade1` reads as "Mandalay Lightweight Alloy". The same branch
+> > retired "Cargo Rack (cargorack)", a qualifier that restated the name it qualified, so the
+> > example output on the capability page was refreshed with it.
 
 ## Step 7 — `engineers` gains the chain
 

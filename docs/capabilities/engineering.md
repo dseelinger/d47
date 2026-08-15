@@ -58,7 +58,7 @@ unlock and has no price.
 
   Frame Shift Drive — FSD LongRange, grade 5, finished (1.0)
   Thrusters in Main Engines — Engine Dirty, grade 3, 3 rolls to go (0.4)
-  Cargo Rack (cargorack) in Slot01 Size6 — CargoRack IncreasedCapacity, grade 5, finished (1.0)
+  Cargo Rack in Slot01 Size6 — CargoRack IncreasedCapacity, grade 5, finished (1.0)
   Shield Booster in Tiny Hardpoint1 — ShieldBooster HeavyDuty, grade 5, finished (1.0)
   Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 rolls to go (0.2)
 ```
