@@ -64,6 +64,7 @@ public static class BuiltinCapabilities
         RouteCapability.Create(routes, () => gameState.Active, settings),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active),
+        EngineeringCapability.Create(() => gameState.Active),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),

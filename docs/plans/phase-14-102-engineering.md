@@ -252,6 +252,35 @@ the live schema.
 
 **Checkpoint** — first point the whole loop is exercised end to end.
 
+> **Done, 2026-08-15.** `EngineeringCapability.cs`, `docs/capabilities/engineering.md` and 19 tests
+> against the real shipped tables. Then run end to end over the corpus, which is what a checkpoint
+> is for: **2,196 real `Loadout` events, 20,526 engineered modules described, zero failures**, and
+> all **259** blueprint names in the table asked for and answered with **zero** unresolved
+> ingredient references.
+>
+> **The plan assumed `get_module_engineering` could name the blueprint, and it cannot.** The journal
+> writes it as a symbol — `FSD_LongRange` — and never localises it: every key of every `Engineering`
+> block was enumerated across the corpus, 20,526 in `Loadout` and 6,272 in `EngineerCraft`, and
+> there is `BlueprintName`, `BlueprintID` and nothing readable. The experimental effect *does* carry
+> `_Localised`, on all 13,660 that have one, which is why the effect reads properly and the
+> blueprint does not. Three sources were checked for the join and **each fails differently**:
+> EDEngineer carries seven fields per recipe and no symbol; coriolis-data keys on the symbol but the
+> shared-guid join reaches only **31 of the 35** symbols the corpus contains, missing
+> `Misc_LightWeight`, the commonest of all at 2,325 uses; EDDiscovery's `RecipesEngineering.cs`
+> reaches **35 of 35** but its display names agree with the table's on only **15 of 35** — it says
+> "Heavy Duty Armour" where the table says "Heavy Duty", so adopting them would have one tool name a
+> blueprint the other cannot find. So the symbol goes out with its underscores removed, which is
+> what `ModuleStore` already does to the same family of symbol, and **no partly-populated `symbol`
+> column was added to a shipped table**. If a later step wants real names, EDDiscovery is the source
+> and the reconciliation against EDEngineer's vocabulary is the work.
+>
+> Two smaller things. **The rank paragraph picks the highest-ranked engineer who offers the top
+> grade**, and where nobody unlocked can reach it an outstanding invitation is named instead — a
+> "nobody" answer with an invitation sitting unused would be wrong about what the next step is. And
+> `EliteSpecifications` **has no armour rows at all**, 0 of 982, so 1,725 of the 20,526 engineered
+> modules fall back to their symbol; all 17 distinct symbols are `<ship>_armour_<grade>` bulkheads.
+> That is a Phase 7 table gap this step surfaced rather than caused.
+
 ## Step 7 — `engineers` gains the chain
 
 `find_engineer` reports who refers them and at what grade, where the Commander stands on that path,

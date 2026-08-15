@@ -202,6 +202,34 @@ The caveat belongs in the answer, not a comment: system state turns over on the 
 index is a snapshot, so the sentence is "systems **reported** in Boom" — the same crowd-report
 framing `StockLastSeen` already carries.
 
+### The sourcing cutoff is 18.08 as well — there is no third floor
+
+**Settled 2026-08-15.** The plan carried three dates: 3.0 *Beyond* (February 2018) as the hard floor,
+Update 18.08 (2024) as the floor for roll figures, and a materials-sourcing change described only by
+its effects — the Jameson crash site, and being able to fill up on a grade 5 in one visit to a
+high-population Empire system. That third one **is Update 18.08**, the Type-8 update, **Wednesday
+7 August 2024**. Same version, same notes, one cutoff rather than two.
+
+Two claims, and they are not equally strong. **Frontier's own wording is general**: material
+availability and payouts at grade 4 and 5 farming locations were increased, by adding sources and in
+some cases raising the payout per source, alongside mission material rewards of up to 24. **The
+figures everyone quotes are community measurement, not Frontier's**: high grade emissions going from
+4–6 materials to something around 100, and the Jameson crashed Cobra going from 4 beacons to 8 at
+20–30 each. Written down that way round because the second set is what a Commander will recognise and
+the first is what can be cited.
+
+What it means for Step 9. **Anything written about where to farm must describe the game as it is
+after 7 August 2024**, and a guide older than that will understate a grade 5 by more than an order of
+magnitude — which reads as d47 sending somebody on twenty trips for one trip's work. It also puts a
+question against the origin strings above: they name **states and superpowers** and say nothing about
+**population**, which is the axis the change made decisive. That is a gap to measure rather than to
+paper over, and until it is measured the sourcing prose should name the state and the superpower and
+leave the population claim to the Commander.
+
+Both official pages refuse automated fetches — `elitedangerous.com` answers 403 and the Fandom wiki
+402 — so the date here comes from Frontier's own Steam announcement for the update and from the
+community write-ups that follow it. Same two doors that made the roll table a two-pass job above.
+
 ## 7. Three more spansh filters, and two of them lie the same way
 
 Measured against `api/bodies/search` and `api/stations/search`, reference system Sol.
