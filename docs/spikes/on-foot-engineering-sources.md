@@ -359,9 +359,9 @@ say, in coriolis-data's words, that the JSON is Frontier's property. The generat
 reason about the *community* repositories' terms and are silent on Frontier's, which is the one that
 actually governs.
 
-**Settled 2026-08-15: the maintainer accepts Frontier's terms**, and the engineering work proceeds
-on that basis. See [README.md](README.md) for the decision and what it does not change — the
-non-commercial condition, and tables staying derived rather than copied.
+**Settled 2026-08-15: the maintainer has read Frontier's rules and accepts them**, and the
+engineering work proceeds on that basis. See [README.md](README.md) for the decision and what it does
+not change — the non-commercial condition, and tables staying derived rather than copied.
 
 ## 8. Data traps
 

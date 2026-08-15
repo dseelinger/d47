@@ -66,11 +66,13 @@ the game data is Frontier's, and the generator docstrings reason carefully about
 repositories'* licences while being silent about Frontier's — which is the one that actually
 governs.
 
-**Decision, 2026-08-15: the maintainer accepts these terms**, and Phase 14 `#102` proceeds on that
-basis rather than waiting. The link is recorded here rather than summarised so that any attribution
-wording owed is checked against the source instead of recalled — and `NOTICE` remains the single
-place that wording lives, per CLAUDE.md. The thread is a forum URL and answers **403** to an
-automated fetch, so it needs a browser.
+**Decision, 2026-08-15: the maintainer has read Frontier's rules and accepts them**, and the
+engineering work proceeds on that basis. This closes the longest-standing open question in these
+pages — and note *read*, not merely accepted: the thread answers **403** to an automated fetch, so
+it took a person with a browser, which is the whole point §"The method" keeps making.
+
+The link is recorded rather than summarised, so any attribution wording owed is checked against the
+source instead of recalled — and `NOTICE` remains the single place that wording lives, per CLAUDE.md.
 
 What the decision does not change: the use stays **non-commercial**, the data is not d47's to
 relicense, and tables stay **derived by a generator with its provenance recorded** rather than
