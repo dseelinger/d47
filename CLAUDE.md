@@ -49,7 +49,19 @@ Each of these is cheap to break by accident and expensive to fix later.
   Commander can see. See architecture.md D1, amended in Phase 9.
 - **All audio goes through the one arbiter**, which exposes the render reference tap from day one.
 - **No telemetry.** Permissive licenses only, no copyleft — verify the transitive graph, not
-  just direct references.
+  just direct references. **This is a rule about code**, and it was applied to game data once
+  by mistake, which cost accuracy in both directions: a source was rejected on licence grounds
+  when its real problem was elsewhere, and two were accepted without anybody noticing whose
+  data was inside them.
+- **Game data is Frontier's, and d47 uses it under their published rules.** Ship figures,
+  blueprints, material names and engineer locations are facts about Elite Dangerous, not about
+  the community repository they were read from — coriolis-data says so outright, declaring its
+  JSON Frontier's property with its MIT grant covering only code. So a source's own licence is
+  checked and never mistaken for permission over the data underneath it. Three things follow.
+  Tables are **derived by a generator with its provenance recorded**, never copied wholesale or
+  hand-written. Frontier is **attributed in their own words** — see `NOTICE`, which is where the
+  wording lives so it is written once. And the use stays **non-commercial**, which is the
+  condition their rules attach; the code is MIT and the data is not d47's to relicense.
 
 ## Conventions
 

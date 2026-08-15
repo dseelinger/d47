@@ -78,6 +78,39 @@ public class AboutTests
         about.Close();
     }
 
+    /// <summary>
+    /// Frontier's media usage rules permit a non-commercial project to use their game content
+    /// provided it is attributed somewhere a person can find, and d47 ships their ship figures,
+    /// blueprints, material names and engineer locations. The README and the documentation site
+    /// carry the same words, but a Commander who installs the binary and never visits either
+    /// still has to be able to see it, so it has to be in the app.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheAboutDialogAttributesFrontier()
+    {
+        var (_, _, paths) = TestSurface.Create();
+
+        var about = new AboutWindow(paths);
+        about.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var shown = about.GetVisualDescendants().OfType<SelectableTextBlock>()
+            .Select(block => block.Text)
+            .ToList();
+
+        Assert.Contains(AboutWindow.Attribution, shown);
+
+        // Their wording, not a paraphrase of it. The rules supply the sentence.
+        Assert.Contains(
+            "with the permission of Frontier Developments plc",
+            AboutWindow.Attribution,
+            StringComparison.Ordinal);
+
+        Assert.Contains("non-commercial", AboutWindow.Attribution, StringComparison.Ordinal);
+
+        about.Close();
+    }
+
     /// <summary>It is reachable, which a dialog nobody can open is not.</summary>
     [AvaloniaFact]
     public void TheSettingsFooterOffersAWayIn()

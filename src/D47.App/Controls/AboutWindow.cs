@@ -78,6 +78,12 @@ public sealed class AboutWindow : Window
                 Field("Version", BuildInfo.Semantic),
                 Field("Build", BuildInfo.Full),
                 Field("Data folder", paths.Data),
+
+                // Frontier's own long-form wording, verbatim, because their media usage rules
+                // supply it and ask that it be somewhere a person can find. The README and the
+                // documentation site carry it too; this is the copy that ships with the binary,
+                // which is the only one a Commander who never visits either will ever see.
+                Field("Attribution", Attribution),
                 new DockPanel
                 {
                     Children =
@@ -97,6 +103,21 @@ public sealed class AboutWindow : Window
 
         Opened += (_, _) => close.Focus();
     }
+
+    /// <summary>
+    /// Frontier's long-form attribution, as their media usage rules word it.
+    /// <para>
+    /// A constant rather than a literal at the call site so that the one place it is authored is
+    /// findable, and so a test can assert the app ships it. The same words are in <c>NOTICE</c>,
+    /// the README and the documentation site; that is duplication on purpose, because the rules
+    /// ask for it to be easy to locate rather than stored once.
+    /// </para>
+    /// </summary>
+    public const string Attribution =
+        "Directive 47 was created using assets and imagery from Elite Dangerous, with the "
+        + "permission of Frontier Developments plc, for non-commercial purposes. It is not "
+        + "endorsed by nor reflects the views or opinions of Frontier Developments and no "
+        + "employee of Frontier Developments was involved in the making of it.";
 
     /// <summary>A labelled, selectable fact.</summary>
     private static Control Field(string label, string value)

@@ -37,3 +37,15 @@ capability's real tool schema.
 | [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach D47. |
 | [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |
 | [Settings](capabilities/settings.md) | Foundation | What a tool call may change, and the protected set that no model can reach. |
+
+## Attribution
+
+Directive 47 was created using assets and imagery from Elite Dangerous, with the permission of
+Frontier Developments plc, for non-commercial purposes. It is not endorsed by nor reflects the
+views or opinions of Frontier Developments and no employee of Frontier Developments was involved
+in the making of it.
+
+Directive 47's own code is MIT-licensed. The Elite Dangerous game data it ships — ship and module
+figures, blueprints, material names, engineer locations — is Frontier's, used under their
+[media usage rules](https://forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/),
+and is not covered by that licence.
