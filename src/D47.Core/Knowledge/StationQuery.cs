@@ -23,6 +23,15 @@ public sealed record StationSummary
 
     public bool HasLargePad { get; init; }
 
+    /// <summary>Raw, Manufactured or Encoded where the station has a material trader.
+    /// <para>
+    /// Null is a real state and not a parse failure: one station in fifty carries the service and
+    /// no type, which matches the one genuinely unclassifiable trader in two hundred that the
+    /// economy rule could not place either.
+    /// </para>
+    /// </summary>
+    public string? TraderType { get; init; }
+
     /// <summary>
     /// When the service last saw this station's stock. Outfitting data comes from Commanders
     /// sharing it, so it is not "what is there" but "what somebody last reported was there" —
@@ -63,6 +72,17 @@ public sealed record StationQuery
 
     /// <summary>Whether to insist on a large landing pad.</summary>
     public bool LargePadOnly { get; init; }
+
+    /// <summary>
+    /// What kind of material trader, where that is the question — Raw, Manufactured or Encoded.
+    /// <para>
+    /// <b>The index answers this directly</b>, which retires an economy heuristic that was never
+    /// going to behave (docs/spikes/engineering-data-sources.md §8). Every station carries a
+    /// <c>material_trader</c> field, and filtering on it returns exactly the stations that also
+    /// carry the service — 209 either way within 150 light years of Sol, measured 2026-08-15.
+    /// </para>
+    /// </summary>
+    public string? TraderType { get; init; }
 
     public int Size { get; init; } = 5;
 
@@ -152,6 +172,44 @@ public sealed record StationQuery
 
         return true;
     }
+
+    /// <summary>The three kinds of material trader, in the index's own spelling.</summary>
+    public static IReadOnlyList<string> TraderTypes { get; } = ["Raw", "Manufactured", "Encoded"];
+
+    /// <summary>
+    /// A search for material traders, which asks a different question from the module and ship
+    /// search above and so does not go through it — <see cref="TryParse"/> insists on something
+    /// being sold, and a trader sells nothing.
+    /// <para>
+    /// No economy rule and no security or population bound, because the index knows the answer
+    /// outright. The published location rule — Refinery and Extraction for Raw, Extraction and
+    /// Industrial for Manufactured, High Tech and Military for Encoded, medium-or-high security,
+    /// a population between one and twenty-two million — describes where traders <em>tend</em> to
+    /// be, and it was the best available while the type had to be inferred. It no longer does:
+    /// asking for the type returns exactly the stations that carry the service. Two of those
+    /// bounds could not have been applied here anyway, since the station index silently ignores
+    /// <c>population</c> and <c>security</c> (measured 2026-08-15: a population of 0 to 1 returns
+    /// the same count as no filter, identically to a bogus key).
+    /// </para>
+    /// </summary>
+    public static StationQuery ForTrader(string? referenceSystem, string? traderType, double? maxDistance, int size)
+    {
+        var matched = traderType is null
+            ? null
+            : TraderTypes.FirstOrDefault(type => string.Equals(type, traderType.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        return new StationQuery
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
+            TraderType = matched,
+            IsAboutTraders = true,
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
+            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+        };
+    }
+
+    /// <summary>Whether this search is about traders rather than about something being sold.</summary>
+    public bool IsAboutTraders { get; init; }
 
     private static string Unknown(string kind, string spoken, IReadOnlyList<string> near) =>
         near.Count > 0

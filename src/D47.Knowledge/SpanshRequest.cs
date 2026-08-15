@@ -144,6 +144,23 @@ internal static class SpanshRequest
                 writer.WriteEndObject();
             }
 
+            if (query.IsAboutTraders)
+            {
+                // Two shapes in three lines, and they are not the same one — which is the whole
+                // lesson of this file restated. `services` is a group whose member takes the
+                // value array; `material_trader` is a plain choice, and the group spelling that
+                // works one line above returns 2 stations where the flat one returns 565.
+                // Measured 2026-08-15. Shape is per field and cannot be inferred from a family.
+                writer.WriteStartObject("services");
+                WriteGroupMember(writer, "name", "Material Trader");
+                writer.WriteEndObject();
+
+                if (query.TraderType is { } traderType)
+                {
+                    WriteChoice(writer, "material_trader", traderType);
+                }
+            }
+
             if (query.LargePadOnly)
             {
                 writer.WriteStartObject("has_large_pad");
@@ -227,6 +244,18 @@ internal static class SpanshRequest
 
             WriteSignals(writer, "signals", query.Signal, query.SignalCount);
             WriteSignals(writer, "ring_signals", query.RingSignal, query.RingSignalCount);
+
+            if (query.Material is { } material)
+            {
+                // A group, like modules and signals — and only the name member exists. Share is
+                // neither filterable nor sortable: percentage, value and count beside the name are
+                // all silently ignored, and a sort on the material is dropped. Measured
+                // 2026-08-15: the group returns 152 landable bodies within 20 ly of Sol where the
+                // obvious flat spelling returns the unfiltered 703.
+                writer.WriteStartObject("materials");
+                WriteGroupMember(writer, "name", material);
+                writer.WriteEndObject();
+            }
 
             writer.WriteEndObject();
 

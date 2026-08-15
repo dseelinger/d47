@@ -133,6 +133,81 @@ So the symbol goes out with its underscores taken out and nothing else done to i
 treatment stored modules already get. Ugly and true beats invented, and a name the other tool cannot
 look up would be worse than either.
 
+## Where to get it
+
+```text
+Yttrium — a grade 4 raw material.
+You hold 60 of a possible 100.
+Found at: Surface prospecting; Crashed Satellite.
+Richest of the 20 nearest landable bodies carrying it, from Sol:
+  Rich Rock — 1.9%, 9.0 ly
+  Poor Rock — 0.4%, 1.0 ly
+```
+
+Three kinds of material are found in three genuinely different ways, so this is three answers behind
+one question.
+
+**Raw** is a body search. The index will filter on whether a body carries a material and it will
+**not** rank on how much — `percentage`, `value` and `count` beside the name are all silently
+ignored, and a sort on the material is dropped. So the filter is remote and the ranking is local,
+and the sentence says what it ranked over: *the richest of the twenty nearest*, never the richest in
+the galaxy, because it provably is not.
+
+**Three raw materials are declined by name.** Rhenium, Lead and Boron are not in the body index at
+all — 25 of the game's 28. A search for one comes back empty, and an empty result reads as "there is
+none near you", which is a wrong answer wearing the shape of a right one. So it says the index does
+not carry it, which is a fact about the index.
+
+**Manufactured and Encoded** come from the shipped origin list, and where an origin names a system
+state or a superpower the answer becomes a system search:
+
+```text
+Nearest systems reported in Boom, Empire-aligned:
+  Alpha Centauri — 4.4 ly, population 12,000,000
+```
+
+*Reported* in Boom, not in Boom. State turns over on the background simulation's own tick and the
+index is a snapshot — the same crowd-report framing the station stock carries.
+
+## What a trader could make out of what you have
+
+```text
+A trader could make it out of what you already hold:
+  300 × Iron at 6 for 1 — up to 50
+```
+
+The rate is published and was confirmed across 1,096 real trades, so this is arithmetic rather than
+a guess. Two rules it will not break.
+
+**Never across a type.** Each trader deals in Raw, Manufactured or Encoded and only one of them, so
+a Raw surplus cannot become a Manufactured shortfall at any price. No trade in those 1,096 ever
+crossed.
+
+**The line decides the rate, not the type.** Within a line a grade names exactly one material, so a
+same-grade exchange is always cross-line and costs the extra six. Reading the journal's `Category`
+instead would price the commonest trade there is at a sixth of its cost.
+
+Trades the rules define but the storage cap forbids — grade 1 to grade 5 within a line wants 1,296
+units against a cap of 300 — are simply not offered.
+
+## Traders
+
+```text
+Nearest traders dealing in raw materials, from Sol:
+  Broglie Terminal in 61 Cygni — 11.1 ly, raw, 963 ls in
+  Nowhere Dock in Nanomam — 12.0 ly, kind unrecorded
+```
+
+**The index knows the trader type outright**, which retires a heuristic this project had already
+measured and disliked: reading the published economy rule literally classified 152 of 200 real
+traders as Raw, and no galaxy anybody plays in looks like that. Every station carries a
+`material_trader` field of Raw, Manufactured or Encoded, and filtering on it returns exactly the
+stations that carry the service — 209 either way within 150 light years of Sol.
+
+"Kind unrecorded" is a real state and not a failure: about one trader in fifty carries the service
+and no type, which is the same station the economy rule could not place either.
+
+
 ## Tools
 
 ### `get_blueprint`
@@ -164,6 +239,19 @@ other things, with a different recipe each — takes the module as well to say w
 
 Matches against both the module's name and its slot, because "frame shift drive" is one and
 "MainEngines" is the other and you use whichever you can see.
+
+### `find_material`
+
+```json
+{"type":"object","properties":{"material":{"type":"string","description":"The material, by name \u2014 \u0022Yttrium\u0022, \u0022Imperial Shielding\u0022."},"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."}},"required":["material"],"additionalProperties":false}
+```
+
+### `find_material_trader`
+
+```json
+{"type":"object","properties":{"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."},"type":{"type":"string","description":"Which kind of trader.","enum":["Raw","Manufactured","Encoded"]}},"required":[],"additionalProperties":false}
+```
+
 
 ## Notes for anyone reading the code
 

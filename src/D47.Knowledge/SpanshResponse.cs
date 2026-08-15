@@ -271,7 +271,32 @@ internal static class SpanshResponse
         MappingValue = Integer(element, "estimated_mapping_value"),
         Signals = ReadSignals(element),
         Rings = ReadRings(element),
+        Materials = ReadMaterials(element),
     };
+
+    /// <summary>
+    /// Surface materials and their share. Every result carries them whether or not one was asked
+    /// for, which is what makes ranking possible at all — the index will not sort on share.
+    /// </summary>
+    private static IReadOnlyList<(string Name, double Share)> ReadMaterials(JsonElement element)
+    {
+        if (!element.TryGetProperty("materials", out var materials) || materials.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var read = new List<(string, double)>();
+
+        foreach (var material in materials.EnumerateArray())
+        {
+            if (String(material, "name") is { } name)
+            {
+                read.Add((name, Number(material, "share") ?? 0));
+            }
+        }
+
+        return read;
+    }
 
     /// <summary>
     /// The signal counts, dropped into pairs. Read defensively for the same reason everything
@@ -327,6 +352,10 @@ internal static class SpanshResponse
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Type = String(element, "type"),
         HasLargePad = Boolean(element, "has_large_pad"),
+
+        // Null where the station has a trader the index cannot classify — one in fifty, and a
+        // real state rather than a parse failure.
+        TraderType = String(element, "material_trader"),
 
         // Which timestamp depends on what was asked for, and both are worth having: a shipyard
         // seen last year and an outfitting bay seen last week are different kinds of answer.

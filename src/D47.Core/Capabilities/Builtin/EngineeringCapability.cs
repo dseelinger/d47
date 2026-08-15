@@ -25,7 +25,13 @@ public static class EngineeringCapability
 {
     public const string Id = "engineering";
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> commander) => new()
+    /// <param name="galaxy">
+    /// The search service, or null where none is composed. Sourcing is the only half that needs
+    /// it; a blueprint's recipe is a shipped table and answers with the network switched off.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        Func<CommanderGameState?> commander,
+        IGalaxyService? galaxy = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -52,11 +58,10 @@ public static class EngineeringCapability
             {
                 Name = "get_blueprint",
                 Description =
-                    "What an engineering blueprint does and costs: the effects at each grade, the "
-                    + "materials one application needs, who offers it and to what grade, and the "
-                    + "experimental effects that module can take. Folds the Commander's own rank with "
-                    + "each engineer, so the cost of a full grade is an exact total rather than a rate. "
-                    + "Name a blueprint, or a kind of module to list what it can take.",
+                    "What a blueprint changes and costs: effects and materials per grade, who offers "
+                    + "it and to what grade, the module's experimental effects, and — folding the "
+                    + "Commander's rank — the exact total for a full grade. Name a blueprint, or a "
+                    + "module to list what it can take.",
                 Parameters =
                 [
                     new ToolParameter
@@ -83,10 +88,9 @@ public static class EngineeringCapability
             {
                 Name = "get_module_engineering",
                 Description =
-                    "How the engineering on the Commander's fitted modules actually turned out: the "
-                    + "blueprint and grade, the experimental effect, who rolled it, whether the grade is "
-                    + "finished, and what the roll changed in real units. Name a slot or a module for "
-                    + "one of them, or ask with neither for every engineered module aboard.",
+                    "How a fitted module's engineering turned out: blueprint, grade, experimental "
+                    + "effect, who rolled it, whether the grade is finished, and what it changed in real "
+                    + "units. Name a slot or module, or omit for every engineered module aboard.",
                 Parameters =
                 [
                     new ToolParameter
@@ -99,6 +103,55 @@ public static class EngineeringCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Fitted(commander, arguments))),
+            },
+            new ToolDefinition
+            {
+                Name = "find_material",
+                Description =
+                    "Where to get an engineering material: where it is found, and — for a raw one — the "
+                    + "nearest landable bodies carrying it, best share first. Also says what the Commander "
+                    + "already holds and what a material trader could turn into it.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "material",
+                        Type = ToolParameterType.String,
+                        Description = "The material, by name — \"Yttrium\", \"Imperial Shielding\".",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to the Commander's own.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    FindMaterialAsync(galaxy, commander, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "find_material_trader",
+                Description = "Find the nearest material trader, optionally of one kind.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "type",
+                        Type = ToolParameterType.String,
+                        Description = "Which kind of trader.",
+                        AllowedValues = StationQuery.TraderTypes,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to the Commander's own.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    FindTraderAsync(galaxy, commander, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 51 },
@@ -359,6 +412,414 @@ public static class EngineeringCapability
             ? $"You are grade {rank} with {at}: a full grade {grade} is {rolls} roll{(rolls == 1 ? "" : "s")}."
             : $"You are grade {rank} with {at}: a full grade {grade} is {rolls} roll{(rolls == 1 ? "" : "s")}, "
               + $"so {Ingredients(total)}.";
+    }
+
+    // ---- Where to get it ---------------------------------------------------------------------------
+
+    /// <summary>
+    /// Where a material comes from, and what the Commander could do about it today.
+    /// <para>
+    /// Three answers rather than one, because the three kinds of material are found in genuinely
+    /// different ways. <b>Raw</b> is a body search, filtered remotely on presence and ranked
+    /// locally on share. <b>Manufactured and Encoded</b> come from the shipped origin strings, and
+    /// where one names a state the answer becomes a system search on it. And whatever the kind, a
+    /// <b>material trader</b> may already be able to make it out of something aboard.
+    /// </para>
+    /// </summary>
+    private static async Task<ToolResult> FindMaterialAsync(
+        IGalaxyService? galaxy,
+        Func<CommanderGameState?> commander,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!arguments.TryGetString("material", out var wanted) || string.IsNullOrWhiteSpace(wanted))
+        {
+            return ToolResult.Ok("Name a material.");
+        }
+
+        if (MaterialCatalogue.Find(wanted) is not { } material)
+        {
+            return ToolResult.Ok(Catalogue.Unknown("material", wanted.Trim(), MaterialCatalogue.Near(wanted)));
+        }
+
+        var active = commander();
+        var report = new StringBuilder();
+
+        report.AppendLine(Describe(material));
+
+        if (material.Ledger != MaterialLedger.Material)
+        {
+            // A commodity or an Odyssey good rather than a ship material. Saying which beats
+            // running an engineering search that cannot apply — Gold in the hold is two hundred
+            // tonnes of cargo, not two hundred units against a materials cap.
+            return ToolResult.Ok(report.ToString().TrimEnd());
+        }
+
+        report.Append(Held(material, active));
+
+        arguments.TryGetString("near", out var near);
+        near ??= active?.Location.StarSystem;
+
+        report.Append(await SourceAsync(galaxy, material, near, cancellationToken).ConfigureAwait(false));
+        report.Append(Netting(material, active));
+
+        return ToolResult.Ok(report.ToString().TrimEnd());
+    }
+
+    private static string Describe(MaterialEntry material)
+    {
+        var what = material.Ledger switch
+        {
+            MaterialLedger.Material => material.Category is { } category
+                ? $"a grade {material.Grade?.ToString() ?? "?"} {category.ToLowerInvariant()} material"
+                : "a ship material",
+            MaterialLedger.ShipLocker => "an Odyssey ship-locker item, not a ship material",
+            MaterialLedger.Cargo => "a market commodity measured in tonnes, not a ship material",
+            MaterialLedger.RareCargo => "a rare commodity, not a ship material",
+            _ => "something I have no ledger for",
+        };
+
+        return $"{material.Name} — {what}.";
+    }
+
+    /// <summary>What the Commander has of it now. The first thing worth knowing before a trip.</summary>
+    private static string Held(MaterialEntry material, CommanderGameState? active)
+    {
+        if (active?.Materials is not { SnapshotSeen: true } inventory)
+        {
+            return string.Empty;
+        }
+
+        var held = inventory.CountOf(material.Symbol);
+        var cap = material.Grade is { } grade ? MaterialGrades.CapacityOfGrade(grade) : null;
+
+        return cap is { } capacity
+            ? $"You hold {held} of a possible {capacity}." + Environment.NewLine
+            : $"You hold {held}." + Environment.NewLine;
+    }
+
+    /// <summary>
+    /// Where to go for it. Raw is a body search; everything else is the shipped origin list, with
+    /// a state-gated origin turned into a system search.
+    /// </summary>
+    private static async Task<string> SourceAsync(
+        IGalaxyService? galaxy,
+        MaterialEntry material,
+        string? near,
+        CancellationToken cancellationToken)
+    {
+        var report = new StringBuilder();
+
+        if (material.Origins.Count > 0)
+        {
+            report.AppendLine("Found at: " + string.Join("; ", material.Origins) + ".");
+        }
+
+        if (galaxy is null)
+        {
+            return report.ToString();
+        }
+
+        var isRaw = string.Equals(material.Category, "Raw", StringComparison.OrdinalIgnoreCase);
+
+        try
+        {
+            if (isRaw)
+            {
+                report.Append(await BodiesAsync(galaxy, material, near, cancellationToken).ConfigureAwait(false));
+            }
+            else if (StateOf(material) is { } gate)
+            {
+                report.Append(await SystemsAsync(galaxy, gate, near, cancellationToken).ConfigureAwait(false));
+            }
+        }
+        catch (GalaxyUnavailableException failure)
+        {
+            report.AppendLine($"I could not reach the galaxy search: {failure.Message}");
+        }
+
+        return report.ToString();
+    }
+
+    private static async Task<string> BodiesAsync(
+        IGalaxyService galaxy,
+        MaterialEntry material,
+        string? near,
+        CancellationToken cancellationToken)
+    {
+        // Three of the twenty-eight raw materials are not in the index at all, so a search for one
+        // comes back empty — and empty reads as "there is none near you". Declined by name.
+        if (BodyCatalogue.MatchSurfaceMaterial(material.Name) is not { } indexed)
+        {
+            return $"The body index does not carry {material.Name}, so I cannot search for it — that is a "
+                   + "gap in the index rather than a shortage in the galaxy." + Environment.NewLine;
+        }
+
+        var result = await galaxy
+            .FindBodiesAsync(BodyQuery.ForMaterial(near, indexed, maxDistance: 50, size: 20), cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.Bodies.Count == 0)
+        {
+            return $"No landable body within 50 light years is recorded as carrying {material.Name}."
+                   + Environment.NewLine;
+        }
+
+        // The index will not sort on share and will not filter on it, so the ranking is local and
+        // the sentence says what it is over. "The best of what I fetched" is true; "the best in
+        // the galaxy" would not be.
+        var ranked = result.Bodies
+            .Select(body => (Body: body, Share: body.Materials
+                .Where(entry => string.Equals(entry.Name, indexed, StringComparison.OrdinalIgnoreCase))
+                .Select(entry => entry.Share)
+                .DefaultIfEmpty(0)
+                .Max()))
+            .OrderByDescending(pair => pair.Share)
+            .Take(5)
+            .ToArray();
+
+        var report = new StringBuilder();
+
+        report.AppendLine(
+            $"Richest of the {result.Bodies.Count} nearest landable bodies carrying it"
+            + (result.Reference is { } reference ? $", from {reference}:" : ":"));
+
+        foreach (var (body, share) in ranked)
+        {
+            report.Append($"  {body.Name} — {share.ToString("0.0", CultureInfo.InvariantCulture)}%");
+
+            if (body.Distance is { } distance)
+            {
+                report.Append($", {distance.ToString("0.0", CultureInfo.InvariantCulture)} ly");
+            }
+
+            report.AppendLine();
+        }
+
+        return report.ToString();
+    }
+
+    /// <summary>
+    /// The state and superpower a high-grade-emission origin names, matched against the shipped
+    /// vocabularies rather than parsed loosely — both lists are closed, so a word that is not in
+    /// one is a word d47 does not act on.
+    /// </summary>
+    private static (IReadOnlyList<string> States, string? Allegiance)? StateOf(MaterialEntry material)
+    {
+        var origins = string.Join(" ", material.Origins);
+
+        if (!origins.Contains("High grade emission", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        IReadOnlyList<string> states = GalaxyFilters.Find("state") is { } filter
+            ? [.. filter.Choices.Where(state => origins.Contains(state, StringComparison.OrdinalIgnoreCase))]
+            : [];
+
+        var allegiance = GalaxyFilters.Find("allegiance")?.Choices
+            .FirstOrDefault(name => origins.Contains(name, StringComparison.OrdinalIgnoreCase));
+
+        return states.Count == 0 && allegiance is null ? null : (states, allegiance);
+    }
+
+    private static async Task<string> SystemsAsync(
+        IGalaxyService galaxy,
+        (IReadOnlyList<string> States, string? Allegiance) gate,
+        string? near,
+        CancellationToken cancellationToken)
+    {
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal) { ["distance"] = "50" };
+
+        if (gate.States.Count > 0)
+        {
+            requested["state"] = string.Join(",", gate.States);
+        }
+
+        if (gate.Allegiance is { } allegiance)
+        {
+            requested["allegiance"] = allegiance;
+        }
+
+        if (!GalaxyQuery.TryParse(near, requested, size: 5, out var query, out var failure))
+        {
+            return failure + Environment.NewLine;
+        }
+
+        var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+        if (result.Systems.Count == 0)
+        {
+            return "I found no system nearby matching that." + Environment.NewLine;
+        }
+
+        var report = new StringBuilder();
+
+        // "Reported in" rather than "in". System state turns over on the background simulation's
+        // own tick and the index is a snapshot, so this is the same crowd-report framing the
+        // station stock already carries.
+        var described = gate.States.Count > 0
+            ? $"reported in {string.Join(" or ", gate.States)}"
+            : "reported";
+
+        report.AppendLine(
+            $"Nearest systems {described}"
+            + (gate.Allegiance is { } superpower ? $", {superpower}-aligned:" : ":"));
+
+        foreach (var system in result.Systems)
+        {
+            report.Append($"  {system.Name}");
+
+            if (system.Distance is { } distance)
+            {
+                report.Append($" — {distance.ToString("0.0", CultureInfo.InvariantCulture)} ly");
+            }
+
+            if (system.Population is { } population)
+            {
+                report.Append($", population {population.ToString("N0", CultureInfo.InvariantCulture)}");
+            }
+
+            report.AppendLine();
+        }
+
+        return report.ToString();
+    }
+
+    /// <summary>
+    /// What a trader could turn into this, out of what the Commander is actually carrying.
+    /// <para>
+    /// <b>Never across a ledger and never across a type.</b> Each trader deals in Raw,
+    /// Manufactured or Encoded and only one of them, so a Raw surplus cannot become an Encoded
+    /// shortfall at any price — and no trade in 1,096 measured ever crossed. The line, not the
+    /// type, decides the rate: within a line a grade names one material, so a same-grade exchange
+    /// is always cross-line and costs the extra six.
+    /// </para>
+    /// </summary>
+    private static string Netting(MaterialEntry material, CommanderGameState? active)
+    {
+        if (active?.Materials is not { SnapshotSeen: true } inventory
+            || material.Line is null
+            || material.Grade is not { } grade)
+        {
+            return string.Empty;
+        }
+
+        var offers = new List<(string Name, int Held, MaterialExchange Exchange, int Yield)>();
+
+        foreach (var holding in inventory.All)
+        {
+            if (holding.Count <= 0 || MaterialCatalogue.Find(holding.Name) is not { } from)
+            {
+                continue;
+            }
+
+            // Same ledger, same type, not itself. Everything else is not a trade anybody can make.
+            if (from.Symbol == material.Symbol
+                || from.Ledger != MaterialLedger.Material
+                || from.Line is null
+                || from.Grade is not { } fromGrade
+                || !string.Equals(from.Category, material.Category, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var sameLine = string.Equals(from.Line, material.Line, StringComparison.Ordinal);
+
+            if (EngineeringRules.TradeRate(fromGrade, grade, sameLine) is not { } exchange
+                || EngineeringRules.IsBeyondCapacity(fromGrade, grade, sameLine))
+            {
+                continue;
+            }
+
+            var yield = holding.Count / exchange.Paid * exchange.Received;
+
+            if (yield > 0)
+            {
+                offers.Add((from.Name, holding.Count, exchange, yield));
+            }
+        }
+
+        if (offers.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var report = new StringBuilder();
+
+        report.AppendLine("A trader could make it out of what you already hold:");
+
+        foreach (var offer in offers.OrderByDescending(offer => offer.Yield).Take(3))
+        {
+            report.AppendLine(
+                $"  {offer.Held} × {offer.Name} at {offer.Exchange.Paid} for {offer.Exchange.Received} "
+                + $"— up to {offer.Yield}");
+        }
+
+        return report.ToString();
+    }
+
+    private static async Task<ToolResult> FindTraderAsync(
+        IGalaxyService? galaxy,
+        Func<CommanderGameState?> commander,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null)
+        {
+            return ToolResult.Ok("The galaxy search is not switched on, so I cannot look for traders.");
+        }
+
+        arguments.TryGetString("type", out var type);
+        arguments.TryGetString("near", out var near);
+        near ??= commander()?.Location.StarSystem;
+
+        try
+        {
+            var result = await galaxy
+                .FindStationsAsync(StationQuery.ForTrader(near, type, maxDistance: 100, size: 5), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.Stations.Count == 0)
+            {
+                return ToolResult.Ok("I found no material trader within 100 light years.");
+            }
+
+            var report = new StringBuilder();
+
+            report.AppendLine(
+                (type is null
+                    ? "Nearest material traders"
+                    : $"Nearest traders dealing in {type.ToLowerInvariant()} materials")
+                + (result.Reference is { } reference ? $", from {reference}:" : ":"));
+
+            foreach (var station in result.Stations)
+            {
+                report.Append($"  {station.Name} in {station.SystemName}");
+
+                if (station.Distance is { } distance)
+                {
+                    report.Append($" — {distance.ToString("0.0", CultureInfo.InvariantCulture)} ly");
+                }
+
+                // The index answers the type outright, and null is a real state: one trader in
+                // fifty carries the service and no type at all.
+                report.Append(station.TraderType is { } kind ? $", {kind.ToLowerInvariant()}" : ", kind unrecorded");
+
+                if (station.DistanceToArrival is { } arrival)
+                {
+                    report.Append($", {arrival.ToString("N0", CultureInfo.InvariantCulture)} ls in");
+                }
+
+                report.AppendLine();
+            }
+
+            return ToolResult.Ok(report.ToString().TrimEnd());
+        }
+        catch (GalaxyUnavailableException failure)
+        {
+            return ToolResult.Ok($"I could not reach the galaxy search: {failure.Message}");
+        }
     }
 
     // ---- How the roll actually went --------------------------------------------------------------

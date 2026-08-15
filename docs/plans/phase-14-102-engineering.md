@@ -360,6 +360,40 @@ and it unblocks Step 9.
 - Shortfall netting through `TradeRate` — **never across ledgers, never across types**, impossible
   trades named as such.
 
+> **Done, 2026-08-15.** `find_material` and `find_material_trader`, 13 tests, plus the two wire
+> filters they needed: the body index's `materials` group and the station index's `services` group.
+> Every shape re-measured against the live service first, and all three matched what the research
+> recorded — the group spellings return 152 bodies and 100 stations where the flat ones return the
+> unfiltered 703 and 10,000.
+>
+> **The trader heuristic was never needed, and nobody had looked.** §8 measured a *pseudocode file*
+> and found that reading it literally classifies 152 of 200 real traders as Raw; the plan therefore
+> carried a primary-first reading "labelled as a heuristic", plus a `MaterialTrade.TraderType`
+> override per market id to correct it. **The index has carried the answer all along**:
+> `material_trader` is a first-class field on every station, valued Raw/Manufactured/Encoded, and
+> filtering on it returns exactly the stations that carry the service — 209 either way within 150 ly
+> of Sol. So the heuristic is not shipped, the per-market override is not needed, and one station in
+> fifty still comes back with no type at all, which is the same unclassifiable trader the rule could
+> not place and is reported as "kind unrecorded". That is the **fifth** time here that a fact about
+> the looking was written down as a fact about the data.
+>
+> **Two more wire shapes, and they disagree with their neighbours.** `material_trader` is a *plain
+> choice* — the group spelling that works one line above for `services` returns 2 stations where the
+> flat one returns 565. Shape is per field and cannot be inferred from a family, which is now the
+> fourth distinct spelling this file has had to measure rather than guess.
+>
+> **The published location rule is not implementable on that index anyway**, and would have been
+> shipped as a silent lie: `population` and `security` are **ignored** by the station search. A
+> population bound of 0 to 1 returns the same count as no filter, identically to a bogus key. Since
+> the type is indexed the rule is not needed, but the plan's "so the right implementation is a
+> filtered search" would have produced a filter that did nothing.
+>
+> **The relief valve opened a second time**, exactly as the Step 8 note predicted: the two new tools
+> cost 923 characters and `srv` reached 24,130. Paid for out of the two Step 6 tool descriptions,
+> which described their own mechanism rather than what they answer. `srv` now sits at **23,943 — 57
+> characters of headroom**, and Step 10 adds a web-search tool. There is no third trim of this kind
+> left; the next one is a decision about the profile rather than about wording.
+
 ## Step 10 — Web search
 
 The phase's last open item, pulled in because it closes Phase 14 and because the build conversation

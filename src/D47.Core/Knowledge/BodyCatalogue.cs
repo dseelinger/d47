@@ -84,6 +84,26 @@ public static class BodyCatalogue
     public static IReadOnlyList<string> ReserveLevels { get; } =
         ["Common", "Depleted", "Low", "Major", "Pristine"];
 
+    /// <summary>
+    /// The surface materials the body index can be filtered on, in its own spelling.
+    /// <para>
+    /// <b>Twenty-five, and there are twenty-eight raw materials in the game.</b> Rhenium, Lead and
+    /// Boron are simply not in this index, so a search for one comes back empty — and an empty
+    /// search result reads as "there is none near you", which is a wrong answer wearing the shape
+    /// of a right one. They are declined by name instead. Read from the service's own
+    /// <c>field_values</c> on 2026-08-15 rather than recalled.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string> SurfaceMaterials { get; } =
+    [
+        "Antimony", "Arsenic", "Cadmium", "Carbon", "Chromium", "Germanium", "Iron", "Manganese",
+        "Mercury", "Molybdenum", "Nickel", "Niobium", "Phosphorus", "Polonium", "Ruthenium",
+        "Selenium", "Sulphur", "Technetium", "Tellurium", "Tin", "Tungsten", "Vanadium", "Yttrium",
+        "Zinc", "Zirconium",
+    ];
+
+    public static string? MatchSurfaceMaterial(string spoken) => Catalogue.Match(SurfaceMaterials, spoken);
+
     public static string? MatchSubtype(string spoken) => Catalogue.Match(Subtypes, spoken);
 
     public static string? MatchSignal(string spoken) => Catalogue.Match(Signals, spoken);

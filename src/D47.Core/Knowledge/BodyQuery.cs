@@ -54,6 +54,9 @@ public sealed record BodySummary
 
     public IReadOnlyList<RingSummary> Rings { get; init; } = [];
 
+    /// <summary>Surface materials and their percentage share, as every result carries them.</summary>
+    public IReadOnlyList<(string Name, double Share)> Materials { get; init; } = [];
+
     /// <summary>What mapping it is worth, as the service estimates it.</summary>
     public long? MappingValue { get; init; }
 }
@@ -99,6 +102,18 @@ public sealed record BodyQuery
 
     /// <summary>Exactly how many overlapping hotspots of <see cref="RingSignal"/>.</summary>
     public int? RingSignalCount { get; init; }
+
+    /// <summary>
+    /// A surface material to insist on, for the raw half of engineering sourcing.
+    /// <para>
+    /// <b>Presence is filterable and share is not.</b> The index answers "which bodies have any
+    /// Yttrium" and refuses to rank them — <c>percentage</c>, <c>value</c> and <c>count</c> beside
+    /// the name are all silently ignored, and a sort on the material is dropped. So the filter is
+    /// remote and the ranking is local, over what came back, and the answer says so
+    /// (docs/spikes/engineering-data-sources.md §7).
+    /// </para>
+    /// </summary>
+    public string? Material { get; init; }
 
     public string? RingType { get; init; }
 
@@ -195,6 +210,23 @@ public sealed record BodyQuery
 
         return true;
     }
+
+    /// <summary>
+    /// A search for bodies carrying a surface material, which is the raw half of engineering
+    /// sourcing and a different question from the one <see cref="TryParse"/> serves.
+    /// <para>
+    /// Landable only, because a material on a body nobody can land on is not somewhere to go.
+    /// </para>
+    /// </summary>
+    public static BodyQuery ForMaterial(string? referenceSystem, string material, double? maxDistance, int size) =>
+        new()
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
+            Material = material,
+            Landable = true,
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 1000),
+            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+        };
 
     /// <summary>
     /// Counts the service will answer at all. Its own <c>field_values</c> reported no signal
