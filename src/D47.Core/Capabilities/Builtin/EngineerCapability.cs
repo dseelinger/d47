@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -15,11 +16,12 @@ namespace D47.Core.Capabilities.Builtin;
 /// actually asking.
 /// </para>
 /// <para>
-/// <b>The chain of unlocks is not asserted here, only observed.</b> That was once because no
-/// permissive source for the referral graph had been found; two have been since, and the table has
-/// not caught up yet (see <see cref="EngineerDirectory"/>). What this capability says meanwhile is
-/// what the journal already knows: an engineer who has invited the Commander is a referral that has
-/// happened, and one they have never heard of is a step they have not reached.
+/// <b>The chain of unlocks is asserted as well as observed.</b> The table names who recommends
+/// each engineer and the grade that referral needs (see <see cref="EngineerDirectory"/>), so "how
+/// do I get to this person" is answerable before the Commander has taken a step towards them. The
+/// observed half still matters and still comes first where the two meet: an engineer who has
+/// invited the Commander is a referral that has already happened, and no table can be more right
+/// about that than their own journal.
 /// </para>
 /// </summary>
 public static class EngineerCapability
@@ -60,8 +62,9 @@ public static class EngineerCapability
                 Name = "find_engineer",
                 Description =
                     "Look an engineer up by name, or find who grades a kind of module. Says where they "
-                    + "work, what they modify and to what grade, what their invitation asks for where that "
-                    + "is a delivery, and how far along the Commander is with them.",
+                    + "work, what they modify and to what grade, who has to recommend them and at what "
+                    + "grade, what earns their invitation and what it asks for, and how far along the "
+                    + "Commander is both with them and with whoever refers them.",
                 Parameters =
                 [
                     new ToolParameter
@@ -201,7 +204,9 @@ public static class EngineerCapability
 
         foreach (var (engineer, speciality) in grading)
         {
-            report.Append($"  {engineer.Name} — to grade {speciality.MaxGrade}, at {engineer.Where}");
+            report.Append(speciality.IsGraded
+                ? $"  {engineer.Name} — to grade {speciality.MaxGrade}, at {engineer.Where}"
+                : $"  {engineer.Name} — at {engineer.Where}");
 
             // The Commander's own standing beside each one, because "who grades this" is nearly
             // always asked as "who can grade this for me", and the two answers can differ
@@ -213,6 +218,14 @@ public static class EngineerCapability
             else if (progress?.IsKnown == true)
             {
                 report.Append("; not met");
+
+                // The next step rather than a dead end. An engineer the Commander has never heard
+                // of is reachable through somebody, and naming them here turns a list of people
+                // they cannot use into a list of paths they can start.
+                if (engineer.NeedsReferral)
+                {
+                    report.Append($", reached through {Join(engineer.ReferredBy)}");
+                }
             }
 
             report.AppendLine();
@@ -225,13 +238,19 @@ public static class EngineerCapability
     {
         var report = new StringBuilder();
 
-        report.AppendLine($"{engineer.Name} works out of {engineer.Where}.");
+        report.AppendLine(
+            $"{engineer.Name} works out of {engineer.Where}"
+            + (engineer.Body is { } body ? $", on {body}." : "."));
 
         if (engineer.Specialities.Count > 0)
         {
+            // A speciality with no grade is named without one. Odyssey suit and weapon blueprints
+            // are ungraded in the game, and "Suit to 0" reads as a defect rather than as a fact.
             report.AppendLine("Grades: " + string.Join(
                 ", ",
-                engineer.Specialities.Select(speciality => $"{speciality.Kind} to {speciality.MaxGrade}")) + ".");
+                engineer.Specialities.Select(speciality => speciality.IsGraded
+                    ? $"{speciality.Kind} to {speciality.MaxGrade}"
+                    : speciality.Kind)) + ".");
         }
         else
         {
@@ -240,9 +259,28 @@ public static class EngineerCapability
             report.AppendLine("I have no record of what they modify.");
         }
 
+        report.Append(Chain(engineer, active?.Engineers));
+
+        if (engineer.Meeting is { } meeting)
+        {
+            report.AppendLine($"Earning the invitation: {meeting}");
+        }
+
+        // The prose and the material list are the same fact for the 26 engineers whose invitation
+        // is a delivery, and only the prose exists for the rest — so the list goes out where there
+        // is one and the sentence carries the others rather than leaving them blank.
         if (engineer.UnlockCost is { } cost)
         {
             report.AppendLine($"Their invitation asks for {cost}.");
+        }
+        else if (engineer.Unlock is { } unlock)
+        {
+            report.AppendLine($"Their invitation asks for: {unlock}");
+        }
+
+        if (engineer.Reputation is { } reputation)
+        {
+            report.AppendLine($"Reputation with them rises fastest by: {reputation}");
         }
 
         var standing = active?.Engineers.For(engineer.Id);
@@ -258,4 +296,119 @@ public static class EngineerCapability
 
         return report.ToString().TrimEnd();
     }
+
+    /// <summary>
+    /// Who has to recommend this engineer, and where the Commander stands on that path.
+    /// <para>
+    /// <b>Several referrers mean any of them will do</b>, not all — Yi Shen is reached through
+    /// three people, and reading that as three requirements would describe a wall where there is a
+    /// door. So the best standing among them is the one that decides the answer.
+    /// </para>
+    /// <para>
+    /// <b>A referral with no grade is a referral with no grade.</b> The whole Odyssey chain states
+    /// one nowhere, because those engineers unlock on a count of modifications instead; filling in
+    /// <see cref="EngineeringRules.ReferralGrade"/> there would be d47 inventing a requirement the
+    /// game does not have.
+    /// </para>
+    /// </summary>
+    private static string Chain(Engineer engineer, EngineerProgressState? progress)
+    {
+        var report = new StringBuilder();
+
+        if (!engineer.NeedsReferral)
+        {
+            // Said out loud rather than left silent, because "nobody has to introduce you" is the
+            // useful half of the answer for the eleven who need nobody.
+            report.AppendLine(engineer.Discovery is { } discovery
+                ? $"Nobody has to recommend them — {LowerFirst(discovery)}"
+                : "Nobody has to recommend them.");
+
+            return report.ToString();
+        }
+
+        var through = engineer.ReferredBy;
+
+        var at = engineer.ReferralGrade is { } grade
+            ? $" at grade {grade}"
+            : string.Empty;
+
+        report.AppendLine(through.Count == 1
+            ? $"Reached through {through[0]}{at}."
+            : $"Reached through any of {Join(through)}{at}.");
+
+        if (engineer.ReferralGrade is null)
+        {
+            report.AppendLine(
+                "No grade is stated for that referral — the on-foot engineers unlock on a count of "
+                + "modifications rather than on a grade.");
+        }
+
+        if (progress is not { IsKnown: true })
+        {
+            return report.ToString();
+        }
+
+        // Where the Commander actually stands on the path, which is the half no table can supply.
+        var standings = through
+            .Select(name => (Name: name, Standing: EngineerDirectory.ByName(name) is { } referrer
+                ? progress.For(referrer.Id)
+                : null))
+            .ToArray();
+
+        var best = standings
+            .Where(pair => pair.Standing is { IsUnlocked: true })
+            .OrderByDescending(pair => pair.Standing!.Rank ?? 0)
+            .FirstOrDefault();
+
+        if (best.Standing is null)
+        {
+            var met = standings.Where(pair => pair.Standing is not null).Select(pair => pair.Name).ToArray();
+
+            // Named rather than "any of them", because the next sentence is about this engineer
+            // and two unattributed "has not met" lines in a row read as one repeated.
+            report.AppendLine(met.Length > 0
+                ? $"The Commander has heard of {Join(met)} but unlocked nobody on that path."
+                : $"The Commander has not met {Join(through)}.");
+
+            return report.ToString();
+        }
+
+        var rank = best.Standing.Rank ?? 0;
+
+        if (engineer.ReferralGrade is not { } needed)
+        {
+            report.AppendLine($"The Commander is grade {rank} with {best.Name}.");
+        }
+        else if (rank >= needed)
+        {
+            report.AppendLine(
+                $"The Commander is grade {rank} with {best.Name}, so that referral is earned.");
+        }
+        else
+        {
+            // Priced, because the gap is the answer and a Commander who knows the number can
+            // decide whether to close it.
+            var price = EngineeringRules.ReputationCost(needed);
+
+            report.AppendLine(
+                $"The Commander is grade {rank} with {best.Name}, and the referral needs grade {needed}"
+                + (price is { } profit
+                    ? $" — {profit.ToString("N0", CultureInfo.InvariantCulture)} cr of profit sold at "
+                      + "their workshop, plus roughly half the bar to the grade after it."
+                    : "."));
+        }
+
+        return report.ToString();
+    }
+
+    private static string Join(IReadOnlyList<string> names) =>
+        names.Count switch
+        {
+            0 => "nobody",
+            1 => names[0],
+            _ => string.Join(", ", names.Take(names.Count - 1)) + " or " + names[^1],
+        };
+
+    private static string LowerFirst(string text) =>
+        text.Length == 0 ? text : char.ToLowerInvariant(text[0]) + text[1..];
 }

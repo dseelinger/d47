@@ -287,6 +287,26 @@ the live schema.
 and the reputation price of a rank they lack. Retire the docstrings that still describe the chain as
 observed-only.
 
+> **Done, 2026-08-15.** `find_engineer` carries the chain, 9 new tests. The observed-only wording is
+> retired in three places, not one: the capability's own docstring, the "what is missing, and why"
+> section of `docs/capabilities/engineers.md`, and the already-ticked *Engineers* item in `list.md`,
+> which still said the chain was not shipped.
+>
+> Three things the plan did not say. **Several referrers mean any of them**, so the Commander's
+> *best* standing among the three decides Yi Shen's answer rather than all three being reported as
+> requirements — a wall where there is a door. **The referrer's standing is a separate sentence from
+> the engineer's**, and both had to name who they were about: two consecutive "has not met them"
+> lines read as one repeated. And the prose columns Step 5 generated but nothing consumed —
+> `meeting`, `unlock`, `reputation`, `body` — are the rest of the answer to "how do I get to this
+> person", so they go out here; that is the difference between naming a referrer and telling a
+> Commander what to actually do.
+>
+> One defect fixed in passing, from another step's table. Odyssey suit and weapon specialities carry
+> a grade of **0** because those blueprints are ungraded in the game, and nine of 38 engineers read
+> "Grades: Suit to 0, Weapon to 0" — a defect on the face of it rather than a fact. `Speciality`
+> gains `IsGraded` with the zero documented as "no grade stated", and the two reporting sites name
+> the speciality without a grade. The table is untouched.
+
 ## Step 8 — `galaxy` gains `state`
 
 One new `GalaxyFilters` row. It is what makes grade-5 Manufactured sourcing derivable end to end,

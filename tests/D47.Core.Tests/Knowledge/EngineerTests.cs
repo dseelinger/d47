@@ -247,4 +247,138 @@ public class EngineerTests
 
         Assert.Contains("Name an engineer", result.Content, StringComparison.Ordinal);
     }
+
+    // ---- The chain, and where the Commander stands on it -------------------------------------
+
+    /// <summary>
+    /// Selene Jean at rank 2 — one short of the grade 3 her referral of Bill Turner needs, which
+    /// is the case worth reporting: a path started and not finished.
+    /// </summary>
+    private static CapabilityRegistry OnThePath()
+    {
+        var gameState = new GameStateStore();
+        gameState.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
+        gameState.Apply(Event(
+            """
+            {"timestamp":"3311-01-01T00:01:00Z","event":"EngineerProgress","Engineers":[
+              {"Engineer":"Selene Jean","EngineerID":300210,"Progress":"Unlocked","Rank":2}]}
+            """));
+
+        return CapabilityRegistry.Build([EngineerCapability.Create(() => gameState.Active)]);
+    }
+
+    private static async Task<string> Ask(CapabilityRegistry registry, params (string Name, string Value)[] values)
+    {
+        var result = await registry.InvokeAsync("find_engineer", Args(values), TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        return result.Content;
+    }
+
+    [Fact]
+    public async Task AReferredEngineerNamesWhoRefersThemAndAtWhatGrade()
+    {
+        var answer = await Ask(Registry(), ("engineer", "Bill Turner"));
+
+        // Asserted from the table rather than inferred from the journal. Before the chain shipped
+        // this could only be answered once the invitation had already arrived, which is the one
+        // moment the Commander no longer needs telling.
+        Assert.Contains("Reached through Selene Jean at grade 3.", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheGapOnThatPathIsPricedRatherThanLeftAsAGrade()
+    {
+        var answer = await Ask(OnThePath(), ("engineer", "Bill Turner"));
+
+        Assert.Contains("The Commander is grade 2 with Selene Jean", answer, StringComparison.Ordinal);
+        Assert.Contains("the referral needs grade 3", answer, StringComparison.Ordinal);
+
+        // The published price of that rank, and the half of the requirement nobody published as a
+        // number said in words rather than invented as one.
+        Assert.Contains("2,000,000 cr", answer, StringComparison.Ordinal);
+        Assert.Contains("roughly half the bar", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AReferralAlreadyEarnedIsSaidToBeEarned()
+    {
+        var gameState = new GameStateStore();
+        gameState.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
+        gameState.Apply(Event(
+            """
+            {"timestamp":"3311-01-01T00:01:00Z","event":"EngineerProgress","Engineers":[
+              {"Engineer":"Selene Jean","EngineerID":300210,"Progress":"Unlocked","Rank":4}]}
+            """));
+
+        var answer = await Ask(
+            CapabilityRegistry.Build([EngineerCapability.Create(() => gameState.Active)]),
+            ("engineer", "Bill Turner"));
+
+        Assert.Contains("so that referral is earned", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("cr of profit", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ThreeReferrersMeanAnyOfThemRatherThanAllOfThem()
+    {
+        var answer = await Ask(Registry(), ("engineer", "Yi Shen"));
+
+        // Reading three referrers as three requirements would describe a wall where there is a
+        // door.
+        Assert.Contains("Reached through any of Baltanos, Eleanor Bresa or Rosa Dayette.", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnOnFootReferralSaysNoGradeIsStatedRatherThanInventingOne()
+    {
+        var answer = await Ask(Registry(), ("engineer", "Yi Shen"));
+
+        // Defaulting to the ship chain's grade 3 would state a requirement the game does not have:
+        // the Odyssey engineers unlock on a count of modifications instead.
+        Assert.Contains("No grade is stated for that referral", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("at grade 3", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnEngineerNobodyHasToRecommendSaysSo()
+    {
+        var answer = await Ask(Registry(), ("engineer", "Farseer"));
+
+        // The useful half of the answer for the eleven who need nobody. Silence here reads as a
+        // missing referral rather than as an absent one.
+        Assert.Contains("Nobody has to recommend them", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WhatEarnsTheInvitationIsSaidAsWellAsWhatItAsksFor()
+    {
+        var answer = await Ask(Registry(), ("engineer", "Bill Turner"));
+
+        Assert.Contains("Earning the invitation: ", answer, StringComparison.Ordinal);
+        Assert.Contains("Their invitation asks for Bromellite ×50.", answer, StringComparison.Ordinal);
+        Assert.Contains("Reputation with them rises fastest by: ", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnUngradedSpecialityIsNamedWithoutAGradeRatherThanAsGradeZero()
+    {
+        // Odyssey suit and weapon blueprints are ungraded in the game, and the table carries that
+        // as a zero. Nine engineers read "Suit to 0" before this, which is a defect on the face of
+        // it rather than a fact.
+        var answer = await Ask(Registry(), ("engineer", "Domino Green"));
+
+        Assert.Contains("Grades: Suit, Weapon.", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain(" to 0", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WhoGradesSomethingNamesThePathToTheOnesNotMet()
+    {
+        var answer = await Ask(Registry(), ("grades", "thrusters"));
+
+        // A list of people the Commander cannot use becomes a list of paths they can start.
+        Assert.Contains("not met, reached through Marco Qwent", answer, StringComparison.Ordinal);
+    }
 }

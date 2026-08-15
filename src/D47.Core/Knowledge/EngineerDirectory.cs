@@ -3,8 +3,19 @@ using System.Reflection;
 
 namespace D47.Core.Knowledge;
 
-/// <summary>One thing an engineer works on, and how far they take it.</summary>
-public sealed record Speciality(string Kind, int MaxGrade);
+/// <summary>
+/// One thing an engineer works on, and how far they take it.
+/// </summary>
+/// <param name="MaxGrade">
+/// 1 to 5, or <b>0 where the source states no grade at all</b> — which is every Odyssey suit and
+/// weapon speciality, nine engineers' worth, because those blueprints are ungraded in the game
+/// rather than missing a figure. Zero is not a grade and must not be spoken as one; use
+/// <see cref="IsGraded"/> rather than comparing.
+/// </param>
+public sealed record Speciality(string Kind, int MaxGrade)
+{
+    public bool IsGraded => MaxGrade > 0;
+}
 
 /// <summary>
 /// One engineer: who they are, where they work, what they grade, and what their invitation
