@@ -323,9 +323,37 @@ keeps its game data in a separately versioned artifact (`ed-data-impl` is at 1.3
 at 1.7), which is a strong hint about how often on-foot data actually moves, and an argument for
 d47's generated tables carrying a visible version and date.
 
-**EDSY** (edsy.org, the other Coriolis-like builder) has not been examined and is the obvious next
-stop, particularly for suit and weapon stat ladders. EDOMH imports wishlists *from* EDSY, which
-suggests EDSY publishes something structured.
+## 7b. EDSY — unusable licence, and no on-foot data anyway
+
+[`taleden/edsy`](https://github.com/taleden/edsy), JavaScript, actively maintained. Its `eddb.js`
+is a 555 KB database keyed by `fdid` and `fdname`, so structurally it is a fine source. Two
+independent reasons it is not one for d47:
+
+**The licence fails the invariant.** The file header states the design, markup and script are
+*"provided under a Creative Commons Attribution-NonCommercial 4.0 International License"*.
+Non-commercial is a use restriction, and CLAUDE.md's rule is permissive only. That is a harder stop
+than coriolis-data's position, which at least confines its claim to Frontier's ownership of the game
+data rather than adding terms of its own.
+
+**And it has nothing on foot.** Searched for `suit`, `maverick`, `dominator`, `artemis`, `karma`,
+`manticore` and `takada`: **zero hits for every one**. Like coriolis-data, it models ships and ship
+modules only — so even with a usable licence it would not have answered the question it was checked
+for. Which also disposes of the hope that EDOMH's EDSY wishlist import implied on-foot data flowing
+between them; the import must be ship builds.
+
+### The lead worth chasing, which is bigger than EDSY
+
+The same header says the game data *"remains the property of Frontier Developments plc, and is used
+here as authorized by Frontier Customer Services"*, linking to Frontier's **Elite Dangerous media
+usage rules** (`forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/`).
+
+**That is the ground every derived table in this repo already stands on**, and nobody here has read
+it. `MaterialGrades.g.cs`, `EliteSpecifications.tsv` and `Engineers.tsv` are all derived from
+community files whose own licences say, in coriolis-data's words, that the JSON is Frontier's
+property. The generators' docstrings reason about the *community* repositories' terms and are silent
+on Frontier's, which is the one that actually governs. Reading that thread would either confirm the
+present position outright or say plainly what attribution d47 owes — and it is a forum URL, so it
+needs the browser rather than a fetch.
 
 ## 8. Data traps
 
