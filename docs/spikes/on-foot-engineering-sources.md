@@ -223,6 +223,50 @@ recorded in §8.
   desk."* That turns "grade before mods" from an ordering preference into a **routing fact**: the
   upgrade cannot be done at the engineer, so it has to happen before the trip.
 
+## 6c. Suit mod effects and credit costs — found, and weaker than they look
+
+[Inara logbook 72975](https://inara.cz/elite/logbook/72975/) carries all **14 suit mods** with a
+credit price, a provider list split Bubble/Colonia, an itemised material cost, and a described
+effect. Credit prices fall in three tiers:
+
+| Price | Mods |
+|---|---|
+| 500,000 | Added Melee Damage, Reduced Tool Battery Consumption |
+| 750,000 | Combat Movement Speed, Damage Resistance, Enhanced Tracking, Extra Ammo Capacity, Extra Backpack Capacity, Faster Shield Regen, Improved Battery Capacity, Improved Jump Assist, Increased Air Reserves, Increased Sprint Duration |
+| 1,000,000 | **Night Vision**, **Quieter Footsteps** |
+
+The two at a million are the two with a single Bubble source each (§6a) — the scarcity and the price
+agree, which is a small corroboration that the page is describing the real game.
+
+Effects, where the page states a number: Added Melee Damage **+50%** (fists and strikes), Damage
+Resistance **+10%** each to explosive, plasma, thermic and kinetic, Enhanced Tracking **doubles**
+scan range and makes scanning instant, Extra Ammo Capacity **+50%**, Extra Backpack Capacity
+**doubles** goods, data and assets, Faster Shield Regen **+25%**, Improved Battery Capacity
+**+50%**, Increased Air Reserves **1 minute → 5**, Increased Sprint Duration **about ×2**, Reduced
+Tool Battery Consumption **−50%**.
+
+**Three reasons not to ship these as facts yet**, all of which the page itself supplies:
+
+1. **It is dated 24 October 2022**, so it predates the Type-8 rebalance — the same update that
+   demonstrably rewrote on-foot recipes (§4, "Removed Power Regulators"). The material costs on that
+   page are therefore suspect in exactly the way EDEngineer's unlock costs turned out to be.
+2. **The author hedges on several entries in their own words** — "I could not find online by how
+   much" for Improved Jump Assist, and for Faster Shield Regen "it is unclear to me whether this
+   applies to the regular shield regen, broken shield regen or both".
+3. **An earlier search excerpt gave Faster Shield Regen as +33%; the page says 25%.** One of those
+   is wrong and it does not matter which — it is the third time in this investigation that a search
+   excerpt disagreed with the page it was excerpted from.
+
+So: a real source with real numbers, and a compilation by one Commander rather than a specification.
+Worth carrying with attribution and a date, not worth asserting flatly.
+
+**Weapon mod effects are still unsourced.** That guide covers suits only, by the author's own
+statement, and no equivalent weapon guide was found in this pass.
+
+Two things on that page that must **never** reach a shipped table: the per-mod "Recommendation"
+paragraphs, which are opinion and are exactly the sort of thing d47 does not assert, and the suit
+comparisons, which are the same.
+
 ## 7. What has not been found yet
 
 Every row here is a lead, not a verdict. The information is out there; this is a record of where the
@@ -232,7 +276,7 @@ search stopped, so the next person starts further along.
 |---|---|
 | **No suit or weapon ids in any checked source.** FDevIDs has no `suits.csv` or on-foot `weapons.csv`; `outfitting.csv` is ship modules only | The **journal itself** — `SuitLoadout` carries `SuitID`, `SuitName`, `LoadoutID` and per-module `SuitModuleID`. That makes the journal the id authority and inverts the ship arrangement. Also worth checking the Frontier CAPI docs in FDevIDs' `Frontier API/` folder, which mention `onfootmicroresources` and `pioneersupplies` |
 | **Base stats for suits and weapons** — damage, magazine, shield, armour | Inara publishes per-item equipment-blueprint pages with fixed stat ladders (e.g. Maverick shield +22.5% at G2 rising to +125% at G5). Not yet harvested |
-| **26 of 34 mods carry no effect values** in EDEngineer | Inara's mod pages give flat figures (Improved Battery Capacity +50%, Faster Shield Regen +33%, Greater Range +50%, Headshot Damage ×1.5). A second source to derive from rather than hand-write |
+| **Weapon** mod effect values, and a *current* source for the suit ones | The suit 14 are found (§6c) but from a 2022 compilation that predates a recipe-changing patch. No weapon-mod guide turned up in this pass. Per-weapon Inara pages, and the in-game engineer screen, are both untried |
 | **Ship-locker cap: 1000 per category, or per item type?** Sources conflict | Per-category is the reading consistent with years of "1000 is not enough" threads, but it was not confirmed. The journal's `ShipLocker.json` plus a full locker would settle it |
 | **Anything post-Operations** (30 June 2026) beyond the reward list | The Operations page itself is now read (§6c). What remains is whether Operations changed any *mechanic* rather than adding a currency — the update notes thread, in a browser |
 | **Whether Merc Coin on-foot gear mods are grade-upgradeable at an engineer** | One unverified forum comment suggests so, which would be a genuinely new mechanic. Official Operations notes, read directly |
