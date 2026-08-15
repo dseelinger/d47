@@ -2,6 +2,71 @@ using System.Text.Json;
 
 namespace D47.Core.Journal;
 
+/// <summary>
+/// One line of a module's engineering, in real units.
+/// <para>
+/// <b>This is the only place a module's actual roll exists.</b> The blueprint and grade say what
+/// was attempted; these say what came out — 52.3 tonnes of optimal mass where the unmodified drive
+/// had 45, and so on. Nothing in any table can supply them, because they are facts about this
+/// module rather than about the game.
+/// </para>
+/// </summary>
+public sealed record ShipModifier(string Label)
+{
+    /// <summary>The modified figure, for the modifiers that carry a number.</summary>
+    public double? Value { get; init; }
+
+    /// <summary>The same figure before engineering, so the change is arithmetic and not a claim.</summary>
+    public double? OriginalValue { get; init; }
+
+    /// <summary>
+    /// The value for modifiers that are not numeric at all — a damage type reading "Thermal"
+    /// rather than a quantity. Sixteen of 3,384 modifiers measured across the corpus arrive this
+    /// way, carrying <c>ValueStr</c> and no <c>Value</c>, <c>OriginalValue</c> or
+    /// <c>LessIsGood</c>. Read as a number they vanish silently.
+    /// </summary>
+    public string? Text { get; init; }
+
+    /// <summary>
+    /// Whether a smaller number is the better one — true for mass, heat and power draw.
+    /// <para>
+    /// Elite writes this as <c>0</c> or <c>1</c> rather than as a JSON boolean, so reading it as
+    /// one answers false every time and reports every improvement backwards.
+    /// </para>
+    /// </summary>
+    public bool LessIsGood { get; init; }
+
+    /// <summary>How far engineering moved it, or null when there is nothing to subtract.</summary>
+    public double? Change => Value is { } value && OriginalValue is { } original ? value - original : null;
+
+    /// <summary>
+    /// Whether the change is an improvement, or null when it did not move or cannot be measured.
+    /// Null rather than false: "unchanged" and "worse" are different things to say out loud.
+    /// </summary>
+    public bool? IsImprovement => Change switch
+    {
+        null => null,
+        > 0 => !LessIsGood,
+        < 0 => LessIsGood,
+        _ => null,
+    };
+
+    public static ShipModifier From(JsonElement element) => new(element.Named("Label") ?? "unknown")
+    {
+        Value = element.Double("Value"),
+        OriginalValue = element.Double("OriginalValue"),
+
+        // ValueStr for the non-numeric variant, and String("Value") behind it for a Value that
+        // arrives as a string — which Double() answers null for, so without this the modifier
+        // would read as present and empty rather than as the text it is.
+        Text = element.Named("ValueStr") ?? element.String("Value"),
+
+        // Number first, because that is what Elite actually writes. Bool() behind it so a change
+        // to a real JSON boolean keeps working rather than silently flipping every verdict.
+        LessIsGood = element.Int("LessIsGood") == 1 || element.Bool("LessIsGood"),
+    };
+}
+
 /// <summary>One fitted module, as the Loadout event describes it.</summary>
 public sealed record ShipModule(string Slot, string Item, bool Powered, int? Health, long? Value)
 {
@@ -13,19 +78,65 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
     /// <summary>The experimental effect, which Elite reports separately from the blueprint.</summary>
     public string? Experimental { get; init; }
 
+    /// <summary>
+    /// Progress through the grade, 0 to 1. <b>0.85 and above is finished</b>, not 1.0 — see
+    /// <see cref="Knowledge.EngineeringRules.CompleteAt"/>, which carries the evidence.
+    /// </summary>
+    public double? Quality { get; init; }
+
+    /// <summary>
+    /// Who rolled it, where Elite names them.
+    /// <para>
+    /// Absent on 27 of 772 engineered modules measured, all of them carrying engineer id 399999
+    /// and no name — a module that arrived already engineered rather than one somebody rolled.
+    /// So a null engineer with an id present is a real state and not a parse failure.
+    /// </para>
+    /// </summary>
+    public string? Engineer { get; init; }
+
+    public long? EngineerId { get; init; }
+
+    /// <summary>What the roll actually did, in real units. Empty for an unmodified module.</summary>
+    public IReadOnlyList<ShipModifier> Modifiers { get; init; } = [];
+
     public bool IsEngineered => Blueprint is not null;
 
-    public static ShipModule From(JsonElement element) => new(
-        element.String("Slot") ?? "unknown",
-        element.Named("Item") ?? "unknown",
-        Powered: element.Bool("On"),
-        Health: element.Double("Health") is { } health ? (int)Math.Round(health * 100) : null,
-        Value: element.Long("Value"))
+    public static ShipModule From(JsonElement element)
     {
-        Blueprint = element.Object("Engineering")?.Named("BlueprintName"),
-        BlueprintLevel = element.Object("Engineering")?.Int("Level"),
-        Experimental = element.Object("Engineering")?.Named("ExperimentalEffect"),
-    };
+        var engineering = element.Object("Engineering");
+
+        return new ShipModule(
+            element.String("Slot") ?? "unknown",
+            element.Named("Item") ?? "unknown",
+            Powered: element.Bool("On"),
+            Health: element.Double("Health") is { } health ? (int)Math.Round(health * 100) : null,
+            Value: element.Long("Value"))
+        {
+            // "BlueprintName" is the current spelling. "Blueprint" is what journals written before
+            // 3.0 used; there are zero of them in the 912-journal corpus, which starts seven years
+            // after that, so this is carried on EDDiscovery's authority rather than on evidence and
+            // costs one fallback.
+            Blueprint = engineering?.Named("BlueprintName") ?? engineering?.Named("Blueprint"),
+            BlueprintLevel = engineering?.Int("Level"),
+
+            // Loadout writes "ExperimentalEffect" and EngineerCraft writes
+            // "ApplyExperimentalEffect" for the same thing. Blanked because an effect present and
+            // empty is Elite saying there is none, and null is what the rest of this type means
+            // by that.
+            Experimental = Blank(engineering?.Named("ExperimentalEffect")
+                                 ?? engineering?.Named("ApplyExperimentalEffect")),
+
+            Quality = engineering?.Double("Quality"),
+            Engineer = Blank(engineering?.String("Engineer")),
+            EngineerId = engineering?.Long("EngineerID"),
+            Modifiers = engineering is { } block
+                ? [.. block.Items("Modifiers").Select(ShipModifier.From)]
+                : [],
+        };
+    }
+
+    /// <summary>Empty means absent everywhere in this file, and the two must not both circulate.</summary>
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 }
 
 /// <summary>

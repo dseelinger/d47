@@ -143,6 +143,25 @@ the pre-3.0 form and an empty experimental.
 
 **Independently useful** — this answers "how good is my roll" with no table at all.
 
+> **Done, 2026-08-15.** `ShipModifier` and four fields on `ShipModule`, 11 tests. Shapes measured
+> over 772 engineered modules in 78 real Loadout events, and the parser then run over all of them:
+> **3,384 modifiers, 3,368 numeric and 16 text, none dropped.**
+>
+> Three of the four listed gotchas needed correcting, and two more turned up.
+> **`LessIsGood` is `0`/`1`, not a JSON boolean** — read as one it answers false every time and
+> reports every improvement on a less-is-better figure backwards. That is the bug in this step, and
+> it was not on the list. **`Value` arriving as the wrong type is really a different variant**: 16
+> of 3,384 modifiers carry `ValueStr`/`ValueStr_Localised` and no `Value`, `OriginalValue` or
+> `LessIsGood` — a damage type rather than a quantity. And **`Engineer` can be absent while
+> `EngineerID` is present**: 27 of 772, every one id `399999` on a grade 5
+> `CargoRack_IncreasedCapacity`. That is a module that arrived already engineered, so it is direct
+> ship-side evidence for **Step 13** — which no longer has to start from nothing.
+>
+> The other two are carried on EDDiscovery's authority and **cannot be evidenced**: the pre-3.0
+> `Blueprint` spelling and an empty `ExperimentalEffect` have **zero occurrences** in a corpus that
+> begins in July 2025, seven years after the spelling changed. Both are one fallback each and the
+> tests say plainly that they were not measured.
+
 ## Step 4 — `Blueprints.tsv`
 
 `tools/gen-blueprints.py`, plus `BlueprintCatalogue.cs`. Per-application ingredients, grade,
