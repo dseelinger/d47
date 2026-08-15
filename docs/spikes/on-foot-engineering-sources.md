@@ -8,6 +8,13 @@ items rather than as a footnote to them.
 exactly that — not that it does not exist. On-foot is less documented than ships, not undocumented,
 and every "not found" below is a lead rather than a verdict.
 
+> **Second pass, 2026-08-15.** Half of §7's original gaps were closed within a day by opening the
+> pages in a browser instead of fetching them. `elite-dangerous.fandom.com` answers **402** and
+> `forums.frontier.co.uk` answers **403** to an automated fetch and render perfectly in a browser —
+> so "no source has this" meant "a user agent check stopped me". Sections marked **Confirmed at
+> source** below were read that way. What it also turned up: **EDEngineer's Odyssey unlock
+> quantities are stale**, by as much as 8×. See §4.
+
 ---
 
 ## 1. On-foot is not the ship feature with a different vocabulary
@@ -27,7 +34,10 @@ Two axes, and neither one is the ship model.
 
 > "Unlike ship mods, equipment mods are only available in a single quality grade, and require only a
 > single transaction with the Engineer to fully apply it."
-> — Fandom *Engineers* page, via search excerpt (the domain returned HTTP 402 to direct fetch)
+> — [Fandom *Engineers*](https://elite-dangerous.fandom.com/wiki/Engineers), read at source in a
+> browser on 2026-08-15. The same page adds two things worth having: *"Suits and handheld weapons
+> need to be grade 2 or higher before you can modify them"*, and that upgrading and modding both
+> cost **credits** as well as materials.
 
 Three consequences that shape the whole phase:
 
@@ -94,13 +104,35 @@ Oden Geiger      ← Terra Velasquez   Financial Projections 15, Biological Samp
 ```
 
 Domino Green, Hero Ferrari and Jude Navarro have no unlock row because they are the three roots.
-The structure is three chains of three. The four Colonia engineers have no rows at all (§7).
+The structure is three chains of three. The four Colonia engineers have no rows *in this file* —
+which is not the same as having no data, see §6a.
 
 Community sources give the non-material half of each unlock — travel 100 ly by Apex for Domino
 Green, ten on-foot Conflict Zones for Hero Ferrari, Unfriendly with Sirius Corporation for Uma
 Laszlo — from [E:D Black Box](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html)
-and [Inara](https://inara.cz/elite/engineers/). **Not yet cross-checked against a second independent
-source**, and worth doing before shipping, because a wrong unlock requirement costs a trip.
+and [Inara](https://inara.cz/elite/engineers/).
+
+### The quantities above are stale — confirmed at source
+
+Cross-checking against [Frontier's Type-8 notes](https://www.elitedangerous.com/update-notes/4-0-18-08)
+found that the same update which rebalanced ship rolls also **cut four on-foot unlock requirements**,
+and EDEngineer still carries the pre-patch numbers:
+
+| Engineer | EDEngineer says | Frontier says |
+|---|---|---|
+| Kit Fowler | Opinion Polls ×40 | **×5** (down from 10) |
+| Hero Ferrari | Settlement Defence Plans ×15 | **×5** |
+| Yarden Bond | Smear Campaign Plans ×8 | **×5** |
+| Wellington Beck | 25 each of three entertainment kinds | **15 total** across the three |
+
+Kit Fowler is off by a factor of eight. The same notes also record **"Removed Power Regulators from
+recipes"**, which settles a conflict logged in §9 as unresolved: newp.io listed them, Inara did not,
+and Inara was right because they were taken out.
+
+**The lesson is about the generator, not these four rows.** A patch that changes unlock costs will
+not change EDEngineer's file until somebody updates it, so the unlock column is the part of the
+generated table most likely to be quietly wrong, and it is also the part whose failure wastes a
+Commander's trip. It wants a source that tracks patches, or a loud staleness note in the answer.
 
 ## 5. Micro-resources join cleanly, with one known drift
 
@@ -140,6 +172,57 @@ matches the game rule that only Components can be bartered. Whether those two nu
 usable exchange rate is untested and is the most promising lead d47 has for a conversion table it
 never got for ship materials.
 
+## 6a. The complete mod-to-engineer map — confirmed at source
+
+Read from the [Fandom Engineers page](https://elite-dangerous.fandom.com/wiki/Engineers), which
+carries all thirteen. This was §7's "only two engineers verified in full", and it is now closed.
+
+| Engineer | Base, system | Offers |
+|---|---|---|
+| Domino Green | The Jackrabbit, Orishis | Enhanced Tracking, Extra Backpack Capacity, Reduced Tool Battery Consumption, Greater Range, Stability |
+| Hero Ferrari | Nevermore Terrace, Siris | Improved Jump Assist, Increased Air Reserves, Faster Handling, Noise Suppressor |
+| Jude Navarro | Marshall's Drift, Aurai | Added Melee Damage, Damage Resistance, Extra Ammo Capacity, Magazine Size, Reload Speed |
+| Kit Fowler | The Last Call, Capoya | Added Melee Damage, Extra Ammo Capacity, Faster Shield Regen, Magazine Size, Stowed Reloading |
+| Oden Geiger | Ankh's Promise, Candiaei | Enhanced Tracking, Improved Battery Capacity, **Night Vision**, Scope, Stability |
+| Terra Velasquez | Rascal's Choice, Shou Xing | Combat Movement Speed, Increased Air Reserves, Increased Sprint Duration, Improved Hip Fire Accuracy, Noise Suppressor |
+| Uma Laszlo | Laszlo's Resolve, Xuane | Damage Resistance, Faster Shield Regen, Headshot Damage, Reload Speed, Stowed Reloading |
+| Wellington Beck | Beck Facility, Jolapa | Extra Backpack Capacity, Improved Battery Capacity, Reduced Tool Battery Consumption, Greater Range, Scope |
+| Yarden Bond | Salamander Bank, Bayan | Combat Movement Speed, Improved Jump Assist, **Quieter Footsteps**, Audio Masking, Faster Handling, Improved Hip Fire Accuracy |
+| Baltanos | The Divine Apparatus, Deriso | Combat Movement Speed, Improved Jump Assist, Increased Air Reserves, Increased Sprint Duration, Faster Handling, Improved Hip Fire Accuracy, Noise Suppressor |
+| Eleanor Bresa | Bresa Modifications, Desy | Added Melee Damage, Damage Resistance, Extra Ammo Capacity, Faster Shield Regen, Magazine Size, Reload Speed, Stowed Reloading |
+| Rosa Dayette | Rosa's Shop, Kojeara | Enhanced Tracking, Extra Backpack Capacity, Improved Battery Capacity, Reduced Tool Battery Consumption, Greater Range, Scope, Stability |
+| Yi Shen | Eidolon Hold, Einheriar | **Night Vision**, **Quieter Footsteps**, Audio Masking, Headshot Damage |
+
+**The four Colonia engineers are not data-less after all.** §7 originally recorded "nothing at all"
+for Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen. That was true of *EDEngineer*, and false of
+the game — they carry the widest mod lists of the thirteen, and a Colonia Commander reaches nearly
+everything through three of them where a Bubble Commander needs nine.
+
+Two mods have exactly one Bubble source each and are therefore routing-critical: **Night Vision**
+(Oden Geiger) and **Quieter Footsteps** (Yarden Bond). Both are also at Yi Shen in Colonia.
+
+The 25 distinct mods here reconcile with EDEngineer's 34 rows: the extras are the per-manufacturer
+splits of Headshot Damage and Improved Hip Fire Accuracy, plus the old/new naming duplicates
+recorded in §8.
+
+## 6b. Three more, confirmed at source
+
+- **Grade upgrades cost credits as well as materials.** *"Both upgrading and adding mods requires
+  new types of 'materials' … as well as credits."* Closes a §7 row and one of the four spike
+  questions.
+- **The barter rate is computable after all.** The Bartender page describes exactly the mechanic
+  EDEngineer's two fields encode: *"trading Assets for 'Barter Value', and then spending the
+  accumulated Barter Value on the desired Component. **Each Component traded in is worth a fixed
+  amount of Barter Value**"*. So `BarterValue` is what one gives and `BarterCost` is what one costs,
+  both fixed — which makes the conversion arithmetic rather than a guess. **This is a better
+  position than the ship material trader is in**, where no rate was found at all. Assets only;
+  Goods and Data are sold for credits and cannot be exchanged, and illegal items are refused outside
+  Anarchy-controlled systems.
+- **On-foot engineer bases have no Pioneer Supplies.** *"Odyssey … engineers' bases Concourse does
+  not have most of standard services (bar, terminals, Pioneer Supplies). They only have Apex taxi
+  desk."* That turns "grade before mods" from an ordering preference into a **routing fact**: the
+  upgrade cannot be done at the engineer, so it has to happen before the trip.
+
 ## 7. What has not been found yet
 
 Every row here is a lead, not a verdict. The information is out there; this is a record of where the
@@ -150,14 +233,12 @@ search stopped, so the next person starts further along.
 | **No suit or weapon ids in any checked source.** FDevIDs has no `suits.csv` or on-foot `weapons.csv`; `outfitting.csv` is ship modules only | The **journal itself** — `SuitLoadout` carries `SuitID`, `SuitName`, `LoadoutID` and per-module `SuitModuleID`. That makes the journal the id authority and inverts the ship arrangement. Also worth checking the Frontier CAPI docs in FDevIDs' `Frontier API/` folder, which mention `onfootmicroresources` and `pioneersupplies` |
 | **Base stats for suits and weapons** — damage, magazine, shield, armour | Inara publishes per-item equipment-blueprint pages with fixed stat ladders (e.g. Maverick shield +22.5% at G2 rising to +125% at G5). Not yet harvested |
 | **26 of 34 mods carry no effect values** in EDEngineer | Inara's mod pages give flat figures (Improved Battery Capacity +50%, Faster Shield Regen +33%, Greater Range +50%, Headshot Damage ×1.5). A second source to derive from rather than hand-write |
-| **The complete weapon-mod → engineer map.** Only Domino Green and Yi Shen verified in full | Per-engineer Inara pages exist for all thirteen; only two were read |
-| **Nothing at all for the four Colonia engineers** — Baltanos, Eleanor Bresa, Rosa Dayette, Yi Shen | Their specialities are described as Dynamic / Force / Strategic slices, and Yi Shen's four mods *were* read from Inara. So the data exists in community sources even though it is absent from EDEngineer |
 | **Ship-locker cap: 1000 per category, or per item type?** Sources conflict | Per-category is the reading consistent with years of "1000 is not enough" threads, but it was not confirmed. The journal's `ShipLocker.json` plus a full locker would settle it |
-| **Bartender exchange ratios** | `BarterCost`/`BarterValue` above; and a `TradeMicroResources` event in a real journal is ground truth |
-| **Whether the grade upgrade charges credits** as well as materials | Inara's blueprint pages list credits for engineer mods and none for grade upgrades, which may be an omission rather than a zero |
-| **Anything post-Operations** (30 June 2026) | Every mechanical source reached predates it. Frontier's own notes returned 403 |
+| **Anything post-Operations** (30 June 2026) beyond the reward list | The Operations page itself is now read (§6c). What remains is whether Operations changed any *mechanic* rather than adding a currency — the update notes thread, in a browser |
 | **Whether Merc Coin on-foot gear mods are grade-upgradeable at an engineer** | One unverified forum comment suggests so, which would be a genuinely new mechanic. Official Operations notes, read directly |
 
+
+**Four rows were struck from this table on 2026-08-15** by opening pages in a browser rather than fetching them: the full mod-to-engineer map (§6a), the four Colonia engineers (§6a), whether grade upgrades cost credits (§6b) and the barter rate (§6b). They are left described in those sections rather than deleted, because the reason they were ever open is the useful part.
 ## 8. Data traps
 
 - **`Manticore Oppressor` is spelled `Opressor`** (one `p`) at grades 3, 4 and 5 in EDEngineer. A

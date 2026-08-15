@@ -41,32 +41,50 @@ rather than a point, and still says nothing about how many applications cross it
 Community figures range from five to eleven for a grade 5 and contradict each other. That is
 exactly the shape of knowledge this repository refuses to ship.
 
-### Correction — the count is deterministic, and the data files were the wrong place to look
+### Correction — the count is deterministic, published, and the data files were the wrong place to look
 
-**Found 2026-08-14, while researching on-foot engineering.** The two conclusions above are correct
-about the *files* and wrong about the *game*.
+**Read at source 2026-08-15**, in a browser, from
+[Frontier's Type-8 update notes (18.08)](https://www.elitedangerous.com/update-notes/4-0-18-08) and
+the [Fandom Engineers page](https://elite-dangerous.fandom.com/wiki/Engineers). Both refuse
+automated fetches — 403 and 402 respectively — which is the only reason this took two passes.
 
-The **Type-8 update (4.0.18.08)** changed engineering rolls *"from a random percentage of progress
-gained to an exact amount of progress gained"*. There is now always an exact number of rolls to
-complete a grade, **scaling down with the Commander's access level at that engineer** — at rank 5,
-one roll for a grade 1 blueprint, two for a grade 2, through five for a grade 5. Below rank 5 it
-takes more, and is still deterministic.
+Frontier's wording:
 
-Two things follow, and they run in opposite directions:
+> "Updated engineer rolls to consistently give a fixed roll depending on the grade of the recipe and
+> the commander rank with the engineer."
 
-- **A total is quotable.** A known unit cost (§1) times a known count is a real number, and d47
-  already reads `EngineerProgress.Rank`. The three-layer floor-and-record hedge the ship items were
-  designed around is stronger than it needed to be at rank 5, and the empirical layer stops hedging
-  against randomness and starts filling in the rank 1–4 multipliers, which were not in what was
-  found.
-- **This is sourced but unread.** `elitedangerous.com/update-notes/4-0-18-08` returns 403 to
-  automated fetch. It is corroborated across search excerpts of that page, the Fandom Engineers page
-  and two Steam threads — none of them read at source. Someone should open it in a browser before
-  any arithmetic is built on it.
+And the table, in full:
+
+**Progress gained towards a modification, per roll**
+
+| Modification grade | Access 1 | Access 2 | Access 3 | Access 4 | Access 5 |
+|---|---|---|---|---|---|
+| Grade 1 | 20% | 25% | 34% | 50% | **100%** |
+| Grade 2 | — | 20% | 25% | 34% | 50% |
+| Grade 3 | — | — | 20% | 25% | 34% |
+| Grade 4 | — | — | — | 20% | 25% |
+| Grade 5 | — | — | — | — | 20% |
+
+**Two rules fall straight out of it, and they answer the whole question.**
+
+1. **Rolls needed = 100 ÷ the percentage**, so the ladder is `5, 4, 3, 2, 1` indexed by
+   `accessLevel − grade`. Nothing else is involved: not luck, not the module, not the Commander.
+2. **A dash is a hard gate, not a slow path.** Grade *N* is unreachable below access level *N*. A
+   grade 5 blueprint simply cannot be rolled at rank 4.
+
+So the material total is `ingredients × rolls(grade, rank)`, exactly, and d47 already reads
+`EngineerProgress.Rank`. The three-layer floor-and-record hedge the ship items were designed around
+is unnecessary: **a plan can quote a total and be right.** The Commander's own `EngineerCraft`
+history is still worth folding, but as corroboration rather than as the only source of a number.
+
+Rule 2 is the more valuable half for a *plan*, because it converts a material shortfall into an
+ordering problem: "you cannot roll grade 5 at Farseer until you are rank 5 with her" is a blocker no
+amount of gathering fixes, and it is now statable as a fact rather than as a suspicion.
 
 The lesson worth keeping: the community *data files* genuinely do not encode the roll count, and
-that was measured correctly. Concluding from that that the number did not exist was a different
-claim, made without evidence, and it was wrong.
+that was measured correctly. Concluding that the number therefore did not exist was a **different
+claim, made without evidence, and it was wrong** — the game's own patch notes had published the
+whole table, behind nothing more than a user agent check.
 
 ## 3. The two sources disagree, and the disagreements are structural
 
@@ -274,10 +292,10 @@ below was written as settled and was answered within hours by looking somewhere 
 
 | Unknown | Where the search stopped |
 |---|---|
-| ~~How many applications a grade takes~~ — **answered**, see §2 | What remains is the **rank 1–4 multipliers**, absent from what was found, and reading Frontier's notes at source rather than through excerpts. |
-| ~~Whether application count varies with engineer `Rank`~~ — **answered: yes, by design** | The scaling is the mechanic. An empirical table must therefore be keyed by rank, or it pools runs that are not comparable. |
-| Whether `Engineering.Quality` is a per-roll draw or a cumulative fill | The journal schema says only `number, 0..1`. Getting it wrong produces a module the Commander can see is finished and d47 will not call finished. |
-| Whether trade ratios are a pure function of grade delta | Suggested by schema examples. Not chased further — and the on-foot pass found per-item barter prices sitting in a file this search had already opened, so this one is probably closer than it looks. |
+| ~~How many applications a grade takes~~ — **answered in full**, see §2 | The complete table is published. `rolls = 5,4,3,2,1` on `rank − grade`, and grade > rank is unreachable. Nothing left open. |
+| ~~Whether application count varies with engineer `Rank`~~ — **answered: it is the entire mechanic** | Rank is the only variable. An empirical table keyed on anything else pools runs that are not comparable. |
+| Whether `Engineering.Quality` is a per-roll draw or a cumulative fill | The journal schema says only `number, 0..1`. Now much easier to settle: with rolls at fixed 20/25/34/50/100% steps, a cumulative reading should land on those exact values. Getting it wrong produces a module the Commander can see is finished and d47 will not call finished. |
+| Whether ship trade ratios are a pure function of grade delta | Suggested by schema examples. Still unread — but the on-foot pass found the *equivalent* mechanic fully documented and fully computable (§ on-foot doc), which is a strong hint that the ship one is written down somewhere too. |
 | Whether `MaterialTrade` ever crosses Raw/Manufactured/Encoded | Believed impossible. Believing is not knowing, so the design offers same-category surpluses only. |
 | Whether the primary-first trader reading is correct, or merely less absurd | 64/83/52 across 200 stations is plausible, not proven. |
 | Whether the 27 blueprint and 11 experimental disagreements are coriolis errors, EDEngineer errors or version skew | Two cases were examined of 38. |
