@@ -72,9 +72,11 @@ public static class SpecificationCapability
             {
                 Name = "get_module_specification",
                 Description =
-                    "What a module weighs, draws and costs, and for a frame shift drive the numbers a jump "
-                    + "range is computed from. A module name without a size returns the sizes that exist, "
-                    + "because an 8A drive and a 2E drive are not the same answer.",
+                    "What a module weighs, draws and costs, for a frame shift drive the numbers a jump "
+                    + "range is computed from, and for a bulkhead what it adds to the hull and how it "
+                    + "resists each damage type. A module name without a size returns the sizes that "
+                    + "exist, because an 8A drive and a 2E drive are not the same answer. Armour is "
+                    + "per-hull, so name it with its ship: \"Python Reactive Surface Composite\".",
                 Parameters =
                 [
                     new ToolParameter
@@ -259,6 +261,14 @@ public static class SpecificationCapability
                 return Catalogue.Unknown("module", spoken.Trim(), EliteSpecifications.NearModules(spoken));
             }
 
+            // Armour is the third failure. It has no size and no rating at all, so offering the
+            // sizes it comes in would answer a question about a drive when one was asked about a
+            // bulkhead.
+            if (everything.All(module => module.IsBulkhead))
+            {
+                return $"{everything[0].Name} is armour. It has no size or rating — ask for it by name.";
+            }
+
             return $"There is no {size}{rating} {everything[0].Name}. It comes in "
                    + $"{string.Join(", ", everything.Select(module => module.Size).Distinct(StringComparer.Ordinal))}.";
         }
@@ -292,7 +302,8 @@ public static class SpecificationCapability
 
     private static string Describe(ModuleSpecification module)
     {
-        var report = new StringBuilder($"{module.Size} {module.Name}");
+        // A bulkhead's Size falls back to its name, so leading with both would say it twice.
+        var report = new StringBuilder(module.IsBulkhead ? module.Name : $"{module.Size} {module.Name}");
 
         if (module.Mount is not null)
         {
@@ -333,8 +344,34 @@ public static class SpecificationCapability
             report.Append($". Optimal mass {module.OptimalMass} t, max fuel per jump {module.MaxFuelPerJump} t");
         }
 
+        if (module.HullBoost is not null)
+        {
+            // All four resistances, including the zeroes. Mirrored and Reactive are the same mass
+            // and the same hull boost at a different price, so the resistances are the entire
+            // reason to choose between them — and a resistance left unsaid reads as unknown when
+            // "no effect" is the answer.
+            report.Append($". Hull {Percentage(module.HullBoost)}, ")
+                .Append($"kinetic {Percentage(module.KineticResistance)}, ")
+                .Append($"thermal {Percentage(module.ThermalResistance)}, ")
+                .Append($"explosive {Percentage(module.ExplosiveResistance)}, ")
+                .Append($"caustic {Percentage(module.CausticResistance)}");
+        }
+
         return report.Append('.').ToString();
     }
+
+    /// <summary>
+    /// A signed fraction as a percentage. Signed on purpose: a bulkhead's -20% kinetic is a hole
+    /// and its +25% is a saving, and dropping the sign turns one into the other.
+    /// <para>
+    /// Rounded rather than exact because the source stores fractions — 0.8 × 100 is 80.000000000001
+    /// in binary floating point, and nobody wants to hear that read out.
+    /// </para>
+    /// </summary>
+    private static string Percentage(double? fraction) =>
+        fraction is { } value
+            ? $"{(value * 100).ToString("+0.#;-0.#;0", CultureInfo.InvariantCulture)}%"
+            : "unrecorded";
 
     private static string Figure(int? value) =>
         value?.ToString(CultureInfo.InvariantCulture) ?? "an unrecorded number of";

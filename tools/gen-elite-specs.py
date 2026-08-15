@@ -36,6 +36,37 @@ data belonging to Frontier and that its MIT grant covers only the site's own cod
 the same standing as FDevIDs' CSVs, which d47 already derives a table from, and the reason
 this output is a *derived index of facts about a game* rather than a copy of a work.
 
+Bulkheads are modules, and they are not under modules/
+------------------------------------------------------
+Armour is per-hull. A Mandalay's Lightweight Alloy and an Adder's are different objects
+with different mass and different cost, so coriolis-data does not file them under
+`modules/` with the generic outfitting at all — each one lives inside its own ship's JSON
+under `bulkheads`, and FDevIDs marks them by being the only `outfitting.csv` rows with the
+`ship` column filled in. Reading only `modules/` therefore dropped every one of them,
+which is not a small corner: 1,725 of 20,526 engineered modules across 912 real journals
+are bulkheads, and each one d47 could not name was read out as its raw symbol.
+
+So they are built here from the same two sources and the same id join, iterating the
+naming authority rather than the figures: every `outfitting.csv` row that names a hull is
+a row in the output, and a missing counterpart in coriolis-data costs it its figures and
+not its existence — the symbol is still what the journal writes, so a named bulkhead with
+no numbers still answers "that is your Reactive Surface Composite" instead of
+"panthermkii_armour_reactive".
+
+Their names carry the hull. Frontier calls forty-eight different objects "Lightweight
+Alloy" because the outfitting screen already knows which ship you are standing in and this
+table does not, so the hull is prefixed — from `outfitting.csv`'s own `ship` column,
+spelled as the ships section above spells it. That makes each name unique, and it makes
+`get_module_specification` behave: a bare "Lightweight Alloy" is ambiguous across
+forty-eight hulls, and Catalogue answers an ambiguous fragment by offering the candidates
+back rather than picking one.
+
+Class and rating are deliberately dropped. `outfitting.csv` files every bulkhead as class
+1, and rates the pre-2024 hulls I while rating the newer ones A, B or C for the same five
+grades of the same armour — a placeholder that distinguishes nothing and would be spoken
+as "1I Lightweight Alloy", which is a claim about the game that is not true. What does
+distinguish them is `hull_boost` and the four resistances, so those are carried.
+
 Why a TSV resource and not a generated .g.cs
 --------------------------------------------
 `MaterialGrades.g.cs` is 137 short rows and belongs in code. This is around 1,200 module
@@ -46,6 +77,7 @@ that: a Commander who never asks never pays for it.
 """
 
 import csv
+import datetime
 import io
 import json
 import urllib.request
@@ -67,6 +99,7 @@ SHIP_COLUMNS = [
 MODULE_COLUMNS = [
     "symbol", "name", "class", "rating", "mount", "mass", "power", "integrity", "cost",
     "optimal_mass", "max_fuel", "fuel_power", "fuel_multiplier",
+    "hull_boost", "kinetic_res", "thermal_res", "explosive_res", "caustic_res",
 ]
 
 PADS = {1: "small", 2: "medium", 3: "large"}
@@ -96,9 +129,9 @@ def number(value) -> str:
     return str(value)
 
 
-def coriolis_files() -> tuple[list[str], list[str]]:
-    tree = json.loads(fetch(CORIOLIS_TREE))["tree"]
-    paths = [entry["path"] for entry in tree if entry["path"].endswith(".json")]
+def coriolis_files() -> tuple[str, list[str], list[str]]:
+    tree = json.loads(fetch(CORIOLIS_TREE))
+    paths = [entry["path"] for entry in tree["tree"] if entry["path"].endswith(".json")]
 
     ships = sorted(p for p in paths if p.startswith("ships/"))
     modules = sorted(p for p in paths if p.startswith("modules/"))
@@ -106,47 +139,60 @@ def coriolis_files() -> tuple[list[str], list[str]]:
     if not ships or not modules:
         raise SystemExit("coriolis-data has no ships/ or modules/ JSON — the layout moved")
 
-    return ships, modules
+    return tree["sha"], ships, modules
 
 
-def build_ships(paths: list[str]) -> list[list[str]]:
+def ship_documents(paths: list[str]) -> list[dict]:
+    """Every coriolis ship entry, fetched once.
+
+    Two passes read these — the hull figures, and the bulkheads sitting inside them — and
+    fetching forty-seven files twice to do it would make the second pass look free when it
+    is not.
+    """
+    return [
+        ship
+        for path in paths
+        for ship in json.loads(fetch(CORIOLIS_RAW + path)).values()
+    ]
+
+
+def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
     by_id = {int(row["id"]): row for row in rows("shipyard.csv")}
 
     built, missing = [], []
 
-    for path in paths:
-        for ship in json.loads(fetch(CORIOLIS_RAW + path)).values():
-            properties = ship.get("properties") or {}
-            slots = ship.get("slots") or {}
+    for ship in documents:
+        properties = ship.get("properties") or {}
+        slots = ship.get("slots") or {}
 
-            identity = by_id.get(ship.get("edID"))
+        identity = by_id.get(ship.get("edID"))
 
-            if identity is None:
-                missing.append(properties.get("name") or path)
-                continue
+        if identity is None:
+            missing.append(properties.get("name") or "an unnamed hull")
+            continue
 
-            built.append([
-                identity["symbol"].lower(),
-                identity["name"],
-                properties.get("manufacturer") or "",
-                PADS.get(properties.get("class"), ""),
-                number(properties.get("speed")),
-                number(properties.get("boost")),
-                number(properties.get("baseArmour")),
-                number(properties.get("baseShieldStrength")),
-                number(properties.get("hardness")),
-                number(properties.get("hullMass")),
-                number(properties.get("reserveFuelCapacity")),
-                number(properties.get("crew")),
-                number(properties.get("masslock")),
-                number(properties.get("hullCost")),
+        built.append([
+            identity["symbol"].lower(),
+            identity["name"],
+            properties.get("manufacturer") or "",
+            PADS.get(properties.get("class"), ""),
+            number(properties.get("speed")),
+            number(properties.get("boost")),
+            number(properties.get("baseArmour")),
+            number(properties.get("baseShieldStrength")),
+            number(properties.get("hardness")),
+            number(properties.get("hullMass")),
+            number(properties.get("reserveFuelCapacity")),
+            number(properties.get("crew")),
+            number(properties.get("masslock")),
+            number(properties.get("hullCost")),
 
-                # Sizes rather than counts. "3 large, 2 medium" is the answer to "what can
-                # it carry"; "5 hardpoints" is not.
-                ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
-                ",".join(str(size) for size in slots.get("internal") or []
-                         if isinstance(size, int) and size),
-            ])
+            # Sizes rather than counts. "3 large, 2 medium" is the answer to "what can
+            # it carry"; "5 hardpoints" is not.
+            ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
+            ",".join(str(size) for size in slots.get("internal") or []
+                     if isinstance(size, int) and size),
+        ])
 
     # A hull with no id row cannot be keyed to anything the journal writes, so its figures
     # are unreachable — but its *existence* is worth recording. Three of them on
@@ -157,9 +203,7 @@ def build_ships(paths: list[str]) -> list[list[str]]:
     return sorted(built), sorted(missing)
 
 
-def build_modules(paths: list[str]) -> tuple[list[list[str]], int]:
-    by_id = {int(row["id"]): row for row in rows("outfitting.csv")}
-
+def build_modules(paths: list[str], outfitting: dict[int, dict]) -> tuple[list[list[str]], int]:
     built, unnamed = [], 0
 
     for path in paths:
@@ -173,7 +217,7 @@ def build_modules(paths: list[str]) -> tuple[list[list[str]], int]:
                 if not symbol:
                     continue
 
-                identity = by_id.get(module.get("edID"))
+                identity = outfitting.get(module.get("edID"))
 
                 if identity is None:
                     # Unlike a ship, a module with no id row is still worth having: it is
@@ -203,13 +247,85 @@ def build_modules(paths: list[str]) -> tuple[list[list[str]], int]:
                     number(module.get("maxfuel")),
                     number(module.get("fuelpower")),
                     number(module.get("fuelmul")),
+
+                    # And only a bulkhead carries these five. See build_bulkheads.
+                    "", "", "", "", "",
                 ])
 
-    # One symbol can appear in more than one coriolis file. Last wins would be arbitrary;
-    # sorting and de-duplicating on the key keeps the output stable between runs.
-    unique = {row[0]: row for row in sorted(built)}
+    return built, unnamed
 
-    return disambiguate(sorted(unique.values())), unnamed
+
+def build_bulkheads(
+    documents: list[dict], outfitting: dict[int, dict]
+) -> tuple[list[list[str]], list[str], list[str]]:
+    """Per-hull armour, from the ship files rather than from modules/.
+
+    Iterated from `outfitting.csv` rather than from coriolis, because that is the side that
+    decides what exists: a bulkhead is exactly an outfitting row with the `ship` column
+    filled in, which is the only place either source says out loud that a module belongs to
+    one hull. Both directions of the join come back, so neither can fail quietly — a named
+    bulkhead with no figures and a figure with no name are different problems, and only one
+    of them is survivable.
+    """
+    figures = {
+        bulkhead.get("edID"): bulkhead
+        for ship in documents
+        for bulkhead in ship.get("bulkheads") or []
+    }
+
+    built, unmeasured = [], []
+
+    for identifier, identity in sorted(outfitting.items()):
+        if not identity["ship"]:
+            continue
+
+        bulkhead = figures.pop(identifier, None)
+
+        if bulkhead is None:
+            unmeasured.append(identity["symbol"].lower())
+            bulkhead = {}
+
+        built.append([
+            identity["symbol"].lower(),
+
+            # The hull, then Frontier's name for the armour. Forty-eight ships have a
+            # "Lightweight Alloy", and the outfitting screen can leave the hull unsaid
+            # because the Commander is standing in it. A table cannot.
+            f"{identity['ship']} {identity['name']}",
+
+            # Class and rating are placeholders in the id list — every bulkhead is class 1,
+            # rated I on the old hulls and A, B or C on the new ones for the same five
+            # grades — so they are dropped rather than spoken. Nor is armour mounted.
+            "", "", "",
+
+            number(bulkhead.get("mass")),
+
+            # A bulkhead draws no power, and neither source gives it an integrity.
+            "", "",
+
+            number(bulkhead.get("cost")),
+
+            # Not a drive.
+            "", "", "", "",
+
+            # The fraction added to the hull's own armour, so the ships section's `armour`
+            # column times one plus this is the fitted figure. Then the four resistances,
+            # signed as coriolis signs them: negative is a hole, not a saving. They are
+            # what separates Mirrored from Reactive, which are otherwise the same mass, the
+            # same boost and a different price.
+            number(bulkhead.get("hullboost")),
+            number(bulkhead.get("kinres")),
+            number(bulkhead.get("thermres")),
+            number(bulkhead.get("explres")),
+            number(bulkhead.get("causres")),
+        ])
+
+    # Whatever is left in `figures` had figures and no name. Nothing can be keyed to it, so
+    # it is reported and not written: a row under a symbol coriolis invented would be a
+    # symbol the journal never writes.
+    return built, unmeasured, sorted(
+        bulkhead.get("name") or "an unnamed bulkhead" for bulkhead in figures.values()
+    )
 
 
 # Frontier's own placeholder rows. Not modules anybody can fit, and a "0Z Frame Shift Drive"
@@ -218,6 +334,11 @@ PLACEHOLDERS = ("int_missing_",)
 
 # Tokens every module symbol carries, so they never distinguish one from another.
 NOISE = {"int", "hpt", "size", "class"}
+
+
+def relax(text: str) -> str:
+    """Letters and digits, lower case. `Catalogue.Relax` in Core, for the same reason."""
+    return "".join(character.lower() for character in text if character.isalnum())
 
 
 def disambiguate(built: list[list[str]]) -> list[list[str]]:
@@ -232,6 +353,18 @@ def disambiguate(built: list[list[str]]) -> list[list[str]]:
     The qualifier is *derived from the symbol*, never invented: whatever token one member of
     a colliding group has and the others do not. That yields "Frame Shift Drive
     (overcharge)" rather than a guess at what Frontier calls it in the outfitting screen.
+
+    What the name already says is then struck out of the qualifier, because that is the same
+    word twice rather than a distinction. `outfitting.csv` calls
+    `int_corrosionproofcargorack_size5_class1` a "Cargo Rack", the same as the plain rack, so
+    the tokens separating them are `cargorack` and `corrosionproofcargorack` — and "Cargo
+    Rack (cargorack)" is harder to say than "Cargo Rack" while telling a listener strictly
+    less. Striking `cargorack` leaves nothing on one and "corrosionproof" on the other, which
+    is the distinction that was actually there.
+
+    Striking can only ever remove information, so it is kept only while the group still comes
+    apart. A group left ambiguous by it keeps its raw tokens and reads badly rather than
+    reading wrong.
     """
     kept = [row for row in built if not row[0].startswith(PLACEHOLDERS)]
 
@@ -249,27 +382,46 @@ def disambiguate(built: list[list[str]]) -> list[list[str]]:
         ]
         shared = set.intersection(*tokens)
 
-        for row, own in zip(group, tokens):
-            distinct = sorted(own - shared)
+        raw = [sorted(own - shared) for own in tokens]
+        said = relax(group[0][1])
+        struck = [[t for t in (token.replace(said, "") for token in own) if t] for own in raw]
 
-            if distinct:
-                row[1] = f"{row[1]} ({' '.join(distinct)})"
+        qualifiers = struck if len({tuple(own) for own in struck}) == len(group) else raw
+
+        for row, qualifier in zip(group, qualifiers):
+            if qualifier:
+                row[1] = f"{row[1]} ({' '.join(qualifier)})"
 
     return kept
 
 
 def main() -> None:
-    ship_paths, module_paths = coriolis_files()
+    sha, ship_paths, module_paths = coriolis_files()
 
-    ships, unkeyed = build_ships(ship_paths)
-    modules, unnamed = build_modules(module_paths)
+    outfitting = {int(row["id"]): row for row in rows("outfitting.csv")}
+    documents = ship_documents(ship_paths)
+
+    ships, unkeyed = build_ships(documents)
+    generic, unnamed = build_modules(module_paths, outfitting)
+    bulkheads, unmeasured, unkeyed_bulkheads = build_bulkheads(documents, outfitting)
+
+    # One symbol can appear in more than one coriolis file. Last wins would be arbitrary;
+    # sorting and de-duplicating on the key keeps the output stable between runs.
+    unique = {row[0]: row for row in sorted(generic + bulkheads)}
+    modules = disambiguate(sorted(unique.values()))
 
     lines = [
         "# Generated by tools/gen-elite-specs.py. Do not edit by hand — rerun the tool.",
         "# Derived from EDCD/FDevIDs (shipyard.csv, outfitting.csv) for names and the symbols",
         "# the journal writes, joined on Frontier's own ids with EDCD/coriolis-data for the",
         "# figures. See that script for why this table is derived rather than written.",
-        f"# Ships: {len(ships)}. Modules: {len(modules)}. Known but unmeasured: {len(unkeyed)}.",
+        "# Bulkheads are per-hull and live in coriolis-data's ship files rather than its",
+        "# modules/, and their names carry the hull because forty-eight hulls have a",
+        "# Lightweight Alloy. Class and rating are placeholders for armour and are dropped.",
+        "# Game data is Frontier's, used under their media usage rules — see NOTICE.",
+        f"# Ships: {len(ships)}. Modules: {len(modules)}, of which bulkheads {len(bulkheads)}. "
+        f"Known but unmeasured: {len(unkeyed)}.",
+        f"# coriolis-data tree {sha[:12]}. Built: {datetime.date.today().isoformat()}.",
         "[ships]",
         "\t".join(SHIP_COLUMNS),
     ]
@@ -284,13 +436,26 @@ def main() -> None:
 
     OUTPUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
-    print(f"Wrote {len(ships)} ships and {len(modules)} modules to {OUTPUT}")
+    print(f"Wrote {len(ships)} ships and {len(modules)} modules "
+          f"({len(bulkheads)} of them bulkheads) to {OUTPUT}")
 
     if unkeyed:
         print(f"No shipyard.csv row, recorded as known but unmeasured: {', '.join(unkeyed)}")
 
     if unnamed:
         print(f"{unnamed} modules had no outfitting.csv row and were named from their file")
+
+    if unmeasured:
+        print(f"{len(unmeasured)} bulkheads had no coriolis-data figures and carry a name "
+              f"only: {', '.join(unmeasured)}")
+
+    # The one direction that is not survivable. A bulkhead nothing can key is a bulkhead the
+    # journal can name and this table cannot, which is the failure that started all this.
+    if unkeyed_bulkheads:
+        raise SystemExit(
+            "coriolis-data bulkheads with no outfitting.csv row, so nothing to key them by: "
+            + ", ".join(unkeyed_bulkheads)
+        )
 
 
 if __name__ == "__main__":

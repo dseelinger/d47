@@ -82,9 +82,45 @@ public sealed record ModuleSpecification
 
     public double? FuelMultiplier { get; init; }
 
+    /// <summary>
+    /// The fraction a bulkhead adds to the hull's own <see cref="ShipSpecification.Armour"/>, so
+    /// 0.8 on a Sidewinder's 60 is the 108 the outfitting screen shows. Only a bulkhead carries
+    /// this and the four resistances below.
+    /// </summary>
+    public double? HullBoost { get; init; }
+
+    /// <summary>
+    /// Kinetic resistance as a signed fraction. <b>Negative is a hole, not a saving</b> — every
+    /// alloy below Mirrored is -0.2 against kinetic, meaning it takes 20% more of it.
+    /// </summary>
+    public double? KineticResistance { get; init; }
+
+    public double? ThermalResistance { get; init; }
+
+    public double? ExplosiveResistance { get; init; }
+
+    public double? CausticResistance { get; init; }
+
     public bool IsDrive => OptimalMass is not null;
 
-    /// <summary>The size and rating as a Commander says it: "5A".</summary>
+    /// <summary>
+    /// Per-hull armour. The one module kind with no class and no rating: the id list files every
+    /// bulkhead as class 1 and rates the older hulls I and the newer ones A, B or C for the same
+    /// five grades, so the generator drops both rather than speak a placeholder.
+    /// <para>
+    /// Read off the missing class rather than off <see cref="HullBoost"/>, because five bulkheads
+    /// are named in the id list and absent from the figures — and a Lynx Highliner's armour is
+    /// still armour when d47 has no numbers for it. The specification tests assert that no other
+    /// module kind reaches the table without a class.
+    /// </para>
+    /// </summary>
+    public bool IsBulkhead => Class is null && Rating is null;
+
+    /// <summary>
+    /// The size and rating as a Commander says it: "5A". A bulkhead has neither, so it falls back
+    /// to the name — which already carries its hull, because forty-eight of them are called
+    /// Lightweight Alloy.
+    /// </summary>
     public string Size => Class is { } size && Rating is { } rating ? $"{size}{rating}" : Name;
 }
 
@@ -100,7 +136,7 @@ public sealed record ModuleSpecification
 /// carries the figures, on Frontier's own ids.
 /// </para>
 /// <para>
-/// <b>Read on first use, never at startup.</b> Nine hundred module rows is a parse nobody should
+/// <b>Read on first use, never at startup.</b> Twelve hundred module rows is a parse nobody should
 /// pay for unless they ask a specification question, which is what list.md means by a dataset
 /// "lazy-queried at runtime". <see cref="Lazy{T}"/> rather than a static constructor so the
 /// laziness is visible in the type rather than a property of where the field happens to sit.
@@ -321,6 +357,11 @@ public static class EliteSpecifications
         MaxFuelPerJump = Real(cells, 10),
         FuelPower = Real(cells, 11),
         FuelMultiplier = Real(cells, 12),
+        HullBoost = Real(cells, 13),
+        KineticResistance = Real(cells, 14),
+        ThermalResistance = Real(cells, 15),
+        ExplosiveResistance = Real(cells, 16),
+        CausticResistance = Real(cells, 17),
     };
 
     /// <summary>

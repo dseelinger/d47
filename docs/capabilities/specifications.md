@@ -50,8 +50,47 @@ speed reads identically to the feature working.
 
 The join **is** the check. A ship in one and not the other is a gap the script refuses to hide.
 
-It is read on first use rather than at startup. Nine hundred module rows is a parse nobody should
+It is read on first use rather than at startup. Twelve hundred module rows is a parse nobody should
 pay for unless they ask a specification question.
+
+## Armour is per-hull
+
+A Mandalay's Lightweight Alloy and an Adder's are different objects with different mass and
+different cost, so coriolis-data does not file bulkheads under `modules/` with the generic
+outfitting at all — each one lives inside its own ship's JSON, and FDevIDs marks them by being the
+only `outfitting.csv` rows with a ship named. Reading only `modules/` dropped every one of them,
+which is how 1,725 of 20,526 engineered modules across 912 real journals came to be read out as
+raw symbols like `mandalay_armour_grade1`.
+
+So the name carries the hull. Frontier calls forty-eight different objects "Lightweight Alloy"
+because the outfitting screen already knows which ship you are standing in, and a table does not:
+
+```text
+Mandalay Reactive Surface Composite — 38 t, 36,482,626 cr. Hull +250%, kinetic +25%,
+thermal -40%, explosive +20%, caustic 0%.
+```
+
+Ask for a bare "Lightweight Alloy" and you get the hulls offered back rather than one of them
+picked, for the same reason a bare "Frame Shift Drive" gets the sizes.
+
+**The resistances are the point.** Mirrored and Reactive weigh the same, boost the hull by the same
+amount and differ only in price — so a table carrying mass and cost alone would offer a choice
+between two rows that read identically. All four are said out loud including the zeroes: "no
+effect" and "no figure" are different claims. And the sign is the answer, not decoration — every
+alloy below Mirrored is **-20% against kinetic**, which is a hole and not a saving.
+
+Hull boost is the fraction added to the ship's own `armour` above, so a Sidewinder's 60 under
+Military Grade Composite is the 210 the outfitting screen shows.
+
+Armour has no size and no rating. The id list files every bulkhead as class 1 and rates the older
+hulls `I` while rating the newer ones `A`, `B` or `C` for the same five grades — a placeholder that
+distinguishes nothing, and "1I Lightweight Alloy" spoken aloud is a claim about the game that is
+not true. Ask for one at a size and it says it has none rather than listing sizes it does not come
+in.
+
+Five bulkheads are named in the id list and absent from the figures, all the Lynx Highliner's.
+They ship as a name with no numbers, on the same reasoning as a hull with no figures: the symbol is
+still what the journal writes, so d47 can say what it is rather than spell it out.
 
 ## A ship it has no figures for
 
@@ -119,6 +158,15 @@ group has and the others do not. That yields `Frame Shift Drive (mkii overcharge
 than a guess at what the outfitting screen calls it. Frontier's own placeholder rows
 (`int_missing_*`) are dropped: a "0Z Frame Shift Drive" in a list of the sizes a drive comes in is
 a lie about the game.
+
+What the name already says is then struck out of the qualifier, because that is the same word twice
+rather than a distinction. `outfitting.csv` calls `int_corrosionproofcargorack_size5_class1` a
+"Cargo Rack", the same as the plain rack, so the tokens separating them are `cargorack` and
+`corrosionproofcargorack` — and `Cargo Rack (cargorack)` was harder to say than the name it
+qualified while telling a listener strictly less. Striking `cargorack` leaves nothing on one and
+`corrosionproof` on the other, which is the distinction that was actually there. Striking can only
+remove information, so it is kept only while the group still comes apart; a group left ambiguous by
+it keeps its raw tokens and reads badly rather than reading wrong.
 
 Mount words are mapped to a closed set of three rather than echoed. A value outside it reads as no
 mount, which is true of most modules; passing an unrecognised word through would put whatever the
