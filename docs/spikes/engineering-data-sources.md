@@ -8,6 +8,11 @@ No probe directory survives. Each finding names the file or endpoint and the que
 makes it re-measurable when a source moves — a preserved script that has rotted is worse than a
 recipe.
 
+**Read the gaps as open, not closed.** Where this document says something was not found, it means
+exactly that. §2 is the standing warning: it originally concluded that a number did not exist
+anywhere, and the number turned up a few hours later while researching something else. Treat every
+row of §"What is still unknown" as a lead rather than a verdict.
+
 ---
 
 ## 1. A blueprint application costs exactly one of each ingredient
@@ -35,6 +40,33 @@ rather than a point, and still says nothing about how many applications cross it
 
 Community figures range from five to eleven for a grade 5 and contradict each other. That is
 exactly the shape of knowledge this repository refuses to ship.
+
+### Correction — the count is deterministic, and the data files were the wrong place to look
+
+**Found 2026-08-14, while researching on-foot engineering.** The two conclusions above are correct
+about the *files* and wrong about the *game*.
+
+The **Type-8 update (4.0.18.08)** changed engineering rolls *"from a random percentage of progress
+gained to an exact amount of progress gained"*. There is now always an exact number of rolls to
+complete a grade, **scaling down with the Commander's access level at that engineer** — at rank 5,
+one roll for a grade 1 blueprint, two for a grade 2, through five for a grade 5. Below rank 5 it
+takes more, and is still deterministic.
+
+Two things follow, and they run in opposite directions:
+
+- **A total is quotable.** A known unit cost (§1) times a known count is a real number, and d47
+  already reads `EngineerProgress.Rank`. The three-layer floor-and-record hedge the ship items were
+  designed around is stronger than it needed to be at rank 5, and the empirical layer stops hedging
+  against randomness and starts filling in the rank 1–4 multipliers, which were not in what was
+  found.
+- **This is sourced but unread.** `elitedangerous.com/update-notes/4-0-18-08` returns 403 to
+  automated fetch. It is corroborated across search excerpts of that page, the Fandom Engineers page
+  and two Steam threads — none of them read at source. Someone should open it in a browser before
+  any arithmetic is built on it.
+
+The lesson worth keeping: the community *data files* genuinely do not encode the roll count, and
+that was measured correctly. Concluding from that that the number did not exist was a different
+claim, made without evidence, and it was wrong.
 
 ## 3. The two sources disagree, and the disagreements are structural
 
@@ -237,14 +269,15 @@ matter to the design, and both need the journal to settle them:
 ## What is still unknown
 
 Stated here rather than left implicit, because each is a place where guessing produces an answer
-that reads exactly like the feature working.
+that reads exactly like the feature working. **Every row is a lead, not a verdict** — the first one
+below was written as settled and was answered within hours by looking somewhere else.
 
-| Unknown | Why it is not merely un-looked-up |
+| Unknown | Where the search stopped |
 |---|---|
-| How many applications a grade takes | No source has it; community figures contradict each other. There is no constant to find, which is why d47 quotes one application per grade and says so. |
+| ~~How many applications a grade takes~~ — **answered**, see §2 | What remains is the **rank 1–4 multipliers**, absent from what was found, and reading Frontier's notes at source rather than through excerpts. |
+| ~~Whether application count varies with engineer `Rank`~~ — **answered: yes, by design** | The scaling is the mechanic. An empirical table must therefore be keyed by rank, or it pools runs that are not comparable. |
 | Whether `Engineering.Quality` is a per-roll draw or a cumulative fill | The journal schema says only `number, 0..1`. Getting it wrong produces a module the Commander can see is finished and d47 will not call finished. |
-| Whether application count varies with the engineer's `Rank` | If it does, any empirical table must be keyed by rank too, or it pools runs that are not comparable. |
-| Whether trade ratios are a pure function of grade delta | Suggested by schema examples, not stated anywhere. |
+| Whether trade ratios are a pure function of grade delta | Suggested by schema examples. Not chased further — and the on-foot pass found per-item barter prices sitting in a file this search had already opened, so this one is probably closer than it looks. |
 | Whether `MaterialTrade` ever crosses Raw/Manufactured/Encoded | Believed impossible. Believing is not knowing, so the design offers same-category surpluses only. |
 | Whether the primary-first trader reading is correct, or merely less absurd | 64/83/52 across 200 stations is plausible, not proven. |
 | Whether the 27 blueprint and 11 experimental disagreements are coriolis errors, EDEngineer errors or version skew | Two cases were examined of 38. |
