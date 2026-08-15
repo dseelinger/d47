@@ -79,6 +79,8 @@ import re
 import urllib.request
 from pathlib import Path
 
+import edengineer_names
+
 FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 
 EDENGINEER = ("https://raw.githubusercontent.com/msarilar/EDEngineer/master/"
@@ -116,16 +118,9 @@ KINDS = {
     "Commodity": ("cargo", "rare-cargo"),
 }
 
-# EDEngineer display name -> FDevIDs display name. Every one is asserted below to be drift
-# and not absence. Kept as data rather than a similarity threshold, because the three names
-# that look most like drift are the ones that are not it.
-ALIASES = {
-    "Abnormal Compact Emission Data": "Abnormal Compact Emissions Data",
-    "Ballistic Data": "Ballistics Data",
-    "Guardian Wreckage Components": "Guardian Sentinel Wreckage Components",
-    "Ship System Data": "Ship Systems Data",
-    "Xihe Companions": "Xihe Biomorphic Companions",
-}
+# The five drifting display names live in one place, because gen-blueprints.py joins on the
+# same names and a drift repaired in one generator and not the other loses rows in silence.
+ALIASES = edengineer_names.ALIASES
 
 
 def fetch(url: str) -> bytes:
@@ -297,37 +292,6 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
     return found, sorted(spelled), {e.get("Kind") or "" for e in entries}, collapsed, len(carrying)
 
 
-def check_aliases(alias_targets: dict[str, list[str]], spelled: list[str]) -> None:
-    """Every alias must be drift, and drift is a specific, checkable thing.
-
-    A name that is drift appears in exactly one source and its counterpart in exactly the
-    other. If both sources carry both spellings they are two different items, and aliasing
-    one onto the other hangs its origins on the wrong thing — a quieter and worse failure
-    than having no origins at all. Three real near-misses fail this test:
-    `Geographical Data` is not `Geological Data`.
-    """
-    theirs = set(spelled)
-
-    for source, target in ALIASES.items():
-        if target not in alias_targets:
-            raise SystemExit(
-                f"alias {source!r} -> {target!r}: the target is no longer in FDevIDs, so the "
-                "drift has moved and the pair needs looking at again"
-            )
-
-        if source in alias_targets:
-            raise SystemExit(
-                f"alias {source!r} -> {target!r}: FDevIDs now carries both spellings, so "
-                "these are two items rather than one and the alias is wrong"
-            )
-
-        if target in theirs:
-            raise SystemExit(
-                f"alias {source!r} -> {target!r}: EDEngineer now carries both spellings, so "
-                "these are two items rather than one and the alias is wrong"
-            )
-
-
 def main() -> None:
     built: list[list[str]] = []
     by_name: dict[str, list[str]] = {}
@@ -370,7 +334,7 @@ def main() -> None:
 
             by_name.setdefault(name, []).append(ledger)
 
-    check_aliases(by_name, spelled)
+    edengineer_names.check(by_name, spelled)
     lines = check_lines(built)
 
     # The ledger is only a classification if the four files are disjoint. They are today,

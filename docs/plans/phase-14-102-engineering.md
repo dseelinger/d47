@@ -176,6 +176,28 @@ engineers, effects, experimentals.
 **Verified by:** every ingredient resolves to a material row; **every ingredient size is 1**; the
 disagreement list is printed.
 
+> **Done, 2026-08-15.** `tools/gen-blueprints.py` → `Blueprints.tsv` (1,172 rows),
+> `BlueprintCatalogue.cs`, 11 tests. **All 3,396 ingredient references resolve, zero unresolved**,
+> and the cross-check reproduces the research exactly: 688 blueprints and 59 experimentals joined
+> on `CoriolisGuid`, **27 and 11 disagreements**, printed and never resolved.
+>
+> Two things above are wrong. **"Every ingredient size is 1" is true of modifications and of
+> nothing else** — 57 graded ship rows break it and every one is synthesis: munitions, refills,
+> limpets, SRV repair. Hence a `kind` column, told apart by EDEngineer's `@`-prefixed
+> pseudo-engineers rather than by a list of type names, and the size assertion scoped to
+> modifications. The distinction is load-bearing: `TotalFor` returns null for anything else,
+> because multiplying a synthesis recipe by a roll count is arithmetic on the wrong kind of thing.
+>
+> And **the `Effects` strings are not double-encoded.** The file carries 56 real U+2713 ticks and
+> reads cleanly as UTF-8; `âœ“` is exactly what those correct bytes look like decoded as cp1252.
+> The defect was in the reading, so the generator applies no repair — only the right encoding.
+> That is the fourth time a fact about the reader has been written down as a fact about the data.
+>
+> The five drifting display names now live in `tools/edengineer_names.py`, shared with
+> `gen-materials.py`: this generator failed on 22 ingredient references until it used them, which
+> is the same 22 the research measured, and a drift repaired in one generator and not the other
+> loses rows in silence.
+
 ## Step 5 — `Engineers.tsv` gains the chain
 
 Extend `tools/gen-engineers.py`. New columns: `referred_by`, `referral_grade`, `body`, `discovery`,
