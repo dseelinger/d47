@@ -154,6 +154,40 @@ So the acquisition question has a better answer than "nothing records it": **a g
 materialises in `StoredModules` at the awarding station, at `BuyPrice: 0`, within a minute of
 `CommunityGoalReward`** — and d47 can see all three of those things today.
 
+## 7. "Never seen before" — where the lag actually bites
+
+**Added after being told these modules are often something the game has not had before**, which
+the `list.md` item also predicts: "their blueprints will not be in the community datasets yet —
+the same lag that already left Caspian Explorer, Corsair and Kestrel Mk II in the specification
+table with a name and no figures." Measured three ways, and the lag turns out to sit somewhere
+other than where that sentence puts it.
+
+**The blueprint lag has closed.** Coriolis is keyed on the symbol the journal writes, and it knows
+**all 35** blueprint symbols in this corpus — nothing unknown, including both sentinel names. The
+gap d47 actually has is not the community being behind; it is that d47's own table comes from
+EDEngineer, which carries **no symbols at all** and no cargo rack blueprint under any name. That is
+the Step 6 finding wearing a different hat.
+
+> A first attempt at this measured journal symbols against d47's shipped `Blueprints.tsv` and
+> reported all 35 as unknown. That table is keyed on EDEngineer display names and has no symbol
+> column, so the join could only ever return "all of them" — a fact about the join, and the same
+> mistake this page warns about in section 4. The number above is against coriolis because coriolis
+> is the only one of the three the question can be asked of.
+
+**The signature is unique, which makes it a detector rather than a list.** Of all **81** blueprints
+in coriolis, exactly **one** has no ingredients at any grade — `CargoRack_IncreasedCapacity`, the
+community goal rack. So "this is not something you make" is readable from the shape of the data,
+and a blueprint minted by next year's goal is covered the day coriolis lists it, with no code
+change and no name to hard-code. That matters precisely because the class is expected to grow.
+
+**The module lag is real and live.** FDevIDs `outfitting.csv` has never heard of
+`int_fighterbaymk2_size5_class1` or its `_free` variant — the Fighter Hangar Mk II. Those are the
+only two real modules among 217 unrecognised symbols; the other 215 are bobbles, ship kits, paint
+and cockpits, which are noise rather than lag. And d47 inherits it: `EliteSpecifications.tsv`
+carries `fighterbay_size5_class1`, `_size6_`, `_size7_` and no `fighterbaymk2` at all, so a
+Commander flying one gets the symbol fallback today — exactly the armour gap Step 6 found and
+closed, still open for this module.
+
 ## What this changes
 
 - **The premise holds.** Nothing here needs a second reading path: a pre-engineered module is a
@@ -162,10 +196,13 @@ materialises in `StoredModules` at the awarding station, at `BuyPrice: 0`, withi
 - **A build intent must not name one** (Phase 16). There is no recipe, so there is no total to
   compute — the honest answer is that the module is acquired, not made. `TotalFor` returning null
   for anything that is not a modification already covers this shape.
-- **The blueprint table does not need a second source.** It needs to keep saying "I do not know
-  this blueprint" for exactly two names, which is what it already does. Adding coriolis as an
-  authority to cover them would import a source d47 deliberately demoted in Step 4, to describe a
-  module a Commander cannot make.
+- **The blueprint table still does not need a second source for recipes** — but "exactly two
+  names" was the wrong frame, and section 7 is why. These modules arrive with community goals, so
+  the class grows; an unknown blueprint is a **permanent condition rather than two special cases**,
+  and the graceful path is load-bearing rather than a fallback. If d47 ever wants to *say* "this is
+  not something you make" instead of merely not knowing, the honest form is the derived flag from
+  section 7 — one boolean, computed from a blueprint having no ingredients at any grade — not a
+  hard-coded pair of names and not adopting coriolis's recipes over EDEngineer's.
 - **`EngineerModifications` on stored modules is unclaimed ground** — section 1 above. Answering
   "which of my stored modules are engineered, and to what" needs no new source and no new table.
 - **It joins up with community goals**, the last open item in Phase 14. The journal half of that
@@ -181,7 +218,8 @@ Engineering blocks and engineer ids; `scan_399999.py` characterises the sentinel
 each slot through time and reads EDEngineer's coverage; `scan_blueprint_engineers.py` is the one
 that separates a pre-engineered blueprint from an ordinary one; `check_sources.py` and
 `coriolis_entries.py` fetch the three upstream sources live; `scan_cg.py` and `scan_cg_link.py`
-are the community goal pass that should have been in the first sweep.
+are the community goal pass that should have been in the first sweep; `scan_unknown_surface.py`
+measures how much of what the journal names the sources do not know.
 
 **Merc Coin does not appear in the corpus at all**, and section 6 is why that is no longer a gap
 worth chasing for this question — the modules found here came from community goals, not from
