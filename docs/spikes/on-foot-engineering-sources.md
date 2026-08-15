@@ -284,6 +284,49 @@ search stopped, so the next person starts further along.
 
 
 **Four rows were struck from this table on 2026-08-15** by opening pages in a browser rather than fetching them: the full mod-to-engineer map (§6a), the four Colonia engineers (§6a), whether grade upgrades cost credits (§6b) and the barter rate (§6b). They are left described in those sections rather than deleted, because the reason they were ever open is the useful part.
+## 7a. EDOMH — MIT source, and the data is deliberately not in it
+
+[`jixxed/ed-odyssey-materials-helper`](https://github.com/jixxed/ed-odyssey-materials-helper) does
+precisely what Phase 19 describes: reads the journal, tracks micro-resources, and says how much is
+needed to upgrade a suit or weapon, unlock an engineer or craft a blueprint. 387 stars, Java, last
+pushed four days before this was written. It looked like the goldmine it was suggested to be.
+
+**The licensing is cleanly separated and worth stating exactly**, because a careless reading goes
+either way:
+
+- `LICENSE` is **MIT**, and `NOTICE` says *"This repository contains source code licensed under the
+  MIT License."* Reading and deriving from the repository is fine.
+- `EULA.MD` covers the **compiled binaries**, which *"include third-party proprietary components and
+  assets"* that are explicitly **not** MIT, and forbids decompiling them or extracting *"embedded
+  credentials, cryptographic keys, configuration data, or other confidential information"*.
+
+So the boundary is source-yes, binaries-no — which is the right answer for d47's licence invariant
+either way.
+
+**But the game data is not in the source.** The tree is 1,451 entries; the `enums` package holds
+thirteen files and they are all UI sort and filter options, and the non-localisation resources are
+icons, audio and stylesheets. The data arrives as a dependency:
+
+```
+implementation "nl.jixxed.ed.data:ed-data-api:1.7"
+implementation "nl.jixxed.ed.data:ed-data-impl:1.36"
+implementation 'nl.jixxed.ed.confidential:ed-confidential-api:1.3'
+```
+
+…from the author's own Maven repository at `repo.repsy.io/mvn/jixxed/maven/`, not from the open
+tree. The `-impl` artifacts are closed, and a sibling package is called *confidential* in as many
+words.
+
+**Conclusion: EDOMH is not a source d47 can derive a table from.** The one thing worth taking from
+it is architectural rather than factual — an actively maintained tool solving this exact problem
+keeps its game data in a separately versioned artifact (`ed-data-impl` is at 1.36 while the API is
+at 1.7), which is a strong hint about how often on-foot data actually moves, and an argument for
+d47's generated tables carrying a visible version and date.
+
+**EDSY** (edsy.org, the other Coriolis-like builder) has not been examined and is the obvious next
+stop, particularly for suit and weapon stat ladders. EDOMH imports wishlists *from* EDSY, which
+suggests EDSY publishes something structured.
+
 ## 8. Data traps
 
 - **`Manticore Oppressor` is spelled `Opressor`** (one `p`) at grades 3, 4 and 5 in EDEngineer. A
