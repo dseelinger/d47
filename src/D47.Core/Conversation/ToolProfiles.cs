@@ -43,8 +43,31 @@ public static class ToolProfiles
     /// of advertised schema. Deliberately generous: degrading is a real cost — the Commander
     /// loses the ability to act on their ship — so it is a relief valve rather than a tuning
     /// knob, and it should not open on an ordinary turn.
+    /// <para>
+    /// <b>Raised from 24,000 on 2026-08-15, after measuring what it was protecting.</b> A real
+    /// request was captured off the wire — d47 pointed at a local endpoint, so the body is the
+    /// one the provider actually builds — and it carries <b>42 tools in 21,914 characters</b>
+    /// beside a 5,327-character system block, with the cache breakpoint on the system block and
+    /// therefore covering both. That puts the advertised block at roughly 6,000 to 7,000 tokens,
+    /// <em>inside the cached prefix</em>: about a third of a penny a turn at Claude Opus 5's
+    /// cache-read rate, against 4.4 cents once per profile when it is written cold.
+    /// </para>
+    /// <para>
+    /// So the old number was not approximating a provider limit — there is none published for
+    /// the Messages API, and Anthropic's own guidance is qualitative: keep the set focused, and
+    /// past a few dozen tools prefer deferred loading to advertising every schema. 24,000 was a
+    /// proxy for "the surface has grown enough to think about", and it began firing on ordinary
+    /// turns, which is precisely what a relief valve must not do.
+    /// </para>
+    /// <para>
+    /// <b>The next move is not another number.</b> Mid-conversation tool changes
+    /// (<c>defer_loading</c> plus <c>tool_addition</c>/<c>tool_removal</c>, Claude Opus 5 onward)
+    /// let the tool set vary per mode <em>without</em> invalidating the cached prefix — which is
+    /// the exact conflict the profile enumeration exists to work around (architecture.md §6).
+    /// When that lands, this constant and the profiles beneath it can go.
+    /// </para>
     /// </summary>
-    public const int ComfortableBytes = 24_000;
+    public const int ComfortableBytes = 32_000;
 
     /// <summary>
     /// The tools that ship in every profile, including the degraded one. Answering, help,
