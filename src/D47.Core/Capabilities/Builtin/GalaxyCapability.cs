@@ -51,11 +51,9 @@ public static class GalaxyCapability
             {
                 Name = "search_systems",
                 Description =
-                    "Find star systems matching some criteria, nearest first. Filters available: "
-                    + $"{GalaxyFilters.Names()}. Each one's allowed values are on its own parameter. "
-                    + "Ranges take a number for an upper bound (\"20\" means within 20), or two "
-                    + "separated by a dash (\"10-50\"). "
-                    + "Only these filters exist; anything else is refused rather than ignored.",
+                    "Find star systems matching some criteria, nearest first. Filters: "
+                    + $"{GalaxyFilters.Names()}, and no others. Ranges take one number for an upper "
+                    + "bound (\"20\") or two separated by a dash (\"10-50\").",
                 Parameters =
                 [
                     new ToolParameter
@@ -63,7 +61,7 @@ public static class GalaxyCapability
                         Name = "near",
                         Type = ToolParameterType.String,
                         Description =
-                            "The system to measure distances from. Defaults to where the Commander is now.",
+                            "Measure from this system. Defaults to the Commander's own.",
                     },
                     new ToolParameter
                     {
@@ -118,7 +116,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Defaults to 5.",
+                        Description = "How many to return, 1 to 20. Default 5.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -153,9 +151,7 @@ public static class GalaxyCapability
             {
                 Name = "find_nearest_station",
                 Description =
-                    "Find the nearest station selling a named module or ship. Give the module or the ship "
-                    + "by name — they are matched against the real catalogue, and a name that is not in it "
-                    + "is refused with suggestions rather than reported as 'nobody sells that'.",
+                    "Find the nearest station selling a named module or ship.",
                 Parameters =
                 [
                     new ToolParameter
@@ -190,13 +186,13 @@ public static class GalaxyCapability
                     {
                         Name = "near",
                         Type = ToolParameterType.String,
-                        Description = "The system to search out from. Defaults to where the Commander is now.",
+                        Description = "Search out from this system. Defaults to the Commander's own.",
                     },
                     new ToolParameter
                     {
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Defaults to 50.",
+                        Description = "How far to look, in light years. Default 50.",
                     },
                     new ToolParameter
                     {
@@ -208,7 +204,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Defaults to 5.",
+                        Description = "How many to return, 1 to 20. Default 5.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -218,11 +214,8 @@ public static class GalaxyCapability
             {
                 Name = "find_body",
                 Description =
-                    "Find the nearest planets, moons or stars matching some criteria. Answers three kinds "
-                    + "of question from one index: where the nearest Earth-like world or neutron star is, "
-                    + "where there is something to sample on a surface, and which ring to mine. Names are "
-                    + "matched against the real catalogue, and one that is not in it is refused with "
-                    + "suggestions rather than reported as 'there is no such thing'.",
+                    "Find the nearest planets, moons or stars matching some criteria — a body type, a "
+                    + "surface signal, or a ring to mine.",
                 Parameters =
                 [
                     new ToolParameter
@@ -295,19 +288,19 @@ public static class GalaxyCapability
                     {
                         Name = "near",
                         Type = ToolParameterType.String,
-                        Description = "The system to search out from. Defaults to where the Commander is now.",
+                        Description = "Search out from this system. Defaults to the Commander's own.",
                     },
                     new ToolParameter
                     {
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Defaults to 50.",
+                        Description = "How far to look, in light years. Default 50.",
                     },
                     new ToolParameter
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Defaults to 5.",
+                        Description = "How many to return, 1 to 20. Default 5.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
