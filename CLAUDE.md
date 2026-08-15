@@ -12,7 +12,7 @@ Three documents carry the design. They are not summarized here — go read the r
 
 | Question | File |
 |---|---|
-| What should it do? Is this in scope? | [list.md](list.md) — ~130 items in 17 phases, each line carrying its own acceptance criteria |
+| What should it do? Is this in scope? | [list.md](list.md) — ~160 items in 21 phases, each line carrying its own acceptance criteria |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
 
@@ -71,6 +71,18 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
+- **Phase numbers are references, not an ordering.** Around 320 code comments cite `list.md
+  Phase N` to say why a thing exists, so a phase number is load-bearing outside this file —
+  Phase 4 alone is cited 55 times. New phases are therefore **appended, never inserted**, and an
+  existing one is never renumbered: inserting in the middle silently repoints hundreds of those
+  comments at the wrong item. Moving items *between* unbuilt phases is free and encouraged when
+  a phase stops being one subject — a phase is a minor release, so one that cannot be finished
+  holds its ready items hostage. Phases 1-14 are frozen by their own citations; everything after
+  is cheap to reshape.
+- **Order within a phase is subject grouping; execution order lives in the plan.** `list.md`
+  reads top to bottom as a description of the product, not as a schedule — Phase 14 shipped its
+  ninth item as step 12 of 13. When sequence matters, it belongs in `docs/plans/`, which is where
+  dependencies can be stated and argued rather than implied by position.
 
 ## Build
 
