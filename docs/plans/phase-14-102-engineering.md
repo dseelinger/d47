@@ -536,6 +536,34 @@ corpus can now answer it**: `BuySuit`/`BuyWeapon` carry mod arrays at point of s
 912 journals), and the ship-side equivalent is a module purchase carrying an `Engineering` block.
 Finding to `docs/spikes/`.
 
+> **Done, 2026-08-15 — [`operations-pre-engineered.md`](../spikes/operations-pre-engineered.md).**
+> The premise survives; the blueprint table is what breaks. **The plan's own guess at the ship-side
+> shape was wrong**: there is no "module purchase carrying an `Engineering` block", because no
+> purchase event carries one — the block appears on `Loadout` and nowhere else across 692,631
+> events. The marker is `EngineerID: 399999` with the `Engineer` name absent, which Step 3 had
+> already glimpsed as "27 of 772, every one id 399999".
+>
+> **And it does not mean what that note assumed.** Step 3 read it as "a module that arrived already
+> engineered". It means *engineer not recorded*, which is a superset:
+> `CargoRack_IncreasedCapacity` carries it 294 times and was never crafted in 912 journals, while
+> `PowerDistributor_PrioritySystems` carries it on one module and was rolled by The Dweller on
+> another with 16 crafts behind it. The blueprint decides, and the module symbol cannot — a
+> pre-engineered rack is `int_cargorack_size5_class1`, the same symbol as the one bought off the
+> shelf for 111,566 Cr.
+>
+> Two near-misses worth keeping. **`Quality` looked like the marker and is not** — all 320 sentinel
+> blocks read exactly 1.0, and so do 19,609 named-engineer blocks. And **EDEngineer returning
+> nothing for a blueprint symbol is not absence**, because EDEngineer has no symbols at all
+> (Step 6); the cargo rack absence is real only because it survives a question symbols play no part
+> in — EDEngineer lists no cargo rack blueprint under any name.
+>
+> No second source is needed: the table should keep saying it does not know these two, and a build
+> intent must not name one because coriolis gives the rack `"components": {}` — there is nothing to
+> gather. Merc Coin appears **nowhere** in the corpus, so that half of the item stays a claim read
+> at source. The probe also turned up unclaimed ground: `StoredModules`, `ModuleStore` and
+> `ModuleRetrieve` carry `EngineerModifications`, `Level` and `Quality` on 24,451 entries, so
+> "which of my stored modules are engineered, and to what" is answerable with no new source.
+
 ---
 
 ## Verification

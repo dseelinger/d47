@@ -12,6 +12,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [journal-corpus-engineering.md](journal-corpus-engineering.md) | What do 6,272 real engineering rolls say — about `Quality`, the roll table, the trade rate, and a source conflict? |
 | [community-goals.md](community-goals.md) | What does the journal already know about community goals, and where does an external source actually start? |
 | [material-lines.md](material-lines.md) | Can d47 derive the material trader's 32 lines, the thing the trade rate depends on and the journal cannot supply? |
+| [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
 
 The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
@@ -46,6 +47,13 @@ since `MaterialGrades.g.cs` was first generated, added in January 2021 and never
 [material-lines.md](material-lines.md). That makes three: a user-agent check, one machine's play
 history, and a column nobody looked at. Each time the conclusion was *no source has this* and each
 time the honest sentence was **where the looking stopped**.
+
+[operations-pre-engineered.md](operations-pre-engineered.md) is the same lesson from the other end.
+Searching EDEngineer for `PowerDistributor_PrioritySystems` returns nothing — but EDEngineer carries
+no blueprint symbols at all, so that search returns nothing whatever the truth is, and the absence
+is a property of the query. The cargo rack in the same table really is missing, and the way to tell
+the two apart was to ask a question symbols are not involved in: EDEngineer lists **no cargo rack
+blueprint under any name**. A negative result is only evidence when the search could have succeeded.
 
 ## The source ledger
 
