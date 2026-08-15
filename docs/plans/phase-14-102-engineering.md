@@ -211,6 +211,24 @@ Extend `tools/gen-engineers.py`. New columns: `referred_by`, `referral_grade`, `
 - Stop the `NOT_PEOPLE` filter discarding `@Merchant` rows — they are Phase 19's entire on-foot
   vocabulary. Keep them out of the *directory*, but emit them.
 
+> **Done, 2026-08-15.** All 38 initialisers parse, the assertion holds, and **27 of 38 engineers
+> are reached through somebody else**. Bill Turner's override is in the generator and asserted in a
+> test so it cannot quietly stop applying. Columns as listed, except the pre-existing `unlock`
+> column — the material tribute — is renamed `tribute`, so EDDiscovery's unlock prose can have the
+> name the plan gave it without two columns meaning different things.
+>
+> Two things the plan did not know. **The on-foot chain states no grade**: ship referrals read
+> "From Hera Tani (grade 3-4)" and Odyssey ones read "From Domino Green" and nothing more, because
+> those unlock on a count of modifications. Seven referrals would have been lost by a regex
+> requiring the grade, and defaulting them to 3 would state a requirement the game does not have —
+> so `ReferralGrade` is null there. And **one engineer has three referrers**: Yi Shen, reached
+> through any of Baltanos, Eleanor Bresa or Rosa Dayette, so `ReferredBy` is a list.
+>
+> **The `@Merchant` change is not needed and was not made.** Those 56 rows are Phase 19's on-foot
+> vocabulary and Step 4's `Blueprints.tsv` already carries every one of them as `kind=merchant`
+> with full recipes — which did not exist when this was written. Emitting them here as well would
+> put pseudo-people into a directory of people to duplicate a table that already has them.
+
 **Checkpoint.** Everything to here is data and pure functions; nothing is exposed yet.
 
 ---

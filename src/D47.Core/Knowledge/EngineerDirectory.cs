@@ -32,6 +32,45 @@ public sealed record Engineer
     /// <summary>What they grade, best grade first. Empty for an engineer nobody has blueprints for.</summary>
     public IReadOnlyList<Speciality> Specialities { get; init; } = [];
 
+    /// <summary>
+    /// Who recommends them. Empty for the ones anybody can walk up to.
+    /// <para>
+    /// More than one name means <em>any</em> of them will do — Yi Shen is reached through three
+    /// people. Their spelling is the directory's own, so each is a name <see cref="ByName"/> finds.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> ReferredBy { get; init; } = [];
+
+    /// <summary>
+    /// The grade needed with the referrer, or null when no source states one.
+    /// <para>
+    /// Null is the honest answer for the whole on-foot chain: Odyssey engineers unlock on a count
+    /// of modifications rather than on a grade, so a 3 here would be a requirement d47 invented.
+    /// Where it is stated it is always <see cref="EngineeringRules.ReferralGrade"/>, plus roughly
+    /// half the bar to the next — which is the part nobody published as a number.
+    /// </para>
+    /// </summary>
+    public int? ReferralGrade { get; init; }
+
+    /// <summary>The body their base orbits, as the game labels it — "6 A".</summary>
+    public string? Body { get; init; }
+
+    /// <summary>How the Commander learns they exist, in prose.</summary>
+    public string? Discovery { get; init; }
+
+    /// <summary>What earns the invitation — a rank, a distance, a reputation.</summary>
+    public string? Meeting { get; init; }
+
+    /// <summary>What the invitation itself asks for, in prose. <see cref="UnlockCost"/> is the
+    /// same thing as a material list, where it is a delivery.</summary>
+    public string? Unlock { get; init; }
+
+    /// <summary>How reputation with them is raised fastest, in prose.</summary>
+    public string? Reputation { get; init; }
+
+    /// <summary>Whether anybody has to recommend them first.</summary>
+    public bool NeedsReferral => ReferredBy.Count > 0;
+
     /// <summary>The best grade they reach on anything, or null when nothing is known of their work.</summary>
     public int? TopGrade => Specialities.Count == 0 ? null : Specialities.Max(speciality => speciality.MaxGrade);
 
@@ -53,17 +92,13 @@ public sealed record Engineer
 /// at all. What they grade comes from msarilar/EDEngineer's blueprint list.
 /// </para>
 /// <para>
-/// <b>The unlock chain is absent from this table, and no longer for want of a source.</b> It was
-/// recorded as unobtainable because it is in neither FDevIDs, coriolis-data nor EDEngineer's ship
-/// rows — a correct measurement of three files, turned into a wrong claim about the world. Two
-/// sources have it: EDDiscovery's <c>EliteDangerousCore</c> (Apache-2.0) machine-readably, naming
-/// the referring engineer and the grade needed with them, and the Fandom engineer table in prose.
-/// They agree on 37 of 38, and the one conflict is settled by journal. See
-/// <c>docs/spikes/journal-corpus-engineering.md</c>. Until the generator joins them, what is here
-/// is the half that always had a source — the material tribute 26 of them ask for — and, from the
-/// journal, the chain as <em>observed</em>: an engineer who has invited the Commander and is not
-/// yet unlocked is a referral that has already happened.
-/// </para>
+/// <b>The referral chain is here</b>, and was once recorded as unobtainable — a correct
+/// measurement of three files (FDevIDs, coriolis-data, EDEngineer's ship rows) turned into a
+/// wrong claim about the world. It comes from EDDiscovery's <c>EliteDangerousCore</c>
+/// (Apache-2.0), which names the referring engineer and the grade needed with them. The two
+/// sources that have it agree on 37 of 38; the conflict is Bill Turner, settled by journal in
+/// the wiki's favour — see <c>docs/spikes/journal-corpus-engineering.md</c> §4.
+/// /// </para>
 /// </summary>
 public static class EngineerDirectory
 {
@@ -177,11 +212,28 @@ public static class EngineerDirectory
                 Station = Text(cells, 3),
                 UnlockCost = Text(cells, 4),
                 Specialities = ReadSpecialities(Text(cells, 5)),
+                ReferredBy = ReadNames(Text(cells, 6)),
+                ReferralGrade = ReadGrade(Text(cells, 7)),
+                Body = Text(cells, 8),
+                Discovery = Text(cells, 9),
+                Meeting = Text(cells, 10),
+                Unlock = Text(cells, 11),
+                Reputation = Text(cells, 12),
             });
         }
 
         return engineers;
     }
+
+    private static IReadOnlyList<string> ReadNames(string? cell) =>
+        cell is null
+            ? []
+            : [.. cell.Split(',').Select(name => name.Trim()).Where(name => name.Length > 0)];
+
+    private static int? ReadGrade(string? cell) =>
+        cell is not null && int.TryParse(cell, CultureInfo.InvariantCulture, out var grade)
+            ? grade
+            : null;
 
     private static IReadOnlyList<Speciality> ReadSpecialities(string? cell)
     {
