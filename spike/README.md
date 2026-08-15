@@ -10,6 +10,7 @@ be deleted once the answer is written down.
 | `RefBypassProbe` | Can Avalonia 12's reference-assembly guard be bypassed? | same |
 | `HotasProbe` | Can a desktop process read HOTAS switch positions, and what identifies a device? | [docs/spikes/hotas-switch-read.md](../docs/spikes/hotas-switch-read.md) |
 | `tools/ApiDump` | What does an assembly actually expose? | supporting tool |
+| `MaterialLineProbe` | Can the material trader's lines be parsed out of EDDiscovery's C#, and do they price real trades? | [docs/spikes/material-lines.md](../docs/spikes/material-lines.md) |
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.

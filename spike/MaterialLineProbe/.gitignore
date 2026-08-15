@@ -1,0 +1,3 @@
+# EDDiscovery's source, fetched at the pinned commit. Someone else's file, and 120KB of
+# it — the probe re-downloads on demand, so there is no reason for it to be in the tree.
+MCMRType.cs.cache

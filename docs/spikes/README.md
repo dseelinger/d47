@@ -11,6 +11,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [on-foot-engineering-sources.md](on-foot-engineering-sources.md) | Same question for suits and handheld weapons, which turn out to be a different game. |
 | [journal-corpus-engineering.md](journal-corpus-engineering.md) | What do 6,272 real engineering rolls say — about `Quality`, the roll table, the trade rate, and a source conflict? |
 | [community-goals.md](community-goals.md) | What does the journal already know about community goals, and where does an external source actually start? |
+| [material-lines.md](material-lines.md) | Can d47 derive the material trader's 32 lines, the thing the trade rate depends on and the journal cannot supply? |
 
 The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
