@@ -52,8 +52,9 @@ public static class GalaxyCapability
                 Name = "search_systems",
                 Description =
                     "Find star systems matching some criteria, nearest first. Filters available: "
-                    + $"{GalaxyFilters.Describe()}. Ranges take a number for an upper bound "
-                    + "(\"20\" means within 20), or two separated by a dash (\"10-50\"). "
+                    + $"{GalaxyFilters.Names()}. Each one's allowed values are on its own parameter. "
+                    + "Ranges take a number for an upper bound (\"20\" means within 20), or two "
+                    + "separated by a dash (\"10-50\"). "
                     + "Only these filters exist; anything else is refused rather than ignored.",
                 Parameters =
                 [
@@ -103,6 +104,15 @@ public static class GalaxyCapability
                         Name = "population",
                         Type = ToolParameterType.String,
                         Description = "Population, as a range. For example \"1000000-\" for a million or more.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "state",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "What the controlling faction is going through. Crowd-reported, so this "
+                            + "finds systems reported in that state.",
+                        AllowedValues = Choices("state"),
                     },
                     new ToolParameter
                     {

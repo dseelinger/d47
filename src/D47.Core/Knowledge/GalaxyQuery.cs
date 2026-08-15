@@ -17,8 +17,28 @@ public enum GalaxyFilterKind
 /// </summary>
 public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyList<string> Choices)
 {
+    /// <summary>
+    /// The key the service wants, where that is not the word d47 uses for it.
+    /// <para>
+    /// Almost always the same string, and deliberately so — two names for one filter is a thing
+    /// to keep in step. The exception is a service field whose real name is long enough to cost
+    /// the model something to say: the tool description lists every filter, and tool definitions
+    /// serialise first in the request, so a name is prompt in a way a value is not.
+    /// </para>
+    /// </summary>
+    public string Field { get; init; } = Name;
+
+    // Deliberately not an overload taking the field name. `Choice(name, params string[])` would
+    // swallow the first choice as the field on every existing call site, and the result is a
+    // filter sent under the key "Alliance" — which the service ignores silently, the exact
+    // failure GalaxyFilters exists to prevent. A differently shaped call cannot be captured by
+    // accident. (Caught by SpanshRequestTests before it left the working tree.)
     public static GalaxyFilter Choice(string name, params string[] choices) =>
         new(name, GalaxyFilterKind.Choice, choices);
+
+    /// <summary>A choice filter the service keys under a different name. See <see cref="Field"/>.</summary>
+    public static GalaxyFilter ChoiceOf(string name, string field, IReadOnlyList<string> choices) =>
+        new(name, GalaxyFilterKind.Choice, choices) { Field = field };
 
     public static GalaxyFilter Range(string name) => new(name, GalaxyFilterKind.Range, []);
 }
@@ -72,16 +92,50 @@ public static class GalaxyFilters
             "Agriculture", "Colony", "Extraction", "High Tech", "Industrial", "Military", "None", "Refinery",
             "Service", "Terraforming", "Tourism"),
         GalaxyFilter.Choice("security", "Anarchy", "High", "Low", "Medium"),
+
+        // What the controlling faction is going through, which is what a Commander means by "a
+        // system in Boom" and what gates where several grade-5 materials can be found at all
+        // (docs/spikes/engineering-data-sources.md §6).
+        //
+        // The field is NOT called "state", and that trap is worse than the silent-ignore one this
+        // class was built for. Measured on 2026-08-15: "state" is a real key — it has its own
+        // field_values list carrying exactly these 21 words, and it is honoured rather than
+        // dropped — but it matches nothing. Zero systems for every value including "None", where
+        // a bogus key returns the unfiltered count; no result row carries a "state" field at all.
+        // So it fails as an empty answer rather than as a wrong one, and an empty answer reads as
+        // "there are none near you", which is a wrong answer that looks like a right one.
+        // controlling_minor_faction_state returns 1,286 systems in Boom within 200 ly of Sol.
+        GalaxyFilter.ChoiceOf(
+            "state",
+            "controlling_minor_faction_state",
+            [
+                "Blight", "Boom", "Bust", "Civil Liberty", "Civil Unrest", "Civil War", "Drought", "Election",
+                "Expansion", "Famine", "Infrastructure Failure", "Investment", "Lockdown", "Natural Disaster",
+                "None", "Outbreak", "Pirate Attack", "Public Holiday", "Retreat", "Terrorist Attack", "War",
+            ]),
     ];
 
     public static GalaxyFilter? Find(string name) =>
         All.FirstOrDefault(filter => string.Equals(filter.Name, name, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The vocabulary as one line, for a tool description and for spoken help.</summary>
+    /// <summary>
+    /// The vocabulary with every value spelled out, for the sentence a <em>rejected</em> filter
+    /// gets back and for spoken help.
+    /// <para>
+    /// <b>Not for the tool description.</b> Every value here is already in that tool's schema as
+    /// an <c>enum</c> on the parameter it belongs to, so putting it in the description as well
+    /// pays for the whole vocabulary twice in prompt position 1 (architecture.md §6). A tool
+    /// result is a different matter — it is not cached, and a model that has just guessed a
+    /// filter value needs to be shown the real ones rather than told it was wrong.
+    /// </para>
+    /// </summary>
     public static string Describe() =>
         string.Join(", ", All.Select(filter => filter.Kind == GalaxyFilterKind.Range
             ? $"{filter.Name} (a range)"
             : $"{filter.Name} ({string.Join("/", filter.Choices)})"));
+
+    /// <summary>The filter names alone, for the tool description. See <see cref="Describe"/>.</summary>
+    public static string Names() => string.Join(", ", All.Select(filter => filter.Name));
 }
 
 /// <summary>One filter with the value asked for, already known to be valid.</summary>

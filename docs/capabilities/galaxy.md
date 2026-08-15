@@ -48,9 +48,32 @@ a request. If you ask for something that is not on the list, you get told what i
 confident wrong answer. This is the first guardrail — never invent game data — applied to a
 service that will happily let you invent it.
 
-The filters are `distance`, `population`, `allegiance`, `government`, `primary_economy` and
-`security`. Ranges take one number for an upper bound (`30` means within 30) or two separated by
-a dash (`10-50`, `1000000-`).
+The filters are `distance`, `population`, `allegiance`, `government`, `primary_economy`,
+`security` and `state`. Ranges take one number for an upper bound (`30` means within 30) or two
+separated by a dash (`10-50`, `1000000-`).
+
+### A worse trap than the misspelling: a real filter that matches nothing
+
+`state` is not sent under the name `state`, and finding that out cost a measurement rather than a
+guess. There **is** a field called `state`. It has its own published value list carrying exactly the
+twenty-one words this filter accepts, and it is honoured rather than dropped. It also matches
+nothing — zero systems for every value, including `None`, where a bogus key returns the unfiltered
+count. No result row carries a `state` field at all.
+
+| Request, within 200 light years of Sol | Result |
+|---|---|
+| no state filter | 10,000 (the cap) |
+| `state: ["Boom"]` | **0** |
+| `state: ["None"]` | **0** |
+| `controlling_minor_faction_state: ["Boom"]` | 1,286 |
+| `controlling_minor_faction_state: ["Outbreak"]` | 68 |
+
+Measured 2026-08-15. This fails as an *empty* answer rather than a wrong one, which is worse than
+the misspelling above: "there are no systems in Boom near you" reads as a fact about the galaxy, and
+a Commander has no way to tell it from one. So d47 offers the short word and sends the long key.
+
+The state itself is **crowd-reported and turns over on the background simulation's tick**, so the
+answer says systems *reported* in Boom — the same framing the station stock carries.
 
 ## What comes back
 
@@ -79,7 +102,7 @@ failed turn.
 Find star systems matching some criteria, nearest first.
 
 ```json
-{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years. For example \u002230\u0022 or \u002210-50\u0022."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Defaults to 5."},"near":{"type":"string","description":"The system to measure distances from. Defaults to where the Commander is now."},"population":{"type":"string","description":"Population, as a range. For example \u00221000000-\u0022 for a million or more."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years. For example \u002230\u0022 or \u002210-50\u0022."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Defaults to 5."},"near":{"type":"string","description":"The system to measure distances from. Defaults to where the Commander is now."},"population":{"type":"string","description":"Population, as a range. For example \u00221000000-\u0022 for a million or more."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
 ```
 
 A search with no filters is refused rather than run — it would match the whole galaxy.

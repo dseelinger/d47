@@ -37,7 +37,10 @@ internal static class SpanshRequest
 
             foreach (var criterion in query.Criteria)
             {
-                writer.WriteStartObject(criterion.Filter.Name);
+                // The service's own key, which is not always the word d47 offers for it — "state"
+                // is sent as controlling_minor_faction_state, because the field actually called
+                // "state" is honoured and matches nothing.
+                writer.WriteStartObject(criterion.Filter.Field);
 
                 if (criterion.Filter.Kind == GalaxyFilterKind.Choice)
                 {

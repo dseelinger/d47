@@ -319,6 +319,33 @@ observed-only.
 One new `GalaxyFilters` row. It is what makes grade-5 Manufactured sourcing derivable end to end,
 and it unblocks Step 9.
 
+> **Done, 2026-08-15.** The row is `state`, 21 values, 3 new tests — and **it is not sent under
+> that name**. There is a real field called `state`: it has its own `field_values` list carrying
+> exactly those 21 words, and the service honours it rather than dropping it. It also matches
+> nothing — **0 systems for every value including `None`**, measured within 200 ly of Sol, where a
+> bogus key returns the unfiltered count and no result row carries a `state` field at all. The
+> field that works is `controlling_minor_faction_state`: 1,286 in Boom, 330 in War, 68 in Outbreak.
+> **That is a worse trap than the silent-ignore this vocabulary was built for**, because it fails as
+> an *empty* answer rather than a wrong one, and "no systems in Boom near you" reads as a fact about
+> the galaxy. So `GalaxyFilter` gained a `Field`, and d47 offers the short word while sending the
+> long key.
+>
+> Two things fell out of doing it. **The first attempt was a `Choice(name, field, params string[])`
+> overload, and it silently captured the first choice of every existing filter as its field name** —
+> allegiance would have gone out under the key "Alliance", which the service ignores, which is the
+> exact failure this class exists to prevent. `SpanshRequestTests` caught it before it left the
+> working tree; the factory is now a differently shaped call that cannot be captured by accident.
+>
+> And **the tool-profile relief valve opened**, which is the first time it has. The `srv` profile
+> reached 24,470 characters against a 24,000 limit, so it degraded and dropped the Commander's
+> ability to act. The fix was not the limit: `search_systems` was listing every filter's whole
+> vocabulary in its description *and* again as schema enums, so the vocabulary was being paid for
+> twice in prompt position 1. The description now names the filters and lets each parameter carry
+> its own values — `Describe()` stays for tool *results*, which are not cached. Every profile is
+> smaller than before this step despite gaining a filter, and `srv` sits at 23,843. **That is 157
+> characters of headroom, and Steps 9 and 10 add three tools**, so the surface will trip the valve
+> again before the phase closes.
+
 ## Step 9 — Sourcing
 
 - `find_material` — origins from the table; state-gated origins become a system search on `state`,

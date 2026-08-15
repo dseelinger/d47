@@ -204,4 +204,68 @@ public class SpanshRequestTests
             out _,
             out _));
     }
+
+    /// <summary>
+    /// The one filter whose wire key is not the word d47 offers for it, and the reason it is not.
+    /// <para>
+    /// <b>There is a real field called <c>state</c> and it is a trap.</b> Measured against the
+    /// live service on 2026-08-15: it has its own <c>field_values</c> list carrying exactly the 21
+    /// words this filter accepts, and it is honoured rather than dropped — but it matches nothing.
+    /// Zero systems for every value including <c>None</c>, where a bogus key returns the
+    /// unfiltered count and no result row carries a <c>state</c> field at all.
+    /// </para>
+    /// <para>
+    /// That fails as an <em>empty</em> answer rather than as a wrong one, which is worse than the
+    /// silent-ignore case this class was built around: "no systems in Boom near you" reads as a
+    /// fact about the galaxy. <c>controlling_minor_faction_state</c> returns 1,286 systems in Boom
+    /// within 200 light years of Sol.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheStateFilterIsSentUnderTheKeyThatActuallyMatchesSomething()
+    {
+        var body = Build(("state", "Boom"));
+
+        var filters = body.GetProperty("filters");
+
+        Assert.False(
+            filters.TryGetProperty("state", out _),
+            "'state' is a real key that matches nothing. Sending it returns an empty result, which "
+            + "reads as 'there are none near you'.");
+
+        var state = filters.GetProperty("controlling_minor_faction_state");
+
+        Assert.Equal("Boom", state.GetProperty("value")[0].GetString());
+    }
+
+    [Fact]
+    public void AFilterWhoseKeyNeedsNoTranslationStillSendsItsOwnName()
+    {
+        // The translation is the exception, not the rule. Two names for one filter is a thing to
+        // keep in step, so everything else sends the word it is offered as.
+        var body = Build(("security", "High"));
+
+        Assert.True(body.GetProperty("filters").TryGetProperty("security", out _));
+    }
+
+    [Fact]
+    public void TheStateVocabularyIsTheServicesOwnAndAWordOutsideItIsRefusedHere()
+    {
+        var filter = GalaxyFilters.Find("state");
+
+        Assert.NotNull(filter);
+        Assert.Equal(21, filter.Choices.Count);
+        Assert.Contains("Outbreak", filter.Choices, StringComparer.Ordinal);
+
+        // Refused locally rather than sent and answered wrong, which is what the closed
+        // vocabulary is for.
+        Assert.False(GalaxyQuery.TryParse(
+            "Sol",
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["state"] = "Prosperity" },
+            size: 5,
+            out _,
+            out var failure));
+
+        Assert.Contains("Prosperity", failure, StringComparison.Ordinal);
+    }
 }
