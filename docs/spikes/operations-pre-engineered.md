@@ -17,6 +17,10 @@ is special is that its blueprint is one **no player can roll and no source d47 g
 carries a recipe for**, so a build intent must never name one and a total must never be quoted
 for one.
 
+**And most of that matters less than it looks**, because a module nobody can buy is one the
+ship's AI only ever meets in two states — already stored, or already fitted — and both are
+answered from the journal without the tables at all (section 9).
+
 **They are community goal rewards** (section 6). The module appears in `StoredModules` at the
 awarding station, at `BuyPrice: 0`, **32 seconds** after `CommunityGoalReward` — which is the
 acquisition event this spike first reported as missing. **Merc Coin is a second route to the same
@@ -238,21 +242,58 @@ section is corroboration that arrived from outside.
 [Engineered Cargo Racks (Frontier Forums)](https://forums.frontier.co.uk/threads/engineered-cargo-racks.573473/),
 [Merc updated cargo rack issues grade 5 (Frontier issue tracker)](https://issues.frontierstore.net/issue-detail/86823).
 
+## 9. Two states, and why that makes most of this moot
+
+**The scoping insight, and it retires work the earlier sections proposed.** A pre-engineered
+module cannot be bought, so the ship's AI can only ever meet one in two states:
+
+- **A — sitting in the Commander's module storage**, visible in `StoredModules` with its
+  `EngineerModifications`, `Level` and `Quality` (section 1).
+- **B — fitted to one of their ships**, visible in `Loadout` with the full `Engineering` block,
+  including `Modifiers` in real units.
+
+There is no third state, because there is no shop. **And that is structural rather than a matter
+of sample size**: a module offered for sale is a listing of exactly three fields — `Name`,
+`BuyPrice` and `id`, read from `Outfitting.json`, which the `Outfitting` *event* only points at.
+There is no field in which a stock listing could express engineering, so what a station sells is
+always the plain module.
+
+**The symbol is purchasable; the module is not.** `int_cargorack_size5_class1` was bought over the
+counter 27 times in this corpus and `int_cargorack_size6_class1` 45 times — the same symbols the
+pre-engineered racks carry. So d47 must never reason from "this module is for sale" to "you can
+get one of these", because the thing for sale is the ordinary rack with the same name.
+
+**Both states are answerable without the blueprint table.** That is the part that matters. A
+fitted module carries its own `Modifiers` in real units, which Step 3 established is the only
+place its actual roll exists; a stored one carries blueprint, grade and quality. Neither needs a
+recipe, an engineer list or an effect table — those exist for **planning**, and a module that
+cannot be acquired cannot be planned for.
+
+So the unknown-blueprint case never actually arrives anywhere that needs an answer. d47 meets one
+of these only while describing something the Commander already owns, and describing owned things
+is exactly the path that reads the journal rather than the tables.
+
+> **This retires the derived flag proposed in section 7.** That suggestion — mark recipeless
+> blueprints so d47 could say "this is not something you make" — was solving a problem that does
+> not occur: nothing asks d47 to make one, because nothing can offer one. Section 7's measurement
+> still stands as the reason the class is detectable if a later phase ever wants the wording; it
+> is no longer a thing to build.
+
 ## What this changes
 
 - **The premise holds.** Nothing here needs a second reading path: a pre-engineered module is a
   blueprint and a grade like any other, and Step 6 already described all 320 of these blocks
   inside its 20,526-module corpus run without failing.
-- **A build intent must not name one** (Phase 16). There is no recipe, so there is no total to
-  compute — the honest answer is that the module is acquired, not made. `TotalFor` returning null
-  for anything that is not a modification already covers this shape.
-- **The blueprint table still does not need a second source for recipes** — but "exactly two
-  names" was the wrong frame, and section 7 is why. These modules arrive with community goals, so
-  the class grows; an unknown blueprint is a **permanent condition rather than two special cases**,
-  and the graceful path is load-bearing rather than a fallback. If d47 ever wants to *say* "this is
-  not something you make" instead of merely not knowing, the honest form is the derived flag from
-  section 7 — one boolean, computed from a blueprint having no ingredients at any grade — not a
-  hard-coded pair of names and not adopting coriolis's recipes over EDEngineer's.
+- **A build intent must not name one** (Phase 16), and the crisp reason is section 9's rather than
+  this page's first one. Not "there is no recipe to total" but **"there is nowhere to get one"** —
+  a target you cannot acquire is not a target. `TotalFor` returning null for anything that is not a
+  modification already covers the arithmetic; what a build plan needs is to not offer it at all.
+- **The blueprint table needs no second source and no new flag** — and section 9 is the reason,
+  which is better than the one this page reached first. An unknown blueprint is a permanent
+  condition rather than two special cases, because the class grows with each goal; but it never
+  arrives anywhere that needs the table, because the only two states d47 can meet one of these in
+  are *stored* and *fitted*, and both are answered from the journal. The tables exist for planning,
+  and a module nobody can acquire cannot be planned for.
 - **`EngineerModifications` on stored modules is unclaimed ground** — section 1 above. Answering
   "which of my stored modules are engineered, and to what" needs no new source and no new table.
 - **Merc Coin needs no further chasing.** Section 8 settles it at source: it buys the same
@@ -271,7 +312,8 @@ Engineering blocks and engineer ids; `scan_399999.py` characterises the sentinel
 `scan_origin.py` traces first sightings and tests the `Quality` marker; `scan_further.py` traces
 each slot through time and reads EDEngineer's coverage; `scan_blueprint_engineers.py` is the one
 that separates a pre-engineered blueprint from an ordinary one; `check_sources.py` and
-`coriolis_entries.py` fetch the three upstream sources live; `scan_cg.py` and `scan_cg_link.py`
+`coriolis_entries.py` fetch the three upstream sources live; `scan_purchasable.py` separates the
+purchasable symbol from the unpurchasable module; `scan_cg.py` and `scan_cg_link.py`
 are the community goal pass that should have been in the first sweep; `scan_unknown_surface.py`
 measures how much of what the journal names the sources do not know.
 

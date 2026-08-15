@@ -55,6 +55,12 @@ a sweep of every module and purchase event in 912 journals. It was 32 seconds af
 `list.md` item being answered says in its own text that the wiki attributes these modules to
 community goals.** The looking stopped inside the document that named where to look.
 
+That page collected a seventh on the way out, and this one was caught before it was written down:
+"no outfitting listing offers an engineered module, 0 of them" — measured against the `Outfitting`
+*event*, which carries no stock list at all. The stock is in `Outfitting.json` beside the journal.
+The honest version of that finding is structural rather than counted, and better for it: a listing
+is `Name`, `BuyPrice` and `id`, so there is no field in which engineering could be expressed.
+
 That page is also the same lesson from the other end.
 Searching EDEngineer for `PowerDistributor_PrioritySystems` returns nothing — but EDEngineer carries
 no blueprint symbols at all, so that search returns nothing whatever the truth is, and the absence
