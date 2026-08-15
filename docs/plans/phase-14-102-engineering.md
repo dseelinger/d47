@@ -115,6 +115,16 @@ Fixed game rules about a handful of numbers, hand-written beside the generated t
 **Verified by:** assertions against the corpus's own numbers — grade 5 admits only a 0.2 step, three
 ⅓ rolls reach 0.99 and count as complete, `rank < grade` is unreachable.
 
+> **Done, 2026-08-15.** `EngineeringRules.cs` beside the generated tables, 38 tests. Two things
+> worth recording. `TradeRate` returns the exchange **in lowest terms** — the published rule quotes
+> a cross-line trade one grade down as 6 for 3, but 2 for 1 is the same exchange and is what a
+> Commander wanting one unit should hand over; quoting the unreduced form sends them to gather
+> three times what they need. And the capacity companion finds **five** impossible combinations,
+> not the one the plan implies: g1→g4 and g1→g5 cross-line, g1→g5 same-line, g2→g5 cross-line, and
+> g3→g5 cross-line at 216 against a cap of 200. Checked end to end outside the suite: the rate
+> logic prices **1,096 of 1,096 real trades** correctly when fed line and grade from the shipped
+> `Materials.tsv`, which tests Steps 1 and 2 together against the corpus.
+
 ## Step 3 — Stop dropping the `Engineering` block
 
 *Today d47 reads three fields out of a module's engineering and throws four away, which is why "how
