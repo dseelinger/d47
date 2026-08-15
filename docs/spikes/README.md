@@ -48,7 +48,14 @@ since `MaterialGrades.g.cs` was first generated, added in January 2021 and never
 history, and a column nobody looked at. Each time the conclusion was *no source has this* and each
 time the honest sentence was **where the looking stopped**.
 
-[operations-pre-engineered.md](operations-pre-engineered.md) is the same lesson from the other end.
+[operations-pre-engineered.md](operations-pre-engineered.md) supplies a sixth, and it is the
+sharpest: the acquisition of a pre-engineered module was written down as "predates the corpus" after
+a sweep of every module and purchase event in 912 journals. It was 32 seconds after a
+`CommunityGoalReward`, in the same files. The sweep never searched for community goals — **and the
+`list.md` item being answered says in its own text that the wiki attributes these modules to
+community goals.** The looking stopped inside the document that named where to look.
+
+That page is also the same lesson from the other end.
 Searching EDEngineer for `PowerDistributor_PrioritySystems` returns nothing — but EDEngineer carries
 no blueprint symbols at all, so that search returns nothing whatever the truth is, and the absence
 is a property of the query. The cargo rack in the same table really is missing, and the way to tell

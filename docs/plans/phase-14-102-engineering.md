@@ -539,8 +539,14 @@ Finding to `docs/spikes/`.
 > **Done, 2026-08-15 — [`operations-pre-engineered.md`](../spikes/operations-pre-engineered.md).**
 > The premise survives; the blueprint table is what breaks. **The plan's own guess at the ship-side
 > shape was wrong**: there is no "module purchase carrying an `Engineering` block", because no
-> purchase event carries one — the block appears on `Loadout` and nowhere else across 692,631
-> events. The marker is `EngineerID: 399999` with the `Engineer` name absent, which Step 3 had
+> module event carries one at acquisition — the block appears on `Loadout` and nowhere else across
+> 692,631 events. **The modules are community goal rewards**, which the `list.md` item's own wiki
+> line predicted and the first sweep never searched for: they appear in `StoredModules` at the
+> awarding station, at `BuyPrice: 0`, **32 seconds** after `CommunityGoalReward`. That finding
+> arrived from the maintainer after the spike was first written down as "the acquisition predates
+> the corpus", which it does not — it was in the files the whole time, in a shape nothing about
+> modules would lead you to look for. It also gives **Step 12** a reason to exist beyond reporting
+> tiers: the same events explain where a module a Commander cannot make came from. The marker is `EngineerID: 399999` with the `Engineer` name absent, which Step 3 had
 > already glimpsed as "27 of 772, every one id 399999".
 >
 > **And it does not mean what that note assumed.** Step 3 read it as "a module that arrived already
