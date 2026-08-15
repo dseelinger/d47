@@ -38,14 +38,23 @@ So the order of attack is: **browser first, then the file, then the excerpt, and
 absence from a fetch failure.** If it still cannot be found, say where the search stopped rather
 than that the thing does not exist.
 
+**And read the file you already have open.** On 2026-08-15 the material trader's *lines* were
+written down across three documents as existing in exactly one permissive source, parsed out of C#,
+and were called this plan's single point of failure on that basis. They were also in FDevIDs
+`material.csv` — in a `category` column immediately beside the `rarity` column this repo has read
+since `MaterialGrades.g.cs` was first generated, added in January 2021 and never since touched. See
+[material-lines.md](material-lines.md). That makes three: a user-agent check, one machine's play
+history, and a column nobody looked at. Each time the conclusion was *no source has this* and each
+time the honest sentence was **where the looking stopped**.
+
 ## The source ledger
 
 | Source | Licence | Usable? | What it is good for |
 |---|---|---|---|
-| **EDCD/FDevIDs** | no licence file | yes, by precedent | The ids and symbols the journal writes. Ships, modules, materials, micro-resources, engineers. **No suit or weapon list exists.** |
+| **EDCD/FDevIDs** | no licence file | yes, by precedent | The ids and symbols the journal writes. Ships, modules, materials, micro-resources, engineers. `material.csv` also carries the **grade** and the **trader line**, the latter overlooked until 2026-08-15. **No suit or weapon list exists.** |
 | **EDCD/coriolis-data** | code MIT; **JSON declared Frontier's IP** | yes, by precedent | Ship and module figures. **Ships only** — no suits, weapons or micro-resources. |
 | **msarilar/EDEngineer** | **MIT** | yes | The whole on-foot vocabulary: mods, upgrade recipes, ingredients, engineer attribution, micro-resource origins. **Its Odyssey unlock quantities are a patch stale.** |
-| **EDDiscovery/EliteDangerousCore** | **Apache-2.0** | yes | Found 2026-08-15 through [edcodex.info](https://edcodex.info). The things nothing else had: the **engineer referral graph** with the grade needed at the referrer, the **suit list** keyed on what `SuitLoadout` writes, the **hand-weapon list**, and a `MaterialGroupType` that is the material **line** the trade rate depends on. Data is **C# source rather than data files**, and carries per-figure provenance including visible guesses. |
+| **EDDiscovery/EliteDangerousCore** | **Apache-2.0** | yes | Found 2026-08-15 through [edcodex.info](https://edcodex.info). The things nothing else had: the **engineer referral graph** with the grade needed at the referrer, the **suit list** keyed on what `SuitLoadout` writes, and the **hand-weapon list**. Its `MaterialGroupType` is the material **line**, but is the *cross-check* rather than the source — FDevIDs had it too. Data is **C# source rather than data files**, and carries per-figure provenance including visible guesses. |
 | **Fandom wiki** | — | read-only reference | The most productive seam by far. Needs a browser (402). |
 | **Frontier update notes and forums** | — | read-only reference | Authoritative and needs a browser (403). The only source that tracks patches. |
 | **Inara** | — | read-only reference | Fetches cleanly. Per-engineer and per-item pages, mod effects, stat ladders. |

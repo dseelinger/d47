@@ -170,13 +170,43 @@ where the rest match almost exactly: `uncutfocuscrystals` is shown as **Flawed**
 **Proprietary** Composites. Step 1 joins EDEngineer on display name, so these are three more places
 that join can quietly lose a row.
 
+## Correction, found while building Step 1: there are two sources, not one
+
+**FDevIDs `material.csv` has carried the line all along**, in a `category` column sitting
+immediately beside the `rarity` column d47 already reads to build `MaterialGrades.g.cs`. It holds
+`1`..`7` for Raw and a named group for the other two, and `None` for the rest.
+
+It agrees with EDDiscovery **completely**: the 23 distinct FDevIDs groups map one-to-one onto the 23
+trader `MaterialGroupType` values, no group splits across two lines and no line merges two groups,
+and FDevIDs' 29 `None` rows are exactly the Guardian and Thargoid materials. Two independently
+maintained sources, neither derived from the other, agreeing on all 137 rows.
+
+The column was added on **13 January 2021**, fifty-one minutes after the file itself. It is not new,
+and it was not missed because it was stale.
+
+So this page's opening framing — and the plan's, and
+[journal-corpus-engineering.md](journal-corpus-engineering.md) §3's "the only permissive source
+found that carries the grouping at all" — is **wrong**, and wrong in the exact way §"The method" in
+[README.md](README.md) is written to prevent. *A failed fetch is a fact about the fetcher.* This is
+the third costume that mistake has worn here: first a user-agent check, then one machine's play
+history, and now **a column nobody read in a file already open**. The habit that catches all three is
+the same one: say *where* you looked before saying a thing is not there.
+
+What it changes:
+
+- **The plan's single point of failure is not single.** Step 0's conclusion survives and gets
+  stronger — it is now two sources in agreement rather than one regex over C#.
+- **`line` comes from FDevIDs**, in the same fetch as the symbol, name, grade and type, from a CSV
+  with a schema rather than C# that can be restructured. EDDiscovery is the **cross-check**, pinned
+  at a commit, and `gen-materials.py` fails the run if the two ever disagree — which is the standard
+  this repo already holds its joins to.
+
 ## What this settles for the plan
 
 - **Step 0 passes.** The `line` column is derivable, and the priced half of the plan proceeds
   unchanged.
-- **Step 1** gets its `line` values from `MaterialGroupType`, must fail loudly on an empty one, and
-  must record the upstream commit SHA — the source is C# that can be restructured, not a data file
-  with a schema.
+- **Step 1** gets its `line` values from FDevIDs `material.csv`, cross-checked against
+  `MaterialGroupType` at a pinned commit, and must fail loudly rather than emit a blank one.
 - **Step 2's `TradeRate(from, to, sameLine)`** is confirmed against 1,096 trades, including that a
   same-grade trade is always cross-line.
 - **Step 9's shortfall netting** must decline for Guardian and Thargoid materials by name rather

@@ -127,9 +127,17 @@ line a grade names one material — which is why grade delta 0 has no same-line 
 
 Defined here because the rest of this repo refers to the column without saying what it holds.
 
-**A line is one column of the material trader's grid: one material per grade.** There are 32 of
-them, sitting inside the three types, and they come from EDDiscovery's `Items/MCMRType.cs`
-`MaterialGroupType` — the only permissive source found that carries the grouping at all.
+**A line is one column of the material trader's grid: one material per grade.** There are **23** of
+them, sitting inside the three types.
+
+> **Corrected 2026-08-15 by [material-lines.md](material-lines.md).** This section said there were
+> 32, from EDDiscovery's `MaterialGroupType`, "the only permissive source found that carries the
+> grouping at all". Both halves were wrong. `MaterialGroupType` declares 32 members but only 23 are
+> columns of the grid — the other nine group Guardian and Thargoid materials, which the trader does
+> not deal in and which no trade in this corpus touches. And FDevIDs `material.csv` has carried the
+> line since January 2021 in a `category` column beside the `rarity` this repo already reads, in
+> complete agreement with EDDiscovery. Left visible rather than silently edited, because the way it
+> was got wrong is the point.
 
 ```text
 RawCategory1         Carbon → Vanadium → Niobium → Yttrium

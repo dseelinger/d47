@@ -48,6 +48,16 @@ ManufacturedAlloys Salvaged Alloys → Galvanising Alloys → Phase Alloys →
 **Done when** every material in `MaterialGrades.g.cs` lands in exactly one line, and no line holds
 two materials at the same grade. Finding to `docs/spikes/`.
 
+> **Done, 2026-08-15 — [`material-lines.md`](../spikes/material-lines.md).** It holds, and harder
+> than asked: the derived lines price **1,096 of 1,096 real trades** correctly. Three corrections to
+> what is written above. There are **23** lines, not 32 — `MaterialGroupType` declares 32 members but
+> nine group Guardian and Thargoid materials the trader does not deal in, so those have a *group* and
+> not a line and the arithmetic must decline rather than guess. There is **more than one source**:
+> FDevIDs `material.csv` has carried the line in its `category` column since 2021, in complete
+> agreement with EDDiscovery, so this was never a single point of failure and Step 1 takes the line
+> from there with EDDiscovery as the pinned cross-check. And two `Add` overloads in `MCMRType.cs`
+> take no group at all, so an empty `line` must fail the run.
+
 ---
 
 # Steps 1–5 — Tables and rules
@@ -69,11 +79,22 @@ Columns: `symbol, name, ledger, category, grade, line, origins`.
 - **`ledger`** — material / ship-locker / cargo / rare-cargo, from which FDevIDs file the symbol
   appears in. Gold ×200 is two hundred tonnes of cargo and must never be totalled against a
   300-unit material cap.
-- **`line`** from Step 0.
+- **`line`** from FDevIDs `material.csv` `category`, per Step 0, cross-checked against EDDiscovery.
 - **`origins`** from EDEngineer `entryData.json` `OriginDetails` — 365 of 371 entries, 77 strings.
 
-**Verified by:** generator run, not mocked. All 22 drifting Encoded symbols resolve, four aliases
+**Verified by:** generator run, not mocked. All 22 drifting Encoded symbols resolve, the aliases
 resolve, zero unresolved, no `ledger` bucket empty, every line populated.
+
+> **Done, 2026-08-15.** `tools/gen-materials.py` → `Materials.tsv` (731 rows: material 137,
+> ship-locker 196, cargo 256, rare-cargo 142), `MaterialCatalogue.cs`, 12 tests against the shipped
+> table. Two things the plan did not know. **Five aliases, not four** — `Ship System Data` →
+> `Ship Systems Data` joins the known ones, and each is asserted to be *drift* (the name in exactly
+> one source, its counterpart in exactly the other) rather than matched on similarity. **Three
+> near-misses are deliberately not aliased**: `Geographical Data` is not `Geological Data`,
+> `Mineral Analytics` is not `Mining Analytics`, `Security Plans` is not `Settlement Defence Plans`
+> — both spellings exist in EDEngineer, so these are distinct items FDevIDs has no symbol for, and
+> aliasing would hang one item's origins on a different real one. They go to a
+> `[known-but-unkeyed]` section with the two Thargoid data types FDevIDs lacks.
 
 ## Step 2 — `EngineeringRules.cs`
 
