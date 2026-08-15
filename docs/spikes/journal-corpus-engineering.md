@@ -123,6 +123,32 @@ So **`line` is load-bearing rather than decorative** in the `Materials.tsv` colu
 without it cannot do trade arithmetic at all. A same-grade trade is always cross-line — within one
 line a grade names one material — which is why grade delta 0 has no same-line column.
 
+### What a line actually is
+
+Defined here because the rest of this repo refers to the column without saying what it holds.
+
+**A line is one column of the material trader's grid: one material per grade.** There are 32 of
+them, sitting inside the three types, and they come from EDDiscovery's `Items/MCMRType.cs`
+`MaterialGroupType` — the only permissive source found that carries the grouping at all.
+
+```text
+RawCategory1         Carbon → Vanadium → Niobium → Yttrium
+RawCategory4         Iron → Zinc → Tin → Selenium
+EncodedEmissionData  Exceptional Scrambled Emission Data → Irregular Emission Data →
+                     Unexpected Emission Data → Decoded Emission Data →
+                     Abnormal Compact Emissions Data
+ManufacturedAlloys   Salvaged Alloys → Galvanising Alloys → Phase Alloys →
+                     Proto Light Alloys → Proto Radiolic Alloys
+```
+
+Trading up and down **within** a line is the cheap move. Crossing to another line costs the extra
+6×, whether or not the type changes — and the type never changes, because a trader deals in one.
+
+**The journal cannot supply this.** Its `Category` field names the type, so Iron for Vanadium reads
+as "same category" and prices as free when it is in fact a 6× cross-line trade. That is the
+commonest trade there is, so a table without the column is not merely less capable — it is
+confidently wrong about most of what it is asked.
+
 ## 4. Bill Turner: the journal decides a cross-source conflict
 
 EDDiscovery records Bill Turner's discovery as *"Common knowledge"*; the Fandom engineer table

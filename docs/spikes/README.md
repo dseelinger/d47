@@ -10,6 +10,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [engineering-data-sources.md](engineering-data-sources.md) | What do the ship engineering sources contain, and what does a roll actually cost? |
 | [on-foot-engineering-sources.md](on-foot-engineering-sources.md) | Same question for suits and handheld weapons, which turn out to be a different game. |
 | [journal-corpus-engineering.md](journal-corpus-engineering.md) | What do 6,272 real engineering rolls say — about `Quality`, the roll table, the trade rate, and a source conflict? |
+| [community-goals.md](community-goals.md) | What does the journal already know about community goals, and where does an external source actually start? |
 
 The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
@@ -51,18 +52,29 @@ than that the thing does not exist.
 | **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 19's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
 | **taleden/edsy** | **CC BY-NC** | **no** | Fails the permissive-only rule, and has no on-foot data anyway. |
 
-## The licensing question nobody has answered
+## The licensing question, and the decision taken on it
 
 EDSY's data header says the game data *"remains the property of Frontier Developments plc, and is
 used here as authorized by Frontier Customer Services"*, linking to Frontier's **Elite Dangerous
-media usage rules** (`forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/`).
+media usage rules**:
 
-**That is the ground every generated table in this repo already stands on, and it has not been
-read.** `MaterialGrades.g.cs`, `EliteSpecifications.tsv` and `Engineers.tsv` all descend from
-community files whose own terms say the game data is Frontier's. The generator docstrings reason
-carefully about the *community repositories'* licences and are silent about Frontier's, which is the
-one that actually governs. Reading that thread either confirms the position or says what attribution
-is owed. It is a forum URL, so it needs the browser.
+> https://forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/
+
+**That is the ground every generated table in this repo stands on.** `MaterialGrades.g.cs`,
+`EliteSpecifications.tsv` and `Engineers.tsv` all descend from community files whose own terms say
+the game data is Frontier's, and the generator docstrings reason carefully about the *community
+repositories'* licences while being silent about Frontier's — which is the one that actually
+governs.
+
+**Decision, 2026-08-15: the maintainer accepts these terms**, and Phase 14 `#102` proceeds on that
+basis rather than waiting. The link is recorded here rather than summarised so that any attribution
+wording owed is checked against the source instead of recalled — and `NOTICE` remains the single
+place that wording lives, per CLAUDE.md. The thread is a forum URL and answers **403** to an
+automated fetch, so it needs a browser.
+
+What the decision does not change: the use stays **non-commercial**, the data is not d47's to
+relicense, and tables stay **derived by a generator with its provenance recorded** rather than
+copied.
 
 ## The one blocker three spikes shared — cleared 2026-08-15
 

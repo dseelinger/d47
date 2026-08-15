@@ -353,13 +353,15 @@ The same header says the game data *"remains the property of Frontier Developmen
 here as authorized by Frontier Customer Services"*, linking to Frontier's **Elite Dangerous media
 usage rules** (`forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/`).
 
-**That is the ground every derived table in this repo already stands on**, and nobody here has read
-it. `MaterialGrades.g.cs`, `EliteSpecifications.tsv` and `Engineers.tsv` are all derived from
-community files whose own licences say, in coriolis-data's words, that the JSON is Frontier's
-property. The generators' docstrings reason about the *community* repositories' terms and are silent
-on Frontier's, which is the one that actually governs. Reading that thread would either confirm the
-present position outright or say plainly what attribution d47 owes — and it is a forum URL, so it
-needs the browser rather than a fetch.
+**That is the ground every derived table in this repo already stands on.** `MaterialGrades.g.cs`,
+`EliteSpecifications.tsv` and `Engineers.tsv` are all derived from community files whose own licences
+say, in coriolis-data's words, that the JSON is Frontier's property. The generators' docstrings
+reason about the *community* repositories' terms and are silent on Frontier's, which is the one that
+actually governs.
+
+**Settled 2026-08-15: the maintainer accepts Frontier's terms**, and the engineering work proceeds
+on that basis. See [README.md](README.md) for the decision and what it does not change — the
+non-commercial condition, and tables staying derived rather than copied.
 
 ## 8. Data traps
 
