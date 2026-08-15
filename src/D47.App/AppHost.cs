@@ -583,6 +583,13 @@ public sealed class AppHost : IDisposable
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
 
+        // The key is read on every call rather than captured here, so pasting one in or clearing
+        // it takes effect without a restart — the same rule the galaxy service's setting follows.
+        var communityGoals = new D47.Knowledge.InaraCommunityGoalService(
+            () => secrets.TryGet(CommunityGoalCapability.KeySecretName, out var key) ? key : null,
+            version,
+            loggerFactory.CreateLogger<D47.Knowledge.InaraCommunityGoalService>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -678,7 +685,9 @@ public sealed class AppHost : IDisposable
                 // exists: the row that turns it on has to work without a restart, and a service
                 // built only when the setting was already true could not (list.md Phase 4).
                 galaxy,
-                routePlanner));
+                routePlanner,
+                communityGoals,
+                () => DateTimeOffset.Now));
 
         built = capabilities;
 

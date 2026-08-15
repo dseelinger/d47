@@ -32,6 +32,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>How far along they are with each engineer.</summary>
     public EngineerProgressState Engineers { get; private set; } = EngineerProgressState.Empty;
 
+    /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
+    public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -58,6 +61,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Modules = Modules.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);
+        CommunityGoals = CommunityGoals.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather

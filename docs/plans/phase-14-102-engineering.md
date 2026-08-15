@@ -529,6 +529,34 @@ Two halves, and **the split is not the one the item assumed** — see
 
 Shares nothing with the rest but the capability pattern — can be done first, last or alone.
 
+> **Done, 2026-08-15.** The journal half, the Inara half, a `community-goals` capability with one
+> tool, and the disclosure row. Three things the plan did not know:
+>
+> **The listing carries no `CGID`.** `getCommunityGoalsRecent` returns a name, a system, a station,
+> an expiry, two tiers, two totals and the goal's GalNet copy — and no id. So the only field the
+> journal and the listing can be matched on is the name, which is the one field two sources spell
+> differently. They are merged only on an exact match, and anything else is allowed to appear
+> twice: a duplicate is visible and a wrong merge is silent.
+>
+> **HTTP 200 is not a success there.** A rejected key, a malformed request and "no results" all
+> come back as 200 with the real status inside the body. Reading the transport code would report a
+> bad key as an empty board — the one wrong answer here that looks exactly like a right one, and
+> the fault the wire test reintroduces to prove it is caught.
+>
+> **There is no on/off toggle, and that is the design.** Every other third-party destination needs
+> one because a fresh install could otherwise reach it unasked; this one cannot be reached at all
+> until somebody pastes in a credential, which is a clearer act of consent than a checkbox. So the
+> key is the switch, `EgressDisclosure` gained an `inaraKeyPresent` argument to say so, and
+> clearing the key is how it is turned off. The capability still answers from the journal either
+> way, which is what keeps it state rather than a guard.
+>
+> The plan's own framing of the split held, and the spike's correction to it is what the wording
+> everywhere now says: the key buys *everywhere I have not been*, not *everything I have not
+> joined* — the journal already covers the second one.
+>
+> The two open questions in the spike are closed in it rather than here: `CurrentGoals` merges by
+> `CGID`, and the wire shape is recorded.
+
 ## Step 13 — The Operations spike
 
 `list.md`'s pre-engineered spike can invalidate the "unmodified → blueprint → grade" premise. **The

@@ -23,6 +23,11 @@ public static class PrivacyCapability
             LlmProviderCatalog.Selected(settings.Current.Llm.Provider) is { KeySecretName: { } name }
             && settings.HasSecret(name);
 
+        // Asked separately because it is the one destination decided by a secret alone: there is
+        // no setting that turns Inara on, so the disclosure would read "nothing sent" forever if
+        // it only had settings to go on.
+        bool InaraKeyPresent() => settings.HasSecret(CommunityGoalCapability.KeySecretName);
+
         return new CapabilityDescriptor
         {
             Id = Id,
@@ -59,14 +64,14 @@ public static class PrivacyCapability
                         "List every destination D47 can send to, whether it is active with the current settings, "
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
-                        ToolResult.Ok(EgressDisclosure.Describe(settings.Current, KeyPresent()))),
+                        ToolResult.Ok(EgressDisclosure.Describe(settings.Current, KeyPresent(), InaraKeyPresent()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent),
         };
     }
 
-    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<bool> keyPresent)
+    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<bool> keyPresent, Func<bool> inaraKeyPresent)
     {
         var rows = new List<SettingRow>
         {
@@ -115,7 +120,7 @@ public static class PrivacyCapability
             {
                 Read = s =>
                 {
-                    var entry = EgressDisclosure.Entry(id, s, keyPresent());
+                    var entry = EgressDisclosure.Entry(id, s, keyPresent(), inaraKeyPresent());
                     return $"{entry.Line}\n{entry.What}";
                 },
             },

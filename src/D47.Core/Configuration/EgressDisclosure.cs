@@ -56,6 +56,13 @@ public static class EgressDisclosure
     public const string GalaxySearch = "galaxy";
 
     /// <summary>
+    /// Listing community goals running where the Commander has not been. Added in Phase 14 with
+    /// the item that needs it, and the only destination d47 reaches with a credential of the
+    /// Commander's own rather than one they bought from a provider.
+    /// </summary>
+    public const string CommunityGoals = "communitygoals";
+
+    /// <summary>
     /// Searching the web, which the language-model provider does on d47's behalf.
     /// <para>
     /// A separate entry even though it adds no new host, and that is the point worth making
@@ -79,7 +86,17 @@ public static class EgressDisclosure
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
-        [LanguageModel, WebSearch, TextToSpeech, GalaxySearch, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
+    [
+        LanguageModel,
+        WebSearch,
+        TextToSpeech,
+        GalaxySearch,
+        CommunityGoals,
+        UpdateCheck,
+        SpeechModels,
+        Diagnostics,
+        JournalFiles,
+    ];
 
     /// <summary>
     /// The heading for a disclosure. Fixed, because it labels a settings row and rows are
@@ -92,6 +109,7 @@ public static class EgressDisclosure
         UpdateCheck => "Update check",
         TextToSpeech => "Spoken replies",
         GalaxySearch => "Galaxy search",
+        CommunityGoals => "Community goals",
         WebSearch => "Web search",
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
@@ -99,7 +117,16 @@ public static class EgressDisclosure
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
 
-    public static EgressEntry Entry(string id, D47Settings settings, bool llmKeyPresent) => id switch
+    /// <param name="inaraKeyPresent">
+    /// Whether the Commander has stored an Inara key. Optional and last, because it is the only
+    /// destination whose row is decided by a secret rather than by a setting — a caller that has
+    /// no secret store to ask reports it silent, which is what a machine with no key is.
+    /// </param>
+    public static EgressEntry Entry(
+        string id,
+        D47Settings settings,
+        bool llmKeyPresent,
+        bool inaraKeyPresent = false) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent),
@@ -122,6 +149,27 @@ public static class EgressDisclosure
                 GalaxySearch,
                 NameOf(GalaxySearch),
                 "Galaxy search is off, so no system name and no search leaves this machine."),
+        // The key is the switch, and deliberately the only one. Every other third-party
+        // destination needs a toggle because it could otherwise be reached by a fresh install
+        // that never asked for it; this one cannot be reached at all until somebody pastes in a
+        // credential, which is a clearer act of consent than a checkbox. Clearing the key is how
+        // it is turned off, and the capability still answers from the journal either way.
+        CommunityGoals => inaraKeyPresent
+            ? new EgressEntry(
+                CommunityGoals,
+                NameOf(CommunityGoals),
+                "inara.cz",
+                "Your Inara API key, and nothing else. The request asks for the current community goals and "
+                + "says nothing about you — not your Commander name, not your Frontier ID, not where you are "
+                + "and nothing from your journal. What comes back is treated as information rather than as "
+                + "an instruction, and the goal descriptions are left there rather than read.",
+                Active: true)
+            : EgressEntry.Silent(
+                CommunityGoals,
+                NameOf(CommunityGoals),
+                "No Inara API key is stored, so nothing is requested and community goals are read only from "
+                + "your own journal."),
+
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(
                 UpdateCheck,
@@ -229,13 +277,16 @@ public static class EgressDisclosure
             : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), provider.Egress);
     }
 
-    public static IReadOnlyList<EgressEntry> For(D47Settings settings, bool llmKeyPresent) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent))];
+    public static IReadOnlyList<EgressEntry> For(
+        D47Settings settings,
+        bool llmKeyPresent,
+        bool inaraKeyPresent = false) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
-    public static string Describe(D47Settings settings, bool llmKeyPresent)
+    public static string Describe(D47Settings settings, bool llmKeyPresent, bool inaraKeyPresent = false)
     {
-        var entries = For(settings, llmKeyPresent);
+        var entries = For(settings, llmKeyPresent, inaraKeyPresent);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

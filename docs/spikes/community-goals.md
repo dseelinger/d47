@@ -68,14 +68,37 @@ they dock somewhere, the stale entry is the common case rather than the edge one
 The same reasoning that makes `StockLastSeen` carry its age applies here, and the wording already
 exists in the repo for it.
 
-## 4. What is still open
+## 4. What was still open, and how it was settled
+
+Both of these were open when this was written and both were closed by the implementation on
+2026-08-15. Kept here rather than deleted, because the *reasoning* is the finding.
 
 - **Whether `CurrentGoals` replaces or merges.** It looks like a complete board per event, which
-  would mean replace — but two stations running different goals would then overwrite each other, and
-  no station in this corpus ran more than one goal at a time, so the case is untested. Getting it
-  wrong loses a goal the Commander is actually running.
-- **The INARA wire shape** for goals the Commander has never encountered. Not measured; the item's
-  own condition is an API key, and nothing here needed one.
+  would argue for replacing — but it is the board at *one station*, and no station in this corpus
+  ran more than one goal at a time, so the two-stations case is untested. **It merges by `CGID`.**
+  Replacing on an untested assumption loses a goal the Commander is actually running; merging keeps
+  a goal that has ended, which the expiry check in §3 already has to handle because the snapshot
+  goes stale regardless. Only one of those two failures is silent.
+
+- **The INARA wire shape.** Read at source rather than measured, since the corpus has no key in it:
+  `getCommunityGoalsRecent`, one endpoint, an envelope of a `header` and an `events` array. Three
+  things in it are worth carrying:
+  - **The response has no `CGID`.** `communitygoalName`, `starsystemName`, `stationName`,
+    `goalExpiry`, `tierReached`, `tierMax`, `contributorsNum`, `contributionsTotal`, `isCompleted`,
+    `lastUpdate`, `goalObjectiveText`, `goalRewardText`, `goalDescriptionText`, `inaraURL` — and no
+    id. So the only field the journal and the listing can be matched on is the goal's *name*, which
+    is exactly the field two sources spell differently. Merge on an exact match and let anything
+    else appear twice: a duplicate is visible, a wrong merge is silent.
+  - **`tierMax` is 0 when unknown**, because the journals carry no maximum tier and the site's own
+    worked example shows a journal-sourced entry reading zero. Read literally, it announces a goal
+    whose top tier is zero.
+  - **HTTP 200 is not a success.** A rejected key, a malformed request and "no results" all arrive
+    as 200 with the real status inside the body — `400` on the header cancels the batch, `204` on
+    the event means there is nothing to report. Reading the transport code would report a bad key
+    as an empty board, which is the one wrong answer here that looks exactly like a right one.
+
+  The event is usable with the site's generic application key. d47 does not use one: it ships as a
+  public binary with its source beside it, so a key baked in would be a published key.
 
 ## 5. How to re-measure
 

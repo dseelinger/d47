@@ -572,6 +572,28 @@ public class EgressDisclosureTests
     }
 
     [Fact]
+    public void CommunityGoalsAreSilentUntilAKeyIsStored()
+    {
+        // The only row decided by a secret rather than by a setting. There is no toggle: the
+        // key is the switch, so a machine with no key must read as sending nothing.
+        var silent = EgressDisclosure.Entry(
+            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: true);
+
+        Assert.False(silent.Active);
+        Assert.Contains("No Inara API key is stored", silent.What, StringComparison.Ordinal);
+
+        var active = EgressDisclosure.Entry(
+            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: false, inaraKeyPresent: true);
+
+        Assert.True(active.Active);
+        Assert.Equal("inara.cz", active.Destination);
+
+        // The claim the request builder is tested against on the other side of the seam: the
+        // header may carry a Commander name and a Frontier ID, and this one carries neither.
+        Assert.Contains("nothing else", active.What, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheDisclosureNamesEveryDestinationIncludingTheSilentOnes()
     {
         // A disclosure that lists only what does send invites the question of what else exists.

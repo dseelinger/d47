@@ -54,7 +54,17 @@ public static class BuiltinCapabilities
 
         // Same story as the galaxy service, and the same host behind it — but a different
         // protocol, so a different seam (see RouteCapability).
-        Knowledge.IRouteService? routes = null) =>
+        Knowledge.IRouteService? routes = null,
+
+        // Third of the same family, and the only one that needs a credential before it can do
+        // anything at all. Null composes a capability that answers from the journal alone,
+        // which is also what a machine with no Inara key gets.
+        Knowledge.ICommunityGoalService? communityGoals = null,
+
+        // The clock, injected because no Core component reads one. Defaults to the epoch under
+        // the designer and in tests that do not care; the community goal board is the only
+        // reader, and every goal then reads as live, which is the harmless direction.
+        Func<DateTimeOffset>? now = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -65,6 +75,10 @@ public static class BuiltinCapabilities
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
+        CommunityGoalCapability.Create(
+            () => gameState.Active,
+            communityGoals,
+            now ?? (() => DateTimeOffset.MinValue)),
         ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
