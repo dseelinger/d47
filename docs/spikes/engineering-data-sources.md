@@ -86,6 +86,21 @@ that was measured correctly. Concluding that the number therefore did not exist 
 claim, made without evidence, and it was wrong** — the game's own patch notes had published the
 whole table, behind nothing more than a user agent check.
 
+### Confirmed against 6,272 real rolls — with two corrections
+
+**2026-08-15.** The whole of the above now has evidence behind it rather than a patch note, in
+[journal-corpus-engineering.md](journal-corpus-engineering.md). Two things it changes:
+
+- **The published 34% is `1/3` in the game.** Observed deltas are `0.333` and `0.334`, never `0.34`.
+  Three rolls therefore sum to `0.99` rather than overshooting to 1.0.
+- **A grade completes at 0.85, not at 1.0.** Of 68 grades left short, the 45 the game let the
+  Commander move on from all sat at 0.85, 0.95 or 0.99; the 23 that were genuinely abandoned all sat
+  at 0.8 or below. So `Quality == 1.0` is the wrong test for "done", and it is wrong in the direction
+  that tells a Commander their finished module is unfinished.
+
+Rule 2 gains the strongest corroboration on that page: grade 5 admits **exactly one step size,
+`0.2`, across 1,428 deltas**. A grade 5 blueprint rollable below access 5 would show a smaller one.
+
 ## 3. The two sources disagree, and the disagreements are structural
 
 - 688 of 786 graded blueprints share a `CoriolisGuid`. **27 of those 688 disagree on ingredients.**
@@ -261,10 +276,17 @@ The journal settles it per Commander: `MaterialTrade` carries `MarketID` and **`
 market id, and an observed table should override the heuristic — which then only ever answers about
 stations nobody has visited, which is what a heuristic is for.
 
-**Trade ratios are not in any permissive source.** The journal schema's own examples are suggestive
-— 60 Proto Light Alloys → 10 Proto Radiolic Alloys is 6:1 up one grade; 14 Pharmaceutical Isolators
-→ 42 Phase Alloys is 1:3 down one grade — but **examples in a schema are not a stated rule** and
-d47 must not ship them as one.
+~~**Trade ratios are not in any permissive source.**~~ **Measured 2026-08-15 across 1,096 real
+trades** — see [journal-corpus-engineering.md](journal-corpus-engineering.md) §3. The published rule
+holds exactly: one grade down returns 1→3, one grade up costs 6→1, a different line costs another
+factor of 6, and combinations multiply. **No trade crosses Raw / Manufactured / Encoded in 1,096
+samples.**
+
+**And the wording of that rule contains a trap.** The extra 6× is described as applying to a
+different *category*, but "category" in the journal names the Raw/Manufactured/Encoded type — which
+nothing ever crosses. The 6× applies across material **lines** within one type. Reading `Category`
+off the journal to decide it computes the wrong rate for the commonest trade there is, so the `line`
+column in `Materials.tsv` is load-bearing and a table without it cannot price a trade at all.
 
 ## 9. Operations and Merc Coin — reported, not verified
 
@@ -374,9 +396,9 @@ below was written as settled and was answered within hours by looking somewhere 
 |---|---|
 | ~~How many applications a grade takes~~ — **answered in full**, see §2 | The complete table is published. `rolls = 5,4,3,2,1` on `rank − grade`, and grade > rank is unreachable. Nothing left open. |
 | ~~Whether application count varies with engineer `Rank`~~ — **answered: it is the entire mechanic** | Rank is the only variable. An empirical table keyed on anything else pools runs that are not comparable. |
-| Whether `Engineering.Quality` is a per-roll draw or a cumulative fill | The journal schema says only `number, 0..1`. Now much easier to settle: with rolls at fixed 20/25/34/50/100% steps, a cumulative reading should land on those exact values. Getting it wrong produces a module the Commander can see is finished and d47 will not call finished. |
-| Whether ship trade ratios are a pure function of grade delta | Suggested by schema examples. Still unread — but the on-foot pass found the *equivalent* mechanic fully documented and fully computable (§ on-foot doc), which is a strong hint that the ship one is written down somewhere too. |
-| Whether `MaterialTrade` ever crosses Raw/Manufactured/Encoded | Believed impossible. Believing is not knowing, so the design offers same-category surpluses only. |
+| ~~Whether `Engineering.Quality` is a per-roll draw or a cumulative fill~~ — **answered: cumulative** | 1,609 of 1,609 multi-roll runs non-decreasing. And the follow-on nobody had asked: **a grade completes at 0.85, not 1.0**. See [journal-corpus-engineering.md](journal-corpus-engineering.md) §1. |
+| ~~Whether ship trade ratios are a pure function of grade delta~~ — **answered: yes, of delta and line** | Measured across 1,096 trades, §3 of the same page. The published table holds exactly. The residual unknown is only whether `line` can be derived from a permissive source for every material — EDDiscovery's `MaterialGroupType` is the candidate and is not yet joined. |
+| ~~Whether `MaterialTrade` ever crosses Raw/Manufactured/Encoded~~ — **answered: never** | Zero of 1,096. The design may state this rather than hedge it. |
 | Whether the primary-first trader reading is correct, or merely less absurd | 64/83/52 across 200 stations is plausible, not proven. |
 | Whether the 27 blueprint and 11 experimental disagreements are coriolis errors, EDEngineer errors or version skew | Two cases were examined of 38. |
 | Whether Elite reuses a `ShipID` after a ship is sold | Decides whether a stale-hull check is load-bearing or merely tidy. |

@@ -53,13 +53,16 @@ public sealed record Engineer
 /// at all. What they grade comes from msarilar/EDEngineer's blueprint list.
 /// </para>
 /// <para>
-/// <b>The unlock chain is deliberately absent.</b> list.md asks for "who in the chain of unlocks"
-/// and there is no permissive machine-readable source for it — not FDevIDs, not coriolis-data, not
-/// EDEngineer. It is wiki knowledge, and writing it out from memory is exactly the invented game
-/// data every table in this namespace exists to avoid; a wrong unlock requirement costs a
-/// Commander a trip. What is here instead is the half that does have a source — the material
-/// tribute 26 of them ask for — and, from the journal, the chain as <em>observed</em>: an engineer
-/// who has invited the Commander and is not yet unlocked is a referral that has already happened.
+/// <b>The unlock chain is absent from this table, and no longer for want of a source.</b> It was
+/// recorded as unobtainable because it is in neither FDevIDs, coriolis-data nor EDEngineer's ship
+/// rows — a correct measurement of three files, turned into a wrong claim about the world. Two
+/// sources have it: EDDiscovery's <c>EliteDangerousCore</c> (Apache-2.0) machine-readably, naming
+/// the referring engineer and the grade needed with them, and the Fandom engineer table in prose.
+/// They agree on 37 of 38, and the one conflict is settled by journal. See
+/// <c>docs/spikes/journal-corpus-engineering.md</c>. Until the generator joins them, what is here
+/// is the half that always had a source — the material tribute 26 of them ask for — and, from the
+/// journal, the chain as <em>observed</em>: an engineer who has invited the Commander and is not
+/// yet unlocked is a referral that has already happened.
 /// </para>
 /// </summary>
 public static class EngineerDirectory

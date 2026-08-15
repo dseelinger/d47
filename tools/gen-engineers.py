@@ -29,16 +29,25 @@ precisely so a Commander asking "where is Farseer" gets an answer with no networ
 the engineers who offer it and the grade it goes to, so grouping by engineer gives their
 speciality list and the top grade they reach in each.
 
-What is deliberately missing
-----------------------------
-**The unlock chain.** list.md asks for "who in the chain of unlocks", and there is no
-permissive machine-readable source for it: FDevIDs has no unlock column, coriolis-data
-carries blueprints and not requirements, and EDEngineer's data files are blueprints,
-entries, equipment, localisation and release notes — none of them the referral graph. It is
-wiki knowledge, and writing it out from memory is exactly the invented game data every other
-table in this repo exists to avoid. A wrong unlock requirement costs a Commander a trip.
+What is missing, and why that is now a to-do rather than a verdict
+-----------------------------------------------------------------
+**The unlock chain.** list.md asks for "who in the chain of unlocks". This script does not
+produce one, and the reason recorded here was wrong: FDevIDs has no unlock column,
+coriolis-data carries blueprints and not requirements, and EDEngineer's ship rows name only
+the engineer being unlocked — all true, and all a fact about three files rather than about
+the world.
 
-What d47 says instead is what the journal actually knows: which engineers are unlocked and
+Two sources have the graph. `EDDiscovery/EliteDangerousCore` (Apache-2.0) carries it
+machine-readably in `EliteDangerous/FrontierData/Items/Engineers.cs`, naming the *referring*
+engineer and the grade needed with them, alongside discovery, meeting and unlock
+requirements and the reputation route. The Fandom engineer tables state the same thing in
+prose per engineer. They agree on 37 of 38; the disagreement is Bill Turner, and a
+912-journal corpus decides it in the wiki's favour. See
+`docs/spikes/journal-corpus-engineering.md`.
+
+So the join is available and is itself the check — which is the standard this repo holds
+game data to, and better than the careful transcription that was planned instead. Until it
+is done, what d47 says is what the journal actually knows: which engineers are unlocked and
 at what rank, which have invited you, and which you have not met. "Invited but not unlocked"
 *is* the chain, observed rather than asserted.
 """

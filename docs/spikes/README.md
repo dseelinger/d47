@@ -9,8 +9,9 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [hotas-switch-read.md](hotas-switch-read.md) | Can a desktop process read HOTAS switch positions, and what identifies a device? |
 | [engineering-data-sources.md](engineering-data-sources.md) | What do the ship engineering sources contain, and what does a roll actually cost? |
 | [on-foot-engineering-sources.md](on-foot-engineering-sources.md) | Same question for suits and handheld weapons, which turn out to be a different game. |
+| [journal-corpus-engineering.md](journal-corpus-engineering.md) | What do 6,272 real engineering rolls say — about `Quality`, the roll table, the trade rate, and a source conflict? |
 
-The two engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
+The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
 research on.
 
@@ -42,6 +43,7 @@ than that the thing does not exist.
 | **EDCD/FDevIDs** | no licence file | yes, by precedent | The ids and symbols the journal writes. Ships, modules, materials, micro-resources, engineers. **No suit or weapon list exists.** |
 | **EDCD/coriolis-data** | code MIT; **JSON declared Frontier's IP** | yes, by precedent | Ship and module figures. **Ships only** — no suits, weapons or micro-resources. |
 | **msarilar/EDEngineer** | **MIT** | yes | The whole on-foot vocabulary: mods, upgrade recipes, ingredients, engineer attribution, micro-resource origins. **Its Odyssey unlock quantities are a patch stale.** |
+| **EDDiscovery/EliteDangerousCore** | **Apache-2.0** | yes | Found 2026-08-15 through [edcodex.info](https://edcodex.info). The things nothing else had: the **engineer referral graph** with the grade needed at the referrer, the **suit list** keyed on what `SuitLoadout` writes, the **hand-weapon list**, and a `MaterialGroupType` that is the material **line** the trade rate depends on. Data is **C# source rather than data files**, and carries per-figure provenance including visible guesses. |
 | **Fandom wiki** | — | read-only reference | The most productive seam by far. Needs a browser (402). |
 | **Frontier update notes and forums** | — | read-only reference | Authoritative and needs a browser (403). The only source that tracks patches. |
 | **Inara** | — | read-only reference | Fetches cleanly. Per-engineer and per-item pages, mod effects, stat ladders. |
@@ -62,18 +64,26 @@ carefully about the *community repositories'* licences and are silent about Fron
 one that actually governs. Reading that thread either confirms the position or says what attribution
 is owed. It is a forum URL, so it needs the browser.
 
-## The one blocker three spikes share
+## The one blocker three spikes shared — cleared 2026-08-15
 
-**A journal corpus with real engineering in it.** The development machine has four journals and
-none of them carry `EngineerCraft`, `MaterialTrade`, `SuitLoadout`, `UpgradeSuit` or
-`UpgradeWeapon`. That blocks, all at once:
+**A journal corpus with real engineering in it.** The development laptop has four journals and none
+of them carry `EngineerCraft`, `MaterialTrade`, `SuitLoadout`, `UpgradeSuit` or `UpgradeWeapon`, and
+all three spikes were recorded as waiting on that.
 
-- what `Engineering.Quality` means — a per-roll draw or a cumulative fill
-- whether observed trades match the published exchange table
-- what `SuitLoadout` actually carries, and whether `SuitName` encodes the grade
+**They were waiting on one laptop, not on the world.** A second machine holds 912 journals covering
+thirteen months and nine Commanders — the same corpus list.md Phase 15 already used for the NPC-comms
+measurement, which nobody had connected to this. All three questions are answered in
+[journal-corpus-engineering.md](journal-corpus-engineering.md): `Quality` is a cumulative fill that
+completes at 0.85 rather than 1.0, the published trade rate holds exactly across 1,096 trades, and
+`SuitName` does encode the grade.
 
-It is the cheapest thing on the board: one archived journal folder unblocks all three. Note that
-`JournalSpine` tails only the newest file, so anything historical needs a deliberate backfill.
+**The habit worth taking from it** is the same one §"The method" states about fetching. *No data
+here* was recorded as *no data anywhere*, twice, for two different reasons — a user agent check the
+first time and a single machine's play history the second. Before writing that something cannot be
+measured, say **where** it was looked for.
+
+Still true and still worth knowing: `JournalSpine` tails only the newest file, so anything historical
+needs a deliberate backfill rather than a folder to point at.
 
 ## What is still open
 
@@ -81,9 +91,14 @@ Kept per page rather than duplicated — see the "what is still unknown" section
 [engineering-data-sources.md](engineering-data-sources.md) and "what has not been found yet" in
 [on-foot-engineering-sources.md](on-foot-engineering-sources.md). The largest remaining items:
 
-- **The referral graph is found but not transcribed.** It is a collapsed wiki table expressing a
-  tree through row and column spans, and the flattened text is ambiguous about Marco Qwent.
-  Deliberately left for a careful read, because its failure mode is grinding the wrong engineer.
+- ~~**The referral graph is found but not transcribed.**~~ **Settled 2026-08-15.** It is
+  machine-readable in EDDiscovery's `Items/Engineers.cs`, naming the referring engineer and the grade
+  needed with them, and it agrees with the wiki's rendered per-engineer table on **37 of 38**. The
+  Marco Qwent ambiguity was a scraping artefact of the collapsed table — both sources say he is
+  reached through Elvira Martuuk. The one conflict, Bill Turner, is decided by journal in
+  [journal-corpus-engineering.md](journal-corpus-engineering.md) §4 in the wiki's favour. The
+  threshold is stated by both: **grade 3 access plus roughly half the bar to grade 4** with the
+  referrer.
 - **Weapon mod effects**, and a *current* source for the suit ones — those come from a 2022
   compilation that predates a recipe-changing patch.
 - **Suit and weapon base stats and grade ladders.** Inara has them; not harvested.

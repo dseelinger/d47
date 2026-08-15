@@ -15,11 +15,11 @@ namespace D47.Core.Capabilities.Builtin;
 /// actually asking.
 /// </para>
 /// <para>
-/// <b>The chain of unlocks is not asserted, only observed.</b> There is no permissive source for
-/// the referral graph, so d47 does not carry one — what it says instead is what the journal
-/// already knows: an engineer who has invited the Commander is a referral that has happened, and
-/// one they have never heard of is a step they have not reached. See
-/// <see cref="EngineerDirectory"/>.
+/// <b>The chain of unlocks is not asserted here, only observed.</b> That was once because no
+/// permissive source for the referral graph had been found; two have been since, and the table has
+/// not caught up yet (see <see cref="EngineerDirectory"/>). What this capability says meanwhile is
+/// what the journal already knows: an engineer who has invited the Commander is a referral that has
+/// happened, and one they have never heard of is a step they have not reached.
 /// </para>
 /// </summary>
 public static class EngineerCapability

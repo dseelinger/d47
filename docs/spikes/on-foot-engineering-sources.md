@@ -89,10 +89,16 @@ no caveat. That is a stronger answer than the ship side can give even now.
 
 Ingredient counts per blueprint are 4–6 for on-foot against a ship mode of 3.
 
-## 4. The unlock chain is partly sourceable — unlike ships
+## 4. The unlock chain is partly sourceable — and the ship half caught up
 
 Phase 14 refused to ship a referral graph for ship engineers because none was found. On foot, six of
 them are **in the data**: `Type: Unlock` rows whose `Engineers` array names the *referring* engineer.
+
+**That asymmetry closed on 2026-08-15.** EDDiscovery's `Items/Engineers.cs` (Apache-2.0) carries the
+graph for all 38, ship and on-foot alike, and it agrees with these six exactly — which is what makes
+it trustworthy on the other 32. See the ledger in [README.md](README.md) and the one conflict it
+has with the wiki, decided by journal, in
+[journal-corpus-engineering.md](journal-corpus-engineering.md) §4.
 
 ```
 Kit Fowler       ← Domino Green      Push 5, Opinion Polls 40
@@ -275,10 +281,10 @@ search stopped, so the next person starts further along.
 
 | Gap | Where to look next |
 |---|---|
-| **No suit or weapon ids in any checked source.** FDevIDs has no `suits.csv` or on-foot `weapons.csv`; `outfitting.csv` is ship modules only | The **journal itself** — `SuitLoadout` carries `SuitID`, `SuitName`, `LoadoutID` and per-module `SuitModuleID`. That makes the journal the id authority and inverts the ship arrangement. Also worth checking the Frontier CAPI docs in FDevIDs' `Frontier API/` folder, which mention `onfootmicroresources` and `pioneersupplies` |
-| **Base stats for suits and weapons** — damage, magazine, shield, armour | Inara publishes per-item equipment-blueprint pages with fixed stat ladders (e.g. Maverick shield +22.5% at G2 rising to +125% at G5). Not yet harvested |
+| ~~**No suit or weapon ids in any checked source.**~~ **Found 2026-08-15** | **EDDiscovery/EliteDangerousCore** (Apache-2.0) has both: `Items/Suits.cs` keyed on the `SuitFDName` the journal writes, and `Items/HandItems.cs` for hand weapons. Independently confirmed by 768 `SuitLoadout` events, which also settle that **`SuitName` encodes the grade** (`explorationsuit_class1`). FDevIDs still has neither, so the journal remains the id authority and EDDiscovery is the name and stat join |
+| **Base stats for suits and weapons** — partially found, and weaker than it looks | EDDiscovery carries per-grade `SuitStats` and `WeaponStats`, but with **per-figure provenance that varies**: `rob checked 20/8/21 for all suits to class 3 in game, class 4/5 according to wiki`, and one weapon row annotated `TBD Guess at same muliplier of 1.25`. It also has a transcription bug — `SuitStats` assigns the health multipliers to the shield multiplier fields. Usable as a lead, not as a table to copy. Inara's per-item ladders remain the unharvested cross-check |
 | **Weapon** mod effect values, and a *current* source for the suit ones | The suit 14 are found (§6c) but from a 2022 compilation that predates a recipe-changing patch. No weapon-mod guide turned up in this pass. Per-weapon Inara pages, and the in-game engineer screen, are both untried |
-| **Ship-locker cap: 1000 per category, or per item type?** Sources conflict | Per-category is the reading consistent with years of "1000 is not enough" threads, but it was not confirmed. The journal's `ShipLocker.json` plus a full locker would settle it |
+| **Ship-locker cap: 1000 per category, or per item type?** Sources conflict | Still open, and the 912-journal corpus does not answer it — `ShipLocker.json` is a state file rather than a journal event, so it was not in the extract. EDDiscovery's `SuitStats` carries `ItemCap`, `ComponentCap` and `DataCap` per suit, but those are the **backpack**, not the locker, and conflating the two would produce a confident wrong number. A full locker plus its `ShipLocker.json` still settles it |
 | **Anything post-Operations** (30 June 2026) beyond the reward list | The Operations page itself is now read (§6c). What remains is whether Operations changed any *mechanic* rather than adding a currency — the update notes thread, in a browser |
 | **Whether Merc Coin on-foot gear mods are grade-upgradeable at an engineer** | One unverified forum comment suggests so, which would be a genuinely new mechanic. Official Operations notes, read directly |
 
@@ -366,6 +372,14 @@ needs the browser rather than a fetch.
 - **`@Merchant` never appears on a ship blueprint**, and `@Bartender` appears only on four Odyssey
   `Unlock` rows. `tools/gen-engineers.py` currently drops both as `NOT_PEOPLE`, which is why none of
   §2's 56 upgrade recipes reach d47 today.
+- **Frontier's own suit localisation is broken, and it lies about the grade.** An `UpgradeSuit` on
+  `utilitysuit_class3` returned `"Name_Localised": "$UtilitySuit_Class1_Name;"` — an unresolved token
+  naming **Class1** for a class 4 suit. Anything that speaks the localised string says the wrong
+  grade or reads a raw symbol aloud. `Name` and the separate `Class` field are the truth. Measured in
+  [journal-corpus-engineering.md](journal-corpus-engineering.md) §6.
+- **`Name` and `Class` disagree by design on an upgrade.** The same event carries the suit's *old*
+  symbol (`utilitysuit_class3`) alongside the *new* `Class` (4). Reading the grade out of the symbol
+  on that one event is off by one.
 
 ## 9. Terminology, because the sources disagree with the game
 
