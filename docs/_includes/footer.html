@@ -48,17 +48,15 @@
 
     {%- if site.frontier_attribution -%}
     <div class="footer-col-wrapper" style="margin-top: 15px; font-size: 14px; color: #828282;">
-      <p>
-        {{ site.frontier_attribution | escape }}
-        {%- if site.elite_official_url %}
-        <a href="{{ site.elite_official_url }}">Elite Dangerous</a>.
-        {%- endif %}
-      </p>
+      <p>{{ site.frontier_attribution | escape }}</p>
       <p>
         Directive 47's own code is MIT-licensed; the Elite Dangerous game data it ships is
         Frontier's and is not covered by that licence. See
         <a href="https://forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/">Frontier's
         media usage rules</a>.
+        {%- if site.elite_official_url %}
+        The official game site is <a href="{{ site.elite_official_url }}">elitedangerous.com</a>.
+        {%- endif %}
       </p>
     </div>
     {%- endif -%}
