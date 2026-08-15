@@ -1,0 +1,68 @@
+{%- comment -%}
+  Overrides minima 2.5.1's _includes/footer.html — the version GitHub Pages pins.
+
+  Everything above the attribution block is minima's own markup, kept verbatim so the
+  footer keeps rendering the way the theme intends. What is added is the last block.
+
+  Why it is here rather than on one page: Frontier's media usage rules ask that
+  attribution sit somewhere "easily located by others", naming the header, footer or
+  terms for a community site, and they prefer the long form where it fits — a footer
+  fits. Before this, the long form was on index.md and nowhere else, so a reader
+  landing straight on a capability page built out of Frontier's data saw none of it.
+
+  The wording is site.frontier_attribution in _config.yml, so the site states it once
+  and this file and index.md cannot drift apart. NOTICE is the repository's canonical
+  copy and must match.
+{%- endcomment -%}
+<footer class="site-footer h-card">
+  <data class="u-url" href="{{ "/" | relative_url }}"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">{{ site.title | escape }}</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            {%- if site.author -%}
+              {{ site.author | escape }}
+            {%- else -%}
+              {{ site.title | escape }}
+            {%- endif -%}
+            </li>
+            {%- if site.email -%}
+            <li><a class="u-email" href="mailto:{{ site.email }}">{{ site.email }}</a></li>
+            {%- endif -%}
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        {%- include social.html -%}
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>{{- site.description | escape -}}</p>
+      </div>
+    </div>
+
+    {%- if site.frontier_attribution -%}
+    <div class="footer-col-wrapper" style="margin-top: 15px; font-size: 14px; color: #828282;">
+      <p>
+        {{ site.frontier_attribution | escape }}
+        {%- if site.elite_official_url %}
+        <a href="{{ site.elite_official_url }}">Elite Dangerous</a>.
+        {%- endif %}
+      </p>
+      <p>
+        Directive 47's own code is MIT-licensed; the Elite Dangerous game data it ships is
+        Frontier's and is not covered by that licence. See
+        <a href="https://forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/">Frontier's
+        media usage rules</a>.
+      </p>
+    </div>
+    {%- endif -%}
+
+  </div>
+
+</footer>

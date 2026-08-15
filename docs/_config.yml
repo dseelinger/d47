@@ -4,6 +4,23 @@ description: >-
   for Elite Dangerous.
 theme: minima
 
+# Frontier's own long-form attribution, which their media usage rules ask for on a
+# community site and ask to be put somewhere "easily located" — the header, footer or
+# terms. It lives here rather than in a page so the site states it once: _includes/footer.html
+# puts it on every page and index.md renders the same string. NOTICE is the canonical
+# copy for the repository as a whole; this is the site's, and the two must match.
+#
+#   https://forums.frontier.co.uk/threads/elite-dangerous-media-usage-rules.510879/
+frontier_attribution: >-
+  Directive 47 was created using assets and imagery from Elite Dangerous, with the
+  permission of Frontier Developments plc, for non-commercial purposes. It is not
+  endorsed by nor reflects the views or opinions of Frontier Developments and no
+  employee of Frontier Developments was involved in the making of it.
+
+# Not required by those rules, but stated as preferred: a link back to an official
+# Elite Dangerous source.
+elite_official_url: https://www.elitedangerous.com/
+
 # docs/ is the published site. Spike write-ups and implementation plans are contributor
 # material, not user documentation: they stay in the repo (architecture.md links to them and
 # GitHub renders them there) but they do not belong next to the install guide.
