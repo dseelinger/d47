@@ -32,13 +32,21 @@ The answer is computed from your settings as they stand at that moment. It is no
 of what Directive 47 could do in general, and it cannot go stale the way a page like this one
 can — which is why the answer is worth more than the page.
 
-## The four destinations
+## The destinations
 
 **Language model** — the only one that receives anything from your gameplay. What goes: your
 question, the conversation so far, the guardrails, the persona, your About Me text, and the game
 state assembled from your journal. What does not: journal files, your key, or anything about your
 machine. Inactive when the provider is `none`, and also when a provider is chosen but has no key
 stored — selected-but-inert sends nothing.
+
+**Web search** — the same host as the language model, doing something different. When the
+[web search row](conversation.md#let-the-model-search-the-web) is on and a question needs current
+information, your provider runs the search and reads the pages; Directive 47 only ever sees the
+reply. It is listed separately even though it adds no new address, because "your provider gets
+your question" and "your provider will go and fetch pages about it" are not the same disclosure,
+and organising this list by host rather than by what is done would have hidden the second behind
+the first. Off by default, and inactive whenever no model is usable.
 
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which
@@ -100,7 +108,7 @@ could switch that back on is a model that could be told to by text it read in an
 ## The disclosure rows {#egress-llm}
 
 The settings panel carries one row per destination, saying the same things this page does
-{#egress-updates} {#egress-diagnostics} {#egress-journal} — but computed live from your settings
+{#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.
 

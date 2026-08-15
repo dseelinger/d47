@@ -10,6 +10,16 @@
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
   </ItemGroup>
 
+  <!--
+    The request builder is internal rather than private from Phase 14 on. What it decides became
+    consequential: the web search declaration varies by model, and choosing wrong is a 400 on
+    every turn rather than a worse answer. The wire capture cannot check it, because pointing
+    llm.endpoint at a local listener is exactly what turns server-side tools off.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.App.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Anthropic" Version="12.40.0" />
   </ItemGroup>

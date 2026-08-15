@@ -21,6 +21,12 @@ public static class ConversationCapability
 
     public const string ModelKey = "llm.model";
 
+    /// <summary>
+    /// Whether the model may search the web. An <c>llm.</c> key because the search happens at
+    /// the provider rather than from here — see <see cref="Configuration.LlmSettings.WebSearch"/>.
+    /// </summary>
+    public const string WebSearchKey = "llm.webSearch";
+
     /// <summary>The secret row key for a provider's API key. One row per provider that needs one.</summary>
     public static string KeyRowFor(LlmProviderInfo provider) => $"llm.{provider.Id}.apiKey";
 
@@ -254,6 +260,27 @@ public static class ConversationCapability
             {
                 Read = s => s.Llm.PersonalityEnabled ? "true" : "false",
                 Write = (s, v) => s with { Llm = s.Llm with { PersonalityEnabled = v is not "false" } },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = WebSearchKey,
+            Label = "Let the model search the web",
+            Help =
+                "Lets D47 look something up online when a question needs current information — a "
+                + "community guide, patch notes, what other Commanders are reporting. The search runs "
+                + "at your language-model provider, not here, so nothing new leaves this machine "
+                + "beyond what you already send them. What comes back is spoken as something D47 read, "
+                + "never written into its own tables. Off by default; see Privacy for what is sent. "
+                + "Searches are billed separately by the provider, about a penny each.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "off",
+            DocsAnchor = "let-the-model-search-the-web",
+            Binding = new SettingBinding
+            {
+                Read = s => s.Llm.WebSearch ? "true" : "false",
+                Write = (s, v) => s with { Llm = s.Llm with { WebSearch = v == "true" } },
             },
         });
 

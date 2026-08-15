@@ -11,11 +11,25 @@ public sealed record ModelPrice(decimal InputPerMillion, decimal OutputPerMillio
 
     public decimal CacheReadPerMillion => InputPerMillion * 0.1m;
 
+    /// <summary>
+    /// What one server-side web search costs, on top of the tokens its results become. Listed
+    /// at $10 per 1,000 searches, so a penny each.
+    /// <para>
+    /// A flat rate rather than a per-model one because it is not a model rate: every model that
+    /// can search reaches the same service at the same published price. It sits here because
+    /// this is where a turn is priced, and it is worth stating what a penny means next to these
+    /// other numbers — <b>one search costs more than a whole Haiku turn</b> of a few hundred
+    /// tokens each way. That is why it is counted rather than rounded away.
+    /// </para>
+    /// </summary>
+    public const decimal DollarsPerWebSearch = 0.01m;
+
     public decimal DollarsFor(LlmUsage usage) =>
-        (usage.InputTokens * InputPerMillion
-         + usage.OutputTokens * OutputPerMillion
-         + usage.CacheCreationInputTokens * CacheWritePerMillion
-         + usage.CacheReadInputTokens * CacheReadPerMillion) / 1_000_000m;
+        ((usage.InputTokens * InputPerMillion
+          + usage.OutputTokens * OutputPerMillion
+          + usage.CacheCreationInputTokens * CacheWritePerMillion
+          + usage.CacheReadInputTokens * CacheReadPerMillion) / 1_000_000m)
+        + (usage.WebSearchRequests * DollarsPerWebSearch);
 }
 
 /// <summary>

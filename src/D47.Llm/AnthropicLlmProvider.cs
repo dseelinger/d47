@@ -41,6 +41,45 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         };
 
     /// <summary>
+    /// Models that cannot run the search from inside code execution, and so must be given the
+    /// basic tool instead.
+    /// <para>
+    /// <b>Dynamic filtering is a family rule, not a list</b> — it needs Claude 4.6 or later — so
+    /// this names the exceptions rather than the members, and a model d47 has not heard of gets
+    /// the filtering variant along with everything else current. Naming the members instead is
+    /// what made this ambiguous in the first place: the summary d47 was working from enumerated
+    /// six models and mentioned neither <c>claude-fable-5</c> nor <c>claude-haiku-4-5</c>, both
+    /// of which are offered here.
+    /// </para>
+    /// <para>
+    /// The consequence of getting it wrong is not a worse answer. On the newer tool
+    /// <c>allowed_callers</c> defaults to code execution, and a model that cannot be called that
+    /// way <b>fails the request with a 400</b> — so this is the difference between a working
+    /// turn and no turn at all.
+    /// </para>
+    /// </summary>
+    private static readonly HashSet<string> BasicWebSearchOnly =
+        new(StringComparer.Ordinal) { "claude-haiku-4-5" };
+
+    /// <summary>
+    /// The ceiling on searches in one turn. Three, which is two things at once.
+    /// <para>
+    /// It is a <b>cost</b> control, because a search is billed at a penny and a model told to
+    /// research freely will spend ten of them on one question — more than the turn itself costs
+    /// by a wide margin. And it is what keeps <c>pause_turn</c> rare: the provider pauses a turn
+    /// when its own server-side loop runs long, and a turn that cannot search more than three
+    /// times has little opportunity to get there. That matters because d47 cannot resume a
+    /// paused turn — see <see cref="CoreConversation.LlmStopReason.Paused"/> — so the cheapest
+    /// handling is to make it unlikely and report it honestly when it happens anyway.
+    /// </para>
+    /// <para>
+    /// Three is also plenty for the question actually being asked. This is a voice answering a
+    /// Commander mid-flight, not a research assistant.
+    /// </para>
+    /// </summary>
+    private const long MaxWebSearchesPerTurn = 3;
+
+    /// <summary>
     /// How many content blocks may pass before an intermediate cache breakpoint is spent. Set
     /// below the API's 20-block lookback with room to spare: a breakpoint placed exactly at the
     /// limit is one block of drift away from finding nothing (architecture.md §6).
@@ -56,12 +95,24 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     private readonly AnthropicClient _client;
 
     /// <summary>
+    /// Whether this is Anthropic's own endpoint rather than a gateway. Server-side tools are the
+    /// one thing that turns on: a gateway may forward to somewhere that has no web search at all
+    /// — Amazon Bedrock has none, Google Cloud has only the basic tool — and an unsupported
+    /// declaration is a request that fails outright rather than one that quietly does less.
+    /// </summary>
+    private readonly bool _ownEndpoint;
+
+    /// <summary>
     /// <paramref name="baseUrl"/> is null for Anthropic's own endpoint. A value points at
     /// something else speaking the same protocol — a gateway or a proxy — which is a setting
     /// the Commander can change without restarting d47 (list.md Phase 4).
     /// </summary>
     public AnthropicLlmProvider(string apiKey, string? baseUrl = null)
     {
+        _ownEndpoint = string.IsNullOrWhiteSpace(baseUrl);
+
+        // Still testing baseUrl rather than the field just set from it: the null analysis
+        // follows IsNullOrWhiteSpace and does not follow a bool that happens to mean the same.
         _client = string.IsNullOrWhiteSpace(baseUrl)
             ? new AnthropicClient { ApiKey = apiKey }
             : new AnthropicClient { ApiKey = apiKey, BaseUrl = baseUrl };
@@ -80,6 +131,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         SupportsOperatorSystemMessages = OperatorSystemMessageModels.Contains(model),
         MinimumCacheablePrefixTokens = MinimumCacheablePrefix.GetValueOrDefault(model, 1024),
         SupportsToolCalls = true,
+        SupportsWebSearch = _ownEndpoint,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -186,7 +238,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         yield return new LlmStreamEvent.Completed(usage, stopReason);
     }
 
-    private MessageCreateParams BuildParameters(LlmRequest request)
+    internal MessageCreateParams BuildParameters(LlmRequest request)
     {
         var prompt = request.Prompt;
         var capabilities = CapabilitiesFor(request.Model);
@@ -293,7 +345,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             // canonicalised by ToolSchemaWriter, and it is passed through as raw JSON rather
             // than reassembled here — a second serializer with its own opinion about key order
             // is exactly the "non-deterministic serialization" §6 warns breaks byte-identity.
-            Tools = [.. prompt.Tools.Select(Translate)],
+            Tools = [.. prompt.Tools.Select(Translate), .. WebSearchTool(request)],
 
             // The cache breakpoint. Everything above it — guardrails, persona, About Me — is
             // stable across turns; everything in Messages below it changes every turn.
@@ -313,6 +365,36 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             OutputConfig = new OutputConfig { Effort = Translate(request.Effort) },
             Messages = messages,
         };
+    }
+
+    /// <summary>
+    /// The web search declaration, or nothing.
+    /// <para>
+    /// Appended <em>after</em> the registered tools rather than mixed in, so that turning it on
+    /// leaves every byte of the existing advertisement where it was. The prefix still changes —
+    /// anything in position 1 does — but the change is one appended object rather than a
+    /// reshuffle, which is the difference between a cache miss and a cache miss that also
+    /// invalidates the profile for every other mode.
+    /// </para>
+    /// <para>
+    /// It is deliberately <b>not</b> a <see cref="ToolAdvertisement"/>: it has no schema d47
+    /// wrote, no handler d47 runs, and no result d47 ever sees. That is the whole reason this
+    /// shape was chosen over a search tool of d47's own — the answer arrives as prose in the
+    /// turn and there is no code path by which it could arrive as anything else. It also means
+    /// the declaration costs nothing against the tool-profile budget, because
+    /// <c>ToolProfiles</c> never sees it.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<ToolUnion> WebSearchTool(LlmRequest request)
+    {
+        if (!request.WebSearch)
+        {
+            yield break;
+        }
+
+        yield return BasicWebSearchOnly.Contains(request.Model)
+            ? new ToolUnion(new WebSearchTool20250305 { MaxUses = MaxWebSearchesPerTurn })
+            : new ToolUnion(new WebSearchTool20260318 { MaxUses = MaxWebSearchesPerTurn });
     }
 
     /// <summary>
@@ -372,11 +454,19 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         _ => Effort.High,
     };
 
+    /// <summary>
+    /// <c>pause_turn</c> is here because it was silently absent. It arrives when the provider
+    /// stops a long server-side turn part-way, and falling through to <see cref="LlmStopReason.Completed"/>
+    /// reported that truncation as a finished answer — a sentence that stops mid-thought, with
+    /// nothing anywhere saying it was cut off. It could not happen before this step because
+    /// nothing d47 sent could run a server-side loop.
+    /// </summary>
     private static LlmStopReason Translate(string? stopReason) => stopReason switch
     {
         "refusal" => LlmStopReason.Refusal,
         "max_tokens" => LlmStopReason.MaxTokens,
         "tool_use" => LlmStopReason.ToolUse,
+        "pause_turn" => LlmStopReason.Paused,
         _ => LlmStopReason.Completed,
     };
 
@@ -391,7 +481,12 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 Math.Max(current.InputTokens, (int)incoming.InputTokens),
                 Math.Max(current.OutputTokens, (int)incoming.OutputTokens),
                 Math.Max(current.CacheCreationInputTokens, (int)(incoming.CacheCreationInputTokens ?? 0)),
-                Math.Max(current.CacheReadInputTokens, (int)(incoming.CacheReadInputTokens ?? 0)));
+                Math.Max(current.CacheReadInputTokens, (int)(incoming.CacheReadInputTokens ?? 0)))
+            {
+                WebSearchRequests = Math.Max(
+                    current.WebSearchRequests,
+                    (int)(incoming.ServerToolUse?.WebSearchRequests ?? 0)),
+            };
 
     private static LlmUsage Merge(LlmUsage current, MessageDeltaUsage? incoming) =>
         incoming is null
@@ -400,7 +495,12 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 Math.Max(current.InputTokens, (int)(incoming.InputTokens ?? 0)),
                 Math.Max(current.OutputTokens, (int)incoming.OutputTokens),
                 Math.Max(current.CacheCreationInputTokens, (int)(incoming.CacheCreationInputTokens ?? 0)),
-                Math.Max(current.CacheReadInputTokens, (int)(incoming.CacheReadInputTokens ?? 0)));
+                Math.Max(current.CacheReadInputTokens, (int)(incoming.CacheReadInputTokens ?? 0)))
+            {
+                WebSearchRequests = Math.Max(
+                    current.WebSearchRequests,
+                    (int)(incoming.ServerToolUse?.WebSearchRequests ?? 0)),
+            };
 
     /// <summary>
     /// Transient means "the same request may work shortly". Anything else needs a settings change

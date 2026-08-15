@@ -480,6 +480,23 @@ public sealed record LlmSettings
 
     /// <summary>The Commander's standing prompt about themselves, kept between sessions.</summary>
     public string? AboutMe { get; init; }
+
+    /// <summary>
+    /// Whether the model may search the web when it decides a question needs current
+    /// information. Off by default, on the same reasoning as the galaxy search: this reaches a
+    /// third party, and a fresh install should not start doing that before the Commander has
+    /// seen it in the disclosure and said yes.
+    /// <para>
+    /// Here rather than on <see cref="KnowledgeSettings"/>, which is where the galaxy search
+    /// lives, and the distinction is the one that record's own comment draws — those
+    /// destinations are "not the model's". This one <em>is</em> the model's: the only host d47
+    /// contacts is the endpoint already selected above, and the search happens on the far side
+    /// of it. A Commander who has chosen no provider has nothing to turn on here, which is
+    /// exactly the coupling <see cref="KnowledgeSettings"/> exists to avoid for spansh and
+    /// exactly the coupling that is true here.
+    /// </para>
+    /// </summary>
+    public bool WebSearch { get; init; }
 }
 
 /// <summary>

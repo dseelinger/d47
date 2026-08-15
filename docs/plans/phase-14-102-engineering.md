@@ -406,6 +406,105 @@ Untrusted input like every other outside source: it must not be able to reach a 
 
 Its own settings row and `EgressDisclosure` entry, computed rather than hand-written.
 
+### The fork, decided: Anthropic's server-side tool
+
+**Settled 2026-08-15, against the claude-api skill and then against the live tool page**, because
+the skill's own table is cached and turned out to be a version behind. Two candidates: Anthropic's
+server-side web search, declared in the request's `tools` array and executed by the provider; or a
+d47-side tool calling a search API, which needs a key and a new egress target. **The server-side
+tool wins, and the deciding argument is not convenience — it is that the plan's boundary stops
+being a convention d47 has to maintain and becomes structural.**
+
+A server-side result is never handed to d47 at all. The model asks, Anthropic searches, the results
+land in the model's context, and what reaches d47 is prose in the assistant turn. There is no code
+path from a search result to a generator, a TSV or a `Catalogue` — not because nothing takes that
+path today, but because nothing *can*. A d47-side tool would put web text into `ToolResult`, one
+refactor away from the tables. The same structure answers the protected-settings rule: search
+results never enter the tool-execution path, so they reach protected settings exactly as an in-game
+message does, which is to say not at all. `Guardrails.Text` **already names "web search results" as
+untrusted** — Phase 3 wrote that line before there was a web search, and it needed no amendment.
+
+It also costs **nothing in prompt position 1's budget**. The declaration is not a
+`ToolAdvertisement` and never enters `ToolProfiles`, so the Step 9 note's worry — that a third tool
+would trip the relief valve again — does not arise. The valve stays where `70bbdb2` measured it.
+
+The price is that the capability is provider-shaped: an endpoint that is not Anthropic's own cannot
+be assumed to offer it, so it is off there. That is "capabilities are state, not guards" (Phase 3),
+and it lands on `LlmProviderCapabilities` beside `SupportsOperatorSystemMessages`, which is the same
+shape of flag for the same reason.
+
+**Four things the cached skill table had wrong or absent**, all found by reading the live tool page
+rather than trusting the summary:
+
+- **There are three versions, not two.** `web_search_20260318` adds `response_inclusion`; the SDK at
+  12.40.0 carries all three. The plan above named `web_search_20260209` because that is what the
+  table listed.
+- **Dynamic filtering is a family rule, not an enumeration** — "Claude 4.6 and later models". The
+  table's explicit list (Opus 5/4.8/4.7/4.6, Sonnet 5/4.6) mentions neither `claude-fable-5` nor
+  `claude-haiku-4-5`, both of which d47 offers, and the enumeration cannot answer for either. The
+  family rule answers both: Fable 5 is later than 4.6 and gets the filtering variant; **Haiku 4.5 is
+  not, and gets `web_search_20250305`**. Without this the choice for Fable 5 would have been a
+  guess, and the guess would have been "off".
+- **`allowed_callers` defaults differently per version** — `["code_execution_20260120"]` on
+  `_20260209` and later, `["direct"]` before. A model without programmatic tool calling **needs
+  `["direct"]` explicitly or the request is a 400**, which is the trap in shipping one declaration
+  for every model.
+- **Web search can be switched off for the whole organisation in the Console**, and that failure is
+  a hard `400 invalid_request_error` rather than the in-band `web_search_tool_result_error` every
+  other failure uses. So there are two error shapes, not one, and only one of them is graceful.
+
+**Two consequences for d47 that are not about web search at all.** `pause_turn` is a stop reason
+`Translate` did not have a case for, so it fell to `Completed` — a long search would have been
+reported as a finished answer that stopped mid-sentence. And a search costs **$0.01**, which is more
+than an entire cheap turn, so a running total that counted only tokens would have been quietly wrong
+the moment this shipped.
+
+> **Done, 2026-08-15.** The declaration on `AnthropicLlmProvider`, `SupportsWebSearch` on
+> `LlmProviderCapabilities`, `WebSearch` on `LlmRequest` and `LlmSettings`, an `EgressDisclosure`
+> entry, a settings row on the conversation capability, and one new guardrail line. 22 tests: 11 on
+> the provider (including the serialised wire shape, not just the constructed type), 8 on the turn,
+> 3 on the disclosure. Both halves of the gate were fault-injected and watched to fail — the model
+> gate and the setting — because a test that passes for the wrong reason is the failure mode here.
+>
+> **Two defects it surfaced that have nothing to do with web search, and both were live.**
+> `pause_turn` had no case in `Translate` and fell through to `Completed`, so a turn the provider
+> cut short would have been reported as an answer — a sentence that stops mid-thought with nothing
+> anywhere saying it was truncated. It was unreachable before this step, because nothing d47 sent
+> could start a server-side loop. And `TurnLoop.Add` rebuilds the per-turn usage record
+> **positionally**, so the new search count was dropped between rounds and searches were billed as
+> free. That one is the cost of choosing an `init` property to keep every existing construction
+> compiling: it compiles everywhere and is silently zero anywhere that forgets it. The test asserts
+> the money rather than the field, which is why it caught it — `$0.02175` against `$0.00175`, a turn
+> priced at a twelfth of what it cost.
+>
+> **The wire capture cannot check this step, and that is worth writing down** because it is the
+> tool this repo reaches for first. Capturing means pointing `llm.endpoint` at a local listener, and
+> a non-default endpoint is exactly what turns server-side tools off — the act of looking removes
+> the thing being looked at. So the request builder became `internal` and is asserted directly,
+> which is what `D47.Audio` and `D47.Tts` already do with their own test projects. What the
+> serialisation test pins is the bytes: `{"type":"web_search_20260318","name":"web_search",
+> "max_uses":3}`.
+>
+> **What was decided and not measured**, stated rather than left implied. `response_inclusion:
+> "excluded"` on the newer tool would drop the raw result blocks from the response and save output
+> tokens, and d47 ignores those blocks entirely — but its interaction with citations is not
+> documented either way, and attribution is the one thing this step promised, so the default stands.
+> Search results are **not** carried into later turns: `ConversationContent` has no case for a
+> server-side block, so the assistant turn keeps its prose and drops the rest. That avoids the
+> `encrypted_content` round-trip and its 400 by never sending one, at the cost of the model not
+> having the pages on the next turn — which is the same treatment thinking already gets.
+>
+> Changing `Guardrails.Text` invalidates every cached prefix once, on upgrade. That is the ordinary
+> price of a prompt change and is noted so the first cold turn after this release is expected rather
+> than investigated.
+>
+> **This does not close Phase 14.** The plan's scope sentence says it would, and `list.md` disagrees:
+> after ticking *Web Search* the phase still has four unticked items. Two are Steps 0–9 — *#102 Know
+> what engineering actually does* and *#102 Go and get it* — which are built and committed and whose
+> boxes were simply never ticked. Two are real work that has not been done: **community goals**
+> (Step 12) and the **Operations spike** (Step 13). So the next tag is not `v0.10.0`; the minor
+> belongs to whoever finishes those.
+
 ---
 
 # Steps 11–13 — Independent tails

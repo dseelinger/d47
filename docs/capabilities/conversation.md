@@ -117,6 +117,34 @@ Spoken shortcuts, recognised without the model:
 The whole sentence has to be the phrase rather than merely contain it, so asking "what does
 personality off actually change" gets you an answer instead of switching it off.
 
+### Let the model search the web {#let-the-model-search-the-web}
+
+Off by default. On, Directive 47 can look something up online when a question turns on current
+information — what a patch changed, what other Commanders are reporting, a community guide that
+did not exist when the model was trained.
+
+**Directive 47 does not do the searching.** Your language-model provider does, on the far side of
+the connection you already have with them, and only the reply comes back. So this opens no new
+destination: nothing goes anywhere that was not already receiving your turns. What it does change
+is that the model can now read arbitrary pages about what you asked, and the wording of the
+search — drawn from your question — goes with it. The [Privacy](privacy.md#egress-websearch) row
+says so while it is on.
+
+Two things are true of anything found this way. It is **spoken as something read, with the source
+named**, and never quietly mixed into the ship and galaxy figures Directive 47 was built with —
+if a page disagrees with those, you get told both and which is which. And it is **never written
+into Directive 47's own tables**: those are generated from recorded sources, and a search result
+has no route into them.
+
+Searches are billed by your provider on top of the turn, at roughly a penny each. The turn price
+counts them, so a searching turn reads as what it actually cost. A turn will not search more than
+three times.
+
+It needs a working language model, so it does nothing with the provider set to `none` or with no
+key stored. On a custom [endpoint](#endpoint) it stays off whatever this row says: whether a
+gateway can search is not something Directive 47 can know, and asking one that cannot would fail
+the turn rather than answer it without searching.
+
 ### About Me {#about-me}
 
 Standing context about you — how you fly, what you are working towards, what to call you — sent

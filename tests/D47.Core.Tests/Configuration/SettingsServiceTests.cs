@@ -515,6 +515,51 @@ public class EgressDisclosureTests
         Assert.Contains("no key stored", entry.What, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Web search is off by default, so the row is silent on a fresh install even with a key.
+    /// </summary>
+    [Fact]
+    public void WebSearchIsSilentUntilItIsTurnedOn()
+    {
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, new D47Settings(), llmKeyPresent: true);
+
+        Assert.False(entry.Active);
+        Assert.Contains("Web search is off", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// On, with a usable model, the row says the provider does the searching. The point of the
+    /// wording is that d47 contacts no new host and the Commander should not be left to infer
+    /// that the model is now reading arbitrary pages on their behalf.
+    /// </summary>
+    [Fact]
+    public void WebSearchOnNamesTheProviderAsTheOneWhoSearches()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: true);
+
+        Assert.True(entry.Active);
+        Assert.Equal("https://api.anthropic.com", entry.Destination);
+        Assert.Contains("does not search the web itself", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The setting alone is not enough to make it active. Without a key no turn runs, so no
+    /// search can be made, and a row reading "active" would be describing something that
+    /// cannot happen.
+    /// </summary>
+    [Fact]
+    public void WebSearchOnWithNoKeyIsStillInert()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: false);
+
+        Assert.False(entry.Active);
+        Assert.Contains("no language model is usable", entry.What, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AConfiguredProviderNamesTheEndpointItSendsTo()
     {

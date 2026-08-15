@@ -102,7 +102,7 @@ public static class PrivacyCapability
         {
             Key = $"egress.{id}",
             Label = EgressDisclosure.NameOf(id),
-            // The heading below says "read-only" once for all four. Repeating it per row is
+            // The heading below says "read-only" once for all of them. Repeating it per row is
             // how a disclosure starts reading as boilerplate instead of as a statement.
             Help = string.Empty,
             Group = "What leaves this machine",

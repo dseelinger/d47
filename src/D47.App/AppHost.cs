@@ -722,6 +722,7 @@ public sealed class AppHost : IDisposable
             // all. Both asked per turn, because both change underneath this.
             ToolContext = () => actionSurface.Context,
             ActionsEnabled = () => settings.Current.Actions.Keyboard,
+            WebSearchEnabled = () => settings.Current.Llm.WebSearch,
 
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),

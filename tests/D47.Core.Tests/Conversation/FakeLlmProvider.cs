@@ -27,6 +27,9 @@ public sealed class FakeLlmProvider : ILlmProvider
     /// <summary>Whether this endpoint advertises tools and executes tool_use replies.</summary>
     public bool ToolCalls { get; init; }
 
+    /// <summary>Whether this endpoint can run a web search on the model's behalf.</summary>
+    public bool WebSearch { get; init; } = true;
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
@@ -34,6 +37,7 @@ public sealed class FakeLlmProvider : ILlmProvider
         SupportsOperatorSystemMessages = true,
         MinimumCacheablePrefixTokens = 512,
         SupportsToolCalls = ToolCalls,
+        SupportsWebSearch = WebSearch,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(

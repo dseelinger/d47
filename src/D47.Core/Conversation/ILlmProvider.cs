@@ -40,6 +40,26 @@ public sealed record LlmProviderCapabilities
     /// </para>
     /// </summary>
     public bool SupportsToolCalls { get; init; }
+
+    /// <summary>
+    /// Whether this endpoint can run a web search on the model's behalf and hand the results
+    /// back inside the same turn.
+    /// <para>
+    /// Both provider- and model-gated, and the two gates fail for different reasons. The
+    /// <em>provider</em> gate is the endpoint: a value in <c>llm.endpoint</c> points at a
+    /// gateway or a proxy, and whether that thing offers a server-side tool is not something
+    /// d47 can know — Bedrock does not, Google Cloud offers only the basic variant, and a
+    /// request that declares an unsupported tool fails outright rather than degrading. The
+    /// <em>model</em> gate is the variant: dynamic filtering needs Claude 4.6 or later, so
+    /// <c>claude-haiku-4-5</c> gets the basic tool instead of nothing.
+    /// </para>
+    /// <para>
+    /// False is a capability that is off, not a failure — the settings row says so and the turn
+    /// carries on, which is the same treatment every other absent capability gets
+    /// (architecture.md §6).
+    /// </para>
+    /// </summary>
+    public bool SupportsWebSearch { get; init; }
 }
 
 public sealed record LlmUsage(
@@ -49,6 +69,18 @@ public sealed record LlmUsage(
     int CacheReadInputTokens)
 {
     public static readonly LlmUsage None = new(0, 0, 0, 0);
+
+    /// <summary>
+    /// How many web searches the provider ran for this turn. An <c>init</c> property rather
+    /// than a fifth positional field so that every existing construction still reads as the
+    /// four token counts it always was.
+    /// <para>
+    /// Counted because it is <em>billed separately from tokens</em> and is not small: one
+    /// search costs more than an entire cheap turn, so a running total that saw only tokens
+    /// would understate a searching turn by more than it reported.
+    /// </para>
+    /// </summary>
+    public int WebSearchRequests { get; init; }
 
     /// <summary>
     /// Uncached input is only part of the prompt — the rest was written to or read from cache.
@@ -64,6 +96,19 @@ public enum LlmStopReason
 
     /// <summary>The model declined. Surfaces as an unsure turn, not as an error.</summary>
     Refusal,
+
+    /// <summary>
+    /// The provider stopped a long server-side turn part-way and is willing to resume it.
+    /// <para>
+    /// Distinguished from <see cref="Completed"/> deliberately, because the difference is
+    /// invisible in the text: a paused turn is a sentence that simply stops, and reporting it as
+    /// an answer is reporting a truncation as a fact. d47 does not resume — resuming means
+    /// sending the paused assistant message back <em>unchanged</em>, and its server-side blocks
+    /// have no representation in <see cref="ConversationContent"/> — so the turn ends here and
+    /// says that it did. Capping searches keeps it rare rather than papering over it.
+    /// </para>
+    /// </summary>
+    Paused,
 
     /// <summary>
     /// The model stopped because it wants a tool run. Not an ending: the turn loop executes what
@@ -127,6 +172,20 @@ public sealed record LlmRequest
     /// going to be spoken aloud to someone flying a ship.
     /// </summary>
     public int MaxOutputTokens { get; init; } = 8192;
+
+    /// <summary>
+    /// Whether the provider may search the web for this turn.
+    /// <para>
+    /// Set per request rather than read from settings at the seam, because the seam has no
+    /// settings — but it is a value that must stay <em>stable across a session</em> all the
+    /// same. The declaration serialises with the tools, in prompt position 1, so flipping it
+    /// between turns rewrites the cached prefix exactly as adding a tool would
+    /// (architecture.md §6). It changes when the Commander changes the setting, which is one
+    /// cache miss for one deliberate act, and on the round that offers no tools at all — which
+    /// already rewrites that position.
+    /// </para>
+    /// </summary>
+    public bool WebSearch { get; init; }
 }
 
 /// <summary>

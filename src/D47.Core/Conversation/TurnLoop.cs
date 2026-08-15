@@ -189,6 +189,13 @@ public sealed class TurnLoop(
     /// </summary>
     public Func<bool>? ActionsEnabled { get; set; }
 
+    /// <summary>
+    /// Whether the Commander has allowed the model to search the web. A source like the others,
+    /// but for a different reason: this one barely changes, and it is read per turn only so that
+    /// switching it off takes effect on the next turn rather than the next session.
+    /// </summary>
+    public Func<bool>? WebSearchEnabled { get; set; }
+
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
         InputSource source = InputSource.Typed,
@@ -317,12 +324,20 @@ public sealed class TurnLoop(
         // Gated on the provider actually being able to execute a tool_use reply. Advertising a
         // tool the loop would silently drop is worse than not offering it: the model then tells
         // the Commander it has done something that never happened.
-        var advertised = activeProvider.CapabilitiesFor(chosenModel).SupportsToolCalls
+        var providerCapabilities = activeProvider.CapabilitiesFor(chosenModel);
+
+        var advertised = providerCapabilities.SupportsToolCalls
             ? ToolProfiles.For(
                 capabilities,
                 ToolContext?.Invoke() ?? Input.ControlContext.None,
                 ActionsEnabled?.Invoke() ?? false).Tools
             : [];
+
+        // Both halves, and the endpoint half is not the Commander's doing: pointing llm.endpoint
+        // at a gateway turns this off whatever the setting says, because a server-side tool is
+        // the provider's to offer. Capabilities are state, so that is a capability that is off
+        // rather than a turn that fails (architecture.md §6).
+        var webSearch = providerCapabilities.SupportsWebSearch && (WebSearchEnabled?.Invoke() ?? false);
 
         // What this turn has said so far, tool rounds included. Kept apart from _history until
         // the turn succeeds, so a turn that fails commits nothing — a half-written exchange
@@ -346,6 +361,12 @@ public sealed class TurnLoop(
             {
                 Model = chosenModel,
                 Effort = effort,
+
+                // Withdrawn on the last round with the tools, and for the same reason: that
+                // round exists to force an answer out of what is already known. A model that
+                // could still search could still spend a penny and come back with more to
+                // think about instead of the reply the ceiling was supposed to produce.
+                WebSearch = webSearch && !lastRound,
                 Prompt = new PromptAssembly
                 {
                     Tools = lastRound ? [] : advertised,
@@ -434,8 +455,10 @@ public sealed class TurnLoop(
         spend.Record(cost, coldPrefixExpected);
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer
-        // about what it will do rather than a fault in the pipeline.
-        var turnOutcome = stopReason == LlmStopReason.Refusal || answer.Length == 0
+        // about what it will do rather than a fault in the pipeline. A paused turn is unsure for
+        // a different reason — the text is real but it stopped part-way, and the one thing that
+        // must not happen is passing a truncation off as a finished answer.
+        var turnOutcome = stopReason is LlmStopReason.Refusal or LlmStopReason.Paused || answer.Length == 0
             ? TurnOutcome.Unsure
             : TurnOutcome.Answered;
 
@@ -478,11 +501,24 @@ public sealed class TurnLoop(
         public string? Failure { get; set; }
     }
 
+    /// <summary>
+    /// One turn is several rounds, and the bill is their sum.
+    /// <para>
+    /// <b>Every field has to be named here or it is silently dropped.</b> Searches are counted
+    /// on an <c>init</c> property rather than as a positional field, which is what let this
+    /// method keep compiling unchanged when they arrived — and a turn that searched twice was
+    /// then billed as though it had searched none. That is the exact error the count exists to
+    /// prevent, so the tests pin the money rather than the field.
+    /// </para>
+    /// </summary>
     private static LlmUsage Add(LlmUsage running, LlmUsage round) => new(
         running.InputTokens + round.InputTokens,
         running.OutputTokens + round.OutputTokens,
         running.CacheCreationInputTokens + round.CacheCreationInputTokens,
-        running.CacheReadInputTokens + round.CacheReadInputTokens);
+        running.CacheReadInputTokens + round.CacheReadInputTokens)
+    {
+        WebSearchRequests = running.WebSearchRequests + round.WebSearchRequests,
+    };
 
     /// <summary>
     /// One request to the provider, retried where retrying is honest.

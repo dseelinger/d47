@@ -56,6 +56,19 @@ public static class EgressDisclosure
     public const string GalaxySearch = "galaxy";
 
     /// <summary>
+    /// Searching the web, which the language-model provider does on d47's behalf.
+    /// <para>
+    /// A separate entry even though it adds no new host, and that is the point worth making
+    /// rather than eliding: the destination is the same endpoint the language-model row already
+    /// names, but what happens there is different in kind. Folding it into that row would let a
+    /// Commander read "the model gets your question" and not learn that the model can now go and
+    /// fetch arbitrary pages about it. A disclosure organised by host rather than by what is
+    /// actually done is a disclosure that hides things behind an address.
+    /// </para>
+    /// </summary>
+    public const string WebSearch = "websearch";
+
+    /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
     /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
     /// storage, so the bytes land from objects.githubusercontent.com. Named in full rather than
@@ -66,7 +79,7 @@ public static class EgressDisclosure
 
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
-        [LanguageModel, TextToSpeech, GalaxySearch, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
+        [LanguageModel, WebSearch, TextToSpeech, GalaxySearch, UpdateCheck, SpeechModels, Diagnostics, JournalFiles];
 
     /// <summary>
     /// The heading for a disclosure. Fixed, because it labels a settings row and rows are
@@ -79,6 +92,7 @@ public static class EgressDisclosure
         UpdateCheck => "Update check",
         TextToSpeech => "Spoken replies",
         GalaxySearch => "Galaxy search",
+        WebSearch => "Web search",
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
@@ -88,6 +102,7 @@ public static class EgressDisclosure
     public static EgressEntry Entry(string id, D47Settings settings, bool llmKeyPresent) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
+        WebSearch => WebSearchEntry(settings, llmKeyPresent),
         TextToSpeech => TextToSpeechEntry(settings),
 
         GalaxySearch => settings.Knowledge.GalaxySearch
@@ -155,6 +170,50 @@ public static class EgressDisclosure
 
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
+
+    /// <summary>
+    /// What a web search sends, and where.
+    /// <para>
+    /// Three conditions, all of which have to hold before anything can happen: a provider that
+    /// is not "none", a key for it, and the setting on. Reporting the setting alone would say
+    /// "active" on a machine with no key, where no turn runs and therefore no search can.
+    /// </para>
+    /// </summary>
+    private static EgressEntry WebSearchEntry(D47Settings settings, bool keyPresent)
+    {
+        var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
+        var usable = provider.Id != LlmProviderCatalog.NoneId && (!provider.NeedsKey || keyPresent);
+
+        if (!settings.Llm.WebSearch)
+        {
+            return EgressEntry.Silent(
+                WebSearch,
+                NameOf(WebSearch),
+                "Web search is off, so D47 never asks the model to look anything up online.");
+        }
+
+        if (!usable)
+        {
+            return EgressEntry.Silent(
+                WebSearch,
+                NameOf(WebSearch),
+                "Web search is on, but no language model is usable, so no turn runs and no search "
+                + "is made.");
+        }
+
+        return new EgressEntry(
+            WebSearch,
+            NameOf(WebSearch),
+            settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name,
+            $"D47 does not search the web itself. When a question needs current information, "
+            + $"{provider.Name} runs the search and reads the pages, and D47 only ever sees the reply. "
+            + "That means no new destination beyond the one above — but it does mean the wording of "
+            + "the search, which is drawn from what you asked, and whatever those pages say comes back "
+            + "into the conversation. Anything read there is treated as information, never as an "
+            + "instruction, and is never written into D47's own tables. Searches are billed by "
+            + "the provider on top of the turn, at about a penny each.",
+            Active: true);
+    }
 
     /// <summary>
     /// What the selected voice provider receives. Active whenever one is selected, because that
