@@ -284,6 +284,86 @@ matter to the design, and both need the journal to settle them:
 
 ---
 
+## 10. Third pass — three more "no source" claims were wrong
+
+**2026-08-15, same browser session.** Prompted by a fair question: if the wiki had the roll table,
+what else does it have? All three of these were recorded in earlier passes as unfindable.
+
+### The material trader rate is fully published
+
+[Fandom, Material Trader](https://elite-dangerous.fandom.com/wiki/Material_Trader). It is a pure
+function of grade delta and whether the category changes, exactly the shape §"unknowns" hoped for:
+
+- one grade **lower** → `1 → 3` (you gain)
+- one grade **higher** → `6 → 1`
+- **different category** → `6 → 1`
+- combinations multiply
+
+| Same category, out ↓ in → | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| 1 | – | 1→3 | 1→9 | 1→27 | 1→81 |
+| 3 | 36→1 | 6→1 | – | 1→3 | 1→9 |
+| 5 | 1296→1* | 216→1 | 36→1 | 6→1 | – |
+
+Cross-category is one further factor of 6 throughout, and **the asterisked conversions are flagged
+by the wiki itself as impossible because of the storage cap**. That is a detail d47 can act on
+rather than merely repeat: `MaterialGrades.CapacityOfGrade` already knows a grade 1 material caps at
+300, and 1,296 does not fit in 300. So "that trade is defined and you cannot physically do it" is
+computable, and it is exactly the sort of thing a Commander cannot work out in their head.
+
+**This also means the "do not net a shortfall against a surplus" rule can be relaxed** — with a
+published rate, netting is arithmetic. What must not be netted is a *cross-type* surplus: each
+trader deals in one type only (Raw, Manufactured or Encoded), so Raw cannot become Encoded at any
+price.
+
+### The trader's location rule is authoritative, and the FDevIDs pseudocode was the wrong source
+
+> Raw: **Refinery and Extraction** · Manufactured: **Extraction and Industrial** · Encoded:
+> **High Tech and Military**
+
+Extraction appears under *both* Raw and Manufactured, which is why §8's economy heuristic could not
+be made to behave — the economy alone genuinely does not determine the type for an Extraction
+station. Alongside it, four restrictions that are all **already filterable on spansh**:
+
+- medium or high security
+- population between 1,000,000 and 22,000,000
+- not controlled by an anarchy faction
+- not damaged, repairing or under lockdown
+
+`security`, `population` and `government` are in `GalaxyFilters` today. So the right implementation
+is a filtered system search plus the `services` group filter, not a heuristic over economies — and
+the 152-of-200 embarrassment in §8 stops mattering.
+
+### Engineer reputation has a published price, and the referral graph exists
+
+Two things Phase 14 recorded as unsourceable:
+
+**Rank costs money, and the amount is stated.** Reputation rises by buying modifications, and also
+by selling exploration data or commodities at the workshop:
+
+| Reach | Net profit sold at that workshop |
+|---|---|
+| Grade 2 | 500,000 cr |
+| Grade 3 | 2,000,000 cr |
+| Grade 4 | 8,000,000 cr |
+| Grade 5 | 16,000,000 cr |
+
+Combined with the roll table in §2 — where grade *N* is unreachable below rank *N* — a plan can now
+say "that grade 5 blueprint needs rank 5 with Farseer, which is 16 million in profit sold at her
+workshop", instead of "rank blocks you and I cannot say by how much".
+
+**The referral graph is on the same page**, as a collapsed table, covering ship *and* on-foot
+engineers: Elvira Martuuk → Mel Brandon and Zacariah Nemo; Felicity Farseer → Juri Ishmaak →
+Colonel Bris Dekker and The Sarge; Selene Jean → Bill Turner and Didi Vatermann; and so on, plus
+the three on-foot chains already known from EDEngineer.
+
+**Not transcribed here on purpose.** The table uses row and column spans to express a tree, and the
+flattened text is ambiguous in at least one place — Marco Qwent reads as publicly known in the
+flattened form while the page's own prose says he is reached through Elvira Martuuk. A graph whose
+failure mode is sending a Commander to grind the wrong engineer deserves a careful read of the
+rendered table, not a scrape. **What is settled is that it exists and where it is**, which is what
+the earlier claim got wrong.
+
 ## What is still unknown
 
 Stated here rather than left implicit, because each is a place where guessing produces an answer

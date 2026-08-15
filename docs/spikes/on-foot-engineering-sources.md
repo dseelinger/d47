@@ -218,6 +218,7 @@ recorded in §8.
   position than the ship material trader is in**, where no rate was found at all. Assets only;
   Goods and Data are sold for credits and cannot be exchanged, and illegal items are refused outside
   Anarchy-controlled systems.
+- **On-foot engineers have no reputation system at all** — confirmed at source, where the first two passes had this as an inference: *"Engineers that focus on pilot equipment do not use a reputation unlock system, and offer all of their modifications immediately upon fulfilling their meeting requirements."* So unlike ships, where rank gates which grades are reachable and costs up to 16 million credits of profit to raise, meeting an on-foot engineer is the whole of it.
 - **On-foot engineer bases have no Pioneer Supplies.** *"Odyssey … engineers' bases Concourse does
   not have most of standard services (bar, terminals, Pioneer Supplies). They only have Apex taxi
   desk."* That turns "grade before mods" from an ordering preference into a **routing fact**: the
