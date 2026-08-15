@@ -1,8 +1,8 @@
-# Phase 15 — exobiology, from the Galaxy Map to the sample
+# Phase 17 — exobiology, from the Galaxy Map to the sample
 
 ## Context
 
-`list.md` Phase 15 carried one line about exobiology: genus, spacing, and what has already been
+`list.md` Phase 17 carried one line about exobiology: genus, spacing, and what has already been
 scanned. That is the last thing a Commander does, and the item said nothing about the four hours
 before it — finding somewhere worth going.
 
@@ -165,7 +165,7 @@ The original item, with three things that were not in it:
 panel is open and `SAASignalsFound` says what the body holds; nothing says which entry is
 highlighted, and in VR the panel is in world space, so there is no fixed place on the screen to
 look. The reachable half is naming the genera and asking which is being hunted — one question,
-remembered, working identically in the headset. The screen-reading branch is Phase 20 and is
+remembered, working identically in the headset. The screen-reading branch is Phase 21 and is
 deliberately not a dependency of anything here.
 
 ---
@@ -187,10 +187,10 @@ The spike gates everything except the position plumbing, which can start immedia
 longest pole in *Exobiology sampling*. *Read a system name* needs only question 3 and is otherwise
 free-standing — it is the shortest path to something useful, and the only item that works with no
 network at all. *Find the exobiology* needs question 1 for its route half and nothing for its
-arithmetic half, so it can ship in two pieces. Nothing here needs Phase 20.
+arithmetic half, so it can ship in two pieces. Nothing here needs Phase 21.
 
-**Release:** these four items are part of Phase 15, not all of it — colonisation and the prospector
+**Release:** these four items are part of Phase 17, not all of it — colonisation and the prospector
 callouts are still open, so finishing them is a patch and the minor waits for the phase. The two
-warnings that used to sit here moved to Phase 21, so they no longer gate this one and it no longer
+warnings that used to sit here moved to Phase 15, so they no longer gate this one and it no longer
 gates them. The maintainer has flagged colonisation as closer to engineering in complexity and it
 gets its own plan.

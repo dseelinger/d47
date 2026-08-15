@@ -71,14 +71,16 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, not an ordering.** Around 320 code comments cite `list.md
-  Phase N` to say why a thing exists, so a phase number is load-bearing outside this file —
-  Phase 4 alone is cited 55 times. New phases are therefore **appended, never inserted**, and an
-  existing one is never renumbered: inserting in the middle silently repoints hundreds of those
-  comments at the wrong item. Moving items *between* unbuilt phases is free and encouraged when
-  a phase stops being one subject — a phase is a minor release, so one that cannot be finished
-  holds its ready items hostage. Phases 1-14 are frozen by their own citations; everything after
-  is cheap to reshape.
+- **Phase numbers are references, and phases 1-14 are frozen.** Several hundred code comments cite
+  `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
+  phase silently repoints them at the wrong item. The unfinished tail, 15 onward, was renumbered
+  **once**, on 2026-08-15, into the build order recorded in
+  [docs/plans/build-order.md](docs/plans/build-order.md), which carries the old-to-new mapping for
+  anything written before that. It cost three code comments and a file rename, and it was cheap only
+  because those phases were unbuilt. **From here new phases are appended**, and a phase that has
+  shipped anything is not renumbered again. Moving items *between* unbuilt phases stays free and
+  encouraged when a phase stops being one subject — a phase is a minor release, so one that cannot
+  be finished holds its ready items hostage.
 - **Order within a phase is subject grouping; execution order lives in the plan.** `list.md`
   reads top to bottom as a description of the product, not as a schedule — Phase 14 shipped its
   ninth item as step 12 of 13. When sequence matters, it belongs in `docs/plans/`, which is where

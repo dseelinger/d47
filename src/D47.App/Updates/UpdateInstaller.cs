@@ -25,7 +25,7 @@ public enum UpdateFailure
 }
 
 /// <summary>
-/// Downloads a newer d47 and puts it in place of the running one (list.md Phase 17, "Check for
+/// Downloads a newer d47 and puts it in place of the running one (list.md Phase 18, "Check for
 /// Updates on start" — "the user is given an opportunity to exit, install it, and restart").
 /// <para>
 /// <b>This downloads a program and then runs it</b>, which is the most dangerous thing d47 does,

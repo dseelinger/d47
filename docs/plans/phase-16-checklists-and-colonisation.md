@@ -2,7 +2,7 @@
 
 ## Context
 
-Colonisation was one line in Phase 15 — commodity requirements and delivered-so-far. The maintainer
+Colonisation was one line in Phase 17 — commodity requirements and delivered-so-far. The maintainer
 scoped it out on 2026-08-15 into three asks: **find a target, plan it, execute it.** That is the
 same triple engineering has, and engineering's plan-and-execute half was already deferred to Phase
 16. So this plan covers both phases, because the interesting decision is shared.
@@ -30,13 +30,13 @@ Ordered by how much it depends on somebody else being right.
 
 | Half | Phase | Needs a source? |
 |---|---|---|
-| **Execute** — what is required, what is delivered, what is left | 15 | No. Journal only. |
-| **Find** — candidate systems for a stated objective | 15 | The objective's criteria; the index for body shape |
+| **Execute** — what is required, what is delivered, what is left | 17 | No. Journal only. |
+| **Find** — candidate systems for a stated objective | 17 | The objective's criteria; the index for body shape |
 | **Plan** — an objective costed into things to do | 16 | The facility cost and effect table, if it exists |
 
 **Execute ships first and waits on nothing.** `ColonisationConstructionDepot` carries required and
 provided amounts, so the arithmetic the maintainer is currently doing on paper is subtraction over
-data already on disk. It is the cheapest item in Phase 15 and the one most likely to be used daily.
+data already on disk. It is the cheapest item in Phase 17 and the one most likely to be used daily.
 
 ---
 
@@ -159,7 +159,7 @@ parallel list.
 
 ## Order and dependencies
 
-Phase 15's tracking item needs nothing and should ship first. The spike gates the planning table and
+Phase 17's tracking item needs nothing and should ship first. The spike gates the planning table and
 the objective criteria, not the tracking. Within Phase 16, the checklist substrate is built once —
 **item identity and the two kinds are the two decisions to settle before any code** — and the ship
 and colonisation plans are then two keys into one machine.

@@ -10,9 +10,10 @@ verify a build](https://dseelinger.github.io/d47/install.html).
 
 ## Status
 
-Phases 1-9 are complete: the foundation, the journal spine, typed and spoken conversation,
-the settings surface, speaking and listening, game knowledge, proactive callouts, and the
-SteamVR overlay. Phase 10 (acting on the game) is next. See [list.md](list.md) for the full
+Phases 1-14 are complete: the foundation, the journal spine, typed and spoken conversation,
+the settings surface, speaking and listening, game knowledge, proactive callouts, the SteamVR
+overlay, acting on the game, personas and voices, the soundscape, hands-free listening, and
+knowledge from outside the journal. Phase 15 (warnings that arrive in time) is next. See [list.md](list.md) for the full
 plan and [architecture.md](architecture.md) for how it is built and why.
 
 ## Building

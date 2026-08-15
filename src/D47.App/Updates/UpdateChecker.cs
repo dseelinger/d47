@@ -29,7 +29,7 @@ public sealed record AvailableUpdate(
 }
 
 /// <summary>
-/// Checks GitHub Releases for a build newer than the one currently running (list.md Phase 17,
+/// Checks GitHub Releases for a build newer than the one currently running (list.md Phase 18,
 /// "Check for Updates on start"). Any failure - offline, rate-limited, malformed response -
 /// resolves to "no update" rather than an error: an optional check should never be why the
 /// app looks broken to a Commander with no internet.
