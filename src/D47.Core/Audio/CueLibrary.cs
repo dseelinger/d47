@@ -60,22 +60,26 @@ public sealed class EmbeddedCueSource(Assembly assembly) : ICueSource
 public sealed class CueLibrary
 {
     internal const string CuePrefix = "D47.Core.Cues.";
+    internal const string AlertPrefix = "D47.Core.Alerts.";
     internal const string BedPrefix = "D47.Core.Beds.";
     internal const string MusicPrefix = "D47.Core.Music.";
 
     private readonly IReadOnlyDictionary<LoopState, AudioClip> _cues;
+    private readonly IReadOnlyDictionary<AlertCue, AudioClip> _alerts;
     private readonly IReadOnlyDictionary<string, AudioClip> _beds;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> _music;
     private readonly IReadOnlySet<string> _custom;
 
     private CueLibrary(
         IReadOnlyDictionary<LoopState, AudioClip> cues,
+        IReadOnlyDictionary<AlertCue, AudioClip> alerts,
         IReadOnlyDictionary<string, AudioClip> beds,
         IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> music,
         IReadOnlySet<string> custom,
         IReadOnlyList<string> skipped)
     {
         _cues = cues;
+        _alerts = alerts;
         _beds = beds;
         _music = music;
         _custom = custom;
@@ -123,6 +127,7 @@ public sealed class CueLibrary
     public static CueLibrary Load(ILogger? logger, params ICueSource[] sources)
     {
         var cues = new Dictionary<LoopState, AudioClip>();
+        var alerts = new Dictionary<AlertCue, AudioClip>();
         var beds = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
         var music = new Dictionary<string, List<AudioClip>>(StringComparer.OrdinalIgnoreCase);
         var custom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -131,40 +136,52 @@ public sealed class CueLibrary
 
         foreach (var source in sources)
         {
+            // Two families are keyed by an enum — loop states and alerts — and the rule binding a
+            // filename to a member is the same for both, so it is written once. Enum.TryParse is
+            // the whole of that binding. Case insensitive because the files are lowercase and the
+            // members are Pascal, which is a spelling difference rather than a naming scheme
+            // worth encoding twice.
+            void ReadInto<TKey>(Dictionary<TKey, AudioClip> into, string resource, string prefix, string folder, string subject)
+                where TKey : struct, Enum
+            {
+                var stem = resource[prefix.Length..];
+
+                if (!Enum.TryParse<TKey>(stem, ignoreCase: true, out var key))
+                {
+                    // A shipped clip named for nothing is usually a member that was renamed while
+                    // its file was not, and it fails the build. The same file dropped into
+                    // data/audio is a Commander who guessed a name, and it is reported rather
+                    // than fatal.
+                    if (source.Required)
+                    {
+                        unclaimed.Add($"{folder}/{stem}");
+                    }
+                    else
+                    {
+                        skipped.Add(
+                            $"{folder}/{stem}.wav matches no {subject} — expected one of "
+                            + $"{string.Join(", ", Enum.GetNames<TKey>().Select(name => name.ToLowerInvariant()))}.");
+                    }
+
+                    return;
+                }
+
+                if (TryRead(source, resource, stem, skipped) is { } clip)
+                {
+                    into[key] = clip;
+                    Claim(custom, stem, source);
+                }
+            }
+
             foreach (var resource in source.Names)
             {
                 if (resource.StartsWith(CuePrefix, StringComparison.Ordinal))
                 {
-                    var stem = resource[CuePrefix.Length..];
-
-                    // Enum.TryParse is the whole binding between a filename and a state. Case
-                    // insensitive because the files are lowercase and the enum is Pascal — that
-                    // is a spelling difference, not a naming scheme worth encoding twice.
-                    if (!Enum.TryParse<LoopState>(stem, ignoreCase: true, out var state))
-                    {
-                        // A shipped cue named for nothing is usually a state that was renamed
-                        // while its file was not, and it fails the build. The same file dropped
-                        // into data/audio/cues is a Commander who guessed a name, and it is
-                        // reported rather than fatal.
-                        if (source.Required)
-                        {
-                            unclaimed.Add(stem);
-                        }
-                        else
-                        {
-                            skipped.Add(
-                                $"cues/{stem}.wav matches no loop state — expected one of "
-                                + $"{string.Join(", ", Enum.GetNames<LoopState>().Select(name => name.ToLowerInvariant()))}.");
-                        }
-
-                        continue;
-                    }
-
-                    if (TryRead(source, resource, stem, skipped) is { } cue)
-                    {
-                        cues[state] = cue;
-                        Claim(custom, stem, source);
-                    }
+                    ReadInto(cues, resource, CuePrefix, "cues", "loop state");
+                }
+                else if (resource.StartsWith(AlertPrefix, StringComparison.Ordinal))
+                {
+                    ReadInto(alerts, resource, AlertPrefix, "alerts", "alert");
                 }
                 else if (resource.StartsWith(BedPrefix, StringComparison.Ordinal))
                 {
@@ -222,10 +239,22 @@ public sealed class CueLibrary
                 "and regenerate with tools/gen-cues.py.");
         }
 
+        // The same rule for alerts, and it matters more: a loop state with no cue is a turn that
+        // sounds wrong, while an alert with no cue is a warning that arrives with nothing to mark
+        // it — and a warning that did not fire sounds exactly like one whose cue would not load.
+        var silent = Enum.GetValues<AlertCue>().Where(alert => !alerts.ContainsKey(alert)).ToList();
+
+        if (silent.Count > 0)
+        {
+            throw new CueSetException(
+                $"No alert cue shipped for {string.Join(", ", silent)}. Add assets/alerts/<alert>.wav " +
+                "and regenerate with tools/gen-cues.py.");
+        }
+
         if (unclaimed.Count > 0)
         {
             throw new CueSetException(
-                $"Shipped cues match no loop state: {string.Join(", ", unclaimed)}.");
+                $"Shipped clips match no loop state or alert: {string.Join(", ", unclaimed)}.");
         }
 
         if (beds.Count == 0 || !beds.ContainsKey(DefaultBed))
@@ -240,6 +269,7 @@ public sealed class CueLibrary
 
         return new CueLibrary(
             cues,
+            alerts,
             beds,
             music.ToDictionary(
                 entry => entry.Key,
@@ -269,6 +299,13 @@ public sealed class CueLibrary
     }
 
     public AudioClip For(LoopState state) => _cues[state];
+
+    /// <summary>
+    /// The marker played ahead of one warning (list.md Phase 15). An indexer rather than a
+    /// try-get: the set is closed and asserted complete at construction, so a miss here is a bug
+    /// in this class rather than a Commander's missing file.
+    /// </summary>
+    public AudioClip For(AlertCue alert) => _alerts[alert];
 
     /// <summary>
     /// The ambience tracks for one situation, in the order the folder was read. Empty is the

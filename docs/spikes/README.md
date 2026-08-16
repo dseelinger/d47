@@ -13,6 +13,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [community-goals.md](community-goals.md) | What does the journal already know about community goals, and where does an external source actually start? |
 | [material-lines.md](material-lines.md) | Can d47 derive the material trader's 32 lines, the thing the trade rate depends on and the journal cannot supply? |
 | [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
+| [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
 
 The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that

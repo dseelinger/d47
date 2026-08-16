@@ -16,7 +16,8 @@ cues so they never compete with speech.
 Loop-state cue names are the state ids themselves. That is deliberate: `CueLibrary`
 discovers them from disk and asserts one per state, so a state added in code without a
 cue fails loudly at startup instead of going wrong as silence nobody notices
-(list.md Phase 5, #20).
+(list.md Phase 5, #20). Alert cues are named for the `AlertCue` members under the same
+rule (list.md Phase 15).
 """
 
 import os
@@ -133,6 +134,21 @@ def main():
     _write("cues/answered.wav", _sequence([("C5", 0.12), ("G5", 0.19)], 0.40))
     _write("cues/unsure.wav", _sequence([("A4", 0.13), ("F#4", 0.22)], 0.44, peak=0.35))
     _write("cues/failed.wav", _sequence([("E4", 0.14), ("D4", 0.26)], 0.51))
+
+    # One cue per alert. Same rule as the loop states — the filename is the AlertCue member
+    # and CueLibrary asserts the set matches the enum — but a different job, so a different
+    # sound. These play over the top of whatever was being said, ahead of a warning that has
+    # a median of six to eight seconds to be useful in, so they are louder than the loop cues
+    # and shorter than the states they interrupt.
+    #
+    # Every one of them falls. The loop cues use rising intervals for progress and falling for
+    # trouble, and all four of these are trouble; what separates them is *which* trouble,
+    # carried by the interval rather than by the volume. A Commander should be able to tell a
+    # bounty hunter from a pirate without waiting for the sentence.
+    _write("alerts/interdiction.wav", _sequence([("A4", 0.09), ("F#4", 0.09), ("D3", 0.30)], 0.55, peak=0.62))
+    _write("alerts/piracy.wav", _sequence([("G4", 0.11), ("D4", 0.26)], 0.46, peak=0.52))
+    _write("alerts/bountyhunter.wav", _sequence([("C5", 0.07), ("C5", 0.07), ("F#4", 0.26)], 0.52, peak=0.55))
+    _write("alerts/rivalterritory.wav", _sequence([("D4", 0.16), ("A2", 0.40)], 0.70, peak=0.34))
 
     # Beds loop for as long as the state lasts, so they are quiet, low, and seamless.
     # 440 carrier cycles and 3 AM cycles over 3.00 s; 264 and 3 over 2.40 s.

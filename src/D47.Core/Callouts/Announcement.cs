@@ -47,6 +47,18 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
         Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert : AudioChannel.Speech;
 
     /// <summary>
+    /// A marker played immediately ahead of the line, saying which warning this is before the
+    /// sentence has arrived (list.md Phase 15).
+    /// <para>
+    /// Null for everything that came before Phase 15, which is most of what is said: a cue per
+    /// announcement would make the common ones into an alarm and would leave the Commander no way
+    /// to tell the four that matter apart. It is set where the game has already said which
+    /// situation this is, and that is the only case where a distinct sound can mean anything.
+    /// </para>
+    /// </summary>
+    public AlertCue? Cue { get; init; }
+
+    /// <summary>
     /// Who says it. Defaults to the ship's AI, which is what every Phase 8 callout is —
     /// d47 speaking. Phase 11 adds announcements that are somebody else talking: a re-voiced
     /// in-game message, a carrier's tower. Carried here rather than resolved by the caller

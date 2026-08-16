@@ -33,6 +33,8 @@ public static class CalloutCapability
     public const string LongJumpKey = "callouts.longJumpRemark";
     public const string ArrivalKey = "callouts.arrival";
     public const string MaterialsKey = "callouts.materials";
+    public const string AnnouncedAttackKey = "callouts.announcedAttack";
+    public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -162,6 +164,24 @@ public static class CalloutCapability
                 "materials",
                 s => s.Callouts.Materials,
                 (s, v) => s with { Callouts = s.Callouts with { Materials = v } }),
+
+            Toggle(
+                AnnouncedAttackKey,
+                "Announced attacks",
+                "An NPC saying it is about to interdict you or take your cargo, before it does.",
+                "announced-attack",
+                "announced attacks",
+                s => s.Callouts.AnnouncedAttack,
+                (s, v) => s with { Callouts = s.Callouts with { AnnouncedAttack = v } }),
+
+            Toggle(
+                RivalTerritoryKey,
+                "Rival Power territory",
+                "Flying in normal space in a system controlled by a Power other than the one you fly for.",
+                "rival-territory",
+                "enemy territory",
+                s => s.Callouts.RivalTerritory,
+                (s, v) => s with { Callouts = s.Callouts with { RivalTerritory = v } }),
 
             Toggle(
                 AmbientKey,

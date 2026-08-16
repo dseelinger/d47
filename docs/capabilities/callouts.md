@@ -2,8 +2,8 @@
 title: Callouts
 ---
 
-What Directive 47 says without being asked: danger, fuel, route progress, arrivals and material
-milestones.
+What Directive 47 says without being asked: danger, fuel, route progress, arrivals, material
+milestones, and an attack somebody has announced but not yet made.
 
 All of it comes from the files Elite already writes, as they change. Nothing here waits on the
 language model, so a warning arrives when the thing happens rather than after something has
@@ -18,11 +18,13 @@ finished thinking about it — which for an interdiction is after it is over.
 ```text
 I speak up about:
   danger: on
+  announced-attack: on
   fuel: on
   route: on
   long-jump: on
   arrival: on
   materials: on
+  rival-territory: on
 Route progress every 3 jumps.
 Home system is Shinrarta Dezhra.
 ```
@@ -39,6 +41,31 @@ decision and is not read back to you as an emergency.
 
 An urgent warning cuts in rather than waiting its turn. A warning that arrives after Directive 47
 has finished reading you a commodity list has arrived too late to be one.
+
+### Announced attacks {#announced-attack}
+
+NPCs say what they are about to do before they do it. Directive 47 listens for that and tells you
+while there is still time to act:
+
+```text
+Pirate lining up an interdiction. Boost or high-wake now.
+```
+
+Across 912 real journals, that line came a **median of six seconds** before the first shot and was
+right **88%** of the time. A pirate demanding cargo gives eight seconds and is right 67%. Each of
+the three situations gets its own sentence and its own sound, so you can tell an interdiction from
+a cargo demand from a bounty hunter before the sentence has finished.
+
+**Directive 47 matches on Elite's message ids, never on the words.** That is not tidiness — it is
+the difference between a useful warning and an unusable one. The obvious approach, warning about
+anything that *sounds* hostile, was measured: one such message fires 2,399 times to catch 30 real
+attacks, and another is wrong 48 times out of 48. A hundred false alarms per real event is a
+warning you switch off within the hour and then do not have when it matters.
+
+It is also what keeps it safe. In-game chat can be written by anyone in range, and matching on the
+text would mean matching on a string somebody else chose. The ids come from a fixed list, only NPC
+chatter is considered, and **nothing the message says is repeated, shown, or passed to the language
+model** — the spoken line is chosen by which id arrived and is otherwise a constant.
 
 ### Fuel and range {#fuel}
 
@@ -105,6 +132,34 @@ so the percentages come from a table of material grades built from the community
 list that Coriolis and EDEngineer use, rather than from anyone's memory. A material too new for
 that table still announces your first unit; the percentages stay quiet rather than being counted
 against a number nobody checked.
+
+### Rival Power territory {#rival-territory}
+
+If you fly for a Power, Directive 47 tells you when you drop into normal space somewhere another
+Power controls:
+
+```text
+Yuri Grom controls this system, and you fly for Edmund Mahon. You are exposed here.
+```
+
+Said once as you enter the condition, then silent for as long as it lasts. It waits until you are
+in normal space rather than saying it as you arrive, because arriving happens in supercruise and
+nothing can reach you there — that is measured, not assumed: across every Power security contact in
+912 journals, none of them happened in supercruise and two thirds happened in normal space.
+
+It also **stands down for anything dangerous**. A remark about enemy territory arriving as somebody
+opens fire is worse than silence, so if you are already being shot at, interdicted, or have just
+been told an attack is coming, this one is dropped rather than delivered late.
+
+Your pledge is followed as it changes rather than read once at startup, so defecting does not leave
+Directive 47 calling your new Power's space hostile.
+
+**What this is not.** What you actually want is a warning when a Power Security ship shows up in
+your contacts panel — and no third-party app can see that. There is no event for a ship appearing,
+no file listing your contacts, and every signal about another ship requires it to have already done
+something to you. The message a Power's security sends does exist and does name the Power, but it
+arrives about a second before the shot, which is a caption rather than a warning. So this says the
+thing it actually knows — that where you are is hostile — instead of implying somebody is close.
 
 ## Settings
 
@@ -211,5 +266,17 @@ Condition-based warnings carry a cooldown keyed by what they are about, coarse e
 repeat is suppressed and specific enough that a different warning is not. A callout that throws
 is logged and skipped and the rest still run: one broken callout must not take the danger
 warnings down with it.
+
+An announcement may also name an **alert cue** — a short sound played immediately ahead of it, on
+the same channel, so the queue orders the two. Cue names are bound to the `AlertCue` members the
+same way loop-state cues are bound to `LoopState`: the file is named for the member and the library
+asserts the shipped set matches the enum, so a member added without a clip fails at startup rather
+than going wrong as silence. That matters more here than it does for the loop states, because a
+warning that did not fire and a warning whose cue would not load sound identical.
+
+The measurements behind both Phase 15 warnings — every id group's follow-through rate and lead
+time, the groups measured and deliberately not shipped, and what the journal does and does not
+report about Powerplay — are in
+[docs/spikes/journal-corpus-warnings.md](../spikes/journal-corpus-warnings.md).
 
 </details>

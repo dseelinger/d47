@@ -406,6 +406,15 @@ public sealed record CalloutSettings
 
     public bool Materials { get; init; } = true;
 
+    /// <summary>
+    /// An attack an NPC has announced but not yet made (list.md Phase 15). On, because it is the
+    /// only warning here that arrives while there is still something to do about it.
+    /// </summary>
+    public bool AnnouncedAttack { get; init; } = true;
+
+    /// <summary>Flying in a rival Power's space (list.md Phase 15).</summary>
+    public bool RivalTerritory { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

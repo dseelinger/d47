@@ -35,6 +35,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
+    /// <summary>Which Power they fly for, if any (list.md Phase 15).</summary>
+    public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -62,6 +65,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
+        Pledge = Pledge.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather

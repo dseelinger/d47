@@ -62,6 +62,22 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// </summary>
     public double? FuelMain { get; init; }
 
+    /// <summary>
+    /// The Power controlling this system, or null where nobody does (list.md Phase 15).
+    /// <para>
+    /// <b>Absent means unoccupied.</b> Elite omits the field entirely rather than writing null —
+    /// 1,932 of 4,891 measured jumps have no <c>ControllingPower</c> at all — so null here is a
+    /// fact about the system rather than a gap in what was read.
+    /// </para>
+    /// <para>
+    /// It arrives only on the three events that state where the Commander now is:
+    /// <c>Location</c>, <c>FSDJump</c> and <c>CarrierJump</c>. There is no <c>SupercruiseExit</c>
+    /// copy, which is why anything reading this reads it from the location rather than waiting for
+    /// the event that drops them into normal space.
+    /// </para>
+    /// </summary>
+    public string? ControllingPower { get; init; }
+
     /// <summary>Docked at a fleet carrier, which is a station type rather than a separate place.</summary>
     public bool AtCarrier => StationType is "FleetCarrier";
 
@@ -71,7 +87,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// </summary>
     public JournalLocation Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
-        "Location" => this with
+        // CarrierJump shares Location's shape and means the same thing — this is where the
+        // Commander now is — so it folds through the same arm. Without it, a Commander carried
+        // into another system keeps the previous one's name and Power until they next jump under
+        // their own drive, which is exactly the stale reading Phase 15's territory warning would
+        // announce as fact.
+        "Location" or "CarrierJump" => this with
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             Body = journalEvent.String("Body") ?? Body,
@@ -79,6 +100,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = journalEvent.Bool("Docked"),
             StationName = journalEvent.String("StationName") ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
+
+            // Assigned rather than coalesced, unlike everything above it. Absent means nobody
+            // controls this system, so keeping the last system's Power would be the one mistake
+            // that matters here.
+            ControllingPower = journalEvent.String("ControllingPower"),
+
             Mode = journalEvent.Bool("OnFoot") ? FlightMode.OnFoot
                 : journalEvent.Bool("Docked") ? FlightMode.Docked
                 : FlightMode.Normal,
@@ -95,6 +122,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StationType = null,
             Mode = FlightMode.Supercruise,
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
+            ControllingPower = journalEvent.String("ControllingPower"),
 
             // Consumed by arriving. Leaving it set would have Phase 8 warning about a star the
             // Commander is now sitting next to.

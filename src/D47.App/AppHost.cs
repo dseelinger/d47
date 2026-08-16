@@ -922,6 +922,11 @@ public sealed class AppHost : IDisposable
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
+
+            // Above everything except danger itself (list.md Phase 15). It is the only warning
+            // here that arrives before the thing it warns about, and it has a median of six to
+            // eight seconds to be useful in.
+            .Add(new AnnouncedAttackCallout())
             .Add(new FuelCallout())
             .Add(new RouteCallout())
             .Add(new LongJumpCallout())
@@ -936,6 +941,11 @@ public sealed class AppHost : IDisposable
             // it. Both are announcements in somebody else's voice rather than d47's, which is
             // what Announcement.Voice exists to carry.
             .Add(new CarrierCallout())
+
+            // Low on purpose. It is a standing condition rather than news, and it stands down for
+            // anything above it — a remark about enemy territory arriving as somebody opens fire
+            // is worse than silence (list.md Phase 15).
+            .Add(new RivalTerritoryCallout())
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -966,6 +976,8 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("long-jump", callouts.LongJump);
         engine.SetEnabled("arrival", callouts.Arrival);
         engine.SetEnabled("materials", callouts.Materials);
+        engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
+        engine.SetEnabled("rival-territory", callouts.RivalTerritory);
         engine.SetEnabled("ambient", callouts.Ambient);
 
         foreach (var callout in engine.Callouts)

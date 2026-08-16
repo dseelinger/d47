@@ -235,6 +235,20 @@ public sealed class VoicePipeline(
             arbiter.Silence();
         }
 
+        // After the silence and before the speech, on the announcement's own channel, so the
+        // queue orders the two: cue, then line. It is deliberately not gated on CuesEnabled —
+        // that row is about the loop states marking a turn, and a Commander who finds those
+        // chatty has not asked to lose the mark on a warning. Switching a warning off is what
+        // the warning's own row is for.
+        if (announcement.Cue is { } alert)
+        {
+            arbiter.Enqueue(new AudioRequest
+            {
+                Channel = announcement.Channel,
+                Clip = cues().For(alert),
+            });
+        }
+
         _logger.LogDebug(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
