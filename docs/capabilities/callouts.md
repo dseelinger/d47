@@ -227,6 +227,20 @@ It is spoken as a routine line rather than an urgent one — urgent speaks over 
 being said and is reserved for danger and fuel. A core is exciting; it is not a safety matter, and
 announcing one across a hull warning would be the priority exactly backwards.
 
+### Sampling progress {#sampling}
+
+Each organic specimen as it lands, with the distance you covered to get it:
+
+```text
+Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
+Stratum Paleas analysed. That run is complete.
+```
+
+The distance is the whole point — you can see the genus and you can count to three, but nobody can
+judge four hundred metres across a ridge, and getting it wrong wastes the sample. Directive 47 says
+how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
+in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
+
 ## Settings
 
 ### Speak without being asked {#enabled}

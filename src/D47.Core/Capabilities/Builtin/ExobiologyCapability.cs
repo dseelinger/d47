@@ -31,9 +31,15 @@ public static class ExobiologyCapability
     /// journal half still answers, which is what a capability being partly off looks like rather
     /// than one being absent (list.md Phase 3).
     /// </param>
+    /// <param name="status">
+    /// The live <c>Status.json</c>, which is the only thing that knows where the Commander is
+    /// standing — <c>ScanOrganic</c> carries no position at all. Null under the designer and in a
+    /// test that is not about it, and the sampling answer then carries counts without distances.
+    /// </param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
-        Func<CommanderGameState?> commander) => new()
+        Func<CommanderGameState?> commander,
+        Func<GameStatus>? status = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -78,6 +84,18 @@ public static class ExobiologyCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), arguments))),
+            },
+            new ToolDefinition
+            {
+                Name = "get_sampling_progress",
+                Description =
+                    "What the Commander has sampled on the body they are on: which genus, how many "
+                    + "specimens of the three, how far they have moved since the last one, and what "
+                    + "is already finished here. Does not say whether they have moved far enough — "
+                    + "the required distance is in the species' Codex entry in-game, and D47 ships "
+                    + "no table of it.",
+                Parameters = [],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Sampling(commander(), status))),
             },
             new ToolDefinition
             {
@@ -203,6 +221,78 @@ public static class ExobiologyCapability
             report.AppendLine(
                 "Elite names the genus and not the species, and the species is what sets the price — "
                 + "so I cannot tell you what this is worth until you sample it.");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    // ----------------------------------------------------------- the sampling
+
+    private static string Sampling(CommanderGameState? state, Func<GameStatus>? status)
+    {
+        if (state is null)
+        {
+            return "No Elite Dangerous journal has been detected yet.";
+        }
+
+        if (state.Sampling.MostRecent is not { } body)
+        {
+            return
+                "You have not sampled anything I have seen. I track a run once you take the first "
+                + "specimen.";
+        }
+
+        var live = status?.Invoke();
+
+        var here = live is { HasPosition: true, PlanetRadius: { } radius }
+            ? new SurfaceFix(live.Latitude!.Value, live.Longitude!.Value, radius)
+            : (SurfaceFix?)null;
+
+        var report = new StringBuilder();
+
+        foreach (var genus in body.InProgress)
+        {
+            report.AppendLine($"{genus.Species ?? genus.Genus} — {genus.Taken} of {GenusProgress.Required}, "
+                + $"{genus.Remaining} to go.");
+
+            // The live half, and the only reason this is a tool rather than only a callout: a
+            // Commander driving away from the last specimen wants the number now, not when the
+            // next sample lands.
+            if (state.Sampling.MetresSinceLast(genus, here) is { } metres)
+            {
+                report.AppendLine($"  {OrganicSampling.Metres(metres)} from your last specimen.");
+            }
+            else
+            {
+                report.AppendLine(
+                    "  I have no position for you, so I cannot say how far you have moved — that "
+                    + "needs you to be on the surface.");
+            }
+
+            // Measured from this Commander's own accepted samples, and quoted as what it is: an
+            // upper bound on the requirement, with its sample size, never the requirement itself.
+            if (state.Sampling.ClosestAccepted(genus.Genus) is { } closest)
+            {
+                report.AppendLine(
+                    $"  The closest I have seen {genus.Genus} accepted is "
+                    + $"{OrganicSampling.Metres(closest.Metres)}, over {closest.Samples} "
+                    + $"sample{(closest.Samples == 1 ? "" : "s")}. That is an upper bound on what it "
+                    + "needs, not the figure — the Codex entry has that.");
+            }
+        }
+
+        var done = body.Completed;
+
+        if (done.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine(
+                $"Finished here: {string.Join(", ", done.Select(genus => genus.Species ?? genus.Genus))}.");
+        }
+
+        if (body.InProgress.Count == 0 && done.Count > 0)
+        {
+            report.AppendLine("Nothing in progress on this body.");
         }
 
         return report.ToString().TrimEnd();

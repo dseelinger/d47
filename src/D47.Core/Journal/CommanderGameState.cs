@@ -44,6 +44,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What their surface scans found on each body (list.md Phase 18).</summary>
     public BodySignals Bodies { get; private set; } = BodySignals.Empty;
 
+    /// <summary>What they have sampled, per body and per genus (list.md Phase 18).</summary>
+    public OrganicSampling Sampling { get; internal set; } = OrganicSampling.Empty;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -63,7 +66,10 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// </summary>
     public CargoHold Hold { get; internal set; } = CargoHold.Empty;
 
-    public void Apply(JournalEvent journalEvent)
+    public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
+
+    /// <param name="at">Where the Commander was standing, where that is known. See <see cref="Sampling"/>.</param>
+    public void Apply(JournalEvent journalEvent, SurfaceFix? at)
     {
         if (CommanderIdentity.From(journalEvent) is { } identity && identity.FrontierId == Identity.FrontierId)
         {
@@ -80,6 +86,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
+        Sampling = Sampling.Apply(journalEvent, at);
         Session = Session.Apply(journalEvent);
 
         // After Location, because the depot event names no system and no station: where the

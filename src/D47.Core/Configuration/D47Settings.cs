@@ -436,6 +436,12 @@ public sealed record CalloutSettings
     /// </summary>
     public bool CoreAsteroid { get; init; } = true;
 
+    /// <summary>
+    /// Organic sampling progress on the surface (list.md Phase 18). On, because the distance is the
+    /// number nobody can eyeball and the reason a sample gets wasted.
+    /// </summary>
+    public bool Sampling { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

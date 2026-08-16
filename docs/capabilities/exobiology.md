@@ -63,6 +63,52 @@ species. Values come from the response, never computed — a Commander's own sal
 a species, because 30 of the 31 species sold in the measured corpus were sold exactly once and the
 row total covers an unstated number of specimens.
 
+## On the surface: how many, and how far
+
+Once you take the first specimen, Directive 47 tracks the run and speaks each one as it lands:
+
+```text
+Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
+Stratum Paleas analysed. That run is complete.
+```
+
+Ask at any point and it will answer from where you are standing right now, which is the question you
+actually have while driving away from the last specimen:
+
+```text
+Stratum Paleas — 2 of 3, 1 to go.
+  341 metres from your last specimen.
+  The closest I have seen Stratum accepted is 502 metres, over 4 samples. That is an upper
+  bound on what it needs, not the figure — the Codex entry has that.
+
+Finished here: Bacterium Cerbrus.
+```
+
+**Directive 47 will not tell you whether you have gone far enough, and that is a sourcing decision
+rather than a gap.** The required spacing is published by the game in the species' own Codex entry.
+Every machine-readable copy of it outside the game is a community wiki, and this project's rule is
+that what a web search finds stays a sentence — the same sentence copied into a shipped table is
+Directive 47 laundering somebody's forum post into its own voice, and it cannot be corrected without
+a new release. The Codex is two clicks away and is authoritative; a table here would be neither.
+
+**What it does instead is learn.** A specimen the game accepted is proof that the distance you
+travelled was sufficient, so the smallest accepted gap is an upper bound on the requirement —
+measured from your own play, carried with its sample size, and never presented as the figure itself.
+It needs no source and gets better the more you sample.
+
+Three things this rests on, all measured:
+
+- **`ScanOrganic` carries no position at all** — not on any of the 632 events measured. Directive 47
+  stamps one from `Status.json` as the event lands, so the distance is only as good as how closely
+  those two writes track each other. A specimen taken with no position still counts; it simply
+  carries no distance, because reporting zero would read as "you have not moved".
+- **The run is `Log`, `Sample`, `Sample`, `Analyse`** on 94 of 101 runs. That is three specimens and
+  a fourth event that banks them, so `Analyse` completes rather than counting as a fourth.
+- **The body radius comes from `Status.json`**, not from a `Scan`. That is a correction to the
+  original plan, which would have made the distance uncomputable on any body you had not scanned.
+  Distances are great-circle, so the same angle is a shorter drive on a small moon than on a large
+  planet.
+
 ## The trade-off nobody should discover after the flight
 
 **A plotted route structurally cannot contain a first footfall.** An index only holds what has been
@@ -97,6 +143,15 @@ What your own surface scan found. Names genera; never quotes a value.
 
 ```json
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
+```
+
+### `get_sampling_progress`
+
+How many specimens you have taken on this body, how far you have moved since the last one, and what
+is already finished here. Never says whether the distance was enough.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
 ### `plot_exobiology_route`

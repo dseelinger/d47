@@ -14,7 +14,16 @@ namespace D47.Core.Journal;
 /// inside <see cref="SuitInventoryReader"/> and <see cref="CargoManifestReader"/>.
 /// </para>
 /// </summary>
-public sealed class JournalSpine(string directory, GameStateStore gameState, ILoggerFactory loggerFactory)
+/// <param name="position">
+/// The live <c>Status.json</c>, for stamping a position onto events that carry none — organic
+/// sampling is the whole reason it exists (list.md Phase 18). Null where nothing composed one, and
+/// the sampling state then simply carries no distances.
+/// </param>
+public sealed class JournalSpine(
+    string directory,
+    GameStateStore gameState,
+    ILoggerFactory loggerFactory,
+    Func<GameStatus>? position = null)
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<JournalSpine>();
 
@@ -53,7 +62,7 @@ public sealed class JournalSpine(string directory, GameStateStore gameState, ILo
 
         foreach (var journalEvent in events)
         {
-            gameState.Apply(journalEvent);
+            gameState.Apply(journalEvent, FixFor(journalEvent));
         }
 
         // After the events, so the Commander whose locker this is has been established by them
@@ -72,5 +81,34 @@ public sealed class JournalSpine(string directory, GameStateStore gameState, ILo
         }
 
         return events;
+    }
+
+    /// <summary>
+    /// How far apart a journal line and a <c>Status.json</c> write may be and still describe the
+    /// same moment.
+    /// <para>
+    /// <b>This is a guard against the backlog, not a precision claim.</b> The first poll replays
+    /// however much of the session Elite has already written, and stamping the Commander's
+    /// <em>current</em> position onto a sample they took two hours ago would invent a distance out
+    /// of nothing and then feed it into the one figure this whole feature exists to compute. Ten
+    /// seconds is generous against a file polled at 10 Hz and ruthless against a backlog; the true
+    /// write-to-write correlation is unmeasured, because <c>Status.json</c> is overwritten in place
+    /// and so no corpus of journals contains it.
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan SameMoment = TimeSpan.FromSeconds(10);
+
+    private SurfaceFix? FixFor(JournalEvent journalEvent)
+    {
+        if (position?.Invoke() is not { HasPosition: true } status
+            || status.ReadAt is not { } readAt
+            || status.PlanetRadius is not { } radius)
+        {
+            return null;
+        }
+
+        return (readAt - journalEvent.Timestamp).Duration() <= SameMoment
+            ? new SurfaceFix(status.Latitude!.Value, status.Longitude!.Value, radius)
+            : null;
     }
 }

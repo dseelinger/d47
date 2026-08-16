@@ -405,14 +405,26 @@ public sealed class AppHost : IDisposable
         // lambda's benefit.
         Func<EliteBinds>? bindsRef = null;
 
-        var gameState = new GameStateStore();
-        var journal = new JournalSpine(journalDirectory, gameState, loggerFactory);
+        // Sampling history, which is the one derived state that has to outlive a session: the
+        // spine tails the newest journal, so a run begun yesterday is otherwise simply gone
+        // (list.md Phase 18).
+        var sampling = new SamplingStore(
+            Path.Combine(paths.Data, "sampling.json"),
+            loggerFactory.CreateLogger<SamplingStore>());
+
+        sampling.Load();
+
+        var gameState = new GameStateStore { Restore = sampling.For };
 
         // The two state files Elite rewrites in place. Same folder as the journal, different
         // shape: a log is appended to and these are replaced, which is entirely inside the
         // readers.
         var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
+
+        // After the status reader, because the spine stamps a surface position onto events that
+        // carry none — organic sampling is the whole reason (list.md Phase 18).
+        var journal = new JournalSpine(journalDirectory, gameState, loggerFactory, () => status.Current);
 
         // The Commander's checklist and the proposals waiting on it, in two files beside the
         // executable (list.md Phase 17). Two files rather than one because the trust boundary is
@@ -467,6 +479,13 @@ public sealed class AppHost : IDisposable
 
             callouts.Tick(calloutContext);
             autonomous.Tick(calloutContext);
+
+            // Written only when a sample actually landed, rather than every tick: this runs ten
+            // times a second and the file changes a few times an hour.
+            if (events.Any(journalEvent => journalEvent.Kind == "ScanOrganic"))
+            {
+                sampling.Save(gameState.All);
+            }
         });
 
         // Primed synchronously before anything reads game state, so a journal already on disk
@@ -730,7 +749,11 @@ public sealed class AppHost : IDisposable
                 // host that makes it does not exist yet at this point in composition.
                 (provider, token) => self is { } host
                     ? host.VerifyLanguageModelKeyAsync(provider, token)
-                    : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up."))));
+                    : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
+
+                // Where the Commander is standing, which only Status.json knows — ScanOrganic
+                // carries no position at all (list.md Phase 18).
+                () => status.Current));
 
         built = capabilities;
 
@@ -995,6 +1018,7 @@ public sealed class AppHost : IDisposable
             // hide, and it is said once — the recomputed verdict is written down as it is
             // announced. Below the danger family, because a plan item un-completing can wait for
             // the shooting to stop.
+            .Add(new SamplingCallout())
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
@@ -1035,6 +1059,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("materials", callouts.Materials);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory);
+        engine.SetEnabled("sampling", callouts.Sampling);
         engine.SetEnabled("prospector", callouts.Prospector);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid);
         engine.SetEnabled("checklist", callouts.Checklist);

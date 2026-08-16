@@ -37,6 +37,8 @@ public static class CalloutCapability
     public const string ProspectorKey = "callouts.prospector";
 
     public const string CoreAsteroidKey = "callouts.coreAsteroid";
+
+    public const string SamplingKey = "callouts.sampling";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -187,6 +189,15 @@ public static class CalloutCapability
                 "core asteroids",
                 s => s.Callouts.CoreAsteroid,
                 (s, v) => s with { Callouts = s.Callouts with { CoreAsteroid = v } }),
+
+            Toggle(
+                SamplingKey,
+                "Sampling progress",
+                "How many organic specimens you have taken and how far you moved for the last one.",
+                "sampling",
+                "sampling progress",
+                s => s.Callouts.Sampling,
+                (s, v) => s with { Callouts = s.Callouts with { Sampling = v } }),
 
             Toggle(
                 AnnouncedAttackKey,

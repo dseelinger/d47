@@ -113,6 +113,38 @@ public sealed record GameStatus
 
     public long? Balance { get; init; }
 
+    /// <summary>
+    /// Where the Commander is standing, in degrees (list.md Phase 18, "Exobiology sampling").
+    /// <para>
+    /// <b>Written only when there is a surface to be above</b>, which is what
+    /// <see cref="StatusFlags.HasLatLong"/> announces — so these are null in supercruise and in deep
+    /// space rather than zero. Reading a missing coordinate as 0,0 would put the Commander on the
+    /// equator at the prime meridian and quietly make every distance from there enormous.
+    /// </para>
+    /// </summary>
+    public double? Latitude { get; init; }
+
+    public double? Longitude { get; init; }
+
+    /// <summary>Metres above the surface, where Elite reports one.</summary>
+    public double? Altitude { get; init; }
+
+    /// <summary>
+    /// The body's radius in metres, which Elite writes beside the position rather than making d47
+    /// go and find it.
+    /// <para>
+    /// <b>This is a correction to what the checklist item assumed.</b> It expected the radius to come
+    /// off the <c>Scan</c> event — which would have meant a sample distance was only computable on a
+    /// body the Commander had scanned, and wrong or absent on one they had merely landed on.
+    /// <c>Status.json</c> carries it directly, so the distance needs nothing but the file d47 is
+    /// already reading ten times a second.
+    /// </para>
+    /// </summary>
+    public double? PlanetRadius { get; init; }
+
+    /// <summary>Whether a position is actually being reported, rather than merely flagged.</summary>
+    public bool HasPosition => Latitude is not null && Longitude is not null;
+
     /// <summary>When this was read. Null means Status.json has not been seen.</summary>
     public DateTimeOffset? ReadAt { get; init; }
 
@@ -201,6 +233,14 @@ public sealed class GameStatusReader(string directory, ILogger logger)
                 Heat = root.Double("Temperature"),
                 BodyName = root.String("BodyName"),
                 Balance = root.Long("Balance"),
+
+                // Absent everywhere except near a surface, and absent is not zero — see the remarks
+                // on these properties.
+                Latitude = root.Double("Latitude"),
+                Longitude = root.Double("Longitude"),
+                Altitude = root.Double("Altitude"),
+                PlanetRadius = root.Double("PlanetRadius"),
+
                 ReadAt = new DateTimeOffset(written, TimeSpan.Zero),
             };
 

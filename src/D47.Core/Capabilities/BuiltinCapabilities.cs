@@ -70,7 +70,12 @@ public static class BuiltinCapabilities
         // Tries a language-model provider's stored key against the real service, by provider id
         // (list.md Phase 16). Null under the designer and in every test that does not press the
         // button; the row then offers no check rather than offering one that cannot be made.
-        Func<string, CancellationToken, Task<Configuration.SecretCheck>>? verifyLlmKey = null) =>
+        Func<string, CancellationToken, Task<Configuration.SecretCheck>>? verifyLlmKey = null,
+
+        // The live Status.json, which is the only thing that knows where the Commander is standing
+        // (list.md Phase 18). Null under the designer and in tests that are not about it; the
+        // sampling answer then carries counts without distances.
+        Func<Journal.GameStatus>? gameStatus = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -84,7 +89,7 @@ public static class BuiltinCapabilities
         ChecklistCapability.Create(checklists),
         ColonisationCapability.Create(() => gameState.Active),
         SystemNameCapability.Create(() => gameState.Active),
-        ExobiologyCapability.Create(routes, () => gameState.Active),
+        ExobiologyCapability.Create(routes, () => gameState.Active, gameStatus),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,
