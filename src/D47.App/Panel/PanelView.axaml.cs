@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -69,6 +70,30 @@ public partial class PanelView : UserControl
 
     private int _hitOffset;
 
+    /// <summary>
+    /// Whether this surface is following the end of the transcript (list.md Phase 19, "Follow
+    /// the live log, or stop following it").
+    /// <para>
+    /// A property of the surface rather than of the model, like the scroll position it is about:
+    /// the Commander can be reading back through history on the desktop window while the headset
+    /// stays on the newest line.
+    /// </para>
+    /// <para>
+    /// True to begin with, because a panel beside a running game is a live view by default. It
+    /// goes false the moment the reader scrolls away from the bottom and true again when they
+    /// come back — the lock is inferred from where they are looking rather than being a mode
+    /// they have to remember to leave.
+    /// </para>
+    /// </summary>
+    private bool _following = true;
+
+    /// <summary>
+    /// Set while this view is doing the scrolling, so the handler below does not read its own
+    /// <see cref="ScrollToEnd"/> as the Commander having moved. Without it, following would be
+    /// re-decided from a position the reader did not choose.
+    /// </summary>
+    private bool _scrollingItself;
+
     public PanelView()
     {
         InitializeComponent();
@@ -87,6 +112,11 @@ public partial class PanelView : UserControl
             if (!Equals(change.OldValue, change.NewValue))
             {
                 view.DropSearch();
+
+                // A page arrived at is a page opened at its newest line. Following belongs to
+                // the page being read, and carrying "I have scrolled up" from the conversation
+                // to the log file would open the log at the top of a file with nothing in view.
+                view._following = true;
             }
 
             view.ApplyPage();
@@ -292,11 +322,12 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the search box.
+    /// Gives this surface the tools that belong to the page being read — the search box, and the
+    /// button that copies the page (list.md Phase 19, "Copy log").
     /// <para>
-    /// Enabled by the host, like the settings page and for the same reason: the desktop window
-    /// is the surface with a keyboard. Mini shows no strip at all and the headset has none, and
-    /// a search box the Commander cannot type into is worse than no search at all.
+    /// Enabled by the host, like the settings page and for the same reason: the desktop window is
+    /// the surface with a keyboard and a clipboard. Mini shows no strip at all and the headset
+    /// has neither, and a search box the Commander cannot type into is worse than no search.
     /// </para>
     /// </summary>
     public void EnableSearch() => SearchRow.IsVisible = true;
@@ -449,6 +480,10 @@ public partial class PanelView : UserControl
 
         var where = layout.HitTestTextPosition(_matches[_hit].Start);
 
+        // Deliberately not guarded by _scrollingItself. Stepping to a match is moving away from
+        // the end on purpose, and following has to stop — otherwise the next line to arrive
+        // yanks the reader off the hit they just asked to be shown.
+        //
         // A third of the way down rather than at the very top, so the lines around the hit are
         // visible: reading back a conversation means reading what was around it.
         TranscriptScroller.Offset = new Vector(
@@ -557,6 +592,11 @@ public partial class PanelView : UserControl
         // After the read rather than before, or the page draws the log it had last time and
         // then redraws — which is a visible flicker on the one page opened to read something.
         DrawTranscript();
+
+        // At the end, because a log is read newest-first and this page has always opened at the
+        // top of it. The transcript pages have followed the tail since Phase 4 and this one
+        // never did, which was a difference nobody chose (list.md Phase 19).
+        ScrollToEnd();
     }
 
     private async Task BuildSettingsOnceAsync()
@@ -767,15 +807,157 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ScrollToEnd()
     {
+        // Only while following. This used to be unconditional, which is the whole of the
+        // complaint: reading back through history meant being dragged to the bottom by every
+        // line that arrived, and a busy session appends several a second (list.md Phase 19).
+        if (!_following)
+        {
+            return;
+        }
+
         // Posted only when it has to be. Marshalling unconditionally would put the scroll behind
         // the append that caused it even on the UI thread, which is a visible lag for nothing.
         if (Dispatcher.UIThread.CheckAccess())
         {
-            TranscriptScroller.ScrollToEnd();
+            Follow();
             return;
         }
 
-        Dispatcher.UIThread.Post(TranscriptScroller.ScrollToEnd);
+        Dispatcher.UIThread.Post(Follow);
+    }
+
+    /// <summary>
+    /// Goes to the newest line, without the trip through the handler deciding whether the
+    /// Commander meant to move.
+    /// </summary>
+    private void Follow()
+    {
+        _scrollingItself = true;
+
+        try
+        {
+            // Laid out first. A scroll viewer scrolls to the end of the extent it currently
+            // knows about, and the runs were rewritten a moment ago — so without this it goes to
+            // where the end was before the line that caused it, which is the "lands one append
+            // behind" the subscription order above is already fighting. Forced rather than
+            // awaited because the following has to be true when this returns.
+            TranscriptScroller.UpdateLayout();
+            TranscriptScroller.ScrollToEnd();
+        }
+        finally
+        {
+            _scrollingItself = false;
+        }
+
+        ShowFollowButton();
+    }
+
+    /// <summary>
+    /// Whether the view is at the end of the text, within a line's worth.
+    /// <para>
+    /// A tolerance rather than an equality, because a scroll viewer's extent and its offset are
+    /// laid-out doubles: a wrapped line, a font fallback or a fractional scale leaves the last
+    /// pixel unreachable, and "following" would then switch itself off on a surface that is
+    /// visibly at the bottom.
+    /// </para>
+    /// </summary>
+    private bool AtTheEnd()
+    {
+        var slack = Math.Max(1, TranscriptScroller.Extent.Height - TranscriptScroller.Viewport.Height);
+
+        return TranscriptScroller.Offset.Y >= slack - Transcript.FontSize;
+    }
+
+    /// <summary>
+    /// The Commander moved. Following is inferred from where they left the view rather than
+    /// being a mode: scrolling up stops it and scrolling back to the bottom starts it again,
+    /// which is what every log viewer they have used already does.
+    /// </summary>
+    private void OnTranscriptScrolled(object? sender, ScrollChangedEventArgs e)
+    {
+        if (_scrollingItself)
+        {
+            return;
+        }
+
+        // Only when the offset actually moved, and deliberately not when the viewport or the
+        // extent did. Those two change on the first layout pass — the viewport grows from zero
+        // while the offset is still at the top — and reading that as a gesture switched
+        // following off on every surface the moment it was shown, which is every surface.
+        if (e.OffsetDelta.Y != 0)
+        {
+            _following = AtTheEnd();
+        }
+
+        ShowFollowButton();
+    }
+
+    private void OnFollowClick(object? sender, RoutedEventArgs e)
+    {
+        _following = true;
+        Follow();
+    }
+
+    /// <summary>
+    /// Shows the jump-to-latest control, and says how far behind the reader is.
+    /// <para>
+    /// Hidden while following, because a control that does nothing sitting over the text it does
+    /// nothing to is worse than no control. Hidden with nothing to scroll for the same reason.
+    /// </para>
+    /// </summary>
+    private void ShowFollowButton()
+    {
+        var behind = !_following && !AtTheEnd();
+
+        FollowButton.IsVisible = behind;
+
+        if (behind)
+        {
+            FollowButton.Content = "↓ Newest";
+        }
+    }
+
+    /// <summary>
+    /// Copies the whole of the page being read (list.md Phase 19, "Copy log").
+    /// <para>
+    /// The page as currently shown, which is what "as currently filtered" means here: the
+    /// conversation without the diagnostics, or with them, or the log file — the same text the
+    /// Commander is looking at, and not a fourth thing assembled for the clipboard.
+    /// </para>
+    /// <para>
+    /// A search query highlights on these pages rather than filtering, so it deliberately does
+    /// not narrow what is copied. Copying only the matches would be a different feature and a
+    /// surprising one: the Commander asked for the log.
+    /// </para>
+    /// </summary>
+    private async void OnCopyClick(object? sender, RoutedEventArgs e)
+    {
+        // Its own visual root's clipboard, which is a thing a control may ask for — unlike a
+        // window, a dialog or a browser, none of which this view knows about. A surface with no
+        // clipboard behind it, which is what the headset's never-shown host is, answers null and
+        // the button does nothing rather than throwing on a quad a metre away.
+        if (_bound is null || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+        {
+            return;
+        }
+
+        var text = string.Concat(_bound.Segments(Page).Select(segment => segment.Text));
+
+        // Said on the button rather than in a banner. It is a one-word confirmation of a
+        // one-click action, and a fault here — no clipboard, another application holding it —
+        // is otherwise indistinguishable from having worked.
+        try
+        {
+            await clipboard.SetTextAsync(text);
+            CopyButton.Content = "Copied";
+        }
+        catch (Exception)
+        {
+            CopyButton.Content = "Could not copy";
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        CopyButton.Content = "Copy";
     }
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
