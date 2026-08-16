@@ -12,7 +12,7 @@ Three documents carry the design. They are not summarized here — go read the r
 
 | Question | File |
 |---|---|
-| What should it do? Is this in scope? | [list.md](list.md) — ~160 items in 21 phases, each line carrying its own acceptance criteria |
+| What should it do? Is this in scope? | [list.md](list.md) — 160 items in 22 phases, each line carrying its own acceptance criteria |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
 
@@ -88,7 +88,9 @@ Each of these is cheap to break by accident and expensive to fix later.
   changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,
   reported by nothing. Map through placeholders exactly once per file so no replacement can re-consume
   its own output, cover the prose forms (`Phases 17, 19 and 20` matches no pattern looking for
-  `Phase` + space + digit), and then re-read every citation of an item that moved. That last step is
+  `Phase` + space + digit), **check bare numbers in table cells** — a `| 16 |` in a phase column has
+  no `Phase` next to it and has now been missed twice — and then re-read every citation of an item
+  that moved. That last step is
   not automatable; it is the only one that matters.
 - **Order within a phase is subject grouping; execution order lives in the plan.** `list.md`
   reads top to bottom as a description of the product, not as a schedule — Phase 14 shipped its

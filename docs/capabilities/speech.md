@@ -92,7 +92,7 @@ refetched it, so the picker stayed empty with the key sitting in the row above i
 from a browser usually arrives with a trailing newline, and that fails in a way that reads as a
 wrong key rather than as a bad paste. This key is also offered on the first run, after the
 language-model one and marked optional; see
-[the first run](conversation.html#first-run).
+[the first run](conversation.md#first-run).
 
 When something does go wrong, Directive 47 repeats **what the service said** rather than
 translating a status code:

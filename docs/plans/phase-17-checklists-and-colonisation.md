@@ -28,15 +28,25 @@ without the Commander taking their hands off the stick.
 
 Ordered by how much it depends on somebody else being right.
 
-| Half | Phase | Needs a source? |
-|---|---|---|
-| **Execute** — what is required, what is delivered, what is left | 17 | No. Journal only. |
-| **Find** — candidate systems for a stated objective | 17 | The objective's criteria; the index for body shape |
-| **Plan** — an objective costed into things to do | 16 | The facility cost and effect table, if it exists |
+| Half | Phase | Needs a source? | Answered 2026-08-16 |
+|---|---|---|---|
+| **Execute** — what is required, what is delivered, what is left | 18 | No. Journal only. | **Confirmed, and cheaper than hoped** |
+| **Find** — candidate systems for a stated objective | 18 | The objective's criteria; the index for body shape | Criteria yes; **availability never** |
+| **Plan** — an objective costed into things to do | 17 | The facility cost and effect table, if it exists | **It does not exist licence-clean** |
+
+*(The phase column was stale until 2026-08-16: it held pre-renumber numbers, because a bare digit in
+a table cell matches no pattern looking for "Phase" followed by one. That is the second time that
+exact shape has been missed — see `CLAUDE.md` on remapping.)*
 
 **Execute ships first and waits on nothing.** `ColonisationConstructionDepot` carries required and
 provided amounts, so the arithmetic the maintainer is currently doing on paper is subtraction over
 data already on disk. It is the cheapest item in Phase 18 and the one most likely to be used daily.
+The spike made it cheaper still: the event is a **snapshot rather than a delta**, measured over
+6,330 events and 120,208 rows, so "what is left" is one subtraction over the latest event per
+`MarketID` with no history to keep and no commodity table to carry — `Name_Localised` is on every
+row. Two corrections it did make: **several sites can be open at once**, so this is a collection with
+a selection rather than a current-site field, and the event only arrives **while docked at that
+site**, so what d47 knows is as fresh as the Commander's last visit and should say so.
 
 ---
 
@@ -54,9 +64,21 @@ Costs, effects, and the link rules that decide how facilities influence each oth
 - Licence checked on the **transitive graph**, and the data underneath checked separately — a
   source's own licence is never mistaken for permission over Frontier's figures. coriolis-data says
   so outright about its own JSON, and that lesson was learned here once already.
-- **If it is prose:** the planning half does not ship as a table, the strategy advice moves to web
-  search, and *A colonisation plan writes the checklist* shrinks to what the journal and Frontier's
-  own guide can support. That is a smaller item and an honest one.
+- ~~**If it is prose:**~~ **It is prose, effectively — settled 2026-08-16.** Every machine-readable
+  rendering of the figures is inside GPL-3.0 source (`gaborauth/ed-colonisation-planner`'s
+  `buildings.ts`, and SrvSurvey, which carries no data files at all), EDSC publishes nothing, EDCD
+  has no colonisation repository, and everything traces to one unlicensed community spreadsheet.
+  Frontier's own guide states every mechanic and **publishes not one number** — and predates the
+  link topology Update 3 added. The licences are a fact about the code rather than about Frontier's
+  figures, which is why this is a routing answer and not a moral one: there is no licence-clean
+  *route* to numbers that were Frontier's before anyone typed them into a sheet.
+
+  **So the planning half does not ship as a costed table.** *A colonisation plan writes the
+  checklist* becomes what the checklist substrate already provides — an objective, an ordered set of
+  intents, and progress diffed against the depot — with quantities entered by the Commander or read
+  from the site once it exists, rather than predicted from a table d47 does not have. Strategy advice
+  moves to web search. A smaller item, and an honest one.
+  See [../spikes/colonisation-sources.md](../spikes/colonisation-sources.md).
 
 ## 2. Three journal questions, none of them measured yet
 
