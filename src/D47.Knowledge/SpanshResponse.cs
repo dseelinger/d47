@@ -160,6 +160,64 @@ internal static class SpanshResponse
         return new RichesRoute(stops);
     }
 
+    /// <summary>
+    /// An exobiology plot (list.md Phase 18, "Find the exobiology").
+    /// <para>
+    /// <b>The origin comes back as a stop with no bodies</b> — a live plot from Sol returned four
+    /// stops of which the first was Sol itself carrying an empty list. Dropping bodyless stops is
+    /// what keeps "three systems worth landing on" from reading as four.
+    /// </para>
+    /// </summary>
+    public static ExobiologyRoute? ReadExobiology(JsonElement result)
+    {
+        if (result.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var stops = new List<ExobiologyStop>();
+
+        foreach (var stop in result.EnumerateArray())
+        {
+            var bodies = new List<ExobiologyBody>();
+
+            foreach (var body in stop.Items("bodies"))
+            {
+                var species = new List<ExobiologySpecies>();
+
+                foreach (var landmark in body.Items("landmarks"))
+                {
+                    species.Add(new ExobiologySpecies(
+                        // `type` is the genus and `subtype` is the species. Named that way round
+                        // here because "subtype" says nothing at a call site.
+                        String(landmark, "type") ?? "an unnamed genus",
+                        String(landmark, "subtype") ?? "an unnamed species",
+                        landmark.Int("count") ?? 1,
+                        Integer(landmark, "value") ?? 0));
+                }
+
+                bodies.Add(new ExobiologyBody(
+                    String(body, "name") ?? "an unnamed body",
+                    String(body, "subtype"))
+                {
+                    DistanceToArrival = Number(body, "distance_to_arrival"),
+                    LandmarkValue = Integer(body, "landmark_value") ?? 0,
+                    Species = species,
+                });
+            }
+
+            if (bodies.Count > 0)
+            {
+                stops.Add(new ExobiologyStop(
+                    String(stop, "name") ?? "an unnamed system",
+                    stop.Int("jumps") ?? 0,
+                    bodies));
+            }
+        }
+
+        return new ExobiologyRoute(stops);
+    }
+
     public static TradeRoute? ReadTrade(JsonElement result)
     {
         if (result.ValueKind != JsonValueKind.Array)

@@ -217,4 +217,86 @@ public class SpanshRouteServiceTests
         Assert.Equal("Aries Dark Region FW-W d1-59", stop.System);
         Assert.Equal(971_799, riches.TotalValue);
     }
+
+    /// <summary>
+    /// The fifth plot type (list.md Phase 18, "Find the exobiology"). The body below is a verbatim
+    /// slice of a live plot from Sol on 2026-08-16 — including the origin stop with no bodies, which
+    /// the plotter really does return.
+    /// </summary>
+    [Fact]
+    public async Task AnExobiologyPlotCarriesSpeciesAndWhatEachPays()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"Sol","jumps":1,"bodies":[]},
+                  {"name":"Opet","jumps":3,"bodies":[
+                    {"name":"Opet 7 b","subtype":"Rocky body","type":"Planet",
+                     "distance_to_arrival":2536.772878,"estimated_scan_value":500,
+                     "estimated_mapping_value":2221,"landmark_value":6904100,
+                     "landmarks":[
+                       {"count":1,"subtype":"Frutexa Flabellum","type":"Frutexa","value":1808900},
+                       {"count":1,"subtype":"Tussock Cultro","type":"Tussock","value":1766600},
+                       {"count":1,"subtype":"Fungoida Setisis","type":"Fungoida","value":1670100},
+                       {"count":1,"subtype":"Bacterium Alcyoneum","type":"Bacterium","value":1658500}]}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 3, 1_000_000, 10_000, false, out var query, out _));
+
+        var route = await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        // The origin comes back as a stop with no bodies, and would read as a system worth flying to.
+        var stop = Assert.Single(route!.Stops);
+        Assert.Equal("Opet", stop.System);
+
+        var body = Assert.Single(stop.Bodies);
+        Assert.Equal("Opet 7 b", body.Name);
+        Assert.Equal(6_904_100, body.LandmarkValue);
+
+        // The species, which is the half SAASignalsFound cannot supply — the game names the genus
+        // and stops, and the species is what carries the price.
+        Assert.Equal(4, body.Species.Count);
+        Assert.Equal("Frutexa Flabellum", body.Species[0].Name);
+        Assert.Equal("Frutexa", body.Species[0].Genus);
+        Assert.Equal(1_808_900, body.Species[0].Value);
+
+        // Reported rather than summed — and the two agree, which is the property worth pinning.
+        Assert.Equal(body.LandmarkValue, body.Species.Sum(species => species.Value));
+    }
+
+    /// <summary>
+    /// <c>from</c> is required, works, and is echoed back as <c>source</c>. A caller checking its own
+    /// parameters against the echo would "fix" it into something the service really does ignore.
+    /// </summary>
+    [Fact]
+    public async Task TheExobiologyPlotSendsFromRatherThanSource()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, """{"status":"ok","result":[]}"""));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 10, 1_000_000, 10_000, true, out var query, out _));
+
+        await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        var sent = recorder.Requests[0]
+            .Split('&')
+            .ToDictionary(pair => pair.Split('=')[0], pair => pair.Split('=')[1], StringComparer.Ordinal);
+
+        Assert.Equal("Sol", sent["from"]);
+        Assert.DoesNotContain("source", sent.Keys);
+
+        // Honoured by the Road to Riches plotter and silently dropped by this one, so it is not sent.
+        Assert.DoesNotContain("use_mapping_value", sent.Keys);
+
+        Assert.Equal("/api/exobiology/route", recorder.Paths[0]);
+    }
 }

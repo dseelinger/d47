@@ -46,6 +46,126 @@ public sealed record RichesRoute(IReadOnlyList<RichesStop> Stops)
     public int TotalJumps => Stops.Sum(stop => stop.Jumps);
 }
 
+/// <summary>
+/// One species the plotter says is on a body, with what it pays (list.md Phase 18, "Find the
+/// exobiology").
+/// <para>
+/// <b>The species, not the genus</b> — and that distinction is the whole reason this half of the
+/// item is worth having. The game's own <c>SAASignalsFound</c> names <em>Bacterium</em> and stops,
+/// while <em>Bacterium Alcyoneum</em> and <em>Bacterium Acies</em> are different money. So the
+/// plotter can quote a figure where the journal can only name a genus, and d47 must never let the
+/// two look like the same kind of answer.
+/// </para>
+/// </summary>
+/// <param name="Value">
+/// Taken from the response, never computed. The Phase 16 spike established that a Commander's own
+/// sale history cannot price a species — 30 of 31 sold exactly once, with the row total covering an
+/// unstated number of specimens — so the service's figure is the only sourced one.
+/// </param>
+public sealed record ExobiologySpecies(string Genus, string Name, int Count, long Value);
+
+/// <summary>One body on an exobiology route, and what is growing on it.</summary>
+public sealed record ExobiologyBody(string Name, string? Subtype)
+{
+    /// <summary>Light seconds from the entry point. The number that decides whether it is worth it.</summary>
+    public double? DistanceToArrival { get; init; }
+
+    /// <summary>
+    /// What the biology on this body is worth, as the service totals it. Kept as reported rather
+    /// than summed from <see cref="Species"/>: they agree today — measured against a live plot,
+    /// where four species at 1,808,900, 1,766,600, 1,670,100 and 1,658,500 came to exactly the
+    /// 6,904,100 reported — and if they ever stop agreeing, that is worth being able to see.
+    /// </summary>
+    public long LandmarkValue { get; init; }
+
+    public IReadOnlyList<ExobiologySpecies> Species { get; init; } = [];
+}
+
+public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<ExobiologyBody> Bodies)
+{
+    public long Value => Bodies.Sum(body => body.LandmarkValue);
+}
+
+public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
+{
+    public long TotalValue => Stops.Sum(stop => stop.Value);
+
+    public int TotalJumps => Stops.Sum(stop => stop.Jumps);
+}
+
+/// <summary>
+/// A validated exobiology plot.
+/// <para>
+/// <b>What this can and cannot promise is set by where the data comes from.</b> A crowd-fed index
+/// knows only what somebody has already scanned and uploaded — so a plotted route is a tour of
+/// <em>known</em> biology, and by definition none of it is a first footfall, which is the thing that
+/// pays five times over. That is not a defect to fix; it is the reason
+/// <see cref="SystemName"/> exists beside it.
+/// </para>
+/// </summary>
+public sealed record ExobiologyQuery
+{
+    private ExobiologyQuery()
+    {
+    }
+
+    public required string From { get; init; }
+
+    public double JumpRange { get; init; } = 50;
+
+    /// <summary>How far from the origin to look, in light years.</summary>
+    public double Radius { get; init; } = 200;
+
+    /// <summary>How many systems to visit.</summary>
+    public int MaxResults { get; init; } = 10;
+
+    /// <summary>The least a body's biology must be worth to be worth stopping for.</summary>
+    public long MinimumValue { get; init; } = 1_000_000;
+
+    /// <summary>Light seconds. A body a quarter of a million light seconds out is not on the way.</summary>
+    public double MaxDistanceToArrival { get; init; } = 10_000;
+
+    /// <summary>Whether the route should come back to where it started.</summary>
+    public bool Loop { get; init; } = true;
+
+    public static bool TryParse(
+        string? from,
+        double? jumpRange,
+        double? radius,
+        int? maxResults,
+        long? minimumValue,
+        double? maxDistanceToArrival,
+        bool? loop,
+        out ExobiologyQuery query,
+        out string failure)
+    {
+        query = null!;
+        failure = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(from))
+        {
+            failure = "I don't know where the Commander is right now, so I need a system to start from.";
+            return false;
+        }
+
+        query = new ExobiologyQuery
+        {
+            From = from.Trim(),
+            JumpRange = Math.Clamp(jumpRange ?? 50, 10.01, 500),
+            Radius = Math.Clamp(radius ?? 200, 10, 10_000),
+
+            // Bounded low for the same reason the Road to Riches plot is: every extra stop is
+            // another line to be read out, and the route is flown one system at a time regardless.
+            MaxResults = Math.Clamp(maxResults ?? 10, 1, 50),
+            MinimumValue = Math.Clamp(minimumValue ?? 1_000_000, 0, 100_000_000),
+            MaxDistanceToArrival = Math.Clamp(maxDistanceToArrival ?? 10_000, 100, 1_000_000),
+            Loop = loop ?? true,
+        };
+
+        return true;
+    }
+}
+
 public sealed record TradeCommodity(string Name, int Amount, long TotalProfit);
 
 /// <summary>One buy-and-sell leg of a trade route.</summary>
@@ -338,4 +458,7 @@ public interface IRouteService
     Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken);
 
     Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken);
+
+    /// <summary>The fifth plot type (list.md Phase 18, "Find the exobiology").</summary>
+    Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken);
 }

@@ -111,6 +111,40 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
         return result is null ? null : SpanshResponse.ReadRiches(result.Value);
     }
 
+    /// <summary>
+    /// The exobiology plotter (list.md Phase 18, "Find the exobiology").
+    /// <para>
+    /// <b>Two traps here that the other four do not have, both established live rather than
+    /// guessed.</b> <c>from</c> is required, works, and comes home under a <em>different name</em> —
+    /// the echo re-emits it as <c>source</c> — so a caller checking its own parameters against the
+    /// echo would conclude the origin was ignored and "fix" it into something that really is. And
+    /// <c>use_mapping_value</c>, which the Road to Riches plotter honours, is silently dropped here.
+    /// </para>
+    /// </summary>
+    public async Task<ExobiologyRoute?> PlotExobiologyAsync(
+        ExobiologyQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await RunAsync(
+            "api/exobiology/route",
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                // The endpoint says what it requires outright, which none of the others do:
+                // "from, range, radius and max_results are required".
+                ["from"] = query.From,
+                ["range"] = Number(query.JumpRange),
+                ["radius"] = Number(query.Radius),
+                ["max_results"] = query.MaxResults.ToString(CultureInfo.InvariantCulture),
+                ["min_value"] = query.MinimumValue.ToString(CultureInfo.InvariantCulture),
+                ["max_distance"] = Number(query.MaxDistanceToArrival),
+                ["loop"] = query.Loop ? "1" : "0",
+            },
+            "the exobiology plotter",
+            cancellationToken).ConfigureAwait(false);
+
+        return result is null ? null : SpanshResponse.ReadExobiology(result.Value);
+    }
+
     public async Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken)
     {
         var result = await RunAsync(

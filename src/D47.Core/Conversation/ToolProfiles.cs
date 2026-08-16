@@ -60,14 +60,28 @@ public static class ToolProfiles
     /// turns, which is precisely what a relief valve must not do.
     /// </para>
     /// <para>
-    /// <b>The next move is not another number.</b> Mid-conversation tool changes
-    /// (<c>defer_loading</c> plus <c>tool_addition</c>/<c>tool_removal</c>, Claude Opus 5 onward)
-    /// let the tool set vary per mode <em>without</em> invalidating the cached prefix — which is
-    /// the exact conflict the profile enumeration exists to work around (architecture.md §6).
-    /// When that lands, this constant and the profiles beneath it can go.
+    /// <b>Raised again to 40,000 on 2026-08-16, and this time the valve had actually opened.</b>
+    /// Phase 18 added three knowledge capabilities in a day, and the SRV profile — the largest,
+    /// because it carries the SRV's controls on top of everything else — landed at <b>32,539</b>
+    /// bytes against a 32,000 ceiling. It degraded, which took the SRV's own controls away from a
+    /// Commander driving one, and it was caught by a test asserting those controls ship rather than
+    /// by anything watching the size. Every other profile was under: docked, landed, normal space
+    /// and supercruise at 31,827, on foot at 30,111, no-game at 28,930. So the surface had grown
+    /// 1.7% past a threshold and lost a whole capability group for it, which is precisely the
+    /// "relief valve, not a tuning knob" failure the paragraph above describes. 40,000 restores the
+    /// headroom the 32,000 was meant to provide, and <see cref="Conversation"/>'s size test now
+    /// names the cause directly instead of leaving it to be inferred from a missing tool.
+    /// </para>
+    /// <para>
+    /// <b>The next move is not another number, and it is now available.</b> Mid-conversation tool
+    /// changes (<c>defer_loading</c> plus <c>tool_addition</c>/<c>tool_removal</c>, Claude Opus 5
+    /// onward) let the tool set vary per mode <em>without</em> invalidating the cached prefix —
+    /// which is the exact conflict the profile enumeration exists to work around (architecture.md
+    /// §6). That model is what d47 runs on today, so this constant and the profiles beneath it are
+    /// removable work rather than a someday. **Raising the number a third time is the wrong answer.**
     /// </para>
     /// </summary>
-    public const int ComfortableBytes = 32_000;
+    public const int ComfortableBytes = 40_000;
 
     /// <summary>
     /// The tools that ship in every profile, including the degraded one. Answering, help,

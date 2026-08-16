@@ -45,6 +45,13 @@ public class RouteCapabilityTests
             return Throws is not null ? Task.FromException<RichesRoute?>(Throws) : Task.FromResult(Riches);
         }
 
+        // The fifth plot type. This class is not about it — see ExobiologyCapabilityTests — but the
+        // interface is one seam and a double has to satisfy all of it.
+        public Task<ExobiologyRoute?> PlotExobiologyAsync(
+            ExobiologyQuery query,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<ExobiologyRoute?>(null);
+
         public Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken)
         {
             LastTrade = query;

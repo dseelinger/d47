@@ -41,6 +41,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Construction sites they have visited (list.md Phase 17).</summary>
     public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
 
+    /// <summary>What their surface scans found on each body (list.md Phase 18).</summary>
+    public BodySignals Bodies { get; private set; } = BodySignals.Empty;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -76,6 +79,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Engineers = Engineers.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
+        Bodies = Bodies.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
 
         // After Location, because the depot event names no system and no station: where the

@@ -84,6 +84,7 @@ public static class BuiltinCapabilities
         ChecklistCapability.Create(checklists),
         ColonisationCapability.Create(() => gameState.Active),
         SystemNameCapability.Create(() => gameState.Active),
+        ExobiologyCapability.Create(routes, () => gameState.Active),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,

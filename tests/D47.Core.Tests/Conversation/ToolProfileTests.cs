@@ -18,6 +18,45 @@ public class ToolProfileTests
     private static D47.Core.Capabilities.CapabilityRegistry Registry(TempInstall install) =>
         TestSurface.For(install).Registry;
 
+    /// <summary>
+    /// The relief valve must stay shut on an ordinary turn.
+    /// <para>
+    /// Degrading is not a graceful fallback — it takes the Commander's controls away — so a profile
+    /// crossing <see cref="ToolProfiles.ComfortableBytes"/> is a regression rather than a mode. This
+    /// existed as a failure nobody could read: adding three capabilities on 2026-08-16 pushed the
+    /// SRV profile to 32,539 bytes against a 32,000 ceiling, and it surfaced as "the SRV's controls
+    /// are missing in the SRV" with nothing pointing at the size. Now the size says so itself.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NoOrdinaryProfileIsBigEnoughToTripTheReliefValve()
+    {
+        using var install = new TempInstall();
+        var registry = Registry(install);
+
+        var contexts = new[]
+        {
+            ControlContext.None, ControlContext.Docked, ControlContext.Landed,
+            ControlContext.NormalSpace, ControlContext.Supercruise, ControlContext.Hyperspace,
+            ControlContext.Srv, ControlContext.OnFoot, ControlContext.Fighter,
+        };
+
+        var over = contexts
+            .Select(context => ToolProfiles.For(registry, context, actionsEnabled: true))
+            .Where(profile => profile.Bytes > ToolProfiles.ComfortableBytes)
+            .Select(profile => $"{profile.Id} at {profile.Bytes}")
+            .ToArray();
+
+        Assert.True(
+            over.Length == 0,
+            $"""
+             These profiles exceed ComfortableBytes ({ToolProfiles.ComfortableBytes}) and will degrade,
+             dropping the Commander's action tools on an ordinary turn: {string.Join(", ", over)}.
+             Either the surface has grown and the constant needs re-measuring, or the tool
+             descriptions that grew it need trimming. See the remark on ComfortableBytes.
+             """);
+    }
+
     [Fact]
     public void TheSameSituationShipsTheSameBytesEveryTime()
     {

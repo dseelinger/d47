@@ -36,6 +36,7 @@ capability's real tool schema.
 | [Engineering](capabilities/engineering.md) | Knowledge | What a blueprint costs and changes, and how the roll on a fitted module actually went. |
 | [Community goals](capabilities/community-goals.md) | Knowledge | What community goals are running, what tier they have reached, and how you are doing in them. |
 | [Checklists](capabilities/checklists.md) | Knowledge | One list of what you are working on — your own lines, your ship builds and your construction sites. |
+| [Exobiology](capabilities/exobiology.md) | Knowledge | Plot a circuit through known biology, and read back what your own surface scan found. |
 | [System names](capabilities/system-names.md) | Knowledge | What a system's name says about it — its sector, its boxel, and the mass code that sizes it. |
 | [Construction tracking](capabilities/colonisation.md) | Knowledge | What your construction sites still need, what you are already carrying towards them, and what is left to haul. |
 | [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
