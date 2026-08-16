@@ -15,6 +15,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
 | [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
 | [colonisation-sources.md](colonisation-sources.md) | Is the construction depot a snapshot or a delta, is there a licence-clean facility table, and can anybody see a claim? |
+| [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
@@ -81,7 +82,7 @@ blueprint under any name**. A negative result is only evidence when the search c
 | **Fandom wiki** | — | read-only reference | The most productive seam by far. Needs a browser (402). |
 | **Frontier update notes and forums** | — | read-only reference | Authoritative and needs a browser (403). The only source that tracks patches. |
 | **Inara** | — | read-only reference | Fetches cleanly. Per-engineer and per-item pages, mod effects, stat ladders. |
-| **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. |
+| **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. **Five plot types now established, not four** — `api/exobiology/route` was found on 2026-08-16 and returns per-body species with counts and per-species values, which is the exobiology prediction half arriving from a service rather than from a table. `from` is echoed back as `source`. |
 | **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 20's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
 | **taleden/edsy** | **CC BY-NC** | **no** | Fails the permissive-only rule, and has no on-foot data anyway. |
 | **gaborauth/ed-colonisation-planner** | **GPL-3.0** | **no** | The only machine-readable facility table found — costs, the seven system attributes, and Update 3's link/economy topology — but it lives in TypeScript source under copyleft. Its own upstream is DaftMav's community spreadsheet. Worth reading for its provenance habits; nothing may be derived from it. |

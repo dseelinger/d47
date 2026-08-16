@@ -13,6 +13,7 @@ be deleted once the answer is written down.
 | `MaterialLineProbe` | Can the material trader's lines be parsed out of EDDiscovery's C#, and do they price real trades? | [docs/spikes/material-lines.md](../docs/spikes/material-lines.md) |
 | `OperationsProbe` | What does a pre-engineered module look like in the journal, and do the blueprint sources know it? | [docs/spikes/operations-pre-engineered.md](../docs/spikes/operations-pre-engineered.md) |
 | `ColonisationProbe` | Is `ColonisationConstructionDepot` a snapshot or a delta, can two sites be open at once, and is a claim visible to anybody? | [docs/spikes/colonisation-sources.md](../docs/spikes/colonisation-sources.md) |
+| `ExobiologyProbe` | Does the mass code predict what pays, what is the first-footfall multiplier, and does `ScanOrganic` carry a position? | [docs/spikes/exobiology-sources.md](../docs/spikes/exobiology-sources.md) |
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.
