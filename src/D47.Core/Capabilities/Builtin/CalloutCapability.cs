@@ -35,6 +35,7 @@ public static class CalloutCapability
     public const string MaterialsKey = "callouts.materials";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
+    public const string ChecklistKey = "callouts.checklist";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -182,6 +183,15 @@ public static class CalloutCapability
                 "enemy territory",
                 s => s.Callouts.RivalTerritory,
                 (s, v) => s with { Callouts = s.Callouts with { RivalTerritory = v } }),
+
+            Toggle(
+                ChecklistKey,
+                "Checklist changes",
+                "A plan item the journal has just changed its mind about, and the last unit a plan needed.",
+                "checklist",
+                "checklist changes",
+                s => s.Callouts.Checklist,
+                (s, v) => s with { Callouts = s.Callouts with { Checklist = v } }),
 
             Toggle(
                 AmbientKey,

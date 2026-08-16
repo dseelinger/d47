@@ -62,6 +62,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private D47.Core.Actions.MacroStore? _macros;
 
     /// <summary>
+    /// The Commander's checklist, for the row that offers the panel. Null under the designer and
+    /// in a test that is not about it, and the button is then absent rather than dead.
+    /// </summary>
+    private D47.Core.Checklists.ChecklistService? _checklists;
+
+    /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
     /// capabilities that declare rows, and a phrase can come from one that does not.
@@ -88,6 +94,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         AppPaths paths,
         Func<CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
+        D47.Core.Checklists.ChecklistService? checklists = null,
         IReadOnlyList<string>? reservedPhrases = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
         Func<Task>? setUpKeys = null)
@@ -100,6 +107,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _paths = paths;
         _coverage = coverage;
         _macros = macros;
+        _checklists = checklists;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -926,6 +934,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == MacroCapability.ListKey && _macros is not null:
                 return BuildMacros(row);
 
+            // The third row that offers a window. A list of things to do is not a settings value
+            // and never could be — and it is where accepting a proposal lives, which is an act
+            // the model is not allowed to perform.
+            case SettingKind.Info when row.Key == ChecklistCapability.SummaryKey && _checklists is not null:
+                return BuildChecklists(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1065,6 +1079,42 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             await new Controls.MacroWindow(_macros) { ReservedPhrases = _reserved }.ShowDialog(owner);
 
             // The editor writes the file; this is what puts the new summary on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// The checklist summary, plus the way into the panel. Built like the macro row above and for
+    /// the same reason: what is behind the button does not belong inline.
+    /// </summary>
+    private (Control, Action, bool) BuildChecklists(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenChecklist",
+            Content = "Open the checklist",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_checklists is null || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.ChecklistWindow(_checklists).ShowDialog(owner);
+
+            // The panel writes the file; this is what puts the new summary on the row without
             // waiting for something else to notice.
             refresh();
         };

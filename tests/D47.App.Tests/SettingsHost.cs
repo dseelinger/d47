@@ -55,6 +55,7 @@ internal sealed class SettingsHost
         AppPaths paths,
         Func<CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
+        D47.Core.Checklists.ChecklistService? checklists = null,
         IReadOnlyList<string>? reservedPhrases = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
         double width = DefaultWidth,
@@ -67,7 +68,7 @@ internal sealed class SettingsHost
         // build is on the path this exercises too.
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths, coverage, macros, reservedPhrases, downloadModel);
+            view.Attach(settings, viewState, paths, coverage, macros, checklists, reservedPhrases, downloadModel);
             return view;
         });
 

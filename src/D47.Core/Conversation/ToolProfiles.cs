@@ -149,6 +149,15 @@ public static class ToolProfiles
 
             foreach (var tool in capability.Descriptor.Tools)
             {
+                // A protected tool is never advertised. Not caution — arithmetic: it would refuse
+                // every call it received, and a refusal advertised in the cached prefix is paid
+                // for on every turn of the session (architecture.md §6). The registry refuses it
+                // again at the call, which is where the guarantee actually lives.
+                if (tool.Protected)
+                {
+                    continue;
+                }
+
                 tools.Add(new ToolAdvertisement(
                     tool.Name,
                     tool.Description,

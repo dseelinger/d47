@@ -1,0 +1,825 @@
+using System.Text;
+using D47.Core.Journal;
+
+namespace D47.Core.Checklists;
+
+/// <summary>Something worth saying out loud about an item whose computed verdict moved.</summary>
+/// <param name="Key">Stable per item, so the callout engine's cooldown does its usual job.</param>
+public sealed record ChecklistNews(string Key, string Text);
+
+/// <summary>
+/// The one place the checklist is read from and written to (list.md Phase 17, "TheApp keeps 'The
+/// Ultimate' checklist").
+/// <para>
+/// <b>"What am I working on" has exactly one answer.</b> The derived lists — a ship's build, a
+/// system's construction — appear on this one surface rather than each growing a surface of its
+/// own, so there is one panel, one set of voice commands, and one thing to fix a bug in.
+/// </para>
+/// <para>
+/// <b>The trust boundary is a property of this class rather than of a file format.</b> Everything
+/// named <c>Propose</c> is reachable by the model and writes only
+/// <see cref="ChecklistProposalStore"/>; everything that changes the Commander's own list is
+/// reachable from the panel and from the model-free keyword router and from nowhere else. That is
+/// the same rule <c>architecture.md</c> §7 states for safety-critical settings: protected is a
+/// property of the caller, not of the modality.
+/// </para>
+/// </summary>
+public sealed class ChecklistService(
+    ChecklistStore list,
+    ChecklistProposalStore proposals,
+    Func<CommanderGameState?> commander)
+{
+    public ChecklistStore List => list;
+
+    public ChecklistProposalStore Proposals => proposals;
+
+    private CommanderGameState? State => commander();
+
+    private string Fid => State?.Identity.FrontierId ?? string.Empty;
+
+    private string? Name => State?.Identity.Name;
+
+    public ChecklistDocument Document => list.For(Fid, Name);
+
+    /// <summary>
+    /// What the journal says about one item right now, or null when nothing can be said. Exposed
+    /// so the panel and the spoken report read the same verdict from the same place rather than
+    /// each holding an opinion about live state.
+    /// </summary>
+    public ChecklistVerdict? Verdict(ChecklistItem item) => ChecklistEvaluator.Evaluate(item, State);
+
+    /// <summary>
+    /// The scope a bare phrase means. "This ship" and "this system" are the two a Commander says
+    /// without naming, and both are answerable from where they are right now.
+    /// </summary>
+    public ChecklistScope ScopeFor(string? group, string? key)
+    {
+        var state = State;
+
+        return group?.Trim().ToLowerInvariant() switch
+        {
+            "ship" => key is { Length: > 0 }
+                ? new ChecklistScope(ChecklistGroup.Ship, key.Trim())
+                : state?.Ship.ShipId is { } id ? ChecklistScope.Ship(id) : ChecklistScope.Universal,
+
+            "system" => key is { Length: > 0 }
+                ? ChecklistScope.System(key)
+                : state?.Location.StarSystem is { } system ? ChecklistScope.System(system) : ChecklistScope.Universal,
+
+            _ => ChecklistScope.Universal,
+        };
+    }
+
+    /// <summary>
+    /// What the journal calls the slot a Commander just named — "thrusters" becoming
+    /// "MainEngines".
+    /// <para>
+    /// <b>Identity, not presentation.</b> Two conversations about the same slot in different words
+    /// have to produce the same item, or a revision reads as the old plan abandoned and an
+    /// identical new one opened beside it. Resolved against the ship they are actually in, because
+    /// that is the only thing that knows; unmatched words stand as given rather than being mapped
+    /// to whichever slot looked closest.
+    /// </para>
+    /// </summary>
+    public string SlotFor(string spoken)
+    {
+        if (State?.Ship is not { } ship || string.IsNullOrWhiteSpace(spoken))
+        {
+            return spoken;
+        }
+
+        var wanted = ChecklistKeys.Compact(spoken);
+
+        if (ship.Modules.FirstOrDefault(module => ChecklistKeys.Compact(module.Slot) == wanted) is { } exact)
+        {
+            return exact.Slot;
+        }
+
+        var byItem = ship.Modules
+            .Where(module => ChecklistKeys.Compact(ModuleNames.Readable(module.Item))
+                .Contains(wanted, StringComparison.Ordinal))
+            .ToList();
+
+        // One match or none. Mapping "shield" onto whichever of four shield boosters came first
+        // would give the Commander an item about a slot they did not mean.
+        return byItem.Count == 1 ? byItem[0].Slot : spoken;
+    }
+
+    /// <summary>The hull to stamp on a ship-scoped item, so a later swap can be called stale.</summary>
+    public string? HullFor(ChecklistScope scope) =>
+        scope.Group == ChecklistGroup.Ship
+        && State?.Ship is { ShipId: { } id, Type: { } type }
+        && scope.Key == id.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            ? type
+            : null;
+
+    // ------------------------------------------------------------- reading
+
+    /// <summary>News waiting to be spoken. Written by <see cref="Poll"/>, read by the callout.</summary>
+    private readonly Queue<ChecklistNews> _news = new();
+
+    /// <summary>
+    /// Takes what is waiting to be said. Separate from <see cref="Poll"/> because the two have
+    /// different masters: polling keeps the list and its verdicts honest and must happen whatever
+    /// the Commander has switched off, while speaking is a callout and is theirs to silence. A
+    /// muted callout that also froze the panel would be a setting doing two things, one of them
+    /// invisible.
+    /// </summary>
+    public IReadOnlyList<ChecklistNews> Drain()
+    {
+        lock (_news)
+        {
+            if (_news.Count == 0)
+            {
+                return [];
+            }
+
+            var taken = _news.ToArray();
+            _news.Clear();
+            return taken;
+        }
+    }
+
+    /// <summary>
+    /// Re-reads both files and brings every derived item's verdict up to date.
+    /// <para>
+    /// <b>A computed tick going backwards is information, not a glitch to hide</b>, so a verdict
+    /// that moves is queued as news and said <em>once</em> — once, because the new verdict is
+    /// written back, and the next tick therefore finds nothing to say.
+    /// </para>
+    /// </summary>
+    /// <param name="announce">
+    /// False on the priming tick, which replays the whole journal backlog. The verdicts are
+    /// folded either way; without this, starting d47 after Elite reads out every plan item the
+    /// journal has ever satisfied, all at once, as though it had just happened.
+    /// </param>
+    public IReadOnlyList<ChecklistNews> Poll(bool announce = true)
+    {
+        list.Poll();
+        proposals.Poll();
+
+        var state = State;
+
+        if (state is null)
+        {
+            return [];
+        }
+
+        Adopt(state);
+
+        var document = list.For(state.Identity.FrontierId, state.Identity.Name);
+        var news = new List<ChecklistNews>();
+        var moved = new List<ChecklistItem>();
+
+        foreach (var item in document.Items)
+        {
+            if (ChecklistEvaluator.Evaluate(item, state) is not { } verdict)
+            {
+                continue;
+            }
+
+            var noted = item.Noted || verdict.State == ChecklistState.Unverified;
+
+            if (verdict.State == item.State && noted == item.Noted)
+            {
+                continue;
+            }
+
+            moved.Add(item with { State = verdict.State, Noted = noted });
+
+            if (verdict.State == item.State)
+            {
+                continue;
+            }
+
+            // An unknown is said once and a contradiction every time — but a contradiction is
+            // only ever *raised* once here, because the state it disagrees with has just been
+            // written down. What repeats is the report, which says it whenever it is read.
+            if (item.IsComplete)
+            {
+                news.Add(new ChecklistNews(
+                    $"checklist.undone.{item.Id}",
+                    $"\"{item.Text}\" is no longer done. {verdict.Reason}"));
+            }
+            else if (verdict.State == ChecklistState.Done)
+            {
+                news.Add(new ChecklistNews($"checklist.done.{item.Id}", $"\"{item.Text}\" is done. {verdict.Reason}"));
+            }
+            else if (verdict.State is ChecklistState.Blocked or ChecklistState.Stale)
+            {
+                news.Add(new ChecklistNews($"checklist.{verdict.State}.{item.Id}", verdict.Reason));
+            }
+        }
+
+        if (announce && news.Count > 0)
+        {
+            lock (_news)
+            {
+                foreach (var item in news)
+                {
+                    _news.Enqueue(item);
+                }
+            }
+        }
+
+        if (moved.Count == 0)
+        {
+            return news;
+        }
+
+        list.Apply(
+            state.Identity.FrontierId,
+            state.Identity.Name,
+            current =>
+            {
+                var updated = current;
+
+                foreach (var item in moved)
+                {
+                    if (updated.Find(item.Id) is not null)
+                    {
+                        updated = updated.WithState(item);
+                    }
+                }
+
+                return new ChecklistChange(updated, Changed: true, "Recomputed.");
+            });
+
+        return news;
+    }
+
+    /// <summary>
+    /// Hands anything written before a Commander was known to the first one who appears.
+    /// <para>
+    /// d47 can be running before Elite is, and the Frontier id only exists once a journal has been
+    /// read — so a line jotted at that point has nobody to belong to. It is kept in an unowned
+    /// document and moved here rather than refused on the way in, because a checklist that quietly
+    /// loses a line is the one failure this store exists to prevent. Keys are re-minted on the way
+    /// across, so nothing collides with what the Commander already had.
+    /// </para>
+    /// </summary>
+    private void Adopt(CommanderGameState state)
+    {
+        if (state.Identity.FrontierId.Length == 0
+            || list.Documents.FirstOrDefault(document => document.CommanderFid.Length == 0)
+                is not { Items.Count: > 0 } unowned)
+        {
+            return;
+        }
+
+        var mine = list.For(state.Identity.FrontierId, state.Identity.Name);
+
+        foreach (var item in unowned.Items)
+        {
+            mine = mine.AddNote(item.Scope, item.Text).Document;
+        }
+
+        list.Save(
+        [
+            .. list.Documents.Where(document =>
+                document.CommanderFid.Length > 0
+                && !string.Equals(document.CommanderFid, mine.CommanderFid, StringComparison.Ordinal)),
+            mine with { CommanderName = state.Identity.Name },
+        ]);
+    }
+
+    /// <summary>
+    /// The checklist as words. <b>Completed items are kept and shown below the open ones with
+    /// their count</b>, because on something that runs for weeks seeing how far you have come is
+    /// most of the point — and forty finished ones must not bury the six still open.
+    /// </summary>
+    public string Report(string? group = null, string? key = null, string? state = null, string? kind = null)
+    {
+        var document = Document;
+        var live = document.Items.Where(item => item.IsLive).ToList();
+
+        if (group is { Length: > 0 })
+        {
+            var scope = ScopeFor(group, key);
+            live = [.. live.Where(item => item.Scope.Same(scope))];
+        }
+
+        if (kind is { Length: > 0 } wantedKind)
+        {
+            live = [.. live.Where(item => item.Kind.ToString().Equals(wantedKind, StringComparison.OrdinalIgnoreCase)
+                                          || item.Source.ToString().Equals(wantedKind, StringComparison.OrdinalIgnoreCase))];
+        }
+
+        var open = live.Where(item => !item.IsComplete).ToList();
+        var done = live.Where(item => item.IsComplete).ToList();
+
+        if (state is { Length: > 0 } wantedState)
+        {
+            var onlyOpen = wantedState.Equals("open", StringComparison.OrdinalIgnoreCase);
+            var onlyDone = wantedState.Equals("complete", StringComparison.OrdinalIgnoreCase)
+                           || wantedState.Equals("done", StringComparison.OrdinalIgnoreCase);
+
+            if (onlyOpen)
+            {
+                done = [];
+            }
+            else if (onlyDone)
+            {
+                open = [];
+            }
+        }
+
+        var report = new StringBuilder();
+
+        if (open.Count == 0 && done.Count == 0)
+        {
+            report.AppendLine(live.Count == 0 && document.Items.Count == 0
+                ? "Your checklist is empty."
+                : "Nothing on your checklist matches that.");
+        }
+
+        foreach (var scope in open.Select(item => item.Scope).Distinct())
+        {
+            report.AppendLine($"{Heading(scope)}:");
+
+            foreach (var item in open.Where(item => item.Scope.Same(scope)))
+            {
+                report.AppendLine("  " + Line(item));
+            }
+        }
+
+        if (done.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine($"Done ({done.Count}):");
+
+            foreach (var item in done)
+            {
+                report.AppendLine("  " + Line(item));
+            }
+        }
+
+        var tombstoned = document.Items.Count(item => !item.IsLive);
+
+        if (tombstoned > 0)
+        {
+            report.AppendLine();
+            report.AppendLine(
+                $"{tombstoned} dropped from earlier versions of a plan, kept so you can see what changed.");
+        }
+
+        foreach (var problem in list.Problems)
+        {
+            report.AppendLine($"Refused: {problem.Where} — {problem.Reason}");
+        }
+
+        var pending = proposals.PendingFor(Fid);
+
+        if (pending.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine($"Waiting for you ({pending.Count}):");
+
+            foreach (var proposal in pending)
+            {
+                report.AppendLine($"  [{proposal.Id}] {proposal.Summary}");
+            }
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// What every live plan still costs, netted across all of them at once (list.md Phase 17, "An
+    /// engineering plan writes the checklist"; and the batching half of Phase 14's "Go and get it",
+    /// which was deferred here because it needs a plan to exist).
+    /// <para>
+    /// <b>Caps run first, and against the exact total rather than a projection.</b> Needing more
+    /// than the cap is a flat certainty — at least two trips, however the rolls go — while
+    /// anything below it is a possibility and has to read like one. And caps are shared, so two
+    /// plans that each fit can be jointly impossible; that is the arithmetic nobody can do in
+    /// their head, and it is the reason this counts every plan rather than one.
+    /// </para>
+    /// <para>
+    /// <b>The three ledgers are totalled apart and never together.</b> Meta-alloys are a material,
+    /// Gold ×200 is two hundred tonnes of cargo, and Opinion Polls ×40 are ship locker — summing
+    /// them produces a feasibility verdict that is nonsense delivered confidently.
+    /// </para>
+    /// </summary>
+    public string Shortfall()
+    {
+        var state = State;
+        var document = Document;
+        var costing = EngineeringPlan.Cost(document.Items, state);
+        var report = new StringBuilder();
+
+        // Caps first. A certainty stated after a list of possibilities reads as one more
+        // possibility, and this one is the only line here that cannot be gathered away.
+        foreach (var over in costing.OverCapacity)
+        {
+            report.AppendLine(
+                $"{over.Material.Name}: your plans need {over.Needed} and you can only hold {over.Capacity}. "
+                + "That is at least two trips whatever happens.");
+        }
+
+        foreach (var gate in costing.Gates)
+        {
+            report.AppendLine(gate);
+        }
+
+        foreach (var ledger in costing.Shortfall.GroupBy(ingredient => ingredient.Material.Ledger))
+        {
+            report.AppendLine();
+            report.AppendLine($"{Ledger(ledger.Key)}:");
+
+            foreach (var ingredient in ledger)
+            {
+                report.AppendLine(
+                    $"  {ingredient.Material.Name}: {ingredient.Short} short ({ingredient.Held} of {ingredient.Needed}).");
+            }
+        }
+
+        // Where to go, grouped by the sourcing string the materials table already carries. A
+        // greedy grouping and said as one — the best cover, not the optimal one, and claiming
+        // otherwise would be claiming an answer nobody computed.
+        var origins = costing.Shortfall
+            .SelectMany(ingredient => ingredient.Material.Origins.Select(origin => (origin, ingredient)))
+            .GroupBy(pair => pair.origin, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .OrderByDescending(group => group.Count())
+            .Take(3)
+            .ToList();
+
+        if (origins.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine("Worth batching — one trip covers several:");
+
+            foreach (var group in origins)
+            {
+                report.AppendLine(
+                    $"  {group.Key}: {string.Join(", ", group.Select(pair => pair.ingredient.Material.Name))}");
+            }
+        }
+
+        if (state is not null)
+        {
+            var owed = ColonisationPlan.Outstanding(state.Colonisation, null);
+
+            if (owed.Count > 0)
+            {
+                report.AppendLine();
+                report.AppendLine("Still to haul, as of your last visit to each site:");
+
+                foreach (var (site, resource) in owed.Take(12))
+                {
+                    report.AppendLine(
+                        $"  {resource.Name}: {resource.Remaining} of {resource.Required} to {site.Where}.");
+                }
+            }
+        }
+
+        // Kept and marked, never refused. A macro refuses an unknown action because it presses
+        // keys; a checklist line presses nothing, so the honest move is to carry it and say what
+        // is not known about it.
+        foreach (var unknown in costing.Uncovered)
+        {
+            report.AppendLine();
+            report.AppendLine(unknown);
+        }
+
+        return report.Length == 0
+            ? "Nothing on your plans is outstanding that I can price."
+            : report.ToString().TrimEnd();
+    }
+
+    private static string Ledger(Knowledge.MaterialLedger ledger) => ledger switch
+    {
+        Knowledge.MaterialLedger.Material => "Materials",
+        Knowledge.MaterialLedger.Cargo => "Cargo, in tonnes",
+        Knowledge.MaterialLedger.RareCargo => "Rare cargo, in tonnes",
+        Knowledge.MaterialLedger.ShipLocker => "Ship locker",
+        _ => "Not in any ledger I recognise",
+    };
+
+    /// <summary>
+    /// The filter row, <b>generated from the three axes rather than hand-listed</b> — kind, source
+    /// and state — so a fourth kind of plan appears without anybody remembering to add it. The
+    /// same relationship the settings surface has to the capability registry: a projection, never
+    /// a parallel list.
+    /// </summary>
+    public IReadOnlyList<string> Filters()
+    {
+        var live = Document.Items.Where(item => item.IsLive).ToList();
+
+        var kinds = live.Select(item => item.Kind.ToString().ToLowerInvariant());
+        var sources = live.Where(item => item.Source != ChecklistSource.Commander)
+            .Select(item => item.Source.ToString().ToLowerInvariant());
+        var scopes = live.Select(item => item.Scope.Group.ToString().ToLowerInvariant());
+        var states = live.Select(item => item.IsComplete ? "complete" : "open");
+
+        return [.. kinds.Concat(sources).Concat(scopes).Concat(states).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    }
+
+    private static string Heading(ChecklistScope scope) => scope.Group switch
+    {
+        ChecklistGroup.Ship => $"Ship {scope.Key}",
+        ChecklistGroup.System => scope.Key ?? "A system",
+        _ => "Everything else",
+    };
+
+    /// <summary>
+    /// One line, carrying its own verdict. A derived item shows what the journal says now rather
+    /// than what was stored, so the two can never silently disagree on screen.
+    /// </summary>
+    private string Line(ChecklistItem item)
+    {
+        var box = item.IsComplete ? "[x]" : "[ ]";
+        var text = $"{box} {item.Text}";
+
+        if (item.Kind == ChecklistItemKind.Authored)
+        {
+            return text;
+        }
+
+        var verdict = ChecklistEvaluator.Evaluate(item, State);
+
+        return verdict is { } known
+            ? $"{text} — {known.Reason}"
+            : $"{text} — {Stale(item)}";
+    }
+
+    private static string Stale(ChecklistItem item) => item.State switch
+    {
+        ChecklistState.Done => "done, as of the last time I could see it.",
+        _ => "I cannot see this right now — you are not in that ship, or have not visited that site.",
+    };
+
+    // ---------------------------------------------- the Commander's own hand
+
+    /// <summary>
+    /// Adds the Commander's own line. <b>Not reachable from the tool surface</b>: the model
+    /// proposes and this commits, which is what keeps a hostile in-game message to a proposal that
+    /// gets declined.
+    /// </summary>
+    public ChecklistChange AddNote(ChecklistScope scope, string text) =>
+        list.Apply(Fid, Name, document => document.AddNote(scope, text));
+
+    public ChecklistChange Complete(ChecklistItemId id) =>
+        list.Apply(Fid, Name, document => document.Complete(id));
+
+    public ChecklistChange Uncomplete(ChecklistItemId id) =>
+        list.Apply(Fid, Name, document => document.Uncomplete(id));
+
+    public ChecklistChange Delete(ChecklistItemId id) =>
+        list.Apply(Fid, Name, document => document.Delete(id));
+
+    public ChecklistChange Revise(
+        ChecklistScope scope,
+        ChecklistSource source,
+        IReadOnlyList<ChecklistItem> items) =>
+        list.Apply(Fid, Name, document => document.Revise(scope, source, items));
+
+    /// <summary>
+    /// Accepts everything waiting. One phrase, because a Commander answering out loud is answering
+    /// the question d47 just asked rather than picking an id off a list.
+    /// </summary>
+    public string Accept(string? id = null)
+    {
+        var taken = TakeOne(id);
+
+        if (taken.Count == 0)
+        {
+            return "There is nothing waiting for you to accept.";
+        }
+
+        var said = new List<string>();
+
+        foreach (var proposal in taken)
+        {
+            said.Add(Apply(proposal).Report);
+        }
+
+        return string.Join(" ", said);
+    }
+
+    public string Decline(string? id = null)
+    {
+        var taken = TakeOne(id);
+
+        return taken.Count == 0
+            ? "There is nothing waiting for you to decline."
+            : $"Dropped {taken.Count} proposal{(taken.Count == 1 ? string.Empty : "s")}.";
+    }
+
+    /// <summary>
+    /// The named proposal, or every one waiting. Named is the panel's route and "every one
+    /// waiting" is the spoken one, because a Commander answering out loud is answering the
+    /// question that was just asked rather than reading an id back.
+    /// </summary>
+    private IReadOnlyList<ChecklistProposal> TakeOne(string? id)
+    {
+        if (id is not { Length: > 0 })
+        {
+            return proposals.Take(Fid);
+        }
+
+        return proposals.Take(Fid, id) is { } one ? [one] : [];
+    }
+
+    private ChecklistChange Apply(ChecklistProposal proposal)
+    {
+        var target = new ChecklistItemId(proposal.Scope, proposal.TargetKey ?? string.Empty);
+
+        return proposal.Kind switch
+        {
+            ProposalKind.Plan => Revise(proposal.Scope, proposal.Source, proposal.Items),
+            ProposalKind.Complete => Complete(target),
+            ProposalKind.Reopen => Uncomplete(target),
+            ProposalKind.Remove => Delete(target),
+            _ => AddAll(proposal),
+        };
+    }
+
+    /// <summary>
+    /// Adds every line a proposal carried, one at a time so each gets its own minted key — and
+    /// reports what each one did rather than only the last. A proposal of three lines where the
+    /// second is refused must not read as though all three landed.
+    /// </summary>
+    private ChecklistChange AddAll(ChecklistProposal proposal)
+    {
+        if (proposal.Items.Count == 0)
+        {
+            return ChecklistChange.Refused(Document, "There was nothing to add.");
+        }
+
+        var said = new List<string>();
+        var moved = false;
+
+        foreach (var item in proposal.Items)
+        {
+            var change = AddNote(proposal.Scope, item.Text);
+            moved |= change.Changed;
+            said.Add(change.Report);
+        }
+
+        return new ChecklistChange(Document, moved, string.Join(" ", said));
+    }
+
+    // ------------------------------------------------- what the model may do
+
+    /// <summary>
+    /// Records a proposal to add lines. Model-callable, and it writes the proposals file rather
+    /// than the Commander's list.
+    /// </summary>
+    public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines)
+    {
+        var wanted = lines
+            .Select(line => line.Trim())
+            .Where(line => line.Length is > 0 and <= ChecklistLimits.MaxTextLength)
+            .Take(ChecklistLimits.MaxPendingProposals)
+            .ToList();
+
+        if (wanted.Count == 0)
+        {
+            return "There was nothing to propose.";
+        }
+
+        var items = wanted.Select((line, index) => new ChecklistItem
+        {
+            Key = ChecklistKeys.NotePrefix + "proposed-" + index.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Scope = scope,
+            Kind = ChecklistItemKind.Authored,
+            Text = line,
+            Provenance = ChecklistProvenance.Quoted,
+        }).ToList();
+
+        var summary = wanted.Count == 1
+            ? $"Add \"{wanted[0]}\" to the {scope} list"
+            : $"Add {wanted.Count} lines to the {scope} list";
+
+        return Record(new ChecklistProposal
+        {
+            Id = "pending",
+            CommanderFid = Fid,
+            Kind = ProposalKind.Add,
+            Scope = scope,
+            Summary = Trim(summary),
+            Items = items,
+        });
+    }
+
+    /// <summary>
+    /// Proposes that a line is finished, re-opened or gone. <b>The whole of item five</b>: where
+    /// the journal can tell, d47 asks and marks only after the Commander agrees, because a line
+    /// they wrote in their own words is something no table can settle.
+    /// </summary>
+    public string ProposeChange(string phrase, ProposalKind change)
+    {
+        if (Document.Match(phrase) is not { } item)
+        {
+            return $"I could not tell which item \"{phrase}\" means.";
+        }
+
+        if (!item.TicksByHand)
+        {
+            // Observing rather than asserting. A derived item's state is read out of the journal
+            // and simply stated; there is nothing here for the Commander to agree to.
+            var verdict = ChecklistEvaluator.Evaluate(item, State);
+
+            return verdict is { } known
+                ? $"\"{item.Text}\" is worked out from your journal rather than agreed: {known.Reason}"
+                : $"\"{item.Text}\" is worked out from your journal, and I cannot see it from here.";
+        }
+
+        var said = change switch
+        {
+            ProposalKind.Reopen => $"Re-open \"{item.Text}\"",
+            ProposalKind.Remove => $"Remove \"{item.Text}\" from the list",
+            _ => $"Mark \"{item.Text}\" done",
+        };
+
+        return Record(new ChecklistProposal
+        {
+            Id = "pending",
+            CommanderFid = Fid,
+            Kind = change,
+            Scope = item.Scope,
+            TargetKey = item.Key,
+            Summary = Trim(said),
+        });
+    }
+
+    /// <summary>
+    /// Proposes what a plan should say about one <em>subject</em> — one slot, one place — and
+    /// leaves everything else the plan says alone.
+    /// <para>
+    /// <b>That is what makes a revision a diff rather than a rebuild.</b> "Burst lasers instead of
+    /// multi-cannons" is a statement about one hardpoint; applying it as a whole-plan replacement
+    /// would tombstone the shield boosters nobody mentioned. So the proposal carries the plan's
+    /// whole item set with just that subject rewritten, and <see cref="ChecklistDocument.Revise"/>
+    /// does the diffing it always did.
+    /// </para>
+    /// <para>
+    /// Pending proposals for the same plan are folded in as well, so two builds proposed in one
+    /// breath and accepted together do not have the second silently undo the first.
+    /// </para>
+    /// </summary>
+    /// <param name="replacing">
+    /// The subjects this proposal has an opinion about. Anything the plan currently says about one
+    /// of these and this proposal does not repeat is being dropped on purpose.
+    /// </param>
+    public string ProposePlan(
+        ChecklistScope scope,
+        ChecklistSource source,
+        IReadOnlyList<ChecklistItem> items,
+        IReadOnlyCollection<string> replacing)
+    {
+        var touched = replacing.Select(ChecklistKeys.Compact).ToHashSet(StringComparer.Ordinal);
+
+        var standing = Document.Items
+            .Where(item => item.IsLive && item.Scope.Same(scope) && item.Source == source)
+            .Concat(proposals.PendingFor(Fid)
+                .Where(proposal => proposal.Kind == ProposalKind.Plan
+                                   && proposal.Scope.Same(scope)
+                                   && proposal.Source == source)
+                .SelectMany(proposal => proposal.Items))
+            .Where(item => item.Intent is { } intent && !touched.Contains(ChecklistKeys.Compact(intent.Subject)))
+            .ToList();
+
+        var wanted = standing
+            .Concat(items)
+            .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .ToList();
+
+        if (wanted.Count == 0)
+        {
+            return "That would leave the plan empty, and I would rather you dropped it from the panel.";
+        }
+
+        var said = items.Count == 0
+            ? $"Drop {string.Join(", ", replacing)} from the {scope} plan"
+            : $"Set the {scope} plan's {string.Join(", ", replacing)} to {string.Join("; ", items.Select(item => item.Text))}";
+
+        return Record(new ChecklistProposal
+        {
+            Id = "pending",
+            CommanderFid = Fid,
+            Kind = ProposalKind.Plan,
+            Scope = scope,
+            Source = source,
+            Items = wanted,
+            Summary = Trim(said),
+        });
+    }
+
+    private string Record(ChecklistProposal proposal)
+    {
+        if (proposals.Add(proposal) is { } refused)
+        {
+            return refused;
+        }
+
+        return $"{proposal.Summary}? Say \"accept the proposal\" and I will, or \"decline the proposal\" and I will not. "
+               + "I cannot make this change myself.";
+    }
+
+    private static string Trim(string text) =>
+        text.Length <= ChecklistLimits.MaxTextLength ? text : text[..ChecklistLimits.MaxTextLength];
+}

@@ -38,6 +38,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Which Power they fly for, if any (list.md Phase 15).</summary>
     public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
 
+    /// <summary>Construction sites they have visited (list.md Phase 17).</summary>
+    public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
+
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
@@ -67,6 +70,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Session = Session.Apply(journalEvent);
+
+        // After Location, because the depot event names no system and no station: where the
+        // Commander is standing is the only thing that can say where the site is, and the event
+        // arrives while docked at it (measured, 6,307 of 6,330).
+        Colonisation = Colonisation.Apply(journalEvent, Location.StarSystem, Location.StationName);
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather
         // than the one they were in a moment ago. Elite's CrewAssign names no ship at all, so

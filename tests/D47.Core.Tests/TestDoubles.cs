@@ -150,6 +150,27 @@ public sealed class TestSurface
 
     public KeywordRouter Router => new(Registry);
 
+    /// <summary>
+    /// A checklist service over a throwaway install. Real stores over real (empty) files: the
+    /// trust boundary is two files, and a double that collapsed them into one would be a double
+    /// that cannot fail the way the shipped thing can.
+    /// </summary>
+    public static D47.Core.Checklists.ChecklistService Checklists(
+        AppPaths paths,
+        GameStateStore? gameState = null)
+    {
+        var state = gameState ?? new GameStateStore();
+
+        return new D47.Core.Checklists.ChecklistService(
+            new D47.Core.Checklists.ChecklistStore(
+                Path.Combine(paths.Data, "checklist.json"),
+                NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
+            new D47.Core.Checklists.ChecklistProposalStore(
+                Path.Combine(paths.Data, "checklist-proposals.json"),
+                NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
+            () => state.Active);
+    }
+
     public static TestSurface For(
         TempInstall install,
         GameStateStore? gameState = null,
@@ -183,7 +204,8 @@ public sealed class TestSurface
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            personas ?? new D47.Core.Persona.PersonaHost()));
+            personas ?? new D47.Core.Persona.PersonaHost(),
+            Checklists(install.Paths, state)));
 
         built = registry;
 

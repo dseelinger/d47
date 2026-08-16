@@ -90,5 +90,26 @@ public sealed record ToolDefinition
     /// </summary>
     public IReadOnlyList<ToolCommandPhrase> Commands { get; init; } = [];
 
+    /// <summary>
+    /// Never callable by the model — the panel, a hotkey and the model-free keyword router reach
+    /// it, the LLM path does not.
+    /// <para>
+    /// The same rule <see cref="SettingRow.Protected"/> already carries, and the same reason:
+    /// journal text and in-game messages are untrusted (architecture.md §7), so anything the model
+    /// can call, a hostile in-game message can attempt to invoke. It arrived on tools when the
+    /// checklist did (list.md Phase 17), which is the first capability whose <em>write</em> path
+    /// has to be model-free while its read path stays open.
+    /// </para>
+    /// <para>
+    /// Enforced in two places because advertising and calling are two different things.
+    /// <see cref="Conversation.ToolProfiles"/> leaves it out of the advertisement, so no cached
+    /// prefix pays for a tool that would refuse; and <see cref="CapabilityRegistry.InvokeAsync"/>
+    /// refuses it outright when the caller is the model, so a name recalled from anywhere else
+    /// still cannot reach the handler. Advertisement alone would be a lock on the front door and
+    /// none on the back.
+    /// </para>
+    /// </summary>
+    public bool Protected { get; init; }
+
     public required ToolHandler Handler { get; init; }
 }

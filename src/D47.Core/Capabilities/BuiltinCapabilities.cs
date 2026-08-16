@@ -37,6 +37,7 @@ public static class BuiltinCapabilities
         Builtin.NavigationSurface navigation,
         Actions.MacroStore macros,
         Persona.PersonaHost personas,
+        Checklists.ChecklistService checklists,
 
         // What was found in the Commander's own audio folder, and what was skipped. Null under
         // the designer and in a test that is not about it, and the row is then absent.
@@ -80,6 +81,7 @@ public static class BuiltinCapabilities
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
+        ChecklistCapability.Create(checklists),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,

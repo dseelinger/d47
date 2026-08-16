@@ -16,6 +16,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
 | [colonisation-sources.md](colonisation-sources.md) | Is the construction depot a snapshot or a delta, is there a licence-clean facility table, and can anybody see a claim? |
 | [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
+| [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that

@@ -469,6 +469,7 @@ public partial class MainWindow : Window
                 _host.Paths,
                 _host.CoverageRecorder is { } recorder ? recorder.Report : null,
                 _host.Macros,
+                _host.Checklists,
                 _host.ReservedPhrases,
 
                 // The choice is the go-ahead: it states its size in the list it was made from,

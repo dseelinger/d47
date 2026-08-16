@@ -19,6 +19,20 @@ public sealed class RegisteredCapability
 
 public sealed class CapabilityRegistrationException(string message) : Exception(message);
 
+/// <summary>
+/// Who is making a tool call. <b>Protected is a property of the caller, not of the modality</b>
+/// (architecture.md §7): the same tool the panel and the keyword router may run is one the model
+/// may not, and the only thing that can tell those apart is who asked.
+/// </summary>
+public enum ToolCaller
+{
+    /// <summary>The panel, a hotkey, or the model-free keyword router. Trusted, because a person.</summary>
+    Commander,
+
+    /// <summary>The language model, which reads untrusted text and is therefore refused.</summary>
+    Model,
+}
+
 /// <summary>One tool call and how it went.</summary>
 /// <param name="Succeeded">
 /// Whether the capability's own handler came back clean.
@@ -151,10 +165,16 @@ public sealed partial class CapabilityRegistry
     /// A handler that throws becomes an error result rather than taking the turn down: a
     /// capability failing is a state, not a crash (list.md Phase 3).
     /// </summary>
+    /// <param name="caller">
+    /// Who asked. Defaults to <see cref="ToolCaller.Commander"/> because the panel and the
+    /// model-free router are the callers that need no qualification; the model path says so
+    /// explicitly, and that is what makes <see cref="ToolDefinition.Protected"/> mean anything.
+    /// </param>
     public async Task<ToolResult> InvokeAsync(
         string toolName,
         ToolArguments arguments,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ToolCaller caller = ToolCaller.Commander)
     {
         if (!_byToolName.TryGetValue(toolName, out var found))
         {
@@ -162,6 +182,15 @@ public sealed partial class CapabilityRegistry
         }
 
         var tool = found.Tool;
+
+        // Before the use is counted and before anything is validated: a refused call is not a use
+        // of the capability, and there is nothing to validate on a call that will not be made.
+        if (tool.Protected && caller == ToolCaller.Model)
+        {
+            return ToolResult.Error(
+                $"'{toolName}' is not something I can do on my own — the Commander performs it from the "
+                + "panel or by saying so directly.");
+        }
 
         // Counted on the attempt rather than on success. A capability the Commander keeps
         // reaching for is one worth ranking highly even on the days it fails.

@@ -415,6 +415,13 @@ public sealed record CalloutSettings
     /// <summary>Flying in a rival Power's space (list.md Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 
+    /// <summary>
+    /// A checklist item the journal has just changed its mind about, and the last unit a plan
+    /// needed (list.md Phase 17). On, because a computed tick going backwards is something the
+    /// Commander wants to know rather than a glitch to hide.
+    /// </summary>
+    public bool Checklist { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

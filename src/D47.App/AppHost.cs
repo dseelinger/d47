@@ -12,6 +12,7 @@ using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
@@ -253,6 +254,13 @@ public sealed class AppHost : IDisposable
     public MacroStore Macros { get; private set; } = null!;
 
     /// <summary>
+    /// The Commander's checklist, and the proposals waiting on it (list.md Phase 17). The panel
+    /// writes through this like the macro editor does — and it is the surface that accepts a
+    /// proposal, which is an act the model is not allowed to perform.
+    /// </summary>
+    public ChecklistService Checklists { get; private set; } = null!;
+
+    /// <summary>
     /// Every phrase d47 already answers to, so the macro editor can refuse one that would
     /// shadow a built-in command. Computed once: the registry is immutable.
     /// </summary>
@@ -406,7 +414,24 @@ public sealed class AppHost : IDisposable
         var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
-        var callouts = BuildCallouts(loaded, loggerFactory);
+        // The Commander's checklist and the proposals waiting on it, in two files beside the
+        // executable (list.md Phase 17). Two files rather than one because the trust boundary is
+        // the point: the model writes proposals and never the list, and that is inspectable by
+        // opening data\ rather than by reading this file.
+        //
+        // Built here, before the callouts, because the checklist has a callout of its own and the
+        // priming tick below has to fold the journal backlog into it silently — exactly as the
+        // material milestones are primed.
+        var checklists = new ChecklistService(
+            new ChecklistStore(
+                Path.Combine(paths.Data, "checklist.json"),
+                loggerFactory.CreateLogger<ChecklistStore>()),
+            new ChecklistProposalStore(
+                Path.Combine(paths.Data, "checklist-proposals.json"),
+                loggerFactory.CreateLogger<ChecklistProposalStore>()),
+            () => gameState.Active);
+
+        var callouts = BuildCallouts(loaded, loggerFactory, checklists);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -426,6 +451,11 @@ public sealed class AppHost : IDisposable
             var events = journal.Poll();
             status.Poll();
             route.Poll();
+
+            // Before the callouts and inside this subscriber, so a verdict recomputed from this
+            // tick's events is announced on this tick rather than the next. Polled unconditionally
+            // — the checklist callout can be switched off, and the list must stay honest anyway.
+            checklists.Poll(announce: !context.IsFirst);
 
             var calloutContext = new CalloutContext(
                 context.Now,
@@ -684,6 +714,7 @@ public sealed class AppHost : IDisposable
                 },
                 macros,
                 personas,
+                checklists,
                 () => (self?.Cues ?? cues).DescribeDrops(),
                 coverage is null ? null : () => coverage.Report().Summary,
 
@@ -747,7 +778,9 @@ public sealed class AppHost : IDisposable
 
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
-                Join(ActionCapabilities.Describe(actionSurface), MacroCapability.Live(macros))),
+                Join(
+                    ActionCapabilities.Describe(actionSurface),
+                    Join(MacroCapability.Live(macros), ChecklistCapability.Live(checklists)))),
         };
 
         var host = self = new AppHost(
@@ -826,6 +859,7 @@ public sealed class AppHost : IDisposable
         settings.Changed += host.OnSettingsChanged;
 
         host.Macros = macros;
+        host.Checklists = checklists;
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
         host.CoverageRecorder = coverage;
@@ -930,7 +964,10 @@ public sealed class AppHost : IDisposable
     /// announcement order within one tick, which is why danger comes first: an interdiction and
     /// a route progress report arriving together should not be spoken the other way round.
     /// </summary>
-    private static CalloutEngine BuildCallouts(D47Settings settings, ILoggerFactory loggers)
+    private static CalloutEngine BuildCallouts(
+        D47Settings settings,
+        ILoggerFactory loggers,
+        ChecklistService checklists)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -953,6 +990,12 @@ public sealed class AppHost : IDisposable
             // it. Both are announcements in somebody else's voice rather than d47's, which is
             // what Announcement.Voice exists to carry.
             .Add(new CarrierCallout())
+
+            // Phase 17. A computed tick going backwards is information rather than a glitch to
+            // hide, and it is said once — the recomputed verdict is written down as it is
+            // announced. Below the danger family, because a plan item un-completing can wait for
+            // the shooting to stop.
+            .Add(new ChecklistCallout(checklists))
 
             // Low on purpose. It is a standing condition rather than news, and it stands down for
             // anything above it — a remark about enemy territory arriving as somebody opens fire
@@ -990,6 +1033,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("materials", callouts.Materials);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory);
+        engine.SetEnabled("checklist", callouts.Checklist);
         engine.SetEnabled("ambient", callouts.Ambient);
 
         foreach (var callout in engine.Callouts)

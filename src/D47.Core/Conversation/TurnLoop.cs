@@ -430,8 +430,15 @@ public sealed class TurnLoop(
             {
                 yield return new TurnEvent.ToolStarted(call.Name);
 
+                // The one call site that says Model. Everything else reaching the registry came
+                // from the panel, a hotkey or the model-free router, and a protected tool is
+                // refused here rather than merely left out of the advertisement.
                 var result = await capabilities
-                    .InvokeAsync(call.Name, ToolArguments.FromJson(call.InputJson), cancellationToken)
+                    .InvokeAsync(
+                        call.Name,
+                        ToolArguments.FromJson(call.InputJson),
+                        cancellationToken,
+                        ToolCaller.Model)
                     .ConfigureAwait(false);
 
                 logger.LogInformation(

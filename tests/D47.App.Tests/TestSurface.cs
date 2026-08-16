@@ -106,6 +106,17 @@ public static class TestSurface
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
+
+            // Real stores over real (empty) files. The trust boundary is two files, and a double
+            // that collapsed them into one could not fail the way the shipped thing can.
+            new D47.Core.Checklists.ChecklistService(
+                new D47.Core.Checklists.ChecklistStore(
+                    Path.Combine(paths.Data, "checklist.json"),
+                    NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
+                new D47.Core.Checklists.ChecklistProposalStore(
+                    Path.Combine(paths.Data, "checklist-proposals.json"),
+                    NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
+                () => null),
             coverage: coverage));
 
         built = registry;

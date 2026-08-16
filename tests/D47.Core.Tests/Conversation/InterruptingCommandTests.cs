@@ -43,7 +43,8 @@ public class InterruptingCommandTests
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost()));
+            new D47.Core.Persona.PersonaHost(),
+            TestSurface.Checklists(install.Paths)));
 
         built = registry;
 
@@ -202,7 +203,8 @@ public class InterruptingCommandTests
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost()));
+            new D47.Core.Persona.PersonaHost(),
+            TestSurface.Checklists(install.Paths)));
 
         built = registry;
 
@@ -247,7 +249,8 @@ public class InterruptingCommandTests
             new D47.Core.Actions.MacroStore(
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost()));
+            new D47.Core.Persona.PersonaHost(),
+            TestSurface.Checklists(install.Paths)));
 
         built = registry;
 

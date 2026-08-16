@@ -161,6 +161,32 @@ something to you. The message a Power's security sends does exist and does name 
 arrives about a second before the shot, which is a caption rather than a warning. So this says the
 thing it actually knows — that where you are is hostile — instead of implying somebody is close.
 
+### Checklist changes {#checklist}
+
+Two moments from your checklist, both of which happen while you are doing something else.
+
+**A plan item the journal has changed its mind about.** Selling the engineered multi-cannon
+un-completes the item that was tracking it, and Directive 47 says so — *once*, because the new
+verdict is written down as it is announced:
+
+```text
+"Grade 5 Overcharged on Hardpoint 1" is no longer done. Nothing is fitted in Hardpoint 1.
+```
+
+A computed tick going backwards is information rather than a glitch to hide. You would otherwise
+find out by reading a list that had quietly changed under you.
+
+**The last unit a plan needed.** Netted across every live plan, because storage caps are shared and
+a shopping trip is a trip for everything:
+
+```text
+That is the last Cadmium your plans needed. 12 of 12.
+```
+
+Switching this off silences both. It does not freeze the list — the verdicts stay up to date and the
+panel keeps showing them; a setting that did two things, one of them invisible, would be the wrong
+setting.
+
 ## Settings
 
 ### Speak without being asked {#enabled}

@@ -193,3 +193,36 @@ the halves drift, so that "what am I working on" has two answers depending on wh
 is genuinely different between a ship plan and a system plan is the key and the table behind it.
 
 **Release:** these items span two phases, so neither closes on this work alone.
+
+---
+
+## What shipped, 2026-08-16
+
+Phase 17 is closed. The substrate is one capability (`checklists`), one service, two files, and one
+panel; the ship plan and the colonisation plan are two keys into it, as this plan said they would be.
+
+**Item identity survived contact, but only just.** The design here — content-addressed on the intent,
+never on position — is right and is what makes revision a diff. What it did not say is that the
+*spelling* of the subject is part of identity too: `MainEngines` and "main engines" produced different
+keys, so a plan restated in a differently-worded conversation would have read as every item tombstoned
+and an identical set opened, which is precisely the failure the whole decision exists to prevent. Two
+fixes: keys compare with separators stripped, and a spoken slot is resolved against the live `Loadout`
+before it is keyed, so "thrusters" and `MainEngines` are one item. A test found this, not a Commander.
+
+**The planning half of the ship build has a gap this plan did not anticipate.** Elite never localises
+a blueprint name — that was already measured and already documented in `EngineeringCapability` — and
+**nothing d47 ships joins `Engine_Dirty` to "Dirty Drive Tuning"**. So "checked against the `Loadout`"
+holds for the slot, the grade and whether the grade is finished, and does not hold for the name. The
+comparison answers true or *cannot say* and never false, because guessing false would tell a Commander
+their finished module is unfinished. Where the looking stopped is
+[../spikes/blueprint-name-join.md](../spikes/blueprint-name-join.md), including the one place nobody
+opened.
+
+**The trust boundary needed a new flag.** `ToolDefinition.Protected` is the tool-level twin of the
+settings-row flag that already existed, and it is enforced twice — left out of the advertisement so no
+cached prefix pays for a refusal, and refused at the call when the caller is the model, because
+advertisement alone is a lock on the front door and none on the back.
+
+**And the depot fold was built here rather than in Phase 18.** The colonisation plan needs something
+to diff against, and this plan's own order table put tracking first — which it was not. `ColonisationSites`
+is the state; Phase 18's item is the reporting surface over it and is still open.
