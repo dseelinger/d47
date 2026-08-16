@@ -18,6 +18,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
 | [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 | [elevenlabs-voice-sources.md](elevenlabs-voice-sources.md) | What does an ElevenLabs account's voice list actually hold, is the picker empty on a fresh one, and does the named default survive? |
+| [screen-reading-licence-and-rules.md](screen-reading-licence-and-rules.md) | What do the computer-vision candidates *and their native payloads* actually license as, and does reading the screen sit inside Frontier's published rules? |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
@@ -39,6 +40,14 @@ of which had been written down as unobtainable.
 A related trap, hit three times: **a search-engine excerpt is not the page.** Each time an excerpt
 was checked against the page it came from, it differed — most sharply on a suit mod's figure, where
 the excerpt said 33% and the page said 25%.
+
+**`www.frontier.co.uk/legal/…` answers 403 as well**, found 2026-08-16 — which is where the EULA and
+the Mod Policy live, the only *binding* documents in any of this. A fetch-only pass concludes that
+Frontier publishes no rules at all, the exact opposite of the truth. See
+[screen-reading-licence-and-rules.md](screen-reading-licence-and-rules.md) §10, which also adds a
+costume nobody had seen: **a fetch that succeeds and returns unreadable bytes.** Frontier's Player
+Journal manual is a PDF, and the most load-bearing quotation in that page sat inside 1.5 MB of
+compressed streams until the text was extracted. Not a 403 — and the same mistake.
 
 So the order of attack is: **browser first, then the file, then the excerpt, and never conclude
 absence from a fetch failure.** If it still cannot be found, say where the search stopped rather
