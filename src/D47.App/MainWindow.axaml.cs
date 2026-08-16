@@ -654,7 +654,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Downloads the new build, verifies it, puts it where this one is and starts it
-    /// (list.md Phase 18: "the user is given an opportunity to exit, install it, and restart").
+    /// (list.md Phase 19: "the user is given an opportunity to exit, install it, and restart").
     /// <para>
     /// Every failure ends at the release page rather than at a dead end — the Commander asked to
     /// be updated, and the browser is the path that always works. The reason is said out loud

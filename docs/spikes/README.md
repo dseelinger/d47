@@ -15,7 +15,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
 | [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
 
-The three engineering pages back Phase 14 `#102`, Phase 16 and Phase 19 in
+The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
 research on.
 
@@ -81,7 +81,7 @@ blueprint under any name**. A negative result is only evidence when the search c
 | **Frontier update notes and forums** | — | read-only reference | Authoritative and needs a browser (403). The only source that tracks patches. |
 | **Inara** | — | read-only reference | Fetches cleanly. Per-engineer and per-item pages, mod effects, stat ladders. |
 | **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. |
-| **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 19's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
+| **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 20's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
 | **taleden/edsy** | **CC BY-NC** | **no** | Fails the permissive-only rule, and has no on-foot data anyway. |
 
 ## The licensing question, and the decision taken on it

@@ -71,16 +71,25 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-14 are frozen.** Several hundred code comments cite
+- **Phase numbers are references, and phases 1-15 are frozen.** Several hundred code comments cite
   `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
-  phase silently repoints them at the wrong item. The unfinished tail, 15 onward, was renumbered
-  **once**, on 2026-08-15, into the build order recorded in
-  [docs/plans/build-order.md](docs/plans/build-order.md), which carries the old-to-new mapping for
-  anything written before that. It cost three code comments and a file rename, and it was cheap only
-  because those phases were unbuilt. **From here new phases are appended**, and a phase that has
-  shipped anything is not renumbered again. Moving items *between* unbuilt phases stays free and
-  encouraged when a phase stops being one subject — a phase is a minor release, so one that cannot
-  be finished holds its ready items hostage.
+  phase silently repoints them at the wrong item. Phase 15 joined the frozen set the day it shipped,
+  at 22 citations across 18 files; the set only ever grows.
+  The unfinished tail was renumbered **twice on 2026-08-15** — once into build order, and once again
+  when three items were pulled into a new Phase 16 so the running order is the numbers themselves
+  rather than a paragraph explaining them. Both passes are recorded with their mapping in
+  [docs/plans/build-order.md](docs/plans/build-order.md). They were cheap only because those phases
+  were unbuilt. **From here new phases are appended**, and a phase that has shipped anything is not
+  renumbered again. Moving items *between* unbuilt phases stays free and encouraged when a phase
+  stops being one subject — a phase is a minor release, so one that cannot be finished holds its
+  ready items hostage.
+- **Renumbering: remap the numbers mechanically, then check the moved items by hand.** Both passes
+  moved every number correctly and both got the same thing wrong: a citation naming an *item* that
+  changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,
+  reported by nothing. Map through placeholders exactly once per file so no replacement can re-consume
+  its own output, cover the prose forms (`Phases 17, 19 and 20` matches no pattern looking for
+  `Phase` + space + digit), and then re-read every citation of an item that moved. That last step is
+  not automatable; it is the only one that matters.
 - **Order within a phase is subject grouping; execution order lives in the plan.** `list.md`
   reads top to bottom as a description of the product, not as a schedule — Phase 14 shipped its
   ninth item as step 12 of 13. When sequence matters, it belongs in `docs/plans/`, which is where

@@ -1,8 +1,8 @@
-# Phase 17 — exobiology, from the Galaxy Map to the sample
+# Phase 18 — exobiology, from the Galaxy Map to the sample
 
 ## Context
 
-`list.md` Phase 17 carried one line about exobiology: genus, spacing, and what has already been
+`list.md` Phase 18 carried one line about exobiology: genus, spacing, and what has already been
 scanned. That is the last thing a Commander does, and the item said nothing about the four hours
 before it — finding somewhere worth going.
 
@@ -165,7 +165,7 @@ The original item, with three things that were not in it:
 panel is open and `SAASignalsFound` says what the body holds; nothing says which entry is
 highlighted, and in VR the panel is in world space, so there is no fixed place on the screen to
 look. The reachable half is naming the genera and asking which is being hunted — one question,
-remembered, working identically in the headset. The screen-reading branch is Phase 21 and is
+remembered, working identically in the headset. The screen-reading branch is Phase 22 and is
 deliberately not a dependency of anything here.
 
 ---
@@ -183,14 +183,25 @@ deliberately not a dependency of anything here.
 
 ## Order and dependencies
 
+**The spike is no longer in this phase.** On 2026-08-15 it moved into **Phase 16**, with the
+colonisation spike and the first-run key prompt, precisely because it gates everything below it and
+a gate inside the thing it gates is not a gate. Nothing else about this plan changed: the spike is
+the same five questions, asked in the same order, and its findings land here.
+
+That is also the one thing a renumber cannot get right by itself. Every other number on this page
+moved with its phase; this one moved *against* it, because the item left rather than the phase
+shifting. A remap that carried it faithfully to Phase 18 would have been wrong in the way that is
+hardest to notice — a citation that still resolves, to the wrong place.
+
 The spike gates everything except the position plumbing, which can start immediately and is the
 longest pole in *Exobiology sampling*. *Read a system name* needs only question 3 and is otherwise
 free-standing — it is the shortest path to something useful, and the only item that works with no
 network at all. *Find the exobiology* needs question 1 for its route half and nothing for its
-arithmetic half, so it can ship in two pieces. Nothing here needs Phase 21.
+arithmetic half, so it can ship in two pieces. Nothing here needs Phase 22.
 
-**Release:** these four items are part of Phase 17, not all of it — colonisation and the prospector
-callouts are still open, so finishing them is a patch and the minor waits for the phase. The two
-warnings that used to sit here moved to Phase 15, so they no longer gate this one and it no longer
-gates them. The maintainer has flagged colonisation as closer to engineering in complexity and it
-gets its own plan.
+**Release:** the three items left here are part of Phase 18 rather than all of it — colonisation and
+the prospector callouts are still open, so finishing them is a patch and the minor waits for the
+phase. The spike ships with Phase 16 and does not carry a release of its own; a findings page is not
+a capability. The two warnings that used to sit here moved to Phase 15, so they no longer gate this
+one and it no longer gates them. The maintainer has flagged colonisation as closer to engineering in
+complexity and it gets its own plan.

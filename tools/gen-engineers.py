@@ -93,7 +93,7 @@ COLUMNS = [
 # in the same blueprint list and would otherwise appear in the directory as people.
 #
 # The plan for this step asked for the `@Merchant` rows to be emitted here rather than dropped,
-# on the grounds that they are Phase 19's entire on-foot vocabulary. They are — and `Blueprints.tsv`
+# on the grounds that they are Phase 20's entire on-foot vocabulary. They are — and `Blueprints.tsv`
 # already carries all 56 of them as `kind=merchant`, with full recipes, which did not exist when
 # that was written. Emitting them a second time would put four pseudo-people into a directory of
 # people to duplicate a table that already has them, so the filter stays.

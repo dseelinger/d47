@@ -2,10 +2,10 @@
 
 ## Context
 
-Colonisation was one line in Phase 17 — commodity requirements and delivered-so-far. The maintainer
+Colonisation was one line in Phase 18 — commodity requirements and delivered-so-far. The maintainer
 scoped it out on 2026-08-15 into three asks: **find a target, plan it, execute it.** That is the
 same triple engineering has, and engineering's plan-and-execute half was already deferred to Phase
-16. So this plan covers both phases, because the interesting decision is shared.
+17. So this plan covers both phases, because the interesting decision is shared.
 
 **The community has built this three times over, and Frontier published the rules.**
 
@@ -36,7 +36,7 @@ Ordered by how much it depends on somebody else being right.
 
 **Execute ships first and waits on nothing.** `ColonisationConstructionDepot` carries required and
 provided amounts, so the arithmetic the maintainer is currently doing on paper is subtraction over
-data already on disk. It is the cheapest item in Phase 17 and the one most likely to be used daily.
+data already on disk. It is the cheapest item in Phase 18 and the one most likely to be used daily.
 
 ---
 
@@ -159,8 +159,10 @@ parallel list.
 
 ## Order and dependencies
 
-Phase 17's tracking item needs nothing and should ship first. The spike gates the planning table and
-the objective criteria, not the tracking. Within Phase 16, the checklist substrate is built once —
+Phase 18's tracking item needs nothing and should ship first. **Phase 16's** colonisation spike
+gates the planning table and the objective criteria, not the tracking — it is named by number here
+because it sits in neither of the two phases this plan covers, having been pulled into Phase 16 on
+2026-08-15 for exactly that reason. Within Phase 17, the checklist substrate is built once —
 **item identity and the two kinds are the two decisions to settle before any code** — and the ship
 and colonisation plans are then two keys into one machine.
 

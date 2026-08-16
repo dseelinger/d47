@@ -1,7 +1,7 @@
 # What the on-foot engineering sources actually contain
 
 **Measured 2026-08-14.** Parsed from the live files and researched against community sources. This
-is the ground under Phase 19, and the reason that phase exists separately from the ship engineering
+is the ground under Phase 20, and the reason that phase exists separately from the ship engineering
 items rather than as a footnote to them.
 
 **Read the gaps as open, not closed.** Where this document says something was not found, it means
@@ -293,7 +293,7 @@ search stopped, so the next person starts further along.
 ## 7a. EDOMH — MIT source, and the data is deliberately not in it
 
 [`jixxed/ed-odyssey-materials-helper`](https://github.com/jixxed/ed-odyssey-materials-helper) does
-precisely what Phase 19 describes: reads the journal, tracks micro-resources, and says how much is
+precisely what Phase 20 describes: reads the journal, tracks micro-resources, and says how much is
 needed to upgrade a suit or weapon, unlock an engineer or craft a blueprint. 387 stars, Java, last
 pushed four days before this was written. It looked like the goldmine it was suggested to be.
 

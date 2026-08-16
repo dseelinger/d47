@@ -208,7 +208,7 @@ Extend `tools/gen-engineers.py`. New columns: `referred_by`, `referral_grade`, `
   shape change fails the run rather than half-populating a table.
 - **Bill Turner is an explicit commented override**: EDDiscovery says "common knowledge", the wiki
   and a journal trace both say Selene Jean.
-- Stop the `NOT_PEOPLE` filter discarding `@Merchant` rows — they are Phase 19's entire on-foot
+- Stop the `NOT_PEOPLE` filter discarding `@Merchant` rows — they are Phase 20's entire on-foot
   vocabulary. Keep them out of the *directory*, but emit them.
 
 > **Done, 2026-08-15.** All 38 initialisers parse, the assertion holds, and **27 of 38 engineers
@@ -224,7 +224,7 @@ Extend `tools/gen-engineers.py`. New columns: `referred_by`, `referral_grade`, `
 > so `ReferralGrade` is null there. And **one engineer has three referrers**: Yi Shen, reached
 > through any of Baltanos, Eleanor Bresa or Rosa Dayette, so `ReferredBy` is a list.
 >
-> **The `@Merchant` change is not needed and was not made.** Those 56 rows are Phase 19's on-foot
+> **The `@Merchant` change is not needed and was not made.** Those 56 rows are Phase 20's on-foot
 > vocabulary and Step 4's `Blueprints.tsv` already carries every one of them as `kind=merchant`
 > with full recipes — which did not exist when this was written. Emitting them here as well would
 > put pseudo-people into a directory of people to duplicate a table that already has them.

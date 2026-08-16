@@ -51,7 +51,7 @@ its own rounding creates. The `0.85` cases do not decompose as cleanly and no si
 claimed for all 45.
 
 **Why this matters more than the arithmetic.** Gating "done" on `Quality == 1.0` produces exactly the
-failure list.md Phase 16 warns about — *a module the Commander can see is finished and d47 will not
+failure list.md Phase 17 warns about — *a module the Commander can see is finished and d47 will not
 call finished* — and it would have looked correct in testing, because 93% of grades do reach 1.0.
 The bug lives in the last 7%.
 

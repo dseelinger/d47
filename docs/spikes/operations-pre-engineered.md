@@ -284,7 +284,7 @@ is exactly the path that reads the journal rather than the tables.
 - **The premise holds.** Nothing here needs a second reading path: a pre-engineered module is a
   blueprint and a grade like any other, and Step 6 already described all 320 of these blocks
   inside its 20,526-module corpus run without failing.
-- **A build intent must not name one** (Phase 16), and the crisp reason is section 9's rather than
+- **A build intent must not name one** (Phase 17), and the crisp reason is section 9's rather than
   this page's first one. Not "there is no recipe to total" but **"there is nowhere to get one"** —
   a target you cannot acquire is not a target. `TotalFor` returning null for anything that is not a
   modification already covers the arithmetic; what a build plan needs is to not offer it at all.

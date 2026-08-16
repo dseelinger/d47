@@ -1,73 +1,56 @@
 # What to build next, and why
 
-**The phase numbers are the order.** Phases 15 to 21 were renumbered into build order on
-2026-08-15 at the maintainer's instruction; this document carries the reasoning behind that
-sequence, which the numbers alone cannot.
-
-The renumber was a deliberate, one-off exception to the rule in `CLAUDE.md`, and the cost was paid
-rather than dodged: every reference moved with it, including three code comments in
-`MainWindow.axaml.cs`, `UpdateChecker.cs` and `UpdateInstaller.cs` that cite what is now Phase 18.
-Phases 1 to 14 were not touched — they are built, and they carry the several hundred citations that
-make renumbering expensive. From here, new phases are appended.
-
-**And Phase 15 has joined them.** It shipped on 2026-08-15 in `v0.11.0` and now carries 22 citations
-across 18 files, so 1–15 are frozen by the same argument and the frozen set only ever grows. A
-second renumber was raised the same evening and declined on exactly this ground: there was no
-reordering to express — the request came from reading the section below as phases jumping the queue,
-which they are not — and the numbers already said the right thing. **If this document ever seems to
-put a later phase before an earlier one, the bug is in this document's wording, not in the order.**
-
-The mapping, for anything written before that date:
-
-| Was | Is | Phase |
-|---|---|---|
-| 21 | **15** | Warnings that arrive in time |
-| 16 | **16** | Checklists |
-| 15 | **17** | Activity assistants |
-| 17 | **18** | Session tooling and release polish |
-| 19 | **19** | On-foot engineering |
-| 18 | **20** | HOTAS switches |
-| 20 | **21** | Reading the screen |
+**The phase numbers are the order, with nothing running ahead of them.** Read the numbers; that is
+the sequence. This document carries the reasoning behind it, which the numbers alone cannot.
 
 Ranked on four things, in this order: **is it blocked**, **what does it unblock**, **value per hour
 to a Commander**, and **how likely is the work to be wasted**.
 
+## Two renumbers, on the same day, and why the second one was right
+
+**2026-08-15, first pass.** Phases 15 to 21 were renumbered into build order at the maintainer's
+instruction — a deliberate, one-off exception to the rule in `CLAUDE.md`. The cost was paid rather
+than dodged: every reference moved with it, including three code comments in `MainWindow.axaml.cs`,
+`UpdateChecker.cs` and `UpdateInstaller.cs`.
+
+**2026-08-15, second pass.** Phase 15 shipped in `v0.11.0`, and this document then described three
+items as running "before any of it" — two spikes and the first-run key prompt, listed above Phase 16
+while belonging to Phases 17 and 18. That reads as *Phase 17 before Phase 16*, and it was read that
+way within the hour.
+
+The first fix attempted was better wording. **The maintainer's fix was better than that: give those
+three items a phase of their own and make it 16.** The ordering is now expressed by the numbers
+rather than explained in a paragraph beside them, which is the only version that cannot be misread —
+a document that has to say "the order below is not what it looks like" has already lost.
+
+**Both renumbers are still one-off exceptions and the rule stands.** New phases are appended, an
+existing one is never renumbered, and the frozen set only grows. It is now **1 to 15**: Phase 15
+shipped on 2026-08-15 and carries 22 citations across 18 files, joining the several hundred that make
+1 to 14 immovable.
+
+The mapping, for anything written before 2026-08-15:
+
+| Originally | After the first pass | **Now** | Phase |
+|---|---|---|---|
+| — | — | **16** | Before the rest of it *(new — three items pulled out of 17 and 18)* |
+| 21 | 15 | **15** | Warnings that arrive in time — **shipped, `v0.11.0`** |
+| 16 | 16 | **17** | Checklists |
+| 15 | 17 | **18** | Activity assistants |
+| 17 | 18 | **19** | Session tooling and release polish |
+| 19 | 19 | **20** | On-foot engineering |
+| 18 | 20 | **21** | HOTAS switches |
+| 20 | 21 | **22** | Reading the screen |
+
+**The one thing a remap cannot do for you.** Both passes moved numbers correctly and both got the
+same class of thing wrong by hand: a citation pointing at an *item* that changed phase, which a
+faithful remap carries to the wrong place — still resolving, so nothing reports it. The first pass
+sent two spike pages to the phase the NPC-comms measurement had left. The second pass would have sent
+`list.md`'s "whether that table exists at all is Phase 17's spike" to Phase 18, when the spike it
+names had just moved to 16. **Remap the numbers mechanically; check the moved items by name.**
+
 ---
 
-## Three individual items that run ahead of their own phase
-
-**These are items, not phases. The phase order below is not affected by anything in this
-section**, and reading it as "Phase 17 before Phase 16" is the misreading it has already caused
-once. `list.md` is a list of phases; each phase is a list of items; and an item can be worth doing
-before the phase around it without the phase moving. Nothing here is renumbered, reordered, or
-promoted — these are three lines pulled forward out of two phases that otherwise stay exactly where
-they are.
-
-**Two of the three are spikes**, which is the ordinary reason an item runs early: a spike produces
-a findings page, and the work that consumes those findings cannot be specified until it exists. A
-spike running ahead of its phase is the normal shape of this list rather than an exception to it.
-
-**Both Phase 17 spikes** — `Spike: what can be known about exobiology before you land`, and
-`Spike: what is already known about colonisation, and by whom`. They are research, they are cheap,
-and **their results reorder everything below**. A null result on the colonisation facility table
-shrinks what Phase 16 can promise — specifically *A colonisation plan writes the checklist*, which
-is why the caveat under Phase 16 points back here; a null on the exobiology sources halves Phase 17
-itself. Running them first means the rest of this list is built on measurements rather than on this
-document's guesses.
-
-**Ask for the keys on the first run that needs them** — an item in Phase 18, and the one thing here
-that is not a spike. A fresh install has no language-model key, and this item is the difference
-between a new Commander having a companion and having a window that will not answer. It is the most
-user-facing gap in the file and it is currently buried in a polish phase behind eleven other things.
-Nothing else here matters to somebody who cannot get past the first run.
-
-**It is also the one item whose rank is a question about you rather than about the code.** It is
-first only if somebody other than the maintainer is installing d47. If nobody is yet, it is the
-least urgent line on this page rather than the most — see "What would change this order".
-
----
-
-## 1. ~~Phase 15 — Warnings that arrive in time~~ — shipped in `v0.11.0`, 2026-08-15
+## ~~Phase 15 — Warnings that arrive in time~~ — shipped in `v0.11.0`, 2026-08-15
 
 Kept rather than deleted, because the reasoning is the worked example: it was ranked first for being
 the readiest work in the repo — both items measured against 912 journals, both naming their own
@@ -79,7 +62,39 @@ that pass is what found the three id groups that clear 40% and are still not shi
 `npc`-channel requirement that closes a spoof nobody had written down. Cheap, but not nothing. See
 [../spikes/journal-corpus-warnings.md](../spikes/journal-corpus-warnings.md).
 
-## 2. Phase 16 — Checklists — **next**
+## Phase 16 — Before the rest of it — **next**
+
+**Three items pulled out of two later phases on 2026-08-15**, and given a phase so that the running
+order is the numbers rather than a paragraph explaining the numbers. Two are spikes; one is the gap a
+new install falls into.
+
+**Both spikes** — `Spike: what can be known about exobiology before you land`, and `Spike: what is
+already known about colonisation, and by whom`, which were the first two items of what is now Phase
+18. They are research, they are cheap, and **their results reorder everything below**. A null on the
+colonisation facility table shrinks what Phase 17 can promise — specifically *A colonisation plan
+writes the checklist*; a null on the exobiology sources halves Phase 18. Running them first means the
+rest of this list is built on measurements rather than on this document's guesses.
+
+**A spike gating the phase it lives in is not a gate.** That is the structural argument for the move
+and it is worth more than the ordering convenience: both spikes sat inside phases whose other items
+could not be specified until the spike returned, so the phase could not be planned as a unit and its
+own plan had to reach backwards past its first item.
+
+**Ask for the keys on the first run that needs them** — from what is now Phase 19, and the one item
+here that is not a spike. A fresh install has no language-model key, and this is the difference
+between a new Commander having a companion and having a window that will not answer. It was buried in
+a polish phase behind eleven other things.
+
+**Its rank is the one question here about you rather than about the code.** It is first only if
+somebody other than the maintainer is installing d47. If nobody is yet, it is the least urgent line
+on this page rather than the most — see "What would change this order". The two spikes do not depend
+on that answer, which is why they lead within the phase.
+
+**Release:** this phase closes when the two findings pages exist and first-run asks for a key. Two of
+its three items produce documents rather than code, so it is the one phase here whose minor release
+is mostly a promise that the next two are built on something measured.
+
+## Phase 17 — Checklists
 
 **What everything else is waiting on.** Engineering's planning half was deferred here from Phase 14
 and has been waiting since `v0.10.0` closed — the tables are built, so *An engineering plan writes
@@ -87,15 +102,16 @@ the checklist* can land the moment the substrate exists. Colonisation's planning
 substrate, which is the whole argument for not writing a second one.
 
 The design was settled on 2026-08-15 and is written up in
-[phase-16-checklists-and-colonisation.md](phase-16-checklists-and-colonisation.md): one surface, two
+[phase-17-checklists-and-colonisation.md](phase-17-checklists-and-colonisation.md): one surface, two
 kinds of item, three groups, completion that is not removal, revision as a diff. **Item identity is
 the decision to get right before any code** — two plans can only be diffed if an item knows what it
 is independently of its position in a list.
 
-One caveat: *A colonisation plan writes the checklist* needs Phase 17's colonisation spike, which is
-why that spike is above this line.
+One caveat: *A colonisation plan writes the checklist* needs **Phase 16's** colonisation spike. That
+is the dependency that used to be expressed as "the spike sits above this line", and it is now
+expressed as 16 coming before 17.
 
-## 3. Phase 17 — Activity assistants
+## Phase 18 — Activity assistants
 
 Split, because the parts do not share a readiness.
 
@@ -107,33 +123,36 @@ replaces arithmetic the maintainer is currently doing on paper.
 conversation rather than a spike.
 
 **Exobiology is the long pole**: position plumbing that does not exist yet, per-body state that
-outlives a session, and two items whose shape depends on what the spike finds.
+outlives a session, and two items whose shape depends on what **Phase 16's** exobiology spike finds.
+The plan is [phase-18-exobiology.md](phase-18-exobiology.md), which now begins by saying its own
+spike is no longer in it.
 
-## 4. Phase 18 — Session tooling and release polish
+## Phase 19 — Session tooling and release polish
 
-Ten items left, and they are three subjects wearing one hat: voices, first-run, and the log and docs
-surfaces. **Give the composition root a test harness** is the one that gets more expensive the
-longer it waits — `AppHost` is where the app is actually assembled and it has no tests — so it
-belongs earlier than the polish around it.
+Nine items left — one fewer since the first-run key prompt moved to Phase 16 — and they are three
+subjects wearing one hat: voices, first-run, and the log and docs surfaces. **Give the composition
+root a test harness** is the one that gets more expensive the longer it waits — `AppHost` is where
+the app is actually assembled and it has no tests — so it belongs earlier than the polish around it.
 
 If this phase is still one hat by the time it comes up, it is a candidate for splitting; moving items
 between unbuilt phases is free, and a phase that cannot be finished holds its ready items hostage.
-That is exactly why the warnings left Phase 17.
+That is exactly why the warnings left what is now Phase 18 — and, on the same argument, why the
+first-run item left this one.
 
-## 5. Phase 19 — On-foot engineering
+## Phase 20 — On-foot engineering
 
 Well specced, with its own spike and a sources document already written. It is a whole second
 engineering domain, and it ranks here rather than higher for one reason: it is worth the most to a
 Commander who plays on foot, and least to one who does not. That is a question about the maintainer's
 own play, not about the code.
 
-## 6. Phase 20 — HOTAS switches
+## Phase 21 — HOTAS switches
 
 Fully specced, and the hardest to verify — it needs the physical hardware in front of whoever is
 building it, and the failure modes are all about a switch and the game disagreeing. Narrow audience
 by construction: it does nothing for a Commander without a switch panel.
 
-## 7. Phase 21 — Reading the screen
+## Phase 22 — Reading the screen
 
 **Last deliberately.** It is the only phase whose spike might close it outright: if the VR mirror
 carries nothing a panel can be located in, what remains is a desktop-only feature. Everything in it
@@ -147,9 +166,10 @@ Phase 15's rival-Power warning is written around — so it earns its place on th
 
 ## What would change this order
 
-- **A spike comes back empty.** Exobiology sources missing pushes that half of Phase 17 down;
-  colonisation sources missing shrinks Phase 16's last item.
-- **Somebody other than the maintainer installs it.** Then the first-run items and the log surfaces
-  outrank everything that is not a safety warning.
-- **The maintainer's play changes.** Phases 17, 19 and 20 are ranked partly on what gets played, and
+- **A spike comes back empty.** Exobiology sources missing pushes that half of Phase 18 down;
+  colonisation sources missing shrinks Phase 17's last item. Both spikes are in Phase 16, so this is
+  the first thing that can happen rather than a risk carried for weeks.
+- **Somebody other than the maintainer installs it.** Then the first-run item leads Phase 16 instead
+  of trailing it, and the log surfaces in Phase 19 outrank everything that is not a safety warning.
+- **The maintainer's play changes.** Phases 18, 20 and 21 are ranked partly on what gets played, and
   that is the one input this document cannot measure.
