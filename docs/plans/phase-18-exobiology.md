@@ -129,7 +129,7 @@ is a source. Read it at Frontier's own wording where they state it, and record w
 
 # The items
 
-## Read a system name
+## Read a system name — shipped 2026-08-16
 
 A rule and a string. No network, no index, no upload — which is what makes it work in the black,
 where the first-footfall money is.
@@ -141,6 +141,27 @@ where the first-footfall money is.
 - **What the code means and what it is worth are two claims.** Only the first is settled today.
   Question 3 decides whether the second is said at all.
 - Star class rides along: a variant's colour follows the star, and the variant sets the price.
+
+**The "recorded source" turned out to be the game.** This plan expected a page to cite, and a page
+was found and does corroborate — but the stronger source was sitting in the corpus the whole time. A
+name encodes a boxel index in its letters, so regressing that index against real `StarPos`
+coordinates recovers the box size as a slope: 9.99, 20.02, 39.51, 78.23 and 165.32 for `a` through
+`e`. Sourcing a figure and *measuring* it are not the same act, and where both are available the
+second is what this repository has always preferred.
+
+**`f`, `g` and `h` are the "or omitted" half, handled a third way.** The corpus holds two, one and
+zero of them, so they are quoted from the doubling — closed at the far end by `h` being the sector
+itself, 10 × 2⁷ = 1,280 — and the shipped answer *says which rungs are measured and which are not*.
+Neither asserting them silently nor withholding them would have been better than labelling them.
+
+**Question 3 came back negative and the item is smaller for it.** The payout heuristic does not ship,
+and it is declined in the answer rather than by omission: a Commander asking what the letter means is
+usually asking precisely whether it predicts payout, so silence would read as assent.
+
+**One thing this plan did not anticipate.** Star class had no obvious home in d47 and the obvious
+source was wrong — the arrival auto-scan covers 28.6% of arrivals, while the `FSDTarget` that fires
+*before* the jump covers 99.7%. So the class of the star outside the canopy is the one the route
+named on the way in, kept as the jump lands rather than discarded with the targeting state.
 
 ## Find the exobiology
 

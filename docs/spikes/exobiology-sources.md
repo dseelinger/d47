@@ -192,6 +192,69 @@ and display name share nothing. Anything keying exobiology on localised names wi
 against anything keying on symbols — which is the same shape as the Phase 14 finding where keying
 materials on `FormattedName` lost 22 of 45 Encoded materials.
 
+## 8. The mass ladder, derived from the game rather than recited
+
+**Measured 2026-08-16, same corpus, while building *Read a system name*.** §4 answered what the mass
+code is *worth* — nothing d47 may claim. This answers what it *means*, which is the half that ships,
+and the item required it to come from a source with its provenance recorded rather than from memory.
+
+**The strongest available source turned out to be the game itself.** A procedural name encodes a
+boxel index in its three letters plus the boxel number. If a mass code's boxels are `S` ly on a side
+then a sector — 1,280 ly — holds `N = 1280/S` of them per axis, and the index decomposes as
+`i = idx % N`, `j = (idx // N) % N`, `k = idx // N²`. Regressing that decoded index against real
+`StarPos` coordinates, with each sector's own mean removed so no sector grid origin has to be
+assumed, recovers the box size as the slope of the fit.
+
+Over 2,854 procedurally-named systems:
+
+| Mass code | Systems | Measured slope | Nominal | Fit (`i`→`x`) |
+|---|---|---|---|---|
+| `a` | 298 | **9.99** | 10 | r² 0.999 |
+| `b` | 1,400 | **20.02** | 20 | r² 0.997 |
+| `c` | 638 | **39.51** | 40 | r² 0.993 |
+| `d` | 489 | **78.23** | 80 | r² 0.975 |
+| `e` | 26 | **165.32** | 160 | r² 0.990, thin |
+| `f` | 2 | — | 320 | not measurable |
+| `g` | 1 | — | 640 | not measurable |
+| `h` | 0 | — | 1,280 | not measurable |
+
+**The slope is stable across candidate `N`, which is what makes this a measurement rather than a
+curve fitted to an assumption.** A wrong `N` scrambles the index-to-position mapping and fits
+nothing; the `i`→`x` component recovers the same number regardless.
+
+**The top three rungs are not measured and the shipped answer says so.** They rest on the doubling
+the five rungs above establish, closed at the far end by the published rule that `h` is the sector
+itself — and 10 × 2⁷ is exactly 1,280, so the ladder has nowhere else to land. Community
+documentation corroborates both ends independently: mass code `a` within a 10 ly cube, `h`
+"somewhere in this 1280 ly cube", halving through `g` at 640 and `f` at 320
+([Marx's guide to boxels](https://forums.frontier.co.uk/threads/marxs-guide-to-boxels-subsectors.618286/),
+which answers `403` to an automated fetch and renders in a browser — the trap this folder's README
+names, hit again and handled the same way).
+
+**And the grammar survey the parser's tests cite comes from the same run:** of 4,746 distinct real
+names, 2,854 are procedural and 1,892 are hand-named, with **0 hand-named names containing a
+boxel-shaped designator**. That last count is the one that matters — a grammar which silently
+rejects a real name reports "this one has no mass code", which is a wrong answer wearing the shape of
+a right one.
+
+## 9. The star class comes from the route, not from the scan
+
+*Read a system name* carries the main star's class, because a variant's colour follows the star and
+the variant sets the price. Two candidate sources, measured over **7,412 arrivals**:
+
+| Source | Coverage |
+|---|---|
+| `FSDTarget`, which fires *before* the jump and names the target and its `StarClass` | **99.7%** |
+| The arrival auto-scan — a `Scan` of the main star carrying `StarType` | **28.6%** |
+
+**The obvious source is the one that is usually not there.** So the class of the star a Commander is
+sitting next to is the class the route named for the system they were entering, captured as the
+`FSDJump` lands rather than discarded with the rest of the targeting state.
+
+Two guards fall out, and both produce *no* answer rather than a plausible one: a jump that ended
+somewhere other than the plotted target carries no class, and a name merely read aloud borrows none
+from wherever the Commander happens to be standing.
+
 ## What this means for the items downstream
 
 - ***Find the exobiology*** (Phase 18) — **ships, and is mostly wiring.** A fifth plot type on
@@ -200,9 +263,11 @@ materials on `FormattedName` lost 22 of 45 Encoded materials.
 - ***Exobiology sampling*** (Phase 18) — **blocked on a decision, not on research.** Spacing needs
   live `Status.json` sampling paired to `ScanOrganic` by timestamp; sample *count* does not. Shipping
   the count half first is available and cheap.
-- ***Read a system name*** (Phase 18) — unaffected by all of this, still the only item here that
-  needs nobody to have been there first. **But it must not carry the mass-code payout heuristic**,
-  per §4.
+- ***Read a system name*** (Phase 18) — **shipped 2026-08-16**, still the only item here that needs
+  nobody to have been there first. It carries the ladder derived in §8 and the star class sourced in
+  §9, and **it does not carry the mass-code payout heuristic**, per §4 — it declines it in the answer
+  rather than by omission, because a Commander asking what the letter means is usually asking
+  precisely that.
 - **First-footfall value** — the ×5 in §2 is measured and may be quoted as a figure.
 
 ## Reproducing this

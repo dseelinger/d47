@@ -52,6 +52,22 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>The next system's star class, which is what decides whether it can be scooped.</summary>
     public string? NextJumpStarClass { get; init; }
 
+    /// <summary>
+    /// The class of the star the Commander is at now (list.md Phase 18, "Read a system name" —
+    /// a variant's colour follows the star, and the variant is what sets an organic's price).
+    /// <para>
+    /// <b>It comes from the <c>FSDTarget</c> that preceded the jump, not from the arrival scan.</b>
+    /// Measured over 7,412 jumps in the corpus: <c>FSDTarget</c> named the system being entered on
+    /// <b>99.7%</b> of them, while a main-star <c>Scan</c> followed on only <b>28.6%</b>. The
+    /// obvious source is the one that is usually not there.
+    /// </para>
+    /// <para>
+    /// Null where d47 did not see the Commander arrive — logging in, or a carrier jump — because
+    /// "I did not watch you get here" is a different answer from "this star has no class".
+    /// </para>
+    /// </summary>
+    public string? StarClass { get; init; }
+
     /// <summary>Jumps left in the plotted route, from FSDTarget. Null when nothing is plotted.</summary>
     public int? JumpsRemaining { get; init; }
 
@@ -106,6 +122,11 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             // that matters here.
             ControllingPower = journalEvent.String("ControllingPower"),
 
+            // Neither event carries a star class, and both can move the Commander somewhere new —
+            // so a class carried over would describe the system they left. Kept only where the
+            // system has not changed, which is the login-in-place case.
+            StarClass = journalEvent.String("StarSystem") == StarSystem ? StarClass : null,
+
             Mode = journalEvent.Bool("OnFoot") ? FlightMode.OnFoot
                 : journalEvent.Bool("Docked") ? FlightMode.Docked
                 : FlightMode.Normal,
@@ -123,6 +144,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Mode = FlightMode.Supercruise,
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
             ControllingPower = journalEvent.String("ControllingPower"),
+
+            // Not discarded on arrival — moved. The class the route named for the system being
+            // entered is the class of the star now outside the canopy, and it is the only reliable
+            // report of it. Guarded on the names matching so a jump that ended somewhere other than
+            // the plotted target carries no class rather than the wrong one.
+            StarClass = journalEvent.String("StarSystem") == NextJumpSystem ? NextJumpStarClass : null,
 
             // Consumed by arriving. Leaving it set would have Phase 8 warning about a star the
             // Commander is now sitting next to.
