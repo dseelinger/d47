@@ -255,6 +255,80 @@ Two guards fall out, and both produce *no* answer rather than a plausible one: a
 somewhere other than the plotted target carries no class, and a name merely read aloud borrows none
 from wherever the Commander happens to be standing.
 
+## 10. The mass code question, answered — with a denominator under it
+
+**Measured 2026-08-16.** §4 could not answer this and named the reason: a Commander's flight log is a
+record of where somebody *chose to fly*, so if they already believe the folklore the data agrees with
+the belief. The fix is to stop sampling routes and start sampling **bodies**, which is what the
+maintainer proposed and what this does.
+
+**The design, and the one thing that makes it valid.** Numerator and denominator come out of *one*
+query stream — every landable body in a ball, with its landmarks attached — so they cannot disagree
+about volume. Counting only the good systems would have "discovered" that the common mass codes are
+the best ones, because they are common. Six references spread across the galaxy (Sol, Colonia,
+Sagittarius A\*, Beagle Point, Merope, Diaguandri), each measured separately as well as pooled, so a
+result that only holds in the bubble is visible as one that only holds in the bubble.
+
+**13,000 landable bodies later, the folklore is directionally right and about the wrong quantity.**
+
+| Mass code | Landable bodies | P(any value) | P(≥5M cr) | Mean cr/body | Best seen |
+|---|---|---|---|---|---|
+| `a` | 1,176 | 5.4% | **0.17%** | **79,333** | 5,289,900 |
+| `b` | 2,504 | 7.5% | 2.88% | 453,106 | 83,537,100 |
+| `c` | 5,697 | 5.6% | 3.05% | 460,293 | 46,880,300 |
+| `d` | 2,672 | 6.8% | **4.19%** | **682,261** | 45,542,900 |
+| `e` | 627 | 2.2% | 0.80% | 190,073 | 54,933,000 |
+| `f` | 9 | — | — | — | — |
+
+**Whether there is biology barely moves. What it is worth moves a great deal.** P(any valuable
+landmark) sits between 5.4% and 7.5% across `a` to `d` with no trend in it. But P(a body worth 5
+million or more) runs **0.17% → 2.88% → 3.05% → 4.19%**, a **25× rise from `a` to `d`**, and mean
+credits per landable body runs **79k → 453k → 460k → 682k**, a **8.6× rise**. So *"more mass, more
+biology"* is not supported and *"more mass, more valuable biology"* is.
+
+**Per system, which is the unit a Commander actually chooses:** 20.2% of `a` systems hold at least
+one landmark, against 34.0% of `b`, 29.6% of `c` and 37.2% of `d`.
+
+**It appears to turn over at `e`**, which is worse than `a` on the 5M measure. That is the weakest
+claim here — 627 bodies from a subset of the references — and `f`, `g` and `h` are unmeasurable at 9,
+0 and 0 bodies.
+
+**The mechanism shows through in the genus mix, not just the totals.** The top ≥1M species per mass
+code are different lists rather than longer ones: `a` is almost entirely *Bacterium Acies*; `b` and
+`c` bring in *Fonticulua Campestris*, *Stratum Tectonicas* and *Electricae Radialem*; `d` is
+*Tussock Catena*, *Frutexa Flammasis*, *Stratum Paleas*, *Osseus Spiralis*; `e` is *Cactoida Vermis*,
+*Clypeus Speculumi*, *Concha Renibus*. Mass code shapes what bodies and atmospheres generate, and
+those gate genera — which is why the honest predictor is body type and atmosphere, and the mass code
+is a **proxy that happens to be readable off a name with no network**. That is exactly the case where
+a proxy earns its keep.
+
+**One methodological result worth keeping.** Landmarks are not all organic — *Fumarole*, *Gas Vent*,
+*Lava Spout*, *Geyser*, *Thargoid Barnacle* and *Surface Station* are about 19% of landmark rows. No
+hand-written genus list was needed to exclude them, because the `≥1` and `≥1M` columns come out
+near-identical: geological landmarks carry no `landmark_value`, so they never enter the count. The
+measure is organic-only for free, and that is a property of the data rather than an assumption.
+
+**What would have to be true before d47 says any of this out loud.** The residual bias is upload
+coverage — the index holds what people uploaded, which still correlates with where people fly, though
+far more weakly than one Commander's beliefs. Shell radii differ by reference (30 to 120 ly), so the
+pooled row weights regions unequally. And the per-reference tables vary a lot: Beagle Point's `b` is
+1.4% where Merope's is 8.2%. **The direction is solid; the magnitudes are not yet quotable.**
+
+## 11. `CodexEntry` carries a position, and §6 did not look at it
+
+**Found 2026-08-16 while chasing the above.** §6 established that `ScanOrganic` carries no latitude or
+longitude, and concluded that sample spacing therefore needs live `Status.json` pairing and cannot be
+backfilled. That is still true of `ScanOrganic` — and there is a second event it did not check.
+
+`CodexEntry` fires 354 times in the corpus and carries **`Latitude` and `Longitude` on 130 of them**,
+alongside `Name`, `Category`, `Region`, `System` and `BodyID`. 61 are *Organic structures*.
+
+It is not a general fix: the Codex logs a **first** entry, so it covers the discovery rather than
+every sample, and `IsNewEntry` is on 345 of 354. But it is a real positional record of organic finds
+that costs nothing to fold, and *Exobiology sampling* should be re-scoped around it before that item
+is built. **It does not carry genus conditions** — the Codex event is a discovery log, not the
+encyclopedia's contents, so §5's null result stands.
+
 ## What this means for the items downstream
 
 - ***Find the exobiology*** (Phase 18) — **ships, and is mostly wiring.** A fifth plot type on

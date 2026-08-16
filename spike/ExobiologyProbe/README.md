@@ -8,6 +8,13 @@ before you land*. Finding: [docs/spikes/exobiology-sources.md](../../docs/spikes
 | `scan_organic.py` | Does the mass code predict what pays, what is the first-footfall multiplier, what position does `ScanOrganic` carry, and what does a scan sequence look like? |
 | `scan_boxel.py` | How big is a boxel at each mass code, derived from real coordinates rather than recited — and does the name grammar ever miss a real name? |
 | `scan_starclass.py` | Where does the current system's star class come from, and how often is it actually there? |
+| `scan_masscode_payout.py` | Does the mass code predict the biology, measured against a denominator rather than against one Commander's flight log? |
+
+`scan_masscode_payout.py` is the only script here that talks to a network rather than to the corpus,
+because that is the whole point of it: §4 failed on the corpus for a reason no amount of corpus fixes
+— a flight log records where somebody *chose* to fly. It samples bodies instead of routes, and takes
+its numerator and denominator from one query stream so they cannot disagree about volume. Finding:
+§10. One request a second, and a hard page cap, because spansh is a free community service.
 
 The last two were added on 2026-08-16 for `list.md` Phase 18's *Read a system name*, which requires
 the mass ladder to come from a source with its provenance recorded. The strongest available source
