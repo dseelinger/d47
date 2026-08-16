@@ -18,7 +18,7 @@ public class AwaitingDownloadTests
     [Fact]
     public void AChosenModelThatIsNotOnDiskIsOutstanding()
     {
-        var pending = WhisperModels.AwaitingDownload("small.en", new FakeStore());
+        var pending = WhisperModels.AwaitingDownload("small.en", new FakeModelStore());
 
         Assert.NotNull(pending);
         Assert.Equal("small.en", pending.Id);
@@ -27,7 +27,7 @@ public class AwaitingDownloadTests
     [Fact]
     public void AModelAlreadyOnDiskIsNot()
     {
-        Assert.Null(WhisperModels.AwaitingDownload("small.en", new FakeStore("small.en")));
+        Assert.Null(WhisperModels.AwaitingDownload("small.en", new FakeModelStore("small.en")));
     }
 
     /// <summary>Choosing no model is a decision, not a question to re-ask at every launch.</summary>
@@ -38,7 +38,7 @@ public class AwaitingDownloadTests
     [InlineData("not-a-model")]
     public void NothingIsOutstandingWhenNothingWasChosen(string? selected)
     {
-        Assert.Null(WhisperModels.AwaitingDownload(selected, new FakeStore()));
+        Assert.Null(WhisperModels.AwaitingDownload(selected, new FakeModelStore()));
     }
 
     /// <summary>
@@ -51,35 +51,14 @@ public class AwaitingDownloadTests
     public void AFreshInstallHasTheDefaultModelOutstandingRatherThanInstalled()
     {
         var shipped = new D47.Core.Configuration.D47Settings().Listening.Model;
-        var pending = WhisperModels.AwaitingDownload(shipped, new FakeStore());
+        var pending = WhisperModels.AwaitingDownload(shipped, new FakeModelStore());
 
         Assert.NotNull(pending);
         Assert.Equal(shipped, pending.Id);
 
         // And once it is on disk nothing is outstanding, so the fetch cannot repeat at every
         // launch.
-        Assert.Null(WhisperModels.AwaitingDownload(shipped, new FakeStore(shipped)));
+        Assert.Null(WhisperModels.AwaitingDownload(shipped, new FakeModelStore(shipped)));
     }
 
-    private sealed class FakeStore(params string[] installed) : IModelStore
-    {
-        public string Directory => "nowhere";
-
-        public bool IsInstalled(WhisperModel model) => installed.Contains(model.Id);
-
-        public string? PathOf(WhisperModel model) => IsInstalled(model) ? "nowhere" : null;
-
-        public IReadOnlyList<string> Installed() => installed;
-
-        public Task<ModelOffer?> DescribeAsync(WhisperModel model, CancellationToken cancellationToken = default) =>
-            Task.FromResult<ModelOffer?>(null);
-
-        public bool Remove(WhisperModel model) => false;
-
-        public Task<ModelInstallResult> InstallAsync(
-            WhisperModel model,
-            IProgress<ModelProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ModelInstallResult(ModelInstall.Failed, "nothing is fetched in a test"));
-    }
 }

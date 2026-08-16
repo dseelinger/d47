@@ -359,6 +359,98 @@ public static class VoicePairing
     }
 
     /// <summary>
+    /// One repair's result: the pairings to store, and whether the repair finished.
+    /// </summary>
+    /// <param name="Voices">Every core that had a pairing, still holding one.</param>
+    /// <param name="Complete">
+    /// False when at least one core kept a voice the repair wanted to take off it, because
+    /// nothing could be chosen to replace it. The caller leaves its "this repair has run" mark
+    /// off, so the first launch that can finish the job does.
+    /// </param>
+    public sealed record VoiceRepair(IReadOnlyDictionary<string, string> Voices, bool Complete);
+
+    /// <summary>
+    /// Gives a voice back to every core a repair took one off (list.md Phase 11, #33).
+    /// <para>
+    /// <see cref="WithoutMiscastVoices"/> and <see cref="WithNamedDefaultsRestored"/> both work
+    /// by <em>removing</em> a pairing, which leaves the core with none — and a core with no
+    /// pairing has no voice. On Edge it falls back to the ship AI's and two cores share one; on
+    /// ElevenLabs there is nothing to fall back to, so the provider refuses the sentence and the
+    /// panel says so in red. A repair that only takes away is a repair that breaks the thing it
+    /// was fixing.
+    /// </para>
+    /// <para>
+    /// When nothing can be chosen the core keeps what it had. Two cores sharing a voice, or one
+    /// speaking in the wrong gender, are both smaller faults than one that cannot speak at all.
+    /// </para>
+    /// <para>
+    /// Lifted out of <c>AppHost</c>, where it was unreachable by any test and where it was
+    /// wrong: the replacement was logged and then dropped on the floor, so the success path —
+    /// the common one — did the exact thing the method exists to prevent (list.md Phase 19,
+    /// "Give the composition root a test harness").
+    /// </para>
+    /// </summary>
+    /// <param name="before">The pairings as they stood, before the repair removed anything.</param>
+    /// <param name="after">The repair's output. Reference-equal to <paramref name="before"/> when it changed nothing.</param>
+    public static async Task<VoiceRepair> WithReplacementsAsync(
+        IReadOnlyDictionary<string, string> before,
+        IReadOnlyDictionary<string, string> after,
+        IReadOnlyList<VoiceInfo> voices,
+        ILlmProvider? provider,
+        string? model,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        string? ttsProvider = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (ReferenceEquals(after, before))
+        {
+            return new VoiceRepair(after, Complete: true);
+        }
+
+        var repaired = new Dictionary<string, string>(after, StringComparer.Ordinal);
+        var complete = true;
+
+        foreach (var id in before.Keys.Where(id => !after.ContainsKey(id)))
+        {
+            // Asked one at a time, and against what has been assigned so far rather than against
+            // the starting set: two cores repaired in the same pass must not both be handed the
+            // same replacement.
+            var voice = await ChooseOneAsync(
+                PersonaCatalog.Resolve(id),
+                voices,
+                repaired.Values,
+                provider,
+                model,
+                spend,
+                prices,
+                logger,
+                ttsProvider,
+                cancellationToken).ConfigureAwait(false);
+
+            if (voice is null)
+            {
+                logger?.LogInformation(
+                    "Leaving {Persona} on {Voice}: nothing else could be chosen for it", id, before[id]);
+
+                repaired[id] = before[id];
+                complete = false;
+                continue;
+            }
+
+            logger?.LogInformation("{Persona} takes {Voice} instead", id, voice);
+
+            // The line the log line was always claiming. Without it the core is left with no
+            // pairing at all, the repair is marked complete so it never runs again, and the
+            // voice nobody recorded as taken is offered to the next core in the same loop.
+            repaired[id] = voice;
+        }
+
+        return new VoiceRepair(repaired, complete);
+    }
+
+    /// <summary>
     /// The model's answer, as persona id to voice id. Empty when there is no model, when the
     /// call failed, or when nothing it said parsed — all four are the same thing to the caller,
     /// which then falls back per core rather than wholesale.

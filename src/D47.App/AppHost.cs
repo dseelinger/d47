@@ -1287,7 +1287,7 @@ public sealed class AppHost : IDisposable
 
         var before = Settings.Current.Persona.Voices;
 
-        var (voices, complete) = await WithReplacementsAsync(
+        var repair = await WithReplacementsAsync(
             before,
             VoicePairing.WithoutMiscastVoices(before, _voices.Voices, _logger)).ConfigureAwait(false);
 
@@ -1295,8 +1295,8 @@ public sealed class AppHost : IDisposable
         {
             Persona = current.Persona with
             {
-                Voices = voices,
-                VoicesGenderChecked = complete,
+                Voices = repair.Voices,
+                VoicesGenderChecked = repair.Complete,
             },
         });
 
@@ -1304,62 +1304,23 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// One repair's result, with a voice chosen for every core the repair took one off.
-    /// <para>
-    /// A repair that only takes away is a repair that can leave a core unable to speak: a core
-    /// with no pairing has no voice, and ElevenLabs has no default to fall back on — it refuses
-    /// the sentence and the panel says so in red. That is what "Mender gives George back" became
-    /// on a running build, in the window between the repair and the Commander switching the
-    /// model off.
-    /// </para>
-    /// <para>
-    /// When nothing can be chosen, the core keeps what it had: two cores sharing a voice, or one
-    /// speaking in the wrong gender, are both smaller faults than one that cannot speak at all.
-    /// The caller is told the repair did not finish so it leaves the mark off and finishes on the
-    /// first launch that can.
-    /// </para>
+    /// One repair's result, with a voice chosen for every core the repair took one off. All of
+    /// the deciding is <see cref="VoicePairing.WithReplacementsAsync"/>; what is left here is
+    /// handing it the things only the root holds — the voice list, the model and the spend.
     /// </summary>
-    private async Task<(IReadOnlyDictionary<string, string> Voices, bool Complete)> WithReplacementsAsync(
+    private Task<VoicePairing.VoiceRepair> WithReplacementsAsync(
         IReadOnlyDictionary<string, string> before,
-        IReadOnlyDictionary<string, string> after)
-    {
-        if (ReferenceEquals(after, before))
-        {
-            return (after, true);
-        }
-
-        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id;
-        var repaired = new Dictionary<string, string>(after, StringComparer.Ordinal);
-        var complete = true;
-
-        foreach (var id in before.Keys.Where(id => !after.ContainsKey(id)))
-        {
-            var voice = await VoicePairing.ChooseOneAsync(
-                PersonaCatalog.Resolve(id),
-                _voices.Voices,
-                repaired.Values,
-                Turns.Provider,
-                Turns.Model,
-                Spend,
-                PriceTable.Default,
-                _logger,
-                provider).ConfigureAwait(false);
-
-            if (voice is null)
-            {
-                _logger.LogInformation(
-                    "Leaving {Persona} on {Voice}: nothing else could be chosen for it", id, before[id]);
-
-                repaired[id] = before[id];
-                complete = false;
-                continue;
-            }
-
-            _logger.LogInformation("{Persona} takes {Voice} instead", id, voice);
-        }
-
-        return (repaired, complete);
-    }
+        IReadOnlyDictionary<string, string> after) =>
+        VoicePairing.WithReplacementsAsync(
+            before,
+            after,
+            _voices.Voices,
+            Turns.Provider,
+            Turns.Model,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id);
 
     /// <summary>
     /// Puts every named default back where the table says it goes, once.
@@ -1379,7 +1340,7 @@ public sealed class AppHost : IDisposable
         var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id;
         var before = Settings.Current.Persona.Voices;
 
-        var (voices, complete) = await WithReplacementsAsync(
+        var repair = await WithReplacementsAsync(
             before,
             VoicePairing.WithNamedDefaultsRestored(before, _voices.Voices, provider, _logger)).ConfigureAwait(false);
 
@@ -1387,8 +1348,8 @@ public sealed class AppHost : IDisposable
         {
             Persona = current.Persona with
             {
-                Voices = voices,
-                VoicesRepaired = complete ? VoicePairing.RepairRevision : current.Persona.VoicesRepaired,
+                Voices = repair.Voices,
+                VoicesRepaired = repair.Complete ? VoicePairing.RepairRevision : current.Persona.VoicesRepaired,
             },
         });
 
@@ -2116,30 +2077,36 @@ public sealed class AppHost : IDisposable
 
         // The model, before the key. A Commander who binds a key and finds d47 captures but
         // cannot understand should see the reason in the status answer, not infer it.
-        if (WhisperModels.Find(listening.Model) is { } model && Models.PathOf(model) is { } path)
-        {
-            _transcriber.Load(path, model.Id, listening.UseGpu);
-        }
-        else if (WhisperModels.AwaitingDownload(listening.Model, Models) is { } wanted)
-        {
-            // Selected but not on disk, so fetch it. The selection stays where it is while that
-            // happens: it is what the Commander asked for, and a row that drops to none because
-            // the file has not arrived yet describes the disk rather than the choice.
-            //
-            // Fetched rather than offered. The offer was the wrong shape for the one case that
-            // matters — a fresh install, where the answer is always yes and the question is a
-            // step between the Commander and a working microphone. Choosing a model on the
-            // settings row has never asked either; this makes the two paths agree.
-            _logger.LogInformation("{Model} is selected but not installed; fetching it", wanted.Id);
+        //
+        // Which of the three happens is decided in Core, where a test can reach it; loading the
+        // native model and starting the download stay here, where the file handles are.
+        var model = ListeningWiring.PlanModel(listening, Models);
 
-            _transcriber.Unload();
-            _ = FetchModelAsync(wanted);
-        }
-        else
+        switch (model.Action)
         {
-            // Unload, not Dispose: this runs on every listening.* change, and the host keeps
-            // one transcriber for the life of the process.
-            _transcriber.Unload();
+            case SpeechModelAction.Load:
+                _transcriber.Load(model.Path!, model.Model!.Id, model.UseGpu);
+                break;
+
+            case SpeechModelAction.Fetch:
+                // Selected but not on disk, so fetch it. The selection stays where it is while
+                // that happens: it is what the Commander asked for, and a row that drops to none
+                // because the file has not arrived yet describes the disk rather than the choice.
+                //
+                // Fetched rather than offered. The offer was the wrong shape for the one case
+                // that matters — a fresh install, where the answer is always yes and the question
+                // is a step between the Commander and a working microphone.
+                _logger.LogInformation("{Model} is selected but not installed; fetching it", model.Model!.Id);
+
+                _transcriber.Unload();
+                _ = FetchModelAsync(model.Model);
+                break;
+
+            default:
+                // Unload, not Dispose: this runs on every listening.* change, and the host keeps
+                // one transcriber for the life of the process.
+                _transcriber.Unload();
+                break;
         }
 
         // Deferred to the end, because writing a setting raises Changed, which re-enters this
@@ -2150,9 +2117,8 @@ public sealed class AppHost : IDisposable
         // exactly where the Commander put it.
 
         var bound = _pushToTalk.Bind(listening.PushToTalkKey);
-        var handsFree = ListeningCapability.IsHandsFree(listening.Mode);
 
-        if (!bound && !handsFree)
+        if (!ListeningWiring.NeedsMicrophone(listening.Mode, bound))
         {
             // No key and nothing that opens the gate by itself, so no microphone. d47 opening an
             // input device it will never read from is exactly the surprise the unset default
@@ -2200,22 +2166,15 @@ public sealed class AppHost : IDisposable
 
         var listening = Settings.Current.Listening;
 
-        Panel.MicrophoneDetail = state switch
-        {
-            MicrophoneState.Armed when listening.Mode == ListeningCapability.WakeMode =>
-                Wake.Phrases is { Count: > 0 } names
-                    ? $"say {names[0]} and D47 will listen"
-                    : "say D47's name and it will listen",
-
-            MicrophoneState.Armed => "D47 opens the microphone by itself when it hears you start",
-
-            MicrophoneState.Idle when listening.PushToTalkKey is { } key =>
-                $"audio is discarded within {listening.PreRollMilliseconds} ms unless you "
-                + $"{(listening.Mode == ListeningCapability.ToggleMode ? "press" : "hold")} "
-                + Input.Gestures.Describe(key),
-
-            _ => string.Empty,
-        };
+        // Describing a key is the App's business — Core has no keyboard — so the gesture is
+        // rendered here and the sentence is chosen in Core, where a test reads what a Commander
+        // reads.
+        Panel.MicrophoneDetail = MicrophoneNarration.For(
+            state,
+            listening.Mode,
+            Wake.Phrases,
+            listening.PushToTalkKey is { } key ? Input.Gestures.Describe(key) : null,
+            listening.PreRollMilliseconds);
     }
 
     /// <summary>
@@ -2233,18 +2192,7 @@ public sealed class AppHost : IDisposable
 
         Wake.Window = TimeSpan.FromSeconds(listening.WakeWindowSeconds);
 
-        // Empty outside wake-word mode, which is what makes the policy inert rather than the
-        // callers having to know which mode is in force: with no phrases it admits everything,
-        // and admitting everything is precisely what continuous listening means.
-        if (listening.Mode != ListeningCapability.WakeMode)
-        {
-            Wake.Phrases = [];
-            return;
-        }
-
-        Wake.Phrases = listening.WakeWords is { Length: > 0 } spelled
-            ? [.. spelled.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)]
-            : [Personas.ShipName];
+        Wake.Phrases = ListeningWiring.WakePhrases(listening.Mode, listening.WakeWords, Personas.ShipName);
     }
 
     /// <summary>
@@ -2505,55 +2453,23 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private async Task<Announcement> VaryAsync(Announcement announcement)
     {
-        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
+        // Which lines are eligible and what each is asked lives in Core, where the one property
+        // that matters — that a danger callout is never rewritten — can be asserted. Resolving
+        // the persona block and reading the live game state stay here.
+        if (Turns.Provider is null
+            || FlavourBriefs.For(announcement, Settings.Current.Llm.PersonalityEnabled) is not { } brief)
         {
             return announcement;
         }
 
         using var budget = new CancellationTokenSource(FlavourBudget);
 
-        // An ambient remark is the core's own, so it gets the persona block and the live game
-        // state. The carrier's two roles are other people entirely and get neither.
-        var (persona, instruction, state) = announcement switch
-        {
-            { Key: var key } when key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal) =>
-            (
-                Personas.RenderBlock(personalityEnabled: true),
-                "Make one short unprompted remark about where the Commander is right now — you are "
-                + $"{AmbientLines.Describe(SituationOf(key))}. Nothing has happened; this is you "
-                + "filling a quiet moment in character. One or two sentences. Do not ask a question, "
-                + "do not offer help, and do not comment on the Commander's decisions.",
-                Turns.LiveGameState?.Invoke()
-            ),
-
-            { Voice: VoiceRole.CarrierCaptain or VoiceRole.TowerControl } =>
-            (
-                // No persona block: this is not the ship's AI speaking. Handing a Guardian core
-                // the carrier's lines would put one of them in two places at once, which is the
-                // one thing the isolation model cannot survive.
-                $"You are {(announcement.Voice == VoiceRole.CarrierCaptain
-                    ? "the captain of the Commander's fleet carrier"
-                    : "the tower controller aboard the Commander's fleet carrier")}. You are a "
-                + "professional, not a character — brief, competent and human. One short sentence. "
-                + "Never mention being an AI.",
-                $"Say this in your own words, once: \"{announcement.Text}\"",
-                (string?)null
-            ),
-
-            _ => (null, null, null),
-        };
-
-        if (instruction is null)
-        {
-            return announcement;
-        }
-
         var line = await FlavourTurn.AskAsync(
             Turns.Provider,
             Turns.Model,
-            persona,
-            instruction,
-            state,
+            brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
+            brief.Instruction,
+            brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
             Spend,
             PriceTable.Default,
             _logger,
@@ -2561,16 +2477,6 @@ public sealed class AppHost : IDisposable
 
         return line is null ? announcement : announcement with { Text = line };
     }
-
-    /// <summary>
-    /// Which situation an ambient announcement was about, from its key. Carried on the key
-    /// rather than read back off the callout, because a batch may hold more than one and the
-    /// callout only remembers the last.
-    /// </summary>
-    private static AmbientSituation SituationOf(string key) =>
-        Enum.TryParse<AmbientSituation>(key[AmbientCallout.KeyPrefix.Length..], ignoreCase: true, out var situation)
-            ? situation
-            : AmbientSituation.None;
 
     /// <summary>
     /// A turn the Commander addressed to a crew member. Swaps the prompt block and the voice for
@@ -2709,54 +2615,62 @@ public sealed class AppHost : IDisposable
 
     private void OnSettingsChanged(SettingsChanged change)
     {
-        if (change.Key.StartsWith("llm.", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplyLlmSettings();
-        }
-        else if (change.Key.StartsWith("speech.", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplySpeechSettings();
+        // Which subsystem a key reaches is decided in Core, where every row can be asserted
+        // against the one it is supposed to re-apply. What each of them does is still here.
+        var fanout = SettingsFanout.For(change.Key);
 
-            // Clearing the Voice row is how a Commander asks for the voice d47 chose for this
-            // core back, so one is chosen now rather than the next time this core happens to be
-            // selected — which, for the core already aboard, is a wait with no end in sight. The
-            // guard inside is "does it have one already", so a row set to a voice falls straight
-            // through and nothing is asked of the model.
-            if (change.Key.Equals(SpeechCapability.VoiceKey, StringComparison.OrdinalIgnoreCase))
-            {
-                _ = EnsureVoiceForCurrentPersonaAsync();
-            }
-        }
-        else if (change.Key.StartsWith("audio.", StringComparison.OrdinalIgnoreCase))
+        switch (fanout.Subsystem)
         {
-            // Straight onto the arbiter, which re-levels whatever is already playing. A mixer
-            // that only took effect on the next clip would be a mixer the Commander cannot hear
-            // themselves using.
-            Audio.Mix = Settings.Current.Audio;
+            case SettingsSubsystem.LanguageModel:
+                ApplyLlmSettings();
+                break;
 
-            // Muting the ambience stops it rather than playing it at nothing, and unmuting it
-            // starts a track rather than waiting for the next time the Commander docks — which
-            // could be an hour, and reads as a switch that did not work.
-            if (Settings.Current.Audio.Music.Muted)
-            {
-                Audio.StopMusic();
-            }
-            else if (!Audio.Activity.MusicPlaying)
-            {
-                PlayNextTrack();
-            }
+            case SettingsSubsystem.Speech:
+                ApplySpeechSettings();
+                break;
+
+            case SettingsSubsystem.Audio:
+                // Straight onto the arbiter, which re-levels whatever is already playing. A mixer
+                // that only took effect on the next clip would be a mixer the Commander cannot
+                // hear themselves using.
+                Audio.Mix = Settings.Current.Audio;
+
+                // Muting the ambience stops it rather than playing it at nothing, and unmuting it
+                // starts a track rather than waiting for the next time the Commander docks —
+                // which could be an hour, and reads as a switch that did not work.
+                if (Settings.Current.Audio.Music.Muted)
+                {
+                    Audio.StopMusic();
+                }
+                else if (!Audio.Activity.MusicPlaying)
+                {
+                    PlayNextTrack();
+                }
+
+                break;
+
+            case SettingsSubsystem.Callouts:
+                ApplyCalloutSettings(Callouts, Settings.Current);
+                break;
+
+            case SettingsSubsystem.Listening:
+                ApplyListeningSettings();
+                break;
+
+            case SettingsSubsystem.Persona:
+                ApplyPersonaSettings();
+                break;
+
+            default:
+                break;
         }
-        else if (change.Key.StartsWith("callouts.", StringComparison.OrdinalIgnoreCase))
+
+        // After the apply, as it was when this was an if/else chain. The guard inside is "does
+        // the core have a voice already", so a row set to a voice falls straight through and
+        // nothing is asked of the model.
+        if (fanout.ChooseVoiceForCoreAboard)
         {
-            ApplyCalloutSettings(Callouts, Settings.Current);
-        }
-        else if (change.Key.StartsWith("listening.", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplyListeningSettings();
-        }
-        else if (change.Key.StartsWith("persona.", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplyPersonaSettings();
+            _ = EnsureVoiceForCurrentPersonaAsync();
         }
     }
 
