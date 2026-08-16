@@ -995,6 +995,8 @@ public sealed class AppHost : IDisposable
             // hide, and it is said once — the recomputed verdict is written down as it is
             // announced. Below the danger family, because a plan item un-completing can wait for
             // the shooting to stop.
+            .Add(new ProspectorCallout())
+            .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
 
             // Low on purpose. It is a standing condition rather than news, and it stands down for
@@ -1033,6 +1035,8 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("materials", callouts.Materials);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory);
+        engine.SetEnabled("prospector", callouts.Prospector);
+        engine.SetEnabled("core-asteroid", callouts.CoreAsteroid);
         engine.SetEnabled("checklist", callouts.Checklist);
         engine.SetEnabled("ambient", callouts.Ambient);
 

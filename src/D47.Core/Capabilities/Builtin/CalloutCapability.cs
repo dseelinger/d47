@@ -33,6 +33,10 @@ public static class CalloutCapability
     public const string LongJumpKey = "callouts.longJumpRemark";
     public const string ArrivalKey = "callouts.arrival";
     public const string MaterialsKey = "callouts.materials";
+
+    public const string ProspectorKey = "callouts.prospector";
+
+    public const string CoreAsteroidKey = "callouts.coreAsteroid";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -165,6 +169,24 @@ public static class CalloutCapability
                 "materials",
                 s => s.Callouts.Materials,
                 (s, v) => s with { Callouts = s.Callouts with { Materials = v } }),
+
+            Toggle(
+                ProspectorKey,
+                "Prospector results",
+                "What a prospector limpet found in a rock, and whether it is the richest of the session.",
+                "prospector",
+                "prospector results",
+                s => s.Callouts.Prospector,
+                (s, v) => s with { Callouts = s.Callouts with { Prospector = v } }),
+
+            Toggle(
+                CoreAsteroidKey,
+                "Core asteroids",
+                "A core asteroid, and what is in it. Separate from prospector results because it is rare.",
+                "core-asteroid",
+                "core asteroids",
+                s => s.Callouts.CoreAsteroid,
+                (s, v) => s with { Callouts = s.Callouts with { CoreAsteroid = v } }),
 
             Toggle(
                 AnnouncedAttackKey,

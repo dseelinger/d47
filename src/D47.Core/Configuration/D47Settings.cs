@@ -422,6 +422,20 @@ public sealed record CalloutSettings
     /// </summary>
     public bool Checklist { get; init; } = true;
 
+    /// <summary>
+    /// What a prospector limpet found, spoken in the ring (list.md Phase 18). On, because a
+    /// Commander mining is looking at the rock rather than at a panel — but separable from the core
+    /// alert below, since this one arrives every 48 seconds at the median and that one is rare.
+    /// </summary>
+    public bool Prospector { get; init; } = true;
+
+    /// <summary>
+    /// A core asteroid (list.md Phase 18). Its own row rather than sharing the prospector's,
+    /// because it is 3 in 1,633 prospects and it is the announcement somebody turning the running
+    /// commentary off still wants.
+    /// </summary>
+    public bool CoreAsteroid { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

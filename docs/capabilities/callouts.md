@@ -187,6 +187,46 @@ Switching this off silences both. It does not freeze the list — the verdicts s
 panel keeps showing them; a setting that did two things, one of them invisible, would be the wrong
 setting.
 
+### Prospector results {#prospector}
+
+What a prospector limpet found, spoken in the ring so you can keep your eyes on the rock instead of
+the panel. Richest material first:
+
+```text
+Platinum, 58.3%.
+Tritium, 23.5%, plus Liquid oxygen at 5.1%.
+Platinum, 66.7%. Best you have found this session.
+```
+
+**Directive 47 never repeats Elite's own `Material Content` grade, and that is deliberate.** Measured
+across 1,633 prospects, `Low` and `High` rocks have the same distribution of best-material proportion
+— medians of 19.9% and 20.3% — and **45% of the rocks holding a material at 40% or more are graded
+`Low`**. The example above, at 58.3% Platinum, is one of them. That grade is about the
+engineering-material fragments a collector limpet picks up, not the commodity you are refining: two
+different questions sharing a word. Passing it on would fly you past the best rock in the cluster.
+
+**"Best you have found this session" is relative, and says so.** There is no fixed percentage that
+means "good" — Platinum's median of 26.6% is above Water's 90th percentile — so a single threshold
+would be wrong per material and silently so. What you have actually seen this session needs no table
+and adapts to whatever you are mining. The first rock is never announced as a best, because it is the
+only one.
+
+A prospect arrives every 48 seconds at the median, which is about seventy-five lines in an hour of
+mining. That is why this has its own switch, separate from the one below.
+
+### Core asteroids {#core-asteroid}
+
+```text
+Core asteroid. Alexandrite.
+```
+
+**Its own setting, because a core is 3 in 1,633 prospects.** Turning the running commentary off must
+not cost you the one announcement you are actually mining for.
+
+It is spoken as a routine line rather than an urgent one — urgent speaks over the top of whatever is
+being said and is reserved for danger and fuel. A core is exciting; it is not a safety matter, and
+announcing one across a hull warning would be the priority exactly backwards.
+
 ## Settings
 
 ### Speak without being asked {#enabled}
