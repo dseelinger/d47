@@ -14,6 +14,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [material-lines.md](material-lines.md) | Can d47 derive the material trader's 32 lines, the thing the trade rate depends on and the journal cannot supply? |
 | [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
 | [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
+| [colonisation-sources.md](colonisation-sources.md) | Is the construction depot a snapshot or a delta, is there a licence-clean facility table, and can anybody see a claim? |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
@@ -83,6 +84,9 @@ blueprint under any name**. A negative result is only evidence when the search c
 | **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. |
 | **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 20's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
 | **taleden/edsy** | **CC BY-NC** | **no** | Fails the permissive-only rule, and has no on-foot data anyway. |
+| **gaborauth/ed-colonisation-planner** | **GPL-3.0** | **no** | The only machine-readable facility table found — costs, the seven system attributes, and Update 3's link/economy topology — but it lives in TypeScript source under copyleft. Its own upstream is DaftMav's community spreadsheet. Worth reading for its provenance habits; nothing may be derived from it. |
+| **njthomson/SrvSurvey** + **Raven Colonial** | **GPL-3.0** | **no** | Live construction tracking and the ecosystem's most complete API. **Zero data files in the repo**, and its 19 endpoints mention "claim" not once. |
+| **EDSC** (edsc.info) | **none stated** | **no** | Web tracker. No published data, no API, no terms. |
 
 ## The licensing question, and the decision taken on it
 
