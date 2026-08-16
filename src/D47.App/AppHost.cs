@@ -612,6 +612,12 @@ public sealed class AppHost : IDisposable
                     // list is fetched from the provider over the network after this point.
                     Voices = () => self?.VoiceIds() ?? [],
                     VoiceLabel = id => self?.VoiceLabelFor(id) ?? id,
+
+                    // Late-bound like the two above, because the check is a network call made by
+                    // a host that does not exist yet at this point in composition.
+                    VerifyKey = (provider, token) => self is { } host
+                        ? host.VerifySpeechKeyAsync(provider, token)
+                        : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
                 },
                 cancellation,
                 callouts,
@@ -687,7 +693,13 @@ public sealed class AppHost : IDisposable
                 galaxy,
                 routePlanner,
                 communityGoals,
-                () => DateTimeOffset.Now));
+                () => DateTimeOffset.Now,
+
+                // Late-bound like the surfaces above: the check is a real network call and the
+                // host that makes it does not exist yet at this point in composition.
+                (provider, token) => self is { } host
+                    ? host.VerifyLanguageModelKeyAsync(provider, token)
+                    : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up."))));
 
         built = capabilities;
 
@@ -2601,6 +2613,155 @@ public sealed class AppHost : IDisposable
     /// Only the <em>source</em> is ever logged, never the key.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// How long a key check may take before it is reported as unreachable rather than as wrong.
+    /// Short, because this runs while somebody is looking at it — and because the failure it is
+    /// distinguishing is "no network", which does not get better by waiting.
+    /// </summary>
+    private static readonly TimeSpan KeyCheckBudget = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    /// Tries the stored language-model key for real (list.md Phase 16, "a key is verified, not
+    /// merely stored").
+    /// <para>
+    /// The smallest turn that proves a key: one token, no tools, no persona, no game state. It
+    /// costs a fraction of a cent and it is the only thing that can tell a good key from one that
+    /// is revoked, mistyped, or carrying the newline a browser copy put on the end.
+    /// </para>
+    /// <para>
+    /// <b>Rejected and unreachable are different answers and are kept apart.</b> Telling a
+    /// Commander their key is wrong when the machine is offline sends them to their account page
+    /// to issue another one, which will also fail.
+    /// </para>
+    /// </summary>
+    private async Task<SecretCheck> VerifyLanguageModelKeyAsync(string providerId, CancellationToken cancellationToken)
+    {
+        var selected = LlmProviderCatalog.Selected(providerId);
+
+        if (ResolveKey(selected) is not { } resolved)
+        {
+            return SecretCheck.Rejected($"No {selected.Name} key is stored.");
+        }
+
+        ILlmProvider? provider = selected.Id switch
+        {
+            LlmProviderCatalog.AnthropicId =>
+                new AnthropicLlmProvider(resolved.Key, Settings.Current.Llm.Endpoint),
+            _ => null,
+        };
+
+        if (provider is null)
+        {
+            return SecretCheck.Unreachable($"D47 has no client for {selected.Name} yet.");
+        }
+
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(KeyCheckBudget);
+
+        var request = new LlmRequest
+        {
+            Model = Settings.Current.Llm.Model ?? selected.DefaultModel ?? provider.DefaultModel,
+            Prompt = new PromptAssembly
+            {
+                History = [new ConversationMessage(ConversationRole.User, "Reply with the single word OK.")],
+            },
+            Effort = ThinkingEffort.Low,
+            MaxOutputTokens = 1,
+        };
+
+        try
+        {
+            await foreach (var step in provider.StreamAsync(request, budget.Token).ConfigureAwait(false))
+            {
+                // A failure the provider itself classified. Transient is the network's problem
+                // and permanent is the key's, which is exactly the distinction this returns.
+                if (step is LlmStreamEvent.Failed failure)
+                {
+                    return failure.Transient
+                        ? SecretCheck.Unreachable(failure.Message)
+                        : SecretCheck.Rejected(failure.Message);
+                }
+            }
+
+            // Reaching the end of the stream without a failure is the provider having accepted
+            // the key. Whether it said "OK" is not the question — being allowed to ask is.
+            return SecretCheck.Works($"{selected.Name} accepted the key.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return SecretCheck.Unreachable($"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
+        }
+        catch (Exception ex)
+        {
+            // Never the key, at any level — the message is the exception's and the exception
+            // never held it.
+            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
+            return SecretCheck.Unreachable(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Tries the stored speech key for real, against the provider's own voice list — which is the
+    /// call d47 makes anyway the moment a key lands, so this proves the exact thing that has to
+    /// work rather than a proxy for it.
+    /// </summary>
+    private async Task<SecretCheck> VerifySpeechKeyAsync(string providerId, CancellationToken cancellationToken)
+    {
+        var selected = TtsProviderCatalog.Selected(providerId);
+
+        if (selected.KeySecretName is not { } name)
+        {
+            return SecretCheck.Works($"{selected.Name} needs no key.");
+        }
+
+        if (!Secrets.TryGet(name, out var key))
+        {
+            return SecretCheck.Rejected($"No {selected.Name} key is stored.");
+        }
+
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(KeyCheckBudget);
+
+        // Its own instance rather than the live one, so a refusal surfaces here as a verdict
+        // instead of being swallowed by the background refresh's catch. Refreshing the cache is
+        // not this method's job: storing the key already raised a settings change, which
+        // ApplySpeechSettings turns into a refetch on the key-presence edge.
+        ITtsProvider? provider = selected.Id switch
+        {
+            SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
+                () => key,
+                _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
+
+            _ => null,
+        };
+
+        if (provider is null)
+        {
+            return SecretCheck.Unreachable($"D47 has no client for {selected.Name} yet.");
+        }
+
+        try
+        {
+            var voices = await provider.ListVoicesAsync(budget.Token).ConfigureAwait(false);
+
+            return SecretCheck.Works($"{selected.Name} accepted the key — {voices.Count} voices.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return SecretCheck.Unreachable($"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
+        }
+        catch (TtsException ex)
+        {
+            // The provider's own refusal, which is the one case that means the key is wrong.
+            return SecretCheck.Rejected(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
+            return SecretCheck.Unreachable(ex.Message);
+        }
+    }
+
     private (string Key, string Source)? ResolveKey(LlmProviderInfo provider)
     {
         if (provider.KeySecretName is not { } name)

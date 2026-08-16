@@ -30,12 +30,17 @@ public static class ConversationCapability
     /// <summary>The secret row key for a provider's API key. One row per provider that needs one.</summary>
     public static string KeyRowFor(LlmProviderInfo provider) => $"llm.{provider.Id}.apiKey";
 
+    /// <param name="verifyKey">
+    /// Tries a provider's stored key against the real service, by provider id (list.md Phase 16).
+    /// Optional, because most callers of this factory are tests that never press the button.
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         LlmAvailabilityState availability,
         SpendTracker spend,
         TurnCancellation cancellation,
-        Action silence)
+        Action silence,
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
     {
         return new CapabilityDescriptor
         {
@@ -101,7 +106,7 @@ public static class ConversationCapability
                         ToolResult.Ok(DescribeModel(settings.Current, availability, spend))),
                 },
             ],
-            Settings = BuildSettingRows(),
+            Settings = BuildSettingRows(verifyKey),
         };
     }
 
@@ -134,7 +139,8 @@ public static class ConversationCapability
         return report.ToString().TrimEnd();
     }
 
-    private static IReadOnlyList<SettingRow> BuildSettingRows()
+    private static IReadOnlyList<SettingRow> BuildSettingRows(
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey)
     {
         var rows = new List<SettingRow>
         {
@@ -233,6 +239,13 @@ public static class ConversationCapability
                 Kind = SettingKind.Secret,
                 SecretName = provider.KeySecretName,
                 DocsAnchor = "api-key",
+                EgressId = EgressDisclosure.LanguageModel,
+
+                // The one key that decides whether d47 can answer at all, so it is the one worth
+                // proving before the Commander closes the window and finds out on the first turn.
+                Verify = verifyKey is { } verify
+                    ? token => verify(provider.Id, token)
+                    : null,
                 AppliesWhen = s => string.Equals(s.Llm.Provider, provider.Id, StringComparison.OrdinalIgnoreCase),
             });
 

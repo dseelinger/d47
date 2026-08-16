@@ -54,7 +54,7 @@ public static class TestSurface
     /// provider — passed in by the tests about the Voice row, which cannot say anything about a
     /// row with nothing in it.
     /// </param>
-    public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
+    public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths, CapabilityRegistry Registry, SecretStore Secrets) CreateFull(
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null)
@@ -112,7 +112,24 @@ public static class TestSurface
 
         settings.Bind(registry);
 
-        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths);
+        // The registry and the secret store come back too: the guided key setup is built from
+        // the real descriptor rows and asks the real store whether a key is present, so a test
+        // that cannot reach either could only assert against a copy of them.
+        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
+    }
+
+    /// <summary>
+    /// The three most tests want. Kept beside <see cref="CreateFull"/> rather than replaced by it
+    /// because forty-four call sites destructure this shape, and widening it would be forty-four
+    /// edits to give every one of them two values it does not use.
+    /// </summary>
+    public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
+        Func<string>? coverage = null,
+        D47.Core.Persona.PersonaHost? personas = null,
+        IReadOnlyList<VoiceInfo>? voices = null)
+    {
+        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices);
+        return (settings, viewState, paths);
     }
 
     /// <summary>Just the settings service, for tests that need nowhere to put a view state.</summary>

@@ -26,7 +26,14 @@ namespace D47.App.Controls;
 /// </summary>
 public sealed class AboutWindow : Window
 {
-    public AboutWindow(AppPaths paths)
+    /// <param name="setUpKeys">
+    /// Reopens the guided key setup (list.md Phase 16). Optional: null hides the button, which is
+    /// what a caller with no host to drive it gets. Here rather than only on first run because
+    /// <b>keys get rotated and revoked</b>, so the state that triggers the guide is a state a
+    /// working install can return to — and About is where a Commander already goes when
+    /// something is not working.
+    /// </param>
+    public AboutWindow(AppPaths paths, Func<Task>? setUpKeys = null)
     {
         Title = "About Directive 47";
         Width = 460;
@@ -68,6 +75,21 @@ public sealed class AboutWindow : Window
             addToStartMenu.IsEnabled = false;
         };
 
+        var keys = new Button
+        {
+            Name = "SetUpKeys",
+            Content = "Set up keys",
+            IsVisible = setUpKeys is not null,
+        };
+
+        keys.Click += async (_, _) =>
+        {
+            if (setUpKeys is { } open)
+            {
+                await open();
+            }
+        };
+
         Content = new StackPanel
         {
             Margin = new Thickness(24),
@@ -93,7 +115,8 @@ public sealed class AboutWindow : Window
                             [DockPanel.DockProperty] = Dock.Right,
                             Orientation = Orientation.Horizontal,
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Children = { close },
+                            Spacing = 8,
+                            Children = { keys, close },
                         },
                         addToStartMenu,
                     },

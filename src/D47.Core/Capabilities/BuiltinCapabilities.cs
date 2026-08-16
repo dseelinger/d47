@@ -64,7 +64,12 @@ public static class BuiltinCapabilities
         // The clock, injected because no Core component reads one. Defaults to the epoch under
         // the designer and in tests that do not care; the community goal board is the only
         // reader, and every goal then reads as live, which is the harmless direction.
-        Func<DateTimeOffset>? now = null) =>
+        Func<DateTimeOffset>? now = null,
+
+        // Tries a language-model provider's stored key against the real service, by provider id
+        // (list.md Phase 16). Null under the designer and in every test that does not press the
+        // button; the row then offers no check rather than offering one that cannot be made.
+        Func<string, CancellationToken, Task<Configuration.SecretCheck>>? verifyLlmKey = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -79,7 +84,8 @@ public static class BuiltinCapabilities
             () => gameState.Active,
             communityGoals,
             now ?? (() => DateTimeOffset.MinValue)),
-        ConversationCapability.Create(settings, llmAvailability, spend, cancellation, speech.Silence),
+        ConversationCapability.Create(
+            settings, llmAvailability, spend, cancellation, speech.Silence, verifyLlmKey),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),

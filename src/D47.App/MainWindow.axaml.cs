@@ -13,6 +13,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Listening;
+using D47.Core.Audio;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging;
 
@@ -252,11 +253,81 @@ public partial class MainWindow : Window
             _ = CheckForUpdateAsync(_host);
         }
 
+        // Before the Start Menu offer, because it is the one that decides whether d47 can answer
+        // at all — and a Commander who has just been asked about a shortcut has already formed a
+        // view about how much this app asks of them.
+        await OfferKeysAsync();
+
         // Last, and awaited rather than fired and forgotten: it is modal, so it must not appear
         // over a panel that is still assembling itself. Returns immediately on every run after
         // the first.
         await OfferStartMenuEntryAsync();
 
+    }
+
+    /// <summary>
+    /// The guided key setup, shown when there is no usable language-model key (list.md Phase 16).
+    /// <para>
+    /// <b>Driven by state, never by a flag.</b> There is nothing recorded about having shown
+    /// this, which is the point: a Commander who restored a <c>data\</c> folder onto a new
+    /// machine has a <c>secrets.json</c> that DPAPI cannot decrypt, <see cref="SecretStore"/>
+    /// reports those values absent, and this offers to fix exactly that. A "have we done this?"
+    /// flag would have shown it once on the machine that could read its secrets and never again
+    /// on the one that could not.
+    /// </para>
+    /// </summary>
+    private async Task OfferKeysAsync()
+    {
+        if (_host is not { } host)
+        {
+            return;
+        }
+
+        // The one gate, and it is on the *offer* rather than on the window. Reopening from About
+        // deliberately skips it: keys get rotated and revoked, and a Commander who came looking
+        // for the key screen should find it rather than be told they do not need it.
+        if (!FirstRun.IsNeeded(
+                LlmProviderCatalog.Selected(host.Settings.Current.Llm.Provider),
+                host.Secrets.Has))
+        {
+            return;
+        }
+
+        await ShowKeySetupAsync();
+    }
+
+    /// <summary>
+    /// The guided key setup, shown because it was asked for. Ungated, so a fully configured
+    /// install sees its rows with their keys already stored and a Check button beside each —
+    /// which is what somebody arriving here from About came to use.
+    /// </summary>
+    private async Task ShowKeySetupAsync()
+    {
+        if (_host is not { } host)
+        {
+            return;
+        }
+
+        var provider = LlmProviderCatalog.Selected(host.Settings.Current.Llm.Provider);
+
+        var steps = FirstRun.Steps(
+            host.Capabilities,
+            host.Settings.Current,
+            provider,
+            host.Secrets.Has,
+            ConversationCapability.KeyRowFor(provider),
+
+            // The voice key, offered because a companion that talks back is most of the point —
+            // and offered second, because one that does not is still a companion. Inara's row
+            // joins this list in the phase that adds it, beside its own row rather than here.
+            [SpeechCapability.KeyRowFor(TtsProviderCatalog.ElevenLabs)]);
+
+        if (steps.Count == 0)
+        {
+            return;
+        }
+
+        await new FirstRunWindow(steps, host.Settings).ShowDialog(this);
     }
 
     /// <summary>
@@ -402,7 +473,12 @@ public partial class MainWindow : Window
 
                 // The choice is the go-ahead: it states its size in the list it was made from,
                 // and the row shows what it is doing while it does it.
-                (model, progress) => _host.InstallModelAsync(model, progress));
+                (model, progress) => _host.InstallModelAsync(model, progress),
+
+                // About's way back in. The window rather than the offer, because the offer is
+                // gated on there being no usable key and this path is for the Commander who came
+                // looking — a rotated key, a revoked one, or just checking the one they have.
+                ShowKeySetupAsync);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is

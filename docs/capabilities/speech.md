@@ -76,6 +76,24 @@ ElevenLabs' voice *catalogue* is actually public — it answers without a key at
 is deliberately left empty until you have stored one. A picker full of voices that every
 synthesis then refuses is worse than an empty picker and a row telling you what is missing.
 
+**Check** proves the key against ElevenLabs' own voice list, which is the exact call Directive 47
+makes anyway the moment a key lands — so it verifies the thing that has to work rather than a
+proxy for it:
+
+```text
+ElevenLabs accepted the key — 42 voices.
+```
+
+**Storing a key takes effect immediately.** The voice picker refills without a restart, which it
+did not always: selecting ElevenLabs before pasting the key fetched an empty list and nothing
+refetched it, so the picker stayed empty with the key sitting in the row above it.
+
+**Show** unmasks what you are typing on the way in, and what you paste is trimmed — a key copied
+from a browser usually arrives with a trailing newline, and that fails in a way that reads as a
+wrong key rather than as a bad paste. This key is also offered on the first run, after the
+language-model one and marked optional; see
+[the first run](conversation.html#first-run).
+
 When something does go wrong, Directive 47 repeats **what the service said** rather than
 translating a status code:
 

@@ -48,6 +48,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private AppPaths? _paths;
 
     /// <summary>
+    /// Reopens the guided key setup from About (list.md Phase 16). Null in the designer and
+    /// in tests, which hides the button rather than offering one that does nothing.
+    /// </summary>
+    private Func<Task>? _setUpKeys;
+
+    /// <summary>
     /// Where the hand-testing coverage record stands, when this process was asked to keep one.
     /// Null on every normal run, which is what keeps the row's button absent rather than dead.
     /// </summary>
@@ -83,8 +89,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Func<CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
         IReadOnlyList<string>? reservedPhrases = null,
-        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null)
+        Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
+        Func<Task>? setUpKeys = null)
     {
+        _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
         _settings = settings;
         _viewStateStore = viewState;
@@ -563,7 +571,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         if (_paths is not null && TopLevel.GetTopLevel(this) is Window owner)
         {
-            await new Controls.AboutWindow(_paths).ShowDialog(owner);
+            await new Controls.AboutWindow(_paths, _setUpKeys).ShowDialog(owner);
         }
     }
 
@@ -1434,77 +1442,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }, false);
     }
 
+    /// <summary>
+    /// The key row, which is <see cref="SecretEditor"/> — the same control the first-run guide
+    /// shows (list.md Phase 16). Extracted rather than duplicated so the trim, the reveal, the
+    /// write-only store and the real check cannot drift between the two surfaces.
+    /// </summary>
     private (Control, Action, bool) BuildSecret(SettingRow row, TextBlock message)
     {
-        var box = new TextBox
-        {
-            PasswordChar = '•',
-            PlaceholderText = "Paste a key to store it",
-            Width = 280,
-        };
+        // The editor reports its own failures inline, next to the box that caused them, so the
+        // row's shared message line stays for everything else.
+        message.IsVisible = false;
 
-        // A pill rather than a muted sentence at the end of the row. Whether a key is stored is
-        // the single thing this row is asked, usually at the moment something is not working,
-        // and eleven-point grey after two buttons is where an answer goes to be missed. Same
-        // shape as the "protected" tag on a row heading, so it reads as a state rather than as
-        // a remark.
-        var state = new TextBlock { FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
+        var editor = new SecretEditor(row, _settings!);
 
-        var badge = new Border
-        {
-            Padding = new Thickness(8, 2),
-            CornerRadius = new CornerRadius(8),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = state,
-        };
+        // A stored key changes what other rows can offer — the voice picker is the obvious one —
+        // so the surface re-reads itself rather than waiting for the next open.
+        editor.Changed += Refresh;
 
-        var store = new Button { Content = "Store" };
-        var clear = new Button { Content = "Clear" };
-
-        store.Click += (_, _) =>
-        {
-            if (Apply(row, box.Text, message))
-            {
-                // Never held in a control after it is stored. The store is write-only and so is
-                // the box that fed it.
-                box.Text = string.Empty;
-            }
-        };
-
-        clear.Click += (_, _) =>
-        {
-            box.Text = string.Empty;
-            Apply(row, null, message);
-        };
-
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        panel.Children.Add(box);
-        panel.Children.Add(store);
-        panel.Children.Add(clear);
-        panel.Children.Add(badge);
-
-        return (panel, () =>
-        {
-            var stored = _settings!.HasSecret(row.SecretName);
-
-            state.Text = stored ? "Key stored" : "No key";
-
-            // Accent for stored and muted for not, so the two states differ in colour as well as
-            // in wording — the row is read at a glance far more often than it is read.
-            Themed(
-                state,
-                TextBlock.ForegroundProperty,
-                stored ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
-
-            Themed(
-                badge,
-                Border.BorderBrushProperty,
-                stored ? ThemeManager.AccentKey : ThemeManager.BorderKey);
-
-            // And the box stops inviting a first key once there is one to replace.
-            box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
-        }, false);
+        return (editor, editor.Refresh, false);
     }
 
     private (Control, Action, bool) BuildHotkey(SettingRow row, TextBlock message)

@@ -1,0 +1,149 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
+using D47.App.Controls;
+using D47.App.Settings;
+using D47.Core;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
+using D47.Core.Conversation;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>
+/// The guided key setup, on the surface (list.md Phase 16). The decision itself is covered in
+/// Core; what is asserted here is that the window shows the real rows, discloses egress, and can
+/// be reached again from About.
+/// </summary>
+public class FirstRunKeysTests
+{
+    private static FirstRunWindow Guide(params string[] optionalKeys)
+    {
+        var (settings, _, _, registry, secrets) = TestSurface.CreateFull();
+        var provider = LlmProviderCatalog.Selected(LlmProviderCatalog.AnthropicId);
+
+        // Selected for real, because the egress lines are computed from settings: with the
+        // default "none" provider the model destination is correctly reported as sending
+        // nothing, which is a true sentence about a Commander this guide is never shown to.
+        settings.Apply(ConversationCapability.ProviderKey, provider.Id, SettingsCaller.Panel);
+
+        var steps = FirstRun.Steps(
+            registry,
+            settings.Current,
+            provider,
+            secrets.Has,
+            ConversationCapability.KeyRowFor(provider),
+            optionalKeys);
+
+        return new FirstRunWindow(steps, settings);
+    }
+
+    /// <summary>
+    /// The window shows the real key controls rather than a re-authored copy of them — the same
+    /// <see cref="SecretEditor"/> the settings surface builds.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheGuideShowsTheSameKeyControlAsSettings()
+    {
+        var window = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
+        window.Show();
+
+        var editors = window.GetVisualDescendants().OfType<SecretEditor>().ToList();
+
+        Assert.Equal(2, editors.Count);
+        window.Close();
+    }
+
+    /// <summary>
+    /// Every key says what it sends and where. Computed from <see cref="EgressDisclosure"/>, so
+    /// this asserts the sentence reached the screen rather than that somebody typed one.
+    /// </summary>
+    [AvaloniaFact]
+    public void EveryKeyDisclosesWhatLeavesTheMachine()
+    {
+        var window = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
+        window.Show();
+
+        var text = string.Join(
+            "\n",
+            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? ""));
+
+        Assert.Contains("api.anthropic.com", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("elevenlabs", text, StringComparison.OrdinalIgnoreCase);
+        window.Close();
+    }
+
+    /// <summary>
+    /// Nothing here is a wall: the window closes on its own button, and declining is simply
+    /// closing it. Capabilities are state rather than guards (list.md Phase 3).
+    /// </summary>
+    [AvaloniaFact]
+    public void ItCanBeClosedWithoutStoringAnything()
+    {
+        var (settings, _, _, registry, secrets) = TestSurface.CreateFull();
+        var provider = LlmProviderCatalog.Selected(LlmProviderCatalog.AnthropicId);
+
+        var steps = FirstRun.Steps(
+            registry, settings.Current, provider, secrets.Has,
+            ConversationCapability.KeyRowFor(provider), []);
+
+        var window = new FirstRunWindow(steps, settings);
+        window.Show();
+
+        var done = window.GetVisualDescendants().OfType<Button>()
+            .First(button => (button.Content as string) == "Done");
+
+        done.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.False(secrets.Has(provider.KeySecretName!));
+    }
+
+    /// <summary>
+    /// About carries the way back in, because keys get rotated and revoked — the state that
+    /// triggers the guide is one a working install can return to.
+    /// </summary>
+    [AvaloniaFact]
+    public void AboutOffersTheKeySetupAgain()
+    {
+        var (_, _, paths) = TestSurface.Create();
+        var opened = 0;
+
+        var about = new AboutWindow(paths, () =>
+        {
+            opened++;
+            return Task.CompletedTask;
+        });
+
+        about.Show();
+
+        var button = about.GetVisualDescendants().OfType<Button>()
+            .First(candidate => candidate.Name == "SetUpKeys");
+
+        Assert.True(button.IsVisible);
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal(1, opened);
+
+        about.Close();
+    }
+
+    /// <summary>
+    /// And a caller with nothing to open hides the button rather than offering one that does
+    /// nothing — the designer and the tests that are not about this.
+    /// </summary>
+    [AvaloniaFact]
+    public void AboutHidesTheButtonWhenThereIsNothingToOpen()
+    {
+        var (_, _, paths) = TestSurface.Create();
+        var about = new AboutWindow(paths);
+        about.Show();
+
+        var button = about.GetVisualDescendants().OfType<Button>()
+            .First(candidate => candidate.Name == "SetUpKeys");
+
+        Assert.False(button.IsVisible);
+        about.Close();
+    }
+}

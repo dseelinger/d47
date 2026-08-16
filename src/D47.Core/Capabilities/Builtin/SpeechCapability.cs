@@ -65,6 +65,16 @@ public static class SpeechCapability
         /// <summary>Voices the selected provider offers, or empty when it cannot say.</summary>
         public Func<IReadOnlyList<string>>? Voices { get; init; }
 
+        /// <summary>
+        /// Tries a provider's stored key against the real service (list.md Phase 16). Takes the
+        /// provider id, because the row that asks is the row for one provider and the surface has
+        /// to know which.
+        /// <para>
+        /// Null where nothing can make the call, which is every test that does not care.
+        /// </para>
+        /// </summary>
+        public Func<string, CancellationToken, Task<SecretCheck>>? VerifyKey { get; init; }
+
         /// <summary>Output devices, as id/label pairs the picker can render.</summary>
         public Func<IReadOnlyList<string>>? OutputDevices { get; init; }
 
@@ -515,6 +525,13 @@ public static class SpeechCapability
                 Kind = SettingKind.Secret,
                 SecretName = provider.KeySecretName,
                 DocsAnchor = "api-key",
+                EgressId = EgressDisclosure.TextToSpeech,
+
+                // Verified against the provider's own voice list, which is the real call this key
+                // is for — and the one d47 makes anyway the moment the key lands.
+                Verify = surface.VerifyKey is { } verify
+                    ? token => verify(provider.Id, token)
+                    : null,
                 AppliesWhen = s => string.Equals(s.Speech.Provider, provider.Id, StringComparison.OrdinalIgnoreCase),
             });
 

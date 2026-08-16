@@ -128,6 +128,31 @@ public sealed record SettingRow
     public string? SecretName { get; init; }
 
     /// <summary>
+    /// Tries the stored secret against the real service and says what happened (list.md Phase 16).
+    /// Null on a row that has nothing to try it against.
+    /// <para>
+    /// <b>It makes the real call.</b> A key that is wrong, revoked, or pasted with a trailing
+    /// newline is otherwise indistinguishable from one that works until the first turn fails —
+    /// and by then the Commander is somewhere else, watching d47 not answer rather than watching
+    /// a key not work.
+    /// </para>
+    /// <para>
+    /// Takes no argument: the verifier reads the stored value itself, so the key never travels
+    /// through the surface that asked. That is the same rule as <see cref="SecretName"/> — a row
+    /// can ask whether a secret works without ever being told what it is.
+    /// </para>
+    /// </summary>
+    public Func<CancellationToken, Task<SecretCheck>>? Verify { get; init; }
+
+    /// <summary>
+    /// The id in <see cref="Configuration.EgressDisclosure"/> for what this key sends and where.
+    /// Carried rather than written out beside the row, because a hand-written sentence about what
+    /// leaves the machine is exactly the sentence that goes stale — and this is the one place a
+    /// Commander is deciding whether to trust the thing.
+    /// </summary>
+    public string? EgressId { get; init; }
+
+    /// <summary>
     /// Anchor within the owning capability's documentation page. The per-row setup-guide link
     /// points here; the docs gate asserts the anchor's heading exists (list.md Phase 4,
     /// "Link each settings row to its documentation").

@@ -62,11 +62,17 @@ that pass is what found the three id groups that clear 40% and are still not shi
 `npc`-channel requirement that closes a spoof nobody had written down. Cheap, but not nothing. See
 [../spikes/journal-corpus-warnings.md](../spikes/journal-corpus-warnings.md).
 
-## Phase 16 — Before the rest of it — **next**
+## ~~Phase 16 — Before the rest of it~~ — complete 2026-08-16
 
 **Three items pulled out of two later phases on 2026-08-15**, and given a phase so that the running
 order is the numbers rather than a paragraph explaining the numbers. Two are spikes; one is the gap a
-new install falls into.
+new install falls into. All three closed on 2026-08-16.
+
+**What the spikes changed.** Colonisation tracking got *easier* — the depot event is a snapshot, so
+it needs no source at all — and colonisation *planning* got smaller, because no licence-clean facility
+table exists. Exobiology gained a route planner that already returns per-species values, and lost the
+mass-code heuristic, which the corpus cannot test. Both findings are in `docs/spikes/`, and both land
+on Phase 17 and Phase 18 before either starts, which is what this phase existed to do.
 
 **Both spikes** — `Spike: what can be known about exobiology before you land`, and `Spike: what is
 already known about colonisation, and by whom`, which were the first two items of what is now Phase
@@ -94,7 +100,7 @@ on that answer, which is why they lead within the phase.
 its three items produce documents rather than code, so it is the one phase here whose minor release
 is mostly a promise that the next two are built on something measured.
 
-## Phase 17 — Checklists
+## Phase 17 — Checklists — **next**
 
 **What everything else is waiting on.** Engineering's planning half was deferred here from Phase 14
 and has been waiting since `v0.10.0` closed — the tables are built, so *An engineering plan writes

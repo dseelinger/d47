@@ -101,8 +101,49 @@ again. If you lose it, paste a new one.
 The row says which state it is in, and the box changes with it: `No key` and "Paste a key to
 store it", or `Key stored` and "Paste a new key to replace it".
 
+**Show** unmasks what you are typing, on the way in only — a stored key is still never shown back.
+It exists because the commonest reason a key does not work is that it was pasted wrong, and you
+cannot see that through bullets. What you paste is **trimmed** before it is stored: a key copied
+from a browser arrives with a trailing newline more often than not, and a newline fails at the
+provider in a way that reads as a wrong key rather than as a bad paste.
+
+**Check** proves it. It makes the smallest real call the provider offers — one token, no tools, no
+persona — and says what came back:
+
+```text
+Anthropic accepted the key.
+```
+
+This matters more than it sounds. A key that is wrong, revoked, or newline-padded is otherwise
+indistinguishable from one that works until your first question fails, by which point you are
+looking at Directive 47 not answering rather than at a key not working.
+
+**Rejected and unreachable are different answers and are kept apart.** If the check cannot be made
+at all — offline, blocked, timed out — it says so and says nothing about the key. Being told a good
+key is bad would send you to your account page to issue another one that fails the same way.
+
 If you already keep `ANTHROPIC_API_KEY` in your environment, that still works and is used when
 nothing is stored here.
+
+### The first run {#first-run}
+
+On a fresh install there is no key, so the first thing you would otherwise do is hunt for this row
+in a surface with fourteen sections. Directive 47 offers the two that matter instead — this one,
+and the voice key as optional — with what each one sends and where.
+
+**It is not a wall.** Decline everything and Directive 47 still runs: you get a typed companion
+that reads your journal and answers from what it can see, rather than one that talks back. That is
+the same rule as everywhere else here — a capability without its key is off, not broken.
+
+**There is no "we have shown this" flag**, and that is deliberate. The condition is *there is no
+usable language-model key*, asked fresh each time. That is also true if you copy your `data\`
+folder to another machine: `secrets.json` is encrypted for one Windows account, so on the new one
+those values cannot be decrypted and are reported absent — and the offer appears, on exactly the
+machine that needs it. A flag would have been set on the old machine and would suppress it forever
+on the new one.
+
+Reopen it any time from **About → Set up keys**. Keys get rotated and revoked, so the state that
+triggers this is one a working install can come back to.
 
 ### Personality {#personality}
 
