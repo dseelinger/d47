@@ -79,7 +79,19 @@ public static class GalaxyFilters
     public static IReadOnlyList<GalaxyFilter> All { get; } =
     [
         GalaxyFilter.Range("distance"),
-        GalaxyFilter.Range("population"),
+
+        // There is no "population" filter here, and there was one until 2026-08-16. It did
+        // nothing. Measured within 15 light years of Sol, where 48 of the 51 systems are
+        // populated: {"min":"1","max":"1000000000000"} returned 51, {"min":"0","max":"0"} returned
+        // 51, numeric bounds rather than string ones returned 51, and a key the service has never
+        // heard of returned 51. The field is real — its own field_values endpoint reports a
+        // minimum and a maximum for it — and only the range shape is dropped; written as a choice
+        // it is honoured and matches nothing, 0 results for a population a system in range
+        // actually has. So every "find me a system with a million people" this ever answered was
+        // an answer to a question nobody asked, which is the precise failure this class exists to
+        // prevent, shipped inside it since Phase 14. A filter the service ignores must not be
+        // offered, and offering it is worse than not having it — the number is on every result,
+        // so a caller who needs the distinction reads it there (ColonisationScan does).
         GalaxyFilter.Choice(
             "allegiance",
             "Alliance", "Empire", "Federation", "Guardian", "Independent", "Pilots Federation", "Thargoid"),

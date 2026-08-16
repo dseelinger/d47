@@ -268,4 +268,115 @@ public class SpanshRequestTests
 
         Assert.Contains("Prosperity", failure, StringComparison.Ordinal);
     }
+
+    // ------------------------------------------------- the colonisation scan
+
+    private static JsonElement Colonisation(double maxDistance = 15)
+    {
+        Assert.True(
+            ColonisationQuery.TryParse(
+                "Sol",
+                subtype: null,
+                terraformable: false,
+                rings: false,
+                minimumLandable: null,
+                maxDistance,
+                size: 3,
+                out var query,
+                out var failure),
+            failure);
+
+        return JsonDocument.Parse(SpanshRequest.Colonisation(query)).RootElement;
+    }
+
+    /// <summary>
+    /// The one criterion that decides a colonisation candidate is the one filter this index drops
+    /// without saying so. Measured 2026-08-16 within 15 light years of Sol, where 48 of the 51
+    /// systems are populated: every range spelling of <c>population</c> returned 51, identical to
+    /// a key the service has never heard of. So it must not be sent, and something else has to do
+    /// its job.
+    /// </summary>
+    [Fact]
+    public void ThePopulationFilterIsNeverSentBecauseTheServiceDropsIt()
+    {
+        var filters = Colonisation().GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("population", out _));
+
+        // And the vocabulary no longer offers it either, so no other request can send it.
+        Assert.Null(GalaxyFilters.Find("population"));
+    }
+
+    /// <summary>
+    /// What cannot be filtered can be sorted, and the second key is what keeps the page in
+    /// distance order inside the ties.
+    /// </summary>
+    [Fact]
+    public void PopulationIsSortedOnInsteadNearestFirstWithinTheTies()
+    {
+        var sort = Colonisation().GetProperty("sort");
+
+        Assert.Equal(2, sort.GetArrayLength());
+        Assert.Equal("asc", sort[0].GetProperty("population").GetProperty("direction").GetString());
+        Assert.Equal("asc", sort[1].GetProperty("distance").GetProperty("direction").GetString());
+    }
+
+    /// <summary>
+    /// Both flags are presence-only: the value is discarded, so asking for <c>"false"</c> returns
+    /// precisely the systems that are true. Neither can be sent at all.
+    /// </summary>
+    [Fact]
+    public void NeitherColonisationFlagIsSentBecauseAskingForFalseReturnsTheTrueOnes()
+    {
+        var filters = Colonisation().GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("is_colonised", out _));
+        Assert.False(filters.TryGetProperty("is_being_colonised", out _));
+    }
+
+    /// <summary>
+    /// The page has to hold every unpopulated system in range, since the sort is the only thing
+    /// putting them where they can be seen. 120 is above the densest 15 light years measured — 106
+    /// systems, around Colonia — and below the 500 the service caps a page at, past which it
+    /// silently returns 25 rather than erroring.
+    /// </summary>
+    [Fact]
+    public void TheScanAsksForMoreSystemsThanTheDensestClaimRangeHolds()
+    {
+        var body = Colonisation();
+
+        Assert.Equal(ColonisationQuery.ScanSize, body.GetProperty("size").GetInt32());
+        Assert.InRange(body.GetProperty("size").GetInt32(), 107, 500);
+        Assert.Equal("Sol", body.GetProperty("reference_system").GetString());
+        Assert.Equal("15", body.GetProperty("filters").GetProperty("distance").GetProperty("max").GetString());
+    }
+
+    /// <summary>
+    /// One candidate's bodies, reached by name. The obvious alternative — a zero-width distance
+    /// range around the system — is not "this system only": it matched every body in the galaxy
+    /// and took 120 seconds before it was given up on.
+    /// </summary>
+    [Fact]
+    public void BodiesInNamedSystemsAreAskedForAsOneChoiceCarryingEveryName()
+    {
+        var query = BodyQuery.ForSystems("Sol", ["HIP 22711", "HIP 22460"], maxDistance: 15);
+        var filters = JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement.GetProperty("filters");
+
+        var names = filters.GetProperty("system_name").GetProperty("value");
+
+        Assert.Equal(2, names.GetArrayLength());
+        Assert.Equal("HIP 22711", names[0].GetString());
+        Assert.Equal("HIP 22460", names[1].GetString());
+
+        // Still bounded, and never a zero-width one.
+        Assert.Equal("15", filters.GetProperty("distance").GetProperty("max").GetString());
+    }
+
+    [Fact]
+    public void AnOrdinaryBodySearchSendsNoSystemNameFilter()
+    {
+        Assert.False(Bodies(builder => builder.Subtype = "Water world")
+            .GetProperty("filters")
+            .TryGetProperty("system_name", out _));
+    }
 }

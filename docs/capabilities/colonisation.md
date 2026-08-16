@@ -1,15 +1,19 @@
-# Construction tracking
+# Colonisation
 
-What your construction sites still need, what you are already carrying towards them, and what is
-left to haul.
+What your construction sites still need, what you are already carrying towards them, what is left to
+haul — and which nearby systems have the bodies your next colony wants.
 
 > "what does my construction site still need"
 > "what is left to deliver"
 > "how far along is the construction"
 > "what am I carrying for the build"
+> "find me somewhere worth colonising"
 
-This needs no key, no account and no network. It is subtraction over data Elite has already written
-to your disk — the shortest supply chain of anything d47 ships.
+**Two halves, and they run on different things.** Tracking a build needs no key, no account and no
+network: it is subtraction over data Elite has already written to your disk, the shortest supply
+chain of anything d47 ships. Finding somewhere to build is a question about the galaxy, so it goes
+to the same index and the same off switch as every other question that leaves this machine — see
+[galaxy search](galaxy.md).
 
 ## The arithmetic you would otherwise be doing on paper
 
@@ -133,6 +137,105 @@ would join the depot to the hold perfectly and match **no contribution against a
 a delivery you had just completed as never having happened. Names are folded to lowercase for exactly
 that reason.
 
+## Somewhere to put the next one
+
+The claim rule is Frontier's, in their own words: the System Colonisation Contact offers you "a
+nearby unpopulated star system (within a max distance of 15ly)". Both halves of that are checkable
+against an index d47 already queries, so this narrows a hundred-odd neighbours down to the handful
+that hold what you want to build on.
+
+```text
+97 of the 109 systems within 15 light years of Ratraii are unpopulated. 3 are worth a look,
+nearest first:
+
+Eol Prou LW-L c8-188 — 2.48 ly, 22 bodies.
+  11 landable. Rings on 2: A 5 (Rocky, pristine reserves); A 8 (Icy, pristine reserves).
+  9 Icy bodies, 5 Rocky bodies, 3 High metal content worlds, 1 Class I gas giant, 1 Gas giant
+  with water-based life.
+  Planets 11 ls to 3,490 ls from arrival.
+
+Eol Prou LW-L c8-266 — 2.66 ly, 18 bodies.
+  11 landable. Rings on 3: 2 (Rocky, pristine reserves); 4 (Rocky, pristine reserves);
+  3 (Metal Rich, Icy, pristine reserves).
+  7 Rocky bodies, 6 Icy bodies, 2 Class III gas giants, 1 Class I gas giant, 1 Metal-rich body.
+  Planets 10 ls to 3,133 ls from arrival.
+
+Eol Prou RS-T d3-74 — 5.03 ly, 26 bodies.
+  12 landable. Rings on 4: A 2 (Rocky, pristine reserves); BC 6 (Icy, pristine reserves);
+  A 3 (Rocky, pristine reserves); A 1 (Metal Rich, pristine reserves).
+  10 Rocky bodies, 5 Icy bodies, 3 High metal content worlds, 2 Class I gas giants,
+  2 Class III gas giants.
+  Planets 3,958 ls to 81,811 ls from arrival.
+
+23 more are systems nobody has surveyed — the index has their stars and no planets at all, so I
+cannot say what is in them. That is not the same as empty.
+None of this says a system is free. A claim lasts 24 hours, lives on Frontier's servers, and is
+visible only to the Commander who made it — no index outside the game holds one, so I cannot
+check. These are systems worth opening in the System Colonisation Contact, which is the only
+thing that knows.
+```
+
+That last paragraph is the whole shape of this feature and is on every answer. Look at the third
+candidate to see why the arrival spread is there: its planets run from 3,958 to 81,811 light seconds
+out, which is a very different build from the first one's 11 to 3,490 whatever the bodies are.
+
+And note the twenty-three. A crowd-sourced index holds what somebody has scanned and uploaded, so a
+system nobody has honked comes back as a star with no planets — **a fifth of the neighbourhood in
+that example**. Those are not small systems and they are not empty ones; they are systems with
+nothing known about them, which on a frontier is often exactly where you would go and look. They are
+counted rather than recommended, and counted rather than quietly dropped.
+
+### What this cannot be: telling you a system is free
+
+**A claim is invisible to everybody except the Commander who made it.** That is not a gap waiting on
+a better source; it is structural, and it was measured before this was built.
+
+`ColonisationSystemClaim` carries a system, an address and a timestamp, and there is **no expiry
+field** — Frontier's 24 hours is a published rule rather than a number in the file. There is **no
+release or expiry event** either, so a claim lapsing is written nowhere at all. And nothing outside
+the game holds one: the most complete live service in the ecosystem is Raven Colonial, whose API is
+nineteen endpoints across projects, Commanders, carriers and systems, and **the word "claim" appears
+in none of them**. It is not an oversight. A claim is server-side state that produces exactly one
+journal line on one machine, and crowd-fed indexes are built from journal lines — there is no line
+to send.
+
+So any "is this free" answer would be stale by up to 24 hours and could not be made fresher. d47
+says which systems have what you want, and the Galaxy Map at a System Colonisation Contact says
+which ones you can have.
+
+### What it can say, and where each half comes from
+
+| | Where it comes from |
+|---|---|
+| Unpopulated | The system record's own population. Frontier's guide calls a finished colony "an Uncontrolled Populated star system", so zero is the offline half of the rule |
+| Within 15 ly | Measured from the reference, which defaults to where you are — the range runs from the starport you claim at |
+| Somebody is already building there | The index's `is_being_colonised` flag, read one way only: true excludes, false says nothing |
+| How many bodies, of what kinds, how many terraformable | The bodies the systems search embeds with each system |
+| How many are landable, which have rings | A second call, for the shortlist only — the embedded records carry neither |
+| Nobody has surveyed this one | No known planets at all, which is what an unscanned system looks like in a crowd-fed index |
+
+Two things it deliberately does not do. It **does not rank systems by quality**, because a
+"colonisation score" is a number d47 would be inventing; it filters on what you asked for and orders
+by distance. And it **does not tell you which facility wants which body** — Frontier publishes the
+facility list and not one figure behind it, so the strategy half is a web search with a source
+attached, never a table shipped in d47's own voice.
+
+### Two traps in the index, both of which read as right answers
+
+Neither of these produces an error. Both were measured on 2026-08-16 and both are the reason this
+tool decides things locally rather than asking the index to decide them.
+
+**The population filter does nothing.** Within 15 light years of Sol, where 48 of the 51 systems are
+populated, asking for population 1 and upwards returned 51 — identical to asking for population
+exactly 0, and identical to a filter key the service has never heard of. It is a real field with a
+published range, and only the range shape is dropped. So the filter is gone from
+[galaxy search](galaxy.md) altogether, and this tool sorts by population instead and applies the
+rule to what comes back.
+
+**`is_colonised: false` returns the colonised ones.** The value is discarded; the filter means
+"true" whenever it is present. Asking for `"false"` returned the same sixteen systems as `"true"`,
+and so did asking for `"banana"`. Neither flag is ever sent.
+
 ## What this does not do
 
 **Planning** — an objective, which facilities to build and in what order — is not here. It lives on
@@ -163,4 +266,13 @@ is already aboard, and how many runs the ship's capacity implies.
 
 ```json
 {"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."}},"required":[],"additionalProperties":false}
+```
+
+### `find_colonisation_candidates`
+
+Unpopulated systems within claim range that hold the bodies a colony wants, and the sentence saying
+what that does not mean.
+
+```json
+{"type":"object","properties":{"body_type":{"type":"string","description":"A kind of planet the system must hold \u2014 for example \u0022Earth-like world\u0022, \u0022High metal content world\u0022 or \u0022Class I gas giant\u0022."},"landable":{"type":"integer","description":"At least this many bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 5. Default 3."},"max_distance":{"type":"number","description":"How far to look, in light years. Defaults to 15, which is the furthest a claim reaches, and is capped there."},"near":{"type":"string","description":"Search out from this system. Defaults to where the Commander is, which is where they would claim from."},"rings":{"type":"boolean","description":"Only systems with a ringed body in them."},"terraformable":{"type":"boolean","description":"Only systems with at least one terraforming candidate."}},"required":[],"additionalProperties":false}
 ```

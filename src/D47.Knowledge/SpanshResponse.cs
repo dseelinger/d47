@@ -316,6 +316,90 @@ internal static class SpanshResponse
             bodies);
     }
 
+    /// <summary>
+    /// The colonisation candidate scan (list.md Phase 18, "Find somewhere worth colonising").
+    /// <para>
+    /// The counting happens here rather than downstream because the raw material is enormous and
+    /// almost entirely unwanted: 51 systems within 15 light years of Sol came back as 1.49 MB,
+    /// nearly all of it the embedded bodies. Reducing each system to its shape as it is read means
+    /// nothing beyond a dozen numbers per system is ever held, let alone projected into records
+    /// carrying fields the source does not have.
+    /// </para>
+    /// </summary>
+    public static ColonisationScan ReadColonisation(JsonDocument document)
+    {
+        var root = document.RootElement;
+
+        var systems = new List<ColonisationSystem>();
+
+        if (root.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var result in results.EnumerateArray())
+            {
+                systems.Add(ReadColonisationSystem(result));
+            }
+        }
+
+        return new ColonisationScan(
+            ReadReference(root),
+            root.TryGetProperty("count", out var count) && count.TryGetInt32(out var total) ? total : systems.Count,
+            systems);
+    }
+
+    private static ColonisationSystem ReadColonisationSystem(JsonElement element)
+    {
+        var planets = new Dictionary<string, int>(StringComparer.Ordinal);
+        var terraformable = 0;
+        double? nearest = null;
+        double? furthest = null;
+
+        foreach (var body in element.Items("bodies"))
+        {
+            // Stars are counted in body_count and left out of the shape. A colony is built on
+            // planets and in orbit of them, and listing "1 M (Red dwarf) Star" beside the four
+            // worlds that matter is a line that costs a Commander attention and buys nothing.
+            if (String(body, "type") is not "Planet")
+            {
+                continue;
+            }
+
+            if (String(body, "subtype") is { } subtype)
+            {
+                planets[subtype] = planets.GetValueOrDefault(subtype) + 1;
+            }
+
+            if (String(body, "terraforming_state") is "Terraformable")
+            {
+                terraformable++;
+            }
+
+            if (Number(body, "distance_to_arrival") is { } arrival)
+            {
+                nearest = nearest is null ? arrival : Math.Min(nearest.Value, arrival);
+                furthest = furthest is null ? arrival : Math.Max(furthest.Value, arrival);
+            }
+        }
+
+        return new ColonisationSystem
+        {
+            Name = String(element, "name") ?? "an unnamed system",
+            Distance = Number(element, "distance"),
+
+            // Absent means zero, and here that is the same reading rather than a convenient one:
+            // the index omits the field on systems nobody lives in.
+            Population = Integer(element, "population") ?? 0,
+            BeingColonised = Boolean(element, "is_being_colonised"),
+            Colonised = Boolean(element, "is_colonised"),
+            BodyCount = (int)(Integer(element, "body_count") ?? 0),
+            Terraformable = terraformable,
+            Planets = [.. planets.OrderByDescending(planet => planet.Value)
+                .ThenBy(planet => planet.Key, StringComparer.Ordinal)
+                .Select(planet => (planet.Key, planet.Value))],
+            NearestBody = nearest,
+            FurthestBody = furthest,
+        };
+    }
+
     private static BodySummary ReadBody(JsonElement element) => new()
     {
         Name = String(element, "name") ?? "an unnamed body",

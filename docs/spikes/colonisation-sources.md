@@ -10,7 +10,8 @@ This answers `list.md` Phase 16, *Spike: what is already known about colonisatio
 
 **What it settles.** Everything the journal reports about a construction site, including the
 snapshot-or-delta question that has caught this repo twice before. Whether a licence-clean,
-machine-readable facility table exists. Whether a claim is visible to anybody outside the game.
+machine-readable facility table exists. Whether a claim is visible to anybody outside the game. And,
+in §8, what the galaxy index will and will not answer about a system nobody lives in yet.
 
 **What it does not settle.** Facility costs and effects themselves — see §4, which is the null
 result, and §5 for what follows from it.
@@ -18,6 +19,11 @@ result, and §5 for what follows from it.
 **Extended 2026-08-16** with §7, measured while building the Phase 18 tracking item: where the cargo
 hold manifest actually lives, why a carrier's cargo cannot be itemised at all, and the commodity-name
 fold that the whole subtraction rests on.
+
+**Extended again 2026-08-16** with §8, measured while building *Find somewhere worth colonising*.
+That section is about a live service rather than the corpus: what the galaxy index can be asked about
+a candidate system, and the three of its filters that answer a different question than the one asked.
+It contains the only finding in this document that changed code written for something else.
 
 ---
 
@@ -178,9 +184,11 @@ Colonisation Contact in-game.
   against the depot — with quantities entered by the Commander or read from the site once it exists,
   rather than predicted from a table d47 does not have. The strategy advice moves to web search, as
   the spike allowed for.
-- ***Find somewhere worth colonising*** (Phase 18) — must promise **candidates, not availability**,
-  for the reason in §5. The 15 ly rule and "unpopulated" are both checkable offline against data d47
-  can reach; "unclaimed" is not checkable at all.
+- ***Find somewhere worth colonising*** (Phase 18) — **shipped 2026-08-16**, promising **candidates,
+  not availability**, for the reason in §5. The 15 ly rule and "unpopulated" are both checkable
+  against data d47 can reach and "unclaimed" is not checkable at all, which is now a paragraph on
+  every answer rather than a caveat in a document. §8 records what the index would and would not
+  answer, including the filter it had been silently dropping for four phases.
 
 ## 7. What the hold and the carrier can say, and what they cannot
 
@@ -246,13 +254,154 @@ absent from **33 of 64** hold symbols, because Elite omits it where the display 
 symbol capitalised. So the depot names a commodity and the hold merely counts it — which is why the
 report takes every spelling from the site's own manifest.
 
+## 8. What the galaxy index can be asked about a candidate, and the three filters that lie
+
+**Measured 2026-08-16 against spansh.co.uk**, while building *Find somewhere worth colonising*. The
+probe is `scan_spansh.py`, and unlike the rest of this document it asks a live service rather than
+912 journals. §5 settled what this item may *promise*; this settles what it can actually *check*.
+
+The headline is that Frontier's rule is checkable and the index will not check it for you.
+
+### The population filter does nothing, and has done nothing since Phase 14
+
+`population` is the field the whole item turns on — Frontier's guide says a claim covers "a nearby
+unpopulated star system", and calls a completed colony "an Uncontrolled Populated star system", so
+zero is the offline half of the rule. It is also the one filter this index silently drops.
+
+Measured within 15 light years of Sol, where **48 of the 51 systems are populated** — counted from
+the response rather than asked for, which is what makes the rest of the table mean anything:
+
+| Request | Systems returned |
+|---|---|
+| no filter at all | 51 |
+| a key the service has never heard of | 51 |
+| `population: {"min":"1","max":"1000000000000"}` | **51** |
+| `population: {"min":"0","max":"0"}` | **51** |
+| the same bounds as JSON numbers rather than strings | **51** |
+| `population: {"min":"100000","max":"1000000000000"}` | **51** |
+| `population: {"value":["0"]}` | 0 |
+| `population: {"value":["19160"]}` — a population a system in range has | 0 |
+
+The field is real: `api/systems/field_values/population` reports a minimum of 0 and a maximum of
+31,607,896,208. Only the range shape is dropped, and written as a choice it is honoured and matches
+nothing. **There is no spelling that works.**
+
+This is the failure `GalaxyFilters` was built to prevent, and it was inside `GalaxyFilters`. d47 has
+offered a `population` range filter on `search_systems` since Phase 14 and every answer it ever gave
+was the unfiltered neighbourhood with a population filter written on the front of it. It is removed
+rather than fixed, because there is nothing to fix it to — and the number is on every result row, so
+the caller that needs the distinction reads it there.
+
+**What cannot be filtered can be sorted.** `sort: [{"population":{"direction":"asc"}}]` works, and a
+second key on `distance` holds distance order inside the ties, so a page of 120 comes back as the
+nearest unpopulated systems in order. That is the same shape as the surface-material finding in
+[engineering-data-sources.md](engineering-data-sources.md) §7 — *the filter is remote and the
+deciding is local* — arrived at from the opposite direction.
+
+### `is_colonised: false` returns the systems that are colonised
+
+Two flags exist and both are exactly what this item wants: `is_colonised` and `is_being_colonised`.
+Both are presence filters whose **value is discarded**.
+
+| Request, within 15 ly of Sol | Returned | Ground truth in the same response |
+|---|---|---|
+| `is_colonised: {"value":["true"]}` | 16 | 16 systems have it true |
+| `is_colonised: {"value":["false"]}` | **16** | 34 have it false |
+| `is_colonised: {"value":["banana"]}` | **16** | — |
+| `is_being_colonised: {"value":["false"]}` | **5** | 5 have it true |
+
+So the filter means "true" whenever it is present, and there is no way to ask for the absence of
+either. Neither is ever sent; both are read off the result instead.
+
+And they are read **one way only**. Across 180 systems sampled from five regions, of the 84 with
+population 0 the flag was **absent on 79 and false on 5, and true on none** — while 50 of the 96
+populated ones had `is_colonised` true. Absence is "nothing reported", not "no". So true excludes a
+system and false endorses nothing, which fits §5 exactly: `is_being_colonised` is set by a beacon and
+a construction site, both of which produce public events, and a **claim produces none**. The flag
+catches the ones already being built in and still cannot see the ones merely spoken for.
+
+### Where a candidate's shape comes from, and the two things it does not include
+
+The systems search embeds every system's bodies. That is what makes "does this system hold the bodies
+your objective wants" answerable at all — and it is also why 51 systems within 15 light years of Sol
+come back as **1.49 MB**. There is no way to ask for less: `fields` and `_source` are both accepted
+and ignored.
+
+Those embedded body records carry twelve keys, and the useful ones are `name`, `type` (Star or
+Planet), `subtype`, `terraforming_state` and `distance_to_arrival`. Measured across **2,355 embedded
+bodies in 180 systems**, they never carry `is_landable`, `rings`, `belts`, `atmosphere`,
+`reserve_level` or `gravity` — all of which the *body* search returns and this one does not. So a
+candidate's landable count and its rings need a second call, and projecting the embedded records into
+d47's existing `BodySummary` would have shipped `IsLandable` as false on every body in the galaxy.
+
+| | Systems search | Body search |
+|---|---|---|
+| Body kinds, terraformable, arrival distance | yes | yes |
+| Landable, rings, belts, atmosphere, reserves, materials | **no** | yes |
+| The system's population and colonisation flags | yes | **no** |
+
+### A star and no planets is not a small system, it is an unsurveyed one
+
+The index holds what somebody has scanned and uploaded. So `body_count` is **how many bodies are
+known**, not how many exist — it equalled the length of the embedded `bodies` array on 50 of 51
+systems, the exception being a record with neither. Within 15 light years of Ratraii, a real frontier
+reference:
+
+| Known bodies per system | Systems |
+|---|---|
+| 1 | 7 |
+| 2 | 16 |
+| 3 | 5 |
+| 4 | 2 |
+| 5 or more | 79 |
+
+**23 of the 109 had no known planet at all** — a star, sometimes two, and nothing else. Reporting one
+of those as "a system with 1 body" would be a wrong answer with a number in it, and the number is the
+part that would be believed. There is no field distinguishing "surveyed and empty" from "not
+surveyed", so the honest reading of no known planets is *nobody has looked*, and these are counted
+out loud rather than recommended or silently dropped. On a frontier they are frequently the
+interesting ones.
+
+### One system's bodies: by name, and never by a zero-width distance
+
+`system_name: {"value":["Sol"]}` returns exactly Sol's 40 bodies in about a second, and takes several
+names at once — three systems came back as their 65 bodies in one call. Two traps beside it:
+
+- **It matches exactly and case-sensitively.** `"sol"` returns nothing where `"Sol"` returns forty.
+  So the names sent are only ever names the index itself handed back.
+- **`system` — the obvious short key — is accepted and ignored**, returning every body in range.
+
+And the spelling that looks cleverest is the worst request in this document. Confining a body search
+to one system with `distance: {"min":"0","max":"0"}` around it is **not "this system only"**: it
+matched the 10,000-result cap and took **120 seconds** before the probe gave up on it. A zero-width
+range is read as no upper bound at all.
+
+### Sizes, timings and the page cap
+
+| | |
+|---|---|
+| Systems within 15 ly, five references | 17 (HIP 22460) to 106 (Colonia) |
+| Response size, systems search | 121 KB to 1.49 MB |
+| Latency, systems search | 1.4 s to **13.5 s**, and it does not track size — 121 KB took 3.8 s where 1.49 MB took 1.9 |
+| `size` above 500 | **silently returns 25**, not an error and not more |
+
+The 13.5-second figure is why the candidate scan is the one call in `SpanshGalaxyService` given
+longer than the fifteen seconds everything else gets: against a fifteen-second budget it is a search
+that fails roughly one time in five for no reason a Commander can see.
+
 ## Reproducing this
 
-[`spike/ColonisationProbe`](../../spike/ColonisationProbe) holds the four scripts, run against the
-corpus over SSH. `scan_depot.py` answers the snapshot-or-delta and docked questions; `scan_sites.py`
-answers concurrency, the other three events, and whether the manifest ever moves; `scan_cargo.py` and
-`scan_join.py` answer §7. None writes anything; all four print.
+[`spike/ColonisationProbe`](../../spike/ColonisationProbe) holds the five scripts. `scan_depot.py`
+answers the snapshot-or-delta and docked questions; `scan_sites.py` answers concurrency, the other
+three events, and whether the manifest ever moves; `scan_cargo.py` and `scan_join.py` answer §7. Those
+four run against the corpus over SSH. `scan_spansh.py` answers §8 and needs a network rather than a
+corpus. None writes anything; all five print.
 
 The corpus is one person's play history and is not in the repo. The one trap worth repeating: the
 remote default shell reads piped input line by line, so send a script on stdin to `python -` rather
 than splitting a pipeline across lines.
+
+**And §8 is worth re-running rather than trusting.** Every figure in it describes an undocumented
+service that can change without telling anybody, which is the same reason `SpanshRequest` records its
+shapes with the date they were measured. A filter that starts working is as much of a change as one
+that stops.

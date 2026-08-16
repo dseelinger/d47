@@ -86,6 +86,12 @@ public class MaterialSourcingTests
             LastBodyQuery = query;
             return Task.FromResult(Bodies);
         }
+
+        /// <summary>Not what this file is about. See <c>ColonisationCandidateTests</c>.</summary>
+        public Task<ColonisationScan> ScanForColonisationAsync(
+            ColonisationQuery query,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ColonisationScan("Sol", 0, []));
     }
 
     private static JournalEvent Event(string json)

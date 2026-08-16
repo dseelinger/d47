@@ -99,12 +99,6 @@ public static class GalaxyCapability
                     },
                     new ToolParameter
                     {
-                        Name = "population",
-                        Type = ToolParameterType.String,
-                        Description = "Population, as a range. For example \"1000000-\" for a million or more.",
-                    },
-                    new ToolParameter
-                    {
                         Name = "state",
                         Type = ToolParameterType.String,
                         Description =

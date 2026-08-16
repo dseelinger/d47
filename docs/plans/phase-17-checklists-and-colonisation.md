@@ -31,7 +31,7 @@ Ordered by how much it depends on somebody else being right.
 | Half | Phase | Needs a source? | Answered 2026-08-16 |
 |---|---|---|---|
 | **Execute** — what is required, what is delivered, what is left | 18 | No. Journal only. | **Confirmed, and cheaper than hoped** |
-| **Find** — candidate systems for a stated objective | 18 | The objective's criteria; the index for body shape | Criteria yes; **availability never** |
+| **Find** — candidate systems for a stated objective | 18 | The objective's criteria; the index for body shape | Criteria yes; **availability never**; and the index will not filter on the one thing that decides a candidate |
 | **Plan** — an objective costed into things to do | 17 | The facility cost and effect table, if it exists | **It does not exist licence-clean** |
 
 *(The phase column was stale until 2026-08-16: it held pre-renumber numbers, because a bare digit in
@@ -192,7 +192,8 @@ A second checklist engine for colonisation would double every hard part in this 
 the halves drift, so that "what am I working on" has two answers depending on which is asked. What
 is genuinely different between a ship plan and a system plan is the key and the table behind it.
 
-**Release:** these items span two phases, so neither closes on this work alone.
+**Release:** these items span two phases, so neither closes on this work alone. *(Both have since
+closed — Phase 17 on 2026-08-16 and Phase 18 later the same day, when the finding half landed.)*
 
 ---
 
@@ -249,3 +250,46 @@ imprecise one, so it is refused out loud rather than shipped with a caveat.
 none, so stripping the decoration without lowercasing would have matched every requirement to the hold
 and no delivery to anything. Same shape as `MainEngines` against "main engines", one phase later,
 caught the same way — by looking at what the game actually writes rather than at one example of it.
+
+## And the finding half, 2026-08-16. Phase 18 closes.
+
+The third of the three asks shipped the same day, as a third tool on the `colonisation` capability
+rather than a capability of its own — the split table above sorts these by *what they depend on*, and
+what finding depends on is the galaxy index, so it is gated by the same switch and named in the same
+disclosure as every other question that leaves the machine. Putting it elsewhere would have split
+"where should I colonise" from "how is my colony going" for a reason about plumbing.
+
+**§5's answer became a paragraph on every answer, which is the whole point of having asked.** The
+tool is named for candidates, described as candidates, tested for never implying otherwise, and ends
+each reply with what a claim is and why nothing outside the game can see one.
+
+**What the plan did not anticipate is that the criterion the item turns on is the one the index will
+not accept.** `population` is a real field whose range filter is silently dropped — every spelling
+returned the unfiltered count, identical to a key that does not exist — so the query sorts on it and
+the claim rule is applied to the response. Two consequences worth keeping. The first is that this
+found a filter d47 had been offering since Phase 14 that had never done anything, which is the
+failure `GalaxyFilters` exists to prevent, living inside `GalaxyFilters`; it is gone. The second is
+that `is_colonised: {"value":["false"]}` returns precisely the systems that *are* colonised, because
+the value is discarded — a filter that answers the opposite of what it was asked, found only because
+a nonsense value returned the same count as a true one.
+
+**The body shape needed a second call the plan had not costed.** The systems search embeds each
+system's bodies, which is what makes "does this system hold what your objective wants" answerable —
+and across 2,355 of those embedded records not one carries `is_landable` or `rings`. So the shortlist
+is detailed by a second query keyed on `system_name`, and the temptation to reuse `BodySummary` for
+the first call was refused: it would have shipped `IsLandable` as false on every body in the galaxy.
+
+**Nothing is scored.** Filters narrow and distance orders, because a "colonisation quality" number
+would be d47 inventing the one thing this whole family of items keeps refusing to invent. What the
+answer does carry is the arrival spread, which is a fact and a decisive one: one measured candidate's
+planets run from 3,958 to 81,811 light seconds out, and that is a different build from its neighbour's
+11 to 3,490 whatever the bodies are.
+
+**And the last correction came from running the finished thing rather than from the spike.** A
+candidate came back with one body. It is not a system with one body — it is a system nobody has
+scanned, which in a crowd-fed index is indistinguishable from a small one except that the honest
+reading of "no known planets" is *nobody has looked*. That is a fifth of the neighbourhood on a real
+frontier reference, 23 of 109, and on a frontier they are frequently the ones worth flying to. So
+they are counted in a sentence of their own rather than recommended, and rather than dropped where
+nobody would learn they existed. The spike asked what the index would *answer* and never asked what
+its silence meant.

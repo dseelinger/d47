@@ -38,7 +38,7 @@ capability's real tool schema.
 | [Checklists](capabilities/checklists.md) | Knowledge | One list of what you are working on — your own lines, your ship builds and your construction sites. |
 | [Exobiology](capabilities/exobiology.md) | Knowledge | Plot a circuit through known biology, and read back what your own surface scan found. |
 | [System names](capabilities/system-names.md) | Knowledge | What a system's name says about it — its sector, its boxel, and the mass code that sizes it. |
-| [Construction tracking](capabilities/colonisation.md) | Knowledge | What your construction sites still need, what you are already carrying towards them, and what is left to haul. |
+| [Colonisation](capabilities/colonisation.md) | Knowledge | What your construction sites still need, what is left to haul, and which nearby systems have the bodies your next colony wants. |
 | [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
 | [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach D47. |
 | [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |

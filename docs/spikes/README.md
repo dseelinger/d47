@@ -14,7 +14,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [material-lines.md](material-lines.md) | Can d47 derive the material trader's 32 lines, the thing the trade rate depends on and the journal cannot supply? |
 | [operations-pre-engineered.md](operations-pre-engineered.md) | What does a module that arrives already engineered look like, and do the blueprint sources know it? |
 | [journal-corpus-warnings.md](journal-corpus-warnings.md) | Which NPC comms ids actually precede an attack, and what does the journal know about Powerplay territory? |
-| [colonisation-sources.md](colonisation-sources.md) | Is the construction depot a snapshot or a delta, is there a licence-clean facility table, and can anybody see a claim? |
+| [colonisation-sources.md](colonisation-sources.md) | Is the construction depot a snapshot or a delta, is there a licence-clean facility table, can anybody see a claim, and what will the galaxy index answer about a system nobody lives in? |
 | [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
 | [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 
@@ -72,6 +72,17 @@ is a property of the query. The cargo rack in the same table really is missing, 
 the two apart was to ask a question symbols are not involved in: EDEngineer lists **no cargo rack
 blueprint under any name**. A negative result is only evidence when the search could have succeeded.
 
+An eighth, from [colonisation-sources.md](colonisation-sources.md) §8, and it is the same shape
+pointed at a live service instead of a file. **A filter that returns results is not a filter that
+worked.** d47 shipped a `population` range filter for four phases and it did nothing — every request
+came back looking like a perfectly good answer, because it *was* a perfectly good answer to the
+unfiltered question. The only thing that catches it is a **locally counted ground truth**: pull the
+unfiltered page, count the property yourself, and compare. Two controls make the reading unambiguous
+and both are cheap — a key the service has never heard of, which shows what "ignored" looks like, and
+a nonsense *value* under a real key, which shows whether the value is being read at all. The second
+control is what turned "`is_colonised: false` behaves oddly" into "the value is discarded", because
+`banana` returned the same sixteen systems.
+
 ## The source ledger
 
 | Source | Licence | Usable? | What it is good for |
@@ -83,7 +94,7 @@ blueprint under any name**. A negative result is only evidence when the search c
 | **Fandom wiki** | — | read-only reference | The most productive seam by far. Needs a browser (402). |
 | **Frontier update notes and forums** | — | read-only reference | Authoritative and needs a browser (403). The only source that tracks patches. |
 | **Inara** | — | read-only reference | Fetches cleanly. Per-engineer and per-item pages, mod effects, stat ladders. |
-| **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. **Five plot types now established, not four** — `api/exobiology/route` was found on 2026-08-16 and returns per-body species with counts and per-species values, which is the exobiology prediction half arriving from a service rather than from a table. `from` is echoed back as `source`. |
+| **spansh.co.uk** | — | live service | The galaxy index. Wire shapes are measured, not published. **Five plot types now established, not four** — `api/exobiology/route` was found on 2026-08-16 and returns per-body species with counts and per-species values, which is the exobiology prediction half arriving from a service rather than from a table. `from` is echoed back as `source`. It also carries `population`, `is_colonised` and `is_being_colonised` per system, and **silently answers the wrong question about all three** — see [colonisation-sources.md](colonisation-sources.md) §8, which is where a filter d47 had shipped since Phase 14 was found to have never done anything. |
 | **jixxed/ed-odyssey-materials-helper** | source MIT, binaries EULA | **no** | Does exactly Phase 20's job, but its game data lives in a closed `ed-data-impl` artifact, not in the source tree. |
 | **taleden/edsy** | **CC BY-NC** | **no** | Fails the permissive-only rule, and has no on-foot data anyway. |
 | **gaborauth/ed-colonisation-planner** | **GPL-3.0** | **no** | The only machine-readable facility table found — costs, the seven system attributes, and Update 3's link/economy topology — but it lives in TypeScript source under copyleft. Its own upstream is DaftMav's community spreadsheet. Worth reading for its provenance habits; nothing may be derived from it. |

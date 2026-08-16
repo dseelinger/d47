@@ -226,6 +226,24 @@ internal static class SpanshRequest
             writer.WriteString("max", Number(query.MaxDistance));
             writer.WriteEndObject();
 
+            if (query.SystemNames.Count > 0)
+            {
+                // A plain choice taking every name at once — three systems in one call returned
+                // exactly their 65 bodies. The group spelling that works for modules and signals
+                // is a 500 here, and the key without the `_name` suffix is accepted and ignored,
+                // returning every body in range: the same silent-drop this file keeps meeting.
+                writer.WriteStartObject("system_name");
+                writer.WriteStartArray("value");
+
+                foreach (var name in query.SystemNames)
+                {
+                    writer.WriteStringValue(name);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+
             WriteChoice(writer, "subtype", query.Subtype);
             WriteChoice(writer, "rings", query.RingType);
             WriteChoice(writer, "reserve_level", query.ReserveLevel);
@@ -274,6 +292,68 @@ internal static class SpanshRequest
             {
                 writer.WriteString("reference_system", query.ReferenceSystem);
             }
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    /// <summary>
+    /// The colonisation candidate scan: every system within claim range, least populated first.
+    /// <para>
+    /// <b>The sort is doing the filter's job, and it has to.</b> <c>population</c> is a field this
+    /// index knows — its own <c>field_values</c> reports a min and a max for it — and a range
+    /// filter on it is <em>silently dropped</em>. Measured 2026-08-16 within 15 light years of
+    /// Sol, where 48 of the 51 systems are populated: <c>{"min":"1","max":"1000000000000"}</c>
+    /// returned 51, <c>{"min":"0","max":"0"}</c> returned 51, numeric bounds returned 51, and a
+    /// key that does not exist at all returned 51. Written as a choice instead it is honoured and
+    /// matches nothing — 0 results for both <c>"0"</c> and a population a system in range actually
+    /// has. So there is no spelling that works, and the deciding is done over the response.
+    /// </para>
+    /// <para>
+    /// Sorting on the same field <em>does</em> work, and a second key holds distance order within
+    /// the ties, so the page that comes back is the nearest unpopulated systems in order. Neither
+    /// <c>is_colonised</c> nor <c>is_being_colonised</c> is ever sent: they are presence flags
+    /// whose value is discarded, and asking for <c>"false"</c> returns precisely the systems that
+    /// are true.
+    /// </para>
+    /// </summary>
+    public static string Colonisation(ColonisationQuery query)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("distance");
+            writer.WriteString("min", "0");
+            writer.WriteString("max", Number(query.MaxDistance));
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+
+            writer.WriteStartObject();
+            writer.WriteStartObject("population");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+
+            writer.WriteStartObject();
+            writer.WriteStartObject("distance");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", ColonisationQuery.ScanSize);
+            writer.WriteNumber("page", 0);
+            writer.WriteString("reference_system", query.ReferenceSystem);
 
             writer.WriteEndObject();
         }

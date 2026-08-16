@@ -115,6 +115,19 @@ public sealed record BodyQuery
     /// </summary>
     public string? Material { get; init; }
 
+    /// <summary>
+    /// Named systems to confine the search to, as the index spells them.
+    /// <para>
+    /// <b>Matched exactly, and case-sensitively</b> — "sol" returns nothing where "Sol" returns
+    /// Sol's forty bodies, measured 2026-08-16. So these are only ever names the index itself
+    /// handed back, never a name somebody said out loud. The obvious spelling of the same idea,
+    /// a zero-width distance range around the system, is the worst request in this file: it is
+    /// not "this system only", it is every body in the galaxy, and it took 120 seconds before
+    /// timing out rather than failing.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> SystemNames { get; init; } = [];
+
     public string? RingType { get; init; }
 
     public string? ReserveLevel { get; init; }
@@ -226,6 +239,25 @@ public sealed record BodyQuery
             Landable = true,
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 1000),
             Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+        };
+
+    /// <summary>
+    /// Every body in a handful of named systems, for the second half of a colonisation candidate
+    /// search — landability and rings, which the systems search's embedded bodies do not carry.
+    /// <para>
+    /// Unfiltered otherwise, and that is the point: the shortlist is already small, and the
+    /// question being asked of it is "what is in there", not "which of these matches". The page is
+    /// the service's maximum, since a rich system runs to forty bodies and five of them would
+    /// overrun any smaller number without saying so.
+    /// </para>
+    /// </summary>
+    public static BodyQuery ForSystems(string referenceSystem, IReadOnlyList<string> names, double maxDistance) =>
+        new()
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
+            SystemNames = names,
+            MaxDistance = Math.Clamp(maxDistance, 1, 1000),
+            Size = 500,
         };
 
     /// <summary>

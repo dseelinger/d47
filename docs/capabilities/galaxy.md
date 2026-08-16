@@ -48,9 +48,32 @@ a request. If you ask for something that is not on the list, you get told what i
 confident wrong answer. This is the first guardrail — never invent game data — applied to a
 service that will happily let you invent it.
 
-The filters are `distance`, `population`, `allegiance`, `government`, `primary_economy`,
-`security` and `state`. Ranges take one number for an upper bound (`30` means within 30) or two
-separated by a dash (`10-50`, `1000000-`).
+The filters are `distance`, `allegiance`, `government`, `primary_economy`, `security` and `state`.
+Ranges take one number for an upper bound (`30` means within 30) or two separated by a dash
+(`10-50`).
+
+### The list was one filter longer until 2026-08-16, and that one was doing nothing
+
+There was a `population` filter here, from Phase 14 until the colonisation work went looking for
+exactly that field and measured it. Within 15 light years of Sol, where 48 of the 51 systems are
+populated:
+
+| Request | Systems returned |
+|---|---|
+| no filter at all | 51 |
+| a key the service has never heard of | 51 |
+| `population: {"min":"1","max":"1000000000000"}` | **51** |
+| `population: {"min":"0","max":"0"}` | **51** |
+| the same bounds as numbers rather than strings | **51** |
+| `population: {"value":["0"]}` | 0 |
+| `population: {"value":["19160"]}`, a population a system in range has | 0 |
+
+The field is real — the service publishes a minimum and a maximum for it — and only the range shape
+is dropped. So every "find me a system with a million people" this ever answered was the whole
+neighbourhood with a population filter written on the front of it: the precise failure the section
+above describes, shipped inside the class built to prevent it. A filter the service ignores must not
+be offered, so it is gone. The number itself is on every result, which is how
+[colonisation](colonisation.md) tells an unpopulated system from a populated one.
 
 ### A worse trap than the misspelling: a real filter that matches nothing
 
@@ -102,7 +125,7 @@ failed turn.
 Find star systems matching some criteria, nearest first.
 
 ```json
-{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years. For example \u002230\u0022 or \u002210-50\u0022."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to the Commander\u0027s own."},"population":{"type":"string","description":"Population, as a range. For example \u00221000000-\u0022 for a million or more."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years. For example \u002230\u0022 or \u002210-50\u0022."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to the Commander\u0027s own."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
 ```
 
 A search with no filters is refused rather than run — it would match the whole galaxy.

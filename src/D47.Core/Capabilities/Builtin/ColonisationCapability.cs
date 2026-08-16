@@ -1,18 +1,24 @@
 using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What a construction site still wants, and what the Commander has to give it (list.md Phase 18,
-/// "Colonisation and construction tracking").
+/// What a construction site still wants, what the Commander has to give it, and where the next one
+/// could go (list.md Phase 18, "Colonisation and construction tracking" and "Find somewhere worth
+/// colonising").
 /// <para>
-/// <b>The whole capability is subtraction over data already on disk.</b> No table, no network, no
-/// commodity list — <c>ColonisationConstructionDepot</c> is a snapshot rather than a delta, measured
-/// over 6,330 events and 120,208 rows, and carries <c>Name_Localised</c> on every one of them. This
-/// is the cheapest item in its phase and the one with the shortest supply chain in the repository:
-/// the Commander's own journal, and nothing else.
+/// <b>Two halves that answer different questions from different sources, which is the same shape
+/// <see cref="ExobiologyCapability"/> has and for the same reason.</b> Tracking is subtraction over
+/// data already on disk — no table, no network, no commodity list, because
+/// <c>ColonisationConstructionDepot</c> is a snapshot rather than a delta over 6,330 events and
+/// carries <c>Name_Localised</c> on every one of 120,208 rows. Finding is a question about the
+/// galaxy, so it goes to the index d47 already queries and is gated by the same switch and the same
+/// disclosure as every other question that leaves this machine. Splitting them across two
+/// capabilities would put "where should I colonise" and "how is my colony going" in two places for
+/// a reason that is about plumbing rather than about anything a Commander would recognise.
 /// </para>
 /// <para>
 /// <b>Everything here is as fresh as the Commander's last visit, and every figure says so.</b> The
@@ -34,6 +40,15 @@ namespace D47.Core.Capabilities.Builtin;
 /// colonisation build is the same shape of long-lived intent as an engineering one. This capability
 /// reports; it holds no state of its own and proposes nothing.
 /// </para>
+/// <para>
+/// <b>And the finding half promises candidates, never availability.</b> A claim lasts 24 hours, is
+/// server-side state that produces exactly one journal line on one Commander's machine, and is
+/// therefore invisible to every crowd-fed index there is — Raven Colonial's nineteen endpoints, the
+/// most complete in the ecosystem, contain the word "claim" zero times. So the honest sentence is
+/// "this system has what your plan wants" and never "this one is free", and the single authority is
+/// the System Colonisation Contact in-game. That is a structural property rather than a gap to be
+/// closed later, which is why it is said on every answer rather than documented once.
+/// </para>
 /// </summary>
 public static class ColonisationCapability
 {
@@ -43,20 +58,29 @@ public static class ColonisationCapability
     /// The active Commander, or null before any journal has been read. Null and "no site has ever
     /// been visited" are different silences and are said differently.
     /// </param>
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> commander) => new()
+    /// <param name="galaxy">
+    /// The galaxy index, or null where none is composed — under the designer, and in a test that is
+    /// not about it. The journal half still answers, which is what a capability being partly off
+    /// looks like rather than one being absent (list.md Phase 3).
+    /// </param>
+    public static CapabilityDescriptor Create(
+        Func<CommanderGameState?> commander,
+        IGalaxyService? galaxy = null,
+        Configuration.SettingsService? settings = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
-        Name = "Construction tracking",
+        Name = "Colonisation",
         Summary =
             "What your construction sites still need, what you are already carrying towards them, "
-            + "and what is left to haul.",
+            + "what is left to haul — and which nearby systems have the bodies your next colony wants.",
         Examples =
         [
             "what does my construction site still need",
             "what is left to deliver",
             "how far along is the construction",
             "what am I carrying for the build",
+            "find me somewhere worth colonising",
         ],
         // Phrases rather than bare words. "construction" alone would hijack any sentence that
         // happens to contain it, and both spellings of "colonisation" belong to the plan as much as
@@ -68,6 +92,10 @@ public static class ColonisationCapability
             "colonisation site",
             "colonization site",
             "left to deliver",
+            "worth colonising",
+            "worth colonizing",
+            "where to colonise",
+            "where to colonize",
         ],
         Tools =
         [
@@ -114,8 +142,72 @@ public static class ColonisationCapability
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Needs(commander(), arguments))),
             },
+            new ToolDefinition
+            {
+                Name = "find_colonisation_candidates",
+                Description =
+                    "Unpopulated systems within claim range that hold the bodies a colony wants: how "
+                    + "many bodies, of what kinds, how many can be landed on, which have rings, and how "
+                    + "far apart they are. Says nothing about whether a system is free to claim — no "
+                    + "index outside the game can see a claim — so these are systems to check in the "
+                    + "System Colonisation Contact, which is the only authority on that. Range is "
+                    + "measured from the station the claim would be made at.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "Search out from this system. Defaults to where the Commander is, which is "
+                            + "where they would claim from.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "body_type",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A kind of planet the system must hold — for example \"Earth-like world\", "
+                            + "\"High metal content world\" or \"Class I gas giant\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "terraformable",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only systems with at least one terraforming candidate.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "rings",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only systems with a ringed body in them.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "landable",
+                        Type = ToolParameterType.Integer,
+                        Description = "At least this many bodies that can be landed on.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description =
+                            "How far to look, in light years. Defaults to 15, which is the furthest a "
+                            + "claim reaches, and is capped there.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "limit",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many to return, 1 to 5. Default 3.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    CandidatesAsync(galaxy, settings, commander, arguments, cancellationToken),
+            },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Construction", Order = 53 },
+        Display = new CapabilityDisplay { PanelTitle = "Colonisation", Order = 53 },
     };
 
     // ------------------------------------------------------------------ sites
@@ -382,6 +474,361 @@ public static class ColonisationCapability
             ? "No construction sites at all in what I have seen."
             : "Nothing is under construction in what I have seen. Every site I know of is complete or failed.";
     }
+
+    // ------------------------------------------------------------ candidates
+
+    /// <summary>
+    /// How many matching systems are looked at in detail before the shortlist is cut to what was
+    /// asked for. The second call costs one request whatever it covers, so this is bounded by how
+    /// much of somebody else's index is worth holding at once rather than by request count — five
+    /// rich systems already run to two hundred bodies.
+    /// </summary>
+    private const int DetailPool = 12;
+
+    private static async Task<ToolResult> CandidatesAsync(
+        IGalaxyService? galaxy,
+        Configuration.SettingsService? settings,
+        Func<CommanderGameState?> commander,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(
+                "Galaxy search is switched off, so I can't look for anywhere to colonise. The Commander "
+                + "can turn it on in settings.");
+        }
+
+        var near = arguments.TryGetString("near", out var given) && !string.IsNullOrWhiteSpace(given)
+            ? given
+            : commander()?.Location.StarSystem;
+
+        if (!ColonisationQuery.TryParse(
+                near,
+                arguments.TryGetString("body_type", out var bodyType) ? bodyType : null,
+                arguments.TryGetBoolean("terraformable", out var terraformable) && terraformable,
+                arguments.TryGetBoolean("rings", out var rings) && rings,
+                arguments.TryGetInt32("landable", out var landable) ? landable : null,
+                arguments.Values.TryGetValue("max_distance", out var raw)
+                && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+                    ? parsed
+                    : null,
+                arguments.TryGetInt32("limit", out var limit) ? limit : 3,
+                out var query,
+                out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        ColonisationScan scan;
+
+        try
+        {
+            scan = await galaxy.ScanForColonisationAsync(query, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+
+        // The claim rule, applied here because the index will not apply it. Filtered with
+        // predicates rather than set operations: these are records, so Except would compare them by
+        // value and quietly collapse two systems that happened to look alike.
+        var unpopulated = scan.Systems.Where(system => system.Population == 0).ToList();
+
+        var free = unpopulated.Where(system => !system.BeingColonised && !system.Colonised).ToList();
+
+        // Nobody has scanned these. A star and no planets is what an unsurveyed system looks like
+        // in a crowd-fed index, and it is emphatically not a system with no planets — so they are
+        // counted out loud rather than either recommended or quietly dropped.
+        var unsurveyed = free.Count(system => system.KnownPlanets == 0);
+
+        var matched = free
+            .Where(system => system.KnownPlanets > 0)
+            .Where(system => query.Subtype is null || system.Holds(query.Subtype))
+            .Where(system => !query.Terraformable || system.Terraformable > 0)
+            .OrderBy(system => system.Distance ?? double.MaxValue)
+            .ToList();
+
+        // How many to fetch the body shape for. Where landability or rings decide the shortlist it
+        // has to be wider than the shortlist, because the deciding facts are only in that call;
+        // where they do not, the shape is worth reporting for the candidates and fetching for
+        // nobody else. One request either way.
+        var pool = matched.Take(query.NeedsBodyDetail ? DetailPool : query.Size).ToList();
+
+        var detail = new Dictionary<string, SystemBodies>(StringComparer.Ordinal);
+        var detailFailed = false;
+
+        if (pool.Count > 0)
+        {
+            try
+            {
+                detail = Fold(await galaxy.FindBodiesAsync(
+                    BodyQuery.ForSystems(
+                        query.ReferenceSystem,
+                        [.. pool.Select(system => system.Name)],
+                        query.MaxDistance),
+                    cancellationToken).ConfigureAwait(false));
+            }
+            catch (GalaxyUnavailableException)
+            {
+                // The scan already answered. Losing the second call costs the landable and ring
+                // figures and nothing else, so the answer degrades to what the first call knows and
+                // says which half is missing — a refusal here would throw away work that succeeded,
+                // including the objective the scan itself could decide.
+                detailFailed = true;
+            }
+        }
+
+        if (query.NeedsBodyDetail && !detailFailed)
+        {
+            pool = [.. pool.Where(system =>
+                detail.TryGetValue(system.Name, out var shape)
+                && shape.Landable >= query.MinimumLandable
+                && (!query.Rings || shape.Rings.Count > 0))];
+        }
+
+        var candidates = pool.Take(query.Size).ToList();
+
+        // Whether the search was made from somewhere a claim can actually be registered. The
+        // contact is a starport service, and an unpopulated system has no starport — so a search
+        // from one is measuring fifteen light years out from the wrong place, and it comes back
+        // looking exactly like a search from the right one.
+        var fromEmpty = scan.Systems.Any(system =>
+            system.Population == 0
+            && string.Equals(system.Name, scan.Reference ?? query.ReferenceSystem, StringComparison.OrdinalIgnoreCase));
+
+        return ToolResult.Ok(Describe(
+            query,
+            scan,
+            unpopulated.Count,
+            unpopulated.Count - free.Count,
+            unsurveyed,
+            candidates,
+            detail,
+            detailFailed,
+            fromEmpty));
+    }
+
+    /// <summary>What the body search adds that the scan cannot see.</summary>
+    private sealed record SystemBodies(int Landable, IReadOnlyList<string> Rings);
+
+    private static Dictionary<string, SystemBodies> Fold(BodySearchResult bodies)
+    {
+        var folded = new Dictionary<string, SystemBodies>(StringComparer.Ordinal);
+
+        foreach (var group in bodies.Bodies.GroupBy(body => body.SystemName, StringComparer.Ordinal))
+        {
+            var ringed = new List<string>();
+
+            foreach (var body in group.Where(body => body.Rings.Count > 0))
+            {
+                var types = body.Rings
+                    .Select(ring => ring.Type)
+                    .Where(type => type is not null)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+
+                // Elite names a body by prefixing its system, so the full name repeats a word the
+                // line above just said — "HIP 22711 7 h" against "HIP 22711". The short form is
+                // what a Commander reads off the system map anyway.
+                var name = body.Name.StartsWith(group.Key + " ", StringComparison.OrdinalIgnoreCase)
+                    ? body.Name[(group.Key.Length + 1)..]
+                    : body.Name;
+
+                ringed.Add(types.Count == 0
+                    ? name
+                    : $"{name} ({string.Join(", ", types)}"
+                        + (body.ReserveLevel is { } reserve ? $", {reserve.ToLowerInvariant()} reserves)" : ")"));
+            }
+
+            folded[group.Key] = new SystemBodies(group.Count(body => body.IsLandable), ringed);
+        }
+
+        return folded;
+    }
+
+    private static string Describe(
+        ColonisationQuery query,
+        ColonisationScan scan,
+        int unpopulated,
+        int taken,
+        int unsurveyed,
+        IReadOnlyList<ColonisationSystem> candidates,
+        IReadOnlyDictionary<string, SystemBodies> detail,
+        bool detailFailed,
+        bool fromEmpty)
+    {
+        var report = new StringBuilder();
+        var from = scan.Reference ?? query.ReferenceSystem;
+
+        if (candidates.Count == 0)
+        {
+            // Three ways to have nothing to show, and they call for three different next actions.
+            // "Nothing matched" where the objective was never the problem would send a Commander
+            // off to loosen a filter they did not set.
+            report.AppendLine(
+                unpopulated == 0
+                    ? $"Every one of the {scan.Total} systems within {Distance(query.MaxDistance)} of {from} is "
+                        + "already populated, so none of them can be claimed."
+                : query.HasObjective
+                    ? $"{unpopulated} unpopulated system{(unpopulated == 1 ? "" : "s")} within "
+                        + $"{Distance(query.MaxDistance)} of {from}, and none of them match what you asked "
+                        + "for. A wider objective would find something."
+                    : $"{unpopulated} unpopulated system{(unpopulated == 1 ? "" : "s")} within "
+                        + $"{Distance(query.MaxDistance)} of {from}, and nothing I can tell you anything "
+                        + "useful about.");
+
+            if (taken > 0)
+            {
+                report.AppendLine(Building(taken));
+            }
+
+            if (unsurveyed > 0)
+            {
+                report.AppendLine(Unsurveyed(unsurveyed));
+            }
+
+            report.AppendLine();
+            report.AppendLine(CannotSay);
+
+            return report.ToString().TrimEnd();
+        }
+
+        report.AppendLine(
+            $"{unpopulated} of the {scan.Total} systems within {Distance(query.MaxDistance)} of {from} are "
+            + $"unpopulated. {(candidates.Count == 1 ? "One is" : $"{candidates.Count} are")} worth a look, "
+            + "nearest first:");
+
+        foreach (var system in candidates)
+        {
+            report.AppendLine();
+            report.Append(system.Name);
+
+            if (system.Distance is { } light)
+            {
+                report.Append($" — {light.ToString("N2", CultureInfo.InvariantCulture)} ly");
+            }
+
+            report.AppendLine($", {system.BodyCount} bod{(system.BodyCount == 1 ? "y" : "ies")}.");
+
+            if (detail.TryGetValue(system.Name, out var shape))
+            {
+                report.AppendLine(
+                    $"  {shape.Landable} landable"
+                    + (shape.Rings.Count == 0
+                        ? ", nothing ringed."
+                        : $". Rings on {shape.Rings.Count}: {string.Join("; ", shape.Rings.Take(4))}."));
+            }
+
+            if (system.Planets.Count > 0)
+            {
+                // Five kinds at most. The tail of a body list is Icy bodies, and a Commander who has
+                // heard the first five knows what the system is.
+                report.AppendLine(
+                    "  " + string.Join(", ", system.Planets.Take(5).Select(planet =>
+                        $"{planet.Count} {Plural(planet.Subtype, planet.Count)}")) + ".");
+            }
+
+            if (system.Terraformable > 0)
+            {
+                report.AppendLine(
+                    $"  {system.Terraformable} terraforming candidate{(system.Terraformable == 1 ? "" : "s")}.");
+            }
+
+            if (system.NearestBody is { } nearest && system.FurthestBody is { } furthest)
+            {
+                // Planets rather than bodies, because the star sits at zero and a spread that
+                // always starts there says nothing about how spread out the system is.
+                report.AppendLine($"  Planets {Light(nearest)} to {Light(furthest)} from arrival.");
+            }
+        }
+
+        report.AppendLine();
+
+        if (taken > 0)
+        {
+            report.AppendLine(Building(taken));
+        }
+
+        if (unsurveyed > 0)
+        {
+            report.AppendLine(Unsurveyed(unsurveyed));
+        }
+
+        if (fromEmpty)
+        {
+            report.AppendLine(
+                $"{from} is itself unpopulated, so there is no System Colonisation Contact there. Claim "
+                + "range is measured from the starport you claim at, so this is the wrong place to "
+                + "measure from unless you are heading back to one.");
+        }
+
+        if (detailFailed)
+        {
+            report.AppendLine(
+                "I couldn't reach the index for the second half of this, so there are no landable or ring "
+                + "figures above — the systems and their bodies are still right.");
+        }
+
+        report.AppendLine(CannotSay);
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// A body kind said of several bodies. Written out because the naive rule produces "18 Rocky
+    /// bodys" and "4 Gas giant with water-based lifes" — the head noun is not always the last
+    /// word, and the catalogue is a closed sixty-one so the two shapes it uses are all there are.
+    /// </summary>
+    private static string Plural(string subtype, int count)
+    {
+        if (count == 1)
+        {
+            return subtype;
+        }
+
+        var split = subtype.IndexOf(" with ", StringComparison.Ordinal);
+        var head = split < 0 ? subtype : subtype[..split];
+        var tail = split < 0 ? string.Empty : subtype[split..];
+        var space = head.LastIndexOf(' ');
+        var last = space < 0 ? head : head[(space + 1)..];
+
+        var plural = last.EndsWith('y') && last.Length > 1 && !"aeiou".Contains(last[^2])
+            ? last[..^1] + "ies"
+            : last + "s";
+
+        return (space < 0 ? plural : head[..(space + 1)] + plural) + tail;
+    }
+
+    private static string Building(int taken) =>
+        $"{taken} more unpopulated system{(taken == 1 ? " is" : "s are")} left out because somebody has "
+        + "already begun building there.";
+
+    /// <summary>
+    /// Said rather than swallowed. These are the ones a Commander on a frontier might most want,
+    /// and the only honest thing to report about them is that nobody has looked.
+    /// </summary>
+    private static string Unsurveyed(int count) =>
+        $"{count} more {(count == 1 ? "is a system" : "are systems")} nobody has surveyed — the index has "
+        + $"{(count == 1 ? "its star" : "their stars")} and no planets at all, so I cannot say what is in "
+        + $"{(count == 1 ? "it" : "them")}. That is not the same as empty.";
+
+    /// <summary>
+    /// Said on every candidate answer, in full, because the thing it rules out is exactly what a
+    /// Commander will otherwise assume they have been told.
+    /// </summary>
+    private const string CannotSay =
+        "None of this says a system is free. A claim lasts 24 hours, lives on Frontier's servers, and is "
+        + "visible only to the Commander who made it — no index outside the game holds one, so I cannot "
+        + "check. These are systems worth opening in the System Colonisation Contact, which is the only "
+        + "thing that knows.";
+
+    private static string Distance(double lightYears) =>
+        $"{lightYears.ToString("0.#", CultureInfo.InvariantCulture)} light years";
+
+    private static string Light(double seconds) =>
+        $"{seconds.ToString("N0", CultureInfo.InvariantCulture)} ls";
 
     // -------------------------------------------------------------- wording
 

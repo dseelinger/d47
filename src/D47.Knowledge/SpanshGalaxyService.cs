@@ -38,10 +38,12 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
         _http = http ?? new HttpClient
         {
-            // Short by the standards of a web client, and deliberately so: this runs while a
-            // Commander is waiting mid-flight for an answer, and a lookup that takes half a
-            // minute has already failed at being useful even if it eventually returns.
-            Timeout = TimeSpan.FromSeconds(15),
+            // The ceiling rather than the budget. Every call gets <see cref="Ordinary"/> unless it
+            // asks for more, and only one does — see ScanForColonisationAsync. A single client
+            // timeout would have to be either too short for that call or too long for all the
+            // others, so the wait a Commander actually experiences is set per call and this is
+            // only the backstop behind it.
+            Timeout = TimeSpan.FromSeconds(45),
         };
 
         _http.BaseAddress ??= new Uri($"https://{Host}/");
@@ -54,11 +56,21 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         }
     }
 
+    /// <summary>
+    /// How long a Commander waits for an answer before being told there is not one.
+    /// <para>
+    /// Short by the standards of a web client, and deliberately so: this runs while they are
+    /// waiting mid-flight, and a lookup that takes half a minute has already failed at being
+    /// useful even if it eventually returns.
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan Ordinary = TimeSpan.FromSeconds(15);
+
     public async Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
     {
         using var content = new StringContent(SpanshRequest.Search(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
-            () => _http.PostAsync("api/systems/search", content, cancellationToken),
+            token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken).ConfigureAwait(false);
 
@@ -72,7 +84,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Stations(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
-            () => _http.PostAsync("api/stations/search", content, cancellationToken),
+            token => _http.PostAsync("api/stations/search", content, token),
             "the station search",
             cancellationToken).ConfigureAwait(false);
 
@@ -83,11 +95,39 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Bodies(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
-            () => _http.PostAsync("api/bodies/search", content, cancellationToken),
+            token => _http.PostAsync("api/bodies/search", content, token),
             "the body search",
             cancellationToken).ConfigureAwait(false);
 
         return SpanshResponse.ReadBodies(document!);
+    }
+
+    /// <summary>
+    /// The candidate scan. One call, and the only one in this class that is given longer than
+    /// <see cref="Ordinary"/>.
+    /// <para>
+    /// The response is the largest thing d47 fetches from anywhere — the systems search embeds
+    /// every body of every system it returns, and the densest fifteen light years measured came
+    /// back as 1.49 MB. There is no way to ask for less: <c>fields</c> and <c>_source</c> are both
+    /// accepted and silently ignored. Latency does not track the size — 121 KB took 3.8 seconds
+    /// and 1.49 MB took 1.9 — so it is the service rather than the payload that takes its time,
+    /// and 13.5 seconds was measured against an ordinary 22-system request. Against a 15-second
+    /// budget that is a search which fails roughly one time in five for no reason the Commander
+    /// can see, which is why this one asks for more.
+    /// </para>
+    /// </summary>
+    public async Task<ColonisationScan> ScanForColonisationAsync(
+        ColonisationQuery query,
+        CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(SpanshRequest.Colonisation(query), Encoding.UTF8, "application/json");
+        using var document = await SendAsync(
+            token => _http.PostAsync("api/systems/search", content, token),
+            "the galaxy search",
+            cancellationToken,
+            budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
+
+        return SpanshResponse.ReadColonisation(document!);
     }
 
     public async Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
@@ -142,7 +182,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         using var content = new StringContent(SpanshRequest.Search(probe), Encoding.UTF8, "application/json");
 
         using var document = await SendAsync(
-            () => _http.PostAsync("api/systems/search", content, cancellationToken),
+            token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken,
             rejectionMeansMissing: true).ConfigureAwait(false);
@@ -169,17 +209,26 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     /// Whether a 400 is "there is no such system" rather than a fault. True only where the sole
     /// thing in the request the service can reject is a system name the Commander supplied.
     /// </param>
+    /// <param name="budget">
+    /// How long to wait, defaulting to <see cref="Ordinary"/>. Enforced here rather than by the
+    /// client's own timeout so that one slow call cannot lengthen every other one — the client's
+    /// timeout is the backstop behind this and never the number a Commander experiences.
+    /// </param>
     private async Task<JsonDocument?> SendAsync(
-        Func<Task<HttpResponseMessage>> send,
+        Func<CancellationToken, Task<HttpResponseMessage>> send,
         string what,
         CancellationToken cancellationToken,
-        bool rejectionMeansMissing = false)
+        bool rejectionMeansMissing = false,
+        TimeSpan? budget = null)
     {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(budget ?? Ordinary);
+
         HttpResponseMessage response;
 
         try
         {
-            response = await send().ConfigureAwait(false);
+            response = await send(deadline.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -220,10 +269,22 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
             try
             {
-                var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                // The deadline rather than the caller's token, because the body is where the time
+                // actually goes on the largest of these responses and a read left unbounded would
+                // put the whole budget back where it was.
+                var stream = await response.Content.ReadAsStreamAsync(deadline.Token).ConfigureAwait(false);
 
-                return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken)
+                return await JsonDocument.ParseAsync(stream, cancellationToken: deadline.Token)
                     .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("{What} did not finish answering within the timeout", what);
+                throw new GalaxyUnavailableException($"{Capitalise(what)} took too long to answer.");
             }
             catch (JsonException ex)
             {

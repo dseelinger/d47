@@ -61,6 +61,12 @@ public class GalaxyCapabilityTests
                 ? Task.FromException<BodySearchResult>(Throws)
                 : Task.FromResult(Bodies);
         }
+
+        /// <summary>Not what this file is about. See <c>ColonisationCandidateTests</c>.</summary>
+        public Task<ColonisationScan> ScanForColonisationAsync(
+            ColonisationQuery query,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ColonisationScan("Sol", 0, []));
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(

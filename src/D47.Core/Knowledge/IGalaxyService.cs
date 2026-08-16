@@ -86,6 +86,19 @@ public interface IGalaxyService
     /// nearest Earth-like world is, where there is something to sample, and which ring to mine.
     /// </summary>
     Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every system within claim range of a reference, least populated first (list.md Phase 18,
+    /// "Find somewhere worth colonising").
+    /// <para>
+    /// Deliberately not a <see cref="SearchAsync"/> with more filters. The criterion that decides
+    /// a candidate — an unpopulated system — is the one filter this index silently drops, so the
+    /// query has to be sorted rather than narrowed and the deciding is done over what comes back.
+    /// A separate call keeps that inversion in one place instead of making
+    /// <see cref="GalaxyQuery"/> mean two different things about its own filters.
+    /// </para>
+    /// </summary>
+    Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken);
 }
 
 /// <summary>
