@@ -100,7 +100,7 @@ on that answer, which is why they lead within the phase.
 its three items produce documents rather than code, so it is the one phase here whose minor release
 is mostly a promise that the next two are built on something measured.
 
-## Phase 17 — Checklists — **next**
+## ~~Phase 17 — Checklists~~ — complete 2026-08-16
 
 **What everything else is waiting on.** Engineering's planning half was deferred here from Phase 14
 and has been waiting since `v0.10.0` closed — the tables are built, so *An engineering plan writes
@@ -117,7 +117,7 @@ One caveat: *A colonisation plan writes the checklist* needs **Phase 16's** colo
 is the dependency that used to be expressed as "the spike sits above this line", and it is now
 expressed as 16 coming before 17.
 
-## Phase 18 — Activity assistants
+## ~~Phase 18 — Activity assistants~~ — complete 2026-08-16
 
 Split, because the parts do not share a readiness.
 
@@ -133,19 +133,43 @@ outlives a session, and two items whose shape depends on what **Phase 16's** exo
 The plan is [phase-18-exobiology.md](phase-18-exobiology.md), which now begins by saying its own
 spike is no longer in it.
 
-## Phase 19 — Session tooling and release polish
+## ~~Phase 19 — Session tooling and release polish~~ — complete 2026-08-16
 
-Nine items left — one fewer since the first-run key prompt moved to Phase 16 — and they are three
-subjects wearing one hat: voices, first-run, and the log and docs surfaces. **Give the composition
-root a test harness** is the one that gets more expensive the longer it waits — `AppHost` is where
-the app is actually assembled and it has no tests — so it belongs earlier than the polish around it.
+Nine items, three subjects wearing one hat: voices, the log surfaces and the docs. It was flagged
+as a candidate for splitting and it did not need to be — the hat turned out to be real, because
+five of the nine are one subject and the other four are two pairs.
 
-If this phase is still one hat by the time it comes up, it is a candidate for splitting; moving items
-between unbuilt phases is free, and a phase that cannot be finished holds its ready items hostage.
-That is exactly why the warnings left what is now Phase 18 — and, on the same argument, why the
-first-run item left this one.
+**The ordering guess held.** *Give the composition root a test harness* was ranked first for
+getting more expensive the longer it waited, and running it first is what made the four voice items
+cheap: two pure functions came out of `AppHost` — one deciding when the client is rebuilt and the
+voice list refetched, one deciding what happens to stored voices on a provider switch — and every
+voice item after it was a change to one of those with a test already pointing at it. It also found
+a third fault in the code it was lifting past, which the two known ones had not: the speech key
+check reported "accepted the key — 0 voices" for a key that had just been refused.
 
-## Phase 20 — On-foot engineering
+**Two items came back different from how they were written, and both in the same direction — the
+thing being feared was not the thing that was wrong.**
+
+The ElevenLabs spike predicted an empty picker on a fresh paid account. `GET /v1/voices` turns out
+to need no account at all, so the picker is populated for everybody, and the real defect was the
+one the item mentioned in passing: four different empties arriving as one, with nothing above the
+seam able to tell them apart. See
+[../spikes/elevenlabs-voice-sources.md](../spikes/elevenlabs-voice-sources.md).
+
+The docs item predicted an unreadable banner, which was true, and the reachability line it added
+almost as an afterthought is what found the actual bug: nine capability pages had no front-matter
+title and were reaching the header only because GitHub Pages runs `jekyll-titles-from-headings`.
+
+**One thing the phase shipped that no item asked for**, and it is the same shape both times: a
+hand-maintained copy of a generated list had drifted. `index.md`'s capability table listed sixteen
+of thirty-three. It is gone rather than corrected, because correcting it would have set the same
+clock running again.
+
+**Release:** `v0.14.0`, following `v0.13.0`. Two of the nine were already shipped before the phase
+was picked up — the update check and the installer, the latter pulled forward out of order because
+the Commander was unpacking archives by hand in the meantime.
+
+## Phase 20 — On-foot engineering — **next**
 
 Well specced, with its own spike and a sources document already written. It is a whole second
 engineering domain, and it ranks here rather than higher for one reason: it is worth the most to a

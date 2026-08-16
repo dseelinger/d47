@@ -1,0 +1,120 @@
+---
+# Empty front matter, which is what makes Jekyll compile this file. It overrides minima's own
+# assets/main.scss, so the import below is what keeps the theme — everything after it is the
+# left nav that _layouts/default.html builds (list.md Phase 19).
+---
+
+@import "minima";
+
+/* The banner and the footer widen with the content. minima sizes all three from one .wrapper,
+   and leaving those two at 800px under a 68rem page puts the site's own name somewhere other
+   than above the nav it belongs to. */
+.site-header > .wrapper,
+.site-footer > .wrapper {
+  max-width: 68rem;
+}
+
+/* The two columns. Grid rather than a float, so the nav is a column with a real width and the
+   content cannot flow underneath it — the failure a floated sidebar has at every width the
+   author did not test. */
+.d47-layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+
+  /* Wider than minima's own wrapper, because the wrapper is now shared. At minima's 800px the
+     nav would take 240 of it and leave a capability page 560px to render tables and quoted tool
+     schemas in — narrower than the site was before the nav arrived, which is a nav that has
+     cost the reader something. */
+  max-width: 68rem;
+}
+
+/* Sticky, because the nav is the reason a reader is not lost and a capability page is long
+   enough to scroll it out of sight. Its own scrollbar when it is taller than the viewport,
+   rather than clipping entries off the bottom. */
+.d47-nav {
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.d47-nav-group {
+  margin-bottom: 1.4rem;
+}
+
+.d47-nav-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #828282;
+}
+
+.d47-nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.d47-nav li {
+  margin: 0;
+
+  /* Room to breathe at the sides so the current-page marker is a band rather than a stripe
+     hard against the text. */
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+
+  /* Never mid-phrase. The banner this replaces broke "Ship and module / specifications" into
+     what read as two links; a nav entry wraps under itself, indented, and stays one entry. */
+  text-indent: -0.6rem;
+  padding-left: 1.1rem;
+}
+
+/* The current page, marked. minima's header marked nothing at all, so a reader had no way to
+   tell where they were from the navigation. Not a link, because it goes nowhere. */
+.d47-nav-here {
+  font-weight: 600;
+  background: #f2f2f2;
+  color: #111;
+}
+
+.d47-content {
+  min-width: 0;
+}
+
+/* Wide content — the specification tables, a quoted tool schema — scrolls inside itself rather
+   than pushing the page sideways. */
+.d47-content table,
+.d47-content pre {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Phone width: the nav goes above the content rather than beside it, and the columns stop being
+   columns. A 15rem sidebar on a 375px screen leaves 8rem for the page. */
+@media screen and (max-width: 700px) {
+  .d47-layout {
+    display: block;
+  }
+
+  .d47-nav {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  /* Two columns of entries rather than one very long list to scroll past on the way to the
+     page the reader came for. */
+  .d47-nav-group ul {
+    columns: 2;
+  }
+}

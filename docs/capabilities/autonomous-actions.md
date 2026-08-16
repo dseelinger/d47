@@ -1,5 +1,7 @@
 ---
 title: Acting on its own
+group: Acting on the game
+nav_order: 127
 ---
 
 Things Directive 47 does to your ship without being asked. There is one so far, and it is off.

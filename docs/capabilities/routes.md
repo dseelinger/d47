@@ -1,4 +1,8 @@
-# Route planning
+---
+title: Route planning
+group: Knowledge
+nav_order: 105
+---
 
 Plot a neutron route, a Road to Riches loop, or a trade run.
 

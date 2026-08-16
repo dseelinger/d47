@@ -1,5 +1,7 @@
 ---
 title: Interface
+group: Interface
+nav_order: 120
 ---
 
 How Directive 47 looks, and which keys reach it.
@@ -116,6 +118,30 @@ Which page you are on belongs to the surface you are looking at, not to the tran
 desktop window can sit on the log while the headset panel shows the conversation — same
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
 has no tabs at all, being the transcript's tail and the provenance line and nothing else.
+
+### Following it, or not {#following}
+
+The transcript follows its own newest line, which is what you want almost all of the time and
+exactly what you do not want the moment you scroll up to read something — a busy session appends
+several lines a second, and every one of them used to drag you back to the bottom.
+
+Scrolling away from the end stops it following. A **↓ Newest** button appears over the bottom
+right of the page while you are behind; pressing it goes to the newest line *and* starts
+following again, and so does scrolling back to the bottom yourself. There is no mode to
+remember: the lock is inferred from where you are looking.
+
+Following belongs to the page, so arriving at a different tab opens it at its newest line rather
+than carrying "I have scrolled up" across with you.
+
+### Selecting and copying it {#copying}
+
+The transcript is selectable text. Drag across it and press <kbd>Ctrl</kbd>+<kbd>C</kbd>, exactly
+as anywhere else — including across lines that arrive while you are selecting.
+
+**Copy**, beside the search box, takes the whole page as it is currently shown: the conversation
+without the diagnostics, or with them, or the log file. A search query highlights on these pages
+rather than filtering, so it deliberately does not narrow what is copied — you asked for the log.
+The button says **Copied** for a moment, and says so if it could not.
 
 ## The ship AI's face {#avatar}
 

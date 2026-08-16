@@ -1,5 +1,7 @@
 ---
 title: Checklists
+group: Knowledge
+nav_order: 109
 ---
 
 One list of what you are working on. Your own lines, your ship builds and your construction sites

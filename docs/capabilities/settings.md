@@ -1,5 +1,7 @@
 ---
 title: Settings
+group: Foundation
+nav_order: 132
 ---
 
 Changing Directive 47's settings by asking, and the things it will not change however nicely

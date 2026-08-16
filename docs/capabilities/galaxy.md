@@ -1,4 +1,8 @@
-# Galaxy search
+---
+title: Galaxy search
+group: Knowledge
+nav_order: 104
+---
 
 Look up star systems, and work out how far apart two of them are.
 

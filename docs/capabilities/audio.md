@@ -1,5 +1,7 @@
 ---
 title: Audio mixer
+group: Voice
+nav_order: 117
 ---
 
 How loud each kind of sound is, whether it is muted, and how far it drops out of the way while

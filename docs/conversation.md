@@ -1,5 +1,7 @@
 ---
 title: Talking to Directive 47
+group: General help
+nav_order: 2
 ---
 
 Type a question into D47's window and press Enter. What happens next depends on which path can
@@ -66,6 +68,10 @@ Answered via Model, effort Medium, 1420 in (1180 cached), 96 out, $0.0031 this t
   input alone badly under-reports a cached turn.
 - **Cost** — this turn and the session, priced from a per-provider, per-model table so the
   running total survives switching endpoints.
+- **Voice** — appended as `; voice 1,204 characters spoken, $0.1204` once anything has been
+  spoken aloud. Characters rather than tokens, because that is what speech is billed in; free
+  providers say so rather than reporting a zero. See
+  [what the voices cost](capabilities/speech.md#voice-cost).
 
 If you ever see `unexplained cold prefix(es)` on that line, prompt caching is being defeated by
 something and the turn is being re-billed in full. A cold prefix is only legitimate on the first

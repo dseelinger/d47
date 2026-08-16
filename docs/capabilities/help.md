@@ -1,5 +1,7 @@
 ---
 title: Help
+group: Foundation
+nav_order: 100
 ---
 
 What Directive 47 can actually do, answered from its own list of capabilities rather than from

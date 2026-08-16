@@ -1,5 +1,7 @@
 ---
 title: Language model
+group: Conversation
+nav_order: 114
 ---
 
 Which model answers you, whether it can be reached right now, and what the session has cost so
@@ -20,7 +22,15 @@ Model: claude-sonnet-5
 Availability: Available
 Personality: on
 Session so far: 3 turn(s), $0.0412
+Speech so far: 1,204 characters spoken, $0.1204
 ```
+
+**Speech is counted separately and in a different unit**, because it is billed in a different
+unit: the model is billed per token and the voice per character. It is here rather than on a
+report of its own so that "what has this cost" has one answer — see
+[what the voices cost](speech.md#voice-cost) for where the rate comes from and why it is an
+assumption you can correct. A provider that charges nothing says **free** rather than `$0.00`,
+and the line is absent entirely until something has been spoken.
 
 With no key stored it says so, rather than going quiet and leaving you to work out why nothing
 answers:

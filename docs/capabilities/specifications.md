@@ -1,4 +1,8 @@
-# Ship and module specifications
+---
+title: Ship and module specifications
+group: Knowledge
+nav_order: 106
+---
 
 What a hull or a module can do, before anybody buys one.
 

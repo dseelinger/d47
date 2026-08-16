@@ -1,4 +1,8 @@
-# Colonisation
+---
+title: Colonisation
+group: Knowledge
+nav_order: 110
+---
 
 What your construction sites still need, what you are already carrying towards them, what is left to
 haul — and which nearby systems have the bodies your next colony wants.

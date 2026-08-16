@@ -1,5 +1,7 @@
 ---
 title: Listening
+group: Voice
+nav_order: 118
 ---
 
 Talking to Directive 47 instead of typing at it. Hold a key, speak, let go, and what you said is

@@ -1,4 +1,8 @@
-# Exobiology
+---
+title: Exobiology
+group: Knowledge
+nav_order: 112
+---
 
 Plot a circuit through known biology, and read back what your own surface scan found on the body you
 are at.

@@ -1,4 +1,8 @@
-# Engineering
+---
+title: Engineering
+group: Knowledge
+nav_order: 108
+---
 
 What a blueprint costs and changes, and how the roll on a fitted module actually went.
 

@@ -1,5 +1,7 @@
 ---
 title: Crew
+group: Ship
+nav_order: 103
 ---
 
 The pilots you have hired, and how to talk to them.

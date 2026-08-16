@@ -1,5 +1,7 @@
 ---
 title: Re-anchor
+group: Interface
+nav_order: 122
 ---
 
 Puts your world-locked headset panels back in front of you.

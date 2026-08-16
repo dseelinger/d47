@@ -1,5 +1,7 @@
 ---
 title: Diagnostics
+group: Foundation
+nav_order: 101
 ---
 
 Where Directive 47 keeps its files, and how much detail it writes down about what it is doing.

@@ -1,5 +1,7 @@
 ---
 title: Speech
+group: Voice
+nav_order: 116
 ---
 
 Everything Directive 47 makes audible: spoken replies, the short sound that marks each stage of a
@@ -122,6 +124,55 @@ the picker's **Use the default** button is that same act under a name. With no m
 there is nothing to pick with, so clearing it leaves that core on the provider's own default —
 which is what the button says in that case, because it is a different outcome.
 
+#### Hear it before you choose it
+
+The picker lists several hundred names, and you are casting a character from them. "Bill - Wise,
+Mature, Balanced" and "George - Warm, Captivating Storyteller" are both true and neither tells
+you which one is Warden.
+
+**Hear it** speaks the highlighted voice without closing the dialog and without committing the
+choice, so you can walk the list and listen. What it says is the core's own opening line rather
+than a neutral sample, because the question you are asking is about a character.
+
+It is a press rather than a hover, and it is never automatic: on a paid provider each one is a
+synthesis request billed by the character, so the button carries the price before you press it —
+**Hear it (free)** on Edge Neural, an estimate in dollars on ElevenLabs. Each voice is
+synthesised once per session and replayed after that, so walking back and forth over four
+candidates costs four auditions rather than eight.
+
+It goes through the same audio path as everything else Directive 47 says: it ducks the game, the
+shut-up key cuts it off, and starting a second audition drops the first mid-word rather than
+queueing behind it.
+
+With no provider selected, or with a paid provider and no key stored, the button is shut and
+says which of those it is.
+
+#### An empty list says which empty it is
+
+A voice list can be empty for four different reasons and only two of them are yours to fix. The
+picker says which:
+
+| What you see | What it means |
+|---|---|
+| *…needs an API key before it will list its voices* | Nothing was sent. Fill in the key row above. |
+| *…refused the stored key* | It was asked and said no, quoting its own words. |
+| *…could not be reached* | It was asked and did not answer. Waiting is the fix. |
+| *…answered, and has no voices on this account* | Nothing is wrong. Add one on their site. |
+
+Before this they were one empty list under one sentence telling you to type the value you want,
+which for a voice id is a value you have no way of knowing.
+
+#### Choices survive a provider switch
+
+A voice id means nothing to a provider that did not issue it, so switching provider still empties
+every voice row. It no longer *loses* them: the ship AI's voice, both carrier roles and all
+eleven per-core pairings are filed under the provider they were chosen for, and switching back
+puts them where they were — including the flag that says the pairing has already run, so eleven
+cores are not re-picked from scratch.
+
+A settings file written before Directive 47 recorded whose voices were whose has nothing to file
+them under, so those are dropped rather than filed under a guess.
+
 ### Speaking rate {#rate}
 
 `1.0` is the voice's natural pace; `1.2` is a fifth faster.
@@ -136,6 +187,37 @@ ElevenLabs accepts `0.7` to `1.2` and rejects anything outside that outright —
 arrives as silence, so a wider value is clamped to the nearest one it will take rather than
 being sent and failing.
 
+### What the voices cost {#voice-cost}
+
+Speech is billed **by the character** where it is billed at all. ElevenLabs charges per
+character, Edge Neural charges nothing, and quoting either in tokens would be a number whose
+basis is wrong — so this is counted separately from [what the model costs](conversation.md).
+
+Two rows, and they are deliberately different kinds of thing.
+
+**Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
+published list price for the model Directive 47 asks for — $0.10 per thousand for ElevenLabs'
+`eleven_multilingual_v2`, read from their API pricing page. That is a list price and not your
+bill: a subscription burns bundled credits instead, at an effective rate that depends on your
+tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
+and every figure below follows it. The row is absent on a provider that charges nothing.
+
+**Spoken this session** is a fact. It is the number of characters actually handed to the
+provider since Directive 47 started, counted at the one seam every caller passes — the ship's AI,
+a callout, a re-voiced in-game message and a core's own introduction all converge there.
+
+- Counted on synthesis that **succeeded**. A refused voice or a failed request costs nothing.
+- A line cut off by the shut-up key still counts the sentences that were already sent, because
+  they were already paid for.
+- There is no caching, so the same sentence twice is billed twice. The utterance count is kept
+  alongside the characters for exactly that reason.
+- A provider that costs nothing reads as **free**, never as `$0.00` — those are the same string
+  for opposite reasons.
+
+The same line appears beside the model's price on the panel's status row after each turn, and in
+the answer to *"what has this session cost"*, so the question has one answer rather than one per
+subsystem.
+
 ### Other voices {#carrier-voices}
 
 Directive 47 speaks as more than one person from Phase 11 onwards. Each of these is a different
@@ -149,6 +231,10 @@ falling silent.
 
 They are two rows rather than one because they are two people. A carrier whose captain and tower
 sound identical is a carrier with one person on it.
+
+Both offer the same **Hear it** button as the voice row, and both audition as themselves rather
+than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is
+what you are actually listening for when you cast one.
 
 ### Speak incoming messages {#incoming-messages}
 

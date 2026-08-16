@@ -1,5 +1,7 @@
 ---
 title: Journal
+group: Foundation
+nav_order: 102
 ---
 
 Everything Directive 47 knows about your game, read straight from the files Elite Dangerous

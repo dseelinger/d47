@@ -1,8 +1,8 @@
 ---
-title: Installing Directive 47
+title: Installing
+group: General help
+nav_order: 1
 ---
-
-# Installing and verifying a build
 
 Download **`d47-setup.exe`** from the
 [latest release](https://github.com/dseelinger/d47/releases/latest) and run it. There is no
