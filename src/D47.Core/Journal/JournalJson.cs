@@ -86,4 +86,50 @@ public static class JournalJson
     /// </summary>
     public static string? Named(this JsonElement element, string property) =>
         element.String(property + "_Localised") ?? element.String(property);
+
+    /// <summary>
+    /// The internal symbol, folded so that two events which spell the same thing differently join.
+    /// The counterpart to <see cref="Named"/>: that one is for speaking, this one is for matching,
+    /// and nothing should use one where it means the other.
+    /// <para>
+    /// <b>The case fold is not tidiness — it is the join.</b> Elite writes the same commodity three
+    /// ways: <c>ColonisationConstructionDepot</c> writes <c>$aluminium_name;</c>, <c>Cargo.json</c>
+    /// writes <c>aluminium</c>, and <c>ColonisationContribution</c> writes
+    /// <c>$ComputerComponents_name;</c> — measured mixed-case on <b>30 of 30</b> distinct symbols in
+    /// the corpus, against 0 of 31 for the depot and 0 of 64 for the hold. So a normaliser that
+    /// stripped the decoration and stopped would match every depot row against every hold row and
+    /// <em>no</em> contribution against anything, reporting a Commander's own completed delivery as
+    /// never having happened. Measured 2026-08-16; see <c>docs/spikes/colonisation-sources.md</c>.
+    /// </para>
+    /// </summary>
+    public static string? Symbol(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var symbol = value.Trim();
+
+        if (symbol.StartsWith('$'))
+        {
+            symbol = symbol[1..];
+        }
+
+        if (symbol.EndsWith(';'))
+        {
+            symbol = symbol[..^1];
+        }
+
+        if (symbol.EndsWith("_name", StringComparison.OrdinalIgnoreCase))
+        {
+            symbol = symbol[..^"_name".Length];
+        }
+
+        return symbol.Length == 0 ? null : symbol.ToLowerInvariant();
+    }
+
+    /// <summary>The folded symbol of a property, for joining. See <see cref="Symbol(string?)"/>.</summary>
+    public static string? Symbol(this JsonElement element, string property) =>
+        Symbol(element.String(property));
 }

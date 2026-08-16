@@ -13,6 +13,13 @@ namespace D47.Core.Journal;
 /// </summary>
 public sealed record ConstructionResource(string Name, int Required, int Provided)
 {
+    /// <summary>
+    /// The folded internal symbol, which is what joins this row to the hold and to the Commander's
+    /// own contributions. <see cref="Name"/> is the spelling; this is the identity, and the two are
+    /// never interchanged — see <see cref="JournalJson.Symbol(string?)"/>.
+    /// </summary>
+    public string? Symbol { get; init; }
+
     /// <summary>What is left. One subtraction, over the latest event — no history to keep.</summary>
     public int Remaining => Math.Max(0, Required - Provided);
 
@@ -88,6 +95,26 @@ public sealed record ColonisationSites
     private IReadOnlyDictionary<long, ConstructionSite> Sites { get; init; } =
         new Dictionary<long, ConstructionSite>();
 
+    /// <summary>
+    /// What this Commander has handed over, per site, per commodity symbol.
+    /// <para>
+    /// <b>Kept apart from the sites rather than folded into them</b>, and for two reasons. A
+    /// contribution can name a <c>MarketID</c> no depot event has described yet, and turning that
+    /// into a site record would invent a construction site out of a delivery note. And the two
+    /// numbers mean different things: the depot's <c>ProvidedAmount</c> is what <em>everybody</em>
+    /// has delivered, while this is what <em>you</em> did — the distinction that matters on a build
+    /// several Commanders are hauling for.
+    /// </para>
+    /// <para>
+    /// <b>This one really is an accumulation, and its scope is the session.</b> Each event reports
+    /// one delivery rather than a running total, so it is summed — and the spine tails the newest
+    /// journal, so what is summed is this session's deliveries and not a career's. Anything reading
+    /// it has to say so.
+    /// </para>
+    /// </summary>
+    private IReadOnlyDictionary<long, IReadOnlyDictionary<string, int>> Contributions { get; init; } =
+        new Dictionary<long, IReadOnlyDictionary<string, int>>();
+
     public IReadOnlyList<ConstructionSite> All =>
         [.. Sites.Values.OrderByDescending(site => site.SeenAt)];
 
@@ -128,10 +155,22 @@ public sealed record ColonisationSites
             ? []
             : [.. All.Where(site => string.Equals(site.StarSystem, system, StringComparison.OrdinalIgnoreCase))];
 
+    /// <summary>
+    /// What this Commander has delivered to one site <b>this session</b>, per commodity symbol.
+    /// Empty for a site they have not hauled to since d47 started reading.
+    /// </summary>
+    public IReadOnlyDictionary<string, int> MineDeliveredTo(long marketId) =>
+        Contributions.GetValueOrDefault(marketId) ?? new Dictionary<string, int>();
+
     /// <param name="starSystem">Where the Commander was when the event landed, which is the site.</param>
     /// <param name="stationName">The same, for the depot itself.</param>
     public ColonisationSites Apply(JournalEvent journalEvent, string? starSystem = null, string? stationName = null)
     {
+        if (journalEvent.Kind == "ColonisationContribution")
+        {
+            return Contribute(journalEvent);
+        }
+
         if (journalEvent.Kind != "ColonisationConstructionDepot"
             || journalEvent.Long("MarketID") is not { } marketId)
         {
@@ -145,7 +184,10 @@ public sealed record ColonisationSites
                 // no commodity table at all — not even the one d47 already reads.
                 row.Named("Name") ?? "an unnamed commodity",
                 row.Int("RequiredAmount") ?? 0,
-                row.Int("ProvidedAmount") ?? 0))
+                row.Int("ProvidedAmount") ?? 0)
+            {
+                Symbol = row.Symbol("Name"),
+            })
             .ToList();
 
         var known = Sites.GetValueOrDefault(marketId);
@@ -167,5 +209,47 @@ public sealed record ColonisationSites
         var updated = new Dictionary<long, ConstructionSite>(Sites) { [marketId] = site };
 
         return this with { Sites = updated };
+    }
+
+    /// <summary>
+    /// One delivery, added to what this Commander has already handed over at that site.
+    /// <para>
+    /// Summed rather than replaced, which is the opposite of how the depot event is treated three
+    /// lines above — and deliberately so. That one is a snapshot and this one is a receipt, and the
+    /// only reason d47 can be sure which is which is that both were measured.
+    /// </para>
+    /// </summary>
+    private ColonisationSites Contribute(JournalEvent journalEvent)
+    {
+        if (journalEvent.Long("MarketID") is not { } marketId)
+        {
+            return this;
+        }
+
+        var running = new Dictionary<string, int>(MineDeliveredTo(marketId));
+        var moved = false;
+
+        foreach (var row in journalEvent.Items("Contributions"))
+        {
+            // Mixed case on every distinct symbol this event writes, against none on the depot's —
+            // so folding here is what makes a delivery findable against the thing it paid for.
+            if (row.Symbol("Name") is not { } symbol || row.Int("Amount") is not { } amount)
+            {
+                continue;
+            }
+
+            running[symbol] = running.GetValueOrDefault(symbol) + amount;
+            moved = true;
+        }
+
+        if (!moved)
+        {
+            return this;
+        }
+
+        var updated =
+            new Dictionary<long, IReadOnlyDictionary<string, int>>(Contributions) { [marketId] = running };
+
+        return this with { Contributions = updated };
     }
 }

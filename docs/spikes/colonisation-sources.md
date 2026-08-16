@@ -15,6 +15,10 @@ machine-readable facility table exists. Whether a claim is visible to anybody ou
 **What it does not settle.** Facility costs and effects themselves — see §4, which is the null
 result, and §5 for what follows from it.
 
+**Extended 2026-08-16** with §7, measured while building the Phase 18 tracking item: where the cargo
+hold manifest actually lives, why a carrier's cargo cannot be itemised at all, and the commodity-name
+fold that the whole subtraction rests on.
+
 ---
 
 ## 1. The headline: the tracking item needs no external source at all
@@ -163,9 +167,11 @@ Colonisation Contact in-game.
 
 ## 6. What this means for the items downstream
 
-- ***Colonisation and construction tracking*** (Phase 18) — **ships as specified, and needs nothing.**
-  No table, no network, no commodity list. Subtraction over one snapshot event per site, keyed by
-  `MarketID`, with a collection rather than a single site and an "as of your last visit" caveat.
+- ***Colonisation and construction tracking*** (Phase 18) — **shipped 2026-08-16, and needed
+  nothing.** No table, no network, no commodity list. Subtraction over one snapshot event per site,
+  keyed by `MarketID`, with a collection rather than a single site and an "as of your last visit"
+  caveat. §7 amends one line of the item: *what is sitting on the carrier* is a tonnage and not a
+  manifest, because Elite writes no manifest and the derivable one is wrong twice as often as right.
 - ***A colonisation plan writes the checklist*** (Phase 17) — **does not ship as a costed table.**
   The figures exist only under GPL-3.0 or in an unlicensed spreadsheet. What it can do is the shape
   the checklist already provides — an objective, an ordered set of intents, and progress diffed
@@ -176,12 +182,76 @@ Colonisation Contact in-game.
   for the reason in §5. The 15 ly rule and "unpopulated" are both checkable offline against data d47
   can reach; "unclaimed" is not checkable at all.
 
+## 7. What the hold and the carrier can say, and what they cannot
+
+**Measured 2026-08-16, same corpus, while building the Phase 18 tracking item.** §1 established what
+a site *wants*. This is the other half of the subtraction — what the Commander *has* — and it was not
+asked the first time. Two answers, and one of them closes a feature off.
+
+### The hold manifest is in `Cargo.json`, and cannot come from the journal
+
+| Check | Result |
+|---|---|
+| `Cargo` events carrying an `Inventory` array | **1,151 of 13,762** |
+| …of which are the first `Cargo` in their file | 731 of 748 files |
+| Later `Cargo` events carrying one | **420 of 13,014** |
+| `Count` equal to the sum of `Inventory` when present | 1,151 of 1,151 |
+
+So the event is a tonnage with a manifest attached at session start and stripped thereafter. **A
+journal-only reader is correct for the first minute of a session and stale for the rest of it**,
+which is the failure shape this repository keeps meeting: exact arithmetic over a stale input reads
+exactly like a right answer. `Cargo.json` is rewritten on every change, so it is read the way
+`Backpack.json` and `ShipLocker.json` already are.
+
+One thing to carry rather than assume: **338 of the 13,762 events describe the SRV**, and the file is
+rewritten for whichever vessel the Commander is in. Eight tonnes of scoopings reported as the ship's
+four hundred would be wrong in a way nobody could see.
+
+### A carrier's cargo is a tonnage, and there is no manifest behind it anywhere
+
+`CarrierStats.SpaceUsage.Cargo` is a real published figure. Nothing Elite writes says what those
+tonnes *are*. The only per-commodity signal is `CargoTransfer`, so the obvious model is to accumulate
+it — and that model was built and reconciled against the game's own total at every `CarrierStats`:
+
+| Check | Result |
+|---|---|
+| Derived stock matched the reported tonnage | **347** |
+| Derived stock was wrong | **679** |
+| Commodities driven **negative** | 118 occurrences across 11 commodities |
+
+**The negatives are the proof rather than the drift.** A stock that goes below zero is a transfer out
+of cargo the journal never saw arrive — the carrier's own commodity market, another Commander's
+delivery, anything loaded before the file being read. So `CargoTransfer` is not an imprecise view of
+carrier stock; it is a partial one, and no amount of care makes it whole. **d47 says how much and
+refuses to say what**, which is the honest half rather than the useful-sounding one.
+
+### The commodity name is spelled three ways, and one of them is the trap
+
+| Source | As written | With uppercase |
+|---|---|---|
+| `ColonisationConstructionDepot` | `$aluminium_name;` | **0** of 31 |
+| `Cargo.json` | `aluminium` | **0** of 64 |
+| `ColonisationContribution` | `$ComputerComponents_name;` | **30 of 30** |
+
+A normaliser that strips the `$` and the `_name;` and stops there joins the depot to the hold
+perfectly — and matches **no contribution against anything**, reporting a delivery the Commander has
+just completed as never having happened. Folding to lowercase is therefore load-bearing, and it is
+the same lesson as the `MainEngines`-versus-"main engines" one Phase 17 learned: *the spelling of a
+subject is part of its identity, and two sources will disagree about it.* With the fold, all 30
+contribution symbols resolve to a commodity the depot asked for, and 0 of 31 depot symbols disagree
+with the hold about the display name.
+
+**And the two sources are not equal about naming.** `Name_Localised` is on all 31 depot symbols and
+absent from **33 of 64** hold symbols, because Elite omits it where the display name is only the
+symbol capitalised. So the depot names a commodity and the hold merely counts it — which is why the
+report takes every spelling from the site's own manifest.
+
 ## Reproducing this
 
-[`spike/ColonisationProbe`](../../spike/ColonisationProbe) holds the two scripts, run against the
+[`spike/ColonisationProbe`](../../spike/ColonisationProbe) holds the four scripts, run against the
 corpus over SSH. `scan_depot.py` answers the snapshot-or-delta and docked questions; `scan_sites.py`
-answers concurrency, the other three events, and whether the manifest ever moves. Neither writes
-anything; both print.
+answers concurrency, the other three events, and whether the manifest ever moves; `scan_cargo.py` and
+`scan_join.py` answer §7. None writes anything; all four print.
 
 The corpus is one person's play history and is not in the repo. The one trap worth repeating: the
 remote default shell reads piped input line by line, so send a script on stdin to `python -` rather

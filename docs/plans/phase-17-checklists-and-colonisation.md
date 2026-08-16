@@ -225,4 +225,27 @@ advertisement alone is a lock on the front door and none on the back.
 
 **And the depot fold was built here rather than in Phase 18.** The colonisation plan needs something
 to diff against, and this plan's own order table put tracking first — which it was not. `ColonisationSites`
-is the state; Phase 18's item is the reporting surface over it and is still open.
+is the state; Phase 18's item is the reporting surface over it.
+
+## And Phase 18's tracking item, 2026-08-16
+
+The reporting surface shipped the same day, as the `colonisation` capability — two tools over the fold
+above, plus the two things the fold did not have: what is in the hold, and what is on the carrier.
+
+**The split table at the top of this plan said Execute needs no source, and that held.** No table, no
+network, no commodity list. What it did not anticipate is that *"journal only"* is not the same claim
+as *"events only"*: the hold manifest is in `Cargo.json`, because the `Cargo` event carries its
+inventory on 1,151 of 13,762 occurrences and a reader built on it is correct for the first minute of a
+session and stale afterwards.
+
+**One line of the Phase 18 item is now struck through by measurement.** *What is sitting on the
+carrier* is a tonnage and nothing more. Elite publishes `SpaceUsage.Cargo` and writes no manifest
+behind it; accumulating `CargoTransfer` was tried and reconciled against that figure, and it was wrong
+679 times against 347 right, going negative on 11 commodities. That is a partial view rather than an
+imprecise one, so it is refused out loud rather than shipped with a caveat.
+
+**And the commodity-name fold nearly repeated Phase 17's identity bug exactly.**
+`ColonisationContribution` writes mixed case on 30 of 30 symbols where the depot and the hold write
+none, so stripping the decoration without lowercasing would have matched every requirement to the hold
+and no delivery to anything. Same shape as `MainEngines` against "main engines", one phase later,
+caught the same way — by looking at what the game actually writes rather than at one example of it.

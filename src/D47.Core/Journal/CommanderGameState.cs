@@ -53,6 +53,13 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// </summary>
     public SuitInventory Suit { get; internal set; } = SuitInventory.Empty;
 
+    /// <summary>
+    /// What is in the cargo hold (list.md Phase 18). Same story as <see cref="Suit"/> and for the
+    /// same measured reason — the manifest is in a file Elite rewrites, and the matching journal
+    /// event carries it on 8% of its occurrences.
+    /// </summary>
+    public CargoHold Hold { get; internal set; } = CargoHold.Empty;
+
     public void Apply(JournalEvent journalEvent)
     {
         if (CommanderIdentity.From(journalEvent) is { } identity && identity.FrontierId == Identity.FrontierId)

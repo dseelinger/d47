@@ -39,6 +39,28 @@ public sealed record CarrierState
     /// <summary>"all", "squadron", "squadronfriends", "friends", "none" — as Elite words it.</summary>
     public string? DockingAccess { get; init; }
 
+    /// <summary>
+    /// Tonnes of cargo aboard, from <c>CarrierStats.SpaceUsage.Cargo</c> (list.md Phase 18).
+    /// <para>
+    /// <b>A total, and there is no manifest anywhere behind it.</b> Nothing Elite writes says what
+    /// those tonnes are. The only per-commodity signal is <c>CargoTransfer</c>, and deriving stock
+    /// from it was measured and fails: reconciled against this very figure across the corpus it was
+    /// <b>wrong 679 times against right 347</b>, and it drove 11 commodities negative — transfers
+    /// out of stock that arrived by a route the journal never itemises (the carrier's own market,
+    /// another Commander's delivery, anything bought before the file d47 is reading). So d47 says
+    /// how much and refuses to say what, which is the honest half rather than the useful-sounding
+    /// one. Measured 2026-08-16; see <c>docs/spikes/colonisation-sources.md</c>.
+    /// </para>
+    /// </summary>
+    public int? CargoTonnes { get; init; }
+
+    /// <summary>
+    /// When the stats above were reported. The figure only refreshes when the Commander opens the
+    /// carrier management panel, so it needs its age said beside it for the same reason a
+    /// construction site does.
+    /// </summary>
+    public DateTimeOffset? StatsSeenAt { get; init; }
+
     public bool Owned => CallSign is not null;
 
     public bool JumpScheduled => DestinationSystem is not null;
@@ -59,6 +81,8 @@ public sealed record CarrierState
             CarrierId = journalEvent.Long("CarrierID") ?? CarrierId,
             FuelLevel = journalEvent.Int("FuelLevel") ?? FuelLevel,
             DockingAccess = journalEvent.String("DockingAccess") ?? DockingAccess,
+            CargoTonnes = journalEvent.Object("SpaceUsage")?.Int("Cargo") ?? CargoTonnes,
+            StatsSeenAt = journalEvent.Timestamp,
         },
 
         "CarrierLocation" => this with

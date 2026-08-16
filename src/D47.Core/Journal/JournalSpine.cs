@@ -8,10 +8,10 @@ namespace D47.Core.Journal;
 /// thread and no timer — it is <see cref="Poll"/>, called at whatever cadence the caller
 /// chooses, exactly like <see cref="JournalReader"/> underneath it.
 /// <para>
-/// It also polls the two on-foot inventory files, which sit in the same folder but are state
-/// rather than a log: Elite rewrites them in place instead of appending. Same folder, same
-/// cadence, same <see cref="Poll"/> — the difference is entirely inside
-/// <see cref="SuitInventoryReader"/>.
+/// It also polls the three inventory files — the two on-foot ones and the cargo hold — which sit
+/// in the same folder but are state rather than a log: Elite rewrites them in place instead of
+/// appending. Same folder, same cadence, same <see cref="Poll"/> — the difference is entirely
+/// inside <see cref="SuitInventoryReader"/> and <see cref="CargoManifestReader"/>.
 /// </para>
 /// </summary>
 public sealed class JournalSpine(string directory, GameStateStore gameState, ILoggerFactory loggerFactory)
@@ -20,6 +20,9 @@ public sealed class JournalSpine(string directory, GameStateStore gameState, ILo
 
     private readonly SuitInventoryReader _suit =
         new(directory, loggerFactory.CreateLogger<SuitInventoryReader>());
+
+    private readonly CargoManifestReader _hold =
+        new(directory, loggerFactory.CreateLogger<CargoManifestReader>());
 
     private JournalReader? _reader;
 
@@ -59,6 +62,13 @@ public sealed class JournalSpine(string directory, GameStateStore gameState, ILo
         if (_suit.Poll() && gameState.Active is { } active)
         {
             active.Suit = _suit.Current;
+        }
+
+        // Cargo.json, on the same terms as the two above: same folder, same cadence, same reason
+        // for reading a file rather than an event.
+        if (_hold.Poll() && gameState.Active is { } carrying)
+        {
+            carrying.Hold = _hold.Current;
         }
 
         return events;

@@ -36,6 +36,7 @@ capability's real tool schema.
 | [Engineering](capabilities/engineering.md) | Knowledge | What a blueprint costs and changes, and how the roll on a fitted module actually went. |
 | [Community goals](capabilities/community-goals.md) | Knowledge | What community goals are running, what tier they have reached, and how you are doing in them. |
 | [Checklists](capabilities/checklists.md) | Knowledge | One list of what you are working on — your own lines, your ship builds and your construction sites. |
+| [Construction tracking](capabilities/colonisation.md) | Knowledge | What your construction sites still need, what you are already carrying towards them, and what is left to haul. |
 | [Language model](capabilities/conversation.md) | Conversation | Which model answers, where it lives, and what the session has cost. |
 | [Interface](capabilities/interface.md) | Interface | Themes — including one that follows your own HUD colours — and the keys that reach D47. |
 | [Privacy](capabilities/privacy.md) | Foundation | Exactly what leaves this machine, to whom, and whether it is being sent right now. |
