@@ -41,6 +41,19 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="0,10,0,0">
+        <!--
+          Hearing it is not choosing it (list.md Phase 19). On the left of the row and separated
+          from the two that close the dialog, because it is the one button here that leaves the
+          picker exactly as it was.
+
+          A press rather than a hover or a selection-changed: on a paid provider every one of
+          these is a synthesis request billed by the character, so walking the list with the
+          arrow keys must cost nothing at all.
+        -->
+        <Button x:Name="AuditionButton"
+                IsVisible="False"
+                Margin="0,0,16,0"
+                Click="OnAuditionClick" />
         <Button Content="Cancel" Click="OnCancelClick" />
         <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
       </StackPanel>

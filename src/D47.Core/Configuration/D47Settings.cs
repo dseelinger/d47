@@ -597,6 +597,37 @@ public sealed record SpeechSettings
         new Dictionary<string, double>();
 
     /// <summary>
+    /// The voices chosen while each <em>other</em> provider was selected, keyed by provider id
+    /// (list.md Phase 19, "Remember which voice you chose for each provider").
+    /// <para>
+    /// <see cref="ProviderRates"/> is the shape this copies and the reason it could not simply
+    /// be copied: a rate is one number and a voice choice is the ship's, two named roles, one
+    /// per core and the flag saying the pairing has run. So the value is a record rather than a
+    /// scalar, and <see cref="VoiceMemory"/> owns moving choices in and out of it.
+    /// </para>
+    /// <para>
+    /// The provider currently selected is never in here — its choices are the live ones above.
+    /// An entry appears when a provider is switched away from and is consumed when it is
+    /// switched back to, so the map holds the providers not in use and nothing else.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, VoiceChoices> ProviderVoices { get; init; } =
+        new Dictionary<string, VoiceChoices>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// What a thousand characters costs, in US dollars, per provider (list.md Phase 19, "What
+    /// the voices cost, beside what the model costs").
+    /// <para>
+    /// Absent means the provider's published list price stands. Present means the Commander has
+    /// corrected it, which they are the only ones who can: the rate actually paid is a property
+    /// of a subscription tier, and the API reports neither the tier nor whether the month's
+    /// bundled credits have run out.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, double> CharacterPrices { get; init; } =
+        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// The voice a fleet carrier answers in, or null for the ship AI's (list.md Phase 11,
     /// "Carrier Captain").
     /// </summary>

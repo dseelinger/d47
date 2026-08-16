@@ -40,7 +40,8 @@ public static class ConversationCapability
         SpendTracker spend,
         TurnCancellation cancellation,
         Action silence,
-        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
+        Func<Audio.SpeechSpend?>? speechSpend = null)
     {
         return new CapabilityDescriptor
         {
@@ -103,7 +104,7 @@ public static class ConversationCapability
                         "Report the selected language model provider and model, whether it is currently reachable, "
                         + "and this session's token spend so far.",
                     Handler = (_, _) => Task.FromResult(
-                        ToolResult.Ok(DescribeModel(settings.Current, availability, spend))),
+                        ToolResult.Ok(DescribeModel(settings.Current, availability, spend, speechSpend))),
                 },
             ],
             Settings = BuildSettingRows(verifyKey),
@@ -113,7 +114,8 @@ public static class ConversationCapability
     private static string DescribeModel(
         D47Settings settings,
         LlmAvailabilityState availability,
-        SpendTracker spend)
+        SpendTracker spend,
+        Func<Audio.SpeechSpend?>? speechSpend)
     {
         var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
 
@@ -135,6 +137,14 @@ public static class ConversationCapability
         report.AppendLine($"Personality: {(settings.Llm.PersonalityEnabled ? "on" : "off")}");
         report.AppendLine(
             $"Session so far: {spend.TurnCount} turn(s), {spend.RunningTotalDollars:C4}");
+
+        // Here rather than on a capability of its own, because the question a Commander asks is
+        // "what has this cost" and it has one answer (list.md Phase 19). The unit differs and
+        // says so: the model is billed in tokens and speech in characters.
+        if (speechSpend?.Invoke()?.Describe(settings) is { } voice)
+        {
+            report.AppendLine($"Speech so far: {voice}");
+        }
 
         return report.ToString().TrimEnd();
     }

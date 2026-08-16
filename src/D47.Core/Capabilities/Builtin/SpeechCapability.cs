@@ -37,10 +37,84 @@ public static class SpeechCapability
     public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
     public const string TowerVoiceKey = "speech.towerVoice";
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
+    public const string CharacterPriceKey = "speech.characterPrice";
+    public const string SpentKey = "speech.spent";
     public const string SpeakNpcKey = "speech.speakNpcMessages";
 
     /// <summary>The secret row key for a voice provider's API key. One row per provider needing one.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
+
+    /// <summary>
+    /// The sentence the three voice rows show when their picker has nothing in it. One
+    /// expression shared by all three, because a Commander opening the carrier tower's picker
+    /// deserves the same explanation as one opening the ship AI's — and because three copies of
+    /// this is three places for it to stop agreeing with the provider.
+    /// </summary>
+    private static Func<D47Settings, string?> WhyNoVoices(SpeechSurface surface) => _ =>
+        surface.WhyNoVoices?.Invoke();
+
+    /// <summary>
+    /// The audition the three voice rows offer, or null where nothing composed one — under the
+    /// designer and in tests, where the button is then absent rather than dead.
+    /// <para>
+    /// One expression for all three, and the role is what tells them apart. A Commander casting
+    /// the carrier tower's voice is listening for something different from one casting a
+    /// companion, so the tower auditions as the tower rather than reciting the core's opening —
+    /// which would be the same category error the item exists to fix, one level down.
+    /// </para>
+    /// </summary>
+    private static SettingAudition? AuditionOf(SpeechSurface surface, VoiceRole role) =>
+        surface.Audition is not { } play ? null : new SettingAudition
+        {
+            Play = (voiceId, token) => play(voiceId, role, token),
+            Label = AuditionLabel,
+            Unavailable = AuditionUnavailable(surface),
+        };
+
+    /// <summary>
+    /// What the audition button says. The whole point is that the price is on the button rather
+    /// than discovered afterwards on the bill: each press is a synthesis request billed by the
+    /// character, and the character count is known before it is sent.
+    /// <para>
+    /// Free reads as free. A provider that costs nothing must not be described with a figure,
+    /// for the same reason the spend line does not print "$0.00" for Edge (list.md Phase 19).
+    /// </para>
+    /// </summary>
+    private static string AuditionLabel(D47Settings settings)
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+
+        if (!provider.Billed)
+        {
+            return "Hear it (free)";
+        }
+
+        // Cached for the session, so this is what the *first* press of a given voice costs and
+        // the ones after it are nothing. Said as an estimate because the line length varies with
+        // the core aboard, and because the rate itself is a list price the Commander may have
+        // corrected.
+        return SpeechSpend.RateFor(settings, provider.Id) is { } rate
+            ? $"Hear it (about {(rate * AuditionLine.TypicalCharacters / 1000m):C3})"
+            : "Hear it (this provider charges)";
+    }
+
+    /// <summary>
+    /// Why the button cannot be pressed. Two reasons, and both are things the Commander can act
+    /// on from rows they can see — which is the difference between a shut button and a broken one.
+    /// </summary>
+    private static Func<D47Settings, string?> AuditionUnavailable(SpeechSurface surface) => settings =>
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+
+        if (!provider.Speaks)
+        {
+            return "No voice provider is selected, so there is nothing to hear it with.";
+        }
+
+        return provider.NeedsKey && surface.HasKey?.Invoke() == false
+            ? $"{provider.Name} needs an API key before it will speak."
+            : null;
+    };
 
     /// <summary>
     /// The provider ids the settings row offers. "none" is a first-class choice. Kept as
@@ -64,6 +138,44 @@ public static class SpeechCapability
 
         /// <summary>Voices the selected provider offers, or empty when it cannot say.</summary>
         public Func<IReadOnlyList<string>>? Voices { get; init; }
+
+        /// <summary>
+        /// Why <see cref="Voices"/> came back empty, in a sentence, or null when it did not or
+        /// when nothing better than the picker's own wording is known.
+        /// <para>
+        /// Separate from <see cref="Voices"/> because an empty list is four different situations
+        /// and only the provider knows which — no key stored, a key it refused, no answer at all,
+        /// or an account that genuinely holds none. Three of those look identical from here and
+        /// two of them are the Commander's to fix (list.md Phase 19).
+        /// </para>
+        /// </summary>
+        public Func<string?>? WhyNoVoices { get; init; }
+
+        /// <summary>
+        /// What speech has cost this session (list.md Phase 19). A function because the tracker
+        /// is the app's and lives for the process, and Core holds no reference to it — the row
+        /// asks at render time, which is also what keeps the figure current without anything
+        /// having to push it.
+        /// </summary>
+        public Func<Audio.SpeechSpend?>? SpeechSpend { get; init; }
+
+        /// <summary>
+        /// Speaks one voice so it can be judged before it is chosen (list.md Phase 19). Takes the
+        /// voice id and the role it is being cast in; the app decides what it says, because the
+        /// ship AI's line is the core's own and the core aboard is the app's to know.
+        /// <para>
+        /// Null where nothing can make a sound — under the designer, and in every test that is
+        /// not about it — and the button is then absent rather than present and inert.
+        /// </para>
+        /// </summary>
+        public Func<string, VoiceRole, CancellationToken, Task>? Audition { get; init; }
+
+        /// <summary>
+        /// Whether the selected provider has whatever credential it needs, or true where it needs
+        /// none. The secret store is the app's and settings do not hold keys, so this is the only
+        /// way a row can tell "no key yet" from "ready".
+        /// </summary>
+        public Func<bool>? HasKey { get; init; }
 
         /// <summary>
         /// Tries a provider's stored key against the real service (list.md Phase 16). Takes the
@@ -193,6 +305,8 @@ public static class SpeechCapability
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface),
+                Audition = AuditionOf(surface, VoiceRole.ShipAi),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
 
@@ -234,6 +348,62 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = CharacterPriceKey,
+                Label = "Price per 1,000 characters",
+                Help =
+                    "What this provider charges, in US dollars, so the session's speech can be "
+                    + "priced beside the model's. The default is their published list price for "
+                    + "the model D47 asks for — correct it if your subscription pays a different "
+                    + "rate, because the API does not say which one you are on.",
+                Kind = SettingKind.Number,
+
+                // Tenths of a cent. The published rates run from $0.05 to $0.20 per thousand, so
+                // a step of a cent would be a fifth of the range.
+                Step = 0.001,
+                Minimum = 0,
+                Maximum = 10,
+
+                // Only where money changes hands. Edge and "none" cost nothing, and a price row
+                // on a free provider invites a figure that would then be reported as spend.
+                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider).Billed,
+                DefaultDisplaySource = s =>
+                    TtsProviderCatalog.Selected(s.Speech.Provider).ListDollarsPerThousandCharacters
+                        is { } list
+                        ? list.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
+                        : "(not published — no price will be quoted)",
+                Group = "What it costs",
+                GroupHelp =
+                    "Speech is billed by the character where it is billed at all. D47 counts the "
+                    + "characters it actually sent, which is a fact; turning that into money needs "
+                    + "a rate, which is not.",
+                DocsAnchor = "voice-cost",
+                Binding = new SettingBinding
+                {
+                    Read = s => SpeechSpend.RateFor(s, s.Speech.Provider)
+                        ?.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
+                    Write = WriteCharacterPrice,
+                },
+            },
+            new SettingRow
+            {
+                Key = SpentKey,
+                Label = "Spoken this session",
+                Help =
+                    "Characters handed to the voice provider since D47 started, and what that "
+                    + "comes to at the rate above. Counted on synthesis that succeeded, so a "
+                    + "refused request costs nothing and a line cut off part-way still counts "
+                    + "what was already sent. There is no caching: the same sentence twice is "
+                    + "billed twice.",
+                Kind = SettingKind.Info,
+                Group = "What it costs",
+                DocsAnchor = "voice-cost",
+                Binding = new SettingBinding
+                {
+                    Read = s => surface.SpeechSpend?.Invoke()?.Describe(s) ?? "Nothing spoken yet.",
+                },
+            },
+            new SettingRow
+            {
                 Key = CarrierCaptainVoiceKey,
                 Label = "Carrier captain voice",
                 Help = "Who answers for your fleet carrier. Empty uses the ship AI's voice.",
@@ -242,6 +412,8 @@ public static class SpeechCapability
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface),
+                Audition = AuditionOf(surface, VoiceRole.CarrierCaptain),
 
                 // Only on offer to a Commander who has one. A row for a carrier you do not own
                 // is a control that can only be got wrong, and the journal already knows.
@@ -267,6 +439,8 @@ public static class SpeechCapability
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface),
+                Audition = AuditionOf(surface, VoiceRole.TowerControl),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
                 DocsAnchor = "carrier-voices",
@@ -581,27 +755,18 @@ public static class SpeechCapability
     /// mismatched — see <see cref="SpeechSettings.VoicesProvider"/>.
     /// </para>
     /// <para>
-    /// Dropped rather than remembered per provider, which is what <see cref="SpeechSettings
-    /// .ProviderRates"/> does for the rate. Voices are a larger structure — the ship's, two
-    /// named roles and one per core — and the fix for a Commander who cannot hear anything
-    /// should not wait on a schema that can hold all of it twice.
+    /// They are no longer <em>lost</em>, which is the half that changed in Phase 19. What comes
+    /// out of the live slots is filed under the provider it belonged to, in
+    /// <see cref="SpeechSettings.ProviderVoices"/>, and whatever was filed under the provider
+    /// being switched to is put back — so switching to ElevenLabs to hear what it sounds like
+    /// and switching back no longer costs eleven paired cores and the ship's own voice. The
+    /// clearing this method is named for still happens; only the discarding stopped.
+    /// <see cref="VoiceMemory"/> owns it, because it is a pure function of settings and it is
+    /// where a test can reach it.
     /// </para>
     /// </summary>
-    public static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) => settings with
-    {
-        Speech = settings.Speech with
-        {
-            Voice = null,
-            CarrierCaptainVoice = null,
-            TowerVoice = null,
-            VoicesProvider = chosenFor,
-        },
-        Persona = settings.Persona with
-        {
-            Voices = new Dictionary<string, string>(StringComparer.Ordinal),
-            VoicesPaired = false,
-        },
-    };
+    public static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) =>
+        VoiceMemory.Switched(settings, settings.Speech.VoicesProvider, chosenFor);
 
     /// <summary>
     /// The same settings with one voice id removed from every place that could hold it.
@@ -705,6 +870,32 @@ public static class SpeechCapability
             Speech = settings.Speech with { Voice = null },
             Persona = settings.Persona with { Voices = voices },
         };
+    }
+
+    /// <summary>
+    /// Writes the price against the provider it was quoted for, never as a general one. A rate
+    /// is a property of one account with one supplier, so there is no such thing as the price of
+    /// speech in the abstract — the same reason the speaking rate is kept per provider.
+    /// <para>
+    /// Clearing the row removes the override and the published list price stands again, which is
+    /// what makes "I do not know what I am paying" expressible.
+    /// </para>
+    /// </summary>
+    private static D47Settings WriteCharacterPrice(D47Settings settings, string? value)
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var prices = new Dictionary<string, double>(settings.Speech.CharacterPrices, StringComparer.OrdinalIgnoreCase);
+
+        if (value is null)
+        {
+            prices.Remove(provider.Id);
+        }
+        else
+        {
+            prices[provider.Id] = ParseDouble(value, 0, 0, 10);
+        }
+
+        return settings with { Speech = settings.Speech with { CharacterPrices = prices } };
     }
 
     private static D47Settings WriteRate(D47Settings settings, string? value)

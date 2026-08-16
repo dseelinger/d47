@@ -587,7 +587,7 @@ public partial class MainWindow : Window
                             break;
 
                         case TurnEvent.Completed completed:
-                            _model.TurnLine = DescribeTurn(completed.Result, _host.Spend);
+                            _model.TurnLine = DescribeTurn(completed.Result, _host);
                             break;
                     }
                 });
@@ -687,8 +687,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private static string DescribeTurn(TurnResult result, SpendTracker spend)
+    private static string DescribeTurn(TurnResult result, AppHost host)
     {
+        var spend = host.Spend;
         var line = new StringBuilder($"{result.Outcome} via {result.Route}");
 
         if (result.Effort is { } effort)
@@ -712,6 +713,15 @@ public partial class MainWindow : Window
                 // being non-zero is a caching regression rather than a cost curiosity.
                 line.Append($" — {spend.UnexplainedColdPrefixes} unexplained cold prefix(es)");
             }
+        }
+
+        // Beside the model's price rather than on a line of its own, so "what has this cost" has
+        // one answer rather than one per subsystem (list.md Phase 19). The unit is characters,
+        // because that is what speech is billed in — quoting tokens here would be a number whose
+        // basis is wrong.
+        if (host.SpeechSpend.Describe(host.Settings.Current) is { } voice)
+        {
+            line.Append($"; voice {voice}");
         }
 
         return line.ToString();

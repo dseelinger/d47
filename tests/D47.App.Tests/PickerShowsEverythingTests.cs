@@ -71,6 +71,49 @@ public class PickerShowsEverythingTests
     }
 
     /// <summary>
+    /// A picker with nothing in it says what the row told it, not the generic line
+    /// (list.md Phase 19).
+    /// <para>
+    /// The generic line is "D47 does not know this endpoint's vocabulary — type the value you
+    /// want", which is true of a model name and useless for a voice id. Four different reasons
+    /// for an empty voice list all landed on it, including the two the Commander could have
+    /// fixed from the row directly above.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AnEmptyListSaysWhatTheRowKnowsAboutWhy()
+    {
+        var picker = PickerWindow.For(new PickerRequest
+        {
+            Prompt = "Voice",
+            Choices = [],
+            AllowsFreeText = true,
+            WhyEmpty = "ElevenLabs refused the stored key — Invalid API key.",
+        });
+
+        var hint = picker.GetControl<TextBlock>("EmptyHint");
+
+        Assert.True(hint.IsVisible);
+        Assert.Equal("ElevenLabs refused the stored key — Invalid API key.", hint.Text);
+    }
+
+    [AvaloniaFact]
+    public void AndFallsBackToTheGenericLineWhenTheRowHasNothingToAdd()
+    {
+        var picker = PickerWindow.For(new PickerRequest
+        {
+            Prompt = "Model",
+            Choices = [],
+            AllowsFreeText = true,
+        });
+
+        Assert.Contains(
+            "does not know this endpoint's vocabulary",
+            picker.GetControl<TextBlock>("EmptyHint").Text!,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The default button is the width of the list and trims what does not fit, with the whole
     /// string on the pointer. In one right-aligned row with Cancel and Use this, a resolved
     /// device name pushed both of those off the left edge of a fixed-width window — a picker

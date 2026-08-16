@@ -98,6 +98,163 @@ public partial class DocumentationGateTests
         Assert.True(File.Exists(Path.Combine(root, "docs/install.md")), "docs/install.md is missing.");
     }
 
+    /// <summary>
+    /// Where a capability's page sits in the nav, derived from where the capability sits in the
+    /// registry. The hundred is a floor rather than a meaning: it leaves room below for the
+    /// general help pages, so the nav opens with "how do I install this" rather than with the
+    /// first capability that happens to be registered.
+    /// </summary>
+    private static int NavOrderFor(int registryIndex) => 100 + registryIndex;
+
+    /// <summary>
+    /// The nav is grouped by <see cref="CapabilityDescriptor.Group"/>, and this is what stops
+    /// that being a second hand-maintained list (list.md Phase 19, "The published docs need a
+    /// left nav").
+    /// <para>
+    /// The site is Jekyll and cannot read the registry, so the grouping lives in each page's
+    /// front matter and this asserts the two still agree. Same arrangement as the schema gate
+    /// above and for the same reason: when it fails it says exactly what to paste.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryCapabilityPageIsFiledUnderTheGroupItsCapabilityDeclares()
+    {
+        var wrong = new List<string>();
+
+        foreach (var (capability, index) in Registry().All.Select((c, i) => (c, i)))
+        {
+            var descriptor = capability.Descriptor;
+            var path = Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{descriptor.Id}.md");
+            var front = FrontMatter(File.ReadAllText(path));
+
+            var expected = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["title"] = descriptor.Name,
+                ["group"] = descriptor.Group,
+                ["nav_order"] = NavOrderFor(index).ToString(),
+            };
+
+            foreach (var (key, want) in expected)
+            {
+                if (!string.Equals(front.GetValueOrDefault(key), want, StringComparison.Ordinal))
+                {
+                    wrong.Add(
+                        $"{descriptor.Id}.md has {key}: {front.GetValueOrDefault(key) ?? "(missing)"}, "
+                        + $"and its capability says {key}: {want}");
+                }
+            }
+        }
+
+        Assert.True(wrong.Count == 0, string.Join(Environment.NewLine, wrong));
+    }
+
+    /// <summary>
+    /// Every published page is reachable from the nav.
+    /// <para>
+    /// The gate above asserts a page <em>exists</em> and asserts nothing about anybody being able
+    /// to find it, which is how a page can pass CI and be invisible. It is not hypothetical:
+    /// nine capability pages carried no front-matter title at all, so minima left them out of its
+    /// header run entirely and the only way to reach them was to already know the URL.
+    /// </para>
+    /// <para>
+    /// Reachability is <c>nav_order</c>, because that is the field <c>_layouts/default.html</c>
+    /// filters on — a page without one is not in the nav, whatever else it has.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryPublishedPageIsReachableFromTheNav()
+    {
+        var missing = PublishedPages()
+            .Where(page => !FrontMatter(File.ReadAllText(page.Path)).ContainsKey("nav_order"))
+            .Select(page => page.Relative)
+            .ToArray();
+
+        Assert.True(
+            missing.Length == 0,
+            $"Published but unreachable from the nav: {string.Join(", ", missing)}. "
+            + "Give each one a title, a group and a nav_order in its front matter.");
+    }
+
+    [Fact]
+    public void EveryPublishedPageIsNamedAndGroupedAndSitsSomewhereUnique()
+    {
+        var pages = PublishedPages()
+            .Select(page => (page.Relative, Front: FrontMatter(File.ReadAllText(page.Path))))
+            .ToArray();
+
+        var unnamed = pages
+            .Where(page => !page.Front.ContainsKey("title") || !page.Front.ContainsKey("group"))
+            .Select(page => page.Relative)
+            .ToArray();
+
+        Assert.True(unnamed.Length == 0, $"Published with no title or no group: {string.Join(", ", unnamed)}");
+
+        // Two pages at the same position is a nav whose order depends on how the file system
+        // enumerated them, which is a nav that reorders itself between builds.
+        var clashes = pages
+            .GroupBy(page => page.Front["nav_order"], StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => $"{group.Key}: {string.Join(" and ", group.Select(page => page.Relative))}")
+            .ToArray();
+
+        Assert.True(clashes.Length == 0, $"Two pages share a nav_order — {string.Join("; ", clashes)}");
+    }
+
+    /// <summary>
+    /// The pages the site actually publishes. <c>_config.yml</c> excludes the spike write-ups and
+    /// the implementation plans — those are contributor material that GitHub renders in the repo
+    /// — so a gate about the published site must exclude them too or it fails on documents that
+    /// were never meant to have a nav entry.
+    /// </summary>
+    private static IEnumerable<(string Path, string Relative)> PublishedPages()
+    {
+        var docs = Path.Combine(RepositoryRoot(), "docs");
+
+        return Directory
+            .EnumerateFiles(docs, "*.md", SearchOption.AllDirectories)
+            .Where(path => !Excluded(Path.GetRelativePath(docs, path)))
+            .Select(path => (path, Path.GetRelativePath(docs, path).Replace('\\', '/')));
+    }
+
+    private static bool Excluded(string relative) =>
+        relative.StartsWith("spikes", StringComparison.OrdinalIgnoreCase)
+        || relative.StartsWith("plans", StringComparison.OrdinalIgnoreCase)
+        || relative.StartsWith("_", StringComparison.Ordinal);
+
+    /// <summary>
+    /// A page's front matter as key/value pairs. Deliberately not a YAML parser: this reads three
+    /// scalar keys off the top of a file the repository writes, and a dependency for that would
+    /// be a dependency in the test project's graph for the sake of thirty lines.
+    /// </summary>
+    private static Dictionary<string, string> FrontMatter(string page)
+    {
+        var front = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (!page.StartsWith("---", StringComparison.Ordinal))
+        {
+            return front;
+        }
+
+        foreach (var line in page.Split('\n').Skip(1))
+        {
+            var trimmed = line.TrimEnd('\r');
+
+            if (trimmed.StartsWith("---", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            var colon = trimmed.IndexOf(':');
+
+            if (colon > 0 && !trimmed.StartsWith('#'))
+            {
+                front[trimmed[..colon].Trim()] = trimmed[(colon + 1)..].Trim();
+            }
+        }
+
+        return front;
+    }
+
     [Fact]
     public void EveryCapabilityPageBelongsToARegisteredCapability()
     {

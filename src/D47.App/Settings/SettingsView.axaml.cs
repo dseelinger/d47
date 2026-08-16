@@ -1559,6 +1559,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 Current = _settings.Read(row.Key),
                 DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
                 AllowsFreeText = row.AllowsFreeText,
+                WhyEmpty = row.WhyNoChoicesFor(_settings.Current),
+
+                // Read at open rather than captured once, because both the price and the reason
+                // it might be unavailable follow the selected provider.
+                Audition = row.Audition is { } audition
+                    ? new PickerAudition
+                    {
+                        Play = audition.Play,
+                        Label = audition.Label(_settings.Current),
+                        Unavailable = audition.Unavailable?.Invoke(_settings.Current),
+                    }
+                    : null,
             },
             onListed: () => listed.TrySetResult());
 

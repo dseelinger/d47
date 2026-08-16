@@ -29,6 +29,52 @@ public sealed record PickerRequest
 
     /// <summary>Whether a value outside <see cref="Choices"/> may be typed.</summary>
     public bool AllowsFreeText { get; init; }
+
+    /// <summary>
+    /// Why <see cref="Choices"/> is empty, when the row knows and the generic wording would be
+    /// wrong. Null everywhere else, and then the picker says what it always said.
+    /// <para>
+    /// The voice row is what this exists for: "D47 does not know this endpoint's vocabulary,
+    /// type the value you want" is true of a model name and useless for a voice id, which the
+    /// Commander has no way of knowing and four different reasons for not being shown
+    /// (list.md Phase 19).
+    /// </para>
+    /// </summary>
+    public string? WhyEmpty { get; init; }
+
+    /// <summary>
+    /// How to play the highlighted value, when the row offers that. Null everywhere else, and
+    /// the button is then absent rather than present and inert (list.md Phase 19).
+    /// </summary>
+    public PickerAudition? Audition { get; init; }
+}
+
+/// <summary>
+/// Hearing a value before choosing it. Everything about it is the row's to decide — the picker
+/// owns the button, the cancellation of the previous press, and nothing else.
+/// </summary>
+public sealed record PickerAudition
+{
+    /// <summary>
+    /// Plays one value. Never commits it, never closes the dialog. Cancelled when a second
+    /// press arrives, so starting an audition drops the one before it mid-word rather than
+    /// queueing behind it.
+    /// </summary>
+    public required Func<string, CancellationToken, Task> Play { get; init; }
+
+    /// <summary>
+    /// What the button says, which is where the price goes: <c>Hear it</c> where the provider
+    /// is free and something that says otherwise where it is not. A Commander pressing a button
+    /// that costs money should be able to see that it does before they press it.
+    /// </summary>
+    public required string Label { get; init; }
+
+    /// <summary>
+    /// Why it cannot be pressed, or null when it can. Shut and explained rather than silently
+    /// inert: "no voice provider is selected" is a fact the Commander can act on and an
+    /// unresponsive button is not.
+    /// </summary>
+    public string? Unavailable { get; init; }
 }
 
 /// <summary>The chosen value, where null means "clear this and use the default".</summary>
@@ -120,6 +166,17 @@ public partial class PickerWindow : Window
         DefaultButtonText.Text = useDefault;
         ToolTip.SetTip(DefaultButton, useDefault);
 
+        if (_request.Audition is { } audition)
+        {
+            AuditionButton.IsVisible = true;
+            AuditionButton.Content = audition.Label;
+            AuditionButton.IsEnabled = audition.Unavailable is null;
+
+            // The reason on the pointer whichever way it goes: shut, it says why; live, it says
+            // what pressing it will do, which on a paid provider is spend money.
+            ToolTip.SetTip(AuditionButton, audition.Unavailable ?? audition.Label);
+        }
+
         ApplyFilter();
 
         // Selecting the current value means Enter with no typing keeps what you had, which is
@@ -162,8 +219,14 @@ public partial class PickerWindow : Window
         Choices.IsVisible = matches.Length > 0;
 
         EmptyHint.IsVisible = matches.Length == 0;
+
+        // Three different empties, and the row gets to answer the first one. A list that is
+        // empty because the provider refused a key is not the same as one that is empty because
+        // d47 does not know an endpoint's vocabulary, and the advice differs: one is "fix the row
+        // above", the other is "type what you want".
         EmptyHint.Text = _request.Choices.Count == 0
-            ? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
+            ? _request.WhyEmpty
+              ?? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
             : $"Nothing matches \"{filter}\". {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
         // A closed vocabulary means the typed text is a filter and nothing else, so there has to
@@ -246,6 +309,70 @@ public partial class PickerWindow : Window
         {
             Accept();
         }
+    }
+
+    /// <summary>
+    /// The audition in flight, so the next press can drop it. One at a time by construction:
+    /// two voices talking over each other tells you nothing about either.
+    /// </summary>
+    private CancellationTokenSource? _auditioning;
+
+    private async void OnAuditionClick(object? sender, RoutedEventArgs e)
+    {
+        if (_request.Audition is not { Unavailable: null } audition
+            || Choices.SelectedIndex < 0
+            || Choices.SelectedIndex >= _visible.Count)
+        {
+            return;
+        }
+
+        var value = _visible[Choices.SelectedIndex];
+
+        // Swapped before the old one is cancelled, so the handler below cannot cancel its own
+        // successor if two presses land in the same instant.
+        var previous = _auditioning;
+        var mine = new CancellationTokenSource();
+        _auditioning = mine;
+
+        if (previous is not null)
+        {
+            await previous.CancelAsync();
+            previous.Dispose();
+        }
+
+        try
+        {
+            await audition.Play(value, mine.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // A second press, or the shut-up key. Both are the Commander saying "not that one".
+        }
+        catch (Exception ex)
+        {
+            // A provider that would not speak. Said on the button, because that is what was
+            // pressed and the picker has nowhere else to put a message.
+            ToolTip.SetTip(AuditionButton, ex.Message);
+        }
+        finally
+        {
+            if (ReferenceEquals(_auditioning, mine))
+            {
+                _auditioning = null;
+            }
+
+            mine.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Whatever is still being auditioned when the dialog goes stops with it. A voice still
+    /// talking about a picker that has closed is a voice nobody can now stop from here.
+    /// </summary>
+    protected override void OnClosed(EventArgs e)
+    {
+        _auditioning?.Cancel();
+        base.OnClosed(e);
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(null);

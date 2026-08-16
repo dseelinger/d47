@@ -19,6 +19,38 @@ public enum SettingKind
 }
 
 /// <summary>
+/// Hearing a value before choosing it (list.md Phase 19).
+/// <para>
+/// Declared on the row rather than special-cased in the settings surface, for the reason every
+/// other row property is: the surface renders what a descriptor declares, and a voice row that
+/// the panel had to recognise by key would be a second list to keep in step with the registry.
+/// </para>
+/// <para>
+/// Everything here is a function of settings, because all three answers move: what the line
+/// costs depends on the selected provider, and whether it can be played at all depends on
+/// whether one is selected.
+/// </para>
+/// </summary>
+public sealed record SettingAudition
+{
+    /// <summary>
+    /// Plays one value, and commits nothing. Cancelled when a second audition starts, which is
+    /// what makes walking a list of candidates one voice at a time rather than several at once.
+    /// </summary>
+    public required Func<string, CancellationToken, Task> Play { get; init; }
+
+    /// <summary>
+    /// What the button says. The price belongs here — a button that spends money should say so
+    /// before it is pressed, and a provider that costs nothing should say <em>that</em> rather
+    /// than leaving it to be guessed at.
+    /// </summary>
+    public required Func<D47Settings, string> Label { get; init; }
+
+    /// <summary>Why it cannot be pressed, or null when it can.</summary>
+    public Func<D47Settings, string?>? Unavailable { get; init; }
+}
+
+/// <summary>
 /// How a row reads and writes its value. String-valued throughout: the settings surface, the
 /// picker, the tool surface and the keyword router all speak text, and one conversion point
 /// per row is fewer than one per caller. A null written value means "no choice made" and the
@@ -93,6 +125,31 @@ public sealed record SettingRow
     /// that an empty list still lets you keep the current value or type one (list.md Phase 4).
     /// </summary>
     public bool AllowsFreeText { get; init; }
+
+    /// <summary>
+    /// Why there is nothing to choose from, when there is nothing to choose from — or null when
+    /// the row has no better answer than the picker's own generic one.
+    /// <para>
+    /// Added because the voice row had four different reasons for being empty and one sentence
+    /// for all of them: no key stored, a key the provider refused, a provider that could not be
+    /// reached, and an account that genuinely has no voices. Only the first two are anything the
+    /// Commander can act on, and the picker was telling them to type a voice id they have no way
+    /// of knowing (list.md Phase 19; docs/spikes/elevenlabs-voice-sources.md §3).
+    /// </para>
+    /// <para>
+    /// A function of settings rather than a string, for the same reason
+    /// <see cref="ChoiceSource"/> is: the answer belongs to whichever provider is selected right
+    /// now, and one captured at registration would keep explaining the wrong one.
+    /// </para>
+    /// </summary>
+    public Func<D47Settings, string?>? WhyNoChoices { get; init; }
+
+    /// <summary>
+    /// How a value can be heard before it is chosen, when hearing it is the only way to judge it
+    /// (list.md Phase 19, "Hear a voice before you choose it"). Null on every row where it is
+    /// not, which is all of them but three.
+    /// </summary>
+    public SettingAudition? Audition { get; init; }
 
     /// <summary>
     /// Whether the row applies at all right now. Settings adapt to the selected provider
@@ -192,7 +249,14 @@ public sealed record SettingRow
     {
         >= 1 => "0",
         >= 0.1 => "0.#",
-        _ => "0.##",
+        >= 0.01 => "0.##",
+
+        // Thousandths, for the one row that needs them: a price per thousand characters runs
+        // from $0.05 to $0.20, so two decimal places is four distinguishable values across the
+        // whole published range. The ladder is extended rather than the row declaring its own
+        // format, because a format and a step that disagree is a value that changes every time
+        // it is read back.
+        _ => "0.###",
     };
 
     /// <summary>Phrases the model-free router accepts for this row. Usually empty.</summary>
@@ -239,6 +303,13 @@ public sealed record SettingRow
 
     public IReadOnlyList<string> ChoicesFor(D47Settings settings) =>
         ChoiceSource?.Invoke(settings) ?? Choices;
+
+    /// <summary>
+    /// Why the list is empty, or null — either because it is not, or because this row has
+    /// nothing more specific to say than the picker already does.
+    /// </summary>
+    public string? WhyNoChoicesFor(D47Settings settings) =>
+        ChoicesFor(settings).Count > 0 ? null : WhyNoChoices?.Invoke(settings);
 
     public bool Applies(D47Settings settings) => AppliesWhen?.Invoke(settings) ?? true;
 

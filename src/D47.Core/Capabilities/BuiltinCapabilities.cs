@@ -95,7 +95,13 @@ public static class BuiltinCapabilities
             communityGoals,
             now ?? (() => DateTimeOffset.MinValue)),
         ConversationCapability.Create(
-            settings, llmAvailability, spend, cancellation, speech.Silence, verifyLlmKey),
+            settings, llmAvailability, spend, cancellation, speech.Silence, verifyLlmKey,
+
+            // The same tracker the speech rows read, so "what has this cost" cannot answer two
+            // different numbers depending on where it is asked (list.md Phase 19). Passed as the
+            // surface's own late-bound function, because the host that owns it does not exist
+            // yet at this point in composition.
+            speech.SpeechSpend),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),

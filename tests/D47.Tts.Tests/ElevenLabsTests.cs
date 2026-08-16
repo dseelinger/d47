@@ -35,7 +35,15 @@ public class ElevenLabsTests
         // that is off, not a failure to handle.
         using var provider = Provider();
 
-        Assert.Empty(await provider.ListVoicesAsync(TestContext.Current.CancellationToken));
+        var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
+
+        Assert.Empty(listed.Voices);
+
+        // And says which empty it is. "No key" is the one the Commander can fix from the row
+        // above, and it used to be indistinguishable from an outage
+        // (docs/spikes/elevenlabs-voice-sources.md §3).
+        Assert.Equal(VoiceListing.NoKey, listed.Listing);
+        Assert.Contains("API key", listed.WhyEmpty("ElevenLabs")!, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -96,7 +104,7 @@ public class ElevenLabsLiveTests
         using var provider = Provider();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
-        var voices = await provider.ListVoicesAsync(timeout.Token);
+        var voices = (await provider.ListVoicesAsync(timeout.Token)).Voices;
 
         Assert.NotEmpty(voices);
         Assert.All(voices, voice => Assert.False(string.IsNullOrWhiteSpace(voice.Id)));
@@ -113,7 +121,7 @@ public class ElevenLabsLiveTests
         using var provider = Provider();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
-        var voices = await provider.ListVoicesAsync(timeout.Token);
+        var voices = (await provider.ListVoicesAsync(timeout.Token)).Voices;
         Assert.NotEmpty(voices);
 
         var clip = await provider.SynthesizeAsync(
@@ -142,7 +150,7 @@ public class ElevenLabsLiveTests
         // a 400 about the voice and says nothing about the key. The first version of this test
         // passed a made-up id and was quietly asserting nothing.
         using var real = Provider();
-        var voices = await real.ListVoicesAsync(timeout.Token);
+        var voices = (await real.ListVoicesAsync(timeout.Token)).Voices;
         Assert.NotEmpty(voices);
 
         using var wrongKey = new ElevenLabsTtsProvider(

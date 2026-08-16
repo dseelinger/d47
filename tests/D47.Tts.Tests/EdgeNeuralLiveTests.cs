@@ -32,7 +32,7 @@ public class EdgeNeuralLiveTests
         using var provider = Provider();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
-        var voices = await provider.ListVoicesAsync(timeout.Token);
+        var voices = (await provider.ListVoicesAsync(timeout.Token)).Voices;
 
         Assert.NotEmpty(voices);
         Assert.Contains(voices, voice => voice.Id == EdgeNeuralTtsProvider.DefaultVoice);

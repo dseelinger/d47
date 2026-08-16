@@ -661,6 +661,13 @@ public sealed class AppHost : IDisposable
                     // list is fetched from the provider over the network after this point.
                     Voices = () => self?.VoiceIds() ?? [],
                     VoiceLabel = id => self?.VoiceLabelFor(id) ?? id,
+                    WhyNoVoices = () => self?.WhyNoVoices(),
+                    SpeechSpend = () => self?.SpeechSpend,
+                    HasKey = () => self is not { } host
+                                   || host.HasKeyFor(TtsProviderCatalog.Selected(settings.Current.Speech.Provider)),
+                    Audition = (voiceId, role, token) => self is { } host
+                        ? host.AuditionVoiceAsync(voiceId, role, token)
+                        : Task.CompletedTask,
 
                     // Late-bound like the two above, because the check is a network call made by
                     // a host that does not exist yet at this point in composition.
@@ -1163,15 +1170,35 @@ public sealed class AppHost : IDisposable
     /// setting without a restart").
     /// </summary>
     /// <summary>The ids the voice picker offers.</summary>
-    internal IReadOnlyList<string> VoiceIds() => [.. _voices.Select(voice => voice.Id)];
+    internal IReadOnlyList<string> VoiceIds() => [.. _voices.Voices.Select(voice => voice.Id)];
 
     /// <summary>
     /// How the picker labels one — "Ava — Female, en-US" rather than the raw id. Falls back to
     /// the id, so a voice the Commander typed themselves still shows as what they typed.
     /// </summary>
     internal string VoiceLabelFor(string id) =>
-        _voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+        _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Label ?? id;
+
+    /// <summary>
+    /// Why the voice picker has nothing in it, when it has nothing in it (list.md Phase 19;
+    /// docs/spikes/elevenlabs-voice-sources.md §3).
+    /// <para>
+    /// Four situations used to arrive as one empty list and one generic sentence telling the
+    /// Commander to type a value — which, for a voice id, they have no way of knowing. The
+    /// provider now says which of the four it was and this passes it on unchanged.
+    /// </para>
+    /// <para>
+    /// Null while no provider is selected: the row is absent then, and a sentence for a row that
+    /// is not on screen is a sentence nobody reads.
+    /// </para>
+    /// </summary>
+    internal string? WhyNoVoices()
+    {
+        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider);
+
+        return provider.Speaks ? _voices.WhyEmpty(provider.Name) : null;
+    }
 
     /// <summary>
     /// One voice per core, chosen once and written to settings (list.md Phase 11, #33).
@@ -1210,7 +1237,7 @@ public sealed class AppHost : IDisposable
         {
             var voice = await VoicePairing.ChooseOneAsync(
                 persona,
-                _voices,
+                _voices.Voices,
                 Settings.Current.Persona.Voices.Values,
                 Turns.Provider,
                 Turns.Model,
@@ -1262,7 +1289,7 @@ public sealed class AppHost : IDisposable
 
         var (voices, complete) = await WithReplacementsAsync(
             before,
-            VoicePairing.WithoutMiscastVoices(before, _voices, _logger)).ConfigureAwait(false);
+            VoicePairing.WithoutMiscastVoices(before, _voices.Voices, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -1309,7 +1336,7 @@ public sealed class AppHost : IDisposable
         {
             var voice = await VoicePairing.ChooseOneAsync(
                 PersonaCatalog.Resolve(id),
-                _voices,
+                _voices.Voices,
                 repaired.Values,
                 Turns.Provider,
                 Turns.Model,
@@ -1354,7 +1381,7 @@ public sealed class AppHost : IDisposable
 
         var (voices, complete) = await WithReplacementsAsync(
             before,
-            VoicePairing.WithNamedDefaultsRestored(before, _voices, provider, _logger)).ConfigureAwait(false);
+            VoicePairing.WithNamedDefaultsRestored(before, _voices.Voices, provider, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -1390,7 +1417,7 @@ public sealed class AppHost : IDisposable
         try
         {
             var paired = await VoicePairing.ChooseAsync(
-                _voices,
+                _voices.Voices,
                 Settings.Current.Persona.Voices,
                 Turns.Provider,
                 Turns.Model,
@@ -1421,19 +1448,14 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Makes the stored voices and the selected provider agree, and answers the speech settings
-    /// that result.
+    /// that result. All of the deciding is <see cref="VoiceMemory.Reconciled"/>; what is left
+    /// here is the write, the announcement and the log line.
     /// <para>
     /// Asked on every apply rather than only when the provider is seen to change, which is the
-    /// difference that matters: the old check watched <c>_ttsProviderId</c>, and that is null on
-    /// the first call of the process, so a settings file that was already mismatched was trusted
-    /// on every launch and every sentence failed forever. The file now says which provider its
-    /// voices came from, so the question can be asked of the file instead of of the process.
-    /// </para>
-    /// <para>
-    /// A file with nothing recorded is stamped rather than cleared. It was written before d47
-    /// recorded this, and its voices are as likely to be right as wrong - throwing them away on
-    /// a guess would cost every Commander whose file was fine, while the one whose file is not
-    /// is repaired at the seam the moment a voice is actually refused.
+    /// difference that matters: the old check watched the provider held by <em>this process</em>,
+    /// which is null on the first call, so a settings file that was already mismatched was
+    /// trusted on every launch and every sentence failed forever. The file now says which
+    /// provider its voices came from, so the question is asked of the file.
     /// </para>
     /// </summary>
     private SpeechSettings ReconcileVoicesWithProvider()
@@ -1441,21 +1463,18 @@ public sealed class AppHost : IDisposable
         var speech = Settings.Current.Speech;
         var selected = TtsProviderCatalog.Selected(speech.Provider).Id;
 
-        if (string.Equals(speech.VoicesProvider, selected, StringComparison.Ordinal))
+        if (speech.VoicesProvider is { } chosenFor && !string.Equals(chosenFor, selected, StringComparison.Ordinal))
         {
-            return speech;
+            _logger.LogInformation(
+                "The live voices were chosen for {Previous}; filing them there and taking back {Now}'s",
+                chosenFor,
+                selected);
         }
 
-        if (speech.VoicesProvider is { } chosenFor)
-        {
-            ForgetVoicesChosenFor(chosenFor, selected);
-        }
-        else
-        {
-            Settings.Replace(
-                SpeechCapability.ProviderKey,
-                current => current with { Speech = current.Speech with { VoicesProvider = selected } });
-        }
+        // The decision itself is a pure function of settings and lives where a test can reach
+        // it. Reconciled answers the same instance when there is nothing to do, so Replace's own
+        // equality check turns that into no write and no announcement.
+        Settings.Replace(SpeechCapability.ProviderKey, VoiceMemory.Reconciled);
 
         return Settings.Current.Speech;
     }
@@ -1463,28 +1482,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Whether the selected provider has whatever credential it needs, if it needs one.</summary>
     private bool HasKeyFor(TtsProviderInfo provider) =>
         provider.KeySecretName is not { } secret || Secrets.Has(secret);
-
-    /// <summary>
-    /// Drops every voice chosen while <paramref name="previous"/> was selected.
-    /// <para>
-    /// A voice id is only meaningful to the provider that issued it, so these are not settings
-    /// that survive a switch — they are settings that belong to a provider no longer in use.
-    /// Clearing <c>VoicesPaired</c> as well is what lets the pairing run again against the new
-    /// provider's list; leaving it set was how eleven cores kept pointing at voices that had
-    /// stopped existing.
-    /// </para>
-    /// </summary>
-    private void ForgetVoicesChosenFor(string previous, string now)
-    {
-        _logger.LogInformation(
-            "The stored voices were chosen for {Previous} and {Now} is selected; clearing them",
-            previous,
-            now);
-
-        Settings.Replace(
-            SpeechCapability.ProviderKey,
-            current => SpeechCapability.WithoutChosenVoices(current, now));
-    }
 
     /// <summary>
     /// Drops one voice the provider refused, everywhere it is written down.
@@ -1510,7 +1507,8 @@ public sealed class AppHost : IDisposable
         try
         {
             _voices = await provider.ListVoicesAsync().ConfigureAwait(false);
-            _logger.LogInformation("The voice list has {Count} voices", _voices.Count);
+            _logger.LogInformation(
+                "The voice list has {Count} voices ({Listing})", _voices.Count, _voices.Listing);
 
             // The pool a re-voiced sender is drawn from. English-locale voices only, where the
             // provider tags a locale at all: Edge offers several hundred across every language
@@ -1519,7 +1517,7 @@ public sealed class AppHost : IDisposable
             // than a locale, so nothing is filtered out there and the whole account is the pool.
             Cast.Pool =
             [
-                .. _voices
+                .. _voices.Voices
                     .Where(voice => voice.Locale.Length == 0
                                     || voice.Locale.StartsWith("en", StringComparison.OrdinalIgnoreCase))
                     .Select(voice => voice.Id),
@@ -1785,19 +1783,21 @@ public sealed class AppHost : IDisposable
         var speech = ReconcileVoicesWithProvider();
         var provider = TtsProviderCatalog.Selected(speech.Provider);
 
-        // Rebuilt when the provider changes, not merely when there is none yet. A voice id
-        // belongs to the provider that issued it, so carrying a client — or a voice list, or a
-        // table of sender assignments — across a switch keeps ids that no longer resolve.
-        if (!string.Equals(_ttsProviderId, provider.Id, StringComparison.Ordinal))
+        // Whether to rebuild and whether to refetch are decided in Core, where a test can reach
+        // them; what to build and how to fetch it stay here, where the loggers and the secret
+        // store are. Both of the faults an afternoon's hand-testing found lived on the far side
+        // of that line (list.md Phase 19).
+        var plan = SpeechWiring.Plan(_speechWiring, speech.Provider, HasKeyFor(provider));
+        _speechWiring = plan.Next;
+
+        if (plan.RebuildClient)
         {
             // Through the interface, so this stays correct for a provider that needs no
             // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
             // audio seam, and whether an implementation holds an HTTP handle is its own business.
             (_tts as IDisposable)?.Dispose();
-            _tts = null;
-            _voices = [];
+            _voices = VoiceCatalogue.Silent;
             Cast.Reset();
-            _ttsProviderId = provider.Id;
 
             _tts = provider.Id switch
             {
@@ -1811,25 +1811,22 @@ public sealed class AppHost : IDisposable
                 _ => null,
             };
 
+            // Counted at the seam, which is the only place every caller passes — the ship's AI,
+            // a callout, a re-voiced sender and a core's own introduction all converge on it,
+            // and counting at any caller means missing the next one (list.md Phase 19).
             if (_tts is not null)
             {
-                // Fetched once, in the background. The picker asks synchronously and the list
-                // comes over the network, so it is cached rather than requested on open — and
-                // not awaited, because a settings change must not wait on a provider being
-                // reachable.
-                _ = LoadVoicesAsync(_tts);
+                _tts = new MeteredTtsProvider(_tts, SpeechSpend);
             }
         }
-        else if (_tts is not null && HasKeyFor(provider) != _ttsKeyPresent)
+
+        // Fetched in the background. The picker asks synchronously and the list comes over the
+        // network, so it is cached rather than requested on open — and not awaited, because a
+        // settings change must not wait on a provider being reachable.
+        if (plan.RefetchVoices && _tts is not null)
         {
-            // A key arriving is the other thing that changes what the provider can tell us, and
-            // it does not change the provider. Selecting ElevenLabs before pasting the key
-            // fetched an empty list and nothing refetched it, so the picker stayed empty until
-            // the app was restarted — with the key sitting right there in the row above it.
             _ = LoadVoicesAsync(_tts);
         }
-
-        _ttsKeyPresent = HasKeyFor(provider);
 
         Voice.Tts = _tts;
 
@@ -2295,13 +2292,16 @@ public sealed class AppHost : IDisposable
     private ITtsProvider? _tts;
 
     /// <summary>
-    /// Which provider <see cref="_tts"/> is. Tracked rather than inferred, because "is it null"
-    /// answered "does one need building" only while there was exactly one to build.
+    /// Which provider <see cref="_tts"/> is, and whether that provider had its key last time
+    /// speech settings were applied. Tracked rather than inferred, because "is it null" answered
+    /// "does one need building" only while there was exactly one to build — and because a key
+    /// arriving is an edge rather than a level.
+    /// <para>
+    /// Handed to <see cref="SpeechWiring.Plan"/> and replaced with what it answers. This field
+    /// and that function are the whole of the state; nothing else here remembers the last apply.
+    /// </para>
     /// </summary>
-    private string? _ttsProviderId;
-
-    /// <summary>Whether the selected provider had its key last time speech settings were applied.</summary>
-    private bool _ttsKeyPresent;
+    private SpeechWiringState _speechWiring = SpeechWiringState.Nothing;
 
     /// <summary>
     /// Everyone d47 can speak as (list.md Phase 11). Not a second audio path: it decides which
@@ -2315,7 +2315,89 @@ public sealed class AppHost : IDisposable
     /// the honest answer in the meantime: the picker allows a typed value, so an empty list is a
     /// smaller list rather than a dead end.
     /// </summary>
-    private IReadOnlyList<VoiceInfo> _voices = [];
+    private VoiceCatalogue _voices = VoiceCatalogue.Silent;
+
+    /// <summary>
+    /// What the voices have cost this session (list.md Phase 19). Lives for the process, like
+    /// <see cref="Spend"/>, and for the same reason: "what has this cost" is a question about a
+    /// session rather than about a turn, and it must survive the provider being switched.
+    /// </summary>
+    public SpeechSpend SpeechSpend { get; } = new();
+
+    /// <summary>
+    /// Auditions already paid for, keyed by the provider that issued the voice, the role being
+    /// cast and the voice itself (list.md Phase 19).
+    /// <para>
+    /// Walking back and forth over four candidates should not be four purchases each way. Keyed
+    /// on the provider as well as the voice because an id means nothing outside the provider
+    /// that issued it, so the same string can be two different voices across a switch.
+    /// </para>
+    /// <para>
+    /// For the session only, and deliberately not written to disk: the clip is the Commander's
+    /// core's own words in a voice they may not keep, and caching it on disk would be d47
+    /// choosing to store audio nobody asked it to store.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<(string Provider, string Voice), AudioClip> _auditions = new();
+
+    /// <summary>The group auditions play in, so a second one drops the first mid-word.</summary>
+    private const string AuditionGroup = "voice-audition";
+
+    /// <summary>
+    /// Speaks one voice so it can be judged before it is chosen (list.md Phase 19, "Hear a voice
+    /// before you choose it").
+    /// <para>
+    /// The line is the core aboard's own opening for the ship's AI, and the role's own words for
+    /// the two carrier voices, because a voice is being cast for a character and a generic sample
+    /// answers a different question — including one level down, where a tower reciting Warden's
+    /// introduction would be the same mistake. Through the one arbiter like
+    /// everything else that makes a sound (architecture.md D7), so an audition ducks the game,
+    /// is cut off by the shut-up hotkey exactly as speech is, and drops the previous audition
+    /// rather than queueing behind it.
+    /// </para>
+    /// <para>
+    /// Nothing here commits the choice. The picker is still open and the settings row is
+    /// untouched; the Commander has heard a voice, which is all they asked for.
+    /// </para>
+    /// </summary>
+    internal async Task AuditionVoiceAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
+    {
+        if (_tts is not { } provider)
+        {
+            throw new InvalidOperationException("No voice provider is selected.");
+        }
+
+        // Before the synthesis rather than after it, so pressing the button twice in a row
+        // silences the first attempt while the second is still being fetched — which on a paid
+        // provider is most of the wait.
+        Audio.DropGroup(AuditionGroup);
+
+        var key = (provider.Id, $"{role}:{voiceId}");
+
+        if (!_auditions.TryGetValue(key, out var clip))
+        {
+            clip = await provider.SynthesizeAsync(
+                role == VoiceRole.ShipAi ? AuditionLine.For(Personas.Current) : AuditionLine.For(role),
+                new VoiceSelection(voiceId, SpeechCapability.RateFor(Settings.Current)),
+                cancellationToken).ConfigureAwait(false);
+
+            // Cached after the await, so a cancelled or failed synthesis caches nothing and the
+            // next press tries again.
+            _auditions[key] = clip;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = clip,
+            Group = AuditionGroup,
+            // The clip's name is the text it was synthesised from, which is what the caption
+            // layer wants — so an audition is captioned in the headset like any other speech.
+            Caption = clip.Name,
+        });
+    }
 
     /// <summary>
     /// One autonomous action at a time. The honk holds a key for six seconds, and two of them
@@ -2817,7 +2899,21 @@ public sealed class AppHost : IDisposable
         {
             var voices = await provider.ListVoicesAsync(budget.Token).ConfigureAwait(false);
 
-            return SecretCheck.Works($"{selected.Name} accepted the key — {voices.Count} voices.");
+            // Read from the listing rather than from the count, which is what this check was
+            // quietly doing wrong: the provider answers an empty list rather than throwing, so a
+            // rejected key arrived here as "accepted the key — 0 voices" (list.md Phase 19).
+            return voices.Listing switch
+            {
+                VoiceListing.KeyRejected => SecretCheck.Rejected(
+                    $"{selected.Name} refused the key{Reason(voices.Detail)}"),
+
+                VoiceListing.Unreachable => SecretCheck.Unreachable(
+                    $"{selected.Name} could not be reached{Reason(voices.Detail)}"),
+
+                VoiceListing.NoKey => SecretCheck.Rejected($"No {selected.Name} key is stored."),
+
+                _ => SecretCheck.Works($"{selected.Name} accepted the key — {voices.Count} voices."),
+            };
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -2834,6 +2930,10 @@ public sealed class AppHost : IDisposable
             return SecretCheck.Unreachable(ex.Message);
         }
     }
+
+    /// <summary>The service's own words where it gave any, punctuated to finish the sentence.</summary>
+    private static string Reason(string? detail) =>
+        detail is { Length: > 0 } said ? $" — {said}." : ".";
 
     private (string Key, string Source)? ResolveKey(LlmProviderInfo provider)
     {

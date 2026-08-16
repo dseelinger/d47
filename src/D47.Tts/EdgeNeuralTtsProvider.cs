@@ -33,7 +33,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     private readonly HttpClient _http = http ?? new HttpClient();
     private readonly bool _ownsHttp = http is null;
 
-    private IReadOnlyList<VoiceInfo>? _voices;
+    private VoiceCatalogue? _voices;
 
     public string Id => "edge";
 
@@ -55,7 +55,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         "turned into audio. No game state, no journal content and no keys are sent. Selecting no " +
         "voice provider keeps D47 silent and sends nothing.";
 
-    public async Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(CancellationToken cancellationToken = default)
+    public async Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)
     {
         if (_voices is { } cached)
         {
@@ -83,7 +83,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
                 .DeserializeAsync<List<EdgeVoice>>(stream, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            _voices =
+            _voices = VoiceCatalogue.Of(
             [
                 .. (listed ?? [])
                     .Where(voice => voice.ShortName is not null)
@@ -94,7 +94,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
                         voice.Gender))
                     .OrderBy(voice => voice.Locale, StringComparer.Ordinal)
                     .ThenBy(voice => voice.Name, StringComparer.Ordinal),
-            ];
+            ]);
 
             logger.LogInformation("Edge Neural offers {Count} voices", _voices.Count);
             return _voices;
@@ -102,9 +102,10 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // An empty list is a supported answer: the picker still lets the Commander keep
-            // the current value or type one (list.md Phase 4).
+            // the current value or type one (list.md Phase 4). It says which kind of empty it
+            // is, though — Edge needs no key, so unreachable is the only one it can be.
             logger.LogWarning(ex, "Could not list Edge Neural voices");
-            return [];
+            return VoiceCatalogue.Unreachable(ex.Message);
         }
     }
 

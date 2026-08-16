@@ -93,7 +93,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     private readonly bool _ownsHttp;
     private readonly Func<string?> _key;
 
-    private IReadOnlyList<VoiceInfo>? _voices;
+    private VoiceCatalogue? _voices;
 
     /// <param name="key">
     /// Asked for rather than held, because a key can be added or replaced mid-session and the
@@ -116,7 +116,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
     public string Name => "ElevenLabs";
 
-    public async Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(CancellationToken cancellationToken = default)
+    public async Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)
     {
         if (_voices is { } cached)
         {
@@ -126,9 +126,13 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         if (_key() is not { Length: > 0 } key)
         {
             // No key is not a failure to log loudly. The picker's contract is that an empty
-            // list still lets the Commander keep the current value or type one (list.md Phase 4).
+            // list still lets the Commander keep the current value or type one (list.md Phase 4)
+            // — and it now says which kind of empty this is, rather than showing the same
+            // nothing it shows for a refused key.
+            //
+            // Not cached, deliberately: the key is the thing most likely to arrive next.
             _logger.LogDebug("No ElevenLabs key is stored, so no voices can be listed");
-            return [];
+            return VoiceCatalogue.NoKey("no key is stored");
         }
 
         try
@@ -137,13 +141,27 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             request.Headers.Add("xi-api-key", key);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // The service's own message, for the same reason a refused synthesis prefers it:
+                // "Invalid API key" is what the Commander needs and 401 is not. Measured — every
+                // one of no-header, bad-key and a 500 answers with a distinct `detail.message`.
+                var said = await MessageFromBodyAsync(response, cancellationToken).ConfigureAwait(false);
+
+                _logger.LogWarning(
+                    "ElevenLabs would not list its voices: {Status} {Said}", (int)response.StatusCode, said);
+
+                return response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden
+                    ? VoiceCatalogue.KeyRejected(said ?? "the key was rejected")
+                    : VoiceCatalogue.Unreachable(said ?? $"it answered {(int)response.StatusCode}");
+            }
 
             var listed = await response.Content
                 .ReadFromJsonAsync<VoiceListResponse>(Json, cancellationToken)
                 .ConfigureAwait(false);
 
-            _voices =
+            _voices = VoiceCatalogue.Of(
             [
                 .. (listed?.Voices ?? [])
                     .Where(voice => voice.VoiceId is not null)
@@ -157,7 +175,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                         // renders it in the same slot.
                         voice.Labels?.GetValueOrDefault("accent") ?? "multilingual",
                         voice.Labels?.GetValueOrDefault("gender"))),
-            ];
+            ]);
 
             _logger.LogInformation("ElevenLabs offers {Count} voices", _voices.Count);
             return _voices;
@@ -165,7 +183,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Could not list ElevenLabs voices");
-            return [];
+            return VoiceCatalogue.Unreachable(ex.Message);
         }
     }
 

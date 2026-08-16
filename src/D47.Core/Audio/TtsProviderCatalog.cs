@@ -37,6 +37,24 @@ public sealed record TtsProviderInfo
 
     public double MaximumRate { get; init; } = 2.0;
 
+    /// <summary>
+    /// Whether speaking through this provider costs the Commander money at all.
+    /// <para>
+    /// Declared rather than inferred from <see cref="NeedsKey"/>, because "free" and "billed at a
+    /// rate d47 does not know" have to read differently: <c>$0.00</c> from Edge and <c>$0.00</c>
+    /// from an ElevenLabs run nobody has priced are the same string for opposite reasons
+    /// (list.md Phase 19).
+    /// </para>
+    /// </summary>
+    public bool Billed { get; init; }
+
+    /// <summary>
+    /// The published list price in US dollars per thousand characters, or null where the
+    /// provider does not publish one. The default for the settings row, never a claim about what
+    /// this Commander is actually paying — see <see cref="SpeechSpend"/> for why those differ.
+    /// </summary>
+    public decimal? ListDollarsPerThousandCharacters { get; init; }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>
@@ -98,6 +116,19 @@ public static class TtsProviderCatalog
         // declared here and the settings row narrows to it while this provider is selected.
         MinimumRate = 0.7,
         MaximumRate = 1.2,
+
+        Billed = true,
+
+        // The published API list price for eleven_multilingual_v2, which is the model d47 pins —
+        // $0.10 per 1,000 characters, read from elevenlabs.io/pricing/api on 2026-08-16. Flash
+        // and Turbo are half that and d47 does not ask for them.
+        //
+        // A list price and not a bill. A subscription burns bundled credits instead — 121,000 a
+        // month for $22 on Creator, so an effective $0.18 per thousand until the bundle runs out
+        // and nothing at the margin before that — and the API reports neither the tier nor the
+        // arrangement. So this is the row's default and the row is editable, in the same spirit
+        // as the model price table declining to model introductory pricing it cannot date.
+        ListDollarsPerThousandCharacters = 0.10m,
     };
 
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>
