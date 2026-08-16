@@ -10,6 +10,13 @@ rather than dodged: every reference moved with it, including three code comments
 Phases 1 to 14 were not touched — they are built, and they carry the several hundred citations that
 make renumbering expensive. From here, new phases are appended.
 
+**And Phase 15 has joined them.** It shipped on 2026-08-15 in `v0.11.0` and now carries 22 citations
+across 18 files, so 1–15 are frozen by the same argument and the frozen set only ever grows. A
+second renumber was raised the same evening and declined on exactly this ground: there was no
+reordering to express — the request came from reading the section below as phases jumping the queue,
+which they are not — and the numbers already said the right thing. **If this document ever seems to
+put a later phase before an earlier one, the bug is in this document's wording, not in the order.**
+
 The mapping, for anything written before that date:
 
 | Was | Is | Phase |
@@ -27,33 +34,52 @@ to a Commander**, and **how likely is the work to be wasted**.
 
 ---
 
-## Before any of it: two singles, out of order on purpose
+## Three individual items that run ahead of their own phase
 
-**Ask for the keys on the first run that needs them** — Phase 18. `v0.10.0` is published *now*. A
-fresh install has no language-model key, and this item is the difference between a new Commander
-having a companion and having a window that will not answer. It is the most user-facing gap in the
-file and it is currently buried in a polish phase behind eleven other things. Nothing else here
-matters to somebody who cannot get past the first run.
+**These are items, not phases. The phase order below is not affected by anything in this
+section**, and reading it as "Phase 17 before Phase 16" is the misreading it has already caused
+once. `list.md` is a list of phases; each phase is a list of items; and an item can be worth doing
+before the phase around it without the phase moving. Nothing here is renumbered, reordered, or
+promoted — these are three lines pulled forward out of two phases that otherwise stay exactly where
+they are.
 
-**Both Phase 17 spikes** — exobiology sources, and colonisation sources. They are research, they are
-cheap, and **their results reorder everything below**. A null result on the colonisation facility
-table shrinks what Phase 16 can promise; a null on the exobiology sources halves Phase 17. Running
-them first means the rest of this list is built on measurements rather than on this document's
-guesses.
+**Two of the three are spikes**, which is the ordinary reason an item runs early: a spike produces
+a findings page, and the work that consumes those findings cannot be specified until it exists. A
+spike running ahead of its phase is the normal shape of this list rather than an exception to it.
+
+**Both Phase 17 spikes** — `Spike: what can be known about exobiology before you land`, and
+`Spike: what is already known about colonisation, and by whom`. They are research, they are cheap,
+and **their results reorder everything below**. A null result on the colonisation facility table
+shrinks what Phase 16 can promise — specifically *A colonisation plan writes the checklist*, which
+is why the caveat under Phase 16 points back here; a null on the exobiology sources halves Phase 17
+itself. Running them first means the rest of this list is built on measurements rather than on this
+document's guesses.
+
+**Ask for the keys on the first run that needs them** — an item in Phase 18, and the one thing here
+that is not a spike. A fresh install has no language-model key, and this item is the difference
+between a new Commander having a companion and having a window that will not answer. It is the most
+user-facing gap in the file and it is currently buried in a polish phase behind eleven other things.
+Nothing else here matters to somebody who cannot get past the first run.
+
+**It is also the one item whose rank is a question about you rather than about the code.** It is
+first only if somebody other than the maintainer is installing d47. If nobody is yet, it is the
+least urgent line on this page rather than the most — see "What would change this order".
 
 ---
 
-## 1. Phase 15 — Warnings that arrive in time
+## 1. ~~Phase 15 — Warnings that arrive in time~~ — shipped in `v0.11.0`, 2026-08-15
 
-**The readiest work in the repo.** Both items are measured against 912 journals, both name their own
-false positives, neither needs a source, a table or a network call, and the callout engine they plug
-into already exists beside `DangerCallout`. There is nothing to research and nothing to decide.
+Kept rather than deleted, because the reasoning is the worked example: it was ranked first for being
+the readiest work in the repo — both items measured against 912 journals, both naming their own
+false positives, neither needing a source, a table or a network call — and it closed in a day.
 
-It is also two items, so it *closes* — which makes it a minor release on its own, and the shortest
-path from here to something a Commander notices. The attack warning gives a median ten seconds
-before the shooting starts, which is enough to boost, deploy hardpoints or high-wake.
+**The ranking held, and one line of it did not.** "There is nothing to research" was wrong in a way
+worth recording: the measurement was re-run against the corpus rather than taken from `list.md`, and
+that pass is what found the three id groups that clear 40% and are still not shipped, and the
+`npc`-channel requirement that closes a spoof nobody had written down. Cheap, but not nothing. See
+[../spikes/journal-corpus-warnings.md](../spikes/journal-corpus-warnings.md).
 
-## 2. Phase 16 — Checklists
+## 2. Phase 16 — Checklists — **next**
 
 **What everything else is waiting on.** Engineering's planning half was deferred here from Phase 14
 and has been waiting since `v0.10.0` closed — the tables are built, so *An engineering plan writes
