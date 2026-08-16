@@ -86,30 +86,12 @@ public sealed class SteamVrRuntime(
     private readonly HashSet<VrSurface> _served = [];
 
     /// <summary>
-    /// The last thing each surface said about itself, and when it said it. A read-back
-    /// identical to the one before it is not news, and printing it anyway is how the one that
-    /// <em>is</em> news gets missed.
+    /// The last thing each surface said about itself, and when it said it. A read-back identical
+    /// to the one before it is not news, and printing it anyway is how the one that <em>is</em>
+    /// news gets missed. When that amounts to a line in the log is
+    /// <see cref="RuntimeReadback.Plan"/>'s decision; this is only where the answer is kept.
     /// </summary>
-    private readonly Dictionary<VrSurface, (string Text, DateTimeOffset When)> _described = [];
-
-    /// <summary>
-    /// The floor between two read-backs for one surface, changed or not. <c>Serve</c> runs at
-    /// 10 Hz, so a value that merely jittered would write ten lines a second - which is the
-    /// fault being fixed here, only faster.
-    /// </summary>
-    private static readonly TimeSpan DescribeAtMost = TimeSpan.FromSeconds(1);
-
-    /// <summary>
-    /// How often the runtime is asked to describe itself when nothing about it has changed.
-    /// <para>
-    /// Was five seconds, which is right while hunting an invisible overlay and wrong every
-    /// other minute of a session: it wrote seven hundred identical lines an hour and buried
-    /// everything else in the file. The read-back stays - going blind is what made the Phase 12
-    /// fault cost a day - but it is now driven by the answer changing, with this as the
-    /// heartbeat that proves the session is still being served.
-    /// </para>
-    /// </summary>
-    private static readonly TimeSpan DescribeEvery = TimeSpan.FromMinutes(5);
+    private readonly Dictionary<VrSurface, SurfaceReport> _described = [];
 
     private DateTimeOffset _now;
     private readonly Dictionary<VrSurface, VrPixels> _buffers = [];
@@ -447,16 +429,20 @@ public sealed class SteamVrRuntime(
         // On change, and otherwise on a slow heartbeat. What is worth reading is the moment the
         // runtime starts saying something different - visible going false, a width the Commander
         // did not set, a transform that stopped tracking - and that is invisible in a wall of
-        // identical lines.
+        // identical lines. When that happens is decided in Core, where a test can drive a
+        // session's worth of frames without a headset; asking the runtime and writing the line
+        // stay here.
         var described = overlay.Describe();
-        var seen = _described.TryGetValue(source.Surface, out var last);
-        var changed = !seen || !string.Equals(last.Text, described, StringComparison.Ordinal);
-        var since = seen ? _now - last.When : TimeSpan.MaxValue;
 
-        if (since >= (changed ? DescribeAtMost : DescribeEvery))
+        var readback = RuntimeReadback.Plan(
+            _described.TryGetValue(source.Surface, out var last) ? last : null,
+            described,
+            _now);
+
+        _described[source.Surface] = readback.Held;
+
+        if (readback.Write)
         {
-            _described[source.Surface] = (described, _now);
-
             logger.LogInformation("{Surface}: {State}", source.Surface, described);
         }
 
