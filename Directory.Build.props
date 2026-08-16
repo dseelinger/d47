@@ -10,6 +10,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- No telemetry (CLAUDE.md), and the rule reaches the toolchain rather than only the
+         product. Microsoft.NET.Test.Sdk pulls Microsoft.Testing.Extensions.Telemetry into every
+         test project's graph by default; this is the documented opt-out, set here so a test
+         project cannot be added without it. Nothing shipped ever referenced it — the packages
+         are test-only — but "no telemetry" is not a claim worth qualifying. -->
+    <TestingPlatformTelemetryOptOut>true</TestingPlatformTelemetryOptOut>
   </PropertyGroup>
 
   <!-- Release version comes from the git tag via CI; this is the local fallback. -->

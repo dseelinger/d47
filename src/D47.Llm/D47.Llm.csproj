@@ -18,6 +18,7 @@
   -->
   <ItemGroup>
     <InternalsVisibleTo Include="D47.App.Tests" />
+    <InternalsVisibleTo Include="D47.Llm.Tests" />
   </ItemGroup>
 
   <ItemGroup>

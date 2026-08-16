@@ -10,8 +10,15 @@
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
   </ItemGroup>
 
+  <!--
+    The sample providers are internal because nothing outside this assembly should be building
+    NAudio graph nodes, and they are also the part that can be wrong with no sound card involved
+    — PCM widening, the loop point, and the render tap's running sample position. So the tests
+    reach them directly, the same arrangement D47.Tts makes for its wire format.
+  -->
   <ItemGroup>
     <InternalsVisibleTo Include="D47.App.Tests" />
+    <InternalsVisibleTo Include="D47.Audio.Tests" />
   </ItemGroup>
 
   <ItemGroup>

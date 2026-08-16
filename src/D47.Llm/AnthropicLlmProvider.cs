@@ -229,7 +229,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             else if (streamEvent.TryPickDelta(out var messageDelta))
             {
                 usage = Merge(usage, messageDelta!.Usage);
-                stopReason = Translate(messageDelta.Delta.StopReason?.ToString());
+                stopReason = messageDelta.Delta.StopReason is { } reason ? Translate(reason) : LlmStopReason.Completed;
             }
         }
 
@@ -460,13 +460,30 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     /// reported that truncation as a finished answer — a sentence that stops mid-thought, with
     /// nothing anywhere saying it was cut off. It could not happen before this step because
     /// nothing d47 sent could run a server-side loop.
+    /// <para>
+    /// <b>Switched on the SDK's enum rather than on its <c>ToString</c>.</b> This matched the
+    /// wire spellings — <c>"pause_turn"</c>, <c>"max_tokens"</c> — and the SDK hands over an enum
+    /// whose <c>ToString</c> is <c>PauseTurn</c> and <c>MaxTokens</c>, so <em>no</em> case ever
+    /// matched and every turn was reported as Completed. Refusal, truncation and a paused turn
+    /// all arrived at <c>TurnLoop</c> indistinguishable from a finished answer, which is the one
+    /// thing the comment above says must not happen. Nothing could see it: the fallthrough is
+    /// also the correct answer for the common case.
+    /// </para>
     /// </summary>
-    private static LlmStopReason Translate(string? stopReason) => stopReason switch
+    private static LlmStopReason Translate(StopReason stopReason) => stopReason switch
     {
-        "refusal" => LlmStopReason.Refusal,
-        "max_tokens" => LlmStopReason.MaxTokens,
-        "tool_use" => LlmStopReason.ToolUse,
-        "pause_turn" => LlmStopReason.Paused,
+        StopReason.Refusal => LlmStopReason.Refusal,
+        StopReason.MaxTokens => LlmStopReason.MaxTokens,
+        StopReason.ToolUse => LlmStopReason.ToolUse,
+        StopReason.PauseTurn => LlmStopReason.Paused,
+
+        // The context window filling is a truncation like any other. Reported as MaxTokens
+        // because that is what it is from above the seam — the answer stopped short for want of
+        // room — and Completed would be the same lie in a different hat.
+        StopReason.ModelContextWindowExceeded => LlmStopReason.MaxTokens,
+
+        // EndTurn, StopSequence, and anything a later SDK adds. A stop sequence is a finished
+        // answer as far as d47 is concerned.
         _ => LlmStopReason.Completed,
     };
 
