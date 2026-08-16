@@ -52,6 +52,8 @@ public static class ChecklistEvaluator
             ChecklistIntentKind.EngineerAccess => Access(intent, state),
             ChecklistIntentKind.Facility => Facility(item, intent, state),
             ChecklistIntentKind.Commodity => Commodity(item, intent, state),
+            ChecklistIntentKind.Grade => OnFootGrade(item, intent, state),
+            ChecklistIntentKind.Modification => OnFootModification(item, intent, state),
             _ => null,
         };
     }
@@ -368,6 +370,148 @@ public static class ChecklistEvaluator
     }
 
     // ---------------------------------------------------------------- parts
+
+    // ------------------------------------------------------------- on foot
+
+    /// <summary>
+    /// A grade on a suit or a hand weapon. <b>Nothing is rolled</b>, so this is a comparison rather
+    /// than the fill-and-rank arithmetic a ship blueprint needs.
+    /// </summary>
+    private static ChecklistVerdict? OnFootGrade(
+        ChecklistItem item, ChecklistIntent intent, CommanderGameState state)
+    {
+        if (Worn(item, state) is not { } current)
+        {
+            return null;
+        }
+
+        if (intent.Grade is not { } wanted)
+        {
+            return null;
+        }
+
+        if (current.Grade is not { } grade)
+        {
+            // The flight suit, which has no class at all and cannot be upgraded. Said, because the
+            // Commander is otherwise waiting for a Pioneer Supplies trip that does not exist.
+            return new ChecklistVerdict(
+                ChecklistState.Blocked,
+                $"{current.Name} has no grade and cannot be upgraded.");
+        }
+
+        return grade >= wanted
+            ? new ChecklistVerdict(ChecklistState.Done, $"{current.Name} is at grade {grade}.")
+            : new ChecklistVerdict(
+                ChecklistState.Open,
+                $"{current.Name} is at grade {grade} of {wanted}, "
+                + $"{wanted - grade} step{(wanted - grade == 1 ? "" : "s")} to go at Pioneer Supplies.");
+    }
+
+    /// <summary>
+    /// A modification on a suit or a hand weapon.
+    /// <para>
+    /// <b>Two ways this can fail to be checkable, and they are different answers.</b> Elite writes
+    /// a fitted modification as a symbol and the recipe table names it in words; where the shipped
+    /// map joins them the check is exact, and where it does not this answers
+    /// <see cref="ChecklistState.Unverified"/> and says so — the same contract
+    /// <see cref="ChecklistNaming"/> has for ship blueprints, and for the same reason.
+    /// </para>
+    /// <para>
+    /// A grade 1 item is <see cref="ChecklistState.Blocked"/> rather than open: it has zero slots,
+    /// so this is an ordering problem no amount of gathering fixes.
+    /// </para>
+    /// </summary>
+    private static ChecklistVerdict? OnFootModification(
+        ChecklistItem item, ChecklistIntent intent, CommanderGameState state)
+    {
+        if (Worn(item, state) is not { } current)
+        {
+            return null;
+        }
+
+        var fitted = current.Modifications;
+
+        if (fitted.Any(modification =>
+                modification.Name is { } name
+                && ChecklistKeys.Compact(name) == ChecklistKeys.Compact(intent.Detail)))
+        {
+            return new ChecklistVerdict(ChecklistState.Done, $"{intent.Detail} is fitted to {current.Name}.");
+        }
+
+        if (current.Grade is null or < Knowledge.OnFootRules.ModifiableFrom)
+        {
+            return new ChecklistVerdict(
+                ChecklistState.Blocked,
+                $"{current.Name} is grade {current.Grade?.ToString(CultureInfo.InvariantCulture) ?? "none"} "
+                + "and carries no modification slots. Upgrade it at Pioneer Supplies first — an "
+                + "engineer's base has none.");
+        }
+
+        // Every slot spent and this one not among them. Permanent, so it is the one shortfall on
+        // this list that gathering cannot fix.
+        if (fitted.Count >= Knowledge.OnFootRules.SlotsAt(current.Grade.Value))
+        {
+            return new ChecklistVerdict(
+                ChecklistState.Blocked,
+                $"{current.Name} has all {fitted.Count} of its slots filled and modifications cannot "
+                + "be removed. This needs a fresh item, bought and re-upgraded.");
+        }
+
+        // A symbol nothing joins is not evidence of absence. Said once, per the Noted flag.
+        var unnamed = fitted.Where(modification => !modification.IsNamed).ToArray();
+
+        if (unnamed.Length > 0)
+        {
+            return new ChecklistVerdict(
+                ChecklistState.Unverified,
+                $"I cannot confirm whether {intent.Detail} is fitted: {current.Name} carries "
+                + $"{string.Join(", ", unnamed.Select(modification => modification.Speak()))}, which "
+                + "Elite writes as symbols my table does not name.");
+        }
+
+        return new ChecklistVerdict(
+            ChecklistState.Open,
+            $"{intent.Detail} is not fitted to {current.Name}; "
+            + $"{Knowledge.OnFootRules.SlotsAt(current.Grade.Value) - fitted.Count} slot"
+            + $"{(Knowledge.OnFootRules.SlotsAt(current.Grade.Value) - fitted.Count == 1 ? "" : "s")} free.");
+    }
+
+    /// <summary>
+    /// The suit or weapon an item is about, as it stands right now, or null when it is not the one
+    /// the Commander is in — which is a "nothing can be said" rather than a "not done".
+    /// </summary>
+    private static OnFootSubject? Worn(ChecklistItem item, CommanderGameState state)
+    {
+        var loadout = state.OnFoot;
+
+        if (!loadout.IsKnown || item.Scope.Key is not { Length: > 0 } key)
+        {
+            return null;
+        }
+
+        if (item.Scope.Group == ChecklistGroup.Suit)
+        {
+            return loadout.SuitId?.ToString(CultureInfo.InvariantCulture) == key
+                ? new OnFootSubject(loadout.Speak(), loadout.Grade, loadout.SuitModifications)
+                : null;
+        }
+
+        if (item.Scope.Group != ChecklistGroup.Weapon)
+        {
+            return null;
+        }
+
+        var weapon = loadout.Weapons.FirstOrDefault(carried =>
+            carried.ModuleId?.ToString(CultureInfo.InvariantCulture) == key);
+
+        return weapon is null
+            ? null
+            : new OnFootSubject(weapon.Speak(), weapon.Grade, weapon.Modifications);
+    }
+
+    /// <summary>A suit and a hand weapon answer the same three questions, so they share a shape.</summary>
+    private readonly record struct OnFootSubject(
+        string Name, int? Grade, IReadOnlyList<FittedModification> Modifications);
 
     private static bool IsActive(ChecklistScope scope, ShipLoadout loadout) =>
         scope.Group == ChecklistGroup.Ship

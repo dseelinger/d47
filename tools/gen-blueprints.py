@@ -42,6 +42,33 @@ Told apart by the `@`-prefixed pseudo-engineers EDEngineer uses — `@Synthesis`
 munitions recipe classifies itself. The distinction is load-bearing: multiplying a synthesis
 recipe by a roll count is arithmetic on the wrong kind of thing.
 
+EDEngineer's on-foot quantities are pre-patch, and are corrected here
+---------------------------------------------------------------------
+**Measured 2026-08-16 against the game itself**, and this is the one place a source's numbers
+are changed rather than merely reported. Every on-foot size in `blueprints.json` predates the
+patch that cut them, by two different factors:
+
+- a **modification** costs `⌈size ÷ 2⌉` — 5/10/15 become 3/5/8
+- a **grade upgrade** costs `⌈size ÷ 3⌉` — 1/5/10/15/25/35 become 1/2/4/5/9/12
+- and a grade upgrade no longer asks for **Power Regulators** at all
+
+The evidence is in `docs/spikes/journal-corpus-on-foot.md` §3: 78 ingredient comparisons
+against the `Resources` list on 16 real `UpgradeSuit`/`UpgradeWeapon` events for the upgrade
+ladder, and a zero-remainder cover of 41 material lines across four `ShipLocker` deltas for
+the modification ladder, each corroborating the other's leftovers. **Every key in both tables
+was observed** — nothing is extrapolated, and the two divisors are a description of the
+measurements rather than a rule anything here relies on.
+
+**Why this is a correction and not a refusal.** Everywhere else this generator finds two
+sources disagreeing it prints the disagreement and changes nothing, because neither source is
+the game. Here one of them *is* the game. Shipping the published figures would quote a
+Commander two to three times the real cost of everything on foot, in the half of Phase 20 that
+was supposed to need no caveat at all — and it would look right, because it is what every
+other tool says.
+
+The remap is printed on every run, and a size the tables do not cover is a hard stop rather
+than a pass-through.
+
 Two things the plan for this step got wrong, both worth recording
 -----------------------------------------------------------------
 **EDEngineer's `Effects` strings are not double-encoded.** The file carries 56 real U+2713
@@ -89,6 +116,30 @@ PSEUDO = {
 }
 
 ON_FOOT = {"Suit": "suit", "Weapon": "weapon"}
+
+# What the game charges, against what EDEngineer publishes. See the module docstring: measured,
+# complete over the sizes that occur, and a stop rather than a guess for anything else.
+MODIFICATION_SIZES = {5: 3, 10: 5, 15: 8}
+
+UPGRADE_SIZES = {1: 1, 5: 2, 10: 4, 15: 5, 25: 9, 35: 12}
+
+# Removed from every grade-upgrade recipe by Frontier, in their own words, and still listed by
+# EDEngineer in all four suit rows. Absent from all four UpgradeSuit events in the corpus.
+WITHDRAWN = {"Power Regulator"}
+
+# The kinds the two remaps apply to. Everything else — ship modifications, experimentals,
+# synthesis, tech broker, unlocks — is left exactly as published, because nothing measured
+# says otherwise about any of them.
+MODIFICATION_KINDS = {"suit", "weapon"}
+
+UPGRADE_KINDS = {"merchant"}
+
+# EDEngineer spells one weapon two ways — "Oppressor" at grade 2 and "Opressor" at 3, 4 and 5.
+# Left as a typo it splits that weapon's upgrade ladder in half on any name join, so a
+# Commander asks what grade 5 costs and is told there is no such recipe. Corrected here rather
+# than at every call site, and asserted below so it cannot be silently fixed upstream and
+# leave a rewrite behind that no longer matches anything.
+MISSPELLED = {"Manticore Opressor": "Manticore Oppressor"}
 
 # The one kind with no pseudo-engineer to give it away. EDEngineer models an engineer's
 # invitation task as an ungraded blueprint offered by the engineer being unlocked, so without
@@ -146,6 +197,27 @@ def materials() -> tuple[dict[str, str], set[str]]:
     return {name: symbol for name, (symbol, _ledger) in by_name.items()}, ambiguous
 
 
+def restate(kind: str, size: int, entry: dict, name: str, unpriced: list[str]) -> int:
+    """What the game charges for an on-foot ingredient, where EDEngineer says what it used to.
+
+    Off-foot recipes fall straight through. An on-foot size the measurements do not cover is
+    recorded rather than passed along, because passing it along would put one pre-patch number
+    into a table of corrected ones with nothing saying which is which.
+    """
+    table = (MODIFICATION_SIZES if kind in MODIFICATION_KINDS
+             else UPGRADE_SIZES if kind in UPGRADE_KINDS
+             else None)
+
+    if table is None:
+        return size
+
+    if size not in table:
+        unpriced.append(f"{entry['Type']} / {entry['Name']}: {name} x{size}")
+        return size
+
+    return table[size]
+
+
 def kind_of(entry: dict) -> str:
     """Which of the six things in EDEngineer's one list this row is."""
     engineers = entry.get("Engineers") or []
@@ -188,6 +260,9 @@ def main() -> None:
     built: list[list[str]] = []
     unresolved: list[str] = []
     oversized: list[str] = []
+    withdrawn: list[str] = []
+    unpriced: list[str] = []
+    respelled: list[str] = []
     counts: collections.Counter = collections.Counter()
 
     for entry in entries:
@@ -204,6 +279,12 @@ def main() -> None:
                 unresolved.append(f"{entry['Type']} / {entry['Name']}: {name!r}")
                 continue
 
+            if kind in UPGRADE_KINDS and name in WITHDRAWN:
+                withdrawn.append(f"{entry['Type']} / {entry['Name']} G{entry['Grade']}: {name}")
+                continue
+
+            size = restate(kind, size, entry, name, unpriced)
+
             ingredients.append(f"{symbol}*{size}")
 
             # Per-application is the whole basis of "ingredients x rolls". A modification whose
@@ -218,10 +299,16 @@ def main() -> None:
             if effect.get("Property")
         )
 
+        name = entry["Name"]
+
+        if name in MISSPELLED:
+            respelled.append(f"{entry['Type']} / {name} G{entry.get('Grade')}")
+            name = MISSPELLED[name]
+
         built.append([
             kind,
             entry["Type"],
-            entry["Name"],
+            name,
             str(entry.get("Grade") or ""),
             ",".join(who for who in entry.get("Engineers") or [] if not who.startswith("@")),
             ",".join(ingredients),
@@ -243,6 +330,14 @@ def main() -> None:
             + "\n  ".join(oversized[:20])
         )
 
+    if unpriced:
+        # A stop rather than a warning. One uncorrected size sitting in a table of corrected
+        # ones is invisible, and it is wrong by a factor of two or three.
+        raise SystemExit(
+            f"{len(unpriced)} on-foot ingredient sizes are outside the measured tables, so what "
+            "the game charges for them is not known:\n  " + "\n  ".join(unpriced[:20])
+        )
+
     disagreements = compare(entries, blueprints, specials, by_name)
 
     built.sort(key=lambda row: (row[0], row[1], row[2], row[3]))
@@ -257,7 +352,10 @@ def main() -> None:
         "# disagreements are printed by the generator rather than resolved here.",
         "# Ingredients are keyed to Materials.tsv symbols and are PER APPLICATION for kind=",
         "# modification — multiply by EngineeringRules.RollsFor for a total. No other kind is",
-        "# per application. Game data is Frontier's, used under their media usage rules; see NOTICE.",
+        "# per application. On-foot quantities (kind=suit, weapon, merchant) are NOT EDEngineer's:",
+        "# its figures are pre-patch and are restated here to what the game charges, measured over",
+        "# 16 upgrade events and four locker deltas — see docs/spikes/journal-corpus-on-foot.md §3.",
+        "# Game data is Frontier's, used under their media usage rules; see NOTICE.",
         f"# Rows: {len(built)} ("
         + ", ".join(f"{kind} {count}" for kind, count in sorted(counts.items()))
         + f"). Built: {stamp}.",
@@ -276,6 +374,31 @@ def main() -> None:
     if ambiguous:
         print(f"Display names that are more than one material, resolved to the material ledger: "
               f"{', '.join(sorted(ambiguous))}")
+
+    print(f"\nOn-foot quantities restated from EDEngineer's pre-patch figures: "
+          f"modifications {MODIFICATION_SIZES}, grade upgrades {UPGRADE_SIZES}")
+
+    print(f"Ingredients dropped as withdrawn by Frontier: {len(withdrawn)}")
+    for item in withdrawn:
+        print(f"  {item}")
+
+    if not withdrawn:
+        raise SystemExit(
+            "no Power Regulators were found to drop. Either EDEngineer has been updated — in "
+            "which case check whether its quantities moved too, and retire the remap with them — "
+            "or the filter has stopped matching."
+        )
+
+    print(f"Misspellings corrected: {len(respelled)}")
+    for item in respelled:
+        print(f"  {item}")
+
+    if not respelled:
+        raise SystemExit(
+            "the Manticore Opressor typo was not found. If it has been fixed upstream, delete "
+            "MISSPELLED — leaving a rewrite in place that no longer matches anything is how a "
+            "table starts lying quietly."
+        )
 
     for label, items in disagreements.items():
         print(f"\n{label}: {len(items)}")

@@ -66,6 +66,21 @@ public sealed class ChecklistService(
                 ? ChecklistScope.System(key)
                 : state?.Location.StarSystem is { } system ? ChecklistScope.System(system) : ChecklistScope.Universal,
 
+            // Keyed on the id rather than on the name, because a Maverick taken from grade 3 to 5
+            // changes its symbol and keeps its id — and a list keyed on the symbol would be
+            // abandoned by the very upgrade it was written to plan.
+            "suit" => key is { Length: > 0 }
+                ? new ChecklistScope(ChecklistGroup.Suit, key.Trim())
+                : state?.OnFoot.SuitId is { } suit ? ChecklistScope.Suit(suit) : ChecklistScope.Universal,
+
+            // The weapon in the Commander's hands, where exactly one is carried. More than one is
+            // an ambiguity the plan has to resolve by name rather than by guessing at a slot.
+            "weapon" => key is { Length: > 0 }
+                ? new ChecklistScope(ChecklistGroup.Weapon, key.Trim())
+                : state?.OnFoot.Weapons is [{ ModuleId: { } only }]
+                    ? ChecklistScope.Weapon(only)
+                    : ChecklistScope.Universal,
+
             _ => ChecklistScope.Universal,
         };
     }
@@ -401,11 +416,31 @@ public sealed class ChecklistService(
     /// them produces a feasibility verdict that is nonsense delivered confidently.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Two costings as one. Their ingredient lists are disjoint by intent kind, and each computes
+    /// <c>Held</c> from the inventory its own materials actually live in — ship materials from the
+    /// <c>Materials</c> event, micro-resources from the backpack and locker — which is why they are
+    /// computed apart and joined here rather than being one pass over both.
+    /// </summary>
+    private static PlanCosting Merge(PlanCosting ship, PlanCosting foot) => new()
+    {
+        Ingredients = [.. ship.Ingredients.Concat(foot.Ingredients)
+            .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)],
+        Gates = [.. ship.Gates.Concat(foot.Gates)],
+        Uncovered = [.. ship.Uncovered.Concat(foot.Uncovered)],
+    };
+
     public string Shortfall()
     {
         var state = State;
         var document = Document;
-        var costing = EngineeringPlan.Cost(document.Items, state);
+        // Both plans, netted together. A shopping trip is a trip for everything, and the ship
+        // and on-foot halves are disjoint by intent kind but not by destination — a settlement
+        // that owes a Commander two micro-resources is one stop whichever plan wanted them.
+        var costing = Merge(
+            EngineeringPlan.Cost(document.Items, state),
+            OnFootPlan.Cost(document.Items, state));
+
         var report = new StringBuilder();
 
         // Caps first. A certainty stated after a list of possibilities reads as one more
@@ -451,6 +486,30 @@ public sealed class ChecklistService(
             report.AppendLine("Worth batching — one trip covers several:");
 
             foreach (var group in origins)
+            {
+                report.AppendLine(
+                    $"  {group.Key}: {string.Join(", ", group.Select(pair => pair.ingredient.Material.Name))}");
+            }
+        }
+
+        // The on-foot half of batching, which is sharper than anything the ship materials can
+        // offer: "Planetary Settlement" is the best origin string an Odyssey ingredient has, and
+        // the building code is what turns it into a place to walk to.
+        var buildings = costing.Shortfall
+            .Where(ingredient => ingredient.Material.Ledger == Knowledge.MaterialLedger.ShipLocker)
+            .SelectMany(ingredient => ingredient.Material.Buildings.Select(building => (building, ingredient)))
+            .GroupBy(pair => pair.building, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .OrderByDescending(group => group.Count())
+            .Take(3)
+            .ToList();
+
+        if (buildings.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine("On foot, by building:");
+
+            foreach (var group in buildings)
             {
                 report.AppendLine(
                     $"  {group.Key}: {string.Join(", ", group.Select(pair => pair.ingredient.Material.Name))}");

@@ -86,6 +86,7 @@ public static class BuiltinCapabilities
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
+        OnFootCapability.Create(() => gameState.Active),
         ChecklistCapability.Create(checklists),
         ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
         SystemNameCapability.Create(() => gameState.Active),

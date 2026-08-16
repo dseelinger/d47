@@ -18,6 +18,19 @@ public enum ChecklistGroup
 
     /// <summary>Belongs to one star system. Keyed by its name.</summary>
     System,
+
+    /// <summary>
+    /// Belongs to one suit, and follows it through every upgrade. Keyed by the journal's
+    /// <c>SuitID</c>, which survives a grade change where the symbol does not.
+    /// <para>
+    /// Its own group rather than a ship's, because a Maverick is not attached to whatever hull
+    /// happened to be under the Commander when they talked about it.
+    /// </para>
+    /// </summary>
+    Suit,
+
+    /// <summary>One hand weapon, keyed by the journal's <c>SuitModuleID</c>.</summary>
+    Weapon,
 }
 
 /// <summary>
@@ -38,6 +51,12 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
 
     public static ChecklistScope System(string name) => new(ChecklistGroup.System, name.Trim());
 
+    public static ChecklistScope Suit(long suitId) =>
+        new(ChecklistGroup.Suit, suitId.ToString(global::System.Globalization.CultureInfo.InvariantCulture));
+
+    public static ChecklistScope Weapon(long moduleId) =>
+        new(ChecklistGroup.Weapon, moduleId.ToString(global::System.Globalization.CultureInfo.InvariantCulture));
+
     public bool Same(ChecklistScope other) =>
         Group == other.Group
         && string.Equals(Key ?? string.Empty, other.Key ?? string.Empty, StringComparison.OrdinalIgnoreCase);
@@ -47,6 +66,8 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
     {
         ChecklistGroup.Ship => $"ship {Key}",
         ChecklistGroup.System => Key ?? "a system",
+        ChecklistGroup.Suit => $"suit {Key}",
+        ChecklistGroup.Weapon => $"weapon {Key}",
         _ => "universal",
     };
 }
@@ -76,6 +97,7 @@ public enum ChecklistSource
     Commander,
     EngineeringPlan,
     ColonisationPlan,
+    OnFootPlan,
 }
 
 /// <summary>
@@ -180,6 +202,21 @@ public enum ChecklistIntentKind
 
     /// <summary>A commodity a construction site is asking for.</summary>
     Commodity,
+
+    /// <summary>
+    /// A grade on a suit or a hand weapon, bought at Pioneer Supplies.
+    /// <para>
+    /// Its own kind rather than a <see cref="Blueprint"/> with a grade, because nothing about it
+    /// behaves the same way: no roll count, no engineer, no rank gate, and it is the thing every
+    /// <see cref="Modification"/> on the same item is blocked behind.
+    /// </para>
+    /// </summary>
+    Grade,
+
+    /// <summary>
+    /// An on-foot modification on a suit or a hand weapon. Ungraded, and <b>permanent</b>.
+    /// </summary>
+    Modification,
 }
 
 /// <summary>

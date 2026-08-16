@@ -59,6 +59,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// </summary>
     public SuitInventory Suit { get; internal set; } = SuitInventory.Empty;
 
+    /// <summary>What they are wearing and carrying on foot (list.md Phase 20).</summary>
+    public OnFootLoadout OnFoot { get; private set; } = OnFootLoadout.Unknown;
+
     /// <summary>
     /// What is in the cargo hold (list.md Phase 18). Same story as <see cref="Suit"/> and for the
     /// same measured reason — the manifest is in a file Elite rewrites, and the matching journal
@@ -78,6 +81,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         Location = Location.Apply(journalEvent);
         Ship = Ship.Apply(journalEvent);
+        OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         Fleet = Fleet.Apply(journalEvent);
         Modules = Modules.Apply(journalEvent);

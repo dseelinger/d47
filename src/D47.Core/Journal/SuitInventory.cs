@@ -47,6 +47,34 @@ public sealed record SuitInventory
     /// </summary>
     public static IReadOnlyList<string> Kinds { get; } = ["Items", "Components", "Consumables", "Data"];
 
+    /// <summary>
+    /// How many of one micro-resource the Commander has, <b>backpack and locker together</b>
+    /// (list.md Phase 20).
+    /// <para>
+    /// Both, because an on-foot recipe spends from either and a Commander standing at Pioneer
+    /// Supplies with the last five in their backpack is not short. Keyed on the journal's symbol,
+    /// folded, so a name written one way in one file and another way in another still joins —
+    /// the same reason <see cref="JournalJson.Symbol(string?)"/> exists.
+    /// </para>
+    /// </summary>
+    public int CountOf(string symbol)
+    {
+        var wanted = JournalJson.Symbol(symbol);
+
+        return wanted is null
+            ? 0
+            : Backpack.Concat(ShipLocker)
+                .Where(item => JournalJson.Symbol(item.Name) == wanted)
+                .Sum(item => item.Count);
+    }
+
+    /// <summary>
+    /// Everything held in one of Elite's four categories, totalled — which is what the locker's
+    /// cap is measured against. See <see cref="Knowledge.OnFootRules.LockerCapacityPerCategory"/>:
+    /// the cap is per category rather than per item, measured over 28,148 locker snapshots.
+    /// </summary>
+    public int ShipLockerTotal(string kind) => ShipLockerOf(kind).Sum(item => item.Count);
+
     public IReadOnlyList<SuitItem> BackpackOf(string kind) =>
         [.. Backpack.Where(item => string.Equals(item.Kind, kind, StringComparison.OrdinalIgnoreCase))];
 

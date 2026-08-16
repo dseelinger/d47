@@ -38,6 +38,7 @@
     <EmbeddedResource Include="Knowledge\Engineers.tsv" LogicalName="D47.Core.Engineers" />
     <EmbeddedResource Include="Knowledge\Materials.tsv" LogicalName="D47.Core.Materials" />
     <EmbeddedResource Include="Knowledge\Blueprints.tsv" LogicalName="D47.Core.Blueprints" />
+    <EmbeddedResource Include="Knowledge\OnFoot.tsv" LogicalName="D47.Core.OnFoot" />
   </ItemGroup>
 
 </Project>

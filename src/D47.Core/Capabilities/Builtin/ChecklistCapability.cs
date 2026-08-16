@@ -32,7 +32,7 @@ public static class ChecklistCapability
 
     public const string SummaryKey = "checklists.summary";
 
-    private static readonly string[] Groups = ["universal", "ship", "system"];
+    private static readonly string[] Groups = ["universal", "ship", "system", "suit", "weapon"];
 
     public static CapabilityDescriptor Create(ChecklistService checklists) => new()
     {
@@ -78,15 +78,18 @@ public static class ChecklistCapability
                         Name = "group",
                         Type = ToolParameterType.String,
                         Description =
-                            "Which list: universal, ship, or system. Omitted shows all of them. With no "
-                            + "name, ship and system mean the one the Commander is in right now.",
+                            "Which list: universal, ship, system, suit or weapon. Omitted shows all of "
+                            + "them. With no name, each means the one the Commander is in or carrying "
+                            + "right now.",
                         AllowedValues = Groups,
                     },
                     new ToolParameter
                     {
                         Name = "name",
                         Type = ToolParameterType.String,
-                        Description = "A specific ship id or star system, when the group is not the current one.",
+                        Description =
+                            "A specific ship id, star system, suit id or weapon id, when the group is not "
+                            + "the current one.",
                     },
                     new ToolParameter
                     {
@@ -101,7 +104,7 @@ public static class ChecklistCapability
                         Type = ToolParameterType.String,
                         Description =
                             "Only the Commander's own lines (authored), only the computed ones (derived), "
-                            + "or one plan's — engineeringPlan or colonisationPlan.",
+                            + "or one plan's — engineeringPlan, colonisationPlan or onFootPlan.",
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(checklists.Report(
@@ -253,6 +256,68 @@ public static class ChecklistCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Build(checklists, arguments))),
+            },
+
+            new ToolDefinition
+            {
+                Name = "plan_on_foot_build",
+                Description =
+                    "Propose what a suit's or a hand weapon's plan should say: a grade to buy at Pioneer "
+                    + "Supplies, and modifications to have an engineer fit. The grade always comes first "
+                    + "in the list, because a grade 1 item has no modification slots and an engineer's "
+                    + "base has no Pioneer Supplies. Modifications are permanent and there are four at "
+                    + "most, so propose them one at a time rather than in a batch. Totals are exact — "
+                    + "nothing on foot is rolled.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "equipment",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "The suit or weapon by name — \"Maverick\", \"Dominator\", \"Karma AR-50\".",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "grade",
+                        Type = ToolParameterType.Integer,
+                        Description =
+                            "The grade to reach, 2 to 5. Omit to leave the grade alone — on foot that "
+                            + "means no upgrade rather than any upgrade.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "modification",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "One modification to fit — \"Night Vision\", \"Magazine Size\". Permanent, so "
+                            + "one per proposal.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "item",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A suit id or weapon id. Omit for the suit being worn, or the one weapon "
+                            + "being carried.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "weapon",
+                        Type = ToolParameterType.Boolean,
+                        Description = "True when this is about a hand weapon rather than the suit.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "drop",
+                        Type = ToolParameterType.Boolean,
+                        Description =
+                            "Propose that the plan say nothing about this. What it already said is kept "
+                            + "as history rather than deleted.",
+                    },
+                ],
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(OnFoot(checklists, arguments))),
             },
 
             new ToolDefinition
@@ -428,6 +493,52 @@ public static class ChecklistCapability
             .Select(item => item.Intent!.Subject));
 
         return checklists.ProposePlan(scope, ChecklistSource.EngineeringPlan, items, subjects);
+    }
+
+    private static string OnFoot(ChecklistService checklists, ToolArguments arguments)
+    {
+        if (!arguments.TryGetString("equipment", out var equipment) || string.IsNullOrWhiteSpace(equipment))
+        {
+            return "No suit or weapon was named.";
+        }
+
+        var weapon = arguments.TryGetBoolean("weapon", out var isWeapon) && isWeapon;
+        var group = weapon ? "weapon" : "suit";
+
+        var scope = checklists.ScopeFor(
+            group, arguments.TryGetString("item", out var item) ? item : null);
+
+        if (scope.Group is not (ChecklistGroup.Suit or ChecklistGroup.Weapon))
+        {
+            return weapon
+                ? "I do not know which weapon that is — no on-foot loadout has arrived yet with exactly "
+                  + "one weapon in it, and none was named."
+                : "I do not know which suit that is — I have not seen you on foot yet, and none was named.";
+        }
+
+        var dropping = arguments.TryGetBoolean("drop", out var drop) && drop;
+
+        var grade = arguments.TryGetInt32("grade", out var wanted) ? wanted : (int?)null;
+        var modification = arguments.TryGetString("modification", out var fit) ? fit : null;
+
+        if (!dropping && grade is null && string.IsNullOrWhiteSpace(modification))
+        {
+            return "A plan for a suit or a weapon needs a grade or a modification.";
+        }
+
+        IReadOnlyList<ChecklistItem> items = dropping
+            ? []
+            : OnFootPlan.Items(
+                scope,
+                new OnFootRequest(
+                    equipment, grade, modification is { Length: > 0 } ? [modification] : null));
+
+        var said = checklists.ProposePlan(scope, ChecklistSource.OnFootPlan, items, [equipment]);
+
+        return dropping
+            ? said
+            : said + " Modifications are permanent: four slots at most, and a wrong one is "
+              + "recoverable only by buying and re-upgrading a fresh item.";
     }
 
     private static string Colonise(ChecklistService checklists, ToolArguments arguments)

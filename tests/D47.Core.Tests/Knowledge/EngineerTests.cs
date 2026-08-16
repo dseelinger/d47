@@ -367,9 +367,15 @@ public class EngineerTests
         // Odyssey suit and weapon blueprints are ungraded in the game, and the table carries that
         // as a zero. Nine engineers read "Suit to 0" before this, which is a defect on the face of
         // it rather than a fact.
+        //
+        // Phase 20 then went further: an on-foot speciality is the **modification's name** rather
+        // than the word "Suit". "Grades: Suit, Weapon" was true and said nothing — every one of the
+        // thirteen said exactly that — where the names are what a Commander asks by, and what makes
+        // the four Colonia engineers expressible at all.
         var answer = await Ask(Registry(), ("engineer", "Domino Green"));
 
-        Assert.Contains("Grades: Suit, Weapon.", answer, StringComparison.Ordinal);
+        Assert.Contains("Enhanced tracking", answer, StringComparison.Ordinal);
+        Assert.Contains("Extra backpack capacity", answer, StringComparison.Ordinal);
         Assert.DoesNotContain(" to 0", answer, StringComparison.Ordinal);
     }
 

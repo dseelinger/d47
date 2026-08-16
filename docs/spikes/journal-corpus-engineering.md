@@ -193,6 +193,13 @@ chain plus the Colonia convergence — which is a gap in the corpus rather than 
 
 ## 6. On-foot, which is thin but not empty
 
+> **Superseded and enlarged on 2026-08-16 by
+> [journal-corpus-on-foot.md](journal-corpus-on-foot.md).** Everything below still holds. What this
+> section got wrong is its scope: "thin" was true of the *events* and false of the *answers*. The
+> same corpus settles the locker cap, the barter rate, the credit cost of an upgrade — and that
+> EDEngineer's on-foot recipes are stale by factors of two and three, which is the one thing Phase 20
+> was most confident about.
+
 Four events, and three of them answer a question that was open:
 
 - **`SuitName` encodes the grade.** `explorationsuit_class1` / "Artemis Suit", across 768

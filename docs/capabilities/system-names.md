@@ -1,7 +1,7 @@
 ---
 title: System names
 group: Knowledge
-nav_order: 111
+nav_order: 112
 ---
 
 What a system's own name says about it — its sector, its boxel, and the mass code that sizes it.

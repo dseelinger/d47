@@ -33,6 +33,14 @@ the symbol appears in, so the classification is free.
 
 **`origins`** — where the thing is found, from EDEngineer's own sourcing table.
 
+**`settlements`, `buildings`, `containers`, `barter`** — the on-foot sourcing detail, which is
+richer than anything a ship material gets. `origins` for an Odyssey ingredient is coarse — 195
+of them say only `Planetary Settlement` — but the same file carries `SettlementType`,
+`BuildingType` (16 codes, AGRI to STO) and `ContainerType` (22 kinds of locker and data port),
+so "which settlement, which building, which locker" is answerable rather than approximated.
+`barter` is `value/cost`, present on exactly the 33 Components, and it makes the Bartender's
+rate arithmetic — see `OnFootRules.BarterYield`.
+
 Sources, and what each is the authority on
 ------------------------------------------
 `EDCD/FDevIDs` is the naming authority and, it turns out, carries almost everything:
@@ -48,7 +56,16 @@ a far better warrant than either alone, so this script asserts the agreement and
 ever breaks.
 
 `msarilar/EDEngineer` (MIT) `entryData.json` is the authority on **origins** — 365 of its
-371 entries carry `OriginDetails`, drawn from a vocabulary of 77 strings.
+371 entries carry `OriginDetails`, drawn from a vocabulary of 77 strings — and on the four
+on-foot columns above. It is read `utf-8-sig`: the file has a BOM and a plain `json.load`
+fails on it.
+
+**One barter figure is overruled.** Graphene is published at `BarterValue` 12 and the game
+charges 13. Two independent trades in a 912-journal corpus pin it to exactly that, and with
+the correction the published mechanic reproduces **49 of 49** real trades rather than 47 —
+`floor(sum(offered x value) / cost)`, no carry-over. The wrong number is the plausible one:
+cost runs `2*value - 1` for every component valued 3 to 6, which 12 fits and 13 does not. See
+`docs/spikes/journal-corpus-on-foot.md` §2.
 
 The join, and the trap in it
 ----------------------------
@@ -97,7 +114,14 @@ EDDISCOVERY = (
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 
-COLUMNS = ["symbol", "name", "ledger", "category", "grade", "line", "origins"]
+COLUMNS = ["symbol", "name", "ledger", "category", "grade", "line", "origins",
+           "settlements", "buildings", "containers", "barter"]
+
+# Measured against the game, which the published figure disagrees with. See the module
+# docstring; asserted below so a fix upstream retires this rather than double-counting.
+BARTER_CORRECTIONS = {"Graphene": 13}
+
+BLANK = ["", "", "", ""]
 
 # Which FDevIDs file a symbol appears in *is* its inventory. The four are disjoint — no
 # symbol appears in two — so this is a classification rather than a guess.
@@ -208,7 +232,7 @@ def check_lines(built: list[list[str]]) -> int:
     reverse: dict[str, set[str]] = {}
     unlined = []
 
-    for symbol, _name, ledger, _category, _grade, line, _origins in built:
+    for symbol, _name, ledger, _category, _grade, line, *_rest in built:
         if ledger != "material" or symbol not in theirs:
             continue
 
@@ -255,7 +279,10 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
     """
     entries = json.loads(fetch(EDENGINEER).decode("utf-8-sig"))
 
+    corrected: list[str] = []
+
     found: dict[tuple[str, str], str] = {}
+    onfoot: dict[str, list[str]] = {}
     spelled: set[str] = set()
     carrying: set[str] = set()
     collapsed = 0
@@ -266,6 +293,22 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
 
         if not name:
             continue
+
+        # The four on-foot columns, keyed on the name alone because they exist only for the
+        # Odyssey ingredients and those sit in one ledger.
+        value = entry.get("BarterValue")
+        cost = entry.get("BarterCost")
+
+        if value is not None and name in BARTER_CORRECTIONS:
+            corrected.append(f"{name}: BarterValue {value} -> {BARTER_CORRECTIONS[name]}")
+            value = BARTER_CORRECTIONS[name]
+
+        onfoot[name.casefold()] = [
+            "; ".join(entry.get("SettlementType") or []),
+            "; ".join(entry.get("BuildingType") or []),
+            "; ".join(entry.get("ContainerType") or []),
+            f"{value}/{cost}" if value is not None and cost is not None else "",
+        ]
 
         spelled.add(name)
 
@@ -289,7 +332,15 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
 
             found[key] = detail
 
-    return found, sorted(spelled), {e.get("Kind") or "" for e in entries}, collapsed, len(carrying)
+    if not corrected:
+        raise SystemExit(
+            "no barter figure needed correcting. If EDEngineer has been fixed upstream, delete "
+            "BARTER_CORRECTIONS — a correction that no longer matches anything is a rule nobody "
+            "can see is dead."
+        )
+
+    return (found, onfoot, sorted(spelled), {e.get("Kind") or "" for e in entries},
+            collapsed, len(carrying), corrected)
 
 
 def main() -> None:
@@ -297,7 +348,7 @@ def main() -> None:
     by_name: dict[str, list[str]] = {}
     counts: dict[str, int] = {}
 
-    sourced, spelled, kinds, collapsed, carrying = origins()
+    sourced, onfoot, spelled, kinds, collapsed, carrying, corrected = origins()
 
     unknown_kinds = kinds - set(KINDS)
     if unknown_kinds:
@@ -330,6 +381,10 @@ def main() -> None:
                 (row.get("rarity") or "").strip(),
                 line_of(kind, category) if ledger == "material" else "",
                 sourced.get((name.casefold(), ledger), ""),
+
+                # Blank for everything that is not an Odyssey ingredient, which is most of the
+                # table. Only the ship-locker ledger has any of this.
+                *(onfoot.get(name.casefold(), BLANK) if ledger == "ship-locker" else BLANK),
             ])
 
             by_name.setdefault(name, []).append(ledger)
@@ -364,7 +419,10 @@ def main() -> None:
         "# commodity, rare_commodity .csv). The line is cross-checked against EDDiscovery/",
         f"# EliteDangerousCore MCMRType.cs at {EDDISCOVERY_COMMIT[:12]} and the run fails if they",
         "# disagree. Origins from msarilar/EDEngineer entryData.json (MIT), joined on display",
-        "# name. Game data is Frontier's, used under their media usage rules — see NOTICE.",
+        "# name. The four on-foot columns come from the same file; barter is value/cost and sits",
+        "# on exactly the 33 Components. One barter figure is overruled against the game — see",
+        "# docs/spikes/journal-corpus-on-foot.md §2. Game data is Frontier's, used under their",
+        "# media usage rules — see NOTICE.",
         f"# Rows: {len(built)} ("
         + ", ".join(f"{ledger} {count}" for ledger, count in counts.items())
         + f"). Trader lines: {lines}. Built: {stamp}.",
@@ -387,6 +445,11 @@ def main() -> None:
           f"{len(unkeyed)} have no FDevIDs symbol -> {described} rows described "
           f"({collapsed} duplicate entries collapsed after checking they agree)")
     print(f"Aliases applied: {len(ALIASES)} — " + ", ".join(sorted(ALIASES)))
+
+    bartered = sum(1 for row in built if row[10])
+    detailed = sum(1 for row in built if row[8])
+    print(f"On foot: {detailed} rows carrying a building type, {bartered} carrying a barter rate")
+    print("Barter figures overruled against the game: " + ", ".join(corrected))
 
     if unkeyed:
         # Loud on purpose. Each of these is something EDEngineer models and FDevIDs has no

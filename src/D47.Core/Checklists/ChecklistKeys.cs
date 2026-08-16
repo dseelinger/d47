@@ -95,6 +95,8 @@ public static class ChecklistKeys
         ChecklistIntentKind.EngineerAccess => "eng",
         ChecklistIntentKind.Facility => "fac",
         ChecklistIntentKind.Commodity => "com",
+        ChecklistIntentKind.Grade => "grd",
+        ChecklistIntentKind.Modification => "fit",
         _ => "x",
     };
 

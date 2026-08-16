@@ -104,6 +104,62 @@ NOT_PEOPLE = "@"
 # speciality list — but it is the one piece of "who unlocks what" that has a source.
 UNLOCK = "Unlock"
 
+# EDEngineer's two on-foot blueprint types.
+ON_FOOT = {"Suit", "Weapon"}
+
+# The Odyssey unlock quantities are stale, and they are **stated rather than patched**.
+#
+# Frontier's 4.0.18.08 notes cut four of them and EDEngineer still carries the pre-patch numbers.
+# Correcting them per ingredient was tried and abandoned, because the two sources are not counting
+# the same thing: EDEngineer's Odyssey `Unlock` rows are **cumulative along the referral chain** —
+# the row that unlocks Kit Fowler carries Domino Green's Push ×5 as well as the Opinion Polls, and
+# the row that unlocks Wellington Beck carries Hero Ferrari's Settlement Defence Plans. Frontier's
+# notes are per engineer. So EDEngineer's 40 Opinion Polls is not a stale version of Frontier's 5;
+# it is a different quantity with a different meaning, and quietly replacing one with the other
+# would produce a number belonging to neither.
+#
+# This is the column whose failure wastes a Commander's trip rather than merely their materials, so
+# it says so out loud instead. Keyed the way `relax` leaves a name — lower case, no spaces.
+TRIBUTE_NOTES = {
+    "kitfowler":
+        "Frontier's update 4.0.18.08 cut Opinion Polls to 5; this list is EDEngineer's and is "
+        "cumulative along the chain, so check it before you fly",
+    "yardenbond":
+        "Frontier's update 4.0.18.08 cut Smear Campaign Plans to 5",
+    "wellingtonbeck":
+        "Frontier's update 4.0.18.08 cut Settlement Defence Plans to 5 and the three "
+        "entertainment kinds to 15 in total rather than 15 of each",
+    "odengeiger":
+        "EDEngineer's quantities here predate Frontier's update 4.0.18.08 and no per-engineer "
+        "figure was found for them",
+}
+
+# The four Colonia engineers are absent from EDEngineer entirely, and they are not data-less: they
+# carry the widest modification lists of the thirteen, so a Colonia Commander reaches nearly
+# everything through three of them where a Bubble Commander needs nine. Read from the Fandom
+# Engineers page at source on 2026-08-15 and recorded in
+# docs/spikes/on-foot-engineering-sources.md §6a, because that page answers 402 to an automated
+# fetch and so cannot be a source this script reads.
+#
+# Kept small and kept here rather than being folded into a table pretending EDEngineer supplied it.
+# The `colonia` provenance marker is emitted with the row so d47 can say where it came from.
+COLONIA = {
+    "baltanos": [
+        "Combat Movement Speed", "Improved Jump Assist", "Increased Air Reserves",
+        "Increased Sprint Duration", "Faster Handling", "Improved Hip Fire Accuracy",
+        "Noise Suppressor",
+    ],
+    "eleanorbresa": [
+        "Added Melee Damage", "Damage Resistance", "Extra Ammo Capacity", "Faster Shield Regen",
+        "Magazine Size", "Reload Speed", "Stowed Reloading",
+    ],
+    "rosadayette": [
+        "Enhanced Tracking", "Extra Backpack Capacity", "Improved Battery Capacity",
+        "Reduced Tool Battery Consumption", "Greater Range", "Scope", "Stability",
+    ],
+    "yishen": ["Night Vision", "Quieter Footsteps", "Audio Masking", "Headshot Damage"],
+}
+
 
 def relax(name: str) -> str:
     """A name reduced to what two sources can be expected to agree on.
@@ -148,6 +204,22 @@ def blueprints() -> tuple[dict[str, list[tuple[str, int]]], dict[str, str], set[
         if not kind:
             continue
 
+        if kind == UNLOCK:
+            # The row's *name* is the engineer being unlocked, on all 24 rows. The `Engineers`
+            # array is not, on six of them.
+            unlocked = relax((blueprint.get("Name") or "").strip())
+
+            tribute[unlocked] = ", ".join(
+                f"{(item.get('Name') or '').strip()} ×{item.get('Size') or 0}"
+                for item in blueprint.get("Ingredients") or []
+                if item.get("Name")
+            )
+
+            if unlocked in TRIBUTE_NOTES:
+                tribute[unlocked] += f" ({TRIBUTE_NOTES[unlocked]})"
+
+            continue
+
         for engineer in blueprint.get("Engineers") or []:
             if engineer.startswith(NOT_PEOPLE):
                 continue
@@ -156,17 +228,35 @@ def blueprints() -> tuple[dict[str, list[tuple[str, int]]], dict[str, str], set[
             key = relax(engineer)
 
             if kind == UNLOCK:
-                tribute[key] = ", ".join(
-                    f"{(item.get('Name') or '').strip()} ×{item.get('Size') or 0}"
-                    for item in blueprint.get("Ingredients") or []
-                    if item.get("Name")
-                )
+                # Deliberately NOT filed under `engineer`. See the loop below: an Unlock row is
+                # named for the engineer being unlocked, and its `Engineers` array names the
+                # engineer being unlocked on the 18 ship rows and the *referring* engineer on all
+                # six Odyssey ones. Filing on the array put every on-foot tribute one link down
+                # the chain — Kit Fowler asking for what Yarden Bond wants — and it read as
+                # correct because both are real engineers with real tributes.
                 continue
 
             # The top grade an engineer reaches on a module type is the number that decides
             # whether they are worth the trip. A list of every blueprint they offer is a
             # different document and not one anybody can hear read out.
-            best[key][kind] = max(best[key].get(kind, 0), grade)
+            #
+            # **On foot that reasoning inverts**, so the speciality is the modification's name.
+            # There is no grade to reach — a modification is present or absent — so "Suit:0,
+            # Weapon:0" was the whole of what the thirteen Odyssey engineers said about
+            # themselves, which is nothing. The names are what a Commander asks for by, and they
+            # are what the four Colonia engineers below carry too, so all thirteen read alike.
+            speciality = blueprint["Name"] if kind in ON_FOOT else kind
+            best[key][speciality] = max(best[key].get(speciality, 0), grade)
+
+    for unlocked in TRIBUTE_NOTES:
+        if unlocked not in tribute:
+            # A note attached to nobody is a warning that will never be read, which is worse
+            # than no warning at all.
+            raise SystemExit(f"a tribute note names {unlocked!r}, who has no unlock row")
+
+    print(f"Unlock tributes carrying a staleness note: {len(TRIBUTE_NOTES)}")
+    for unlocked in sorted(TRIBUTE_NOTES):
+        print(f"  {unlocked}")
 
     return (
         {key: sorted(kinds.items(), key=lambda pair: (-pair[1], pair[0])) for key, kinds in best.items()},
@@ -326,8 +416,12 @@ def main() -> None:
             # chain, and exactly the part that has no source.
             tribute.get(key, ""),
 
-            # "Frame Shift Drive:5" — the type and the top grade, comma separated.
-            ",".join(f"{kind}:{grade}" for kind, grade in (kinds or [])),
+            # "Frame Shift Drive:5" — the type and the top grade, comma separated. On foot the
+            # grade is 0, because a modification is ungraded: present or absent, never rolled.
+            # The four Colonia engineers have no EDEngineer rows at all, so theirs are the named
+            # modifications instead, marked so their provenance travels with them.
+            ",".join(f"{name}:0" for name in COLONIA[key]) if key in COLONIA
+            else ",".join(f"{kind}:{grade}" for kind, grade in (kinds or [])),
 
             # Who recommends them, and at what grade with that referrer. More than one name means
             # any of them will do. An empty grade beside a present referrer is the on-foot chain,
@@ -352,7 +446,13 @@ def main() -> None:
         "# blueprints.json (MIT). The referral chain, body, unlock prose and reputation route come",
         f"# from EDDiscovery/EliteDangerousCore Engineers.cs at {EDDISCOVERY_COMMIT[:12]} — C# source, not",
         "# data, so the run asserts all 38 rows parse rather than half-populating the table. Bill",
-        "# Turner's referrer is an explicit override; see the script. Game data is Frontier's, used",
+        "# Turner's referrer is an explicit override; see the script. An Unlock row is filed under",
+        "# the engineer it NAMES, not the ones in its Engineers array — those are the referrer on",
+        "# all six Odyssey rows, and filing on them put every on-foot tribute one link down the",
+        "# chain. Odyssey tributes are EDEngineer's, are cumulative along the chain, and are stale",
+        "# since Frontier update 4.0.18.08 — four carry a note saying so. The four Colonia",
+        "# engineers have no EDEngineer rows at all and their modification lists were read from the",
+        "# wiki; see tools/gen-engineers.py. Game data is Frontier's, used",
         "# under their media usage rules — see NOTICE.",
         f"# Engineers: {len(built)}.",
         "\t".join(COLUMNS),

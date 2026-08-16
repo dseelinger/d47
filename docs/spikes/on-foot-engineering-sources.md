@@ -87,6 +87,15 @@ The upgrade tiers are strictly patterned: G2 uses 1/5, G3 uses 5/15, G4 uses 10/
 **So an on-foot build's material cost is exactly and completely knowable.** No floor, no estimate,
 no caveat. That is a stronger answer than the ship side can give even now.
 
+> **True, and not from these numbers. Measured 2026-08-16 against the game itself.** Every size above
+> is pre-patch. The game charges `⌈size ÷ 2⌉` for a modification — 5/10/15 become **3/5/8** — and
+> `⌈size ÷ 3⌉` for a grade upgrade — 1/5/10/15/25/35 become **1/2/4/5/9/12** — and it no longer asks
+> for Power Regulators at all. 78 ingredient comparisons on the upgrade ladder and a zero-remainder
+> cover of 41 material lines on the mod ladder, corroborated by two independent mechanisms. See
+> [journal-corpus-on-foot.md](journal-corpus-on-foot.md) §3. **The staleness §4 found in the unlock
+> column runs through the whole file**, which is the part worth carrying forward: EDEngineer is the
+> right source for *what* a recipe contains and the wrong one for *how much*.
+
 Ingredient counts per blueprint are 4–6 for on-foot against a ship mode of 3.
 
 ## 4. The unlock chain is partly sourceable — and the ship half caught up
@@ -177,6 +186,12 @@ BAR, CBN, CMD, DORM, EXT, HAB, IND, LAB, MED, OPR, PROC, PWR, RES, SEC, STO) and
 matches the game rule that only Components can be bartered. Whether those two numbers compose into a
 usable exchange rate is untested and is the most promising lead d47 has for a conversion table it
 never got for ship materials.
+
+> **Tested 2026-08-16 and they do**, against 49 real trades:
+> `floor(Σ(offered × BarterValue) ÷ BarterCost(wanted))`, with no carry-over between trades. Exact on
+> 47 of 49 as published and **49 of 49** once Graphene's `BarterValue` is read as 13 rather than 12 —
+> a figure two independent trades pin to exactly that. See
+> [journal-corpus-on-foot.md](journal-corpus-on-foot.md) §2.
 
 ## 6a. The complete mod-to-engineer map — confirmed at source
 
@@ -283,13 +298,47 @@ search stopped, so the next person starts further along.
 |---|---|
 | ~~**No suit or weapon ids in any checked source.**~~ **Found 2026-08-15** | **EDDiscovery/EliteDangerousCore** (Apache-2.0) has both: `Items/Suits.cs` keyed on the `SuitFDName` the journal writes, and `Items/HandItems.cs` for hand weapons. Independently confirmed by 768 `SuitLoadout` events, which also settle that **`SuitName` encodes the grade** (`explorationsuit_class1`). FDevIDs still has neither, so the journal remains the id authority and EDDiscovery is the name and stat join |
 | **Base stats for suits and weapons** — partially found, and weaker than it looks | EDDiscovery carries per-grade `SuitStats` and `WeaponStats`, but with **per-figure provenance that varies**: `rob checked 20/8/21 for all suits to class 3 in game, class 4/5 according to wiki`, and one weapon row annotated `TBD Guess at same muliplier of 1.25`. It also has a transcription bug — `SuitStats` assigns the health multipliers to the shield multiplier fields. Usable as a lead, not as a table to copy. Inara's per-item ladders remain the unharvested cross-check |
-| **Weapon** mod effect values, and a *current* source for the suit ones | The suit 14 are found (§6c) but from a 2022 compilation that predates a recipe-changing patch. No weapon-mod guide turned up in this pass. Per-weapon Inara pages, and the in-game engineer screen, are both untried |
-| **Ship-locker cap: 1000 per category, or per item type?** Sources conflict | Still open, and the 912-journal corpus does not answer it — `ShipLocker.json` is a state file rather than a journal event, so it was not in the extract. EDDiscovery's `SuitStats` carries `ItemCap`, `ComponentCap` and `DataCap` per suit, but those are the **backpack**, not the locker, and conflating the two would produce a confident wrong number. A full locker plus its `ShipLocker.json` still settles it |
+| ~~**Weapon** mod effect values, and a *current* source for the suit ones~~ **Found 2026-08-16** | The **Fandom page for each of the 25 modifications** carries its in-game description, its effect as a percentage, its full material cost and its credit price, for weapons as well as suits. It is a per-page source rather than the compilation §6c was working from, and it is current where that one is a 2022 snapshot. §6d records what it says and where it disagrees with itself |
+| ~~**Ship-locker cap: 1000 per category, or per item type?**~~ **Answered 2026-08-16: per category** | The reasoning that closed this row was wrong twice over. `ShipLocker.json` is indeed a state file — but Elite *also* writes a `ShipLocker` **event** carrying the whole locker, 28,148 times in the very corpus that was declared unable to help. Components total exactly 1,000 in 7,931 snapshots and never more, with the largest single component at 94. See [journal-corpus-on-foot.md](journal-corpus-on-foot.md) §1. EDDiscovery's `ItemCap`/`ComponentCap`/`DataCap` are still the **backpack** and still must not be conflated with this |
 | **Anything post-Operations** (30 June 2026) beyond the reward list | The Operations page itself is now read (§6c). What remains is whether Operations changed any *mechanic* rather than adding a currency — the update notes thread, in a browser |
 | **Whether Merc Coin on-foot gear mods are grade-upgradeable at an engineer** | One unverified forum comment suggests so, which would be a genuinely new mechanic. Official Operations notes, read directly |
 
 
+**One more row was struck on 2026-08-16**, again by opening a page in a browser: the per-modification
+Fandom pages are the current source §6c wanted, and they cover weapons.
+
 **Four rows were struck from this table on 2026-08-15** by opening pages in a browser rather than fetching them: the full mod-to-engineer map (§6a), the four Colonia engineers (§6a), whether grade upgrades cost credits (§6b) and the barter rate (§6b). They are left described in those sections rather than deleted, because the reason they were ever open is the useful part.
+## 6d. The per-modification pages — current, and inconsistent with themselves
+
+Read at source on 2026-08-16, in a browser, because `elite-dangerous.fandom.com` still answers **402**
+to an automated fetch. The category page lists exactly **25** modifications and each has its own page
+carrying an in-game description, an effect figure, a full material cost and a credit price.
+
+**The material costs corroborate the corpus measurement, independently.** Magazine Size reads
+*3 Weapon Component, 3 Tungsten Carbide, 5 Metal Coil, 5 Weapon Test Data, 3 Security Expenses*, and
+Quieter Footsteps *3 Settlement Assault Plans, 5 Tactical Plans, 5 Patrol Routes, 3 Micro Hydraulics,
+8 Viscoelastic Polymer* — every quantity exactly what
+[journal-corpus-on-foot.md](journal-corpus-on-foot.md) §3 measured out of real `ShipLocker` deltas,
+and every one exactly half of EDEngineer's. Two sources that cannot have copied each other agreeing
+on a number neither of them explains is the strongest warrant this investigation has produced.
+
+**And the page set is only partly updated, which is worth knowing before trusting a row of it.**
+*Greater Range* has three per-manufacturer recipes and they do not agree with each other about which
+patch they are from: the **Takada** section carries the halved figures, and the **Kinematic** and
+**Manticore** sections carry EDEngineer's pre-patch ones byte for byte. That is a stale page section
+rather than a counter-example — where the game itself was measured it is always halved — but it means
+a row of this source is corroboration and never authority.
+
+Credit prices seen so far: Greater Range **500,000**, Magazine Size **750,000**, Quieter Footsteps
+**1,000,000**. Those fall in the same three tiers §6c found for suits, from a completely different
+page, which is a small corroboration of that compilation too.
+
+**Weapon modification effects exist here and nowhere else found**, which closes §7's longest-standing
+row: Magazine Size is *+50%*, and the pages state a figure for each. They are not shipped, because
+this pass read four of twenty-five pages and quoting four effects as though the set were complete is
+the failure mode this whole document is written against. **The next sitting is the remaining
+twenty-one**, and it is cheap: one page each, no login, no fetcher to argue with.
+
 ## 7a. EDOMH — MIT source, and the data is deliberately not in it
 
 [`jixxed/ed-odyssey-materials-helper`](https://github.com/jixxed/ed-odyssey-materials-helper) does

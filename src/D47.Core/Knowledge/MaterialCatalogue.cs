@@ -76,8 +76,43 @@ public sealed record MaterialEntry
     /// <summary>Where it is found, as EDEngineer's sourcing table puts it. Empty for the rest.</summary>
     public IReadOnlyList<string> Origins { get; init; } = [];
 
+    /// <summary>
+    /// Which kinds of settlement hold it — High Tech, Industrial, Research, Tourist, or ALL.
+    /// Empty for anything that is not an Odyssey ingredient.
+    /// </summary>
+    public IReadOnlyList<string> Settlements { get; init; } = [];
+
+    /// <summary>
+    /// Which buildings within a settlement hold it, as Frontier's own 16 codes — AGRI, LAB, PROC
+    /// and the rest.
+    /// <para>
+    /// <b>This is the detail no ship material gets.</b> The best <see cref="Origins"/> can do for
+    /// an Odyssey ingredient is "Planetary Settlement", which it says for 195 of them; this and
+    /// <see cref="Containers"/> are what turn that into a place to walk to.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> Buildings { get; init; } = [];
+
+    /// <summary>Which lockers and data ports inside those buildings hold it.</summary>
+    public IReadOnlyList<string> Containers { get; init; } = [];
+
+    /// <summary>
+    /// What the Bartender gives for handing one over. Present on exactly the 33 Components,
+    /// because those are the only micro-resources that can be exchanged at all.
+    /// </summary>
+    public int? BarterValue { get; init; }
+
+    /// <summary>What the Bartender charges in barter value for one of these.</summary>
+    public int? BarterCost { get; init; }
+
     /// <summary>Whether a material trader will deal in it. Only a material with a line.</summary>
     public bool IsTradeable => Ledger == MaterialLedger.Material && Line is not null;
+
+    /// <summary>
+    /// Whether the Bartender will exchange it. Components only — Items and Data are sold for
+    /// credits and cannot be traded for, which is a different answer from "no rate is known".
+    /// </summary>
+    public bool IsBarterable => BarterValue is not null && BarterCost is not null;
 }
 
 /// <summary>
@@ -234,7 +269,22 @@ public static class MaterialCatalogue
         Grade = Integer(cells, 4),
         Line = Text(cells, 5),
         Origins = Origins(cells, 6),
+        Settlements = Origins(cells, 7),
+        Buildings = Origins(cells, 8),
+        Containers = Origins(cells, 9),
+        BarterValue = Barter(cells, 0),
+        BarterCost = Barter(cells, 1),
     };
+
+    /// <summary>
+    /// One half of the <c>value/cost</c> cell. Both or neither: a value with no cost prices
+    /// nothing, and the generator only ever writes the pair.
+    /// </summary>
+    private static int? Barter(string[] cells, int half) =>
+        Text(cells, 10)?.Split('/') is { Length: 2 } parts
+        && int.TryParse(parts[half], CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
 
     /// <summary>
     /// The four inventories, spelled as the generator writes them. A closed set, so an

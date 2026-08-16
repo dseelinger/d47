@@ -1,7 +1,7 @@
 ---
 title: Checklists
 group: Knowledge
-nav_order: 109
+nav_order: 110
 ---
 
 One list of what you are working on. Your own lines, your ship builds and your construction sites
@@ -234,7 +234,7 @@ Reads the list. Open items by group, then what is done with its count, then anyt
 you. Derived items carry the journal's verdict as of right now.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list: universal, ship, or system. Omitted shows all of them. With no name, ship and system mean the one the Commander is in right now.","enum":["universal","ship","system"]},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan or colonisationPlan."},"name":{"type":"string","description":"A specific ship id or star system, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list: universal, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["universal","ship","system","suit","weapon"]},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
 ```
 
 ### `get_plan_shortfall`
@@ -252,7 +252,7 @@ still wants delivered.
 Proposes a line in your own words. **Proposes** — it is not added until you agree.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to universal.","enum":["universal","ship","system"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"text":{"type":"string","description":"The line, as the Commander would say it."}},"required":["text"],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to universal.","enum":["universal","ship","system","suit","weapon"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"text":{"type":"string","description":"The line, as the Commander would say it."}},"required":["text"],"additionalProperties":false}
 ```
 
 ### `propose_checklist_change`
@@ -273,6 +273,20 @@ other slots alone.
 
 ```json
 {"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 \u0022Dirty Drive Tuning\u0022. Omit for any."},"drop":{"type":"boolean","description":"Propose that the plan say nothing about this slot. What it already said is kept as history rather than deleted."},"engineer":{"type":"string","description":"Who would roll it. Naming one is what lets D47 quote an exact roll count and say when a grade is out of rank reach entirely."},"experimental":{"type":"string","description":"An experimental effect, which becomes its own item on the same slot."},"grade":{"type":"integer","description":"1 to 5. Omit for any grade \u2014 that is a wildcard, not an unknown."},"ship":{"type":"string","description":"A ship id. Omit for the one the Commander is flying."},"slot":{"type":"string","description":"The slot or the module \u2014 \u0022MainEngines\u0022, \u0022thrusters\u0022, \u0022Slot01_Size4\u0022."}},"required":["slot"],"additionalProperties":false}
+```
+
+### `plan_on_foot_build`
+
+Proposes what a **suit's or a hand weapon's** plan should say. The grade comes first in the list,
+because a grade 1 item has no modification slots and an engineer's base has no Pioneer Supplies —
+so "upgrade first" is a step in the order rather than advice under it.
+
+One modification per proposal, deliberately. They are permanent, four at most, and a wrong one is
+recoverable only by buying and re-upgrading a fresh item, so a batch is the wrong shape for a
+decision this hard to undo.
+
+```json
+{"type":"object","properties":{"drop":{"type":"boolean","description":"Propose that the plan say nothing about this. What it already said is kept as history rather than deleted."},"equipment":{"type":"string","description":"The suit or weapon by name \u2014 \u0022Maverick\u0022, \u0022Dominator\u0022, \u0022Karma AR-50\u0022."},"grade":{"type":"integer","description":"The grade to reach, 2 to 5. Omit to leave the grade alone \u2014 on foot that means no upgrade rather than any upgrade."},"item":{"type":"string","description":"A suit id or weapon id. Omit for the suit being worn, or the one weapon being carried."},"modification":{"type":"string","description":"One modification to fit \u2014 \u0022Night Vision\u0022, \u0022Magazine Size\u0022. Permanent, so one per proposal."},"weapon":{"type":"boolean","description":"True when this is about a hand weapon rather than the suit."}},"required":["equipment"],"additionalProperties":false}
 ```
 
 ### `plan_colonisation`

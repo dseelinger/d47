@@ -169,14 +169,31 @@ clock running again.
 was picked up — the update check and the installer, the latter pulled forward out of order because
 the Commander was unpacking archives by hand in the meantime.
 
-## Phase 20 — On-foot engineering — **next**
+## ~~Phase 20 — On-foot engineering~~ — complete 2026-08-16
 
-Well specced, with its own spike and a sources document already written. It is a whole second
-engineering domain, and it ranks here rather than higher for one reason: it is worth the most to a
-Commander who plays on foot, and least to one who does not. That is a question about the maintainer's
-own play, not about the code.
+**"Well specced" turned out to mean well specced against a source that was wrong.** The phase's own
+spike ran first — the Phase 16 lesson applied inside a phase — and it overturned the item this phase
+was most confident about: *"the material cost of an on-foot build is exactly and completely
+knowable"*. It is, and not from EDEngineer's numbers, every one of which predates the patch that cut
+them. Shipping them would have quoted two to three times the real cost of everything on foot while
+agreeing with every other tool.
 
-## Phase 21 — HOTAS switches
+**Running the spike first is the whole reason that was caught.** Had it run in item order, four items
+would have been built on the published figures and the correction would have arrived as a rewrite
+rather than as a generator change. See
+[phase-20-on-foot-engineering.md](phase-20-on-foot-engineering.md).
+
+**Two of the six came back different in the same direction, and it is the direction the last three
+phases keep coming back in: the thing being feared was not the thing that was wrong.** The spike was
+written to answer the locker cap and the barter rate, and its two biggest results were the recipe
+staleness and the credit multiplier, neither of which anybody had asked about. *Who unlocks whom* was
+ranked for its stale quantities and its real defect was an attribution bug that had every Odyssey
+tribute filed one link down the referral chain — reading as correct, because both ends of every
+mis-filing are real engineers with real tributes.
+
+**Release:** `v0.15.0`, following `v0.14.0`.
+
+## Phase 21 — HOTAS switches — **next**
 
 Fully specced, and the hardest to verify — it needs the physical hardware in front of whoever is
 building it, and the failure modes are all about a switch and the game disagreeing. Narrow audience
