@@ -326,8 +326,12 @@
           The text is selectable and Ctrl+C already works on a selection; this is the case that
           is tedious by hand — several hundred lines of a log, to paste into an issue.
         -->
+        <!-- Centred like everything else in this row. Without it the button takes the strip's
+             full height and its label sits wherever the stack put it, which beside a 28-pixel
+             search box reads as one control hanging lower than its neighbours. -->
         <Button x:Name="CopyButton"
                 Height="28"
+                VerticalAlignment="Center"
                 Padding="10,0"
                 FontSize="{StaticResource D47.Type.Secondary}"
                 Content="Copy"

@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
@@ -89,5 +90,84 @@ public class MaterialGradeTests
         {
             Assert.NotNull(MaterialGrades.CapacityOf(name));
         }
+    }
+}
+
+/// <summary>
+/// A holding never runs past what the game will hold
+/// (remediation.md, "Adaptive Encryptors Capture is full. 109 of 100").
+/// <para>
+/// The inventory is a snapshot plus deltas, and d47 is usually started after Elite — so it sees
+/// spending it never saw collected, and collecting it never saw spent. It has always floored at
+/// zero for the first of those. "109 of 100" is the second, and it is a number the game cannot
+/// produce: a Commander reading it learns only that d47 is wrong.
+/// </para>
+/// </summary>
+public class AHoldingStaysInsideItsCapacityTests
+{
+    private static JournalEvent Event(string json)
+    {
+        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
+
+    private static MaterialsInventory After(params string[] lines)
+    {
+        var inventory = MaterialsInventory.Empty;
+
+        foreach (var line in lines)
+        {
+            inventory = inventory.Apply(Event(line));
+        }
+
+        return inventory;
+    }
+
+    /// <summary>Adaptive Encryptors is grade 5: a hundred of them and no more.</summary>
+    [Fact]
+    public void CollectingPastTheCapStopsAtTheCap()
+    {
+        var inventory = After(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[],"Manufactured":[],"Encoded":[{"Name":"adaptiveencryptors","Count":100}]}""",
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialCollected","Category":"Encoded","Name":"adaptiveencryptors","Count":9}""");
+
+        Assert.Equal(100, inventory.Find("adaptiveencryptors")?.Count);
+    }
+
+    /// <summary>The floor it has always had, asserted beside the ceiling it now has.</summary>
+    [Fact]
+    public void SpendingPastZeroStopsAtZero()
+    {
+        var inventory = After(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":2}],"Manufactured":[],"Encoded":[]}""",
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialDiscarded","Category":"Raw","Name":"iron","Count":9}""");
+
+        Assert.Equal(0, inventory.Find("iron")?.Count);
+    }
+
+    /// <summary>
+    /// A material the grade table does not recognise has no ceiling rather than a guessed one —
+    /// the same answer the milestone callout gives, for the same reason.
+    /// </summary>
+    [Fact]
+    public void SomethingWithNoKnownCapacityIsNotClamped()
+    {
+        var inventory = After(
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialCollected","Category":"Raw","Name":"notarealmaterial","Count":500}""");
+
+        Assert.Equal(500, inventory.Find("notarealmaterial")?.Count);
+    }
+
+    /// <summary>
+    /// And a snapshot is believed as written. It is the game stating the whole inventory, and
+    /// second-guessing it would be d47 disagreeing with the only authority there is.
+    /// </summary>
+    [Fact]
+    public void ASnapshotIsTakenAsGiven()
+    {
+        var inventory = After(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[],"Manufactured":[],"Encoded":[{"Name":"adaptiveencryptors","Count":109}]}""");
+
+        Assert.Equal(109, inventory.Find("adaptiveencryptors")?.Count);
     }
 }

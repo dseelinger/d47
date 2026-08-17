@@ -185,7 +185,8 @@ public sealed class VoicePipeline(
         VoiceSelection? voice = null,
         string group = "announcement",
         Func<AudioClip, AudioClip>? colour = null,
-        string? speaker = null)
+        string? speaker = null,
+        bool captioned = true)
     {
         if (Tts is not { } provider)
         {
@@ -205,7 +206,8 @@ public sealed class VoicePipeline(
             loggers.CreateLogger<SpeechPipeline>(),
             channel,
             colour,
-            speaker);
+            speaker,
+            captioned);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
@@ -285,7 +287,13 @@ public sealed class VoicePipeline(
                 // the voice down is being able to tell two senders apart.
                 speaker: announcement.Speaker is { Length: > 0 } named
                     ? named
-                    : announcement.Voice.ToString())
+                    : announcement.Voice.ToString(),
+
+                // Anything already written onto the comms page is not also captioned. That is the
+                // same property rather than a second list: Transcript is non-null exactly for a
+                // re-voiced in-game message, which is the traffic the request is about
+                // (remediation.md, "NPC speech does not need captioning").
+                captioned: announcement.Transcript is null)
             .ConfigureAwait(false);
     }
 

@@ -35,10 +35,18 @@ public sealed record MaterialHolding(string Name, MaterialCategory Category, int
 /// d47 confidently reporting a stock that was spent last session.
 /// </para>
 /// <para>
-/// Deltas are clamped at zero rather than allowed to go negative. A journal that starts
-/// mid-session — d47 launched after Elite, which is the common case — will report materials
-/// being spent that were never seen being collected, and a negative holding is a worse answer
-/// than an understated one.
+/// Deltas are clamped at both ends rather than allowed to run past what the game permits. A
+/// journal that starts mid-session — d47 launched after Elite, which is the common case — will
+/// report materials being spent that were never seen being collected, and collected that were
+/// never seen being spent. A negative holding is a worse answer than an understated one, and
+/// <b>"109 of 100" is a worse answer than an overstated one</b>: it is a number the game cannot
+/// produce, so a Commander reading it knows only that d47 is wrong
+/// (remediation.md, "Adaptive Encryptors Capture is full. 109 of 100").
+/// </para>
+/// <para>
+/// The ceiling comes from <see cref="MaterialGrades"/>, which is where capacity already lives,
+/// and a material it does not recognise has no ceiling rather than a guessed one — the same
+/// answer the milestone callout gives for the same reason.
 /// </para>
 /// </summary>
 public sealed record MaterialsInventory
@@ -208,9 +216,14 @@ public sealed record MaterialsInventory
         var updated = new Dictionary<string, MaterialHolding>(Holdings, StringComparer.OrdinalIgnoreCase);
         var existing = Holdings.GetValueOrDefault(name);
 
-        // Clamped, per the note on this type: d47 started mid-session sees spending it never
-        // saw collected, and a negative stock is a worse answer than an understated one.
+        // Clamped at both ends, per the note on this type. A snapshot is authoritative and is
+        // not put through here; only deltas are, and only a delta can drift.
         var count = Math.Max(0, (existing?.Count ?? 0) + delta);
+
+        if (MaterialGrades.CapacityOf(name) is { } capacity && capacity > 0)
+        {
+            count = Math.Min(count, capacity);
+        }
 
         updated[name] = new MaterialHolding(
             name,

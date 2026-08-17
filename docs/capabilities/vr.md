@@ -166,11 +166,27 @@ running* look identical from the outside unless something says which.
 
 ### `get_headset_status`
 
-Reports whether D47 is showing in the headset, and if not, why not. Takes no arguments.
+Reports whether D47 is showing in the headset, and if not, why not. Reports only. Takes no
+arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
+
+### `show_in_headset`
+
+Shows D47 in the headset, or stops showing it — the same row as the switch above, reached by
+voice. It answers with the *status* rather than an acknowledgement, because switching it on is
+not the same as it appearing: with no runtime installed the setting takes and nothing shows.
+
+```json
+{"type":"object","properties":{"on":{"type":"boolean","description":"True to show D47 in the headset, false to leave SteamVR alone."}},"required":["on"],"additionalProperties":false}
+```
+
+It exists because asking to see the panel used to reach `get_headset_status`, that being the only
+headset-shaped thing on the surface — so *"show the VR panel"* was answered with *"the overlays
+are dark, Commander"*, which is true and is not what was asked. `set_setting` could always have
+done it; nothing pointed at that.
 
 An *overlay* application, never a scene one — that is what keeps D47 clear of anything resembling
 game injection. Elite renders through OpenVR, which is why this is OpenVR and not OpenXR.

@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Media.Imaging;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
 
@@ -80,10 +81,41 @@ public sealed class OffscreenSurface : IDisposable
     /// Lays the view out and rasterises it. Runs on the UI thread — a <c>Visual</c> is thread
     /// affine and the layout pass is the dispatcher's.
     /// </summary>
-    public RenderTargetBitmap Render()
+    /// <param name="settle">
+    /// Run between the layout pass and the rasterise, for anything that can only be decided once
+    /// the tree has a size — and then laid out again, because what it decides is a position.
+    /// <para>
+    /// The panel's "follow the newest line" is the case this exists for. It scrolls to the end of
+    /// the extent the scroll viewer currently knows about, and calls <c>UpdateLayout</c> first to
+    /// make sure that extent is current — which, on a window that is never shown, does nothing at
+    /// all. So it scrolled to the end of an extent equal to the viewport, which is offset zero,
+    /// and the headset showed the oldest lines of the transcript for the whole session
+    /// (remediation.md, "The Newest button in VR does not appear to work").
+    /// </para>
+    /// </param>
+    public RenderTargetBitmap Render(Action? settle = null)
     {
         var bounds = new Rect(0, 0, _size.Width, _size.Height);
 
+        Layout(bounds);
+
+
+        if (settle is not null)
+        {
+            settle();
+
+            // Again, because what settling decides is where things sit rather than how big they
+            // are, and a scroll offset is applied by an arrange.
+            Layout(bounds);
+        }
+
+        _target!.Render(_view);
+        return _target;
+    }
+
+    /// <summary>One full layout pass over the offscreen tree.</summary>
+    private void Layout(Rect bounds)
+    {
         // <b>Every element is invalidated first, and that is the fix rather than a precaution.</b>
         //
         // Measure short-circuits on a control that is already valid, and a control that changed
@@ -116,9 +148,6 @@ public sealed class OffscreenSurface : IDisposable
         _root.Arrange(bounds);
         _view.Measure(bounds.Size);
         _view.Arrange(bounds);
-
-        _target!.Render(_view);
-        return _target;
     }
 
     /// <summary>
@@ -232,6 +261,121 @@ public sealed class OffscreenSurface : IDisposable
             }
         }
     }
+
+    /// <summary>
+    /// How far from a scrollbar a ray may land and still count as being on it, in surface
+    /// pixels.
+    /// <para>
+    /// A scrollbar is about a dozen pixels wide and a hand at arm's length in a headset does not
+    /// hold still to a dozen pixels. This is deliberately far more than the bar itself: the
+    /// nearest scrollbar within this distance is the one being aimed at, because on this panel
+    /// there is nothing else along that edge to confuse it with
+    /// (remediation.md, "Scrollbars in VR should be usable with a controller").
+    /// </para>
+    /// </summary>
+    public const double AimTolerance = 28;
+
+    /// <summary>
+    /// The vertical scrollbar a ray at this point is aiming at, or null.
+    /// <para>
+    /// Distance to the bar's rectangle rather than containment, which is the whole of what makes
+    /// this usable: the Commander points at roughly the right edge and the nearest bar within
+    /// <see cref="AimTolerance"/> takes it.
+    /// </para>
+    /// </summary>
+    public ScrollBar? ScrollbarNear(Point at)
+    {
+        ScrollBar? nearest = null;
+        var closest = AimTolerance;
+
+        foreach (var bar in _view.GetVisualDescendants().OfType<ScrollBar>())
+        {
+            if (!bar.IsVisible || bar.Orientation != Orientation.Vertical || bar.Maximum <= 0)
+            {
+                continue;
+            }
+
+            if (bar.TranslatePoint(new Point(0, 0), _view) is not { } corner)
+            {
+                continue;
+            }
+
+            var box = new Rect(corner, bar.Bounds.Size);
+            var away = Distance(box, at);
+
+            if (away <= closest)
+            {
+                closest = away;
+                nearest = bar;
+            }
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    /// Puts a bar where the ray is pointing along it, top to bottom.
+    /// <para>
+    /// The position along the bar <em>is</em> the position in the document, rather than the drag
+    /// being relative to where a thumb was grabbed. Absolute is the forgiving one in a headset:
+    /// there is no thumb to catch, nothing to miss, and letting go and taking hold again does not
+    /// jump.
+    /// </para>
+    /// </summary>
+    public static void Aim(ScrollBar bar, Control within, Point at)
+    {
+        if (bar.TranslatePoint(new Point(0, 0), within) is not { } corner || bar.Bounds.Height <= 0)
+        {
+            return;
+        }
+
+        var along = Math.Clamp((at.Y - corner.Y) / bar.Bounds.Height, 0, 1);
+
+        bar.Value = bar.Minimum + ((bar.Maximum - bar.Minimum) * along);
+    }
+
+    /// <summary>Shortest distance from a point to a rectangle, and zero inside it.</summary>
+    private static double Distance(Rect box, Point at)
+    {
+        var across = Math.Max(Math.Max(box.X - at.X, at.X - box.Right), 0);
+        var down = Math.Max(Math.Max(box.Y - at.Y, at.Y - box.Bottom), 0);
+
+        return Math.Sqrt((across * across) + (down * down));
+    }
+
+    /// <summary>
+    /// Lights the control a ray is resting on, and puts out whatever it was resting on before.
+    /// <para>
+    /// Set as a pseudo-class rather than through the input manager, for the same reason the hit
+    /// test here is geometric: the input manager decides <c>:pointerover</c> from the renderer,
+    /// and the renderer for a window that is never shown answers nothing. A scrollbar that does
+    /// not light up when aimed at is a scrollbar the Commander cannot tell they have found.
+    /// </para>
+    /// </summary>
+    public void Illuminate(Control? control)
+    {
+        if (ReferenceEquals(control, _lit))
+        {
+            return;
+        }
+
+        if (_lit is not null)
+        {
+            ((IPseudoClasses)_lit.Classes).Set(":pointerover", false);
+        }
+
+        _lit = control;
+
+        if (_lit is not null)
+        {
+            ((IPseudoClasses)_lit.Classes).Set(":pointerover", true);
+        }
+    }
+
+    private Control? _lit;
+
+    /// <summary>The view a point is expressed in, for callers that need to translate into it.</summary>
+    public Control View => _view;
 
     /// <summary>
     /// One id for every synthetic press, because there is exactly one thing pointing at this

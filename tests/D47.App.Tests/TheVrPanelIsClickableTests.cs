@@ -116,4 +116,51 @@ public class TheVrPanelIsClickableTests
 
         return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pixels));
     }
+
+    /// <summary>
+    /// The jump-to-latest control, pressed from a headset
+    /// (remediation.md, "The Newest button in VR does not appear to work").
+    /// </summary>
+    [AvaloniaFact]
+    public void PressingJumpToLatestFollowsAgain()
+    {
+        var model = new PanelViewModel();
+
+        for (var line = 0; line < 200; line++)
+        {
+            model.Append($"Line {line} of the transcript, long enough to wrap once or twice.\n");
+        }
+
+        var view = new PanelView { DataContext = model };
+        using var surface = new OffscreenSurface(view, Quad);
+
+        // Twice: the first pass is what gives the tree an extent, and following is asserted
+        // against it on the pass after.
+        surface.Render(view.KeepUp);
+        surface.Render(view.KeepUp);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var scroller = view.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .First(found => found.Name == "TranscriptScroller");
+
+        // The headset shows the newest lines, which is the half of this that was silently wrong:
+        // it sat at the top of a 3,271-pixel transcript through a whole session.
+        Assert.True(scroller.Offset.Y > 0, "the transcript follows the newest line");
+
+        // Scrolled back through the log, which is when the control appears at all.
+        scroller.Offset = new Vector(0, 0);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        surface.Render();
+
+        var follow = view.GetVisualDescendants().OfType<Button>().First(found => found.Name == "FollowButton");
+
+        Assert.True(follow.IsVisible, "the control is offered once the reader is behind");
+
+        Assert.True(surface.Click(Centre(view, follow)), "the press landed on something");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        surface.Render(view.KeepUp);
+
+        Assert.True(scroller.Offset.Y > 0, "it scrolled back to the newest line");
+    }
 }

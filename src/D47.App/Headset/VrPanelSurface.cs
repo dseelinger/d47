@@ -158,7 +158,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         var (width, height) = Size;
         _offscreen.Resize(new PixelSize(width, height));
-        var rendered = _offscreen.Render();
+        // Following is re-asserted between the layout and the rasterise, because that is the one
+        // moment this tree has a real extent to scroll to the end of.
+        var rendered = _offscreen.Render(_view.KeepUp);
         _offscreen.CopyInto(destination, rowBytes);
         _dirty = false;
 
@@ -264,6 +266,70 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         return landed;
     }
+
+    /// <summary>
+    /// Takes hold of the scrollbar a ray is aiming at, if there is one within reach, and says
+    /// whether it did.
+    /// <para>
+    /// Asked before a carry is allowed to begin, so a hand that came down on a scrollbar scrolls
+    /// rather than picking the whole panel up. The two gestures are the same button and cannot
+    /// both run.
+    /// </para>
+    /// </summary>
+    public bool GrabsScroll(float u, float v)
+    {
+        var (width, height) = Size;
+        var at = new Point(u * width, v * height);
+
+        _scrolling = _offscreen.ScrollbarNear(at);
+
+        if (_scrolling is null)
+        {
+            return false;
+        }
+
+        Scroll(u, v);
+        return true;
+    }
+
+    /// <summary>Moves the held bar to where the ray is now.</summary>
+    public void Scroll(float u, float v)
+    {
+        if (_scrolling is null)
+        {
+            return;
+        }
+
+        var (width, height) = Size;
+
+        OffscreenSurface.Aim(_scrolling, _offscreen.View, new Point(u * width, v * height));
+        _dirty = true;
+    }
+
+    /// <summary>Lets go. The bar stays where it was left.</summary>
+    public void ReleaseScroll() => _scrolling = null;
+
+    /// <summary>
+    /// Lights whatever the ray is resting on, so the Commander can see they have found it.
+    /// Called every frame a ray is on the panel, and with null when it leaves.
+    /// </summary>
+    public void Aim(float? u, float? v)
+    {
+        if (u is not { } across || v is not { } down)
+        {
+            _offscreen.Illuminate(null);
+            _dirty = true;
+            return;
+        }
+
+        var (width, height) = Size;
+        var lit = _offscreen.ScrollbarNear(new Point(across * width, down * height));
+
+        _offscreen.Illuminate(lit);
+        _dirty = true;
+    }
+
+    private Avalonia.Controls.Primitives.ScrollBar? _scrolling;
 
     public void Dispose()
     {

@@ -300,4 +300,51 @@ public class CaptionTests
 
         Assert.NotEmpty(layer.Lines);
     }
+
+    /// <summary>
+    /// The dwell is timed against everything still on screen, not only the sentence that just
+    /// finished (remediation.md, "Captions: which standard, and how long do they stay?").
+    /// <para>
+    /// The window is a roll-up, so what a reader is catching up on when the voice stops is the
+    /// three lines in front of them. Timing a short last line on its own put the whole window
+    /// away after five sixths of a second, which is what "it disappears as soon as the voice
+    /// completes" was.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AFullWindowStaysUpLongerThanItsLastLineWould()
+    {
+        var full = new CaptionLayer();
+        full.Say("Interdiction detected.", Now, utterance: 1);
+        full.Say("Submit or run, Commander, but decide now, because the tether is closing.", Now, utterance: 2);
+        full.Quiet(Now);
+
+        var alone = new CaptionLayer();
+        alone.Say("Interdiction detected.", Now, utterance: 1);
+        alone.Quiet(Now);
+
+        // Both are still on screen at the point the short one on its own would have cleared.
+        var shortDwell = Caption.DwellFor("Interdiction detected.", Caption.AdultReadingSpeed);
+
+        alone.Tick(Now + shortDwell);
+        Assert.Empty(alone.Lines);
+
+        full.Tick(Now + shortDwell);
+        Assert.NotEmpty(full.Lines);
+    }
+
+    /// <summary>And still inside the standard's ceiling, which is where the argument ends.</summary>
+    [Fact]
+    public void ItStillClearsWithinTheStandardsMaximum()
+    {
+        var layer = new CaptionLayer();
+
+        layer.Say("Submit or run, Commander, but decide now, because the tether is closing.", Now, utterance: 1);
+        layer.Say("The interdiction tether is at ninety per cent and climbing steadily.", Now, utterance: 2);
+        layer.Quiet(Now);
+
+        layer.Tick(Now + Caption.MaximumDwell);
+
+        Assert.Empty(layer.Lines);
+    }
 }
