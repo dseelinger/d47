@@ -73,7 +73,17 @@ public sealed record VrSurfaceSettings
     public double Drop { get; init; } = -0.25;
 
     /// <summary>Degrees tilted back towards the Commander, so a dropped panel still faces them.</summary>
-    public double Pitch { get; init; } = 12;
+    /// <summary>
+    /// A trim on the tilt, in degrees, on top of the angle that already faces the Commander's
+    /// eyes. Zero means exactly at them.
+    /// <para>
+    /// It used to be the whole angle and defaulted to 12, which could only be right for one
+    /// distance and drop — see <see cref="Vr.VrPlacementMath.EyeFacingPitch"/>. Files written
+    /// before that carry the 12 and are cleared once by the repair
+    /// <see cref="VrSettings.PitchRepaired"/> counts.
+    /// </para>
+    /// </summary>
+    public double Pitch { get; init; }
 
     /// <summary>How wide the quad is, in metres. Height follows from the texture's aspect.</summary>
     public double Width { get; init; } = 1.1;

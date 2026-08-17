@@ -17,7 +17,12 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. Their record is
 those sections of the changelog.
 
-One of them is fixed but not confirmed: the VR panel could not be picked up because the two
-flags that make an overlay interactive were called by nothing at all, and no test on this side
-of the headset can say whether the grab now works. A test asserts the call exists, the log
-says whether a press ever arrives, and the rest is a Commander in a headset.
+The VR grab that 0.16.2 recorded as "fixed but not confirmed" was not fixed. The two flags it
+called are the wrong road entirely — they opt the quad in to SteamVR's own laser, which only runs
+over SteamVR's dashboard, so the events they unlock never arrive while Elite holds the headset.
+0.22.1 replaced the whole channel; see its changelog section.
+
+**Still not confirmed, for the same reason as before.** Nothing on this side of the headset can
+say whether a Commander can now pick the panel up. What the tests cover is the manifest's shape,
+the ray arithmetic and the beam and cursor geometry; what they cannot reach is whether SteamVR
+actually binds the trigger. If it does not, `vrserver.txt` is the file that says so.

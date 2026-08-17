@@ -269,6 +269,18 @@ public sealed record VrSettings
     /// is a number the standard fixes.
     /// </summary>
     public Vr.CaptionSettings Captions { get; init; } = new();
+
+    /// <summary>
+    /// Which revision of the panel-pitch repair this file has had.
+    /// <para>
+    /// <see cref="VrSurfaceSettings.Pitch"/> changed from the whole tilt angle to a trim on top of
+    /// one derived from distance and drop, so every value already on disk means something else
+    /// now. A number rather than a flag for the reason
+    /// <see cref="PersonaSettings.VoicesRepaired"/> is one: a repair that ships wrong can only
+    /// reach the files it already stamped if the stamp can be raised.
+    /// </para>
+    /// </summary>
+    public int PitchRepaired { get; init; }
 }
 
 /// <summary>

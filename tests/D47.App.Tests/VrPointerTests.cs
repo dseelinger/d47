@@ -9,15 +9,20 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Grab-to-move needs SteamVR to point a laser at the quad and send back what the hand does
-/// with it, and that is two flags on the overlay (list.md Phase 9).
+/// Grab-to-move needs the trigger, and the trigger arrives through <c>IVRInput</c> (list.md
+/// Phase 9).
 /// <para>
-/// The flags themselves cannot be asserted from here — they are an OpenVR call on a handle that
-/// only a running session has. What can be asserted is the half that was actually wrong:
-/// <see cref="VrOverlay.TakePointer"/> was written, documented as load-bearing, and called by
-/// nothing at all, so no overlay was ever interactive and the panel could not be picked up
-/// (bugs.md 4). A method nobody calls is invisible to every test that reasons about behaviour,
-/// which is why one of these reasons about the assembly instead.
+/// None of that can be asserted from here — it is a conversation with a running SteamVR. What can
+/// be asserted is the shape of the defect that has now happened twice in this file's subject:
+/// a method written, documented as load-bearing, and called by nothing at all. First it was
+/// <c>VrOverlay.TakePointer</c>, and the panel could not be picked up. The road it opened turned
+/// out to be a dead end regardless — SteamVR only runs its laser over its own dashboard, so those
+/// events never arrive while Elite holds the headset — and the registration that replaced it has
+/// exactly the same failure mode, silently, if nothing calls it.
+/// </para>
+/// <para>
+/// A method nobody calls has no behaviour to be wrong about, so no behavioural test can see it.
+/// That is why these reason about the assembly instead.
 /// </para>
 /// </summary>
 public class VrPointerTests
@@ -36,16 +41,29 @@ public class VrPointerTests
     }
 
     /// <summary>
-    /// And something calls it. This is the shape of the defect rather than a proof the grab
-    /// works — that needs a headset — but it is the one property no behavioural test could
-    /// have: an uncalled method has no behaviour to be wrong about.
+    /// Something registers with SteamVR. Without this the action manifest is never loaded, and
+    /// every downstream call succeeds while reporting that nothing is pressed — which is
+    /// indistinguishable, from inside d47, from a Commander not touching the trigger.
     /// </summary>
     [Fact]
-    public void SomethingInTheRuntimeActuallyTakesThePointer()
+    public void SomethingInTheRuntimeActuallyRegistersForTheTrigger()
     {
         Assert.True(
-            IsCalledInside(typeof(VrOverlay).Assembly, nameof(VrOverlay.TakePointer)),
-            $"nothing in {typeof(VrOverlay).Assembly.GetName().Name} calls {nameof(VrOverlay.TakePointer)}");
+            IsCalledInside(typeof(VrActionInput).Assembly, nameof(VrActionInput.Register)),
+            $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Register)}");
+    }
+
+    /// <summary>
+    /// And something reads it. An action set is active only for the frame it is passed in, so a
+    /// registration nobody follows up on is a set that is never activated — the panel would be
+    /// pointable and never grabbable.
+    /// </summary>
+    [Fact]
+    public void SomethingInTheAppActuallyReadsTheTrigger()
+    {
+        Assert.True(
+            IsCalledInside(typeof(VrHost).Assembly, nameof(VrActionInput.TriggerHeld)),
+            $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.TriggerHeld)}");
     }
 
     /// <summary>What a surface source says about the pointer, read off the type's own default.</summary>
@@ -71,12 +89,20 @@ public class VrPointerTests
 
         var metadata = pe.GetMetadataReader();
 
-        var target = metadata.MethodDefinitions.FirstOrDefault(
+        // A call to a method in another assembly is a MemberRef rather than a MethodDef, so both
+        // tables are searched. Without the second, asking whether the app calls into D47.Vr always
+        // answers "that method is not here" — a passing assertion about the wrong question.
+        var declared = metadata.MethodDefinitions.FirstOrDefault(
             handle => metadata.GetString(metadata.GetMethodDefinition(handle).Name) == method);
 
-        Assert.False(target.IsNil, $"{method} is not in {assembly.GetName().Name}");
+        var reference = metadata.MemberReferences.FirstOrDefault(
+            handle => metadata.GetString(metadata.GetMemberReference(handle).Name) == method);
 
-        var token = MetadataTokens.GetToken(target);
+        Assert.False(
+            declared.IsNil && reference.IsNil,
+            $"{method} is neither defined nor referenced in {assembly.GetName().Name}");
+
+        var token = MetadataTokens.GetToken(declared.IsNil ? reference : declared);
 
         var wanted = new byte[5];
         BitConverter.TryWriteBytes(wanted.AsSpan(1), token);

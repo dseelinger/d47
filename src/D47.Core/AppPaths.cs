@@ -21,6 +21,7 @@ public sealed class AppPaths
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
         SpendFile = Path.Combine(Data, "spend.jsonl");
+        VrActions = Path.Combine(Data, "vr-actions");
     }
 
     /// <summary>
@@ -51,6 +52,19 @@ public sealed class AppPaths
     /// row rather than the history, and readable by anything that can read a line at a time.
     /// </summary>
     public string SpendFile { get; }
+
+    /// <summary>
+    /// The OpenVR action manifest and its binding files, written here rather than shipped as
+    /// content beside the executable.
+    /// <para>
+    /// Written at runtime for the reason the <c>.vrmanifest</c> beside them has to be: SteamVR
+    /// resolves these paths itself, in another process, with a different working directory, so
+    /// they have to be absolute — and one of them names whichever executable is actually running,
+    /// which a checked-in file cannot. Putting all of them here means one seam rather than a
+    /// shipped-content path and a generated one.
+    /// </para>
+    /// </summary>
+    public string VrActions { get; }
 
     public void EnsureCreated()
     {

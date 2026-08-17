@@ -1,4 +1,6 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
+using D47.Core;
 using D47.Core.Vr;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
@@ -26,15 +28,17 @@ public interface IVrSurfaceSource
     SurfacePlacement Placement { get; }
 
     /// <summary>
-    /// Whether SteamVR should point a laser at this quad and send back what the hand does with
-    /// it. Only a surface something can be done to wants this: the panel is grab-to-move, and
-    /// captions are a label that would merely be in the way of everything behind them.
+    /// Whether a controller ray is cast at this quad at all, and so whether it can be carried.
+    /// Only a surface something can be done to wants this: the panel is grab-to-move, and captions
+    /// are a label that would merely be in the way of everything behind them.
     /// <para>
-    /// Asked of the surface rather than assumed by the runtime, because it is the one half of
-    /// the arrangement a test can reach without a headset — and it is the half that was missing.
-    /// The flags themselves live on <see cref="VrOverlay.TakePointer"/>, which was written,
-    /// documented, and called by nothing at all, so no overlay was ever interactive and the
-    /// panel could not be picked up (bugs.md 4).
+    /// Asked of the surface rather than assumed, because it is the one half of the arrangement a
+    /// test can reach without a headset — and it is the half that was missing twice. It first named
+    /// two overlay flags that nothing ever set. Those flags turned out to be the wrong road
+    /// entirely: they opt in to SteamVR's own laser, which only runs over its dashboard, so the
+    /// events they were meant to unlock never arrive while a game holds the headset. What it gates
+    /// now is d47's own ray cast, in <c>VrRay.PointingAt</c>, which does not depend on SteamVR
+    /// pointing at anything.
     /// </para>
     /// </summary>
     bool TakesPointer { get; }
@@ -70,6 +74,7 @@ public interface IVrSurfaceSource
 /// </summary>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
+    AppPaths paths,
     ILogger<SteamVrRuntime> logger) : IVrRuntime
 {
     /// <summary>
@@ -109,6 +114,30 @@ public sealed class SteamVrRuntime(
 
     private DateTimeOffset _now;
     private readonly Dictionary<VrSurface, VrPixels> _buffers = [];
+
+    /// <summary>
+    /// The grip-to-tip correction per device, which is a property of the controller model rather
+    /// than of the frame. See <see cref="GripToTip"/>.
+    /// </summary>
+    private readonly Dictionary<uint, Matrix4x4> _gripToTip = [];
+
+    /// <summary>
+    /// The trigger. Its own object because registering for it is a several-step transaction with
+    /// SteamVR that has to happen once and can fail without being a reason not to start.
+    /// </summary>
+    public VrActionInput Actions { get; } = new(logger);
+
+    /// <summary>
+    /// The aim beam and the cursor: two more overlays, and they have to be overlays rather than
+    /// pixels drawn into the panel. The beam moves with the hand at headset rate while the panel
+    /// repaints a few times a second, so compositing it in would drag the panel's pixels along at
+    /// 90 Hz — and the cursor has to be a real 3D object or the beam has nothing to stop on.
+    /// </summary>
+    private VrOverlay? _beam;
+
+    private VrOverlay? _cursor;
+
+    private float _beamLength = float.NaN;
 
     private CVRSystem? _system;
     private bool _claimed;
@@ -188,6 +217,12 @@ public sealed class SteamVrRuntime(
     {
         _buffers.Clear();
 
+        _beam?.Dispose();
+        _cursor?.Dispose();
+        _beam = null;
+        _cursor = null;
+        _beamLength = float.NaN;
+
         foreach (var overlay in _overlays.Values)
         {
             overlay.Dispose();
@@ -210,6 +245,63 @@ public sealed class SteamVrRuntime(
         Release();
     }
 
+    /// <summary>The aim beam, if the runtime allowed one. Null leaves the pointing unguided.</summary>
+    public VrOverlay? Beam => _beam;
+
+    /// <summary>The cursor sprite, if the runtime allowed one.</summary>
+    public VrOverlay? Cursor => _cursor;
+
+    /// <summary>
+    /// Points the beam along a hand and stops it at <paramref name="lengthMetres"/>, or takes it
+    /// off screen when nothing is being aimed at.
+    /// <para>
+    /// The width is what sets the length — the quad's height follows its width by the texture's
+    /// aspect — so it is re-sent only when the length actually changes. The pixels are uploaded
+    /// once, at creation, and never again: re-handing a texture to SteamVR at frame rate is what
+    /// makes an overlay flicker, and a transform is cheap.
+    /// </para>
+    /// </summary>
+    public void AimBeam(VrPose? along, VrPose head, float lengthMetres)
+    {
+        if (_beam is null)
+        {
+            return;
+        }
+
+        if (along is not { } aim)
+        {
+            _beam.Show(false);
+            return;
+        }
+
+        if (!_beamLength.Equals(lengthMetres))
+        {
+            _beamLength = lengthMetres;
+            _beam.Look(VrAim.BeamWidthFor(lengthMetres), 0f, 1f);
+        }
+
+        _beam.PlaceAbsolute(VrAim.BeamAlong(aim, head.Position, lengthMetres));
+        _beam.Show(true);
+    }
+
+    /// <summary>Puts the cursor on a world point, or takes it off screen.</summary>
+    public void ShowCursor(Vector3? at, VrPose head)
+    {
+        if (_cursor is null)
+        {
+            return;
+        }
+
+        if (at is not { } point)
+        {
+            _cursor.Show(false);
+            return;
+        }
+
+        _cursor.PlaceAbsolute(VrAim.CursorAt(point, head.Position));
+        _cursor.Show(true);
+    }
+
     /// <summary>The overlay a surface is drawn on, for the placement code to point rays at.</summary>
     public VrOverlay? OverlayFor(VrSurface surface) =>
         Keys.TryGetValue(surface, out var key) && _overlays.TryGetValue(key.Key, out var overlay)
@@ -217,11 +309,11 @@ public sealed class SteamVrRuntime(
             : null;
 
     /// <summary>
-    /// Every tracked controller that is genuinely reporting a pose. Both flags are checked in
-    /// <see cref="VrMatrix.Real"/>, and there is no later layer that would catch a slot that
-    /// is merely zeroed.
+    /// Every tracked controller that is genuinely reporting a pose, with the aim already corrected
+    /// off the grip. Both flags are checked in <see cref="VrMatrix.Real"/>, and there is no later
+    /// layer that would catch a slot that is merely zeroed.
     /// </summary>
-    public IReadOnlyList<(uint Device, VrPose Pose)> Controllers()
+    public IReadOnlyList<VrHand> Controllers()
     {
         if (_system is null)
         {
@@ -229,12 +321,16 @@ public sealed class SteamVrRuntime(
         }
 
         var poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+
+        // No prediction. A panel is furniture rather than a thing being aimed, and asking where a
+        // device will be by the time photons land buys nothing but jitter when the answer decides
+        // whether somebody grabbed something.
         _system.GetDeviceToAbsoluteTrackingPose(
             ETrackingUniverseOrigin.TrackingUniverseSeated,
             0,
             poses);
 
-        var found = new List<(uint, VrPose)>(2);
+        var found = new List<VrHand>(2);
 
         for (uint device = 0; device < poses.Length; device++)
         {
@@ -243,13 +339,93 @@ public sealed class SteamVrRuntime(
                 continue;
             }
 
-            if (VrMatrix.Real(poses[device]) is { } pose)
+            if (VrMatrix.Real(poses[device]) is { } grip)
             {
-                found.Add((device, pose));
+                var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
+                found.Add(new VrHand(device, grip, aim));
             }
         }
 
         return found;
+    }
+
+    /// <summary>
+    /// The correction from the grip pose OpenVR reports to the tip the Commander aims with.
+    /// <para>
+    /// The grip pose sits inside the handle and runs roughly along it; on Touch controllers that is
+    /// off from the apparent pointing direction by a large angle — enough to put a ray visibly away
+    /// from where the laser looks like it goes, so a grab misses a panel that is plainly being
+    /// pointed at. Read out of the render model rather than hardcoded, so it is right for whichever
+    /// controller is actually connected.
+    /// </para>
+    /// <para>
+    /// <c>tip</c> before <c>openxr_aim</c>: aim is a near neighbour rather than the same pose and
+    /// leaves a small residual offset. No render models, or no such component, degrades to
+    /// grip-as-aim — wrong in the obvious way rather than a refusal to start.
+    /// </para>
+    /// <para>
+    /// Cached per device. The component transform is a property of the model rather than of the
+    /// frame, so this is a marshalled string property and two interop calls that would otherwise
+    /// run for every controller on every tick.
+    /// </para>
+    /// </summary>
+    private Matrix4x4 GripToTip(uint device)
+    {
+        if (_gripToTip.TryGetValue(device, out var cached))
+        {
+            return cached;
+        }
+
+        var correction = Matrix4x4.Identity;
+        var models = OpenVR.RenderModels;
+
+        if (models is not null && ModelName(device) is { } model)
+        {
+            foreach (var component in
+                     new[] { OpenVR.k_pch_Controller_Component_Tip, OpenVR.k_pch_Controller_Component_OpenXR_Aim })
+            {
+                if (!models.RenderModelHasComponent(model, component))
+                {
+                    continue;
+                }
+
+                var buttons = default(VRControllerState_t);
+                var mode = default(RenderModel_ControllerMode_State_t);
+                var state = default(RenderModel_ComponentState_t);
+
+                if (models.GetComponentState(model, component, ref buttons, ref mode, ref state))
+                {
+                    correction = VrMatrix.ToMatrix(state.mTrackingToComponentLocal);
+                    break;
+                }
+            }
+        }
+
+        _gripToTip[device] = correction;
+
+        logger.LogDebug(
+            "Controller {Device} aims {Source}",
+            device,
+            correction == Matrix4x4.Identity ? "from the grip; no tip component was available" : "from its tip");
+
+        return correction;
+    }
+
+    private string? ModelName(uint device)
+    {
+        var error = ETrackedPropertyError.TrackedProp_Success;
+        var text = new System.Text.StringBuilder((int)OpenVR.k_unMaxPropertyStringSize);
+
+        _system!.GetStringTrackedDeviceProperty(
+            device,
+            ETrackedDeviceProperty.Prop_RenderModelName_String,
+            text,
+            OpenVR.k_unMaxPropertyStringSize,
+            ref error);
+
+        return error == ETrackedPropertyError.TrackedProp_Success && text.Length > 0
+            ? text.ToString()
+            : null;
     }
 
     private VrStart Bring()
@@ -326,9 +502,61 @@ public sealed class SteamVrRuntime(
             _overlays[key] = overlay;
         }
 
+        // Both fail soft. No beam and no cursor is a panel that can still be pointed at and
+        // carried, just without anything on screen saying where — a downgrade, not a failure.
+        _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
+            VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: 1);
+
+        _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
+            VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
+
+        // After the overlays, and only once there is a session: registering an application key is
+        // a conversation with SteamVR, and there is nothing to have it with before VR_Init.
+        Actions.Register(paths.VrActions);
+
         logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
 
         return VrStart.Started;
+    }
+
+    /// <summary>
+    /// One of the two static quads: created, given its pixels once, sized, and left. Null if the
+    /// runtime refuses any of it.
+    /// </summary>
+    private VrOverlay? Sprite(
+        string key,
+        string name,
+        byte[] pixels,
+        int width,
+        int height,
+        float widthMetres,
+        uint sortOrder)
+    {
+        var overlay = VrOverlay.Create(key, name, out _, Refused);
+
+        if (overlay is null)
+        {
+            logger.LogWarning("SteamVR would not create the {Name} overlay; pointing goes unguided", name);
+            return null;
+        }
+
+        var pinned = System.Runtime.InteropServices.GCHandle.Alloc(pixels, System.Runtime.InteropServices.GCHandleType.Pinned);
+
+        try
+        {
+            // SetOverlayRaw copies before returning, which is what makes handing it a bare address
+            // safe — but only for the duration of the call, hence the pin.
+            overlay.Submit(pinned.AddrOfPinnedObject(), width, height);
+        }
+        finally
+        {
+            pinned.Free();
+        }
+
+        overlay.Look(widthMetres, 0f, 1f);
+        overlay.Above(sortOrder);
+        overlay.Show(false);
+        return overlay;
     }
 
     /// <summary>
@@ -410,14 +638,6 @@ public sealed class SteamVrRuntime(
         else
         {
             pixels.Resize(width, height);
-        }
-
-        // Before the pixels rather than after: an interactive flag set on a quad the Commander
-        // is already looking at arrives a frame late, and the mouse scale has to be the size
-        // this frame is drawn at or the quad answers a laser against the size it used to be.
-        if (source.TakesPointer)
-        {
-            overlay.TakePointer(width, height);
         }
 
         if (source.IsDirty)

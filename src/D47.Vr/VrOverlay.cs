@@ -4,9 +4,6 @@ using Valve.VR;
 
 namespace D47.Vr;
 
-/// <summary>What the pointer did to a surface this tick.</summary>
-public readonly record struct OverlayPointer(bool Pointing, bool Held);
-
 /// <summary>
 /// One <c>IVROverlay</c> quad: its texture, its transform, its look, and its pointer.
 /// <para>
@@ -17,14 +14,6 @@ public readonly record struct OverlayPointer(bool Pointing, bool Held);
 /// </summary>
 public sealed class VrOverlay : IDisposable
 {
-    /// <summary>
-    /// The trigger, arriving as a mouse button because the overlay asked for
-    /// <see cref="VROverlayInputMethod.Mouse"/>. A controller reports its other buttons —
-    /// including the grip — through this same event, so treating them all as a press means the
-    /// grip also clicks whatever the ray happened to be over.
-    /// </summary>
-    private const uint Trigger = (uint)EVRMouseButton.Left;
-
     /// <summary>
     /// High, so the panel sits above ordinary overlays and above SteamVR's own furniture.
     /// Not highest: it has no business claiming it outranks a system warning.
@@ -39,12 +28,7 @@ public sealed class VrOverlay : IDisposable
     private float _appliedWidth = float.NaN;
     private float _appliedCurvature = float.NaN;
     private float _appliedAlpha = float.NaN;
-    private (int Width, int Height) _appliedMouseScale = (-1, -1);
-    private bool _takesPointer;
     private bool _shown;
-
-    private bool _pointing;
-    private bool _held;
 
     private VrOverlay(ulong handle, string key, Action<string>? refused)
     {
@@ -74,8 +58,6 @@ public sealed class VrOverlay : IDisposable
     }
 
     public string Key { get; }
-
-    public OverlayPointer Pointer => new(_pointing, _held);
 
     /// <summary>
     /// Creates the quad. <see cref="EVROverlayError.KeyInUse"/> is called out by name because
@@ -141,43 +123,6 @@ public sealed class VrOverlay : IDisposable
 
         failure = VrStart.Started;
         return overlay;
-    }
-
-    /// <summary>
-    /// Asks SteamVR to point at this quad.
-    /// <para>
-    /// The flag is the load-bearing half and its absence is silent: without it the overlay is a
-    /// picture, SteamVR draws no laser for it, and the ray passes straight through. The mouse
-    /// scale is given in the quad's own metres so a reported position arrives in the units
-    /// everything else uses, and it has to be re-sent on every size change or the quad answers
-    /// a laser against the size it used to be.
-    /// </para>
-    /// </summary>
-    public void TakePointer(int width, int height)
-    {
-        // The two flags are a property of the quad and are set once; the scale is a property of
-        // the picture on it and is re-sent whenever that changes. Served every frame, so the
-        // difference is thirty needless calls a second across the boundary or none.
-        if (!_takesPointer)
-        {
-            _takesPointer = true;
-            OpenVR.Overlay.SetOverlayInputMethod(_handle, VROverlayInputMethod.Mouse);
-            OpenVR.Overlay.SetOverlayFlag(_handle, VROverlayFlags.MakeOverlaysInteractiveIfVisible, true);
-        }
-
-        SetMouseScale(width, height);
-    }
-
-    public void SetMouseScale(int width, int height)
-    {
-        if (_appliedMouseScale == (width, height))
-        {
-            return;
-        }
-
-        _appliedMouseScale = (width, height);
-        var scale = new HmdVector2_t { v0 = width, v1 = height };
-        OpenVR.Overlay.SetOverlayMouseScale(_handle, ref scale);
     }
 
     /// <summary>
@@ -274,6 +219,12 @@ public sealed class VrOverlay : IDisposable
         }
     }
 
+    /// <summary>
+    /// Puts this quad above the panel. The beam and the cursor both sit on it, and a cursor the
+    /// panel draws over is one nobody can see.
+    /// </summary>
+    public void Above(uint sortOrder) => OpenVR.Overlay.SetOverlaySortOrder(_handle, SortOrder + sortOrder);
+
     public void Show(bool shown)
     {
         if (_shown == shown)
@@ -358,12 +309,14 @@ public sealed class VrOverlay : IDisposable
     }
 
     /// <summary>
-    /// Drains the event queue and updates the latched pointer state.
+    /// Drains this overlay's event queue.
     /// <para>
-    /// Latched, because SteamVR reports transitions rather than state: a hand held still sends
-    /// nothing at all, and treating no event as no pointer would make a grab let go the moment
-    /// somebody stopped moving. Drained rather than sampled, because reading one event per
-    /// frame puts the pointer behind the ray by however many were skipped.
+    /// <b>Nothing is read out of it any more, and it is still drained.</b> The events that used to
+    /// carry the pointer — <c>VREvent_MouseMove</c> and the button either side of it — only ever
+    /// arrive while SteamVR is running its own laser over this quad, which it does only on its
+    /// dashboard. With a game holding the headset this queue is empty forever, which is why the
+    /// trigger now comes from <see cref="VrActionInput"/> instead. What is left arriving here is
+    /// SteamVR's own housekeeping, and a queue nobody drains is one that grows.
     /// </para>
     /// </summary>
     public void PumpEvents()
@@ -373,47 +326,8 @@ public sealed class VrOverlay : IDisposable
 
         while (OpenVR.Overlay.PollNextOverlayEvent(_handle, ref next, size))
         {
-            switch ((EVREventType)next.eventType)
-            {
-                case EVREventType.VREvent_MouseMove:
-                    _pointing = true;
-                    break;
-
-                case EVREventType.VREvent_MouseButtonDown when next.data.mouse.button == Trigger:
-                    _pointing = true;
-                    _held = true;
-                    break;
-
-                case EVREventType.VREvent_MouseButtonUp when next.data.mouse.button == Trigger:
-                    _held = false;
-                    break;
-
-                case EVREventType.VREvent_FocusLeave:
-                    // The trigger is dropped with it. A Commander who aims away mid-drag gets
-                    // no button-up on this overlay, and a hold nobody ever ends is one that
-                    // carries the panel around for the rest of the session.
-                    _pointing = false;
-                    _held = false;
-                    break;
-            }
+            // Drained, not read.
         }
-    }
-
-    /// <summary>Whether a ray from <paramref name="from"/> meets this quad, and how far along.</summary>
-    public float? IntersectedBy(System.Numerics.Vector3 from, System.Numerics.Vector3 along)
-    {
-        var parameters = new VROverlayIntersectionParams_t
-        {
-            vSource = new HmdVector3_t { v0 = from.X, v1 = from.Y, v2 = from.Z },
-            vDirection = new HmdVector3_t { v0 = along.X, v1 = along.Y, v2 = along.Z },
-            eOrigin = ETrackingUniverseOrigin.TrackingUniverseSeated,
-        };
-
-        var results = new VROverlayIntersectionResults_t();
-
-        return OpenVR.Overlay.ComputeOverlayIntersection(_handle, ref parameters, ref results)
-            ? results.fDistance
-            : null;
     }
 
     /// <summary>

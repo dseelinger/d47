@@ -17,6 +17,70 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.22.1 — 2026-08-17 — The panel can be picked up, and it tilts at your eyes
+
+Two defects in the headset, one of which had been shipped as fixed and was not.
+
+### The grab was fixed against the wrong channel
+
+0.16.2 reported that the VR panel could not be picked up because the two flags that make an
+overlay interactive were called by nothing, and called them. That was true and it was not the
+fault. Those flags opt the quad in to **SteamVR's own laser**, and SteamVR only runs that laser
+over its own dashboard — so with Elite holding the headset, the event queue they unlock returns
+nothing, forever, with no error anywhere. It works perfectly with the game closed, which is what
+made three separate implementations believe it worked at all.
+
+The trigger now comes from `IVRInput`, which does not depend on SteamVR pointing at anything. The
+reason two earlier attempts at that concluded it was impossible is one step whose absence is
+silent: **an application has to register itself**. SteamVR files bindings under an application
+key, and a process it does not recognise has none, so there is nothing for a binding to attach to
+— the manifest loads, the handles resolve, and the action stays bound to nothing forever. It does
+not appear under Manage Controller Bindings either, so it cannot be fixed by hand, and the only
+place that says any of this is `vrserver.txt`.
+
+Three more things in the same chain, each of which fails the same quiet way: the action set is
+activated at overlay priority, or it loses to the running game and receives nothing; it is claimed
+only while a ray is on the panel or a carry is running, or it takes the controllers hostage from
+Virtual Desktop and the dashboard for the whole session; and the manifest declares `oculus_touch`
+**and** `rift`, because the Oculus driver asks for each in turn and one missing binding disables
+input entirely.
+
+**A controller does not point where it says it does.** OpenVR reports the grip pose, inside the
+handle. On Touch controllers the tip is off from it by a large angle, so the ray was landing
+nowhere near the laser coming out of the Commander's hand. The correction is read out of the
+render model rather than hardcoded, so it is right for whatever controller is plugged in.
+
+**And there is something to aim with.** Losing SteamVR's laser means losing the only thing that
+said where you were pointing, so d47 draws its own: a beam that lights as your hand comes near the
+panel and stops exactly on the cursor when it is on it, and a cursor on the point itself. Both are
+their own overlays, and both fail soft — no beam and no cursor is a panel that can still be
+carried, just unguided.
+
+### The panel tilted away from you
+
+A head-locked panel took a fixed tilt from settings, hand-tuned to 12°. A fixed angle can only
+suit one distance and one drop, and there are two panels with two of each: mini wanted 18.4° and
+got 12. It is now worked out from where the panel actually sits, and the setting is a trim on top
+of that — a file already on disk has its old value converted, exactly, so nothing moves that a
+Commander had set deliberately.
+
+Underneath that was a worse one. **The resting placement had its pitch inverted**, so a
+world-locked panel dropped to knee height turned its face at the *floor* — through twice the angle
+it should have gone the other way. An overlay's visible side looks along its own +Z and a positive
+rotation carries that downwards, which is written down correctly in `architecture.md` and was not
+what the code did. The test that should have caught it measured the panel's *back* and agreed with
+the bug; assertions here are now on the direction a face ends up pointing, because the angle is the
+right size either way.
+
+### Still unconfirmed
+
+None of the OpenVR side can be checked without a headset, and this release does not pretend
+otherwise. The manifest's shape, the ray arithmetic and the beam and cursor geometry are covered
+by tests. Whether SteamVR actually binds the trigger is a question only a Commander in a headset
+can answer, and `vrserver.txt` is where it says no.
+
+---
+
 ## 0.22.0 — 2026-08-17 — In-game comms arrive over a radio, not from the next seat
 
 Four wanted changes about re-voiced messages, all of them the same complaint from different

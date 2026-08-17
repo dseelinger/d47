@@ -56,14 +56,52 @@ public static class VrPlacementMath
     /// it still moves when the head moves — so every "it followed" assertion passes — and the
     /// distance comes out wrong, which is the part a Commander would actually notice.
     /// </para>
+    /// <para>
+    /// The pitch is <see cref="EyeFacingPitch"/> plus <paramref name="pitchTrimRadians"/>, unless
+    /// <paramref name="facesTheEyes"/> is false — which is the caption layer, and only it. See
+    /// <see cref="EyeFacingPitch"/> for why the angle is derived rather than configured.
+    /// </para>
     /// </summary>
-    public static VrPose HeadLocked(VrPose head, float distanceMetres, float dropMetres, float pitchRadians)
+    public static VrPose HeadLocked(
+        VrPose head,
+        float distanceMetres,
+        float dropMetres,
+        float pitchTrimRadians,
+        bool facesTheEyes = true)
     {
         var offset = Matrix4x4.CreateTranslation(new Vector3(0, dropMetres, -distanceMetres));
-        var pitch = Matrix4x4.CreateRotationX(pitchRadians);
+
+        var angle = facesTheEyes
+            ? EyeFacingPitch(distanceMetres, dropMetres) + pitchTrimRadians
+            : pitchTrimRadians;
+
+        var pitch = Matrix4x4.CreateRotationX(angle);
 
         return VrPose.FromMatrix(pitch * offset * head.ToMatrix());
     }
+
+    /// <summary>
+    /// How far a surface has to tilt back to face the Commander's eyes, given how far ahead and
+    /// how far below them it sits. Zero at eye level, and <em>negative</em> for a surface below
+    /// one: an overlay's visible face looks along its own +Z, and a positive rotation about X
+    /// carries that downwards. See <see cref="Resting"/>, which shipped with this sign inverted.
+    /// <para>
+    /// The same arithmetic <see cref="Resting"/> already does for a world-locked surface, for the
+    /// same reason: a quad below eye level that is not tilted up is read edge-on. Head-locked took
+    /// a fixed angle from settings instead, hand-tuned to 12° — within a degree of right for the
+    /// full panel at 1.1 m and 0.25 m down, and six degrees short for mini at 0.9 m and 0.3 m
+    /// down, where the geometry asks for 18.4°. That is the tell that it was a constant standing
+    /// in for a derivation: it can only be correct for one distance and drop at a time, and there
+    /// are two surfaces with two of each, both settable.
+    /// </para>
+    /// <para>
+    /// Derived, so the tilt follows the distance and drop rows instead of going stale behind them.
+    /// What is left of the setting is a trim on top of this, which is the part a Commander might
+    /// actually have an opinion about.
+    /// </para>
+    /// </summary>
+    public static float EyeFacingPitch(float distanceMetres, float dropMetres) =>
+        MathF.Atan2(dropMetres, distanceMetres);
 
     /// <summary>
     /// The offset to freeze when a surface is grabbed: <c>hand⁻¹ · surface</c>.
@@ -171,9 +209,17 @@ public static class VrPlacementMath
             head.Position.Z + (flattened.Z * distanceMetres));
 
         // Tilted back by however far the eyes are above it, so the face of the quad points at
-        // them rather than at the ceiling. At eye level this is zero and the panel is upright.
+        // them rather than at the floor. At eye level this is zero and the panel is upright.
+        //
+        // NEGATIVE, and that is the whole of a bug this shipped with. An overlay's visible face
+        // looks along its own +Z — it has to, or a head-locked panel at pitch zero would be
+        // showing the Commander its back — and a positive rotation about X carries +Z downwards.
+        // So the obvious sign tilts a panel at knee height to face the floor, through exactly
+        // twice the angle it should have gone the other way. It is invisible in an assertion on
+        // the angle, which is the right size either way, and only shows up in one on the
+        // direction the face ends up pointing.
         var rise = head.Position.Y - centre.Y;
-        var pitch = MathF.Atan2(rise, distanceMetres);
+        var pitch = -MathF.Atan2(rise, distanceMetres);
 
         var yaw = MathF.Atan2(flattened.X, -flattened.Z);
 

@@ -34,6 +34,11 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
         DistanceMetres = 1.6f,
         DropMetres = -0.45f,
         PitchDegrees = 0f,
+
+        // Square to the view, not tilted at the eye. Captions are two or three short lines read
+        // at a glance in the middle of the picture; the panel derives its tilt because it is
+        // furniture you look down at, and a caption is not.
+        FacesTheEyes = false,
         WidthMetres = 0.9f,
 
         // Never curved. Two short lines in the middle of the view have no far edges to bring
