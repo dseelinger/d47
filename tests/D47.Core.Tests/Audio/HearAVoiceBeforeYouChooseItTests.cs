@@ -26,7 +26,7 @@ public class HearAVoiceBeforeYouChooseItTests
     [Fact]
     public void AndOnlyTheFirstSentenceOfIt()
     {
-        // Warden's introduction runs to five sentences. Every press of the button is a synthesis
+        // Warden's introduction runs to five sentences. Every press of a play glyph is a synthesis
         // request billed by the character, and the first sentence is where a core's voice is
         // most itself anyway — it is written as the opening.
         Assert.True(
@@ -52,7 +52,7 @@ public class HearAVoiceBeforeYouChooseItTests
     }
 
     /// <summary>
-    /// The button carries a price before it is pressed, and the estimate behind it has to be
+    /// The picker states a price before anything is pressed, and the estimate behind it has to be
     /// somewhere near the truth or the figure is worse than no figure.
     /// </summary>
     [Fact]

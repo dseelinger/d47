@@ -40,11 +40,16 @@ public sealed record SettingAudition
     public required Func<string, CancellationToken, Task> Play { get; init; }
 
     /// <summary>
-    /// What the button says. The price belongs here — a button that spends money should say so
-    /// before it is pressed, and a provider that costs nothing should say <em>that</em> rather
-    /// than leaving it to be guessed at.
+    /// What a press costs, as a sentence. The price belongs here — a control that spends money
+    /// should say so before it is pressed, and a provider that costs nothing should say
+    /// <em>that</em> rather than leaving it to be guessed at.
+    /// <para>
+    /// It reads as a line above the list rather than as a caption, because from
+    /// change-requests.md 18 the control itself is a play glyph on each row and a glyph has no
+    /// room for a price. The disclosure survived the button it used to be written on.
+    /// </para>
     /// </summary>
-    public required Func<D47Settings, string> Label { get; init; }
+    public required Func<D47Settings, string> Cost { get; init; }
 
     /// <summary>Why it cannot be pressed, or null when it can.</summary>
     public Func<D47Settings, string?>? Unavailable { get; init; }

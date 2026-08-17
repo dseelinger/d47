@@ -1,8 +1,9 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.VisualTree;
+using Avalonia.Media;
 
 namespace D47.App.Controls;
 
@@ -63,22 +64,96 @@ public sealed record PickerAudition
     public required Func<string, CancellationToken, Task> Play { get; init; }
 
     /// <summary>
-    /// What the button says, which is where the price goes: <c>Hear it</c> where the provider
-    /// is free and something that says otherwise where it is not. A Commander pressing a button
-    /// that costs money should be able to see that it does before they press it.
+    /// What a press costs, stated once above the list. The disclosure outlived the button it used
+    /// to be written on (change-requests.md 18): a glyph has no room for a price, and a price
+    /// discovered afterwards on the bill is the thing Phase 11 put it there to prevent. So it is
+    /// a sentence about the list, and it is also the pointer text on every glyph in it.
     /// </summary>
-    public required string Label { get; init; }
+    public required string Cost { get; init; }
 
     /// <summary>
-    /// Why it cannot be pressed, or null when it can. Shut and explained rather than silently
-    /// inert: "no voice provider is selected" is a fact the Commander can act on and an
-    /// unresponsive button is not.
+    /// Why nothing here can be played, or null when it can. Shut and explained rather than
+    /// silently inert: "no voice provider is selected" is a fact the Commander can act on and an
+    /// unresponsive glyph is not.
     /// </summary>
     public string? Unavailable { get; init; }
 }
 
 /// <summary>The chosen value, where null means "clear this and use the default".</summary>
 public sealed record PickerResult(string? Value);
+
+/// <summary>
+/// One line of the list: what it is called, what it really is, and — where the row offers an
+/// audition — the control that plays it (change-requests.md 18).
+/// <para>
+/// The play control lives on the row rather than under the list because that is where a
+/// Commander looks for it, and because a glyph beside the thing it plays needs no selection to
+/// explain which thing that is. It is a press either way: on a paid provider every audition is a
+/// synthesis request billed by the character, so nothing here may fire on hover or on a
+/// selection change.
+/// </para>
+/// <para>
+/// Mutable in exactly one respect. <see cref="Playing"/> swaps the glyph between play and stop
+/// while a voice is talking, so the control says what it will do next rather than what it did.
+/// Everything else is fixed at construction.
+/// </para>
+/// </summary>
+public sealed class PickerChoice : INotifyPropertyChanged
+{
+    /// <summary>A right-pointing triangle, and a square. Drawn in repo as path data in one 24x24
+    /// space, the same rule the reveal and clear glyphs follow.</summary>
+    private static readonly Geometry Play = Geometry.Parse("M 8,5 L 19,12 L 8,19 Z");
+
+    private static readonly Geometry Stop = Geometry.Parse("M 6,6 L 18,6 L 18,18 L 6,18 Z");
+
+    private bool _playing;
+
+    /// <summary>What choosing this row writes to settings — an id, not the words above it.</summary>
+    public required string Value { get; init; }
+
+    /// <summary>What the row says, which is the row's own <c>Describe</c> applied to the value.</summary>
+    public required string Text { get; init; }
+
+    /// <summary>Whether this list offers auditions at all. False leaves the glyph out entirely.</summary>
+    public required bool CanPlay { get; init; }
+
+    /// <summary>And whether one can be played right now — false where the provider cannot speak.</summary>
+    public required bool Playable { get; init; }
+
+    /// <summary>The pointer text on the glyph: what a press costs, or why it cannot be pressed.</summary>
+    public string? Why { get; init; }
+
+    public bool Playing
+    {
+        get => _playing;
+        set
+        {
+            if (_playing == value)
+            {
+                return;
+            }
+
+            _playing = value;
+            Raise(nameof(Playing));
+            Raise(nameof(Glyph));
+            Raise(nameof(ActionName));
+        }
+    }
+
+    /// <summary>Play, or stop while this row is the one talking.</summary>
+    public Geometry Glyph => _playing ? Stop : Play;
+
+    /// <summary>
+    /// What the glyph is for, in words. Dropping the label is what buys the room for a control on
+    /// every row, and a bare shape tells a screen reader nothing — so the name says which voice as
+    /// well as which action, because on this list "Play" alone names four hundred controls.
+    /// </summary>
+    public string ActionName => _playing ? $"Stop {Text}" : $"Play {Text}";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void Raise(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
 
 /// <summary>
 /// One searchable picker, used everywhere a value is chosen — models, themes, log levels, and
@@ -95,8 +170,18 @@ public partial class PickerWindow : Window
 {
     private PickerRequest _request = new() { Prompt = "Choose" };
 
-    /// <summary>The values behind the labels currently listed, in the same order.</summary>
-    private IReadOnlyList<string> _visible = [];
+    /// <summary>
+    /// Every choice, built once when the picker is bound. Filtering picks from these rather than
+    /// making new ones, which is what keeps a selection and a playing glyph alive across a
+    /// keystroke: a <see cref="ListBox"/> holds its selection by object, so handing it a fresh
+    /// row for the same value silently deselects it. That is not hypothetical — rebuilding per
+    /// filter cost the picker the current value the moment it opened, because a text box raises
+    /// TextChanged as its template applies.
+    /// </summary>
+    private IReadOnlyList<PickerChoice> _all = [];
+
+    /// <summary>The rows currently listed, in the order they are drawn.</summary>
+    private IReadOnlyList<PickerChoice> _visible = [];
 
     public PickerWindow()
     {
@@ -166,16 +251,23 @@ public partial class PickerWindow : Window
         DefaultButtonText.Text = useDefault;
         ToolTip.SetTip(DefaultButton, useDefault);
 
+        // Said once for the whole list, whichever way it goes: shut, it says why nothing here can
+        // be played; live, it says what pressing a glyph will do, which on a paid provider is
+        // spend money.
         if (_request.Audition is { } audition)
         {
-            AuditionButton.IsVisible = true;
-            AuditionButton.Content = audition.Label;
-            AuditionButton.IsEnabled = audition.Unavailable is null;
-
-            // The reason on the pointer whichever way it goes: shut, it says why; live, it says
-            // what pressing it will do, which on a paid provider is spend money.
-            ToolTip.SetTip(AuditionButton, audition.Unavailable ?? audition.Label);
+            AuditionNote.IsVisible = true;
+            AuditionNote.Text = audition.Unavailable ?? audition.Cost;
         }
+
+        _all = [.. _request.Choices.Select(value => new PickerChoice
+        {
+            Value = value,
+            Text = Label(value),
+            CanPlay = _request.Audition is not null,
+            Playable = _request.Audition is { Unavailable: null },
+            Why = _request.Audition is { } offered ? offered.Unavailable ?? offered.Cost : null,
+        })];
 
         ApplyFilter();
 
@@ -185,8 +277,8 @@ public partial class PickerWindow : Window
         Choices.SelectedIndex = _request.Current is null
             ? -1
             : Array.FindIndex(
-                _visible.ToArray(),
-                value => string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase));
+                [.. _visible],
+                choice => string.Equals(choice.Value, _request.Current, StringComparison.OrdinalIgnoreCase));
 
         if (Choices.SelectedIndex >= 0)
         {
@@ -208,14 +300,16 @@ public partial class PickerWindow : Window
 
         // Matches on either what it is called or what it is named, so a Commander who types
         // what they can see finds it, and one who types the id does too.
-        var matches = _request.Choices
+        var matches = _all
             .Where(choice => filter.Length == 0
-                             || choice.Contains(filter, StringComparison.OrdinalIgnoreCase)
-                             || Label(choice).Contains(filter, StringComparison.OrdinalIgnoreCase))
+                             || choice.Value.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                             || choice.Text.Contains(filter, StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
         _visible = matches;
-        Choices.ItemsSource = matches.Select(Label).ToArray();
+
+        // The same row objects, filtered — never new ones. See _all.
+        Choices.ItemsSource = matches;
         Choices.IsVisible = matches.Length > 0;
 
         EmptyHint.IsVisible = matches.Length == 0;
@@ -277,7 +371,7 @@ public partial class PickerWindow : Window
         // A selection wins over typed text, because typing is how you got to the selection.
         if (Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count)
         {
-            Close(new PickerResult(_visible[Choices.SelectedIndex]));
+            Close(new PickerResult(_visible[Choices.SelectedIndex].Value));
             return;
         }
 
@@ -292,24 +386,22 @@ public partial class PickerWindow : Window
     private void OnAcceptClick(object? sender, RoutedEventArgs e) => Accept();
 
     /// <summary>
-    /// One click takes it. A list of things to choose from is not a file manager: the second
-    /// click is a step nobody is asking for, and every picker a Commander has met this decade —
-    /// a command palette, a browser's address bar, a phone's share sheet — commits on the first
-    /// one. Cancel and Escape are the way out, and re-opening and picking again is the undo.
+    /// A click highlights, and the second one takes it (change-requests.md 19).
     /// <para>
-    /// Only when the click landed on a row. A click on the empty space below the last item
-    /// leaves the selection alone, and accepting there would take a value the Commander did not
-    /// point at. The keyboard path is unchanged: arrows move, Enter or <b>Use this</b> takes it.
+    /// This overturns the reasoning that stood here — "a list of things to choose from is not a
+    /// file manager, and every picker a Commander has met this decade commits on the first
+    /// click". That is true of a command palette, whose list is a means of getting at one known
+    /// answer. It is false of a list of four hundred voices, which is a list to be examined:
+    /// committing on the first click meant there was no way to look at one without taking it, and
+    /// it left no row for a play glyph to live on, because a row that dismisses the window when
+    /// touched cannot hold a control (change-requests.md 18).
+    /// </para>
+    /// <para>
+    /// The ways out are unchanged, and there are four ways in: double-click, Enter,
+    /// <b>Use this</b>, and the arrows that move the highlight before any of them.
     /// </para>
     /// </summary>
-    private void OnChoiceTapped(object? sender, TappedEventArgs e)
-    {
-        if (e.Source is Visual source
-            && source.FindAncestorOfType<ListBoxItem>(includeSelf: true) is not null)
-        {
-            Accept();
-        }
-    }
+    private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e) => Accept();
 
     /// <summary>
     /// The audition in flight, so the next press can drop it. One at a time by construction:
@@ -317,32 +409,42 @@ public partial class PickerWindow : Window
     /// </summary>
     private CancellationTokenSource? _auditioning;
 
-    private async void OnAuditionClick(object? sender, RoutedEventArgs e)
+    /// <summary>
+    /// Plays the row the glyph is on — not the selection, which is the point of moving it there
+    /// (change-requests.md 18): a Commander can listen to one voice while another stays
+    /// highlighted, and pressing play commits to nothing whatsoever.
+    /// <para>
+    /// A press on the row that is already talking stops it. That is what the glyph says at the
+    /// time, and a stop control that restarted the sound instead would be the one state nobody
+    /// could get out of without waiting the line out.
+    /// </para>
+    /// </summary>
+    private async void OnPlayClick(object? sender, RoutedEventArgs e)
     {
-        if (_request.Audition is not { Unavailable: null } audition
-            || Choices.SelectedIndex < 0
-            || Choices.SelectedIndex >= _visible.Count)
+        if (sender is not Control control
+            || control.DataContext is not PickerChoice choice
+            || _request.Audition is not { Unavailable: null } audition)
         {
             return;
         }
 
-        var value = _visible[Choices.SelectedIndex];
+        // Read before stopping, because stopping is what clears it.
+        var stopping = choice.Playing;
 
-        // Swapped before the old one is cancelled, so the handler below cannot cancel its own
-        // successor if two presses land in the same instant.
-        var previous = _auditioning;
+        await StopAsync();
+
+        if (stopping)
+        {
+            return;
+        }
+
         var mine = new CancellationTokenSource();
         _auditioning = mine;
-
-        if (previous is not null)
-        {
-            await previous.CancelAsync();
-            previous.Dispose();
-        }
+        choice.Playing = true;
 
         try
         {
-            await audition.Play(value, mine.Token);
+            await audition.Play(choice.Value, mine.Token);
         }
         catch (OperationCanceledException)
         {
@@ -350,18 +452,49 @@ public partial class PickerWindow : Window
         }
         catch (Exception ex)
         {
-            // A provider that would not speak. Said on the button, because that is what was
-            // pressed and the picker has nowhere else to put a message.
-            ToolTip.SetTip(AuditionButton, ex.Message);
+            // A provider that would not speak. Said on the glyph that was pressed and in the line
+            // above the list, because an audition that silently does nothing is indistinguishable
+            // from a voice that is very quiet.
+            ToolTip.SetTip(control, ex.Message);
+            AuditionNote.Text = ex.Message;
         }
         finally
         {
+            choice.Playing = false;
+
             if (ReferenceEquals(_auditioning, mine))
             {
                 _auditioning = null;
             }
 
             mine.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Silences whatever is talking and puts every glyph back to play.
+    /// <para>
+    /// The field is swapped before the old source is cancelled, so two presses landing in the
+    /// same instant cannot leave one cancelling its own successor.
+    /// </para>
+    /// </summary>
+    private async Task StopAsync()
+    {
+        var previous = _auditioning;
+
+        _auditioning = null;
+
+        // Every row, not the listed ones. A voice can still be talking about a row the Commander
+        // has since filtered out of sight, and it is the one that has to be put back.
+        foreach (var row in _all)
+        {
+            row.Playing = false;
+        }
+
+        if (previous is not null)
+        {
+            await previous.CancelAsync();
+            previous.Dispose();
         }
     }
 

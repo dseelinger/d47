@@ -130,22 +130,28 @@ The picker lists several hundred names, and you are casting a character from the
 Mature, Balanced" and "George - Warm, Captivating Storyteller" are both true and neither tells
 you which one is Warden.
 
-**Hear it** speaks the highlighted voice without closing the dialog and without committing the
-choice, so you can walk the list and listen. What it says is the core's own opening line rather
-than a neutral sample, because the question you are asking is about a character.
+**Every voice in the list has a play glyph at the right of its row.** Pressing it speaks that
+voice without closing the dialog and without committing the choice, so you can walk the list and
+listen. While it is talking the glyph is a stop square, and pressing it again cuts it off. What
+it says is the core's own opening line rather than a neutral sample, because the question you are
+asking is about a character.
+
+**Clicking a voice highlights it and nothing more.** **Use this**, Enter, or a double-click takes
+the highlighted one; Cancel and Escape keep what you had. That is what makes the list something
+you can examine rather than a single click away from a decision.
 
 It is a press rather than a hover, and it is never automatic: on a paid provider each one is a
-synthesis request billed by the character, so the button carries the price before you press it —
-**Hear it (free)** on Edge Neural, an estimate in dollars on ElevenLabs. Each voice is
-synthesised once per session and replayed after that, so walking back and forth over four
-candidates costs four auditions rather than eight.
+synthesis request billed by the character, so the price is stated above the list before you press
+anything — *"Play a voice to hear it. This provider costs nothing"* on Edge Neural, an estimate in
+dollars on ElevenLabs. Each voice is synthesised once per session and replayed after that, so
+walking back and forth over four candidates costs four auditions rather than eight.
 
 It goes through the same audio path as everything else Directive 47 says: it ducks the game, the
 shut-up key cuts it off, and starting a second audition drops the first mid-word rather than
 queueing behind it.
 
-With no provider selected, or with a paid provider and no key stored, the button is shut and
-says which of those it is.
+With no provider selected, or with a paid provider and no key stored, the glyphs are shut and the
+line above the list says which of those it is.
 
 #### An empty list says which empty it is
 
@@ -232,9 +238,9 @@ falling silent.
 They are two rows rather than one because they are two people. A carrier whose captain and tower
 sound identical is a carrier with one person on it.
 
-Both offer the same **Hear it** button as the voice row, and both audition as themselves rather
-than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is
-what you are actually listening for when you cast one.
+Both offer the same play glyphs as the voice row, and both audition as themselves rather than
+reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is what you
+are actually listening for when you cast one.
 
 ### Speak incoming messages {#incoming-messages}
 

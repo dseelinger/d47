@@ -181,7 +181,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var section in settings.Sections)
         {
             var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var (card, content) = BuildCard(section, title, _sections.Count);
+            var (card, content, heading) = BuildCard(section, title, _sections.Count);
 
             Cards.Children.Add(card);
 
@@ -189,14 +189,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             NavItems.Children.Add(nav.Item);
 
             _sections.Add(
-                new SectionView(section.Capability.Id, title, card, content, nav.Item, nav.Bar, nav.Text));
+                new SectionView(
+                    section.Capability.Id, title, card, content, heading, nav.Item, nav.Bar, nav.Text));
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
 
-    private (Border Card, StackPanel Content) BuildCard(SettingsSection section, string title, int index)
+    private (Border Card, StackPanel Content, TextBlock Heading) BuildCard(
+        SettingsSection section,
+        string title,
+        int index)
     {
         var content = new StackPanel
         {
@@ -323,7 +327,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return (card, content);
+        return (card, content, heading);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -657,6 +661,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var showing = new int[_sections.Count];
 
+        // Which sections the query names. Worked out before the rows because a section that
+        // matches keeps all of them (change-requests.md 15).
+        var named = new bool[_sections.Count];
+
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            named[i] = _query.Length > 0
+                       && _sections[i].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
+        }
+
         _refreshing = true;
         try
         {
@@ -664,7 +678,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (list.md Phase 4).
-                var shown = row.Row.Applies(_settings.Current) && Matches(row.Row);
+                var shown = row.Row.Applies(_settings.Current)
+                            && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
 
                 row.Container.IsVisible = shown;
                 row.Refresh();
@@ -687,7 +702,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             _refreshing = false;
         }
 
-        ApplyFilterToCards(showing);
+        // The section's own name, marked in both places it is written. Painted after the rows so
+        // it happens on the same pass, and unconditionally so clearing the query takes the mark
+        // off again — Paint with nothing to find puts the plain string back.
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            Paint(_sections[i].Heading, _sections[i].Title);
+            Paint(_sections[i].NavText, _sections[i].Title);
+        }
+
+        ApplyFilterToCards(showing, named);
     }
 
     /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
@@ -703,6 +727,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// argument against highlighting <em>instead of</em> filtering, and not against doing both —
     /// once the filter has cut the haystack down, marking the hits is what tells the Commander
     /// which words survived on their behalf. See <see cref="Illuminate"/>.
+    /// </para>
+    /// <para>
+    /// <b>A section name is a match too</b> (change-requests.md 15). Typing "Speech" used to find
+    /// rows and not the card called Speech, so a search for a section's own name looked like it
+    /// had found nothing at the top of the thing it was looking for. A named section keeps every
+    /// row it has rather than only the ones that happen to repeat the word, because "Speech" is a
+    /// Commander asking to be taken there — and its name is marked in the card and in the nav, so
+    /// it is visible why the whole card survived.
     /// </para>
     /// </summary>
     public void Filter(string? query)
@@ -836,14 +868,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// state is not written while this happens, so clearing the query puts it back.
     /// </para>
     /// </summary>
-    private void ApplyFilterToCards(int[] showing)
+    private void ApplyFilterToCards(int[] showing, bool[] named)
     {
         var filtering = _query.Length > 0;
 
         for (var i = 0; i < _sections.Count; i++)
         {
             var section = _sections[i];
-            var holds = showing[i] > 0;
+
+            // Named counts even with nothing under it. A section whose every row is inapplicable
+            // right now would otherwise answer a search for its own name by vanishing.
+            var holds = showing[i] > 0 || named[i];
 
             section.Card.IsVisible = !filtering || holds;
             section.NavItem.IsVisible = !filtering || holds;
@@ -1807,7 +1842,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     ? new PickerAudition
                     {
                         Play = audition.Play,
-                        Label = audition.Label(_settings.Current),
+                        Cost = audition.Cost(_settings.Current),
                         Unavailable = audition.Unavailable?.Invoke(_settings.Current),
                     }
                     : null,
@@ -1923,6 +1958,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         string Title,
         Border Card,
         StackPanel Content,
+
+        /// <summary>The card's own title, so a query that matched the section can be marked in it.</summary>
+        TextBlock Heading,
         Border NavItem,
         Border NavBar,
         TextBlock NavText)

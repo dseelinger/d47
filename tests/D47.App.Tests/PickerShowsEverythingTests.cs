@@ -46,7 +46,7 @@ public class PickerShowsEverythingTests
         // the one place the id must never be.
         Assert.Equal(
             ["Microphone (Logi 4K Stream Edition)", "Microphone (Virtual Desktop Audio)"],
-            choices.ItemsSource!.Cast<string>());
+            choices.ItemsSource!.Cast<PickerChoice>().Select(choice => choice.Text));
 
         // And they are actually on screen, not merely in the ItemsSource. The reported symptom
         // was a list with one row in it, so the assertion worth having is the one about rows.

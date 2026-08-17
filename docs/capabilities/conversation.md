@@ -139,8 +139,11 @@ cannot see that through bullets. What you paste is **trimmed** before it is stor
 from a browser arrives with a trailing newline more often than not, and a newline fails at the
 provider in a way that reads as a wrong key rather than as a bad paste.
 
-**Check** proves it. It makes the smallest real call the provider offers — one token, no tools, no
-persona — and says what came back:
+**Verify Key** proves it. It is shut until you have pasted something — on an empty box the only
+answer it could give is that an empty key is not a valid one — and pressing it stores what you
+typed and then checks *that*, so it is never answering about the key you have just replaced. The
+check is the smallest real call the provider offers — one token, no tools, no persona — and it
+says what came back:
 
 ```text
 Anthropic accepted the key.

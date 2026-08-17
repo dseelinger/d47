@@ -17,6 +17,67 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.23.0 — 2026-08-17 — Five wanted changes to the settings surface
+
+All five raised hand-testing 0.21.x, none of them a defect. Four are about the two places a
+Commander spends the most time on that surface: the search box, and the picker that casts a voice.
+
+### The search finds a section by its own name
+
+Typing "Speech" found rows and not the card called **Speech**, so a search for a section's own name
+looked like it had found nothing at the top of the thing it was looking for. The name is now marked
+where it is written — in the card's heading and in the nav item — and a named section keeps every
+row it has rather than only the ones that happen to repeat the word, because naming a section is a
+Commander asking to be taken to it.
+
+"Audio mixer" is the case that shows why: nothing inside that card says "audio mixer", so it used
+to answer a search for its own name by emptying itself and then disappearing for being empty.
+
+### **Verify Key** is shut until a key has been typed
+
+It was offered on an empty box, where the only answer it could give was that an empty key is not a
+valid one — and it was offered there for as long as a key was stored, which is most of the time.
+
+It now lights up when you paste something and says why while it is shut. Pressing it stores what
+you typed and *then* checks it, which is the only honest thing it can do: the check is a real call
+made against the store, so on an unsaved paste it would otherwise have been answering about the key
+you had just replaced.
+
+### The ElevenLabs key sits beside the provider that needs it
+
+It was at the foot of the Speech card, below sixteen rows about rates, cues, retries and egress —
+so selecting ElevenLabs asked for a key, and the box to put one in was off the bottom of the
+screen. Selecting a provider is what makes its key relevant, so the row that answers that choice is
+now directly beneath the one that made it. Which key rows exist and when they appear is unchanged.
+
+### Auditioning a voice is a glyph on the row
+
+**Hear it (about $0.013)** was a button with a disclosure written on it. Every voice in the list now
+carries a play glyph at the right of its row, which becomes a stop square while that voice is
+talking and cuts it off when pressed again.
+
+The price did not go with the button. It is a sentence above the list — *"Play a voice to hear it.
+Each one costs about $0.013"* — and the same words are on the pointer over every glyph, because a
+cost you have to hover to discover is a cost discovered afterwards on the bill. With no provider
+selected, or a paid one with no key, the glyphs are shut and that line says which it is.
+
+### Clicking a voice highlights it rather than choosing it
+
+The picker committed and closed on a single click, so there was no way to look at the list — and no
+row for a play glyph to live on, since a row that dismisses the window when touched cannot hold a
+control. A click now highlights; **Use this**, Enter or a double-click takes it, and Cancel and
+Escape are unchanged.
+
+This overturns the reasoning that stood in `PickerWindow`: a command palette is a means of getting
+at one known answer and should commit on the first click, but a list of four hundred voices is a
+list to be examined.
+
+Fixed on the way past: rebuilding the rows on each keystroke would have cost the picker its
+highlight the moment it opened — a list holds its selection by object, and a text box raises
+`TextChanged` as its template applies. The rows are built once and filtered.
+
+---
+
 ## 0.22.2 — 2026-08-17 — The panel stops flickering while you carry it
 
 0.22.1 got the trigger arriving and the panel moving. This is what carrying it then showed.
