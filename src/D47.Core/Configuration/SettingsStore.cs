@@ -114,8 +114,63 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
                 settings.Callouts.AmbientSeconds);
         }
 
+        // The panel pitch was the whole tilt angle and is now a trim on top of one derived from
+        // distance and drop, so every value already on disk means something else than it did.
+        // Converted rather than dropped, once, and counted by a revision so a corrected repair can
+        // still reach a file this one has stamped.
+        if (settings.Vr.PitchRepaired < PitchRepair)
+        {
+            settings = settings with
+            {
+                Vr = settings.Vr with
+                {
+                    Panel = Retrim(settings.Vr.Panel),
+                    Mini = Retrim(settings.Vr.Mini),
+                    PitchRepaired = PitchRepair,
+                },
+            };
+
+            logger.LogInformation(
+                "The VR panel pitch is now a trim on a derived tilt; panel became {Panel:0.0}° and mini {Mini:0.0}°",
+                settings.Vr.Panel.Pitch,
+                settings.Vr.Mini.Pitch);
+        }
+
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
+    }
+
+    /// <summary>
+    /// Which revision of the pitch repair this build performs. Raised only if the repair below is
+    /// found to be wrong, never routinely — each raise re-decides an angle a Commander may have
+    /// since set deliberately.
+    /// </summary>
+    private const int PitchRepair = 1;
+
+    /// <summary>
+    /// What the old pitch was in absolute degrees, expressed as a trim on the derived tilt.
+    /// <para>
+    /// A file still holding the old default is taken to have <em>not</em> chosen: 12° is what
+    /// every file got without anybody asking, and carrying it forward as a trim would tilt every
+    /// panel 12° past the eyes it now aims at. Anything else is a decision, and is preserved
+    /// exactly — the trim that reproduces that angle is the angle minus the derived one, so the
+    /// Commander's panel does not move.
+    /// </para>
+    /// </summary>
+    private static VrSurfaceSettings Retrim(VrSurfaceSettings surface)
+    {
+        const double WhatPitchUsedToDefaultTo = 12;
+
+        if (surface.Pitch == WhatPitchUsedToDefaultTo)
+        {
+            return surface with { Pitch = 0 };
+        }
+
+        var derived = Vr.VrPlacementMath.EyeFacingPitch(
+            (float)surface.Distance,
+            (float)surface.Drop) * 180d / Math.PI;
+
+        return surface with { Pitch = surface.Pitch - derived };
     }
 
     public void Save(D47Settings settings)

@@ -28,7 +28,7 @@ public class VrPlacementTests
     {
         foreach (var head in new[] { VrPose.Origin, Awkward })
         {
-            var placed = VrPlacementMath.HeadLocked(head, distanceMetres: 1.1f, dropMetres: 0f, pitchRadians: 0f);
+            var placed = VrPlacementMath.HeadLocked(head, distanceMetres: 1.1f, dropMetres: 0f, pitchTrimRadians: 0f);
 
             Assert.Equal(1.1f, Vector3.Distance(head.Position, placed.Position), 4);
         }
@@ -54,12 +54,112 @@ public class VrPlacementTests
         // A Commander lying on their side wants the panel below their eyes, not below the
         // world. Applied in world space this would hang off to one side.
         var onTheirSide = new VrPose(Vector3.Zero, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2));
-        var placed = VrPlacementMath.HeadLocked(onTheirSide, 1.0f, dropMetres: -0.25f, pitchRadians: 0f);
+        var placed = VrPlacementMath.HeadLocked(onTheirSide, 1.0f, dropMetres: -0.25f, pitchTrimRadians: 0f);
 
         var down = Vector3.Transform(-Vector3.UnitY, onTheirSide.Facing);
         var offset = placed.Position - Vector3.Transform(new Vector3(0, 0, -1), onTheirSide.Facing);
 
         Assert.Equal(0.25f, Vector3.Dot(offset, down), 3);
+    }
+
+    /// <summary>
+    /// The tilt is worked out from the geometry, not taken from a setting. A fixed angle can
+    /// only be right for one distance and drop, and the two panels ship with two of each.
+    /// </summary>
+    [Theory]
+    [InlineData(1.1f, -0.25f, -12.8f)]  // the full panel: the magnitude the old fixed 12° was tuned for
+    [InlineData(0.9f, -0.30f, -18.4f)]  // mini: six degrees short under the old constant
+    [InlineData(1.6f, 0f, 0f)]          // at eye level there is nothing to tilt towards
+    public void TheHeadLockedTiltFacesTheEyesFromTheDistanceAndDrop(
+        float distance,
+        float drop,
+        float expectedDegrees)
+    {
+        var degrees = VrPlacementMath.EyeFacingPitch(distance, drop) * 180f / MathF.PI;
+
+        Assert.Equal(expectedDegrees, degrees, 1);
+    }
+
+    /// <summary>
+    /// The derived tilt actually points the quad's face at the eye, rather than merely being a
+    /// number of the right size. Checked as the angle between the surface's own forward and the
+    /// line from the surface to the head, which is zero when it is aimed exactly at them.
+    /// </summary>
+    [Theory]
+    [InlineData(1.1f, -0.25f)]
+    [InlineData(0.9f, -0.30f)]
+    [InlineData(1.4f, -0.60f)]
+    public void AHeadLockedSurfaceAimsItsFaceAtTheEye(float distance, float drop)
+    {
+        foreach (var head in new[] { VrPose.Origin, Awkward })
+        {
+            var placed = VrPlacementMath.HeadLocked(head, distance, drop, pitchTrimRadians: 0f);
+
+            // The visible face of an overlay quad looks along its own +Z, which is the opposite
+            // of the -Z every tracked device points along.
+            var face = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, placed.Facing));
+            var toTheEye = Vector3.Normalize(head.Position - placed.Position);
+
+            Assert.Equal(1f, Vector3.Dot(face, toTheEye), 3);
+        }
+    }
+
+    /// <summary>
+    /// The same question asked of the world-locked resting placement, which shipped with this sign
+    /// inverted: a panel dropped to knee height tilted its face at the floor, through twice the
+    /// angle it should have gone the other way. An assertion on the angle cannot see that — it is
+    /// the right size either way — so this one is on the direction the face ends up pointing.
+    /// </summary>
+    [Theory]
+    [InlineData(1.7f, 0.5f)]    // standing: the panel rests near the knee, well below the eye
+    [InlineData(1.2f, 0.4f)]    // seated: less far below, and still below
+    public void ARestingSurfaceAimsItsFaceAtTheEye(float eyeHeight, float topEdge)
+    {
+        var head = new VrPose(new Vector3(0, eyeHeight, 0), Quaternion.Identity);
+        var placed = VrPlacementMath.Resting(head, distanceMetres: 1.1f, topEdge, quadHeightMetres: 0.6f);
+
+        var face = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, placed.Facing));
+        var toTheEye = Vector3.Normalize(head.Position - placed.Position);
+
+        Assert.Equal(1f, Vector3.Dot(face, toTheEye), 3);
+    }
+
+    /// <summary>
+    /// The trim is added to the derived angle rather than replacing it, so a Commander who nudges
+    /// it moves the panel by that much from facing them — not to that much from square.
+    /// </summary>
+    [Fact]
+    public void TheConfiguredPitchTrimsTheDerivedTiltRatherThanReplacingIt()
+    {
+        var trim = 5f * MathF.PI / 180f;
+
+        var facing = VrPlacementMath.HeadLocked(VrPose.Origin, 1.1f, -0.25f, 0f);
+        var trimmed = VrPlacementMath.HeadLocked(VrPose.Origin, 1.1f, -0.25f, trim);
+
+        var between = Quaternion.Concatenate(Quaternion.Inverse(facing.Facing), trimmed.Facing);
+
+        Assert.Equal(5f, 2f * MathF.Acos(MathF.Abs(between.W)) * 180f / MathF.PI, 2);
+    }
+
+    /// <summary>
+    /// Captions opt out, and are the only thing that does: they sit 0.45 m below the eye at
+    /// 1.6 m, so deriving would tilt them 15.7° when they are meant to be square to the view.
+    /// </summary>
+    [Fact]
+    public void ASurfaceThatDoesNotFaceTheEyesKeepsItsAngleOutright()
+    {
+        var placed = VrPlacementMath.HeadLocked(
+            VrPose.Origin, 1.6f, -0.45f, pitchTrimRadians: 0f, facesTheEyes: false);
+
+        Assert.Equal(Quaternion.Identity, placed.Facing, new QuaternionComparer());
+    }
+
+    private sealed class QuaternionComparer : IEqualityComparer<Quaternion>
+    {
+        public bool Equals(Quaternion a, Quaternion b) =>
+            MathF.Abs(MathF.Abs(Quaternion.Dot(a, b)) - 1f) < 1e-4f;
+
+        public int GetHashCode(Quaternion value) => 0;
     }
 
     /// <summary>

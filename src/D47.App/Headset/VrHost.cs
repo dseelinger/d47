@@ -92,6 +92,7 @@ public sealed class VrHost : IDisposable
         SettingsService settings,
         ViewStateStore viewState,
         TickLoop tick,
+        D47.Core.AppPaths paths,
         ILoggerFactory loggers,
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null)
@@ -102,7 +103,10 @@ public sealed class VrHost : IDisposable
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
-        var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
+        var runtime = new SteamVrRuntime(
+            [panel, captions],
+            paths,
+            loggers.CreateLogger<SteamVrRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
@@ -325,28 +329,52 @@ public sealed class VrHost : IDisposable
     }
 
     /// <summary>
-    /// Grab-to-move. The pointer is the only controller input an overlay application gets —
-    /// SteamVR takes the controllers to drive its own laser and hands back mouse events — so
-    /// this is the trigger, arriving as a button, over a quad the ray is on.
+    /// Grab-to-move, and the guidance that makes it possible to aim.
+    /// <para>
+    /// <b>The ray is cast before the button is read, and that inversion is the whole fix.</b>
+    /// Whether a ray is on the panel is what decides whether d47 claims the controllers at all —
+    /// see <see cref="VrActionInput.TriggerHeld"/> — so position and claim come out of the same
+    /// intersection, one frame, one source of truth. This used to be handed a <c>Held</c> flag
+    /// decoded from overlay mouse events, which carry nothing while a game holds the headset.
+    /// </para>
+    /// <para>
+    /// Which hand is holding it is resolved <em>only</em> at the moment of the press. Mid-carry the
+    /// holder is whoever already holds it: re-deriving it every frame from the nearer ray would let
+    /// a flicker in the curvature model hand the panel to the other hand, or drop it.
+    /// </para>
     /// </summary>
     private void Carry()
     {
-        var overlay = _runtime.OverlayFor(_panel.Surface);
-
-        if (overlay is null || _runtime.Head is not { } head)
+        // Asked of the surface rather than assumed here. Captions are read rather than touched,
+        // and a quad that answers a ray in front of the cockpit is a beam that stops on a label.
+        if (!_panel.TakesPointer || _runtime.Head is not { } head)
         {
             return;
         }
 
         var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
+        var placement = _panel.Placement;
+        var resting = placement.Where(head);
+        var (width, height) = _panel.Size;
+        var extent = new VrExtent(placement.WidthMetres, (float)width / Math.Max(1, height));
 
-        if (!overlay.Pointer.Held)
+        var hands = _runtime.Controllers();
+        var found = VrRay.PointingAt(hands, resting, extent, placement.Curvature);
+
+        // Claimed only while a ray is on the panel or a carry is already running — the second
+        // because a hand can swing the panel far enough that its own ray leaves it, and dropping
+        // the claim there would drop the panel mid-move.
+        var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null);
+
+        Guide(hands, found, resting, extent, head);
+
+        if (!held)
         {
             if (_carrying is not null)
             {
-                // Written once, on release. A drag is thirty poses a second and the settings
-                // store writes a whole file atomically; persisting each one would be a
-                // hundred file writes to record one gesture.
+                // Written once, on release. A drag is thirty poses a second and the settings store
+                // writes a whole file atomically; persisting each one would be a hundred file
+                // writes to record one gesture.
                 _carrying = null;
                 Remember();
                 _logger.LogDebug("The panel was put down");
@@ -355,42 +383,114 @@ public sealed class VrHost : IDisposable
             return;
         }
 
-        // Which hand is doing it is not on the event: trackedDeviceIndex on an overlay mouse
-        // event has been measured as the invalid index against two tracked controllers. So it
-        // is recovered by casting each hand's ray at the quad and taking the nearest hit,
-        // which only has to tell one hand from the other.
-        if (Pointing(overlay) is not { } pointing)
-        {
-            return;
-        }
-
         if (_carrying is null)
         {
-            _carrying = VrPlacementMath.Grab(pointing.Pose, _panel.Placement.Where(head));
-            _carryingHand = pointing.Device;
+            if (found is not { } start)
+            {
+                return;
+            }
 
-            // Picking it up means putting it somewhere, so it becomes world-locked. The
-            // setting follows the action rather than gating it: a Commander who has physically
-            // carried the panel across the cockpit has said where they want it, and a
-            // head-locked surface that sprang back would be d47 arguing with them.
+            _carrying = VrPlacementMath.Grab(start.Hand.Aim, resting);
+            _carryingHand = start.Hand.Device;
+
+            // Picking it up means putting it somewhere, so it becomes world-locked. The setting
+            // follows the action rather than gating it: a Commander who has physically carried the
+            // panel across the cockpit has said where they want it, and a head-locked surface that
+            // sprang back would be d47 arguing with them.
             _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
 
-            // The mirror of the put-down line. Without it a log could show a drop with no grab
-            // above it, which reads as a lost release when it is a pick-up that never happened —
-            // and telling those two apart from outside a headset is the whole difficulty here.
-            _logger.LogDebug("The panel was picked up by device {Device}", pointing.Device);
+            _logger.LogDebug("The panel was picked up by device {Device}", start.Hand.Device);
             return;
         }
 
-        // A second hand pressing mid-carry does not steal the panel, and the carrying hand
-        // losing tracking drops it where it was rather than following a pose nobody has.
-        if (_carryingHand != pointing.Device)
+        // The hand that took it, and only that one. A second hand pressing does not steal the
+        // panel, and the carrying hand losing tracking drops it where it was rather than following
+        // a pose nobody has.
+        if (Holding(hands) is not { } carrier)
         {
             return;
         }
 
-        _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, pointing.Pose), head);
+        _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, carrier.Aim), head);
         _panel.Invalidate();
+    }
+
+    /// <summary>
+    /// The beam and the cursor: where the Commander is pointing, drawn, because SteamVR is no
+    /// longer drawing it for them.
+    /// <para>
+    /// <b>The beam's rule is "approaching", not "on".</b> A beam that only appeared once the ray
+    /// was already on the panel would answer a question the cursor has already answered, and leave
+    /// the real one — <em>where is the panel, and am I close?</em> — unanswered. So the test is a
+    /// hit against a panel scaled up by <see cref="VrAim.BeamGuideScale"/>, which lights the beam
+    /// as the hand comes near and keeps it off the rest of the time. An always-on laser in a
+    /// cockpit is its own nuisance.
+    /// </para>
+    /// <para>
+    /// The length says the same thing without a number. On the panel the beam stops exactly at the
+    /// cursor, so it reads as touching; near but off, it is drawn a fixed short length and visibly
+    /// falls short.
+    /// </para>
+    /// </summary>
+    private void Guide(
+        IReadOnlyList<VrHand> hands,
+        (VrHand Hand, VrHit Hit)? found,
+        VrPose resting,
+        VrExtent extent,
+        VrPose head)
+    {
+        VrPose? aim = null;
+        Vector3? point = null;
+        var length = VrAim.BeamMissLengthMetres;
+
+        if (found is { } on)
+        {
+            aim = on.Hand.Aim;
+            length = on.Hit.DistanceMetres;
+
+            // One value feeds both, so the beam stops at exactly the point the cursor sits on and
+            // the two meet whether or not the curvature model is right about where that point is.
+            point = VrAim.PointAlong(on.Hand.Aim, on.Hit.DistanceMetres);
+        }
+        else if (_carrying is not null && Holding(hands) is { } carrier)
+        {
+            // Kept through a carry that has swung the panel off its own ray.
+            aim = carrier.Aim;
+        }
+        else
+        {
+            var guide = extent with { WidthMetres = extent.WidthMetres * VrAim.BeamGuideScale };
+
+            if (VrRay.PointingAt(hands, resting, guide, 0f) is { } near)
+            {
+                aim = near.Hand.Aim;
+            }
+        }
+
+        _runtime.AimBeam(aim, head, length);
+        _runtime.ShowCursor(point, head);
+    }
+
+    /// <summary>
+    /// The hand currently carrying the panel, if it is still being tracked.
+    /// <para>
+    /// Nullable rather than <c>FirstOrDefault</c>: <see cref="VrHand"/> is a struct, so a missing
+    /// hand comes back as a perfectly usable zero — device zero, at the origin, facing backwards —
+    /// and following it would drag the panel to the Commander's feet the moment a controller went
+    /// to sleep. That is the same shape as the empty-pose-slot trap one layer down.
+    /// </para>
+    /// </summary>
+    private VrHand? Holding(IReadOnlyList<VrHand> hands)
+    {
+        foreach (var hand in hands)
+        {
+            if (hand.Device == _carryingHand)
+            {
+                return hand;
+            }
+        }
+
+        return null;
     }
 
     private static SurfaceAnchor Anchor(VrPose placed, VrPose head) => new()
@@ -413,25 +513,5 @@ public sealed class VrHost : IDisposable
         }
 
         _viewState.Save(state);
-    }
-
-    private (uint Device, VrPose Pose)? Pointing(VrOverlay overlay)
-    {
-        (uint Device, VrPose Pose)? nearest = null;
-        var closest = float.MaxValue;
-
-        foreach (var (device, pose) in _runtime.Controllers())
-        {
-            // A controller points along its own -Z, which is OpenVR's convention and not ours.
-            var along = Vector3.Transform(-Vector3.UnitZ, pose.Facing);
-
-            if (overlay.IntersectedBy(pose.Position, along) is { } distance && distance < closest)
-            {
-                closest = distance;
-                nearest = (device, pose);
-            }
-        }
-
-        return nearest;
     }
 }

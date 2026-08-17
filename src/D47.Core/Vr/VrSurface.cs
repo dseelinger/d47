@@ -63,8 +63,30 @@ public sealed record SurfacePlacement
     /// <summary>How far below eye level, in metres. Negative is down.</summary>
     public float DropMetres { get; init; } = -0.25f;
 
-    /// <summary>Tilted back towards the Commander, in degrees, so a dropped panel still faces them.</summary>
-    public float PitchDegrees { get; init; } = 12f;
+    /// <summary>
+    /// A trim on top of the tilt that already faces the Commander, in degrees. Zero means "face
+    /// my eyes", which is what <see cref="VrPlacementMath.EyeFacingPitch"/> works out from
+    /// <see cref="DistanceMetres"/> and <see cref="DropMetres"/>.
+    /// <para>
+    /// This used to be the whole angle, fixed at 12°, and a fixed angle can only suit one
+    /// distance and drop — see <see cref="VrPlacementMath.EyeFacingPitch"/> for what that cost
+    /// mini. A file written before the change carries the old 12 and is cleared once, on load,
+    /// by the repair <see cref="Configuration.VrSettings.PitchRepaired"/> counts.
+    /// </para>
+    /// </summary>
+    public float PitchDegrees { get; init; }
+
+    /// <summary>
+    /// Whether the surface tilts to face the Commander's eyes, or holds whatever
+    /// <see cref="PitchDegrees"/> says outright.
+    /// <para>
+    /// True for the panel, which is furniture a Commander reads. False for captions, and only
+    /// them: they sit 0.45 m below the eye at 1.6 m, so deriving would tilt them 15.7° and they
+    /// are deliberately square to the view. Not a settings row — it is a property of what the
+    /// surface is for, and nothing about a caption layer is placed by hand.
+    /// </para>
+    /// </summary>
+    public bool FacesTheEyes { get; init; } = true;
 
     public float WidthMetres { get; init; } = 1.0f;
 
@@ -126,7 +148,8 @@ public sealed record SurfacePlacement
         VrPose.Origin,
         DistanceMetres,
         DropMetres,
-        PitchDegrees * MathF.PI / 180f);
+        PitchDegrees * MathF.PI / 180f,
+        FacesTheEyes);
 
     public VrPose Where(VrPose head)
     {
@@ -139,6 +162,7 @@ public sealed record SurfacePlacement
             head,
             DistanceMetres,
             DropMetres,
-            PitchDegrees * MathF.PI / 180f);
+            PitchDegrees * MathF.PI / 180f,
+            FacesTheEyes);
     }
 }

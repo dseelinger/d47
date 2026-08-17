@@ -158,29 +158,89 @@ It also means animations have no clock — anything moving on the VR panel must 
 
 Elite renders through OpenVR. `XR_EXTX_overlay` is barely implemented across runtimes. `IVROverlay` composites out-of-process, which is also what keeps TheApp clear of anything resembling game injection.
 
-Two overlay handles, not three. *Amended in Phase 9.*
+Two content handles, not three, plus two for the aim. *Amended in Phase 9, and again 2026-08-17
+when the aim stopped being SteamVR's to draw.*
 
 | Handle | Locking | Input |
 |---|---|---|
-| Panel | Head- or world-locked, per *VR Panel locking*. `Full` and `Mini` are content modes of it, each with its own placement | Pointer, for grab-to-move |
+| Panel | Head- or world-locked, per *VR Panel locking*. `Full` and `Mini` are content modes of it, each with its own placement | Ray-cast and carried by the trigger |
 | Captions | Head-locked, fixed | None — output only |
+| Beam | Follows the aiming hand | None — it *is* the input, drawn |
+| Cursor | Sits on the hit point | None |
+
+The beam and the cursor are separate handles rather than pixels in the panel for two reasons: they
+move at headset rate while the panel repaints a few times a second, so compositing them in would
+drag the panel's whole texture along at 90 Hz; and a cursor stamped into the texture is a texel
+whose real 3D position only SteamVR knows, which leaves the beam with nothing to stop on. Both fail
+soft — no beam and no cursor is a panel that can still be carried, just unguided.
 
 The original table gave mini its own handle. *TheApp's panel works in VR* is explicit that "Mini is a mode of the same panel — a reduced content set — not a separate surface or a scaled-down copy", and that line is the acceptance criterion, so mini is a mode on the view model and the two modes share one handle and one quad. They do **not** share a size: apparent text size in a headset is the texture's pixel count and the quad's width in metres together, so mini is a smaller image at a smaller width, not the same image hung nearer. Each mode therefore carries its own placement, which is what the "same transform family" row was reaching for.
 
 Captions stay a separate handle precisely so *Overlay Positioning & Look* cannot accidentally apply to them.
 
-**The pointer is the only controller input an overlay gets, and it arrives as mouse events.** This is settled, expensively, by three prior implementations. `IVRSystem.GetControllerState` returns false for controllers that are connected and tracking, silently. An `IVRInput` action manifest was built twice in two separate projects, accepted by SteamVR, reported as bound by `GetActionBindingInfo`, and never went live — `IsInputAvailable` false while `IsSteamVRDrawingControllers` was true. The reason is that an overlay which asks to be pointed at gives up its controllers: SteamVR takes them to drive its own laser, and what comes back is pointer events and nothing else. So:
+**Controller input is `IVRInput`, not overlay mouse events.** *Amended 2026-08-17, reversing what
+this section said for three phases.*
 
-- `SetOverlayInputMethod(handle, VROverlayInputMethod.Mouse)` and `SetOverlayFlag(handle, MakeOverlaysInteractiveIfVisible, true)`. Without the flag the overlay is a picture and the ray passes through it, silently.
-- `SetOverlayMouseScale` in the units the rest of the system uses, re-applied on **every** size change, or the quad reports positions against the size it used to be.
-- OpenVR counts mouse Y from the **bottom**; everything else counts from the top. Unflipped, the panel works perfectly upside down.
-- Only the trigger. Other buttons arrive through the same channel, so the grip that grabs the panel would otherwise also press whatever the ray was over.
-- Pointer and held state must be **latched**: the runtime reports transitions, not state, and a hand held still sends nothing. `VREvent_FocusLeave` clears both, or a Commander who aims away mid-drag never gets the button-up and carries the panel for the rest of the session.
-- `trackedDeviceIndex` on an overlay mouse event is **not** the hand — measured as `k_unTrackedDeviceIndexInvalid` against tracked devices 1 and 2. Which hand grabbed is recovered by casting each controller's aim ray at the overlay and taking the nearest hit.
+The overlay mouse channel — `SetOverlayInputMethod(Mouse)` plus
+`MakeOverlaysInteractiveIfVisible` — opts the quad in to **SteamVR's own laser**, and SteamVR only
+runs that laser over **its own dashboard**. With Elite holding the headset,
+`PollNextOverlayEvent` returns nothing, forever: no pointer, no grab, no error. It works perfectly
+with the game closed, which is exactly what made three implementations believe it worked at all.
+Measured rather than reasoned, in COVAS++ (`#264`), whose smoke test passes with Elite closed and
+does nothing with it running.
+
+This section previously recorded that an `IVRInput` manifest had been "built twice, accepted, and
+never went live", and concluded the mouse channel was the only road. Both attempts were missing the
+same step, and its absence is silent:
+
+- **Register the application.** `AddApplicationManifest(path, temporary: true)` then
+  `IdentifyApplication(pid, appKey)`. SteamVR files bindings under an application key; a process it
+  does not recognise has none, so there is nothing for a binding to attach to. The action manifest
+  still loads, the handles still resolve, and the action stays bound to nothing forever. It does not
+  appear under Manage Controller Bindings either, so it cannot be fixed by hand. The only place that
+  says so is `vrserver.txt`.
+- **Activate the set at overlay priority.** `k_nActionSetOverlayGlobalPriorityMin`. At priority 0 the
+  set loses to the running scene application and receives nothing. An action set is active only for
+  the frame it is passed to `UpdateActionState`, so *not* calling it is the release.
+- **And only while it is wanted.** Claimed while a ray is on the panel or a carry is running, and
+  not otherwise: Elite does not bind motion controllers, but Virtual Desktop and the SteamVR
+  dashboard do, and holding global priority for a session takes them hostage. The tell is physical —
+  the trigger's own haptic tick stops.
+- **Declare `oculus_touch` *and* `rift`.** The Oculus driver asks for each profile in turn and one
+  missing binding disables input entirely: `[Input] ... (rift) has no configured binding. Input will
+  not be available`.
+
+`IVRSystem.GetControllerState` remains dead for controllers that are connected and tracking, and
+that part was always right.
+
+**Two consequences follow from losing the laser.**
+
+- **The ray is ours to cast, before the button is read.** Whether a ray is on the panel is what
+  decides whether we claim the controllers at all, so position and claim come out of one
+  intersection each frame. `ComputeOverlayIntersection` is not enough: on a curved overlay it was
+  measured returning true for every ray with `vUVs` stuck at `(0, 1)`, so it cannot say *where*.
+  d47 casts its own in `D47.Core/Vr/VrRay.cs`, flat and cylindrical, which also puts it where a test
+  can reach it without a headset.
+- **The aim has to be drawn.** SteamVR is no longer drawing it, and a panel you cannot see yourself
+  pointing at is one you cannot grab. A beam overlay along the aim and a cursor overlay at the hit
+  point, both separate handles: the beam moves at headset rate while the panel repaints a few times
+  a second, and the cursor has to be a real 3D object or the beam has nothing to stop on. One
+  distance feeds both, so they meet by construction whatever the curvature model gets wrong.
+
+**A controller's reported pose is the grip, not the tip.** OpenVR reports the pose inside the
+handle; on Touch controllers the tip differs by a large angle, enough that a ray cast from the grip
+lands nowhere near where the Commander is aiming. The correction is read out of the render model —
+`Prop_RenderModelName_String`, then `GetComponentState` on `tip`, falling back to `openxr_aim` and
+then to identity — never hardcoded, because it differs per controller.
+
+**`trackedDeviceIndex` on an overlay event is not the hand** — measured as
+`k_unTrackedDeviceIndexInvalid` against tracked devices 1 and 2. Which hand grabbed is recovered
+from the nearest ray hit, and resolved **only at the press**: re-deriving it mid-carry would let a
+flicker in the curvature model hand the panel to the other hand, or drop it.
 
 **Grabbing is one frozen offset.** `offset = hand⁻¹ · overlay` at the press, `overlay = hand · offset` every frame after, always measured from the grab origin rather than accumulated from the last answer — accumulating makes the overlay's speed a function of how often it is asked, which reads as broken tracking rather than as wrong arithmetic. Nothing re-faces the panel at the Commander while it is held: a panel forced upright and square cannot be tilted to read from below, which is most of what moving one is for.
 
-**Conventions, each of which is invisible until it is not.** `HmdMatrix34_t` is column-vector where `System.Numerics.Matrix4x4` is row-vector, so the rotation transposes on the crossing — and the error is invisible for any placement square to the view, so the test that matters rotates on all three axes. An overlay quad faces its own **+Z**; a controller and the head face **-Z**. A tracked pose is only real if `bPoseIsValid` **and** `bDeviceIsConnected`: an all-zero device slot converts to a perfectly valid-looking unit quaternion at the origin, so an unchecked slot is a grabbed panel dragged to the Commander's feet the moment a controller sleeps. Quaternions out of a tracking runtime drift off unit length over a session and are normalised at the boundary.
+**Conventions, each of which is invisible until it is not.** `HmdMatrix34_t` is column-vector where `System.Numerics.Matrix4x4` is row-vector, so the rotation transposes on the crossing — and the error is invisible for any placement square to the view, so the test that matters rotates on all three axes. An overlay quad faces its own **+Z**; a controller and the head face **-Z** — and this was written here correctly while `VrPlacementMath.Resting` shipped with its pitch sign inverted against it, tilting a knee-height panel to face the floor. Assert on the direction a face ends up pointing, never on the angle: the angle is the right size either way, which is why a test measuring `-Z` agreed with the bug. A tracked pose is only real if `bPoseIsValid` **and** `bDeviceIsConnected`: an all-zero device slot converts to a perfectly valid-looking unit quaternion at the origin, so an unchecked slot is a grabbed panel dragged to the Commander's feet the moment a controller sleeps. Quaternions out of a tracking runtime drift off unit length over a session and are normalised at the boundary.
 
 **Lifecycle, beyond what the state machine already says.** `VR_Init` is called once per process and nothing in OpenVR refuses a second call, so the refusal lives in our code. `EVROverlayError.KeyInUse` means another copy of d47 owns the key, not a generic failure, so overlay keys are claimed before anything expensive is built. Recovery from a mid-session SteamVR restart rebuilds every handle rather than repairing any — the first refused call unwinds, the session is dropped, and the next poll starts clean. `ClearOverlayTexture` precedes `DestroyOverlay`, because an overlay outliving the device that owns its image leaves SteamVR querying a destroyed one.
 

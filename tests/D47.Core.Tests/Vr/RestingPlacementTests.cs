@@ -82,6 +82,14 @@ public class RestingPlacementTests
     /// <summary>
     /// A quad near the floor that is not tilted up is a line. It faces the eyes that are above
     /// it, and at eye level it stands upright rather than being tilted for its own sake.
+    /// <para>
+    /// <b>Measured on +Z, and that correction is the point.</b> This test read the normal off -Z
+    /// and passed for as long as the placement had its pitch sign inverted — because -Z is the
+    /// quad's <em>back</em>, so what it actually asserted was that a knee-level panel turns its
+    /// back up towards the Commander and its face at the floor. Both halves were wrong together,
+    /// which is why nothing caught it: the angle was the right size, and the axis agreed with the
+    /// arithmetic rather than with the headset.
+    /// </para>
     /// </summary>
     [Fact]
     public void ItIsTiltedBackTowardsTheEyesAboveIt()
@@ -91,12 +99,13 @@ public class RestingPlacementTests
         var low = VrPlacementMath.Resting(head, 0.9f, 0.5f, 0.15f);
         var atEyeLevel = VrPlacementMath.Resting(head, 0.9f, head.Position.Y + 0.075f, 0.15f);
 
-        // The surface's own up, tipped back: its normal has climbed away from horizontal.
-        var lowNormal = Vector3.Transform(-Vector3.UnitZ, low.Facing);
-        var levelNormal = Vector3.Transform(-Vector3.UnitZ, atEyeLevel.Facing);
+        // The face an overlay actually shows, which looks along its own +Z: tipped back, it has
+        // climbed away from horizontal towards the eyes.
+        var lowFace = Vector3.Transform(Vector3.UnitZ, low.Facing);
+        var levelFace = Vector3.Transform(Vector3.UnitZ, atEyeLevel.Facing);
 
-        Assert.True(lowNormal.Y > 0.3f, $"a knee-level panel was left facing the ceiling ({lowNormal.Y:0.000})");
-        Assert.Equal(0f, levelNormal.Y, 3);
+        Assert.True(lowFace.Y > 0.3f, $"a knee-level panel was left facing the floor ({lowFace.Y:0.000})");
+        Assert.Equal(0f, levelFace.Y, 3);
     }
 
     /// <summary>
