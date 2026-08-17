@@ -48,6 +48,10 @@ public class VrSurfaceTests
     public void MiniIsASmallerImageAtASmallerWidthRatherThanTheSameOneHungNearer()
     {
         var (settings, _, _) = TestSurface.Create();
+
+        // Full, explicitly. Mini is the shipped default now, and this test is about the
+        // full panel's own settings slot rather than about which mode d47 starts in.
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         using var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null);
 
         var full = (surface.Size, surface.Placement.WidthMetres);
@@ -63,6 +67,10 @@ public class VrSurfaceTests
     public void EachModeReadsItsOwnPlacementSlot()
     {
         var (settings, _, _) = TestSurface.Create();
+
+        // Full, explicitly. Mini is the shipped default now, and this test is about the
+        // full panel's own settings slot rather than about which mode d47 starts in.
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         using var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null);
 
         Assert.Equal(VrCapability.PanelSlot, surface.Slot);
@@ -88,6 +96,10 @@ public class VrSurfaceTests
     {
         var (settings, _, _) = TestSurface.Create();
 
+        // Full, explicitly. Mini is the shipped default now, and this test is about the
+        // full panel's own settings slot rather than about which mode d47 starts in.
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
+
         var placed = new VrPose(new System.Numerics.Vector3(0.4f, 1.3f, -0.9f), System.Numerics.Quaternion.Identity);
         var against = new VrPose(new System.Numerics.Vector3(0, 1.6f, 0), System.Numerics.Quaternion.Identity);
 
@@ -107,6 +119,10 @@ public class VrSurfaceTests
     public void CurvatureReachingZeroIsWhatFlatMeans()
     {
         var (settings, _, _) = TestSurface.Create();
+
+        // Full, explicitly. Mini is the shipped default now, and this test is about the
+        // full panel's own settings slot rather than about which mode d47 starts in.
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         using var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null);
 
         // The default is flat, and there is no second mode that could disagree with it.
@@ -128,6 +144,10 @@ public class VrSurfaceTests
     public void ScaleAndMiniAreDifferentLevers()
     {
         var (settings, _, _) = TestSurface.Create();
+
+        // Full, explicitly. Mini is the shipped default now, and this test is about the
+        // full panel's own settings slot rather than about which mode d47 starts in.
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         using var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null);
 
         var before = surface.Size;

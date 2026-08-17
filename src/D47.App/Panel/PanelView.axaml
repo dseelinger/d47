@@ -176,9 +176,10 @@
                 Fill="{DynamicResource D47.Accent}"
                 Data="M 2.5,3 L 22,12 L 2.5,21 L 2.5,13.6 L 14.5,12 L 2.5,10.4 Z" />
         </Button>
+        <!-- The placeholder is set in code rather than bound; see ApplyAskHint for why a
+             binding on this particular control is the wrong tool. -->
         <TextBox x:Name="AskBox"
                  Text="{Binding AskText, Mode=TwoWay}"
-                 PlaceholderText="Ask D47 something — try &quot;where am I&quot; or &quot;what's your status&quot;"
                  KeyDown="OnAskBoxKeyDown" />
       </DockPanel>
     </Border>
@@ -259,7 +260,29 @@
                    Foreground="{DynamicResource D47.Accent}" />
       </Border>
 
-      <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
+      <!--
+        One line of provenance per turn: which path answered, at what effort, for what.
+
+        The figures behind it live in a dialog rather than on the line. Eleven numbers on one
+        row beside a running game is a wall a Commander reads none of; the ones that answer
+        "did that work" stay here and the rest are a click away. The link is docked so the line
+        wraps against it rather than pushing it off the row.
+      -->
+      <Button x:Name="TurnDetails"
+              DockPanel.Dock="Right"
+              Content="Details"
+              IsVisible="False"
+              Margin="8,0,0,0"
+              Padding="6,1"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              ToolTip.Tip="Tokens, cost, and what this has come to over time"
+              Click="OnTurnDetailsClick" />
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"
                  VerticalAlignment="Center"
@@ -309,6 +332,17 @@
                 FontSize="{StaticResource D47.Type.Secondary}"
                 Content="Copy"
                 Click="OnCopyClick" />
+        <!--
+          The clear affordance sits inside the field, not beside it. Another sibling in this
+          StackPanel would sit outside the border and read as a fourth button in a row that
+          already has Copy and the two steppers, rather than as part of the box it empties.
+
+          U+00D7, the multiplication sign, and deliberately not the letter x — the same reason
+          the steppers above are U+2039 and U+203A rather than angle brackets.
+
+          Hidden until there is something to clear, or it is a control that does nothing for
+          most of the time a Commander can see it.
+        -->
         <TextBox x:Name="SearchInput"
                  Width="200"
                  Height="28"
@@ -317,7 +351,25 @@
                  VerticalContentAlignment="Center"
                  PlaceholderText="Search this page"
                  TextChanged="OnSearchChanged"
-                 KeyDown="OnSearchKeyDown" />
+                 KeyDown="OnSearchKeyDown">
+          <TextBox.InnerRightContent>
+            <Button x:Name="SearchClear"
+                    Content="&#x00D7;"
+                    Padding="6,0"
+                    MinWidth="0"
+                    Margin="0,0,2,0"
+                    IsVisible="False"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    VerticalAlignment="Center"
+                    FontSize="{StaticResource D47.Type.Body}"
+                    Foreground="{DynamicResource D47.TextMuted}"
+                    Cursor="Hand"
+                    ToolTip.Tip="Clear the search (Esc)"
+                    AutomationProperties.Name="Clear the search"
+                    Click="OnSearchClearClick" />
+          </TextBox.InnerRightContent>
+        </TextBox>
         <TextBlock x:Name="SearchCount"
                    VerticalAlignment="Center"
                    IsVisible="False"

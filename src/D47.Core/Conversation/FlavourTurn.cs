@@ -128,7 +128,9 @@ public static class FlavourTurn
 
                 // Its prefix is not the conversation's prefix, so a cold one here is expected
                 // rather than the regression an unexplained cache miss on the turn path is.
-                coldPrefixExpected: true);
+                coldPrefixExpected: true,
+                provider.Id,
+                chosenModel);
         }
 
         var line = reply.ToString().Trim();

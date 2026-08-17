@@ -241,9 +241,13 @@ states:
 
 | | |
 |---|---|
-| **Microphone open, nothing kept** | Push-to-talk at rest. Audio runs into the half-second ring and is overwritten. |
-| **Listening for you** | Hands free. Directive 47 is deciding for itself when to listen. |
-| **Listening** *(filled, ringed)* | The gate is open. What is arriving now will be transcribed. |
+| **PTT Ready** | Push-to-talk at rest. Audio runs into the half-second ring and is overwritten, and nothing is kept. |
+| **Listening...** | Hands free. Directive 47 is deciding for itself when to listen. |
+| **MIC ON** *(filled, ringed)* | The gate is open. What is arriving now will be transcribed. |
+
+The first two name the mode because the state only happens in that mode: at rest is
+push-to-talk, hands free is not. The open gate is reached both ways — a held key and a gate
+Directive 47 opened for itself are the same fact about the microphone — so it says neither.
 
 Filled or hollow is the state, not only the colour — a glance reads a shape first, and a difference
 that is only colour is not a difference for everybody. Hover it for the gesture, or the name, that

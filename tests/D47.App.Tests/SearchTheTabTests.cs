@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using D47.App.Settings;
 using D47.App.Panel;
 using D47.App.Theming;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -357,6 +358,187 @@ public class SearchTheTabTests
     }
 
     /// <summary>
+    /// The cross appears only once there is a query behind it. A control that is present and
+    /// inert for most of the time it can be seen is one a Commander learns to stop reading.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheClearGlyphIsOnlyThereWhenThereIsSomethingToClear()
+    {
+        var (window, view) = Open(Said());
+        var clear = Named(view, "SearchClear");
+
+        Assert.False(clear.IsVisible);
+
+        Box(view).Text = "docked";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Assert.True(clear.IsVisible);
+
+        Box(view).Text = string.Empty;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Assert.False(clear.IsVisible);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The cross runs the same clear path Escape does, and the claim worth asserting is about the
+    /// page rather than about the box: blanking the text without letting the query back through
+    /// the handler would leave settings filtered to a handful of sections with an empty search
+    /// box above them — which is bugs.md 2, reintroduced through a new control.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheClearGlyphPutsTheWholeFilteredPageBack()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var cardsBefore = Cards(host);
+        var navBefore = Nav(host);
+
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+        box.Text = "push-to-talk";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Nav(host) < navBefore, "the filter did not take");
+
+        var clear = host.Panel.FindControl<Control>("SearchClear")!;
+        clear.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(string.Empty, box.Text ?? string.Empty);
+        Assert.Equal(cardsBefore, Cards(host));
+        Assert.Equal(navBefore, Nav(host));
+
+        host.Close();
+    }
+
+    /// <summary>Every run on the settings page drawn with a highlight behind it.</summary>
+    private static List<Run> MarkedRuns(SettingsHost host) =>
+        [.. host.View.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => block.IsEffectivelyVisible)
+            .SelectMany(block => (IEnumerable<Run>?)block.Inlines?.OfType<Run>() ?? [])
+            .Where(run => run.Background is not null)];
+
+    /// <summary>
+    /// The filter cuts the page down and the highlight says why each survivor is on it. Both, not
+    /// one or the other: rows with nothing marked leave the Commander comparing the query against
+    /// every word to work out what it caught.
+    /// </summary>
+    [AvaloniaFact]
+    public void SurvivingRowsMarkWhatTheQueryFound()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        Assert.Empty(MarkedRuns(host));
+
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+        box.Text = "microphone";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var marked = MarkedRuns(host);
+
+        Assert.NotEmpty(marked);
+        Assert.All(marked, run => Assert.Equal("microphone", run.Text, ignoreCase: true));
+
+        // A TextBlock draws its Text and then its Inlines, so a caption that still holds both
+        // renders twice — the plain string followed by the marked one. Nothing about the runs
+        // says so, which is why the claim is made about the string they replaced.
+        Assert.All(
+            host.View.GetVisualDescendants().OfType<TextBlock>()
+                .Where(block => block.Inlines is { Count: > 0 }),
+            block => Assert.True(
+                string.IsNullOrEmpty(block.Text),
+                $"a marked caption still has Text \"{block.Text}\" behind its runs, so it draws twice"));
+
+        // And the marks come off with the query, or a row keeps a highlight for a string nobody
+        // is searching for.
+        box.Text = string.Empty;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(MarkedRuns(host));
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// A row matched on its key alone used to survive with nothing on screen agreeing with the
+    /// query — the filter looks broken when the one thing it matched is the one thing never
+    /// drawn. The key appears for exactly that case, and stays away when the words already
+    /// explain themselves.
+    /// </summary>
+    [AvaloniaFact]
+    public void AKeyOnlyMatchShowsTheKeyThatMatched()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+        box.Text = "listening.pushToTalk";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Push-to-talk key", VisibleRowLabels(host));
+
+        var shown = host.View.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => block.IsEffectivelyVisible)
+            .Select(Words)
+            .ToList();
+
+        // The whole key, though the query was only a prefix of it — the line is evidence about
+        // the row, not an echo of what was typed.
+        Assert.Contains("listening.pushToTalkKey", shown);
+
+        // A query the label carries needs no identifier under it.
+        box.Text = "Push-to-talk key";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            "listening.pushToTalkKey",
+            host.View.GetVisualDescendants().OfType<TextBlock>()
+                .Where(block => block.IsEffectivelyVisible)
+                .Select(Words));
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// The filtered page with its hits marked, for a human to look at. Whether a highlight on a
+    /// caption reads as an answer or as noise is a question only eyes settle.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheFilteredPageRendersToACapture()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+        box.Text = "microphone";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        host.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "settings-filter-highlight.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        host.Close();
+    }
+
+    /// <summary>
     /// A row is reachable by the key the documentation and a hand-edited settings file call it,
     /// not only by the words on screen.
     /// </summary>
@@ -442,10 +624,21 @@ public class SearchTheTabTests
 
     private static List<string> VisibleRowLabels(SettingsHost host) =>
         [.. host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.IsEffectivelyVisible)
-            .Select(grid => grid.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text)
-            .Where(label => !string.IsNullOrEmpty(label))
-            .Select(label => label!)];
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.IsEffectivelyVisible)
+            .Select(grid => grid.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault())
+            .Where(label => label is not null)
+            .Select(label => Words(label!))
+            .Where(label => !string.IsNullOrEmpty(label))];
+
+    /// <summary>
+    /// What a caption says, however it is put together. A block with a search hit in it is built
+    /// out of runs and reports no <see cref="TextBlock.Text"/> of its own, so reading that
+    /// property alone finds every row except the ones the query matched.
+    /// </summary>
+    private static string Words(TextBlock block) =>
+        block.Inlines is { Count: > 0 } inlines
+            ? string.Concat(inlines.OfType<Run>().Select(run => run.Text))
+            : block.Text ?? string.Empty;
 
     private static int Rows(SettingsHost host) => VisibleRowLabels(host).Count;
 }

@@ -127,4 +127,75 @@ public static class VrPlacementMath
         var forward = Vector3.Transform(-Vector3.UnitZ, pose.Facing);
         return MathF.Atan2(-forward.X, -forward.Z);
     }
+
+    /// <summary>
+    /// Where a world-locked surface goes the first time it is shown, if nobody has ever put it
+    /// anywhere (docs/plans/change-requests.md item 9).
+    /// <para>
+    /// <b>A world-locked surface with no placement rides the head</b>, so defaulting the lock to
+    /// "world" and stopping there looks exactly like the change not having been made. Something
+    /// has to choose a first position, and this is it.
+    /// </para>
+    /// <para>
+    /// <paramref name="topEdgeMetres"/> is measured from the <em>floor</em>, because that is what
+    /// "knee level" is measured from — the standing universe puts y=0 there. The centre is half a
+    /// quad-height below it, which is the whole reason the caller has to know how tall the quad
+    /// is: <see cref="SurfacePlacement.WidthMetres"/> is settable and the height is not, so the
+    /// drop that puts the <em>top</em> anywhere depends on the texture's aspect and changes the
+    /// moment the width does.
+    /// </para>
+    /// <para>
+    /// Yaw only, and then pitched to face the Commander's eyes. A Commander who happens to be
+    /// looking down when the panel first appears meant "in front of me", not "below where I was
+    /// already looking" — and a quad near the floor that is not tilted up is a line.
+    /// </para>
+    /// </summary>
+    public static VrPose Resting(
+        VrPose head,
+        float distanceMetres,
+        float topEdgeMetres,
+        float quadHeightMetres)
+    {
+        var forward = Vector3.Transform(-Vector3.UnitZ, head.Facing);
+        var flattened = new Vector3(forward.X, 0f, forward.Z);
+
+        // Straight up or straight down leaves no compass direction at all. Falling back to the
+        // tracking universe's forward is arbitrary but finite, which the alternative is not.
+        flattened = flattened.LengthSquared() < 1e-6f
+            ? -Vector3.UnitZ
+            : Vector3.Normalize(flattened);
+
+        var centre = new Vector3(
+            head.Position.X + (flattened.X * distanceMetres),
+            topEdgeMetres - (quadHeightMetres / 2f),
+            head.Position.Z + (flattened.Z * distanceMetres));
+
+        // Tilted back by however far the eyes are above it, so the face of the quad points at
+        // them rather than at the ceiling. At eye level this is zero and the panel is upright.
+        var rise = head.Position.Y - centre.Y;
+        var pitch = MathF.Atan2(rise, distanceMetres);
+
+        var yaw = MathF.Atan2(flattened.X, -flattened.Z);
+
+        return new VrPose(centre, Quaternion.CreateFromYawPitchRoll(yaw, pitch, 0f));
+    }
+
+    /// <summary>
+    /// About where a Commander's knees are, worked out from how high their eyes are.
+    /// <para>
+    /// Derived rather than assumed, because a fixed figure is wrong for anybody who is not the
+    /// height it was picked for — and the floor is the one reference the runtime actually
+    /// supplies. Knee height is close to 0.285 of stature across adult populations, and stature
+    /// runs about 0.10 m above eye height.
+    /// </para>
+    /// <para>
+    /// <b>Seated and standing are not told apart, and cannot be from this number alone.</b> A
+    /// seated Commander's eyes are lower while their knees are not, so this reads low for them —
+    /// which puts the panel further out of the way rather than in front of anything, and out of
+    /// the way is what the request actually asked for. Clamped at both ends so a dropped tracking
+    /// frame or a mis-set floor cannot put the panel underground or at head height.
+    /// </para>
+    /// </summary>
+    public static float KneeHeight(float eyeHeightMetres) =>
+        Math.Clamp((eyeHeightMetres + 0.10f) * 0.285f, 0.25f, 0.75f);
 }

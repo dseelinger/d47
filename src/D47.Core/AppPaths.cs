@@ -20,6 +20,7 @@ public sealed class AppPaths
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
+        SpendFile = Path.Combine(Data, "spend.jsonl");
     }
 
     /// <summary>
@@ -44,6 +45,12 @@ public sealed class AppPaths
 
     /// <summary>How the panel was left. A view preference, not a setting.</summary>
     public string ViewStateFile { get; }
+
+    /// <summary>
+    /// Every charge d47 has made, one JSON row per line. Append-only, so a crash costs the last
+    /// row rather than the history, and readable by anything that can read a line at a time.
+    /// </summary>
+    public string SpendFile { get; }
 
     public void EnsureCreated()
     {

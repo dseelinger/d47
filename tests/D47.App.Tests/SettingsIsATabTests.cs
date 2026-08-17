@@ -256,8 +256,10 @@ public class SettingsIsATabTests
 
         var host = SettingsHost.Open(settings, viewState, paths, width: 820);
 
+        // By the class the view marks its rows with, not by "three columns" — that also matched
+        // the grid Avalonia builds a TextBox out of. See RowWidthTests.CompactRows.
         var rows = host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.Bounds.Width > 0)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.Bounds.Width > 0)
             .ToList();
 
         Assert.NotEmpty(rows);

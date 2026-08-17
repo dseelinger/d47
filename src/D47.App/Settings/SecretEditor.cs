@@ -1,11 +1,22 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using Avalonia.Styling;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+
+// The shape, not the file-system helper. Implicit usings put System.IO in scope everywhere, and
+// this file draws two glyphs and reads no files.
+using Path = Avalonia.Controls.Shapes.Path;
 
 namespace D47.App.Settings;
 
@@ -31,6 +42,9 @@ public sealed class SecretEditor : UserControl
     private readonly SettingsService _settings;
     private readonly TextBox _box;
     private readonly ToggleButton _reveal;
+    private readonly Path _revealSlash;
+    private readonly Button _clear;
+    private readonly Button _store;
     private readonly Button _check;
     private readonly TextBlock _state;
     private readonly Border _badge;
@@ -38,6 +52,9 @@ public sealed class SecretEditor : UserControl
     private readonly TextBlock _message;
 
     private SecretCheck _result = SecretCheck.Untested;
+
+    /// <summary>Marks the two glyph controls that live inside the field rather than beside it.</summary>
+    private const string InBoxClass = "in-box";
 
     /// <summary>Raised after a key is stored or cleared, so a host can advance or re-read state.</summary>
     public event Action? Changed;
@@ -57,14 +74,50 @@ public sealed class SecretEditor : UserControl
         // Masked by default with a reveal, because the commonest reason a key does not work is
         // that it was pasted wrong and a Commander cannot see that through bullets. The reveal
         // shows only what is in the box on the way in — a stored key is never shown back, which
-        // is what makes the store write-only.
-        _reveal = new ToggleButton { Content = "Show", MinWidth = 56 };
+        // is what makes the store write-only and what keeps the eye from being a privacy hole.
+        //
+        // Inside the box rather than beside it. A control that acts on the field belongs in the
+        // field: outside the border it reads as one more button in the row, which is what the
+        // word "Show" had to work to overcome and what a bare glyph could not have.
+        _revealSlash = Stroked("M 3.8,3.8 L 20.2,20.2");
+        _revealSlash.IsVisible = false;
+
+        _reveal = new ToggleButton
+        {
+            Content = Glyph(
+                16,
+                Stroked("M 1.5,12 C 4.5,6 8,3.5 12,3.5 C 16,3.5 19.5,6 22.5,12"
+                        + " C 19.5,18 16,20.5 12,20.5 C 8,20.5 4.5,18 1.5,12 Z"),
+                Filled(new EllipseGeometry(new Rect(8.1, 8.1, 7.8, 7.8))),
+                _revealSlash),
+        };
+
+        InTheBox(_reveal, "Show the key while you paste it");
+
         _reveal.IsCheckedChanged += (_, _) =>
         {
             var shown = _reveal.IsChecked == true;
             _box.PasswordChar = shown ? '\0' : '•';
-            _reveal.Content = shown ? "Hide" : "Show";
+
+            // The eye is struck through while the key is legible, so the glyph says what is
+            // true now rather than what pressing it would do. An icon with no label has no
+            // second chance to explain itself.
+            _revealSlash.IsVisible = shown;
+            ToolTip.SetTip(_reveal, shown ? "Hide the key" : "Show the key while you paste it");
+            AutomationProperties.SetName(_reveal, shown ? "Hide the key" : "Show the key");
         };
+
+        // An undo arrow, and deliberately the one control here that asks before it acts: it
+        // blanks the box, and if a key is stored it deletes that too. See ClearAsync.
+        _clear = new Button
+        {
+            Content = Glyph(
+                16,
+                Filled(Geometry.Parse("M 3.4,9 L 9.4,4.6 L 9.4,13.4 Z")),
+                Stroked("M 8.2,9 L 14,9 A 5.5,5.5 0 0 1 14,20 L 10.4,20")),
+        };
+
+        InTheBox(_clear, "Clear the key");
 
         _state = new TextBlock { FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
 
@@ -93,26 +146,48 @@ public sealed class SecretEditor : UserControl
 
         Themed(_message, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
-        var store = new Button { Content = "Store" };
-        var clear = new Button { Content = "Clear" };
-        _check = new Button { Content = "Check", IsVisible = row.Verify is not null };
+        // Both glyphs ride inside the field. The row outside it is now only the two things that
+        // act on the store rather than on the box, which is the distinction the old five-button
+        // row could not make.
+        _box.InnerRightContent = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { _reveal, _clear },
+        };
 
-        store.Click += (_, _) => Store();
-        clear.Click += (_, _) => Clear();
+        // "Save" with nothing behind it, "Overwrite" once there is: the second warns that a
+        // stored key is about to be replaced, which "Store" said either way.
+        _store = new Button();
+        _check = new Button { Content = "Verify Key", IsVisible = row.Verify is not null };
+
+        _store.Click += (_, _) => Store();
+        _clear.Click += async (_, _) => await ClearAsync();
         _check.Click += async (_, _) => await CheckAsync();
+
+        _box.TextChanged += (_, _) => RefreshClearVisibility();
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         controls.Children.Add(_box);
-        controls.Children.Add(_reveal);
-        controls.Children.Add(store);
+        controls.Children.Add(_store);
         controls.Children.Add(_check);
-        controls.Children.Add(clear);
         controls.Children.Add(_badge);
 
         var stack = new StackPanel { Spacing = 4 };
         stack.Children.Add(controls);
         stack.Children.Add(_verdict);
         stack.Children.Add(_message);
+
+        // A checked ToggleButton paints itself in the accent, which inside a text box is a solid
+        // chip sitting on the field — loud enough to read as the state rather than as the button,
+        // when the state is already said by the stroke through the eye. Setting Background on the
+        // control does not reach it: the theme styles the ContentPresenter in the template, so
+        // that is what has to be overridden.
+        Styles.Add(new Style(x => x.OfType<ToggleButton>().Class(InBoxClass).Class(":checked")
+            .Template().OfType<ContentPresenter>())
+        {
+            Setters = { new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent) },
+        });
 
         Content = stack;
         Refresh();
@@ -156,6 +231,47 @@ public sealed class SecretEditor : UserControl
 
         Refresh();
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Asks first, then clears. The glyph is an undo arrow, and an undo arrow promises something
+    /// reversible — but with a key stored this deletes a credential the Commander may have to go
+    /// back to the provider and reissue. The gap between what the drawing promises and what the
+    /// code does is exactly the gap a confirmation is for.
+    /// <para>
+    /// Only when there is something to destroy. With an empty store this blanks the box and
+    /// nothing else, and a dialog in front of that would be a question about nothing.
+    /// </para>
+    /// <para>
+    /// No owner window means no way to ask, and no way to ask means no delete. Falling through
+    /// to the destructive branch because the dialog could not be shown would be the one failure
+    /// mode a confirmation exists to prevent.
+    /// </para>
+    /// </summary>
+    private async Task ClearAsync()
+    {
+        if (IsStored)
+        {
+            if (TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            var wanted = await new ConfirmWindow(
+                "Delete stored key",
+                $"Delete the stored {_row.Label}? Directive 47 cannot show a stored key back, so "
+                + "this cannot be undone — you would have to paste it again, or reissue it at the "
+                + "provider if you no longer have a copy.",
+                confirmLabel: "Delete key",
+                declineLabel: "Keep it").AskAsync(owner);
+
+            if (!wanted)
+            {
+                return;
+            }
+        }
+
+        Clear();
     }
 
     private void Clear()
@@ -213,6 +329,8 @@ public sealed class SecretEditor : UserControl
     {
         var stored = IsStored;
 
+        _store.Content = stored ? "Overwrite" : "Save";
+
         _state.Text = stored ? "Key stored" : "No key";
 
         // Accent for stored and muted for not, so the two states differ in colour as well as in
@@ -230,6 +348,8 @@ public sealed class SecretEditor : UserControl
         // Nothing to check until there is something stored to check.
         _check.IsEnabled = stored && _row.Verify is not null;
 
+        RefreshClearVisibility();
+
         _box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
 
         _verdict.IsVisible = _result.Verdict != SecretVerdict.Untested;
@@ -246,6 +366,82 @@ public sealed class SecretEditor : UserControl
             });
     }
 
+    /// <summary>
+    /// Hidden while there is nothing for it to clear. A glyph that is present but inert most of
+    /// the time teaches a Commander to stop reading it, and this is the one in the row that must
+    /// not be ignored when it does appear.
+    /// </summary>
+    private void RefreshClearVisibility() =>
+        _clear.IsVisible = IsStored || !string.IsNullOrEmpty(_box.Text);
+
     private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));
+
+    /// <summary>
+    /// A control that lives inside the text box rather than beside it: no chrome of its own, so
+    /// the field's border stays the only box drawn, and a tooltip and an automation name because
+    /// dropping the label is what buys the space and a glyph alone tells a screen reader nothing.
+    /// </summary>
+    private static void InTheBox(TemplatedControl control, string name)
+    {
+        control.Classes.Add(InBoxClass);
+        control.Background = Brushes.Transparent;
+        control.BorderThickness = new Thickness(0);
+        control.Padding = new Thickness(5, 0);
+        control.MinWidth = 0;
+        control.VerticalAlignment = VerticalAlignment.Center;
+        control.Cursor = new Cursor(StandardCursorType.Hand);
+
+        ToolTip.SetTip(control, name);
+        AutomationProperties.SetName(control, name);
+    }
+
+    /// <summary>
+    /// Several paths drawn as one figure, in repo rather than taken from a font — the same rule
+    /// the send glyph and the help mark follow.
+    /// <para>
+    /// The <see cref="Canvas"/> is what makes it one figure. A <see cref="Path"/> asked to
+    /// stretch scales against <em>its own</em> bounds, so an eye and the stroke through it would
+    /// each fill the space and the drawing would come apart; a fixed 24×24 canvas gives them one
+    /// coordinate space and the <see cref="Viewbox"/> scales the result as a unit.
+    /// </para>
+    /// </summary>
+    private static Viewbox Glyph(double size, params Path[] parts)
+    {
+        var canvas = new Canvas { Width = 24, Height = 24 };
+
+        foreach (var part in parts)
+        {
+            canvas.Children.Add(part);
+        }
+
+        return new Viewbox { Width = size, Height = size, Child = canvas };
+    }
+
+    /// <summary>
+    /// Themed through a dynamic resource rather than a literal brush, so a glyph repaints with
+    /// the rest of the app on a theme change (list.md Phase 4, "Themes"). Static, so it cannot
+    /// use the instance helper and reaches for the same markup extension the confirm dialog does.
+    /// </summary>
+    private static Path Stroked(string data)
+    {
+        var path = new Path
+        {
+            Data = Geometry.Parse(data),
+            StrokeThickness = 1.7,
+            StrokeJoin = PenLineJoin.Round,
+            StrokeLineCap = PenLineCap.Round,
+        };
+
+        path[!Shape.StrokeProperty] = new DynamicResourceExtension(ThemeManager.TextMutedKey);
+        return path;
+    }
+
+    private static Path Filled(Geometry data)
+    {
+        var path = new Path { Data = data };
+
+        path[!Shape.FillProperty] = new DynamicResourceExtension(ThemeManager.TextMutedKey);
+        return path;
+    }
 }

@@ -126,9 +126,18 @@ public partial class MainWindow : Window
             // are made from the same line of the same file, which is where "desktop only" lives.
             Panel.EnableSearch();
 
+            // And the same window is the one with somewhere to open a dialog, which is what the
+            // turn line's figures need. The headset's copy is handed nothing.
+            Panel.EnableTurnDetails(() => _ = ShowSpendAsync());
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             WindowPlacementMemory.Attach(this, host.ViewState);
+
+            // Read before the first paint for the same reason: the worked example appearing and
+            // then vanishing is worse than either state, and it is the Commander who has already
+            // asked — the one who does not need it — who would see it happen.
+            _model.HasAsked = host.ViewState.Load().HasAsked;
 
             // One zoom host, on the one window. The settings surface is inside this widget tree
             // now, so it scales with everything else rather than needing a host of its own.
@@ -497,6 +506,31 @@ public partial class MainWindow : Window
         return view;
     }
 
+    /// <summary>
+    /// Remembers that this Commander has asked something, once and for good.
+    /// <para>
+    /// Written rather than worked out later. The signal that would let this be derived — a
+    /// conversation with anything in it — does not survive a restart, so a launch with nothing
+    /// asked yet and a launch by someone who has been flying for a month look identical from
+    /// live state. That is why this differs from <c>FirstRun</c>, which records nothing and
+    /// decides from what it can see each time.
+    /// </para>
+    /// <para>
+    /// Guarded on the flag it sets, so the common case — every ask after the first — is a
+    /// boolean and not a file write.
+    /// </para>
+    /// </summary>
+    private void MarkAsked()
+    {
+        if (_host is null || _model.HasAsked)
+        {
+            return;
+        }
+
+        _model.HasAsked = true;
+        _host.ViewState.Save(_host.ViewState.Load() with { HasAsked = true });
+    }
+
     private async Task AskAsync()
     {
         if (_host is null)
@@ -515,6 +549,11 @@ public partial class MainWindow : Window
         {
             return;
         }
+
+        // Recorded here rather than in either modality's own path, because this is where typed
+        // and spoken meet — and the hint retires on "has asked at all", not on "has used this
+        // control". A Commander who has only ever spoken to d47 has still been taught.
+        MarkAsked();
 
         // Asked before the in-flight gate, never after. A silence command is only ever wanted
         // while d47 is mid-sentence, which is exactly when _turnInFlight is true — so gating it
@@ -688,9 +727,23 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// One short line of provenance, with the figures behind a link
+    /// (docs/plans/change-requests.md item 2).
+    /// <para>
+    /// This used to carry outcome, route, effort, three token counts, the turn's cost, the
+    /// session's cost, a cold-prefix counter, a character count and a voice price — eleven
+    /// numbers on one row beside a running game, which is a wall rather than a status.
+    /// </para>
+    /// <para>
+    /// What stays is what a glance is actually asking: did that work, which path answered, and
+    /// what did it cost. Everything else moved to <see cref="SpendWindow"/>, including all of
+    /// the numbers that are only interesting when something is wrong — a cold-prefix count is
+    /// worth chasing and worth nothing on a row nobody reads.
+    /// </para>
+    /// </summary>
     private static string DescribeTurn(TurnResult result, AppHost host)
     {
-        var spend = host.Spend;
         var line = new StringBuilder($"{result.Outcome} via {result.Route}");
 
         if (result.Effort is { } effort)
@@ -700,32 +753,36 @@ public partial class MainWindow : Window
 
         if (result.Cost is { } cost)
         {
-            line.Append(
-                $", {cost.Usage.TotalInputTokens} in ({cost.Usage.CacheReadInputTokens} cached), " +
-                $"{cost.Usage.OutputTokens} out");
-
-            line.Append(cost.Priced
-                ? $", {cost.Dollars:C4} this turn, {spend.RunningTotalDollars:C4} session"
-                : ", unpriced model");
-
-            if (spend.UnexplainedColdPrefixes > 0)
-            {
-                // A profile switch is the only sanctioned cause of a cold prefix, so this counter
-                // being non-zero is a caching regression rather than a cost curiosity.
-                line.Append($" — {spend.UnexplainedColdPrefixes} unexplained cold prefix(es)");
-            }
-        }
-
-        // Beside the model's price rather than on a line of its own, so "what has this cost" has
-        // one answer rather than one per subsystem (list.md Phase 19). The unit is characters,
-        // because that is what speech is billed in — quoting tokens here would be a number whose
-        // basis is wrong.
-        if (host.SpeechSpend.Describe(host.Settings.Current) is { } voice)
-        {
-            line.Append($"; voice {voice}");
+            line.Append(cost.Priced ? $" — {cost.Dollars:C4}" : " — unpriced model");
         }
 
         return line.ToString();
+    }
+
+    /// <summary>
+    /// Opens the figures. Here rather than in the panel because the panel opens no dialogs —
+    /// one view definition serves the desktop window and the headset, and only one of them has
+    /// somewhere to put a window.
+    /// <para>
+    /// The zone is the machine's own, read at the moment of asking. "This week" and "this month"
+    /// are local-calendar ideas and a Commander who has flown to another timezone means them
+    /// there, not where the rows happened to be written.
+    /// </para>
+    /// </summary>
+    private async Task ShowSpendAsync()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        await new SpendWindow(
+            _host.Spend.Last,
+            _host.Spend,
+            _host.SpeechSpend,
+            _host.SpendLedger,
+            _host.Settings.Current,
+            TimeZoneInfo.Local).ShowDialog(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -667,6 +669,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 row.Container.IsVisible = shown;
                 row.Refresh();
 
+                // Only the survivors. Painting a query into a row nobody can see is work done
+                // for a hidden control, and it would have to be undone before the row came back.
+                if (shown)
+                {
+                    Illuminate(row);
+                }
+
                 if (shown && row.Section >= 0)
                 {
                     showing[row.Section]++;
@@ -685,12 +694,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private string _query = string.Empty;
 
     /// <summary>
-    /// Shows only the rows that match (list.md Phase 12, "Search whichever tab you are looking
-    /// at").
+    /// Shows only the rows that match, and marks what the query found in each of them
+    /// (list.md Phase 12, "Search whichever tab you are looking at").
     /// <para>
-    /// Settings filters where the transcript pages highlight, and the difference is the design
-    /// rather than an inconsistency: 92 rows across 14 sections is a haystack, and highlighting
-    /// in place in a haystack is a scroll hunt with extra colour.
+    /// Settings filters where the transcript pages only highlight, and the difference is the
+    /// design rather than an inconsistency: 92 rows across 14 sections is a haystack, and
+    /// highlighting in place in a haystack is a scroll hunt with extra colour. That is an
+    /// argument against highlighting <em>instead of</em> filtering, and not against doing both —
+    /// once the filter has cut the haystack down, marking the hits is what tells the Commander
+    /// which words survived on their behalf. See <see cref="Illuminate"/>.
     /// </para>
     /// </summary>
     public void Filter(string? query)
@@ -711,6 +723,103 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// router and a hand-edited settings file all call the row, so a Commander who arrived with
     /// one of those in hand can paste it in.
     /// </summary>
+    /// <summary>
+    /// Marks why a row survived the filter. The filter cuts the haystack down; this says which
+    /// words in each survivor the query found — the two halves of one answer rather than two
+    /// competing designs.
+    /// <para>
+    /// The key gets a line of its own only when it is the sole reason. When the label or the help
+    /// already carries a highlight the row has explained itself, and adding the key underneath
+    /// every one of them turns a filtered page into a page of identifiers.
+    /// </para>
+    /// </summary>
+    private void Illuminate(RowView row)
+    {
+        if (row.Label is { } label)
+        {
+            Paint(label, row.Row.Label);
+        }
+
+        if (row.Help is { } help)
+        {
+            Paint(help, row.Row.Help);
+        }
+
+        if (row.KeyLine is not { } keyLine)
+        {
+            return;
+        }
+
+        var onlyTheKey = _query.Length > 0
+            && row.Row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase)
+            && !row.Row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
+            && !row.Row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase);
+
+        keyLine.IsVisible = onlyTheKey;
+
+        if (onlyTheKey)
+        {
+            Paint(keyLine, row.Row.Key);
+        }
+    }
+
+    /// <summary>
+    /// One block of caption text with the hits in it marked, or the plain string when there is
+    /// no query. The same accent the transcript pages mark a hit with, because it is the same
+    /// question being answered on a different surface.
+    /// <para>
+    /// Inlines are cleared first either way. A block left holding runs from the previous query
+    /// renders those instead of its <see cref="TextBlock.Text"/>, so the row would keep a
+    /// highlight for a string nobody is searching for any more.
+    /// </para>
+    /// </summary>
+    private void Paint(TextBlock block, string text)
+    {
+        // A block composed of runs reports no Text of its own, and Text is what an automation
+        // peer reads — so the name is set outright rather than left to be inferred. Without it,
+        // marking a hit would quietly cost a screen reader the whole caption.
+        AutomationProperties.SetName(block, text);
+
+        // Qualified: Avalonia.Controls has a TextSearch of its own, about typing to select an
+        // item in a list, and it is the one that wins in this file's usings.
+        var matches = D47.Core.Interface.TextSearch.Find(text, _query);
+
+        if (matches.Count == 0)
+        {
+            block.Inlines?.Clear();
+            block.Text = text;
+            return;
+        }
+
+        // Text and Inlines both draw, one after the other. Filling the runs without dropping the
+        // string leaves every filtered caption rendered twice — once plain, once marked — which
+        // is what "MicrophoneMicrophone" on the filtered page turned out to be. Text goes first,
+        // because setting it is itself a way of putting a run back.
+        block.Text = null;
+        block.Inlines!.Clear();
+
+        var cursor = 0;
+
+        foreach (var match in matches)
+        {
+            if (match.Start > cursor)
+            {
+                block.Inlines!.Add(new Run(text[cursor..match.Start]));
+            }
+
+            var hit = new Run(text[match.Start..match.End]);
+            hit.Bind(TextElement.BackgroundProperty, this.GetResourceObservable(ThemeManager.AccentMutedKey));
+
+            block.Inlines!.Add(hit);
+            cursor = match.End;
+        }
+
+        if (cursor < text.Length)
+        {
+            block.Inlines!.Add(new Run(text[cursor..]));
+        }
+    }
+
     private bool Matches(SettingRow row) =>
         _query.Length == 0
         || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
@@ -755,6 +864,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// so a narrow panel shrinks the caption rather than clipping the control itself.
     /// </summary>
     private const double StandardControlWidth = 190;
+
+    /// <summary>
+    /// Marks a caption-and-control row, so a test can find the rows this view builds rather than
+    /// every three-column grid that happens to be in the tree. Public because the test asserting
+    /// the column split is the only other thing that needs the name, and two spellings of it
+    /// would fail by finding nothing rather than by failing.
+    /// </summary>
+    public const string CompactRowClass = "compact-row";
 
     /// <summary>
     /// The height every control that opens a list stands at, and the padding inside it.
@@ -864,9 +981,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var (control, refresh, compact) = BuildControl(row, message);
 
+        // The settings key, shown only when it is the reason this row survived a filter.
+        // Matches() has always tested the key, and the key has never been on screen — so a row
+        // could stay behind while every visible word on it disagreed with the query, which reads
+        // as the filter being broken rather than as a match the Commander cannot see.
+        var keyLine = new TextBlock
+        {
+            FontSize = TypeScale.Small,
+            Margin = new Thickness(0, 2, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false,
+        };
+        Themed(keyLine, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
         var caption = new StackPanel { Spacing = 0 };
         caption.Children.Add(header);
         caption.Children.Add(help);
+        caption.Children.Add(keyLine);
 
         Control body;
         if (compact)
@@ -894,6 +1025,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 ],
             };
 
+            // Load-bearing rather than decorative: RowWidthTests asserts the caption keeps the
+            // larger share of every compact row, and it needs a way to say which grids those are.
+            // Selecting on "three columns" instead caught control templates — a TextBox is itself
+            // a three-column grid, inner-left content, text, inner-right content — and a glyph
+            // put inside a box was read as a settings row starving its own caption.
+            grid.Classes.Add(CompactRowClass);
+
             Grid.SetColumn(caption, 0);
             Grid.SetColumn(control, 2);
             control.VerticalAlignment = VerticalAlignment.Center;
@@ -914,7 +1052,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         container.Children.Add(body);
         container.Children.Add(message);
 
-        return new RowView(row, container, refresh) { Control = control, Body = body };
+        return new RowView(row, container, refresh)
+        {
+            Control = control,
+            Body = body,
+            Label = label,
+            Help = help,
+            KeyLine = keyLine,
+        };
     }
 
     /// <summary>
@@ -1811,5 +1956,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         /// <summary>Made the first time this row has something slow to say. See ShowBusy.</summary>
         public BusyGlyph? Busy { get; set; }
+
+        /// <summary>The row's words, held so a query can be painted into them and taken out again.</summary>
+        public TextBlock? Label { get; init; }
+
+        public TextBlock? Help { get; init; }
+
+        /// <summary>The settings key, drawn only when it is why this row survived. See Evidence.</summary>
+        public TextBlock? KeyLine { get; init; }
     }
 }

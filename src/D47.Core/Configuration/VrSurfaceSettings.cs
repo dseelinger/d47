@@ -49,8 +49,22 @@ public sealed record PoseSettings
 /// </summary>
 public sealed record VrSurfaceSettings
 {
-    /// <summary>"head" or "world".</summary>
-    public string Lock { get; init; } = "head";
+    /// <summary>
+    /// "head" or "world".
+    /// <para>
+    /// World out of the box (docs/plans/change-requests.md item 9). A panel that follows the
+    /// Commander's gaze is in the way of whatever they turned to look at, which is the one thing
+    /// a companion beside a flight sim must not be; put down in the room it is somewhere they
+    /// glance at instead of something they see through.
+    /// </para>
+    /// <para>
+    /// <b>This string on its own changes nothing.</b> A world-locked surface that has never been
+    /// put anywhere still rides the head — see <c>VrSurface.RidesTheHead</c> — so the default
+    /// only takes effect because a first position is computed on first show. The two go together
+    /// and neither works alone.
+    /// </para>
+    /// </summary>
+    public string Lock { get; init; } = "world";
 
     /// <summary>Metres in front of the anchor.</summary>
     public double Distance { get; init; } = 1.1;

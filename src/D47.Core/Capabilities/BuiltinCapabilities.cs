@@ -77,6 +77,11 @@ public static class BuiltinCapabilities
         // sampling answer then carries counts without distances.
         Func<Journal.GameStatus>? gameStatus = null,
 
+        // Puts Elite in front (docs/plans/change-requests.md item 10). Null under the designer and
+        // in tests that are not about it; the phrase then answers that it cannot reach the game
+        // window rather than going quiet, which is the one thing this must never do.
+        Func<Builtin.FocusResult>? raiseGame = null,
+
         // The Commander's mapped HOTAS switches (list.md Phase 21). Null under the designer and
         // in tests that are not about them; the capability still registers, so its rows and its
         // documentation page exist, and it reports that it is reading nothing — which is what a
@@ -117,6 +122,7 @@ public static class BuiltinCapabilities
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
         ReanchorCapability.Create(headset),
+        FocusCapability.Create(raiseGame),
         .. ActionCapabilities.All(actions),
         AutonomousCapability.Create(autonomous),
         NavigationCapability.Create(navigation),

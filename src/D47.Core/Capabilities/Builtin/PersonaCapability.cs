@@ -148,9 +148,10 @@ public static class PersonaCapability
             Key = IntroductionsKey,
             Label = "Introductions",
             Help =
-                "A core introduces itself the first time you pick it after d47 starts, and reacts "
-                + "to the gap every time after that. Forgetting puts every core back to its "
-                + "introduction, which otherwise costs a restart.",
+                "A core introduces itself the first time you ever pick it, and reacts to the gap "
+                + "every time after that. That is remembered between sessions, so restarting d47 "
+                + "no longer brings the opening lines back — forgetting is the only way to hear "
+                + "them again, and it puts every core back to its introduction at once.",
             Kind = SettingKind.Info,
             DocsAnchor = "introductions",
             PressLabel = "Forget introductions",

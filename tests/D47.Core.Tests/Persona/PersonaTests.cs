@@ -235,6 +235,106 @@ public class PersonaHostTests
         Assert.Equal(PersonaArrival.Gap, arrivals[^1]);
     }
 
+    /// <summary>A memory with no file behind it, so the round trip can be checked without one.</summary>
+    private sealed class Remembered : IIntroductionMemory
+    {
+        private string[] _ids = [];
+
+        public int Writes { get; private set; }
+
+        public IReadOnlyCollection<string> Load() => _ids;
+
+        public void Save(IReadOnlyCollection<string> introduced)
+        {
+            _ids = [.. introduced];
+            Writes++;
+        }
+    }
+
+    /// <summary>
+    /// The change this item is: a core's opening line is spent once, not once per launch. The
+    /// second host is the next session — same memory, no shared state otherwise.
+    /// </summary>
+    [Fact]
+    public void AnIntroductionIsSpentAcrossSessions()
+    {
+        var memory = new Remembered();
+
+        var first = new PersonaHost(memory: memory);
+        first.Apply(Choose("cora"));
+
+        Assert.Equal(["Cora"], first.Introduced.Select(p => p.Name));
+
+        var next = new PersonaHost(memory: memory);
+        var arrivals = new List<PersonaArrival>();
+        next.Changed += change => arrivals.Add(change.Arrival);
+
+        Assert.Equal(["Cora"], next.Introduced.Select(p => p.Name));
+
+        // A return, so it reacts to the gap rather than opening with a line this Commander has
+        // already heard — which before this was only true inside one run.
+        next.Apply(Choose("cora"), TimeSpan.FromHours(3), "9 jumps");
+        Assert.Equal([PersonaArrival.Gap], arrivals);
+    }
+
+    /// <summary>
+    /// Forgetting has to reach the store, or it lasts until the next launch and then undoes
+    /// itself — with the button being the only way back, that failure has no second remedy.
+    /// </summary>
+    [Fact]
+    public void ForgettingIsWrittenDownAndSurvivesTheSession()
+    {
+        var memory = new Remembered();
+
+        var first = new PersonaHost(memory: memory);
+        first.Apply(Choose("cora"));
+        first.ForgetIntroductions();
+
+        var next = new PersonaHost(memory: memory);
+        var arrivals = new List<PersonaArrival>();
+        next.Changed += change => arrivals.Add(change.Arrival);
+
+        Assert.Empty(next.Introduced);
+
+        next.Apply(Choose("cora"), TimeSpan.FromHours(3), "9 jumps");
+        Assert.Equal([PersonaArrival.Introduction], arrivals);
+    }
+
+    /// <summary>
+    /// Handed nothing, it behaves exactly as it did before any of this — which is what the
+    /// replay harness and every test above rely on.
+    /// </summary>
+    [Fact]
+    public void AHostWithNoMemoryForgetsWhenItStops()
+    {
+        var host = new PersonaHost();
+        host.Apply(Choose("cora"));
+
+        Assert.Equal(["Cora"], host.Introduced.Select(p => p.Name));
+        Assert.Empty(new PersonaHost().Introduced);
+    }
+
+    /// <summary>
+    /// Written on the edges only. A core selected again is not news, and rewriting the same set
+    /// on every switch would put a file write on a path a Commander can hold down.
+    /// </summary>
+    [Fact]
+    public void OnlyAChangeIsWrittenDown()
+    {
+        var memory = new Remembered();
+        var host = new PersonaHost(memory: memory);
+
+        host.Apply(Choose("cora"));
+        Assert.Equal(1, memory.Writes);
+
+        host.Apply(Choose("kex"));
+        Assert.Equal(2, memory.Writes);
+
+        // Back to one that has already introduced itself: a gap reaction, and nothing to record.
+        host.Apply(Choose("cora"), TimeSpan.FromHours(1), "2 jumps");
+        Assert.Equal(2, memory.Writes);
+    }
+
     [Fact]
     public void PersonalityOffRemovesThePersonaAndNothingElse()
     {

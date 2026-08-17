@@ -47,6 +47,13 @@ public partial class PanelView : UserControl
     private Func<Control>? _buildSettings;
 
     /// <summary>
+    /// How the host shows the turn's figures, when it gave a way. Null on every surface that was
+    /// not handed one — which is what makes the headset's copy unable to open a desktop dialog
+    /// rather than merely unlikely to.
+    /// </summary>
+    private Action? _showTurnDetails;
+
+    /// <summary>
     /// The page to come back to when settings are left. The one the Commander was reading, not
     /// a fixed default: Escape out of settings should put back what Escape into them covered up.
     /// </summary>
@@ -157,6 +164,7 @@ public partial class PanelView : UserControl
                 _bound.PropertyChanged += OnModelChanged;
                 Avatar.Show(_bound.LoopState);
                 ApplyMicrophone();
+                ApplyAskHint();
             }
 
             // The model handed over is rarely empty — the window binds one that has already
@@ -213,6 +221,36 @@ public partial class PanelView : UserControl
 
                 Dispatcher.UIThread.Post(ApplyMicrophone);
                 return;
+
+            case nameof(PanelViewModel.HasAsked):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    ApplyAskHint();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(ApplyAskHint);
+                return;
+        }
+    }
+
+    /// <summary>
+    /// The ask box's placeholder: a worked example until the Commander has asked something, and
+    /// a plain label for ever after (docs/plans/change-requests.md item 5).
+    /// <para>
+    /// Set in code rather than bound, and the reason is threading rather than taste. A binding
+    /// on the view model subscribes to <c>PropertyChanged</c> for <em>every</em> property and
+    /// filters by name — so a control bound here is woken on each streamed delta, from the
+    /// turn's thread, which is not the thread that owns it. Everything else on this control
+    /// that a background path can raise is marshalled through the switch above for exactly that
+    /// reason; a binding would be the one route out of it.
+    /// </para>
+    /// </summary>
+    private void ApplyAskHint()
+    {
+        if (_bound is not null)
+        {
+            AskBox.PlaceholderText = _bound.AskHint;
         }
     }
 
@@ -229,9 +267,23 @@ public partial class PanelView : UserControl
     /// microphone in the accent, ringed by a border, and it is the only one that is: what is
     /// arriving right now will be transcribed. <em>Armed</em> is the same shape hollow, in the
     /// information colour, because d47 is deciding for itself and the Commander should be able
-    /// to see it doing so at a glance. <em>Idle</em> is muted grey and says outright that
-    /// nothing is being kept, which is the claim push-to-talk has always quietly made and never
-    /// shown.
+    /// to see it doing so at a glance. <em>Idle</em> is muted grey.
+    /// </para>
+    /// <para>
+    /// The words are short because they are read at a glance beside a running game, and two of
+    /// the three can name the mode outright because the state already implies it: <em>Idle</em>
+    /// occurs only under push-to-talk and <em>Armed</em> only without it, so "PTT Ready" and
+    /// "Listening..." are exact rather than shorthand. <em>Open</em> is the one state both modes
+    /// reach, so it says "MIC ON" — a held key and a gate d47 opened for itself are the same
+    /// fact about the microphone, and naming push-to-talk there would be false half the time.
+    /// </para>
+    /// <para>
+    /// <em>Idle</em> used to spell out that nothing was being kept. That is still what it does —
+    /// the handle is held open, audio runs into a half-second ring and is overwritten — but the
+    /// label led with the alarming half of the sentence and went on leading with it for as long
+    /// as d47 was running. The claim it was making is the ordinary case; <em>Armed</em> is the
+    /// state worth a Commander's suspicion, and that one is still distinguished by shape,
+    /// colour and word.
     /// </para>
     /// </summary>
     private void ApplyMicrophone()
@@ -246,9 +298,9 @@ public partial class PanelView : UserControl
 
         var (key, label) = state switch
         {
-            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "Listening"),
-            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "Listening for you"),
-            _ => ("D47.TextMuted", "Microphone open, nothing kept"),
+            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "MIC ON"),
+            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "Listening..."),
+            _ => ("D47.TextMuted", "PTT Ready"),
         };
 
         MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
@@ -332,6 +384,24 @@ public partial class PanelView : UserControl
     /// </summary>
     public void EnableSearch() => SearchRow.IsVisible = true;
 
+    /// <summary>
+    /// Offers the turn's figures behind a link, for a host that has somewhere to show them
+    /// (docs/plans/change-requests.md item 2).
+    /// <para>
+    /// Handed in like the settings builder rather than opened here, because this view hosts no
+    /// window and opens no dialog — that is what lets one view definition serve the desktop
+    /// window and the headset. The headset's copy is handed nothing, so it structurally has no
+    /// link rather than merely being unlikely to be clicked in mid-air.
+    /// </para>
+    /// </summary>
+    public void EnableTurnDetails(Action show)
+    {
+        _showTurnDetails = show;
+        TurnDetails.IsVisible = true;
+    }
+
+    private void OnTurnDetailsClick(object? sender, RoutedEventArgs e) => _showTurnDetails?.Invoke();
+
     /// <summary>Puts the cursor in the search box. Ctrl+F does this; a host may too.</summary>
     public void FocusSearch()
     {
@@ -404,6 +474,27 @@ public partial class PanelView : UserControl
         (SettingsPane.Child as IFilterablePage)?.Filter(string.Empty);
     }
 
+    /// <summary>
+    /// The cross inside the box. Clears by emptying the box rather than by calling the page
+    /// directly, so the query goes back through <see cref="OnSearchChanged"/> and the filtered
+    /// page is restored — blanking the text and stopping there would leave settings showing four
+    /// sections of eighteen with an empty box above them, which is bugs.md 2 in a new coat.
+    /// <para>
+    /// Focus stays in the field, where Escape hands it back to the page. Pressing Escape says the
+    /// Commander is done searching; clicking the cross is usually the start of the next query.
+    /// </para>
+    /// </summary>
+    private void OnSearchClearClick(object? sender, RoutedEventArgs e)
+    {
+        if (_query.Length == 0)
+        {
+            return;
+        }
+
+        SearchInput.Text = string.Empty;
+        SearchInput.Focus();
+    }
+
     private void OnSearchChanged(object? sender, TextChangedEventArgs e)
     {
         _query = SearchInput.Text ?? string.Empty;
@@ -450,6 +541,11 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ApplySearch()
     {
+        // Here rather than in ShowSearchProgress, which is about the count and the steppers and
+        // is therefore only true on a page that highlights. There is something to clear on a
+        // filtered page too — arguably more, since a filter hides the rest of the page.
+        SearchClear.IsVisible = _query.Length > 0;
+
         if (Page == TranscriptPage.Settings)
         {
             (SettingsPane.Child as IFilterablePage)?.Filter(_query);

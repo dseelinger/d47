@@ -75,6 +75,9 @@ Turn it off if you use SteamVR for other things and would rather Directive 47 st
 **Full** or **mini**. Mini is the same panel showing less — the gear, the banners and the ask box
 go, the transcript stays. It is also drawn smaller, so it can sit at the edge of vision.
 
+**Mini out of the box.** The full panel is 1.1 m across — close to fifty degrees of view — which
+is a lot to meet before you know it can be moved or shrunk. Switch to full whenever you want it.
+
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
@@ -93,6 +96,17 @@ Six settings each, and the mini panel has its own copies of all six.
 
 Head-locked is what you want for something you glance at; world-locked for something that lives
 in a particular corner of the cockpit.
+
+**World-locked out of the box**, and put down for you the first time Directive 47 runs in your
+headset: about a metre ahead of wherever you are facing, low enough that the top of the panel sits
+around knee height, and tilted back so it faces you rather than the ceiling. A panel that follows
+your gaze is in the way of whatever you turned to look at, which is the one thing a companion
+beside a flight sim should never be.
+
+That first position is worked out from where your head actually is — the floor comes from your
+room setup, and the height of the panel from its width and proportions — so it is not a number
+picked for somebody else's height or somebody else's panel size. Move it once and it is yours;
+Directive 47 never places it again.
 
 **Scale and mini are different things**, and the difference is the point: scale changes how big
 everything on the panel is, mini changes how much of it there is. Zooming a panel you cannot read

@@ -16,7 +16,16 @@ public static class LoggingSetup
     private const string HumanTemplate =
         "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
 
-    public static ILogger Create(AppPaths paths, SerilogVerbosityControl verbosity)
+    /// <param name="technical">
+    /// Forwards speech-loop errors to the Technical page as well as to the files. Added here
+    /// rather than wrapped around the factory afterwards, because a sink has to be part of the
+    /// pipeline to see an event at all — and it is pointed at a panel later, since logging is
+    /// built before there is one.
+    /// </param>
+    public static ILogger Create(
+        AppPaths paths,
+        SerilogVerbosityControl verbosity,
+        TechnicalLogBridge? technical = null)
     {
         var configuration = new LoggerConfiguration()
             .MinimumLevel.ControlledBy(verbosity.Default)
@@ -27,6 +36,11 @@ public static class LoggingSetup
         foreach (var (subsystem, prefix) in Subsystems.SourcePrefixes)
         {
             configuration = configuration.MinimumLevel.Override(prefix, verbosity.SwitchFor(subsystem));
+        }
+
+        if (technical is not null)
+        {
+            configuration = configuration.WriteTo.Sink(technical);
         }
 
         return configuration

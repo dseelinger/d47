@@ -56,18 +56,37 @@ public sealed class PersonaHost
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Which cores have already introduced themselves this session, so a second selection gets
-    /// a gap reaction rather than the introduction again. Session-scoped like the transcripts
-    /// themselves: d47 has never persisted conversation history, and starting to do so is not
-    /// something this phase was asked for.
+    /// Which cores have already introduced themselves, so a second selection gets a gap reaction
+    /// rather than the introduction again.
+    /// <para>
+    /// <b>Remembered across sessions, which it deliberately was not.</b> It used to be
+    /// session-scoped like the transcripts beside it, on the reasoning that d47 has never
+    /// persisted conversation history and starting to do so was not what that phase was asked
+    /// for. That reasoning was about the <em>conversation</em>, and this is not one: it is a
+    /// single fact per core — has this one said its opening line — with no wording in it and
+    /// nothing of what was discussed. Persisting it costs a list of ids and buys a cast who stop
+    /// re-introducing themselves every launch
+    /// (docs/plans/change-requests.md item 7).
+    /// </para>
+    /// <para>
+    /// The transcripts are untouched by this and still die with the session.
+    /// </para>
     /// </summary>
-    private readonly HashSet<string> _introduced = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _introduced;
+
+    /// <summary>
+    /// Where the set is kept between runs, or null for a host that forgets — the designer, the
+    /// replay harness, and every test that is not about this.
+    /// </summary>
+    private readonly IIntroductionMemory? _memory;
 
     private string? _shipNameOverride;
 
-    public PersonaHost(Persona? current = null)
+    public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null)
     {
         Current = current ?? PersonaCatalog.Resolve(null);
+        _memory = memory;
+        _introduced = new HashSet<string>(memory?.Load() ?? [], StringComparer.Ordinal);
     }
 
     /// <summary>The core aboard. Never null — "personality off" is a prompt decision, not an empty seat.</summary>
@@ -94,8 +113,24 @@ public sealed class PersonaHost
     /// away and back: selecting the core that is already running is not a switch and raises
     /// nothing, which is the same rule that stops an unrelated settings edit re-introducing it.
     /// </para>
+    /// <para>
+    /// Now the <em>only</em> way back. A restart used to reset every introduction as a side
+    /// effect of forgetting them, which made this button a convenience; it is the mechanism.
+    /// </para>
     /// </summary>
-    public void ForgetIntroductions() => _introduced.Clear();
+    public void ForgetIntroductions()
+    {
+        _introduced.Clear();
+        Remember();
+    }
+
+    /// <summary>
+    /// Writes the set out, if this host was given somewhere to write it. Called on both edges —
+    /// a core introducing itself and the whole set being forgotten — because a forget that is
+    /// not written down comes back at the next launch, which is the failure the button exists
+    /// to prevent.
+    /// </summary>
+    private void Remember() => _memory?.Save([.. _introduced]);
 
     /// <summary>Raised after the switch, with everything the surface needs to speak about it.</summary>
     public event Action<PersonaChanged>? Changed;
@@ -163,6 +198,11 @@ public sealed class PersonaHost
         var firstTime = _introduced.Add(incoming.Id);
         var arrival = firstTime || away is null ? PersonaArrival.Introduction : PersonaArrival.Gap;
 
+        if (firstTime)
+        {
+            Remember();
+        }
+
         Changed?.Invoke(new PersonaChanged(
             previous,
             incoming,
@@ -182,4 +222,22 @@ public sealed class PersonaHost
 
         return transcript;
     }
+}
+
+/// <summary>
+/// Where introductions are kept between runs (docs/plans/change-requests.md item 7).
+/// <para>
+/// A port rather than a store, because <see cref="PersonaHost"/> is Core and Core is the thing
+/// the replay harness runs with nothing behind it. A host handed no memory behaves exactly as
+/// it did before this existed, which is what keeps every test that is not about persistence
+/// from having to grow a file.
+/// </para>
+/// </summary>
+public interface IIntroductionMemory
+{
+    /// <summary>The cores already introduced, or empty when nothing has been written yet.</summary>
+    IReadOnlyCollection<string> Load();
+
+    /// <summary>Records the set as it now stands. Replaces rather than merges.</summary>
+    void Save(IReadOnlyCollection<string> introduced);
 }

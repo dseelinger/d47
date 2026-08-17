@@ -43,6 +43,37 @@ public sealed record ViewState
     public IReadOnlyList<string> ExpandedCards { get; init; } = [];
 
     /// <summary>
+    /// Whether the Commander has ever asked d47 anything, by any route. What it retires is the
+    /// worked example in the ask box's placeholder, which is an onboarding hint wearing a
+    /// placeholder's clothes and was still teaching someone a month in.
+    /// <para>
+    /// <b>Recorded rather than derived, and that is the departure.</b> The house pattern is
+    /// derivation — <c>FirstRun</c> records nothing and decides from live state each time — and
+    /// the obvious live signal here is a non-empty conversation history. There is no such
+    /// signal: d47 has never persisted conversation history, so every launch looks like a first
+    /// one and the hint would come back for ever. A fact about the Commander that no live state
+    /// remembers has to be written down.
+    /// </para>
+    /// <para>
+    /// Here rather than in settings for the same reason the window's position is: there is
+    /// nothing to configure and no default worth documenting. Losing it costs one worked example
+    /// shown once more, which is the cheapest failure on this record.
+    /// </para>
+    /// </summary>
+    public bool HasAsked { get; init; }
+
+    /// <summary>
+    /// Which cores have introduced themselves, so a Commander hears each opening line once
+    /// rather than once per launch (docs/plans/change-requests.md item 7).
+    /// <para>
+    /// Remembered state rather than a setting: nothing here is chosen, there is no default worth
+    /// documenting, and a core re-introducing itself because this could not be read is a wasted
+    /// line rather than a failure. The same reason a collapsed card is here.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> IntroducedCores { get; init; } = [];
+
+    /// <summary>
     /// Whether a card should be open, given what the capability asked for and what the
     /// Commander has since said. Their choice wins in both directions.
     /// </summary>

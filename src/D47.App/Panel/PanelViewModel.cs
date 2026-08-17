@@ -109,6 +109,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// </summary>
     private readonly List<(TranscriptKind Kind, bool Marker, StringBuilder Text)> _runs = [];
 
+    /// <summary>Guards <see cref="_runs"/> and the strings derived from it. See Append.</summary>
+    private readonly Lock _appendLock = new();
+
     private string _conversationText = string.Empty;
     private string _logText = string.Empty;
     private string _turnLine = string.Empty;
@@ -117,6 +120,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private bool _updateBusy;
     private string _askText = string.Empty;
     private bool _canAsk = true;
+    private bool _hasAsked;
     private string _transcriptText = string.Empty;
     private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
@@ -346,6 +350,41 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Whether this Commander has ever asked d47 anything. Set from view state at startup and
+    /// again the first time they ask; the host is what persists it.
+    /// <para>
+    /// On the model rather than on the view because both surfaces show the ask box and there is
+    /// one Commander behind them. A flag per instantiation would retire the hint on the desktop
+    /// window while the headset went on offering it.
+    /// </para>
+    /// </summary>
+    public bool HasAsked
+    {
+        get => _hasAsked;
+        set
+        {
+            if (Set(ref _hasAsked, value))
+            {
+                Raise(nameof(AskHint));
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the ask box says when it is empty. The worked example is onboarding, so it goes once
+    /// the Commander has asked anything by any route — but the box still has to say what it is
+    /// for, because a text box with no label is a box.
+    /// <para>
+    /// The examples are the half that expires. "Where am I" teaches that d47 can be asked about
+    /// the game rather than only commanded, which is worth saying once and reads as instruction
+    /// for ever afterwards.
+    /// </para>
+    /// </summary>
+    public string AskHint => _hasAsked
+        ? "Ask D47 something"
+        : "Ask D47 something — try \"where am I\" or \"what's your status\"";
+
+    /// <summary>
     /// Adds to the transcript. The only way it grows.
     /// <para>
     /// <paramref name="kind"/> defaults to <see cref="TranscriptKind.Conversation"/> so the
@@ -355,16 +394,32 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// </summary>
     public void Append(string text, TranscriptKind kind = TranscriptKind.Conversation, bool marker = false)
     {
-        if (_runs.Count == 0 || _runs[^1].Kind != kind || _runs[^1].Marker != marker)
+        string transcript;
+        string conversation;
+
+        // Locked, because there is more than one writer now. The turn path appends a streaming
+        // reply from its own thread while the speech loop appends stage lines from the audio
+        // path and the log bridge appends errors from wherever they were raised — and a
+        // StringBuilder mutated while another thread is reading it throws out of
+        // ToString(), which is a crash in a diagnostics feature.
+        lock (_appendLock)
         {
-            _runs.Add((kind, marker, new StringBuilder()));
+            if (_runs.Count == 0 || _runs[^1].Kind != kind || _runs[^1].Marker != marker)
+            {
+                _runs.Add((kind, marker, new StringBuilder()));
+            }
+
+            _runs[^1].Text.Append(text);
+
+            transcript = string.Concat(_runs.Select(run => run.Text.ToString()));
+            conversation = string.Concat(
+                _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(run => run.Text.ToString()));
         }
 
-        _runs[^1].Text.Append(text);
-
-        TranscriptText = string.Concat(_runs.Select(run => run.Text.ToString()));
-        ConversationText = string.Concat(
-            _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(run => run.Text.ToString()));
+        // Outside the lock. These raise PropertyChanged, which reaches bindings and handlers that
+        // marshal to the UI thread — holding a lock across that is how a deadlock is built.
+        TranscriptText = transcript;
+        ConversationText = conversation;
 
         TranscriptAppended?.Invoke();
     }

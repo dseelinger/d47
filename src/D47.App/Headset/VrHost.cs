@@ -251,6 +251,7 @@ public sealed class VrHost : IDisposable
 
             if (_lifecycle.State == VrState.Active)
             {
+                RestIfNeverPlaced();
                 Carry();
             }
         }
@@ -262,6 +263,65 @@ public sealed class VrHost : IDisposable
             _logger.LogError(ex, "The headset path threw; the session will be rebuilt");
             _lifecycle.Stop();
         }
+    }
+
+    /// <summary>
+    /// Puts a world-locked panel somewhere the first time it is ever shown
+    /// (docs/plans/change-requests.md item 9).
+    /// <para>
+    /// <b>Without this the world-lock default is invisible.</b> <c>RidesTheHead</c> is true
+    /// whenever <c>Placed</c> is null, whatever the lock says, and until now the only thing that
+    /// ever set <c>Placed</c> was a completed carry — so a Commander who had never grabbed the
+    /// panel would have seen a head-locked panel and a setting claiming otherwise.
+    /// </para>
+    /// <para>
+    /// Once, and then it is theirs. It writes an anchor exactly as putting the panel down does,
+    /// so the next launch finds one and this does nothing — and a Commander who moves it is
+    /// never argued with.
+    /// </para>
+    /// <para>
+    /// Needs a real head pose. An all-zero pose converts to a valid-looking unit quaternion at
+    /// the origin, so a dropped tracking frame here would anchor the panel at the floor of the
+    /// play space and persist it — which is why <c>Head</c> is null rather than defaulted when
+    /// the pose is not valid, and why this waits rather than guessing.
+    /// </para>
+    /// </summary>
+    private void RestIfNeverPlaced()
+    {
+        var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
+
+        if (_anchors.ContainsKey(slot) || _panel.Placement.Lock != SurfaceLock.WorldLocked)
+        {
+            return;
+        }
+
+        if (_runtime.Head is not { IsFinite: true } head)
+        {
+            return;
+        }
+
+        var placement = _panel.Placement;
+        var (width, height) = _panel.Size;
+
+        // The quad's height is not settable — it follows from the texture's aspect off the
+        // configured width — so the height that puts the top edge anywhere has to be computed
+        // from both. Hand-tuning a drop would break the moment the width row was touched.
+        var quadHeight = placement.WidthMetres * height / width;
+
+        var resting = VrPlacementMath.Resting(
+            head,
+            placement.DistanceMetres,
+            VrPlacementMath.KneeHeight(head.Position.Y),
+            quadHeight);
+
+        _anchors[slot] = Anchor(resting, head);
+        Remember();
+
+        _logger.LogInformation(
+            "The {Slot} panel had never been placed; resting it {Distance:0.00} m ahead with its top at {Top:0.00} m",
+            slot,
+            placement.DistanceMetres,
+            resting.Position.Y + (quadHeight / 2f));
     }
 
     /// <summary>

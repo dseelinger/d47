@@ -238,8 +238,19 @@ public sealed record VrSettings
     /// <summary>
     /// Which content set the panel is showing: "full" or "mini". A value rather than a second
     /// surface, because the checklist is explicit that mini is a mode of the same panel.
+    /// <para>
+    /// Mini out of the box (docs/plans/change-requests.md item 9). The full panel is a 1.1 m quad
+    /// — near fifty degrees of view — and a Commander meets it before they have any idea it can
+    /// be moved or shrunk. Mini is the mode that suits a headset beside a running game, and the
+    /// full panel is one switch away.
+    /// </para>
+    /// <para>
+    /// Only for a fresh install. Every property is written to <c>settings.json</c>, so a
+    /// Commander who already has one keeps whatever it says — a default is what d47 starts from,
+    /// not something it imposes later on a layout somebody has already arranged.
+    /// </para>
     /// </summary>
-    public string Mode { get; init; } = "full";
+    public string Mode { get; init; } = "mini";
 
     /// <summary>Where the full panel sits and what it looks like.</summary>
     public VrSurfaceSettings Panel { get; init; } = new();

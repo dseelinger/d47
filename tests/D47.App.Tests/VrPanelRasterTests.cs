@@ -158,6 +158,14 @@ public class VrPanelRasterTests
     {
         var (settings, _, _) = TestSurface.Create();
 
+        // Full, said out loud. Mini is the shipped default now, and this test is about the
+        // raster path rather than about which mode a Commander starts in — leaving it implicit
+        // made the size assertion below a statement about the default instead.
+        settings.Apply(
+            D47.Core.Capabilities.Builtin.VrCapability.ModeKey,
+            "full",
+            D47.Core.Configuration.SettingsCaller.Panel);
+
         new D47.App.Theming.ThemeManager(Application.Current!, NullLogger<D47.App.Theming.ThemeManager>.Instance)
             .Apply(D47.Core.Interface.ThemeCatalog.Elite);
 

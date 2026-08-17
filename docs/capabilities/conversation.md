@@ -32,6 +32,28 @@ report of its own so that "what has this cost" has one answer — see
 assumption you can correct. A provider that charges nothing says **free** rather than `$0.00`,
 and the line is absent entirely until something has been spoken.
 
+### What it has cost over time {#running-totals}
+
+The line under the panel says what the last turn cost, and **Details** beside it opens the rest:
+the token counts, what the session has come to, and four running totals — **the last 7 days**,
+**the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
+
+Those four are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
+back when Directive 47 starts. Both the model and the voices go in it; a total covering only half
+of what you spent would be worse than no total at all.
+
+Each row records the instant it happened, in UTC. "This week" and "this month" are worked out
+against **your** clock at the moment you ask, which is what keeps them right across a daylight
+saving change and right if you ask from a different timezone than you flew in.
+
+A charge Directive 47 could not price — a model with no published rate, or a voice provider you
+have not set a rate for — is recorded with its tokens or characters and no dollar figure. Any
+window containing one reports **at least** its total rather than presenting a figure that quietly
+leaves part of the cost out.
+
+The file is only ever appended to, so nothing that has already been written can be lost by a
+later crash. Delete it and the running totals start again from empty; nothing else is affected.
+
 With no key stored it says so, rather than going quiet and leaving you to work out why nothing
 answers:
 

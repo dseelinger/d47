@@ -459,7 +459,7 @@ public sealed class TurnLoop(
 
         var price = prices.For(activeProvider.Id, chosenModel);
         var cost = price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true);
-        spend.Record(cost, coldPrefixExpected);
+        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel);
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer
         // about what it will do rather than a fault in the pipeline. A paused turn is unsure for

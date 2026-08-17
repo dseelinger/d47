@@ -35,6 +35,34 @@ public sealed class SpeechSpend
     private readonly Lock _lock = new();
 
     /// <summary>
+    /// Where charges are kept between runs, and the rate to price them at. Null for a session-only
+    /// tracker — the replay harness and every test that is not about history.
+    /// <para>
+    /// <b>Speech has to reach the ledger or the ledger is wrong.</b> Ledgering the model alone
+    /// would leave a month figure that looks authoritative while covering half of what was spent,
+    /// which is worse than not reporting one.
+    /// </para>
+    /// </summary>
+    private Conversation.SpendLedger? _ledger;
+
+    private Func<D47Settings>? _settings;
+
+    /// <summary>
+    /// Handed the ledger and a way to read the current rates, after construction because the
+    /// composition root builds the settings service and this on either side of each other.
+    /// <para>
+    /// The rate is read at the moment of the charge rather than at the moment of the question.
+    /// A Commander who corrects their rate should not silently restate what last month cost —
+    /// the row records what the figure was believed to be when it was spent.
+    /// </para>
+    /// </summary>
+    public void LedgerTo(Conversation.SpendLedger ledger, Func<D47Settings> settings)
+    {
+        _ledger = ledger;
+        _settings = settings;
+    }
+
+    /// <summary>
     /// One synthesis that <b>succeeded</b>. A refused voice or a failed request costs nothing,
     /// and a turn cut off by the shut-up hotkey has already paid for the sentences that were
     /// synthesised before it — which is the case that makes "count what was sent" different from
@@ -57,6 +85,28 @@ public sealed class SpeechSpend
                 Utterances = held.Utterances + 1,
             };
         }
+
+        if (_ledger is null || _settings is null)
+        {
+            return;
+        }
+
+        // Priced from this one utterance rather than from the running total, because a ledger row
+        // is one charge. Characters stay a fact and dollars an assumption all the way into the
+        // file: an unpriced provider records the count with Priced false, so a window containing
+        // it reports a floor rather than pretending to a total.
+        var settings = _settings();
+        var one = new SpeechCharge(providerId, characters, 1);
+
+        _ledger.Append(new Conversation.SpendEntry
+        {
+            Kind = Conversation.SpendKind.Voice,
+            ProviderId = providerId,
+            Model = TtsProviderCatalog.Selected(providerId).Name,
+            Dollars = DollarsFor(settings, one) ?? 0m,
+            Priced = Priced(settings, providerId),
+            Characters = characters,
+        });
     }
 
     /// <summary>Every provider that has spoken this session, most characters first.</summary>

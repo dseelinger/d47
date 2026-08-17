@@ -49,8 +49,8 @@ Transcripts are per session. Closing Directive 47 clears them.
 
 ## It says something when you switch
 
-A core you have not used this session introduces itself. One you are coming back to reacts to
-the time it was switched off instead, and it is handed what changed while it was away:
+A core you have never used introduces itself. One you are coming back to reacts to the time it
+was switched off instead, and it is handed what changed while it was away:
 
 ```text
 While you were not running:
@@ -168,10 +168,13 @@ its own and there is nothing for this to decide.
 
 ### Introductions
 
-A core introduces itself the first time you pick it after Directive 47 starts. Every time after
-that it reacts to the gap instead, which is the better line once you have heard the first one —
-and the wrong line when you are working through the cast and want to hear how each of them
-opens.
+A core introduces itself the first time you ever pick it. Every time after that it reacts to the
+gap instead, which is the better line once you have heard the first one — and the wrong line when
+you are working through the cast and want to hear how each of them opens.
+
+**That is remembered between sessions**, so restarting Directive 47 no longer brings the opening
+lines back. Which cores are spent is kept in `data/view-state.json` beside the rest of how you
+left the panel; it is not part of your settings, and nothing you said to a core is stored with it.
 
 **Forget introductions** puts all eleven back to their first line at once. Nothing else is
 touched: transcripts, voices and the core aboard stay exactly as they were. The row states which

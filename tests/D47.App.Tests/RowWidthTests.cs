@@ -126,8 +126,20 @@ public class RowWidthTests
         return host;
     }
 
+    /// <summary>
+    /// The rows the settings view builds, found by the class it marks them with.
+    /// <para>
+    /// This used to be "every grid with three columns", which is not the same set. Avalonia
+    /// builds a <see cref="TextBox"/> out of a three-column grid — inner-left content, the text,
+    /// inner-right content — so putting a glyph inside a box made a control template look like a
+    /// settings row with a 26-pixel control and no caption at all. The selector was reporting on
+    /// grids this view never built.
+    /// </para>
+    /// </summary>
     private static IEnumerable<Grid> CompactRows(SettingsHost host) =>
-        host.View.GetVisualDescendants().OfType<Grid>().Where(grid => grid.ColumnDefinitions.Count == 3);
+        host.View.GetVisualDescendants()
+            .OfType<Grid>()
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass));
 
     private static Grid CompactRowFor(SettingsHost host, string label) =>
         CompactRows(host).First(grid =>

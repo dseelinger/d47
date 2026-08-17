@@ -44,9 +44,9 @@ public class MicrophoneIsVisibleTests
     }
 
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Idle, "nothing kept")]
-    [InlineData(MicrophoneState.Armed, "Listening for you")]
-    [InlineData(MicrophoneState.Open, "Listening")]
+    [InlineData(MicrophoneState.Idle, "PTT Ready")]
+    [InlineData(MicrophoneState.Armed, "Listening...")]
+    [InlineData(MicrophoneState.Open, "MIC ON")]
     public void EachStateSaysWhichOneItIs(MicrophoneState state, string expected)
     {
         var model = new PanelViewModel { Microphone = state };
@@ -161,7 +161,7 @@ public class MicrophoneIsVisibleTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         Render(view, 1024, 640);
 
-        Assert.Equal("Listening", ((TextBlock)Named(view, "MicrophoneLabel")).Text);
+        Assert.Equal("MIC ON", ((TextBlock)Named(view, "MicrophoneLabel")).Text);
     }
 
     /// <summary>The settings page has no turns on it and no provenance line, so neither shows.</summary>

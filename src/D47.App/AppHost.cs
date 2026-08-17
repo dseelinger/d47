@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Input;
 using D47.App.Logging;
+using D47.App.Panel;
 using D47.App.Ticking;
 using D47.App.Updates;
 using D47.App.Voice;
@@ -61,6 +62,7 @@ public sealed class AppHost : IDisposable
         PersonaHost personas,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
+        SpendLedger spendLedger,
         WasapiAudioSink audioSink,
         AudioArbiter audio,
         CueLibrary cues,
@@ -95,6 +97,7 @@ public sealed class AppHost : IDisposable
         Personas = personas;
         LlmAvailability = llmAvailability;
         Spend = spend;
+        SpendLedger = spendLedger;
         _audioSink = audioSink;
         Audio = audio;
         Cues = cues;
@@ -205,6 +208,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Per-turn cost and the running total.</summary>
     public SpendTracker Spend { get; }
+
+    /// <summary>
+    /// Every charge, kept between runs. What answers "this week" and "this month" — questions the
+    /// session-scoped <see cref="Spend"/> cannot be asked.
+    /// </summary>
+    public SpendLedger SpendLedger { get; }
 
     /// <summary>
     /// The one queue every audible thing goes through (architecture.md D7). Exposed because
@@ -373,7 +382,13 @@ public sealed class AppHost : IDisposable
 
         // Logging first, so everything below has somewhere to report a failure.
         var verbosity = new SerilogVerbosityControl();
-        Log.Logger = LoggingSetup.Create(paths, verbosity);
+
+        // Built with logging rather than after it, because a sink has to be in the pipeline to
+        // see anything. It drops events until it is pointed at a panel, which is the right
+        // behaviour for the startup errors raised before there is one.
+        var technicalLog = new TechnicalLogBridge();
+
+        Log.Logger = LoggingSetup.Create(paths, verbosity, technicalLog);
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
@@ -512,7 +527,15 @@ public sealed class AppHost : IDisposable
         // Availability and spend exist before the registry because capabilities report on them;
         // the provider itself is built afterwards, from settings, by ApplyLlmSettings.
         var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
-        var spend = new SpendTracker();
+
+        // The history behind the running totals. Read once here, so the first turn of a session
+        // can already be charged against a month that started before the process did.
+        var spendLedger = new SpendLedger(
+            paths.SpendFile,
+            SystemWallClock.Instance,
+            loggerFactory.CreateLogger<SpendLedger>());
+
+        var spend = new SpendTracker(spendLedger);
 
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
@@ -624,7 +647,12 @@ public sealed class AppHost : IDisposable
         // Built before the registry, because the persona capability declares settings rows from
         // it and which rows exist has to be settled before registration — descriptors are
         // registered once and never mutated (architecture.md D5).
-        var personas = new PersonaHost(PersonaCatalog.Resolve(settings.Current.Persona.Id));
+        // Handed somewhere to remember its introductions, so a core says its opening line to
+        // this Commander once rather than once per launch. Forgetting them is now the only way
+        // back, which is what the row's help had to stop promising a restart would do.
+        var personas = new PersonaHost(
+            PersonaCatalog.Resolve(settings.Current.Persona.Id),
+            new ViewStateIntroductions(viewState));
 
         // The help capability answers from the registry it is itself registered in, so the
         // accessor is filled in immediately after Build. A Func rather than a mutable property
@@ -780,6 +808,11 @@ public sealed class AppHost : IDisposable
                 // carries no position at all (list.md Phase 18).
                 () => status.Current,
 
+                // The same window object the injector asks about before every key. One thing
+                // knows how to find Elite, and now it also knows how to raise it — a second
+                // finder would be a second answer to "is that Elite" and they would disagree.
+                eliteWindow.Raise,
+
                 new SwitchSurface
                 {
                     Mappings = () => switches.Switches,
@@ -859,6 +892,7 @@ public sealed class AppHost : IDisposable
             personas,
             llmAvailability,
             spend,
+            spendLedger,
             audioSink,
             audio,
             cues,
@@ -877,6 +911,11 @@ public sealed class AppHost : IDisposable
         personas.Changed += host.OnPersonaChanged;
         turns.UseTranscript(personas.Transcript);
 
+        // Speech reaches the ledger too, or the running totals would look authoritative while
+        // covering only what the model cost. Wired here rather than at construction because the
+        // rate a charge is priced at is read from settings at the moment it is spoken.
+        host.SpeechSpend.LedgerTo(spendLedger, () => settings.Current);
+
         // The avatar's own imagery, if the Commander has dropped any in. Scanned once at
         // startup; the drawn face is what every state falls back to, so an empty data/avatar is
         // the normal case rather than a missing asset.
@@ -887,6 +926,17 @@ public sealed class AppHost : IDisposable
         // the rule the transcript scroll already follows, so the avatar does not get a second
         // one of its own.
         voice.StateEntered += state => host.Panel.LoopState = state;
+
+        // And the Technical page gets the same transitions in words. The page's premise is the
+        // conversation with the diagnostics left in, and until now the loop it most needs to show
+        // reported itself only to a log file (docs/plans/change-requests.md item 6).
+        var trace = new SpeechLoopTrace(host.Panel);
+        voice.StateEntered += trace.Entered;
+
+        // Errors from the speech path land there too, through the log rather than through a call
+        // site: an authored list of stage lines cannot cover the failure nobody has written yet.
+        technicalLog.WriteTo(line =>
+            host.Panel.Append($"[error] {line}{Environment.NewLine}", TranscriptKind.Technical));
 
         // That the microphone is open, on both surfaces, as a property of the gate policy rather
         // than of any one capability (list.md Phase 13). Set straight onto the view model from

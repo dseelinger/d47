@@ -4,12 +4,193 @@ What changed in each release of Directive 47, newest first.
 
 A **completed phase in [list.md](list.md) is a minor release** — `0.<minor+1>.0` — because the
 version is how a Commander tells "some fixes landed" from "there is a whole capability here
-now". Fixes between phases are patches. **A published tag never moves**: it is a receipt for
+now". A batch of wanted changes from
+[docs/plans/change-requests.md](docs/plans/change-requests.md) is a minor for the same reason:
+nothing in it is a defect, so shipping it as a patch would tell a Commander that nothing had
+changed. Fixes between phases are patches. **A published tag never moves**: it is a receipt for
 one exact `d47.exe` and the checksum beside it, so a correction ships as the next patch rather
 than as the same number twice.
 
-Open defects live in [bugs.md](bugs.md). An entry leaves that file when it ships, and the line
-it gets here is its permanent record.
+Open defects live in [bugs.md](bugs.md), and wanted changes in
+[docs/plans/change-requests.md](docs/plans/change-requests.md). An entry leaves either file when
+it ships, and the line it gets here is its permanent record.
+
+---
+
+## 0.21.0 — 2026-08-17 — Ten wanted changes, and none of them defects
+
+Everything raised hand-testing 0.15.0 on 2026-08-16. None of it was broken; all of it was
+Directive 47 saying too much in one place, too little in another, or forgetting between
+launches something it had no reason to forget.
+
+### Fewer words, and a reason for each of them
+
+- **The microphone indicator stopped leading with the alarming half.** It used to read
+  *Microphone open, nothing kept* — true, and a strange first thing to read at a glance beside
+  a running game. The three states are now **PTT Ready**, **Listening...** and **MIC ON**. The
+  first two name the mode outright because those states only ever happen in one of them; the
+  open gate is reached both ways — a held key and a gate D47 opened for itself are the same
+  fact about the microphone — so it claims neither.
+- **The Settings search now marks what it found.** It has always taken rows away, which is
+  right for 92 rows across 14 sections, but a page of survivors with nothing marked left you
+  comparing the query against every word to work out what it caught. The hits are now
+  highlighted in the rows that remain. And a row matched on its **settings key** — which the
+  search has always read and the page has never shown — now displays that key underneath, so a
+  row can no longer survive with every visible word on it disagreeing with what you typed.
+- **The search box has a × in it.** Inside the field rather than beside it, so it reads as part
+  of the box rather than as a fourth button next to Copy and the steppers, and it appears only
+  once there is something to clear. It runs the same path Escape does, so the page comes back
+  rather than just the box going empty.
+- **The API key row lost three buttons.** *Show* is now an eye inside the field, struck through
+  while the key is legible. *Store* reads **Save** when nothing is stored and **Overwrite** when
+  something is, so replacing a key says so before you press it. *Check* is now **Verify Key**.
+  And *Clear* is an undo arrow inside the field — which asks first, because with a key stored it
+  deletes a credential you may have to reissue at the provider, and an undo arrow on its own
+  promises something reversible. A stored key is still never shown back to you; the eye reveals
+  only what you are pasting in.
+
+### Two things it stops telling you twice
+
+Both of these were Directive 47 forgetting something between launches that it had no reason to
+forget, and repeating itself as a result.
+
+- **A core's opening line is now spent for good.** Each of the eleven introduces itself the
+  first time you ever pick it, and reacts to the gap every time after that — but restarting
+  wiped the slate, so the whole cast opened with their first lines again on every launch.
+  Which cores are spent is now remembered. **Forget introductions** is the way back, and is now
+  the only one; the row said a restart would do it, and that is no longer true. Nothing you
+  said to a core is stored — only which ones have spoken. Transcripts are still per session and
+  still cleared when Directive 47 closes.
+- **The ask box stops teaching you once you have asked.** Its placeholder carried a worked
+  example — *try "where am I" or "what's your status"* — and went on carrying it for as long as
+  you used Directive 47, because nothing remembered that you had ever asked anything. Ask
+  something, by voice or by typing, and it settles down to **Ask D47 something**. It does not
+  come back.
+
+Both are kept in `data/view-state.json`, beside the window position and the collapsed cards,
+rather than in your settings — nothing here is configured, and losing the file costs one
+repeated hint rather than a broken install.
+
+### What this has cost, for longer than a session
+
+The line under the panel used to carry eleven numbers: the outcome, the route, the effort, three
+token counts, the turn's cost, the session's cost, a cache-regression counter, a character count
+and a voice price. All of it true, none of it readable at a glance beside a running game.
+
+- **The line says what a glance is asking.** What answered, at what effort, and what it cost —
+  and nothing else.
+- **Details, beside it, opens the rest.** Tokens in and out and how many were cached, what the
+  session has come to, what the voices have cost, and the cold-prefix counter that matters when
+  something is defeating prompt caching and is noise the rest of the time.
+- **And four running totals: the last 7 days, the last 30 days, this week, and this calendar
+  month.** None of which Directive 47 could answer before, because nothing was written down —
+  both cost trackers were in memory and started empty at every launch, so the only honest figure
+  was "this session".
+
+Charges now go to `data/spend.jsonl` as they happen, one line each, and are read back at
+startup. **The voices are in it too**: a month figure covering only what the model cost would
+look authoritative while leaving out half of what you spent.
+
+Each row records the instant it happened in UTC, and "this week" and "this month" are worked out
+against your own clock when you ask. That is what keeps them right across a daylight saving
+change — and right if you ask from a timezone you were not in when the charges were made.
+
+Anything Directive 47 could not price — a model with no published rate, a voice provider whose
+rate you have not set — is recorded with its tokens or characters and no dollar figure, and any
+window holding one says **at least** rather than quietly reporting part of the cost as all of it.
+
+The file is only appended to, so nothing already written is at risk from a later crash, and a
+half-written last line costs that line rather than the history. Delete it and the totals start
+again from empty; nothing else changes.
+
+### The headset panel gets out of the way
+
+What Directive 47 put in front of you the first time you wore a headset was a 1.1 m panel, a
+metre away, a quarter of a metre below your eyeline, **following your gaze** — a large bright
+rectangle over whatever you turned to look at. Every part of that was adjustable and none of it
+was a good place to start.
+
+- **Mini is the default panel.** The same panel showing less, at 0.34 m instead of 1.1 m. Full
+  is one setting away and keeps its own placement, so switching between them does not cost you
+  the position you set for either.
+- **Panels are world-locked by default**, and **Directive 47 now puts the panel down for you**
+  the first time it runs in your headset. Roughly a metre ahead of wherever you are facing, low
+  enough that the top of it sits around knee height, and tilted back so it faces you rather than
+  the ceiling. Glance down and it is there; look up and it is not in the way.
+- That first position is **worked out rather than assumed**. The floor comes from your room
+  setup and the panel's height from its own width and proportions, so it is not a figure picked
+  for somebody else's height or somebody else's panel size — and it stays right if you change
+  the width.
+
+Move it once and it is yours: placing it writes the position exactly as putting it down always
+did, and Directive 47 never places it again.
+
+**Only for a fresh install.** Every setting you have is written to `settings.json`, so if you
+already have one you keep the panel exactly where and how you had it. These are the values
+Directive 47 starts from, not ones it imposes on a layout you have already arranged.
+
+### The Technical page shows the speech loop
+
+**Technical** is described as the conversation with the diagnostics left in, and it showed almost
+none of them: five things ever wrote to it, all about the turn as a whole. Everything the speech
+loop reported — the microphone opening, your words being transcribed, the answer being worked out
+and spoken — went to a log file instead. The information existed; it was on the wrong page.
+
+```text
+[21:04:07] Microphone open, listening.
+[21:04:09] Turning what you said into words.
+[21:04:10] Working on an answer.
+[21:04:12] Speaking the answer.
+```
+
+Each stage is a line that **stays**, so when something stops part-way, how far it got is still on
+the page above it. The microphone indicator beside the ask box answers the other question — what
+is true right now — and this one answers what happened.
+
+**Errors from the speech path arrive here too**, with the cause attached rather than only the
+sentence:
+
+```text
+[error] Could not start capture — device in use by another application
+```
+
+Errors only, and only from speech. Warnings and the rest of the running commentary stay in the
+log file, because a page that repeats another page is one nobody reads.
+
+### "Set focus to game" brings Elite forward
+
+Directive 47 will not press a key unless Elite is the window in front — the one thing standing
+between a voice command and typing into your browser. The awkward consequence was that
+alt-tabbing away switched every flight command off, and the only way back was the mouse you were
+trying not to reach for.
+
+- **"Set focus to game"** — or *"focus the game"*, *"switch to Elite"*, *"back to the game"* —
+  brings Elite forward. It needs no model configured; it goes through the spoken command path
+  rather than the language model.
+- **The model cannot do this.** Your journal, in-game messages, search results and INARA are all
+  untrusted text, and anything the model can call, a hostile in-game message can try to invoke.
+  A message that could yank your focus while you were typing is a nuisance at best, so this is
+  reachable by spoken phrase only.
+
+**Windows may refuse, and Directive 47 will tell you when it does.** A program that does not
+already hold the foreground cannot take it — it can only ask, and what usually happens instead
+is the taskbar button flashing. So this works when you ask from Directive 47's own window and is
+often refused when you ask from somewhere else. There is no way around that which does not
+involve faking keyboard input at the operating system, which is the thing Directive 47 promises
+never to do outside Elite. What it does instead is say so:
+
+```text
+Windows would not let me bring Elite forward from the background. Its taskbar button should be
+flashing; click that, or alt-tab.
+```
+
+Silence there would read exactly like the microphone having failed, and you would repeat
+yourself at a Directive 47 that had heard you perfectly.
+
+One phrase is deliberately missing. **"Elite" on its own is not a command**, because spoken
+phrases are matched before the model sees them — a bare "Elite" would swallow *"what is my Elite
+rank in combat"* and answer it by moving a window. Elite is the top rank in every career the game
+has.
 
 ---
 

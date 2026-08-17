@@ -77,7 +77,13 @@ public sealed record TurnCost(LlmUsage Usage, decimal Dollars, bool Priced)
 /// rather than absorbed into the total unnoticed.
 /// </para>
 /// </summary>
-public sealed class SpendTracker
+/// <param name="ledger">
+/// Where charges are kept between runs, or null for a tracker that only knows this session —
+/// the replay harness, and every test that is not about history. What this class counts is
+/// still session-scoped: the running total is what has been spent since launch, and the ledger
+/// answers the longer questions beside it rather than changing what these properties mean.
+/// </param>
+public sealed class SpendTracker(SpendLedger? ledger = null)
 {
     private readonly List<TurnCost> _turns = [];
 
@@ -97,8 +103,17 @@ public sealed class SpendTracker
     /// <summary>
     /// <paramref name="coldPrefixExpected"/> is true for the first turn of a session and for the
     /// turn after a model or provider change — the cases where writing cache is correct.
+    /// <para>
+    /// The provider and model are taken here rather than derived later because this is the last
+    /// place that knows them for certain. A row is stamped with what actually answered, not with
+    /// whatever is selected by the time somebody opens the dialog.
+    /// </para>
     /// </summary>
-    public void Record(TurnCost cost, bool coldPrefixExpected)
+    public void Record(
+        TurnCost cost,
+        bool coldPrefixExpected,
+        string providerId = "",
+        string model = "")
     {
         _turns.Add(cost);
         RunningTotalDollars += cost.Dollars;
@@ -107,5 +122,19 @@ public sealed class SpendTracker
         {
             UnexplainedColdPrefixes++;
         }
+
+        ledger?.Append(new SpendEntry
+        {
+            Kind = SpendKind.Model,
+            ProviderId = providerId,
+            Model = model,
+            Dollars = cost.Dollars,
+            Priced = cost.Priced,
+            InputTokens = cost.Usage.InputTokens,
+            CacheWriteTokens = cost.Usage.CacheCreationInputTokens,
+            CacheReadTokens = cost.Usage.CacheReadInputTokens,
+            OutputTokens = cost.Usage.OutputTokens,
+            WebSearchRequests = cost.Usage.WebSearchRequests,
+        });
     }
 }

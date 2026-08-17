@@ -110,6 +110,29 @@ The big text area is one of three pages, chosen by the tabs along the top of it.
 **Technical** is the same with the diagnostics left in — the version banner, where things are
 installed, whether the language model came up. This is what the panel used to show all the time.
 
+It also carries **the speech loop, as it happens**: the microphone opening, what you said being
+turned into words, the answer being worked out, the answer being spoken. Each stage is a line
+that stays, so when something stops part-way, what it got as far as is still on the page above
+it. That is the difference between this and the microphone indicator beside the ask box — the
+indicator says what is true right now, and this says what happened.
+
+```text
+[21:04:07] Microphone open, listening.
+[21:04:09] Turning what you said into words.
+[21:04:10] Working on an answer.
+[21:04:12] Speaking the answer.
+```
+
+**Errors from the speech path land here too**, with the cause attached rather than only the
+sentence:
+
+```text
+[error] Could not start capture — device in use by another application
+```
+
+Errors only, and only from speech. Warnings and the rest of the running commentary stay in the
+log file, because a page that repeats another page is one nobody reads.
+
 **Log file** is today's log, read when you open the page rather than tailed continuously: a log
 nobody is looking at is not worth a file read per tick, and one you *are* looking at is open
 because something already went wrong. Switch away and back to re-read it.

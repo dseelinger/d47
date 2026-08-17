@@ -1,3 +1,4 @@
+using D47.Core.Capabilities.Builtin;
 using D47.App.Input;
 using D47.Core.Input;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,6 +22,14 @@ public class ScancodeInjectorTests
         public bool IsRunning { get; set; } = true;
 
         public bool IsForeground { get; set; } = true;
+
+        /// <summary>
+        /// Nothing here raises anything. Injection never asks — a command that quietly brought
+        /// the game forward so it could type into it would defeat the foreground check these
+        /// tests are about, so this failing loudly if it were ever called is the point.
+        /// </summary>
+        public FocusResult Raise() =>
+            throw new InvalidOperationException("the injector must never raise the game itself");
     }
 
     private static ScancodeInjector Injector(FakeElite elite) =>
