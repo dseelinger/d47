@@ -17,6 +17,35 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.21.1 — 2026-08-17 — Three log-level rows that controlled nothing
+
+**Turning the Voice, Input or LLM log level up or down did nothing at all.** The row accepted
+the change and read it back correctly; the code it named went on logging at whatever the
+default said. Found while building the Technical page in 0.21.0, not by anyone hitting it —
+which is the trouble with it, because there was no symptom to hit. Nothing warned, nothing
+failed, and the setting looked like it had worked.
+
+Each subsystem was bound to the namespace its code lives in, and three of the eight named
+namespaces that do not exist anywhere in Directive 47. A binding that matches nothing is simply
+never applied.
+
+The real cause was the shape rather than the spelling: a subsystem is not one namespace. **The
+speech loop alone spans six**, across four projects — what drives it, what it captures and
+plays, what decides when to listen, and the three speech providers underneath. None of that fits
+in a single name, so the single name was wrong.
+
+Two more rows were quietly incomplete for the same reason and are now whole:
+
+- **VR** reached the SteamVR runtime but not the placement arithmetic or the headset surfaces,
+  so turning it down left two thirds of it talking.
+- **Input** reaches key injection, the bindings it reads and the HOTAS switches together.
+
+Where two subsystems both cover a piece of code — the app's own row covers everything on the
+surface, including the speech pipeline — the more specific one wins, so the rows stay
+independent of each other rather than one quietly shadowing the other.
+
+---
+
 ## 0.21.0 — 2026-08-17 — Ten wanted changes, and none of them defects
 
 Everything raised hand-testing 0.15.0 on 2026-08-16. None of it was broken; all of it was

@@ -31,11 +31,18 @@ public static class LoggingSetup
             .MinimumLevel.ControlledBy(verbosity.Default)
             .Enrich.FromLogContext();
 
-        // One controllable target per subsystem. The switch is read per event, which is what
-        // makes a level change take effect without a restart.
-        foreach (var (subsystem, prefix) in Subsystems.SourcePrefixes)
+        // One controllable target per subsystem, over however many namespaces that subsystem
+        // spans. The switch is shared across a subsystem's prefixes rather than copied, so the
+        // whole of it moves together — and it is read per event, which is what makes a level
+        // change take effect without a restart.
+        foreach (var (subsystem, prefixes) in Subsystems.SourcePrefixes)
         {
-            configuration = configuration.MinimumLevel.Override(prefix, verbosity.SwitchFor(subsystem));
+            var level = verbosity.SwitchFor(subsystem);
+
+            foreach (var prefix in prefixes)
+            {
+                configuration = configuration.MinimumLevel.Override(prefix, level);
+            }
         }
 
         if (technical is not null)

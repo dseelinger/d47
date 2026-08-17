@@ -34,5 +34,6 @@ Two of them left something worth knowing about:
   and whether it is wrong for a seated Commander — is a question only somebody wearing one can
   answer.
 - **Item 6 turned up a defect on the way past**, in the log-level rows rather than in anything it
-  was asked to change. It is [bugs.md](../../bugs.md) 1, and `TechnicalLogBridge` carries a second
-  copy of a list that should be a lookup until it is fixed.
+  was asked to change: three of them named namespaces that do not exist and so controlled
+  nothing. Fixed in 0.21.1, and `TechnicalLogBridge` now reads the one list rather than keeping
+  a copy.

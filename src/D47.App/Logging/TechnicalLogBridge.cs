@@ -1,3 +1,4 @@
+using D47.Core.Diagnostics;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -27,25 +28,16 @@ namespace D47.App.Logging;
 public sealed class TechnicalLogBridge : ILogEventSink
 {
     /// <summary>
-    /// The namespaces the speech loop logs under.
+    /// The namespaces the speech loop logs under, read from the one place that knows.
     /// <para>
-    /// Written out here rather than taken from <c>Subsystems.SourcePrefixes</c>, which is the
-    /// repo's one vocabulary for this and would be the right source — except that its Voice entry
-    /// points at a namespace that does not exist, so it currently matches nothing. That is a
-    /// defect of its own and is recorded in bugs.md; when it is fixed this list should become a
-    /// lookup rather than a second copy.
-    /// </para>
-    /// <para>
-    /// The loop spans three of them regardless of how that is repaired: the pipeline that drives
-    /// it, the audio it plays and captures, and the gate that decides when to listen.
+    /// This was a hand-written copy, because <c>Subsystems</c> is the repo's single vocabulary
+    /// for exactly this question and its Voice entry named a namespace that did not exist. That
+    /// is fixed (bugs.md 1), so the copy is gone: a Commander turning the Voice log level down
+    /// and a Commander watching the Technical page are asking about the same set of code, and
+    /// two lists would eventually disagree about what that set is.
     /// </para>
     /// </summary>
-    public static readonly string[] SpeechSources =
-    [
-        "D47.App.Voice",
-        "D47.Core.Audio",
-        "D47.Core.Listening",
-    ];
+    public static IReadOnlyList<string> SpeechSources => Subsystems.SourcePrefixes[Subsystems.Voice];
 
     private Action<string>? _write;
 
