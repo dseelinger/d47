@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Media.Imaging;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
 
@@ -129,6 +132,165 @@ public sealed class OffscreenSurface : IDisposable
             destination,
             rowBytes * _size.Height,
             rowBytes);
+
+    /// <summary>
+    /// Delivers a press and a release at a point on the surface, as a mouse would, and says
+    /// whether there was anything there to press.
+    /// <para>
+    /// <b>Synthesised rather than routed, because there is no platform pointer here.</b> The
+    /// window is never shown, so it receives no input from the desktop at all — the only thing
+    /// pointing at this surface is a controller in a headset, and the coordinates it produces are
+    /// a fraction across a quad. Raising the real routed events is what lets every control behave
+    /// as itself: a button presses, a tab selects, a toggle toggles, and none of them needs to
+    /// know where the press came from.
+    /// </para>
+    /// <para>
+    /// Press and release together, at the same point. A drag across the surface would be a second
+    /// gesture, and the one the panel already has for a held trigger is carrying the whole quad.
+    /// </para>
+    /// </summary>
+    public bool Click(Point at)
+    {
+        if (Deepest(_view, at) is not { } target)
+        {
+            return false;
+        }
+
+        var pointer = new Pointer(PointerId, PointerType.Mouse, isPrimary: true);
+
+        target.RaiseEvent(new PointerPressedEventArgs(
+            target,
+            pointer,
+            _view,
+            at,
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.None));
+
+        target.RaiseEvent(new PointerReleasedEventArgs(
+            target,
+            pointer,
+            _view,
+            at,
+            0,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+            KeyModifiers.None,
+            MouseButton.Left));
+
+        // Released explicitly: a control that captured this pointer on the press would otherwise
+        // keep hold of an object nothing will ever move again.
+        pointer.Capture(null);
+
+        Activate(target);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Does what the release should have done, for the controls this panel is made of.
+    /// <para>
+    /// <b>The routed events alone are not enough here, and the reason is the same one
+    /// <see cref="Deepest"/> exists for.</b> <c>ButtonBase.OnPointerReleased</c> only calls
+    /// <c>OnClick</c> if the renderer says the release landed on the button — and the renderer
+    /// belonging to a window that is never shown answers that question with nothing, for every
+    /// point. Measured: the press arrived, the button took it, and the release passed the button
+    /// silently. So the press and release are still raised, because a control with its own
+    /// handling should see a real gesture, and then the activation is done here.
+    /// </para>
+    /// <para>
+    /// A closed list rather than a general mechanism, and it is the list of what the panel
+    /// offers: the page tabs are radio buttons and Copy and the search steppers are buttons.
+    /// Most specific first, because a radio button is a toggle button is a button. Anything else
+    /// — a combo box, a text field on the settings page — receives the gesture and does whatever
+    /// it does with it, which for most of them is nothing a Commander in a headset could finish
+    /// anyway.
+    /// </para>
+    /// </summary>
+    private static void Activate(Interactive target)
+    {
+        foreach (var candidate in target.GetSelfAndVisualAncestors().OfType<Control>())
+        {
+            switch (candidate)
+            {
+                case RadioButton radio:
+                    radio.IsChecked = true;
+                    return;
+
+                case ToggleButton toggle:
+                    toggle.IsChecked = toggle.IsChecked != true;
+                    return;
+
+                case Button button:
+                    button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent) { Source = button });
+
+                    if (button.Command is { } command && command.CanExecute(button.CommandParameter))
+                    {
+                        command.Execute(button.CommandParameter);
+                    }
+
+                    return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// One id for every synthetic press, because there is exactly one thing pointing at this
+    /// surface at a time — the panel is carried with the same button that clicks it, so a second
+    /// simultaneous pointer is not a state the gesture can be in.
+    /// </summary>
+    private const int PointerId = 47;
+
+    /// <summary>
+    /// The topmost thing under a point, found by walking the tree rather than by asking the
+    /// framework.
+    /// <para>
+    /// <c>InputHitTest</c> answers null for every point on this surface. It resolves against the
+    /// visual root's hit-test path, and the root here is a window that is never shown — there is
+    /// no composition behind it to test against. Measured: a tab sitting at (208, 92) inside a
+    /// laid-out 1024x640 view, visible, enabled and hit-test visible, was not found by it.
+    /// </para>
+    /// <para>
+    /// Geometry is enough for what this has to do. Children are walked back to front so the
+    /// topmost wins, an invisible or hit-test-invisible subtree is skipped entirely, and the
+    /// deepest match is returned so the event starts where a real pointer would and bubbles from
+    /// there. Clipping is not modelled: nothing on this panel draws outside its own bounds.
+    /// </para>
+    /// </summary>
+    private static Interactive? Deepest(Visual from, Point at)
+    {
+        var children = from.GetVisualChildren().ToList();
+
+        for (var i = children.Count - 1; i >= 0; i--)
+        {
+            if (children[i] is not { } child || !child.IsVisible)
+            {
+                continue;
+            }
+
+            if (child is InputElement { IsHitTestVisible: false })
+            {
+                continue;
+            }
+
+            if (from.TranslatePoint(at, child) is not { } local
+                || !new Rect(child.Bounds.Size).Contains(local))
+            {
+                continue;
+            }
+
+            if (Deepest(child, local) is { } deeper)
+            {
+                return deeper;
+            }
+
+            if (child is Interactive interactive)
+            {
+                return interactive;
+            }
+        }
+
+        return null;
+    }
 
     public void Dispose()
     {

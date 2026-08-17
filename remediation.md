@@ -31,8 +31,10 @@ Reported 2026-08-17. Each item is checked off as it ships.
   `WindowPlacementMemory.SampleWhenSettled`, which no headless test can tell apart.
 - [x] **Only the first caption arrives, and it doubles the spoken line.** After the first, the
   panel appears headlocked but blank while the voice is speaking.
-- [ ] **The VR big panel should carry the Settings tab**, unless there is a good reason not to.
+- [x] **The VR big panel should carry the Settings tab**, unless there is a good reason not to.
 - [x] **All tabs should update in the VR big panel.**
-- [ ] **Controls should be clickable in the VR panels.**
+- [x] **Controls should be clickable in the VR panels.** **Not yet confirmed in a headset.**
+  Tabs and buttons are covered by headless tests that press the real surface; a combo box or a
+  text field on the settings page takes the gesture and does nothing useful with it.
 - [x] **"Ray Gateway offers engineering" is a useless callout.** Every starport appears to,
   and if some do not, the absence is what would be worth saying — not the presence.

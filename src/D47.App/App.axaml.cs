@@ -24,9 +24,11 @@ public partial class App(AppHost? host) : Application
             new ThemeManager(this, host.Loggers.CreateLogger<ThemeManager>()).FollowSettings(host.Settings);
         }
 
+        MainWindow? window = null;
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow(host);
+            desktop.MainWindow = window = new MainWindow(host);
         }
 
         // After the framework is up, because the headset path rasterises a widget tree and
@@ -44,7 +46,13 @@ public partial class App(AppHost? host) : Application
                 host.Paths,
                 host.Loggers,
                 host.Avatars,
-                host.Paths.Data);
+                host.Paths.Data,
+
+                // The same builder the window uses, which is the point: two of them would be two
+                // lists of what a settings surface needs wired to it, and the headset's would be
+                // the one that quietly fell behind. It hands back a new instance per call, which
+                // it has to — a Visual belongs to exactly one visual tree.
+                window is null ? null : window.BuildSettingsPage);
         }
 
         base.OnFrameworkInitializationCompleted();
