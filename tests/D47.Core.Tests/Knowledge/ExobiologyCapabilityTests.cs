@@ -117,6 +117,38 @@ public class ExobiologyCapabilityTests
     }
 
     /// <summary>
+    /// A ring signal Elite did not localise is said the way the rest of the list is said.
+    /// <para>
+    /// <b>Measured, and it is one material out of twelve.</b> Where <c>SAASignalsFound</c> writes a
+    /// ring's mineral it usually omits <c>Type_Localised</c> and leaves a bare symbol — eleven of
+    /// which are already title case (<c>Alexandrite</c>, <c>Painite</c>, <c>Serendibite</c>) and one
+    /// of which is not. Across 912 journals Tritium arrives as <c>tritium</c> 22 times against
+    /// <c>Tritium</c> 21, so the same mineral appears twice in two spellings in one list — and
+    /// because it is the only lower-case one, every other material makes this look correct.
+    /// </para>
+    /// <para>
+    /// The same defect and the same remedy as <c>ProspectedRock.Display</c>, which Phase 18 shipped
+    /// one file away for the prospector's identical habit.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task ARingSignalEliteLeftUnlocalisedIsSpokenLikeTheRest()
+    {
+        var result = await Ask(
+            Store(
+                """
+                {"timestamp":"2026-08-16T10:00:00Z","event":"SAASignalsFound","BodyName":"Fixture 1 a Ring",
+                 "SystemAddress":1,"BodyID":4,
+                 "Signals":[{"Type":"tritium","Count":4},{"Type":"Alexandrite","Count":2}],
+                 "Genuses":[]}
+                """),
+            "get_body_biology");
+
+        Assert.Contains("4 Tritium", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("tritium", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A scan that found nothing is a real answer and the one that saves a landing — different from
     /// d47 never having looked.
     /// </summary>

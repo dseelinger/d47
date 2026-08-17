@@ -150,9 +150,9 @@ public sealed class CoreAsteroidCallout : ICallout
 
 /// <summary>One material in a prospected rock.</summary>
 /// <param name="Symbol">
-/// Folded for identity, because Elite writes the same material two ways. 13 of the 27 materials in
+/// Folded for identity, because Elite writes the same material two ways. 14 of the 27 materials in
 /// the corpus appear under both spellings — <c>gallite</c> and <c>Gallite</c>, <c>gold</c> and
-/// <c>Gold</c> — depending on whether <c>Name_Localised</c> was written, which is 40 raw spellings
+/// <c>Gold</c> — depending on whether <c>Name_Localised</c> was written, which is 41 raw spellings
 /// for 27 materials. Tracking a session best on the raw name would keep two high water marks for one
 /// material and announce a personal best that was not one.
 /// </param>
@@ -189,24 +189,13 @@ public sealed record ProspectedRock(IReadOnlyList<ProspectedMaterial> Materials)
                 Proportion = row.Double("Proportion") ?? 0,
             })
             .Where(row => row.Symbol is not null && row.Name is not null)
-            .Select(row => new ProspectedMaterial(row.Symbol!, Display(row.Name!), row.Proportion))
+            .Select(row => new ProspectedMaterial(row.Symbol!, JournalJson.Spoken(row.Name)!, row.Proportion))
             .OrderByDescending(material => material.Proportion)
             .ToList();
 
         return new ProspectedRock(materials)
         {
-            Motherlode = journalEvent.Named("MotherlodeMaterial") is { } motherlode
-                ? Display(motherlode)
-                : null,
+            Motherlode = JournalJson.Spoken(journalEvent.Named("MotherlodeMaterial")),
         };
     }
-
-    /// <summary>
-    /// What to say out loud. Elite writes <c>gallite</c> where it wrote no localised name, and a
-    /// spoken line reading "gallite" beside "Gallite" is the same material twice in two voices.
-    /// </summary>
-    private static string Display(string name) =>
-        name.Length > 0 && char.IsLower(name[0])
-            ? char.ToUpperInvariant(name[0]) + name[1..]
-            : name;
 }

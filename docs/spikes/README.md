@@ -19,6 +19,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 | [elevenlabs-voice-sources.md](elevenlabs-voice-sources.md) | What does an ElevenLabs account's voice list actually hold, is the picker empty on a fresh one, and does the named default survive? |
 | [screen-reading-licence-and-rules.md](screen-reading-licence-and-rules.md) | What do the computer-vision candidates *and their native payloads* actually license as, and does reading the screen sit inside Frontier's published rules? |
+| [journal-corpus-soak.md](journal-corpus-soak.md) | Phases 17, 18 and 19 shipped in one day — what do 692,631 real events say about them? One fix, two reports, and a crash hunt that came back empty. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 [list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
