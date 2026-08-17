@@ -110,7 +110,10 @@ public sealed record BodySignals
 
         var signals = journalEvent
             .Items("Signals")
-            .Select(row => new BodySignal(row.Named("Type") ?? "an unnamed signal", row.Int("Count") ?? 0))
+            // Spoken rather than Named: a ring's mineral usually arrives with no localised name,
+            // and Tritium is the one of the twelve that Elite writes in lower case — so without
+            // this one list says "4 tritium" and "2 Alexandrite" about the same kind of thing.
+            .Select(row => new BodySignal(row.Spoken("Type") ?? "an unnamed signal", row.Int("Count") ?? 0))
             .ToList();
 
         var genera = journalEvent

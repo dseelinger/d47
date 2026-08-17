@@ -16,6 +16,7 @@ be deleted once the answer is written down.
 | `ExobiologyProbe` | Does the mass code predict what pays, what is the first-footfall multiplier, and does `ScanOrganic` carry a position? | [docs/spikes/exobiology-sources.md](../docs/spikes/exobiology-sources.md) |
 | `MiningProbe` | What does a prospector limpet report, and does Elite's own `Content` grade track what a miner cares about? | [docs/spikes/mining-callouts.md](../docs/spikes/mining-callouts.md) |
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
+| `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.

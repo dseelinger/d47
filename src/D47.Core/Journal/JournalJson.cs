@@ -88,6 +88,32 @@ public static class JournalJson
         element.String(property + "_Localised") ?? element.String(property);
 
     /// <summary>
+    /// A name Elite left unlocalised, cased the way the localised ones are cased.
+    /// <para>
+    /// <b>Only the first letter, and only when it is lower case.</b> Where Elite omits
+    /// <c>_Localised</c> the fallback is a symbol that is usually already a display name —
+    /// <c>Alexandrite</c>, <c>Painite</c>, <c>Serendibite</c> — and occasionally is not. Across 912
+    /// journals <c>ProspectedAsteroid</c> writes 14 of its 27 materials both ways, and
+    /// <c>SAASignalsFound</c> writes Tritium as <c>tritium</c> 22 times against <c>Tritium</c> 21.
+    /// One list then holds the same mineral in two spellings, which reads as two things.
+    /// </para>
+    /// <para>
+    /// <b>This is for speaking and never for matching</b> — see <see cref="Symbol(string?)"/>, which
+    /// folds the other way for exactly that reason. It rewrites nothing else: a word that is
+    /// already capitalised, and every letter after the first, are left alone, because inventing a
+    /// prettier name than the one Frontier wrote would be inventing game data.
+    /// </para>
+    /// </summary>
+    public static string? Spoken(string? name) =>
+        name is { Length: > 0 } && char.IsLower(name[0])
+            ? char.ToUpperInvariant(name[0]) + name[1..]
+            : name;
+
+    /// <summary>The spoken name of a property. See <see cref="Spoken(string?)"/>.</summary>
+    public static string? Spoken(this JsonElement element, string property) =>
+        Spoken(element.Named(property));
+
+    /// <summary>
     /// The internal symbol, folded so that two events which spell the same thing differently join.
     /// The counterpart to <see cref="Named"/>: that one is for speaking, this one is for matching,
     /// and nothing should use one where it means the other.
