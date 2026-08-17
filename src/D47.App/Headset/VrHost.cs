@@ -34,6 +34,7 @@ public sealed class VrHost : IDisposable
     private readonly VrCaptionSurface _captions;
     private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
+    private readonly D47.Core.AppPaths _paths;
 
     private int _pending;
     private bool _disposed;
@@ -61,6 +62,7 @@ public sealed class VrHost : IDisposable
         CaptionLayer layer,
         SteamVrRuntime runtime,
         VrLifecycle lifecycle,
+        D47.Core.AppPaths paths,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -71,6 +73,7 @@ public sealed class VrHost : IDisposable
         _layer = layer;
         _runtime = runtime;
         _lifecycle = lifecycle;
+        _paths = paths;
         _logger = logger;
     }
 
@@ -103,14 +106,12 @@ public sealed class VrHost : IDisposable
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
-        var runtime = new SteamVrRuntime(
-            [panel, captions],
-            paths,
-            loggers.CreateLogger<SteamVrRuntime>());
+        var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
-            settings, viewState, panel, captions, layer, runtime, lifecycle, loggers.CreateLogger<VrHost>());
+            settings, viewState, panel, captions, layer, runtime, lifecycle, paths,
+            loggers.CreateLogger<VrHost>());
 
         host.Configure();
         settings.Changed += _ => Dispatcher.UIThread.Post(host.Configure);
@@ -255,6 +256,12 @@ public sealed class VrHost : IDisposable
 
             if (_lifecycle.State == VrState.Active)
             {
+                // Here rather than inside the runtime: this is the real application, and only the
+                // real application may claim the d47 application key with SteamVR. Idempotent, so
+                // every tick after the first costs a comparison, and a rebuilt session re-registers
+                // itself without anything having to notice that it was rebuilt.
+                _runtime.Actions.Register(_paths.VrActions);
+
                 RestIfNeverPlaced();
                 Carry();
             }

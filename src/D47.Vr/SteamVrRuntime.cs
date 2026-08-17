@@ -1,6 +1,5 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
-using D47.Core;
 using D47.Core.Vr;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
@@ -74,7 +73,6 @@ public interface IVrSurfaceSource
 /// </summary>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
-    AppPaths paths,
     ILogger<SteamVrRuntime> logger) : IVrRuntime
 {
     /// <summary>
@@ -124,6 +122,20 @@ public sealed class SteamVrRuntime(
     /// <summary>
     /// The trigger. Its own object because registering for it is a several-step transaction with
     /// SteamVR that has to happen once and can fail without being a reason not to start.
+    /// <para>
+    /// <b>Registering is the application's call, not this class's, and that is a correction.</b>
+    /// <see cref="Start"/> used to do it, which meant anything that brought a session up did — and
+    /// the test suite brings one up to check that attaching can be retried. So <c>dotnet test</c>
+    /// registered the <c>com.dseelinger.d47</c> application key against a path under
+    /// <c>tests/…/bin/Debug</c>, on the developer's own SteamVR, and SteamVR keeps the first
+    /// manifest it is given for a key and skips every later one — logging
+    /// "was already described in manifest … Skipping" and nothing else. The installed d47 then ran
+    /// on bindings loaded out of a test's output folder, which works right up until that folder is
+    /// cleaned or rebuilt and then stops, silently, with the grab dead again.
+    /// </para>
+    /// <para>
+    /// Whoever owns the process decides. <c>D47.App</c> registers; a test does not.
+    /// </para>
     /// </summary>
     public VrActionInput Actions { get; } = new(logger);
 
@@ -509,10 +521,6 @@ public sealed class SteamVrRuntime(
 
         _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
             VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
-
-        // After the overlays, and only once there is a session: registering an application key is
-        // a conversation with SteamVR, and there is nothing to have it with before VR_Init.
-        Actions.Register(paths.VrActions);
 
         logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
 

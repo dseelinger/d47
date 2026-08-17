@@ -48,9 +48,18 @@ internal static class Program
         var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-grab-spike"));
         Directory.CreateDirectory(paths.Data);
 
-        var runtime = new SteamVrRuntime([], paths, loggers.CreateLogger<SteamVrRuntime>());
+        var runtime = new SteamVrRuntime([], loggers.CreateLogger<SteamVrRuntime>());
 
         var start = runtime.Start();
+
+        // Explicit, because registering the d47 application key with SteamVR is now something a
+        // process opts into rather than a side effect of starting a session. The spike opts in;
+        // the test suite must not, which is the whole reason it moved.
+        if (start.Outcome == VrStartOutcome.Started)
+        {
+            runtime.Actions.Register(paths.VrActions);
+        }
+
         Console.WriteLine($"start: {start.Outcome} — {start.Detail}");
 
         if (start.Outcome != VrStartOutcome.Started)
