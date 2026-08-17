@@ -139,7 +139,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// Binds a brush property to a theme resource, so a theme switch repaints controls built
     /// in code the same way DynamicResource repaints the ones built in markup.
     /// </summary>
-    private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
+    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));
 
     /// <summary>
@@ -422,10 +422,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         UpdateNavVisuals();
     }
 
-    /// <summary>
-    /// Also re-run by <see cref="Refresh"/>: these brushes are fetched, not bound, so a theme
-    /// switch has to repaint them or the active item keeps the old theme's colours.
-    /// </summary>
     private void UpdateNavVisuals()
     {
         for (var i = 0; i < _sections.Count; i++)
@@ -434,9 +430,55 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             var active = i == _activeSection;
 
             section.NavBar.Opacity = active ? 1 : 0;
-            section.NavItem.Background = active ? Res(ThemeManager.SurfaceAltKey) : Brushes.Transparent;
-            section.NavText.Foreground = Res(active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
             section.NavText.FontWeight = active ? FontWeight.Medium : FontWeight.Normal;
+
+            PaintNav(section, active);
+        }
+    }
+
+    /// <summary>
+    /// The two colours that say which section is being read: the item's fill, and the ink its
+    /// name is written in.
+    /// <para>
+    /// Bound rather than fetched. <see cref="Res"/> resolves against the visual tree and this
+    /// column is painted inside <see cref="Build"/> — which runs while the view is still being
+    /// constructed, before the caller has handed it to the pane that hosts it — so every lookup
+    /// came back null, and a null foreground is text that is laid out, counted and hit-tested
+    /// and never drawn. The whole nav was blank until the first scroll repainted it against a
+    /// tree that by then existed (bugs.md 3; AvatarView records the same trap).
+    /// </para>
+    /// <para>
+    /// A binding also resolves the theme on its own, which is what retired the note that used to
+    /// stand above <see cref="UpdateNavVisuals"/> asking <see cref="Refresh"/> to re-run it.
+    /// </para>
+    /// </summary>
+    private void PaintNav(SectionView section, bool active)
+    {
+        if (section.PaintedActive == active)
+        {
+            return;
+        }
+
+        section.PaintedActive = active;
+
+        section.NavInk?.Dispose();
+        section.NavInk = Themed(
+            section.NavText,
+            TextBlock.ForegroundProperty,
+            active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
+
+        section.NavFill?.Dispose();
+        section.NavFill = null;
+
+        if (active)
+        {
+            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        }
+        else
+        {
+            // No resource for "nothing", so the fill is dropped rather than bound. The pointer
+            // handlers paint an inactive item on hover and this is the state they paint over.
+            section.NavItem.Background = Brushes.Transparent;
         }
     }
 
@@ -610,8 +652,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             return;
         }
-
-        UpdateNavVisuals();
 
         var showing = new int[_sections.Count];
 
@@ -1740,7 +1780,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         StackPanel Content,
         Border NavItem,
         Border NavBar,
-        TextBlock NavText);
+        TextBlock NavText)
+    {
+        /// <summary>
+        /// How the nav item is currently painted, or null before it has been painted at all —
+        /// which is what makes the first pass apply and the rest of them cost nothing.
+        /// </summary>
+        public bool? PaintedActive { get; set; }
+
+        /// <summary>
+        /// The nav item's live brush subscriptions, held so the next state can drop them.
+        /// Binding a property that is already bound leaves both bindings live, and this is
+        /// repainted every time the Commander scrolls past a heading.
+        /// </summary>
+        public IDisposable? NavInk { get; set; }
+
+        public IDisposable? NavFill { get; set; }
+    }
 
     private sealed record RowView(SettingRow Row, Control Container, Action Refresh)
     {
