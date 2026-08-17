@@ -17,6 +17,15 @@ be deleted once the answer is written down.
 | `MiningProbe` | What does a prospector limpet report, and does Elite's own `Content` grade track what a miner cares about? | [docs/spikes/mining-callouts.md](../docs/spikes/mining-callouts.md) |
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
 | `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
+| `MirrorProbe` | Is there anything in Elite's desktop mirror to read — can a world-space panel be located in it at all? | [docs/spikes/mirror-panel-locatability.md](../docs/spikes/mirror-panel-locatability.md) — **method and instrument only; the measurement is untaken** |
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.
+
+`MirrorProbe` is the one directory here that is not throwaway *yet*: it is the instrument for a
+measurement that has not been taken, so it survives until a headset has been in front of it. It
+references `OpenCvSharp4` and `OpenCvSharp4.runtime.win.slim` — **never `OpenCvSharp4.runtime.win`**,
+which declares Apache-2.0 and packs an LGPL-2.1 FFmpeg binary. `spike/` is outside `d47.slnx` and so
+outside `PackageLicenceGateTests`, which is why the reason is written beside the reference in the
+csproj rather than left to a gate that does not run here. It writes captures to a gitignored
+`captures/`, because they are pictures of somebody's game session.

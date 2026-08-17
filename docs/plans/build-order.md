@@ -194,13 +194,13 @@ mis-filing are real engineers with real tributes.
 
 **Release:** `v0.15.0`, following `v0.14.0`.
 
-## Phase 21 — HOTAS switches — **next**
+## Phase 21 — HOTAS switches — **shipped 2026-08-16**
 
-Fully specced, and the hardest to verify — it needs the physical hardware in front of whoever is
-building it, and the failure modes are all about a switch and the game disagreeing. Narrow audience
+Fully specced, and the hardest to verify — it needed the physical hardware in front of whoever was
+building it, and the failure modes were all about a switch and the game disagreeing. Narrow audience
 by construction: it does nothing for a Commander without a switch panel.
 
-## Phase 22 — Reading the screen
+## Phase 22 — Reading the screen — **next, and the order inside it changed**
 
 **Last deliberately.** It is the only phase whose spike might close it outright: if the VR mirror
 carries nothing a panel can be located in, what remains is a desktop-only feature. Everything in it
@@ -208,7 +208,19 @@ is unproven, it would be the first input d47 reads that the game did not deliber
 and its failure mode is a confident wrong answer rather than an error.
 
 It is also the only one that would retire other phases' impossibilities — the contacts panel that
-Phase 15's rival-Power warning is written around — so it earns its place on the list. Just not yet.
+Phase 15's rival-Power warning is written around — so it earns its place on the list.
+
+**Two things have moved since that was written, and neither of them is the measurement.** The desk
+half of the spike came back on 2026-08-16 with a licence-clean path and with the finding that the
+phase's two use cases carry *different* exposure under Frontier's rules, which reverses the order
+`list.md` states: **the Galaxy Map goes first and the contacts panel is gated on having asked
+Frontier**, an enquiry now drafted at [phase-22-frontier-enquiry.md](phase-22-frontier-enquiry.md).
+And the instrument for the primary question exists — `spike/MirrorProbe`, proved against the running
+game, with the frames it was built to judge still untaken.
+
+So the phase is next, and **the next thing in it is a measurement rather than a commit**: three
+captures at three head angles, in a headset. The plan of record, including why nothing ships before
+that number exists, is [phase-22-reading-the-screen.md](phase-22-reading-the-screen.md).
 
 ---
 
