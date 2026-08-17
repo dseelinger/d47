@@ -387,8 +387,22 @@ public partial class PanelView : UserControl
     /// <summary>
     /// Drops the query without moving focus. Used when the page changes, where there is nothing
     /// to give back — the Commander is already looking somewhere else.
+    /// <para>
+    /// The settings page is told directly rather than through the box. Emptying the box raises
+    /// <c>TextChanged</c>, and <see cref="ApplySearch"/> hands the empty query to whatever page
+    /// is <em>current</em> - which by the time this runs is the page being arrived at, not the
+    /// one being left. Settings therefore kept the filter it was last given, and the Commander
+    /// came back to an empty search box over four sections of eighteen, with nothing they could
+    /// type that would bring the rest back (bugs.md 2). Unconditional, because a page that is
+    /// not filtered answers an empty query with a comparison and a return.
+    /// </para>
     /// </summary>
-    private void DropSearch() => SearchInput.Text = string.Empty;
+    private void DropSearch()
+    {
+        SearchInput.Text = string.Empty;
+
+        (SettingsPane.Child as IFilterablePage)?.Filter(string.Empty);
+    }
 
     private void OnSearchChanged(object? sender, TextChangedEventArgs e)
     {

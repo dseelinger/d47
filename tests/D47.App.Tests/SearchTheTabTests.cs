@@ -314,6 +314,49 @@ public class SearchTheTabTests
     }
 
     /// <summary>
+    /// The query is dropped when the page changes, and the page it was filtering is the page
+    /// that has to hear about it.
+    /// <para>
+    /// The box empties itself on the way out, and its <c>TextChanged</c> hands the now-empty
+    /// query to whatever page is <em>current</em> — which, by the time a page change has run, is
+    /// the page being arrived at. So Settings kept the filter it was given and the Commander came
+    /// back to an empty search box over four sections of eighteen, with nothing to type into it
+    /// that would put the rest back (bugs.md 2).
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void LeavingTheSettingsPageClearsTheFilterItWasLeftWith()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var cardsBefore = Cards(host);
+        var navBefore = Nav(host);
+
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+        box.Text = "push-to-talk";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Nav(host) < navBefore, "the filter did not take");
+
+        host.Panel.Page = TranscriptPage.Conversation;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        host.Panel.Page = TranscriptPage.Settings;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(string.Empty, box.Text ?? string.Empty);
+        Assert.Equal(cardsBefore, Cards(host));
+        Assert.Equal(navBefore, Nav(host));
+
+        host.Close();
+    }
+
+    /// <summary>
     /// A row is reachable by the key the documentation and a hand-edited settings file call it,
     /// not only by the words on screen.
     /// </summary>
