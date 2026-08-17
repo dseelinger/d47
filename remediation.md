@@ -29,10 +29,10 @@ Reported 2026-08-17. Each item is checked off as it ships.
   tested; the restore itself already worked headlessly and had no test. If it still opens
   un-maximised on the real build, the remaining suspect is the event ordering guarded in
   `WindowPlacementMemory.SampleWhenSettled`, which no headless test can tell apart.
-- [ ] **Only the first caption arrives, and it doubles the spoken line.** After the first, the
+- [x] **Only the first caption arrives, and it doubles the spoken line.** After the first, the
   panel appears headlocked but blank while the voice is speaking.
 - [ ] **The VR big panel should carry the Settings tab**, unless there is a good reason not to.
-- [ ] **All tabs should update in the VR big panel.**
+- [x] **All tabs should update in the VR big panel.**
 - [ ] **Controls should be clickable in the VR panels.**
 - [x] **"Ray Gateway offers engineering" is a useless callout.** Every starport appears to,
   and if some do not, the absence is what would be worth saying — not the presence.

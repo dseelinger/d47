@@ -20,6 +20,7 @@ public sealed class CaptionLayer
 
     private DateTimeOffset? _clearAt;
     private string _showing = string.Empty;
+    private long? _saying;
 
     public CaptionSettings Settings { get; set; } = new();
 
@@ -36,12 +37,34 @@ public sealed class CaptionLayer
     /// pipeline already splits a reply at sentence boundaries so it can start speaking before
     /// the model has finished, and a sentence is the right size for a caption event anyway.
     /// </summary>
-    public void Say(string text, DateTimeOffset now)
+    /// <param name="utterance">
+    /// Which clip this is, so the same one arriving twice is one caption.
+    /// <para>
+    /// It arrives twice as a matter of course. The audio arbiter re-raises a snapshot of
+    /// everything audible for every change to any of it — the next sentence being queued behind
+    /// this one, the thinking bed stopping, a music track starting — and each of those carries
+    /// the current clip's caption again. Without an identity to compare, every one of them was
+    /// another <c>Say</c>: the line went onto the screen twice, and a three-line window filled
+    /// with two copies of one sentence (remediation.md, "Only the first caption arrives").
+    /// </para>
+    /// <para>
+    /// Null means "no identity", which is always a new caption. That is what the tests and the
+    /// audition path pass, and it is the honest answer for a caller that has no clip.
+    /// </para>
+    /// </param>
+    public void Say(string text, DateTimeOffset now, long? utterance = null)
     {
         if (!Settings.Enabled)
         {
             return;
         }
+
+        if (utterance is not null && utterance == _saying)
+        {
+            return;
+        }
+
+        _saying = utterance;
 
         var wrapped = Caption.Wrap(text);
 
@@ -99,6 +122,7 @@ public sealed class CaptionLayer
         _lines.Clear();
         _clearAt = null;
         _showing = string.Empty;
+        _saying = null;
         Changed?.Invoke();
     }
 

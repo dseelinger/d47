@@ -31,18 +31,20 @@
       <SolidColorBrush Color="#000000" Opacity="{Binding BackgroundOpacity}" />
     </Border.Background>
 
-    <ItemsControl ItemsSource="{Binding Lines}">
-      <ItemsControl.ItemTemplate>
-        <DataTemplate x:DataType="x:String">
-          <TextBlock Text="{Binding}"
-                     TextAlignment="Center"
-                     HorizontalAlignment="Center"
-                     Foreground="#F2F2F2"
-                     FontFamily="Segoe UI,Inter,sans-serif"
-                     FontWeight="SemiBold"
-                     FontSize="{Binding $parent[ItemsControl].((headset:CaptionViewModel)DataContext).FontSize}" />
-        </DataTemplate>
-      </ItemsControl.ItemTemplate>
-    </ItemsControl>
+    <!--
+      One text block with newlines in it, not an item per line. The quad is rasterised out of a
+      window that is constructed and never shown, and an ItemsControl in one does not regenerate
+      its containers when its source is replaced - so the first caption drew and every caption
+      after it drew an empty box. An ordinary bound property in the same host redraws perfectly.
+      Nothing is lost: every line is the same size, weight and colour, centred, and the wrapping
+      was decided by Caption before it reached the view.
+    -->
+    <TextBlock Text="{Binding Text}"
+               TextAlignment="Center"
+               HorizontalAlignment="Center"
+               Foreground="#F2F2F2"
+               FontFamily="Segoe UI,Inter,sans-serif"
+               FontWeight="SemiBold"
+               FontSize="{Binding FontSize}" />
   </Border>
 </UserControl>

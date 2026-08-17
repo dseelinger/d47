@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.VisualTree;
 
 namespace D47.App.Panel;
 
@@ -79,6 +80,31 @@ public sealed class OffscreenSurface : IDisposable
     public RenderTargetBitmap Render()
     {
         var bounds = new Rect(0, 0, _size.Width, _size.Height);
+
+        // <b>Every element is invalidated first, and that is the fix rather than a precaution.</b>
+        //
+        // Measure short-circuits on a control that is already valid, and a control that changed
+        // does not mark its ancestors: it marks itself and queues itself with the layout manager,
+        // which is what would normally run the pass. This window is constructed and never shown,
+        // so nothing runs that pass — Measure on the root returned immediately, never descended,
+        // and whatever had changed was never laid out. UpdateLayout on the root does not help for
+        // the same reason.
+        //
+        // What that looked like: the VR panel drew the transcript its model held when the data
+        // context was first set and nothing after it — an append did not appear, and the line that
+        // <em>was</em> showing vanished on the next one, leaving an empty page under a tab strip
+        // that still lit up, because the strip's own properties are on controls the root reaches.
+        // Confirmed against a saved frame rather than inferred
+        // (remediation.md, "All tabs should update in the VR big panel").
+        //
+        // Affordable because it only runs on a frame being redrawn at all: the runtime calls Draw
+        // only when the surface says it is dirty, which is when something has changed.
+        foreach (var element in _root.GetVisualDescendants().OfType<Avalonia.Layout.Layoutable>())
+        {
+            element.InvalidateMeasure();
+        }
+
+        _root.InvalidateMeasure();
 
         // The window's own layout pass is what applies styling and materialises the template.
         // Arranging the view afterwards is what makes it fill the surface rather than settle

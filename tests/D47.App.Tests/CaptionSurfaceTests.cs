@@ -127,3 +127,117 @@ public class CaptionSurfaceTests
         return pixels[(y * stride) + (x * 4) + 3];
     }
 }
+
+/// <summary>
+/// The caption quad across a whole utterance rather than one frame of it
+/// (remediation.md, "Only the first caption arrives").
+/// <para>
+/// The reported symptom has two halves: the first caption is doubled, and every one after it
+/// draws an empty box. The doubling is asserted in Core, where the identity that fixes it
+/// lives. This is the other half — whether the surface actually redraws when the layer rolls,
+/// which is a question about pixels.
+/// </para>
+/// </summary>
+public class CaptionsKeepArrivingTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 8, 12, 21, 0, 0, TimeSpan.Zero);
+
+    /// <summary>
+    /// Ink somewhere along the middle of the box. A box with no text in it still has alpha, so
+    /// the box's own presence proves nothing — what is looked for is a pixel that is not the
+    /// background and not fully transparent.
+    /// </summary>
+    private static int InkAcross(byte[] pixels, PixelSize size, int y)
+    {
+        var stride = size.Width * 4;
+        var ink = 0;
+
+        for (var x = 0; x < size.Width; x++)
+        {
+            var at = (y * stride) + (x * 4);
+
+            // The text is #F2F2F2 on a black box. Anything bright is the text.
+            if (pixels[at] > 200 && pixels[at + 1] > 200 && pixels[at + 2] > 200)
+            {
+                ink++;
+            }
+        }
+
+        return ink;
+    }
+
+    private static byte[] Pixels(RenderTargetBitmap frame)
+    {
+        var stride = frame.PixelSize.Width * 4;
+        var pixels = new byte[stride * frame.PixelSize.Height];
+
+        unsafe
+        {
+            fixed (byte* buffer = pixels)
+            {
+                frame.CopyPixels(
+                    new PixelRect(0, 0, frame.PixelSize.Width, frame.PixelSize.Height),
+                    (IntPtr)buffer,
+                    pixels.Length,
+                    stride);
+            }
+        }
+
+        return pixels;
+    }
+
+    /// <summary>How much text the surface would put on the quad as it stands.</summary>
+    private static int Ink(VrCaptionSurface surface)
+    {
+        var (width, height) = surface.Size;
+        var size = new PixelSize(width, height);
+
+        var stride = size.Width * 4;
+        var buffer = new byte[stride * size.Height];
+
+        int ink;
+
+        unsafe
+        {
+            fixed (byte* address = buffer)
+            {
+                surface.Draw((IntPtr)address, stride);
+            }
+        }
+
+        ink = 0;
+
+        for (var y = 0; y < size.Height; y += 2)
+        {
+            ink += InkAcross(buffer, size, y);
+        }
+
+        return ink;
+    }
+
+    [AvaloniaFact]
+    public void EveryCaptionInATurnIsDrawnAndNotJustTheFirst()
+    {
+        var layer = new CaptionLayer();
+        using var surface = new VrCaptionSurface(layer) { Enabled = true };
+
+        layer.Say("Interdiction detected.", Now, utterance: 1);
+
+        Assert.True(surface.IsDirty, "the first caption asks for a redraw");
+        var first = Ink(surface);
+        Assert.True(first > 0, "the first caption is drawn");
+
+        // The second sentence of the same reply, which is where the report says it stops.
+        layer.Say("Submit or run, Commander.", Now, utterance: 2);
+
+        Assert.True(surface.IsDirty, "the second caption asks for a redraw");
+        Assert.True(Ink(surface) > 0, "the second caption is drawn");
+
+        // And a third, because "only the first" would also be satisfied by a surface that drew
+        // two and then stopped.
+        layer.Say("The tether is closing.", Now, utterance: 3);
+
+        Assert.True(Ink(surface) > 0, "the third caption is drawn");
+        Assert.True(surface.Visible, "and the quad is still asking to be shown");
+    }
+}

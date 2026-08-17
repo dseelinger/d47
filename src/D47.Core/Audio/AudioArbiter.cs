@@ -68,11 +68,26 @@ public sealed record AudioRequest
 /// panel and the caption layer read the first three; nothing yet reads this one, and it is here
 /// because a snapshot that omits half the background is a snapshot that will be wrong later.
 /// </param>
+/// <param name="Utterance">
+/// Which clip <paramref name="Caption"/> belongs to, or null when nothing is playing.
+/// <para>
+/// Carried because this record is a <em>snapshot</em>, re-raised for every change to anything
+/// audible — a second sentence being queued behind the first, the thinking bed stopping, a
+/// music track starting. Every one of those repeats the current clip's caption, and a caption
+/// consumer with no way to tell "still this one" from "another one" wrote the same line onto
+/// the screen once per event (remediation.md, "Only the first caption arrives").
+/// </para>
+/// <para>
+/// An id rather than comparing the text, because the same sentence said twice really is two
+/// captions.
+/// </para>
+/// </param>
 public sealed record AudioActivity(
     AudioChannel? Channel,
     string? Caption,
     bool BedPlaying,
-    bool MusicPlaying = false);
+    bool MusicPlaying = false,
+    long? Utterance = null);
 
 /// <summary>
 /// The one queue in front of every audible thing (architecture.md D7). Speech, cues, the
@@ -521,7 +536,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     }
 
     private AudioActivity Snapshot() =>
-        new(_current?.Request.Channel, _current?.Request.Caption, _bed is not null, _music is not null);
+        new(
+            _current?.Request.Channel,
+            _current?.Request.Caption,
+            _bed is not null,
+            _music is not null,
+            _current?.Id);
 
     public void Dispose()
     {

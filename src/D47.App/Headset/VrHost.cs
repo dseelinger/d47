@@ -192,7 +192,9 @@ public sealed class VrHost : IDisposable
     {
         if (activity.Caption is { Length: > 0 } caption)
         {
-            _layer.Say(caption, _now);
+            // With the clip's identity, so the same one reported again — which happens on every
+            // change to anything else audible — is one caption and not two.
+            _layer.Say(caption, _now, activity.Utterance);
             return;
         }
 

@@ -225,4 +225,79 @@ public class CaptionTests
         Assert.True(absurd.CharactersPerSecond >= 8);
         Assert.Equal(1.0, absurd.BackgroundOpacity);
     }
+
+    /// <summary>
+    /// One clip is one caption, however many times the audio arbiter mentions it.
+    /// <para>
+    /// It mentions it constantly. That record is a snapshot of everything audible, re-raised for
+    /// every change to any of it — the next sentence queued behind this one, the thinking bed
+    /// stopping, a track starting — and each carries the current clip's caption again. Without
+    /// an identity to compare, the reported symptom was one line written twice and a three-line
+    /// window holding two copies of one sentence
+    /// (remediation.md, "Only the first caption arrives").
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheSameClipReportedAgainIsStillOneCaption()
+    {
+        var layer = new CaptionLayer();
+
+        layer.Say("Fuel is at nineteen per cent.", Now, utterance: 7);
+        var after = layer.Lines.Count;
+
+        layer.Say("Fuel is at nineteen per cent.", Now, utterance: 7);
+        layer.Say("Fuel is at nineteen per cent.", Now, utterance: 7);
+
+        Assert.Equal(after, layer.Lines.Count);
+    }
+
+    /// <summary>
+    /// And the next clip is a new caption even when it says exactly the same thing, which is
+    /// why this compares an id rather than the words.
+    /// </summary>
+    [Fact]
+    public void TheSameSentenceSaidTwiceIsTwoCaptions()
+    {
+        var layer = new CaptionLayer();
+
+        layer.Say("Shields are down.", Now, utterance: 1);
+        var after = layer.Lines.Count;
+
+        layer.Say("Shields are down.", Now, utterance: 2);
+
+        Assert.True(layer.Lines.Count > after);
+    }
+
+    /// <summary>
+    /// A caller with no clip to name still gets a caption. The audition path and the tests are
+    /// both in that position, and refusing them would be worse than not de-duplicating.
+    /// </summary>
+    [Fact]
+    public void ACallerWithNoIdentityIsAlwaysANewCaption()
+    {
+        var layer = new CaptionLayer();
+
+        layer.Say("Interdiction detected.", Now);
+        var after = layer.Lines.Count;
+
+        layer.Say("Interdiction detected.", Now);
+
+        Assert.True(layer.Lines.Count > after);
+    }
+
+    /// <summary>
+    /// Silence forgets which clip was speaking, so the same one starting again after a shut-up
+    /// is a caption rather than a repeat that is swallowed.
+    /// </summary>
+    [Fact]
+    public void SilenceForgetsWhatWasBeingSaid()
+    {
+        var layer = new CaptionLayer();
+
+        layer.Say("Docking granted.", Now, utterance: 3);
+        layer.Silence();
+        layer.Say("Docking granted.", Now, utterance: 3);
+
+        Assert.NotEmpty(layer.Lines);
+    }
 }

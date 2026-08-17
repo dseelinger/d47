@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using D47.App.Panel;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -176,4 +177,122 @@ public class PanelParityTests
         block.Inlines is { Count: > 0 } inlines
             ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
             : block.Text ?? string.Empty;
+}
+
+/// <summary>
+/// The headset's copy of the panel, over time rather than in one frame
+/// (remediation.md, "All tabs should update in the VR big panel").
+/// <para>
+/// Every other test of this surface renders it once. That is the one case that worked: the view
+/// drew whatever its model held when its data context was set, and nothing after it — so the
+/// panel in the headset was a photograph of the moment the session started, under a tab strip
+/// that still lit up when the page changed.
+/// </para>
+/// </summary>
+public class TheVrPanelKeepsUpTests
+{
+    private static readonly PixelSize Quad = new(1024, 640);
+
+    [AvaloniaFact]
+    public void ALineAppendedAfterTheFirstFrameIsDrawn()
+    {
+        var model = new PanelViewModel();
+        var view = new PanelView { DataContext = model };
+        using var surface = new OffscreenSurface(view, Quad);
+
+        var blank = Frame(surface);
+
+        model.Append("Fixture One, docked.");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var written = Frame(surface);
+        Assert.NotEqual(blank, written);
+
+        model.Append(" Cleared to depart.");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEqual(written, Frame(surface));
+    }
+
+    /// <summary>
+    /// And a line that was already showing does not vanish when the next one arrives, which is
+    /// the shape the failure actually took: the rebuilt runs were never laid out, so the page
+    /// went empty rather than stale.
+    /// </summary>
+    [AvaloniaFact]
+    public void WhatWasShowingIsStillShowingAfterTheNextAppend()
+    {
+        var model = new PanelViewModel();
+        model.Append("Fixture Two, in supercruise.");
+
+        var view = new PanelView { DataContext = model };
+        using var surface = new OffscreenSurface(view, Quad);
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var showing = Frame(surface);
+
+        var blankModel = new PanelViewModel();
+        using var blankSurface = new OffscreenSurface(new PanelView { DataContext = blankModel }, Quad);
+        var blank = Frame(blankSurface);
+
+        Assert.NotEqual(blank, showing);
+
+        model.Append(" And a second line.");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var after = Frame(surface);
+
+        Assert.NotEqual(showing, after);
+        Assert.NotEqual(blank, after);
+    }
+
+    /// <summary>Each page draws its own content, and changing pages redraws.</summary>
+    [AvaloniaFact]
+    public void EveryPageDrawsWhatItHolds()
+    {
+        var model = new PanelViewModel();
+        model.Append("The Commander and the ship's AI.");
+        model.Append("[12:00:00] Microphone open, listening.\n", TranscriptKind.Technical);
+
+        var view = new PanelView { DataContext = model };
+        using var surface = new OffscreenSurface(view, Quad);
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var conversation = Frame(surface);
+
+        view.Page = TranscriptPage.Technical;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var technical = Frame(surface);
+
+        // Technical is the same runs with the diagnostics left in, so it cannot be the same
+        // picture as the conversation when there is a diagnostic to leave in.
+        Assert.NotEqual(conversation, technical);
+
+        // And a line appended while Technical is showing lands on it.
+        model.Append("[12:00:01] Speaking the answer.\n", TranscriptKind.Technical);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEqual(technical, Frame(surface));
+    }
+
+    /// <summary>The rendered frame, as something two of them can be compared by.</summary>
+    private static string Frame(OffscreenSurface surface)
+    {
+        var rendered = surface.Render();
+        var size = rendered.PixelSize;
+        var stride = size.Width * 4;
+        var pixels = new byte[stride * size.Height];
+
+        unsafe
+        {
+            fixed (byte* buffer = pixels)
+            {
+                rendered.CopyPixels(
+                    new PixelRect(0, 0, size.Width, size.Height), (IntPtr)buffer, pixels.Length, stride);
+            }
+        }
+
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pixels));
+    }
 }
