@@ -22,7 +22,26 @@ namespace D47.Vr;
 /// </summary>
 public sealed class VrPixels
 {
-    private byte[] _buffer = [];
+    /// <summary>
+    /// How many buffers are kept in flight.
+    /// <para>
+    /// <b>One is not enough, and the reason is not obvious.</b> <c>SetOverlayRaw</c> is not
+    /// documented as copying synchronously, so the runtime may still be reading the last buffer it
+    /// was handed when the next frame is rasterised into it. With a panel that repaints a few times
+    /// a second that is a race nothing ever loses; while a panel is being carried the uploads come
+    /// every tick and it starts to show — as tearing, or as the panel flickering, and only while
+    /// something is happening. COVAS++ hit exactly this and fixed it the same way.
+    /// </para>
+    /// <para>
+    /// Four, following theirs. The cost is three more buffers of a panel-sized image, which is a
+    /// couple of megabytes against a hazard that is invisible until it is a bug report.
+    /// </para>
+    /// </summary>
+    private const int InFlight = 4;
+
+    private byte[][] _buffers = [];
+    private IntPtr[] _addresses = [];
+    private int _next;
 
     public VrPixels(int width, int height) => Allocate(width, height);
 
@@ -37,8 +56,24 @@ public sealed class VrPixels
     /// </summary>
     public int RowBytes => Width * 4;
 
-    /// <summary>Where to rasterise, and what to hand the runtime. Stable for the buffer's life.</summary>
+    /// <summary>
+    /// Where to rasterise, and what to hand the runtime — the current buffer of the ring.
+    /// <para>
+    /// Not stable between frames any more, and nothing may cache it. It changes only in
+    /// <see cref="Rotate"/>, which the serving loop calls once per upload.
+    /// </para>
+    /// </summary>
     public IntPtr Address { get; private set; }
+
+    /// <summary>
+    /// Moves to the next buffer in the ring. Called after an upload, so the frame the runtime was
+    /// just handed is left alone until three more have been drawn.
+    /// </summary>
+    public void Rotate()
+    {
+        _next = (_next + 1) % InFlight;
+        Address = _addresses[_next];
+    }
 
     public void Resize(int width, int height)
     {
@@ -67,7 +102,7 @@ public sealed class VrPixels
     /// </summary>
     public void ToRgba()
     {
-        var pixels = MemoryMarshal.Cast<byte, uint>(_buffer.AsSpan());
+        var pixels = MemoryMarshal.Cast<byte, uint>(_buffers[_next].AsSpan());
 
         for (var i = 0; i < pixels.Length; i++)
         {
@@ -88,11 +123,21 @@ public sealed class VrPixels
     {
         Width = width;
         Height = height;
-        _buffer = GC.AllocateArray<byte>(width * height * 4, pinned: true);
+        _buffers = new byte[InFlight][];
+        _addresses = new IntPtr[InFlight];
+        _next = 0;
 
-        unsafe
+        for (var i = 0; i < InFlight; i++)
         {
-            Address = (IntPtr)Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(_buffer));
+            _buffers[i] = GC.AllocateArray<byte>(width * height * 4, pinned: true);
+
+            unsafe
+            {
+                _addresses[i] = (IntPtr)Unsafe.AsPointer(
+                    ref MemoryMarshal.GetArrayDataReference(_buffers[i]));
+            }
         }
+
+        Address = _addresses[0];
     }
 }

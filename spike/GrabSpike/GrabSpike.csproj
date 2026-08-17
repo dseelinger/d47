@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>GrabSpike</AssemblyName>
+    <RootNamespace>GrabSpike</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The real ones, deliberately. A spike with its own copy of the runtime proves something
+         about the copy; this one exercises the code that actually ships. -->
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\..\src\D47.Vr\D47.Vr.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Console logging only; the spike has no host to inherit one from. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -17,6 +17,48 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.22.2 — 2026-08-17 — The panel stops flickering while you carry it
+
+0.22.1 got the trigger arriving and the panel moving. This is what carrying it then showed.
+
+### It flickered, and only while being carried
+
+Two causes, and a sibling project had already found both.
+
+**The panel was redrawn from scratch on every frame of a carry.** Moving it marked the surface
+dirty, which is what makes the app re-render the widget tree, convert it, and hand the whole image
+back to SteamVR — thirty times a second, for pixels that had not changed. It bought nothing: where
+the panel goes is worked out fresh every frame anyway and never consulted that flag. Carrying no
+longer touches it.
+
+**And the image was being drawn into memory the runtime might still be reading.** `SetOverlayRaw`
+is not documented as copying before it returns, and d47 kept one buffer and rewrote it in place.
+With a panel that repaints a few times a second that is a race nothing ever loses; while one is
+being carried the uploads come every tick and it starts to show. There are now four buffers in
+rotation, so the frame the compositor was just handed is left alone until three more have been
+drawn.
+
+### Picking up a head-locked panel
+
+Grabbing a head-locked panel is supposed to make it world-locked, since carrying it somewhere is a
+Commander saying where they want it. That setting write could be refused, and the refusal was
+discarded — so the panel would carry perfectly, spring back to the head on release, and nothing
+anywhere would say why. It now says so in the log.
+
+Next to it, a real ordering fault: the frame a panel is picked up sets the carry and turns the lock
+to world without yet writing down where the panel is, so the *next* frame saw a world-locked panel
+that had never been placed and helpfully placed it — at knee height, for one frame, before the hand
+took it back. Nothing places a panel that is already in somebody's hand now.
+
+### Underneath
+
+`spike/GrabSpike` drives the real runtime, action input and ray maths without the rasteriser, and
+prints what each controller is actually doing. It exists because the reported symptoms — a ray that
+does not follow the hand, a trigger that may or may not be bound — are all invisible from this side
+of the headset, and guessing at them from the code had already been wrong once.
+
+---
+
 ## 0.22.1 — 2026-08-17 — The panel can be picked up, and it tilts at your eyes
 
 Two defects in the headset, one of which had been shipped as fixed and was not.
