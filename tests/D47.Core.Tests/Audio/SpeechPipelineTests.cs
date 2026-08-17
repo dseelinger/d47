@@ -302,3 +302,82 @@ public class SpeechPipelineTests
         Assert.Empty(tts.Requested);
     }
 }
+
+/// <summary>
+/// What was spoken, and in whose voice, written into the log
+/// (remediation.md, "In the log file, record which voice was used").
+/// </summary>
+public class TheVoiceIsWrittenDownTests
+{
+    private static (AudioArbiter Arbiter, RecordingAudioSink Sink) Build()
+    {
+        var sink = new RecordingAudioSink();
+        return (new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start(), sink);
+    }
+
+    [Fact]
+    public async Task TheVoiceAndTheSpeakerAreRecordedOnce()
+    {
+        var (arbiter, _) = Build();
+        var log = new CapturingLogger();
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            new FakeTtsProvider(),
+            new VoiceSelection("en-GB-RyanNeural"),
+            "announcement",
+            log,
+            speaker: "Ilse Bruhn");
+
+        // Three sentences, one voice. Six identical lines would bury the one that differs.
+        pipeline.Push("Hold position. This is a routine scan. Do not deploy hardpoints. ");
+        await pipeline.CompleteAsync();
+
+        var said = Assert.Single(log.Lines, line => line.Contains("Spoken by", StringComparison.Ordinal));
+
+        Assert.Contains("Ilse Bruhn", said, StringComparison.Ordinal);
+        Assert.Contains("en-GB-RyanNeural", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A voice the provider refused did not speak, so what is written down is the one that did.
+    /// </summary>
+    [Fact]
+    public async Task ARefusedVoiceIsNotRecordedAsHavingSpoken()
+    {
+        var (arbiter, _) = Build();
+        var log = new CapturingLogger();
+
+        await using var pipeline = new SpeechPipeline(
+            arbiter,
+            new FakeTtsProvider { Refuses = "en-US-RogerNeural" },
+            new VoiceSelection("en-US-RogerNeural"),
+            "turn-1",
+            log,
+            speaker: "D47");
+
+        pipeline.Push("You are in Sol. ");
+        await pipeline.CompleteAsync();
+
+        var said = Assert.Single(log.Lines, line => line.Contains("Spoken by", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("en-US-RogerNeural", said, StringComparison.Ordinal);
+        Assert.Contains("provider's own voice", said, StringComparison.Ordinal);
+    }
+
+    private sealed class CapturingLogger : Microsoft.Extensions.Logging.ILogger
+    {
+        public List<string> Lines { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            Microsoft.Extensions.Logging.LogLevel logLevel,
+            Microsoft.Extensions.Logging.EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) => Lines.Add(formatter(state, exception));
+    }
+}

@@ -124,6 +124,27 @@ the remembered position is the *restored* rectangle and has to stay that way, so
 on the second monitor had nothing recording it. The window is put back on that screen before it is
 maximised, because Windows maximises to whichever monitor a window is already on.
 
+### Every NPC in a system had the same voice
+
+Voices are assigned per sender name and held for as long as the Commander is in that system, and
+they have been since Phase 11 — what was wrong is the pool they were drawn from. The filter that
+keeps a wingmate from being voiced in a language you do not speak read ElevenLabs' *accent* label
+as though it were a locale, so "american", "british" and "multilingual" were all discarded for not
+starting with `en`. Measured on a real account: **473 voices offered, one eligible.** Every named
+NPC shared it, and the per-name assignment beside it had nothing left to assign.
+
+A tag is only filtered on when it is a language tag now. The line that says how big the pool is
+gives both numbers, because "1 available" is unremarkable on its own and alarming beside
+"473 offered".
+
+### The log says which voice spoke
+
+Every line D47 speaks — a turn's reply, a callout, a re-voiced message, a crew member, a core's
+introduction — is built through one pipeline, so one line there records the speaker and the voice
+id once per utterance. Once, not per sentence: a six-sentence reply is one voice, and six identical
+lines would bury the one that differs. A voice the provider refused is not recorded as having
+spoken, because it did not.
+
 ### Smaller things
 
 The egress disclosure — five lines of prose between rows that are one line each — is a tooltip on

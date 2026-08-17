@@ -1598,20 +1598,18 @@ public sealed class AppHost : IDisposable
             _logger.LogInformation(
                 "The voice list has {Count} voices ({Listing})", _voices.Count, _voices.Listing);
 
-            // The pool a re-voiced sender is drawn from. English-locale voices only, where the
-            // provider tags a locale at all: Edge offers several hundred across every language
-            // it supports, and drawing a wingmate's voice from all of them means most Commanders
-            // hear their wing in a language they do not speak. ElevenLabs tags an accent rather
-            // than a locale, so nothing is filtered out there and the whole account is the pool.
-            Cast.Pool =
-            [
-                .. _voices.Voices
-                    .Where(voice => voice.Locale.Length == 0
-                                    || voice.Locale.StartsWith("en", StringComparison.OrdinalIgnoreCase))
-                    .Select(voice => voice.Id),
-            ];
+            // The pool a re-voiced sender is drawn from. Which voices those are is decided in
+            // Core, where the distinction between a locale and an accent label can be asserted —
+            // this used to read ElevenLabs' accent as a locale and discard 472 of a 473-voice
+            // account, leaving every NPC in a system sharing one voice.
+            Cast.Pool = VoicePool.From(_voices.Voices);
 
-            _logger.LogInformation("{Count} voices are available for re-voiced senders", Cast.Pool.Count);
+            // Both numbers, because one of them alone is what hid that: "1 voice available" is
+            // alarming beside "473 offered" and unremarkable on its own.
+            _logger.LogInformation(
+                "{Count} of {Offered} voices are available for re-voiced senders",
+                Cast.Pool.Count,
+                _voices.Count);
 
             // Pairing a voice to each core needs the list, so it starts once the list arrives
             // rather than at startup. Background and best-effort: picking a character must never

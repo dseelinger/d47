@@ -41,3 +41,8 @@ Reported 2026-08-17. Each item is checked off as it ships.
 - [x] **Materials announcements stop after a trader.** They work for a while, but after
   filling up at Jameson's Crash Site and then offloading at a Materials trader, no more
   announcements arrive until the app is restarted.
+- [x] **Record which voice was used in the log file**, whenever something is spoken.
+- [x] **Named NPCs each use a different voice, per name, for as long as you are in the system.**
+  The assignment was already there and tested; the pool it drew from was not. `Cast.Pool` read
+  ElevenLabs' *accent* label as a locale and kept only what started with `en`, so a 473-voice
+  account became a pool of one and every NPC shared it.
