@@ -13,6 +13,38 @@ it gets here is its permanent record.
 
 ---
 
+## 0.16.2 — 2026-08-17 — Four defects
+
+Four bugs, all of them found by Commanders using the thing rather than by a test.
+
+- **A question that made d47 use one of its own tools failed, and kept failing.** "Place the
+  VR panel here" came back as *I couldn't reach the model after 3 tries*, and so did the next
+  question, and the one after that. Anything that needed a tool was dead for as long as you
+  were in the game; only a restart appeared to help, and it did not. The live game state d47
+  attaches to your question was overwriting the result of the tool it had just run, which
+  makes the request one the model's own service refuses. Your typed words were also arriving
+  wrapped in a pair of quote marks nobody typed.
+- **The Settings search left the page filtered.** Search Settings, switch to another tab and
+  come back, and only the sections that had matched were still listed — with an empty search
+  box above them and nothing you could type to bring the rest back.
+- **The Settings section list was blank until you scrolled.** All eighteen sections were
+  there, in text with no colour, which is text that does not draw. The first scroll painted
+  them.
+- **The VR panel could not be picked up with a motion controller.** Grab-to-move was written
+  and never switched on: nothing asked SteamVR to point a laser at the panel, so no press ever
+  reached it. Captions stay untouchable on purpose — a laser that stops on a label is a label
+  in the way of everything behind it.
+
+Nothing here touches the network.
+
+## 0.16.1 — 2026-08-17 — HOTAS switches, published
+
+*The content of 0.16.0, which is a tag with no Release behind it. Identical but for the
+publish path it was tagged to correct, and it went out with no release notes: the section
+below is 0.16.0's and this version had none of its own to find.*
+
+---
+
 ## 0.16.0 — 2026-08-16 — HOTAS switches
 
 *The tag exists; no Release was built from it. The publish path still named a target framework
