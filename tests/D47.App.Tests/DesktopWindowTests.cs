@@ -185,6 +185,123 @@ public class DesktopWindowTests
     }
 
     /// <summary>
+    /// And it comes back maximised, which is the half nothing asserted.
+    /// </summary>
+    [AvaloniaFact]
+    public void ARememberedMaximisedWindowOpensMaximised()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        viewState.Save(new ViewState
+        {
+            MainWindow = new WindowPlacement { Width = 500, Height = 400, Maximized = true },
+        });
+
+        var window = new Window { Width = 820, Height = 640 };
+        WindowPlacementMemory.Attach(window, viewState);
+
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+
+        // And the restored size is still the one to un-maximise back to.
+        Assert.Equal(500, window.Width);
+        Assert.Equal(400, window.Height);
+    }
+
+    /// <summary>
+    /// The monitor a maximised window was on travels with the flag, so it comes back on that
+    /// one (remediation.md, "Window state is not restored").
+    /// <para>
+    /// Its own pair of numbers, because <c>X</c> and <c>Y</c> hold the restored rectangle and
+    /// have to keep holding it — maximised on the second monitor and restored on the first is an
+    /// ordinary arrangement that one pair cannot describe.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void MaximisingRemembersWhichScreenItWasMaximisedOn()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        var window = new Window { Width = 900, Height = 700 };
+        WindowPlacementMemory.Attach(window, viewState);
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        window.WindowState = WindowState.Maximized;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        window.Close();
+
+        var remembered = viewState.Load().MainWindow;
+
+        Assert.NotNull(remembered);
+        Assert.True(remembered.Maximized);
+
+        var screen = window.Screens!.Primary ?? window.Screens.All[0];
+
+        Assert.Equal(screen.WorkingArea.X, remembered.MaximizedOnX);
+        Assert.Equal(screen.WorkingArea.Y, remembered.MaximizedOnY);
+    }
+
+    /// <summary>
+    /// And it is put back there before it is maximised, because Windows maximises a window to
+    /// whichever monitor it is already on.
+    /// </summary>
+    [AvaloniaFact]
+    public void AMaximisedWindowIsPutBackOnItsOwnScreenFirst()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        var window = new Window { Width = 900, Height = 700 };
+        var screen = window.Screens!.Primary ?? window.Screens.All[0];
+
+        viewState.Save(new ViewState
+        {
+            MainWindow = new WindowPlacement
+            {
+                Width = 500,
+                Height = 400,
+                Maximized = true,
+                MaximizedOnX = screen.WorkingArea.X,
+                MaximizedOnY = screen.WorkingArea.Y,
+            },
+        });
+
+        WindowPlacementMemory.Attach(window, viewState);
+
+        Assert.Equal(WindowStartupLocation.Manual, window.WindowStartupLocation);
+        Assert.Equal(new PixelPoint(screen.WorkingArea.X, screen.WorkingArea.Y), window.Position);
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+    /// <summary>
+    /// A monitor that has been unplugged since is not one to open on. The platform decides
+    /// instead, which is the same fail-soft the restored position already has.
+    /// </summary>
+    [AvaloniaFact]
+    public void AScreenThatIsNoLongerThereIsNotInsistedOn()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+
+        viewState.Save(new ViewState
+        {
+            MainWindow = new WindowPlacement
+            {
+                Width = 500,
+                Height = 400,
+                Maximized = true,
+                MaximizedOnX = -30_000,
+                MaximizedOnY = -30_000,
+            },
+        });
+
+        var window = new Window { Width = 900, Height = 700 };
+        WindowPlacementMemory.Attach(window, viewState);
+
+        Assert.NotEqual(new PixelPoint(-30_000, -30_000), window.Position);
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+
+    /// <summary>
     /// Bigger text wants a bigger window to put it in, so the opening size follows the zoom.
     /// A size the Commander chose does not: that one is not a guess to be improved on.
     /// <para>

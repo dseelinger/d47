@@ -24,8 +24,11 @@ Reported 2026-08-17. Each item is checked off as it ships.
   system.**
 - [x] **Auto-honk does nothing.** It should hold the fire button for 5.3 seconds on entering a
   new system.
-- [ ] **Window state is not restored.** If the app closes maximized it should start
-  maximized, and on the same monitor where possible.
+- [x] **Window state is not restored.** If the app closes maximized it should start
+  maximized, and on the same monitor where possible. **Note:** the monitor half is new and
+  tested; the restore itself already worked headlessly and had no test. If it still opens
+  un-maximised on the real build, the remaining suspect is the event ordering guarded in
+  `WindowPlacementMemory.SampleWhenSettled`, which no headless test can tell apart.
 - [ ] **Only the first caption arrives, and it doubles the spoken line.** After the first, the
   panel appears headlocked but blank while the voice is speaking.
 - [ ] **The VR big panel should carry the Settings tab**, unless there is a good reason not to.
