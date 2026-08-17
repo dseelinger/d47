@@ -17,6 +17,108 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.24.0 — 2026-08-17 — Thirteen from hand-testing, and two things that had never once worked
+
+Raised in one pass with a headset on. Two of them were features that have never worked since the
+day they shipped, and neither had left a trace anywhere.
+
+### Auto-honk never fired, not once
+
+It waits for the ship to be out of the witchspace tunnel before pressing the fire button, and it
+waited for **normal space**. The far end of a hyperspace jump is supercruise. A Commander who
+arrives is in supercruise for the whole thirty-second window the arm is good for, so the arm
+expired every time and the trigger was never pressed.
+
+Every test of it modelled normal space, which is why nine of them passed while the feature did
+nothing. The hold is 5.3 seconds now, and the primary fire group is offered while flying rather
+than in normal space only.
+
+### The panel in the headset was a photograph
+
+Both headset surfaces are rasterised out of a window that is constructed and never shown, and
+nothing runs a layout pass in one. A control that changes marks itself and queues itself with the
+layout manager rather than marking its ancestors, so `Measure` on the root returned without ever
+descending and whatever had changed was never laid out.
+
+The panel therefore drew the transcript its model held when the data context was set, and nothing
+after it — worse than stale, because rebuilt text has no size, so the line that *was* showing
+vanished on the next append and left an empty page under a tab strip that still lit up.
+
+Captions had the same shape plus one of their own: an `ItemsControl` in such a window does not
+regenerate its containers when its source is replaced, so the first caption drew and every one
+after it drew an empty box. The three lines are one text block now.
+
+### Captions were also doubled
+
+The audio arbiter reports everything audible as one snapshot, re-raised for every change to any of
+it — so a second sentence being queued behind the first re-reported the first sentence's caption,
+and it went onto the screen twice. Clips carry an id now and the caption layer ignores a repeat of
+the one it is already showing.
+
+### The panel in the headset can be pressed, and it has Settings
+
+One trigger does both jobs, because a second action would change a manifest SteamVR caches under an
+application key and discard whatever binding the Commander had made. A press that has neither dwelt
+400 ms nor travelled a twentieth of the panel is a press; anything else is the carry it always was.
+Starting the carry on the button going down is why every attempt to press a control moved the whole
+quad instead.
+
+The Settings tab is no longer withheld from the quad. The reasoning was a nav column beside a
+700-pixel minimum, and that surface has collapsed its nav below 900 since Phase 12.
+
+### The settings nav pointed at the wrong section
+
+The scroll-spy added the card column's own position to the card's, and a scroll viewer scrolls by
+arranging its content at a *negative* offset — so the test "has this card's head passed the top
+edge" meant "is its top less than twice the scroll". At the fourth section the nav named the
+seventh, and past the sixth it sat on the last one for the rest of the page. Not a zoom problem: it
+reproduces identically at 100%, 125% and 175%.
+
+### ElevenLabs stopped speaking German
+
+A material milestone — *"Adaptive Encryptors Capture at 75 percent. 88 of 100."* — came back with
+the tail in German. A bare numeral is the one token in a sentence that carries no language, and
+Multilingual 2 decides the language from the sentence.
+
+Numerals are now spelled out on the way to the synthesiser, and the model is `eleven_turbo_v2_5`
+with the language pinned to English, because Multilingual 2 rejects that parameter outright. What
+you read is unchanged: the transcript and the captions keep the digits. The list price halves with
+the model, and the spend counter asks the provider what it actually sent.
+
+### Two callouts that said nothing
+
+Elite announces which channel you have joined every time you drop out of hyperspace — 8,833 of them
+across the journal corpus, second in volume only to station traffic, and a fact you can read off
+the system name in front of you. It is no longer re-voiced.
+
+*"Ray Gateway offers engineering"* is gone for the same reason: 3,726 of the 3,759 dockings in the
+corpus advertise the service, and all 33 that do not are construction depots. Inverting it, which
+is what the report suggested, would have said nothing about a construction site instead.
+
+### Ship AI callouts are on the page now
+
+A fuel warning was heard once and was afterwards findable only in the log file. `Announcement`'s own
+documentation claimed every callout "already reaches the transcript by the route everything D47 says
+reaches it"; nothing did. They land on Conversation, and therefore on Technical.
+
+### A maximised window comes back on its own monitor
+
+The flag was saved and applied and nothing asserted the applying. What was missing is the screen:
+the remembered position is the *restored* rectangle and has to stay that way, so a window maximised
+on the second monitor had nothing recording it. The window is put back on that screen before it is
+maximised, because Windows maximises to whichever monitor a window is already on.
+
+### Smaller things
+
+The egress disclosure — five lines of prose between rows that are one line each — is a tooltip on
+its row rather than a paragraph on the page, and it still follows the selected provider. The search
+box is body size rather than a step down from it: a field you type into is not supporting text.
+
+**Not changed:** disabling **Wait between attempts** under logarithmic backoff. It does have an
+effect there — the first retry waits exactly the base under either shape — so the row stays live.
+
+---
+
 ## 0.23.0 — 2026-08-17 — Five wanted changes to the settings surface
 
 All five raised hand-testing 0.21.x, none of them a defect. Four are about the two places a
