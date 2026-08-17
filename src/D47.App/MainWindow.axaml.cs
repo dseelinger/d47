@@ -235,6 +235,7 @@ public partial class MainWindow : Window
         _host.Transcribed += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append(text, TranscriptKind.Technical));
 
+
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();

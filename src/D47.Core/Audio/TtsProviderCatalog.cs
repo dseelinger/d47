@@ -119,16 +119,17 @@ public static class TtsProviderCatalog
 
         Billed = true,
 
-        // The published API list price for eleven_multilingual_v2, which is the model d47 pins —
-        // $0.10 per 1,000 characters, read from elevenlabs.io/pricing/api on 2026-08-16. Flash
-        // and Turbo are half that and d47 does not ask for them.
+        // The published API list price for eleven_turbo_v2_5, which is the model d47 pins —
+        // $0.05 per 1,000 characters, half the Multilingual 2 rate this used to read, from
+        // elevenlabs.io/pricing/api on 2026-08-16. The pin moved for language enforcement
+        // rather than for price; the price moved with it.
         //
         // A list price and not a bill. A subscription burns bundled credits instead — 121,000 a
         // month for $22 on Creator, so an effective $0.18 per thousand until the bundle runs out
         // and nothing at the margin before that — and the API reports neither the tier nor the
         // arrangement. So this is the row's default and the row is editable, in the same spirit
         // as the model price table declining to model introductory pricing it cannot date.
-        ListDollarsPerThousandCharacters = 0.10m,
+        ListDollarsPerThousandCharacters = 0.05m,
     };
 
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>

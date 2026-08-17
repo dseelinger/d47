@@ -476,7 +476,12 @@ public static class GameActions
             Id = "primary_fire",
             Label = "the primary fire group",
             Group = Weapons,
-            Variants = [new ActionVariant("PrimaryFire", ControlContext.NormalSpace)],
+
+            // Flying, not normal space. The discovery scanner is fired through this and is
+            // honked in supercruise, which is where a jump puts the Commander down — offering
+            // it in normal space only made the arrival honk unreachable at exactly the moment
+            // it exists for.
+            Variants = [new ActionVariant("PrimaryFire", ControlContext.Flying)],
         },
 
         new()

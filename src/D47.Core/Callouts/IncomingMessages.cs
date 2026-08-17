@@ -84,6 +84,17 @@ public sealed partial class IncomingMessages : ICallout
             return null;
         }
 
+        // Elite tells you which channel you have joined every time you drop out of hyperspace,
+        // as a ReceiveText from nobody. It is 8,833 events across the corpus and second in
+        // volume only to station traffic, and it is a fact the Commander can read off the
+        // system name in front of them. Matched on the unlocalised token rather than on the
+        // English sentence, so a Commander playing in German is not read it either.
+        if (journalEvent.String("Message") is { } raw
+            && raw.StartsWith("$COMMS_entered:", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
         // The localised form or nothing. An unlocalised value is one of Elite's `$id;` tokens,
         // and speaking "dollar pirate underscore attack semicolon" aloud is worse than silence
         // — this is also how the danger callouts treat them, as ids rather than as prose.

@@ -7,11 +7,18 @@ namespace D47.Core.Callouts;
 /// "Home System").
 /// <para>
 /// Everything this recognises is derived from the Commander's own data — the home system they
-/// typed into settings, where their carrier is, where their ships are stored, and what the
-/// Docked event says the station offers. <b>No table of engineer bases or notable stations is
-/// shipped.</b> A hardcoded list of which engineer lives where is game data that goes stale on
-/// every update and that d47 has no source for; inventing one would be exactly the confident
-/// wrong answer the guardrails exist to prevent. What the journal states, d47 says.
+/// typed into settings, where their carrier is, and where their ships are stored. <b>No table of
+/// engineer bases or notable stations is shipped.</b> A hardcoded list of which engineer lives
+/// where is game data that goes stale on every update and that d47 has no source for; inventing
+/// one would be exactly the confident wrong answer the guardrails exist to prevent. What the
+/// journal states, d47 says.
+/// </para>
+/// <para>
+/// <b>Docking used to announce that the station offered engineering, and that has been
+/// removed.</b> It is not a fact about the station: 3,726 of the 3,759 dockings in the corpus
+/// advertise the service, and all 33 that do not are construction depots, where nobody expects
+/// it. A callout that fires on almost every docking says nothing, and inverting it would have
+/// said nothing about a construction site instead.
 /// </para>
 /// </summary>
 public sealed class ArrivalCallout : ICallout
@@ -34,11 +41,6 @@ public sealed class ArrivalCallout : ICallout
         }
 
         foreach (var announcement in OnArrival(context, state))
-        {
-            yield return announcement;
-        }
-
-        foreach (var announcement in OnDocking(context))
         {
             yield return announcement;
         }
@@ -99,42 +101,4 @@ public sealed class ArrivalCallout : ICallout
         }
     }
 
-    private static IEnumerable<Announcement> OnDocking(CalloutContext context)
-    {
-        if (context.IsPriming)
-        {
-            yield break;
-        }
-
-        foreach (var journalEvent in context.Events)
-        {
-            if (journalEvent.Kind != "Docked")
-            {
-                continue;
-            }
-
-            var station = journalEvent.String("StationName");
-
-            if (station is null)
-            {
-                continue;
-            }
-
-            // Read from the station's own advertised services rather than from a list of
-            // engineer bases. If Elite says the place does engineering, it does — and this keeps
-            // working when a new engineer is added.
-            var engineering = journalEvent.Items("StationServices")
-                .Select(service => service.GetString())
-                .Any(service => service is not null &&
-                                service.Contains("engineer", StringComparison.OrdinalIgnoreCase));
-
-            if (engineering)
-            {
-                yield return new Announcement("arrival.engineer", $"{station} offers engineering.")
-                {
-                    Cooldown = TimeSpan.FromMinutes(5),
-                };
-            }
-        }
-    }
 }

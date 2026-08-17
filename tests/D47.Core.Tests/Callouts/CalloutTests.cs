@@ -513,19 +513,25 @@ public class CalloutTests
         Assert.Empty(callout.Examine(Context(home, atSecond: 1)));
     }
 
+    /// <summary>
+    /// Docking used to announce that the station offered engineering, and it no longer does.
+    /// <para>
+    /// It is not a fact about the station. 3,726 of the 3,759 dockings in the corpus advertise
+    /// the service, and all 33 that do not are construction depots — so the callout fired on
+    /// 99.1% of dockings and told the Commander something that is true of everywhere they can
+    /// dock. Inverting it, which is what the report suggested, would have said nothing about a
+    /// construction site instead (remediation.md, "Ray Gateway offers engineering").
+    /// </para>
+    /// </summary>
     [Fact]
-    public void EngineeringIsRecognisedFromTheStationsOwnAdvertisedServices()
+    public void DockingSomewhereWithEngineeringIsNotWorthSaying()
     {
         var callout = new ArrivalCallout();
 
-        var announced = callout
-            .Examine(Context(StateFrom(), events:
-            ["""{"timestamp":"3311-01-01T00:00:01Z","event":"Docked","StationName":"Farseer Inc","StarSystem":"Deciat","StationServices":["dock","refuel","engineer"]}"""]))
-            .Single(a => a.Key == "arrival.engineer");
+        var announced = callout.Examine(Context(StateFrom(), events:
+            ["""{"timestamp":"3311-01-01T00:00:01Z","event":"Docked","StationName":"Farseer Inc","StarSystem":"Deciat","StationServices":["dock","refuel","engineer"]}"""]));
 
-        // Read from what Elite says the station offers rather than from a shipped list of
-        // engineer bases, so it keeps working when a new engineer is added.
-        Assert.Contains("Farseer Inc", announced.Text);
+        Assert.DoesNotContain(announced, a => a.Key == "arrival.engineer");
     }
 
     // ---- Material milestones ------------------------------------------------------------

@@ -94,11 +94,30 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// writes down who said them.
     /// </para>
     /// <para>
-    /// Non-null is also the signal that this belongs on the page at all. Every Phase 8 callout is
-    /// d47 speaking and already reaches the transcript by the route everything d47 says reaches
-    /// it; in-game comms are the case that is neither the conversation nor a diagnostic, and the
-    /// Technical page is where "true, useful, and not the conversation" already lives.
+    /// Non-null is also the signal that this belongs on the Technical page rather than on the
+    /// conversation: in-game comms are neither the conversation nor a diagnostic, and that page
+    /// is where "true, useful, and not the conversation" already lives. What the ship's AI says
+    /// goes the other way — see <see cref="ConversationLine"/>.
     /// </para>
     /// </summary>
     public string? Transcript { get; init; }
+
+    /// <summary>
+    /// The line the <em>conversation</em> page should carry, or null when this belongs on
+    /// another page.
+    /// <para>
+    /// A callout in the ship's AI's own voice is d47 talking, and the page for the Commander and
+    /// the ship's AI is the conversation — which also puts it on Technical, that being the same
+    /// runs with the diagnostics left in. This documentation used to claim every Phase 8 callout
+    /// "already reaches the transcript by the route everything d47 says reaches it". Nothing did:
+    /// a fuel warning was heard once and was afterwards findable only in the log file
+    /// (remediation.md, "Ship AI callouts belong on the Conversation and Technical tabs").
+    /// </para>
+    /// <para>
+    /// Read after the line has been varied, so what is written is what was said rather than the
+    /// authored line a persona may have replaced.
+    /// </para>
+    /// </summary>
+    public string? ConversationLine =>
+        Transcript is null && Voice == Audio.VoiceRole.ShipAi ? Text : null;
 }

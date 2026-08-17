@@ -202,15 +202,18 @@ basis is wrong — so this is counted separately from [what the model costs](con
 Two rows, and they are deliberately different kinds of thing.
 
 **Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
-published list price for the model Directive 47 asks for — $0.10 per thousand for ElevenLabs'
-`eleven_multilingual_v2`, read from their API pricing page. That is a list price and not your
+published list price for the model Directive 47 asks for — $0.05 per thousand for ElevenLabs'
+`eleven_turbo_v2_5`, read from their API pricing page. That is a list price and not your
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.
 
 **Spoken this session** is a fact. It is the number of characters actually handed to the
 provider since Directive 47 started, counted at the one seam every caller passes — the ship's AI,
-a callout, a re-voiced in-game message and a core's own introduction all converge there.
+a callout, a re-voiced in-game message and a core's own introduction all converge there. It
+counts what went **on the wire**, which for ElevenLabs is a little longer than what you read:
+numerals are spelled out before they are sent, so "88 of 100" leaves as
+"eighty-eight of one hundred".
 
 - Counted on synthesis that **succeeded**. A refused voice or a failed request costs nothing.
 - A line cut off by the shut-up key still counts the sentences that were already sent, because

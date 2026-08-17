@@ -343,11 +343,16 @@
           Hidden until there is something to clear, or it is a control that does nothing for
           most of the time a Commander can see it.
         -->
+        <!--
+          Body, not Secondary. A field the Commander types into is not supporting text, and at
+          13 beside a page of 14 it read as a smaller-than-everything control rather than as a
+          quieter one — which is the exact drift TypeScale exists to stop.
+        -->
         <TextBox x:Name="SearchInput"
                  Width="200"
                  Height="28"
                  Padding="8,3"
-                 FontSize="{StaticResource D47.Type.Secondary}"
+                 FontSize="{StaticResource D47.Type.Body}"
                  VerticalContentAlignment="Center"
                  PlaceholderText="Search this page"
                  TextChanged="OnSearchChanged"

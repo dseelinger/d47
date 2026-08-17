@@ -159,4 +159,19 @@ public interface ITtsProvider
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// What this provider will actually put on the wire for <paramref name="text"/>, which for
+    /// most of them is the text itself.
+    /// <para>
+    /// It exists so the spend counter stays true. A provider that rewrites a line before sending
+    /// it — ElevenLabs writes numerals out as words, because a bare numeral is what makes a
+    /// multilingual voice change language mid-sentence — is billed for the rewritten length, and
+    /// a meter counting what it handed down would under-report every line with a figure in it.
+    /// </para>
+    /// <para>
+    /// Only ever a character count. Nothing reads this to decide what to say.
+    /// </para>
+    /// </summary>
+    string Billable(string text) => text;
 }

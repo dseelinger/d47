@@ -57,7 +57,7 @@ public class WhatTheVoicesCostTests
         var spend = new SpeechSpend();
         spend.Record(Eleven, 20_000);
 
-        Assert.Contains("$2.00", spend.Describe(On(Eleven))!, StringComparison.Ordinal);
+        Assert.Contains("$1.00", spend.Describe(On(Eleven))!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class WhatTheVoicesCostTests
         // means nothing. Both are named, and both carry their own answer about money.
         Assert.Contains("21,806 characters", said, StringComparison.Ordinal);
         Assert.Contains("Edge Neural 1,806 (Edge Neural is free)", said, StringComparison.Ordinal);
-        Assert.Contains("ElevenLabs 20,000 ($2.00", said, StringComparison.Ordinal);
+        Assert.Contains("ElevenLabs 20,000 ($1.00", said, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -157,9 +157,10 @@ public class WhatTheVoicesCostTests
     [Fact]
     public void TheListPriceIsWhatTheProviderPublishes()
     {
-        // Read from elevenlabs.io/pricing/api on 2026-08-16 for eleven_multilingual_v2, which is
-        // the model ElevenLabsTtsProvider pins. If that pin ever moves, this figure moves with it.
-        Assert.Equal(0.10m, TtsProviderCatalog.ElevenLabs.ListDollarsPerThousandCharacters);
+        // Read from elevenlabs.io/pricing/api on 2026-08-16 for eleven_turbo_v2_5, which is the
+        // model ElevenLabsTtsProvider pins. If that pin ever moves, this figure moves with it —
+        // and it has: the pin moved to Turbo for language enforcement, which is half the price.
+        Assert.Equal(0.05m, TtsProviderCatalog.ElevenLabs.ListDollarsPerThousandCharacters);
         Assert.True(TtsProviderCatalog.ElevenLabs.Billed);
 
         Assert.Null(TtsProviderCatalog.Edge.ListDollarsPerThousandCharacters);

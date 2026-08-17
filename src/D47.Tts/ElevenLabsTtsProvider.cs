@@ -56,12 +56,25 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
 
     /// <summary>
-    /// The multilingual model. Named rather than left to the service's default so that a
-    /// change on their side is not a change in what the Commander hears, and because the speed
-    /// control this provider exposes is a property of the model generation rather than of the
-    /// account.
+    /// The model. Named rather than left to the service's default so that a change on their
+    /// side is not a change in what the Commander hears, and because the speed control this
+    /// provider exposes is a property of the model generation rather than of the account.
+    /// <para>
+    /// <b>Turbo 2.5 rather than Multilingual 2, and the reason is language.</b> Multilingual 2
+    /// infers the language of every line from the line, which is the behaviour it is built for
+    /// and which produced a material milestone read half in German. The 2.5 generation accepts
+    /// <c>language_code</c> and holds it; Multilingual 2 rejects the parameter outright, so
+    /// there was no version of pinning English that kept that model. It is also half the price.
+    /// </para>
     /// </summary>
-    public const string DefaultModel = "eleven_multilingual_v2";
+    public const string DefaultModel = "eleven_turbo_v2_5";
+
+    /// <summary>
+    /// The language every line is synthesised as. English, fixed: d47 speaks English, its
+    /// personas are written in English, and the one thing an in-game message can do to this
+    /// path is arrive in another language — which is not a reason to let it choose the voice's.
+    /// </summary>
+    public const string Language = "en";
 
     /// <summary>
     /// What leaves the machine. Stated here so the settings row and the documentation page read
@@ -187,6 +200,12 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         }
     }
 
+    /// <summary>
+    /// Numerals spelled out, and nothing else changed. This is what goes on the wire, so it is
+    /// also what the spend counter measures — see <see cref="ITtsProvider.Billable"/>.
+    /// </summary>
+    public string Billable(string text) => SpokenNumbers.Expand(text);
+
     public async Task<AudioClip> SynthesizeAsync(
         string text,
         VoiceSelection voice,
@@ -219,8 +238,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             request.Content = JsonContent.Create(
                 new SynthesisRequest
                 {
-                    Text = text,
+                    Text = Billable(text),
                     ModelId = DefaultModel,
+                    LanguageCode = Language,
                     VoiceSettings = new VoiceSettings { Speed = SpeedFor(voice.Rate) },
                 },
                 options: Json);
@@ -242,6 +262,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                 throw new TtsException($"ElevenLabs returned no audio for \"{Excerpt(text)}\".");
             }
 
+            // Named with what was asked for, not with what was sent. The clip's name is what
+            // the caption path reads, and a caption saying "eighty-eight of one hundred" would
+            // be a regression everywhere except the sentence this fixes.
             return new AudioClip(text, PcmUpsample.Double(pcm), AudioFormat.Standard);
         }
         catch (OperationCanceledException)
@@ -394,6 +417,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
         [JsonPropertyName("model_id")]
         public required string ModelId { get; init; }
+
+        [JsonPropertyName("language_code")]
+        public required string LanguageCode { get; init; }
 
         [JsonPropertyName("voice_settings")]
         public required VoiceSettings VoiceSettings { get; init; }

@@ -2640,6 +2640,14 @@ public sealed class AppHost : IDisposable
         {
             Transcribed?.Invoke(line);
         }
+        else if (announcement.ConversationLine is { Length: > 0 } spoken)
+        {
+            // The ship's AI, saying something no turn produced — which is exactly what Said is
+            // for, and what callouts were never routed through. Which announcements those are is
+            // decided in Core, where it can be asserted against a callout rather than against a
+            // running app.
+            Said?.Invoke(spoken);
+        }
 
         await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
     }
