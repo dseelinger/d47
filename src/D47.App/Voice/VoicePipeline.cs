@@ -174,7 +174,8 @@ public sealed class VoicePipeline(
         string text,
         AudioChannel channel = AudioChannel.Speech,
         VoiceSelection? voice = null,
-        string group = "announcement")
+        string group = "announcement",
+        Func<AudioClip, AudioClip>? colour = null)
     {
         if (Tts is not { } provider)
         {
@@ -187,7 +188,7 @@ public sealed class VoicePipeline(
         // this one arbiter: separate paths per voice are how a line gets spoken in the wrong
         // one (architecture.md D7).
         await using var speech = new SpeechPipeline(
-            arbiter, provider, voice ?? Voice, group, loggers.CreateLogger<SpeechPipeline>(), channel);
+            arbiter, provider, voice ?? Voice, group, loggers.CreateLogger<SpeechPipeline>(), channel, colour);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
@@ -252,7 +253,16 @@ public sealed class VoicePipeline(
         _logger.LogDebug(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
-        await AnnounceAsync(announcement.Text, announcement.Channel, voice).ConfigureAwait(false);
+        // The role decides whether this is somebody in the ship or somebody transmitting to it.
+        // Resolved here, at the one point where a role and a synthesiser meet, rather than by
+        // each callout — a callout knows whose line it is, and nothing more than that should be
+        // asked of it (see RadioVoice).
+        await AnnounceAsync(
+                announcement.Text,
+                announcement.Channel,
+                voice,
+                colour: RadioVoice.Colours(announcement.Voice))
+            .ConfigureAwait(false);
     }
 
     /// <summary>

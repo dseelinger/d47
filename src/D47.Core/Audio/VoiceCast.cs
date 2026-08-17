@@ -52,13 +52,19 @@ public sealed class VoiceCast
     /// pirate who hailed you two systems ago is not here, and holding their voice forever
     /// would mean a fixed cast of strangers following you around the bubble.
     /// </summary>
-    private readonly Dictionary<string, string> _npcVoices = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _perSystem = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Player voices, kept for the whole session and surviving hyperspace. A wingmate is the
-    /// same person after a jump, and a voice that changed with the system would read as a fault.
+    /// Voices kept for the whole session, surviving hyperspace. A wingmate is the same person
+    /// after a jump, and a voice that changed with the system would read as a fault.
+    /// <para>
+    /// Crew are here too, and for a stronger version of the same reason: they are aboard. Their
+    /// assignments used to share the per-system table with the NPCs, so the gunner the Commander
+    /// hired changed voice on every jump and could collide with a pirate — found while giving the
+    /// crew the other half of "aboard", which is that they are not put through a radio.
+    /// </para>
     /// </summary>
-    private readonly Dictionary<string, string> _playerVoices = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _lasting = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<VoiceRole, string> _roleVoices = new();
 
@@ -104,12 +110,13 @@ public sealed class VoiceCast
     /// a path.
     /// </param>
     /// <param name="isPlayer">
-    /// Which scope the assignment lives in. The whole of the "voices stick" item is that these
-    /// two differ: players survive hyperspace, NPCs do not.
+    /// Whether this is another Commander. With <paramref name="role"/> it decides which scope the
+    /// assignment lives in — see <see cref="Lasts"/>. The whole of the "voices stick" item is
+    /// that the scopes differ: players survive hyperspace, NPC comms traffic does not.
     /// </param>
     public VoiceSelection ForSender(string sender, bool isPlayer, VoiceRole role = VoiceRole.Comms)
     {
-        var assignments = isPlayer ? _playerVoices : _npcVoices;
+        var assignments = Lasts(isPlayer, role) ? _lasting : _perSystem;
 
         if (assignments.TryGetValue(sender, out var already))
         {
@@ -128,9 +135,21 @@ public sealed class VoiceCast
         // NPCs in it has four distinct voices as long as the pool is large enough.
         var start = (int)(Hash(sender) % (uint)Pool.Count);
 
+        // The first voice this sender could have, ignoring who else already holds one. Kept
+        // because a pool that has run out has to share rather than fall silent, and the voice it
+        // shares still must not be one that is somebody aboard.
+        string? sharable = null;
+
         for (var offset = 0; offset < Pool.Count; offset++)
         {
             var candidate = Pool[(start + offset) % Pool.Count];
+
+            if (Aboard(candidate))
+            {
+                continue;
+            }
+
+            sharable ??= candidate;
 
             if (!assignments.Values.Contains(candidate, StringComparer.OrdinalIgnoreCase))
             {
@@ -139,17 +158,48 @@ public sealed class VoiceCast
             }
         }
 
+        // Nothing in the pool that is not already somebody aboard. Falling back to the role is
+        // the honest answer: there is no voice left that would mean anything.
+        if (sharable is null)
+        {
+            return For(role);
+        }
+
         // Every voice in the pool is spoken for, so this sender shares one. Better than
         // silence, and better than a voice that changes every time they speak.
-        assignments[sender] = Pool[start];
-        return new VoiceSelection(Pool[start], Rate);
+        assignments[sender] = sharable;
+        return new VoiceSelection(sharable, Rate);
     }
 
     /// <summary>
-    /// A new system. Drops the NPC assignments and keeps the player ones, which is the
+    /// Whether a sender's voice outlives the system it was assigned in.
+    /// <para>
+    /// Only an NPC transmitting over comms turns over on a jump, because only that cast changes.
+    /// A player is the same person after a jump and everyone aboard is still aboard, so the
+    /// question is not "is this a player" but "is this someone the Commander will meet again".
+    /// </para>
+    /// </summary>
+    private static bool Lasts(bool isPlayer, VoiceRole role) => isPlayer || role is not VoiceRole.Comms;
+
+    /// <summary>
+    /// Whether a voice already belongs to somebody in the ship, and so is not one to hand to a
+    /// stranger.
+    /// <para>
+    /// This is the smaller half of "a voice appropriate for the NPC": whatever else a police
+    /// interceptor sounds like, it must not sound like the companion in the cockpit. Before this,
+    /// nothing stopped the pool handing out the ship AI's own voice — and hearing d47's voice
+    /// arrive from a pirate, through a radio, is worse than either of them alone.
+    /// </para>
+    /// </summary>
+    private bool Aboard(string voiceId) =>
+        string.Equals(voiceId, DefaultVoice, StringComparison.OrdinalIgnoreCase)
+        || _roleVoices.Values.Contains(voiceId, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A new system. Drops the per-system assignments and keeps the lasting ones, which is the
     /// asymmetry the checklist spells out.
     /// </summary>
-    public void EnteredSystem() => _npcVoices.Clear();
+    public void EnteredSystem() => _perSystem.Clear();
 
     /// <summary>
     /// A new session, or a provider change. Everything goes: a voice id from one provider means
@@ -158,13 +208,13 @@ public sealed class VoiceCast
     /// </summary>
     public void Reset()
     {
-        _npcVoices.Clear();
-        _playerVoices.Clear();
+        _perSystem.Clear();
+        _lasting.Clear();
         _roleVoices.Clear();
     }
 
     /// <summary>How many senders currently hold a voice. For diagnostics and for tests.</summary>
-    public (int Players, int Npcs) Assignments => (_playerVoices.Count, _npcVoices.Count);
+    public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);
 
     /// <summary>
     /// FNV-1a. Chosen over <see cref="string.GetHashCode()"/> because that one is randomised

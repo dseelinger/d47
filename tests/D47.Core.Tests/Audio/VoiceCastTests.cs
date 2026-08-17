@@ -96,6 +96,92 @@ public class VoiceCastTests
         Assert.Equal(wingmate, cast.ForSender("Commander Vex", isPlayer: true).VoiceId);
     }
 
+    /// <summary>
+    /// An NPC keeps their voice for as long as the Commander is in the system, which is the whole
+    /// of what "remember which voice was used" asks for — and drops it on the jump out, which is
+    /// the half the request explicitly does not need.
+    /// </summary>
+    [Fact]
+    public void AnNpcKeepsOneVoiceForAsLongAsTheCommanderIsThere()
+    {
+        var cast = Cast();
+
+        var first = cast.ForSender("Ilse Bruhn", isPlayer: false).VoiceId;
+
+        Assert.Equal(first, cast.ForSender("Ilse Bruhn", isPlayer: false).VoiceId);
+        Assert.Equal(first, cast.ForSender("Ilse Bruhn", isPlayer: false).VoiceId);
+
+        // Somebody else in the same system is somebody else.
+        Assert.NotEqual(first, cast.ForSender("ShipName Police Federation", isPlayer: false).VoiceId);
+    }
+
+    /// <summary>
+    /// The crew are aboard, so their voices last the session (docs/plans/change-requests.md
+    /// item 14).
+    /// <para>
+    /// They used to share the per-system table with the NPC comms traffic, which meant the gunner
+    /// the Commander hired at a station changed voice on every jump — and could be handed the same
+    /// voice as a pirate two systems later. Found while giving the crew the other half of being
+    /// aboard, which is that they are not put through a radio.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheCrewKeepTheirVoicesAcrossAJump()
+    {
+        var cast = Cast();
+
+        var gunner = cast.ForSender("Ilse Bruhn", isPlayer: false, VoiceRole.Crew).VoiceId;
+        cast.ForSender("Pirate Lord", isPlayer: false);
+
+        cast.EnteredSystem();
+
+        Assert.Equal(gunner, cast.ForSender("Ilse Bruhn", isPlayer: false, VoiceRole.Crew).VoiceId);
+
+        // One assignment left, and it is the gunner's: the pirate was the only one in the table
+        // the jump cleared.
+        Assert.Equal((1, 0), cast.Assignments);
+    }
+
+    /// <summary>
+    /// No stranger is handed a voice that already belongs to somebody in the ship.
+    /// <para>
+    /// The smaller half of "a voice appropriate for the NPC". Nothing used to stop the pool
+    /// handing out the ship AI's own voice, and hearing d47's voice arrive from a pirate — through
+    /// a radio — is worse than either of those on its own.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NobodyOutsideTheShipIsGivenAVoiceFromInsideIt()
+    {
+        var cast = new VoiceCast
+        {
+            Pool = ["voice-a", "voice-b", "voice-c"],
+            DefaultVoice = "voice-b",
+        };
+
+        cast.Assign(VoiceRole.TowerControl, "voice-c");
+
+        // Which leaves exactly one voice that is nobody's, and every sender gets it rather than
+        // one of the two that are spoken for.
+        foreach (var name in new[] { "Vex", "Ilse", "Pirate Lord" })
+        {
+            Assert.Equal("voice-a", cast.ForSender(name, isPlayer: false).VoiceId);
+        }
+    }
+
+    /// <summary>
+    /// And where every voice in the pool is somebody aboard, the role is the answer rather than
+    /// borrowing one. There is no voice left that would mean anything.
+    /// </summary>
+    [Fact]
+    public void APoolThatIsEntirelyTheShipsOwnFallsBackToTheRole()
+    {
+        var cast = new VoiceCast { Pool = ["ship-ai"], DefaultVoice = "ship-ai" };
+
+        Assert.Equal("ship-ai", cast.ForSender("Pirate Lord", isPlayer: false).VoiceId);
+        Assert.Equal((0, 0), cast.Assignments);
+    }
+
     [Fact]
     public void TheSameNameGetsTheSameVoiceInEveryRun()
     {

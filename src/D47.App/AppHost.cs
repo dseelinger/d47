@@ -308,6 +308,19 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Noted;
 
     /// <summary>
+    /// Raised with a line for the Technical page — in-game comms, which are neither the
+    /// conversation nor a diagnostic.
+    /// <para>
+    /// Separate from <see cref="Said"/> because that one is d47 talking and lands on the
+    /// conversation page, and a station clearing the Commander to dock is not part of a
+    /// conversation with their companion. The wording comes from
+    /// <see cref="Announcement.Transcript"/>, so what is written and what is heard can differ:
+    /// the ear gets the words and the page gets the sender as well.
+    /// </para>
+    /// </summary>
+    public event Action<string>? Transcribed;
+
+    /// <summary>
     /// Raised true when a core has been chosen and has not yet worked out what to say, and
     /// false when it has (list.md Phase 12, "Anything that might take a moment says it is
     /// working").
@@ -2619,6 +2632,14 @@ public sealed class AppHost : IDisposable
         var voice = announcement.Speaker is { Length: > 0 } speaker
             ? Cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
             : Cast.For(announcement.Voice);
+
+        // Written before it is spoken, and whether or not the speaking works. A message that
+        // could not be synthesised is still a message that arrived, and the page is the only
+        // place left to see it.
+        if (announcement.Transcript is { Length: > 0 } line)
+        {
+            Transcribed?.Invoke(line);
+        }
 
         await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
     }

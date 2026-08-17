@@ -18,6 +18,19 @@ be deleted once the answer is written down.
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
 | `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
 | `MirrorProbe` | Is there anything in Elite's desktop mirror to read — can a world-space panel be located in it at all? | [docs/spikes/mirror-panel-locatability.md](../docs/spikes/mirror-panel-locatability.md) — **method and instrument only; the measurement is untaken** |
+| `RadioAudition` | Does `RadioVoice` actually sound like a radio? | 0.22.0 shipped from it — **instrument, kept: the question recurs every time the filter is touched** |
+
+`RadioAudition` says a sentence through Edge Neural, optionally over the comms link, writes it as a
+WAV and plays it. It exists because the one thing a test cannot assert about an audio effect is
+whether it sounds right: `RadioVoiceTests` pins the band shape, the loudness match, the noise floor
+and the determinism, and all of those were already passing when the tail was still too quiet to
+hear. `--everywhere` plays on every active endpoint rather than the default, which is how to reach
+somebody wearing a headset — the Windows default here is frequently something nobody is listening
+to.
+
+```
+dotnet run --project spike/RadioAudition -- "Scanning." out.wav --radio --play
+```
 
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.

@@ -228,6 +228,13 @@ public partial class MainWindow : Window
         // Marked rather than appended, so it reads as the panel and not as whoever is aboard.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
 
+        // In-game comms. On the Technical page rather than the conversation, because a station
+        // and a police interceptor are not talking to the Commander's companion - and because on
+        // a station approach there are a lot of them, and the conversation is the one page that
+        // has to stay readable.
+        _host.Transcribed += text => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append(text, TranscriptKind.Technical));
+
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();

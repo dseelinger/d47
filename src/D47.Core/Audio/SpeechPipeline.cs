@@ -38,6 +38,20 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// behind it — an alert that waits for the current sentence to finish is not an alert.
     /// </summary>
     private readonly AudioChannel _channel;
+
+    /// <summary>
+    /// What every rendered sentence is put through before it reaches the queue, or null for the
+    /// voice as the provider sent it. <see cref="RadioVoice"/> is the one that exists: a sender
+    /// who is not aboard the ship arrives over a link rather than from the next seat.
+    /// <para>
+    /// Applied here rather than in the arbiter because it is a property of who is speaking, and
+    /// the arbiter knows only which channel a clip is on. Applied per sentence as it comes back
+    /// from the provider rather than in the drain, so the arithmetic runs alongside the
+    /// synthesis of the next sentence instead of in front of playback.
+    /// </para>
+    /// </summary>
+    private readonly Func<AudioClip, AudioClip>? _colour;
+
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
@@ -51,7 +65,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         VoiceSelection voice,
         string group,
         ILogger logger,
-        AudioChannel channel = AudioChannel.Speech)
+        AudioChannel channel = AudioChannel.Speech,
+        Func<AudioClip, AudioClip>? colour = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -59,6 +74,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _group = group;
         _logger = logger;
         _channel = channel;
+        _colour = colour;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -135,7 +151,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
-            return new Spoken(sentence, clip);
+            return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }
         catch (OperationCanceledException)
         {
@@ -193,7 +209,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
-            return new Spoken(sentence, clip);
+            return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }
         catch (OperationCanceledException)
         {

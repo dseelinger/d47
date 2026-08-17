@@ -17,6 +17,70 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.22.0 — 2026-08-17 — In-game comms arrive over a radio, not from the next seat
+
+Four wanted changes about re-voiced messages, all of them the same complaint from different
+angles: Phase 11 gave every sender their own voice, and a voice on its own turned out not to be
+enough to say *where somebody is*.
+
+### Nobody says "says" any more
+
+**An NPC message is read as the words alone.** The preamble was written for people, and Elite's
+NPC traffic mostly is not people — in the 912-journal corpus the two commonest senders are
+`$ShipName_Police_Independent;` and a station's name. So what a Commander actually heard on an
+approach was "ShipName Police Independent says" in front of a three-word transmission, several
+times a minute. **A Commander keeps their name**, because in wing chat that is the one thing the
+voice cannot tell you: which of the three of them it was.
+
+Nothing is lost — the sender moved to the page, where there is no voice to carry it.
+
+One thing fixed on the way past: 8821 of the corpus's `ReceiveText` events have an empty sender,
+not a missing one, and those were being read aloud as " says: Entered Channel: Cakutsi".
+
+### Comms are on the Technical page
+
+**In-game messages now appear in the transcript**, on the Technical page, labelled with who sent
+them. They used to reach the synthesiser and nothing else, so a message that arrived while the
+Commander was looking away was gone. Not the conversation page: a station clearing you to dock is
+not part of a conversation with your companion, and on a station approach there are a lot of them.
+
+Written before it is spoken, and whether or not the speaking works — a message that could not be
+synthesised still arrived.
+
+### Only the ship's AI and the crew are in the room
+
+**Everything else is put through a comms link.** A station, a police interceptor, another
+Commander, the fleet carrier and its tower all arrive over the air; the persona aboard and the
+crew hired at a station do not. It is a 300 Hz–3.4 kHz band-pass, a saturator, and a noise floor
+that comes up when the words stop and drops the link a fifth of a second later.
+
+Three properties are held deliberately, because each of them is how an effect like this reads as a
+bug instead:
+
+- **The level does not change.** A treated line comes back at exactly the loudness it arrived at,
+  so the Commander's one speech volume still means one thing.
+- **The static does not step between sentences.** A reply is one clip per sentence, and the floor
+  is added after the level match rather than before the filters — otherwise a loud sentence and a
+  quiet one in the same transmission come back with different noise floors.
+- **It never clips.** Where matching the level would push a peak past full scale, the peak wins.
+
+The two levels of static and the length of the tail were set by listening to real Edge Neural
+output, over two passes; the first was reported as sounding like the clip had simply ended.
+
+### An NPC's voice is theirs while you are in the system
+
+The stickiness itself already worked — an NPC keeps one voice until the Commander jumps out, and
+another Commander keeps theirs for the session. Two things were wrong underneath it:
+
+- **The pool could hand out the ship AI's own voice.** Hearing d47's voice arrive from a pirate,
+  through a radio, is worse than either of those alone. No sender is now given a voice that
+  already belongs to somebody aboard.
+- **The crew turned over on every jump.** Their assignments shared the per-system table with the
+  NPCs, so the gunner hired at a station changed voice on each hyperspace jump and could collide
+  with a passing pirate. They are aboard, so their voices last the session.
+
+---
+
 ## 0.21.1 — 2026-08-17 — Three log-level rows that controlled nothing
 
 **Turning the Voice, Input or LLM log level up or down did nothing at all.** The row accepted

@@ -82,4 +82,23 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// voice assignment lives in: players survive hyperspace, NPCs do not (list.md Phase 11).
     /// </summary>
     public bool SpeakerIsPlayer { get; init; }
+
+    /// <summary>
+    /// The line to write onto the panel's Technical page, or null for an announcement that is
+    /// only ever heard.
+    /// <para>
+    /// Separate from <see cref="Text"/> because the two want different things. What is spoken is
+    /// a voice arriving in a headset, and it does not need to be told whose voice it is — the
+    /// voice is the answer. What is read is a page of lines with no voices on it, and a message
+    /// with no sender on it is unattributable. So a re-voiced message says just the words and
+    /// writes down who said them.
+    /// </para>
+    /// <para>
+    /// Non-null is also the signal that this belongs on the page at all. Every Phase 8 callout is
+    /// d47 speaking and already reaches the transcript by the route everything d47 says reaches
+    /// it; in-game comms are the case that is neither the conversation nor a diagnostic, and the
+    /// Technical page is where "true, useful, and not the conversation" already lives.
+    /// </para>
+    /// </summary>
+    public string? Transcript { get; init; }
 }

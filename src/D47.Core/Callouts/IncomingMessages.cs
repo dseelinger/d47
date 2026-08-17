@@ -105,11 +105,18 @@ public sealed partial class IncomingMessages : ICallout
             return null;
         }
 
-        return new Announcement($"message.{channel}", $"{sender} says: {text}")
+        return new Announcement($"message.{channel}", Spoken(sender, text, isPlayer))
         {
             Voice = VoiceRole.Comms,
             Speaker = sender,
             SpeakerIsPlayer = isPlayer,
+
+            // Written down with the sender on it, whoever they are. The page has no voices to
+            // tell two senders apart with, and a wall of unattributed lines is worse than the
+            // preamble ever was in the ear.
+            Transcript = sender is { Length: > 0 } named
+                ? $"{named}: {text}\n"
+                : $"{text}\n",
 
             // No cooldown. Two messages from the same channel are two messages, not one warning
             // said twice — the cooldown exists for conditions that stay true across hundreds of
@@ -117,6 +124,26 @@ public sealed partial class IncomingMessages : ICallout
             Cooldown = TimeSpan.Zero,
         };
     }
+
+    /// <summary>
+    /// What is actually said out loud.
+    /// <para>
+    /// <b>An NPC is read as the words alone.</b> Elite's NPC traffic is stations, police
+    /// interceptors, passenger liners and ships identified by class — in the corpus the commonest
+    /// senders by far are <c>$ShipName_Police_Independent;</c> and a station's name, not people —
+    /// so the preamble was reading out "ShipName Police Independent says" in front of a
+    /// three-word transmission, several times on an approach. The sender is not lost: it is on
+    /// the page, in <see cref="Announcement.Transcript"/>, and the voice carries who it is in the
+    /// ear.
+    /// </para>
+    /// <para>
+    /// <b>A player keeps theirs.</b> A Commander's name is a name, said once, and it is the thing
+    /// the Commander most needs to know about a message that arrived in wing chat — the voice
+    /// says "not you" but only the name says which of the three of them it was.
+    /// </para>
+    /// </summary>
+    private static string Spoken(string sender, string text, bool isPlayer) =>
+        isPlayer && sender is { Length: > 0 } ? $"{sender} says: {text}" : text;
 
     /// <summary>
     /// Elite wraps names in localisation decorators: <c>$cmdr_decorate:#name=Vex;</c> and
