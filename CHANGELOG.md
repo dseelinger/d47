@@ -17,10 +17,13 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
-## 0.24.0 — 2026-08-17 — Fourteen from hand-testing, and three things that had never once worked
+## 0.23.0 — 2026-08-17 — Nineteen from hand-testing, and three things that had never once worked
 
-Raised in one pass with a headset on. Three of them were features that stopped working, or never
-worked, without leaving a trace anywhere.
+Two batches in one release, because neither had shipped: five wanted changes to the settings
+surface, and fourteen raised in a pass with a headset on. Three of the fourteen were features
+that stopped working, or never worked, without leaving a trace anywhere.
+
+## What was reported with a headset on
 
 ### Auto-honk never fired, not once
 
@@ -124,7 +127,7 @@ the remembered position is the *restored* rectangle and has to stay that way, so
 on the second monitor had nothing recording it. The window is put back on that screen before it is
 maximised, because Windows maximises to whichever monitor a window is already on.
 
-### Every NPC in a system had the same voice
+### Every NPC in a system had the same voice, and none of them matched the name
 
 Voices are assigned per sender name and held for as long as the Commander is in that system, and
 they have been since Phase 11 — what was wrong is the pool they were drawn from. The filter that
@@ -136,6 +139,20 @@ NPC shared it, and the per-name assignment beside it had nothing left to assign.
 A tag is only filtered on when it is a language tag now. The line that says how big the pool is
 gives both numbers, because "1 available" is unremarkable on its own and alarming beside
 "473 offered".
+
+A woman on the radio also sounds like one. **Elite records no sex for anybody** — 914 journals,
+696,000 events, 221 event kinds, and not one carries a gender field, so this cannot be read out of
+what the game states and no amount of reading the journals will make it readable. The names are
+there, though, so d47 ships a list of 692 given names that read as a woman's and gives those
+senders a voice the provider has tagged as one. Everything it does not recognise takes a man's,
+which is the safe half of the error in this material: of the forty commonest names it does not
+match, every one is Mark, John, Paul, Andrew, David, Michael — or not a personal name at all.
+A guess from a name's ending was not on offer; it makes Joshua and Luca women and leaves Ingrid
+and Meg men.
+
+The list is short and gets longer: `tools/scan-npc-names.py` reads the set out of the source it
+ships in and reports what is still unmatched, most heard first. Running out of women's voices
+makes two women share one rather than handing either a man's.
 
 ### The log says which voice spoke
 
@@ -154,9 +171,7 @@ box is body size rather than a step down from it: a field you type into is not s
 **Not changed:** disabling **Wait between attempts** under logarithmic backoff. It does have an
 effect there — the first retry waits exactly the base under either shape — so the row stays live.
 
----
-
-## 0.23.0 — 2026-08-17 — Five wanted changes to the settings surface
+## Five wanted changes to the settings surface
 
 All five raised hand-testing 0.21.x, none of them a defect. Four are about the two places a
 Commander spends the most time on that surface: the search box, and the picker that casts a voice.

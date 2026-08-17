@@ -25,6 +25,24 @@ public static class VoicePool
         [.. voices.Where(voice => Eligible(voice.Locale)).Select(voice => voice.Id)];
 
     /// <summary>
+    /// Which of them are a woman's, by id, so a sender whose name reads as a woman's can be
+    /// given one.
+    /// <para>
+    /// Both providers tag this and neither agrees on the spelling — Edge writes "Female",
+    /// ElevenLabs writes "female" — so the comparison is case-insensitive and anything else,
+    /// including nothing at all, is left out. Absent means "not known to be", which for this
+    /// purpose is the same as a man's.
+    /// </para>
+    /// </summary>
+    public static IReadOnlySet<string> Feminine(IEnumerable<VoiceInfo> voices) =>
+        new HashSet<string>(
+            voices
+                .Where(voice => Eligible(voice.Locale)
+                                && string.Equals(voice.Gender, "female", StringComparison.OrdinalIgnoreCase))
+                .Select(voice => voice.Id),
+            StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Whether a voice tagged this way belongs in the pool: untagged, tagged with something that
     /// is not a locale at all, or tagged with an English one.
     /// </summary>

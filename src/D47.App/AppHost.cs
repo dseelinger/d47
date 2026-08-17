@@ -1604,12 +1604,16 @@ public sealed class AppHost : IDisposable
             // account, leaving every NPC in a system sharing one voice.
             Cast.Pool = VoicePool.From(_voices.Voices);
 
+            // And which of them are a woman's, so a sender whose name reads as one is given one.
+            Cast.Feminine = VoicePool.Feminine(_voices.Voices);
+
             // Both numbers, because one of them alone is what hid that: "1 voice available" is
             // alarming beside "473 offered" and unremarkable on its own.
             _logger.LogInformation(
-                "{Count} of {Offered} voices are available for re-voiced senders",
+                "{Count} of {Offered} voices are available for re-voiced senders, {Feminine} of them women's",
                 Cast.Pool.Count,
-                _voices.Count);
+                _voices.Count,
+                Cast.Feminine.Count);
 
             // Pairing a voice to each core needs the list, so it starts once the list arrives
             // rather than at startup. Background and best-effort: picking a character must never

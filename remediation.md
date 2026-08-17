@@ -46,3 +46,6 @@ Reported 2026-08-17. Each item is checked off as it ships.
   The assignment was already there and tested; the pool it drew from was not. `Cast.Pool` read
   ElevenLabs' *accent* label as a locale and kept only what started with `en`, so a 473-voice
   account became a pool of one and every NPC shared it.
+- [x] **A woman's name gets a woman's voice; everything else a man's.** Elite records no sex
+  anywhere in 914 journals, so this is a shipped list of 692 given names rather than anything
+  derived. `tools/scan-npc-names.py` reports what is still unmatched, most heard first.
