@@ -55,3 +55,10 @@ Raised while the batch was in progress.
   own crew on the Commander's own ship; "Welcome back, Commander" is how a stranger at a
   starport talks. No honorific beyond the rank — nothing in the journal says which would be
   right.
+- [x] **The dropdown appears and works in VR**, and so do text boxes. Neither is a popup: d47
+  draws its own chooser and its own keyboard into the panel's visual tree, over the page. A
+  popup asks the platform for a top level of its own, and a window that has never been shown has
+  none — opening one recurses until the stack is gone and exits at `0xC00000FD` with no exception
+  and nothing in the log, which is the crash that was reported. Forcing it into the window's own
+  overlay layer is the same crash. **Still refused in VR:** the searchable pickers, which open a
+  real dialog; those are marked and left alone rather than opening one behind you.

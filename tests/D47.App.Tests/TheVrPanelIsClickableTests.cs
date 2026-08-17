@@ -196,8 +196,17 @@ public class PressingAControlThatOpensSomethingTests
         return (null!, surface, combo);
     }
 
+    /// <summary>
+    /// Pressing a combo box puts its list on the panel, and pressing a row chooses it.
+    /// <para>
+    /// The control's own dropdown is never opened. It is a popup, and a popup asks the platform
+    /// for a top level of its own — this window has never been shown, so opening one recurses
+    /// until the stack is gone and takes the process with it, at <c>0xC00000FD</c>, before any
+    /// dispatcher work and with nothing in the log. That is the reported crash.
+    /// </para>
+    /// </summary>
     [AvaloniaFact]
-    public void PressingAComboBoxAdvancesItRatherThanOpeningIt()
+    public void PressingAComboBoxOffersItsListOnThePanel()
     {
         var (_, surface, combo) = WithACombo();
         using var _surface = surface;
@@ -207,15 +216,53 @@ public class PressingAControlThatOpensSomethingTests
 
         Assert.True(surface.Click(at.Value), "the press landed on the box");
 
+        Assert.True(surface.IsChoosing, "the list is on the panel");
+        Assert.False(combo.IsDropDownOpen, "and the control's own popup was never opened");
+
+        surface.Render();
+
+        // The rows are real controls in the real tree, which is what lets the same ray press them.
+        var rows = surface.Root.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => button.Content is "full" or "mini" or "off")
+            .ToList();
+
+        Assert.Equal(3, rows.Count);
+
+        var row = rows[1];
+        var onRow = row.TranslatePoint(new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), surface.View);
+        Assert.NotNull(onRow);
+
+        Assert.True(surface.Click(onRow.Value), "the press landed on a row");
+
         Assert.Equal(1, combo.SelectedIndex);
-        Assert.False(combo.IsDropDownOpen, "nothing opened a popup on a window that is never shown");
+        Assert.False(surface.IsChoosing, "and it put itself away");
+    }
+
+    /// <summary>Cancel closes it and changes nothing, which is the other half of a chooser.</summary>
+    [AvaloniaFact]
+    public void TheChooserCanBeLeftWithoutChoosing()
+    {
+        var (_, surface, combo) = WithACombo();
+        using var _surface = surface;
+
+        var at = combo.TranslatePoint(new Point(combo.Bounds.Width / 2, combo.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
 
         surface.Click(at.Value);
-        surface.Click(at.Value);
+        surface.Render();
 
-        // And it wraps, so a list can be walked a press at a time.
+        var cancel = surface.Root.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => button.Content is "Cancel");
+
+        var onCancel = cancel.TranslatePoint(new Point(cancel.Bounds.Width / 2, cancel.Bounds.Height / 2), surface.View);
+        Assert.NotNull(onCancel);
+
+        surface.Click(onCancel.Value);
+
+        Assert.False(surface.IsChoosing);
         Assert.Equal(0, combo.SelectedIndex);
-        Assert.False(combo.IsDropDownOpen);
     }
 
     /// <summary>
@@ -260,5 +307,133 @@ public class PressingAControlThatOpensSomethingTests
 
         Assert.True(surface.Click(at.Value));
         Assert.Equal(1, pressed);
+    }
+}
+
+/// <summary>
+/// Typing into a text box from a headset
+/// (remediation.md 9, "all text boxes should be functional in VR").
+/// <para>
+/// There is no other way to fill one: the window is never shown, so it takes no keystrokes from
+/// the desktop, and there is no keyboard in a cockpit to take them from anyway.
+/// </para>
+/// </summary>
+public class TypingInVrTests
+{
+    private static readonly PixelSize Quad = new(1024, 640);
+
+    private static (OffscreenSurface Surface, TextBox Box) WithABox(string text = "")
+    {
+        var box = new TextBox { Text = text, Width = 200, Height = 32 };
+        var host = new Border { Child = box, Width = Quad.Width, Height = Quad.Height };
+        var surface = new OffscreenSurface(host, Quad);
+
+        surface.Render();
+
+        return (surface, box);
+    }
+
+    private static void Press(OffscreenSurface surface, Control control)
+    {
+        var at = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
+        Assert.True(surface.Click(at.Value), $"the press landed on {control}");
+    }
+
+    private static Button Key(OffscreenSurface surface, string label) =>
+        surface.Root.GetVisualDescendants().OfType<Button>().First(button => (button.Content as string) == label);
+
+    [AvaloniaFact]
+    public void PressingATextBoxOffersAKeyboard()
+    {
+        var (surface, box) = WithABox();
+        using var _ = surface;
+
+        Press(surface, box);
+
+        Assert.True(surface.IsChoosing, "something is over the panel");
+
+        surface.Render();
+
+        // The keys are real buttons in the real tree, pressed by the same ray as everything else.
+        Assert.NotNull(Key(surface, "a"));
+        Assert.NotNull(Key(surface, "space"));
+        Assert.NotNull(Key(surface, "Done"));
+    }
+
+    [AvaloniaFact]
+    public void WhatIsTypedReachesTheBoxOnDone()
+    {
+        var (surface, box) = WithABox();
+        using var _ = surface;
+
+        Press(surface, box);
+        surface.Render();
+
+        foreach (var key in new[] { "s", "o", "l" })
+        {
+            Press(surface, Key(surface, key));
+            surface.Render();
+        }
+
+        // Not yet: a settings row commits what it is handed, and committing letter by letter is
+        // two wrong values on the way to the right one.
+        Assert.Equal(string.Empty, box.Text);
+
+        Press(surface, Key(surface, "Done"));
+
+        Assert.Equal("sol", box.Text);
+        Assert.False(surface.IsChoosing);
+    }
+
+    /// <summary>It starts from what is already in the box, so an edit is an edit.</summary>
+    [AvaloniaFact]
+    public void ItStartsFromWhatIsAlreadyThere()
+    {
+        var (surface, box) = WithABox("deciat");
+        using var _ = surface;
+
+        Press(surface, box);
+        surface.Render();
+
+        Press(surface, Key(surface, "delete"));
+        surface.Render();
+        Press(surface, Key(surface, "Done"));
+
+        Assert.Equal("decia", box.Text);
+    }
+
+    [AvaloniaFact]
+    public void CancelLeavesTheBoxAlone()
+    {
+        var (surface, box) = WithABox("deciat");
+        using var _ = surface;
+
+        Press(surface, box);
+        surface.Render();
+
+        Press(surface, Key(surface, "a"));
+        surface.Render();
+        Press(surface, Key(surface, "Cancel"));
+
+        Assert.Equal("deciat", box.Text);
+        Assert.False(surface.IsChoosing);
+    }
+
+    /// <summary>And clear empties it, for a row being retyped rather than corrected.</summary>
+    [AvaloniaFact]
+    public void ClearEmptiesIt()
+    {
+        var (surface, box) = WithABox("deciat");
+        using var _ = surface;
+
+        Press(surface, box);
+        surface.Render();
+
+        Press(surface, Key(surface, "clear"));
+        surface.Render();
+        Press(surface, Key(surface, "Done"));
+
+        Assert.Equal(string.Empty, box.Text);
     }
 }
