@@ -36,7 +36,26 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
 
     private IReadOnlyList<SwitchMapping> _switches = [];
     private IReadOnlyList<SwitchProblem> _problems = [];
-    private DateTime _stamp;
+
+    /// <summary>
+    /// The file's contents as last read, which is what "has it changed" is answered against.
+    /// <para>
+    /// It was a last-write time, and that is not good enough <b>here</b>. Windows updates the
+    /// file-system clock about every 15.6 ms, so two writes inside one tick carry the same stamp
+    /// and the second is invisible. <see cref="GameStatus"/> stamps for the same reason and is
+    /// fine, because Elite rewrites Status.json every second or so and a missed read self-corrects
+    /// on the next one. A hand edit is a one-off: miss it and it stays missed until the Commander
+    /// edits again, having watched d47 ignore them once already.
+    /// </para>
+    /// <para>
+    /// The airtight version has to be the content, because the alternative needs the clock —
+    /// "is this stamp too fresh to trust?" is a question about now — and no Core component reads
+    /// the clock. The file holds at most <see cref="SwitchValidation.MaxSwitches"/> switches, so
+    /// this is a few kilobytes per poll against a correctness hole that only appears on a fast
+    /// machine. It appeared on CI first.
+    /// </para>
+    /// </summary>
+    private string? _seen;
 
     public string Path => path;
 
@@ -72,16 +91,14 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
     /// </summary>
     public bool Poll()
     {
-        DateTime written;
+        string text;
 
         try
         {
-            var info = new FileInfo(path);
-
-            if (!info.Exists)
+            if (!File.Exists(path))
             {
                 // Not an error: no switches is the normal state, and will be for most Commanders.
-                if (_stamp == default)
+                if (_seen is null)
                 {
                     return false;
                 }
@@ -90,41 +107,42 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
                 {
                     _switches = [];
                     _problems = [];
-                    _stamp = default;
+                    _seen = null;
                 }
 
                 return true;
             }
 
-            written = info.LastWriteTimeUtc;
+            using var stream = new FileStream(
+                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+            using var reader = new StreamReader(stream);
+            text = reader.ReadToEnd();
         }
         catch (IOException ex)
         {
-            logger.LogDebug(ex, "Could not stat the switch file");
+            logger.LogDebug(ex, "Could not read the switch file");
             return false;
         }
 
-        return written != _stamp && Reload(written);
+        return !string.Equals(text, _seen, StringComparison.Ordinal) && Reload(text);
     }
 
-    private bool Reload(DateTime written)
+    private bool Reload(string text)
     {
         SwitchFile? file;
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-            file = JsonSerializer.Deserialize<SwitchFile>(stream, Json);
+            file = JsonSerializer.Deserialize<SwitchFile>(text, Json);
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        catch (JsonException ex)
         {
             lock (_gate)
             {
                 _switches = [];
                 _problems = [new SwitchProblem(System.IO.Path.GetFileName(path), ex.Message)];
-                _stamp = written;
+                _seen = text;
             }
 
             logger.LogWarning(ex, "The switch file could not be read");
@@ -166,7 +184,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
         {
             _switches = accepted;
             _problems = problems;
-            _stamp = written;
+            _seen = text;
         }
 
         logger.LogInformation(
@@ -192,7 +210,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
 
         // Forces the next Poll to re-read rather than trusting what was just written, so the
         // in-memory set is always the validated one rather than the one that was submitted.
-        _stamp = default;
+        _seen = null;
     }
 
     private sealed class SwitchFile

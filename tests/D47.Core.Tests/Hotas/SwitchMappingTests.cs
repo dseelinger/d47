@@ -261,9 +261,51 @@ public class SwitchStoreTests : IDisposable
             }
             """);
 
-        // The stamp is a last-write time, so a file rewritten within the same tick of the file
-        // system clock would not be seen. Saving resets the stamp, which is what makes this real
-        // rather than a race the test happens to win.
+        Assert.True(store.Poll());
+        Assert.Single(store.Switches);
+    }
+
+    /// <summary>
+    /// The same thing as above, with the one variable that used to decide it held still.
+    /// <para>
+    /// The comment this replaces claimed that saving first was "what makes this real rather than a
+    /// race the test happens to win". It was wrong, and precisely backwards: <c>Save</c> resets the
+    /// stamp <em>before</em> the first poll, so the second write is the race — and on a machine
+    /// quick enough to do both inside one 15.6 ms tick of the file-system clock, the edit carried
+    /// the same last-write time as the save and the store saw nothing. The suite passed here and
+    /// failed on CI, which is the only reason anybody found out.
+    /// </para>
+    /// <para>
+    /// So the timestamp is pinned rather than hoped about. This fails against a store that decides
+    /// by last-write time and passes against one that reads the file, which is the whole point of
+    /// writing it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnEditThatLandsOnTheSameTimestampIsStillPickedUp()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(Path_, """{ "switches": [] }""");
+
+        var frozen = File.GetLastWriteTimeUtc(Path_);
+
+        var store = Store();
+        Assert.True(store.Poll());
+        Assert.Empty(store.Switches);
+
+        File.WriteAllText(Path_, """
+            {
+              "switches": [
+                { "name": "gear switch", "deviceId": "d", "positions": [
+                    { "button": 8, "action": "landing_gear", "state": "on" },
+                    { "button": 9, "action": "landing_gear", "state": "off" } ] }
+              ]
+            }
+            """);
+
+        File.SetLastWriteTimeUtc(Path_, frozen);
+        Assert.Equal(frozen, File.GetLastWriteTimeUtc(Path_));
+
         Assert.True(store.Poll());
         Assert.Single(store.Switches);
     }
