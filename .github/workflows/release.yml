@@ -62,7 +62,7 @@ jobs:
       - name: Self-test the published build
         timeout-minutes: 10
         shell: pwsh
-        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        working-directory: src/D47.App/bin/Release/publish
         run: |
           New-Item -ItemType Directory -Force data\models | Out-Null
           Copy-Item (Join-Path $env:GITHUB_WORKSPACE '.model-cache\ggml-tiny.en.bin') data\models\
@@ -78,7 +78,7 @@ jobs:
       # which is why a release is an archive rather than a bare executable.
       - name: Package
         shell: pwsh
-        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        working-directory: src/D47.App/bin/Release/publish
         run: Compress-Archive -Path d47.exe, runtimes -DestinationPath d47.zip
 
       # The installer is the normal way in; the zip stays for portable use and is what the
@@ -97,7 +97,7 @@ jobs:
       - name: Checksums
         shell: bash
         run: |
-          cd src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+          cd src/D47.App/bin/Release/publish
           sha256sum d47.zip | tee d47.zip.sha256
           cd "$GITHUB_WORKSPACE/installer"
           sha256sum d47-setup.exe | tee d47-setup.exe.sha256
@@ -110,5 +110,5 @@ jobs:
           files: |
             installer/d47-setup.exe
             installer/d47-setup.exe.sha256
-            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip
-            src/D47.App/bin/Release/net10.0-windows/win-x64/publish/d47.zip.sha256
+            src/D47.App/bin/Release/publish/d47.zip
+            src/D47.App/bin/Release/publish/d47.zip.sha256

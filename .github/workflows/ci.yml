@@ -53,7 +53,7 @@ jobs:
       - name: Self-test the published build
         timeout-minutes: 10
         shell: pwsh
-        working-directory: src/D47.App/bin/Release/net10.0-windows/win-x64/publish
+        working-directory: src/D47.App/bin/Release/publish
         run: |
           New-Item -ItemType Directory -Force data\models | Out-Null
           Copy-Item (Join-Path $env:GITHUB_WORKSPACE '.model-cache\ggml-tiny.en.bin') data\models\

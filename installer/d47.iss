@@ -63,10 +63,10 @@ Name: "startmenu"; Description: "Add a Start Menu entry"; GroupDescription: "Sho
 Name: "desktopicon"; Description: "Add a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "..\src\D47.App\bin\Release\net10.0-windows\win-x64\publish\{#ExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\D47.App\bin\Release\publish\{#ExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; Whisper's natives, which its loader finds by probing runtimes\win-x64 on disk beside the
 ; executable. recursesubdirs preserves that layout exactly; flattening it breaks speech.
-Source: "..\src\D47.App\bin\Release\net10.0-windows\win-x64\publish\runtimes\*"; DestDir: "{app}\runtimes"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtimes"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 ; Named to match StartMenuShortcut.EntryName so the two paths cannot disagree.

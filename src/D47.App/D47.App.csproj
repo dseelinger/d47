@@ -28,6 +28,23 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!--
+      Publish output goes somewhere the target framework is not part of the path.
+
+      The default is bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish, and
+      three files outside this project spelled that out in full: both workflows and the Inno
+      Setup script. Phase 21 changed the framework from net10.0-windows to
+      net10.0-windows10.0.26100.0 and every one of them kept pointing at a directory that no
+      longer exists. That is not a build failure, because the publish itself succeeded. It is a
+      release failing after the tag is pushed, and a tag never moves, so it cost the version
+      number v0.16.0.
+
+      Setting it here rather than passing -o keeps the rule this csproj already exists for:
+      publish settings live in the project so local and CI cannot diverge (architecture.md 9),
+      and `dotnet publish src/D47.App -c Release` still needs no flags. The path now has no
+      framework in it, so the next framework change cannot repeat this.
+    -->
+    <PublishDir>bin\$(Configuration)\publish\</PublishDir>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <!-- Symbols inside the exe: stack traces keep line numbers without shipping a second file. -->
     <DebugType>embedded</DebugType>
