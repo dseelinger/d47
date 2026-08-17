@@ -683,6 +683,11 @@ public static class SpeechCapability
                 // disclosure unconditionally, which was true while Edge was the only provider
                 // and becomes a false statement the moment a second one is selectable.
                 Help = "Exactly what leaves this machine to be spoken, for the provider you have selected.",
+
+                // On a tooltip rather than inline. It is five lines of prose sitting between
+                // rows that are one line each, and it is consulted rather than read
+                // (remediation.md, "What the voice provider receives").
+                ValueAsHint = true,
                 DocsAnchor = "egress",
                 Binding = new SettingBinding
                 {

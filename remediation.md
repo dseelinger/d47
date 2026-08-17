@@ -7,11 +7,11 @@ Reported 2026-08-17. Each item is checked off as it ships.
   **Dropped 2026-08-17.** It does have an effect: `RetryPolicy.WaitBefore` multiplies the base
   wait by `log2(retry + 1)`, so the first retry waits exactly the base under either shape and
   the later ones are that base decelerating. Disabling the row would have frozen a live value.
-- [ ] **"What the voice provider receives" is a hint, not body text.** It should appear only
+- [x] **"What the voice provider receives" is a hint, not body text.** It should appear only
   on hover over the label or the description.
 - [x] **Search boxes use the UI font size.** They currently render smaller than the rest of
   the UI.
-- [ ] **Nav highlight does not track the settings scroll.** Scrolling the settings, the
+- [x] **Nav highlight does not track the settings scroll.** Scrolling the settings, the
   highlighted heading in the left nav does not line up with what is at the top of the
   settings area on the right. Possibly a zoom issue.
 - [x] **Ship AI callouts belong on the Conversation and Technical tabs.**

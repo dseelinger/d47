@@ -283,6 +283,24 @@ public sealed record SettingRow
     public string? PressLabel { get; init; }
 
     /// <summary>
+    /// Whether an <see cref="SettingKind.Info"/> row's value belongs on a tooltip rather than
+    /// on the page.
+    /// <para>
+    /// The egress disclosures are paragraphs, and a paragraph rendered inline is a paragraph
+    /// between two rows that are one line each — the one about the voice provider is five lines
+    /// in the middle of the speech card. It is a thing to consult, not a thing to read every
+    /// time: the row still states what it is about, and hovering the label or its help line
+    /// gives the whole disclosure (remediation.md, "What the voice provider receives").
+    /// </para>
+    /// <para>
+    /// Declared on the row for the reason every other row property is: the surface renders what
+    /// a descriptor declares, and a row the panel had to recognise by key would be a second
+    /// list to keep in step with the registry.
+    /// </para>
+    /// </summary>
+    public bool ValueAsHint { get; init; }
+
+    /// <summary>
     /// Whether the value is a paragraph rather than a line. Only About Me so far, and only
     /// the control's height depends on it.
     /// </summary>

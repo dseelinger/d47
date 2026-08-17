@@ -499,8 +499,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Scroller.Offset = new Vector(0, CardTop(_sections[index].Card));
     }
 
-    /// <summary>The card's position in the scroller's content space, margins included.</summary>
-    private double CardTop(Border card) => card.Bounds.Y + Cards.Bounds.Y - 8;
+    /// <summary>
+    /// The card's position in the scroller's <em>content</em>, which is not where it is on
+    /// screen.
+    /// <para>
+    /// <b>This read <c>card.Bounds.Y + Cards.Bounds.Y</c>, and that counted the scroll twice.</b>
+    /// A <see cref="ScrollViewer"/> scrolls by arranging its content at a negative offset, so
+    /// <c>Cards.Bounds.Y</c> is the card column's margin <em>minus</em> however far the page has
+    /// been scrolled — 20 at the top, and 20 minus 4,931 further down. Feeding that into a
+    /// comparison against the offset made the test "has this card's head passed the top edge"
+    /// come out as "is this card's top less than twice the offset", so the highlight ran ahead
+    /// of the page and further ahead the further down it went: at the fourth section it named
+    /// the seventh, and past the sixth it sat on the last one for the rest of the page.
+    /// </para>
+    /// <para>
+    /// The margin is the answer instead. It is this class's own margin on its own column, it
+    /// does not move, and content space is what both callers want — the spy compares it against
+    /// the offset, and a nav click assigns it to the offset.
+    /// </para>
+    /// </summary>
+    private double CardTop(Border card) => card.Bounds.Y + Cards.Margin.Top;
 
     /// <summary>
     /// Highlights the section the panel is actually showing — the topmost card still in view —
@@ -1034,6 +1052,31 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         caption.Children.Add(help);
         caption.Children.Add(keyLine);
 
+        if (row is { ValueAsHint: true, Binding: { } hinted })
+        {
+            // On the caption rather than on the label alone, so the help line under it answers
+            // the hover too — the request was "the label or the description", and the two read
+            // as one block.
+            //
+            // Folded into the row's own refresh, because this disclosure is a function of the
+            // selected provider: a tip set once would go on describing Edge after ElevenLabs
+            // was chosen, which is the exact staleness this row was rewritten to end.
+            var describe = refresh;
+
+            refresh = () =>
+            {
+                describe();
+                ToolTip.SetTip(caption, hinted.Read(_settings!.Current));
+            };
+
+            ToolTip.SetShowDelay(caption, 250);
+
+            // The pointer has to have something to be over. A StackPanel with no background is
+            // transparent to hit-testing between its children, so the gaps in the caption would
+            // swallow the hover and the tip would come and go as the pointer crossed them.
+            caption.Background = Brushes.Transparent;
+        }
+
         Control body;
         if (compact)
         {
@@ -1181,6 +1224,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // this button is a method rather than a window the App has to own.
             case SettingKind.Info when row.Press is not null:
                 return BuildPressable(row);
+
+            // A disclosure that is consulted rather than read. It has no control at all: the
+            // value goes on the caption's tooltip, which BuildRow attaches once it has the
+            // caption to attach it to.
+            case SettingKind.Info when row.ValueAsHint:
+                return (new Avalonia.Controls.Panel(), () => { }, true);
 
             case SettingKind.Info:
                 return BuildInfo(row);
