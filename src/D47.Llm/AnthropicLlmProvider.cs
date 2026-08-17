@@ -253,6 +253,11 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         var blocksSinceBreakpoint = 0;
         var breakpointsSpent = 1;
 
+        // The blocks the last message was built from, or null when it was built from a plain
+        // string. Held because live game state may have to be folded into that message, and a
+        // MessageParam does not hand its content back in the form it went in as.
+        List<ContentBlockParam>? lastBlocks = null;
+
         foreach (var turn in prompt.History)
         {
             var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
@@ -264,6 +269,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             {
                 messages.Add(new MessageParam { Role = role, Content = only.Value });
                 blocksSinceBreakpoint++;
+                lastBlocks = null;
                 continue;
             }
 
@@ -314,6 +320,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             }
 
             messages.Add(new MessageParam { Role = role, Content = blocks });
+            lastBlocks = blocks;
         }
 
         // Live game state goes after the cached history either way. The role it arrives under is
@@ -328,11 +335,31 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             else if (messages.Count > 0)
             {
                 var last = messages[^1];
-                messages[^1] = new MessageParam
-                {
-                    Role = last.Role,
-                    Content = $"<system-reminder>\n{prompt.LiveGameState}\n</system-reminder>\n\n{last.Content}",
-                };
+                var reminder = $"<system-reminder>\n{prompt.LiveGameState}\n</system-reminder>";
+
+                // Folded into the last message rather than added after it: a message of its own
+                // would be a second user turn in a row, and in the middle of a tool round it
+                // would stand between a tool_use and the result answering it.
+                //
+                // Rebuilt from what that message was built out of, never from the message
+                // itself. Interpolating the content union serialises it, which is not the same
+                // thing as reading it: a plain string reached the model inside a pair of quote
+                // marks nobody typed, and a block list reached it as the JSON text of itself —
+                // so the tool_result a round had just produced stopped being a block at all. The
+                // tool_use above it then had nothing immediately after it, and the API rejected
+                // the request identically on all three attempts, for as long as the Commander
+                // was in the game (bugs.md 1).
+                messages[^1] = lastBlocks is null
+                    ? new MessageParam { Role = last.Role, Content = $"{reminder}\n\n{TextOf(prompt.History[^1])}" }
+
+                    // After the blocks rather than before them, because a user message carrying
+                    // tool results has to open with them.
+                    : new MessageParam
+                    {
+                        Role = last.Role,
+                        Content = new List<ContentBlockParam>(
+                            [.. lastBlocks, new TextBlockParam { Text = reminder }]),
+                    };
             }
         }
 
@@ -366,6 +393,13 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             Messages = messages,
         };
     }
+
+    /// <summary>
+    /// The text a turn of a single text block was built from — the one shape that goes on the
+    /// wire as a plain string rather than as a list of blocks.
+    /// </summary>
+    private static string TextOf(ConversationMessage turn) =>
+        turn.Content is [ConversationContent.Text only] ? only.Value : string.Empty;
 
     /// <summary>
     /// The web search declaration, or nothing.

@@ -135,7 +135,11 @@ public class PromptOnTheWireTests
 
         Assert.Contains("<system-reminder>", content, StringComparison.Ordinal);
         Assert.Contains("Shinrarta Dezhra", content, StringComparison.Ordinal);
-        Assert.Contains("where am I?", content, StringComparison.Ordinal);
+
+        // The Commander's own words, and only their own words. Rebuilding this message by
+        // interpolating the content union serialised it instead of reading it, so what arrived
+        // was JSON: the question inside a pair of quote marks it was never asked with.
+        Assert.EndsWith("\n\nwhere am I?", content, StringComparison.Ordinal);
     }
 
     /// <summary>No live game state means no extra message at all, on either kind of model.</summary>
@@ -179,6 +183,50 @@ public class PromptOnTheWireTests
         var result = messages[2].GetProperty("content")[0];
         Assert.Equal("tool_result", result.GetProperty("type").GetString());
         Assert.Equal("toolu_9", result.GetProperty("tool_use_id").GetString());
+    }
+
+    /// <summary>
+    /// The fold-in path is the one that runs mid-tool-round, and a tool round ends on a message
+    /// whose content is blocks rather than a string.
+    /// <para>
+    /// This is bugs.md 1. Live game state is folded into the last message by rebuilding it with
+    /// an interpolated string, and interpolating a block list stringifies the union that holds
+    /// it — so the <c>tool_result</c> the round had just produced left the request altogether,
+    /// the <c>tool_use</c> above it had nothing immediately after it, and the API rejected the
+    /// whole turn. Every one of the three attempts sent the same body, which is why retrying
+    /// could not help.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task LiveGameStateDoesNotEatTheToolResultItLandsOn()
+    {
+        var sent = await SentAsync(With(
+        [
+            new ConversationMessage(ConversationRole.User, "place the VR panel here"),
+            new ConversationMessage(
+                ConversationRole.Assistant,
+                [new ConversationContent.ToolUse("toolu_9", "reanchor_vr_panel", "{}")]),
+            new ConversationMessage(
+                ConversationRole.User,
+                [new ConversationContent.ToolResult("toolu_9", "the panel is where you are looking", false)]),
+        ],
+            liveGameState: "System: Shinrarta Dezhra",
+            model: "claude-sonnet-5"));
+
+        var messages = sent.GetProperty("messages");
+        var last = messages[messages.GetArrayLength() - 1];
+
+        // The result is still a block, still carrying the id of the call above it.
+        var result = last.GetProperty("content")[0];
+
+        Assert.Equal("tool_result", result.GetProperty("type").GetString());
+        Assert.Equal("toolu_9", result.GetProperty("tool_use_id").GetString());
+
+        // And the state that had to go somewhere went somewhere, without displacing it.
+        Assert.Contains(
+            "Shinrarta Dezhra",
+            last.GetProperty("content").ToString(),
+            StringComparison.Ordinal);
     }
 
     /// <summary>
