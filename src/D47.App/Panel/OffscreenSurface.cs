@@ -1,10 +1,14 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Controls.Templates;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.VisualTree;
 
 namespace D47.App.Panel;
@@ -34,21 +38,51 @@ public sealed class OffscreenSurface : IDisposable
     private readonly Window _root;
     private readonly Control _view;
 
+    /// <summary>
+    /// Where a chooser is drawn, over the view and inside the same visual tree.
+    /// <para>
+    /// <b>d47 draws its own rather than opening a popup, and that is not a preference.</b> A popup
+    /// asks the platform for a top level of its own; this window has never been shown, so there is
+    /// nothing for one to hang off, and opening one does not fail politely — it recurses until the
+    /// stack is gone and takes the process with it. Measured: <c>IsDropDownOpen = true</c> on a
+    /// combo box in here exits at <c>0xC00000FD</c>, before any dispatcher work, with no exception
+    /// and nothing in the log. Forcing the popup into the window's own overlay layer does not help;
+    /// it is the same crash. That is what pressing "Panel content" from the headset did
+    /// (remediation.md 9).
+    /// </para>
+    /// <para>
+    /// A layer here is a plain <see cref="Avalonia.Controls.Panel"/> in the tree that is already laid out, drawn and
+    /// hit-tested every frame. Everything that works for a button on the panel works for a row in
+    /// here for free — including the ray, which is the whole point.
+    /// </para>
+    /// </summary>
+    private readonly Avalonia.Controls.Panel _over = new() { IsVisible = false };
+
     private RenderTargetBitmap? _target;
     private PixelSize _size;
+
+    /// <summary>Both, so a render includes whatever is being chosen from.</summary>
+    private readonly Avalonia.Controls.Panel _surface;
 
     public OffscreenSurface(Control view, PixelSize size)
     {
         _view = view;
 
+        _surface = new Avalonia.Controls.Panel();
+        _surface.Children.Add(view);
+        _surface.Children.Add(_over);
+
         _root = new Window
         {
             ShowInTaskbar = false,
-            Content = view,
+            Content = _surface,
         };
 
         Resize(size);
     }
+
+    /// <summary>Whether something is being chosen from right now.</summary>
+    public bool IsChoosing => _over.IsVisible;
 
     public PixelSize Size => _size;
 
@@ -80,10 +114,41 @@ public sealed class OffscreenSurface : IDisposable
     /// Lays the view out and rasterises it. Runs on the UI thread — a <c>Visual</c> is thread
     /// affine and the layout pass is the dispatcher's.
     /// </summary>
-    public RenderTargetBitmap Render()
+    /// <param name="settle">
+    /// Run between the layout pass and the rasterise, for anything that can only be decided once
+    /// the tree has a size — and then laid out again, because what it decides is a position.
+    /// <para>
+    /// The panel's "follow the newest line" is the case this exists for. It scrolls to the end of
+    /// the extent the scroll viewer currently knows about, and calls <c>UpdateLayout</c> first to
+    /// make sure that extent is current — which, on a window that is never shown, does nothing at
+    /// all. So it scrolled to the end of an extent equal to the viewport, which is offset zero,
+    /// and the headset showed the oldest lines of the transcript for the whole session
+    /// (remediation.md, "The Newest button in VR does not appear to work").
+    /// </para>
+    /// </param>
+    public RenderTargetBitmap Render(Action? settle = null)
     {
         var bounds = new Rect(0, 0, _size.Width, _size.Height);
 
+        Layout(bounds);
+
+
+        if (settle is not null)
+        {
+            settle();
+
+            // Again, because what settling decides is where things sit rather than how big they
+            // are, and a scroll offset is applied by an arrange.
+            Layout(bounds);
+        }
+
+        _target!.Render(_surface);
+        return _target;
+    }
+
+    /// <summary>One full layout pass over the offscreen tree.</summary>
+    private void Layout(Rect bounds)
+    {
         // <b>Every element is invalidated first, and that is the fix rather than a precaution.</b>
         //
         // Measure short-circuits on a control that is already valid, and a control that changed
@@ -116,9 +181,8 @@ public sealed class OffscreenSurface : IDisposable
         _root.Arrange(bounds);
         _view.Measure(bounds.Size);
         _view.Arrange(bounds);
-
-        _target!.Render(_view);
-        return _target;
+        _surface.Measure(bounds.Size);
+        _surface.Arrange(bounds);
     }
 
     /// <summary>
@@ -151,7 +215,34 @@ public sealed class OffscreenSurface : IDisposable
     /// </summary>
     public bool Click(Point at)
     {
-        if (Deepest(_view, at) is not { } target)
+        if (Deepest(_surface, at) is not { } target)
+        {
+            return false;
+        }
+
+        // Decided before a single pointer event is raised, because for two kinds of control the
+        // gesture itself is the problem rather than what it activates.
+        var actionable = target.GetSelfAndVisualAncestors().OfType<Control>().FirstOrDefault(Actionable);
+
+        // A combo box would open a popup, which is the crash. It gets a chooser drawn into this
+        // tree instead — the same list, on the panel, pressable by the same ray.
+        if (actionable is ComboBox combo)
+        {
+            return Choose(combo);
+        }
+
+        // A text box has nothing to type into it here: there is no keyboard in a cockpit and no
+        // focus to give it. It gets one drawn on the panel.
+        if (actionable is TextBox box)
+        {
+            Type(box);
+            return true;
+        }
+
+        // A control that opens a window is left alone. The chooser above covers the case that
+        // matters; a dialog on a desktop the Commander is not looking at is one they cannot
+        // answer, so it is refused rather than opened behind them.
+        if (actionable is not null && actionable.Classes.Contains(DesktopOnly))
         {
             return false;
         }
@@ -206,6 +297,295 @@ public sealed class OffscreenSurface : IDisposable
     /// anyway.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Controls this knows how to press. A class rather than a name so the settings surface can
+    /// mark one without this having to know what it is for.
+    /// </summary>
+    public const string DesktopOnly = "desktop-only";
+
+    /// <summary>Whether this is a control a press means something to.</summary>
+    private static bool Actionable(Control control) =>
+        control is ComboBox or TextBox or ToggleButton or Button || control.Classes.Contains(DesktopOnly);
+
+    /// <summary>
+    /// Puts a combo box's list on the panel, as a chooser the ray can press.
+    /// <para>
+    /// Its own drawing rather than the control's own dropdown, because the dropdown is a popup
+    /// and a popup cannot be hosted here at all — see <see cref="_over"/>. What the Commander
+    /// gets is the same items in the same order with the current one marked.
+    /// </para>
+    /// </summary>
+    private bool Choose(ComboBox combo)
+    {
+        if (combo.ItemCount == 0)
+        {
+            return false;
+        }
+
+        // Never the control's own. Nothing here opens it, and a box left open by anything else is
+        // the state this exists to keep out of.
+        combo.IsDropDownOpen = false;
+
+        var items = new List<string>(combo.ItemCount);
+
+        foreach (var item in combo.Items)
+        {
+            items.Add(item?.ToString() ?? string.Empty);
+        }
+
+        Offer(items, combo.SelectedIndex, chosen => combo.SelectedIndex = chosen);
+        return true;
+    }
+
+    /// <summary>
+    /// What the panel's own overlays are drawn in.
+    /// <para>
+    /// <b>Deliberately not themed</b>, for the same reason the caption layer is not: these are
+    /// read at a metre through a headset, over whatever the cockpit is doing behind them, and
+    /// they have to be legible before they are in keeping. The first cut inherited the theme and
+    /// came out dark grey on dark grey — present in the tree, pressable, and unreadable.
+    /// </para>
+    /// </summary>
+    private static readonly IBrush Ink = new SolidColorBrush(Color.FromRgb(0xF2, 0xF2, 0xF2));
+
+    private static readonly IBrush KeyFill = new SolidColorBrush(Color.FromRgb(0x2C, 0x31, 0x39));
+
+    private static readonly IBrush KeyEdge = new SolidColorBrush(Color.FromRgb(0x50, 0x57, 0x63));
+
+    private static readonly IBrush CardFill = new SolidColorBrush(Color.FromRgb(0x14, 0x16, 0x1A));
+
+    private static readonly IBrush Marked = new SolidColorBrush(Color.FromRgb(0x1F, 0x4A, 0x6B));
+
+    /// <summary>
+    /// One pressable thing, dressed so it can be read from across a cockpit.
+    /// <para>
+    /// <see cref="Theming.TypeScale.Heading"/> for every one of them, which is the top of the
+    /// scale and the right end of it: the scale resolves upwards precisely because a surface read
+    /// at a metre in a headset is the case it was written for, and a key nobody can read is a key
+    /// nobody can press.
+    /// </para>
+    /// </summary>
+    private static Button Pressable(string label, IBrush? fill = null) => new()
+    {
+        Content = label,
+        Foreground = Ink,
+        Background = fill ?? KeyFill,
+        BorderBrush = KeyEdge,
+        BorderThickness = new Thickness(1),
+        CornerRadius = new CornerRadius(4),
+        FontSize = Theming.TypeScale.Heading,
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>
+    /// Draws a list over the panel and calls back with what was pressed.
+    /// <para>
+    /// Ordinary controls in the ordinary tree: a border, a scroll viewer and one button a row.
+    /// Everything that already works on this surface — the geometric hit test, the activation, the
+    /// scrollbar a ray can drag — works on these without knowing they are special.
+    /// </para>
+    /// </summary>
+    public void Offer(IReadOnlyList<string> items, int selected, Action<int> pick)
+    {
+        var rows = new StackPanel { Spacing = 2 };
+
+        for (var index = 0; index < items.Count; index++)
+        {
+            var at = index;
+
+            var row = Pressable(items[index], fill: index == selected ? Marked : null);
+
+            row.HorizontalAlignment = HorizontalAlignment.Stretch;
+            row.HorizontalContentAlignment = HorizontalAlignment.Left;
+            row.Padding = new Thickness(16, 12);
+            row.MinHeight = 48;
+            row.FontWeight = index == selected ? FontWeight.SemiBold : FontWeight.Normal;
+
+            row.Click += (_, _) =>
+            {
+                Dismiss();
+                pick(at);
+            };
+
+            rows.Children.Add(row);
+        }
+
+        var cancel = Pressable("Cancel");
+        cancel.HorizontalAlignment = HorizontalAlignment.Right;
+        cancel.Padding = new Thickness(18, 10);
+        cancel.Margin = new Thickness(0, 12, 0, 0);
+        cancel.Click += (_, _) => Dismiss();
+
+        var body = new DockPanel { LastChildFill = true };
+        DockPanel.SetDock(cancel, Dock.Bottom);
+        body.Children.Add(cancel);
+        body.Children.Add(new ScrollViewer
+        {
+            Content = rows,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        });
+
+        var card = Card(body);
+        card.MinWidth = Math.Min(460, _size.Width - 120);
+        card.MaxWidth = Math.Min(560, _size.Width - 80);
+
+        Overlay(card);
+    }
+
+    /// <summary>
+    /// The keys, in rows, as they are drawn.
+    /// <para>
+    /// A staggered alphabetic board rather than a strict QWERTY, because what is typed into these
+    /// rows is a system name, a commander name or a hotkey — hunted for one key at a time with a
+    /// controller, where alphabetical order is faster to hunt in than muscle memory that only
+    /// works with ten fingers on a desk.
+    /// </para>
+    /// </summary>
+    private static readonly string[] Keys = ["1234567890", "abcdefghij", "klmnopqrst", "uvwxyz-_.", " "];
+
+    /// <summary>
+    /// Puts a keyboard on the panel for one text box, and writes what was typed back into it.
+    /// <para>
+    /// There is no other way to fill one of these from inside a headset: the window is never
+    /// shown, so it takes no keystrokes from the desktop, and there is no keyboard in a cockpit
+    /// to take them from anyway (remediation.md 9, "all text boxes should be functional in VR").
+    /// </para>
+    /// <para>
+    /// The box is written once, on Done, rather than on every key. A settings row commits what it
+    /// is given, and committing a system name letter by letter would be twelve writes and eleven
+    /// wrong values on the way to the right one.
+    /// </para>
+    /// </summary>
+    public void Type(TextBox box)
+    {
+        var typed = box.Text ?? string.Empty;
+
+        var shown = new TextBox
+        {
+            Text = typed,
+            IsReadOnly = true,
+            FontSize = Theming.TypeScale.Heading,
+            Foreground = Ink,
+            Background = new SolidColorBrush(Color.FromRgb(0x0C, 0x0E, 0x11)),
+            BorderBrush = KeyEdge,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(0, 0, 0, 14),
+        };
+
+        var board = new StackPanel { Spacing = 6 };
+
+        foreach (var row in Keys)
+        {
+            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
+
+            foreach (var key in row)
+            {
+                var character = key;
+
+                var pressed = Pressable(character == ' ' ? "space" : character.ToString());
+                pressed.Width = character == ' ' ? 280 : 60;
+                pressed.Height = 52;
+
+                pressed.Click += (_, _) =>
+                {
+                    typed += character;
+                    shown.Text = typed;
+                };
+
+                line.Children.Add(pressed);
+            }
+
+            board.Children.Add(line);
+        }
+
+        var back = Pressable("delete");
+        back.Height = 52;
+        back.Padding = new Thickness(18, 0);
+
+        back.Click += (_, _) =>
+        {
+            typed = typed.Length > 0 ? typed[..^1] : typed;
+            shown.Text = typed;
+        };
+
+        var clear = Pressable("clear");
+        clear.Height = 52;
+        clear.Padding = new Thickness(18, 0);
+
+        clear.Click += (_, _) =>
+        {
+            typed = string.Empty;
+            shown.Text = typed;
+        };
+
+        var done = Pressable("Done", fill: Marked);
+        done.Height = 52;
+        done.Padding = new Thickness(24, 0);
+
+        done.Click += (_, _) =>
+        {
+            Dismiss();
+
+            // Written once, at the end. The row commits what it is handed.
+            box.Text = typed;
+        };
+
+        var cancel = Pressable("Cancel");
+        cancel.Height = 52;
+        cancel.Padding = new Thickness(18, 0);
+        cancel.Click += (_, _) => Dismiss();
+
+        var actions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 10, 0, 0),
+            Children = { back, clear, cancel, done },
+        };
+
+        var body = new StackPanel { Children = { shown, board, actions } };
+
+        Overlay(Card(body));
+    }
+
+    /// <summary>The card everything on this layer sits in.</summary>
+    private Border Card(Control body) => new()
+    {
+        Child = body,
+        Padding = new Thickness(18),
+        CornerRadius = new CornerRadius(8),
+        BorderThickness = new Thickness(1),
+
+        // Short of the panel, so it reads as something over the page rather than a new page.
+        MaxHeight = Math.Max(180, _size.Height - 60),
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
+        Background = CardFill,
+        BorderBrush = KeyEdge,
+    };
+
+    /// <summary>Puts a card over the page, and dims what is behind it.</summary>
+    private void Overlay(Control card)
+    {
+        // The dimmer is also what makes a press anywhere else land on this layer rather than on
+        // the page underneath: the panel must not be pressable while something is over it.
+        _over.Background = new SolidColorBrush(Color.FromArgb(0xB0, 0, 0, 0));
+        _over.Children.Clear();
+        _over.Children.Add(card);
+        _over.IsVisible = true;
+    }
+
+    /// <summary>Puts the chooser away, whether it was answered or not.</summary>
+    public void Dismiss()
+    {
+        _over.IsVisible = false;
+        _over.Children.Clear();
+    }
+
     private static void Activate(Interactive target)
     {
         foreach (var candidate in target.GetSelfAndVisualAncestors().OfType<Control>())
@@ -232,6 +612,131 @@ public sealed class OffscreenSurface : IDisposable
             }
         }
     }
+
+    /// <summary>
+    /// How far from a scrollbar a ray may land and still count as being on it, in surface
+    /// pixels.
+    /// <para>
+    /// A scrollbar is about a dozen pixels wide and a hand at arm's length in a headset does not
+    /// hold still to a dozen pixels. This is deliberately far more than the bar itself: the
+    /// nearest scrollbar within this distance is the one being aimed at, because on this panel
+    /// there is nothing else along that edge to confuse it with
+    /// (remediation.md, "Scrollbars in VR should be usable with a controller").
+    /// </para>
+    /// </summary>
+    public const double AimTolerance = 28;
+
+    /// <summary>
+    /// The vertical scrollbar a ray at this point is aiming at, or null.
+    /// <para>
+    /// Distance to the bar's rectangle rather than containment, which is the whole of what makes
+    /// this usable: the Commander points at roughly the right edge and the nearest bar within
+    /// <see cref="AimTolerance"/> takes it.
+    /// </para>
+    /// </summary>
+    public ScrollBar? ScrollbarNear(Point at)
+    {
+        ScrollBar? nearest = null;
+        var closest = AimTolerance;
+
+        foreach (var bar in _surface.GetVisualDescendants().OfType<ScrollBar>())
+        {
+            if (!bar.IsVisible || bar.Orientation != Orientation.Vertical || bar.Maximum <= 0)
+            {
+                continue;
+            }
+
+            if (bar.TranslatePoint(new Point(0, 0), _surface) is not { } corner)
+            {
+                continue;
+            }
+
+            var box = new Rect(corner, bar.Bounds.Size);
+            var away = Distance(box, at);
+
+            if (away <= closest)
+            {
+                closest = away;
+                nearest = bar;
+            }
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    /// Puts a bar where the ray is pointing along it, top to bottom.
+    /// <para>
+    /// The position along the bar <em>is</em> the position in the document, rather than the drag
+    /// being relative to where a thumb was grabbed. Absolute is the forgiving one in a headset:
+    /// there is no thumb to catch, nothing to miss, and letting go and taking hold again does not
+    /// jump.
+    /// </para>
+    /// </summary>
+    public static void Aim(ScrollBar bar, Control within, Point at)
+    {
+        if (bar.TranslatePoint(new Point(0, 0), within) is not { } corner || bar.Bounds.Height <= 0)
+        {
+            return;
+        }
+
+        var along = Math.Clamp((at.Y - corner.Y) / bar.Bounds.Height, 0, 1);
+
+        bar.Value = bar.Minimum + ((bar.Maximum - bar.Minimum) * along);
+    }
+
+    /// <summary>Shortest distance from a point to a rectangle, and zero inside it.</summary>
+    private static double Distance(Rect box, Point at)
+    {
+        var across = Math.Max(Math.Max(box.X - at.X, at.X - box.Right), 0);
+        var down = Math.Max(Math.Max(box.Y - at.Y, at.Y - box.Bottom), 0);
+
+        return Math.Sqrt((across * across) + (down * down));
+    }
+
+    /// <summary>
+    /// Lights the control a ray is resting on, and puts out whatever it was resting on before.
+    /// <para>
+    /// Set as a pseudo-class rather than through the input manager, for the same reason the hit
+    /// test here is geometric: the input manager decides <c>:pointerover</c> from the renderer,
+    /// and the renderer for a window that is never shown answers nothing. A scrollbar that does
+    /// not light up when aimed at is a scrollbar the Commander cannot tell they have found.
+    /// </para>
+    /// </summary>
+    public void Illuminate(Control? control)
+    {
+        if (ReferenceEquals(control, _lit))
+        {
+            return;
+        }
+
+        if (_lit is not null)
+        {
+            ((IPseudoClasses)_lit.Classes).Set(":pointerover", false);
+        }
+
+        _lit = control;
+
+        if (_lit is not null)
+        {
+            ((IPseudoClasses)_lit.Classes).Set(":pointerover", true);
+        }
+    }
+
+    private Control? _lit;
+
+    /// <summary>
+    /// The space a point is expressed in, for callers that need to translate into it.
+    /// <para>
+    /// The wrapper rather than the view, because a chooser drawn over the page is a sibling of it
+    /// — a hit test that started at the view would walk straight past the thing on top. Both sit
+    /// at the origin at the same size, so the coordinates are the same either way.
+    /// </para>
+    /// </summary>
+    public Control View => _surface;
+
+    /// <summary>The window the view is hosted in. Overlay content — popups — lives here.</summary>
+    public Control Root => _root;
 
     /// <summary>
     /// One id for every synthetic press, because there is exactly one thing pointing at this
@@ -295,6 +800,14 @@ public sealed class OffscreenSurface : IDisposable
     public void Dispose()
     {
         _target?.Dispose();
+
+        // The children go too, not just the window's content. A Visual belongs to exactly one
+        // visual tree, and the view is a child of the wrapper rather than of the window now — so
+        // dropping the window alone left the view parented to a wrapper nothing else could see,
+        // and handing it to another host threw.
+        _over.Children.Clear();
+        _surface.Children.Clear();
+
         _root.Content = null;
         _root.Close();
     }

@@ -19,6 +19,8 @@ public sealed class CaptionLayer
     private readonly List<string> _lines = [];
 
     private DateTimeOffset? _clearAt;
+
+    /// <summary>The last thing said, kept for nothing but the log and the tests.</summary>
     private string _showing = string.Empty;
     private long? _saying;
 
@@ -105,7 +107,12 @@ public sealed class CaptionLayer
             return;
         }
 
-        _clearAt = now + Caption.DwellFor(_showing, Settings.Sane().CharactersPerSecond);
+        // Timed against everything still on screen, not only the sentence that just finished.
+        // The window is a roll-up: what a reader is catching up on when the voice stops is the
+        // three lines in front of them, and timing a short last line on its own put the whole
+        // window away after five sixths of a second — reported as the caption vanishing the
+        // moment the voice did (remediation.md, "Captions: which standard, and how long").
+        _clearAt = now + Caption.DwellFor(string.Join(' ', _lines), Settings.Sane().CharactersPerSecond);
     }
 
     /// <summary>

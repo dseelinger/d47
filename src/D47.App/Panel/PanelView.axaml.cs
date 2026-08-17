@@ -940,6 +940,24 @@ public partial class PanelView : UserControl
     /// Goes to the newest line, without the trip through the handler deciding whether the
     /// Commander meant to move.
     /// </summary>
+    /// <summary>
+    /// Re-asserts following, for a surface whose layout only happens when it is drawn.
+    /// <para>
+    /// <see cref="Follow"/> calls <c>UpdateLayout</c> so it scrolls to a current extent, and on a
+    /// window that is never shown that call does nothing — so the headset's copy scrolled to the
+    /// end of an extent equal to its viewport, which is the top, and stayed there. This is called
+    /// between that surface's layout pass and its rasterise, which is the one moment the extent
+    /// is right (remediation.md, "The Newest button in VR does not appear to work").
+    /// </para>
+    /// </summary>
+    public void KeepUp()
+    {
+        if (_following)
+        {
+            Follow();
+        }
+    }
+
     private void Follow()
     {
         _scrollingItself = true;

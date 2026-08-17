@@ -204,7 +204,11 @@ public static class AmbientLines
     private static readonly string[] Srv =
     [
         "Six wheels on regolith. The suspension is earning its mass.",
-        "The ship is holding position behind us. It will be there when you want it.",
+        // Not "behind us". Where the ship is depends on which way the Commander has driven since
+        // they left it, and d47 has no reading that says — the SRV's own position relative to the
+        // ship is in no journal event and no status flag. "Nearby" is what is actually known
+        // (remediation.md, "The ship is holding position behind us").
+        "The ship is holding position nearby. It will be there when you want it.",
         "This terrain would have taken a survey team a week. It is taking us an afternoon.",
         "Wheel grip is marginal. It always is, at this gravity.",
         "The horizon keeps arriving sooner than it should out here.",

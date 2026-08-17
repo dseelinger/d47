@@ -55,7 +55,9 @@ public sealed class CarrierCallout : ICallout
 
                     if (!context.IsPriming)
                     {
-                        yield return Tower(ArrivalKey, $"{Called(state.Carrier)}, docking granted. Welcome back, Commander.");
+                        yield return Tower(
+                            ArrivalKey,
+                            $"{Called(state.Carrier)}, docking granted. Welcome home, {Owner(state)}.");
                     }
 
                     break;
@@ -65,7 +67,9 @@ public sealed class CarrierCallout : ICallout
 
                     if (!context.IsPriming)
                     {
-                        yield return Tower(DepartureKey, $"{Called(state.Carrier)} clear. Safe flying, Commander.");
+                        yield return Tower(
+                            DepartureKey,
+                            $"{Called(state.Carrier)} clear. Safe flying, {Owner(state)}.");
                     }
 
                     break;
@@ -75,7 +79,9 @@ public sealed class CarrierCallout : ICallout
                 case "CarrierJumpRequest" when !context.IsPriming:
                     if (journalEvent.String("SystemName") is { Length: > 0 } destination)
                     {
-                        yield return Captain(JumpKey, $"Jump plotted for {destination}. We will be under way shortly.");
+                        yield return Captain(
+                            JumpKey,
+                            $"Jump plotted for {destination}, {Owner(state)}. We will be under way on your order.");
                     }
 
                     break;
@@ -87,6 +93,25 @@ public sealed class CarrierCallout : ICallout
         stationName is { Length: > 0 }
         && carrier.CallSign is { Length: > 0 } callsign
         && string.Equals(stationName, callsign, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// How the carrier's crew address the person who owns it.
+    /// <para>
+    /// By name, because they know it. The tower and the captain are the Commander's own crew on
+    /// the Commander's own ship — an eight-billion-credit one they were hired onto — and
+    /// "Welcome back, Commander" is how a stranger at a starport talks
+    /// (remediation.md 9, "the Carrier Captain and Control Tower should give the Commander the
+    /// respect he deserves as carrier owner").
+    /// </para>
+    /// <para>
+    /// The name is the one the journal header states and is never invented; without it this is
+    /// the bare rank, which is still correct and merely less familiar. No honorific beyond the
+    /// rank: "sir" and "ma'am" are a guess about the Commander that nothing in the journal
+    /// supports, and guessing wrong about somebody's own crew is worse than not guessing.
+    /// </para>
+    /// </summary>
+    private static string Owner(CommanderGameState state) =>
+        state.Identity.Name is { Length: > 0 } name ? $"Commander {name}" : "Commander";
 
     /// <summary>
     /// What to call it out loud: the name the Commander gave it, falling back to the callsign.

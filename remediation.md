@@ -1,51 +1,64 @@
-# Remediation 7
+# Remediation 8
 
-Reported 2026-08-17. Each item is checked off as it ships.
+Reported 2026-08-17 against v0.23.0. Each item is checked off as it ships.
 
-- [~] **Backoff: logarithmic disables "Wait between attempts".** ~~When Backoff is set to
-  logarithmic, "Wait between attempts" should be disabled — it has no effect there.~~
-  **Dropped 2026-08-17.** It does have an effect: `RetryPolicy.WaitBefore` multiplies the base
-  wait by `log2(retry + 1)`, so the first retry waits exactly the base under either shape and
-  the later ones are that base decelerating. Disabling the row would have frozen a live value.
-- [x] **"What the voice provider receives" is a hint, not body text.** It should appear only
-  on hover over the label or the description.
-- [x] **Search boxes use the UI font size.** They currently render smaller than the rest of
-  the UI.
-- [x] **Nav highlight does not track the settings scroll.** Scrolling the settings, the
-  highlighted heading in the left nav does not line up with what is at the top of the
-  settings area on the right. Possibly a zoom issue.
-- [x] **Ship AI callouts belong on the Conversation and Technical tabs.**
-- [x] **ElevenLabs switches Warden to German mid-callout.** Heard on
-  `[Callout materials.milestone.adaptiveencryptors: Adaptive Encryptors Capture at 75 percent.
-  88 of 100.]` — mostly correct, but part of it comes out German, not every time. Pin the
-  language to English if the API allows it. Punctuation or digits may be the trigger; spell
-  numbers out before sending to ElevenLabs. "88 of 100" is the suspect.
-- [x] **Do not announce entering a new channel when dropping out of hyperspace into a new
-  system.**
-- [x] **Auto-honk does nothing.** It should hold the fire button for 5.3 seconds on entering a
-  new system.
-- [x] **Window state is not restored.** If the app closes maximized it should start
-  maximized, and on the same monitor where possible. **Note:** the monitor half is new and
-  tested; the restore itself already worked headlessly and had no test. If it still opens
-  un-maximised on the real build, the remaining suspect is the event ordering guarded in
-  `WindowPlacementMemory.SampleWhenSettled`, which no headless test can tell apart.
-- [x] **Only the first caption arrives, and it doubles the spoken line.** After the first, the
-  panel appears headlocked but blank while the voice is speaking.
-- [x] **The VR big panel should carry the Settings tab**, unless there is a good reason not to.
-- [x] **All tabs should update in the VR big panel.**
-- [x] **Controls should be clickable in the VR panels.** **Not yet confirmed in a headset.**
-  Tabs and buttons are covered by headless tests that press the real surface; a combo box or a
-  text field on the settings page takes the gesture and does nothing useful with it.
-- [x] **"Ray Gateway offers engineering" is a useless callout.** Every starport appears to,
-  and if some do not, the absence is what would be worth saying — not the presence.
-- [x] **Materials announcements stop after a trader.** They work for a while, but after
-  filling up at Jameson's Crash Site and then offloading at a Materials trader, no more
-  announcements arrive until the app is restarted.
-- [x] **Record which voice was used in the log file**, whenever something is spoken.
-- [x] **Named NPCs each use a different voice, per name, for as long as you are in the system.**
-  The assignment was already there and tested; the pool it drew from was not. `Cast.Pool` read
-  ElevenLabs' *accent* label as a locale and kept only what started with `en`, so a 473-voice
-  account became a pool of one and every NPC shared it.
-- [x] **A woman's name gets a woman's voice; everything else a man's.** Elite records no sex
-  anywhere in 914 journals, so this is a shipped list of 692 given names rather than anything
-  derived. `tools/scan-npc-names.py` reports what is still unmatched, most heard first.
+Remediation 7 shipped whole in [v0.23.0](CHANGELOG.md); its permanent record is that section of
+the changelog, which is why this file is the current batch and not a growing archive.
+
+- [x] **The Copy button is not vertically centred.** On the main page, beside the search box.
+- [x] **"The ship is holding position behind us" is a claim d47 cannot make.** Heard as
+  `ambient.srv`: *"The ship is holding position behind us. It will be there when you want it."*
+  It may well not be behind us — the Commander may have turned around. "Nearby" is the better
+  line, if the line is canned at all.
+- [x] **"Show the VR panel" did not show it.** Answered *"The overlays are dark, Commander —
+  nothing showing in the headset right now"*, which should instead have been the panel appearing.
+- [x] **Scrollbars in VR should be usable with a controller.** Hovering one with the motion
+  controller should highlight it, and it should be draggable and clickable. The aim must not have
+  to be precise: hand jitter means "close enough" has to be good enough.
+- [x] **The "Newest" button in VR does not appear to work.**
+- [x] **Captions: which standard, and how long do they stay?** ~~Sometimes three lines arrive,
+  and the caption clears the moment the voice stops rather than lingering.~~
+  **Answered, and half changed.** The numbers are the broadcast/Netflix ones: 42 characters a
+  line, two lines per caption event, 20 characters a second reading speed, and a dwell floored at
+  5/6 s and ceilinged at 7 s. The **three** lines are d47's own choice and not Netflix's — a
+  rolling three-line window, which is the roll-up form live captioning uses, distinct from the
+  two-line maximum for one utterance. The dwell was the real complaint: it was timed against the
+  last sentence alone, so a short one cleared the whole window in 5/6 s. It is now timed against
+  everything still on screen, still inside the same 5/6–7 s.
+- [x] **"Adaptive Encryptors Capture is full. 109 of 100."** Impossible. The count must not run
+  past the capacity.
+- [x] **NPC speech does not need captioning.** It is already on the Comms panel.
+- [~] **An NPC message was spoken inside the cockpit, with no radio colour.** Heard as
+  `message.npc: All I was doing was mining!` — *Spoken by Limp in ZzBnwUd5N5vZp018EN64
+  (announcement)* — with none of the radio sound or static that a sender who is not aboard should
+  arrive with.
+  **Not reproduced.** The announce path passes the radio colour for every role that is not the
+  ship's AI or the crew, and there is now a test that says so end to end — an NPC line comes back
+  with different samples than the provider produced, and a D47 line comes back identical. What
+  0.23.0 could not tell you is which way a given line went, so the spoken-voice log line now ends
+  with `in the room` or `over the air`. If it says `over the air` and still sounds close, the
+  filter is working and the argument is about how strong it should be.
+
+Raised while the batch was in progress.
+
+- [x] **Captions are two lines, not three.** The rolling window matches the per-event maximum
+  now; three lines across the middle of a cockpit was too much of the view.
+- [x] **The mini panel's text is bigger.** 512 pixels across the same 0.34 m rather than 640,
+  which is a quarter larger. The pixel budget down the panel is unchanged — shrinking that too
+  left the transcript pane with no room for the tail, which the minimise-safety test caught.
+- [x] **Pressing "Panel content" in VR stuck the ray and crashed the app.** A combo box opens a
+  popup, a popup belongs to a top level, and the VR panel's top level is a window that is never
+  shown. A press advances the box by one instead. Controls that open a *window* — the searchable
+  pickers — are marked and refused rather than opening a dialog on a desktop nobody is looking
+  at, and a press that throws anywhere else is now logged rather than fatal.
+- [x] **The carrier's tower and captain address the owner by name.** They are the Commander's
+  own crew on the Commander's own ship; "Welcome back, Commander" is how a stranger at a
+  starport talks. No honorific beyond the rank — nothing in the journal says which would be
+  right.
+- [x] **The dropdown appears and works in VR**, and so do text boxes. Neither is a popup: d47
+  draws its own chooser and its own keyboard into the panel's visual tree, over the page. A
+  popup asks the platform for a top level of its own, and a window that has never been shown has
+  none — opening one recurses until the stack is gone and exits at `0xC00000FD` with no exception
+  and nothing in the log, which is the crash that was reported. Forcing it into the window's own
+  overlay layer is the same crash. **Still refused in VR:** the searchable pickers, which open a
+  real dialog; those are marked and left alone rather than opening one behind you.

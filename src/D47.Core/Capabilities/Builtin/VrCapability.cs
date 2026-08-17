@@ -76,8 +76,33 @@ public static class VrCapability
             {
                 Name = "get_headset_status",
                 Description =
-                    "Report whether D47 is showing in the headset, and if not, why not.",
+                    "Report whether D47 is showing in the headset, and if not, why not. "
+                    + "Reports only; use show_in_headset to turn it on or off.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(settings, headset))),
+            },
+
+            // Asking to see the panel used to reach the status tool, because that was the only
+            // headset-shaped thing on the surface — so "show the VR panel" was answered with
+            // "the overlays are dark", which is a true sentence and not what was asked for.
+            // set_setting could always have done it; nothing pointed at that
+            // (remediation.md, "Show the VR panel did not show it").
+            new ToolDefinition
+            {
+                Name = "show_in_headset",
+                Description =
+                    "Show D47 in the headset, or stop showing it. This is the one that acts; "
+                    + "get_headset_status only reports.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "on",
+                        Type = ToolParameterType.Boolean,
+                        Description = "True to show D47 in the headset, false to leave SteamVR alone.",
+                        Required = true,
+                    },
+                ],
+                Handler = (arguments, _) => Task.FromResult(Show(settings, headset, arguments)),
             },
         ],
         Settings =
@@ -355,6 +380,38 @@ public static class VrCapability
         AppliesWhen = s => s.Vr.Enabled,
         Binding = new SettingBinding { Read = read, Write = write },
     };
+
+    /// <summary>
+    /// Turns the headset overlays on or off, and then says what that produced.
+    /// <para>
+    /// Through the settings service like every other write, so the row, the file and the panel
+    /// all move together — and as <see cref="SettingsCaller.Model"/>, so the protections that
+    /// apply to a tool call apply to this one too. It is not a way around them; it is a way to
+    /// the one row a Commander in a headset most obviously wants to reach by voice.
+    /// </para>
+    /// <para>
+    /// The answer is the status rather than an acknowledgement, because switching it on is not
+    /// the same as it appearing: with no runtime installed the setting takes and nothing shows,
+    /// and saying "done" there would be the second time this capability answered the wrong
+    /// question.
+    /// </para>
+    /// </summary>
+    private static ToolResult Show(SettingsService settings, HeadsetSurface headset, ToolArguments arguments)
+    {
+        if (!arguments.TryGetBoolean("on", out var on))
+        {
+            return ToolResult.Error("Say whether to show D47 in the headset or not.");
+        }
+
+        var applied = settings.Apply(EnabledKey, on ? "true" : "false", SettingsCaller.Model);
+
+        if (applied.Status != SettingApplyStatus.Applied)
+        {
+            return ToolResult.Error(applied.Message ?? "That could not be changed.");
+        }
+
+        return ToolResult.Ok(Describe(settings, headset));
+    }
 
     private static string Describe(SettingsService settings, HeadsetSurface headset)
     {

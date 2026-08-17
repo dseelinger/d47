@@ -17,6 +17,89 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.23.1 — 2026-08-17 — The headset was showing the oldest lines, and a dropdown crashed it
+
+Everything reported against 0.23.0 in one pass with a headset on. Two of them were the headset
+path doing something nobody could have guessed from the outside.
+
+### The panel was showing the top of the transcript, not the bottom
+
+It sat at scroll offset zero for a whole session: the oldest 405 pixels of a 3,271-pixel
+transcript. Following scrolls to the end of the extent the scroll viewer knows about and calls
+`UpdateLayout` first to make that extent current — which, on a window that is never shown, does
+nothing at all. So it scrolled to the end of an extent equal to the viewport, which is the top.
+
+The jump-to-latest control never appeared either, because you were never behind. That is what was
+reported; the rest of it was silent. Following is re-asserted between the surface's layout pass
+and its rasterise now, which is the one moment it has a real extent.
+
+### Pressing a dropdown took the app down
+
+A stack overflow, and it is why a popup cannot be the answer in a headset. A popup asks the
+platform for a top level of its own; the panel's window has never been shown, so there is nothing
+for one to hang off, and opening one does not fail politely — `IsDropDownOpen = true` exits at
+`0xC00000FD` before any dispatcher work, with no exception and nothing in the log. Forcing it into
+the window's own overlay layer, which is the documented way to keep a popup inside its parent, is
+the same crash.
+
+So D47 draws its own. A layer over the page, in the tree that is already laid out, drawn and
+hit-tested every frame: pressing a combo box offers its items as rows, and **pressing a text box
+offers a keyboard** — there is no other way to fill one from inside a headset. Both are ordinary
+controls, so the same ray presses them and a long list scrolls on the same draggable bar. What is
+typed reaches the box once, on Done: a settings row commits what it is handed, and a system name
+committed letter by letter would be eleven wrong values on the way to the right one.
+
+The searchable pickers still open a real window and are still left alone rather than opening a
+dialog on a desktop nobody is looking at.
+
+### Scrollbars answer a controller
+
+The nearest vertical bar within 28 surface pixels of the ray takes the press — far wider than the
+bar, because a hand at arm's length is not accurate to a dozen pixels. Position along the bar is
+position in the document rather than a relative drag, so there is no thumb to catch and letting go
+does not jump. It lights up when aimed at.
+
+### "Show the VR panel" now shows it
+
+It reached `get_headset_status`, that being the only headset-shaped tool on the surface, and was
+answered with *"the overlays are dark, Commander"* — true, and not what was asked.
+`show_in_headset` acts; the status tool says it only reports.
+
+### Captions, and what they are
+
+Two lines now rather than three, matching the per-event maximum that the broadcast and streaming
+specs both set. The other numbers are those specs': 42 characters a line, 20 characters a second
+reading speed, a dwell floored at 5/6 s and ceilinged at 7 s. The dwell was the real complaint and
+it is fixed: it was timed against the last sentence alone, so a short one cleared the whole window
+in five sixths of a second. It is timed against everything still on screen now.
+
+Re-voiced in-game messages are no longer captioned at all. They are already on the comms page, and
+a station approach produces a steady stream of them.
+
+### Smaller things
+
+A material holding no longer runs past what the game will hold — *"109 of 100"* is a number Elite
+cannot produce, and a Commander reading it learns only that D47 is wrong. A snapshot is still
+believed as written.
+
+The mini panel's text is a quarter larger: 512 pixels across the same 0.34 m rather than 640. Its
+height does not shrink with it, because that left the transcript pane with no room for the tail.
+
+The carrier's tower and captain address the owner by name. They are the Commander's own crew on
+the Commander's own ship, and *"Welcome back, Commander"* is how a stranger at a starport talks.
+
+The SRV line no longer claims the ship is holding position *behind* you, which depends on which
+way you have driven and is in no journal event. The Copy button is vertically centred.
+
+### Reported and not reproduced
+
+An in-game message heard inside the cockpit with no radio colour. The announce path puts every
+role that is not the ship's AI or the crew through the link, and there is now a test that says so
+end to end. What 0.23.0 could not tell you is which way a given line went, so the spoken-voice log
+line ends with `in the room` or `over the air`.
+
+---
+
 ## 0.23.0 — 2026-08-17 — Nineteen from hand-testing, and three things that had never once worked
 
 Two batches in one release, because neither had shipped: five wanted changes to the settings

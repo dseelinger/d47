@@ -46,6 +46,9 @@ public sealed class VrHost : IDisposable
     /// </summary>
     private Press? _pressed;
 
+    /// <summary>Whether the press that is running took hold of a scrollbar rather than the panel.</summary>
+    private bool _scrolling;
+
     private readonly record struct Press(DateTimeOffset At, float U, float V);
 
     /// <summary>
@@ -390,8 +393,20 @@ public sealed class VrHost : IDisposable
 
         Guide(hands, found, resting, extent, head);
 
+        // What the ray is resting on, lit so the Commander can see they have found it. Null when
+        // no ray is on the panel, which puts out whatever was lit.
+        _panel.Aim(found?.Hit.U, found?.Hit.V);
+
         if (!held)
         {
+            if (_scrolling)
+            {
+                _scrolling = false;
+                _panel.ReleaseScroll();
+                _pressed = null;
+                return;
+            }
+
             if (_pressed is { } tap && _carrying is null)
             {
                 // Let go without ever having moved or dwelt: a press, not a carry. Delivered at
@@ -399,9 +414,21 @@ public sealed class VrHost : IDisposable
                 // touch surface does and what makes a small target hittable at arm's length.
                 _pressed = null;
 
-                if (_panel.Press(tap.U, tap.V))
+                try
                 {
-                    _logger.LogDebug("The panel was pressed at {U:0.00}, {V:0.00}", tap.U, tap.V);
+                    if (_panel.Press(tap.U, tap.V))
+                    {
+                        _logger.LogDebug("The panel was pressed at {U:0.00}, {V:0.00}", tap.U, tap.V);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // A press must never be able to take the app down. The reported case — a
+                    // combo box opening a popup on a window that is never shown — is handled
+                    // where the press is decided rather than here, and this is the backstop for
+                    // whatever control turns out to have the same shape next: the Commander
+                    // loses one press and keeps their session.
+                    _logger.LogError(ex, "A press on the panel threw at {U:0.00}, {V:0.00}", tap.U, tap.V);
                 }
             }
 
@@ -433,6 +460,17 @@ public sealed class VrHost : IDisposable
             if (_pressed is not { } pressed)
             {
                 _pressed = new Press(_now, start.Hit.U, start.Hit.V);
+
+                // A hand that came down on a scrollbar is scrolling, not carrying — decided at
+                // the moment of the press and not revisited, so a drag that wanders off the bar
+                // keeps scrolling rather than suddenly picking the panel up.
+                _scrolling = _panel.GrabsScroll(start.Hit.U, start.Hit.V);
+                return;
+            }
+
+            if (_scrolling)
+            {
+                _panel.Scroll(start.Hit.U, start.Hit.V);
                 return;
             }
 

@@ -58,6 +58,17 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </summary>
     private readonly string? _speaker;
 
+    /// <summary>
+    /// Whether what is said here should also be read in the headset.
+    /// <para>
+    /// False for a re-voiced in-game message, which is already written on the comms page and
+    /// does not need a second copy across the middle of the view — a station approach produces a
+    /// steady stream of them, and captioning that is captioning traffic rather than the
+    /// conversation (remediation.md, "NPC speech does not need captioning").
+    /// </para>
+    /// </summary>
+    private readonly bool _captioned;
+
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
@@ -76,7 +87,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         ILogger logger,
         AudioChannel channel = AudioChannel.Speech,
         Func<AudioClip, AudioClip>? colour = null,
-        string? speaker = null)
+        string? speaker = null,
+        bool captioned = true)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -86,6 +98,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _channel = channel;
         _colour = colour;
         _speaker = speaker;
+        _captioned = captioned;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -222,10 +235,14 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
 
         _logger.LogInformation(
-            "Spoken by {Who} in {Voice} ({Group})",
+            "Spoken by {Who} in {Voice} ({Group}, {Link})",
             _speaker ?? "D47",
             _voice.VoiceId is { Length: > 0 } id ? id : "the provider's own voice",
-            _group);
+            _group,
+
+            // Which side of the hull this came from, because "it did not sound like a radio" is
+            // otherwise a report with nothing to check it against.
+            _colour is null ? "in the room" : "over the air");
     }
 
     /// <summary>
@@ -293,7 +310,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     Channel = _channel,
                     Clip = spoken.Clip,
                     Group = _group,
-                    Caption = spoken.Text,
+                    Caption = _captioned ? spoken.Text : null,
                 });
             }
         }

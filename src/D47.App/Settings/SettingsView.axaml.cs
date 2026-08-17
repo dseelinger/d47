@@ -1693,6 +1693,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         DressAsAChoice(button);
 
+        // Behind this is a window, which is a thing the headset's copy of this surface must not
+        // open: a dialog on a desktop the Commander is not looking at is a dialog they cannot
+        // answer. Marked rather than recognised, so the surface that honours it does not have to
+        // know what a picker is (see OffscreenSurface.DesktopOnly).
+        button.Classes.Add(Panel.OffscreenSurface.DesktopOnly);
+
         // Said rather than left to be guessed at. Gathering what goes in the picker can mean
         // asking the machine for its capture devices or a provider for its voices, and a button
         // that looks unchanged for a second reads as a button that did not take the click — so
