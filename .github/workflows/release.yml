@@ -30,6 +30,54 @@ jobs:
         shell: bash
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      # The release body is the CHANGELOG section for this version, so the notes a Commander
+      # reads are the ones written by hand rather than a list of commit subjects — which in this
+      # repository are deliberately evocative and make poor release notes.
+      #
+      # Run here, before the build, so a missing section is in the log within seconds rather
+      # than after a full test-publish-selftest cycle.
+      #
+      # It falls back to generated notes rather than failing, and that is a judgement rather
+      # than an oversight: this workflow only ever runs on a tag that has already been pushed,
+      # and CLAUDE.md records that a failed run leaves a published tag with no Release behind
+      # it, "which costs a version number to correct". Refusing to publish over a missing
+      # heading would spend a version number on a documentation slip. The warning below is the
+      # louder half of the trade — it surfaces on the workflow summary.
+      - name: Release notes from CHANGELOG
+        id: notes
+        shell: bash
+        run: |
+          version="${{ steps.v.outputs.version }}"
+
+          # From the "## <version> " heading to the next "## ", heading excluded — the release
+          # title already carries the version. Anchored with index()==1 so 0.1.0 cannot match
+          # inside 0.1.0-rc or a version quoted mid-sentence.
+          awk -v v="$version" '
+            index($0, "## " v " ") == 1 { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+
+          # Tested against a version that is not in the file: "-s" is the wrong check here,
+          # because normalising an empty extraction still leaves a one-byte newline and the
+          # fallback would never fire — publishing an empty body instead. Ask for a character
+          # that is not whitespace.
+          if grep -q '[^[:space:]]' notes.md; then
+            # Trim the blank lines the section boundaries leave at both ends.
+            sed -i -e '/./,$!d' notes.md
+            printf '%s\n' "$(cat notes.md)" > notes.md
+          else
+            : > notes.md
+          fi
+
+          if [ -s notes.md ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "Release notes for $version taken from CHANGELOG.md ($(wc -l < notes.md) lines)."
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=No CHANGELOG entry::CHANGELOG.md has no '## $version' section, so this release falls back to generated notes. Add the section and the next release will use it."
+          fi
+
       - run: dotnet test -c Release
 
       # Publish settings live in D47.App.csproj so this needs no flags.
@@ -106,7 +154,8 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           name: d47 ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: notes.md
+          generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
           files: |
             installer/d47-setup.exe
             installer/d47-setup.exe.sha256
