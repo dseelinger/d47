@@ -38,3 +38,20 @@ the changelog, which is why this file is the current batch and not a growing arc
   0.23.0 could not tell you is which way a given line went, so the spoken-voice log line now ends
   with `in the room` or `over the air`. If it says `over the air` and still sounds close, the
   filter is working and the argument is about how strong it should be.
+
+Raised while the batch was in progress.
+
+- [x] **Captions are two lines, not three.** The rolling window matches the per-event maximum
+  now; three lines across the middle of a cockpit was too much of the view.
+- [x] **The mini panel's text is bigger.** 512 pixels across the same 0.34 m rather than 640,
+  which is a quarter larger. The pixel budget down the panel is unchanged — shrinking that too
+  left the transcript pane with no room for the tail, which the minimise-safety test caught.
+- [x] **Pressing "Panel content" in VR stuck the ray and crashed the app.** A combo box opens a
+  popup, a popup belongs to a top level, and the VR panel's top level is a window that is never
+  shown. A press advances the box by one instead. Controls that open a *window* — the searchable
+  pickers — are marked and refused rather than opening a dialog on a desktop nobody is looking
+  at, and a press that throws anywhere else is now logged rather than fatal.
+- [x] **The carrier's tower and captain address the owner by name.** They are the Commander's
+  own crew on the Commander's own ship; "Welcome back, Commander" is how a stranger at a
+  starport talks. No honorific beyond the rank — nothing in the journal says which would be
+  right.

@@ -65,11 +65,16 @@ public static class Caption
     public const int LinesPerEvent = 2;
 
     /// <summary>
-    /// How many lines the layer holds at once. The checklist asks for a rolling three-line
-    /// window, which is the roll-up form live captioning has always used — distinct from the
-    /// per-event two-line maximum above, which governs one utterance rather than the screen.
+    /// How many lines the layer holds at once.
+    /// <para>
+    /// Two, matching <see cref="LinesPerEvent"/> rather than exceeding it. It was three — the
+    /// roll-up form live captioning uses, and what the checklist originally asked for — and three
+    /// lines across the middle of a cockpit was reported as too much of the view
+    /// (remediation.md 9, "2 lines only for captions"). The broadcast and streaming specs both
+    /// cap one caption at two lines; holding two is the screen agreeing with the event.
+    /// </para>
     /// </summary>
-    public const int WindowLines = 3;
+    public const int WindowLines = 2;
 
     public const double AdultReadingSpeed = 20.0;
 

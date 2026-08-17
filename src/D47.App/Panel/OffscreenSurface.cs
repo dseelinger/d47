@@ -185,6 +185,28 @@ public sealed class OffscreenSurface : IDisposable
             return false;
         }
 
+        // Decided before a single pointer event is raised, because for two kinds of control the
+        // gesture itself is the problem rather than what it activates.
+        var actionable = target.GetSelfAndVisualAncestors().OfType<Control>().FirstOrDefault(Actionable);
+
+        // A combo box opens a popup on the press. A popup belongs to a top level, and this one is
+        // a window that is never shown — so pressing "Panel content" from the headset left the
+        // ray captured by a dropdown nobody could see, and took the app down with it
+        // (remediation.md 9, "clicking the Panel content drop-down caused the ray to get stuck").
+        // Here it advances to the next item instead, which for a two-value row is exactly right
+        // and for a longer one is a list walked a press at a time.
+        if (actionable is ComboBox combo)
+        {
+            return Advance(combo);
+        }
+
+        // And a control that opens a window is left alone entirely rather than opening one on a
+        // desktop the Commander is not looking at.
+        if (actionable is not null && actionable.Classes.Contains(DesktopOnly))
+        {
+            return false;
+        }
+
         var pointer = new Pointer(PointerId, PointerType.Mouse, isPrimary: true);
 
         target.RaiseEvent(new PointerPressedEventArgs(
@@ -235,6 +257,35 @@ public sealed class OffscreenSurface : IDisposable
     /// anyway.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Controls this knows how to press. A class rather than a name so the settings surface can
+    /// mark one without this having to know what it is for.
+    /// </summary>
+    public const string DesktopOnly = "desktop-only";
+
+    /// <summary>Whether this is a control a press means something to.</summary>
+    private static bool Actionable(Control control) =>
+        control is ComboBox or ToggleButton or Button || control.Classes.Contains(DesktopOnly);
+
+    /// <summary>
+    /// Moves a combo box on by one, wrapping. Answers false for one with nothing in it, which is
+    /// a press that landed on a control with no answer to give rather than one that did nothing.
+    /// </summary>
+    private static bool Advance(ComboBox combo)
+    {
+        if (combo.ItemCount == 0)
+        {
+            return false;
+        }
+
+        // Shut, unconditionally. Nothing here opens it, and a box left open by anything else is
+        // the state this whole branch exists to avoid being in.
+        combo.IsDropDownOpen = false;
+        combo.SelectedIndex = (combo.SelectedIndex + 1) % combo.ItemCount;
+
+        return true;
+    }
+
     private static void Activate(Interactive target)
     {
         foreach (var candidate in target.GetSelfAndVisualAncestors().OfType<Control>())

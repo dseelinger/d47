@@ -414,9 +414,21 @@ public sealed class VrHost : IDisposable
                 // touch surface does and what makes a small target hittable at arm's length.
                 _pressed = null;
 
-                if (_panel.Press(tap.U, tap.V))
+                try
                 {
-                    _logger.LogDebug("The panel was pressed at {U:0.00}, {V:0.00}", tap.U, tap.V);
+                    if (_panel.Press(tap.U, tap.V))
+                    {
+                        _logger.LogDebug("The panel was pressed at {U:0.00}, {V:0.00}", tap.U, tap.V);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // A press must never be able to take the app down. The reported case — a
+                    // combo box opening a popup on a window that is never shown — is handled
+                    // where the press is decided rather than here, and this is the backstop for
+                    // whatever control turns out to have the same shape next: the Commander
+                    // loses one press and keeps their session.
+                    _logger.LogError(ex, "A press on the panel threw at {U:0.00}, {V:0.00}", tap.U, tap.V);
                 }
             }
 

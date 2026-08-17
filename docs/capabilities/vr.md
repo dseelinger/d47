@@ -207,7 +207,7 @@ third of the size.
 
 ```text
 full   1024 x 640 px   at 1.10 m wide
-mini    640 x 280 px   at 0.34 m wide
+mini     512 x 280 px   at 0.34 m wide
 ```
 
 1.4 m was tried first and read as enormous — close to fifty degrees of view, so the panel filled

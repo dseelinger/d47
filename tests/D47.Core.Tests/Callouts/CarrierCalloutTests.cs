@@ -133,4 +133,64 @@ public class CarrierCalloutTests
         Assert.Equal(CarrierCallout.DepartureKey, departure.Key);
         Assert.Equal(VoiceRole.TowerControl, departure.Voice);
     }
+
+    /// <summary>
+    /// The carrier's crew address the person who owns it by name
+    /// (remediation.md 9, "the Carrier Captain and Control Tower should give the Commander the
+    /// respect he deserves as carrier owner").
+    /// <para>
+    /// They are the Commander's own crew on the Commander's own ship. "Welcome back, Commander"
+    /// is how a stranger at a starport talks.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheTowerAndTheCaptainNameTheOwner()
+    {
+        var callout = new CarrierCallout();
+        var state = WithCarrier();
+
+        var docked = Event("Docked", ("StationName", CallSign));
+        state.Apply(docked);
+
+        var welcome = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
+        Assert.Contains("Commander Fixture", welcome.Text, StringComparison.Ordinal);
+
+        var undocked = Event("Undocked", ("StationName", CallSign));
+        state.Apply(undocked);
+
+        var farewell = Assert.Single(callout.Examine(Context(state, priming: false, undocked)));
+        Assert.Contains("Commander Fixture", farewell.Text, StringComparison.Ordinal);
+
+        var jump = Event("CarrierJumpRequest", ("SystemName", "Deciat"));
+        state.Apply(jump);
+
+        var plotted = Assert.Single(callout.Examine(Context(state, priming: false, jump)));
+        Assert.Contains("Commander Fixture", plotted.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And with no name to use it is the bare rank rather than an invented one. The journal
+    /// header is the only source, and a crew calling their owner by a guessed name is worse than
+    /// one calling them by their rank.
+    /// </summary>
+    [Fact]
+    public void WithNoNameItIsStillTheRank()
+    {
+        var callout = new CarrierCallout();
+        var state = new CommanderGameState(new CommanderIdentity("F1", string.Empty));
+
+        state.Apply(Event("CarrierStats",
+            ("Callsign", CallSign),
+            ("Name", "Long Way Home"),
+            ("CarrierID", 3700000000L),
+            ("FuelLevel", 900)));
+
+        var docked = Event("Docked", ("StationName", CallSign));
+        state.Apply(docked);
+
+        var welcome = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
+
+        Assert.Contains("Commander", welcome.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Commander ,", welcome.Text, StringComparison.Ordinal);
+    }
 }

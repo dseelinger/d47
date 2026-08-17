@@ -114,7 +114,7 @@ public class CaptionTests
     }
 
     [Fact]
-    public void TheWindowHoldsThreeLinesAndRollsTheOldestOff()
+    public void TheWindowHoldsTwoLinesAndRollsTheOldestOff()
     {
         var layer = new CaptionLayer();
 
@@ -123,8 +123,12 @@ public class CaptionTests
         layer.Say("Three.", Now);
         layer.Say("Four.", Now);
 
+        // Two, matching the per-event maximum rather than exceeding it. It was three — the
+        // roll-up form live captioning uses — and three lines across the middle of a cockpit was
+        // too much of the view (remediation.md 9, "2 lines only for captions").
+        Assert.Equal(2, Caption.WindowLines);
         Assert.Equal(Caption.WindowLines, layer.Lines.Count);
-        Assert.Equal(["Two.", "Three.", "Four."], layer.Lines);
+        Assert.Equal(["Three.", "Four."], layer.Lines);
     }
 
     /// <summary>

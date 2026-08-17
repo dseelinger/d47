@@ -164,3 +164,101 @@ public class TheVrPanelIsClickableTests
         Assert.True(scroller.Offset.Y > 0, "it scrolled back to the newest line");
     }
 }
+
+/// <summary>
+/// Controls that must not be pressed the ordinary way from a headset
+/// (remediation.md 9, "clicking the Panel content drop-down caused the ray to get stuck").
+/// <para>
+/// A combo box opens a popup on the press, and a popup belongs to a top level — this one being a
+/// window that is never shown. The reported result was a ray captured by a dropdown nobody could
+/// see, and then a crash.
+/// </para>
+/// </summary>
+public class PressingAControlThatOpensSomethingTests
+{
+    private static readonly PixelSize Quad = new(1024, 640);
+
+    private static (Window Window, OffscreenSurface Surface, ComboBox Combo) WithACombo()
+    {
+        var combo = new ComboBox
+        {
+            ItemsSource = new[] { "full", "mini", "off" },
+            SelectedIndex = 0,
+            Width = 200,
+            Height = 32,
+        };
+
+        var host = new Border { Child = combo, Width = Quad.Width, Height = Quad.Height };
+        var surface = new OffscreenSurface(host, Quad);
+
+        surface.Render();
+
+        return (null!, surface, combo);
+    }
+
+    [AvaloniaFact]
+    public void PressingAComboBoxAdvancesItRatherThanOpeningIt()
+    {
+        var (_, surface, combo) = WithACombo();
+        using var _surface = surface;
+
+        var at = combo.TranslatePoint(new Point(combo.Bounds.Width / 2, combo.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
+
+        Assert.True(surface.Click(at.Value), "the press landed on the box");
+
+        Assert.Equal(1, combo.SelectedIndex);
+        Assert.False(combo.IsDropDownOpen, "nothing opened a popup on a window that is never shown");
+
+        surface.Click(at.Value);
+        surface.Click(at.Value);
+
+        // And it wraps, so a list can be walked a press at a time.
+        Assert.Equal(0, combo.SelectedIndex);
+        Assert.False(combo.IsDropDownOpen);
+    }
+
+    /// <summary>
+    /// And a control that opens a window is left alone entirely — a dialog on a desktop the
+    /// Commander is not looking at is a dialog they cannot answer.
+    /// </summary>
+    [AvaloniaFact]
+    public void AControlMarkedDesktopOnlyIsNotPressed()
+    {
+        var pressed = 0;
+        var button = new Button { Content = "Choose", Width = 200, Height = 32 };
+        button.Classes.Add(OffscreenSurface.DesktopOnly);
+        button.Click += (_, _) => pressed++;
+
+        var host = new Border { Child = button, Width = Quad.Width, Height = Quad.Height };
+        using var surface = new OffscreenSurface(host, Quad);
+
+        surface.Render();
+
+        var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
+
+        Assert.False(surface.Click(at.Value), "the press is refused rather than opening a window");
+        Assert.Equal(0, pressed);
+    }
+
+    /// <summary>An ordinary button in the same host is still pressed, or this proves nothing.</summary>
+    [AvaloniaFact]
+    public void AnOrdinaryButtonStillIs()
+    {
+        var pressed = 0;
+        var button = new Button { Content = "Copy", Width = 200, Height = 32 };
+        button.Click += (_, _) => pressed++;
+
+        var host = new Border { Child = button, Width = Quad.Width, Height = Quad.Height };
+        using var surface = new OffscreenSurface(host, Quad);
+
+        surface.Render();
+
+        var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
+
+        Assert.True(surface.Click(at.Value));
+        Assert.Equal(1, pressed);
+    }
+}

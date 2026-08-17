@@ -84,7 +84,8 @@ public class CaptionSurfaceTests
                 new PngBitmapEncoderOptions()));
         }
 
-        // Three lines, which is the window: two from the long sentence and one rolled off.
+        // Two lines, which is the window: the long sentence wraps to two and the short one
+        // ahead of it has rolled off.
         Assert.Equal(Caption.WindowLines, layer.Lines.Count);
     }
 

@@ -31,7 +31,26 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     private static readonly PixelSize Full = new(1024, 640);
 
-    private static readonly PixelSize Mini = new(640, 280);
+    /// <summary>
+    /// Mini, and it is 512 wide rather than 640 because that is the lever on apparent text size.
+    /// <para>
+    /// Apparent size is the pixel count and the quad's width in metres together, so the same
+    /// 14-point text across 512 pixels of the same 0.34 m is a quarter larger than across 640.
+    /// Reported as a tad too small (remediation.md 9, "bump up the mini-panel font"). The zoom row
+    /// would do it too and does not reach a Commander whose settings file already records 100;
+    /// this is the default that does.
+    /// </para>
+    /// <para>
+    /// <b>The height does not shrink with it.</b> Holding the aspect — 512x224, which is exactly
+    /// 640x280 scaled — was tried first and left the transcript pane with nothing: mini is "the
+    /// tail and the provenance line", the chrome around it does not get smaller, and at 224 there
+    /// was no room left for the tail. Caught by the minimise-safety test, which renders this
+    /// surface and asserts that an appended line changes what it draws. So the pixel budget down
+    /// the panel is unchanged and only the width moves; the quad is proportionally taller in the
+    /// room as a result, which is what "bigger" looks like.
+    /// </para>
+    /// </summary>
+    private static readonly PixelSize Mini = new(512, 280);
 
     private readonly PanelViewModel _model;
     private readonly string? _dumpTo;
