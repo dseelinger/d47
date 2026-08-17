@@ -645,6 +645,10 @@ public sealed class SteamVrRuntime(
             source.Draw(pixels.Address, pixels.RowBytes);
             pixels.ToRgba();
             overlay.Submit(pixels.Address, pixels.Width, pixels.Height);
+
+            // Onto the next buffer of the ring, so the one the runtime was just handed is not the
+            // one the next frame is drawn into. See VrPixels.InFlight for why that matters.
+            pixels.Rotate();
         }
 
         // Head-locked rides the headset; only something put down in the room needs a room

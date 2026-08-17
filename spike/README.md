@@ -6,6 +6,7 @@ be deleted once the answer is written down.
 
 | Directory | Question | Finding |
 |---|---|---|
+| `GrabSpike` | Do controller poses move, does the trigger arrive, and does an absolutely-placed quad stay put? | open — v0.22.1 shipped a ray that does not track the hand |
 | `OverlaySpike` | Can Avalonia reach a SteamVR overlay through a shared D3D11 texture? | [docs/spikes/vr-texture.md](../docs/spikes/vr-texture.md) |
 | `RefBypassProbe` | Can Avalonia 12's reference-assembly guard be bypassed? | same |
 | `HotasProbe` | Can a desktop process read HOTAS switch positions, and what identifies a device? | [docs/spikes/hotas-switch-read.md](../docs/spikes/hotas-switch-read.md) |

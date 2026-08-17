@@ -294,7 +294,9 @@ public sealed class VrHost : IDisposable
     {
         var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
 
-        if (_anchors.ContainsKey(slot) || _panel.Placement.Lock != SurfaceLock.WorldLocked)
+        if (_carrying is not null
+            || _anchors.ContainsKey(slot)
+            || _panel.Placement.Lock != SurfaceLock.WorldLocked)
         {
             return;
         }
@@ -397,7 +399,19 @@ public sealed class VrHost : IDisposable
             // follows the action rather than gating it: a Commander who has physically carried the
             // panel across the cockpit has said where they want it, and a head-locked surface that
             // sprang back would be d47 arguing with them.
-            _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+            var locked = _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+
+            if (locked.Status != SettingApplyStatus.Applied)
+            {
+                // Said out loud, because the failure is otherwise invisible from inside a headset:
+                // the panel is carried perfectly and springs back to the head on release, and
+                // nothing anywhere says the setting refused to move.
+                _logger.LogWarning(
+                    "The panel was picked up but {Key} would not go to world: {Status} — {Detail}",
+                    VrCapability.LockKey(slot),
+                    locked.Status,
+                    locked.Message);
+            }
 
             _logger.LogDebug("The panel was picked up by device {Device}", start.Hand.Device);
             return;
@@ -412,7 +426,6 @@ public sealed class VrHost : IDisposable
         }
 
         _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, carrier.Aim), head);
-        _panel.Invalidate();
     }
 
     /// <summary>

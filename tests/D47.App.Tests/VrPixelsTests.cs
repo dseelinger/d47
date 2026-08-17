@@ -134,4 +134,47 @@ public class VrPixelsTests
         Marshal.WriteByte(pixels.Address, (640 * 280 * 4) - 1, 0xFF);
         Assert.Equal(0xFF, Marshal.ReadByte(pixels.Address, (640 * 280 * 4) - 1));
     }
+
+    /// <summary>
+    /// Consecutive frames are drawn into different memory, and the ring comes back round.
+    /// <para>
+    /// <c>SetOverlayRaw</c> is not documented as copying synchronously, so the runtime may still be
+    /// reading the buffer it was last handed. One buffer rewritten in place is a race that a panel
+    /// repainting a few times a second never loses and a panel being carried does — which is what
+    /// the flicker under a live grab turned out to be.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ConsecutiveFramesAreDrawnIntoDifferentBuffers()
+    {
+        var pixels = new VrPixels(64, 32);
+
+        var seen = new List<IntPtr>();
+
+        for (var i = 0; i < 4; i++)
+        {
+            seen.Add(pixels.Address);
+            pixels.Rotate();
+        }
+
+        Assert.Equal(4, seen.Distinct().Count());
+
+        // And back to the start, so the ring is a ring rather than an allocation per frame.
+        Assert.Equal(seen[0], pixels.Address);
+    }
+
+    /// <summary>A resize starts a fresh ring, and the address it hands out belongs to it.</summary>
+    [Fact]
+    public void AResizeHandsOutAnAddressFromTheNewRing()
+    {
+        var pixels = new VrPixels(64, 32);
+
+        pixels.Rotate();
+        var before = pixels.Address;
+
+        pixels.Resize(128, 64);
+
+        Assert.NotEqual(before, pixels.Address);
+        Assert.Equal(128 * 4, pixels.RowBytes);
+    }
 }
