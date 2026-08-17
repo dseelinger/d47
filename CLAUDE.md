@@ -122,11 +122,22 @@ never a reason to reuse a number. This also means `dotnet test -c Release` has t
 *before* tagging: the release workflow runs it, and a failed run leaves a published tag with
 no Release behind it, which costs a version number to correct.
 
-Two gates run as tests rather than as CI steps, so they cannot drift from the code:
-`CoreDependencyTests` asserts Core references no UI, hardware or provider assembly, and
+Three gates run as tests rather than as CI steps, so they cannot drift from the code:
+`CoreDependencyTests` asserts Core references no UI, hardware or provider assembly,
 `DocumentationGateTests` asserts every registered capability has a page under
-`docs/capabilities/` that quotes its current tool schema. Change a tool's schema and the
-docs test tells you what to paste.
+`docs/capabilities/` that quotes its current tool schema, and `PackageLicenceGateTests`
+asserts every package in the **transitive** graph declares a permissive licence. Change a
+tool's schema and the docs test tells you what to paste; add a package with a copyleft
+dependency four levels down and the licence gate names it and the chain that pulled it in.
+
+The licence gate reads `project.assets.json` and each package's `.nuspec`, so it walks what
+restore actually resolved rather than what a csproj asks for, and it adds no package of its
+own. **It covers packages and nothing else** — it never enumerates a file in this repository
+and cannot be pointed at one. `src/D47.Core/Knowledge/*.tsv` is deliberately out of its
+scope: that data is Frontier's and is governed by their rules rather than by any package
+licence, which is the distinction the invariant above records as having been got wrong once.
+And it reads what a package *claims*: a nuspec declaring Apache-2.0 while packing an
+LGPL binary is invisible to it, so it raises the floor rather than replacing the reading.
 
 Everything the app writes goes to `data/` beside the executable — never `%APPDATA%`.
 
