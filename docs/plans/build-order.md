@@ -24,9 +24,10 @@ rather than explained in a paragraph beside them, which is the only version that
 a document that has to say "the order below is not what it looks like" has already lost.
 
 **Both renumbers are still one-off exceptions and the rule stands.** New phases are appended, an
-existing one is never renumbered, and the frozen set only grows. It is now **1 to 15**: Phase 15
-shipped on 2026-08-15 and carries 22 citations across 18 files, joining the several hundred that make
-1 to 14 immovable.
+existing one is never renumbered, and the frozen set only grows. It is now **1 to 21**. Phase 15
+shipped on 2026-08-15 carrying 22 citations across 18 files, joining the several hundred that make 1
+to 14 immovable; 16 through 20 shipped after it, and **Phase 21 was appended on 2026-08-16** — the
+first phase added under the appended-only rule rather than moved by one of the two passes below.
 
 The mapping, for anything written before 2026-08-15:
 

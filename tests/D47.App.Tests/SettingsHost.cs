@@ -58,6 +58,7 @@ internal sealed class SettingsHost
         D47.Core.Checklists.ChecklistService? checklists = null,
         IReadOnlyList<string>? reservedPhrases = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
+        D47.App.Settings.SwitchEditing? switches = null,
         double width = DefaultWidth,
         double height = DefaultHeight)
     {
@@ -68,7 +69,8 @@ internal sealed class SettingsHost
         // build is on the path this exercises too.
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths, coverage, macros, checklists, reservedPhrases, downloadModel);
+            view.Attach(
+                settings, viewState, paths, coverage, macros, checklists, reservedPhrases, switches, downloadModel);
             return view;
         });
 

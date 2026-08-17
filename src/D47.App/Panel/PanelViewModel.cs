@@ -120,6 +120,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string _transcriptText = string.Empty;
     private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
+    private string? _switchesText;
     private string _microphoneDetail = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -247,6 +248,34 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// a claim they are entitled to see made.
     /// </summary>
     public bool MicrophoneVisible => _microphone != D47.Core.Listening.MicrophoneState.Off;
+
+    /// <summary>
+    /// Which assigned switches currently sit against the game's state (list.md Phase 21, "Show
+    /// which switches disagree with the game"). Null when none do, which is nearly always.
+    /// <para>
+    /// On the view model rather than on either surface, for the same reason
+    /// <see cref="Microphone"/> is: the checklist asks for it on the panel <em>and</em> the VR
+    /// surface, and one copy is the only arrangement that guarantees the two agree.
+    /// </para>
+    /// <para>
+    /// It is an annunciator, not a servo. Showing that a switch is stale costs a line of text;
+    /// moving the switch is impossible, and correcting the game behind the Commander's back is
+    /// the thing the reconcile rule exists to refuse.
+    /// </para>
+    /// </summary>
+    public string? SwitchesText
+    {
+        get => _switchesText;
+        set
+        {
+            if (Set(ref _switchesText, value))
+            {
+                Raise(nameof(SwitchesVisible));
+            }
+        }
+    }
+
+    public bool SwitchesVisible => !string.IsNullOrEmpty(_switchesText);
 
     public string TurnLine
     {

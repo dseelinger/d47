@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+    <!-- Matches D47.App, which carries a versioned target platform for the HOTAS read path.
+         A project cannot reference one targeting a platform version above its own. -->
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <!-- Matches the app under test: the App project publishes self-contained for win-x64,
          and a project that references it has to say the same or the SDK refuses the edge. -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

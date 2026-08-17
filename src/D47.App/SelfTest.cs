@@ -29,6 +29,15 @@ namespace D47.App;
 /// skipped by forgetting a step is not a gate.
 /// </para>
 /// <para>
+/// Phase 21 added a third thing to the same gate, and it is not a native at all: the Windows SDK
+/// projection behind <c>Windows.Gaming.Input</c>. It reaches a published build as a managed
+/// assembly inside the single-file bundle plus a COM activation, which is a third layout the
+/// automated tests cannot tell from <c>bin\</c> — and a projection that fails to activate takes
+/// out every HOTAS switch silently, because the reader is written to treat "no controllers" as
+/// the normal state. A machine with nothing plugged in still passes; a projection that did not
+/// load does not.
+/// </para>
+/// <para>
 /// Phase 13 added a second native to the same gate, for the same reason and against the same
 /// bug: <see cref="EchoCanceller"/> loads <c>webrtc-apm</c>, which reaches a published build
 /// through the single-file bundle's self-extraction rather than through the loose layout Whisper
@@ -47,6 +56,7 @@ internal static class SelfTest
     private const int NoModelExitCode = 3;
     private const int ErrorsLoggedExitCode = 4;
     private const int NativeLoadFailedExitCode = 5;
+    private const int ControllerProjectionFailedExitCode = 6;
 
     public static int Run()
     {
@@ -92,6 +102,23 @@ internal static class SelfTest
             Directory.Exists(natives)
                 ? string.Join(", ", Directory.EnumerateFiles(natives).Select(Path.GetFileName))
                 : "absent");
+
+        // Cheapest of the three and the only one that touches no user data at all, so it runs
+        // first and its answer stands even on a machine with no controllers.
+        using (var controllers = new Input.HotasControllers(loggers.CreateLogger<Input.HotasControllers>()))
+        {
+            _ = controllers.Poll();
+
+            if (controllers.Fault is { } fault)
+            {
+                Report($@"SELFTEST FAIL: {fault} See data\logs for what the projection reported.");
+                return ControllerProjectionFailedExitCode;
+            }
+
+            logger.LogInformation(
+                "Windows.Gaming.Input reachable; {Count} controller interface(s) reported so far",
+                controllers.Interfaces);
+        }
 
         // Before the model lookup, because it is the cheaper of the two checks, it depends on no
         // user data, and a machine missing the Visual C++ runtime fails here in a way that
@@ -146,7 +173,8 @@ internal static class SelfTest
 
         Report(
             $"SELFTEST OK: {modelId} loaded and transcribed 1s of silence "
-            + $"in {heard.Elapsed.TotalMilliseconds:0} ms, and echo cancellation loaded.");
+            + $"in {heard.Elapsed.TotalMilliseconds:0} ms, echo cancellation loaded, and "
+            + "Windows.Gaming.Input activated.");
         return PassedExitCode;
     }
 

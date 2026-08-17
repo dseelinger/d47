@@ -1,7 +1,7 @@
 ---
 title: Privacy
 group: Foundation
-nav_order: 132
+nav_order: 133
 ---
 
 Exactly what Directive 47 sends off this machine, to whom, and whether it is sending it right

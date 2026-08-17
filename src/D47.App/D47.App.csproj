@@ -1,6 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!--
+      Overrides the plain net10.0-windows Directory.Build.props sets for every other project.
+      Windows.Gaming.Input.RawGameController is the HOTAS read path (list.md Phase 21,
+      docs/spikes/hotas-switch-read.md) and it is reachable only through the Windows SDK
+      projections, which need a versioned target platform. Nothing else here depends on the
+      version, so this is the one project that carries it — and D47.App.Tests, which cannot
+      reference a project targeting a platform version above its own.
+    -->
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <AssemblyName>d47</AssemblyName>
     <RootNamespace>D47.App</RootNamespace>

@@ -232,6 +232,33 @@
         </StackPanel>
       </Border>
 
+      <!--
+        Which assigned HOTAS switches currently sit against the game's state (list.md Phase 21).
+        In this row rather than in the banners, and the difference is the whole point: mini hides
+        the banners and mini is the headset's normal state, so a switch annunciator up there
+        would be invisible exactly where a Commander cannot see their own switches either.
+
+        Docked right, so it never pushes the microphone indicator around — the two change on
+        completely different clocks.
+      -->
+      <Border x:Name="SwitchRow"
+              DockPanel.Dock="Right"
+              IsVisible="{Binding SwitchesVisible}"
+              Margin="10,0,0,0"
+              Padding="7,2"
+              CornerRadius="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderBrush="{DynamicResource D47.Accent}"
+              BorderThickness="1">
+        <TextBlock x:Name="SwitchText"
+                   Text="{Binding SwitchesText}"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   FontSize="{StaticResource D47.Type.Small}"
+                   Foreground="{DynamicResource D47.Accent}" />
+      </Border>
+
       <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"

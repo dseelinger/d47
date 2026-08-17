@@ -16,6 +16,7 @@ using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
+using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Listening;
@@ -265,6 +266,13 @@ public sealed class AppHost : IDisposable
     /// shadow a built-in command. Computed once: the registry is immutable.
     /// </summary>
     public IReadOnlyList<string> ReservedPhrases { get; private set; } = [];
+
+    /// <summary>
+    /// What the settings surface needs to walk and assign a HOTAS switch (list.md Phase 21).
+    /// Null when nothing composed hardware, which is what the designer and a test that is not
+    /// about switches get — the row's button is then absent rather than dead.
+    /// </summary>
+    public Settings.SwitchEditing? SwitchEditing { get; private set; }
 
     /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
@@ -601,6 +609,16 @@ public sealed class AppHost : IDisposable
         var macros = new MacroStore(
             Path.Combine(paths.Data, "macros.json"), loggerFactory.CreateLogger<MacroStore>());
 
+        // The Commander's HOTAS switches, in the same shape and beside the same executable
+        // (list.md Phase 21). The reader is the one hardware component here that stays
+        // subscribed as well as being polled — hot-plug and slow enumeration are the same code
+        // path, and a startup-only enumeration reports three of six devices.
+        var switches = new SwitchStore(
+            Path.Combine(paths.Data, "switches.json"), loggerFactory.CreateLogger<SwitchStore>());
+
+        var controllers = new HotasControllers(loggerFactory.CreateLogger<HotasControllers>());
+        var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>());
+
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
         // Built before the registry, because the persona capability declares settings rows from
@@ -760,7 +778,15 @@ public sealed class AppHost : IDisposable
 
                 // Where the Commander is standing, which only Status.json knows — ScanOrganic
                 // carries no position at all (list.md Phase 18).
-                () => status.Current));
+                () => status.Current,
+
+                new SwitchSurface
+                {
+                    Mappings = () => switches.Switches,
+                    States = () => reconciler.States,
+                    Unavailable = () => controllers.Unavailable,
+                    Problems = () => switches.Problems,
+                }));
 
         built = capabilities;
 
@@ -890,6 +916,13 @@ public sealed class AppHost : IDisposable
 
         host.Macros = macros;
         host.Checklists = checklists;
+
+        host.SwitchEditing = new Settings.SwitchEditing(
+            switches,
+            controllers,
+            reconciler,
+            () => DateTimeOffset.Now,
+            Path.Combine(paths.Data, "switch-capture.txt"));
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
         host.CoverageRecorder = coverage;
@@ -959,6 +992,33 @@ public sealed class AppHost : IDisposable
         // store and the finished registry, and neither exists that early.
         tick.Add("macros", _ => macros.Poll(PhrasesAlreadyTaken(capabilities)));
 
+        // The switch path, in the tick's own shape: read the file if it changed, read the
+        // hardware, decide. Nothing here presses anything — the drain below does that, on the
+        // thread pool, for the same reason the autonomous drain does (list.md Phase 21).
+        tick.Add("switches", context =>
+        {
+            switches.Poll();
+
+            reconciler.Poll(
+                new SwitchTick
+                {
+                    Now = context.Now,
+                    Readings = controllers.Poll(),
+                    Status = status.Current,
+                    Binds = bindsRef!(),
+
+                    // Gated by key injection as well as by its own row. A Commander who has not
+                    // allowed d47 to press keys at all has not allowed it for switches either.
+                    Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
+                },
+                switches.Switches);
+
+            // The annunciator, on whichever surfaces are up. Recomputed here rather than bound,
+            // because it is a projection of two things that move independently — where the
+            // switch is, and what the game says.
+            host.ShowSwitches(SwitchCapability.Annunciator(reconciler.States));
+        });
+
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // Ambience follows the situation Status.json states, sampled on the tick rather than
@@ -980,6 +1040,10 @@ public sealed class AppHost : IDisposable
         // After the callouts, so a honk that reports why it did not fire is spoken in the same
         // order it was decided relative to everything else this tick.
         tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
+
+        // After the autonomous drain and for the same reason it exists: the tick is synchronous
+        // and a key press is not. A flip decided on this tick is carried out on the thread pool.
+        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput));
 
         // Last, so every subscriber registered during composition is in place before the first
         // timer-driven tick — and so a failure above happens against a loop that never started
@@ -2160,6 +2224,81 @@ public sealed class AppHost : IDisposable
     /// which knows about audio and not about keys.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The switch annunciator, on both surfaces at once (list.md Phase 21, item 6). Called every
+    /// tick and setting the same value repeatedly is free — the view model raises nothing when
+    /// nothing changed.
+    /// </summary>
+    private void ShowSwitches(string? against) => Panel.SwitchesText = against;
+
+    /// <summary>
+    /// Carries out whatever the reconciler decided this tick. The same shape as
+    /// <see cref="CarryOutPendingActions"/> and for the same reason: the tick is synchronous and
+    /// must never block, and a key press is neither.
+    /// <para>
+    /// It shares <c>_acting</c> with the autonomous drain, so a honk and a switch flip cannot be
+    /// holding keys at the same time. Two callers each pressing their own binding at once is two
+    /// keys down that neither of them knows about.
+    /// </para>
+    /// </summary>
+    private void CarryOutReconciles(SwitchReconciler reconciler, IGameInput input)
+    {
+        var pending = reconciler.Drain();
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            await _acting.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var reconcile in pending)
+                {
+                    if (reconcile.Steps.Count > 0)
+                    {
+                        var result = await input.SendAsync(reconcile.Steps).ConfigureAwait(false);
+
+                        _logger.LogInformation(
+                            "Switch {Name} reconciled {Label}: {Outcome}",
+                            reconcile.Switch,
+                            reconcile.Label,
+                            result.Outcome);
+
+                        // The Commander flipped a switch and is watching for the thing to
+                        // happen, so a refusal that stayed in the log would look like the
+                        // feature not working.
+                        if (!result.Sent)
+                        {
+                            await Voice.AnnounceAsync(new Announcement(
+                                reconcile.Switch,
+                                $"I could not set {reconcile.Label} from {reconcile.Switch}. {result.Reason}"))
+                                .ConfigureAwait(false);
+                        }
+                    }
+
+                    if (reconcile.Say is { } say)
+                    {
+                        await Voice.AnnounceAsync(new Announcement(reconcile.Switch, say)).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "A switch could not be reconciled");
+            }
+            finally
+            {
+                // Unconditional, like everywhere else that presses a key (architecture.md D4).
+                input.ReleaseAll();
+                _acting.Release();
+            }
+        });
+    }
+
     private void ShowMicrophone(MicrophoneState state)
     {
         Panel.Microphone = state;

@@ -203,6 +203,19 @@ public sealed record ActionSettings
     /// other people can see, and because it cannot be taken back.
     /// </summary>
     public bool Chat { get; init; }
+
+    /// <summary>
+    /// Whether a mapped HOTAS switch may operate the ship (list.md Phase 21). Off by default,
+    /// on its own row, and protected — a hostile in-game message must not be able to give a
+    /// switch the keyboard.
+    /// <para>
+    /// Separate from <see cref="Keyboard"/> and gated by it rather than replacing it. A
+    /// Commander who has not allowed key injection at all has not allowed it for switches
+    /// either, and the switch row saying otherwise would be a second answer to a question that
+    /// already has one.
+    /// </para>
+    /// </summary>
+    public bool Switches { get; init; }
 }
 
 /// <summary>

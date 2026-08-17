@@ -43,6 +43,24 @@ namespace D47.Core.Tests;
 /// </para>
 ///
 /// <para>
+/// <b>A second blind spot, found by walking into it.</b> The gate reads <c>targets</c> and
+/// <c>libraries</c>, which is where ordinary <c>PackageReference</c> resolution lands. A
+/// <c>FrameworkReference</c> does not land there: it arrives in <c>downloadDependencies</c> and
+/// <c>frameworkReferences</c>, and is invisible here. That covered nothing but the .NET runtime
+/// packs until Phase 21, which moved <c>D47.App</c> to <c>net10.0-windows10.0.26100.0</c> for
+/// <c>Windows.Gaming.Input</c> and so pulled in <c>Microsoft.Windows.SDK.NET.Ref</c> — a package
+/// that ships <c>Microsoft.Windows.SDK.NET.dll</c> and <c>WinRT.Runtime.dll</c> into the
+/// executable, declares <b>no SPDX expression at all</b>, points its <c>licenseUrl</c> at the
+/// Windows SDK terms, and sets <c>requireLicenseAcceptance</c>. Not copyleft, and it is Microsoft's
+/// own grant for code that runs on Windows — but it is a redistributable binary in the shipped exe
+/// that this gate did not examine and would not have named. Recorded here rather than fixed,
+/// because widening the walk to download dependencies would put the .NET runtime packs themselves
+/// in scope and turn the gate into an argument about the platform d47 is written for. The honest
+/// claim above stands and is narrower than it reads: nothing <em>in the package graph</em>
+/// declares a licence d47 may not ship.
+/// </para>
+///
+/// <para>
 /// <b>The gate's own dependencies obey the gate.</b> It adds no package: the assets file is JSON
 /// and the nuspec is XML, both read with what the framework already provides, so the graph it
 /// walks is not enlarged by the walking.

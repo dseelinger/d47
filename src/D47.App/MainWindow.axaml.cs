@@ -471,6 +471,7 @@ public partial class MainWindow : Window
                 _host.Macros,
                 _host.Checklists,
                 _host.ReservedPhrases,
+                _host.SwitchEditing,
 
                 // The choice is the go-ahead: it states its size in the list it was made from,
                 // and the row shows what it is doing while it does it.

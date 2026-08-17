@@ -68,6 +68,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private D47.Core.Checklists.ChecklistService? _checklists;
 
     /// <summary>
+    /// Everything the switch editor needs: the file, the hardware to walk a switch against, the
+    /// reconciler whose health line the cards show, and where a declined capture is written.
+    /// Null under the designer and in a test that is not about it, and the button is then absent
+    /// rather than dead.
+    /// </summary>
+    private SwitchEditing? _switches;
+
+    /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
     /// capabilities that declare rows, and a phrase can come from one that does not.
@@ -96,6 +104,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         D47.Core.Actions.MacroStore? macros = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
         IReadOnlyList<string>? reservedPhrases = null,
+        SwitchEditing? switches = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
         Func<Task>? setUpKeys = null)
     {
@@ -108,6 +117,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _coverage = coverage;
         _macros = macros;
         _checklists = checklists;
+        _switches = switches;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -940,6 +950,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == ChecklistCapability.SummaryKey && _checklists is not null:
                 return BuildChecklists(row);
 
+            // The fourth row that offers a window. A capture is not a settings value and never
+            // could be — and assigning a switch is an act the model is not allowed to perform,
+            // so it has to live somewhere the tool surface cannot reach.
+            case SettingKind.Info when row.Key == SwitchCapability.ListKey && _switches is not null:
+                return BuildSwitches(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1115,6 +1131,45 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             await new Controls.ChecklistWindow(_checklists).ShowDialog(owner);
 
             // The panel writes the file; this is what puts the new summary on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// The switch summary, plus the way into the walk. Built like the macro row above and for the
+    /// same reason: what is behind the button does not belong inline, and in this case it is a
+    /// dialogue with a piece of hardware rather than a form.
+    /// </summary>
+    private (Control, Action, bool) BuildSwitches(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenSwitches",
+            Content = "Assign switches",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_switches is not { } editing || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.SwitchWindow(
+                editing.Store, editing.Reader, editing.Reconciler, editing.Now, editing.ExportPath)
+                .ShowDialog(owner);
+
+            // The editor writes the file; this is what puts the new summary on the row without
             // waiting for something else to notice.
             refresh();
         };

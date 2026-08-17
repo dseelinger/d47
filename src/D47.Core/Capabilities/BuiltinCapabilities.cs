@@ -75,7 +75,13 @@ public static class BuiltinCapabilities
         // The live Status.json, which is the only thing that knows where the Commander is standing
         // (list.md Phase 18). Null under the designer and in tests that are not about it; the
         // sampling answer then carries counts without distances.
-        Func<Journal.GameStatus>? gameStatus = null) =>
+        Func<Journal.GameStatus>? gameStatus = null,
+
+        // The Commander's mapped HOTAS switches (list.md Phase 21). Null under the designer and
+        // in tests that are not about them; the capability still registers, so its rows and its
+        // documentation page exist, and it reports that it is reading nothing — which is what a
+        // machine with no stick honestly looks like.
+        SwitchSurface? switches = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -116,6 +122,7 @@ public static class BuiltinCapabilities
         NavigationCapability.Create(navigation),
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
         MacroCapability.Create(macros, actions),
+        SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

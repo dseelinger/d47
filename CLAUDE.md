@@ -71,10 +71,11 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-15 are frozen.** Several hundred code comments cite
+- **Phase numbers are references, and phases 1-21 are frozen.** Several hundred code comments cite
   `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
-  phase silently repoints them at the wrong item. Phase 15 joined the frozen set the day it shipped,
-  at 22 citations across 18 files; the set only ever grows.
+  phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
+  Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16 — and the set only ever
+  grows.
   The unfinished tail was renumbered **twice on 2026-08-15** — once into build order, and once again
   when three items were pulled into a new Phase 16 so the running order is the numbers themselves
   rather than a paragraph explaining them. Both passes are recorded with their mapping in
