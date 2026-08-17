@@ -17,10 +17,10 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
-## 0.24.0 — 2026-08-17 — Thirteen from hand-testing, and two things that had never once worked
+## 0.24.0 — 2026-08-17 — Fourteen from hand-testing, and three things that had never once worked
 
-Raised in one pass with a headset on. Two of them were features that have never worked since the
-day they shipped, and neither had left a trace anywhere.
+Raised in one pass with a headset on. Three of them were features that stopped working, or never
+worked, without leaving a trace anywhere.
 
 ### Auto-honk never fired, not once
 
@@ -84,6 +84,22 @@ Numerals are now spelled out on the way to the synthesiser, and the model is `el
 with the language pinned to English, because Multilingual 2 rejects that parameter outright. What
 you read is unchanged: the transcript and the captions keep the digits. The list price halves with
 the model, and the spend counter asks the provider what it actually sent.
+
+### Materials went quiet after a trader visit
+
+The milestone tracker only ever counted up. Filling a material at Jameson's Crash Site set its
+highest announced milestone to 100, and emptying it at a materials trader left that 100 in place —
+so every later collection found no threshold it had not already passed, and that material was
+silent for the rest of the session. A restart is what cleared it, because the tracker is in memory.
+Fill and empty a few at one trader stop and most of what a Commander is gathering goes quiet at
+once.
+
+It follows the holding down now, and it does that on every tick against the inventory rather than
+when something is picked up: spending a material raises no `MaterialCollected`, so a tracker that
+only looked then would next see the count already on its way back up and could not tell that apart
+from its never having moved. Only downwards — a material that fills from a mission reward is not a
+milestone anybody gathered. Across the 912-journal corpus this is 953 more announcements from the
+same 1,110 trades.
 
 ### Two callouts that said nothing
 

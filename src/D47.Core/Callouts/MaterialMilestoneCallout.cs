@@ -36,7 +36,18 @@ public sealed class MaterialMilestoneCallout : ICallout
 
     private static readonly int[] Thresholds = [25, 50, 75];
 
-    /// <summary>The highest milestone already announced per material, so each fires once.</summary>
+    /// <summary>
+    /// The highest milestone already announced per material, so each fires once.
+    /// <para>
+    /// It follows the holding <em>down</em> as well as up, and that is not a refinement. It only
+    /// ever counted up, so filling a material and then emptying it at a materials trader left its
+    /// entry at 100 for the rest of the session: every later collection found no threshold it had
+    /// not already passed, and that material went silent until the app was restarted — a restart
+    /// being the only thing that clears an in-memory tracker. Fill and empty a few at one trader
+    /// stop and most of what a Commander is gathering goes quiet at once, which is how this was
+    /// reported (remediation.md, "Materials announcements stop after a trader").
+    /// </para>
+    /// </summary>
     private readonly Dictionary<string, int> _announced = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Materials seen at all, which is what makes "the first unit" meaningful.</summary>
@@ -48,6 +59,11 @@ public sealed class MaterialMilestoneCallout : ICallout
         {
             yield break;
         }
+
+        // Before anything is announced, and on every tick rather than only on the ticks that
+        // carry a collection: a material spent is a material whose milestones are ahead of it
+        // again.
+        Follow(state);
 
         foreach (var journalEvent in context.Events)
         {
@@ -122,6 +138,51 @@ public sealed class MaterialMilestoneCallout : ICallout
     }
 
     /// <summary>
+    /// Lowers each material's record to where the Commander's holding actually is now.
+    /// <para>
+    /// <b>Run every tick against the inventory, not on collection, and that is the whole of it.</b>
+    /// Spending a material is not a <c>MaterialCollected</c> event, so a tracker that only looks
+    /// when something is picked up never sees the holding go down — it sees the count already on
+    /// its way back up, by which time it cannot tell "emptied and gathering again" from "has been
+    /// sitting here all along". Watching the inventory means the trade itself is what lowers the
+    /// record, and the next quarter is then a fresh crossing.
+    /// </para>
+    /// <para>
+    /// Only downwards. A material that fills without a collection — a mission reward, a
+    /// synthesis refund — is not a milestone anybody gathered, and raising the record here would
+    /// swallow the announcement for the units they then go and collect.
+    /// </para>
+    /// <para>
+    /// Cheap: the loop is over materials this session has announced something about, which is a
+    /// few dozen at the very most, and each is a dictionary lookup.
+    /// </para>
+    /// </summary>
+    private void Follow(CommanderGameState state)
+    {
+        foreach (var name in _announced.Keys.ToArray())
+        {
+            if (Capacity(name) is not { } capacity || capacity <= 0)
+            {
+                continue;
+            }
+
+            var held = state.Materials.Find(name)?.Count ?? 0;
+            var standing = Standing(held, capacity, (int)Math.Floor(held * 100.0 / capacity));
+
+            if (standing < _announced[name])
+            {
+                _announced[name] = standing;
+            }
+        }
+    }
+
+    /// <summary>The milestone a holding of this size is at, said or not.</summary>
+    private static int Standing(int count, int capacity, int percent) =>
+        count >= capacity
+            ? 100
+            : Thresholds.Where(threshold => percent >= threshold).DefaultIfEmpty(0).Max();
+
+    /// <summary>
     /// Brings the tracker up to date with a backlog without saying any of it, so the first live
     /// collection is judged against where the Commander actually is.
     /// </summary>
@@ -132,10 +193,6 @@ public sealed class MaterialMilestoneCallout : ICallout
             return;
         }
 
-        var percent = (int)Math.Floor(count * 100.0 / capacity);
-
-        _announced[name] = count >= capacity
-            ? 100
-            : Thresholds.Where(threshold => percent >= threshold).DefaultIfEmpty(0).Max();
+        _announced[name] = Standing(count, capacity, (int)Math.Floor(count * 100.0 / capacity));
     }
 }

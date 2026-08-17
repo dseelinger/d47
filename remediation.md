@@ -38,3 +38,6 @@ Reported 2026-08-17. Each item is checked off as it ships.
   text field on the settings page takes the gesture and does nothing useful with it.
 - [x] **"Ray Gateway offers engineering" is a useless callout.** Every starport appears to,
   and if some do not, the absence is what would be worth saying — not the presence.
+- [x] **Materials announcements stop after a trader.** They work for a while, but after
+  filling up at Jameson's Crash Site and then offloading at a Materials trader, no more
+  announcements arrive until the app is restarted.
