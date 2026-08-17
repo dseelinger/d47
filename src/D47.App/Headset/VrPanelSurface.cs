@@ -94,6 +94,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public bool Visible => Enabled;
 
     /// <summary>
+    /// The panel is the surface a hand can do something to — it is grab-to-move — so it is the
+    /// one that asks SteamVR for a laser and the mouse events that come back with it.
+    /// </summary>
+    public bool TakesPointer => true;
+
+    /// <summary>
     /// Where this surface goes and what it looks like. The look comes from settings and the
     /// anchor from view state, and they are joined here rather than in either store: choosing
     /// to be world-locked is a preference, and where a hand happened to leave it is not.

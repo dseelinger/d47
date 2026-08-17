@@ -72,6 +72,12 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public bool Visible => Enabled && _layer.Visible;
 
+    /// <summary>
+    /// Captions are read, never touched. An interactive quad in front of the cockpit is a laser
+    /// stopping on a label and a hand that cannot reach past it.
+    /// </summary>
+    public bool TakesPointer => false;
+
     public SurfacePlacement Placement => Placed;
 
     public (int Width, int Height) Size => (Pixels.Width, Pixels.Height);

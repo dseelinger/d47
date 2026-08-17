@@ -314,6 +314,11 @@ public sealed class VrHost : IDisposable
             // carried the panel across the cockpit has said where they want it, and a
             // head-locked surface that sprang back would be d47 arguing with them.
             _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+
+            // The mirror of the put-down line. Without it a log could show a drop with no grab
+            // above it, which reads as a lost release when it is a pick-up that never happened —
+            // and telling those two apart from outside a headset is the whole difficulty here.
+            _logger.LogDebug("The panel was picked up by device {Device}", pointing.Device);
             return;
         }
 

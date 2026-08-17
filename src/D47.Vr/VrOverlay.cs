@@ -40,6 +40,7 @@ public sealed class VrOverlay : IDisposable
     private float _appliedCurvature = float.NaN;
     private float _appliedAlpha = float.NaN;
     private (int Width, int Height) _appliedMouseScale = (-1, -1);
+    private bool _takesPointer;
     private bool _shown;
 
     private bool _pointing;
@@ -154,8 +155,16 @@ public sealed class VrOverlay : IDisposable
     /// </summary>
     public void TakePointer(int width, int height)
     {
-        OpenVR.Overlay.SetOverlayInputMethod(_handle, VROverlayInputMethod.Mouse);
-        OpenVR.Overlay.SetOverlayFlag(_handle, VROverlayFlags.MakeOverlaysInteractiveIfVisible, true);
+        // The two flags are a property of the quad and are set once; the scale is a property of
+        // the picture on it and is re-sent whenever that changes. Served every frame, so the
+        // difference is thirty needless calls a second across the boundary or none.
+        if (!_takesPointer)
+        {
+            _takesPointer = true;
+            OpenVR.Overlay.SetOverlayInputMethod(_handle, VROverlayInputMethod.Mouse);
+            OpenVR.Overlay.SetOverlayFlag(_handle, VROverlayFlags.MakeOverlaysInteractiveIfVisible, true);
+        }
+
         SetMouseScale(width, height);
     }
 

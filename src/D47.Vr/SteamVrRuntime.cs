@@ -26,6 +26,20 @@ public interface IVrSurfaceSource
     SurfacePlacement Placement { get; }
 
     /// <summary>
+    /// Whether SteamVR should point a laser at this quad and send back what the hand does with
+    /// it. Only a surface something can be done to wants this: the panel is grab-to-move, and
+    /// captions are a label that would merely be in the way of everything behind them.
+    /// <para>
+    /// Asked of the surface rather than assumed by the runtime, because it is the one half of
+    /// the arrangement a test can reach without a headset — and it is the half that was missing.
+    /// The flags themselves live on <see cref="VrOverlay.TakePointer"/>, which was written,
+    /// documented, and called by nothing at all, so no overlay was ever interactive and the
+    /// panel could not be picked up (bugs.md 4).
+    /// </para>
+    /// </summary>
+    bool TakesPointer { get; }
+
+    /// <summary>
     /// The pixel size it wants. A change reallocates the buffer, which is why it is asked
     /// rather than fixed: mini is a smaller image, not the same image hung nearer.
     /// </summary>
@@ -396,6 +410,14 @@ public sealed class SteamVrRuntime(
         else
         {
             pixels.Resize(width, height);
+        }
+
+        // Before the pixels rather than after: an interactive flag set on a quad the Commander
+        // is already looking at arrives a frame late, and the mouse scale has to be the size
+        // this frame is drawn at or the quad answers a laser against the size it used to be.
+        if (source.TakesPointer)
+        {
+            overlay.TakePointer(width, height);
         }
 
         if (source.IsDirty)
