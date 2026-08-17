@@ -18,18 +18,24 @@ namespace D47.Core.Actions;
 /// <para>
 /// <b>Arming and firing are separate ticks.</b> The <c>FSDJump</c> event arrives while the
 /// ship is still in the witchspace tunnel, where the game has the controls and a held key goes
-/// nowhere. This arms on the event and fires once the status flags say normal space, which is
-/// usually two or three ticks later.
+/// nowhere. This arms on the event and fires once the tunnel is behind it, which is usually
+/// two or three ticks later.
+/// </para>
+/// <para>
+/// <b>The far end of a jump is supercruise, not normal space</b>, and waiting for normal space
+/// is why this never fired: a Commander who has just arrived is in supercruise for the whole
+/// thirty-second window, so the arm expired every time and nothing was ever pressed. The
+/// discovery scanner fires perfectly well in supercruise — that is where a honk is done.
 /// </para>
 /// </summary>
 public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : IAutonomousAction
 {
     /// <summary>
-    /// How long the scanner needs to be held to complete its sweep. Six seconds is the charge
-    /// the game asks for; a shorter hold releases early and produces no scan at all, which is
-    /// indistinguishable from d47 having done nothing.
+    /// How long the scanner needs to be held to complete its sweep. A shorter hold releases
+    /// early and produces no scan at all, which is indistinguishable from d47 having done
+    /// nothing.
     /// </summary>
-    public static readonly TimeSpan Charge = TimeSpan.FromSeconds(6);
+    public static readonly TimeSpan Charge = TimeSpan.FromSeconds(5.3);
 
     /// <summary>
     /// How long after the jump the honk is still wanted. A Commander who has already turned
@@ -68,8 +74,10 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         }
 
         // Still in the tunnel, or dropped somewhere the guns do not run. Wait rather than
-        // disarm: normal space is where this is going.
-        if (ControlContexts.Of(context.Status) != ControlContext.NormalSpace)
+        // disarm: flying is where this is going, and both halves of flying count.
+        var where = ControlContexts.Of(context.Status);
+
+        if ((where & ControlContext.Flying) == 0)
         {
             return AutonomousDecision.Nothing;
         }
@@ -81,7 +89,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
             return AutonomousDecision.Nothing;
         }
 
-        var reach = ActionReachability.Resolve(fire, binds(), ControlContext.NormalSpace);
+        var reach = ActionReachability.Resolve(fire, binds(), where);
 
         if (!reach.IsOffered)
         {

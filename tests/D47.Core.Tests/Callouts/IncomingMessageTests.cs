@@ -95,19 +95,44 @@ public class IncomingMessageTests
     }
 
     /// <summary>
-    /// Elite's channel-entry notices arrive with no sender at all — 8821 of them in the corpus,
-    /// the commonest <c>ReceiveText</c> shape there is. They used to be spoken as " says: Entered
-    /// Channel: Cakutsi", because an empty name is not a null one.
+    /// A message can arrive with no sender at all, and it used to be spoken as
+    /// " says: <em>whatever it was</em>", because an empty name is not a null one.
     /// </summary>
     [Fact]
     public void AMessageWithNoSenderIsNotReadWithAnEmptyOne()
     {
         var read = Reader().Read(Message(
-            string.Empty, "$COMMS_entered:#name=Cakutsi;", "npc", localised: "Entered Channel: Cakutsi"));
+            string.Empty, "$STATION_docking_granted;", "npc", localised: "Docking request granted."));
 
         Assert.NotNull(read);
-        Assert.Equal("Entered Channel: Cakutsi", read.Text);
-        Assert.Equal("Entered Channel: Cakutsi\n", read.Transcript);
+        Assert.Equal("Docking request granted.", read.Text);
+        Assert.Equal("Docking request granted.\n", read.Transcript);
+    }
+
+    /// <summary>
+    /// Elite tells you which channel you have joined every time you drop out of hyperspace, as a
+    /// <c>ReceiveText</c> from nobody — 8,833 of them across the corpus, the commonest shape
+    /// there is and second in volume only to station traffic. It is a fact the Commander can read
+    /// off the system name in front of them, and it is not worth a voice
+    /// (remediation.md, "Do not announce entering a new channel").
+    /// </summary>
+    [Fact]
+    public void EnteringAChannelIsNotAMessage()
+    {
+        Assert.Null(Reader().Read(Message(
+            string.Empty, "$COMMS_entered:#name=Cakutsi;", "npc", localised: "Entered Channel: Cakutsi")));
+    }
+
+    /// <summary>
+    /// Matched on the token rather than on the English sentence, so a Commander playing in
+    /// German is not read it either — which is the whole reason the unlocalised field is the one
+    /// tested.
+    /// </summary>
+    [Fact]
+    public void TheChannelNoticeIsRecognisedWhateverLanguageItArrivesIn()
+    {
+        Assert.Null(Reader().Read(Message(
+            string.Empty, "$COMMS_entered:#name=Cakutsi;", "npc", localised: "Kanal betreten: Cakutsi")));
     }
 
     /// <summary>
@@ -131,14 +156,39 @@ public class IncomingMessageTests
     }
 
     /// <summary>
-    /// And nothing else does. A Phase 8 callout is d47 speaking, and it already reaches the
-    /// transcript by the route everything d47 says reaches it — writing it twice would double
-    /// every warning on the page.
+    /// And nothing else does — a Phase 8 callout is d47 speaking, and it belongs on the
+    /// conversation rather than beside a station's traffic.
     /// </summary>
     [Fact]
-    public void ACalloutThatIsD47SpeakingIsNotWrittenTwice()
+    public void ACalloutThatIsD47SpeakingIsNotOnTheCommsPage()
     {
         Assert.Null(new Announcement("fuel.low", "Fuel is low.").Transcript);
+    }
+
+    /// <summary>
+    /// It is on the conversation instead. This was the gap: <see cref="Announcement.Transcript"/>
+    /// carried in-game comms to the Technical page and nothing carried a callout anywhere, so a
+    /// fuel warning was heard once and was afterwards findable only in the log file
+    /// (remediation.md, "Ship AI callouts belong on the Conversation and Technical tabs").
+    /// </summary>
+    [Fact]
+    public void ACalloutThatIsD47SpeakingIsOnTheConversation()
+    {
+        Assert.Equal("Fuel is low.", new Announcement("fuel.low", "Fuel is low.").ConversationLine);
+    }
+
+    /// <summary>
+    /// And a re-voiced message is not, whichever page it lands on. A station clearing the
+    /// Commander to dock is not their companion talking, and putting it on the conversation is
+    /// the exact confusion the two roles exist to keep apart.
+    /// </summary>
+    [Fact]
+    public void ARevoicedMessageIsNeverOnTheConversation()
+    {
+        var read = Reader().Read(Message("$cmdr_decorate:#name=Vex;", "watch your six", "wing"));
+
+        Assert.NotNull(read);
+        Assert.Null(read.ConversationLine);
     }
 
     [Fact]

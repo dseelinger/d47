@@ -513,19 +513,25 @@ public class CalloutTests
         Assert.Empty(callout.Examine(Context(home, atSecond: 1)));
     }
 
+    /// <summary>
+    /// Docking used to announce that the station offered engineering, and it no longer does.
+    /// <para>
+    /// It is not a fact about the station. 3,726 of the 3,759 dockings in the corpus advertise
+    /// the service, and all 33 that do not are construction depots — so the callout fired on
+    /// 99.1% of dockings and told the Commander something that is true of everywhere they can
+    /// dock. Inverting it, which is what the report suggested, would have said nothing about a
+    /// construction site instead (remediation.md, "Ray Gateway offers engineering").
+    /// </para>
+    /// </summary>
     [Fact]
-    public void EngineeringIsRecognisedFromTheStationsOwnAdvertisedServices()
+    public void DockingSomewhereWithEngineeringIsNotWorthSaying()
     {
         var callout = new ArrivalCallout();
 
-        var announced = callout
-            .Examine(Context(StateFrom(), events:
-            ["""{"timestamp":"3311-01-01T00:00:01Z","event":"Docked","StationName":"Farseer Inc","StarSystem":"Deciat","StationServices":["dock","refuel","engineer"]}"""]))
-            .Single(a => a.Key == "arrival.engineer");
+        var announced = callout.Examine(Context(StateFrom(), events:
+            ["""{"timestamp":"3311-01-01T00:00:01Z","event":"Docked","StationName":"Farseer Inc","StarSystem":"Deciat","StationServices":["dock","refuel","engineer"]}"""]));
 
-        // Read from what Elite says the station offers rather than from a shipped list of
-        // engineer bases, so it keeps working when a new engineer is added.
-        Assert.Contains("Farseer Inc", announced.Text);
+        Assert.DoesNotContain(announced, a => a.Key == "arrival.engineer");
     }
 
     // ---- Material milestones ------------------------------------------------------------
@@ -601,5 +607,110 @@ public class CalloutTests
                 "materials.full.iron",
             ],
             said);
+    }
+
+    /// <summary>
+    /// Trading a full material away and gathering it again announces it again.
+    /// <para>
+    /// <b>This was reported as "materials stop announcing until I restart the app".</b> The
+    /// tracker only ever counted up: filling a material at Jameson's Crash Site set its highest
+    /// announced milestone to 100, and emptying it at a materials trader left that 100 in place.
+    /// Every later collection then found no threshold it had not already passed, so the material
+    /// went permanently silent — permanently, because the tracker is in memory and a restart is
+    /// what cleared it. Fill and empty a few at one trader stop and most of what a Commander is
+    /// gathering has gone quiet at once, which is what "no more announcements" was.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AMaterialTradedAwayAndGatheredAgainIsAnnouncedAgain()
+    {
+        var callout = new MaterialMilestoneCallout { Capacity = _ => 100 };
+        var store = new GameStateStore();
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        var said = new List<string>();
+
+        void Collect(int held, int second)
+        {
+            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held}}}],"Manufactured":[],"Encoded":[]}""";
+            var collect = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
+
+            store.Apply(Event(snapshot));
+            store.Apply(Event(collect));
+
+            said.AddRange(callout
+                .Examine(Context(store.Active, events: [collect], atSecond: second))
+                .Select(a => a.Key));
+        }
+
+        // Filled up.
+        Collect(100, 1);
+        Assert.Contains("materials.full.iron", said);
+
+        // And then traded away at a materials trader, which the inventory folds and the tracker
+        // has to follow.
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:02Z","event":"MaterialTrade","MarketID":1,"TraderType":"raw","Paid":{"Material":"iron","Category":"Raw","Quantity":101},"Received":{"Material":"nickel","Category":"Raw","Quantity":10}}"""));
+
+        Assert.Equal(0, store.Active!.Materials.Find("iron")?.Count ?? 0);
+
+        // A tick with nothing on it, which is what the tick loop is mostly made of. This is where
+        // the trade is noticed: spending a material raises no MaterialCollected, so a tracker
+        // that only looked when something was picked up would next see iron already on its way
+        // back up and could not tell that apart from its never having moved.
+        Assert.Empty(callout.Examine(Context(store.Active, atSecond: 2)));
+
+        said.Clear();
+
+        // Gathering it again. A quarter full is a milestone again, because it is one.
+        Collect(26, 3);
+
+        Assert.Equal(["materials.milestone.iron"], said);
+
+        // And so is the rest of the way back up.
+        said.Clear();
+        Collect(51, 4);
+        Collect(76, 5);
+        Collect(100, 6);
+
+        Assert.Equal(
+            ["materials.milestone.iron", "materials.milestone.iron", "materials.full.iron"],
+            said);
+    }
+
+    /// <summary>
+    /// Spending a couple below a threshold and picking them back up does not re-announce it.
+    /// The tracker follows the count down, and a milestone the Commander is still past is one
+    /// they have already been told about.
+    /// </summary>
+    [Fact]
+    public void DippingBelowAThresholdAndBackDoesNotRepeatIt()
+    {
+        var callout = new MaterialMilestoneCallout { Capacity = _ => 100 };
+        var store = new GameStateStore();
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        var said = new List<string>();
+
+        void Collect(int held, int second)
+        {
+            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held}}}],"Manufactured":[],"Encoded":[]}""";
+            var collect = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
+
+            store.Apply(Event(snapshot));
+            store.Apply(Event(collect));
+
+            said.AddRange(callout
+                .Examine(Context(store.Active, events: [collect], atSecond: second))
+                .Select(a => a.Key));
+        }
+
+        Collect(60, 1);
+        said.Clear();
+
+        // Still over half, so nothing has been un-passed.
+        Collect(55, 2);
+        Collect(58, 3);
+
+        Assert.Empty(said);
     }
 }

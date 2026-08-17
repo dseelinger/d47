@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using D47.Core.Configuration;
 using D47.Core.Interface;
 
@@ -98,6 +99,17 @@ public sealed class WindowPlacementMemory
 
         if (remembered?.Maximized == true)
         {
+            // Onto the screen it was maximised on, before it is maximised. Windows maximises a
+            // window to whichever monitor it is on, so putting it there first is the whole of
+            // "on the same monitor, if possible" — and the "if possible" is the screen lookup:
+            // a monitor that has been unplugged since falls through and the platform decides.
+            if (remembered is { MaximizedOnX: { } screenX, MaximizedOnY: { } screenY }
+                && window.Screens?.ScreenFromPoint(new PixelPoint((int)screenX, (int)screenY)) is not null)
+            {
+                window.WindowStartupLocation = WindowStartupLocation.Manual;
+                window.Position = new PixelPoint((int)screenX, (int)screenY);
+            }
+
             window.WindowState = WindowState.Maximized;
         }
 
@@ -111,17 +123,58 @@ public sealed class WindowPlacementMemory
                 X = remembered?.X,
                 Y = remembered?.Y,
                 Maximized = remembered?.Maximized ?? false,
+                MaximizedOnX = remembered?.MaximizedOnX,
+                MaximizedOnY = remembered?.MaximizedOnY,
             });
 
         // Sampled while the window is in its normal state rather than read at close, because a
         // maximised window reports the maximised rectangle and restoring to that would leave a
         // Commander who maximises once with a window that can never be un-maximised back to a
         // size they chose.
-        window.Resized += (_, _) => memory.Sample();
-        window.PositionChanged += (_, _) => memory.Sample();
-        window.Closing += (_, _) => memory.Save();
+        //
+        // Deferred rather than read inside the handler, which is a guard and not a diagnosis.
+        // A window manager is free to raise the resize and the move for a maximise before the
+        // WindowState property has caught up, and a sample taken mid-burst would then read
+        // Normal, write the maximised rectangle down as a size the Commander had chosen, and
+        // record Maximized as false. Posting lets the burst finish, so the sample reads the
+        // state the window settled in whatever order the platform raised things in.
+        //
+        // <b>Unproven against Win32.</b> Avalonia's headless platform raises these in the
+        // settled order, so a test cannot tell this apart from the synchronous version; the
+        // reason to prefer it is that it does not depend on the order at all.
+        window.Resized += (_, _) => memory.SampleWhenSettled();
+        window.PositionChanged += (_, _) => memory.SampleWhenSettled();
+
+        window.Closing += (_, _) =>
+        {
+            // Directly, not posted: there may be no dispatcher pass left to run a deferred one
+            // in. By now the state is settled anyway, which is the only thing the deferral buys.
+            memory.Sample();
+            memory.Save();
+        };
 
         return memory;
+    }
+
+    /// <summary>Whether a deferred sample is already on its way, so a burst costs one.</summary>
+    private bool _sampling;
+
+    private void SampleWhenSettled()
+    {
+        if (_sampling)
+        {
+            return;
+        }
+
+        _sampling = true;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                _sampling = false;
+                Sample();
+            },
+            DispatcherPriority.Background);
     }
 
     private static Screen? ScreenFor(Window window, WindowPlacement? remembered)
@@ -148,7 +201,20 @@ public sealed class WindowPlacementMemory
     {
         if (_window.WindowState != WindowState.Normal)
         {
-            _last = _last with { Maximized = _window.WindowState == WindowState.Maximized };
+            var maximised = _window.WindowState == WindowState.Maximized;
+
+            // Which screen, while there is still a window on one to ask about. Minimised is the
+            // other branch through here and answers nothing: a minimised window is on no screen,
+            // and the answer from before it was minimised is the one worth keeping.
+            var screen = maximised ? _window.Screens?.ScreenFromWindow(_window) : null;
+
+            _last = _last with
+            {
+                Maximized = maximised,
+                MaximizedOnX = screen?.WorkingArea.X ?? _last.MaximizedOnX,
+                MaximizedOnY = screen?.WorkingArea.Y ?? _last.MaximizedOnY,
+            };
+
             return;
         }
 
@@ -159,6 +225,11 @@ public sealed class WindowPlacementMemory
             X = _window.Position.X,
             Y = _window.Position.Y,
             Maximized = false,
+
+            // Kept rather than cleared. Un-maximising does not un-choose the monitor, and a
+            // Commander who maximises again before closing should not have to re-teach it.
+            MaximizedOnX = _last.MaximizedOnX,
+            MaximizedOnY = _last.MaximizedOnY,
         };
     }
 

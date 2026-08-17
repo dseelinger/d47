@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:D47.App.Controls"
         x:Class="D47.App.Controls.PickerWindow"
         Width="520" Height="420"
         CanResize="False"
@@ -15,6 +16,19 @@
       <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,10">
         <TextBlock x:Name="PromptText" FontSize="{StaticResource D47.Type.Subheading}" Foreground="{DynamicResource D47.Accent}" />
         <TextBlock x:Name="HelpText"
+                   FontSize="{StaticResource D47.Type.Secondary}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+        <!--
+          What pressing a play glyph costs, said once for the whole list rather than on every row
+          (change-requests.md 18). The number itself is Phase 11's and is not negotiable: an
+          ElevenLabs audition spends the Commander's money, and they have to be able to see that
+          without hovering anything. What changed is that it is a sentence about the list instead
+          of a label on a button.
+        -->
+        <TextBlock x:Name="AuditionNote"
+                   IsVisible="False"
+                   Margin="0,4,0,0"
                    FontSize="{StaticResource D47.Type.Secondary}"
                    TextWrapping="Wrap"
                    Foreground="{DynamicResource D47.TextMuted}" />
@@ -41,19 +55,6 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="0,10,0,0">
-        <!--
-          Hearing it is not choosing it (list.md Phase 19). On the left of the row and separated
-          from the two that close the dialog, because it is the one button here that leaves the
-          picker exactly as it was.
-
-          A press rather than a hover or a selection-changed: on a paid provider every one of
-          these is a synthesis request billed by the character, so walking the list with the
-          arrow keys must cost nothing at all.
-        -->
-        <Button x:Name="AuditionButton"
-                IsVisible="False"
-                Margin="0,0,16,0"
-                Click="OnAuditionClick" />
         <Button Content="Cancel" Click="OnCancelClick" />
         <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
       </StackPanel>
@@ -74,12 +75,58 @@
         <TextBlock x:Name="DefaultButtonText" TextTrimming="CharacterEllipsis" />
       </Button>
 
+      <!--
+        Hearing it is not choosing it (list.md Phase 19), and from Phase 22 that is a glyph on the
+        row rather than a button under the list (change-requests.md 18). The control that plays a
+        voice is beside the voice it plays, which is what every list of audio a Commander has ever
+        met does, and it takes the selection out of the question entirely.
+
+        A press rather than a hover or a selection-changed: on a paid provider every one of these
+        is a synthesis request billed by the character, so walking the list with the arrow keys
+        must cost nothing at all.
+      -->
       <ListBox x:Name="Choices"
                Background="{DynamicResource D47.SurfaceAlt}"
                BorderBrush="{DynamicResource D47.Border}"
                BorderThickness="1"
-               Tapped="OnChoiceTapped"
-               KeyDown="OnFilterKeyDown" />
+               DoubleTapped="OnChoiceDoubleTapped"
+               KeyDown="OnFilterKeyDown">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="controls:PickerChoice">
+            <DockPanel>
+              <!--
+                Docked before the text so the text takes what is left, and absent rather than
+                inert on a row that offers nothing to hear - a microphone picker has no play
+                control at all.
+              -->
+              <Button DockPanel.Dock="Right"
+                      IsVisible="{Binding CanPlay}"
+                      IsEnabled="{Binding Playable}"
+                      ToolTip.Tip="{Binding Why}"
+                      AutomationProperties.Name="{Binding ActionName}"
+                      Click="OnPlayClick"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      Padding="6,0"
+                      MinWidth="0"
+                      VerticalAlignment="Center"
+                      Cursor="Hand">
+                <!-- One 24x24 coordinate space for both glyphs, so the square and the triangle
+                     are the same size on screen. A Path asked to stretch scales against its own
+                     bounds, and these two have different ones. -->
+                <Viewbox Width="15" Height="15">
+                  <Canvas Width="24" Height="24">
+                    <Path Data="{Binding Glyph}" Fill="{DynamicResource D47.TextMuted}" />
+                  </Canvas>
+                </Viewbox>
+              </Button>
+              <TextBlock Text="{Binding Text}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
 
     </DockPanel>
   </Border>

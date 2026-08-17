@@ -13,7 +13,7 @@ namespace D47.Core.Audio;
 /// </para>
 /// <para>
 /// The opening of it rather than the whole introduction, because Warden's runs to five sentences
-/// and every press of the button is a synthesis request billed by the character. The opening is
+/// and every press of a play glyph is a synthesis request billed by the character. The opening is
 /// where a core's voice is most itself anyway — it is written as the opening.
 /// </para>
 /// </summary>
@@ -33,15 +33,15 @@ public static class AuditionLine
     private const int ShortestLine = 60;
 
     /// <summary>
-    /// Roughly how long an audition line is, for pricing the button before it is pressed. The
+    /// Roughly how long an audition line is, for pricing an audition before it is played. The
     /// eleven cores produce 71 to 171 characters with a median of 134, measured rather than
     /// guessed — see HearAVoiceBeforeYouChooseItTests, which fails if this drifts outside the
     /// range the catalogue actually produces.
     /// <para>
-    /// Deliberately an estimate and said as one on the button, because the exact figure is not
-    /// known until the core aboard is, and the button has to carry a number before anybody
-    /// presses it. Rounded down from the median, since a price quoted low and charged high is
-    /// the wrong way round.
+    /// Deliberately an estimate and said as one in the line above the picker's list, because the
+    /// exact figure is not known until the core aboard is, and the Commander has to see a number
+    /// before anybody presses anything. Rounded down from the median, since a price quoted low
+    /// and charged high is the wrong way round.
     /// </para>
     /// </summary>
     public const int TypicalCharacters = 130;

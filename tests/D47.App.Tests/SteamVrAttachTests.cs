@@ -1,5 +1,4 @@
 using D47.Core.Vr;
-using D47.Core;
 using D47.Vr;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -26,7 +25,7 @@ public class SteamVrAttachTests
     [Fact]
     public void AnAttemptThatFindsNoSessionCanBeRetried()
     {
-        var runtime = new SteamVrRuntime([], AppPaths.BesideExecutable(), NullLogger<SteamVrRuntime>.Instance);
+        var runtime = new SteamVrRuntime([], NullLogger<SteamVrRuntime>.Instance);
 
         var first = runtime.Start();
 
@@ -52,7 +51,7 @@ public class SteamVrAttachTests
     [Fact]
     public void WaitingSaysWhatItIsWaitingFor()
     {
-        var runtime = new SteamVrRuntime([], AppPaths.BesideExecutable(), NullLogger<SteamVrRuntime>.Instance);
+        var runtime = new SteamVrRuntime([], NullLogger<SteamVrRuntime>.Instance);
 
         var start = runtime.Start();
 

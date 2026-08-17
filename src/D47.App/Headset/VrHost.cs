@@ -1,4 +1,5 @@
 using System.Numerics;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using D47.App.Panel;
 using D47.Core.Audio;
@@ -34,9 +35,18 @@ public sealed class VrHost : IDisposable
     private readonly VrCaptionSurface _captions;
     private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
+    private readonly D47.Core.AppPaths _paths;
 
     private int _pending;
     private bool _disposed;
+
+    /// <summary>
+    /// Where and when the trigger went down, while it is still undecided whether this is a press
+    /// or a carry. Null when nothing is held or the carry has already begun.
+    /// </summary>
+    private Press? _pressed;
+
+    private readonly record struct Press(DateTimeOffset At, float U, float V);
 
     /// <summary>
     /// The frozen offset between the hand and the panel, while the panel is being carried.
@@ -61,6 +71,7 @@ public sealed class VrHost : IDisposable
         CaptionLayer layer,
         SteamVrRuntime runtime,
         VrLifecycle lifecycle,
+        D47.Core.AppPaths paths,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -71,6 +82,7 @@ public sealed class VrHost : IDisposable
         _layer = layer;
         _runtime = runtime;
         _lifecycle = lifecycle;
+        _paths = paths;
         _logger = logger;
     }
 
@@ -95,22 +107,22 @@ public sealed class VrHost : IDisposable
         D47.Core.AppPaths paths,
         ILoggerFactory loggers,
         D47.Core.Interface.AvatarLibrary? avatars = null,
-        string? dumpTo = null)
+        string? dumpTo = null,
+        Func<Control>? settingsPage = null)
     {
         VrHost? self = null;
 
-        var panel = new VrPanelSurface(model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo);
+        var panel = new VrPanelSurface(
+            model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
-        var runtime = new SteamVrRuntime(
-            [panel, captions],
-            paths,
-            loggers.CreateLogger<SteamVrRuntime>());
+        var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
-            settings, viewState, panel, captions, layer, runtime, lifecycle, loggers.CreateLogger<VrHost>());
+            settings, viewState, panel, captions, layer, runtime, lifecycle, paths,
+            loggers.CreateLogger<VrHost>());
 
         host.Configure();
         settings.Changed += _ => Dispatcher.UIThread.Post(host.Configure);
@@ -191,7 +203,9 @@ public sealed class VrHost : IDisposable
     {
         if (activity.Caption is { Length: > 0 } caption)
         {
-            _layer.Say(caption, _now);
+            // With the clip's identity, so the same one reported again — which happens on every
+            // change to anything else audible — is one caption and not two.
+            _layer.Say(caption, _now, activity.Utterance);
             return;
         }
 
@@ -255,6 +269,12 @@ public sealed class VrHost : IDisposable
 
             if (_lifecycle.State == VrState.Active)
             {
+                // Here rather than inside the runtime: this is the real application, and only the
+                // real application may claim the d47 application key with SteamVR. Idempotent, so
+                // every tick after the first costs a comparison, and a rebuilt session re-registers
+                // itself without anything having to notice that it was rebuilt.
+                _runtime.Actions.Register(_paths.VrActions);
+
                 RestIfNeverPlaced();
                 Carry();
             }
@@ -372,6 +392,21 @@ public sealed class VrHost : IDisposable
 
         if (!held)
         {
+            if (_pressed is { } tap && _carrying is null)
+            {
+                // Let go without ever having moved or dwelt: a press, not a carry. Delivered at
+                // the point the finger went down rather than where it came up, which is what a
+                // touch surface does and what makes a small target hittable at arm's length.
+                _pressed = null;
+
+                if (_panel.Press(tap.U, tap.V))
+                {
+                    _logger.LogDebug("The panel was pressed at {U:0.00}, {V:0.00}", tap.U, tap.V);
+                }
+            }
+
+            _pressed = null;
+
             if (_carrying is not null)
             {
                 // Written once, on release. A drag is thirty poses a second and the settings store
@@ -391,6 +426,22 @@ public sealed class VrHost : IDisposable
             {
                 return;
             }
+
+            // One button does both, so the gesture has to say which. A press that has neither
+            // dwelt nor travelled is still undecided, and starting the carry immediately is what
+            // made every attempt to press a control move the whole panel instead.
+            if (_pressed is not { } pressed)
+            {
+                _pressed = new Press(_now, start.Hit.U, start.Hit.V);
+                return;
+            }
+
+            if (!VrPress.BecomesACarry(_now - pressed.At, pressed.U, pressed.V, start.Hit.U, start.Hit.V))
+            {
+                return;
+            }
+
+            _pressed = null;
 
             _carrying = VrPlacementMath.Grab(start.Hand.Aim, resting);
             _carryingHand = start.Hand.Device;

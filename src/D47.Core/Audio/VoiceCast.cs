@@ -76,6 +76,18 @@ public sealed class VoiceCast
     public IReadOnlyList<string> Pool { get; set; } = [];
 
     /// <summary>
+    /// Which of the pool's voices are a woman's, by id. Absent from the set means "not known to
+    /// be", which is the same thing as a man's here — both providers tag gender, and a voice
+    /// neither of them tags is one nothing can say anything about.
+    /// <para>
+    /// Kept beside <see cref="Pool"/> rather than in it because the pool is the order voices are
+    /// walked in and this is a property of each voice; joining them would make the assignment
+    /// arithmetic carry a record it does not otherwise need.
+    /// </para>
+    /// </summary>
+    public IReadOnlySet<string> Feminine { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Speaking rate, normalised. One value for the whole cast rather than per role: it is a
     /// property of how fast the Commander likes to be spoken to, not of who is speaking.
     /// </summary>
@@ -131,26 +143,44 @@ public sealed class VoiceCast
         // Seeded from the name rather than drawn at random, so the same Commander gets the same
         // voice in a replay as they did live — which is what makes this testable at all — and
         // so a name that has been seen before is recognisable even after the scope was cleared.
-        // Voices already spoken for are stepped past rather than reused, so a system with four
-        // NPCs in it has four distinct voices as long as the pool is large enough.
         var start = (int)(Hash(sender) % (uint)Pool.Count);
 
-        // The first voice this sender could have, ignoring who else already holds one. Kept
-        // because a pool that has run out has to share rather than fall silent, and the voice it
-        // shares still must not be one that is somebody aboard.
-        string? sharable = null;
+        // Everything this sender could be given, in the order they would be walked. Nobody
+        // aboard the ship is in it: whatever else a police interceptor sounds like, it must not
+        // sound like the companion in the cockpit.
+        var eligible = new List<string>(Pool.Count);
 
         for (var offset = 0; offset < Pool.Count; offset++)
         {
             var candidate = Pool[(start + offset) % Pool.Count];
 
-            if (Aboard(candidate))
+            if (!Aboard(candidate))
             {
-                continue;
+                eligible.Add(candidate);
             }
+        }
 
-            sharable ??= candidate;
+        // Nothing in the pool that is not already somebody aboard. Falling back to the role is
+        // the honest answer: there is no voice left that would mean anything.
+        if (eligible.Count == 0)
+        {
+            return For(role);
+        }
 
+        // Of the right sex where there is a right sex to be had. A woman called over the radio in
+        // a man’s voice is a worse error than two women sharing one, so this narrows first and
+        // only widens when the provider offers nothing that matches at all — which is the case
+        // for a provider that tags no genders, and there the whole pool is the answer.
+        var matching = eligible
+            .Where(voice => Feminine.Contains(voice) == GivenNames.ReadsFemale(sender))
+            .ToList();
+
+        var drawnFrom = matching.Count > 0 ? matching : eligible;
+
+        // Voices already spoken for are stepped past rather than reused, so a system with four
+        // NPCs in it has four distinct voices as long as there are four to give out.
+        foreach (var candidate in drawnFrom)
+        {
             if (!assignments.Values.Contains(candidate, StringComparer.OrdinalIgnoreCase))
             {
                 assignments[sender] = candidate;
@@ -158,17 +188,10 @@ public sealed class VoiceCast
             }
         }
 
-        // Nothing in the pool that is not already somebody aboard. Falling back to the role is
-        // the honest answer: there is no voice left that would mean anything.
-        if (sharable is null)
-        {
-            return For(role);
-        }
-
-        // Every voice in the pool is spoken for, so this sender shares one. Better than
-        // silence, and better than a voice that changes every time they speak.
-        assignments[sender] = sharable;
-        return new VoiceSelection(sharable, Rate);
+        // They are all spoken for, so this sender shares one — still of the right sex. Better
+        // than silence, and better than a voice that changes every time they speak.
+        assignments[sender] = drawnFrom[0];
+        return new VoiceSelection(drawnFrom[0], Rate);
     }
 
     /// <summary>

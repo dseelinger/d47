@@ -40,11 +40,16 @@ public sealed record SettingAudition
     public required Func<string, CancellationToken, Task> Play { get; init; }
 
     /// <summary>
-    /// What the button says. The price belongs here — a button that spends money should say so
-    /// before it is pressed, and a provider that costs nothing should say <em>that</em> rather
-    /// than leaving it to be guessed at.
+    /// What a press costs, as a sentence. The price belongs here — a control that spends money
+    /// should say so before it is pressed, and a provider that costs nothing should say
+    /// <em>that</em> rather than leaving it to be guessed at.
+    /// <para>
+    /// It reads as a line above the list rather than as a caption, because from
+    /// change-requests.md 18 the control itself is a play glyph on each row and a glyph has no
+    /// room for a price. The disclosure survived the button it used to be written on.
+    /// </para>
     /// </summary>
-    public required Func<D47Settings, string> Label { get; init; }
+    public required Func<D47Settings, string> Cost { get; init; }
 
     /// <summary>Why it cannot be pressed, or null when it can.</summary>
     public Func<D47Settings, string?>? Unavailable { get; init; }
@@ -276,6 +281,24 @@ public sealed record SettingRow
 
     /// <summary>What the <see cref="Press"/> button says. Required when there is one.</summary>
     public string? PressLabel { get; init; }
+
+    /// <summary>
+    /// Whether an <see cref="SettingKind.Info"/> row's value belongs on a tooltip rather than
+    /// on the page.
+    /// <para>
+    /// The egress disclosures are paragraphs, and a paragraph rendered inline is a paragraph
+    /// between two rows that are one line each — the one about the voice provider is five lines
+    /// in the middle of the speech card. It is a thing to consult, not a thing to read every
+    /// time: the row still states what it is about, and hovering the label or its help line
+    /// gives the whole disclosure (remediation.md, "What the voice provider receives").
+    /// </para>
+    /// <para>
+    /// Declared on the row for the reason every other row property is: the surface renders what
+    /// a descriptor declares, and a row the panel had to recognise by key would be a second
+    /// list to keep in step with the registry.
+    /// </para>
+    /// </summary>
+    public bool ValueAsHint { get; init; }
 
     /// <summary>
     /// Whether the value is a paragraph rather than a line. Only About Me so far, and only

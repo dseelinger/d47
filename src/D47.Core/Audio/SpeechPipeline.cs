@@ -52,10 +52,19 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </summary>
     private readonly Func<AudioClip, AudioClip>? _colour;
 
+    /// <summary>
+    /// Who this is, for the log line — a sender's name, a role, or null when the caller has
+    /// nothing more specific to say than the group already does.
+    /// </summary>
+    private readonly string? _speaker;
+
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
     private int _failures;
+
+    /// <summary>Whether the voice has already been written down for this utterance.</summary>
+    private int _recorded;
 
     private sealed record Spoken(string Text, AudioClip Clip);
 
@@ -66,7 +75,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         string group,
         ILogger logger,
         AudioChannel channel = AudioChannel.Speech,
-        Func<AudioClip, AudioClip>? colour = null)
+        Func<AudioClip, AudioClip>? colour = null,
+        string? speaker = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -75,6 +85,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _logger = logger;
         _channel = channel;
         _colour = colour;
+        _speaker = speaker;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -151,6 +162,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
+            Record();
+
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }
         catch (OperationCanceledException)
@@ -182,6 +195,40 @@ public sealed class SpeechPipeline : IAsyncDisposable
     }
 
     /// <summary>
+    /// Writes down which voice this was actually spoken in
+    /// (remediation.md, "In the log file, record which voice was used").
+    /// <para>
+    /// <b>Here because everything audible converges here.</b> A turn's reply, a Phase 8 callout,
+    /// a re-voiced in-game message, a crew member and a core's own introduction are five callers
+    /// with five different reasons, and all five build one of these — so this is one line rather
+    /// than five that would drift apart.
+    /// </para>
+    /// <para>
+    /// Once per utterance, not once per sentence: a six-sentence reply is one voice, and six
+    /// identical lines would bury the one that differs. On the first sentence that actually
+    /// rendered, so a voice the provider refused is not recorded as having spoken.
+    /// </para>
+    /// <para>
+    /// The id rather than a name, because that is what this layer holds and what the settings
+    /// file and every other log line say. Edge's read as words; ElevenLabs' are opaque, and the
+    /// point of writing them down is to be able to tell two senders apart.
+    /// </para>
+    /// </summary>
+    private void Record()
+    {
+        if (Interlocked.Exchange(ref _recorded, 1) == 1)
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "Spoken by {Who} in {Voice} ({Group})",
+            _speaker ?? "D47",
+            _voice.VoiceId is { Length: > 0 } id ? id : "the provider's own voice",
+            _group);
+    }
+
+    /// <summary>
     /// Drops the voice, and answers what it was — or null if it has already been dropped, which
     /// is what stops several sentences failing at once from each raising the same complaint.
     /// </summary>
@@ -208,6 +255,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
             var clip = await _tts
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
+
+            Record();
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }

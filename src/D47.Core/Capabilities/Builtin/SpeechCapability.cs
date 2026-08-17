@@ -67,26 +67,32 @@ public static class SpeechCapability
         surface.Audition is not { } play ? null : new SettingAudition
         {
             Play = (voiceId, token) => play(voiceId, role, token),
-            Label = AuditionLabel,
+            Cost = AuditionCost,
             Unavailable = AuditionUnavailable(surface),
         };
 
     /// <summary>
-    /// What the audition button says. The whole point is that the price is on the button rather
-    /// than discovered afterwards on the bill: each press is a synthesis request billed by the
-    /// character, and the character count is known before it is sent.
+    /// What auditioning a voice costs. The whole point is that the price is in front of the
+    /// Commander rather than discovered afterwards on the bill: each press is a synthesis request
+    /// billed by the character, and the character count is known before it is sent.
+    /// <para>
+    /// A sentence about the list, not a caption. It was a button label until
+    /// change-requests.md 18 made the control a play glyph on each row — the disclosure was the
+    /// half of that button worth keeping, so it moved to the line above the list and to the
+    /// pointer text on every glyph in it.
+    /// </para>
     /// <para>
     /// Free reads as free. A provider that costs nothing must not be described with a figure,
     /// for the same reason the spend line does not print "$0.00" for Edge (list.md Phase 19).
     /// </para>
     /// </summary>
-    private static string AuditionLabel(D47Settings settings)
+    private static string AuditionCost(D47Settings settings)
     {
         var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
 
         if (!provider.Billed)
         {
-            return "Hear it (free)";
+            return "Play a voice to hear it. This provider costs nothing.";
         }
 
         // Cached for the session, so this is what the *first* press of a given voice costs and
@@ -94,8 +100,8 @@ public static class SpeechCapability
         // the core aboard, and because the rate itself is a list price the Commander may have
         // corrected.
         return SpeechSpend.RateFor(settings, provider.Id) is { } rate
-            ? $"Hear it (about {(rate * AuditionLine.TypicalCharacters / 1000m):C3})"
-            : "Hear it (this provider charges)";
+            ? $"Play a voice to hear it. Each one costs about {(rate * AuditionLine.TypicalCharacters / 1000m):C3}."
+            : "Play a voice to hear it. This provider charges for each one.";
     }
 
     /// <summary>
@@ -677,6 +683,11 @@ public static class SpeechCapability
                 // disclosure unconditionally, which was true while Edge was the only provider
                 // and becomes a false statement the moment a second one is selectable.
                 Help = "Exactly what leaves this machine to be spoken, for the provider you have selected.",
+
+                // On a tooltip rather than inline. It is five lines of prose sitting between
+                // rows that are one line each, and it is consulted rather than read
+                // (remediation.md, "What the voice provider receives").
+                ValueAsHint = true,
                 DocsAnchor = "egress",
                 Binding = new SettingBinding
                 {
@@ -688,7 +699,14 @@ public static class SpeechCapability
         // One key row per provider that needs one, rather than a single row whose secret name
         // shifts underneath it. Each declares when it applies, so only the selected provider's
         // key is on screen — the same shape the language-model capability uses.
-        rows.AddRange(
+        //
+        // Directly beneath the provider row, not at the foot of the card. Selecting ElevenLabs is
+        // what makes its key relevant, and the row that answers a choice belongs where the choice
+        // was made: appended, it sat below sixteen rows about rates, cues and retries, so the
+        // dropdown asked for a key and the box to put it in was off the bottom of the screen.
+        // Index 1 rather than a sort, because "after the provider" is the whole requirement.
+        rows.InsertRange(
+            1,
             from provider in TtsProviderCatalog.All
             where provider.NeedsKey
             select new SettingRow

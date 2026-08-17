@@ -47,12 +47,24 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private int _appliedZoom = ZoomLadder.Default;
     private VrPose _head = VrPose.Origin;
 
+    /// <param name="settingsPage">
+    /// Builds the settings surface for this copy of the panel, or null to leave it without one.
+    /// <para>
+    /// It used to be structurally absent here, on the reasoning that a nav column beside a
+    /// 700-pixel minimum has no business on a quad a metre away. The quad is 1024 wide and the
+    /// surface already collapses its nav below 900, so what it renders at is the arrangement a
+    /// Commander sees in the desktop window at its default size — and every reason to reach a
+    /// setting applies at least as much with a headset on, where there is no other way to reach
+    /// one (remediation.md, "The VR big panel should carry the Settings tab").
+    /// </para>
+    /// </param>
     public VrPanelSurface(
         PanelViewModel model,
         SettingsService settings,
         Func<string, (VrPose Placed, VrPose Against)?> anchor,
         D47.Core.Interface.AvatarLibrary? avatars = null,
-        string? dumpTo = null)
+        string? dumpTo = null,
+        Func<Control>? settingsPage = null)
     {
         _dumpTo = dumpTo;
 
@@ -66,6 +78,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // to both surfaces, and a face the window has and the headset does not would be exactly
         // the parity the one-widget-tree item exists to protect.
         _view.Avatar.Library = avatars;
+
+        if (settingsPage is not null)
+        {
+            _view.EnableSettings(settingsPage);
+        }
 
         // The same scaling host the desktop window zooms with, for the same reason: a render
         // transform would draw the panel larger and let the surface clip it, where a layout
@@ -222,6 +239,31 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>Forces the next serve to redraw — after a reconnect, or a mode change.</summary>
     public void Invalidate() => _dirty = true;
+
+    /// <summary>
+    /// A press at a point on the quad's face, in the 0..1 the ray already answers in, and whether
+    /// there was anything there to press.
+    /// <para>
+    /// The conversion to pixels is the whole of what this adds: <see cref="VrHit"/> is a fraction
+    /// across and down the face in raster order, and the view is laid out at whatever
+    /// <see cref="Size"/> the current mode asks for. Zoom needs no part in it — the scale is a
+    /// layout transform inside the surface, so the view's own coordinate space is the pixel space
+    /// either way.
+    /// </para>
+    /// <para>
+    /// The frame after a press is a different frame, so it is marked dirty unconditionally: a tab
+    /// that has been selected and not redrawn is a tab a Commander pressed twice.
+    /// </para>
+    /// </summary>
+    public bool Press(float u, float v)
+    {
+        var (width, height) = Size;
+        var landed = _offscreen.Click(new Point(u * width, v * height));
+
+        _dirty = true;
+
+        return landed;
+    }
 
     public void Dispose()
     {

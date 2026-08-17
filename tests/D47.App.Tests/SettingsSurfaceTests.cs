@@ -165,3 +165,65 @@ public class SettingsSurfaceTests
         Assert.NotNull(new MainWindow(host: null).Icon);
     }
 }
+
+/// <summary>
+/// The egress disclosure is a thing to consult, not a paragraph to scroll past
+/// (remediation.md, "What the voice provider receives").
+/// </summary>
+public class DisclosureIsAHintTests
+{
+    private const string Label = "What the voice provider receives";
+
+    /// <summary>
+    /// The caption block the row's label sits in — which is what the hover is attached to, and
+    /// what the row's own text has to be looked for inside.
+    /// </summary>
+    private static Control Caption(SettingsView view)
+    {
+        var label = view.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .First(block => string.Equals(block.Text, Label, StringComparison.Ordinal));
+
+        // Label, then the header row it is in, then the caption that header belongs to.
+        return (Control)label.GetVisualAncestors().OfType<StackPanel>().Skip(1).First();
+    }
+
+    [AvaloniaFact]
+    public void TheDisclosureIsOnTheHoverRatherThanOnTheRow()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var disclosure = TtsProviderCatalog.Selected(settings.Current.Speech.Provider).Egress;
+        var caption = Caption(host.View);
+
+        // The row still says what it is about — and does not say the whole of it.
+        Assert.DoesNotContain(
+            caption.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains(disclosure, StringComparison.Ordinal));
+
+        Assert.Equal(disclosure, ToolTip.GetTip(caption));
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// And it follows the provider. A tip set once at build time would go on describing Edge
+    /// after ElevenLabs was chosen, which is the staleness this row was rewritten to end.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHintFollowsTheSelectedProvider()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        Assert.Equal(TtsProviderCatalog.Edge.Egress, ToolTip.GetTip(Caption(host.View)));
+
+        settings.Apply(SpeechCapability.ProviderKey, TtsProviderCatalog.ElevenLabs.Id, SettingsCaller.Panel);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(TtsProviderCatalog.ElevenLabs.Egress, ToolTip.GetTip(Caption(host.View)));
+
+        host.Close();
+    }
+}

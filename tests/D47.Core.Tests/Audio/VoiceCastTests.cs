@@ -377,3 +377,90 @@ public class TextToSpeechEgressTests
         Assert.False(silent.Active);
     }
 }
+
+/// <summary>
+/// A woman on the radio sounds like one (remediation.md, "Named NPCs should each use a different
+/// voice"). The name is all there is to go on: Elite records no sex for anybody.
+/// </summary>
+public class VoicesMatchTheNameTests
+{
+    private static VoiceCast Cast() => new()
+    {
+        DefaultVoice = "ship-ai",
+        Pool = ["m1", "f1", "m2", "f2", "m3", "f3"],
+        Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2", "f3" },
+    };
+
+    private static bool IsFemale(string? voiceId) => voiceId is not null && voiceId.StartsWith('f');
+
+    [Fact]
+    public void AWomansNameGetsAWomansVoice()
+    {
+        var cast = Cast();
+
+        foreach (var name in new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl" })
+        {
+            Assert.True(IsFemale(cast.ForSender(name, isPlayer: false).VoiceId), name);
+        }
+    }
+
+    [Fact]
+    public void EverybodyElseGetsAMans()
+    {
+        var cast = Cast();
+
+        foreach (var name in new[] { "Mark Bennett", "John Tennyson", "Squidbrain" })
+        {
+            Assert.False(IsFemale(cast.ForSender(name, isPlayer: false).VoiceId), name);
+        }
+    }
+
+    /// <summary>
+    /// And they are still one voice each. Matching the sex narrows the pool, and narrowing it
+    /// must not start handing the same voice to two people while unused ones are left.
+    /// </summary>
+    [Fact]
+    public void TheyAreStillDistinctWithinTheSex()
+    {
+        var cast = Cast();
+
+        var women = new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl" }
+            .Select(name => cast.ForSender(name, isPlayer: false).VoiceId)
+            .ToArray();
+
+        Assert.Equal(3, women.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(women, voice => Assert.True(IsFemale(voice)));
+    }
+
+    /// <summary>
+    /// A fourth woman with only three women's voices shares one rather than being given a man's.
+    /// Running out is not a reason to start getting it wrong.
+    /// </summary>
+    [Fact]
+    public void RunningOutOfWomensVoicesSharesRatherThanSwitchingSex()
+    {
+        var cast = Cast();
+
+        var women = new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl", "Beatrice Kohl" }
+            .Select(name => cast.ForSender(name, isPlayer: false).VoiceId)
+            .ToArray();
+
+        Assert.All(women, voice => Assert.True(IsFemale(voice)));
+    }
+
+    /// <summary>
+    /// A pool nothing is tagged in still works, because most of what this has to survive is a
+    /// provider that says nothing about its voices.
+    /// </summary>
+    [Fact]
+    public void AnUntaggedPoolStillAssignsAVoiceEach()
+    {
+        var cast = new VoiceCast { DefaultVoice = "ship-ai", Pool = ["a", "b", "c"] };
+
+        var assigned = new[] { "Marianne Hobbs", "Mark Bennett", "Ilse Bruhn" }
+            .Select(name => cast.ForSender(name, isPlayer: false).VoiceId)
+            .ToArray();
+
+        Assert.Equal(3, assigned.Distinct(StringComparer.Ordinal).Count());
+    }
+}

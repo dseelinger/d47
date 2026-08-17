@@ -105,7 +105,12 @@ public sealed class VoicePipeline(
                         {
                             _spoke = true;
                             speech = new SpeechPipeline(
-                                arbiter, provider, Voice, group, loggers.CreateLogger<SpeechPipeline>());
+                                arbiter,
+                                provider,
+                                Voice,
+                                group,
+                                loggers.CreateLogger<SpeechPipeline>(),
+                                speaker: "D47");
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -170,12 +175,17 @@ public sealed class VoicePipeline(
     /// misconfigured — silence there is indistinguishable from a model with nothing to say
     /// (list.md Phase 5) — and for every Phase 8 callout.
     /// </summary>
+    /// <param name="speaker">
+    /// Who is talking, for the log line that records which voice said it. Null leaves the group
+    /// to say what it can.
+    /// </param>
     public async Task AnnounceAsync(
         string text,
         AudioChannel channel = AudioChannel.Speech,
         VoiceSelection? voice = null,
         string group = "announcement",
-        Func<AudioClip, AudioClip>? colour = null)
+        Func<AudioClip, AudioClip>? colour = null,
+        string? speaker = null)
     {
         if (Tts is not { } provider)
         {
@@ -188,7 +198,14 @@ public sealed class VoicePipeline(
         // this one arbiter: separate paths per voice are how a line gets spoken in the wrong
         // one (architecture.md D7).
         await using var speech = new SpeechPipeline(
-            arbiter, provider, voice ?? Voice, group, loggers.CreateLogger<SpeechPipeline>(), channel, colour);
+            arbiter,
+            provider,
+            voice ?? Voice,
+            group,
+            loggers.CreateLogger<SpeechPipeline>(),
+            channel,
+            colour,
+            speaker);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
@@ -217,7 +234,7 @@ public sealed class VoicePipeline(
     {
         arbiter.DropGroup(PersonaGroup);
 
-        await AnnounceAsync(text, AudioChannel.Speech, voice, PersonaGroup).ConfigureAwait(false);
+        await AnnounceAsync(text, AudioChannel.Speech, voice, PersonaGroup, speaker: "D47").ConfigureAwait(false);
     }
 
     /// <summary>
@@ -261,7 +278,14 @@ public sealed class VoicePipeline(
                 announcement.Text,
                 announcement.Channel,
                 voice,
-                colour: RadioVoice.Colours(announcement.Voice))
+                colour: RadioVoice.Colours(announcement.Voice),
+
+                // The sender where there is one and the role otherwise, which is the difference
+                // between "Ilse Bruhn" and "Comms" in the log — and the whole point of writing
+                // the voice down is being able to tell two senders apart.
+                speaker: announcement.Speaker is { Length: > 0 } named
+                    ? named
+                    : announcement.Voice.ToString())
             .ConfigureAwait(false);
     }
 

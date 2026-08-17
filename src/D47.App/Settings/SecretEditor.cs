@@ -165,7 +165,7 @@ public sealed class SecretEditor : UserControl
         _clear.Click += async (_, _) => await ClearAsync();
         _check.Click += async (_, _) => await CheckAsync();
 
-        _box.TextChanged += (_, _) => RefreshClearVisibility();
+        _box.TextChanged += (_, _) => RefreshBox();
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         controls.Children.Add(_box);
@@ -199,7 +199,9 @@ public sealed class SecretEditor : UserControl
     /// <summary>The last real check, or <see cref="SecretCheck.Untested"/>.</summary>
     public SecretCheck Result => _result;
 
-    private void Store()
+    /// <summary>Takes what is in the box into the store. False when there was nothing to take,
+    /// or the store refused it — either way the reason is on screen before this returns.</summary>
+    private bool Store()
     {
         // Trimmed on the way in. A key copied from a browser arrives with whitespace or a
         // newline more often than not, and a trailing newline fails at the provider in a way
@@ -209,7 +211,7 @@ public sealed class SecretEditor : UserControl
         if (string.IsNullOrEmpty(value))
         {
             Fail("Paste a key first.");
-            return;
+            return false;
         }
 
         var result = _settings.Apply(_row.Key, value, SettingsCaller.Panel);
@@ -219,7 +221,7 @@ public sealed class SecretEditor : UserControl
 
         if (!result.Ok)
         {
-            return;
+            return false;
         }
 
         // Never held in a control after it is stored.
@@ -231,6 +233,8 @@ public sealed class SecretEditor : UserControl
 
         Refresh();
         Changed?.Invoke();
+
+        return true;
     }
 
     /// <summary>
@@ -288,9 +292,24 @@ public sealed class SecretEditor : UserControl
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Proves the key in the box, which means storing it first. The check reads the store — it is
+    /// a real call to the provider made by the host, not something this control can hand a
+    /// candidate to without breaking the rule at the top of this file — so a Commander who pasted
+    /// a key and pressed <b>Verify Key</b> would otherwise be told about the key they replaced.
+    /// <para>
+    /// Which is also why the button is shut on an empty box (change-requests.md 16): with nothing
+    /// typed the only answer it can give is about a value the Commander is not looking at.
+    /// </para>
+    /// </summary>
     private async Task CheckAsync()
     {
         if (_row.Verify is not { } verify)
+        {
+            return;
+        }
+
+        if (!Store())
         {
             return;
         }
@@ -313,7 +332,8 @@ public sealed class SecretEditor : UserControl
         }
         finally
         {
-            _check.IsEnabled = true;
+            // Refresh decides whether the button comes back, because by now the box has emptied
+            // into the store and a shut button is the correct answer to that.
             Refresh();
         }
     }
@@ -345,10 +365,7 @@ public sealed class SecretEditor : UserControl
             Border.BorderBrushProperty,
             stored ? ThemeManager.AccentKey : ThemeManager.BorderKey);
 
-        // Nothing to check until there is something stored to check.
-        _check.IsEnabled = stored && _row.Verify is not null;
-
-        RefreshClearVisibility();
+        RefreshBox();
 
         _box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
 
@@ -367,12 +384,33 @@ public sealed class SecretEditor : UserControl
     }
 
     /// <summary>
-    /// Hidden while there is nothing for it to clear. A glyph that is present but inert most of
-    /// the time teaches a Commander to stop reading it, and this is the one in the row that must
-    /// not be ignored when it does appear.
+    /// The two controls that answer to what is in the box rather than to what is in the store.
+    /// <para>
+    /// <b>Clear</b> is hidden while there is nothing for it to clear. A glyph that is present but
+    /// inert most of the time teaches a Commander to stop reading it, and this is the one in the
+    /// row that must not be ignored when it does appear.
+    /// </para>
+    /// <para>
+    /// <b>Verify Key</b> is shut until a key has been typed (change-requests.md 16). Offered on an
+    /// empty box it was a button whose only available answer was that an empty key is not a valid
+    /// one. Shut and explained rather than silently inert, the way every other refused control on
+    /// this surface is.
+    /// </para>
     /// </summary>
-    private void RefreshClearVisibility() =>
+    private void RefreshBox()
+    {
+        var typed = !string.IsNullOrWhiteSpace(_box.Text);
+
         _clear.IsVisible = IsStored || !string.IsNullOrEmpty(_box.Text);
+
+        _check.IsEnabled = typed && _row.Verify is not null;
+
+        ToolTip.SetTip(
+            _check,
+            typed
+                ? "Store this key and check it against the provider"
+                : "Paste a key first — there is nothing here to check yet");
+    }
 
     private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));

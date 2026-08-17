@@ -60,26 +60,39 @@ public class SettingsIsATabTests
     }
 
     /// <summary>
-    /// And the headset's own instantiation is one of the surfaces that was not given one.
+    /// The headset's own instantiation has one when it is given a builder, and does not when it
+    /// is not.
+    /// <para>
+    /// It used to have none by construction, on the reasoning that a nav column beside a
+    /// 700-pixel minimum has no business on a quad a metre away. The quad is 1024 wide and the
+    /// surface collapses its nav below 900, so what it renders is the arrangement the desktop
+    /// window shows at its default size — and with a headset on there is no other way to reach a
+    /// setting at all (remediation.md, "The VR big panel should carry the Settings tab").
+    /// </para>
     /// <para>
     /// Read out of the real <see cref="Headset.VrPanelSurface"/> rather than out of a view built
-    /// here to resemble it. Resembling it is exactly what a test of this cannot afford: the
-    /// claim is about what the overlay does, and a copy constructed in the test would go on
-    /// passing the day the overlay started enabling settings.
+    /// here to resemble it. Resembling it is exactly what a test of this cannot afford: the claim
+    /// is about what the overlay does.
     /// </para>
     /// </summary>
-    [AvaloniaFact]
-    public void TheHeadsetCopyHasNoSettingsTab()
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheHeadsetCopyHasSettingsWhenItIsGivenThem(bool given)
     {
         var (settings, _, _) = TestSurface.Create();
 
-        using var surface = new Headset.VrPanelSurface(new PanelViewModel(), settings, _ => null);
+        using var surface = new Headset.VrPanelSurface(
+            new PanelViewModel(),
+            settings,
+            _ => null,
+            settingsPage: given ? () => new TextBlock { Text = "settings" } : null);
 
         var view = (PanelView)surface.GetType()
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(surface)!;
 
-        Assert.False(Named(view, "SettingsTab").IsVisible);
+        Assert.Equal(given, Named(view, "SettingsTab").IsVisible);
     }
 
     /// <summary>

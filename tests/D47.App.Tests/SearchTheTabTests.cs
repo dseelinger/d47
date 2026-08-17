@@ -416,6 +416,13 @@ public class SearchTheTabTests
         host.Close();
     }
 
+    /// <summary>Every highlighted run under one control, for a claim about where a mark landed.</summary>
+    private static List<Run> MarkedIn(Control root) =>
+        [.. root.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => block.IsEffectivelyVisible)
+            .SelectMany(block => (IEnumerable<Run>?)block.Inlines?.OfType<Run>() ?? [])
+            .Where(run => run.Background is not null)];
+
     /// <summary>Every run on the settings page drawn with a highlight behind it.</summary>
     private static List<Run> MarkedRuns(SettingsHost host) =>
         [.. host.View.GetVisualDescendants().OfType<TextBlock>()
@@ -589,6 +596,55 @@ public class SearchTheTabTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(shut, Rows(host));
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// A section name is a match too (change-requests.md 15). Typing "Speech" used to find rows
+    /// and not the card called Speech, so a search for a section's own name looked like it had
+    /// found nothing at the top of the thing it was looking for.
+    /// </summary>
+    [AvaloniaFact]
+    public void ASectionIsFoundByItsOwnName()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
+
+        box.Text = "Speech";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        // The name is marked in both places it is written — the card's own heading and the nav
+        // item — rather than only in whichever rows happen to repeat the word.
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Speech");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("NavItems")!), run => run.Text == "Speech");
+
+        // Whether a mark on a heading reads as an answer or as noise is a question only eyes
+        // settle, and this one lands on a card title and a nav item at once.
+        host.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "settings-section-name-highlight.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        // And a named section keeps the rows it has, rather than only the ones that happen to
+        // repeat the word. "Audio mixer" is the case that proves it: nothing inside that card
+        // says "audio mixer", so before this the card answered a search for its own name by
+        // emptying itself and then vanishing for being empty.
+        box.Text = "Audio mixer";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(1, Cards(host));
+        Assert.NotEmpty(VisibleRowLabels(host));
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Audio mixer");
+
+        box.Text = string.Empty;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(MarkedRuns(host));
 
         host.Close();
     }

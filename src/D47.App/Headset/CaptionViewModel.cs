@@ -36,9 +36,30 @@ public sealed class CaptionViewModel : INotifyPropertyChanged
         {
             _lines = value;
             Raise(nameof(Lines));
+            Raise(nameof(Text));
             Raise(nameof(HasLines));
         }
     }
+
+    /// <summary>
+    /// The window as one string, which is what the view draws.
+    /// <para>
+    /// <b>One text block rather than an item per line, and that is a fix rather than a
+    /// simplification.</b> The quad is rasterised out of a window that is constructed and never
+    /// shown, and an <c>ItemsControl</c> in one does not regenerate its containers when its
+    /// source is replaced: the first caption drew, and every caption after it drew an empty box
+    /// — measured at 6,202 lit pixels for the first and 0 for the second and third, with the
+    /// view's desired size frozen at the first one's. An ordinary bound property in the same
+    /// host updates and redraws perfectly, which is what this now is
+    /// (remediation.md, "Only the first caption arrives").
+    /// </para>
+    /// <para>
+    /// Nothing is lost by it. Every line is the same size, weight and colour, centred, and the
+    /// wrapping was decided by <see cref="Caption"/> before it ever reached here — the item
+    /// template was three identical text blocks where one with newlines in it says the same.
+    /// </para>
+    /// </summary>
+    public string Text => string.Join('\n', _lines);
 
     public bool HasLines => _lines.Count > 0;
 

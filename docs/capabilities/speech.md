@@ -130,22 +130,28 @@ The picker lists several hundred names, and you are casting a character from the
 Mature, Balanced" and "George - Warm, Captivating Storyteller" are both true and neither tells
 you which one is Warden.
 
-**Hear it** speaks the highlighted voice without closing the dialog and without committing the
-choice, so you can walk the list and listen. What it says is the core's own opening line rather
-than a neutral sample, because the question you are asking is about a character.
+**Every voice in the list has a play glyph at the right of its row.** Pressing it speaks that
+voice without closing the dialog and without committing the choice, so you can walk the list and
+listen. While it is talking the glyph is a stop square, and pressing it again cuts it off. What
+it says is the core's own opening line rather than a neutral sample, because the question you are
+asking is about a character.
+
+**Clicking a voice highlights it and nothing more.** **Use this**, Enter, or a double-click takes
+the highlighted one; Cancel and Escape keep what you had. That is what makes the list something
+you can examine rather than a single click away from a decision.
 
 It is a press rather than a hover, and it is never automatic: on a paid provider each one is a
-synthesis request billed by the character, so the button carries the price before you press it —
-**Hear it (free)** on Edge Neural, an estimate in dollars on ElevenLabs. Each voice is
-synthesised once per session and replayed after that, so walking back and forth over four
-candidates costs four auditions rather than eight.
+synthesis request billed by the character, so the price is stated above the list before you press
+anything — *"Play a voice to hear it. This provider costs nothing"* on Edge Neural, an estimate in
+dollars on ElevenLabs. Each voice is synthesised once per session and replayed after that, so
+walking back and forth over four candidates costs four auditions rather than eight.
 
 It goes through the same audio path as everything else Directive 47 says: it ducks the game, the
 shut-up key cuts it off, and starting a second audition drops the first mid-word rather than
 queueing behind it.
 
-With no provider selected, or with a paid provider and no key stored, the button is shut and
-says which of those it is.
+With no provider selected, or with a paid provider and no key stored, the glyphs are shut and the
+line above the list says which of those it is.
 
 #### An empty list says which empty it is
 
@@ -196,15 +202,18 @@ basis is wrong — so this is counted separately from [what the model costs](con
 Two rows, and they are deliberately different kinds of thing.
 
 **Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
-published list price for the model Directive 47 asks for — $0.10 per thousand for ElevenLabs'
-`eleven_multilingual_v2`, read from their API pricing page. That is a list price and not your
+published list price for the model Directive 47 asks for — $0.05 per thousand for ElevenLabs'
+`eleven_turbo_v2_5`, read from their API pricing page. That is a list price and not your
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.
 
 **Spoken this session** is a fact. It is the number of characters actually handed to the
 provider since Directive 47 started, counted at the one seam every caller passes — the ship's AI,
-a callout, a re-voiced in-game message and a core's own introduction all converge there.
+a callout, a re-voiced in-game message and a core's own introduction all converge there. It
+counts what went **on the wire**, which for ElevenLabs is a little longer than what you read:
+numerals are spelled out before they are sent, so "88 of 100" leaves as
+"eighty-eight of one hundred".
 
 - Counted on synthesis that **succeeded**. A refused voice or a failed request costs nothing.
 - A line cut off by the shut-up key still counts the sentences that were already sent, because
@@ -232,9 +241,9 @@ falling silent.
 They are two rows rather than one because they are two people. A carrier whose captain and tower
 sound identical is a carrier with one person on it.
 
-Both offer the same **Hear it** button as the voice row, and both audition as themselves rather
-than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is
-what you are actually listening for when you cast one.
+Both offer the same play glyphs as the voice row, and both audition as themselves rather than
+reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is what you
+are actually listening for when you cast one.
 
 ### Speak incoming messages {#incoming-messages}
 

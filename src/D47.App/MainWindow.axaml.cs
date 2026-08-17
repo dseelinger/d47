@@ -235,6 +235,7 @@ public partial class MainWindow : Window
         _host.Transcribed += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append(text, TranscriptKind.Technical));
 
+
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             DescribeHotkeys();
@@ -473,7 +474,18 @@ public partial class MainWindow : Window
     /// anything changed.
     /// </para>
     /// </summary>
-    private Control BuildSettingsPage()
+    /// <summary>
+    /// Builds a settings page, wired to this app's host. Public because the headset's copy of the
+    /// panel needs one too, and it must be the same builder: two of them would be two lists of
+    /// which stores, recorders and callbacks a settings surface needs, and the headset's would be
+    /// the one nobody noticed had fallen behind (remediation.md, "The VR big panel should carry
+    /// the Settings tab").
+    /// <para>
+    /// A new instance per call, which is required rather than incidental — a <c>Visual</c> belongs
+    /// to exactly one visual tree, so the window and the quad cannot share one.
+    /// </para>
+    /// </summary>
+    public Control BuildSettingsPage()
     {
         var view = new SettingsView();
 

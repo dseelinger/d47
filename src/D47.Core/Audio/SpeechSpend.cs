@@ -249,7 +249,11 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend) : 
         // After the await and outside any catch, which is the whole rule: a refused voice, a
         // rejected key and a cancelled turn all leave through the exception and none of them is
         // billed. What was synthesised before a shut-up was, and is counted, because it was sent.
-        spend.Record(inner.Id, text.Length);
+        //
+        // Asked of the provider rather than measured here, because a provider may rewrite a line
+        // on its way out — ElevenLabs spells numerals — and it is the rewritten length that
+        // arrives on the bill.
+        spend.Record(inner.Id, inner.Billable(text).Length);
 
         return clip;
     }

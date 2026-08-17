@@ -17,6 +17,221 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.23.0 — 2026-08-17 — Nineteen from hand-testing, and three things that had never once worked
+
+Two batches in one release, because neither had shipped: five wanted changes to the settings
+surface, and fourteen raised in a pass with a headset on. Three of the fourteen were features
+that stopped working, or never worked, without leaving a trace anywhere.
+
+## What was reported with a headset on
+
+### Auto-honk never fired, not once
+
+It waits for the ship to be out of the witchspace tunnel before pressing the fire button, and it
+waited for **normal space**. The far end of a hyperspace jump is supercruise. A Commander who
+arrives is in supercruise for the whole thirty-second window the arm is good for, so the arm
+expired every time and the trigger was never pressed.
+
+Every test of it modelled normal space, which is why nine of them passed while the feature did
+nothing. The hold is 5.3 seconds now, and the primary fire group is offered while flying rather
+than in normal space only.
+
+### The panel in the headset was a photograph
+
+Both headset surfaces are rasterised out of a window that is constructed and never shown, and
+nothing runs a layout pass in one. A control that changes marks itself and queues itself with the
+layout manager rather than marking its ancestors, so `Measure` on the root returned without ever
+descending and whatever had changed was never laid out.
+
+The panel therefore drew the transcript its model held when the data context was set, and nothing
+after it — worse than stale, because rebuilt text has no size, so the line that *was* showing
+vanished on the next append and left an empty page under a tab strip that still lit up.
+
+Captions had the same shape plus one of their own: an `ItemsControl` in such a window does not
+regenerate its containers when its source is replaced, so the first caption drew and every one
+after it drew an empty box. The three lines are one text block now.
+
+### Captions were also doubled
+
+The audio arbiter reports everything audible as one snapshot, re-raised for every change to any of
+it — so a second sentence being queued behind the first re-reported the first sentence's caption,
+and it went onto the screen twice. Clips carry an id now and the caption layer ignores a repeat of
+the one it is already showing.
+
+### The panel in the headset can be pressed, and it has Settings
+
+One trigger does both jobs, because a second action would change a manifest SteamVR caches under an
+application key and discard whatever binding the Commander had made. A press that has neither dwelt
+400 ms nor travelled a twentieth of the panel is a press; anything else is the carry it always was.
+Starting the carry on the button going down is why every attempt to press a control moved the whole
+quad instead.
+
+The Settings tab is no longer withheld from the quad. The reasoning was a nav column beside a
+700-pixel minimum, and that surface has collapsed its nav below 900 since Phase 12.
+
+### The settings nav pointed at the wrong section
+
+The scroll-spy added the card column's own position to the card's, and a scroll viewer scrolls by
+arranging its content at a *negative* offset — so the test "has this card's head passed the top
+edge" meant "is its top less than twice the scroll". At the fourth section the nav named the
+seventh, and past the sixth it sat on the last one for the rest of the page. Not a zoom problem: it
+reproduces identically at 100%, 125% and 175%.
+
+### ElevenLabs stopped speaking German
+
+A material milestone — *"Adaptive Encryptors Capture at 75 percent. 88 of 100."* — came back with
+the tail in German. A bare numeral is the one token in a sentence that carries no language, and
+Multilingual 2 decides the language from the sentence.
+
+Numerals are now spelled out on the way to the synthesiser, and the model is `eleven_turbo_v2_5`
+with the language pinned to English, because Multilingual 2 rejects that parameter outright. What
+you read is unchanged: the transcript and the captions keep the digits. The list price halves with
+the model, and the spend counter asks the provider what it actually sent.
+
+### Materials went quiet after a trader visit
+
+The milestone tracker only ever counted up. Filling a material at Jameson's Crash Site set its
+highest announced milestone to 100, and emptying it at a materials trader left that 100 in place —
+so every later collection found no threshold it had not already passed, and that material was
+silent for the rest of the session. A restart is what cleared it, because the tracker is in memory.
+Fill and empty a few at one trader stop and most of what a Commander is gathering goes quiet at
+once.
+
+It follows the holding down now, and it does that on every tick against the inventory rather than
+when something is picked up: spending a material raises no `MaterialCollected`, so a tracker that
+only looked then would next see the count already on its way back up and could not tell that apart
+from its never having moved. Only downwards — a material that fills from a mission reward is not a
+milestone anybody gathered. Across the 912-journal corpus this is 953 more announcements from the
+same 1,110 trades.
+
+### Two callouts that said nothing
+
+Elite announces which channel you have joined every time you drop out of hyperspace — 8,833 of them
+across the journal corpus, second in volume only to station traffic, and a fact you can read off
+the system name in front of you. It is no longer re-voiced.
+
+*"Ray Gateway offers engineering"* is gone for the same reason: 3,726 of the 3,759 dockings in the
+corpus advertise the service, and all 33 that do not are construction depots. Inverting it, which
+is what the report suggested, would have said nothing about a construction site instead.
+
+### Ship AI callouts are on the page now
+
+A fuel warning was heard once and was afterwards findable only in the log file. `Announcement`'s own
+documentation claimed every callout "already reaches the transcript by the route everything D47 says
+reaches it"; nothing did. They land on Conversation, and therefore on Technical.
+
+### A maximised window comes back on its own monitor
+
+The flag was saved and applied and nothing asserted the applying. What was missing is the screen:
+the remembered position is the *restored* rectangle and has to stay that way, so a window maximised
+on the second monitor had nothing recording it. The window is put back on that screen before it is
+maximised, because Windows maximises to whichever monitor a window is already on.
+
+### Every NPC in a system had the same voice, and none of them matched the name
+
+Voices are assigned per sender name and held for as long as the Commander is in that system, and
+they have been since Phase 11 — what was wrong is the pool they were drawn from. The filter that
+keeps a wingmate from being voiced in a language you do not speak read ElevenLabs' *accent* label
+as though it were a locale, so "american", "british" and "multilingual" were all discarded for not
+starting with `en`. Measured on a real account: **473 voices offered, one eligible.** Every named
+NPC shared it, and the per-name assignment beside it had nothing left to assign.
+
+A tag is only filtered on when it is a language tag now. The line that says how big the pool is
+gives both numbers, because "1 available" is unremarkable on its own and alarming beside
+"473 offered".
+
+A woman on the radio also sounds like one. **Elite records no sex for anybody** — 914 journals,
+696,000 events, 221 event kinds, and not one carries a gender field, so this cannot be read out of
+what the game states and no amount of reading the journals will make it readable. The names are
+there, though, so d47 ships a list of 692 given names that read as a woman's and gives those
+senders a voice the provider has tagged as one. Everything it does not recognise takes a man's,
+which is the safe half of the error in this material: of the forty commonest names it does not
+match, every one is Mark, John, Paul, Andrew, David, Michael — or not a personal name at all.
+A guess from a name's ending was not on offer; it makes Joshua and Luca women and leaves Ingrid
+and Meg men.
+
+The list is short and gets longer: `tools/scan-npc-names.py` reads the set out of the source it
+ships in and reports what is still unmatched, most heard first. Running out of women's voices
+makes two women share one rather than handing either a man's.
+
+### The log says which voice spoke
+
+Every line D47 speaks — a turn's reply, a callout, a re-voiced message, a crew member, a core's
+introduction — is built through one pipeline, so one line there records the speaker and the voice
+id once per utterance. Once, not per sentence: a six-sentence reply is one voice, and six identical
+lines would bury the one that differs. A voice the provider refused is not recorded as having
+spoken, because it did not.
+
+### Smaller things
+
+The egress disclosure — five lines of prose between rows that are one line each — is a tooltip on
+its row rather than a paragraph on the page, and it still follows the selected provider. The search
+box is body size rather than a step down from it: a field you type into is not supporting text.
+
+**Not changed:** disabling **Wait between attempts** under logarithmic backoff. It does have an
+effect there — the first retry waits exactly the base under either shape — so the row stays live.
+
+## Five wanted changes to the settings surface
+
+All five raised hand-testing 0.21.x, none of them a defect. Four are about the two places a
+Commander spends the most time on that surface: the search box, and the picker that casts a voice.
+
+### The search finds a section by its own name
+
+Typing "Speech" found rows and not the card called **Speech**, so a search for a section's own name
+looked like it had found nothing at the top of the thing it was looking for. The name is now marked
+where it is written — in the card's heading and in the nav item — and a named section keeps every
+row it has rather than only the ones that happen to repeat the word, because naming a section is a
+Commander asking to be taken to it.
+
+"Audio mixer" is the case that shows why: nothing inside that card says "audio mixer", so it used
+to answer a search for its own name by emptying itself and then disappearing for being empty.
+
+### **Verify Key** is shut until a key has been typed
+
+It was offered on an empty box, where the only answer it could give was that an empty key is not a
+valid one — and it was offered there for as long as a key was stored, which is most of the time.
+
+It now lights up when you paste something and says why while it is shut. Pressing it stores what
+you typed and *then* checks it, which is the only honest thing it can do: the check is a real call
+made against the store, so on an unsaved paste it would otherwise have been answering about the key
+you had just replaced.
+
+### The ElevenLabs key sits beside the provider that needs it
+
+It was at the foot of the Speech card, below sixteen rows about rates, cues, retries and egress —
+so selecting ElevenLabs asked for a key, and the box to put one in was off the bottom of the
+screen. Selecting a provider is what makes its key relevant, so the row that answers that choice is
+now directly beneath the one that made it. Which key rows exist and when they appear is unchanged.
+
+### Auditioning a voice is a glyph on the row
+
+**Hear it (about $0.013)** was a button with a disclosure written on it. Every voice in the list now
+carries a play glyph at the right of its row, which becomes a stop square while that voice is
+talking and cuts it off when pressed again.
+
+The price did not go with the button. It is a sentence above the list — *"Play a voice to hear it.
+Each one costs about $0.013"* — and the same words are on the pointer over every glyph, because a
+cost you have to hover to discover is a cost discovered afterwards on the bill. With no provider
+selected, or a paid one with no key, the glyphs are shut and that line says which it is.
+
+### Clicking a voice highlights it rather than choosing it
+
+The picker committed and closed on a single click, so there was no way to look at the list — and no
+row for a play glyph to live on, since a row that dismisses the window when touched cannot hold a
+control. A click now highlights; **Use this**, Enter or a double-click takes it, and Cancel and
+Escape are unchanged.
+
+This overturns the reasoning that stood in `PickerWindow`: a command palette is a means of getting
+at one known answer and should commit on the first click, but a list of four hundred voices is a
+list to be examined.
+
+Fixed on the way past: rebuilding the rows on each keystroke would have cost the picker its
+highlight the moment it opened — a list holds its selection by object, and a text box raises
+`TextChanged` as its template applies. The rows are built once and filtered.
+
+---
+
 ## 0.22.2 — 2026-08-17 — The panel stops flickering while you carry it
 
 0.22.1 got the trigger arriving and the panel moving. This is what carrying it then showed.

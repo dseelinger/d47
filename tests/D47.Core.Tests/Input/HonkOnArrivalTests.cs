@@ -41,7 +41,19 @@ public class HonkOnArrivalTests
         params JournalEvent[] events) =>
         new(now ?? DateTimeOffset.UnixEpoch, priming, null, status, NavRoute.None, events);
 
+    /// <summary>
+    /// Where a jump actually puts the Commander down: supercruise, in analysis mode.
+    /// <para>
+    /// This used to be <c>InMainShip | AnalysisMode</c> — normal space — which is a state the
+    /// far end of a hyperspace jump is never in, and it is why every test here passed while the
+    /// honk never once fired in the game.
+    /// </para>
+    /// </summary>
     private static readonly StatusFlags Arrived =
+        StatusFlags.InMainShip | StatusFlags.Supercruise | StatusFlags.AnalysisMode;
+
+    /// <summary>Dropped out of supercruise before the arm was spent. Also a honk.</summary>
+    private static readonly StatusFlags Dropped =
         StatusFlags.InMainShip | StatusFlags.AnalysisMode;
 
     private static HonkOnArrival Honk(bool enabled = true, EliteBinds? binds = null) =>
@@ -58,9 +70,23 @@ public class HonkOnArrivalTests
         var decision = honk.Examine(Context(Status(Arrived)));
 
         Assert.True(decision.Acts);
+        Assert.Equal(TimeSpan.FromSeconds(5.3), HonkOnArrival.Charge);
         Assert.Equal(HonkOnArrival.Charge, decision.Steps.Single(s => s.Kind == InputStepKind.Delay).Delay);
         Assert.Equal(InputStepKind.MouseDown, decision.Steps[0].Kind);
         Assert.Equal(InputStepKind.MouseUp, decision.Steps[^1].Kind);
+    }
+
+    /// <summary>
+    /// Both halves of flying count. The arrival itself is in supercruise, and a Commander who
+    /// drops out before the arm expires is still owed the honk they asked for.
+    /// </summary>
+    [Fact]
+    public void ItFiresInNormalSpaceToo()
+    {
+        var honk = Honk();
+        honk.Examine(Context(Status(StatusFlags.InMainShip | StatusFlags.FsdJump), events: Jump()));
+
+        Assert.True(honk.Examine(Context(Status(Dropped))).Acts);
     }
 
     [Fact]

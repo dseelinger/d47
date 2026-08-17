@@ -181,7 +181,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var section in settings.Sections)
         {
             var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var (card, content) = BuildCard(section, title, _sections.Count);
+            var (card, content, heading) = BuildCard(section, title, _sections.Count);
 
             Cards.Children.Add(card);
 
@@ -189,14 +189,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             NavItems.Children.Add(nav.Item);
 
             _sections.Add(
-                new SectionView(section.Capability.Id, title, card, content, nav.Item, nav.Bar, nav.Text));
+                new SectionView(
+                    section.Capability.Id, title, card, content, heading, nav.Item, nav.Bar, nav.Text));
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
 
-    private (Border Card, StackPanel Content) BuildCard(SettingsSection section, string title, int index)
+    private (Border Card, StackPanel Content, TextBlock Heading) BuildCard(
+        SettingsSection section,
+        string title,
+        int index)
     {
         var content = new StackPanel
         {
@@ -323,7 +327,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return (card, content);
+        return (card, content, heading);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -495,8 +499,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Scroller.Offset = new Vector(0, CardTop(_sections[index].Card));
     }
 
-    /// <summary>The card's position in the scroller's content space, margins included.</summary>
-    private double CardTop(Border card) => card.Bounds.Y + Cards.Bounds.Y - 8;
+    /// <summary>
+    /// The card's position in the scroller's <em>content</em>, which is not where it is on
+    /// screen.
+    /// <para>
+    /// <b>This read <c>card.Bounds.Y + Cards.Bounds.Y</c>, and that counted the scroll twice.</b>
+    /// A <see cref="ScrollViewer"/> scrolls by arranging its content at a negative offset, so
+    /// <c>Cards.Bounds.Y</c> is the card column's margin <em>minus</em> however far the page has
+    /// been scrolled — 20 at the top, and 20 minus 4,931 further down. Feeding that into a
+    /// comparison against the offset made the test "has this card's head passed the top edge"
+    /// come out as "is this card's top less than twice the offset", so the highlight ran ahead
+    /// of the page and further ahead the further down it went: at the fourth section it named
+    /// the seventh, and past the sixth it sat on the last one for the rest of the page.
+    /// </para>
+    /// <para>
+    /// The margin is the answer instead. It is this class's own margin on its own column, it
+    /// does not move, and content space is what both callers want — the spy compares it against
+    /// the offset, and a nav click assigns it to the offset.
+    /// </para>
+    /// </summary>
+    private double CardTop(Border card) => card.Bounds.Y + Cards.Margin.Top;
 
     /// <summary>
     /// Highlights the section the panel is actually showing — the topmost card still in view —
@@ -657,6 +679,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var showing = new int[_sections.Count];
 
+        // Which sections the query names. Worked out before the rows because a section that
+        // matches keeps all of them (change-requests.md 15).
+        var named = new bool[_sections.Count];
+
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            named[i] = _query.Length > 0
+                       && _sections[i].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
+        }
+
         _refreshing = true;
         try
         {
@@ -664,7 +696,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (list.md Phase 4).
-                var shown = row.Row.Applies(_settings.Current) && Matches(row.Row);
+                var shown = row.Row.Applies(_settings.Current)
+                            && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
 
                 row.Container.IsVisible = shown;
                 row.Refresh();
@@ -687,7 +720,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             _refreshing = false;
         }
 
-        ApplyFilterToCards(showing);
+        // The section's own name, marked in both places it is written. Painted after the rows so
+        // it happens on the same pass, and unconditionally so clearing the query takes the mark
+        // off again — Paint with nothing to find puts the plain string back.
+        for (var i = 0; i < _sections.Count; i++)
+        {
+            Paint(_sections[i].Heading, _sections[i].Title);
+            Paint(_sections[i].NavText, _sections[i].Title);
+        }
+
+        ApplyFilterToCards(showing, named);
     }
 
     /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
@@ -703,6 +745,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// argument against highlighting <em>instead of</em> filtering, and not against doing both —
     /// once the filter has cut the haystack down, marking the hits is what tells the Commander
     /// which words survived on their behalf. See <see cref="Illuminate"/>.
+    /// </para>
+    /// <para>
+    /// <b>A section name is a match too</b> (change-requests.md 15). Typing "Speech" used to find
+    /// rows and not the card called Speech, so a search for a section's own name looked like it
+    /// had found nothing at the top of the thing it was looking for. A named section keeps every
+    /// row it has rather than only the ones that happen to repeat the word, because "Speech" is a
+    /// Commander asking to be taken there — and its name is marked in the card and in the nav, so
+    /// it is visible why the whole card survived.
     /// </para>
     /// </summary>
     public void Filter(string? query)
@@ -836,14 +886,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// state is not written while this happens, so clearing the query puts it back.
     /// </para>
     /// </summary>
-    private void ApplyFilterToCards(int[] showing)
+    private void ApplyFilterToCards(int[] showing, bool[] named)
     {
         var filtering = _query.Length > 0;
 
         for (var i = 0; i < _sections.Count; i++)
         {
             var section = _sections[i];
-            var holds = showing[i] > 0;
+
+            // Named counts even with nothing under it. A section whose every row is inapplicable
+            // right now would otherwise answer a search for its own name by vanishing.
+            var holds = showing[i] > 0 || named[i];
 
             section.Card.IsVisible = !filtering || holds;
             section.NavItem.IsVisible = !filtering || holds;
@@ -999,6 +1052,31 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         caption.Children.Add(help);
         caption.Children.Add(keyLine);
 
+        if (row is { ValueAsHint: true, Binding: { } hinted })
+        {
+            // On the caption rather than on the label alone, so the help line under it answers
+            // the hover too — the request was "the label or the description", and the two read
+            // as one block.
+            //
+            // Folded into the row's own refresh, because this disclosure is a function of the
+            // selected provider: a tip set once would go on describing Edge after ElevenLabs
+            // was chosen, which is the exact staleness this row was rewritten to end.
+            var describe = refresh;
+
+            refresh = () =>
+            {
+                describe();
+                ToolTip.SetTip(caption, hinted.Read(_settings!.Current));
+            };
+
+            ToolTip.SetShowDelay(caption, 250);
+
+            // The pointer has to have something to be over. A StackPanel with no background is
+            // transparent to hit-testing between its children, so the gaps in the caption would
+            // swallow the hover and the tip would come and go as the pointer crossed them.
+            caption.Background = Brushes.Transparent;
+        }
+
         Control body;
         if (compact)
         {
@@ -1146,6 +1224,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // this button is a method rather than a window the App has to own.
             case SettingKind.Info when row.Press is not null:
                 return BuildPressable(row);
+
+            // A disclosure that is consulted rather than read. It has no control at all: the
+            // value goes on the caption's tooltip, which BuildRow attaches once it has the
+            // caption to attach it to.
+            case SettingKind.Info when row.ValueAsHint:
+                return (new Avalonia.Controls.Panel(), () => { }, true);
 
             case SettingKind.Info:
                 return BuildInfo(row);
@@ -1807,7 +1891,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     ? new PickerAudition
                     {
                         Play = audition.Play,
-                        Label = audition.Label(_settings.Current),
+                        Cost = audition.Cost(_settings.Current),
                         Unavailable = audition.Unavailable?.Invoke(_settings.Current),
                     }
                     : null,
@@ -1923,6 +2007,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         string Title,
         Border Card,
         StackPanel Content,
+
+        /// <summary>The card's own title, so a query that matched the section can be marked in it.</summary>
+        TextBlock Heading,
         Border NavItem,
         Border NavBar,
         TextBlock NavText)

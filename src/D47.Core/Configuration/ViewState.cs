@@ -182,6 +182,26 @@ public sealed record WindowPlacement
     public double? Y { get; init; }
 
     public bool Maximized { get; init; }
+
+    /// <summary>
+    /// The origin of the working area of the screen the window was maximised on, or null when it
+    /// was not maximised.
+    /// <para>
+    /// Its own pair rather than reusing <see cref="X"/> and <see cref="Y"/>, which hold the
+    /// restored rectangle and have to keep holding it: a Commander who maximises once must still
+    /// be able to un-maximise back to a window they chose. A maximised window on the second
+    /// monitor and a restored window on the first is an ordinary arrangement, and one pair of
+    /// numbers cannot describe it.
+    /// </para>
+    /// <para>
+    /// A screen origin rather than the window's own position, because a maximised window on
+    /// Windows sits at roughly minus the border thickness — which on the leftmost monitor is a
+    /// point on no screen at all, and next to another monitor is a point on the wrong one.
+    /// </para>
+    /// </summary>
+    public double? MaximizedOnX { get; init; }
+
+    public double? MaximizedOnY { get; init; }
 }
 
 /// <summary>
