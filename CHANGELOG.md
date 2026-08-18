@@ -17,6 +17,45 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.26.1 — 2026-08-18 — Saying so when it cannot look things up
+
+Two faults with one root: `SupportsWebSearch` was consulted everywhere search is *used* and
+nowhere it is *explained*. Found while working out what happens on an endpoint that has no search,
+which is what a custom endpoint generally is.
+
+### The egress disclosure described searches that could not happen
+
+Point `llm.endpoint` at a gateway and the Web search row still read **active**. It named the
+destination, said your provider was running searches and reading pages on your behalf, and quoted
+about a penny each — while `SupportsWebSearch` guaranteed no search would ever be made from there.
+The row had three states and needed four: off, no usable model, **no search at this endpoint**,
+and active.
+
+Over-reporting egress is the safe direction to be wrong in. It is still wrong. A disclosure is
+only worth reading if it describes this machine, these settings, right now, and this one described
+a transfer that could not occur.
+
+### Directive 47 now says why it cannot look something up
+
+Ask about patch notes, or what other Commanders are reporting, on an endpoint with no search — or
+with the row simply switched off — and the model was told nothing. It was not offered the search
+tool and had no idea why, so it answered from memory, and an answer from memory reads exactly like
+an answer that was checked.
+
+It is told now, and told which half is missing, because the two have different answers:
+
+- **The row is off** — you can turn it on.
+- **The endpoint offers no search** — Anthropic's own endpoint offers one; a gateway or a local
+  model may not.
+
+The endpoint wins when both apply. Being told to flip a switch that will not help is worse than
+being told nothing: you flip it, nothing changes, and the next explanation is one you have a
+reason to distrust.
+
+Nothing is said at all when search works, so having it on costs no words about it.
+
+---
+
 ## 0.26.0 — 2026-08-18 — Ships
 
 list.md Phase 26. The Loadout tab has its first surface: your fleet, the hulls you intend to buy,

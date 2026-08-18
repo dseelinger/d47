@@ -15,8 +15,16 @@ public static class PrivacyCapability
 
     public const string UpdateCheckKey = "updates.checkOnStartup";
 
-    public static CapabilityDescriptor Create(SettingsService settings)
+    /// <param name="searchAvailable">
+    /// Whether the provider and model in use offer a server-side web search. Null is "assume it
+    /// can", which is what a caller with no provider to ask is entitled to say — every test here
+    /// is one, and so is first run. <b>A caller that has a provider must supply it</b>, or the
+    /// web-search row describes searches at an endpoint that will never make one.
+    /// </param>
+    public static CapabilityDescriptor Create(SettingsService settings, Func<bool>? searchAvailable = null)
     {
+        var canSearch = searchAvailable ?? (() => true);
+
         // Presence of the key, never its value — the disclosure has to distinguish "configured
         // and sending" from "selected but inert", and that is the only bit it needs.
         bool KeyPresent() =>
@@ -64,14 +72,18 @@ public static class PrivacyCapability
                         "List every destination D47 can send to, whether it is active with the current settings, "
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
-                        ToolResult.Ok(EgressDisclosure.Describe(settings.Current, KeyPresent(), InaraKeyPresent()))),
+                        ToolResult.Ok(EgressDisclosure.Describe(
+                            settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch),
         };
     }
 
-    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<bool> keyPresent, Func<bool> inaraKeyPresent)
+    private static IReadOnlyList<SettingRow> BuildSettingRows(
+        Func<bool> keyPresent,
+        Func<bool> inaraKeyPresent,
+        Func<bool> searchAvailable)
     {
         var rows = new List<SettingRow>
         {
@@ -120,7 +132,8 @@ public static class PrivacyCapability
             {
                 Read = s =>
                 {
-                    var entry = EgressDisclosure.Entry(id, s, keyPresent(), inaraKeyPresent());
+                    var entry = EgressDisclosure.Entry(
+                        id, s, keyPresent(), inaraKeyPresent(), searchAvailable());
                     return $"{entry.Line}\n{entry.What}";
                 },
             },

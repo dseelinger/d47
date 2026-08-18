@@ -560,6 +560,63 @@ public class EgressDisclosureTests
         Assert.Contains("no language model is usable", entry.What, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The setting on, a key present, and an endpoint that offers no search — which is what
+    /// pointing <c>llm.endpoint</c> at a gateway produces, since a server-side search is the
+    /// provider's to offer.
+    /// <para>
+    /// <b>This row used to read Active and describe searches being made.</b> It named the
+    /// destination, said pages were being read on the Commander's behalf and quoted a penny a
+    /// search, none of which could happen. Over-reporting egress is the safe direction to be
+    /// wrong in and is still wrong: a disclosure that describes a transfer that cannot occur is
+    /// not a cautious disclosure, it is an inaccurate one.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void WebSearchAtAnEndpointThatCannotSearchIsSilent()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(
+            EgressDisclosure.WebSearch, settings, llmKeyPresent: true, searchAvailable: false);
+
+        Assert.False(entry.Active);
+        Assert.Contains("offers no search", entry.What, StringComparison.Ordinal);
+
+        // The specific claims the old row made. Asserting their absence rather than only the
+        // new wording, because the failure being guarded is a row that says too much.
+        Assert.DoesNotContain("does not search the web itself", entry.What, StringComparison.Ordinal);
+        Assert.DoesNotContain("penny", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The default stays "assume it can", so a caller with no provider to ask — first run, and
+    /// every test that is not about this — describes what the settings would cause.
+    /// </summary>
+    [Fact]
+    public void WebSearchAssumesTheEndpointCanSearchWhenNobodySays()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        Assert.True(EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: true).Active);
+    }
+
+    /// <summary>
+    /// An endpoint that cannot search takes the whole report with it: the prose form counts
+    /// active destinations, and a row that is wrong there is wrong in the spoken answer too.
+    /// </summary>
+    [Fact]
+    public void TheProseReportDropsSearchAtAnEndpointThatCannotSearch()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var report = EgressDisclosure.Describe(
+            settings, llmKeyPresent: true, inaraKeyPresent: false, searchAvailable: false);
+
+        Assert.Contains("offers no search", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("penny", report, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AConfiguredProviderNamesTheEndpointItSendsTo()
     {

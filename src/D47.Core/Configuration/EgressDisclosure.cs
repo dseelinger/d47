@@ -122,14 +122,23 @@ public static class EgressDisclosure
     /// destination whose row is decided by a secret rather than by a setting — a caller that has
     /// no secret store to ask reports it silent, which is what a machine with no key is.
     /// </param>
+    /// <param name="searchAvailable">
+    /// Whether the provider and model in use offer a server-side web search — what
+    /// <c>LlmProviderCapabilities.SupportsWebSearch</c> says. Optional and last, and defaulting
+    /// to <c>true</c>, because a caller with no provider to ask is describing what the settings
+    /// <em>would</em> cause rather than what this endpoint can do, and the default endpoint can
+    /// search. A caller that has a provider must pass the real answer: without it this row says
+    /// searches are being made at a gateway that will never make one.
+    /// </param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
         bool llmKeyPresent,
-        bool inaraKeyPresent = false) => id switch
+        bool inaraKeyPresent = false,
+        bool searchAvailable = true) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
-        WebSearch => WebSearchEntry(settings, llmKeyPresent),
+        WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
         TextToSpeech => TextToSpeechEntry(settings),
 
         GalaxySearch => settings.Knowledge.GalaxySearch
@@ -227,7 +236,7 @@ public static class EgressDisclosure
     /// "active" on a machine with no key, where no turn runs and therefore no search can.
     /// </para>
     /// </summary>
-    private static EgressEntry WebSearchEntry(D47Settings settings, bool keyPresent)
+    private static EgressEntry WebSearchEntry(D47Settings settings, bool keyPresent, bool available)
     {
         var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
         var usable = provider.Id != LlmProviderCatalog.NoneId && (!provider.NeedsKey || keyPresent);
@@ -247,6 +256,22 @@ public static class EgressDisclosure
                 NameOf(WebSearch),
                 "Web search is on, but no language model is usable, so no turn runs and no search "
                 + "is made.");
+        }
+
+        // The fourth state, and the one this row used to get wrong. A server-side search is the
+        // provider's to offer, so pointing `llm.endpoint` at a gateway turns it off whatever the
+        // setting says — and until this branch existed the row went on to describe searches being
+        // made, pages being read and a penny being billed, none of which could happen. Claiming
+        // egress that does not occur is the safe direction to be wrong in, but it is still wrong,
+        // and Phase 4's rule is that a disclosure which summarises is a disclosure that omits.
+        if (!available)
+        {
+            return EgressEntry.Silent(
+                WebSearch,
+                NameOf(WebSearch),
+                "Web search is on, but the endpoint D47 is pointed at offers no search, so none is "
+                + "made. A server-side search is the provider's to offer, not something D47 can do "
+                + "itself.");
         }
 
         return new EgressEntry(
@@ -282,13 +307,18 @@ public static class EgressDisclosure
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,
         bool llmKeyPresent,
-        bool inaraKeyPresent = false) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent))];
+        bool inaraKeyPresent = false,
+        bool searchAvailable = true) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
-    public static string Describe(D47Settings settings, bool llmKeyPresent, bool inaraKeyPresent = false)
+    public static string Describe(
+        D47Settings settings,
+        bool llmKeyPresent,
+        bool inaraKeyPresent = false,
+        bool searchAvailable = true)
     {
-        var entries = For(settings, llmKeyPresent, inaraKeyPresent);
+        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

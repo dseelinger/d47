@@ -30,6 +30,56 @@ public static class ConversationCapability
     /// <summary>The secret row key for a provider's API key. One row per provider that needs one.</summary>
     public static string KeyRowFor(LlmProviderInfo provider) => $"llm.{provider.Id}.apiKey";
 
+    /// <summary>
+    /// The live half of web search: a line for prompt position 7 when d47 <em>cannot</em> look
+    /// anything up, and nothing at all when it can.
+    /// <para>
+    /// <b>State rather than a tool, because no keyword catches the question.</b> "What is the
+    /// latest on the Thargoid war" needs current information and names nothing d47 could route
+    /// on, so the model has to know the limit before it answers rather than d47 recognising the
+    /// phrasing afterwards. Without this the model is simply not offered the search tool and is
+    /// told nothing about why — it answers from memory, and a Commander cannot tell that from an
+    /// answer that was checked.
+    /// </para>
+    /// <para>
+    /// <b>The two halves name different remedies, so they are separate sentences.</b> The
+    /// setting is one toggle the Commander owns. The endpoint is not theirs at all: pointing
+    /// <c>llm.endpoint</c> at a gateway turns search off whatever the setting says, because a
+    /// server-side search tool is the provider's to offer. Telling somebody to flip a toggle
+    /// that will not help is worse than saying nothing, so <b>the endpoint wins when both are
+    /// off</b> — it is the binding constraint.
+    /// </para>
+    /// <para>
+    /// Present on every turn it applies, which with the default setting is most of them, and
+    /// that cost is accepted: it is position 7, below the cache breakpoint, where a per-turn
+    /// value is billed once at the uncached rate and never rewrites the prefix. Null when
+    /// search works, so the Commander who has it on pays nothing for a sentence about it.
+    /// </para>
+    /// </summary>
+    /// <param name="enabled">The Commander's <see cref="WebSearchKey"/> setting.</param>
+    /// <param name="available">
+    /// What <see cref="LlmProviderCapabilities.SupportsWebSearch"/> says for the provider and
+    /// model in use. Asked of the provider rather than derived from the endpoint here, because
+    /// the rule is the provider's: Anthropic's own endpoint offers search and a gateway is
+    /// unknowable from Core, and the next provider to arrive will answer differently again.
+    /// </param>
+    public static string? LiveSearch(bool enabled, bool available)
+    {
+        if (!available)
+        {
+            return "D47 cannot look anything up online: the language-model endpoint in use offers no web "
+                   + "search. Say so plainly rather than answering a question that needs current "
+                   + "information as though it had been checked. Anthropic's own endpoint offers search; "
+                   + "a gateway or a local model may not.";
+        }
+
+        return enabled
+            ? null
+            : "D47 cannot look anything up online: the Commander has web search switched off. Say so "
+              + "plainly rather than answering a question that needs current information as though it "
+              + "had been checked. They can turn it on in Settings, under the language model.";
+    }
+
     /// <param name="verifyKey">
     /// Tries a provider's stored key against the real service, by provider id (list.md Phase 16).
     /// Optional, because most callers of this factory are tests that never press the button.

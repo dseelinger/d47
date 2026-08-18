@@ -171,4 +171,71 @@ public class WebSearchTurnTests
 
         Assert.Equal(0.00175m, result.Cost!.Dollars);
     }
+
+    /// <summary>
+    /// Search working says nothing at all. The line is a per-turn cost at prompt position 7, so
+    /// a Commander who has search on must not be billed for a sentence about a limit they do not
+    /// have.
+    /// </summary>
+    [Fact]
+    public void NothingIsSaidWhenSearchWorks()
+    {
+        Assert.Null(Capabilities.Builtin.ConversationCapability.LiveSearch(enabled: true, available: true));
+    }
+
+    /// <summary>
+    /// The Commander's own switch, named as theirs, because the remedy is one toggle they own.
+    /// </summary>
+    [Fact]
+    public void TheSettingBeingOffNamesTheSetting()
+    {
+        var line = Capabilities.Builtin.ConversationCapability.LiveSearch(enabled: false, available: true);
+
+        Assert.NotNull(line);
+        Assert.Contains("switched off", line, StringComparison.Ordinal);
+        Assert.Contains("Settings", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The endpoint half, which is not the Commander's doing and is not fixed by the toggle.
+    /// </summary>
+    [Fact]
+    public void AnEndpointWithNoSearchNamesTheEndpoint()
+    {
+        var line = Capabilities.Builtin.ConversationCapability.LiveSearch(enabled: true, available: false);
+
+        Assert.NotNull(line);
+        Assert.Contains("endpoint", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("switched off", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The endpoint wins when both are off.</b> Telling a Commander to flip a switch that
+    /// will not help is worse than saying nothing — they turn it on, nothing changes, and the
+    /// explanation they were given is now the reason they distrust the next one.
+    /// </summary>
+    [Fact]
+    public void TheEndpointWinsWhenBothAreOff()
+    {
+        var line = Capabilities.Builtin.ConversationCapability.LiveSearch(enabled: false, available: false);
+
+        Assert.NotNull(line);
+        Assert.Contains("endpoint", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("Settings", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Both lines have to be usable by a model that is about to answer a current-information
+    /// question, so both say not to answer as though it had been checked.
+    /// </summary>
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void EveryLineForbidsAnsweringAsThoughChecked(bool enabled, bool available)
+    {
+        var line = Capabilities.Builtin.ConversationCapability.LiveSearch(enabled, available);
+
+        Assert.NotNull(line);
+        Assert.Contains("as though it had been checked", line, StringComparison.Ordinal);
+    }
 }

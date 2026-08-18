@@ -923,7 +923,12 @@ public sealed class AppHost : IDisposable
                 // How to present an instant locally. Asked each time rather than captured, so a
                 // Commander whose machine changes zone mid-session sees it without restarting.
                 () => TimeZoneInfo.Local,
-                shipPlans));
+                shipPlans,
+
+                // The endpoint half of web search, for the egress row. Asked each time because
+                // the Commander can retarget `llm.endpoint` without restarting, and the row is
+                // computed at render time so it has to be able to change underneath.
+                () => self?.SearchReachesTheWeb ?? true));
 
         built = capabilities;
 
@@ -978,11 +983,20 @@ public sealed class AppHost : IDisposable
                         Join(
                             ChecklistCapability.Live(checklists),
 
-                            // Both dates, already worked out, below the cache breakpoint where a
-                            // per-turn value costs nothing (list.md Phase 24). The model is never
-                            // asked to add 1286 to anything.
-                            UtilitiesCapability.Live(
-                                timekeeper, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local))))),
+                            Join(
+                                // Both dates, already worked out, below the cache breakpoint
+                                // where a per-turn value costs nothing (list.md Phase 24). The
+                                // model is never asked to add 1286 to anything.
+                                UtilitiesCapability.Live(
+                                    timekeeper, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
+
+                                // Why d47 cannot look something up, when it cannot. Null when it
+                                // can, so the Commander who has search on pays nothing for a
+                                // sentence about it. Reached through `self` because the provider
+                                // belongs to the turn loop this initialiser is still building.
+                                ConversationCapability.LiveSearch(
+                                    settings.Current.Llm.WebSearch,
+                                    self?.SearchReachesTheWeb ?? true)))))),
         };
 
         var host = self = new AppHost(
@@ -2934,9 +2948,26 @@ public sealed class AppHost : IDisposable
     /// offer. The same pair <see cref="TurnLoop"/> checks, read the same way.
     /// </summary>
     private bool CanSearch =>
-        Settings.Current.Llm.WebSearch
-        && Turns.Provider is { } provider
-        && provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;
+        Settings.Current.Llm.WebSearch && Turns.Provider is not null && SearchReachesTheWeb;
+
+    /// <summary>
+    /// The endpoint half on its own — whether the provider and model in use offer a server-side
+    /// search at all, ignoring whether the Commander has asked for one.
+    /// <para>
+    /// Split out because the two halves have <b>different remedies</b> and the disclosure and the
+    /// prompt both have to name the right one: the setting is a toggle the Commander owns, and
+    /// the endpoint is not theirs at all. Telling somebody to flip a switch that will not help is
+    /// worse than saying nothing.
+    /// </para>
+    /// <para>
+    /// True when no provider is selected. That is not "search works" — no turn runs at all — but
+    /// there is nothing about <em>search</em> to report there, and the language-model row already
+    /// says the real thing.
+    /// </para>
+    /// </summary>
+    private bool SearchReachesTheWeb =>
+        Turns.Provider is not { } provider
+        || provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;
 
     /// <summary>
     /// The same lore remark, told that nothing further is coming when nothing further can.
