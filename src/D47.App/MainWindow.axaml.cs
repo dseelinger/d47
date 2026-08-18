@@ -508,7 +508,12 @@ public partial class MainWindow : Window
                 // About's way back in. The window rather than the offer, because the offer is
                 // gated on there being no usable key and this path is for the Commander who came
                 // looking — a rotated key, a revoked one, or just checking the one they have.
-                ShowKeySetupAsync);
+                ShowKeySetupAsync,
+
+                // The Commander's own notes, and the search that decides how one is filed. The
+                // host owns both halves of "can this search at all", which is the thing the
+                // window has to say before anything is typed (list.md Phase 23).
+                _host.LoreEditing);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is

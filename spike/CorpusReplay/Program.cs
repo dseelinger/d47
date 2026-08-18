@@ -2,6 +2,7 @@ using System.Diagnostics;
 using D47.Core.Callouts;
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Lore;
 using Microsoft.Extensions.Logging;
 
 namespace CorpusReplay;
@@ -56,6 +57,14 @@ internal static class Program
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
             .Add(new RivalTerritoryCallout())
+
+            // Phase 23. The stores are scratch copies: this is about whether the fold throws on
+            // real data, not about what a Commander's own notes say.
+            .Add(new LoreCallout(
+                new LoreBook(new LoreStore(
+                    Path.Combine(scratch, "lore.json"), capture.CreateLogger<LoreStore>())),
+                new LoreVisits(
+                    Path.Combine(scratch, "lore-visits.json"), capture.CreateLogger<LoreVisits>())))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages { Enabled = () => true, IncludeNpcs = () => true });
 

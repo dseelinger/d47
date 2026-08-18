@@ -1,7 +1,7 @@
 ---
 title: Language model
 group: Conversation
-nav_order: 115
+nav_order: 116
 ---
 
 Which model answers you, whether it can be reached right now, and what the session has cost so
@@ -205,6 +205,12 @@ destination: nothing goes anywhere that was not already receiving your turns. Wh
 is that the model can now read arbitrary pages about what you asked, and the wording of the
 search — drawn from your question — goes with it. The [Privacy](privacy.md#egress-websearch) row
 says so while it is on.
+
+**One search happens without you asking a question.** With the [lore remark](lore.md#remarks) set
+to look things up, arriving in a system Directive 47 knows about searches for that system by name.
+Nothing else about you goes with it, and it obeys the same rules as everything here — spoken as a
+search result, never written into a table — but it is the one case where a search follows a jump
+rather than a question. Setting that row to *Remark only*, or switching this one off, ends it.
 
 Two things are true of anything found this way. It is **spoken as something read, with the source
 named**, and never quietly mixed into the ship and galaxy figures Directive 47 was built with —

@@ -34,6 +34,22 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 {
     public static readonly JournalLocation Unknown = new(null, null, false, null);
 
+    /// <summary>
+    /// Frontier's own id for the system, from the event that stated where the Commander is.
+    /// <para>
+    /// <b>The stable key, where <see cref="StarSystem"/> is only the current spelling.</b> Ceeckia
+    /// ZQ-L c24-0 became Beagle Point and kept its address, and Phase 23's lore table is keyed on
+    /// the address for exactly that reason.
+    /// </para>
+    /// <para>
+    /// Set only by an event that also names the system, and <b>assigned rather than coalesced</b>
+    /// there: an event saying which system this is and carrying no address leaves the address
+    /// null rather than the previous system's, because a wrong address is worse than none — it is
+    /// what a lore remark would fire on.
+    /// </para>
+    /// </summary>
+    public long? SystemAddress { get; init; }
+
     /// <summary>Planet, star, station — as Elite words it, so d47 never invents a classification.</summary>
     public string? BodyType { get; init; }
 
@@ -98,6 +114,13 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     public bool AtCarrier => StationType is "FleetCarrier";
 
     /// <summary>
+    /// The address for an event that states which system the Commander is in. Null where the
+    /// event names a system without one, unchanged where it names no system at all.
+    /// </summary>
+    private static long? Addressed(JournalEvent journalEvent, long? current) =>
+        journalEvent.String("StarSystem") is null ? current : journalEvent.Long("SystemAddress");
+
+    /// <summary>
     /// Folds one event into the current location. The switch covers the events that state
     /// position; everything else falls through unchanged.
     /// </summary>
@@ -111,6 +134,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         "Location" or "CarrierJump" => this with
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
+            SystemAddress = Addressed(journalEvent, SystemAddress),
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
             Docked = journalEvent.Bool("Docked"),
@@ -136,6 +160,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         "FSDJump" => this with
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
+            SystemAddress = Addressed(journalEvent, SystemAddress),
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
             Docked = false,
@@ -163,6 +188,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StationName = journalEvent.String("StationName") ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
+            SystemAddress = Addressed(journalEvent, SystemAddress),
             Mode = FlightMode.Docked,
         },
 

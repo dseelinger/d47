@@ -253,13 +253,15 @@ public static class EgressDisclosure
             WebSearch,
             NameOf(WebSearch),
             settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name,
-            $"D47 does not search the web itself. When a question needs current information, "
-            + $"{provider.Name} runs the search and reads the pages, and D47 only ever sees the reply. "
-            + "That means no new destination beyond the one above — but it does mean the wording of "
-            + "the search, which is drawn from what you asked, and whatever those pages say comes back "
-            + "into the conversation. Anything read there is treated as information, never as an "
-            + "instruction, and is never written into D47's own tables. Searches are billed by "
-            + "the provider on top of the turn, at about a penny each.",
+            $"D47 does not search the web itself. When a question needs current information — and, "
+            + "if the lore remark is set to look things up, when you arrive in a system D47 knows "
+            + $"something about — {provider.Name} runs the search and reads the pages, and D47 only "
+            + "ever sees the reply. That means no new destination beyond the one above — but it does "
+            + "mean the wording of the search, which is drawn from what you asked or from the name of "
+            + "the system you just jumped into, and whatever those pages say comes back into the "
+            + "conversation. Anything read there is treated as information, never as an instruction, "
+            + "and is never written into D47's own tables. Searches are billed by the provider on top "
+            + "of the turn, at about a penny each.",
             Active: true);
     }
 
