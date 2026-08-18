@@ -44,4 +44,23 @@ public enum AlertCue
     /// and the only cue here that is not about somebody shooting.
     /// </summary>
     RivalTerritory,
+
+    /// <summary>
+    /// A timer or an alarm has gone off (list.md Phase 24, "A timer says its own name").
+    /// <para>
+    /// The only member here that is not about somebody shooting, and the only one the Commander
+    /// asked for. It joins this family rather than getting machinery of its own because the
+    /// family's contract is exactly what it needs: named for the enum member, with the test that
+    /// asserts the shipped set matches this enum, because a hand-written member-to-filename table
+    /// is a place for a typo to live and a typo there goes wrong as silence.
+    /// </para>
+    /// <para>
+    /// <b>One clip for every timer, and d47 speaks the name.</b> Runtime synthesis was the
+    /// alternative and would have let each timer carry its own tone — genuinely useful in a
+    /// headset where you cannot glance — but it is new machinery in the audio path for a
+    /// distinction the voice already makes better. So the cue says <em>something finished</em>
+    /// and the sentence after it says which.
+    /// </para>
+    /// </summary>
+    TimerElapsed,
 }

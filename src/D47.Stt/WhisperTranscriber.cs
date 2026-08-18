@@ -215,11 +215,18 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
             var text = new StringBuilder();
 
+            // The model's own confidence, kept as the worst segment rather than the average
+            // (list.md Phase 25, "Say it, or type it"). One badly-heard word in an otherwise
+            // clear sentence is exactly the failure this figure exists to catch — a system name
+            // among ordinary English — and an average over the sentence buries it.
+            var confidence = 1d;
+
             await foreach (var segment in processor
                                .ProcessAsync(utterance.Samples, cancellationToken)
                                .ConfigureAwait(false))
             {
                 text.Append(segment.Text);
+                confidence = Math.Min(confidence, segment.Probability);
             }
 
             var transcribed = Clean(text.ToString());
@@ -234,6 +241,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             {
                 Elapsed = stopwatch.Elapsed,
                 Model = Model,
+                Confidence = confidence,
             };
         }
         catch (OperationCanceledException)

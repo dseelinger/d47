@@ -52,7 +52,36 @@ public partial class App(AppHost? host) : Application
                 // lists of what a settings surface needs wired to it, and the headset's would be
                 // the one that quietly fell behind. It hands back a new instance per call, which
                 // it has to — a Visual belongs to exactly one visual tree.
-                window is null ? null : window.BuildSettingsPage);
+                window is null ? null : window.BuildSettingsPage,
+
+                // And the checklist, which the headset copy needs more than the window does: a
+                // Window cannot appear here, so this is the only way a Commander in VR sees it
+                // (list.md Phase 25).
+                host.Checklists,
+
+                // And the clocks, timers and alarms (list.md Phase 24).
+                host.Timekeeper,
+                host.Alarms);
+
+            // And the headset's copy of the panel can be the one asking for a spoken value
+            // (list.md Phase 25). Registered beside the window's rather than instead of it: two
+            // surfaces, two navigators, and either can have a prompt open.
+            var prompts = host.Vr.Prompts;
+
+            host.RoutePrompts(heard =>
+            {
+                if (!prompts.IsListening)
+                {
+                    return false;
+                }
+
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => prompts.Hear(heard));
+                return true;
+            });
+
+            // And a spoken phrase moves the headset panel too. Both surfaces, because a phrase
+            // has no surface attached to it - see AppHost.Navigate.
+            host.RouteNavigation(host.Vr.Nav);
         }
 
         base.OnFrameworkInitializationCompleted();

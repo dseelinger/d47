@@ -26,7 +26,7 @@
   <UserControl.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <ResourceInclude Source="avares://d47/Panel/TranscriptTabs.axaml" />
+        <ResourceInclude Source="avares://d47/Panel/PanelTabs.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </UserControl.Resources>
@@ -293,10 +293,11 @@
     </DockPanel>
 
     <!--
-      Which page of the transcript this surface is showing. On the view rather than on the view
-      model, for the same reason PanelMode is: both surfaces bind one model, so a page held
-      there would send the headset to the log file the moment the window went to it. The model
-      owns the content; how much of it a given surface shows is that surface's business.
+      Which surface of the panel this instantiation is showing, and which reading of it. On the
+      view rather than on the view model, for the same reason PanelMode is: both surfaces bind
+      one model, so a page held there would send the headset to the log file the moment the
+      window went to it. The model owns the content; how much of it a given surface shows is
+      that surface's business.
     -->
     <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
 
@@ -404,9 +405,32 @@
                 Click="OnSearchNextClick" />
       </StackPanel>
 
-      <StackPanel x:Name="TranscriptTabs"
-                  Orientation="Horizontal"
-                  VerticalAlignment="Bottom">
+      <!--
+        The modes of whichever tab is showing - Conversation, Technical and the log file for
+        Transcript; Ships, Suits and weapons and Gap analysis for Loadout when it arrives.
+
+        In the tab strip's own row, docked right, and this is the whole of "the mode control is
+        not a second tab strip under the first" (list.md Phase 25). Two stacked strips read
+        worse than the eight flat tabs the collapse avoids, so the second control shares the
+        first's row and is drawn as a segmented pill rather than as tabs.
+
+        Filled in code, because the roots come from the navigator: a tab declares its own, and a
+        tab with one root shows no control at all. Hidden below the root for the reason the
+        theme records.
+      -->
+      <Border x:Name="ModeRow"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              VerticalAlignment="Bottom"
+              Margin="12,0,0,4"
+              Padding="2"
+              CornerRadius="4"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="1">
+        <StackPanel x:Name="Modes" Orientation="Horizontal" Spacing="2" />
+      </Border>
+
       <!--
         No GroupName, deliberately. Avalonia groups named radio buttons across the whole
         application rather than within a tree, and this view is instantiated twice - once by the
@@ -414,52 +438,93 @@
         overlay's tabs unchecked the window's as they were built, and the window opened with no
         tab highlighted until it was clicked. Nameless, they group by their parent panel, which
         is one strip per surface - which is what a tab strip is.
+
+        Six tabs, and five in the headset: Settings stays hidden there for the reason recorded
+        below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
+        the phases that fill them land one at a time without a dead tab in between - the same
+        rule Settings has followed since Phase 12, generalised.
       -->
-      <RadioButton x:Name="ConversationTab"
-                   Theme="{StaticResource D47.Tab}"
-                   IsChecked="True"
-                   Content="Conversation"
-                   IsCheckedChanged="OnPageTabChecked" />
-      <RadioButton x:Name="TechnicalTab"
-                   Theme="{StaticResource D47.Tab}"
-                   Content="Technical"
-                   IsCheckedChanged="OnPageTabChecked" />
-      <!--
-        This tab reads a file off disk before it can show anything, so it carries the glyph that
-        says so. On the tab, because the affordance that was touched is the thing that shows it:
-        a Commander who clicked here does not look elsewhere (list.md Phase 12). It is on the
-        panel rather than on the window, so the headset's copy of this view gets it too.
-      -->
-      <RadioButton x:Name="LogTab"
-                   Theme="{StaticResource D47.Tab}"
-                   IsCheckedChanged="OnPageTabChecked">
-        <StackPanel Orientation="Horizontal" Spacing="7">
-          <TextBlock Text="Log file" VerticalAlignment="Center" />
-          <controls:BusyGlyph x:Name="LogBusy"
-                              IsVisible="False"
-                              VerticalAlignment="Center"
-                              Stroke="{DynamicResource D47.Accent}" />
-        </StackPanel>
-      </RadioButton>
-      <!--
-        Hidden until a host says otherwise, and only the desktop window ever does. The headset
-        renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
-        so much as a wall - so the tab is absent there rather than present and asking to be
-        remembered about (list.md Phase 12).
-      -->
-      <RadioButton x:Name="SettingsTab"
-                   Theme="{StaticResource D47.Tab.Settings}"
-                   IsVisible="False"
-                   Content="Settings"
-                   IsCheckedChanged="OnPageTabChecked" />
+      <StackPanel x:Name="Tabs"
+                  Orientation="Horizontal"
+                  VerticalAlignment="Bottom">
+        <!--
+          One tab for three readings of one exchange. Conversation and Technical are the same
+          turns at two verbosities and the log is a file read off disk - which is why the busy
+          glyph rides the mode rather than the tab, and why the collapse is three modes rather
+          than a single toggle (list.md Phase 25).
+        -->
+        <RadioButton x:Name="TranscriptTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsChecked="True"
+                     Content="Transcript"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="ChecklistTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Checklist"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="LoadoutTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Loadout"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="EngineersTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Engineers"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="UtilitiesTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Utilities"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Hidden until a host says otherwise, and only the desktop window ever does. The headset
+          renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
+          so much as a wall - so the tab is absent there rather than present and asking to be
+          remembered about (list.md Phase 12).
+        -->
+        <RadioButton x:Name="SettingsTab"
+                     Theme="{StaticResource D47.Tab.Settings}"
+                     IsVisible="False"
+                     Content="Settings"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
       </StackPanel>
 
     </DockPanel>
 
     <!--
-      One slot, two pages. The transcript and the settings surface occupy the same place under
+      Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find
+      your way back").
+
+      Both the back affordance and the you-are-here, because a headset has no title bar to
+      orient by and losing your place is expensive when you cannot glance at a second monitor.
+      The first crumb is the tab itself - the tab is the root rather than the first level - so
+      this row says nothing at a root and is not drawn there, which is also what keeps it from
+      reading as a second strip beside the mode control it replaces.
+
+      Filled in code from the navigator's trail, because a trail can materialise mid-drill: a
+      spoken "open the third weapon slot on the Corsair" lands three levels down and the row has
+      to be right the first time it is drawn.
+    -->
+    <StackPanel x:Name="CrumbRow"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                IsVisible="False"
+                Margin="0,10,0,0"
+                Spacing="0" />
+
+    <!--
+      One slot, every page. The transcript and each furnished tab occupy the same place under
       the strip and are swapped by which tab is checked, which is what makes settings a page of
-      this window rather than a second window.
+      this window rather than a second window - and what makes every surface Phases 24 and 26-28
+      add a page of it too, on the same terms.
     -->
     <Panel>
       <!-- Top-left corner square, because a tab is sitting on it. Rounding it there would leave
@@ -516,19 +581,50 @@
       </Border>
 
       <!--
-        Filled on first selection by whatever the host handed to EnableSettings, and never at
-        all on a surface that was handed nothing. The fill is D47.Background rather than the
-        transcript's D47.Surface because the cards inside it are Surface, and a card the same
-        colour as the page it sits on is not a card - which is also why the Settings tab has a
-        control theme of its own for the join.
+        Whichever furnished tab is showing, filled on its first selection by whatever the host
+        handed to Furnish and never at all on a surface that was handed nothing. One pane rather
+        than one per tab, with the built pages kept: constructing ninety-odd settings rows is not
+        free, and a Commander who flips between Checklist and Settings should pay for each once.
+
+        The fill is D47.Background rather than the transcript's D47.Surface because the cards
+        inside a settings page are Surface, and a card the same colour as the page it sits on is
+        not a card - which is also why the Settings tab has a control theme of its own for the
+        join. A page that wants the transcript's fill draws its own.
       -->
-      <Border x:Name="SettingsPane"
+      <Border x:Name="PagePane"
               IsVisible="False"
               ClipToBounds="True"
               Background="{DynamicResource D47.Background}"
               BorderBrush="{DynamicResource D47.Border}"
               BorderThickness="1"
               CornerRadius="0,4,4,4" />
+
+      <!--
+        A chooser, or a value being said or typed. It takes the whole content region because that
+        is what makes it a level of the stack rather than a popup - and because popups cannot
+        exist in the VR path at all, where the panel's window is never shown and a popup has
+        nowhere to hang from (list.md Phase 25, "Choosing takes the panel").
+
+        Over the pane rather than inside it, so the tab underneath keeps its state: a chooser
+        opened three levels into a ship comes back to that ship rather than to its root.
+      -->
+      <Border x:Name="ModalPane"
+              IsVisible="False"
+              ClipToBounds="True"
+              Background="{DynamicResource D47.Background}"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="1"
+              CornerRadius="0,4,4,4" />
+
+      <!--
+        The in-tree layer, for the choosers that are declared as layers rather than as pages - a
+        five-item settings enum, where taking the whole panel would be a level of navigation to
+        answer a question the Commander did not think of as one.
+
+        Still not a popup. It is a panel in this tree, so the geometric hit test the headset uses
+        finds it exactly as it finds everything else.
+      -->
+      <Panel x:Name="Layer" IsVisible="False" />
     </Panel>
 
   </DockPanel>

@@ -94,6 +94,15 @@ public sealed class VrHost : IDisposable
     public string? Reason => _lifecycle.Reason;
 
     /// <summary>
+    /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander
+    /// opened in the headset rather than only one they opened in the window (list.md Phase 25).
+    /// </summary>
+    public Panel.PanelPrompts Prompts => _panel.Prompts;
+
+    /// <summary>Where the headset panel is, so a spoken phrase can move it (list.md Phase 25).</summary>
+    public D47.Core.Interface.PanelNavigator Nav => _panel.Nav;
+
+    /// <summary>
     /// Builds the headset path and subscribes it to the tick loop.
     /// <para>
     /// Constructed unconditionally, on every machine, whether or not there is a headset. An
@@ -111,12 +120,16 @@ public sealed class VrHost : IDisposable
         ILoggerFactory loggers,
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null,
-        Func<Control>? settingsPage = null)
+        Func<Control>? settingsPage = null,
+        D47.Core.Checklists.ChecklistService? checklists = null,
+        D47.Core.Utilities.Timekeeper? timekeeper = null,
+        D47.Core.Utilities.AlarmStore? alarmStore = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
-            model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage);
+            model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
+            checklists, timekeeper, alarmStore);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -237,6 +250,13 @@ public sealed class VrHost : IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             Interlocked.Exchange(ref _pending, 0);
+
+            // Before the serve, so a clock that moved is in the frame this tick draws rather than
+            // in the next one. It marks the surface dirty only when Utilities is what is showing,
+            // which is what keeps a ticking clock from re-rendering a transcript nobody moved
+            // (list.md Phase 24).
+            _panel.TickClocks();
+
             Serve(context.Now);
         });
     }
@@ -392,6 +412,16 @@ public sealed class VrHost : IDisposable
         var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null);
 
         Guide(hands, found, resting, extent, head);
+
+        // Back, on the grip (list.md Phase 25). One of the three routes that must agree, and the
+        // one a Commander with a controller in each hand reaches for without looking. Read after
+        // the trigger because the action set's priority is claimed there, and only ever acted on
+        // when it moves the panel somewhere — a grip squeezed at a root is a grip that meant
+        // something else.
+        if (_runtime.Actions.BackPressed() && _panel.Back())
+        {
+            _panel.Invalidate();
+        }
 
         // What the ray is resting on, lit so the Commander can see they have found it. Null when
         // no ray is on the panel, which puts out whatever was lit.

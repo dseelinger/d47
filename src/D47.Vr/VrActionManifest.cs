@@ -27,6 +27,15 @@ public static class VrActionManifest
     public const string GrabAction = "/actions/panel/in/grab";
 
     /// <summary>
+    /// Back one level (list.md Phase 25, "Drill in, and find your way back").
+    /// <para>
+    /// One of the three routes that must agree - the breadcrumb, this, and a phrase - and the one
+    /// a Commander with a controller in each hand reaches for without looking.
+    /// </para>
+    /// </summary>
+    public const string BackAction = "/actions/panel/in/back";
+
+    /// <summary>
     /// Every controller profile that gets a default binding.
     /// <para>
     /// <b><c>oculus_touch</c> and <c>rift</c> both, and that is not redundancy.</b> The Oculus
@@ -105,7 +114,13 @@ public static class VrActionManifest
 
         // Boolean, and only one. The panel is not clickable — the trigger picks it up and nothing
         // else — so a second action would be one nobody could ever use.
-        actions = new[] { new { name = GrabAction, requirement = "suggested", type = "boolean" } },
+        // Two, and only two. The panel is not clickable — the trigger picks it up — so the second
+        // is the one thing a Commander three levels into a ship needs a button for: back.
+        actions = new[]
+        {
+            new { name = GrabAction, requirement = "suggested", type = "boolean" },
+            new { name = BackAction, requirement = "suggested", type = "boolean" },
+        },
         default_bindings = Profiles
             .Select(profile => new { controller_type = profile, binding_url = BindingFile(profile) })
             .ToArray(),
@@ -116,6 +131,7 @@ public static class VrActionManifest
                 ["language_tag"] = "en_US",
                 [ActionSet] = "d47 panel",
                 [GrabAction] = "Carry the panel",
+                [BackAction] = "Go back a level",
             },
         },
     };
@@ -140,11 +156,27 @@ public static class VrActionManifest
             [ActionSet] = new
             {
                 sources = new[] { "left", "right" }
-                    .Select(hand => new
+                    .SelectMany(hand => new object[]
                     {
-                        path = $"/user/hand/{hand}/input/trigger",
-                        mode = "button",
-                        inputs = new { click = new { output = GrabAction } },
+                        new
+                        {
+                            path = $"/user/hand/{hand}/input/trigger",
+                            mode = "button",
+                            inputs = new { click = new { output = GrabAction } },
+                        },
+
+                        // The grip, and it is the grip because it is the one input every profile
+                        // here has. Touch and Index have face buttons under different names on
+                        // each hand and the Vive wand has none at all, so a face button would be
+                        // a binding that silently does not exist on somebody's controller - and a
+                        // profile missing one binding disables input entirely, which is the
+                        // failure the profile list above already exists to avoid.
+                        new
+                        {
+                            path = $"/user/hand/{hand}/input/grip",
+                            mode = "button",
+                            inputs = new { click = new { output = BackAction } },
+                        },
                     })
                     .ToArray(),
             },

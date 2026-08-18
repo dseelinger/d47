@@ -29,7 +29,11 @@ public sealed class VrActionInput(ILogger logger)
 {
     private ulong _set;
     private ulong _grab;
+    private ulong _back;
     private bool _ready;
+
+    /// <summary>Whether the back button was down last frame, so a hold is one press.</summary>
+    private bool _backWasDown;
 
     private VRActiveActionSet_t[]? _active;
 
@@ -91,9 +95,11 @@ public sealed class VrActionInput(ILogger logger)
 
             var set = 0ul;
             var grab = 0ul;
+            var back = 0ul;
 
             if (OpenVR.Input.GetActionSetHandle(VrActionManifest.ActionSet, ref set) != EVRInputError.None
-                || OpenVR.Input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None)
+                || OpenVR.Input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None
+                || OpenVR.Input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None)
             {
                 logger.LogWarning("The action handles would not resolve; the panel stays display-only");
                 return;
@@ -101,6 +107,7 @@ public sealed class VrActionInput(ILogger logger)
 
             _set = set;
             _grab = grab;
+            _back = back;
             _ready = true;
 
             logger.LogInformation("Controller input is on: the trigger carries the panel");
@@ -175,5 +182,42 @@ public sealed class VrActionInput(ILogger logger)
         // bActive as well as bState: an action bound to nothing, or on a controller that has gone
         // to sleep, reports a perfectly confident false rather than an error.
         return read == EVRInputError.None && data is { bActive: true, bState: true };
+    }
+
+    /// <summary>
+    /// Whether the back button was <em>pressed</em> this frame (list.md Phase 25, "Drill in, and
+    /// find your way back").
+    /// <para>
+    /// The edge rather than the level, and that is the whole of it: this runs at frame rate and a
+    /// held grip is one press, not ninety levels of going back.
+    /// </para>
+    /// <para>
+    /// Read only while the action set is already active, which <see cref="TriggerHeld"/> decides
+    /// for the frame - so the same priority argument holds, and a grip squeezed while the
+    /// Commander is not pointing at the panel belongs to whatever else wants it.
+    /// </para>
+    /// </summary>
+    public bool BackPressed()
+    {
+        if (!_ready || !HoldingPriority)
+        {
+            _backWasDown = false;
+            return false;
+        }
+
+        var data = default(InputDigitalActionData_t);
+
+        var read = OpenVR.Input.GetDigitalActionData(
+            _back,
+            ref data,
+            (uint)Marshal.SizeOf<InputDigitalActionData_t>(),
+            OpenVR.k_ulInvalidInputValueHandle);
+
+        var down = read == EVRInputError.None && data is { bActive: true, bState: true };
+        var pressed = down && !_backWasDown;
+
+        _backWasDown = down;
+
+        return pressed;
     }
 }

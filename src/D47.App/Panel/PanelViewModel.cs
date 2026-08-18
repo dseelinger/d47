@@ -26,7 +26,20 @@ public enum PanelMode
 }
 
 /// <summary>
-/// Which page a surface is showing.
+/// Which reading of the transcript a surface is showing (list.md Phase 25, "One transcript,
+/// three views").
+/// <para>
+/// Three <em>modes</em> of one tab rather than three tabs, because they are three readings of
+/// one exchange rather than three destinations — which is what freed the bar for Checklist,
+/// Loadout, Engineers and Utilities without it growing. Settings used to be a fourth member
+/// here, occupying the same slot from the same strip; it is a <see cref="PanelTab"/> now, along
+/// with everything else the bar carries.
+/// </para>
+/// <para>
+/// One asymmetry, kept rather than smoothed over: Conversation and Technical are the same
+/// exchange at two verbosities and the log is <b>a file read off disk</b>, which is why it
+/// carries the busy glyph and why the collapse is three modes rather than a single toggle.
+/// </para>
 /// <para>
 /// A property of the surface, exactly like <see cref="PanelMode"/> and for the same reason: the
 /// two surfaces bind one model, so a page held there would send the headset to the log file the
@@ -43,18 +56,6 @@ public enum TranscriptPage
 
     /// <summary>Today's log file, read when this page is opened.</summary>
     Log,
-
-    /// <summary>
-    /// The settings surface, in place of the transcript (list.md Phase 12, "Settings is a tab of
-    /// the main window, not a second window").
-    /// <para>
-    /// Named on the same enum as the three transcript pages because it occupies the same slot and
-    /// is chosen from the same strip. A surface that was never given a settings page cannot be
-    /// put on this one — which is how the headset keeps a 1180-pixel nav column out of a quad a
-    /// metre away without anybody having to remember to leave it out.
-    /// </para>
-    /// </summary>
-    Settings,
 }
 
 /// <summary>

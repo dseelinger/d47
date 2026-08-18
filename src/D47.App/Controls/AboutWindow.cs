@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -75,6 +76,20 @@ public sealed class AboutWindow : Window
             addToStartMenu.IsEnabled = false;
         };
 
+        // What changed, rather than what this is. The dialog already answers "which build am
+        // I running"; the question that follows it is "and what came with it", and the answer
+        // is a file in the repository rather than anything shipped beside the executable.
+        // Opened in a browser because that is where it is readable — CHANGELOG.md is markdown,
+        // and a self-contained app has no renderer for it worth carrying.
+        var changelog = new Button
+        {
+            Name = "Changelog",
+            Content = "Changelog",
+        };
+
+        changelog.Click += (_, _) => Process.Start(
+            new ProcessStartInfo(ChangelogUrl) { UseShellExecute = true });
+
         var keys = new Button
         {
             Name = "SetUpKeys",
@@ -116,7 +131,7 @@ public sealed class AboutWindow : Window
                             Orientation = Orientation.Horizontal,
                             HorizontalAlignment = HorizontalAlignment.Right,
                             Spacing = 8,
-                            Children = { keys, close },
+                            Children = { changelog, keys, close },
                         },
                         addToStartMenu,
                     },
@@ -126,6 +141,19 @@ public sealed class AboutWindow : Window
 
         Opened += (_, _) => close.Focus();
     }
+
+    /// <summary>
+    /// The changelog, on GitHub, at the branch rather than at a tag.
+    /// <para>
+    /// A literal rather than something composed from <see cref="BuildInfo"/>: the question this
+    /// answers is "what changed", which is asked most often by a Commander who is one release
+    /// behind, and a URL pinned to the running build would show them everything except the
+    /// entry they came for. Held to the same repository prefix the update path pins itself to,
+    /// for the reason recorded there — <c>UseShellExecute</c> resolves anything, not just http.
+    /// </para>
+    /// </summary>
+    public const string ChangelogUrl =
+        "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md";
 
     /// <summary>
     /// Frontier's long-form attribution, as their media usage rules word it.

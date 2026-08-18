@@ -5,7 +5,9 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
@@ -31,20 +33,75 @@ public partial class PanelView : UserControl
         AvaloniaProperty.Register<PanelView, PanelMode>(nameof(Mode));
 
     /// <summary>
-    /// Which page of the transcript this instantiation is showing. Also a property of the
-    /// surface: the window can be reading the log while the headset shows the conversation.
+    /// The root key of each transcript mode. The three modes of the Transcript tab are roots in
+    /// the navigator's sense — a tab with more than one root — so they are named once here and
+    /// the enum is mapped onto them rather than the other way round.
+    /// <para>
+    /// Public because the segmented control is built from the navigator at runtime rather than
+    /// declared in the markup, so these keys are the only stable name a mode has: a host driving
+    /// one, and a test reaching for one, have nothing else to ask for.
+    /// </para>
     /// </summary>
-    public static readonly StyledProperty<TranscriptPage> PageProperty =
-        AvaloniaProperty.Register<PanelView, TranscriptPage>(nameof(Page));
+    public const string ConversationRoot = "transcript.conversation";
+
+    /// <inheritdoc cref="ConversationRoot"/>
+    public const string TechnicalRoot = "transcript.technical";
+
+    /// <inheritdoc cref="ConversationRoot"/>
+    public const string LogRoot = "transcript.log";
 
     private PanelViewModel? _bound;
 
     /// <summary>
-    /// How the host builds the settings surface, when it gave one. Null on every surface that
-    /// was not handed one — which is what makes the headset's copy structurally unable to show
-    /// settings rather than merely unlikely to.
+    /// Where the Commander is on this surface: which tab, which of its roots, and how far down
+    /// (list.md Phase 25).
+    /// <para>
+    /// Per surface rather than per model, exactly like <see cref="Mode"/> and the scroll
+    /// position, and for the same reason: the window can be three levels into a ship's slots
+    /// while the headset reads the conversation, and one navigator on the shared model would
+    /// drag each surface wherever the other went.
+    /// </para>
     /// </summary>
-    private Func<Control>? _buildSettings;
+    public PanelNavigator Nav { get; } = new();
+
+    /// <summary>
+    /// The two questions this surface can put to the Commander — pick one of these, and say or
+    /// type this (list.md Phase 25). Per surface for the reason the navigator is: a chooser is a
+    /// level of one surface's stack, and the other surface should be able to go on reading the
+    /// transcript while it is up.
+    /// </summary>
+    public PanelPrompts Prompts { get; }
+
+    /// <summary>
+    /// How the host builds each tab's surface, for the tabs it gave. A tab with no builder is a
+    /// tab this surface does not have — which is what makes the headset's copy structurally
+    /// unable to show settings rather than merely unlikely to, and what lets the phases that
+    /// fill Loadout, Engineers and Utilities land one at a time without a dead tab in between.
+    /// </summary>
+    private readonly Dictionary<PanelTab, Func<NavCrumb, Control>> _builders = [];
+
+    /// <summary>
+    /// The drill strip each furnished tab is drawn in, kept. Building a settings page means
+    /// ninety-odd rows from the registry, and a Commander flipping between two tabs should pay
+    /// for each of them once - which the strip's own cache of levels then extends downwards.
+    /// </summary>
+    private readonly Dictionary<PanelTab, DrillView> _pages = [];
+
+    /// <summary>The tab buttons, by tab, so a bar can be driven from the navigator.</summary>
+    private readonly Dictionary<PanelTab, RadioButton> _tabs = [];
+
+    /// <summary>
+    /// The glyph the log mode carries while it reads the file (list.md Phase 12). On the mode
+    /// rather than on the tab now, because the tab is three readings of one thing and only one
+    /// of them touches the disk — which is exactly the asymmetry the collapse keeps.
+    /// </summary>
+    private Controls.BusyGlyph _logBusy = new() { IsVisible = false };
+
+    /// <summary>The button that opened the log mode, so <see cref="Controls.Busy"/> can shut it.</summary>
+    private RadioButton? _logMode;
+
+    /// <summary>Which roots the segmented control is currently drawn for. See DrawModes.</summary>
+    private IReadOnlyList<NavCrumb> _modeRoots = [];
 
     /// <summary>
     /// How the host shows the turn's figures, when it gave a way. Null on every surface that was
@@ -54,10 +111,29 @@ public partial class PanelView : UserControl
     private Action? _showTurnDetails;
 
     /// <summary>
-    /// The page to come back to when settings are left. The one the Commander was reading, not
-    /// a fixed default: Escape out of settings should put back what Escape into them covered up.
+    /// The tab to come back to when a furnished one is left. The one the Commander was reading,
+    /// not a fixed default: Escape out of settings should put back what Escape into them covered
+    /// up.
     /// </summary>
-    private TranscriptPage _lastTranscriptPage = TranscriptPage.Conversation;
+    private PanelTab _lastTab = PanelTab.Transcript;
+
+    /// <summary>What was last drawn, so a change of tab can name the one being left.</summary>
+    private PanelTab _showing = PanelTab.Transcript;
+
+    /// <summary>
+    /// Which page was last drawn, as tab and root together. What tells a redraw of the same page
+    /// from a move to a different one — the search query and the follow lock belong to the page,
+    /// and neither should be reset by a rebuild the Commander did not ask for.
+    /// </summary>
+    private PanelTab _showingTab = PanelTab.Transcript;
+
+    private string _showingRoot = ConversationRoot;
+
+    /// <summary>
+    /// Set while the bar is being driven from the navigator, so the handlers that hear a tab
+    /// check do not read it back as the Commander having pressed one.
+    /// </summary>
+    private bool _drivingBar;
 
     /// <summary>What is being searched for on this surface. Empty when nothing is.</summary>
     private string _query = string.Empty;
@@ -111,25 +187,26 @@ public partial class PanelView : UserControl
         // wrong, and those are different reasons.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyChrome());
 
-        PageProperty.Changed.AddClassHandler<PanelView>((view, change) =>
-        {
-            // The query belongs to the page and is dropped when the page changes. One string
-            // that filters here and highlights there is a control that behaves differently
-            // depending on where the Commander last clicked.
-            if (!Equals(change.OldValue, change.NewValue))
-            {
-                view.DropSearch();
+        // The three readings of one exchange, registered as the Transcript tab's roots. They are
+        // roots rather than levels for the reason Fleet, Locker and Directory are: the tab is the
+        // root, so pressing Transcript while three levels into something returns to whichever of
+        // these was last being read rather than to a fixed one.
+        Nav.Register(PanelTab.Transcript, new NavCrumb(ConversationRoot, "Conversation"));
+        Nav.Register(PanelTab.Transcript, new NavCrumb(TechnicalRoot, "Technical"));
+        Nav.Register(PanelTab.Transcript, new NavCrumb(LogRoot, "Log file"));
 
-                // A page arrived at is a page opened at its newest line. Following belongs to
-                // the page being read, and carrying "I have scrolled up" from the conversation
-                // to the log file would open the log at the top of a file with nothing in view.
-                view._following = true;
-            }
+        Prompts = new PanelPrompts(Nav, Layer);
 
-            view.ApplyPage();
-        });
+        _tabs[PanelTab.Transcript] = TranscriptTab;
+        _tabs[PanelTab.Checklist] = ChecklistTab;
+        _tabs[PanelTab.Loadout] = LoadoutTab;
+        _tabs[PanelTab.Engineers] = EngineersTab;
+        _tabs[PanelTab.Utilities] = UtilitiesTab;
+        _tabs[PanelTab.Settings] = SettingsTab;
 
-        ApplyPage();
+        Nav.Changed += (_, _) => ApplyNavigation();
+
+        ApplyNavigation();
 
         // Tunnelling, because both gestures belong to the surface rather than to whatever has
         // focus: Ctrl+F has to reach the box from inside the ask box, and Escape has to be taken
@@ -179,10 +256,40 @@ public partial class PanelView : UserControl
         set => SetValue(ModeProperty, value);
     }
 
+    /// <summary>
+    /// Which tab this instantiation is showing. A property of the surface: the window can be on
+    /// Settings while the headset reads the conversation.
+    /// <para>
+    /// Setting it to a tab this surface was not furnished with does nothing, which is what stops
+    /// a stale property or a hand-edited state putting the headset on an empty pane with no way
+    /// back.
+    /// </para>
+    /// </summary>
+    public PanelTab Tab
+    {
+        get => Nav.Tab;
+        set => Nav.Select(value);
+    }
+
+    /// <summary>
+    /// Which reading of the transcript this instantiation is showing. Settable without switching
+    /// to the Transcript tab, because it says which mode that tab is on rather than which tab is.
+    /// </summary>
     public TranscriptPage Page
     {
-        get => GetValue(PageProperty);
-        set => SetValue(PageProperty, value);
+        get => Nav.RootKeyOf(PanelTab.Transcript) switch
+        {
+            TechnicalRoot => TranscriptPage.Technical,
+            LogRoot => TranscriptPage.Log,
+            _ => TranscriptPage.Conversation,
+        };
+
+        set => Nav.SelectRoot(PanelTab.Transcript, value switch
+        {
+            TranscriptPage.Technical => TechnicalRoot,
+            TranscriptPage.Log => LogRoot,
+            _ => ConversationRoot,
+        });
     }
 
     private PanelViewModel? Model => DataContext as PanelViewModel;
@@ -352,24 +459,135 @@ public partial class PanelView : UserControl
     /// startup.
     /// </para>
     /// </summary>
-    public void EnableSettings(Func<Control> build)
+    public void EnableSettings(Func<Control> build) =>
+        Furnish(PanelTab.Settings, _ => build(), new NavCrumb("settings", "Settings"));
+
+    /// <summary>
+    /// Gives this surface the checklist (list.md Phase 25, "The checklist leaves its window").
+    /// <para>
+    /// <b>Both surfaces</b>, unlike settings. A <c>Window</c> cannot appear in the headset at
+    /// all, so a Commander in VR could not see their checklist before this — which is the whole
+    /// headline of the item, and would be undone by furnishing only the desktop one.
+    /// </para>
+    /// <para>
+    /// It has one root and one level below it, and the level is the suggestions page: everything
+    /// <c>ChecklistProposals</c> is holding, in one place, rather than arriving as an
+    /// interruption.
+    /// </para>
+    /// </summary>
+    public void EnableChecklist(D47.Core.Checklists.ChecklistService checklists)
     {
-        _buildSettings = build;
-        SettingsTab.IsVisible = true;
+        ChecklistPage? page = null;
+
+        Furnish(
+            PanelTab.Checklist,
+            crumb => crumb.Key == ChecklistPage.SuggestionsKey
+                ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
+                : page = new ChecklistPage(checklists, Nav, Prompts),
+            new NavCrumb("checklist", "Checklist"));
     }
 
     /// <summary>
-    /// Leaves the settings page for the one it covered up, and says whether there was anything
-    /// to leave. The host binds Escape to it.
+    /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").
+    /// <para>
+    /// Both surfaces, like the checklist: a Commander in a headset is exactly the Commander who
+    /// cannot glance at a wall clock.
+    /// </para>
     /// </summary>
-    public bool LeaveSettings()
+    public void EnableUtilities(
+        D47.Core.Utilities.Timekeeper timekeeper,
+        D47.Core.Utilities.AlarmStore alarms,
+        Func<DateTimeOffset> now,
+        Func<TimeZoneInfo> zone)
     {
-        if (Page != TranscriptPage.Settings)
+        Furnish(
+            PanelTab.Utilities,
+            _ => _utilities = new UtilitiesPage(timekeeper, alarms, now, zone, Prompts),
+            new NavCrumb("utilities", "Utilities"));
+    }
+
+    /// <summary>
+    /// Redraws the clocks, from the host's tick.
+    /// <para>
+    /// Pushed rather than pulled, because a clock is the one page whose content changes with
+    /// nothing having happened — which is the same reason the timers themselves are the first
+    /// thing d47 does that nothing external triggers. Nothing at all until the tab has been
+    /// opened once, so a Commander who never looks at it pays no ticks for it.
+    /// </para>
+    /// </summary>
+    public void TickClocks()
+    {
+        if (Tab == PanelTab.Utilities)
+        {
+            _utilities?.Refresh();
+        }
+    }
+
+    private UtilitiesPage? _utilities;
+
+    /// <summary>
+    /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected,
+    /// with the roots it offers (list.md Phase 25).
+    /// <para>
+    /// The general form of what <see cref="EnableSettings"/> has done since Phase 12, and the
+    /// generalisation is the point: a tab is a capability the host grants, so the surfaces
+    /// Phases 24 and 26-28 add appear when they are built and the bar carries no dead tab in the
+    /// meantime. One registration line each.
+    /// </para>
+    /// <para>
+    /// <paramref name="roots"/> are the tab's modes, in the order the segmented control shows
+    /// them. One root means no mode control at all; several means a stack per root, so leaving
+    /// Ships halfway down a slot and coming back arrives where it was left.
+    /// </para>
+    /// </summary>
+    public void Furnish(PanelTab tab, Func<NavCrumb, Control> build, params NavCrumb[] roots)
+    {
+        if (roots.Length == 0)
+        {
+            throw new ArgumentException("A tab needs at least one root.", nameof(roots));
+        }
+
+        _builders[tab] = build;
+
+        foreach (var root in roots)
+        {
+            Nav.Register(tab, root);
+        }
+
+        if (_tabs.TryGetValue(tab, out var button))
+        {
+            button.IsVisible = true;
+        }
+
+        ApplyNavigation();
+    }
+
+    /// <summary>
+    /// Back, and the one method all three routes that must agree go through — the breadcrumb,
+    /// the controller button and the phrase (list.md Phase 25). Says whether there was anything
+    /// to go back from, so Escape with nothing to leave stays available to whatever else wants
+    /// the key.
+    /// <para>
+    /// One level at a time while there is a trail, and out of a furnished tab to the one it
+    /// covered up when there is not. Those are the same gesture from the Commander's side: the
+    /// tab is the root, so leaving the root is leaving the tab.
+    /// </para>
+    /// </summary>
+    public bool GoBack()
+    {
+        if (Nav.Back())
+        {
+            return true;
+        }
+
+        if (Tab == PanelTab.Transcript)
         {
             return false;
         }
 
-        Page = _lastTranscriptPage;
+        // Never back into a tab that is no longer furnished, which is a state a surface handed
+        // one builder and then another could otherwise reach.
+        Tab = Nav.Has(_lastTab) && _lastTab != Tab ? _lastTab : PanelTab.Transcript;
         return true;
     }
 
@@ -429,7 +647,7 @@ public partial class PanelView : UserControl
 
         SearchInput.Text = string.Empty;
 
-        (Page == TranscriptPage.Settings ? SettingsPane.Child : Transcript)?.Focus();
+        (Tab == PanelTab.Transcript ? Transcript : PagePane.Child)?.Focus();
 
         return true;
     }
@@ -471,7 +689,15 @@ public partial class PanelView : UserControl
     {
         SearchInput.Text = string.Empty;
 
-        (SettingsPane.Child as IFilterablePage)?.Filter(string.Empty);
+        // Every built page rather than only the one showing. The bug this guards against is
+        // exactly the one bugs.md 2 recorded: the page being left keeps the filter it was last
+        // given, and a Commander coming back to it finds four sections of eighteen with an empty
+        // search box above them and nothing they can type to bring the rest back. With more than
+        // one filterable tab there is more than one page that can be in that state.
+        foreach (var page in _pages.Values)
+        {
+            (page as IFilterablePage)?.Filter(string.Empty);
+        }
     }
 
     /// <summary>
@@ -546,9 +772,9 @@ public partial class PanelView : UserControl
         // filtered page too — arguably more, since a filter hides the rest of the page.
         SearchClear.IsVisible = _query.Length > 0;
 
-        if (Page == TranscriptPage.Settings)
+        if (Tab != PanelTab.Transcript)
         {
-            (SettingsPane.Child as IFilterablePage)?.Filter(_query);
+            (PagePane.Child as IFilterablePage)?.Filter(_query);
             ShowSearchProgress(stepping: false);
             return;
         }
@@ -613,64 +839,119 @@ public partial class PanelView : UserControl
     private void ApplyChrome()
     {
         var full = Mode == PanelMode.Full;
-        var settings = Page == TranscriptPage.Settings;
+        var transcript = Tab == PanelTab.Transcript;
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
 
-        // The settings surface brings its own footer — the storage line, About, the data folder
-        // — so the ask line and the provenance line give way to it rather than sitting under it
-        // saying nothing about a page with no turns on it.
-        AskRow.IsVisible = full && !settings;
+        // A furnished tab brings its own footer — the settings surface has the storage line,
+        // About and the data folder — so the ask line and the provenance line give way to it
+        // rather than sitting under it saying nothing about a page with no turns on it.
+        AskRow.IsVisible = full && transcript;
 
         // The provenance line and the microphone indicator together, because both are about the
-        // transcript and the settings page has no turns on it.
-        StatusRow.IsVisible = !settings;
+        // transcript and no other tab has turns on it.
+        StatusRow.IsVisible = transcript;
 
-        // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs
-        // and the search box go with the rest of the chrome. A surface with 640x280 to spend
-        // does not spend it on four page selectors.
+        // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs,
+        // the mode control, the breadcrumb and the search box go with the rest of the chrome. A
+        // surface with 512x280 to spend does not spend it on six page selectors.
         TabStrip.IsVisible = full;
+        CrumbRow.IsVisible = full && CrumbRow.Children.Count > 0;
 
-        TranscriptPane.IsVisible = !settings;
-        SettingsPane.IsVisible = settings;
+        var modal = ModalPane.Child is not null;
+
+        // The chooser takes the region rather than sitting over it. Both panes give way, because
+        // a page visible behind a modal is a page a ray can still reach and a modal is a modal.
+        ModalPane.IsVisible = modal;
+        TranscriptPane.IsVisible = transcript && !modal;
+        PagePane.IsVisible = !transcript && !modal;
+
+        // And the ask line goes with them: a chooser has one question in it and a second text box
+        // underneath, pointed at the model, is a second question nobody asked.
+        AskRow.IsVisible = AskRow.IsVisible && !modal;
     }
 
     /// <summary>
-    /// Points the transcript at the page this surface is showing, and checks the tab that says
-    /// so - which keeps a page set in code and a page set by a click on one path.
+    /// Draws everything the navigator decides: which tab is checked, which modes the segmented
+    /// control offers, what the breadcrumb says, and which page is in the slot.
+    /// <para>
+    /// One method rather than one per concern, because they are four readings of one state and
+    /// four handlers each owning part of it is how one of them ends up putting a region back
+    /// that another had just taken away — the same argument <see cref="ApplyChrome"/> already
+    /// makes for mode and tab together.
+    /// </para>
     /// </summary>
-    private void ApplyPage()
+    private void ApplyNavigation()
     {
-        // A surface that was never given a settings page cannot be put on one, whether by a
-        // stale property, a host that forgot to enable it, or a hand-edited state. It goes back
-        // to the page it was on rather than showing an empty pane.
-        if (Page == TranscriptPage.Settings && _buildSettings is null)
+        // A surface that was never given a tab cannot be put on one, whether by a stale
+        // property, a host that forgot to furnish it, or a hand-edited state. The navigator
+        // refuses the move, so this is only ever reached with a tab that exists — except for
+        // Transcript, which every surface has by construction.
+        var tab = Tab;
+
+        if (tab != PanelTab.Transcript && !_builders.ContainsKey(tab))
         {
-            Page = _lastTranscriptPage;
+            Tab = PanelTab.Transcript;
             return;
         }
 
-        var tab = Page switch
-        {
-            TranscriptPage.Technical => TechnicalTab,
-            TranscriptPage.Log => LogTab,
-            TranscriptPage.Settings => SettingsTab,
-            _ => ConversationTab,
-        };
+        _drivingBar = true;
 
-        tab.IsChecked = true;
-
-        if (Page != TranscriptPage.Settings)
+        try
         {
-            _lastTranscriptPage = Page;
+            foreach (var (which, button) in _tabs)
+            {
+                button.IsChecked = which == tab;
+            }
         }
+        finally
+        {
+            _drivingBar = false;
+        }
+
+        // What to put back when this one is left. The tab the Commander came from, not a fixed
+        // default: leaving settings should uncover what opening them covered up.
+        if (tab != _showing)
+        {
+            _lastTab = _showing;
+            _showing = tab;
+        }
+
+        // The page being read has changed - a different tab, or a different mode of the same one.
+        //
+        // The query belongs to the page and is dropped with it. One string that filters here and
+        // highlights there is a control that behaves differently depending on where the Commander
+        // last clicked. And a page arrived at is a page opened at its newest line: carrying
+        // "I have scrolled up" from the conversation to the log file would open the log at the
+        // top of a file with nothing in view.
+        //
+        // Here rather than in the click handler, because a page can change without one - the
+        // window opens settings from a hotkey, and a spoken phrase moves the tab with nothing
+        // pressed at all.
+        var root = Nav.RootKeyOf(tab);
+
+        if (tab != _showingTab || root != _showingRoot)
+        {
+            _showingTab = tab;
+            _showingRoot = root;
+
+            DropSearch();
+            _following = true;
+        }
+
+        DrawModes();
+        DrawCrumbs();
+
+        // A chooser takes the content region, over whichever tab it was opened from - so the tab
+        // underneath keeps its state and comes back to where it was rather than to its root.
+        ModalPane.Child = Nav.Modal ? Prompts.Build(Nav.Trail[^1]) : null;
 
         ApplyChrome();
 
-        if (Page == TranscriptPage.Settings)
+        if (tab != PanelTab.Transcript)
         {
-            _ = BuildSettingsOnceAsync();
+            BuildPageOnce(tab);
             return;
         }
 
@@ -687,6 +968,169 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// The segmented control, rebuilt from the current tab's roots. Absent for a tab with one
+    /// root, and absent below the root of any tab: a mode switch three levels into a ship is a
+    /// question about which stack you are in, and the breadcrumb is already answering the one
+    /// about where you are.
+    /// </summary>
+    private void DrawModes()
+    {
+        var roots = Nav.Roots(Nav.Tab);
+        var showing = Nav.RootKeyOf(Nav.Tab);
+
+        ModeRow.IsVisible = roots.Count > 1 && Nav.AtRoot;
+
+        // Rebuilt only when the roots themselves change - a different tab - and otherwise just
+        // re-checked. Tearing the row down and building it again on every navigation would be
+        // three controls discarded to change one boolean, and it moves the buttons: a rebuilt
+        // control has no bounds until the next layout pass, so a ray or a pointer aimed at where
+        // a mode was a moment ago lands on a control that has not been measured yet.
+        if (!_modeRoots.SequenceEqual(roots))
+        {
+            Rebuild(roots);
+        }
+
+        foreach (var button in Modes.Children.OfType<RadioButton>())
+        {
+            _drivingBar = true;
+
+            try
+            {
+                button.IsChecked = (string?)button.Tag == showing;
+            }
+            finally
+            {
+                _drivingBar = false;
+            }
+        }
+    }
+
+    /// <summary>Builds the segmented control's buttons for a tab's roots, in their order.</summary>
+    private void Rebuild(IReadOnlyList<NavCrumb> roots)
+    {
+        Modes.Children.Clear();
+
+        _logMode = null;
+        _modeRoots = [.. roots];
+
+        foreach (var root in roots)
+        {
+            var button = new RadioButton
+            {
+                Theme = this.FindResource("D47.Segment") as ControlTheme,
+                Tag = root.Key,
+            };
+
+            // The log mode carries the glyph, because it is the one of the three that reads a
+            // file off disk. On the affordance that was touched, so a Commander who pressed here
+            // does not look elsewhere (list.md Phase 12).
+            if (root.Key == LogRoot)
+            {
+                // A fresh glyph each rebuild. A control belongs to exactly one visual tree, and
+                // this row is rebuilt when the tab changes - so a kept instance is one that the
+                // previous button's content panel is still holding, and adding it to the new one
+                // throws rather than reparenting.
+                _logBusy = new Controls.BusyGlyph { IsVisible = false };
+
+                button.Content = new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    Spacing = 7,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = root.Word,
+                            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                        },
+                        _logBusy,
+                    },
+                };
+
+                _logBusy.Bind(
+                    Avalonia.Controls.Shapes.Shape.StrokeProperty,
+                    this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+
+                _logMode = button;
+            }
+            else
+            {
+                button.Content = root.Word;
+            }
+
+            button.IsCheckedChanged += OnModeChecked;
+            Modes.Children.Add(button);
+        }
+    }
+
+    private void OnModeChecked(object? sender, RoutedEventArgs e)
+    {
+        if (_drivingBar || sender is not RadioButton { IsChecked: true, Tag: string key })
+        {
+            return;
+        }
+
+        // The search query and the follow lock are dropped by ApplyNavigation, which the
+        // navigator's own event brings us back through - so a mode reached by a click and a mode
+        // reached by a phrase are one path rather than two that have to agree.
+        Nav.SelectRoot(key);
+    }
+
+    /// <summary>
+    /// The trail, rebuilt. Every crumb but the last is pressable and the last is where you are;
+    /// each is a word that can be said as well as pressed, which is why the word is carried on
+    /// the crumb rather than derived from whatever the page happens to be titled.
+    /// </summary>
+    private void DrawCrumbs()
+    {
+        CrumbRow.Children.Clear();
+
+        var trail = Nav.Trail;
+
+        if (trail.Count <= 1)
+        {
+            return;
+        }
+
+        for (var index = 0; index < trail.Count; index++)
+        {
+            if (index > 0)
+            {
+                var separator = new TextBlock
+                {
+                    Text = "›",
+                    Margin = new Thickness(2, 0, 2, 0),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    FontSize = Theming.TypeScale.Body,
+                };
+
+                separator.Bind(
+                    TextBlock.ForegroundProperty,
+                    this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+
+                CrumbRow.Children.Add(separator);
+            }
+
+            var at = index;
+            var last = index == trail.Count - 1;
+
+            var crumb = new Button
+            {
+                Theme = this.FindResource("D47.Crumb") as ControlTheme,
+                Content = trail[index].Word,
+                IsEnabled = !last,
+            };
+
+            if (!last)
+            {
+                crumb.Click += (_, _) => Nav.JumpTo(at);
+            }
+
+            CrumbRow.Children.Add(crumb);
+        }
+    }
+
+    /// <summary>
     /// Reads the log, saying so on the tab if it takes long enough to be worth saying.
     /// <para>
     /// Off the UI thread, which it was not: a log file is whatever length this session has made
@@ -697,7 +1141,18 @@ public partial class PanelView : UserControl
     /// </summary>
     private async Task ReadLogAsync()
     {
-        await Controls.Busy.While(LogTab, LogBusy, () => Task.Run(() => _bound?.RefreshLog()));
+        // The mode button, which may not exist: the segmented control is not drawn in mini, and
+        // the log can be the mode a surface is on there. The helper wants something to shut, so
+        // with nothing drawn the read simply runs unannounced — there is nothing to announce on.
+        if (_logMode is null)
+        {
+            await Task.Run(() => _bound?.RefreshLog());
+            DrawTranscript();
+            ScrollToEnd();
+            return;
+        }
+
+        await Controls.Busy.While(_logMode, _logBusy, () => Task.Run(() => _bound?.RefreshLog()));
 
         // After the read rather than before, or the page draws the log it had last time and
         // then redraws — which is a visible flicker on the one page opened to read something.
@@ -709,23 +1164,34 @@ public partial class PanelView : UserControl
         ScrollToEnd();
     }
 
-    private async Task BuildSettingsOnceAsync()
+    /// <summary>
+    /// Puts a furnished tab's drill strip in the pane, building it the first time.
+    /// <para>
+    /// Built and cached in one synchronous step, and that is load-bearing rather than tidy: this
+    /// used to shut the tab behind a <see cref="Controls.Busy"/> await while it ran, and an await
+    /// here means a second press arriving before the first finished builds the page twice. The
+    /// cache is the shutter now, and it closes before anything can be awaited.
+    /// </para>
+    /// </summary>
+    private void BuildPageOnce(PanelTab tab)
     {
-        if (SettingsPane.Child is not null || _buildSettings is not { } build)
+        if (!_pages.TryGetValue(tab, out var page))
         {
-            return;
+            if (!_builders.TryGetValue(tab, out var build))
+            {
+                return;
+            }
+
+            // A drill strip rather than the page itself, so drilling in and reflowing are one
+            // mechanism for every tab at once: a tab with no levels is a strip of one pane, which
+            // is exactly the page, and a tab that grows levels needs nothing added here. The
+            // levels themselves are built by the strip, on first sight, which is what keeps a
+            // Commander who never opens Suggestions from paying for it.
+            page = new DrillView(Nav, tab, build);
+            _pages[tab] = page;
         }
 
-        // No glyph, deliberately. Constructing controls has to happen on the thread that draws
-        // them, so nothing can animate while it runs — a spinner here would be a spinner that
-        // is painted after the work it describes has finished. What this call site takes from
-        // the helper is the other half of it: the tab is shut while it builds, so a second click
-        // on a surface that has not come back yet cannot start a second copy of the same build.
-        await Controls.Busy.While(SettingsTab, glyph: null, () =>
-        {
-            SettingsPane.Child = build();
-            return Task.CompletedTask;
-        });
+        PagePane.Child = page;
     }
 
     /// <summary>
@@ -882,22 +1348,58 @@ public partial class PanelView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        ApplyPage();
+        ApplyNavigation();
     }
 
-    private void OnPageTabChecked(object? sender, RoutedEventArgs e)
+    private void OnTabChecked(object? sender, RoutedEventArgs e)
     {
         // Fires for the tab being cleared as well as the one being set, and only the set one
-        // says anything about which page to show.
-        if (sender is not RadioButton { IsChecked: true } tab)
+        // says anything about which page to show. And never while the bar is being driven from
+        // the navigator, or checking a button would ask the navigator for the move it is already
+        // making.
+        if (_drivingBar || sender is not RadioButton { IsChecked: true } button)
         {
             return;
         }
 
-        Page = tab == TechnicalTab ? TranscriptPage.Technical
-            : tab == LogTab ? TranscriptPage.Log
-            : tab == SettingsTab ? TranscriptPage.Settings
-            : TranscriptPage.Conversation;
+        foreach (var (tab, candidate) in _tabs)
+        {
+            if (ReferenceEquals(candidate, button))
+            {
+                // Refused while a chooser holds the panel — which is what "no navigating away
+                // mid-choice" is, and why the button is put back rather than left showing a tab
+                // the panel is not on.
+                if (!Nav.Select(tab))
+                {
+                    ApplyNavigation();
+                }
+
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Pressing the tab that is already selected returns to its root (list.md Phase 25, "the tab
+    /// is the root rather than the first level").
+    /// <para>
+    /// <b>This has to be added rather than inherited.</b> The tabs are <c>RadioButton</c>s and
+    /// re-pressing a checked one announces nothing at all — no <c>IsCheckedChanged</c>, because
+    /// nothing changed — so the one gesture a Commander three levels into a ship reaches for
+    /// first would otherwise be the one gesture that does nothing. Tapped rather than Click,
+    /// since it is the press on the already-checked control that has to be heard.
+    /// </para>
+    /// </summary>
+    private void OnTabTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not RadioButton button
+            || !_tabs.TryGetValue(Nav.Tab, out var current)
+            || !ReferenceEquals(current, button))
+        {
+            return;
+        }
+
+        Nav.ToRoot();
     }
 
     /// <summary>

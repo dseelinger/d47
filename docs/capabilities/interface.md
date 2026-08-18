@@ -101,9 +101,106 @@ Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of
 protected setting, so a model that could rebind one could hand itself a way in it is not allowed
 to have. See [Settings](settings.md).
 
+## The panel {#panel}
+
+One bar along the top, and each tab is a surface of its own:
+
+```text
+Transcript   Checklist   Loadout   Engineers   Utilities   Settings
+```
+
+**Settings is absent in the headset.** The settings surface wants a 1180-pixel navigation column,
+which at a metre is a wall rather than a page. Everything else is on both surfaces — including
+the checklist, which used to be a separate window and was therefore invisible in VR entirely.
+
+A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
+
+### Drilling in, and finding your way back {#drilling}
+
+Every surface below the transcript is a stack — Fleet, then a ship, then a slot, then a
+blueprint. **The tab is the top of that stack, not the first step into it**, which is what makes
+one gesture worth knowing:
+
+> **Press the tab you are already on to go back to the top of it.**
+
+Below the top, a **breadcrumb** appears under the bar. It is both where you are and the way back,
+because a headset has no title bar to orient by and losing your place is expensive when you
+cannot glance at a second monitor. Every crumb but the last can be pressed — **and said**:
+
+> "back"
+> "corsair"
+> "checklist"
+
+Back is three routes that agree: the breadcrumb, the **grip button** on either controller, and
+the phrase. Say the name of the tab you are already on and you go back to its top, exactly as
+pressing it does.
+
+**Voice jumps levels.** Asking for something three levels down takes you there with the whole
+trail behind it, rather than dropping you somewhere with nothing above.
+
+Drill state survives switching tabs, and a tab with more than one mode keeps a separate stack per
+mode — leave Ships halfway into a slot, look at something else, come back where you were.
+
+### One design, one to three panes {#panes}
+
+Drilling in and reflowing are the same mechanism: **how many panes fit**. A wide panel shows the
+level you are on beside the one above it, and a third if there is room; a narrow one shows a
+single pane and you drill. Same stack, same breadcrumb, same phrases — so it is one design across
+the headset's big panel, its mini panel, the desktop window and every zoom level, rather than
+four arrangements that have to agree.
+
+Zoom is what moves you between them most of the time: it re-measures rather than magnifying, so
+zooming out gives the layout more logical room and a third pane appears.
+
+### Choosing {#choosing}
+
+**A chooser takes the whole panel** until you dismiss it, which makes it a level of the stack
+rather than a pop-up over the page. That is not a stylistic call — a pop-up cannot exist on the
+headset surface at all — but it earns its place anyway:
+
+- it fits about sixteen rows at a comfortable size, and twenty-five zoomed out, where a layer over
+  the page fits fewer;
+- and it **carries what you are choosing for in its header** — the slot, its size, and what is
+  fitted now — which a drop-down has nowhere to put.
+
+It behaves as a modal: nothing navigates away mid-choice, and **Back** is the way out, the same
+affordance every other level has. Short lists — a five-item setting — stay as a layer over the
+page instead, and which one a control gets is fixed per control rather than decided by how many
+rows it happens to have today.
+
+### Saying it, or typing it {#entry}
+
+Text entry is **voice first, with a drawn keyboard as the fallback**, and which one opens depends
+on what is being entered: a system name is far easier said than typed, and a number is the
+reverse.
+
+While it is listening it says so and shows the words as they arrive, so you are never talking at
+a blank page. What you say **reaches the box once, when it is done** — a system name arriving
+letter by letter is eleven wrong values on the way to the right one.
+
+**The keyboard comes back on its own** for the three failures Directive 47 can actually detect:
+
+| What happened | What you see |
+|---|---|
+| Nothing heard at all | "I did not catch that." |
+| It was not sure what it heard | "I was not sure I heard that correctly." |
+| The value is not a thing | Why not — "there is no system by that name" |
+
+Confident, valid, and *still* not what you meant is the one case no machine can catch, which is
+what the read-back is for.
+
+**There is no physical keyboard route, and that is deliberate.** Every way of receiving
+keystrokes while Elite has the foreground is closed: a global keyboard hook is forbidden outright,
+raw input would deliver every keystroke on the system including passwords typed into other
+applications, and the polled route reads exactly one bound key. The only remaining option is
+taking your keyboard focus away from Elite mid-session, which is a worse trade than a drawn
+keyboard you never have to use.
+
 ## The transcript {#transcript}
 
-The big text area is one of three pages, chosen by the tabs along the top of it.
+The transcript tab has three **modes**, on the segmented control at the right of the tab bar.
+They are three readings of one exchange rather than three destinations, which is why they are
+modes and not three tabs of their own.
 
 **Conversation** is you and the ship's AI, and nothing else. It is what opens.
 
@@ -137,10 +234,15 @@ log file, because a page that repeats another page is one nobody reads.
 nobody is looking at is not worth a file read per tick, and one you *are* looking at is open
 because something already went wrong. Switch away and back to re-read it.
 
-Which page you are on belongs to the surface you are looking at, not to the transcript. The
+One asymmetry between the three is kept rather than smoothed over: Conversation and Technical are
+the same turns at two verbosities, and **Log file is a file read off disk** — which is why it,
+alone of the three, carries a working indicator, and why this is three modes rather than a single
+toggle.
+
+Which mode you are on belongs to the surface you are looking at, not to the transcript. The
 desktop window can sit on the log while the headset panel shows the conversation — same
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
-has no tabs at all, being the transcript's tail and the provenance line and nothing else.
+has no bar at all, being the transcript's tail and the provenance line and nothing else.
 
 ### Following it, or not {#following}
 

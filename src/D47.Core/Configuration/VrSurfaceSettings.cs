@@ -103,6 +103,30 @@ public sealed record VrSurfaceSettings
     /// </summary>
     public int Zoom { get; init; } = Interface.ZoomLadder.Default;
 
+    /// <summary>
+    /// How many pixels this surface is rendered at, as "1280x800" (list.md Phase 25, "The panel
+    /// resizes and zooms").
+    /// <para>
+    /// The third of the three levers, and the one that was a constant until now: pixels decide
+    /// how much the image can hold, <see cref="Width"/> decides how big it looks in the room, and
+    /// <see cref="Zoom"/> decides how much logical layout those pixels carry. See
+    /// <see cref="Interface.PanelResolution"/> for why every rung holds one aspect and why the
+    /// ceiling is a judgement rather than a limit.
+    /// </para>
+    /// <para>
+    /// A string rather than two integers because it is one choice from one row: two numbers that
+    /// can be edited separately are two numbers that can disagree about the aspect, and the
+    /// aspect is what keeps this lever independent of the one beside it. Empty means the default,
+    /// which is what every file written before this property existed says — the settings file is
+    /// append-only, so an older file has to mean something rather than fail.
+    /// </para>
+    /// </summary>
+    public string Pixels { get; init; } = string.Empty;
+
+    /// <summary>The rung <see cref="Pixels"/> names, snapped, with the default for anything else.</summary>
+    public (int Width, int Height) Resolution => Interface.PanelResolution.Parse(
+        string.IsNullOrWhiteSpace(Pixels) ? null : Pixels);
+
     public SurfacePlacement ToPlacement() => new SurfacePlacement
     {
         Lock = string.Equals(Lock, "world", StringComparison.OrdinalIgnoreCase)

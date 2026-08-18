@@ -10,6 +10,25 @@ public sealed record Transcription(string Text)
     /// <summary>The model that produced it, for the same reason.</summary>
     public string? Model { get; init; }
 
+    /// <summary>
+    /// How sure the model was, 0 to 1 (list.md Phase 25, "Say it, or type it").
+    /// <para>
+    /// One is the default and means "not reported", which is what every path that does not
+    /// produce a figure gets — a test double, a replay, a transcriber that has none. That is the
+    /// safe default here rather than zero: the one caller that reads this treats a low figure as
+    /// a failure and puts a keyboard back, so a transcriber with nothing to say about its own
+    /// confidence must not be read as certain it was wrong.
+    /// </para>
+    /// <para>
+    /// Read by the panel's text-entry loop and by nothing else. The turn path deliberately does
+    /// not gate on it: a turn that refused to run because a model was unsure would be a
+    /// Commander repeating themselves at a companion that heard them perfectly well, where the
+    /// worst case is one wrong answer they can correct. A value being written into a plan is the
+    /// case where being unsure is worth acting on.
+    /// </para>
+    /// </summary>
+    public double Confidence { get; init; } = 1;
+
     public bool IsEmpty => string.IsNullOrWhiteSpace(Text);
 }
 

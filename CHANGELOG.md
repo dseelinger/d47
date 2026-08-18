@@ -17,6 +17,113 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.25.0 — 2026-08-17 — The panel becomes a place, and it knows what time it is
+
+list.md Phases 24 and 25. Two phases in one release: the panel grew a bar of six surfaces, and the
+first of the new ones — clocks, timers and alarms — landed with it.
+
+### The bar
+
+Conversation, Technical and the log file were three tabs. They are three **modes of one Transcript
+tab** now, because they are three readings of one exchange rather than three destinations — and
+that collapse is what paid for the surfaces beside it without the bar growing:
+
+```text
+Transcript   Checklist   Loadout   Engineers   Utilities   Settings
+```
+
+Five in the headset. Settings stays out for the reason it always has: a 1180-pixel navigation
+column at a metre is a wall rather than a page. A tab whose surface has not been built yet is not
+drawn at all, so Loadout and Engineers arrive when they arrive.
+
+The mode control rides the tab strip's own row rather than sitting under it — two stacked strips
+read worse than the eight flat tabs the collapse avoids. The log keeps its working indicator,
+because it alone of the three reads a file off disk.
+
+### Drilling in, and finding the way back
+
+Every surface below the bar is a stack, and **the tab is its root rather than its first step**. So
+pressing the tab you are already on goes back to the top of it — which had to be built rather than
+inherited, because the tabs are radio buttons and re-pressing a checked one announces nothing at
+all.
+
+Below the root there is a **breadcrumb**, which is both where you are and the way back: a headset
+has no title bar to orient by, and losing your place is expensive when you cannot glance at a
+second monitor. Every crumb but the last can be pressed **and said**. Back is three routes that
+agree — the crumb, the **grip button** on either controller, and the phrase.
+
+Voice jumps levels, so a trail materialises with everything above it rather than being built one
+step at a time. Drill state survives switching tabs, and a tab with more than one mode keeps a
+stack per mode.
+
+### One design, one to three panes
+
+Drilling in and reflowing turned out to be the same mechanism: **how many panes fit**. Wide shows
+the level you are on beside the one above it, and a third if there is room; narrow shows one and
+you drill. One design covers the headset's big panel, its mini panel, the desktop window and every
+zoom level.
+
+The big panel's pixels are a setting now, on a ladder that holds one aspect — so asking for more of
+them never changes the shape of the thing in the room. Three levers, kept apart: **pixels decide
+what the image can hold, metres decide how big it looks, zoom decides how much layout those pixels
+carry.**
+
+### Choosing takes the panel
+
+A chooser **replaces the panel until it is dismissed**, which makes it a level of the stack rather
+than a pop-up over the page. A pop-up cannot exist on the headset surface at all, but taking the
+panel earns its place anyway: it fits about sixteen rows at a comfortable size where a layer fits
+fewer, and it **carries what you are choosing for in its header** — the slot, its size, what is
+fitted now — which a drop-down has nowhere to put. Short lists stay as a layer, and which one a
+control gets is fixed per control rather than decided by how many rows it happens to have today.
+
+### Saying it, or typing it
+
+Text entry is **voice first with a drawn keyboard as the fallback**, and which opens depends on
+what is being entered — a system name is far easier said than typed, and a number is the reverse.
+What you say reaches the box **once, when it is done**. The keyboard comes back on its own for the
+three failures Directive 47 can actually detect: nothing heard, a transcription it was not sure of,
+and a value that is not a thing. Whisper reports that confidence now, as the worst segment of the
+sentence rather than the average, so one badly-heard system name among clear English is caught
+rather than buried.
+
+### The checklist left its window
+
+The headline is not tidiness: **a window cannot appear in the headset**, so a Commander wearing one
+could not see their checklist at all. It is a tab now, on both surfaces.
+
+One list in your own order, with the scope on each line rather than the page carved into a list per
+ship — what you reorder on a whim is everything you are working on. **Press a line to select it and
+it grows a pair of arrows**; a drag is the worst gesture available to a laser pointer at a metre and
+has no spoken form at all. Each state says what to do next rather than showing a badge, and colour
+is spent only where something is actually wrong. Suggestions wait on a page of their own instead of
+interrupting the list.
+
+### Clocks, timers and alarms
+
+Elite runs **1286 years ahead**, so the Utilities tab shows today twice — one instant presented
+twice, which is why the two can never disagree.
+
+Timers and alarms are named, set from the tab or by saying so, and **the name is what Directive 47
+says when one goes off** — one rising chime for all of them, and the sentence after it says which.
+**Alarms survive a restart and timers do not**, and one that came round while Directive 47 was
+closed is reported afterwards with when it was due rather than sounded hours late as though nothing
+had happened.
+
+"What's the date" is answered by Directive 47 itself — no turn, no provider, no tokens, and it
+works with no key configured. Both dates also ride along with every conversation already worked
+out, so the ship's AI can mention the date without asking and is never asked to add 1286 to
+anything.
+
+**Cancelling is yours.** Reachable from the tab and from a phrase, and from nowhere the AI can
+reach — an alarm somebody relies on to leave the house is worth that line being drawn.
+
+### Also
+
+- The About dialog links to this file on GitHub.
+
+---
+
 ## 0.24.0 — 2026-08-17 — Systems worth remarking on, and the panel stopped flickering
 
 list.md Phase 23. Jump into somewhere with a story attached and Directive 47 says so — once a day
