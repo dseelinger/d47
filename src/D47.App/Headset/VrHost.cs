@@ -121,12 +121,15 @@ public sealed class VrHost : IDisposable
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null,
         Func<Control>? settingsPage = null,
-        D47.Core.Checklists.ChecklistService? checklists = null)
+        D47.Core.Checklists.ChecklistService? checklists = null,
+        D47.Core.Utilities.Timekeeper? timekeeper = null,
+        D47.Core.Utilities.AlarmStore? alarmStore = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
-            model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage, checklists);
+            model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
+            checklists, timekeeper, alarmStore);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -247,6 +250,13 @@ public sealed class VrHost : IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             Interlocked.Exchange(ref _pending, 0);
+
+            // Before the serve, so a clock that moved is in the frame this tick draws rather than
+            // in the next one. It marks the surface dirty only when Utilities is what is showing,
+            // which is what keeps a ticking clock from re-rendering a transcript nobody moved
+            // (list.md Phase 24).
+            _panel.TickClocks();
+
             Serve(context.Now);
         });
     }

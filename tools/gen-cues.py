@@ -33,6 +33,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
 NOTES = {
     "A2": 110.00, "D3": 146.83, "E4": 329.63, "F#4": 369.99, "G4": 392.00,
     "A4": 440.00, "C5": 523.25, "D4": 293.66, "G5": 783.99, "E5": 659.26,
+    "D5": 587.33, "A5": 880.00,
 }
 
 
@@ -149,6 +150,14 @@ def main():
     _write("alerts/piracy.wav", _sequence([("G4", 0.11), ("D4", 0.26)], 0.46, peak=0.52))
     _write("alerts/bountyhunter.wav", _sequence([("C5", 0.07), ("C5", 0.07), ("F#4", 0.26)], 0.52, peak=0.55))
     _write("alerts/rivalterritory.wav", _sequence([("D4", 0.16), ("A2", 0.40)], 0.70, peak=0.34))
+
+    # The one alert that is not trouble, and the one the Commander asked for: a timer or an alarm
+    # finishing (list.md Phase 24). So it rises where the other four fall, and it is quieter than
+    # them - nothing is about to shoot, and a chime that startles is a chime somebody turns off.
+    #
+    # It says "something finished" and nothing more. d47 speaks the name straight after, which is
+    # why there is one clip here rather than a synthesised tone per timer.
+    _write("alerts/timerelapsed.wav", _sequence([("A4", 0.10), ("D5", 0.10), ("A5", 0.26)], 0.52, peak=0.38))
 
     # Beds loop for as long as the state lasts, so they are quiet, low, and seamless.
     # 440 carrier cycles and 3 AM cycles over 3.00 s; 264 and 3 over 2.40 s.

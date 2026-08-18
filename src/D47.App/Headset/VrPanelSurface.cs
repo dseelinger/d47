@@ -83,7 +83,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null,
         Func<Control>? settingsPage = null,
-        D47.Core.Checklists.ChecklistService? checklists = null)
+        D47.Core.Checklists.ChecklistService? checklists = null,
+        D47.Core.Utilities.Timekeeper? timekeeper = null,
+        D47.Core.Utilities.AlarmStore? alarmStore = null)
     {
         _dumpTo = dumpTo;
 
@@ -109,6 +111,17 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // cannot appear here at all, so before Phase 25 a Commander wearing a headset could
             // not see their checklist.
             _view.EnableChecklist(checklists);
+        }
+
+        if (timekeeper is not null && alarmStore is not null)
+        {
+            // A Commander in a headset is exactly the Commander who cannot glance at a wall
+            // clock, which is most of why this page exists at all (list.md Phase 24).
+            _view.EnableUtilities(
+                timekeeper,
+                alarmStore,
+                () => D47.Core.SystemWallClock.Instance.UtcNow,
+                () => TimeZoneInfo.Local);
         }
 
         // The same scaling host the desktop window zooms with, for the same reason: a render
@@ -141,6 +154,22 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// controller button stays available to whatever else wants it at a root (list.md Phase 25).
     /// </summary>
     public bool Back() => _view.GoBack();
+
+    /// <summary>
+    /// Redraws the clocks, from the headset's own tick. Marks the surface dirty only when the
+    /// Utilities tab is what it is showing — a panel with nothing new costs a boolean, and a
+    /// clock ticking behind a transcript is pixels nobody is looking at.
+    /// </summary>
+    public void TickClocks()
+    {
+        if (_view.Tab != D47.Core.Interface.PanelTab.Utilities)
+        {
+            return;
+        }
+
+        _view.TickClocks();
+        _dirty = true;
+    }
 
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;

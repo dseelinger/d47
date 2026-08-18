@@ -128,6 +128,15 @@ public partial class MainWindow : Window
             // Phase 25).
             Panel.EnableChecklist(host.Checklists);
 
+            // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
+            // checklist: a Commander in a headset is exactly the Commander who cannot glance at
+            // a wall clock.
+            Panel.EnableUtilities(
+                host.Timekeeper,
+                host.Alarms,
+                () => D47.Core.SystemWallClock.Instance.UtcNow,
+                () => TimeZoneInfo.Local);
+
             // And the same window is the one with a keyboard, so it is the one that gets a
             // search box. Two calls rather than one, because they are two affordances — but they
             // are made from the same line of the same file, which is where "desktop only" lives.
@@ -155,6 +164,13 @@ public partial class MainWindow : Window
 
             // And a spoken "show me the checklist" moves this surface (list.md Phase 25).
             host.RouteNavigation(Panel.Nav);
+
+            // A clock is the one page whose content changes with nothing having happened, so it
+            // is pushed rather than pulled (list.md Phase 24). Posted, because the tick loop runs
+            // on its own thread and every control here belongs to this one; and it does nothing
+            // at all until the tab has been opened once.
+            host.Tick.Add("clocks", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickClocks));
 
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.

@@ -488,6 +488,44 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").
+    /// <para>
+    /// Both surfaces, like the checklist: a Commander in a headset is exactly the Commander who
+    /// cannot glance at a wall clock.
+    /// </para>
+    /// </summary>
+    public void EnableUtilities(
+        D47.Core.Utilities.Timekeeper timekeeper,
+        D47.Core.Utilities.AlarmStore alarms,
+        Func<DateTimeOffset> now,
+        Func<TimeZoneInfo> zone)
+    {
+        Furnish(
+            PanelTab.Utilities,
+            _ => _utilities = new UtilitiesPage(timekeeper, alarms, now, zone, Prompts),
+            new NavCrumb("utilities", "Utilities"));
+    }
+
+    /// <summary>
+    /// Redraws the clocks, from the host's tick.
+    /// <para>
+    /// Pushed rather than pulled, because a clock is the one page whose content changes with
+    /// nothing having happened — which is the same reason the timers themselves are the first
+    /// thing d47 does that nothing external triggers. Nothing at all until the tab has been
+    /// opened once, so a Commander who never looks at it pays no ticks for it.
+    /// </para>
+    /// </summary>
+    public void TickClocks()
+    {
+        if (Tab == PanelTab.Utilities)
+        {
+            _utilities?.Refresh();
+        }
+    }
+
+    private UtilitiesPage? _utilities;
+
+    /// <summary>
     /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected,
     /// with the roots it offers (list.md Phase 25).
     /// <para>

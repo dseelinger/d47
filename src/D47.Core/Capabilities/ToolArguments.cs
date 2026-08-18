@@ -92,4 +92,20 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
         value = false;
         return Values.TryGetValue(name, out var raw) && bool.TryParse(raw, out value);
     }
+
+    /// <summary>
+    /// A fractional number, for the parameters that genuinely are one — a length of time in
+    /// minutes, where "an hour and a half" is ninety and "a minute and a half" is one and a half
+    /// (list.md Phase 24).
+    /// <para>
+    /// Invariant culture, like every other reader here: what arrives is a model's JSON rather than
+    /// something a Commander typed, and JSON numbers use a point wherever the Commander lives.
+    /// </para>
+    /// </summary>
+    public bool TryGetDouble(string name, out double value)
+    {
+        value = 0;
+        return Values.TryGetValue(name, out var raw)
+               && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+    }
 }

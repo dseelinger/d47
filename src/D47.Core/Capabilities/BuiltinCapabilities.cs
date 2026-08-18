@@ -91,7 +91,16 @@ public static class BuiltinCapabilities
         // The Commander's own notes about systems (list.md Phase 23). Null under the designer and
         // in tests that are not about them; the capability still registers and still answers from
         // the shipped table, because that table is compiled in rather than composed.
-        Lore.LoreBook? lore = null) =>
+        Lore.LoreBook? lore = null,
+
+        // The Commander's timers and alarms (list.md Phase 24). Null under the designer and in
+        // tests that are not about them; the capability still registers, so its rows and its
+        // documentation page exist, and every tool answers that nothing is keeping time.
+        Utilities.Timekeeper? timekeeper = null,
+
+        // How to present an instant locally. A function because a Commander who changes time zone
+        // mid-session should not have to restart to see it.
+        Func<TimeZoneInfo>? zone = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -138,6 +147,7 @@ public static class BuiltinCapabilities
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
+        UtilitiesCapability.Create(timekeeper, now, zone),
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

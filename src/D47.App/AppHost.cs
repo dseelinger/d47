@@ -14,6 +14,7 @@ using D47.Core.Capabilities;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
+using D47.Core.Utilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
@@ -270,6 +271,12 @@ public sealed class AppHost : IDisposable
     /// proposal, which is an act the model is not allowed to perform.
     /// </summary>
     public ChecklistService Checklists { get; private set; } = null!;
+
+    /// <summary>The Commander's timers and alarms (list.md Phase 24).</summary>
+    public Timekeeper Timekeeper { get; private set; } = null!;
+
+    /// <summary>Where the alarms are kept, for the panel to follow and for a hand edit to reach.</summary>
+    public AlarmStore Alarms { get; private set; } = null!;
 
     /// <summary>
     /// Every phrase d47 already answers to, so the macro editor can refuse one that would
@@ -584,6 +591,18 @@ public sealed class AppHost : IDisposable
 
         var spend = new SpendTracker(spendLedger);
 
+        // Clocks, timers and alarms (list.md Phase 24). Alarms are a file because they are a
+        // promise about a wall-clock moment that outlives the process; timers live only in the
+        // Timekeeper, because a forty-minute countdown through a crash is a question nobody can
+        // answer.
+        var alarms = new AlarmStore(
+            Path.Combine(paths.Data, "alarms.json"),
+            loggerFactory.CreateLogger<AlarmStore>());
+
+        alarms.Poll();
+
+        var timekeeper = new Timekeeper(alarms);
+
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
         // library, which is replaced whenever the Commander drops a file into data/audio.
@@ -867,7 +886,15 @@ public sealed class AppHost : IDisposable
                     Unavailable = () => controllers.Unavailable,
                     Problems = () => switches.Problems,
                 },
-                lore));
+                lore,
+
+                // The Commander's timers and alarms (list.md Phase 24). The store polls itself
+                // from the tick below, so an alarm edited by hand is live without a restart.
+                timekeeper,
+
+                // How to present an instant locally. Asked each time rather than captured, so a
+                // Commander whose machine changes zone mid-session sees it without restarting.
+                () => TimeZoneInfo.Local));
 
         built = capabilities;
 
@@ -917,7 +944,16 @@ public sealed class AppHost : IDisposable
                 Situation.Describe(gameState.Active),
                 Join(
                     ActionCapabilities.Describe(actionSurface),
-                    Join(MacroCapability.Live(macros), ChecklistCapability.Live(checklists)))),
+                    Join(
+                        MacroCapability.Live(macros),
+                        Join(
+                            ChecklistCapability.Live(checklists),
+
+                            // Both dates, already worked out, below the cache breakpoint where a
+                            // per-turn value costs nothing (list.md Phase 24). The model is never
+                            // asked to add 1286 to anything.
+                            UtilitiesCapability.Live(
+                                timekeeper, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local))))),
         };
 
         var host = self = new AppHost(
@@ -1014,6 +1050,8 @@ public sealed class AppHost : IDisposable
 
         host.Macros = macros;
         host.Checklists = checklists;
+        host.Timekeeper = timekeeper;
+        host.Alarms = alarms;
 
         host.SwitchEditing = new Settings.SwitchEditing(
             switches,
@@ -1125,6 +1163,16 @@ public sealed class AppHost : IDisposable
             // because it is a projection of two things that move independently — where the
             // switch is, and what the game says.
             host.ShowSwitches(SwitchCapability.Annunciator(reconciler.States));
+        });
+
+        // The first thing d47 does that nothing external triggers (list.md Phase 24). Every other
+        // subscriber here is reacting to something that arrived; this one asks whether time has
+        // passed. The now comes from the tick's own context, which is what keeps the clock rule
+        // and lets the replay harness run a day of alarms in a second.
+        tick.Add("reminders", context =>
+        {
+            alarms.Poll();
+            host.SoundReminders(timekeeper.Poll(context.Now));
         });
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
@@ -3035,6 +3083,57 @@ public sealed class AppHost : IDisposable
         }
 
         _voiceScopeSystem = system;
+    }
+
+    /// <summary>
+    /// Sounds what came due, and says which (list.md Phase 24, "A timer says its own name").
+    /// <para>
+    /// <b>The cue says <em>something finished</em> and d47 speaks the name.</b> One shipped clip
+    /// for every timer rather than a synthesised tone per timer: per-timer tones are genuinely
+    /// useful in a headset where you cannot glance, but they are new machinery in the audio path
+    /// for a distinction the voice already makes better.
+    /// </para>
+    /// <para>
+    /// Through the one arbiter, like all other audio, which is what decides whether the chime
+    /// waits for a sentence to end or lands on top of it.
+    /// </para>
+    /// <para>
+    /// <b>A missed alarm gets no cue.</b> A chime says "now", and this one means "nine hours ago"
+    /// — so the sentence carries it alone, which is the whole of "reported afterwards, never
+    /// faked".
+    /// </para>
+    /// </summary>
+    private void SoundReminders(IReadOnlyList<Fired> fired)
+    {
+        if (fired.Count == 0)
+        {
+            return;
+        }
+
+        var zone = TimeZoneInfo.Local;
+
+        foreach (var (reminder, missed) in fired)
+        {
+            _logger.LogInformation(
+                "{Kind} \"{Name}\" {What}",
+                reminder.Kind,
+                reminder.Name,
+                missed ? "was due while d47 was closed" : "went off");
+
+            if (!missed && Voice.CuesEnabled)
+            {
+                Audio.Enqueue(new Core.Audio.AudioRequest
+                {
+                    Channel = Core.Audio.AudioChannel.Cue,
+                    Clip = Cues.For(Core.Audio.AlertCue.TimerElapsed),
+                });
+            }
+
+            var said = missed ? reminder.AnnounceMissed(zone) : reminder.Announce();
+
+            _ = Voice.AnnounceAsync(said);
+            Said?.Invoke(said);
+        }
     }
 
     private void SpeakPendingCallouts()
