@@ -331,21 +331,34 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>
     /// Lights whatever the ray is resting on, so the Commander can see they have found it.
     /// Called every frame a ray is on the panel, and with null when it leaves.
+    /// <para>
+    /// <b>Dirty only when the light actually moved.</b> This is called on every tick of a live
+    /// session — including the ordinary case of no ray anywhere near the panel, which asks for
+    /// null over and over — so setting the flag unconditionally holds the surface dirty forever.
+    /// That re-renders the widget tree, converts it and hands the whole image back to SteamVR
+    /// every frame for pixels that did not change, which is the exact condition that made the
+    /// panel flicker while it was being carried; done on every frame instead of only while
+    /// carrying, it makes the panel flicker all the time. <see cref="OffscreenSurface.Illuminate"/>
+    /// already knows whether anything moved and now says so.
+    /// </para>
+    /// <para>
+    /// Or-assigned rather than assigned: a frame where the light did not move may still be dirty
+    /// for a reason that has nothing to do with aiming, and this is not the place that clears it.
+    /// <see cref="Draw"/> is.
+    /// </para>
     /// </summary>
     public void Aim(float? u, float? v)
     {
         if (u is not { } across || v is not { } down)
         {
-            _offscreen.Illuminate(null);
-            _dirty = true;
+            _dirty |= _offscreen.Illuminate(null);
             return;
         }
 
         var (width, height) = Size;
         var lit = _offscreen.ScrollbarNear(new Point(across * width, down * height));
 
-        _offscreen.Illuminate(lit);
-        _dirty = true;
+        _dirty |= _offscreen.Illuminate(lit);
     }
 
     private Avalonia.Controls.Primitives.ScrollBar? _scrolling;

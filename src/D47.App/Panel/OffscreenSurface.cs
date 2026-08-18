@@ -702,12 +702,19 @@ public sealed class OffscreenSurface : IDisposable
     /// and the renderer for a window that is never shown answers nothing. A scrollbar that does
     /// not light up when aimed at is a scrollbar the Commander cannot tell they have found.
     /// </para>
+    /// <para>
+    /// <b>Answers whether anything actually changed</b>, because the caller is asked this every
+    /// frame a ray is on the panel and the answer is almost always no. Only the caller knows what
+    /// a change is worth, and marking the surface dirty for a light that did not move re-rasterises
+    /// and re-uploads the whole panel thirty times a second — which is not a waste of a frame
+    /// budget but a visible fault. See <see cref="D47.Vr.VrPixels"/> on why.
+    /// </para>
     /// </summary>
-    public void Illuminate(Control? control)
+    public bool Illuminate(Control? control)
     {
         if (ReferenceEquals(control, _lit))
         {
-            return;
+            return false;
         }
 
         if (_lit is not null)
@@ -721,6 +728,8 @@ public sealed class OffscreenSurface : IDisposable
         {
             ((IPseudoClasses)_lit.Classes).Set(":pointerover", true);
         }
+
+        return true;
     }
 
     private Control? _lit;
