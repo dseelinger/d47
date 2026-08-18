@@ -761,8 +761,29 @@ public sealed class ChecklistService(
             said.Add(Apply(proposal).Report);
         }
 
-        return string.Join(" ", said);
+        return Once(said);
     }
+
+    /// <summary>
+    /// Several outcomes as one answer, with anything said twice said once
+    /// (remediation.md 11, item 1).
+    /// <para>
+    /// Accepting two proposals whose items are both gone produced "There is no such item on your
+    /// checklist. There is no such item on your checklist." — one fact stated twice, which read
+    /// out loud is indistinguishable from a stutter.
+    /// </para>
+    /// <para>
+    /// <b>Collapsed rather than counted.</b> "That happened twice" is a fact about how many
+    /// proposals were waiting, which is d47's bookkeeping rather than the Commander's business;
+    /// what they asked was what happened to their list. Two <em>different</em> outcomes are still
+    /// both reported, because a Commander who accepted two things is owed what became of each.
+    /// </para>
+    /// </summary>
+    private static string Once(IEnumerable<string> said) =>
+        string.Join(
+            " ",
+            said.Where(line => !string.IsNullOrWhiteSpace(line))
+                .Distinct(StringComparer.Ordinal));
 
     /// <summary>
     /// The one line about a proposal the Commander has not answered, or null when there is none
@@ -851,7 +872,7 @@ public sealed class ChecklistService(
             said.Add(change.Report);
         }
 
-        return new ChecklistChange(Document, moved, string.Join(" ", said));
+        return new ChecklistChange(Document, moved, Once(said));
     }
 
     // ------------------------------------------------- what the model may do
