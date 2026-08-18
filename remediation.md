@@ -53,3 +53,17 @@ the changelog, which is why this file is the current batch and not a growing arc
   a reflow means missing whatever happened in between. Each half fails on its own with the other in
   place, which is what says they were two faults rather than one.
 
+- [x] **4. The goals band should scroll.** Reported with a picture: nine arcs, the third clipped at
+  the bottom edge, and the checklist underneath gone entirely.
+
+  **A docked child takes the height it asks for**, and nine arcs ask for all of it. The band is a
+  window onto the arcs now, bounded to a share of the page, and what does not fit scrolls. Below
+  the cap it takes only what it needs, so two arcs are two arcs and no scrollbar.
+
+  **A share alone was not enough.** The row of buttons above the list costs the same fifty pixels
+  on a tall window and a short one, so a purely proportional band left the list fifty-six pixels —
+  a scrollbar and half a line. The list keeps a floor and the band gives, which is the right way
+  round: the band is the thing the Commander opened and can close again. The gap between the two
+  sits outside the scroller, or the last arc came to rest against the first checklist line and they
+  read as one list.
+
