@@ -172,19 +172,60 @@ public class RadioVoiceTests
         Assert.True(Share(treated, 9_000) < 0.2, $"9 kHz came through at {Share(treated, 9_000):P0}");
     }
 
+    /// <summary>
+    /// Every transmission arrives at the same loudness, whichever voice sent it.
+    /// <para>
+    /// <b>This replaced an assertion that said the opposite</b>, and the reason is worth keeping.
+    /// The old rule was that a treated line came back at the loudness it arrived at, so that an
+    /// effect could not read as a volume change. That is a good rule for one line and the wrong
+    /// one across many: it faithfully preserves whatever level spread the speech provider
+    /// produced, so a voice that is simply hotter than its neighbours arrives hotter — reported
+    /// as "certain voices just sound more loud/present". Matching each line to itself cannot fix a
+    /// difference that is between lines, so the treatment now brings all of them to one level, the
+    /// way a receiver's AGC does.
+    /// </para>
+    /// <para>
+    /// Measured on the voice rather than on the whole clip, because the clip has a fifth of a
+    /// second of carrier on the end of it and that dilutes a whole-clip RMS by a factor that
+    /// depends on how long the line was.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void ALineOverTheRadioIsNoLouderOrQuieterThanOneInTheRoom()
+    public void EveryTransmissionArrivesAtTheSameLoudnessWhicheverVoiceSentIt()
     {
-        // There is one speech volume, and it is the Commander's. An effect that also changed the
-        // level would read as the mixer being broken — and the fix a Commander reaches for then
-        // is to switch re-voiced messages off, not to work out which of the two it was.
-        //
-        // A band of tones rather than one, because the level has to hold across a voice's range
-        // and not just at the frequency that happened to get chosen.
-        foreach (var hertz in new[] { 400, 700, 1_200, 2_500 })
+        // A 26 dB spread going in: quieter than any real voice, and up at full scale.
+        var levels = new[] { 0.05, 0.1, 0.2, 0.4, 0.7, 1.0 }
+            .Select(amplitude => Rms(UnderTheVoice(RadioVoice.Apply(Tone(1_000, 1.0, amplitude)))))
+            .ToArray();
+
+        var spread = 20 * Math.Log10(levels.Max() / levels.Min());
+
+        Assert.True(spread < 1.0, $"{spread:F1} dB of it survived, and the point was that none should");
+    }
+
+    /// <summary>
+    /// And the level it lands on is the one a voice already had, so this is a levelling and not a
+    /// volume change.
+    /// <para>
+    /// There is one speech volume and it is the Commander's; a radio line that arrived louder or
+    /// quieter than the ship's AI would read as the mixer being wrong, and the Commander's fix for
+    /// that is to turn re-voiced messages off rather than to work out which of the two moved. The
+    /// target is the level real Edge Neural output was measured at, which is what keeps the
+    /// average voice exactly where it was and collapses only the spread around it.
+    /// </para>
+    /// <para>
+    /// A band of tones rather than one, because the level has to hold across a voice's range and
+    /// not just at the frequency that happened to get chosen.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ATypicalLineIsNoLouderOrQuieterThanOneInTheRoom()
+    {
+        // 0.1414 peak is an RMS of 0.10, which is the -20 dBFS a real treated line was measured at.
+        foreach (var hertz in new[] { 700, 1_200, 2_000 })
         {
-            var before = Rms(Tone(hertz));
-            var after = Rms(RadioVoice.Apply(Tone(hertz)));
+            var before = Rms(Tone(hertz, 1.0, 0.1414));
+            var after = Rms(UnderTheVoice(RadioVoice.Apply(Tone(hertz, 1.0, 0.1414))));
 
             Assert.True(
                 after > before * 0.7 && after < before * 1.3,

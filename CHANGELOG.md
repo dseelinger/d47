@@ -17,6 +17,76 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.23.2 — 2026-08-17 — The panel flickered all the time, and every voice arrives at one level
+
+Two reports against 0.23.1. The first is a regression that 0.22.1 had already fixed once in a
+narrower form, which is the interesting part of it.
+
+### The VR panel flickered constantly
+
+0.22.1 fixed a flicker that happened *while the panel was being carried*, and the cause was that
+carrying marked the surface dirty on every frame: the serving loop re-rendered the widget tree,
+converted it and handed the whole image back to SteamVR thirty times a second for pixels that had
+not changed.
+
+0.23.1 added the aiming highlight — the scrollbar that lights up when a ray rests on it — and put
+it on exactly the same footing. `Aim` is called on every tick of a live session, including the
+ordinary case of no ray anywhere near the panel, and it set the dirty flag unconditionally every
+time. So the condition that used to hold only during a carry now held always, and the flicker went
+from something you could provoke to something that never stopped.
+
+`Illuminate` already knew whether anything had actually changed — it returns early when the lit
+control is the one already lit — it just did not say so. It returns that answer now, and the
+surface is marked dirty only when the light really moved. The or-assignment matters: a frame where
+the light did not move may still be dirty for some other reason, and aiming is not the place that
+clears it.
+
+`RestingAimDoesNotAskForARedraw` holds the line. It drives thirty ticks of nobody pointing at the
+panel and asserts the surface stays clean, then asserts that finding a bar and leaving it are both
+still drawn — a fix that simply stopped setting the flag would pass the first half and leave a
+highlight that never appears. Reintroducing the fault fails it at the first assertion, and the six
+tests that were already there all still pass with the fault in place, which is why nothing caught
+this the first time.
+
+### Voices over the radio
+
+Three things at once, all of them the same complaint from different angles: a treated line still
+sounded like it was in the room.
+
+**More link.** The passband was 300–3,400 Hz, which is the *telephony* band — a telephone is a
+wire in a building. It is 400–2,700 Hz now, which is the SSB voice channel. The top edge is the
+one that does most of the work: presence lives between roughly 2 and 5 kHz, so that is where a
+voice decides whether it sounds like it is in the cockpit. Consonants are still resolved at 2.7
+kHz, which is why real voice channels stop about there rather than lower. Drive went 1.9 → 2.6, so
+the link runs further out of headroom.
+
+**More static.** The floor under the words went 0.022 → 0.034 and the bare carrier 0.085 → 0.148.
+Part of that is not an increase at all: a narrower band throws away noise power along with
+presence, and that alone cost 3 dB, so holding the shipped level would have been a reduction. The
+tail lands near −31 dBFS against the −33 it shipped at.
+
+**One level for everybody.** This is the one that changes a rule. The treatment used to restore
+each clip to the loudness it arrived with, so that an effect could never read as a volume change.
+That is right for one line and wrong across many — it faithfully preserves whatever level spread
+the speech provider produced, so a voice that is simply hotter than its neighbours arrives hotter.
+Matching each line to itself cannot fix a difference that is *between* lines. There is a receiver
+AGC now: every transmission is brought to one target, and a 26 dB spread going in comes out inside
+1 dB. The target is 0.10 RMS, which is not a round number but the measured one — real Edge Neural
+output was recorded at about −20 dBFS when the static was set by ear, and −20 dBFS is 0.10. So the
+average voice comes out exactly where it already did and only the spread around it collapses,
+which is what keeps this a levelling rather than the volume change the old rule warned about.
+
+The bounds are deliberately asymmetric. Boost stops at four times, because bringing near-silence
+up to a speaking level means multiplying the noise floor by whatever it takes; cutting has no such
+hazard, and twelve dB of it was not enough to bring a hot voice down to meet a quiet one.
+
+`ALineOverTheRadioIsNoLouderOrQuieterThanOneInTheRoom` asserted the old rule and is gone. Two
+assertions replace it: every transmission arrives at the same loudness whichever voice sent it,
+and a line already at a typical level is not moved. With the old behaviour put back, 25.8 dB of
+spread survives the first of them.
+
+---
+
 ## 0.23.1 — 2026-08-17 — The headset was showing the oldest lines, and a dropdown crashed it
 
 Everything reported against 0.23.0 in one pass with a headset on. Two of them were the headset

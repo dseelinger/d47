@@ -44,17 +44,53 @@ public static class RadioVoice
         IsOverTheAir(role) ? Apply : null;
 
     /// <summary>
-    /// The bottom of the passband. 300 Hz is the low edge of the telephony band, and taking the
-    /// chest out of a voice is most of what makes it sound like it came down a wire — the cue a
-    /// listener reads is the missing bottom, not the added noise.
+    /// The bottom of the passband. Taking the chest out of a voice is most of what makes it sound
+    /// like it came down a wire — the cue a listener reads is the missing bottom, not the added
+    /// noise.
+    /// <para>
+    /// <b>400 Hz rather than the 300 it shipped at.</b> 300 is the low edge of the <em>telephony</em>
+    /// band, and a telephone is a wire in a building; a comms link is 400, which is where aviation
+    /// and SSB voice sit. The difference is a third of an octave of chest, and it is part of why
+    /// the first pass was reported as still sounding close.
+    /// </para>
     /// </summary>
-    private const double LowEdgeHz = 300;
+    private const double LowEdgeHz = 400;
 
     /// <summary>
-    /// The top. 3.4 kHz is the other end of the same band; above it a voice starts sounding
-    /// present again, which is the thing this is here to undo.
+    /// The top. Above it a voice starts sounding present again, which is the thing this is here
+    /// to undo.
+    /// <para>
+    /// <b>2.7 kHz rather than the 3.4 it shipped at</b> — the top of the SSB voice channel rather
+    /// than the top of the telephony band. Presence lives between roughly 2 and 5 kHz, so this
+    /// edge is the one that decides whether a voice sounds like it is in the cockpit, and the
+    /// voices reported as sounding "more loud/present" than their neighbours are the ones
+    /// carrying the most energy up here. Intelligibility survives: consonants are still resolved
+    /// at 2.7 kHz, which is why real voice channels stop around there rather than lower.
+    /// </para>
     /// </summary>
-    private const double HighEdgeHz = 3_400;
+    private const double HighEdgeHz = 2_700;
+
+    /// <summary>
+    /// The loudness every transmission is brought to, as an RMS of full scale — the receiver's
+    /// automatic gain control, which is the thing a real link has and d47 did not.
+    /// <para>
+    /// <b>Why an absolute target rather than the level the line arrived at.</b> This used to
+    /// restore each clip to its own original loudness, on the reasoning that the Commander has one
+    /// speech volume and an effect that also changed the level reads as a broken mixer. That is
+    /// true and it is not the whole story: it also faithfully preserves whatever level variance
+    /// the speech provider produced, so a voice that is simply hotter than its neighbours arrives
+    /// hotter — reported as "certain voices just sound more loud/present". Matching each line to
+    /// itself cannot fix that, because the difference is between lines.
+    /// </para>
+    /// <para>
+    /// <b>0.10 is not a round number, it is the measured one.</b> Against real Edge Neural output
+    /// a treated line sits about 13 dB over a tail then landing near -33 dBFS, which puts the
+    /// spoken line at about -20 dBFS — and -20 dBFS is 0.10. So the average voice comes out
+    /// exactly where it already did and only the spread around it collapses, which is what keeps
+    /// this from becoming the volume change the old comment rightly warned about.
+    /// </para>
+    /// </summary>
+    private const double Target = 0.10;
 
     /// <summary>Butterworth. No resonant peak at either edge — a peak reads as a fault in the app.</summary>
     private const double Q = 0.70710678118654752;
@@ -63,8 +99,15 @@ public static class RadioVoice
     /// How hard the link is driven before it saturates. Enough to add the edge of a small speaker
     /// being pushed; not enough to make consonants tear, which stops being character and starts
     /// being unintelligible.
+    /// <para>
+    /// <b>2.6 rather than the 1.9 it shipped at.</b> Saturation is the second half of what reads as
+    /// a radio, after the missing bottom — it is what a link running out of headroom does, and it
+    /// squeezes the loud syllables of a hot voice down into the rest of the line, which is part of
+    /// the answer to voices that arrive more present than their neighbours. Bounded by the test
+    /// that says the loudest possible line still does not distort, rather than by taste alone.
+    /// </para>
     /// </summary>
-    private const double Drive = 1.9;
+    private const double Drive = 2.6;
 
     /// <summary>
     /// How loud the static is under the words. Well down: while somebody is talking the message is
@@ -76,16 +119,29 @@ public static class RadioVoice
     /// with different noise floors, and a reply split into three sentences is three clips — so the
     /// static would step up and down between them, which is a fault rather than a radio.
     /// </para>
+    /// <para>
+    /// <b>0.034 rather than the 0.022 it shipped at</b>, which is about 4 dB more. Two things had
+    /// to be paid for: the narrower band above throws away noise power along with presence, and
+    /// that alone cost 3 dB of floor, so holding the shipped level would have been a reduction.
+    /// The rest is the "a tad more" that was asked for.
+    /// </para>
     /// </summary>
-    private const double HissUnderVoice = 0.022;
+    private const double HissUnderVoice = 0.034;
 
     /// <summary>
     /// And how loud it is once the words stop, on the bare carrier. Several times the floor under
     /// the voice, which is both what a real link does — nothing is masking it and the gain at the
     /// far end comes up to meet it — and the reason the tail is audible as a link at all rather
     /// than as a gap before the next thing d47 says.
+    /// <para>
+    /// <b>0.148 rather than the 0.085 it shipped at</b>, landing the bare carrier near -31 dBFS
+    /// against the -36 the narrower band would otherwise have left it at. Raised slightly further
+    /// than the floor under the voice, so the swell between the two widens rather than merely
+    /// translating: the gap after the words is where static is heard as a link rather than as
+    /// noise over the top of somebody talking.
+    /// </para>
     /// </summary>
-    private const double HissOnTheOpenCarrier = 0.085;
+    private const double HissOnTheOpenCarrier = 0.148;
 
     /// <summary>
     /// How long the floor takes to come up between the two. Not instant, because a step in a noise
@@ -141,7 +197,6 @@ public static class RadioVoice
 
         var shaped = new double[samples];
 
-        var wasSquared = 0.0;
         var isSquared = 0.0;
         var peak = 0.0;
 
@@ -150,8 +205,6 @@ public static class RadioVoice
             var channel = index % channels;
             var sample = (short)(pcm[index * 2] | (pcm[(index * 2) + 1] << 8)) / 32768.0;
 
-            wasSquared += sample * sample;
-
             sample = Math.Tanh(voiceBand.Low[channel].Next(voiceBand.High[channel].Next(sample)) * Drive);
 
             shaped[index] = sample;
@@ -159,7 +212,7 @@ public static class RadioVoice
             peak = Math.Max(peak, Math.Abs(sample));
         }
 
-        var makeup = Makeup(Math.Sqrt(wasSquared / samples), Math.Sqrt(isSquared / samples), peak);
+        var makeup = Makeup(Math.Sqrt(isSquared / samples), peak);
 
         // The words, then the carrier still open, then the cut.
         var tail = (int)(Tail.TotalSeconds * rate) / channels * channels;
@@ -227,30 +280,36 @@ public static class RadioVoice
     }
 
     /// <summary>
-    /// The gain that puts the treated line back at the loudness it arrived with.
+    /// The gain that brings the treated line to <see cref="Target"/> — the receiver's AGC.
     /// <para>
-    /// <b>This is the part that stops the effect being a volume change.</b> Both halves of the
-    /// treatment move the level on their own — the band-pass throws away everything under 300 Hz,
-    /// which for a voice is most of its power, and the saturator has a makeup gain of its own —
-    /// and the Commander has exactly one speech volume for all of it. A radio line that arrives
-    /// louder or quieter than the ship's AI reads as the mixer being wrong, and the Commander's
-    /// fix for that is to turn re-voiced messages off.
+    /// <b>This is the part that stops the effect being a volume change</b>, and now also the part
+    /// that stops one voice arriving hotter than the next. Both halves of the treatment move the
+    /// level on their own — the band-pass throws away everything under 400 Hz, which for a voice
+    /// is most of its power, and the saturator has a makeup gain of its own — and the Commander
+    /// has exactly one speech volume for all of it.
     /// </para>
     /// <para>
-    /// Bounded both ways, because matching the loudness of near-silence means multiplying the
-    /// noise floor by whatever it takes. And it never clips: where matching the level would push
-    /// a peak past full scale, the peak wins, since a line that distorts on its loudest syllable
-    /// is a worse answer than one that is slightly quiet.
+    /// Bounded both ways, and <b>deliberately not by the same amount</b>. Bringing near-silence up
+    /// to a speaking level means multiplying the noise floor by whatever it takes, so the boost
+    /// stops at four times — a clip quiet enough to need more than that is one that should stay
+    /// quiet. Cutting has no such hazard, and the bound that matters is the one that must not stop
+    /// a hot voice being brought down to meet a quiet one, which is the entire point of the
+    /// exercise; twelve dB of cut was not enough to do it, so the floor is a tenth.
+    /// </para>
+    /// <para>
+    /// And it never clips: where reaching the target would push a peak past full scale, the peak
+    /// wins, since a line that distorts on its loudest syllable is a worse answer than one that is
+    /// slightly quiet.
     /// </para>
     /// </summary>
-    private static double Makeup(double was, double now, double peak)
+    private static double Makeup(double now, double peak)
     {
-        if (was <= 0 || now <= 0)
+        if (now <= 0)
         {
             return 1;
         }
 
-        var gain = Math.Clamp(was / now, 0.25, 4.0);
+        var gain = Math.Clamp(Target / now, 0.1, 4.0);
 
         return peak * gain > 1 ? 1 / peak : gain;
     }
