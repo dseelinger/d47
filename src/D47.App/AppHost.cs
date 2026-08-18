@@ -329,6 +329,12 @@ public sealed class AppHost : IDisposable
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
 
     /// <summary>
+    /// What d47 has noticed the Commander keeps doing (list.md Phase 32). Null under the designer,
+    /// where the row shows a summary and no button.
+    /// </summary>
+    public (D47.Core.Habits.HabitBook Book, Action? Mine)? Habits { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -561,6 +567,56 @@ public sealed class AppHost : IDisposable
         // of the observed tier — without it that tier would be an enum member reachable by nothing.
         var memoryObserver = new MemoryObserver(memoryBook);
 
+        // What d47 has noticed the Commander keeps doing, from the journals already on this disk
+        // (list.md Phase 32). Same store shape as memories and keyed the same way, because it is
+        // about the same person — and separate from them because a claim carries a count, a window
+        // and a dismissal, none of which a remembered fact has anywhere to put.
+        var habits = new D47.Core.Habits.HabitStore(
+            Path.Combine(paths.Data, "habits.json"),
+            loggerFactory.CreateLogger<D47.Core.Habits.HabitStore>());
+
+        habits.Poll();
+
+        var habitBook = new D47.Core.Habits.HabitBook(
+            habits,
+            () => gameState.Active?.Identity.FrontierId);
+
+        var miner = new D47.Core.Habits.HabitMiner(
+            loggerFactory.CreateLogger<D47.Core.Habits.HabitMiner>());
+
+        // Whether a pass is already running. An int rather than a bool because Interlocked has no
+        // overload for one, and the guard has to be atomic: the button is a press and a Commander
+        // who does not see anything happen for three seconds presses it again.
+        var mining = 0;
+
+        // Off the UI thread, because the pass is seconds long over hundreds of megabytes. Core
+        // stays synchronous and clock-free and the App is what decides where it runs — the same
+        // split every long-running thing in this file has. Named rather than inlined because two
+        // surfaces press it: the settings row and the window behind it.
+        void MineHabits()
+        {
+            if (Interlocked.Exchange(ref mining, 1) == 1)
+            {
+                return;
+            }
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    habits.Record(miner.Mine(journalDirectory, DateTimeOffset.Now));
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logger.LogWarning(ex, "Could not read the journals for habits");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref mining, 0);
+                }
+            });
+        }
+
         // Assigned once the ship and on-foot plans exist, below. A holder rather than a
         // reordering, exactly as bindsRef above is one: the callouts have to be built before the
         // tick loop and the engineer solver reads two stores that are built after the readers, and
@@ -568,7 +624,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Engineers.EngineerPlanService? unlocksRef = null;
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, () => unlocksRef);
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, () => unlocksRef);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -1019,7 +1075,14 @@ public sealed class AppHost : IDisposable
                 // What d47 remembers about the Commander (list.md Phase 31). Read by two
                 // capabilities — its own, and the privacy section, which is where emptying it lives
                 // rather than in a second place to look.
-                memoryBook));
+                memoryBook,
+
+                // And what it has noticed about them (list.md Phase 32). Read by two capabilities
+                // as well — its own, and privacy, which is where throwing it away lives.
+                habitBook,
+
+                // What the "read my journals" button does (list.md Phase 32).
+                () => MineHabits));
 
         built = capabilities;
 
@@ -1211,6 +1274,7 @@ public sealed class AppHost : IDisposable
         // The store and the clock, together, because a fact typed here is stamped with a real
         // instant and Core reads no clock of its own.
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
+        host.Habits = (habitBook, MineHabits);
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
@@ -1375,6 +1439,12 @@ public sealed class AppHost : IDisposable
             host.ApplyRecall(memoryBook.Recall());
         });
 
+        // What d47 has noticed, on the tick for the same reason the memory store is: the file is
+        // hand-editable, so a claim dropped in a text editor is live without a restart. Nothing is
+        // mined here — that is a button, and the whole point of item 1 is that it costs nothing
+        // while flying.
+        tick.Add("habits", _ => habits.Poll());
+
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // Ambience follows the situation Status.json states, sampled on the tick rather than
@@ -1421,6 +1491,7 @@ public sealed class AppHost : IDisposable
         LoreBook lore,
         LoreVisits loreVisits,
         MemoryBook memories,
+        D47.Core.Habits.HabitBook habits,
         Func<D47.Core.Engineers.EngineerPlanService?> unlocks)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
@@ -1467,6 +1538,12 @@ public sealed class AppHost : IDisposable
             // the start of a session, and it is about what was true before the Commander sat down.
             // Everything above it is about now.
             .Add(new ContinuityCallout(memories, checklists, unlocks))
+
+            // Phase 32, and below the continuity line for the same reason it is below everything
+            // else: it is an observation about the Commander rather than about the world, and
+            // nothing d47 worked out about somebody outranks something the game just said. Off
+            // until the Commander switches it on — the only callout here that ships that way.
+            .Add(new HabitCallout(habits))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -1505,6 +1582,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("checklist", callouts.Checklist);
         engine.SetEnabled("ambient", callouts.Ambient);
         engine.SetEnabled("continuity", callouts.Continuity);
+        engine.SetEnabled("habits", callouts.Habits);
 
         foreach (var callout in engine.Callouts)
         {

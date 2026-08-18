@@ -51,6 +51,12 @@ public static class CalloutCapability
     /// </summary>
     public const string ContinuityKey = "callouts.continuity";
 
+    /// <summary>
+    /// Something d47 noticed the Commander keeps doing, said when the circumstance comes round
+    /// again (list.md Phase 32). The one row in this capability that ships off.
+    /// </summary>
+    public const string HabitsKey = "callouts.habits";
+
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
 
@@ -243,6 +249,21 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { Continuity = v } }),
 
             Toggle(
+                HabitsKey,
+                "Things you keep doing",
+                "Something D47 has noticed in your own journals, said when the situation it is about comes "
+                + "round again. Off until you switch it on, and every claim can be dropped for good.",
+                "habits",
+                "my habits",
+                s => s.Callouts.Habits,
+                (s, v) => s with { Callouts = s.Callouts with { Habits = v } },
+
+                // The only one off by default (list.md Phase 32, item 3). It fires because of a
+                // claim about the Commander rather than because the game said something, and the
+                // item is explicit that this changes the deal.
+                defaultOn: false),
+
+            Toggle(
                 AmbientKey,
                 "Ambient remarks",
                 "The occasional in-character observation about where you are, said because nothing has happened.",
@@ -364,13 +385,19 @@ public static class CalloutCapability
         string anchor,
         string subject,
         Func<D47Settings, bool> read,
-        Func<D47Settings, bool, D47Settings> write) => new()
+        Func<D47Settings, bool, D47Settings> write,
+
+        // Every callout that fires because the game said something is on. Phase 32's fires because
+        // of a claim d47 made about the Commander, which is a different deal and defaults the other
+        // way — so the default is a parameter rather than a constant, and the one caller that
+        // passes false says why.
+        bool defaultOn = true) => new()
     {
         Key = key,
         Label = label,
         Help = help,
         Kind = SettingKind.Toggle,
-        DefaultDisplay = "on",
+        DefaultDisplay = defaultOn ? "on" : "off",
         DocsAnchor = anchor,
         Group = "What D47 speaks up about",
         GroupHelp =

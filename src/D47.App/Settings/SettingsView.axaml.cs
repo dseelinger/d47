@@ -88,6 +88,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? _memories;
 
     /// <summary>
+    /// What d47 has noticed the Commander keeps doing, and what pressing "read my journals" does
+    /// (list.md Phase 32). Null under the designer and in a test that is not about it, and the
+    /// button is then absent rather than dead.
+    /// </summary>
+    private (D47.Core.Habits.HabitBook Book, Action? Mine)? _habits;
+
+    /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
     /// capabilities that declare rows, and a phrase can come from one that does not.
@@ -120,7 +127,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
         Func<Task>? setUpKeys = null,
         LoreEditing? lore = null,
-        (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null)
+        (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null,
+        (D47.Core.Habits.HabitBook Book, Action? Mine)? habits = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -134,6 +142,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _switches = switches;
         _lore = lore;
         _memories = memories;
+        _habits = habits;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -1246,6 +1255,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == MemoryCapability.StoreKey && _memories is not null:
                 return BuildMemories(row);
 
+            // The seventh, and the only one whose button starts work rather than opening
+            // something. Mining is seconds long and runs off this thread, so the row follows the
+            // store rather than being refreshed by the press (list.md Phase 32).
+            case SettingKind.Info when row.Key == HabitsCapability.StoreKey && _habits is not null:
+                return BuildHabits(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1371,6 +1386,68 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// What d47 has noticed, plus the way into the list and the button that fills it.
+    /// <para>
+    /// <b>The refresh follows the store rather than the press.</b> Mining runs off the UI thread
+    /// and takes seconds, so refreshing when the button is released would put the previous run's
+    /// summary on the row and leave it there. The store raises <c>Changed</c> when the results
+    /// land, and that is what updates it — detached with the control, so the handler does not
+    /// outlive the panel it writes to.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildHabits(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenHabits",
+            Content = "Open what D47 has noticed",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_habits is not { } habits || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.HabitsWindow(habits.Book, habits.Mine).ShowDialog(owner);
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        if (row.Press is not null)
+        {
+            var press = new Button
+            {
+                Name = $"Press_{row.Key.Replace('.', '_')}",
+                Content = row.PressLabel,
+                FontSize = TypeScale.Body,
+                Padding = new Thickness(10, 4),
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+
+            press.Click += (_, _) => row.Press!();
+            stack.Children.Insert(1, press);
+        }
+
+        if (_habits is { } book)
+        {
+            void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(refresh);
+
+            stack.AttachedToVisualTree += (_, _) => book.Book.Store.Changed += OnChanged;
+            stack.DetachedFromVisualTree += (_, _) => book.Book.Store.Changed -= OnChanged;
+        }
 
         return (stack, refresh, false);
     }
