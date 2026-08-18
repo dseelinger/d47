@@ -107,6 +107,11 @@ public static class BuiltinCapabilities
         // tool answers that nothing is being tracked.
         Ships.ShipPlanService? ships = null,
 
+        // And their suit and weapon plans (list.md Phase 27), on exactly the same terms. Two
+        // parameters rather than one because they are two stores: the game separates ship and
+        // on-foot hard, and so does everything that reads them.
+        Loadout.OnFootPlanService? onFoot = null,
+
         // Whether the provider and model in use offer a server-side web search. Null is "assume
         // it can", which is what a caller with no provider to ask is entitled to say — the
         // designer and every test that is not about egress. The app supplies the real answer, or
@@ -122,9 +127,10 @@ public static class BuiltinCapabilities
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
-        OnFootCapability.Create(() => gameState.Active),
-        ChecklistCapability.Create(checklists, ships),
+        OnFootCapability.Create(() => gameState.Active, onFoot),
+        ChecklistCapability.Create(checklists, ships, onFoot),
         ShipsCapability.Create(ships),
+        GapCapability.Create(ships, onFoot, () => gameState.Active),
         ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

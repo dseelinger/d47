@@ -42,8 +42,17 @@ public static class ChecklistCapability
     /// — a tool that behaves differently depending on how it was wired is one nobody can reason
     /// about.
     /// </param>
+    /// <param name="onFoot">
+    /// The Commander's suit and weapon plans (list.md Phase 27). <c>plan_on_foot_build</c> writes
+    /// there rather than proposing straight to the checklist, for the reason
+    /// <c>plan_ship_build</c> does: the plan owns <em>what</em> and the checklist owns
+    /// <em>when</em>. Null under the designer and in tests that are not about plans, and the tool
+    /// then says it is tracking none rather than quietly doing the old thing.
+    /// </param>
     public static CapabilityDescriptor Create(
-        ChecklistService checklists, Ships.ShipPlanService? ships = null) => new()
+        ChecklistService checklists,
+        Ships.ShipPlanService? ships = null,
+        Loadout.OnFootPlanService? onFoot = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -269,12 +278,11 @@ public static class ChecklistCapability
             {
                 Name = "plan_on_foot_build",
                 Description =
-                    "Propose what a suit's or a hand weapon's plan should say: a grade to buy at Pioneer "
-                    + "Supplies, and modifications to have an engineer fit. The grade always comes first "
-                    + "in the list, because a grade 1 item has no modification slots and an engineer's "
-                    + "base has no Pioneer Supplies. Modifications are permanent and there are four at "
-                    + "most, so propose them one at a time rather than in a batch. Totals are exact — "
-                    + "nothing on foot is rolled.",
+                    "Set what a suit's or a hand weapon's plan says: a grade to buy at Pioneer Supplies, "
+                    + "and modifications to have an engineer fit. The grade always comes first, because "
+                    + "a grade 1 item has no modification slots and an engineer's base has no Pioneer "
+                    + "Supplies. Modifications are permanent and there are four at most, so set them one "
+                    + "at a time. It does not reach the checklist until the Commander promotes it.",
                 Parameters =
                 [
                     new ToolParameter
@@ -299,15 +307,15 @@ public static class ChecklistCapability
                         Type = ToolParameterType.String,
                         Description =
                             "One modification to fit — \"Night Vision\", \"Magazine Size\". Permanent, so "
-                            + "one per proposal.",
+                            + "set them one at a time.",
                     },
                     new ToolParameter
                     {
                         Name = "item",
                         Type = ToolParameterType.String,
                         Description =
-                            "A suit id or weapon id. Omit for the suit being worn, or the one weapon "
-                            + "being carried.",
+                            "The suit or weapon by name. Omit for the suit being worn, or the one "
+                            + "weapon carried.",
                     },
                     new ToolParameter
                     {
@@ -320,11 +328,11 @@ public static class ChecklistCapability
                         Name = "drop",
                         Type = ToolParameterType.Boolean,
                         Description =
-                            "Propose that the plan say nothing about this. What it already said is kept "
-                            + "as history rather than deleted.",
+                            "Say nothing about this any more. What it already put on the checklist is "
+                            + "kept.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(OnFoot(checklists, arguments))),
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(OnFoot(onFoot, arguments))),
             },
 
             new ToolDefinition
@@ -531,50 +539,95 @@ public static class ChecklistCapability
             : "I could not write that down.";
     }
 
-    private static string OnFoot(ChecklistService checklists, ToolArguments arguments)
+    /// <summary>
+    /// Writes a suit or weapon plan (list.md Phase 27, "The same page, on foot").
+    /// <para>
+    /// <b>To the plan, not to the checklist</b> — which is the change Phase 27 makes here, and the
+    /// same one Phase 26 made to <c>plan_ship_build</c>. Before it, one sentence about a
+    /// modification went straight to a proposal on the Commander's list; now it writes the plan
+    /// they are deciding, and reaching the list is a separate act they perform.
+    /// </para>
+    /// <para>
+    /// <b>A modification with no slot named takes the first free one</b>, because a Commander
+    /// saying "add night vision" has said everything that matters: the slots are interchangeable
+    /// and the number is d47's own. The count comes from the grade the plan is <em>aiming</em> at,
+    /// so planning a modification on a grade 1 suit the same plan is taking to grade 4 works —
+    /// refusing it because the suit has no slots yet would be refusing the plan for being a plan.
+    /// </para>
+    /// </summary>
+    private static string OnFoot(Loadout.OnFootPlanService? plans, ToolArguments arguments)
     {
         if (!arguments.TryGetString("equipment", out var equipment) || string.IsNullOrWhiteSpace(equipment))
         {
             return "No suit or weapon was named.";
         }
 
-        var weapon = arguments.TryGetBoolean("weapon", out var isWeapon) && isWeapon;
-        var group = weapon ? "weapon" : "suit";
-
-        var scope = checklists.ScopeFor(
-            group, arguments.TryGetString("item", out var item) ? item : null);
-
-        if (scope.Group is not (ChecklistGroup.Suit or ChecklistGroup.Weapon))
+        if (plans is null)
         {
-            return weapon
-                ? "I do not know which weapon that is — no on-foot loadout has arrived yet with exactly "
-                  + "one weapon in it, and none was named."
-                : "I do not know which suit that is — I have not seen you on foot yet, and none was named.";
+            return "I am not tracking suit or weapon plans.";
+        }
+
+        var weapon = arguments.TryGetBoolean("weapon", out var isWeapon) && isWeapon;
+
+        var named = arguments.TryGetString("item", out var item) && !string.IsNullOrWhiteSpace(item)
+            ? item.Trim()
+            : equipment.Trim();
+
+        if (Loadout.OnFootPlanService.Which(plans, named, weapon) is not { } build)
+        {
+            return $"I could not tell which suit or weapon \"{named}\" means, and it is not one I "
+                   + "know of either.";
         }
 
         var dropping = arguments.TryGetBoolean("drop", out var drop) && drop;
-
         var grade = arguments.TryGetInt32("grade", out var wanted) ? wanted : (int?)null;
         var modification = arguments.TryGetString("modification", out var fit) ? fit : null;
 
-        if (!dropping && grade is null && string.IsNullOrWhiteSpace(modification))
+        if (grade is null && string.IsNullOrWhiteSpace(modification))
         {
-            return "A plan for a suit or a weapon needs a grade or a modification.";
+            return dropping
+                ? "Which grade or modification should the plan stop saying?"
+                : "A plan for a suit or a weapon needs a grade or a modification.";
         }
 
-        IReadOnlyList<ChecklistItem> items = dropping
-            ? []
-            : OnFootPlan.Items(
-                scope,
-                new OnFootRequest(
-                    equipment, grade, modification is { Length: > 0 } ? [modification] : null));
+        var slot = grade is not null
+            ? Loadout.OnFootBuild.GradeSlot
+            : Slot(plans, build, modification!);
 
-        var said = checklists.ProposePlan(scope, ChecklistSource.OnFootPlan, items, [equipment]);
+        if (slot is null)
+        {
+            return $"{build.Describe()} has all its modification slots planned already, and there "
+                   + "are four at most.";
+        }
 
-        return dropping
-            ? said
-            : said + " Modifications are permanent: four slots at most, and a wrong one is "
-              + "recoverable only by buying and re-upgrading a fresh item.";
+        if (dropping)
+        {
+            return plans.Clear(build.Id, slot)
+                ? $"{build.Describe()}: nothing is planned for {slot} now. What it already put on "
+                  + "your checklist is kept."
+                : $"{build.Describe()} had nothing planned for {slot}.";
+        }
+
+        var plan = new Loadout.KitPlan(slot, grade, modification);
+
+        return plans.Plan(build.Id, plan)
+            ? $"{build.Describe()}: {slot} is planned for {plan.Describe()}. It is not on your "
+              + "checklist until you say so. Modifications are permanent: four slots at most, and a "
+              + "wrong one is recoverable only by buying and re-upgrading a fresh item."
+            : "I could not write that down.";
+    }
+
+    /// <summary>
+    /// The slot a modification belongs in: the one already holding it, or the first free one.
+    /// Null when every slot the planned grade has is spoken for.
+    /// </summary>
+    private static string? Slot(
+        Loadout.OnFootPlanService plans, Loadout.OnFootBuild build, string modification)
+    {
+        var already = build.Slots.FirstOrDefault(slot =>
+            ChecklistKeys.Compact(slot.Modification) == ChecklistKeys.Compact(modification));
+
+        return already?.Slot ?? plans.FirstFreeSlot(build, null);
     }
 
     private static string Colonise(ChecklistService checklists, ToolArguments arguments)

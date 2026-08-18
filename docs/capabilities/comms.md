@@ -1,7 +1,7 @@
 ---
 title: Comms
 group: Acting on the game
-nav_order: 133
+nav_order: 134
 ---
 
 Types a message into Elite's chat for you.
