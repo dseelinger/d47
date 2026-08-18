@@ -222,6 +222,33 @@ So the phase is next, and **the next thing in it is a measurement rather than a 
 captures at three head angles, in a headset. The plan of record, including why nothing ships before
 that number exists, is [phase-22-reading-the-screen.md](phase-22-reading-the-screen.md).
 
+## Phase 29 — Bring your own model — **appended 2026-08-18, and it does not jump the queue**
+
+An OpenAI provider, plus any endpoint speaking its protocol. Added under the appended-only rule, and
+the sequencing question was asked and answered explicitly: **it does not run before Phase 22.**
+
+That is worth recording because the argument for jumping it forward is a good one and was declined.
+It is unblocked, self-contained, touches nothing Phase 22 touches, and needs no spike, no source and
+no hardware — where Phase 22 opens with a headset measurement that may close it outright. On the
+four rankings above it scores well on three. It still waits, because *the phase numbers are the
+order* is the rule this document exists to keep, and the first line of it is that nothing runs ahead
+of them.
+
+**What was decided is only that it does not go first.** The numbers then place it after 27 and 28 as
+well, which follows from the rule rather than from a judgement about the three of them — so if it
+should overtake those, that is a change to this document and an argument to be made here. It is not
+a change to the numbers.
+
+**It is ranked on a guess, and the guess is named.** The value of the compatible half depends on how
+many Commanders want to run a local model, which is the one input this document cannot measure and
+the same blind spot Phases 18, 20 and 21 were ranked with. The OpenAI half does not depend on it:
+that is a Commander who already has a key for the wrong vendor, and today they cannot use d47 at
+all.
+
+The plan of record, including the four calls settled on the day it was written and the four seams
+that are Anthropic-shaped and say nothing about it, is
+[phase-29-bring-your-own-model.md](phase-29-bring-your-own-model.md).
+
 ---
 
 ## What would change this order
