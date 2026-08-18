@@ -1,7 +1,10 @@
 # Phase 29 — Bring your own model
 
 The plan of record for list.md Phase 29. Written 2026-08-18, **before any code**, and before the
-phase is due — Phase 22 and the two phases numbered after it come first.
+phase is due — Phases 27 and 28 come first. (It was written the same day Phase 22 was cut, and the
+sequencing note in [build-order.md](build-order.md) still reads against it, because what was decided
+was that this phase does not jump the queue rather than which phase happened to be at the front of
+it.)
 
 `list.md` reads top to bottom as a description of the product. This is the order the work happens
 in, and the reasoning the order cannot carry on its own.

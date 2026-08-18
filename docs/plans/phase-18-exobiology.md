@@ -186,8 +186,9 @@ The original item, with three things that were not in it:
 panel is open and `SAASignalsFound` says what the body holds; nothing says which entry is
 highlighted, and in VR the panel is in world space, so there is no fixed place on the screen to
 look. The reachable half is naming the genera and asking which is being hunted — one question,
-remembered, working identically in the headset. The screen-reading branch is Phase 22 and is
-deliberately not a dependency of anything here.
+remembered, working identically in the headset. The screen-reading branch was Phase 22, **cut on
+2026-08-18**, and it was deliberately never a dependency of anything here — so this item is
+unaffected by the cut, which is what that sentence was written to guarantee.
 
 ---
 
@@ -218,7 +219,8 @@ The spike gates everything except the position plumbing, which can start immedia
 longest pole in *Exobiology sampling*. *Read a system name* needs only question 3 and is otherwise
 free-standing — it is the shortest path to something useful, and the only item that works with no
 network at all. *Find the exobiology* needs question 1 for its route half and nothing for its
-arithmetic half, so it can ship in two pieces. Nothing here needs Phase 22.
+arithmetic half, so it can ship in two pieces. Nothing here needed Phase 22, which was cut on
+2026-08-18.
 
 **Release:** the three items left here are part of Phase 18 rather than all of it — colonisation and
 the prospector callouts are still open, so finishing them is a patch and the minor waits for the

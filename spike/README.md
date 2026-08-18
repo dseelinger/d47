@@ -18,7 +18,6 @@ be deleted once the answer is written down.
 | `MiningProbe` | What does a prospector limpet report, and does Elite's own `Content` grade track what a miner cares about? | [docs/spikes/mining-callouts.md](../docs/spikes/mining-callouts.md) |
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
 | `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
-| `MirrorProbe` | Is there anything in Elite's desktop mirror to read — can a world-space panel be located in it at all? | [docs/spikes/mirror-panel-locatability.md](../docs/spikes/mirror-panel-locatability.md) — **method and instrument only; the measurement is untaken** |
 | `RadioAudition` | Does `RadioVoice` actually sound like a radio? | 0.22.0 shipped from it — **instrument, kept: the question recurs every time the filter is touched** |
 
 `RadioAudition` says a sentence through Edge Neural, optionally over the comms link, writes it as a
@@ -36,10 +35,13 @@ dotnet run --project spike/RadioAudition -- "Scanning." out.wav --radio --play
 `OverlaySpike/vendor/openvr_api.cs` is Valve's official binding, BSD-3-Clause, vendored
 from `ValveSoftware/openvr`.
 
-`MirrorProbe` is the one directory here that is not throwaway *yet*: it is the instrument for a
-measurement that has not been taken, so it survives until a headset has been in front of it. It
-references `OpenCvSharp4` and `OpenCvSharp4.runtime.win.slim` — **never `OpenCvSharp4.runtime.win`**,
-which declares Apache-2.0 and packs an LGPL-2.1 FFmpeg binary. `spike/` is outside `d47.slnx` and so
-outside `PackageLicenceGateTests`, which is why the reason is written beside the reference in the
-csproj rather than left to a gate that does not run here. It writes captures to a gitignored
-`captures/`, because they are pictures of somebody's game session.
+`MirrorProbe` was here until 2026-08-18 and was deleted with Phase 22, which it was the instrument
+for. The measurement it was built to take — can a world-space panel be located in Elite's desktop
+mirror — was never taken, so it is not a probe that answered its question and was retired; it is one
+whose question was withdrawn. It is recoverable from git if screen reading ever comes back.
+
+**One thing it knew that outlives it**, since `spike/` is outside `d47.slnx` and therefore outside
+`PackageLicenceGateTests`: a computer-vision spike must reference `OpenCvSharp4.runtime.win.slim` and
+**never `OpenCvSharp4.runtime.win`**, which declares Apache-2.0 and packs an LGPL-2.1 FFmpeg binary
+twelve lines below the declaration. No gate runs here, so that is a thing to know rather than a thing
+that will be caught.
