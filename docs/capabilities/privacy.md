@@ -39,8 +39,16 @@ can — which is why the answer is worth more than the page.
 **Language model** — the only one that receives anything from your gameplay. What goes: your
 question, the conversation so far, the guardrails, the persona, your About Me text, and the game
 state assembled from your journal. What does not: journal files, your key, or anything about your
-machine. Inactive when the provider is `none`, and also when a provider is chosen but has no key
-stored — selected-but-inert sends nothing.
+machine. Inactive when the provider is `none`, and also when a provider that *needs* a key is
+chosen and has none stored — selected-but-inert sends nothing.
+
+**And inactive when the endpoint is on this machine.** If you have pointed the OpenAI-compatible
+provider at a loopback address, this row says that nothing leaves the machine at all and names the
+address so you can check it. That is the first time the honest answer to *what is leaving* has
+been *nothing* — and it is a property of that address in these settings right now, not a promise
+about Directive 47. The judgement is deliberately literal: the address is read, never resolved, so
+a hostname that happens to point at your machine today is treated as remote and disclosed in full.
+Being wrong in that direction is the only safe way to be wrong here.
 
 **Web search** — the same host as the language model, doing something different. When the
 [web search row](conversation.md#let-the-model-search-the-web) is on and a question needs current

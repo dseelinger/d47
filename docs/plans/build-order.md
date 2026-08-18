@@ -224,6 +224,16 @@ the same blind spot Phases 18, 20 and 21 were ranked with. The OpenAI half does 
 that is a Commander who already has a key for the wrong vendor, and today they cannot use d47 at
 all.
 
+**Shipped 2026-08-18, and the plan's own execution order held.** The four Anthropic-shaped seams
+went in before either provider existed, which is what made the compatible half testable against a
+local model with no account and no bill — and the compatible half went first despite being second
+in `list.md`, so the Responses decoder inherited a translation layer that had already been driven.
+Two of the four seams were described wrongly in the plan and both were caught by the one instruction
+that made this worth planning: **read the published rates at implementation time rather than writing
+them from memory.** OpenAI bills cache writes now, and the cold-prefix detector can fire there — see
+the amendment in [architecture.md](../../architecture.md) §6, and the ticked items in
+[list.md](../../list.md).
+
 The plan of record, including the four calls settled on the day it was written and the four seams
 that are Anthropic-shaped and say nothing about it, is
 [phase-29-bring-your-own-model.md](phase-29-bring-your-own-model.md).

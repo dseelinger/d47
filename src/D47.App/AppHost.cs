@@ -27,6 +27,7 @@ using D47.Core.Lore;
 using D47.Core.Persona;
 using D47.Core.Ticking;
 using D47.Llm;
+using D47.Llm.OpenAi;
 using D47.Stt;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
@@ -968,7 +969,13 @@ public sealed class AppHost : IDisposable
                 // The endpoint half of web search, for the egress row. Asked each time because
                 // the Commander can retarget `llm.endpoint` without restarting, and the row is
                 // computed at render time so it has to be able to change underneath.
-                () => self?.SearchReachesTheWeb ?? true));
+                () => self?.SearchReachesTheWeb ?? true,
+
+                // What the endpoint said it serves (list.md Phase 29). Empty until the handshake
+                // answers, which is the state the model picker was designed for from Phase 4 —
+                // the row accepts free text, so an empty list has always been a supported answer
+                // rather than a broken one.
+                () => self?.EndpointModelIds ?? []));
 
         built = capabilities;
 
@@ -1466,31 +1473,31 @@ public sealed class AppHost : IDisposable
         {
             reason = "No language model is selected — that is a setting, not a fault.";
         }
-        else if (ResolveKey(selected) is { } resolved)
+        else
         {
-            provider = selected.Id switch
-            {
-                LlmProviderCatalog.AnthropicId => new AnthropicLlmProvider(resolved.Key, current.Llm.Endpoint),
-                _ => null,
-            };
+            // The key may legitimately be absent. A provider whose key is optional is a complete
+            // configuration with an empty box — a model on this machine has no account to get a
+            // key from — so the resolution is attempted and its absence is only fatal if the
+            // factory says so (list.md Phase 29).
+            var resolved = ResolveKey(selected);
+
+            provider = LlmProviderFactory.Create(selected, resolved?.Key, current.Llm.Endpoint);
 
             if (provider is null)
             {
-                reason = $"D47 has no client for {selected.Name} yet.";
+                reason = LlmProviderFactory.ReasonForNoClient(selected);
             }
             else
             {
                 _logger.LogInformation(
                     "{Provider} configured from {Source}, endpoint {Endpoint}",
                     selected.Name,
-                    resolved.Source,
+                    resolved?.Source ?? "no key, which this provider does not require",
                     current.Llm.Endpoint ?? selected.DefaultEndpoint ?? "(provider default)");
             }
         }
-        else
-        {
-            reason = $"No {selected.Name} API key is stored. Add one in Settings.";
-        }
+
+        RefreshEndpointModels(provider, current.Llm.Endpoint);
 
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
@@ -1511,6 +1518,83 @@ public sealed class AppHost : IDisposable
     /// again on any change, so the two paths cannot drift (list.md Phase 4, "Apply every
     /// setting without a restart").
     /// </summary>
+    /// <summary>
+    /// What the language-model endpoint said it serves (list.md Phase 29). Empty until a
+    /// handshake has answered, and empty again for a provider with no endpoint to ask.
+    /// </summary>
+    internal IReadOnlyList<string> EndpointModelIds => _endpointModels;
+
+    /// <summary>
+    /// Asks the endpoint what it serves, if it is the kind of thing that can be asked and has not
+    /// been asked already (list.md Phase 29).
+    /// <para>
+    /// <b>Fire and forget, and only on a change of address.</b> Settings are re-applied on every
+    /// edit to any row — a persona switch, a volume change — and a handshake on each of those
+    /// would put a network call behind moving a slider. The address is what the answer depends
+    /// on, so the address is what triggers it.
+    /// </para>
+    /// <para>
+    /// The old list is cleared first rather than left standing. A model id belongs to its
+    /// endpoint's namespace, and showing one endpoint's models under another's address is the
+    /// stale selection the picker's contract exists to prevent.
+    /// </para>
+    /// </summary>
+    private void RefreshEndpointModels(ILlmProvider? provider, string? endpoint)
+    {
+        var asking = provider switch
+        {
+            ChatCompletionsLlmProvider chat => chat.ListModelsAsync,
+            ResponsesLlmProvider responses => responses.ListModelsAsync,
+            _ => (Func<CancellationToken, Task<EndpointModels>>?)null,
+        };
+
+        var address = $"{provider?.Id}|{endpoint}";
+
+        if (asking is null)
+        {
+            _endpointModels = [];
+            _endpointModelsFor = null;
+            return;
+        }
+
+        if (string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _endpointModels = [];
+        _endpointModelsFor = address;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var models = await asking(CancellationToken.None).ConfigureAwait(false);
+
+                // Only if the address has not moved again while this was in flight. A slow
+                // handshake landing after the Commander retargeted the row would fill the picker
+                // with the previous endpoint's models, which is the exact staleness this avoids.
+                if (string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
+                {
+                    _endpointModels = models.Ids;
+                }
+
+                _logger.LogInformation(
+                    "The endpoint answered {Reach} with {Count} models{Detail}",
+                    models.Reach,
+                    models.Ids.Count,
+                    models.Detail is { Length: > 0 } said ? $": {said}" : string.Empty);
+            }
+            catch (Exception ex)
+            {
+                // No list is a capability being partly off rather than a failure: the model row
+                // still accepts a name typed in, which is what it did before there was anybody
+                // to ask.
+                _logger.LogWarning(ex, "Could not ask the endpoint which models it serves");
+            }
+        });
+    }
+
     /// <summary>The ids the voice picker offers.</summary>
     internal IReadOnlyList<string> VoiceIds() => [.. _voices.Voices.Select(voice => voice.Id)];
 
@@ -2759,6 +2843,12 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private VoiceCatalogue _voices = VoiceCatalogue.Silent;
 
+    /// <summary>What the language-model endpoint last said it serves (list.md Phase 29).</summary>
+    private volatile IReadOnlyList<string> _endpointModels = [];
+
+    /// <summary>Which provider and address that list came from, so it is asked once each.</summary>
+    private volatile string? _endpointModelsFor;
+
     /// <summary>
     /// What the voices have cost this session (list.md Phase 19). Lives for the process, like
     /// <see cref="Spend"/>, and for the same reason: "what has this cost" is a question about a
@@ -3415,25 +3505,59 @@ public sealed class AppHost : IDisposable
     {
         var selected = LlmProviderCatalog.Selected(providerId);
 
-        if (ResolveKey(selected) is not { } resolved)
+        var resolved = ResolveKey(selected);
+
+        if (selected.NeedsKey && resolved is null)
         {
             return SecretCheck.Rejected($"No {selected.Name} key is stored.");
         }
 
-        ILlmProvider? provider = selected.Id switch
-        {
-            LlmProviderCatalog.AnthropicId =>
-                new AnthropicLlmProvider(resolved.Key, Settings.Current.Llm.Endpoint),
-            _ => null,
-        };
+        var provider = LlmProviderFactory.Create(selected, resolved?.Key, Settings.Current.Llm.Endpoint);
 
         if (provider is null)
         {
-            return SecretCheck.Unreachable($"D47 has no client for {selected.Name} yet.");
+            return SecretCheck.Unreachable(LlmProviderFactory.ReasonForNoClient(selected));
         }
 
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(KeyCheckBudget);
+
+        // An OpenAI-shaped endpoint is checked by asking it what it serves rather than by
+        // spending a turn on it (list.md Phase 29), and that is the same reasoning the speech key
+        // check follows: it proves the exact call d47 makes anyway rather than a proxy for it.
+        //
+        // Three things make it the better probe here. It works with **no key**, which is the
+        // configuration this phase exists to reach and about which "is this key good" is not a
+        // question. It works with **no model selected**, which a local server that serves
+        // whatever was loaded into it may well be. And it does not meet the trap the one-token
+        // turn below has: a reasoning model spends that budget entirely on reasoning, or rejects
+        // it outright, and either would be reported as a bad key.
+        if (provider is ChatCompletionsLlmProvider or ResponsesLlmProvider)
+        {
+            var asked = provider switch
+            {
+                ChatCompletionsLlmProvider chat => await chat.ListModelsAsync(budget.Token).ConfigureAwait(false),
+                ResponsesLlmProvider responses => await responses.ListModelsAsync(budget.Token).ConfigureAwait(false),
+                _ => EndpointModels.Unreachable(null),
+            };
+
+            return asked.Reach switch
+            {
+                // Reached and refused. A stored key that is wrong, or an endpoint that wants one
+                // and has been given nothing — either way the Commander has something to change.
+                EndpointReach.Refused => SecretCheck.Rejected(asked.Detail ?? $"{selected.Name} refused the request."),
+
+                EndpointReach.Answered when asked.Ids.Count > 0 => SecretCheck.Works(
+                    $"{selected.Name} answered — {asked.Ids.Count} models."),
+
+                // Answered with an empty catalogue, which is a gateway's prerogative and not a
+                // fault. Reported as working, because reaching it is what was being asked.
+                EndpointReach.Answered => SecretCheck.Works(
+                    $"{selected.Name} answered, but lists no models. Type the model name yourself."),
+
+                _ => SecretCheck.Unreachable(asked.Detail ?? $"{selected.Name} could not be reached."),
+            };
+        }
 
         var request = new LlmRequest
         {
@@ -3443,7 +3567,13 @@ public sealed class AppHost : IDisposable
                 History = [new ConversationMessage(ConversationRole.User, "Reply with the single word OK.")],
             },
             Effort = ThinkingEffort.Low,
-            MaxOutputTokens = 1,
+
+            // Enough room to say one word, rather than exactly one token. A model that thinks
+            // before answering spends this budget on the thinking and stops, which arrives here
+            // as a truncation and is indistinguishable from the key having worked — but a
+            // gateway that validates the field would reject a budget of 1 outright, and that
+            // arrives as the key having failed. This is still a fraction of a cent.
+            MaxOutputTokens = 64,
         };
 
         try
