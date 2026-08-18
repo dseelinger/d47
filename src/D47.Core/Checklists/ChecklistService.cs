@@ -616,8 +616,8 @@ public sealed class ChecklistService(
     /// proposes and this commits, which is what keeps a hostile in-game message to a proposal that
     /// gets declined.
     /// </summary>
-    public ChecklistChange AddNote(ChecklistScope scope, string text) =>
-        list.Apply(Fid, Name, document => document.AddNote(scope, text));
+    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null) =>
+        list.Apply(Fid, Name, document => document.AddNote(scope, text, goal));
 
     public ChecklistChange Complete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Complete(id));
@@ -739,7 +739,7 @@ public sealed class ChecklistService(
 
         foreach (var item in proposal.Items)
         {
-            var change = AddNote(proposal.Scope, item.Text);
+            var change = AddNote(proposal.Scope, item.Text, item.Goal);
             moved |= change.Changed;
             said.Add(change.Report);
         }
@@ -753,7 +753,11 @@ public sealed class ChecklistService(
     /// Records a proposal to add lines. Model-callable, and it writes the proposals file rather
     /// than the Commander's list.
     /// </summary>
-    public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines)
+    /// <param name="goal">
+    /// The arc that asked for these lines, where one did (list.md Phase 34). Carried onto every
+    /// item so that finishing one visibly moves something bigger than itself.
+    /// </param>
+    public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines, string? goal = null)
     {
         var wanted = lines
             .Select(line => line.Trim())
@@ -773,6 +777,7 @@ public sealed class ChecklistService(
             Kind = ChecklistItemKind.Authored,
             Text = line,
             Provenance = ChecklistProvenance.Quoted,
+            Goal = goal,
         }).ToList();
 
         var summary = wanted.Count == 1

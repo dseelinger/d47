@@ -17,6 +17,66 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.34.0 — 2026-08-18 — The long arc
+
+list.md Phase 34. Your checklist holds what you are doing this week. Nothing held what you are doing
+this year — Elite in each career, every engineer unlocked, the ship collection, the exploration
+milestones that take months. Now something does.
+
+A **goal** is a named arc with a definition of done, a progress figure nobody typed, and an age. Nine
+of them ship, on the Checklist tab, behind a **Goals** button that opens the band.
+
+### Progress is worked out, never typed
+
+Your rank, your unlocked engineers and your owned hulls come off your journal, so an arc cannot be
+ticked by hand and does not offer to be. A goal you invented is yours to call done, like a checklist
+line you wrote yourself.
+
+Where nothing can currently say, d47 says so. **An arc reports as of when it last could rather than
+resetting to nothing** — no bar is drawn at zero for the absence of evidence, which would read as no
+progress rather than as no answer.
+
+**Ranks are counted, not named.** Elite writes a number and never a word, so d47 says *rank 5 of 8,
+12% into it* and names only Elite. Shipping the rank ladders would mean hand-writing a table of
+Frontier's own words, which is not what this repository does with game data.
+
+### There is no CQC arc, and any arc can be set aside
+
+Almost nobody plays CQC, and an arc permanently at nothing is a line of the page spent telling you
+about a thing you are not doing. Because that is a judgement about what somebody cares about, the
+general form ships as well: set any arc aside and it leaves the page until you ask for it back. That
+survives a re-read of your journals, the way a dismissed habit does.
+
+### The checklist points at the arc
+
+Ask what to do about a goal and d47 answers with the next concrete thing, and offers it as a
+checklist line. Accepting stays your act — it goes to the suggestions page like everything else — and
+**a line that came from an arc says so**, so finishing it visibly moves something bigger than itself.
+
+The engineers arc hands the question to the unlock solver, which already answers it properly. The
+career arcs propose nothing and say why: rank is earned by doing the career, so d47 names the tool it
+already has for it rather than inventing a plan.
+
+### Ages come from your journals
+
+**Goals → Read my journals** walks every journal on this disk and gives each arc its start date and
+the milestone arcs their figures. 914 journals in 3.5 seconds. Nothing leaves the machine and no
+journal is sent to a model — what comes out is counts and dates.
+
+That walk found something worth naming: **a rank that goes down is a save started again.** One
+Frontier id in the test corpus reports Trade 7 in July, Trade 2 in January and Trade 0 in June — an
+id is an account, and a new Commander can be begun inside one. So a figure that falls restarts the
+arc rather than keeping the old character's start date.
+
+### For the model
+
+`get_goals` is advertised, so d47 can be asked how a campaign is going mid-flight. Everything that
+writes — setting an arc aside, turning one into a checklist line — stays unreachable from the model.
+Six over-long tool descriptions were trimmed to pay for the advertised one; the largest tool profile
+ends smaller than it started.
+
+---
+
 ## 0.33.0 — 2026-08-18 — The Commander's log
 
 list.md Phase 33. Every previous release either kept something on this machine or said something out

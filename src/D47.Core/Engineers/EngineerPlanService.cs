@@ -88,7 +88,12 @@ public sealed class EngineerPlanService(
     /// hide it the moment the Commander sold that hull.
     /// </para>
     /// </summary>
-    public string Promote(string? engineer)
+    /// <param name="goal">
+    /// The arc asking, where one is (list.md Phase 34). The engineers arc delegates its "what do I
+    /// do about this today" here rather than growing a worse solver of its own, and the chain is
+    /// stamped with the arc so the lines say where they came from.
+    /// </param>
+    public string Promote(string? engineer, string? goal = null)
     {
         var report = Report();
 
@@ -109,6 +114,11 @@ public sealed class EngineerPlanService(
         }
 
         var items = UnlockPlanner.Items(candidate.Chain, ChecklistScope.Universal);
+
+        if (goal is { Length: > 0 })
+        {
+            items = [.. items.Select(item => item with { Goal = goal })];
+        }
 
         var said = checklists.ProposePlan(
             ChecklistScope.Universal,

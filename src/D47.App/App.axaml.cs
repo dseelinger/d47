@@ -71,7 +71,12 @@ public partial class App(AppHost? host) : Application
 
                 // And who to go and unlock next (list.md Phase 28), which is the page whose
                 // whole design is for being read where there is no second monitor.
-                host.Unlocks);
+                host.Unlocks,
+
+                // And the long arcs, which ride the checklist tab and therefore reach the headset
+                // on exactly the same terms it does (list.md Phase 34).
+                host.Goals?.Book,
+                host.Goals?.Backfill);
 
             // And the headset's copy of the panel can be the one asking for a spoken value
             // (list.md Phase 25). Registered beside the window's rather than instead of it: two

@@ -75,8 +75,8 @@ public static class SpecificationCapability
                     "What a module weighs, draws and costs, for a frame shift drive the numbers a jump "
                     + "range is computed from, and for a bulkhead what it adds to the hull and how it "
                     + "resists each damage type. A module name without a size returns the sizes that "
-                    + "exist, because an 8A drive and a 2E drive are not the same answer. Armour is "
-                    + "per-hull, so name it with its ship: \"Python Reactive Surface Composite\".",
+                    + "exist. Armour is per-hull, so name it with its ship: \"Python Reactive Surface "
+                    + "Composite\".",
                 Parameters =
                 [
                     new ToolParameter

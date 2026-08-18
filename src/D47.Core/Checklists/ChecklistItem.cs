@@ -375,6 +375,18 @@ public sealed record ChecklistItem
     /// </summary>
     public bool Noted { get; init; }
 
+    /// <summary>
+    /// The arc this line came from, where one proposed it (list.md Phase 34, "The checklist points
+    /// at the arc").
+    /// <para>
+    /// <b>Null on every line nobody's long goal produced</b>, which is most of them. It is carried
+    /// so that finishing the line visibly moves something bigger than itself — the phase says in as
+    /// many words that this is its entire emotional point, and a line that arrived from a
+    /// months-long goal and does not say so has thrown that away for the sake of one string.
+    /// </para>
+    /// </summary>
+    public string? Goal { get; init; }
+
     public ChecklistItemId Id => new(Scope, Key);
 
     public bool IsComplete => State == ChecklistState.Done;

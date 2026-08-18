@@ -89,7 +89,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Ships.ShipPlanService? ships = null,
         Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
-        D47.Core.Engineers.EngineerPlanService? unlocks = null)
+        D47.Core.Engineers.EngineerPlanService? unlocks = null,
+
+        // The Commander's long arcs, and the button that ages them (list.md Phase 34). They ride
+        // the checklist tab, so they reach the headset exactly when the checklist does.
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfillGoals = null)
     {
         _dumpTo = dumpTo;
 
@@ -114,7 +119,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // Unlike settings, this one is the point of the headset copy having it: a Window
             // cannot appear here at all, so before Phase 25 a Commander wearing a headset could
             // not see their checklist.
-            _view.EnableChecklist(checklists);
+            _view.EnableChecklist(checklists, goals, backfillGoals);
         }
 
         if (ships is not null && checklists is not null && gameState is not null)

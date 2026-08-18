@@ -475,7 +475,15 @@ public partial class PanelView : UserControl
     /// interruption.
     /// </para>
     /// </summary>
-    public void EnableChecklist(D47.Core.Checklists.ChecklistService checklists)
+    /// <param name="goals">
+    /// The Commander's long arcs (list.md Phase 34). Null under the designer and in tests that are
+    /// not about them, where the page draws no band at all rather than an empty one.
+    /// </param>
+    /// <param name="backfill">What "read my journals" does. Null where there is nowhere to run it.</param>
+    public void EnableChecklist(
+        D47.Core.Checklists.ChecklistService checklists,
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfill = null)
     {
         ChecklistPage? page = null;
 
@@ -483,7 +491,7 @@ public partial class PanelView : UserControl
             PanelTab.Checklist,
             crumb => crumb.Key == ChecklistPage.SuggestionsKey
                 ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
-                : page = new ChecklistPage(checklists, Nav, Prompts),
+                : page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
             new NavCrumb("checklist", "Checklist"));
     }
 
@@ -565,7 +573,7 @@ public partial class PanelView : UserControl
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null)
     {
-        var source = new EngineerSource(unlocks.Report, unlocks.Promote);
+        var source = new EngineerSource(unlocks.Report, engineer => unlocks.Promote(engineer));
 
         // A plan moving changes who is worth flying to, and neither store knows about this page.
         ships.Store.Changed += source.Invalidate;

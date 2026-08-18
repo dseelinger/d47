@@ -126,7 +126,7 @@ public partial class MainWindow : Window
             // headline of the item that moved it out of a Window. A Window cannot appear in the
             // headset, so a Commander in VR could not see their checklist at all (list.md
             // Phase 25).
-            Panel.EnableChecklist(host.Checklists);
+            Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
             // between them (list.md Phases 26 and 27). Both surfaces, like the checklist.

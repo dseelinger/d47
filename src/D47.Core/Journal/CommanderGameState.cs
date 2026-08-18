@@ -32,6 +32,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>How far along they are with each engineer.</summary>
     public EngineerProgressState Engineers { get; private set; } = EngineerProgressState.Empty;
 
+    /// <summary>Where they stand in every career ladder (list.md Phase 34).</summary>
+    public RankState Ranks { get; private set; } = RankState.Empty;
+
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
@@ -87,6 +90,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Modules = Modules.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);
+        Ranks = Ranks.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
