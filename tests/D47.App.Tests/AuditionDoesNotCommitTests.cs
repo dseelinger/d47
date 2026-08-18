@@ -166,11 +166,13 @@ public class AuditionDoesNotCommitTests
     public async Task PlayingASecondVoiceCancelsTheFirst()
     {
         var cancelled = new TaskCompletionSource();
+        var entered = new TaskCompletionSource();
         var started = 0;
 
         var picker = Shown(Voices(async (_, token) =>
         {
             Interlocked.Increment(ref started);
+            entered.TrySetResult();
 
             using var registration = token.Register(() => cancelled.TrySetResult());
 
@@ -191,6 +193,14 @@ public class AuditionDoesNotCommitTests
         Assert.True(
             Rows(picker).First(item => item.Value == "en-GB-RyanNeural").Playing,
             "the first audition never started, so the second press had nothing to cancel");
+
+        // And the *delegate* has to have entered, which is a later moment than the row saying
+        // Playing. That gap is the remaining race, and it reappeared on a runner made busier by a
+        // seventh test project: cancel the token before the delegate runs and it never reaches
+        // token.Register, so nothing ever completes `cancelled` and the wait below burns its full
+        // five seconds. Waiting on entry rather than on a flag the UI sets closes it — the thing
+        // being cancelled must exist before there is a cancellation to observe.
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Glyph(picker, "en-GB-SoniaNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
