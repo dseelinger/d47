@@ -916,6 +916,14 @@ public partial class PanelView : UserControl
         _hitOffset = _matches[_hit].Start;
 
         DrawTranscript();
+
+        // The inlines were rebuilt a line ago, so both things the scroll depends on are stale:
+        // the text layout the hit's position is measured against, and the extent the offset is
+        // clamped to. Without a pass here the offset is clamped against a scroller that has not
+        // measured the new content, which clamps it to zero — a step that moves the count and
+        // leaves the page exactly where it was (remediation.md 10, item 6).
+        TranscriptScroller.UpdateLayout();
+
         ScrollToHit();
     }
 

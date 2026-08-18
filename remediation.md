@@ -16,27 +16,34 @@ states for its own entries.
 
 ## The panel's chrome
 
-- [ ] **1. The tab strip overlaps itself.** Transcript through Settings, plus the Conversation /
+- [x] **1. The tab strip overlaps itself.** Transcript through Settings, plus the Conversation /
   Technical / Log file mode control, plus the search box and Copy all compete for one row, and
   below a certain window width they collide. Three changes, settled with the Commander:
   the **mode control becomes a dropdown inside the panel** rather than a segmented pill beside
   the tabs; **search and Copy move into the pane** as well, leaving the strip for page selection
   alone; and the tabs themselves **truncate and gain ‹ › arrows** so every tab stays reachable at
   any width. Not yet seen in a headset, where the strip is narrower still.
-- [ ] **2. Copy is scoped to Transcript, and moves into the pane.** It has no visibility rule at
+- [x] **2. Copy is scoped to Transcript, and moves into the pane.** It has no visibility rule at
   all today, so it sits there on Checklist, Loadout, Engineers and Settings, where it copies the
   transcript the Commander is not looking at.
-- [ ] **3. Copy is not vertically centred, and says the wrong thing.** "Copy All", because "Copy"
+- [x] **3. Copy is not vertically centred, and says the wrong thing.** "Copy All", because "Copy"
   beside a page of selectable text reads as copying the selection.
-- [ ] **4. The help glyph is not centred in its hover highlight.** The drawn `?` sits off-centre
+- [x] **4. The help glyph is not centred in its hover highlight.** The drawn `?` sits off-centre
   in the button's highlighted box.
 - [ ] **5. Opening the log file looks like nothing happening.** It reads a file off disk and takes
   long enough to doubt. There is a busy glyph on the mode already; it is not being seen.
 
 ## Reading the page
 
-- [ ] **6. Next / previous do not take you to the match.** Stepping should scroll the occurrence
+- [x] **6. Next / previous do not take you to the match.** Stepping should scroll the occurrence
   into view and draw the current one in a different theme colour from the rest.
+
+  **Half of it already worked and was already tested.** Every hit is drawn muted and the current
+  one accented, and `SearchTheTabTests` has asserted that since Phase 12. What did not work was the
+  scroll, and the reason is one line: the offset was set immediately after the inlines were
+  rebuilt, so the text layout the hit is measured against and the extent the offset is clamped to
+  were both from before the change — and clamping against a scroller that has not measured the new
+  content clamps to zero. A layout pass in between is the fix.
 - [ ] **7. The log file has no startup or shutdown events.** On start: version, build, whether VR
   came up, which providers are configured, the data folder. On stop: why, and whether it was
   clean. *Built; not yet ticked — `AppHost` is not constructible in a test, so this is confirmed by
