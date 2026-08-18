@@ -46,12 +46,29 @@ table says Selene Jean, and a journal trace decides it in the wiki's favour — 
 `docs/spikes/journal-corpus-engineering.md` §4. The two sources agree on the other 37, so the
 one disagreement is stated in the code rather than quietly patched.
 
+Where each engineer is, as a number
+-----------------------------------
+Phase 28 ranks engineers by how far away they are, and a ranking that reaches the network is a
+ranking that fails in flight and fails offline. So the coordinates ship in the table and the
+distance becomes arithmetic — `IGalaxyService.DistanceAsync` computes the same figure correctly
+and is an async service call, which is the wrong shape for something evaluated for every engineer
+every time a plan moves.
+
+**Two sources already in this script, and they have to agree.** spansh's system record carries
+`x`, `y` and `z` beside the name already being read out of it, and EDDiscovery's `EngineeringInfo`
+carries three coordinates this script used to parse and throw away. Elite's coordinates sit on a
+1/32 ly grid and both sources state them exactly, so a difference wider than one grid step is not
+rounding — it is two sources describing different places, and the run stops rather than shipping a
+distance nobody can check. `--corpus` adds Frontier's own `StarPos` as a third opinion wherever the
+Commander has been there, and Frontier wins.
+
 **The on-foot chain states no grade, and is not given one.** Ship referrals read "From Hera Tani
 (grade 3-4)"; Odyssey referrals read "From Domino Green" and nothing more, because those unlock
 on a count of modifications rather than on a grade. Defaulting them to 3 would invent a
 requirement the game does not have. One engineer, Yi Shen, names three referrers and any will do.
 """
 
+import argparse
 import csv
 import io
 import json
@@ -87,7 +104,16 @@ OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledg
 COLUMNS = [
     "id", "name", "system", "station", "tribute", "specialities",
     "referred_by", "referral_grade", "body", "discovery", "meeting", "unlock", "reputation",
+
+    # Appended rather than inserted, so no column index moves under a reader that already
+    # shipped.
+    "x", "y", "z",
 ]
+
+# One step of Elite's coordinate grid. Both sources state coordinates exactly, so this is the
+# widest two figures can differ and still be one place; past it they are two places. Not a
+# tuning constant — it is the resolution of the thing being measured.
+GRID = 1 / 32
 
 # Not engineers. EDEngineer uses these to model the Odyssey vendors and synthesis, which sit
 # in the same blueprint list and would otherwise appear in the directory as people.
@@ -325,7 +351,7 @@ def chain() -> dict[str, dict]:
 
     graph = {}
 
-    for name, _system, _base, _x, _y, _z, body, discovery, meeting, unlock, rep, _odyssey in found:
+    for name, _system, _base, x, y, z, body, discovery, meeting, unlock, rep, _odyssey in found:
         referrers, grade = [], ""
 
         if (match := REFERRAL.search(discovery.strip())) is not None:
@@ -340,6 +366,9 @@ def chain() -> dict[str, dict]:
             "name": name,
             "referred_by": referrers,
             "referral_grade": grade,
+            # Parsed all along and thrown away until Phase 28 needed a second opinion on it.
+            "position": (float(x), float(y), float(z)),
+
             "body": body,
             "discovery": discovery,
             "meeting": meeting,
@@ -350,10 +379,18 @@ def chain() -> dict[str, dict]:
     return graph
 
 
-def place(id64: str, market_id: str) -> tuple[str, str]:
-    """The system and base an engineer works out of, from the two ids the id list carries."""
+Position = tuple[float, float, float]
+
+
+def place(id64: str, market_id: str) -> tuple[str, str, Position | None]:
+    """Where an engineer works, from the two ids the id list carries.
+
+    The record that names the system carries its coordinates too, so the third return value
+    costs no call this script was not already making — which is what makes Phase 28's ranking
+    affordable at all.
+    """
     if not id64:
-        return "", ""
+        return "", "", None
 
     record = json.loads(fetch(SPANSH_SYSTEM.format(id64=id64)))["record"]
 
@@ -366,15 +403,68 @@ def place(id64: str, market_id: str) -> tuple[str, str]:
                 station = candidate.get("name") or ""
                 break
 
-    return system, station
+    axes = [record.get(axis) for axis in ("x", "y", "z")]
+
+    position = (float(axes[0]), float(axes[1]), float(axes[2])) if all(
+        isinstance(axis, (int, float)) for axis in axes) else None
+
+    return system, station, position
+
+
+def from_corpus(folder: Path) -> dict[str, Position]:
+    """Every system Frontier themselves wrote a StarPos beside, from local journals.
+
+    The same idea as `gen-lore.py`'s address check, and the stronger half of it: this is not a
+    third party agreeing with a fourth, it is the game stating where a system is. Three events
+    carry it — Location, FSDJump and CarrierJump — and across a 912-journal corpus all three
+    carry it every time, 9,332 of 9,332.
+    """
+    seen: dict[str, Position] = {}
+
+    for journal in sorted(folder.glob("Journal*.log")):
+        with journal.open(encoding="utf-8", errors="replace") as lines:
+            for line in lines:
+                if '"StarPos"' not in line:
+                    continue
+
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+
+                name, position = event.get("StarSystem"), event.get("StarPos")
+
+                if isinstance(name, str) and isinstance(position, list) and len(position) == 3:
+                    seen[name.casefold()] = (
+                        float(position[0]), float(position[1]), float(position[2]))
+
+    return seen
+
+
+def apart(first: Position | None, second: Position | None) -> float | None:
+    """How far two coordinates are from being the same place. None where either is missing."""
+    if first is None or second is None:
+        return None
+
+    return max(abs(a - b) for a, b in zip(first, second))
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Regenerate d47's engineer directory.")
+    parser.add_argument(
+        "--corpus",
+        type=Path,
+        help="A journal folder whose StarPos figures check the resolved coordinates. Optional.")
+    arguments = parser.parse_args()
+
+    corpus = from_corpus(arguments.corpus) if arguments.corpus else {}
+
     rows = list(csv.DictReader(io.StringIO(fetch(FDEV_IDS).decode("utf-8-sig"))))
     offered, tribute, spelled = blueprints()
     graph = chain()
 
     built, placeless, silent, chainless = [], [], [], []
+    disputed, confirmed, unplaced = [], 0, []
     joined = set()
 
     for row in rows:
@@ -383,8 +473,8 @@ def main() -> None:
         if not name:
             continue
 
-        system, station = place((row.get("system_address") or "").strip(),
-                                (row.get("market_id") or "").strip())
+        system, station, position = place((row.get("system_address") or "").strip(),
+                                          (row.get("market_id") or "").strip())
 
         if not system:
             placeless.append(name)
@@ -404,6 +494,29 @@ def main() -> None:
             # An engineer nobody has a blueprint for. Kept, because where they are is still
             # an answer, and dropping them would make d47 deny that a real person exists.
             silent.append(name)
+
+        # Where they are, agreed between two sources and checked against Frontier's own figure
+        # wherever the Commander has flown there. Unlike everything above it, a disagreement here
+        # is not reported and shipped: a coordinate is the input to a ranking, and a wrong one
+        # produces a confident wrong order rather than a visible gap.
+        theirs = (links or {}).get("position")
+        gap = apart(position, theirs)
+
+        if gap is not None and gap > GRID:
+            disputed.append(f"{name}: spansh says {position}, EDDiscovery says {theirs}")
+
+        position = position or theirs
+
+        if position is None:
+            unplaced.append(name)
+        elif (frontier := corpus.get(system.casefold())) is not None:
+            confirmed += 1
+
+            if apart(position, frontier) > GRID:
+                # Frontier wins, and the run still stops: a resolver that disagrees with the game
+                # about one system is a resolver that may be wrong about the other thirty-seven.
+                disputed.append(
+                    f"{name}: the journal says {frontier}, the resolvers say {position}")
 
         built.append([
             (row.get("id") or "").strip(),
@@ -435,9 +548,23 @@ def main() -> None:
             links.get("meeting", ""),
             links.get("unlock", ""),
             links.get("reputation", ""),
+
+            # Shortest round-trip decimal rather than a fixed width: these are exact positions on
+            # a 1/32 grid, and a formatted one is a slightly different place.
+            *(str(axis) for axis in (position or ("", "", ""))),
         ])
 
     unknown = sorted(name for name in spelled if relax(name) not in joined)
+
+    if disputed:
+        print("Coordinates not written — two sources disagree about where somebody works:")
+
+        for problem in disputed:
+            print(f"  {problem}")
+
+        raise SystemExit(
+            "resolve these by hand before shipping; a wrong coordinate ranks engineers "
+            "confidently in the wrong order rather than failing visibly")
 
     lines = [
         "# Generated by tools/gen-engineers.py. Do not edit by hand — rerun the tool.",
@@ -452,7 +579,9 @@ def main() -> None:
         "# chain. Odyssey tributes are EDEngineer's, are cumulative along the chain, and are stale",
         "# since Frontier update 4.0.18.08 — four carry a note saying so. The four Colonia",
         "# engineers have no EDEngineer rows at all and their modification lists were read from the",
-        "# wiki; see tools/gen-engineers.py. Game data is Frontier's, used",
+        "# wiki; see tools/gen-engineers.py. Coordinates are spansh's, and every one of them agreed",
+        "# with EDDiscovery's to within a step of Elite's 1/32 ly grid; the run refuses to write a",
+        "# row where they do not. Game data is Frontier's, used",
         "# under their media usage rules — see NOTICE.",
         f"# Engineers: {len(built)}.",
         "\t".join(COLUMNS),
@@ -466,6 +595,14 @@ def main() -> None:
 
     if placeless:
         print(f"No system resolved for: {', '.join(placeless)}")
+
+    print(f"Coordinates: {sum(1 for row in built if row[13])} of {len(built)} placed, "
+          f"{confirmed} confirmed against a local journal")
+
+    if unplaced:
+        # Shipped without a position rather than dropped. d47 answers "I do not know how far" for
+        # these, which is the honest reading and the one the ranking is built to survive.
+        print(f"No coordinates for: {', '.join(unplaced)}")
 
     if silent:
         print(f"No blueprints found for: {', '.join(silent)}")

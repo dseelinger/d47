@@ -17,6 +17,93 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.28.0 — 2026-08-18 — Engineers
+
+list.md Phase 28. A tab that answers who to go and get next, and shows you why it thinks so.
+
+### Where every engineer is
+
+`Engineers.tsv` gains coordinates, generated rather than hand-written. `get_distance` computes the
+same figure correctly and is a network call — so ranking thirty-eight people through one every time
+a plan changes is a tab that is useless in flight and unusable offline. With the coordinates
+shipped, distance is arithmetic.
+
+**The second source was already being parsed and thrown away.** EDDiscovery's `EngineeringInfo`
+carries three coordinates the generator read and discarded on every run since the referral chain
+arrived. They are now agreed against spansh's, exactly, to within one step of Elite's 1/32 ly grid;
+a wider difference is not rounding, and the run refuses to write the table rather than ship a
+distance nobody can check. All 38 placed, all 38 agreed, and `--corpus` confirmed 31 of them
+against Frontier's own `StarPos`.
+
+Your own position needed one thing the plan did not mention: **the location had no coordinates at
+all.** It has them now, folded from the three events that carry a `StarPos` — `Location`, `FSDJump`
+and `CarrierJump`, which carried one on all 9,332 occurrences across a 912-journal corpus — and
+pointedly not from `Docked`, which names your system, states no position, and would otherwise make
+your position go unknown the moment you landed.
+
+### Who can roll this
+
+The directory is sorted by **what you can act on today** — within reach, then already yours, then
+behind somebody else — rather than alphabetically or by speciality, because the question is nearly
+always *who can I go and get*. Every row carries how far away they are and how many jumps that is
+in the ship you are actually flying.
+
+**Your journal wins over the table wherever the two meet.** An invitation already extended is a
+referral that has already happened, so an engineer who has invited you is within reach whatever the
+chain says about who has to recommend them.
+
+The line at the top carries the count that belongs to the Loadout tab: **how many of your plans are
+waiting on somebody you have not unlocked.** A plan blocked on a person is not a plan blocked on
+materials, and the gap analysis cannot tell you which it is.
+
+Getting that count right needed a correction to how "who can roll this" is read: **per grade, from
+the blueprint table**. Six engineers offer Increased FSD Range at grade 3 and three of them at
+grade 5, so deriving it from an engineer's top grade sends you to Professor Palin for a grade 5
+drive he does not roll.
+
+### The fastest way in
+
+A solver rather than a display. Walking one referral chain is exact and cheap and answers the wrong
+question — a blueprint usually lists several engineers, and one unlock covers many plans. So the
+best next unlock is the one that satisfies the most of what you have planned, not the shortest
+chain.
+
+**One unit, and it is jumps.** Distance converts at the range of the ship you are flying, and each
+stop on a chain carries its own leg, so a long chain of short hops and one long haul are compared
+on the same scale rather than balanced by a tuning constant. **Colonia needs no rule of its own**:
+22,000 light years is hundreds of jumps and swamps any step count, and because the distance is
+measured from where you are standing, being in Colonia flips it automatically.
+
+**What is not a trip is not turned into one.** A tribute of fifty units is a shopping run to a
+system you know and is already inside the leg that reaches it; a combat rank is not a trip at all,
+so it is printed in Frontier's own words, breaks ties, and never becomes a number. Distance stays
+the primary key deliberately — making "you can just go and do it" a class above it would put an
+already-invited Colonia engineer ahead of one in the Bubble.
+
+**The whole working is on the page.** One step, 131 ly, about 5 jumps, and one planned thing
+covered — then the stops, what each invitation asks for and what it buys. A ranking nobody can
+inspect is an oracle, and when it is wrong, or when you would rather go elsewhere anyway, you
+cannot tell a bad answer from a bug.
+
+**The route promotes as a chain rather than a line**: one checklist item per stop, in flying order,
+each carrying the grade that stop actually needs. A single line reading "unlock Broo Tarquin" hides
+two engineers and two rank climbs behind a tick you can never make progress on. A rank climb with
+somebody you already have is ranked as a way in too — grade 5 wanted from an engineer held at grade
+2 is as much in the way as a stranger.
+
+One row in the table argues with the table. **Yi Shen's own meeting text reads as three referrals
+where the directory reads any one of three.** The directory's reading is kept and the disagreement
+is answered by printing Frontier's sentence under the chain, which is what showing the work is for.
+
+### Elsewhere
+
+The advertised tool surface did not grow: `get_engineer_route` and `promote_engineer_route` are
+both `Protected`, reachable from the panel and from a phrase and never from the model. "Who should
+I unlock next" is a fixed question with no free-text argument in it, which is exactly the shape the
+keyword router handles with no round trip at all.
+
+---
+
 ## 0.27.0 — 2026-08-18 — Suits and weapons, and the gap
 
 list.md Phase 27. The Loadout tab is finished: what you wear beside what you fly, and the

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -23,12 +24,30 @@ namespace D47.Core.Capabilities.Builtin;
 /// invited the Commander is a referral that has already happened, and no table can be more right
 /// about that than their own journal.
 /// </para>
+/// <para>
+/// <b>Phase 28 adds a solver, and adds it as two Protected tools rather than as advertised
+/// ones.</b> The advertised surface is re-billed on every turn and the largest profile sat at
+/// 39,639 bytes against a 40,000 ceiling when this was written, so a route worth several hundred
+/// bytes of schema is a phrase and a press instead. Nothing is lost: "who should I unlock next"
+/// is a fixed question with no free-text argument in it, which is exactly the shape the keyword
+/// router handles without a round trip.
+/// </para>
 /// </summary>
 public static class EngineerCapability
 {
     public const string Id = "engineers";
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> commander) => new()
+    private static readonly IReadOnlyDictionary<string, string> Nothing =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <param name="unlocks">
+    /// The solver, or null under the designer and in tests that are not about it — the capability
+    /// still registers, so its documentation page still exists, and the two routing tools answer
+    /// that there is nothing to rank rather than throwing.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        Func<CommanderGameState?> commander,
+        EngineerPlanService? unlocks = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -39,12 +58,14 @@ public static class EngineerCapability
             "which engineers have I unlocked",
             "who grades frame shift drives",
             "where is Felicity Farseer",
+            "who should I unlock next",
         ],
         Keywords =
         [
             "which engineers",
             "my engineers",
             "engineer progress",
+            "who should I unlock next",
         ],
         Tools =
         [
@@ -83,6 +104,57 @@ public static class EngineerCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Find(commander, arguments))),
+            },
+
+            // Protected, and cost is the reason rather than safety: it reads and writes nothing.
+            new ToolDefinition
+            {
+                Protected = true,
+                Name = "get_engineer_route",
+                Description =
+                    "Which engineer to unlock next, ranked by the trip it takes and how much of what the "
+                    + "Commander has planned it covers. Shows its working: the stops, the distance in "
+                    + "jumps of the ship being flown, what each invitation asks for, and what cannot be "
+                    + "counted in jumps at all.",
+                Commands =
+                [
+                    new ToolCommandPhrase("who should I unlock next", Nothing),
+                    new ToolCommandPhrase("what is the fastest way in", Nothing),
+                    new ToolCommandPhrase("which engineer next", Nothing),
+                ],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(
+                    unlocks?.Describe() ?? "No engineer plans are loaded.")),
+            },
+
+            new ToolDefinition
+            {
+                Protected = true,
+                Name = "promote_engineer_route",
+                Description =
+                    "Offer the way in to an engineer to the checklist, as a chain rather than a line — "
+                    + "one item per stop, each carrying the grade that stop needs. A proposal: the "
+                    + "Commander accepts it.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "engineer",
+                        Type = ToolParameterType.String,
+                        Description = "Which engineer, by name. Omit for the best next unlock.",
+                    },
+                ],
+                Commands =
+                [
+                    new ToolCommandPhrase("put that route on my checklist", Nothing),
+                    new ToolCommandPhrase("promote this unlock", Nothing),
+                ],
+                Handler = (arguments, _) =>
+                {
+                    arguments.TryGetString("engineer", out var named);
+
+                    return Task.FromResult(ToolResult.Ok(
+                        unlocks?.Promote(named) ?? "No engineer plans are loaded."));
+                },
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineers", Order = 50 },

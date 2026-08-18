@@ -291,6 +291,12 @@ public sealed class AppHost : IDisposable
     /// <summary>Where those are kept, for the panel to follow and for a hand edit to reach.</summary>
     public D47.Core.Loadout.OnFootBuildStore OnFootBuilds { get; private set; } = null!;
 
+    /// <summary>
+    /// Which engineer to go and get next, read across both plan stores (list.md Phase 28). Owns
+    /// nothing: every figure is recomputed from those two and the live game state.
+    /// </summary>
+    public D47.Core.Engineers.EngineerPlanService Unlocks { get; private set; } = null!;
+
     /// <summary>Where the alarms are kept, for the panel to follow and for a hand edit to reach.</summary>
     public AlarmStore Alarms { get; private set; } = null!;
 
@@ -652,6 +658,12 @@ public sealed class AppHost : IDisposable
         var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
             onFootBuilds, checklists, () => gameState.Active);
 
+        // The engineer solver (list.md Phase 28). It reads both stores rather than being handed
+        // their contents, because a ranking is only as current as the plans under it — and both
+        // of them move while the panel is open.
+        var unlocks = new D47.Core.Engineers.EngineerPlanService(
+            shipBuilds, onFootBuilds, checklists, () => gameState.Active);
+
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
         // library, which is replaced whenever the Commander drops a file into data/audio.
@@ -950,6 +962,9 @@ public sealed class AppHost : IDisposable
                 // than one, because the game separates ship and on-foot hard.
                 onFootPlans,
 
+                // Which engineer to go and get next, read across both of them (list.md Phase 28).
+                unlocks,
+
                 // The endpoint half of web search, for the egress row. Asked each time because
                 // the Commander can retarget `llm.endpoint` without restarting, and the row is
                 // computed at render time so it has to be able to change underneath.
@@ -1122,6 +1137,7 @@ public sealed class AppHost : IDisposable
         host.Ships = shipPlans;
         host.ShipBuilds = shipBuilds;
         host.OnFootPlans = onFootPlans;
+        host.Unlocks = unlocks;
         host.OnFootBuilds = onFootBuilds;
         host.Alarms = alarms;
 

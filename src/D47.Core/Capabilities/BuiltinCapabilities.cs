@@ -112,6 +112,11 @@ public static class BuiltinCapabilities
         // on-foot hard, and so does everything that reads them.
         Loadout.OnFootPlanService? onFoot = null,
 
+        // The engineer solver (list.md Phase 28), on the same terms again. It reads both stores
+        // above rather than being handed their contents, because a ranking is only as current as
+        // the plans under it and both of them move while the panel is open.
+        Engineers.EngineerPlanService? unlocks = null,
+
         // Whether the provider and model in use offer a server-side web search. Null is "assume
         // it can", which is what a caller with no provider to ask is entitled to say — the
         // designer and every test that is not about egress. The app supplies the real answer, or
@@ -125,7 +130,7 @@ public static class BuiltinCapabilities
         GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
         RouteCapability.Create(routes, () => gameState.Active, settings),
         SpecificationCapability.Create(() => gameState.Active),
-        EngineerCapability.Create(() => gameState.Active),
+        EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
         OnFootCapability.Create(() => gameState.Active, onFoot),
         ChecklistCapability.Create(checklists, ships, onFoot),

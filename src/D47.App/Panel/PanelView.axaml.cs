@@ -547,6 +547,79 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Gives this surface the engineer directory and the solver (list.md Phase 28, "Engineers").
+    /// <para>
+    /// Both surfaces, like the checklist and the loadout: a Commander deciding who to fly to next
+    /// is very often the Commander already sitting in the ship.
+    /// </para>
+    /// <para>
+    /// Two roots rather than two tabs, on the same reading as Loadout's three — the Directory and
+    /// the Route are two answers to <em>which engineer</em>, not two destinations. Each keeps its
+    /// own drill state, so leaving the Directory inside one engineer and looking at the Route does
+    /// not disturb it.
+    /// </para>
+    /// </summary>
+    public void EnableEngineers(
+        D47.Core.Engineers.EngineerPlanService unlocks,
+        D47.Core.Ships.ShipPlanService ships,
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        D47.Core.Loadout.OnFootPlanService? onFoot = null)
+    {
+        var source = new EngineerSource(unlocks.Report, unlocks.Promote);
+
+        // A plan moving changes who is worth flying to, and neither store knows about this page.
+        ships.Store.Changed += source.Invalidate;
+
+        if (onFoot is not null)
+        {
+            onFoot.Store.Changed += source.Invalidate;
+        }
+
+        _engineers = source;
+        _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
+        _engineerState = state;
+
+        Furnish(
+            PanelTab.Engineers,
+            crumb => EngineersPages.Build(crumb, source, Nav),
+            new NavCrumb(EngineersPages.DirectoryRoot, "Directory"),
+            new NavCrumb(EngineersPages.RouteRoot, "Route"));
+    }
+
+    /// <summary>
+    /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody.
+    /// <para>
+    /// <b>On a change rather than on the tick.</b> Every distance on those pages is measured from
+    /// where the Commander is standing, so flying makes them stale — and rebuilding thirty-eight
+    /// rows every tick would cost the tab its hit-testing, because a rebuilt control has no bounds
+    /// until the next layout pass and a ray aimed at a row would land on the one beside it.
+    /// <see cref="D47.Core.Engineers.UnlockPlanner.Stamp"/> is what makes the question cheap to
+    /// ask without computing the answer.
+    /// </para>
+    /// </summary>
+    public void TickEngineers()
+    {
+        if (_engineers is not { } source || Tab != PanelTab.Engineers)
+        {
+            return;
+        }
+
+        var stamp = D47.Core.Engineers.UnlockPlanner.Stamp(_engineerState?.Invoke());
+
+        if (string.Equals(stamp, _engineerStamp, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _engineerStamp = stamp;
+        source.Invalidate();
+    }
+
+    private EngineerSource? _engineers;
+    private string _engineerStamp = string.Empty;
+    private Func<D47.Core.Journal.CommanderGameState?>? _engineerState;
+
+    /// <summary>
     /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").
     /// <para>
     /// Both surfaces, like the checklist: a Commander in a headset is exactly the Commander who

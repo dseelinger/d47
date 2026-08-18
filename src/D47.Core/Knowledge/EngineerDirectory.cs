@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
@@ -65,6 +66,33 @@ public sealed record Engineer
 
     /// <summary>The body their base orbits, as the game labels it — "6 A".</summary>
     public string? Body { get; init; }
+
+    /// <summary>
+    /// Where their system is, in light years on Frontier's axes (list.md Phase 28, "Where every
+    /// engineer is").
+    /// <para>
+    /// <b>Shipped rather than looked up</b>, which is the whole of why the Engineers tab works in
+    /// flight and works offline. <see cref="IGalaxyService.DistanceAsync"/> computes the same
+    /// figure correctly and is an async service call; ranking thirty-eight people through one
+    /// every time a plan moves is a tab nobody can use where they need it.
+    /// </para>
+    /// <para>
+    /// Null where the generator resolved no coordinate — which is nobody today, all 38 placed and
+    /// 31 of them confirmed against Frontier's own <c>StarPos</c>. Kept nullable anyway, because
+    /// "I do not know how far that is" is an answer and a zero is not.
+    /// </para>
+    /// </summary>
+    public StarPosition? Position { get; init; }
+
+    /// <summary>
+    /// Light years from a point to this engineer, or null when either end is unknown.
+    /// <para>
+    /// Null rather than zero, and the difference matters here more than anywhere else this rule
+    /// applies: zero would sort them to the top of a list whose entire subject is who is nearest.
+    /// </para>
+    /// </summary>
+    public double? DistanceFrom(StarPosition? from) =>
+        from is { } here && Position is { } there ? here.DistanceTo(there) : null;
 
     /// <summary>How the Commander learns they exist, in prose.</summary>
     public string? Discovery { get; init; }
@@ -230,10 +258,32 @@ public static class EngineerDirectory
                 Meeting = Text(cells, 10),
                 Unlock = Text(cells, 11),
                 Reputation = Text(cells, 12),
+                Position = ReadPosition(cells),
             });
         }
 
         return engineers;
+    }
+
+    /// <summary>
+    /// The three coordinate columns, or null. <b>All three or none</b>, on the rule
+    /// <see cref="StarPosition.Read"/> states: two axes and a blank is a place that does not
+    /// exist, and it would sort somewhere plausible.
+    /// </summary>
+    private static StarPosition? ReadPosition(string[] cells)
+    {
+        var axes = new double[3];
+
+        for (var index = 0; index < 3; index++)
+        {
+            if (Text(cells, 13 + index) is not { } cell ||
+                !double.TryParse(cell, CultureInfo.InvariantCulture, out axes[index]))
+            {
+                return null;
+            }
+        }
+
+        return new StarPosition(axes[0], axes[1], axes[2]);
     }
 
     private static IReadOnlyList<string> ReadNames(string? cell) =>
