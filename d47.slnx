@@ -15,6 +15,7 @@
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />
     <Project Path="tests/D47.Knowledge.Tests/D47.Knowledge.Tests.csproj" />
     <Project Path="tests/D47.Llm.Tests/D47.Llm.Tests.csproj" />
+    <Project Path="tests/D47.Scenarios.Tests/D47.Scenarios.Tests.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
   </Folder>
 </Solution>

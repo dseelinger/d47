@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The first test project with no src/ counterpart, and that is deliberate (docs/plans/
+    phase-30-prove-the-model-behaves.md, call 2). Every other one mirrors an assembly; what
+    this one tests is not an assembly but the *turn* — Core's loop driven against D47.Llm's
+    providers with the real builtin registry behind it. The name is the unit rather than the
+    subject, because the paid mode is a suite somebody runs alone:
+
+        D47_SCENARIOS_LIVE=1 dotnet test tests/D47.Scenarios.Tests
+
+    and that line needs to be short and unambiguous.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+    <!-- The live half constructs real providers through the same factory the app uses, so a
+         scenario cannot be answered by a client this repository does not ship. -->
+    <ProjectReference Include="..\..\src\D47.Llm\D47.Llm.csproj" />
+    <ProjectReference Include="..\D47.Core.Tests\D47.Core.Tests.csproj" />
+  </ItemGroup>
+
+  <!--
+    The corpus is data, not code (call 3). Copied rather than embedded so that adding an attack
+    is editing one file and rerunning, with no build in between — and so the attacker's words
+    sit in a file that is obviously theirs rather than scattered through C# string literals.
+  -->
+  <ItemGroup>
+    <Content Include="Corpus\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>
