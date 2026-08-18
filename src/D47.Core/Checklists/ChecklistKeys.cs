@@ -57,9 +57,26 @@ public static class ChecklistKeys
     /// A derived item's key: <b>slot plus intent</b> for a ship, <b>body or orbital slot plus
     /// facility type</b> for a system — exactly as list.md states it.
     /// <para>
-    /// The grade is in the key, and that is deliberate. A wildcard-grade intent and a grade 5
-    /// intent on the same slot are two different things to want, and a plan that changes one into
-    /// the other has changed its mind about that slot.
+    /// <b>A slot-shaped intent keys on the slot alone, and nothing about what is wanted in it</b>
+    /// (list.md Phase 26, "A plan is keyed to its slot"). This used to carry the blueprint and the
+    /// grade as well, and that was right for as long as items were regenerated from scratch on
+    /// every evaluation: two conversations settling on different things wanted two items, and the
+    /// diff sorted it out. <b>It does not survive a plan the Commander edits.</b> Changing a slot
+    /// from a long-range pulse laser to an overcharged multi-cannon is not a delete and an add —
+    /// it is still the third hardpoint on the same hull, and keying on the content made an edit
+    /// read as a fortnight of progress abandoned and an identical-looking new item opened beside
+    /// the tombstone.
+    /// </para>
+    /// <para>
+    /// It needs no counter and no tombstone bookkeeping, because <b>a slot exists as long as the
+    /// hull does</b>. And it is what makes <em>one build per ship</em> a decision rather than an
+    /// accident: comparing a combat fit against an exploration fit for the same hull would need
+    /// two items in one slot, and there is deliberately no way to spell that.
+    /// </para>
+    /// <para>
+    /// <b>Only the slot-shaped kinds.</b> A suit carries several modifications at once and a
+    /// construction site several commodities, so those still key on what they are about — see
+    /// <see cref="SlotShaped"/>.
     /// </para>
     /// </summary>
     public static string For(ChecklistIntent intent)
@@ -69,6 +86,11 @@ public static class ChecklistKeys
             Kind(intent.Kind),
             Compact(intent.Subject),
         };
+
+        if (SlotShaped(intent.Kind))
+        {
+            return string.Join('/', parts);
+        }
 
         if (Compact(intent.Detail) is { Length: > 0 } detail)
         {
@@ -82,6 +104,22 @@ public static class ChecklistKeys
 
         return string.Join('/', parts);
     }
+
+    /// <summary>
+    /// Whether an intent's subject is a place on a hull that holds exactly one of this kind of
+    /// thing at a time — which is what makes the slot, rather than the content, the identity.
+    /// <para>
+    /// Three of them, and the list is closed by the game rather than by a judgement: a ship slot
+    /// holds one module, that module carries at most one blueprint, and it carries at most one
+    /// experimental effect. Everything else on <see cref="ChecklistIntentKind"/> is one-to-many —
+    /// a suit takes several modifications, a site wants several commodities, an engineer is not a
+    /// place at all — so for those the content is still what tells two items apart.
+    /// </para>
+    /// </summary>
+    public static bool SlotShaped(ChecklistIntentKind kind) => kind is
+        ChecklistIntentKind.Blueprint or
+        ChecklistIntentKind.Experimental or
+        ChecklistIntentKind.Module;
 
     /// <summary>
     /// One word for each intent kind, so a key says what shape of thing it is without anything

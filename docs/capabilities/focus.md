@@ -1,7 +1,7 @@
 ---
 title: Focus the game
 group: Interface
-nav_order: 125
+nav_order: 126
 ---
 
 Brings Elite Dangerous back to the front, so flight commands work again.

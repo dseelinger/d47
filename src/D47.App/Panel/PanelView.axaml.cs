@@ -488,6 +488,25 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Gives this surface the fleet and its builds (list.md Phase 26, "Ships").
+    /// <para>
+    /// One root for now — Ships. Suits and weapons, and the gap analysis, join it as Phase 27
+    /// registers them, which is one more <see cref="PanelNavigator.Register"/> call each and
+    /// nothing here.
+    /// </para>
+    /// </summary>
+    public void EnableLoadout(
+        D47.Core.Ships.ShipPlanService ships,
+        D47.Core.Checklists.ChecklistService checklists,
+        Func<D47.Core.Journal.CommanderGameState?> state)
+    {
+        Furnish(
+            PanelTab.Loadout,
+            crumb => LoadoutPages.Build(crumb, ships, checklists, state, Nav, Prompts),
+            new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
+    }
+
+    /// <summary>
     /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").
     /// <para>
     /// Both surfaces, like the checklist: a Commander in a headset is exactly the Commander who

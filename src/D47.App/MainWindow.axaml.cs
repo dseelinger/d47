@@ -128,6 +128,9 @@ public partial class MainWindow : Window
             // Phase 25).
             Panel.EnableChecklist(host.Checklists);
 
+            // The fleet and its builds (list.md Phase 26). Both surfaces, like the checklist.
+            Panel.EnableLoadout(host.Ships, host.Checklists, () => host.GameState.Active);
+
             // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at
             // a wall clock.

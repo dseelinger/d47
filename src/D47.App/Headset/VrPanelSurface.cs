@@ -85,7 +85,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Func<Control>? settingsPage = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
         D47.Core.Utilities.Timekeeper? timekeeper = null,
-        D47.Core.Utilities.AlarmStore? alarmStore = null)
+        D47.Core.Utilities.AlarmStore? alarmStore = null,
+        D47.Core.Ships.ShipPlanService? ships = null,
+        Func<D47.Core.Journal.CommanderGameState?>? gameState = null)
     {
         _dumpTo = dumpTo;
 
@@ -111,6 +113,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // cannot appear here at all, so before Phase 25 a Commander wearing a headset could
             // not see their checklist.
             _view.EnableChecklist(checklists);
+        }
+
+        if (ships is not null && checklists is not null && gameState is not null)
+        {
+            // The fleet, in the headset too (list.md Phase 26). A Commander deciding what to fit
+            // is often the Commander sitting in the ship.
+            _view.EnableLoadout(ships, checklists, gameState);
         }
 
         if (timekeeper is not null && alarmStore is not null)

@@ -275,14 +275,26 @@ public sealed record ChecklistIntent(ChecklistIntentKind Kind, string Subject)
 {
     /// <summary>
     /// The blueprint, effect, module, facility or commodity, in whatever spelling the intent was
-    /// stated in. Part of the key: swapping burst lasers for multi-cannons in one slot is a
-    /// tombstone and a new item, not the same item changing its mind.
+    /// stated in.
+    /// <para>
+    /// <b>Part of the key for everything except a slot-shaped intent</b>, where the slot alone is
+    /// the identity (list.md Phase 26). This used to say that swapping burst lasers for
+    /// multi-cannons in one slot was a tombstone and a new item; it is the same item changing its
+    /// mind, and reading it the other way made an edit look like a fortnight of progress thrown
+    /// away. See <see cref="ChecklistKeys.SlotShaped"/> for which kinds those are and why the
+    /// list is closed by the game rather than by a judgement.
+    /// </para>
     /// </summary>
     public string? Detail { get; init; }
 
     /// <summary>
     /// 1 to 5 for a blueprint. <b>Null is wildcard, not unknown</b> — "grade 5 dirty drives and I
     /// don't care which thrusters" has to be expressible, or it is permanently unmeetable.
+    /// <para>
+    /// Out of the key for a slot-shaped intent since Phase 26, along with <see cref="Detail"/>:
+    /// deciding to go to grade 5 on a slot already planned at grade 3 is a Commander changing
+    /// their mind about that slot, not abandoning it.
+    /// </para>
     /// </summary>
     public int? Grade { get; init; }
 

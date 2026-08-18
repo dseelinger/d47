@@ -100,7 +100,12 @@ public static class BuiltinCapabilities
 
         // How to present an instant locally. A function because a Commander who changes time zone
         // mid-session should not have to restart to see it.
-        Func<TimeZoneInfo>? zone = null) =>
+        Func<TimeZoneInfo>? zone = null,
+
+        // The Commander's ship builds (list.md Phase 26). Null under the designer and in tests
+        // that are not about them; the capability still registers, so its page exists, and every
+        // tool answers that nothing is being tracked.
+        Ships.ShipPlanService? ships = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -112,7 +117,8 @@ public static class BuiltinCapabilities
         EngineerCapability.Create(() => gameState.Active),
         EngineeringCapability.Create(() => gameState.Active, galaxy),
         OnFootCapability.Create(() => gameState.Active),
-        ChecklistCapability.Create(checklists),
+        ChecklistCapability.Create(checklists, ships),
+        ShipsCapability.Create(ships),
         ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(
@@ -148,6 +154,7 @@ public static class BuiltinCapabilities
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         UtilitiesCapability.Create(timekeeper, now, zone),
+
         PrivacyCapability.Create(settings),
         SettingsCapability.Create(settings),
     ];

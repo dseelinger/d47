@@ -61,7 +61,11 @@ public partial class App(AppHost? host) : Application
 
                 // And the clocks, timers and alarms (list.md Phase 24).
                 host.Timekeeper,
-                host.Alarms);
+                host.Alarms,
+
+                // And the fleet (list.md Phase 26).
+                host.Ships,
+                () => host.GameState.Active);
 
             // And the headset's copy of the panel can be the one asking for a spoken value
             // (list.md Phase 25). Registered beside the window's rather than instead of it: two

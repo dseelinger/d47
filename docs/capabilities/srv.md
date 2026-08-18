@@ -1,7 +1,7 @@
 ---
 title: SRV
 group: Acting on the game
-nav_order: 129
+nav_order: 130
 ---
 
 The switches on the SRV: turret, handbrake, drive assist, throttle direction, and getting your
