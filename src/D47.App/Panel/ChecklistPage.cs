@@ -560,7 +560,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         return _chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
                || _chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
-               || _chosen.Equals(item.Scope.Group.ToString(), StringComparison.OrdinalIgnoreCase)
+               || _chosen.Equals(ChecklistScope.Word(item.Scope.Group), StringComparison.OrdinalIgnoreCase)
                || _chosen.Equals(item.IsComplete ? "complete" : "open", StringComparison.OrdinalIgnoreCase);
     }
 

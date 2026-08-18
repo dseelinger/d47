@@ -92,7 +92,7 @@ states for its own entries.
 - [ ] **15. Import and export.** Everything, as JSON — a full round-trip of the checklist file,
   derived lines and provenance included, settled with the Commander as a move-machines feature
   rather than a share-with-a-friend one.
-- [ ] **16. "universal" is not a good descriptor; "custom" is.** Everything the Commander or the
+- [x] **16. "universal" is not a good descriptor; "custom" is.** Everything the Commander or the
   model sees — labels, wording, the tool schema and its docs page. The enum member and the value
   on disk stay as they are, so no migration and no risk to an existing checklist.
 
@@ -104,7 +104,7 @@ states for its own entries.
 
 ## The on-screen keyboard
 
-- [ ] **18. It should be QWERTY.** **Overturns a comment**, stated twice — in `PanelPrompts` and
+- [x] **18. It should be QWERTY.** **Overturns a comment**, stated twice — in `PanelPrompts` and
   in `OffscreenSurface` — arguing that a staggered alphabetic board is faster to hunt with a ray.
   The Commander has ruled otherwise; both copies are to be changed together, and the duplicated
   table is to become one.

@@ -30,17 +30,25 @@ public sealed class PanelPrompts
     private readonly Avalonia.Controls.Panel _layer;
 
     /// <summary>
-    /// The keys, in rows, as they are drawn.
+    /// The keys, in rows, as they are drawn. <b>The one table</b>: <c>OffscreenSurface</c> draws
+    /// this same array rather than a copy of it, because two boards that are meant to be the same
+    /// board and are declared twice are two boards that eventually are not.
     /// <para>
-    /// A staggered alphabetic board rather than a strict QWERTY, because what is typed into these
-    /// is a system name, a commander name or a number — hunted for one key at a time with a ray,
-    /// where alphabetical order is faster to hunt in than muscle memory that only works with ten
-    /// fingers on a desk. The same board <c>OffscreenSurface</c> already draws, for the same
-    /// reason, and stated once.
+    /// <b>QWERTY</b> (remediation.md 10, item 18). It was a staggered alphabetic board, declared
+    /// twice, with the same argument written out in both places: what is typed here is a system
+    /// name or a commander name, hunted one key at a time with a ray, and alphabetical order is
+    /// faster to hunt in than muscle memory that needs ten fingers on a desk.
+    /// </para>
+    /// <para>
+    /// That argument is wrong about where the hunting starts. A Commander does not arrive at this
+    /// board without a keyboard in their head — they have one, it is QWERTY, and it tells them
+    /// roughly where a letter is before they start looking. An alphabetical board throws that away
+    /// and makes every letter a fresh search of thirty boxes. The Commander asked for QWERTY, and
+    /// the ordering that is already in their hands beats the one that is merely sorted.
     /// </para>
     /// </summary>
     public static readonly string[] Keys =
-        ["1234567890", "abcdefghij", "klmnopqrst", "uvwxyz-_.", " "];
+        ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm-_.", " "];
 
     /// <summary>
     /// True in every listening mode, and what is shown until a host says something better. The

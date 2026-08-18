@@ -32,7 +32,9 @@ public static class ChecklistCapability
 
     public const string SummaryKey = "checklists.summary";
 
-    private static readonly string[] Groups = ["universal", "ship", "system", "suit", "weapon"];
+    // The Commander's words rather than the enum's (remediation.md 10, item 16). ChecklistScope.Word
+    // is where the two spellings meet; nothing on disk moved.
+    private static readonly string[] Groups = ["custom", "ship", "system", "suit", "weapon"];
 
         /// <param name="ships">
     /// The Commander's ship builds (list.md Phase 26). <c>plan_ship_build</c> writes there rather
@@ -96,7 +98,7 @@ public static class ChecklistCapability
                         Name = "group",
                         Type = ToolParameterType.String,
                         Description =
-                            "Which list: universal, ship, system, suit or weapon. Omitted shows all of "
+                            "Which list: custom, ship, system, suit or weapon. Omitted shows all of "
                             + "them. With no name, each means the one the Commander is in or carrying "
                             + "right now.",
                         AllowedValues = Groups,
@@ -162,7 +164,7 @@ public static class ChecklistCapability
                     {
                         Name = "group",
                         Type = ToolParameterType.String,
-                        Description = "Which list it belongs on. Defaults to universal.",
+                        Description = "Which list it belongs on. Defaults to custom.",
                         AllowedValues = Groups,
                     },
                     new ToolParameter

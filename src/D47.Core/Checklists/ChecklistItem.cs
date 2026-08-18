@@ -68,7 +68,32 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
         ChecklistGroup.System => Key ?? "a system",
         ChecklistGroup.Suit => $"suit {Key}",
         ChecklistGroup.Weapon => $"weapon {Key}",
-        _ => "universal",
+        _ => Word(Group),
+    };
+
+    /// <summary>
+    /// What a Commander calls a group — the word on the filter, in the tool schema and in
+    /// anything d47 says out loud.
+    /// <para>
+    /// <b>"custom", not "universal"</b> (remediation.md 10, item 16). The Commander's word for
+    /// this list is not the enum's: universal describes how the group behaves inside d47 — it
+    /// applies whatever ship you are in — and reads, to a person, as though it were something
+    /// everybody gets rather than the one list they wrote themselves.
+    /// </para>
+    /// <para>
+    /// <b>The enum member and the value on disk are deliberately unchanged.</b> They are
+    /// <c>Universal</c> and they stay <c>Universal</c>, so an existing checklist file keeps
+    /// loading and there is no migration to get wrong. This is the one place the two spellings
+    /// meet, which is what stops a rename of a word turning into a rename of a format.
+    /// </para>
+    /// </summary>
+    public static string Word(ChecklistGroup group) => group switch
+    {
+        ChecklistGroup.Ship => "ship",
+        ChecklistGroup.System => "system",
+        ChecklistGroup.Suit => "suit",
+        ChecklistGroup.Weapon => "weapon",
+        _ => "custom",
     };
 }
 

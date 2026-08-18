@@ -136,6 +136,12 @@ while Directive 47 is running, so a line edited in a text editor appears a momen
 restart. A line the file gets wrong is **reported rather than silently dropped** — a checklist that
 quietly loses a line is worse than one that refuses it out loud.
 
+**The file says `universal` where everything else says `custom`, and that is deliberate.** The
+group a Commander sees, says and reads in the tool schema is **custom** — it is the list they wrote
+themselves. The value stored on disk is still `universal`, unchanged, so a checklist written by any
+earlier version keeps loading and there is no migration to get wrong. The two spellings meet in one
+place, `ChecklistScope.Word`.
+
 ```json
 {
   "commanders": [
@@ -272,7 +278,7 @@ Reads the list. Open items by group, then what is done with its count, then anyt
 you. Derived items carry the journal's verdict as of right now.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list: universal, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["universal","ship","system","suit","weapon"]},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list: custom, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["custom","ship","system","suit","weapon"]},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
 ```
 
 ### `get_plan_shortfall`
@@ -290,7 +296,7 @@ still wants delivered.
 Proposes a line in your own words. **Proposes** — it is not added until you agree.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to universal.","enum":["universal","ship","system","suit","weapon"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"text":{"type":"string","description":"The line, as the Commander would say it."}},"required":["text"],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to custom.","enum":["custom","ship","system","suit","weapon"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"text":{"type":"string","description":"The line, as the Commander would say it."}},"required":["text"],"additionalProperties":false}
 ```
 
 ### `propose_checklist_change`

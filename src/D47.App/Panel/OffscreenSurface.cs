@@ -435,15 +435,15 @@ public sealed class OffscreenSurface : IDisposable
     }
 
     /// <summary>
-    /// The keys, in rows, as they are drawn.
+    /// The keys, in rows, as they are drawn — <see cref="PanelPrompts.Keys"/>, not a copy of it.
     /// <para>
-    /// A staggered alphabetic board rather than a strict QWERTY, because what is typed into these
-    /// rows is a system name, a commander name or a hotkey — hunted for one key at a time with a
-    /// controller, where alphabetical order is faster to hunt in than muscle memory that only
-    /// works with ten fingers on a desk.
+    /// It <em>was</em> a copy, and both copies carried the same paragraph arguing for a staggered
+    /// alphabetic board. Changing that argument's mind meant finding both, which is the failure a
+    /// second declaration always eventually causes; there is one now, and the reasoning lives with
+    /// it (remediation.md 10, item 18).
     /// </para>
     /// </summary>
-    private static readonly string[] Keys = ["1234567890", "abcdefghij", "klmnopqrst", "uvwxyz-_.", " "];
+    private static string[] Keys => PanelPrompts.Keys;
 
     /// <summary>
     /// Puts a keyboard on the panel for one text box, and writes what was typed back into it.

@@ -569,7 +569,7 @@ public sealed class ChecklistService(
         var kinds = live.Select(item => item.Kind.ToString().ToLowerInvariant());
         var sources = live.Where(item => item.Source != ChecklistSource.Commander)
             .Select(item => item.Source.ToString().ToLowerInvariant());
-        var scopes = live.Select(item => item.Scope.Group.ToString().ToLowerInvariant());
+        var scopes = live.Select(item => ChecklistScope.Word(item.Scope.Group));
         var states = live.Select(item => item.IsComplete ? "complete" : "open");
 
         return [.. kinds.Concat(sources).Concat(scopes).Concat(states).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
