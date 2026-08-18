@@ -55,6 +55,47 @@ public sealed record D47Settings
     /// What d47 keeps about the Commander, and for how long (list.md Phase 31).
     /// </summary>
     public MemorySettings Memory { get; init; } = new();
+
+    /// <summary>
+    /// How a Commander's log is written when one is asked for (list.md Phase 33).
+    /// </summary>
+    public LogbookSettings Logbook { get; init; } = new();
+}
+
+/// <summary>
+/// The Commander's log (list.md Phase 33). Three choices and no switch, because there is nothing
+/// to switch off: nothing here happens until somebody asks for it, which is item 4's requirement
+/// and is enforced by there being no caller but a button and a phrase.
+/// <para>
+/// Its own block rather than fields on <see cref="LlmSettings"/>. The voice is not a property of
+/// the endpoint — it is a property of whose log it is — and a Commander who changes provider has
+/// not thereby changed their mind about writing in the first person.
+/// </para>
+/// </summary>
+public sealed record LogbookSettings
+{
+    /// <summary>
+    /// Whose voice writes it. See <see cref="Logbook.LogVoices"/> for the three and for the rule
+    /// that governs the two needing a personality.
+    /// <para>
+    /// <b>First person by default</b>, which item 3 calls the plain one. The ship's-AI log is the
+    /// thing only d47 can do, and a thing only d47 can do is a thing to opt into rather than a
+    /// thing to have happen to you the first time you press a button.
+    /// </para>
+    /// </summary>
+    public string Voice { get; init; } = "first-person";
+
+    /// <summary>
+    /// What span a log covers when nobody named one — a session, today, a week, a month. Two
+    /// explicit dates are reachable from the panel and are never a default.
+    /// </summary>
+    public string Range { get; init; } = "session";
+
+    /// <summary>
+    /// How long it runs to. It sets the output budget, which is most of what the estimate is
+    /// pricing, so it is a setting rather than a constant.
+    /// </summary>
+    public string Length { get; init; } = "standard";
 }
 
 /// <summary>

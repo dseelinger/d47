@@ -17,6 +17,103 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.33.0 — 2026-08-18 — The Commander's log
+
+list.md Phase 33. Every previous release either kept something on this machine or said something out
+loud and let it go. This one produces **a file you take away** — a session, or a week, written up as
+plain markdown in `data/commander-log/`, ready to keep, edit and post wherever Commanders post
+things.
+
+Elite's community has been writing Commander's logs by hand since 3300. This writes the first draft.
+
+### The one thing that leaves this machine
+
+It leaves **because you chose to take it**, which is a different thing from telemetry and is worth
+saying where somebody will read it. D47 sends nothing anywhere on its own. A log leaves when you pick
+up the file.
+
+### Every sentence traces to an event
+
+This is the whole quality bar, and it is why the feature is not simply a prompt.
+
+A model handed your journal writes a better evening than the one you had — it promotes a routine
+docking into a narrow escape, because that reads better and nothing stops it. So the model is **never
+handed your journal.** It gets a numbered list of facts D47 computed:
+
+```
+[3] (travel) 8 hyperspace jump(s), 470 ly in total, HIP 12099 out to Wolf 397.
+[22] (engineering) Rolled Weapon Overcharged on the hpt multicannon gimbal large 65 times
+     with Tod 'The Blaster' McQuinn, finishing at grade 5.
+```
+
+Every sentence has to end with the numbers of the facts behind it. When the log comes back, D47 reads
+it again and checks all of it — a sentence citing nothing came from somewhere other than your
+journal, and a sentence citing a fact that does not exist is worse, because it looks like evidence.
+Both are **marked in the file where they stand**, counted in the header, and listed at the foot.
+
+The brackets stay in the finished file. A Sources section that no sentence points into records
+nothing; delete them before you post it.
+
+**Nothing anybody typed in game is ever part of it.** `ReceiveText` and `SendText` have no handler at
+all, so a message from a stranger in an open system cannot travel into the largest prompt D47
+assembles — or out of it into something you published.
+
+### It was read by hand against a real session, and that found things
+
+Three real logs over one 1,435-event session, checked line by line against the journal. The
+first-person log invented **no events at all**: the twelve ship swaps in order, 65/16/32 rolls to
+grade 5, 470 ly across eight jumps, six dockings at three stations — all correct. Its two flagged
+sentences were editorial rather than false.
+
+The ship's-AI voice is a different animal. Told to write in character, it invented **another Guardian
+core, its own downtime, and the state of the hold** — fourteen untraceable sentences against the
+plain voice's two. Naming those inventions in the instructions cut it to nine, and it invented the
+companion anyway. Which is the argument for the check existing rather than the instruction being
+trusted, arriving as evidence.
+
+### Whose log it is
+
+Three voices, and the shipped default is the plain one:
+
+| Setting | What it writes |
+|---|---|
+| **You write it, in your own words** | Your own account, first person. The default. |
+| **D47 writes about you** | The ship's AI, in your chosen personality, writing about your flying. |
+| **You write, D47 chips in** | Your account, with D47 interjecting a few times. |
+
+**A log is D47 speaking at length, so it inherits the persona's protection.** With personality
+switched off, the ship's-AI voice writes plainly rather than writing as somebody else — and the file
+says which voice you asked for and which one actually wrote it.
+
+### It costs money, and says so first
+
+Prose over a long session is the largest single request D47 will ever make, so asking is two steps:
+
+> **you:** write my commander's log
+>
+> **D47:** A log of the last session: 24 things I can account for, out of 1,435 events in 1 journal
+> file(s). Writing it would cost about $0.05 — about 1,406 tokens in and up to 1,800 tokens of prose
+> back, through claude-opus-5. Say "write the log" and I will.
+>
+> **you:** write the log
+
+Nothing is written until you have seen the figure. Working it out reads your journals here and sends
+nothing. What it actually cost goes to the same spend ledger as everything else, so *what has this
+cost this month* includes it. The three real runs quoted about $0.05 and cost $0.02, $0.03 and
+$0.04 — the quote is a ceiling, which is the direction it should err in.
+
+A run never overwrites an earlier log. It is the one file in `data/` that D47 does not consider its
+own.
+
+### Costing you nothing you were not already paying
+
+The advertised tool surface **did not move by one byte**. The SRV profile is still at 39,914 of
+40,000, exactly where 0.31.0 left it. All three new tools are protected: the model is the part of D47
+that reads untrusted text, and it is also not the part that gets to authorise the largest request D47
+makes.
+
+---
+
 ## 0.32.0 — 2026-08-18 — It learns your mistakes
 
 list.md Phase 32. Directive 47 could tell you what you had told it. Now it can tell you what you

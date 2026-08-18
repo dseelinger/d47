@@ -335,6 +335,12 @@ public sealed class AppHost : IDisposable
     public (D47.Core.Habits.HabitBook Book, Action? Mine)? Habits { get; private set; }
 
     /// <summary>
+    /// The Commander's log (list.md Phase 33). Null under the designer, where the row reads a
+    /// folder that does not exist and offers no way to spend anything.
+    /// </summary>
+    public D47.Core.Logbook.LogbookBook? Logbook { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -765,6 +771,38 @@ public sealed class AppHost : IDisposable
         // library, which is replaced whenever the Commander drops a file into data/audio.
         AppHost? self = null;
 
+        // A session, written up (list.md Phase 33). The one thing d47 produces that the Commander
+        // takes away, so it goes to its own folder beside the executable rather than into data/logs,
+        // which already holds d47's diagnostics and would make "my log" a support question.
+        var logbook = new D47.Core.Logbook.LogbookBook(
+            new D47.Core.Logbook.LogFolder(
+                Path.Combine(paths.Data, D47.Core.Logbook.LogFolder.FolderName),
+                loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>()),
+            new D47.Core.Logbook.LogDigestBuilder(loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
+            new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
+            () => settings.Current.Logbook,
+
+            // Read at the moment a log is asked for rather than captured now, because a Commander
+            // who has been flying since launch has journals here that did not exist then.
+            () => JournalsOnDisk(journalDirectory, logger),
+            () => DateTimeOffset.Now,
+
+            // The provider, the model and the persona as they are at this instant. A snapshot,
+            // because all three can change between the quote and the writing, and a log priced
+            // against one model and written by another would make the quote a fiction — which
+            // LogbookBook.WriteAsync checks for rather than assumes.
+            () => new D47.Core.Logbook.LogbookContext
+            {
+                Provider = self?.Turns.Provider,
+                Model = self?.Turns.Model,
+                PersonalityEnabled = settings.Current.Llm.PersonalityEnabled,
+                Persona = self?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+                AboutMe = settings.Current.Llm.AboutMe,
+                Ledger = spendLedger,
+                Version = version,
+            },
+            loggerFactory.CreateLogger<D47.Core.Logbook.LogbookBook>());
+
         // Audio comes up before the registry because the speech capability's settings rows read
         // the bed names and the device list from it. The sink is opened here rather than lazily
         // so a machine with no working output says so once, at startup, instead of on the first
@@ -1082,7 +1120,10 @@ public sealed class AppHost : IDisposable
                 habitBook,
 
                 // What the "read my journals" button does (list.md Phase 32).
-                () => MineHabits));
+                () => MineHabits,
+
+                // Turning a session into something worth keeping (list.md Phase 33).
+                logbook));
 
         built = capabilities;
 
@@ -1275,6 +1316,7 @@ public sealed class AppHost : IDisposable
         // instant and Core reads no clock of its own.
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
         host.Habits = (habitBook, MineHabits);
+        host.Logbook = logbook;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
@@ -4035,6 +4077,35 @@ public sealed class AppHost : IDisposable
     /// called "gear down" would shadow a phrase that already means something and the Commander
     /// would have no way to tell which one ran.
     /// </summary>
+    /// <summary>
+    /// Every journal on the disk, oldest first, for the Commander's log (list.md Phase 33).
+    /// <para>
+    /// Name order rather than filesystem timestamps, because Elite's filenames already encode the
+    /// session start and that is what survives a copy — the same judgement
+    /// <see cref="D47.Core.Journal.JournalFolder.LatestFile"/> makes and for the same reason. The
+    /// window narrows this to a handful of files before a line is read; see
+    /// <see cref="D47.Core.Logbook.LogRanges.FilesFor"/>.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<string> JournalsOnDisk(string directory, Microsoft.Extensions.Logging.ILogger logger)
+    {
+        try
+        {
+            return Directory.Exists(directory)
+                ?
+                [
+                    .. Directory.EnumerateFiles(directory, D47.Core.Journal.JournalFolder.FilePattern)
+                        .OrderBy(Path.GetFileName, StringComparer.Ordinal),
+                ]
+                : [];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not list the journals in {Directory}", directory);
+            return [];
+        }
+    }
+
     private static IReadOnlyList<string> PhrasesAlreadyTaken(CapabilityRegistry? registry) =>
         registry is null
             ? []

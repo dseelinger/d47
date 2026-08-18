@@ -95,6 +95,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (D47.Core.Habits.HabitBook Book, Action? Mine)? _habits;
 
     /// <summary>
+    /// The Commander's log (list.md Phase 33). Null under the designer and in a test that is not
+    /// about it, and the row then reads a folder with no way to write into it.
+    /// </summary>
+    private D47.Core.Logbook.LogbookBook? _logbook;
+
+    /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
     /// capabilities that declare rows, and a phrase can come from one that does not.
@@ -128,7 +134,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Func<Task>? setUpKeys = null,
         LoreEditing? lore = null,
         (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null,
-        (D47.Core.Habits.HabitBook Book, Action? Mine)? habits = null)
+        (D47.Core.Habits.HabitBook Book, Action? Mine)? habits = null,
+        D47.Core.Logbook.LogbookBook? logbook = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -143,6 +150,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _lore = lore;
         _memories = memories;
         _habits = habits;
+        _logbook = logbook;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -1261,6 +1269,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == HabitsCapability.StoreKey && _habits is not null:
                 return BuildHabits(row);
 
+            // The eighth, and the only one behind which a button spends money. It opens a window
+            // rather than acting, because item 4 of Phase 33 requires the figure to be seen before
+            // the spend is agreed to and a settings row has nowhere to show one.
+            case SettingKind.Info when row.Key == LogbookCapability.StoreKey && _logbook is not null:
+                return BuildLogbook(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1447,6 +1461,51 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             stack.AttachedToVisualTree += (_, _) => book.Book.Store.Changed += OnChanged;
             stack.DetachedFromVisualTree += (_, _) => book.Book.Store.Changed -= OnChanged;
+        }
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// The Commander's log, behind a button (list.md Phase 33).
+    /// <para>
+    /// A window rather than a row for the same reason habits get one, and one more: this is the
+    /// only surface in d47 that spends real money on request, so it needs room for a quote, a
+    /// window to cover, and a second button that stays dead until the first has answered.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildLogbook(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenLogbook",
+            Content = "Write up a session",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_logbook is not { } logbook || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.LogbookWindow(logbook).ShowDialog(owner);
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        if (_logbook is { } book)
+        {
+            void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(refresh);
+
+            stack.AttachedToVisualTree += (_, _) => book.Changed += OnChanged;
+            stack.DetachedFromVisualTree += (_, _) => book.Changed -= OnChanged;
         }
 
         return (stack, refresh, false);
