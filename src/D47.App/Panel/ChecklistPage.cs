@@ -200,14 +200,34 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Content = root;
 
-        checklists.List.Changed += OnChanged;
-        checklists.Proposals.Changed += OnChanged;
+        Rebuild();
+    }
 
-        if (goals is not null)
+    /// <summary>
+    /// Starts listening, and catches up on anything missed while this page was not on screen
+    /// (remediation.md 11, item 3).
+    /// <para>
+    /// <b>Paired with the detach below, and it has to be.</b> The subscription used to be made in
+    /// the constructor and dropped on detach, which is not a pair: drilling into Suggestions
+    /// reflows the tab into two panes and reparents this page, so it detached, unsubscribed, and
+    /// was deaf for the rest of the session. A "Yes" heard out loud then changed the list and the
+    /// page went on showing what it had.
+    /// </para>
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _checklists.List.Changed += OnChanged;
+        _checklists.Proposals.Changed += OnChanged;
+
+        if (_goals is not null)
         {
-            goals.Store.Changed += OnChanged;
+            _goals.Store.Changed += OnChanged;
         }
 
+        // The world moved while this was off screen, which is the ordinary case for a page that is
+        // reparented by a reflow.
         Rebuild();
     }
 
@@ -228,6 +248,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _checklists.List.Changed -= OnChanged;
         _checklists.Proposals.Changed -= OnChanged;
+
+        if (_goals is not null)
+        {
+            _goals.Store.Changed -= OnChanged;
+        }
     }
 
     /// <summary>
@@ -266,12 +291,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Fill();
 
-        return new ScrollViewer
+        var scroller = new ScrollViewer
         {
             Content = page,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
+
+        // The store raises this from whichever thread wrote, so the hop is not optional.
+        void Follow() => Dispatcher.UIThread.Post(Fill);
+
+        // <b>Accepting from this page refreshed it and nothing else did</b>, which is why the gap
+        // was invisible until a spoken yes accepted the same proposal from somewhere else: the
+        // card stayed on screen after the line was already on the list (remediation.md 11, item 3).
+        //
+        // On attach rather than here, and dropped on detach, so the page is not holding a handler
+        // after it has been navigated away from — and so it catches up on whatever happened while
+        // it was gone.
+        scroller.AttachedToVisualTree += (_, _) =>
+        {
+            _checklists.Proposals.Changed += Follow;
+            Fill();
+        };
+
+        scroller.DetachedFromVisualTree += (_, _) => _checklists.Proposals.Changed -= Follow;
+
+        return scroller;
     }
 
     /// <summary>

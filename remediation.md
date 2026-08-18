@@ -38,3 +38,18 @@ the changelog, which is why this file is the current batch and not a growing arc
   every window size. So the box is wide on a wide window, which is the cosmetic cost of having no
   gap at any width.
 
+- [x] **3. A spoken yes left the card on screen.** Reported with a picture: "Yes" was heard, d47
+  answered *Added "Run to the supermarket" to the custom list*, and the panel went on showing the
+  proposal card, `Suggestions (1)`, and a list without the new line on it.
+
+  **Two subscriptions, both wrong, and both invisible until the change came from somewhere else.**
+  The suggestions page refreshed itself from its own Accept and Decline buttons and from nothing
+  else, so it never followed a proposal answered by voice. And the checklist page subscribed in its
+  constructor and unsubscribed on detach, which is not a pair — drilling into Suggestions reflows
+  the tab into two panes and reparents the page, so it detached, unsubscribed, and was deaf for the
+  rest of the session.
+
+  Both listen from attach to detach now, and both catch up on the way in, since being reparented by
+  a reflow means missing whatever happened in between. Each half fails on its own with the other in
+  place, which is what says they were two faults rather than one.
+
