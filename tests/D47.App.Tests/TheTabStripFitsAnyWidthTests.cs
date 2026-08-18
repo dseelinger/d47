@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -151,5 +152,47 @@ public class TheTabStripFitsAnyWidthTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(panel.GetControl<DockPanel>("PageBar").IsVisible);
+    }
+
+    /// <summary>
+    /// The help glyph sits in the middle of the box that highlights under it
+    /// (remediation.md 10, item 4).
+    /// <para>
+    /// Measured rather than looked at, because "not quite centred" is exactly the kind of thing an
+    /// eye reports and a capture argues about. The highlight is the button's own background, so
+    /// the claim is that the drawn mark's centre and the button's centre are the same point.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHelpGlyphIsCentredInItsButton()
+    {
+        var panel = Furnished(1200);
+
+        var button = panel.GetControl<Button>("HelpButton");
+        var glyph = panel.GetControl<Avalonia.Controls.Shapes.Path>("HelpGlyph");
+
+        // The drawn geometry, not the element's box. The box was always centred; what hung left
+        // was the ink inside it, because Stretch scales the geometry's own bounds and a question
+        // mark is about half as wide as it is tall. A test measuring the box passes either way and
+        // proves nothing — the first version of this one did exactly that.
+        Assert.NotNull(glyph.RenderedGeometry);
+
+        var ink = glyph.RenderedGeometry.Bounds;
+
+        var middle = glyph.TranslatePoint(
+            new Point(ink.X + (ink.Width / 2), ink.Y + (ink.Height / 2)),
+            button);
+
+        Assert.NotNull(middle);
+
+        // Half a pixel either way: a square button with an odd-width glyph in it cannot land on a
+        // whole number, and anything a Commander can see is a great deal larger than that.
+        Assert.True(
+            Math.Abs(middle.Value.X - (button.Bounds.Width / 2)) <= 0.5,
+            $"the glyph sits at x={middle.Value.X} in a {button.Bounds.Width}-wide button");
+
+        Assert.True(
+            Math.Abs(middle.Value.Y - (button.Bounds.Height / 2)) <= 0.5,
+            $"the glyph sits at y={middle.Value.Y} in a {button.Bounds.Height}-tall button");
     }
 }

@@ -887,7 +887,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 + "all of them.",
                 options,
                 _chosen,
-                ChoiceSurface.Layer),
+                ChoiceSurface.Layer)
+            {
+                CurrentWord = "showing now",
+            },
             option =>
             {
                 _chosen = option.Key;

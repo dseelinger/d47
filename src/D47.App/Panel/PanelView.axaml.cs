@@ -1256,7 +1256,10 @@ public partial class PanelView : UserControl
                 null,
                 [.. roots.Select(root => new D47.Core.Interface.ChoiceOption(root.Key, root.Word))],
                 Nav.RootKeyOf(Nav.Tab),
-                D47.Core.Interface.ChoiceSurface.Layer),
+                D47.Core.Interface.ChoiceSurface.Layer)
+            {
+                CurrentWord = "showing now",
+            },
             // Through the navigator's own event, so a reading reached by a press and one reached
             // by a spoken phrase are one path rather than two that have to agree. Dropping the
             // search query and the follow lock is ApplyNavigation's job either way.

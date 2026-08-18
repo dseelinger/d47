@@ -517,6 +517,26 @@
                  IsVisible="False"
                  Margin="14,12,14,0">
         <!--
+          Which reading of this page is showing. A button rather than a ComboBox, because a
+          ComboBox is a popup and a popup has no top level to hang from on a window that is never
+          shown — the headset's host is exactly that. It opens the panel's own chooser in the
+          layer, like every other choice here.
+
+          Filled in code, because the roots come from the navigator: a tab declares its own, and a
+          tab with one root shows no control at all. Hidden below the root, where the breadcrumb
+          is already answering which stack you are in.
+        -->
+        <Button x:Name="ModeButton"
+                DockPanel.Dock="Left"
+                Margin="0,0,12,0"
+                VerticalAlignment="Center"
+                Height="28"
+                Padding="10,0"
+                CornerRadius="4"
+                IsVisible="False"
+                FontSize="{StaticResource D47.Type.Secondary}"
+                Click="OnModeClick" />
+        <!--
           One search affordance for the surface, on the tab that is selected — not four features
           bolted to four pages (list.md Phase 12). What a match does differs by page and that
           difference is the design: the transcript pages highlight and step, and Settings filters,
@@ -526,23 +546,26 @@
           and the headset has no keyboard, and a search box the Commander cannot type into is
           worse than no search at all.
         -->
-        <StackPanel x:Name="SearchRow"
-                    DockPanel.Dock="Right"
-                    Orientation="Horizontal"
-                    Spacing="6"
-                    IsVisible="False"
-                    VerticalAlignment="Bottom"
-                    Margin="12,0,0,4">
+        <!--
+          A DockPanel rather than a horizontal stack, and the search box is the child that flexes
+          (remediation.md 10, item 1). A stack with a fixed 200-pixel box in it takes the width it
+          wants and leaves the mode button beside it whatever is left, which on a narrow pane is a
+          sliver — the same failure this batch removed from the tab strip, reproduced one row
+          down. Everything here keeps its size and the box gives, because a search box that is
+          narrower is still a search box and a mode button that is four pixels wide is not a
+          control at all.
+        -->
+        <DockPanel x:Name="SearchRow"
+                   IsVisible="False"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0">
           <!--
             One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy
             log"). Beside the search box because both are about the page rather than about the
             conversation, and because this is the row a Commander looks at when they are reading
-            rather than talking.
+            rather than talking. The tedious case is several hundred lines of a log, to paste into
+            an issue.
 
-            The text is selectable and Ctrl+C already works on a selection; this is the case that
-            is tedious by hand — several hundred lines of a log, to paste into an issue.
-          -->
-          <!--
             "Copy All", not "Copy" (remediation.md 10, item 3). The text on this page is selectable
             and Ctrl+C already works on a selection, so a button beside it saying "Copy" reads as
             copying that selection — which is the one thing it does not do.
@@ -553,6 +576,8 @@
             neighbours.
           -->
           <Button x:Name="CopyButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
                   Height="28"
                   VerticalAlignment="Center"
                   VerticalContentAlignment="Center"
@@ -579,7 +604,7 @@
             quieter one — which is the exact drift TypeScale exists to stop.
           -->
           <TextBox x:Name="SearchInput"
-                   Width="200"
+                   MinWidth="90"
                    Height="28"
                    Padding="8,3"
                    FontSize="{StaticResource D47.Type.Body}"
@@ -606,20 +631,16 @@
             </TextBox.InnerRightContent>
           </TextBox>
           <TextBlock x:Name="SearchCount"
+                     DockPanel.Dock="Right"
+                     Margin="6,0,0,0"
                      VerticalAlignment="Center"
                      IsVisible="False"
                      FontSize="{StaticResource D47.Type.Secondary}"
                      Foreground="{DynamicResource D47.TextMuted}" />
-          <Button x:Name="SearchPrevious"
-                  Content="&#x2039;"
-                  Padding="8,0"
-                  MinWidth="0"
-                  Height="28"
-                  IsVisible="False"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  ToolTip.Tip="Previous match (Shift+Enter)"
-                  Click="OnSearchPreviousClick" />
+
           <Button x:Name="SearchNext"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
                   Content="&#x203A;"
                   Padding="8,0"
                   MinWidth="0"
@@ -628,26 +649,18 @@
                   FontSize="{StaticResource D47.Type.Body}"
                   ToolTip.Tip="Next match (Enter)"
                   Click="OnSearchNextClick" />
-        </StackPanel>
-        <!--
-          Which reading of this page is showing. A button rather than a ComboBox, because a
-          ComboBox is a popup and a popup has no top level to hang from on a window that is never
-          shown — the headset's host is exactly that. It opens the panel's own chooser in the
-          layer, like every other choice here.
-
-          Filled in code, because the roots come from the navigator: a tab declares its own, and a
-          tab with one root shows no control at all. Hidden below the root, where the breadcrumb
-          is already answering which stack you are in.
-        -->
-        <Button x:Name="ModeButton"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                Height="28"
-                Padding="10,0"
-                CornerRadius="4"
-                IsVisible="False"
-                FontSize="{StaticResource D47.Type.Secondary}"
-                Click="OnModeClick" />
+          <Button x:Name="SearchPrevious"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x2039;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Previous match (Shift+Enter)"
+                  Click="OnSearchPreviousClick" />
+        </DockPanel>
       </DockPanel>
 
       <Panel>

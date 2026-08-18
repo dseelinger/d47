@@ -296,11 +296,12 @@ public sealed class PanelPrompts
 
             if (current)
             {
-                // Said rather than only coloured. "Fitted" is a fact about the ship, and a fact
-                // carried only by a hue is a fact half the Commanders reading it do not have.
+                // Said rather than only coloured. A fact carried only by a hue is a fact some of
+                // the Commanders reading it do not have. The word is the caller's, because this
+                // chooser is general and they are not.
                 stack.Children.Add(new TextBlock
                 {
-                    Text = "fitted now",
+                    Text = request.CurrentWord,
                     FontSize = TypeScale.Small,
                     [!TextBlock.ForegroundProperty] =
                         App.Current!.GetResourceObservable(ThemeManager.AccentKey).ToBinding(),
