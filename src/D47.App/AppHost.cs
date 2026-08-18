@@ -341,6 +341,12 @@ public sealed class AppHost : IDisposable
     public D47.Core.Logbook.LogbookBook? Logbook { get; private set; }
 
     /// <summary>
+    /// The Commander's long arcs (list.md Phase 34). Null under the designer, where the checklist
+    /// page draws no arc band and the row shows a summary and no button.
+    /// </summary>
+    public (D47.Core.Goals.GoalBook Book, Action? Backfill)? Goals { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -623,11 +629,61 @@ public sealed class AppHost : IDisposable
             });
         }
 
+        // The Commander's long arcs (list.md Phase 34). The third store keyed on the Frontier id
+        // and the second walk over the same corpus — separate from habits because an arc carries a
+        // definition of done, a start date and a person's decision to set it aside, none of which a
+        // noticed habit has anywhere to put.
+        var goals = new D47.Core.Goals.GoalStore(
+            Path.Combine(paths.Data, "goals.json"),
+            loggerFactory.CreateLogger<D47.Core.Goals.GoalStore>());
+
+        goals.Poll();
+
+        var goalMiner = new D47.Core.Goals.GoalMiner(
+            loggerFactory.CreateLogger<D47.Core.Goals.GoalMiner>());
+
+        var backfilling = 0;
+
+        // Off the UI thread for the reason MineHabits is, and guarded the same way: the button is a
+        // press, and a Commander who does not see anything happen presses it again.
+        void BackfillGoals()
+        {
+            if (Interlocked.Exchange(ref backfilling, 1) == 1)
+            {
+                return;
+            }
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    goals.Record(goalMiner.Mine(journalDirectory, DateTimeOffset.Now));
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logger.LogWarning(ex, "Could not read the journals for goals");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref backfilling, 0);
+                }
+            });
+        }
+
         // Assigned once the ship and on-foot plans exist, below. A holder rather than a
         // reordering, exactly as bindsRef above is one: the callouts have to be built before the
         // tick loop and the engineer solver reads two stores that are built after the readers, and
         // neither of those orders is negotiable for a lambda's benefit.
         D47.Core.Engineers.EngineerPlanService? unlocksRef = null;
+
+        // Reads the same holder the callouts do, because the engineers arc delegates its "what do I
+        // do about this today" to the unlock solver rather than growing a worse one.
+        var goalBook = new D47.Core.Goals.GoalBook(
+            goals,
+            () => gameState.Active?.Identity.FrontierId,
+            () => gameState.Active,
+            checklists,
+            () => unlocksRef);
 
         var callouts = BuildCallouts(
             loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, () => unlocksRef);
@@ -1123,7 +1179,13 @@ public sealed class AppHost : IDisposable
                 () => MineHabits,
 
                 // Turning a session into something worth keeping (list.md Phase 33).
-                logbook));
+                logbook,
+
+                // The campaigns that outlive a checklist (list.md Phase 34).
+                goalBook,
+
+                // What the "read my journals" button does for the arcs' ages.
+                () => BackfillGoals));
 
         built = capabilities;
 
@@ -1317,6 +1379,7 @@ public sealed class AppHost : IDisposable
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
         host.Habits = (habitBook, MineHabits);
         host.Logbook = logbook;
+        host.Goals = (goalBook, BackfillGoals);
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
@@ -1486,6 +1549,10 @@ public sealed class AppHost : IDisposable
         // mined here — that is a button, and the whole point of item 1 is that it costs nothing
         // while flying.
         tick.Add("habits", _ => habits.Poll());
+
+        // The arcs, on the tick for the same reason: goals.json is hand-editable, so a goal typed
+        // into it is live without a restart. Nothing is walked here — that is a button.
+        tick.Add("goals", _ => goals.Poll());
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 

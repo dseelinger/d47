@@ -42,6 +42,26 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
 
+    /// <summary>
+    /// The Commander's long arcs (list.md Phase 34, "The checklist points at the arc"). Null under
+    /// the designer and in a configuration that tracks none, where the band simply is not drawn.
+    /// </summary>
+    private readonly D47.Core.Goals.GoalBook? _goals;
+
+    private readonly Action? _backfill;
+
+    private readonly Func<DateTimeOffset> _now;
+
+    /// <summary>The arcs band, rebuilt with the page because an arc's figure moves with the journal.</summary>
+    private readonly StackPanel _arcs = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 10) };
+
+    private readonly Button _arcsButton = new()
+    {
+        Padding = new Thickness(12, 4),
+        MinHeight = 30,
+        IsVisible = false,
+    };
+
     private readonly StackPanel _list = new() { Spacing = 4 };
     private readonly TextBlock _problems = new()
     {
@@ -76,11 +96,30 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private string? _selected;
 
-    public ChecklistPage(ChecklistService checklists, PanelNavigator nav, PanelPrompts prompts)
+    /// <summary>
+    /// Whether the arcs are showing. <b>Closed by default</b>, because nine arcs above a working
+    /// list is the list pushed off the page — the band is a header a Commander opens when they want
+    /// to know where the year is going, not a permanent third of the tab.
+    /// </summary>
+    private bool _showArcs;
+
+    /// <summary>Which arc is open, by key. Its next step and its two buttons belong to it.</summary>
+    private string? _openArc;
+
+    public ChecklistPage(
+        ChecklistService checklists,
+        PanelNavigator nav,
+        PanelPrompts prompts,
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfill = null,
+        Func<DateTimeOffset>? now = null)
     {
         _checklists = checklists;
         _nav = nav;
         _prompts = prompts;
+        _goals = goals;
+        _backfill = backfill;
+        _now = now ?? (() => DateTimeOffset.Now);
 
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
@@ -92,6 +131,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
+
+        _arcsButton.Click += (_, _) =>
+        {
+            _showArcs = !_showArcs;
+            Rebuild();
+        };
 
         var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = 30 };
         add.Click += (_, _) => AddLine();
@@ -107,7 +152,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         DockPanel.SetDock(right, Dock.Right);
         bar.Children.Add(right);
-        bar.Children.Add(_scopeButton);
+
+        // The arcs live beside the scope filter rather than above the whole page: they are another
+        // way of reading the same list, which is what the bar is for.
+        bar.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Children = { _scopeButton, _arcsButton },
+        });
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
@@ -116,7 +169,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
+        DockPanel.SetDock(_arcs, Dock.Top);
+
         root.Children.Add(bar);
+        root.Children.Add(_arcs);
         root.Children.Add(_problems);
         root.Children.Add(new ScrollViewer
         {
@@ -129,6 +185,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         checklists.List.Changed += OnChanged;
         checklists.Proposals.Changed += OnChanged;
+
+        if (goals is not null)
+        {
+            goals.Store.Changed += OnChanged;
+        }
 
         Rebuild();
     }
@@ -214,6 +275,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _scopeButton.Content = _chosen == Everything ? "Showing everything" : $"Showing {_chosen}";
 
+        RebuildArcs();
+
         var live = document.Items.Where(item => item.IsLive && Matches(item)).ToList();
 
         var open = live.Where(item => !item.IsComplete).ToList();
@@ -257,6 +320,228 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
 
         ShowProblems();
+    }
+
+    /// <summary>
+    /// The arcs band (list.md Phase 34, "The checklist points at the arc").
+    /// <para>
+    /// <b>Here rather than on a tab of its own</b>, because the join is the feature: a goal that
+    /// takes months and the lines it produced this week belong on one page, and putting them on two
+    /// would make the connection something a Commander has to remember rather than something they
+    /// can see.
+    /// </para>
+    /// </summary>
+    private void RebuildArcs()
+    {
+        _arcs.Children.Clear();
+
+        if (_goals is null)
+        {
+            _arcsButton.IsVisible = false;
+            _arcs.IsVisible = false;
+            return;
+        }
+
+        var standings = _goals.Standings;
+        var running = standings.Count(standing => !standing.IsDone);
+
+        _arcsButton.IsVisible = true;
+        _arcsButton.Content = _showArcs ? "Hide goals" : $"Goals ({running} running)";
+        _arcs.IsVisible = _showArcs;
+
+        if (!_showArcs)
+        {
+            return;
+        }
+
+        if (standings.Count == 0)
+        {
+            _arcs.Children.Add(Muted("Every goal is set aside."));
+            return;
+        }
+
+        foreach (var standing in standings)
+        {
+            _arcs.Children.Add(Arc(standing));
+        }
+
+        // The button that gives every arc its age. A press rather than anything automatic: it reads
+        // every journal on the disk, and that is a thing a person asks for.
+        if (_goals.Mine is null && _backfill is not null)
+        {
+            var read = new Button
+            {
+                Content = "Read my journals",
+                Padding = new Thickness(12, 4),
+                MinHeight = 30,
+                Margin = new Thickness(0, 4, 0, 0),
+            };
+
+            read.Click += (_, _) => _backfill();
+
+            _arcs.Children.Add(Muted(
+                "Nothing here has an age yet, and the milestones have no figures. Reading back "
+                + "through the journals already on this disk is what gives them one."));
+
+            _arcs.Children.Add(read);
+        }
+    }
+
+    /// <summary>One arc: what it is, how far along, how long it has run — and, when open, what to do about it.</summary>
+    private Control Arc(D47.Core.Goals.GoalStanding standing)
+    {
+        var open = standing.Arc.Key == _openArc;
+        var body = new StackPanel { Spacing = 2 };
+
+        body.Children.Add(new TextBlock
+        {
+            Text = standing.IsDone ? "✓  " + standing.Arc.Name : standing.Arc.Name,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        // The figure, then the bar — and no bar at all where the fraction is unknown. A bar drawn
+        // at nothing is the one thing item 2 forbids: it reads as no progress rather than as no
+        // answer.
+        body.Children.Add(Muted(Aside(standing)));
+
+        if (standing.Fraction is { } fraction)
+        {
+            body.Children.Add(new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 1,
+                Value = fraction,
+                Height = 4,
+                Margin = new Thickness(0, 4, 0, 0),
+            });
+        }
+
+        if (open)
+        {
+            body.Children.Add(Step(standing));
+        }
+
+        var card = new Border
+        {
+            Padding = new Thickness(12, 8),
+            CornerRadius = new CornerRadius(4),
+            BorderThickness = new Thickness(1),
+            Child = body,
+            MinHeight = 34,
+        };
+
+        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(
+            card,
+            Border.BorderBrushProperty,
+            open ? ThemeManager.AccentKey : ThemeManager.SurfaceAltKey);
+
+        AutomationProperties.SetName(card, standing.Arc.Name);
+
+        card.PointerPressed += (_, _) =>
+        {
+            _openArc = open ? null : standing.Arc.Key;
+            Rebuild();
+        };
+
+        return card;
+    }
+
+    /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>
+    private string Aside(D47.Core.Goals.GoalStanding standing)
+    {
+        var parts = new List<string>();
+
+        if (standing.IsDone)
+        {
+            parts.Add("done");
+        }
+        else if (standing.Note is { Length: > 0 } note)
+        {
+            parts.Add(note);
+        }
+        else if (standing.Have is { } have && standing.Need is { } need)
+        {
+            parts.Add($"{have:N0} of {need:N0}");
+        }
+        else
+        {
+            // Never "0". An arc nothing can currently evaluate has to read as one.
+            parts.Add("not known yet");
+        }
+
+        if (standing.Source == D47.Core.Goals.GoalSource.Mined && standing.AsOf is { } stamp)
+        {
+            parts.Add($"as of {stamp:d MMM yyyy}");
+        }
+
+        if (!standing.IsDone && standing.Age(_now()) is { TotalDays: >= 1 } age)
+        {
+            parts.Add($"running {(int)age.TotalDays} days");
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    /// <summary>
+    /// What to do about this arc today, and the two things a Commander can do about the arc itself.
+    /// <para>
+    /// <b>Adding is a proposal.</b> It goes to the suggestions page like everything else, so
+    /// accepting stays their act rather than a button that writes their list.
+    /// </para>
+    /// </summary>
+    private Control Step(D47.Core.Goals.GoalStanding standing)
+    {
+        var panel = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
+
+        var step = _goals?.Next(standing.Arc.Key);
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = step?.Say ?? standing.Arc.Done,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+        if (step is { CanPropose: true })
+        {
+            var promote = new Button
+            {
+                Content = "Suggest a line",
+                Padding = new Thickness(12, 4),
+                MinHeight = 30,
+            };
+
+            promote.Click += (_, _) =>
+            {
+                Say(_goals!.Promote(standing.Arc.Key));
+                Rebuild();
+            };
+
+            buttons.Children.Add(promote);
+        }
+
+        var aside = new Button
+        {
+            Content = "Set aside",
+            Padding = new Thickness(12, 4),
+            MinHeight = 30,
+        };
+
+        aside.Click += (_, _) =>
+        {
+            Say(_goals!.SetAside(standing.Arc.Key, aside: true));
+            _openArc = null;
+            Rebuild();
+        };
+
+        buttons.Children.Add(aside);
+        panel.Children.Add(buttons);
+
+        return panel;
     }
 
     private bool Matches(ChecklistItem item)
@@ -322,6 +607,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // Scope on the line rather than as a heading over a group of them.
         var aside = new List<string> { item.Scope.ToString() };
+
+        // And the arc it came from, where one proposed it (list.md Phase 34). Without this,
+        // finishing the line visibly moves nothing bigger than itself, which is the phase's own
+        // statement of why the join is worth having.
+        if (item.Goal is { Length: > 0 } goal)
+        {
+            // Through the book rather than the catalogue, so a line from a goal the Commander
+            // invented names it as they wrote it rather than as a key.
+            aside.Add("towards " + (_goals?.Find(goal)?.Arc.Name ?? goal));
+        }
 
         if (ChecklistNextAction.For(item.State) is { } next)
         {

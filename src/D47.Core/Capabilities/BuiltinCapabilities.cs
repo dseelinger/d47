@@ -150,7 +150,17 @@ public static class BuiltinCapabilities
         // about it, on the same terms as the two above: the capability still registers, so its four
         // rows and its documentation page exist, and every tool answers that there is nothing set
         // up to write with.
-        Logbook.LogbookBook? logbook = null) =>
+        Logbook.LogbookBook? logbook = null,
+
+        // The Commander's long arcs (list.md Phase 34). Null under the designer and in tests that
+        // are not about it, on the same terms as the three above: the capability still registers,
+        // so its row and its documentation page exist, and every tool answers that nothing is
+        // being tracked.
+        Goals.GoalBook? goals = null,
+
+        // What pressing "read my journals" does for the arcs. A function returning an action for
+        // the reason mineHabits gives — Core owns no thread, and the pass is seconds long.
+        Func<Action?>? backfillGoals = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -219,6 +229,13 @@ public static class BuiltinCapabilities
         // thing d47 does with the journals rather than with the game, and the tail of the list is
         // where a new capability costs two documentation pages a nav_order instead of twenty-nine.
         LogbookCapability.Create(logbook),
+
+        // And after the log, for the fourth time and the same reason. This one is about a history
+        // too — the arcs are aged from the same corpus the last two phases read.
+        GoalsCapability.Create(
+            goals,
+            backfillGoals ?? (() => null),
+            now ?? (() => DateTimeOffset.MinValue)),
 
         PrivacyCapability.Create(settings, searchAvailable, memories, habits),
         SettingsCapability.Create(settings),

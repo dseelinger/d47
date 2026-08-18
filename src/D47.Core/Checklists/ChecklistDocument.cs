@@ -96,7 +96,12 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>Adds an authored line. The Commander's own words, attributed to them.</summary>
-    public ChecklistChange AddNote(ChecklistScope scope, string text)
+    /// <param name="goal">
+    /// The arc that asked for it, where one did (list.md Phase 34). Carried here rather than only
+    /// on the proposal, because a proposal is accepted into a <em>new</em> item and provenance a
+    /// Commander loses on the way onto their own list is provenance they never had.
+    /// </param>
+    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null)
     {
         var trimmed = text.Trim();
 
@@ -126,6 +131,7 @@ public sealed record ChecklistDocument
             Kind = ChecklistItemKind.Authored,
             Text = trimmed,
             Provenance = ChecklistProvenance.Attributed,
+            Goal = goal,
         };
 
         return new ChecklistChange(

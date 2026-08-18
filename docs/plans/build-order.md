@@ -263,11 +263,19 @@ assertion entirely, and that the weakened-guardrail proof list.md asks for does 
 gpt-5.6-terra. None of those get easier by waiting, and each of 31 to 34 would have added surface on
 top of them.
 
-**31 to 34 are ranked on the same blind spot as everything else, and 31 is now next.** They are ordered by how much of
+**Phases 31, 32, 33 and 34 all shipped on 2026-08-18, so the five are done and this document has no
+unbuilt phase left in it.** The plan of record for the last of them, including the rank table this
+repository declined to hand-write, the ninth arc that was cut on the Commander's own reading of who
+plays CQC, and the second thing the corpus corrected about mining it, is
+[phase-34-the-long-arc.md](phase-34-the-long-arc.md). **Its ordering argument held too**: it was
+ranked last of the four on how much of it was already built, and the engineer solver it was expected
+to generalise is exactly what its hardest item delegates to rather than reimplements.
+
+**31 to 34 were ranked on the same blind spot as everything else, and 31 went first.** They are ordered by how much of
 each is already built rather than by how much anybody wants them: 31 extends Phase 23's tiered
 truth and `SamplingStore`'s shape, 32 is arithmetic over a corpus that already replays in seven
 seconds, 33 needs no new data and no new trust boundary, and 34 generalises the engineer solver.
-None has a plan of record yet, and none needs one until 30 is done.
+Each has a plan of record now, written the day it was built.
 
 ---
 

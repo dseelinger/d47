@@ -105,8 +105,7 @@ public static class ColonisationCapability
                 Description =
                     "Every construction site this Commander's journal has reported: where it is, how "
                     + "far along it is, how many commodities are still outstanding, and when they last "
-                    + "saw it. Several sites can be under construction at once. The figures are as of "
-                    + "their last visit to each site, not live.",
+                    + "saw it. The figures are as of their last visit to each site, not live.",
                 Parameters =
                 [
                     new ToolParameter
@@ -148,10 +147,9 @@ public static class ColonisationCapability
                 Description =
                     "Unpopulated systems within claim range that hold the bodies a colony wants: how "
                     + "many bodies, of what kinds, how many can be landed on, which have rings, and how "
-                    + "far apart they are. Says nothing about whether a system is free to claim — no "
-                    + "index outside the game can see a claim — so these are systems to check in the "
-                    + "System Colonisation Contact, which is the only authority on that. Range is "
-                    + "measured from the station the claim would be made at.",
+                    + "far apart they are. No index outside the game can see a claim, so these are "
+                    + "systems to check in the System Colonisation Contact. Range is measured from "
+                    + "the station the claim would be made at.",
                 Parameters =
                 [
                     new ToolParameter

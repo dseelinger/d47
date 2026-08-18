@@ -62,10 +62,9 @@ public static class SystemNameCapability
                 Description =
                     "Decode what a procedurally-generated system name says about the system: its "
                     + "sector, its boxel, the mass code and the size of the cube that code implies. "
-                    + "Works entirely offline on any name, including one the Commander is reading off "
-                    + "the Galaxy Map and has never visited. Says nothing about what a system is "
-                    + "worth: the mass code orders systems by mass and is not established to predict "
-                    + "payout.",
+                    + "Works offline on any name, including one read off the Galaxy Map and never "
+                    + "visited. Says nothing about what a system is worth: the mass code orders by "
+                    + "mass and does not predict payout.",
                 Parameters =
                 [
                     new ToolParameter

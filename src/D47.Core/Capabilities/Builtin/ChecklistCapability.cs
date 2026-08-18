@@ -279,10 +279,10 @@ public static class ChecklistCapability
                 Name = "plan_on_foot_build",
                 Description =
                     "Set what a suit's or a hand weapon's plan says: a grade to buy at Pioneer Supplies, "
-                    + "and modifications to have an engineer fit. The grade always comes first, because "
-                    + "a grade 1 item has no modification slots and an engineer's base has no Pioneer "
-                    + "Supplies. Modifications are permanent and there are four at most, so set them one "
-                    + "at a time. It does not reach the checklist until the Commander promotes it.",
+                    + "and modifications to have an engineer fit. The grade always comes first: a grade "
+                    + "1 item has no modification slots. Modifications are permanent and there are four "
+                    + "at most, so set them one at a time. It does not reach the checklist until the "
+                    + "Commander promotes it.",
                 Parameters =
                 [
                     new ToolParameter
@@ -342,8 +342,7 @@ public static class ChecklistCapability
                     "Propose what a system's construction plan should say about one place — a body or an "
                     + "orbital slot — and what goes there. D47 holds the plan and counts what the depot "
                     + "says is still owed; it cannot tell you what a facility costs, what it will do to "
-                    + "the system, or what order to build in, because nobody publishes those figures in a "
-                    + "form it can ship.",
+                    + "the system, or what order to build in — nobody publishes those figures.",
                 Parameters =
                 [
                     new ToolParameter
