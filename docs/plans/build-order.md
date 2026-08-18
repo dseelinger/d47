@@ -238,6 +238,32 @@ The plan of record, including the four calls settled on the day it was written a
 that are Anthropic-shaped and say nothing about it, is
 [phase-29-bring-your-own-model.md](phase-29-bring-your-own-model.md).
 
+## Phases 30-34 — appended 2026-08-18, and 30 runs first among them
+
+Five phases from a design session on what to build once Phase 29 lands: prove the model behaves,
+it remembers you, it learns your mistakes, the Commander's log, and the long arc. Appended under
+the same rule as 29, so they sit behind it and behind nothing else.
+
+**Phase 29 shipped on 2026-08-18, so Phase 30 is now next** — by the numbers, as every other time
+this document has said so.
+
+**Phase 30 is not ranked on a guess, which makes it the first entry here that is not.** Every other
+ordering argument in this document weighs how much a Commander wants a thing. This one is about
+decay: Phase 29 takes the provider count from one to two, and **nothing in the repository asserts
+anything about what a model does** — so every phase after 30 adds surface that nothing is checking,
+and the cost of the gap grows with each of them rather than staying put. It is the only phase in
+the five that gets harder the longer it waits.
+
+The plan of record, including the four ways this suite would pass without looking at anything and
+the untrusted path that turned out not to reach the model at all, is
+[phase-30-prove-the-model-behaves.md](phase-30-prove-the-model-behaves.md).
+
+**31 to 34 are ranked on the same blind spot as everything else.** They are ordered by how much of
+each is already built rather than by how much anybody wants them: 31 extends Phase 23's tiered
+truth and `SamplingStore`'s shape, 32 is arithmetic over a corpus that already replays in seven
+seconds, 33 needs no new data and no new trust boundary, and 34 generalises the engineer solver.
+None has a plan of record yet, and none needs one until 30 is done.
+
 ---
 
 ## What would change this order
