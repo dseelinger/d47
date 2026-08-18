@@ -95,7 +95,16 @@ public partial class PanelView : UserControl
     /// rather than on the tab now, because the tab is three readings of one thing and only one
     /// of them touches the disk — which is exactly the asymmetry the collapse keeps.
     /// </summary>
-    private Controls.BusyGlyph _logBusy = new() { IsVisible = false };
+    private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false };
+
+    /// <summary>
+    /// Which reading the mode button says is showing. Written rather than rebuilt, so the glyph
+    /// beside it survives a navigation — see <see cref="DrawModes"/>.
+    /// </summary>
+    private readonly TextBlock _modeLabel = new()
+    {
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+    };
 
     /// <summary>
     /// Whether the search affordance belongs on this surface. Only the desktop window says yes.
@@ -202,6 +211,30 @@ public partial class PanelView : UserControl
         Nav.Register(PanelTab.Transcript, new NavCrumb(ConversationRoot, "Conversation"));
         Nav.Register(PanelTab.Transcript, new NavCrumb(TechnicalRoot, "Technical"));
         Nav.Register(PanelTab.Transcript, new NavCrumb(LogRoot, "Log file"));
+
+        // The mode button's content, once. See DrawModes for why it is not rebuilt.
+        _logBusy.Bind(
+            Avalonia.Controls.Shapes.Shape.StrokeProperty,
+            this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+
+        ModeButton.Content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 7,
+            Children =
+            {
+                _modeLabel,
+                _logBusy,
+
+                // The one thing that says this opens something. Without it the control reads as a
+                // label that happens to be pressable, which is a control nobody presses.
+                new TextBlock
+                {
+                    Text = "▾",
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                },
+            },
+        };
 
         Prompts = new PanelPrompts(Nav, Layer)
         {
@@ -1195,39 +1228,11 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var word = roots.FirstOrDefault(root => root.Key == showing)?.Word ?? roots[0].Word;
-
-        // A fresh glyph each time the content is built. A control belongs to exactly one visual
-        // tree, so a kept instance is one the previous content panel is still holding, and adding
-        // it to a new one throws rather than reparenting.
-        _logBusy = new Controls.BusyGlyph { IsVisible = false };
-
-        _logBusy.Bind(
-            Avalonia.Controls.Shapes.Shape.StrokeProperty,
-            this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-
-        ModeButton.Content = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 7,
-            Children =
-            {
-                new TextBlock
-                {
-                    Text = word,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                },
-                _logBusy,
-
-                // The one thing that says this opens something. Without it the control reads as
-                // a label that happens to be pressable, which is a control nobody presses.
-                new TextBlock
-                {
-                    Text = "▾",
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                },
-            },
-        };
+        // The word changes; the controls do not. Built once and then written to, because the glyph
+        // is handed to Busy.While and a content panel rebuilt underneath it leaves the helper
+        // spinning an instance nothing is showing (remediation.md 10, item 5). It also stops a
+        // navigation discarding three controls to change one string.
+        _modeLabel.Text = roots.FirstOrDefault(root => root.Key == showing)?.Word ?? roots[0].Word;
     }
 
     /// <summary>

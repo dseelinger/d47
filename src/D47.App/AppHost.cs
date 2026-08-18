@@ -4282,7 +4282,10 @@ public sealed class AppHost : IDisposable
             + "Hearing: {Whisper}, {Listening}. Headset: {Vr}. Data: {Data}",
             Version,
             LlmProviderCatalog.Selected(current.Llm.Provider)?.Name ?? current.Llm.Provider,
-            current.Llm.Model,
+
+            // A provider with no model chosen is the state on a fresh install, and "Anthropic/null"
+            // is a line that reads as a fault rather than as a setting nobody has set yet.
+            current.Llm.Model is { Length: > 0 } model ? model : "no model chosen",
             current.Speech.Provider,
             current.Listening.Model,
             current.Listening.Mode,

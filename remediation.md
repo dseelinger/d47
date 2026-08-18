@@ -30,8 +30,14 @@ states for its own entries.
   beside a page of selectable text reads as copying the selection.
 - [x] **4. The help glyph is not centred in its hover highlight.** The drawn `?` sits off-centre
   in the button's highlighted box.
-- [ ] **5. Opening the log file looks like nothing happening.** It reads a file off disk and takes
+- [x] **5. Opening the log file looks like nothing happening.** It reads a file off disk and takes
   long enough to doubt. There is a busy glyph on the mode already; it is not being seen.
+
+  **The read was covered and the draw was not.** The file read ran inside the busy window and the
+  page build — five hundred lines becoming runs, then a layout pass — ran after it, on the thread
+  that paints, with the glyph already put away. Both halves are inside it now. And the glyph was
+  being rebuilt on every navigation, so the helper was handed an instance nothing was showing; the
+  button's content is built once and written to.
 
 ## Reading the page
 
@@ -44,10 +50,12 @@ states for its own entries.
   rebuilt, so the text layout the hit is measured against and the extent the offset is clamped to
   were both from before the change — and clamping against a scroller that has not measured the new
   content clamps to zero. A layout pass in between is the fix.
-- [ ] **7. The log file has no startup or shutdown events.** On start: version, build, whether VR
+- [x] **7. The log file has no startup or shutdown events.** On start: version, build, whether VR
   came up, which providers are configured, the data folder. On stop: why, and whether it was
-  clean. *Built; not yet ticked — `AppHost` is not constructible in a test, so this is confirmed by
-  running d47 and reading the log rather than by an assertion.*
+  clean. Confirmed by running d47 and reading the log, since `AppHost` is not constructible in a
+  test — `d47 0.1.0+d80897b started. Model: Anthropic/no model chosen. Speech: edge. Hearing:
+  tiny.en, hold. Headset: Connecting. Data: …`, then `is stopping: the window was closed` and
+  `stopped cleanly`.
 
   Three lines. A thin one before settings or the headset exist, whose job is to be there when
   startup dies before anything fuller can be said; the full one once the headset has been brought
