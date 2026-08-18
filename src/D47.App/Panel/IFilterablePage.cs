@@ -20,4 +20,21 @@ public interface IFilterablePage
 {
     /// <summary>Shows only what matches. An empty or null query restores everything.</summary>
     void Filter(string? query);
+
+    /// <summary>
+    /// Whether a query would do anything to this page <em>as it is showing right now</em>
+    /// (remediation.md 11, item 6).
+    /// <para>
+    /// The panel's search box is one affordance for the whole surface, and it was drawn on every
+    /// page whether or not the page answered it. A Commander typed "Reaper" on the Ships page,
+    /// watched the list not move, and reported the box rather than the silence — correctly: a
+    /// control that does nothing is worse than an absent one, because it costs a Commander the
+    /// time to find out.
+    /// </para>
+    /// <para>
+    /// A property rather than a fact about the type, because a drill strip is filterable exactly
+    /// when one of the levels it is showing is — which changes as the Commander drills.
+    /// </para>
+    /// </summary>
+    bool Filters { get; }
 }

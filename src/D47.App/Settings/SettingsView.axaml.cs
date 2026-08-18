@@ -786,6 +786,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// it is visible why the whole card survived.
     /// </para>
     /// </summary>
+    /// <summary>Ninety-odd rows across fourteen sections. Always.</summary>
+    public bool Filters => true;
+
     public void Filter(string? query)
     {
         var wanted = query?.Trim() ?? string.Empty;

@@ -291,6 +291,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// a highlight, because a checklist is a list of things rather than a body of text — which is
     /// exactly the per-page difference the one search affordance exists to allow.
     /// </summary>
+    /// <summary>A list of lines is always narrowable.</summary>
+    public bool Filters => true;
+
     public void Filter(string? query)
     {
         _query = (query ?? string.Empty).Trim();

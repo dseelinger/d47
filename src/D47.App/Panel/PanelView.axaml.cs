@@ -1088,10 +1088,7 @@ public partial class PanelView : UserControl
         // search row, and only the window ever turns that on. A headset has no clipboard to copy
         // into — TopLevel.Clipboard is null on a window that is never shown — so the button there
         // would be one that silently does nothing.
-        CopyButton.IsVisible = _searchable && transcript;
-        SearchRow.IsVisible = _searchable && full && !modal;
-
-        ShowPageBar();
+        ShowSearch();
 
         // And the ask line goes with them: a chooser has one question in it and a second text box
         // underneath, pointed at the model, is a second question nobody asked.
@@ -1178,6 +1175,10 @@ public partial class PanelView : UserControl
         if (tab != PanelTab.Transcript)
         {
             BuildPageOnce(tab);
+
+            // After the page is in the pane, because whether a query would do anything is a
+            // question for the page and ApplyChrome above ran before there was one to ask.
+            ShowSearch();
             return;
         }
 
@@ -1845,6 +1846,34 @@ public partial class PanelView : UserControl
     /// <see cref="DrawModes"/> owns the mode button.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether the surface's search box is drawn, and the copy button beside it
+    /// (remediation.md 11, item 6).
+    /// <para>
+    /// <b>Only where a query would do something.</b> The box used to be drawn on every page of a
+    /// surface that had one, so a Commander typed into it on the Ships page and watched nothing
+    /// happen. What a match does is the page's business and always has been; whether there is
+    /// anything for a match to do is the same question, asked one step earlier.
+    /// </para>
+    /// <para>
+    /// The transcript is the case with no page to ask: it highlights and steps rather than
+    /// filtering, which is not <see cref="IFilterablePage"/> and is still a search.
+    /// </para>
+    /// </summary>
+    private void ShowSearch()
+    {
+        var transcript = Tab == PanelTab.Transcript;
+
+        CopyButton.IsVisible = _searchable && transcript;
+
+        SearchRow.IsVisible = _searchable
+                              && Mode == PanelMode.Full
+                              && ModalPane.Child is null
+                              && (transcript || (PagePane.Child as IFilterablePage)?.Filters == true);
+
+        ShowPageBar();
+    }
+
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null

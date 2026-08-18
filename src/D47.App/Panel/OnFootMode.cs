@@ -164,6 +164,13 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
     public string Promote(string item) =>
         Resolve(item) is { } build ? kit.Promote(build.Id) : "That plan is not there any more.";
 
+    /// <summary>The same rule as the fleet's: what was authored can be dropped, what is worn cannot.</summary>
+    public string? DropLabel(string item) =>
+        Resolve(item) is { IsOwned: false } ? "Drop this plan" : null;
+
+    public string Drop(string item) =>
+        Resolve(item) is { } build ? kit.Delete(build.Id) : "That plan is not there any more.";
+
     public bool HasPlan(string item, string slot) => Resolve(item)?.For(slot) is not null;
 
     public void Clear(string item, string slot)

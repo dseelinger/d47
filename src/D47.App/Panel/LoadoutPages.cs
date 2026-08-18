@@ -69,7 +69,7 @@ public static class LoadoutPages
 
             if (crumb.Key.StartsWith(mode.ItemPrefix, StringComparison.Ordinal))
             {
-                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..]);
+                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts);
             }
         }
 
@@ -91,11 +91,24 @@ public static class LoadoutPages
         new($"{SlotPrefix}{buildId}|{slot}", slot);
 
     /// <summary>The crumb for one row of an index, and for one slot below it.</summary>
+    /// <summary>
+    /// One item — a ship, a suit, a weapon.
+    /// <para>
+    /// Levelled, so choosing another one replaces it rather than nesting under it
+    /// (remediation.md 11, item 5). A wide panel keeps the index on screen beside the item, so the
+    /// list is still pressable while an item is open, and without this it produced
+    /// <c>Ships › Tulimiekka › Reaper › Cartage</c> — a trail through three ships at once.
+    /// </para>
+    /// </summary>
     public static NavCrumb Crumb(ILoadoutMode mode, LoadoutRow row) =>
-        new(mode.ItemPrefix + row.Key, row.Word);
+        new(mode.ItemPrefix + row.Key, row.Word) { Level = mode.ItemPrefix };
 
+    /// <summary>
+    /// One slot of one item. Levelled for the same reason, one level down — and because changing
+    /// item drops it, a slot of the ship you just left cannot stay on the trail.
+    /// </summary>
     public static NavCrumb SlotCrumb(ILoadoutMode mode, LoadoutRow row) =>
-        new(mode.SlotPrefix + row.Key, row.Word);
+        new(mode.SlotPrefix + row.Key, row.Word) { Level = mode.SlotPrefix };
 
     private static (string Item, string Slot) SplitSlot(string key)
     {
@@ -361,7 +374,9 @@ public sealed class IndexPage : LoadoutPage
 public sealed class ItemPage : LoadoutPage
 {
     private readonly PanelNavigator _nav;
+    private readonly PanelPrompts? _prompts;
     private readonly string _item;
+    private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = 3 };
     private readonly TextBlock _summary = new()
     {
@@ -371,32 +386,115 @@ public sealed class ItemPage : LoadoutPage
     };
 
     public ItemPage(ILoadoutMode mode, PanelNavigator nav, string item)
+        : this(mode, nav, item, prompts: null)
+    {
+    }
+
+    public ItemPage(ILoadoutMode mode, PanelNavigator nav, string item, PanelPrompts? prompts)
         : base(mode)
     {
         _nav = nav;
         _item = item;
+        _prompts = prompts;
 
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var promote = LoadoutPages.Press(mode.PromoteLabel, () => _summary.Text = Mode.Promote(_item));
 
-        promote.Margin = new Thickness(0, 0, 0, 10);
+        var actions = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children = { promote },
+        };
+
+        // Only where there is something to drop — an intended hull rather than an owned ship
+        // (remediation.md 11, item 7). Built once here rather than in Refresh, because a build
+        // does not stop being intended while the Commander is looking at it: buying the hull
+        // arrives as a fresh page.
+        if (mode.DropLabel(item) is { Length: > 0 } label)
+        {
+            _drop = LoadoutPages.Press(label, Drop);
+            actions.Children.Add(_drop);
+        }
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtItem);
 
         DockPanel.SetDock(_summary, Dock.Top);
-        DockPanel.SetDock(promote, Dock.Top);
+        DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(_summary);
-        root.Children.Add(promote);
+        root.Children.Add(actions);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
         Content = root;
 
         Refresh();
+    }
+
+    /// <summary>
+    /// Drops the plan, having asked (remediation.md 11, item 7).
+    /// <para>
+    /// Asked as a chooser rather than a dialog, because a popup cannot exist in the VR path at
+    /// all — and asked at all because this is the one control on the page with no way back: a
+    /// planned hull is authored, so dropping it discards work rather than a derived view of it.
+    /// </para>
+    /// <para>
+    /// Straight through where the page was built without prompts, which is a designer and a test
+    /// rather than anything a Commander uses.
+    /// </para>
+    /// </summary>
+    private void Drop()
+    {
+        if (_prompts is null)
+        {
+            Dropped();
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "loadout.drop",
+                "Drop",
+                _drop?.Content as string ?? "Drop this",
+                Mode.Summary(_item) is { } what
+                    ? $"{what} There is no way back from this one."
+                    : "There is no way back from this one.",
+                [new ChoiceOption("keep", "Keep it"), new ChoiceOption("drop", "Drop it")],
+                "keep",
+                ChoiceSurface.Layer)
+            {
+                CurrentWord = "chosen now",
+            },
+            option =>
+            {
+                if (option.Key == "drop")
+                {
+                    Dropped();
+                }
+            });
+    }
+
+    /// <summary>
+    /// Drops it and says so on the summary line, which is where <c>Promote</c> already reports.
+    /// <para>
+    /// The Commander is left here rather than sent back, because the sentence is worth reading:
+    /// dropping a build that had already put lines on the checklist says that those lines are
+    /// still there. Refreshing turns the rest of the page into "that build is not there any
+    /// more", so the level says plainly that it is spent and Back is the obvious next press.
+    /// </para>
+    /// </summary>
+    private void Dropped()
+    {
+        var said = Mode.Drop(_item);
+
+        Refresh();
+
+        _summary.Text = said;
     }
 
     protected override void Refresh()

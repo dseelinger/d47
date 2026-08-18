@@ -148,6 +148,17 @@ public sealed class ShipsMode(
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
 
+    /// <summary>
+    /// A hull the Commander intends to buy can be dropped; one they own cannot
+    /// (remediation.md 11, item 7). Owned is derived from the journal and intended is authored,
+    /// which is the same rule the checklist draws between a computed line and a written one.
+    /// </summary>
+    public string? DropLabel(string item) =>
+        Resolve(item) is { IsOwned: false } ? "Drop this hull" : null;
+
+    public string Drop(string item) =>
+        Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";
+
     public bool HasPlan(string item, string slot) => Resolve(item)?.For(slot) is not null;
 
     public void Clear(string item, string slot)

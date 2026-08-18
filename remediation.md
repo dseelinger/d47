@@ -67,3 +67,37 @@ the changelog, which is why this file is the current batch and not a growing arc
   sits outside the scroller, or the last arc came to rest against the first checklist line and they
   read as one list.
 
+- [x] **5. `Ships › Tulimiekka › Reaper › Cartage` — a trail through three ships at once.** A wide
+  panel shows the level you are on beside the one above it, so the fleet list is still on screen
+  and still pressable while a ship is open — and pressing another ship there pushed it on top of
+  the first rather than in place of it.
+
+  A crumb can now say what **kind** of level it is, and pushing one replaces the level of its own
+  kind that is already open along with everything underneath it: a slot of the Tulimiekka is not a
+  slot of the Reaper. Declared on the crumb by the page that pushes rather than worked out from
+  key prefixes, and a crumb that names no kind nests exactly as it always did — so no other tab
+  changed.
+
+- [x] **6. A search box on a page that cannot search.** "Reaper" typed on the Ships page, the list
+  unmoved. The box was drawn wherever a surface had one, whether or not the page answered it.
+
+  A page now says whether a query would do anything to it as it is showing, and the box is drawn
+  only where the answer is yes. A drill strip answers for the levels it currently shows, which is
+  the case that has to be live: it changes as the Commander drills. The transcript is the exception
+  with no page to ask — it highlights and steps rather than filtering, which is not a filterable
+  page and is still a search.
+
+  *The alternative was to make the fleet list filterable instead of hiding the box. Hiding it is
+  what was asked for; making Ships searchable is a small change on top if it is wanted.*
+
+- [x] **7. No way to drop a hull you do not own.** The button that plans one is on the index and
+  nothing undid it, so a Python planned by mistake was on the fleet list for good.
+
+  A planned item offers to be dropped, and asks first — it is authored work with no way back, and
+  the confirmation is a chooser rather than a dialog because a popup cannot exist in the VR path.
+  **An owned ship does not offer it**: it comes out of the journal and is not d47's to remove,
+  which is the same rule the checklist draws between a computed line and a written one. Absent
+  rather than disabled, because a control that exists to be refused teaches the wrong thing about
+  what the page can do. Suits and weapons get it on the same terms, since the two services already
+  had the same delete.
+

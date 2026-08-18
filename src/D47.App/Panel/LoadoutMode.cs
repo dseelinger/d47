@@ -115,6 +115,26 @@ public interface ILoadoutMode
 
     string PromoteLabel { get; }
 
+    /// <summary>
+    /// The label for dropping this item's plan, or null where there is nothing to drop
+    /// (remediation.md 11, item 7).
+    /// <para>
+    /// <b>Only for something the Commander does not own.</b> An owned ship comes out of the
+    /// journal and is not d47's to remove — the plan attached to it is, but the ship is a fact.
+    /// An intended hull is entirely authored, and a Commander who changes their mind about buying
+    /// a Python had no way at all to say so: the button that made it is on the index and nothing
+    /// undid it.
+    /// </para>
+    /// <para>
+    /// Null rather than a disabled button, because a control that exists to be refused teaches
+    /// the wrong thing about what the page can do.
+    /// </para>
+    /// </summary>
+    string? DropLabel(string item);
+
+    /// <summary>Drops it, and says what happened. Only ever called where the label is not null.</summary>
+    string Drop(string item);
+
     /// <summary>What is actually there, from the journal. The truth block.</summary>
     IReadOnlyList<LoadoutLine> Fitted(string item, string slot);
 
