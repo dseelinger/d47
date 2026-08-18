@@ -83,6 +83,18 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
+    /// <summary>
+    /// Import and export, behind one button (remediation.md 10, item 15). One rather than two,
+    /// because they are the same rare errand in two directions and two permanent buttons on a
+    /// working bar is two things to read past every session.
+    /// </summary>
+    private readonly Button _transfer = new()
+    {
+        Content = "Transfer",
+        Padding = new Thickness(12, 4),
+        MinHeight = 30,
+    };
+
     private string _chosen = Everything;
 
     /// <summary>What the surface's own search box is narrowing the page to. Empty for nothing.</summary>
@@ -141,6 +153,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = 30 };
         add.Click += (_, _) => AddLine();
 
+        // Import and export (remediation.md 10, item 15). Beside the filter rather than beside
+        // "Add a line": adding is what a Commander does to this list every session, and moving the
+        // whole thing to another machine is what they do once.
+        _transfer.Click += (_, _) => ChooseTransfer();
+
         var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
 
         var right = new StackPanel
@@ -159,7 +176,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { _scopeButton, _arcsButton },
+            Children = { _scopeButton, _arcsButton, _transfer },
         });
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -718,8 +735,121 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Children = { up, down },
         };
 
+        // Rewording and removing belong to the selection for the same reason the movers do: four
+        // controls on every one of several hundred rows is four hundred things a ray can hit by
+        // accident (remediation.md 10, items 13 and 14).
+        //
+        // Only on a line the Commander wrote. A derived line's words are the plan's words and
+        // dropping it is a revision of the plan, so both controls would be offers d47 then has to
+        // refuse -- and a control that exists to say no is worse than one that is not there.
+        if (item.Kind == ChecklistItemKind.Authored)
+        {
+            var edit = new Button
+            {
+                Content = "Edit",
+                Padding = new Thickness(10, 2),
+                MinWidth = 0,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var drop = new Button
+            {
+                Content = "Delete",
+                Padding = new Thickness(10, 2),
+                MinWidth = 0,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            edit.Click += (_, _) => EditLine(item);
+            drop.Click += (_, _) => DeleteLine(item);
+
+            AutomationProperties.SetName(edit, "Edit this line");
+            AutomationProperties.SetName(drop, "Delete this line");
+
+            movers.Children.Add(edit);
+            movers.Children.Add(drop);
+        }
+
         DockPanel.SetDock(movers, Dock.Right);
         return movers;
+    }
+
+    /// <summary>
+    /// Rewords a line the Commander wrote (remediation.md 10, item 13).
+    /// <para>
+    /// The same prompt <see cref="AddLine"/> uses, opened on the keyboard rather than on the
+    /// microphone and carrying what the line already says. Correcting a word is not the same act
+    /// as writing a sentence: the value already exists and most of it is right, which is the case
+    /// the keyboard is better at and speech is worst at.
+    /// </para>
+    /// </summary>
+    private void EditLine(ChecklistItem item)
+    {
+        _prompts.Enter(
+            new EntryRequest(
+                "checklist.edit",
+                "Edit",
+                "Edit this line",
+                "Your own words. The line keeps its place, its tick and whatever it came from.",
+                item.Text,
+                EntrySurface.Keyboard,
+                value => string.IsNullOrWhiteSpace(value)
+                    ? EntryVerdict.No("A line with nothing written on it is not a line.")
+                    : EntryVerdict.Ok),
+            value =>
+            {
+                var change = _checklists.Reword(item.Id, value);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                    return;
+                }
+
+                Rebuild();
+            });
+    }
+
+    /// <summary>
+    /// Takes a line off the list (remediation.md 10, item 14).
+    /// <para>
+    /// <b>Asked first, and asked as a chooser rather than a dialog</b> — a popup cannot exist in
+    /// the VR path at all. Deleting is the one control here with no way back: a tick can be
+    /// un-ticked and a move can be moved again, and this cannot, which is exactly the gap a ray at
+    /// a metre falls into.
+    /// </para>
+    /// </summary>
+    private void DeleteLine(ChecklistItem item)
+    {
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.delete",
+                "Delete",
+                "Delete this line",
+                $"\"{item.Text}\" would come off the list. There is no way back from this one.",
+                [new ChoiceOption("keep", "Keep it"), new ChoiceOption("delete", "Delete it")],
+                "keep",
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "delete")
+                {
+                    return;
+                }
+
+                var change = _checklists.Delete(item.Id);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                    return;
+                }
+
+                // The line that was selected has gone, so the selection goes with it rather than
+                // pointing at an id nothing answers to.
+                _selected = null;
+                Rebuild();
+            });
     }
 
     private void Moved(ChecklistItem item, int by)
@@ -764,6 +894,180 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 Rebuild();
             });
     }
+
+    /// <summary>
+    /// Import or export, asked as a chooser (remediation.md 10, item 15).
+    /// </summary>
+    private void ChooseTransfer()
+    {
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.transfer",
+                "Transfer",
+                "Import or export",
+                "The whole list, as JSON — every line, what it came from, and the ones you have "
+                + "finished with. For moving to another machine.",
+                [new ChoiceOption("export", "Export to a file"), new ChoiceOption("import", "Import from a file")],
+                "export",
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key == "export")
+                {
+                    _ = ExportAsync();
+                }
+                else
+                {
+                    _ = ImportAsync();
+                }
+            });
+    }
+
+    /// <summary>
+    /// Writes the list out.
+    /// <para>
+    /// Through the Commander's own file picker where there is one, and beside the executable where
+    /// there is not. <b>The headset is the second case</b>: its host window is never shown, so it
+    /// has no storage provider to open a picker from — and an export that simply does not work in
+    /// VR would be an export that works on the surface that already has a text editor and fails on
+    /// the one that does not.
+    /// </para>
+    /// </summary>
+    private async Task ExportAsync()
+    {
+        var json = _checklists.Export();
+        var suggested = $"d47-checklist-{_now():yyyy-MM-dd}.json";
+
+        try
+        {
+            if (TopLevel.GetTopLevel(this)?.StorageProvider is { CanSave: true } storage)
+            {
+                var file = await storage.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+                {
+                    Title = "Export the checklist",
+                    SuggestedFileName = suggested,
+                    DefaultExtension = "json",
+                    FileTypeChoices = [ChecklistFiles],
+                });
+
+                if (file is null)
+                {
+                    return;
+                }
+
+                await using var stream = await file.OpenWriteAsync();
+                await using var writer = new StreamWriter(stream);
+                await writer.WriteAsync(json);
+
+                Say($"Exported to {file.Name}.");
+                return;
+            }
+
+            var path = Path.Combine(
+                Path.GetDirectoryName(_checklists.List.Path) ?? ".",
+                suggested);
+
+            await File.WriteAllTextAsync(path, json);
+            Say($"Exported to {path}.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Said rather than thrown. A file that would not write is the Commander's disk telling
+            // them something, and it is not a reason for the panel to fall over.
+            Say($"Could not write the file: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Reads one back, replacing this Commander's list.
+    /// <para>
+    /// Confirmed first, because it is a replacement rather than a merge and there is no way back
+    /// from it — the same reason deleting one line asks.
+    /// </para>
+    /// </summary>
+    private async Task ImportAsync()
+    {
+        string json;
+        string what;
+
+        try
+        {
+            if (TopLevel.GetTopLevel(this)?.StorageProvider is { CanOpen: true } storage)
+            {
+                var picked = await storage.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+                {
+                    Title = "Import a checklist",
+                    AllowMultiple = false,
+                    FileTypeFilter = [ChecklistFiles],
+                });
+
+                if (picked is not [{ } file])
+                {
+                    return;
+                }
+
+                await using var stream = await file.OpenReadAsync();
+                using var reader = new StreamReader(stream);
+
+                json = await reader.ReadToEndAsync();
+                what = file.Name;
+            }
+            else
+            {
+                var path = Path.Combine(
+                    Path.GetDirectoryName(_checklists.List.Path) ?? ".",
+                    "checklist-import.json");
+
+                if (!File.Exists(path))
+                {
+                    Say($"Put the file at {path} and ask again. There is no file picker on this surface.");
+                    return;
+                }
+
+                json = await File.ReadAllTextAsync(path);
+                what = "checklist-import.json";
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Say($"Could not read the file: {ex.Message}");
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.import.confirm",
+                "Import",
+                "Replace your checklist?",
+                $"Everything on your list would be replaced by what is in {what}. There is no way "
+                + "back from this one.",
+                [new ChoiceOption("keep", "Keep what I have"), new ChoiceOption("replace", "Replace it")],
+                "keep",
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "replace")
+                {
+                    return;
+                }
+
+                var change = _checklists.Import(json);
+
+                Say(change.Report);
+
+                if (change.Changed)
+                {
+                    _selected = null;
+                    Rebuild();
+                }
+            });
+    }
+
+    /// <summary>What both pickers filter on. One declaration, so they cannot disagree.</summary>
+    private static readonly Avalonia.Platform.Storage.FilePickerFileType ChecklistFiles = new("Checklist")
+    {
+        Patterns = ["*.json"],
+    };
 
     /// <summary>
     /// The Commander's own line, said or typed. Voice first, because a checklist line is a

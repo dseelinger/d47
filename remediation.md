@@ -90,16 +90,16 @@ states for its own entries.
   a Commander who leaves one unanswered has "yes" and "no" bound until they answer it. That is the
   cost of the option chosen, and the standing line above is also what makes the pending proposal
   impossible to forget about.
-- [ ] **11. Add a line will not take the keyboard.** In the desktop window it should accept typing
+- [x] **11. Add a line will not take the keyboard.** In the desktop window it should accept typing
   and Ctrl+V, not only speech and the on-screen board.
 - [x] **12. "Say it — I am listening" is not true under push-to-talk.** It is not listening until
   the key is held. **Overturns a comment** arguing the one sentence was worded for both modes and
   that the microphone row beside it says which state d47 is really in. It now says what would open
   the gate — hold this key, press this key, say this name — and only continuous mode claims to be
   listening.
-- [ ] **13. Checklist lines are not editable.** Especially the ones the Commander wrote.
-- [ ] **14. There is no way to delete the current line by hand.**
-- [ ] **15. Import and export.** Everything, as JSON — a full round-trip of the checklist file,
+- [x] **13. Checklist lines are not editable.** Especially the ones the Commander wrote.
+- [x] **14. There is no way to delete the current line by hand.**
+- [x] **15. Import and export.** Everything, as JSON — a full round-trip of the checklist file,
   derived lines and provenance included, settled with the Commander as a move-machines feature
   rather than a share-with-a-friend one.
 - [x] **16. "universal" is not a good descriptor; "custom" is.** Everything the Commander or the

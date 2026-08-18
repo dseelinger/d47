@@ -379,6 +379,14 @@ public sealed class PanelPrompts
         private string _typed;
         private bool _keyboard;
 
+        /// <summary>
+        /// Whether the box is being filled from <see cref="_typed"/> rather than the other way
+        /// round. A drawn key and a heard word both write the box, and the box now writes back;
+        /// without this the two chase each other and a partial transcription lands in the value
+        /// that only Done is allowed to set.
+        /// </summary>
+        private bool _writingBack;
+
         public EntryPage(PanelPrompts host, EntryRequest request, Action<string> done)
         {
             _host = host;
@@ -386,13 +394,30 @@ public sealed class PanelPrompts
             _done = done;
             _typed = request.Initial;
 
+            // Writable, which it was not (remediation.md 10, item 11). It was read-only because
+            // the drawn board and the microphone were the only two ways in, and on the surface
+            // that has neither of those problems -- a window, with a keyboard in front of it and a
+            // clipboard behind it -- that made the obvious thing to do the one thing that did not
+            // work. Ctrl+V comes with the control; nothing had to be invented for it.
+            //
+            // It costs the headset nothing. Nothing there sends a keystroke at this box, so it
+            // behaves exactly as it did; what changes is that the surface which can type, can.
             _shown = new TextBox
             {
                 Text = _typed,
-                IsReadOnly = true,
                 FontSize = TypeScale.Heading,
                 Padding = new Thickness(12, 10),
                 Margin = new Thickness(0, 0, 0, 10),
+            };
+
+            // The box is the value when the Commander types into it. Without this, what they typed
+            // is shown and then thrown away on Done, which reads as the keyboard being decorative.
+            _shown.TextChanged += (_, _) =>
+            {
+                if (!_writingBack)
+                {
+                    _typed = _shown.Text ?? string.Empty;
+                }
             };
 
             _state = new TextBlock
@@ -453,6 +478,13 @@ public sealed class PanelPrompts
                 });
 
             Show(request.Surface == EntrySurface.Keyboard);
+
+            // Focused once it is actually in a tree, so a Commander at a desk can simply type or
+            // paste (remediation.md 10, item 11). Harmless where there is no keyboard: nothing in
+            // the headset sends a keystroke, and the panel already swallows the push-to-talk key
+            // before any control sees it, which is what stops holding it filling the box with
+            // brackets.
+            AttachedToVisualTree += (_, _) => _shown.Focus();
         }
 
         /// <summary>Swaps between listening and typing, and says which one is on.</summary>
@@ -471,6 +503,26 @@ public sealed class PanelPrompts
 
             _state.Text = Waiting;
             _host.Attend(OnHeard);
+        }
+
+        /// <summary>
+        /// Puts the value into the box without the box putting it back. The drawn board edits
+        /// <see cref="_typed"/> and shows the result; the keyboard edits the box and it is read
+        /// back. Both are correct, and they must not chase each other.
+        /// </summary>
+        private void WriteBack()
+        {
+            _writingBack = true;
+
+            try
+            {
+                _shown.Text = _typed;
+                _shown.CaretIndex = _typed.Length;
+            }
+            finally
+            {
+                _writingBack = false;
+            }
         }
 
         private void OnHeard(Heard heard)
@@ -544,7 +596,7 @@ public sealed class PanelPrompts
                     pressed.Click += (_, _) =>
                     {
                         _typed += character;
-                        _shown.Text = _typed;
+                        WriteBack();
                     };
 
                     line.Children.Add(pressed);
@@ -557,14 +609,14 @@ public sealed class PanelPrompts
             back.Click += (_, _) =>
             {
                 _typed = _typed.Length > 0 ? _typed[..^1] : _typed;
-                _shown.Text = _typed;
+                WriteBack();
             };
 
             var clear = new Button { Content = "clear", Height = 40, Padding = new Thickness(16, 0) };
             clear.Click += (_, _) =>
             {
                 _typed = string.Empty;
-                _shown.Text = _typed;
+                WriteBack();
             };
 
             _board.Children.Add(new StackPanel

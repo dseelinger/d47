@@ -30,6 +30,11 @@ namespace D47.Core.Checklists;
 /// </summary>
 public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
 {
+    /// <summary>
+    /// How a checklist is written and read. Internal rather than private since the export and
+    /// import pair round-trips through it (remediation.md 10, item 15) -- one set of options, so
+    /// a file d47 wrote is a file d47 reads.
+    /// </summary>
     internal static readonly JsonSerializerOptions Json = new()
     {
         WriteIndented = true,
