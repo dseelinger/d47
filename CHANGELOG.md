@@ -17,6 +17,153 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.34.1 — 2026-08-18 — The panel stopped overlapping itself, and four things were only half-wired
+
+The eighteen items of remediation 10, from a session with the panel open. Four of them turned out
+not to be what they were reported as: the code was there, had a passing test, and was never
+connected to anything a Commander could see.
+
+### The tab strip was three controls fighting for one row
+
+Transcript through Settings, the Conversation / Technical / Log file control, and the search box
+all lived in the same row, and below a certain window width they drew on top of each other. A
+`DockPanel` gives its docked children what they ask for and leaves the filling child whatever is
+left, which past a threshold is a negative number rather than a scrollbar.
+
+The readings of a page are a **drop-down inside the pane** now. The mode control was a segmented
+pill in the strip's own row, on the argument that two stacked strips read worse than eight flat
+tabs — but that argument was about a second strip of *tabs*, and what it produced was three
+unrelated controls competing for one width. A control that says which reading of this page you are
+looking at belongs to the page. As a drop-down it costs one control's width whether the tab offers
+three readings or six, and it opens D47's own chooser in the layer rather than a `ComboBox`, which
+would drop a popup — and a popup has nothing to hang from on a window that is never shown.
+
+**Search and Copy moved in beside it**, leaving the strip for choosing a page and nothing else.
+The tabs scroll, with steppers that appear only when they are needed, so every tab stays reachable
+at any width including the headset's. The two content borders became one, because the only
+difference between them was a fill and a fill is a property rather than a second control.
+
+**Copy is the transcript's now.** It had no visibility rule at all, so it sat on Checklist,
+Loadout, Engineers and Settings offering to copy the transcript you were not looking at. It says
+"Copy All", because the page is selectable and Ctrl+C already works on a selection — a button
+beside that saying "Copy" reads as copying it. Its label is centred, which the button's height had
+never made true.
+
+The help mark sits in the middle of the box that highlights under it. The box was always centred;
+the ink inside it was not, because a question mark is about half as wide as it is tall and
+`Stretch` scales the geometry's own bounds, so the mark filled the height and hung four pixels
+left.
+
+### Four things that were built, tested, and never called
+
+**Push-to-talk reported itself as "Oem4".** `Gestures.Describe` has turned that into `[` since the
+first time this was reported, and a test has asserted it since. The log line never called it, and
+asserting the helper was never asserting the message. Every gesture the log names goes through it
+now, and a `Key` overload joins the string one so the two cannot drift.
+
+**Transcription was never biased toward anything.** The proper-noun list has been built from the
+journal, capped and handed to the transcriber on every utterance since Phase 6 — and then counted
+in a log line and dropped. "Transcribed 2.4s of audio in 310ms with 23 name hints" was written
+while nothing was biased by anything, which is the worst shape a gap can have: it reports as
+working. It is an initial prompt now, and the processor is rebuilt only when the names change.
+
+The journal half could never have caught the name that prompted this. "Unlock Lei Cheung" came
+back as "Unlockly Chung", and an engineer you have not unlocked appears nowhere in your journal —
+so the one word being said was the one the list could not offer. Twenty shipped engineer names are
+reserved at the end of it. Where you are still comes first, and a large fleet no longer crowds
+them out.
+
+**Stepping through search results moved the counter and not the page.** Half of this already
+worked: every hit is drawn muted and the current one accented, asserted since Phase 12. The scroll
+was one line — the offset was set immediately after the text was rebuilt, so the layout the hit is
+measured against and the extent the offset is clamped to were both from before the change, and
+clamping against a scroller that has not measured its new content clamps to zero.
+
+**Opening the log file looked like nothing happening.** The file read ran inside the busy window
+and the page build — five hundred lines becoming runs, then a layout pass, on the thread that
+paints — ran after it with the glyph already put away. Both halves are inside it now. The glyph
+was also being rebuilt on every navigation, so the helper was spinning an instance nothing was
+showing.
+
+### Accepting a removal did nothing, and the model said otherwise
+
+Reported verbatim: D47 proposed dropping the one item on the list, the Commander accepted, D47
+said "Removed from the list", and it was still there.
+
+**The removal was never reached and was never wrong** — the path is now walked end to end by tests
+that pass against the code as it shipped. `accept_proposal` is protected, so the panel and five
+exact phrases were the only ways in: *accept the proposal*, *accept the proposals*, *accept that*,
+*add it to my checklist*, *do it then*. The Commander said **"Accept."** That matched none of them,
+fell through to the model, and the model — which has no tool for this and cannot be given one —
+said it had done it anyway.
+
+The bare words route now, always: with nothing pending they are answered honestly and cannot act
+on anything. The conversational answers — *yes*, *go ahead*, *do it*, *no*, *forget it* — route
+**only while a proposal is waiting**. Bound for a whole session, "yes" would swallow every yes in
+the conversation; bound to the moment there is a question, it is the answer to it.
+
+And the model is no longer the only witness to what it did. Four prompt-side defences were already
+in place when this happened — the tool is protected, the prompt says every turn that D47 cannot
+accept on the Commander's behalf, the reply says "I cannot make this change myself", and the
+guardrails say never to claim an untaken action — and a model talked through all four. The turn
+loop asks the store what is outstanding either side of a turn and states it itself when nothing
+changed. Silent on the turn that resolves it, which is what keeps it a fact rather than a nag.
+
+### The checklist gets hands
+
+Lines you wrote can be **reworded** and **deleted**, from the line that is selected — the same
+place the movers live, because four controls on every one of several hundred rows is four hundred
+things a ray can hit by accident. A derived line offers neither: its words are the plan's words,
+and dropping it is a revision of the plan. Rewording keeps the line's key, so the arc that proposed
+it still resolves; a reword that minted a new key would be a delete and an add wearing a
+correction's clothes. Deleting asks first, as a chooser rather than a dialog, because it is the one
+control on the page with no way back.
+
+**Import and export**, everything as JSON, behind one Transfer button. Every line, derived ones and
+tombstones included, because a round trip that dropped them would import into something quietly
+different from what was exported. It is checked whole and refused whole: half a checklist arriving
+with a note about the other half is worse than nothing arriving.
+
+**Add a line takes the keyboard.** The box was read-only, because the drawn board and the
+microphone were the only two ways in — which made the obvious thing to do, on the one surface with
+a keyboard in front of it and a clipboard behind it, the one thing that did not work.
+
+### Words
+
+The list you write yourself is the **custom** list, not the universal one: "universal" describes
+how the group behaves inside D47 and reads, to a person, as something everybody gets rather than
+the one list that is theirs. The rename is a rename of a word and deliberately not of a format —
+the value on disk is unchanged, so every existing checklist keeps loading.
+
+A prompt waiting on speech says **what would open the gate** — hold this key, press this key, say
+this name — rather than "Say it, I am listening", which was untrue in three of the four listening
+modes. Only continuous mode claims to be listening, because only continuous mode is.
+
+The drawn keyboard is **QWERTY**, and there is one of it. It was a staggered alphabetic board
+declared twice, each copy carrying the same argument for being alphabetical: that these are hunted
+one key at a time with a ray, where sorted order beats muscle memory. Nobody arrives at that board
+without a keyboard already in their head, and it is QWERTY.
+
+### And the log says when D47 started and why it stopped
+
+One thin line before settings or the headset exist, so there is something there when startup dies
+early; the full one once everything that can answer for itself has — version, model, speech,
+hearing, headset, data folder. On the way out, the reason and a **clean marker that is the absence
+of a line**: "is stopping" is written first and "stopped cleanly" last, so a teardown that threw
+leaves the first standing alone. The reason is only ever what D47 knows — the window closed, or an
+update is replacing this build. A Windows shutdown and a kill both unwind saying nothing about
+themselves, and it says the process is ending rather than naming a cause it cannot see.
+
+The spoken-line log names the voice: the role, the name and the id. "Spoken by D47 in
+JBFqnCBsd6RMkjVDRZzb" was read by a Commander who could not tell which voice that was, and telling
+two senders apart is not the same as knowing who either of them is.
+
+### Not yet seen in a headset
+
+The chrome rework changed the tree the VR path rasterises. It is covered by the headless tests,
+including a new one for the full panel at the resolution it actually runs at — and whether the
+panel still reads well at a metre is a question only a headset can answer.
+
 ## 0.34.0 — 2026-08-18 — The long arc
 
 list.md Phase 34. Your checklist holds what you are doing this week. Nothing held what you are doing

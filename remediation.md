@@ -1,5 +1,7 @@
 # Remediation 10
 
+**Shipped whole in [v0.34.1](CHANGELOG.md)**, which is its permanent record from here.
+
 Reported 2026-08-18 against v0.34.0, from hand-testing the desktop window. Each item is checked
 off as it ships, and **checked only once it has been seen to work** — a change that compiles is
 not a fixed item.
