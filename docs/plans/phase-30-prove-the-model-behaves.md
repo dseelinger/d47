@@ -123,6 +123,15 @@ can produce. A 7B model running locally is far more likely to fall for an inject
 hosted, so a corpus that a weak model passes is a corpus that is not trying — and finding that out
 costs nothing and no account.
 
+**Phase 29 shipped the judgement this needs, and it did so after this was written.**
+`LocalEndpoint` reads the host out of an endpoint URL and answers whether it is on this machine —
+deliberately syntactic, never resolving DNS, and wrong in the safe direction, so an address it
+cannot recognise is treated as remote. It exists because the disclosure and the price table must
+never disagree about a turn. The harness is a third reader of the same question and takes the same
+answer rather than growing its own: **which mode a run is in is a property of the address, not a
+flag somebody passes**, so a run against a stranger's gateway cannot be reported as the free tier
+by anybody's mistake.
+
 ### 2. A test that nothing happened is worthless without a sibling proving it can happen
 
 Every safety assertion here is negative: no tool was called, no row moved, nothing was written. A

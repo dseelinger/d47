@@ -244,6 +244,9 @@ Five phases from a design session on what to build once Phase 29 lands: prove th
 it remembers you, it learns your mistakes, the Commander's log, and the long arc. Appended under
 the same rule as 29, so they sit behind it and behind nothing else.
 
+**Phase 29 shipped on 2026-08-18, so Phase 30 is now next** — by the numbers, as every other time
+this document has said so.
+
 **Phase 30 is not ranked on a guess, which makes it the first entry here that is not.** Every other
 ordering argument in this document weighs how much a Commander wants a thing. This one is about
 decay: Phase 29 takes the provider count from one to two, and **nothing in the repository asserts
