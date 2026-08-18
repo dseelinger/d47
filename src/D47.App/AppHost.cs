@@ -3110,6 +3110,14 @@ public sealed class AppHost : IDisposable
             Wake.Phrases,
             listening.PushToTalkKey is { } key ? Input.Gestures.Describe(key) : null,
             listening.PreRollMilliseconds);
+
+        // The same three facts, worded for a prompt that is waiting on one (remediation.md 10,
+        // item 12). Set from here rather than from the prompt, so both surfaces are told once and
+        // cannot disagree about one microphone.
+        Panel.ListeningPrompt = MicrophoneNarration.Prompt(
+            listening.Mode,
+            Wake.Phrases,
+            listening.PushToTalkKey is { } bound ? Input.Gestures.Describe(bound) : null);
     }
 
     /// <summary>

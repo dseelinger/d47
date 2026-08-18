@@ -42,6 +42,19 @@ public sealed class PanelPrompts
     public static readonly string[] Keys =
         ["1234567890", "abcdefghij", "klmnopqrst", "uvwxyz-_.", " "];
 
+    /// <summary>
+    /// True in every listening mode, and what is shown until a host says something better. The
+    /// view model starts on this same string, so the two cannot drift.
+    /// </summary>
+    internal const string WaitingFallback = "Say it, or type it instead.";
+
+    /// <summary>
+    /// What a prompt waiting on speech says about itself — set by the surface from
+    /// <see cref="PanelViewModel.ListeningPrompt"/>, which the host fills from the listening
+    /// settings (remediation.md 10, item 12).
+    /// </summary>
+    public Func<string?>? Waiting { get; set; }
+
     /// <summary>What each open prompt is, by the crumb key it was pushed as.</summary>
     private readonly Dictionary<string, Func<Control>> _pages = [];
 
@@ -341,11 +354,19 @@ public sealed class PanelPrompts
 
         /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at
-        /// a blank page (list.md Phase 25). Worded for both listening modes: under push-to-talk
-        /// the microphone is not open until a key is held, and the panel's own indicator row is
-        /// on the same surface saying which state it is actually in.
+        /// a blank page (list.md Phase 25).
+        /// <para>
+        /// Read per show rather than held as a constant. It used to be the one sentence "Say it —
+        /// I am listening.", with a comment arguing it was worded for both modes; the Commander
+        /// reported it as untrue under push-to-talk, and they are right — the microphone is shut
+        /// until the key is held (remediation.md 10, item 12). The wording now comes from the
+        /// host, which is the only thing here that knows the mode, and is chosen in Core where a
+        /// test reads what a Commander reads.
+        /// </para>
         /// </summary>
-        private const string Waiting = "Say it — I am listening.";
+        private string Waiting => _host.Waiting?.Invoke() is { Length: > 0 } said
+            ? said
+            : WaitingFallback;
 
         private string _typed;
         private bool _keyboard;

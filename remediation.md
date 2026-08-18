@@ -7,7 +7,7 @@ not a fixed item.
 Remediation 9 shipped whole in [v0.23.1](CHANGELOG.md); its permanent record is that section of
 the changelog, which is why this file is the current batch and not a growing archive.
 
-Four of these overturn a decision that is written down in the source. Those are called out
+Several of these overturn a decision that is written down in the source. Those are called out
 against the item, because a comment left standing beside code that no longer obeys it turns the
 file into a liar — the same rule [docs/plans/change-requests.md](docs/plans/change-requests.md)
 states for its own entries.
@@ -53,8 +53,11 @@ states for its own entries.
   there. A defect, and the only one here that is a lie rather than a rough edge.
 - [ ] **11. Add a line will not take the keyboard.** In the desktop window it should accept typing
   and Ctrl+V, not only speech and the on-screen board.
-- [ ] **12. "Say it — I am listening" is not true under push-to-talk.** It is not listening until
-  the key is held.
+- [x] **12. "Say it — I am listening" is not true under push-to-talk.** It is not listening until
+  the key is held. **Overturns a comment** arguing the one sentence was worded for both modes and
+  that the microphone row beside it says which state d47 is really in. It now says what would open
+  the gate — hold this key, press this key, say this name — and only continuous mode claims to be
+  listening.
 - [ ] **13. Checklist lines are not editable.** Especially the ones the Commander wrote.
 - [ ] **14. There is no way to delete the current line by hand.**
 - [ ] **15. Import and export.** Everything, as JSON — a full round-trip of the checklist file,

@@ -195,7 +195,13 @@ public partial class PanelView : UserControl
         Nav.Register(PanelTab.Transcript, new NavCrumb(TechnicalRoot, "Technical"));
         Nav.Register(PanelTab.Transcript, new NavCrumb(LogRoot, "Log file"));
 
-        Prompts = new PanelPrompts(Nav, Layer);
+        Prompts = new PanelPrompts(Nav, Layer)
+        {
+            // Pulled rather than pushed, because the model is bound after this runs and can be
+            // replaced: a value copied here would be the one that was true when the panel was
+            // built (remediation.md 10, item 12).
+            Waiting = () => Model?.ListeningPrompt,
+        };
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Checklist] = ChecklistTab;

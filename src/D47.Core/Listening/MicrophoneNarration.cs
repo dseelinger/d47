@@ -54,4 +54,55 @@ public static class MicrophoneNarration
             _ => string.Empty,
         };
     }
+
+    /// <summary>
+    /// What a prompt that is waiting on a spoken value says about itself (remediation.md 10,
+    /// item 12).
+    /// <para>
+    /// It used to say "Say it — I am listening." in every mode, with a comment arguing that the
+    /// wording covered both — that under push-to-talk the microphone is not open until a key is
+    /// held, and the panel's own indicator row says which state it is really in. The Commander
+    /// read it and reported it as a lie, which settles it: a prompt that claims to be listening
+    /// while the gate is shut is wrong however carefully the sentence was chosen, and pointing at
+    /// another row is asking somebody to reconcile two controls to find out whether one of them
+    /// is true.
+    /// </para>
+    /// <para>
+    /// So it says what would open the gate, in the imperative, because the Commander is being
+    /// asked to do something. Only continuous mode claims to be listening, and only continuous
+    /// mode is.
+    /// </para>
+    /// </summary>
+    /// <param name="gesture">
+    /// The push-to-talk key as a Commander would say it, or null when nothing is bound — rendered
+    /// by the caller for the reason <see cref="For"/> already gives.
+    /// </param>
+    public static string Prompt(string? mode, IReadOnlyList<string> wakePhrases, string? gesture)
+    {
+        ArgumentNullException.ThrowIfNull(wakePhrases);
+
+        if (string.Equals(mode, ListeningCapability.WakeMode, StringComparison.Ordinal))
+        {
+            return wakePhrases is { Count: > 0 } names
+                ? $"Say {names[0]}, then say it."
+                : "Say D47's name, then say it.";
+        }
+
+        if (string.Equals(mode, ListeningCapability.ContinuousMode, StringComparison.Ordinal))
+        {
+            return "Say it — I am listening.";
+        }
+
+        // Hold and toggle both need a key, and neither can be done without one. An unbound key
+        // is not a degraded hint, it is a different instruction: there is no way to speak here at
+        // all, and the keyboard is the answer rather than a preference.
+        if (gesture is null)
+        {
+            return "No push-to-talk key is bound. Type it instead.";
+        }
+
+        return string.Equals(mode, ListeningCapability.ToggleMode, StringComparison.Ordinal)
+            ? $"Press {gesture} and say it."
+            : $"Hold {gesture} and say it.";
+    }
 }
