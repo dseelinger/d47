@@ -133,7 +133,7 @@ public class TranscriptPagesTests
 
         Assert.Equal(TranscriptPage.Conversation, panel.Page);
 
-        Mode(panel, PanelView.LogRoot).IsChecked = true;
+        PanelModes.Choose(panel, PanelView.LogRoot);
 
         Assert.Equal(TranscriptPage.Log, panel.Page);
     }
@@ -172,13 +172,10 @@ public class TranscriptPagesTests
         var window = Laid(new PanelView { DataContext = model });
         var headset = Laid(new PanelView { DataContext = model });
 
-        Assert.Equal(
-            true,
-            Mode(window, PanelView.ConversationRoot).IsChecked);
-
-        Assert.Equal(
-            true,
-            Mode(headset, PanelView.ConversationRoot).IsChecked);
+        // Each surface's own control says Conversation, which is what "each keeps its own" means
+        // when one model serves both.
+        Assert.Equal("Conversation", PanelModes.Showing(window));
+        Assert.Equal("Conversation", PanelModes.Showing(headset));
     }
 
     /// <summary>
@@ -193,25 +190,12 @@ public class TranscriptPagesTests
         var window = Laid(new PanelView { DataContext = model });
         var headset = Laid(new PanelView { DataContext = model });
 
-        Mode(window, PanelView.LogRoot).IsChecked = true;
+        PanelModes.Choose(window, PanelView.LogRoot);
 
         Assert.Equal(TranscriptPage.Log, window.Page);
         Assert.Equal(TranscriptPage.Conversation, headset.Page);
-        Assert.Equal(true, Mode(headset, PanelView.ConversationRoot).IsChecked);
+        Assert.Equal("Conversation", PanelModes.Showing(headset));
     }
-
-    /// <summary>
-    /// One of the segmented mode buttons, by the root key it carries.
-    /// <para>
-    /// By tag rather than by name, because the control is built from the navigator's roots at
-    /// runtime rather than declared in the markup — so there is no name scope to ask, and the
-    /// root key is the stable identity a mode has (list.md Phase 25).
-    /// </para>
-    /// </summary>
-    private static RadioButton Mode(PanelView panel, string root) =>
-        panel.GetControl<StackPanel>("Modes").Children
-            .OfType<RadioButton>()
-            .First(button => (string?)button.Tag == root);
 
     private static string Shown(PanelView panel) =>
         PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript"));

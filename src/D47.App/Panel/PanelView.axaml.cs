@@ -97,11 +97,19 @@ public partial class PanelView : UserControl
     /// </summary>
     private Controls.BusyGlyph _logBusy = new() { IsVisible = false };
 
-    /// <summary>The button that opened the log mode, so <see cref="Controls.Busy"/> can shut it.</summary>
-    private RadioButton? _logMode;
+    /// <summary>
+    /// Whether the search affordance belongs on this surface. Only the desktop window says yes.
+    /// Held rather than read off a control's visibility, because the controls it governs are now
+    /// hidden and shown by the tab as well (remediation.md 10, item 2).
+    /// </summary>
+    private bool _searchable;
 
-    /// <summary>Which roots the segmented control is currently drawn for. See DrawModes.</summary>
-    private IReadOnlyList<NavCrumb> _modeRoots = [];
+    /// <summary>
+    /// What the copy button says when it is not reporting on itself. "All", because the text on
+    /// this page is selectable and Ctrl+C already works on a selection — a button beside it
+    /// saying "Copy" reads as copying that selection (remediation.md 10, item 3).
+    /// </summary>
+    private const string CopyLabel = "Copy All";
 
     /// <summary>
     /// How the host shows the turn's figures, when it gave a way. Null on every surface that was
@@ -746,7 +754,11 @@ public partial class PanelView : UserControl
     /// has neither, and a search box the Commander cannot type into is worse than no search.
     /// </para>
     /// </summary>
-    public void EnableSearch() => SearchRow.IsVisible = true;
+    public void EnableSearch()
+    {
+        _searchable = true;
+        ApplyChrome();
+    }
 
     /// <summary>
     /// Offers the turn's figures behind a link, for a host that has somewhere to show them
@@ -800,7 +812,7 @@ public partial class PanelView : UserControl
 
     private void OnSurfaceKeyDown(object? sender, KeyEventArgs e)
     {
-        if (!SearchRow.IsVisible)
+        if (!_searchable)
         {
             return;
         }
@@ -1013,6 +1025,33 @@ public partial class PanelView : UserControl
         TranscriptPane.IsVisible = transcript && !modal;
         PagePane.IsVisible = !transcript && !modal;
 
+        // One border for the whole content region, so the fill is a property rather than a second
+        // control (remediation.md 10, item 1). The rule it carries is the one the two borders
+        // carried between them: the transcript is Surface, and every furnished page is Background
+        // because the cards inside a settings page are Surface and a card the colour of its page
+        // is not a card.
+        ContentPane.Bind(
+            Border.BackgroundProperty,
+            this.GetResourceObservable(transcript
+                ? Theming.ThemeManager.SurfaceKey
+                : Theming.ThemeManager.BackgroundKey));
+
+        // The page's own bar. Mini takes it with the rest of the chrome, and a modal takes it
+        // because a chooser is a level of the stack rather than a thing on the page.
+        //
+        // Copy is Transcript's alone (remediation.md 10, item 2). It had no visibility rule at
+        // all, so it sat there on Checklist, Loadout, Engineers and Settings offering to copy the
+        // transcript the Commander was not looking at.
+        //
+        // And it stays the desktop's alone, which it was by accident before: it lived inside the
+        // search row, and only the window ever turns that on. A headset has no clipboard to copy
+        // into — TopLevel.Clipboard is null on a window that is never shown — so the button there
+        // would be one that silently does nothing.
+        CopyButton.IsVisible = _searchable && transcript;
+        SearchRow.IsVisible = _searchable && full && !modal;
+
+        ShowPageBar();
+
         // And the ask line goes with them: a chooser has one question in it and a second text box
         // underneath, pointed at the model, is a second question nobody asked.
         AskRow.IsVisible = AskRow.IsVisible && !modal;
@@ -1119,107 +1158,101 @@ public partial class PanelView : UserControl
     /// question about which stack you are in, and the breadcrumb is already answering the one
     /// about where you are.
     /// </summary>
+    /// <summary>
+    /// Which reading of this page is showing, on the button that changes it
+    /// (remediation.md 10, item 1).
+    /// <para>
+    /// A drop-down rather than a row of segments. The segments rode in the tab strip's own row
+    /// and cost a width proportional to how many readings a tab had, which is what put three
+    /// unrelated controls in competition for one row and made the strip overlap itself below a
+    /// certain window size. A button costs one control's width whatever the tab offers.
+    /// </para>
+    /// <para>
+    /// Shown at the root and nowhere else, and only where there is more than one reading to be
+    /// on. Drilling hides it, because a mode switch three levels into a ship is a question about
+    /// which stack you are in and the breadcrumb is already answering that one.
+    /// </para>
+    /// </summary>
     private void DrawModes()
     {
         var roots = Nav.Roots(Nav.Tab);
         var showing = Nav.RootKeyOf(Nav.Tab);
 
-        ModeRow.IsVisible = roots.Count > 1 && Nav.AtRoot;
+        ModeButton.IsVisible = roots.Count > 1 && Nav.AtRoot;
 
-        // Rebuilt only when the roots themselves change - a different tab - and otherwise just
-        // re-checked. Tearing the row down and building it again on every navigation would be
-        // three controls discarded to change one boolean, and it moves the buttons: a rebuilt
-        // control has no bounds until the next layout pass, so a ray or a pointer aimed at where
-        // a mode was a moment ago lands on a control that has not been measured yet.
-        if (!_modeRoots.SequenceEqual(roots))
-        {
-            Rebuild(roots);
-        }
+        ShowPageBar();
 
-        foreach (var button in Modes.Children.OfType<RadioButton>())
-        {
-            _drivingBar = true;
-
-            try
-            {
-                button.IsChecked = (string?)button.Tag == showing;
-            }
-            finally
-            {
-                _drivingBar = false;
-            }
-        }
-    }
-
-    /// <summary>Builds the segmented control's buttons for a tab's roots, in their order.</summary>
-    private void Rebuild(IReadOnlyList<NavCrumb> roots)
-    {
-        Modes.Children.Clear();
-
-        _logMode = null;
-        _modeRoots = [.. roots];
-
-        foreach (var root in roots)
-        {
-            var button = new RadioButton
-            {
-                Theme = this.FindResource("D47.Segment") as ControlTheme,
-                Tag = root.Key,
-            };
-
-            // The log mode carries the glyph, because it is the one of the three that reads a
-            // file off disk. On the affordance that was touched, so a Commander who pressed here
-            // does not look elsewhere (list.md Phase 12).
-            if (root.Key == LogRoot)
-            {
-                // A fresh glyph each rebuild. A control belongs to exactly one visual tree, and
-                // this row is rebuilt when the tab changes - so a kept instance is one that the
-                // previous button's content panel is still holding, and adding it to the new one
-                // throws rather than reparenting.
-                _logBusy = new Controls.BusyGlyph { IsVisible = false };
-
-                button.Content = new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 7,
-                    Children =
-                    {
-                        new TextBlock
-                        {
-                            Text = root.Word,
-                            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                        },
-                        _logBusy,
-                    },
-                };
-
-                _logBusy.Bind(
-                    Avalonia.Controls.Shapes.Shape.StrokeProperty,
-                    this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-
-                _logMode = button;
-            }
-            else
-            {
-                button.Content = root.Word;
-            }
-
-            button.IsCheckedChanged += OnModeChecked;
-            Modes.Children.Add(button);
-        }
-    }
-
-    private void OnModeChecked(object? sender, RoutedEventArgs e)
-    {
-        if (_drivingBar || sender is not RadioButton { IsChecked: true, Tag: string key })
+        if (!ModeButton.IsVisible)
         {
             return;
         }
 
-        // The search query and the follow lock are dropped by ApplyNavigation, which the
-        // navigator's own event brings us back through - so a mode reached by a click and a mode
-        // reached by a phrase are one path rather than two that have to agree.
-        Nav.SelectRoot(key);
+        var word = roots.FirstOrDefault(root => root.Key == showing)?.Word ?? roots[0].Word;
+
+        // A fresh glyph each time the content is built. A control belongs to exactly one visual
+        // tree, so a kept instance is one the previous content panel is still holding, and adding
+        // it to a new one throws rather than reparenting.
+        _logBusy = new Controls.BusyGlyph { IsVisible = false };
+
+        _logBusy.Bind(
+            Avalonia.Controls.Shapes.Shape.StrokeProperty,
+            this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+
+        ModeButton.Content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 7,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = word,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                },
+                _logBusy,
+
+                // The one thing that says this opens something. Without it the control reads as
+                // a label that happens to be pressable, which is a control nobody presses.
+                new TextBlock
+                {
+                    Text = "▾",
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                },
+            },
+        };
+    }
+
+    /// <summary>
+    /// Opens the readings of this page as a chooser in the layer.
+    /// <para>
+    /// The panel's own idiom rather than a <c>ComboBox</c>, and that is not a preference: a combo
+    /// box drops a popup, a popup needs a top level to hang from, and the headset's host window is
+    /// constructed and never shown. The layer is a panel in this tree, so the geometric hit test
+    /// the headset uses finds it exactly as it finds everything else.
+    /// </para>
+    /// </summary>
+    private void OnModeClick(object? sender, RoutedEventArgs e)
+    {
+        var roots = Nav.Roots(Nav.Tab);
+
+        if (roots.Count <= 1)
+        {
+            return;
+        }
+
+        Prompts.Choose(
+            new D47.Core.Interface.ChoiceRequest(
+                "panel.mode",
+                "Show",
+                "Show",
+                null,
+                [.. roots.Select(root => new D47.Core.Interface.ChoiceOption(root.Key, root.Word))],
+                Nav.RootKeyOf(Nav.Tab),
+                D47.Core.Interface.ChoiceSurface.Layer),
+            // Through the navigator's own event, so a reading reached by a press and one reached
+            // by a spoken phrase are one path rather than two that have to agree. Dropping the
+            // search query and the follow lock is ApplyNavigation's job either way.
+            option => Nav.SelectRoot(option.Key));
     }
 
     /// <summary>
@@ -1287,10 +1320,10 @@ public partial class PanelView : UserControl
     /// </summary>
     private async Task ReadLogAsync()
     {
-        // The mode button, which may not exist: the segmented control is not drawn in mini, and
-        // the log can be the mode a surface is on there. The helper wants something to shut, so
-        // with nothing drawn the read simply runs unannounced — there is nothing to announce on.
-        if (_logMode is null)
+        // The mode button, which may not exist: it is hidden in mini and below a root, and the
+        // log can be the reading a surface is on in either. With nothing drawn the read simply
+        // runs unannounced — there is nothing to announce on.
+        if (!ModeButton.IsVisible)
         {
             await Task.Run(() => _bound?.RefreshLog());
             DrawTranscript();
@@ -1298,16 +1331,23 @@ public partial class PanelView : UserControl
             return;
         }
 
-        await Controls.Busy.While(_logMode, _logBusy, () => Task.Run(() => _bound?.RefreshLog()));
+        // Both halves inside the busy window (remediation.md 10, item 5). The read was covered
+        // and the draw was not, and the draw is on this thread: five hundred lines becoming runs
+        // and then a layout pass is the part a Commander was watching nothing happen during.
+        // The continuation resumes here, so the glyph is still up while the page is built.
+        await Controls.Busy.While(ModeButton, _logBusy, async () =>
+        {
+            await Task.Run(() => _bound?.RefreshLog());
 
-        // After the read rather than before, or the page draws the log it had last time and
-        // then redraws — which is a visible flicker on the one page opened to read something.
-        DrawTranscript();
+            // After the read rather than before, or the page draws the log it had last time and
+            // then redraws — a visible flicker on the one page opened to read something.
+            DrawTranscript();
 
-        // At the end, because a log is read newest-first and this page has always opened at the
-        // top of it. The transcript pages have followed the tail since Phase 4 and this one
-        // never did, which was a difference nobody chose (list.md Phase 19).
-        ScrollToEnd();
+            // At the end, because a log is read newest-first and this page has always opened at
+            // the top of it. The transcript pages have followed the tail since Phase 4 and this
+            // one never did, which was a difference nobody chose (list.md Phase 19).
+            ScrollToEnd();
+        });
     }
 
     /// <summary>
@@ -1733,8 +1773,66 @@ public partial class PanelView : UserControl
         }
 
         await Task.Delay(TimeSpan.FromSeconds(2));
-        CopyButton.Content = "Copy";
+        CopyButton.Content = CopyLabel;
     }
+
+    /// <summary>
+    /// Scrolls the tab strip (remediation.md 10, item 1).
+    /// <para>
+    /// By roughly one tab's width rather than by a page, because the strip is short and a page
+    /// scroll on six tabs is the whole strip — which loses the Commander's place in a control
+    /// whose only job is to say where they are.
+    /// </para>
+    /// </summary>
+    private void StepTabs(double by) =>
+        TabsScroller.Offset = new Vector(
+            Math.Clamp(
+                TabsScroller.Offset.X + by,
+                0,
+                Math.Max(0, TabsScroller.Extent.Width - TabsScroller.Viewport.Width)),
+            TabsScroller.Offset.Y);
+
+    private void OnTabsLeftClick(object? sender, RoutedEventArgs e) => StepTabs(-120);
+
+    private void OnTabsRightClick(object? sender, RoutedEventArgs e) => StepTabs(120);
+
+    /// <summary>
+    /// Whether the strip needs its steppers, asked whenever it is measured.
+    /// <para>
+    /// Hidden when everything fits, which is the ordinary case on a desktop: a pair of dead arrows
+    /// either side of six tabs is two controls that permanently do nothing. Shown together rather
+    /// than one at a time — an arrow that appears and vanishes as the strip is scrolled is a
+    /// control that moves the tabs while you are aiming at them.
+    /// </para>
+    /// </summary>
+    private void OnTabsResized(object? sender, SizeChangedEventArgs e) => ShowTabSteppers();
+
+    private void ShowTabSteppers()
+    {
+        var overflowing = TabsScroller.Extent.Width > TabsScroller.Viewport.Width + 1;
+
+        TabsLeft.IsVisible = overflowing;
+        TabsRight.IsVisible = overflowing;
+    }
+
+    /// <summary>
+    /// Whether the page's bar exists at all.
+    /// <para>
+    /// <b>Only when it has something in it</b>, and that is not tidiness. It is a row, and a row
+    /// costs height that the pane below it does not get — which is nothing on a desktop window and
+    /// is most of the page on a 280-pixel headset panel. The first cut showed it whenever the
+    /// chrome was showing, and the transcript on the small surface came out six pixels tall.
+    /// </para>
+    /// <para>
+    /// Called from both the places that decide what is in it, because either can run last:
+    /// <see cref="ApplyChrome"/> owns the search box and the copy button, and
+    /// <see cref="DrawModes"/> owns the mode button.
+    /// </para>
+    /// </summary>
+    private void ShowPageBar() =>
+        PageBar.IsVisible = Mode == PanelMode.Full
+                            && ModalPane.Child is null
+                            && (ModeButton.IsVisible || SearchRow.IsVisible);
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
 
