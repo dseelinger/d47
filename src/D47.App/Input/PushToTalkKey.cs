@@ -90,7 +90,7 @@ public sealed class PushToTalkKey(ILogger<PushToTalkKey> logger)
 
         if (VirtualKeys.Of(parsed.Key) is not { } key)
         {
-            logger.LogWarning("{Key} has no virtual-key code D47 knows", parsed.Key);
+            logger.LogWarning("{Key} has no virtual-key code D47 knows", Gestures.Describe(parsed.Key));
             return false;
         }
 
@@ -104,7 +104,7 @@ public sealed class PushToTalkKey(ILogger<PushToTalkKey> logger)
         _modifiers = [.. modifiers];
         Gesture = gesture;
 
-        logger.LogInformation("Push-to-talk is bound to {Gesture}", gesture);
+        logger.LogInformation("Push-to-talk is bound to {Gesture}", Gestures.Describe(gesture));
         return true;
     }
 

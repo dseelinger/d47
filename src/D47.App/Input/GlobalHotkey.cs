@@ -124,13 +124,13 @@ public sealed class GlobalHotkey : IDisposable
                 {
                     _logger.LogWarning(
                         "Refusing to bind {Gesture} globally: a system-wide key needs a modifier",
-                        gesture);
+                        Gestures.Describe(gesture));
                     return false;
                 }
 
                 if (VirtualKeyOf(parsed.Key) is not { } virtualKey)
                 {
-                    _logger.LogWarning("{Key} has no virtual-key code D47 knows", parsed.Key);
+                    _logger.LogWarning("{Key} has no virtual-key code D47 knows", Gestures.Describe(parsed.Key));
                     return false;
                 }
 
@@ -162,13 +162,13 @@ public sealed class GlobalHotkey : IDisposable
 
             if (_applyResult)
             {
-                _logger.LogInformation("{Gesture} is bound system-wide", gesture);
+                _logger.LogInformation("{Gesture} is bound system-wide", Gestures.Describe(gesture));
             }
             else
             {
                 _logger.LogWarning(
                     "{Gesture} could not be registered system-wide; another application likely holds it",
-                    gesture);
+                    Gestures.Describe(gesture));
             }
 
             return _applyResult;
