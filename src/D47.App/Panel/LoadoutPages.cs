@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -5,18 +6,23 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
-using D47.Core.Checklists;
 using D47.Core.Interface;
-using D47.Core.Journal;
-using D47.Core.Ships;
+using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Loadout tab's pages: Fleet, then a ship, then a slot (list.md Phase 26, "Ships").
+/// The Loadout tab's pages: an index, then an item, then a slot — drawn once and shown for every
+/// mode (list.md Phase 26, "Ships"; Phase 27, "The same page, on foot").
 /// <para>
 /// Three levels of one drill stack rather than three screens, so the reflow, the breadcrumb and
 /// the phrases Phase 25 built cover all of them without any of them knowing.
+/// </para>
+/// <para>
+/// <b>Nothing here knows what a hull or a suit is.</b> An <see cref="ILoadoutMode"/> is the whole
+/// of the difference between Ships and Suits, which is what makes "one page kind built once and
+/// shown twice" true rather than aspirational — the alternative, two page sets that look the same
+/// on the day they are written, is two page sets that stop looking the same a fortnight later.
 /// </para>
 /// <para>
 /// <b>The ray points and the voice edits</b>, so every page here optimises for being <em>read</em>
@@ -26,7 +32,7 @@ namespace D47.App.Panel;
 /// </summary>
 public static class LoadoutPages
 {
-    /// <summary>The Loadout tab's Ships root. Suits and the gap analysis join it in Phase 27.</summary>
+    /// <summary>The Loadout tab's Ships root.</summary>
     public const string FleetRoot = "loadout.ships";
 
     /// <summary>How a ship's crumb is keyed, so a page can be rebuilt from the trail alone.</summary>
@@ -35,40 +41,63 @@ public static class LoadoutPages
     /// <summary>And a slot's, below it.</summary>
     public const string SlotPrefix = "loadout.slot:";
 
+    /// <summary>The third mode: what every plan needs that the Commander is not carrying.</summary>
+    public const string GapRoot = "loadout.gap";
+
     /// <summary>
     /// Draws whichever level a crumb names. Handed to <see cref="PanelView.Furnish"/>, so the
     /// drill strip asks for a page when it first shows one and keeps it afterwards.
     /// </summary>
+    /// <param name="gap">
+    /// Where the gap gets its arithmetic, or null for a surface with no on-foot half — the tab
+    /// then has the one root Phase 26 gave it.
+    /// </param>
     public static Control Build(
         NavCrumb crumb,
-        ShipPlanService ships,
-        ChecklistService checklists,
-        Func<CommanderGameState?> state,
+        IReadOnlyList<ILoadoutMode> modes,
+        GapSource? gap,
         PanelNavigator nav,
         PanelPrompts prompts)
     {
-        if (crumb.Key.StartsWith(SlotPrefix, StringComparison.Ordinal))
+        foreach (var mode in modes)
         {
-            var (buildId, slot) = SplitSlot(crumb.Key[SlotPrefix.Length..]);
-            return new SlotPage(ships, checklists, state, prompts, buildId, slot);
+            if (crumb.Key.StartsWith(mode.SlotPrefix, StringComparison.Ordinal))
+            {
+                var (item, slot) = SplitSlot(crumb.Key[mode.SlotPrefix.Length..]);
+                return new SlotPage(mode, prompts, item, slot);
+            }
+
+            if (crumb.Key.StartsWith(mode.ItemPrefix, StringComparison.Ordinal))
+            {
+                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..]);
+            }
         }
 
-        if (crumb.Key.StartsWith(ShipPrefix, StringComparison.Ordinal))
+        if (crumb.Key == GapRoot && gap is not null)
         {
-            return new ShipPage(ships, state, nav, prompts, crumb.Key[ShipPrefix.Length..]);
+            return new GapPage(gap);
         }
 
-        return new FleetPage(ships, nav, prompts);
+        var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];
+
+        return new IndexPage(root, nav, prompts);
     }
 
-    /// <summary>The crumb for a ship, and for a slot of it.</summary>
-    public static NavCrumb Ship(FleetEntry entry) =>
+    /// <summary>The crumb for a ship, and for a slot of it. Kept from Phase 26.</summary>
+    public static NavCrumb Ship(D47.Core.Ships.FleetEntry entry) =>
         new(ShipPrefix + (entry.Build?.Id ?? entry.Hull), entry.Name ?? entry.HullName);
 
     public static NavCrumb Slot(string buildId, string slot) =>
         new($"{SlotPrefix}{buildId}|{slot}", slot);
 
-    private static (string BuildId, string Slot) SplitSlot(string key)
+    /// <summary>The crumb for one row of an index, and for one slot below it.</summary>
+    public static NavCrumb Crumb(ILoadoutMode mode, LoadoutRow row) =>
+        new(mode.ItemPrefix + row.Key, row.Word);
+
+    public static NavCrumb SlotCrumb(ILoadoutMode mode, LoadoutRow row) =>
+        new(mode.SlotPrefix + row.Key, row.Word);
+
+    private static (string Item, string Slot) SplitSlot(string key)
     {
         var at = key.IndexOf('|', StringComparison.Ordinal);
 
@@ -167,7 +196,23 @@ public static class LoadoutPages
         return said;
     }
 
-    internal static TextBlock Muted(string text)
+    /// <summary>One line of a page, drawn the way its tone says.</summary>
+    internal static TextBlock Line(LoadoutLine line) => line.Tone switch
+    {
+        LoadoutTone.Heading => Heading(line.Text),
+        LoadoutTone.Body => new TextBlock
+        {
+            Text = line.Text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+        },
+        LoadoutTone.Danger => Toned(line.Text, ThemeManager.DangerKey),
+        _ => Muted(line.Text),
+    };
+
+    internal static TextBlock Muted(string text) => Toned(text, ThemeManager.TextMutedKey);
+
+    internal static TextBlock Toned(string text, string key)
     {
         var block = new TextBlock
         {
@@ -176,7 +221,7 @@ public static class LoadoutPages
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -187,6 +232,21 @@ public static class LoadoutPages
         FontWeight = FontWeight.SemiBold,
         Margin = new Thickness(0, 12, 0, 4),
     };
+
+    internal static Button Press(string label, Action pressed)
+    {
+        var button = new Button
+        {
+            Content = label,
+            Padding = new Thickness(12, 4),
+            MinHeight = 30,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
 
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
@@ -200,38 +260,58 @@ public static class LoadoutPages
 }
 
 /// <summary>
-/// The fleet (list.md Phase 26, "The fleet, and the fleet you intend").
+/// A page that redraws itself when its mode changes underneath. The three levels all do, and
+/// unsubscribing on detach is the part that is easy to forget once rather than three times.
+/// </summary>
+public abstract class LoadoutPage : UserControl
+{
+    private readonly ILoadoutMode _mode;
+
+    protected LoadoutPage(ILoadoutMode mode)
+    {
+        _mode = mode;
+        mode.Changed += OnChanged;
+    }
+
+    protected ILoadoutMode Mode => _mode;
+
+    protected abstract void Refresh();
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _mode.Changed -= OnChanged;
+    }
+
+    private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
+}
+
+/// <summary>
+/// The index (list.md Phase 26, "The fleet, and the fleet you intend"; Phase 27, "The same page,
+/// on foot").
 /// <para>
-/// <b>A root rather than a level</b>, and it earns being landed on by answering where each ship is
-/// and how its plans stand before anything is drilled.
+/// <b>A root rather than a level</b>, and it earns being landed on by answering where each thing
+/// is and how its plans stand before anything is drilled.
 /// </para>
 /// </summary>
-public sealed class FleetPage : UserControl
+public sealed class IndexPage : LoadoutPage
 {
-    private readonly ShipPlanService _ships;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
     private readonly StackPanel _list = new() { Spacing = 3 };
 
-    public FleetPage(ShipPlanService ships, PanelNavigator nav, PanelPrompts prompts)
+    public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts)
+        : base(mode)
     {
-        _ships = ships;
         _nav = nav;
         _prompts = prompts;
 
-        var intend = new Button
-        {
-            Content = "Plan a hull you do not own",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 0, 0, 10),
-        };
+        var intend = LoadoutPages.Press(mode.NewLabel, Intend);
 
-        intend.Click += (_, _) => Intend();
+        intend.Margin = new Thickness(0, 0, 0, 10);
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var say = LoadoutPages.SayLine("what have I planned");
+        var say = LoadoutPages.SayLine(mode.SayAtIndex);
 
         DockPanel.SetDock(intend, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
@@ -242,103 +322,46 @@ public sealed class FleetPage : UserControl
 
         Content = root;
 
-        ships.Store.Changed += OnChanged;
-
         Refresh();
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnDetachedFromVisualTree(e);
-        _ships.Store.Changed -= OnChanged;
-    }
-
-    private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
-
-    private void Refresh()
+    protected override void Refresh()
     {
         _list.Children.Clear();
 
-        var fleet = _ships.Fleet();
+        var rows = Mode.Items();
 
-        if (fleet.Count == 0)
+        if (rows.Count == 0)
         {
-            _list.Children.Add(LoadoutPages.Muted(
-                "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it "
-                + "— or plan a hull you do not own, and buying one will point the plan at it."));
-
+            _list.Children.Add(LoadoutPages.Muted(Mode.EmptyIndex));
             return;
         }
 
-        foreach (var entry in fleet)
+        foreach (var row in rows)
         {
-            var planned = entry.Planned;
-
             _list.Children.Add(LoadoutPages.Row(
-                entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
-
-                // Where it is, and how its plans stand. The two questions this page exists to
-                // answer before anything is drilled.
-                planned > 0
-                    ? $"{entry.Where()} · {planned} planned"
-                    : entry.Where(),
-
-                marked: planned > 0,
-                () =>
-                {
-                    // A ship with no build yet gets one on the way in, so the page below always
-                    // has something to plan against.
-                    if (entry.Build is null && entry.Stored is { } stored)
-                    {
-                        _ships.BuildFor(stored.ShipId, stored.Type, stored.Name);
-                    }
-
-                    _nav.Drill(LoadoutPages.Ship(_ships.Fleet()
-                        .First(again => again.Hull == entry.Hull && again.Name == entry.Name)));
-                }));
+                row.Text,
+                row.Aside,
+                row.Marked,
+                () => _nav.Drill(LoadoutPages.Crumb(Mode, row))));
         }
     }
 
-    /// <summary>
-    /// A hull the Commander does not own. Voice first, because a hull is a name and a name is far
-    /// easier said than hunted for one key at a time.
-    /// </summary>
-    private void Intend()
-    {
-        _prompts.Enter(
-            new EntryRequest(
-                "loadout.intend",
-                "Hull",
-                "Which hull do you intend to buy?",
-                "It is not in your fleet until you own one — acquiring it is the plan's first step.",
-                string.Empty,
-                EntrySurface.Voice,
-                value => D47.Core.Knowledge.EliteSpecifications.Ship(value) is null
-                    ? EntryVerdict.No($"I do not know a hull called “{value}”.")
-                    : EntryVerdict.Ok),
-            hull =>
-            {
-                _ships.Intend(hull);
-                Refresh();
-            });
-    }
+    private void Intend() => Mode.New(_prompts, Refresh);
 }
 
 /// <summary>
-/// One ship's slots (list.md Phase 26, "What is fitted and what you want").
+/// One item's slots (list.md Phase 26, "What is fitted and what you want").
 /// <para>
 /// <b>An index rather than a table</b>: one line per slot, a mark where a plan exists, and
 /// everything else in the pane that opens. That is what lets one layout survive from 512 to 2048
 /// logical pixels — a table wide enough to be worth having at 2048 is unreadable at 512.
 /// </para>
 /// </summary>
-public sealed class ShipPage : UserControl
+public sealed class ItemPage : LoadoutPage
 {
-    private readonly ShipPlanService _ships;
-    private readonly Func<CommanderGameState?> _state;
     private readonly PanelNavigator _nav;
-    private readonly PanelPrompts _prompts;
-    private readonly string _buildId;
+    private readonly string _item;
     private readonly StackPanel _list = new() { Spacing = 3 };
     private readonly TextBlock _summary = new()
     {
@@ -347,37 +370,20 @@ public sealed class ShipPage : UserControl
         Margin = new Thickness(0, 0, 0, 10),
     };
 
-    public ShipPage(
-        ShipPlanService ships,
-        Func<CommanderGameState?> state,
-        PanelNavigator nav,
-        PanelPrompts prompts,
-        string buildId)
+    public ItemPage(ILoadoutMode mode, PanelNavigator nav, string item)
+        : base(mode)
     {
-        _ships = ships;
-        _state = state;
         _nav = nav;
-        _prompts = prompts;
-        _buildId = buildId;
+        _item = item;
 
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var promote = new Button
-        {
-            Content = "Put this build on my checklist",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 0, 0, 10),
-        };
+        var promote = LoadoutPages.Press(mode.PromoteLabel, () => _summary.Text = Mode.Promote(_item));
 
-        promote.Click += (_, _) =>
-        {
-            _summary.Text = _ships.Promote(_buildId);
-        };
+        promote.Margin = new Thickness(0, 0, 0, 10);
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var say = LoadoutPages.SayLine("put that on my checklist");
+        var say = LoadoutPages.SayLine(mode.SayAtItem);
 
         DockPanel.SetDock(_summary, Dock.Top);
         DockPanel.SetDock(promote, Dock.Top);
@@ -390,83 +396,38 @@ public sealed class ShipPage : UserControl
 
         Content = root;
 
-        ships.Store.Changed += OnChanged;
-
         Refresh();
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnDetachedFromVisualTree(e);
-        _ships.Store.Changed -= OnChanged;
-    }
-
-    private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
-
-    private void Refresh()
+    protected override void Refresh()
     {
         _list.Children.Clear();
 
-        if (_ships.Store.Find(_buildId) is not { } build)
+        if (Mode.Summary(_item) is not { } summary)
         {
             _list.Children.Add(LoadoutPages.Muted("That build is not there any more."));
             return;
         }
 
-        _summary.Text = build.IsOwned
-            ? $"{build.Describe()}. One build per ship: a slot holds one plan."
-            : $"{build.Describe()}. Buying one will point this plan at it.";
+        _summary.Text = summary;
 
-        // Every slot the journal reports for the ship being flown, and every slot planned for any
-        // other. A ship in another dock reports no modules at all, which is why the planned ones
-        // have to stand on their own rather than being drawn as annotations on a fitted list.
-        var fitted = Fitted(build);
-        var slots = new List<string>();
+        var rows = Mode.Slots(_item);
 
-        slots.AddRange(fitted.Select(module => module.Slot));
-
-        foreach (var plan in build.Slots)
+        if (rows.Count == 0)
         {
-            if (!slots.Any(slot => string.Equals(slot, plan.Slot, StringComparison.OrdinalIgnoreCase)))
-            {
-                slots.Add(plan.Slot);
-            }
-        }
-
-        if (slots.Count == 0)
-        {
-            _list.Children.Add(LoadoutPages.Muted(
-                "Nothing is planned, and I cannot see this ship's modules — Elite only reports the "
-                + "loadout of the ship you are sitting in. Plan a slot and it will appear here."));
-
+            _list.Children.Add(LoadoutPages.Muted(Mode.EmptySlots));
             return;
         }
 
-        foreach (var slot in slots)
+        foreach (var row in rows)
         {
-            var plan = build.For(slot);
-            var module = fitted.FirstOrDefault(candidate =>
-                string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
-
             _list.Children.Add(LoadoutPages.Row(
-                slot,
-                plan is not null ? plan.Describe() : Describe(module),
-                marked: plan is not null,
-                () => _nav.Drill(LoadoutPages.Slot(_buildId, slot))));
+                row.Text,
+                row.Aside,
+                row.Marked,
+                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row))));
         }
     }
-
-    private IReadOnlyList<ShipModule> Fitted(ShipBuild build)
-    {
-        var loadout = _state()?.Ship;
-
-        return loadout is { IsKnown: true } && loadout.ShipId == build.ShipId
-            ? loadout.Modules
-            : [];
-    }
-
-    private static string? Describe(ShipModule? module) =>
-        module is null ? null : ChecklistNaming.Readable(module.Item);
 }
 
 /// <summary>
@@ -476,39 +437,28 @@ public sealed class ShipPage : UserControl
 /// thing the Commander wants rather than an edit to the truth.
 /// </para>
 /// <para>
-/// <b>A plan carries the journal's verdict with its date and no checkbox.</b>
-/// <see cref="ChecklistEvaluator"/> already answers null for <em>nothing can be said right now</em>,
-/// which is what a ship you are not flying looks like — so the page says <em>not fitted, as of
+/// <b>A plan carries the journal's verdict with its date and no checkbox.</b> The evaluator
+/// already answers null for <em>nothing can be said right now</em>, which is what a ship you are
+/// not flying — or a suit you are not wearing — looks like, so the page says <em>not fitted, as of
 /// three days ago</em> rather than showing a blank that implies disagreement.
 /// </para>
 /// </summary>
-public sealed class SlotPage : UserControl
+public sealed class SlotPage : LoadoutPage
 {
-    private readonly ShipPlanService _ships;
-    private readonly ChecklistService _checklists;
-    private readonly Func<CommanderGameState?> _state;
     private readonly PanelPrompts _prompts;
-    private readonly string _buildId;
+    private readonly string _item;
     private readonly string _slot;
     private readonly StackPanel _body = new() { Spacing = 4 };
 
-    public SlotPage(
-        ShipPlanService ships,
-        ChecklistService checklists,
-        Func<CommanderGameState?> state,
-        PanelPrompts prompts,
-        string buildId,
-        string slot)
+    public SlotPage(ILoadoutMode mode, PanelPrompts prompts, string item, string slot)
+        : base(mode)
     {
-        _ships = ships;
-        _checklists = checklists;
-        _state = state;
         _prompts = prompts;
-        _buildId = buildId;
+        _item = item;
         _slot = slot;
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var say = LoadoutPages.SayLine($"plan grade 5 dirty drives on {slot}");
+        var say = LoadoutPages.SayLine(mode.SayAtSlot(slot));
 
         DockPanel.SetDock(say, Dock.Bottom);
 
@@ -517,270 +467,224 @@ public sealed class SlotPage : UserControl
 
         Content = root;
 
-        ships.Store.Changed += OnChanged;
+        Refresh();
+    }
 
+    protected override void Refresh()
+    {
+        _body.Children.Clear();
+
+        _body.Children.Add(LoadoutPages.Heading("Fitted"));
+
+        foreach (var line in Mode.Fitted(_item, _slot))
+        {
+            _body.Children.Add(LoadoutPages.Line(line));
+        }
+
+        _body.Children.Add(LoadoutPages.Heading("Planned"));
+
+        foreach (var line in Mode.Planned(_item, _slot))
+        {
+            _body.Children.Add(LoadoutPages.Line(line));
+        }
+
+        Buttons(Mode.HasPlan(_item, _slot));
+    }
+
+    private void Buttons(bool planned)
+    {
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Margin = new Thickness(0, 12, 0, 0),
+            Children =
+            {
+                LoadoutPages.Press(
+                    planned ? "Change the plan" : "Plan this slot",
+                    () => Mode.Ask(_item, _slot, _prompts, Refresh)),
+            },
+        };
+
+        if (planned)
+        {
+            row.Children.Add(LoadoutPages.Press("Clear it", () =>
+            {
+                Mode.Clear(_item, _slot);
+                Refresh();
+            }));
+        }
+
+        _body.Children.Add(row);
+    }
+}
+
+/// <summary>
+/// The gap between every plan and what the Commander is carrying (list.md Phase 27, "Gap
+/// analysis").
+/// <para>
+/// <b>A third root-only mode reading across both the others</b>, because a Commander gathering
+/// materials does not care which ship wanted them. <b>Not called a wishlist</b>: a wishlist is a
+/// list of things you want, which is what the plans are — this is the arithmetic between what they
+/// need and what you are holding.
+/// </para>
+/// <para>
+/// <b>The ledgers are never totalled together</b>, and the one figure that spans everything counts
+/// units still to find, which is a shopping list rather than a balance.
+/// </para>
+/// </summary>
+public sealed class GapPage : UserControl
+{
+    private readonly GapSource _gap;
+    private readonly StackPanel _body = new() { Spacing = 4 };
+    private readonly Button _filter;
+
+    private bool _includeIntended = true;
+
+    public GapPage(GapSource gap)
+    {
+        _gap = gap;
+
+        gap.Changed += OnChanged;
+
+        _filter = LoadoutPages.Press(string.Empty, () =>
+        {
+            _includeIntended = !_includeIntended;
+            Refresh();
+        });
+
+        _filter.Margin = new Thickness(0, 0, 0, 10);
+
+        var root = new DockPanel { Margin = new Thickness(14) };
+        var say = LoadoutPages.SayLine("what do my plans still need");
+
+        DockPanel.SetDock(_filter, Dock.Top);
+        DockPanel.SetDock(say, Dock.Bottom);
+
+        root.Children.Add(_filter);
+        root.Children.Add(say);
+        root.Children.Add(LoadoutPages.Scrolling(_body));
+
+        Content = root;
+
+        Refresh();
+    }
+
+    /// <summary>Redraws against the live plans. The tab calls this when it is shown.</summary>
+    public void Refresh()
+    {
+        _body.Children.Clear();
+
+        var report = _gap.Of(_includeIntended);
+
+        // The filter, and it says which question it is answering rather than merely which state it
+        // is in: counting hulls nobody owns is honest about the whole ambition, and excluding them
+        // answers what can be finished now. Both are real questions.
+        _filter.Content = _includeIntended
+            ? "Counting what you do not own yet — show only what you can finish now"
+            : "Only what you own — count the ones you intend to buy too";
+
+        if (report.Plans == 0)
+        {
+            _body.Children.Add(LoadoutPages.Muted(
+                "Nothing is planned yet. Plan a slot on a ship, or a grade on a suit, and what it "
+                + "needs shows up here."));
+
+            return;
+        }
+
+        if (report.IsEmpty)
+        {
+            _body.Children.Add(LoadoutPages.Muted(
+                "You are carrying everything your plans need. Nothing to go and find."));
+
+            return;
+        }
+
+        _body.Children.Add(new TextBlock
+        {
+            Text = $"{report.UnitsToFind.ToString(CultureInfo.InvariantCulture)} units still to find, "
+                   + $"across {report.Plans.ToString(CultureInfo.InvariantCulture)} plan"
+                   + (report.Plans == 1 ? string.Empty : "s") + ".",
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        _body.Children.Add(LoadoutPages.Muted(
+            "A count of things to go and get, never a balance — the ledgers below have separate "
+            + "caps and no exchange between them, so they are never added up."));
+
+        foreach (var gate in report.Gates)
+        {
+            _body.Children.Add(LoadoutPages.Toned(gate, ThemeManager.DangerKey));
+        }
+
+        foreach (var ledger in report.Ledgers)
+        {
+            _body.Children.Add(LoadoutPages.Heading(
+                $"{ledger.Name} — {ledger.UnitsToFind.ToString(CultureInfo.InvariantCulture)} to find"));
+
+            foreach (var line in ledger.Lines)
+            {
+                Draw(line);
+            }
+        }
+
+        foreach (var unknown in report.Uncovered)
+        {
+            _body.Children.Add(LoadoutPages.Muted(unknown));
+        }
+    }
+
+    /// <summary>
+    /// Redrawn on the way in as well as on a change, because the third thing this page reads is
+    /// the Commander's own inventory — which moves without either store having said anything.
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
         Refresh();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _ships.Store.Changed -= OnChanged;
+        _gap.Changed -= OnChanged;
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    private void Refresh()
+    private void Draw(GapLine line)
     {
-        _body.Children.Clear();
-
-        if (_ships.Store.Find(_buildId) is not { } build)
-        {
-            _body.Children.Add(LoadoutPages.Muted("That build is not there any more."));
-            return;
-        }
-
-        Fitted(build);
-        Planned(build);
-    }
-
-    /// <summary>What is actually there, from the journal. The truth block.</summary>
-    private void Fitted(ShipBuild build)
-    {
-        _body.Children.Add(LoadoutPages.Heading("Fitted"));
-
-        var loadout = _state()?.Ship;
-
-        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
-        {
-            _body.Children.Add(LoadoutPages.Muted(
-                "Elite reports the loadout of the ship you are sitting in and no other, so I cannot "
-                + "say what is in this slot right now."));
-
-            return;
-        }
-
-        var module = loadout.Modules.FirstOrDefault(candidate =>
-            string.Equals(candidate.Slot, _slot, StringComparison.OrdinalIgnoreCase));
-
-        if (module is null)
-        {
-            _body.Children.Add(LoadoutPages.Muted("Nothing."));
-            return;
-        }
-
         _body.Children.Add(new TextBlock
         {
-            Text = ChecklistNaming.Readable(module.Item),
+            Text = $"{line.Material.Name}: {line.Short.ToString(CultureInfo.InvariantCulture)} short "
+                   + $"({line.Held.ToString(CultureInfo.InvariantCulture)} of "
+                   + $"{line.Needed.ToString(CultureInfo.InvariantCulture)})",
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 6, 0, 0),
         });
 
-        if (module.Blueprint is { Length: > 0 } blueprint)
+        if (line.ExceedsCapacity)
         {
-            var grade = module.BlueprintLevel is { } level ? $"grade {level} " : string.Empty;
+            _body.Children.Add(LoadoutPages.Toned(
+                $"You can only hold {line.Capacity?.ToString(CultureInfo.InvariantCulture)}. That is "
+                + "at least two trips whatever happens.",
+                ThemeManager.DangerKey));
+        }
 
+        // Trade second and never instead: the headline stays the honest raw shortfall.
+        if (line.Trade is { } trade)
+        {
+            _body.Children.Add(LoadoutPages.Muted(trade.Describe()));
+        }
+
+        // What wants it. This is what makes the roll-up navigable instead of merely a total.
+        if (line.Wanted.Count > 0)
+        {
             _body.Children.Add(LoadoutPages.Muted(
-                $"{grade}{ChecklistNaming.Readable(blueprint)}"
-                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty)));
+                "Wanted by: " + string.Join(", ", line.Wanted.Select(demand => demand.Describe()))));
         }
-    }
-
-    /// <summary>
-    /// What the Commander wants, with the journal's verdict and what it costs. Its own block, and
-    /// never merged into the one above.
-    /// </summary>
-    private void Planned(ShipBuild build)
-    {
-        _body.Children.Add(LoadoutPages.Heading("Planned"));
-
-        var plan = build.For(_slot);
-
-        if (plan is null)
-        {
-            _body.Children.Add(LoadoutPages.Muted("Nothing planned for this slot."));
-            Buttons(planned: false);
-            return;
-        }
-
-        _body.Children.Add(new TextBlock
-        {
-            Text = plan.Describe(),
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
-        Verdict(build, plan);
-        Cost(build, plan);
-        Buttons(planned: true);
-    }
-
-    /// <summary>
-    /// The journal's verdict, as of when it was taken. <b>No checkbox</b>: a derived item's
-    /// progress is a diff against live state, and a tick here would be undone or left standing
-    /// and lying by the next read.
-    /// </summary>
-    private void Verdict(ShipBuild build, SlotPlan plan)
-    {
-        if (build.Scope is not { } scope)
-        {
-            return;
-        }
-
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, plan.Slot)
-        {
-            Detail = plan.Blueprint,
-            Grade = plan.Grade,
-            Engineer = plan.Engineer,
-        };
-
-        var item = new ChecklistItem
-        {
-            Key = ChecklistKeys.For(intent),
-            Scope = scope,
-            Kind = ChecklistItemKind.Derived,
-            Source = ChecklistSource.EngineeringPlan,
-            Text = plan.Describe(),
-            Intent = intent,
-            Hull = build.Hull,
-        };
-
-        var verdict = ChecklistEvaluator.Evaluate(item, _state());
-
-        var said = verdict?.Reason
-                   ?? "Nothing can be said about this right now — Elite reports the loadout of the "
-                      + "ship you are sitting in and no other.";
-
-        var line = LoadoutPages.Muted(said);
-
-        if (verdict is { } answered && ChecklistNextAction.IsWrong(answered.State))
-        {
-            LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
-        }
-
-        _body.Children.Add(line);
-    }
-
-    /// <summary>
-    /// What this plan costs, on the slot. <b>Per plan</b>, because that is the question a
-    /// Commander looking at one slot is asking — the shared-cap arithmetic across every plan at
-    /// once is what the shortfall page is for.
-    /// </summary>
-    private void Cost(ShipBuild build, SlotPlan plan)
-    {
-        if (build.Scope is not { } scope)
-        {
-            return;
-        }
-
-        var items = EngineeringPlan.Items(
-            scope, build.Hull, [plan.ToRequest()], _checklists.SlotFor);
-
-        var costing = EngineeringPlan.Cost(items, _state());
-
-        foreach (var gate in costing.Gates)
-        {
-            var blocked = LoadoutPages.Muted(gate);
-
-            LoadoutPages.Themed(blocked, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
-            _body.Children.Add(blocked);
-        }
-
-        if (costing.Ingredients.Count == 0)
-        {
-            return;
-        }
-
-        _body.Children.Add(LoadoutPages.Heading("What it costs"));
-
-        foreach (var ingredient in costing.Ingredients.OrderByDescending(entry => entry.Short))
-        {
-            // Held, needed and short, all three. "Short 12" alone is a number a Commander cannot
-            // check, and the arithmetic is exact rather than estimated: an application costs one
-            // of each ingredient and the roll count is a published function of grade and rank.
-            _body.Children.Add(LoadoutPages.Muted(
-                $"{ingredient.Material.Name}: {ingredient.Held} of {ingredient.Needed}"
-                + (ingredient.Short > 0 ? $", {ingredient.Short} short" : string.Empty)
-                + (ingredient.ExceedsCapacity ? " — more than one trip" : string.Empty)));
-        }
-    }
-
-    private void Buttons(bool planned)
-    {
-        var plan = new Button
-        {
-            Content = planned ? "Change the plan" : "Plan this slot",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-        };
-
-        plan.Click += (_, _) => Ask();
-
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { plan },
-        };
-
-        if (planned)
-        {
-            var clear = new Button
-            {
-                Content = "Clear it",
-                Padding = new Thickness(12, 4),
-                MinHeight = 30,
-            };
-
-            clear.Click += (_, _) =>
-            {
-                _ships.Clear(_buildId, _slot);
-                Refresh();
-            };
-
-            row.Children.Add(clear);
-        }
-
-        _body.Children.Add(row);
-    }
-
-    /// <summary>
-    /// Asks for the blueprint, then the grade. Voice first for the name and the keyboard for the
-    /// number, which is the per-call-site declaration Phase 25 asks for: a blueprint is a phrase
-    /// and a grade is a digit.
-    /// </summary>
-    private void Ask()
-    {
-        _prompts.Enter(
-            new EntryRequest(
-                "loadout.blueprint",
-                "Blueprint",
-                $"What do you want on {_slot}?",
-                "A blueprint by name. It does not reach your checklist until you promote the build.",
-                _ships.Store.Find(_buildId)?.For(_slot)?.Blueprint ?? string.Empty,
-                EntrySurface.Voice),
-            blueprint => _prompts.Enter(
-                new EntryRequest(
-                    "loadout.grade",
-                    "Grade",
-                    $"Which grade of {blueprint}?",
-                    "1 to 5, or leave it empty for any grade — which is a real answer rather than "
-                    + "an unknown.",
-                    string.Empty,
-                    EntrySurface.Keyboard,
-                    value => value.Trim().Length == 0
-                             || (int.TryParse(value.Trim(), out var grade) && grade is >= 1 and <= 5)
-                        ? EntryVerdict.Ok
-                        : EntryVerdict.No("A grade is 1 to 5, or nothing at all for any.")),
-                grade =>
-                {
-                    _ships.Plan(_buildId, new SlotPlan(
-                        _slot,
-                        string.IsNullOrWhiteSpace(blueprint) ? null : blueprint.Trim(),
-                        int.TryParse(grade.Trim(), out var level) ? level : null));
-
-                    Refresh();
-                }));
     }
 }

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Loadout;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -33,7 +34,13 @@ public static class OnFootCapability
 {
     public const string Id = "on-foot";
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> commander) => new()
+    /// <param name="plans">
+    /// The Commander's suit and weapon plans (list.md Phase 27). Null under the designer and in
+    /// tests that are not about them, and the plan tools then answer that nothing is being
+    /// tracked rather than throwing.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        Func<CommanderGameState?> commander, OnFootPlanService? plans = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -129,9 +136,153 @@ public static class OnFootCapability
                 Handler = (arguments, _) =>
                     Task.FromResult(ToolResult.Ok(DescribeMaterial(commander, arguments))),
             },
+
+            // The three plan tools are Protected, so none of them is advertised to the model and
+            // all three are reachable by phrase and by press. That is Phase 26's finding applied
+            // rather than rediscovered: the advertised surface is re-billed every turn and was
+            // measured at 39,693 bytes against a 40,000 ceiling, so a capability that can be a
+            // phrase should be. `plan_on_foot_build` stays the one model-callable route, because
+            // reading "take my Maverick to grade 5 with night vision" out of free English is the
+            // one thing here that needs a model.
+            new ToolDefinition
+            {
+                Protected = true,
+                Name = "get_on_foot_plans",
+                Description =
+                    "Every suit and weapon the Commander is carrying or has planned for, with the grade "
+                    + "each is at and how many slots its plan has an opinion about.",
+                Commands =
+                [
+                    new ToolCommandPhrase("what have I planned on foot", Nothing),
+                    new ToolCommandPhrase("read my suit plans", Nothing),
+                ],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Kit(plans))),
+            },
+
+            new ToolDefinition
+            {
+                Protected = true,
+                Name = "promote_on_foot_plan",
+                Description =
+                    "Offer a suit's or weapon's plan to the checklist. It is a proposal: the Commander "
+                    + "accepts, and the grade always comes first because a grade 1 item has no "
+                    + "modification slots and an engineer's base has no Pioneer Supplies.",
+                Parameters = [Which, Weapon],
+                Commands =
+                [
+                    new ToolCommandPhrase("put that on my checklist", Nothing),
+                    new ToolCommandPhrase("promote this suit plan", Nothing),
+                ],
+                Handler = (arguments, _) => Task.FromResult(Promote(plans, arguments)),
+            },
+
+            // Protected for safety as well as cost. A plan is often weeks of intent, the model
+            // consumes untrusted text, and a hostile in-game message asking d47 to throw one away
+            // is exactly the shape of thing the trust boundary exists for.
+            new ToolDefinition
+            {
+                Protected = true,
+                Name = "drop_on_foot_plan",
+                Description =
+                    "Drop a suit's or weapon's plan. The Commander's own act: not offered to the model, "
+                    + "and refused if it asks. What the plan already put on the checklist is kept.",
+                Parameters = [Which, Weapon],
+                Handler = (arguments, _) => Task.FromResult(Drop(plans, arguments)),
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "On foot", Order = 55 },
     };
+
+    private static readonly IReadOnlyDictionary<string, string> Nothing =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Which item a plan tool is about. The same pair on both, so they read alike.</summary>
+    private static ToolParameter Which => new()
+    {
+        Name = "item",
+        Type = ToolParameterType.String,
+        Description =
+            "The suit or weapon by name. Omit for the suit being worn, or the one weapon carried.",
+    };
+
+    private static ToolParameter Weapon => new()
+    {
+        Name = "weapon",
+        Type = ToolParameterType.Boolean,
+        Description = "True when this is about a hand weapon rather than the suit.",
+    };
+
+    /// <summary>
+    /// What the model is told about the on-foot plans on every turn, below the cache breakpoint.
+    /// A count and nothing else: the plans themselves are a tool call away, and this block is
+    /// re-billed every turn.
+    /// </summary>
+    public static string? Live(OnFootPlanService? plans)
+    {
+        if (plans is null)
+        {
+            return null;
+        }
+
+        var planned = plans.Kit().Count(entry => entry.Planned > 0);
+
+        return planned == 0
+            ? null
+            : $"On foot: {planned.ToString(CultureInfo.InvariantCulture)} suit or weapon plan"
+              + (planned == 1 ? "." : "s.");
+    }
+
+    private static string Kit(OnFootPlanService? plans)
+    {
+        if (plans is null)
+        {
+            return "I am not tracking any suit or weapon plans.";
+        }
+
+        var kit = plans.Kit();
+
+        if (kit.Count == 0)
+        {
+            return "I have not seen you on foot yet, and nothing is planned.";
+        }
+
+        return string.Join(Environment.NewLine, kit.Select(entry => entry.Planned > 0
+            ? $"{entry.Describe()}, {entry.Planned.ToString(CultureInfo.InvariantCulture)} planned"
+            : entry.Describe()));
+    }
+
+    private static ToolResult Promote(OnFootPlanService? plans, ToolArguments arguments)
+    {
+        if (plans is null)
+        {
+            return ToolResult.Error("I am not tracking any suit or weapon plans.");
+        }
+
+        return Whichever(plans, arguments) is not { } build
+            ? ToolResult.Error("I could not tell which suit or weapon you mean.")
+            : ToolResult.Ok(plans.Promote(build.Id));
+    }
+
+    private static ToolResult Drop(OnFootPlanService? plans, ToolArguments arguments)
+    {
+        if (plans is null)
+        {
+            return ToolResult.Error("I am not tracking any suit or weapon plans.");
+        }
+
+        return Whichever(plans, arguments) is not { } build
+            ? ToolResult.Error("I could not tell which suit or weapon you mean.")
+            : ToolResult.Ok(plans.Delete(build.Id));
+    }
+
+    /// <summary>The item a tool call names, through the service's own matcher.</summary>
+    private static OnFootBuild? Whichever(OnFootPlanService plans, ToolArguments arguments) =>
+        OnFootPlanService.Which(
+            plans,
+            arguments.TryGetString("item", out var item) && !string.IsNullOrWhiteSpace(item)
+                ? item.Trim()
+                : null,
+            arguments.TryGetBoolean("weapon", out var weapon) && weapon);
 
     private static string DescribeLoadout(Func<CommanderGameState?> commander)
     {

@@ -1,7 +1,7 @@
 ---
 title: Community goals
 group: Knowledge
-nav_order: 116
+nav_order: 117
 ---
 
 What community goals are running, what tier they have reached, and how you are doing in them.

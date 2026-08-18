@@ -1,0 +1,404 @@
+using System.Globalization;
+using D47.Core.Checklists;
+using D47.Core.Interface;
+using D47.Core.Journal;
+using D47.Core.Knowledge;
+using D47.Core.Ships;
+
+namespace D47.App.Panel;
+
+/// <summary>
+/// The Loadout tab's Ships mode: the fleet, a ship, a slot (list.md Phase 26, "Ships").
+/// <para>
+/// Everything that was in <c>FleetPage</c>, <c>ShipPage</c> and <c>SlotPage</c> that is about
+/// <em>ships</em> rather than about drawing, moved behind <see cref="ILoadoutMode"/> when Phase 27
+/// needed the same three pages for suits. The pages did not change; what changed is that they no
+/// longer know what a hull is.
+/// </para>
+/// </summary>
+public sealed class ShipsMode(
+    ShipPlanService ships,
+    ChecklistService checklists,
+    Func<CommanderGameState?> state) : ILoadoutMode
+{
+    /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
+    private const string Unplanned = "new:";
+
+    public string RootKey => LoadoutPages.FleetRoot;
+
+    public string RootWord => "Ships";
+
+    public string ItemPrefix => LoadoutPages.ShipPrefix;
+
+    public string SlotPrefix => LoadoutPages.SlotPrefix;
+
+    public event Action? Changed
+    {
+        add => ships.Store.Changed += value;
+        remove => ships.Store.Changed -= value;
+    }
+
+    public string EmptyIndex =>
+        "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it — or "
+        + "plan a hull you do not own, and buying one will point the plan at it.";
+
+    public string EmptySlots =>
+        "Nothing is planned, and I cannot see this ship's modules — Elite only reports the loadout "
+        + "of the ship you are sitting in. Plan a slot and it will appear here.";
+
+    public string NewLabel => "Plan a hull you do not own";
+
+    public string PromoteLabel => "Put this build on my checklist";
+
+    public string SayAtIndex => "what have I planned";
+
+    public string SayAtItem => "put that on my checklist";
+
+    public string SayAtSlot(string slot) => $"plan grade 5 dirty drives on {slot}";
+
+    public IReadOnlyList<LoadoutRow> Items() =>
+    [
+        .. ships.Fleet().Select(entry =>
+        {
+            var planned = entry.Planned;
+
+            return new LoadoutRow(
+                Key(entry),
+                entry.Name ?? entry.HullName,
+                entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
+
+                // Where it is, and how its plans stand. The two questions the fleet page exists to
+                // answer before anything is drilled.
+                planned > 0
+                    ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
+                    : entry.Where(),
+                planned > 0);
+        }),
+    ];
+
+    /// <summary>
+    /// A hull the Commander does not own. Voice first, because a hull is a name and a name is far
+    /// easier said than hunted for one key at a time.
+    /// </summary>
+    public void New(PanelPrompts prompts, Action done) =>
+        prompts.Enter(
+            new EntryRequest(
+                "loadout.intend",
+                "Hull",
+                "Which hull do you intend to buy?",
+                "It is not in your fleet until you own one — acquiring it is the plan's first step.",
+                string.Empty,
+                EntrySurface.Voice,
+                value => EliteSpecifications.Ship(value) is null
+                    ? EntryVerdict.No($"I do not know a hull called “{value}”.")
+                    : EntryVerdict.Ok),
+            hull =>
+            {
+                ships.Intend(hull);
+                done();
+            });
+
+    public string? Summary(string item) => Resolve(item) is not { } build
+        ? null
+        : build.IsOwned
+            ? $"{build.Describe()}. One build per ship: a slot holds one plan."
+            : $"{build.Describe()}. Buying one will point this plan at it.";
+
+    public IReadOnlyList<LoadoutRow> Slots(string item)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [];
+        }
+
+        // Every slot the journal reports for the ship being flown, and every slot planned for any
+        // other. A ship in another dock reports no modules at all, which is why the planned ones
+        // have to stand on their own rather than being drawn as annotations on a fitted list.
+        var fitted = Modules(build);
+        var slots = new List<string>();
+
+        slots.AddRange(fitted.Select(module => module.Slot));
+
+        foreach (var plan in build.Slots)
+        {
+            if (!slots.Any(slot => string.Equals(slot, plan.Slot, StringComparison.OrdinalIgnoreCase)))
+            {
+                slots.Add(plan.Slot);
+            }
+        }
+
+        return
+        [
+            .. slots.Select(slot =>
+            {
+                var plan = build.For(slot);
+                var module = fitted.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+                return new LoadoutRow(
+                    $"{build.Id}|{slot}",
+                    slot,
+                    slot,
+                    plan is not null ? plan.Describe() : Describe(module),
+                    plan is not null);
+            }),
+        ];
+    }
+
+    public string Promote(string item) =>
+        Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
+
+    public bool HasPlan(string item, string slot) => Resolve(item)?.For(slot) is not null;
+
+    public void Clear(string item, string slot)
+    {
+        if (Resolve(item) is { } build)
+        {
+            ships.Clear(build.Id, slot);
+        }
+    }
+
+    public IReadOnlyList<LoadoutLine> Fitted(string item, string slot)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [new LoadoutLine("That build is not there any more.")];
+        }
+
+        var loadout = state()?.Ship;
+
+        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
+        {
+            return
+            [
+                new LoadoutLine(
+                    "Elite reports the loadout of the ship you are sitting in and no other, so I "
+                    + "cannot say what is in this slot right now."),
+            ];
+        }
+
+        var module = loadout.Modules.FirstOrDefault(candidate =>
+            string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+        if (module is null)
+        {
+            return [new LoadoutLine("Nothing.")];
+        }
+
+        var lines = new List<LoadoutLine>
+        {
+            new(ChecklistNaming.Readable(module.Item), LoadoutTone.Body),
+        };
+
+        if (module.Blueprint is { Length: > 0 } blueprint)
+        {
+            var grade = module.BlueprintLevel is { } level
+                ? $"grade {level.ToString(CultureInfo.InvariantCulture)} "
+                : string.Empty;
+
+            lines.Add(new LoadoutLine(
+                $"{grade}{ChecklistNaming.Readable(blueprint)}"
+                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty)));
+        }
+
+        return lines;
+    }
+
+    public IReadOnlyList<LoadoutLine> Planned(string item, string slot)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [];
+        }
+
+        if (build.For(slot) is not { } plan)
+        {
+            return [new LoadoutLine("Nothing planned for this slot.")];
+        }
+
+        var lines = new List<LoadoutLine> { new(plan.Describe(), LoadoutTone.Body) };
+
+        if (build.Scope is not { } scope)
+        {
+            return lines;
+        }
+
+        lines.Add(Verdict(build, plan, scope));
+        lines.AddRange(Cost(build, plan, scope));
+
+        return lines;
+    }
+
+    /// <summary>
+    /// Asks for the blueprint, then the grade. Voice first for the name and the keyboard for the
+    /// number: a blueprint is a phrase and a grade is a digit.
+    /// </summary>
+    public void Ask(string item, string slot, PanelPrompts prompts, Action done)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return;
+        }
+
+        prompts.Enter(
+            new EntryRequest(
+                "loadout.blueprint",
+                "Blueprint",
+                $"What do you want on {slot}?",
+                "A blueprint by name. It does not reach your checklist until you promote the build.",
+                build.For(slot)?.Blueprint ?? string.Empty,
+                EntrySurface.Voice),
+            blueprint => prompts.Enter(
+                new EntryRequest(
+                    "loadout.grade",
+                    "Grade",
+                    $"Which grade of {blueprint}?",
+                    "1 to 5, or leave it empty for any grade — which is a real answer rather than "
+                    + "an unknown.",
+                    string.Empty,
+                    EntrySurface.Keyboard,
+                    value => value.Trim().Length == 0
+                             || (int.TryParse(value.Trim(), out var grade) && grade is >= 1 and <= 5)
+                        ? EntryVerdict.Ok
+                        : EntryVerdict.No("A grade is 1 to 5, or nothing at all for any.")),
+                grade =>
+                {
+                    ships.Plan(build.Id, new SlotPlan(
+                        slot,
+                        string.IsNullOrWhiteSpace(blueprint) ? null : blueprint.Trim(),
+                        int.TryParse(grade.Trim(), out var level) ? level : null));
+
+                    done();
+                }));
+    }
+
+    /// <summary>
+    /// The journal's verdict, as of when it was taken. <b>No checkbox</b>: a derived item's
+    /// progress is a diff against live state, and a tick here would be undone or left standing
+    /// and lying by the next read.
+    /// </summary>
+    private LoadoutLine Verdict(ShipBuild build, SlotPlan plan, ChecklistScope scope)
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, plan.Slot)
+        {
+            Detail = plan.Blueprint,
+            Grade = plan.Grade,
+            Engineer = plan.Engineer,
+        };
+
+        var verdict = ChecklistEvaluator.Evaluate(
+            new ChecklistItem
+            {
+                Key = ChecklistKeys.For(intent),
+                Scope = scope,
+                Kind = ChecklistItemKind.Derived,
+                Source = ChecklistSource.EngineeringPlan,
+                Text = plan.Describe(),
+                Intent = intent,
+                Hull = build.Hull,
+            },
+            state());
+
+        var said = verdict?.Reason
+                   ?? "Nothing can be said about this right now — Elite reports the loadout of the "
+                      + "ship you are sitting in and no other.";
+
+        return new LoadoutLine(
+            said,
+            verdict is { } answered && ChecklistNextAction.IsWrong(answered.State)
+                ? LoadoutTone.Danger
+                : LoadoutTone.Muted);
+    }
+
+    /// <summary>
+    /// What this plan costs, on the slot. <b>Per plan</b>, because that is the question a
+    /// Commander looking at one slot is asking — the arithmetic across every plan at once is what
+    /// the gap page is for.
+    /// </summary>
+    private IReadOnlyList<LoadoutLine> Cost(ShipBuild build, SlotPlan plan, ChecklistScope scope)
+    {
+        var costing = EngineeringPlan.Cost(
+            EngineeringPlan.Items(scope, build.Hull, [plan.ToRequest()], checklists.SlotFor),
+            state());
+
+        var lines = new List<LoadoutLine>();
+
+        foreach (var gate in costing.Gates)
+        {
+            lines.Add(new LoadoutLine(gate, LoadoutTone.Danger));
+        }
+
+        if (costing.Ingredients.Count == 0)
+        {
+            return lines;
+        }
+
+        lines.Add(new LoadoutLine("What it costs", LoadoutTone.Heading));
+
+        foreach (var ingredient in costing.Ingredients.OrderByDescending(entry => entry.Short))
+        {
+            // Held, needed and short, all three. "Short 12" alone is a number a Commander cannot
+            // check, and the arithmetic is exact rather than estimated.
+            lines.Add(new LoadoutLine(
+                $"{ingredient.Material.Name}: {ingredient.Held} of {ingredient.Needed}"
+                + (ingredient.Short > 0 ? $", {ingredient.Short} short" : string.Empty)
+                + (ingredient.ExceedsCapacity ? " — more than one trip" : string.Empty)));
+        }
+
+        return lines;
+    }
+
+    private IReadOnlyList<ShipModule> Modules(ShipBuild build)
+    {
+        var loadout = state()?.Ship;
+
+        return loadout is { IsKnown: true } && loadout.ShipId == build.ShipId
+            ? loadout.Modules
+            : [];
+    }
+
+    private static string Key(FleetEntry entry) =>
+        entry.Build?.Id
+        ?? (entry.Stored is { } stored
+            ? Unplanned + stored.ShipId.ToString(CultureInfo.InvariantCulture)
+            : entry.Hull);
+
+    /// <summary>
+    /// The build a crumb key means, <b>started if the ship has none yet</b>.
+    /// <para>
+    /// A ship the journal reports and nothing has planned for has no build id to key a crumb on,
+    /// so the row carries its <c>ShipID</c> instead and the build is made on the way in — which
+    /// keeps the key stable afterwards, because that ship's build is what the id then resolves to.
+    /// </para>
+    /// </summary>
+    private ShipBuild? Resolve(string key)
+    {
+        if (ships.Store.Find(key) is { } build)
+        {
+            return build;
+        }
+
+        if (key.StartsWith(Unplanned, StringComparison.Ordinal)
+            && int.TryParse(key[Unplanned.Length..], CultureInfo.InvariantCulture, out var shipId))
+        {
+            var flying = ships.Fleet().FirstOrDefault(entry => entry.Stored?.ShipId == shipId);
+
+            return flying?.Stored is { } stored
+                ? ships.BuildFor(stored.ShipId, stored.Type, stored.Name)
+                : null;
+        }
+
+        // A key that is a hull. The trail Phase 26 wrote for a ship with no build used one, so
+        // resolving it keeps a breadcrumb from that shape working rather than dead-ending.
+        var byHull = ships.Fleet()
+            .Where(entry => string.Equals(entry.Hull, key, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return byHull is [{ Stored: { } only }]
+            ? ships.BuildFor(only.ShipId, only.Type, only.Name)
+            : byHull.Count == 1 ? byHull[0].Build : null;
+    }
+
+    private static string? Describe(ShipModule? module) =>
+        module is null ? null : ChecklistNaming.Readable(module.Item);
+}

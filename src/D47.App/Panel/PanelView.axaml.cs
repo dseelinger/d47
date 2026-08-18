@@ -488,22 +488,62 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the fleet and its builds (list.md Phase 26, "Ships").
+    /// Gives this surface the fleet, what the Commander is wearing, and the arithmetic between
+    /// them (list.md Phase 26, "Ships"; Phase 27, "Suits and weapons, and the gap").
     /// <para>
-    /// One root for now — Ships. Suits and weapons, and the gap analysis, join it as Phase 27
-    /// registers them, which is one more <see cref="PanelNavigator.Register"/> call each and
-    /// nothing here.
+    /// Three roots of one tab rather than three tabs, because they are three readings of one
+    /// question — <em>what am I building</em> — rather than three destinations. The mode control
+    /// Phase 25 built is what carries them, and each keeps its own drill state, so leaving Ships
+    /// halfway down a slot and looking at the gap does not disturb it.
+    /// </para>
+    /// <para>
+    /// <paramref name="onFoot"/> is null under the designer and in tests that are not about it,
+    /// and the tab then has the one root it had in Phase 26 rather than two that answer nothing.
     /// </para>
     /// </summary>
     public void EnableLoadout(
         D47.Core.Ships.ShipPlanService ships,
         D47.Core.Checklists.ChecklistService checklists,
-        Func<D47.Core.Journal.CommanderGameState?> state)
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        D47.Core.Loadout.OnFootPlanService? onFoot = null)
     {
+        var modes = new List<ILoadoutMode> { new ShipsMode(ships, checklists, state) };
+
+        if (onFoot is not null)
+        {
+            modes.Add(new OnFootMode(onFoot, state));
+        }
+
+        // Recomputed on every draw rather than cached: it is a subtraction over two stores and the
+        // live inventory, all three of which move under the page.
+        GapSource? gap = null;
+
+        if (onFoot is not null)
+        {
+            gap = new GapSource(intended => D47.Core.Loadout.PlanGap.Of(
+                ships.Store.Builds,
+                onFoot.Store.Builds,
+                state(),
+                intended,
+                checklists.SlotFor));
+
+            // Either store moving changes the subtraction, and neither knows about the other.
+            ships.Store.Changed += gap.Invalidate;
+            onFoot.Store.Changed += gap.Invalidate;
+        }
+
+        var roots = new List<NavCrumb> { new(LoadoutPages.FleetRoot, "Ships") };
+
+        if (onFoot is not null)
+        {
+            roots.Add(new NavCrumb(OnFootMode.Root, "Suits"));
+            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Gap"));
+        }
+
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, ships, checklists, state, Nav, Prompts),
-            new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
+            crumb => LoadoutPages.Build(crumb, modes, gap, Nav, Prompts),
+            [.. roots]);
     }
 
     /// <summary>

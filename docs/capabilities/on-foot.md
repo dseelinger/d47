@@ -175,6 +175,79 @@ because gathering past it is wasted time.
 
 Consumables carry a separate cap of **100 per item**.
 
+## The plan, and your checklist
+
+A suit or weapon plan is the on-foot half of the Loadout tab, and it is the Ships page instantiated
+against the same drill: an index of what you are wearing and carrying, one item, one slot. **It
+stays a second mode rather than a second tab**, because the game separates ship and on-foot hard
+and so does its vocabulary — but nothing about the layout is redrawn.
+
+**What differs is the shape of the thing being planned.** A hull's slot is a place a module goes,
+and the journal names it. An item on foot has a grade and up to four modification slots, and Elite
+names none of them — so the slots here are `Grade`, then `Mod 1` to `Mod 4`, and the numbers are
+d47's own. Elite reports what is fitted as a *set* with no positions in it, so those numbers order
+your plan and claim nothing about the item.
+
+**The grade is the first slot, and that is a routing fact rather than a preference.** A grade 1 item
+has no modification slots at all, and an engineer's base has no Pioneer Supplies — only an Apex
+desk. So the plan is ordered the way the trips have to happen.
+
+**The plan owns what and the checklist owns when.** A plan lives in `data/on-foot.json` and nothing
+crosses into your checklist unasked; promoting it produces a proposal you accept, with the grade
+first and the modifications after it.
+
+**Something you do not own is not absent, it is intended.** It has no `SuitID`, so buying it is the
+plan's first step rather than a precondition sitting outside it — and buying one adopts the plan
+rather than making you re-point it.
+
+### `get_on_foot_plans`
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### `promote_on_foot_plan`
+
+```json
+{"type":"object","properties":{"item":{"type":"string","description":"The suit or weapon by name. Omit for the suit being worn, or the one weapon carried."},"weapon":{"type":"boolean","description":"True when this is about a hand weapon rather than the suit."}},"required":[],"additionalProperties":false}
+```
+
+### `drop_on_foot_plan`
+
+```json
+{"type":"object","properties":{"item":{"type":"string","description":"The suit or weapon by name. Omit for the suit being worn, or the one weapon carried."},"weapon":{"type":"boolean","description":"True when this is about a hand weapon rather than the suit."}},"required":[],"additionalProperties":false}
+```
+
+Dropping a plan keeps whatever it already put on your checklist. You ordered your list around those
+lines, and removing them silently is a history that lies.
+
+### The file
+
+```json
+{
+  "kit": [
+    {
+      "id": "kit-1",
+      "equipment": "Maverick Suit",
+      "kind": "suit",
+      "itemId": 1837009111675068,
+      "slots": [
+        { "slot": "Grade", "grade": 5 },
+        { "slot": "Mod 1", "modification": "Night Vision" }
+      ]
+    }
+  ]
+}
+```
+
+`id` is the plan's own identity and is **independent of `itemId` from the moment it is created** —
+that independence is what there is to rebind when you buy one. A plan with no `itemId` is an
+intended one. A `slot` that is not `Grade` or `Mod 1` to `Mod 4` is refused and reported, because a
+hardpoint on a suit is a line that could be stored and shown and never promoted.
+
+Hand-edited, it takes effect without a restart, and a line the file gets wrong is reported rather
+than silently dropped.
+
 ## Notes for anyone reading the code
 
 Two generated tables sit under this.

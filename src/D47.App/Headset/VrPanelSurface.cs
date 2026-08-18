@@ -87,7 +87,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Utilities.Timekeeper? timekeeper = null,
         D47.Core.Utilities.AlarmStore? alarmStore = null,
         D47.Core.Ships.ShipPlanService? ships = null,
-        Func<D47.Core.Journal.CommanderGameState?>? gameState = null)
+        Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
+        D47.Core.Loadout.OnFootPlanService? onFoot = null)
     {
         _dumpTo = dumpTo;
 
@@ -117,9 +118,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (ships is not null && checklists is not null && gameState is not null)
         {
-            // The fleet, in the headset too (list.md Phase 26). A Commander deciding what to fit
-            // is often the Commander sitting in the ship.
-            _view.EnableLoadout(ships, checklists, gameState);
+            // The fleet, in the headset too (list.md Phase 26), and the suits beside it (Phase
+            // 27). A Commander deciding what to fit is often the Commander sitting in the ship.
+            _view.EnableLoadout(ships, checklists, gameState, onFoot);
         }
 
         if (timekeeper is not null && alarmStore is not null)

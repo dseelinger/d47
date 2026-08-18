@@ -315,16 +315,22 @@ other slots alone.
 
 ### `plan_on_foot_build`
 
-Proposes what a **suit's or a hand weapon's** plan should say. The grade comes first in the list,
-because a grade 1 item has no modification slots and an engineer's base has no Pioneer Supplies —
-so "upgrade first" is a step in the order rather than advice under it.
+Sets what a **suit's or a hand weapon's** plan says. Like `plan_ship_build`, it writes the plan and
+stops: it does not reach your checklist until you promote it, because the plan owns *what* and the
+checklist owns *when*. See [On foot](on-foot.html) for the plan itself.
 
-One modification per proposal, deliberately. They are permanent, four at most, and a wrong one is
+A modification with no slot named takes the first free one, counted from the grade the plan is
+*aiming* at — so planning a modification on a grade 1 suit the same plan is taking to grade 4 works.
+The grade always comes first in what promotion produces, because a grade 1 item has no modification
+slots and an engineer's base has no Pioneer Supplies — so "upgrade first" is a step in the order
+rather than advice under it.
+
+One modification at a time, deliberately. They are permanent, four at most, and a wrong one is
 recoverable only by buying and re-upgrading a fresh item, so a batch is the wrong shape for a
 decision this hard to undo.
 
 ```json
-{"type":"object","properties":{"drop":{"type":"boolean","description":"Propose that the plan say nothing about this. What it already said is kept as history rather than deleted."},"equipment":{"type":"string","description":"The suit or weapon by name \u2014 \u0022Maverick\u0022, \u0022Dominator\u0022, \u0022Karma AR-50\u0022."},"grade":{"type":"integer","description":"The grade to reach, 2 to 5. Omit to leave the grade alone \u2014 on foot that means no upgrade rather than any upgrade."},"item":{"type":"string","description":"A suit id or weapon id. Omit for the suit being worn, or the one weapon being carried."},"modification":{"type":"string","description":"One modification to fit \u2014 \u0022Night Vision\u0022, \u0022Magazine Size\u0022. Permanent, so one per proposal."},"weapon":{"type":"boolean","description":"True when this is about a hand weapon rather than the suit."}},"required":["equipment"],"additionalProperties":false}
+{"type":"object","properties":{"drop":{"type":"boolean","description":"Say nothing about this any more. What it already put on the checklist is kept."},"equipment":{"type":"string","description":"The suit or weapon by name \u2014 \u0022Maverick\u0022, \u0022Dominator\u0022, \u0022Karma AR-50\u0022."},"grade":{"type":"integer","description":"The grade to reach, 2 to 5. Omit to leave the grade alone \u2014 on foot that means no upgrade rather than any upgrade."},"item":{"type":"string","description":"The suit or weapon by name. Omit for the suit being worn, or the one weapon carried."},"modification":{"type":"string","description":"One modification to fit \u2014 \u0022Night Vision\u0022, \u0022Magazine Size\u0022. Permanent, so set them one at a time."},"weapon":{"type":"boolean","description":"True when this is about a hand weapon rather than the suit."}},"required":["equipment"],"additionalProperties":false}
 ```
 
 ### `plan_colonisation`

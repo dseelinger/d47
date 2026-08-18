@@ -17,6 +17,82 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.27.0 — 2026-08-18 — Suits and weapons, and the gap
+
+list.md Phase 27. The Loadout tab is finished: what you wear beside what you fly, and the
+arithmetic between everything you have planned and what you are carrying.
+
+### The same page, on foot
+
+Suits and weapons is the Ships page, instantiated against your suit and weapon plans. One index,
+one drill, one promote path, one say-line on every level — **one page kind built once and shown
+twice**, in the same spirit as one widget tree rendering to two surfaces. It stays a **second mode
+rather than a second tab**, because the game separates ship and on-foot hard and so does its
+vocabulary, but nothing about the layout is redrawn.
+
+**What differs is the shape of the thing being planned**, and one part of that had to be invented
+rather than read. A hull's slot is a place a module goes and the journal names it. An item on foot
+has a grade and up to four modification slots, and **Elite names none of them** — it reports what
+is fitted as a *set* with no positions in it. So the slots are `Grade`, then `Mod 1` to `Mod 4`,
+the numbers are Directive 47's own, and the page says so where you could otherwise read the third
+one as the game's third.
+
+**The grade is the first slot, and that is a routing fact rather than a preference.** A grade 1
+item has no modification slots at all, and an engineer's base has no Pioneer Supplies — only an
+Apex desk. So the plan is ordered the way the trips have to happen.
+
+Everything the ship builds established holds here: the plan owns *what* and your checklist owns
+*when*, a suit you do not own is **intended** rather than absent, buying one adopts the plan rather
+than making you re-point it, and dropping a plan keeps whatever it already put on your list.
+
+One correction to the plan of record, and it is the mirror image of Phase 26's. On the ship side,
+`ShipyardBuy` carries no id for the new hull and the adoption had to match the `ShipyardNew`
+written after it. **On foot the buy event carries the id**: `BuySuit` carries `SuitID` and
+`BuyWeapon` carries `SuitModuleID`, so adoption is one event rather than two. The symbol is what it
+matches on, never `Name_Localised` — Frontier's own localisation reports every suit above grade 1
+as Class1.
+
+### Gap analysis
+
+A third mode reading across both the others, because a Commander gathering materials does not care
+which ship wanted them. **Not called a wishlist**: a wishlist is a list of things you want, which
+is what the plans are. This is the subtraction.
+
+**The ledgers are never totalled together.** Raw, manufactured and encoded materials, the ship
+locker and the cargo hold have separate caps and no exchange between them; a single headline number
+over the top of them would be a lie. The one figure that spans everything counts **units still to
+find**, which is a shopping list rather than a balance.
+
+**A shortfall reads back to what wants it** — the ships and the slots that asked. That is what
+makes the roll-up navigable instead of merely a total, and it is why each planned slot is costed on
+its own and merged afterwards: the totals are identical either way, and it is the only arrangement
+in which the attribution survives.
+
+**Material trading is included and stays secondary.** The trader's rate is exact — one grade down
+returns 3 for 1, one grade up costs 6 for 1, and a different line costs a further 6× — and the line
+is the trader's grid column, never the journal's category. So a trade appears beside the shortfall
+and never instead of it, and only one you could actually make out of a genuine surplus is offered.
+
+**Whether hulls you do not own count is a filter**, not a decision taken once on your behalf.
+Counting them is honest about the whole ambition; excluding them answers what can be finished now.
+Both are real questions, and which one you are asking changes through the evening.
+
+It is a different set from `get_plan_shortfall`, which nets what is on your **checklist**. This one
+nets what is **planned**, including builds that have never been promoted — which is most of them
+while a build is still being decided.
+
+### Also
+
+- The advertised tool surface got **smaller** again, from 39,693 bytes to 39,639 against the same
+  40,000 ceiling. Every tool this phase adds is Protected — reachable by phrase and by press, and
+  advertised to nothing — and `plan_on_foot_build`, which stays the one route that needs a model to
+  read free English, now writes the plan instead of proposing straight to your checklist.
+- Suit and weapon plans live in `data/on-foot.json`, hand-editable and live without a restart. A
+  slot that is not `Grade` or `Mod 1` to `Mod 4` is refused and reported, because a hardpoint on a
+  suit is a line that could otherwise be stored, shown, and never promotable.
+
+---
+
 ## 0.26.1 — 2026-08-18 — Saying so when it cannot look things up
 
 Two faults with one root: `SupportsWebSearch` was consulted everywhere search is *used* and

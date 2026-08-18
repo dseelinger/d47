@@ -1,7 +1,7 @@
 ---
 title: Panels and interface
 group: Acting on the game
-nav_order: 129
+nav_order: 130
 ---
 
 Opens the cockpit panels and moves around them, so you can change fire group or read your

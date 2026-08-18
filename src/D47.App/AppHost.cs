@@ -282,6 +282,15 @@ public sealed class AppHost : IDisposable
     /// <summary>Where the builds are kept, for the panel to follow and for a hand edit to reach.</summary>
     public ShipBuildStore ShipBuilds { get; private set; } = null!;
 
+    /// <summary>
+    /// The Commander's suit and weapon plans, joined to what they are wearing (list.md Phase 27).
+    /// The on-foot half of the same page.
+    /// </summary>
+    public D47.Core.Loadout.OnFootPlanService OnFootPlans { get; private set; } = null!;
+
+    /// <summary>Where those are kept, for the panel to follow and for a hand edit to reach.</summary>
+    public D47.Core.Loadout.OnFootBuildStore OnFootBuilds { get; private set; } = null!;
+
     /// <summary>Where the alarms are kept, for the panel to follow and for a hand edit to reach.</summary>
     public AlarmStore Alarms { get; private set; } = null!;
 
@@ -631,6 +640,18 @@ public sealed class AppHost : IDisposable
         // and never writes to it directly: the plan owns what, the checklist owns when.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
 
+        // And the same arrangement on foot (list.md Phase 27). Its own file rather than a second
+        // array in the ship one, because the game separates ship and on-foot hard and a Commander
+        // hand-editing a suit should not be reading past twenty hardpoints to find it.
+        var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
+            Path.Combine(paths.Data, "on-foot.json"),
+            loggerFactory.CreateLogger<D47.Core.Loadout.OnFootBuildStore>());
+
+        onFootBuilds.Poll();
+
+        var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
+            onFootBuilds, checklists, () => gameState.Active);
+
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
         // library, which is replaced whenever the Commander drops a file into data/audio.
@@ -925,6 +946,10 @@ public sealed class AppHost : IDisposable
                 () => TimeZoneInfo.Local,
                 shipPlans,
 
+                // And the suit and weapon plans beside them (list.md Phase 27). Two stores rather
+                // than one, because the game separates ship and on-foot hard.
+                onFootPlans,
+
                 // The endpoint half of web search, for the egress row. Asked each time because
                 // the Commander can retarget `llm.endpoint` without restarting, and the row is
                 // computed at render time so it has to be able to change underneath.
@@ -1096,6 +1121,8 @@ public sealed class AppHost : IDisposable
         host.Timekeeper = timekeeper;
         host.Ships = shipPlans;
         host.ShipBuilds = shipBuilds;
+        host.OnFootPlans = onFootPlans;
+        host.OnFootBuilds = onFootBuilds;
         host.Alarms = alarms;
 
         host.SwitchEditing = new Settings.SwitchEditing(
@@ -1229,8 +1256,12 @@ public sealed class AppHost : IDisposable
         tick.Add("ships", _unused =>
         {
             shipBuilds.Poll();
+            onFootBuilds.Poll();
 
-            foreach (var adopted in shipPlans.Observe(arrived))
+            // Both halves of the same offer. On foot the buy event carries the id, which is the
+            // opposite of the ship side - ShipyardBuy names no id for the new hull at all and the
+            // ShipyardNew written after it does (list.md Phase 27).
+            foreach (var adopted in shipPlans.Observe(arrived).Concat(onFootPlans.Observe(arrived)))
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);

@@ -1,7 +1,7 @@
 ---
 title: Macros
 group: Acting on the game
-nav_order: 134
+nav_order: 135
 ---
 
 Your own named sequences of ship actions. Say the name, and Directive 47 runs them in order.
