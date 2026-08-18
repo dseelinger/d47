@@ -127,7 +127,12 @@ public static class BuiltinCapabilities
         // 29). Null under the designer and in every test, and null again in the app until the
         // first handshake answers — the model picker then behaves exactly as it did before there
         // was anybody to ask, which is the state it was designed for.
-        Func<IReadOnlyList<string>>? endpointModels = null) =>
+        Func<IReadOnlyList<string>>? endpointModels = null,
+
+        // What d47 remembers about the Commander (list.md Phase 31). Null under the designer and in
+        // tests that are not about it; the capability still registers, so its rows and its
+        // documentation page exist, and every tool answers that there is nowhere to keep anything.
+        Memory.MemoryBook? memories = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -182,7 +187,12 @@ public static class BuiltinCapabilities
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         UtilitiesCapability.Create(timekeeper, now, zone),
 
-        PrivacyCapability.Create(settings, searchAvailable),
+        // Beside Privacy rather than anywhere near the game capabilities, and immediately before it
+        // so that adding this shifted two documentation pages rather than twenty-seven — the nav
+        // order is the registry index, which Phase 26 learned the expensive way.
+        MemoryCapability.Create(memories, now ?? (() => DateTimeOffset.MinValue), settings),
+
+        PrivacyCapability.Create(settings, searchAvailable, memories),
         SettingsCapability.Create(settings),
     ];
 }

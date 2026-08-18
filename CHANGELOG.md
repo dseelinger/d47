@@ -17,6 +17,80 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.31.0 — 2026-08-18 — It remembers you
+
+list.md Phase 31. Directive 47 could tell you which engineer to visit and what your plans were
+short of, and it could not tell you that you had been away for a week. Recall was a `Dictionary`
+field in `AppHost`, alive for as long as the window was open.
+
+### A store that survives
+
+`data/memories.json` — plain text, beside the executable, one file keyed per Commander with the key
+inside the document. Hand-editable and **compared by content** rather than by a last-write time, so
+a line typed in a text editor while D47 is running is live without a restart, and a line that cannot
+be read back is reported rather than dropped.
+
+**Facts and observations, never a transcript.** A rolling record of what you said would be a privacy
+liability, a context-window problem and an invitation to confabulate all at once. There is no field
+that could hold one.
+
+### Three labels, and nothing promotes one to another
+
+Phase 23's tiered truth, extended by one tier. Every entry says where it came from and is read back
+in the sentence its label earns:
+
+- **Your word** — you typed it on the panel. *You told me: …*
+- **Noticed** — D47 read it out of your journal. *I noticed: …*
+- **Unverified** — D47 wrote it down itself, in conversation. *I wrote this one down myself, and
+  nothing has checked it: …*
+
+**The model cannot choose its own label**, and `remember_about_me` has no parameter for one. D47
+reads your journal, your in-game messages and, where you have allowed it, the web — and a turn a
+hostile message steered is indistinguishable from one you asked for, seen from inside a tool handler.
+So the route decides: only the panel produces your word, and an entry the model wrote reads as an
+inference for as long as it exists.
+
+### Recall above the cache breakpoint
+
+Prompt position 5, beside your About Me text rather than down in game state — which is a decision
+taken deliberately because the obvious placement is the wrong one. It carries a **bounded, labelled
+sample** that states its own arithmetic: *3 of 17 things, chosen for where they are and what they are
+doing*, with an instruction not to claim it is everything. Ask *what do you remember about me* and
+the keyword router answers from the whole file, with no model in the path.
+
+It is re-sent only when the bytes actually change, and the rendered text carries no system, no ship
+and no live figure — so flying through a dozen systems D47 remembers nothing about costs nothing.
+
+### It forgets, and says so
+
+**Ninety days by default**, changeable to a month, a year or never. Anything past its expiry is
+dropped, and if what went was something *you* told D47, it says so out loud rather than going quiet.
+The whole file is readable in a panel window and emptied by one button — in **Privacy and egress**,
+where you would look for it, covering every Commander in the file rather than just the one aboard.
+There is no phrase and no tool that can empty it.
+
+### Picking up where you left off
+
+One line at the start of a session, assembled from the store, the checklist and the plans:
+
+```text
+It has been 3 days. You were last aboard in Deciat, docked at Farseer Inc. You were 3 Selenium
+short. Hera Tani is still two steps out.
+```
+
+Written by D47 rather than by the model — a persona is only ever asked to say it back in its own
+voice with every number unchanged — and **silent when there is nothing to say**. A first run says
+nothing at all.
+
+### And what leaves the machine changed, so the disclosure did
+
+Recall goes into the prompt, so the facts D47 remembers about you are now among the things sent to
+the language-model endpoint. Three provider disclosures and the loopback line say so. The egress list
+claims to be exhaustive by construction, and an exhaustive list with a new item missing from it is
+worse than no list.
+
+---
+
 ## 0.30.0 — 2026-08-18 — Prove the model behaves
 
 list.md Phase 30. Nothing in this repository had ever asserted anything about what a model does.

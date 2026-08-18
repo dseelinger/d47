@@ -153,9 +153,10 @@ public static class LlmProviderCatalog
             DefaultModel = "claude-sonnet-5",
             Models = ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8", "claude-haiku-4-5", "claude-fable-5"],
             Egress =
-                "Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the " +
-                "game state D47 assembled from your journal — system, body, station and docking state — are sent " +
-                "to the endpoint below on every turn the model answers. Journal files themselves are never uploaded.",
+                "Your question, D47's reply so far, the guardrails, the persona, your About Me text and the few " +
+                "facts D47 remembers about you that are relevant right now, and the game state D47 assembled from " +
+                "your journal — system, body, station and docking state — are sent to the endpoint below on every " +
+                "turn the model answers. Journal files themselves are never uploaded.",
         },
         new LlmProviderInfo
         {
@@ -178,9 +179,10 @@ public static class LlmProviderCatalog
             // Grok is a base URL and a model name rather than a third implementation.
             AcceptsCustomEndpoint = true,
             Egress =
-                "Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the " +
-                "game state D47 assembled from your journal — system, body, station and docking state — are sent " +
-                "to the endpoint below on every turn the model answers. Journal files themselves are never uploaded.",
+                "Your question, D47's reply so far, the guardrails, the persona, your About Me text and the few " +
+                "facts D47 remembers about you that are relevant right now, and the game state D47 assembled from " +
+                "your journal — system, body, station and docking state — are sent to the endpoint below on every " +
+                "turn the model answers. Journal files themselves are never uploaded.",
         },
         new LlmProviderInfo
         {
@@ -201,12 +203,12 @@ public static class LlmProviderCatalog
             // a guess would fail at the first turn. The handshake asks the endpoint instead.
             AcceptsCustomEndpoint = true,
             Egress =
-                "Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the " +
-                "game state D47 assembled from your journal — system, body, station and docking state — are sent " +
-                "to the endpoint below on every turn the model answers. Journal files themselves are never " +
-                "uploaded. Where that endpoint is on this machine, none of it leaves the machine at all; where it " +
-                "is not, it goes to whoever runs that address. This endpoint has no server-side web search, so " +
-                "D47 never asks it to fetch a page.",
+                "Your question, D47's reply so far, the guardrails, the persona, your About Me text and the few " +
+                "facts D47 remembers about you that are relevant right now, and the game state D47 assembled from " +
+                "your journal — system, body, station and docking state — are sent to the endpoint below on every " +
+                "turn the model answers. Journal files themselves are never uploaded. Where that endpoint is on " +
+                "this machine, none of it leaves the machine at all; where it is not, it goes to whoever runs that " +
+                "address. This endpoint has no server-side web search, so D47 never asks it to fetch a page.",
         },
     ];
 

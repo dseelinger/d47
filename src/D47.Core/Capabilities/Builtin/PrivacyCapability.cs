@@ -15,13 +15,24 @@ public static class PrivacyCapability
 
     public const string UpdateCheckKey = "updates.checkOnStartup";
 
+    /// <summary>The row carrying the one action that empties the memory store (list.md Phase 31).</summary>
+    public const string MemoryKey = "privacy.memory";
+
     /// <param name="searchAvailable">
     /// Whether the provider and model in use offer a server-side web search. Null is "assume it
     /// can", which is what a caller with no provider to ask is entitled to say — every test here
     /// is one, and so is first run. <b>A caller that has a provider must supply it</b>, or the
     /// web-search row describes searches at an endpoint that will never make one.
     /// </param>
-    public static CapabilityDescriptor Create(SettingsService settings, Func<bool>? searchAvailable = null)
+    /// <param name="memories">
+    /// What d47 remembers about the Commander (list.md Phase 31). Null where nothing composed a
+    /// store — under the designer and in tests that are not about it — and the row then says so
+    /// rather than offering a button that erases nothing.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        SettingsService settings,
+        Func<bool>? searchAvailable = null,
+        Memory.MemoryBook? memories = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -76,14 +87,15 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories),
         };
     }
 
     private static IReadOnlyList<SettingRow> BuildSettingRows(
         Func<bool> keyPresent,
         Func<bool> inaraKeyPresent,
-        Func<bool> searchAvailable)
+        Func<bool> searchAvailable,
+        Memory.MemoryBook? memories)
     {
         var rows = new List<SettingRow>
         {
@@ -112,6 +124,35 @@ public static class PrivacyCapability
                 },
             },
         };
+
+        // Emptying the memory store, here rather than in its own section (list.md Phase 31, item 3:
+        // "which joins the existing privacy capability rather than inventing a second place to
+        // look"). A Commander who wants d47 to forget them looks for that where the rest of "what
+        // does this thing know" lives, and a second erase button somewhere else is one they would
+        // find after the one they were looking for.
+        //
+        // Info with a Press, so SettingsService.Apply refuses it and nothing on the tool surface can
+        // reach it — the same mechanism the introductions button uses, and the reason emptying needs
+        // no protected flag of its own. It also has no router phrase: "forget everything about me"
+        // is a sentence a transcriber can produce out of a misheard one, and this is the only
+        // action in the phase that cannot be undone.
+        rows.Add(new SettingRow
+        {
+            Key = MemoryKey,
+            Label = "What D47 remembers about you",
+            Help =
+                "Facts D47 has kept between sessions — what you have told it, what it noticed in your "
+                + "journal, and what it worked out for itself. Emptying is immediate and covers every "
+                + "Commander in the file, not just the one currently aboard.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "memory",
+            PressLabel = memories is null ? null : "Forget everything",
+            Press = memories is null ? null : () => memories.Store.Empty(),
+            Binding = new SettingBinding
+            {
+                Read = _ => MemoryCapability.Summarise(memories),
+            },
+        });
 
         // One row per destination, declared once from the closed id set. The text each one
         // reads is computed at render time, so the card always describes right now.

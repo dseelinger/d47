@@ -50,6 +50,43 @@ public sealed record D47Settings
     public PersonaSettings Persona { get; init; } = new();
 
     public KnowledgeSettings Knowledge { get; init; } = new();
+
+    /// <summary>
+    /// What d47 keeps about the Commander, and for how long (list.md Phase 31).
+    /// </summary>
+    public MemorySettings Memory { get; init; } = new();
+}
+
+/// <summary>
+/// The memory store's two settings (list.md Phase 31, "It forgets, and can be read and emptied").
+/// <para>
+/// Its own block rather than a pair of flags on <see cref="LlmSettings"/>, because the store is not
+/// the model's: the panel writes to it, the journal observer writes to it, and it is still there and
+/// still readable with no provider selected at all. A Commander running local-only has a memory.
+/// </para>
+/// </summary>
+public sealed record MemorySettings
+{
+    /// <summary>
+    /// Whether d47 remembers anything at all. Off stops every write and stops recall reaching the
+    /// prompt; it does <b>not</b> erase what is already there, because a switch that emptied a file
+    /// would be a delete button wearing a toggle's clothes. Emptying is its own action, in the
+    /// privacy section, and it says what it is.
+    /// </summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// How many days an entry lives before it is forgotten. 0 is "never", which is a real choice
+    /// rather than an absence.
+    /// <para>
+    /// <b>Ninety days by default.</b> A store that only grows is a liability with a countdown on it,
+    /// and defaulting to "never" would ship that liability to everybody who never opens this row.
+    /// What makes ninety days tolerable is the other half of the item: an expiry that removes
+    /// something the Commander <em>stated</em> is said out loud rather than happening quietly, so
+    /// the default cannot silently lose the one tier a person authored.
+    /// </para>
+    /// </summary>
+    public int ExpiryDays { get; init; } = 90;
 }
 
 /// <summary>
@@ -537,6 +574,16 @@ public sealed record CalloutSettings
     /// </para>
     /// </summary>
     public Callouts.LoreRemarks Lore { get; init; } = Callouts.LoreRemarks.Lookup;
+
+    /// <summary>
+    /// One line at the start of a session, picking up where the Commander left off (list.md Phase
+    /// 31, "Picking up where you left off").
+    /// <para>
+    /// On, and it costs nothing to leave on: it is silent unless there is a store to read, and it
+    /// is the item the other three exist to make possible.
+    /// </para>
+    /// </summary>
+    public bool Continuity { get; init; } = true;
 }
 
 public sealed record LlmSettings

@@ -573,7 +573,8 @@ public partial class MainWindow : Window
                 // The Commander's own notes, and the search that decides how one is filed. The
                 // host owns both halves of "can this search at all", which is the thing the
                 // window has to say before anything is typed (list.md Phase 23).
-                _host.LoreEditing);
+                _host.LoreEditing,
+                _host.Memories);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is

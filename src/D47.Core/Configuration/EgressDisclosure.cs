@@ -381,8 +381,9 @@ public static class EgressDisclosure
                 LanguageModel,
                 NameOf(LanguageModel),
                 $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
-                + "the reply, the persona and the game state D47 assembled from your journal all go to that "
-                + "address and no further — nothing leaves this machine, and no account or key is involved.");
+                + "the reply, the persona, what D47 remembers about you and the game state D47 assembled from your "
+                + "journal all go to that address and no further — nothing leaves this machine, and no account or "
+                + "key is involved.");
         }
 
         return new EgressEntry(

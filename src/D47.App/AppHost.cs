@@ -24,6 +24,7 @@ using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Listening;
 using D47.Core.Lore;
+using D47.Core.Memory;
 using D47.Core.Persona;
 using D47.Core.Ticking;
 using D47.Llm;
@@ -321,6 +322,13 @@ public sealed class AppHost : IDisposable
     public Settings.LoreEditing? LoreEditing { get; private set; }
 
     /// <summary>
+    /// What d47 remembers about the Commander, and the clock a fact typed on the panel is stamped
+    /// with (list.md Phase 31). Null under the designer, where the row shows a summary and no
+    /// button.
+    /// </summary>
+    public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -533,7 +541,34 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger<ChecklistProposalStore>()),
             () => gameState.Active);
 
-        var callouts = BuildCallouts(loaded, loggerFactory, checklists, lore, loreVisits);
+        // What d47 remembers about the Commander (list.md Phase 31). One file, per Commander with
+        // the key inside the document, and it has both halves of the store pattern Phase 23 split
+        // in two: the Commander's own words are in it, so it is polled for hand edits and reports
+        // problems rather than dropping lines — and it is keyed per character, because who is
+        // flying is who the facts are about.
+        var memories = new MemoryStore(
+            Path.Combine(paths.Data, "memories.json"),
+            loggerFactory.CreateLogger<MemoryStore>());
+
+        memories.Poll();
+
+        var memoryBook = new MemoryBook(
+            memories,
+            () => gameState.Active?.Identity.FrontierId,
+            () => MemorySituation.Of(gameState.Active, status.Current));
+
+        // The only thing in the phase that writes a memory nobody asked for, and the only producer
+        // of the observed tier — without it that tier would be an enum member reachable by nothing.
+        var memoryObserver = new MemoryObserver(memoryBook);
+
+        // Assigned once the ship and on-foot plans exist, below. A holder rather than a
+        // reordering, exactly as bindsRef above is one: the callouts have to be built before the
+        // tick loop and the engineer solver reads two stores that are built after the readers, and
+        // neither of those orders is negotiable for a lambda's benefit.
+        D47.Core.Engineers.EngineerPlanService? unlocksRef = null;
+
+        var callouts = BuildCallouts(
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, () => unlocksRef);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -664,6 +699,10 @@ public sealed class AppHost : IDisposable
         // of them move while the panel is open.
         var unlocks = new D47.Core.Engineers.EngineerPlanService(
             shipBuilds, onFootBuilds, checklists, () => gameState.Active);
+
+        // The holder declared before the callouts, filled in now. The continuity line asks for this
+        // when it composes rather than when the engine was assembled, so this is in time.
+        unlocksRef = unlocks;
 
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
@@ -975,7 +1014,12 @@ public sealed class AppHost : IDisposable
                 // answers, which is the state the model picker was designed for from Phase 4 —
                 // the row accepts free text, so an empty list has always been a supported answer
                 // rather than a broken one.
-                () => self?.EndpointModelIds ?? []));
+                () => self?.EndpointModelIds ?? [],
+
+                // What d47 remembers about the Commander (list.md Phase 31). Read by two
+                // capabilities — its own, and the privacy section, which is where emptying it lives
+                // rather than in a second place to look.
+                memoryBook));
 
         built = capabilities;
 
@@ -1164,6 +1208,10 @@ public sealed class AppHost : IDisposable
             host.SearchForAsync,
             () => DateTimeOffset.Now);
 
+        // The store and the clock, together, because a fact typed here is stamped with a real
+        // instant and Core reads no clock of its own.
+        host.Memories = (memoryBook, () => DateTimeOffset.Now);
+
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
         host.CoverageRecorder = coverage;
@@ -1291,6 +1339,42 @@ public sealed class AppHost : IDisposable
             }
         });
 
+        // What d47 remembers, on the tick like every other store (list.md Phase 31). Four things,
+        // and the order matters: the file is read first so a hand edit is live, then the journal's
+        // two observations are written if they changed, then expiry runs on a coarse interval, and
+        // only then is the recall block recomputed — so the block reflects this tick's store rather
+        // than the last one's.
+        var expiredAt = DateTimeOffset.MinValue;
+
+        tick.Add("memory", context =>
+        {
+            memories.Poll();
+
+            if (!settings.Current.Memory.Enabled)
+            {
+                // Off means no new writes and nothing reaching the prompt. It does not mean the
+                // file is emptied — that is its own action, in the privacy section, and it says so.
+                host.ApplyRecall(null);
+                return;
+            }
+
+            memoryObserver.Observe(gameState.Active, context.Now);
+            memoryObserver.Touch(gameState.Active, context.Now);
+
+            // Once at startup and then rarely. Expiry is a boundary crossing, not an event, so
+            // asking ten times a second would be ten times a second of reading a file to learn
+            // that nothing has aged out.
+            if (context.Now - expiredAt >= ExpiryEvery)
+            {
+                expiredAt = context.Now;
+                host.ReportExpiredMemories(
+                    memoryBook.Expire(context.Now, MemoryCapability.ExpiryOf(settings.Current.Memory)),
+                    context.IsFirst);
+            }
+
+            host.ApplyRecall(memoryBook.Recall());
+        });
+
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // Ambience follows the situation Status.json states, sampled on the tick rather than
@@ -1335,7 +1419,9 @@ public sealed class AppHost : IDisposable
         ILoggerFactory loggers,
         ChecklistService checklists,
         LoreBook lore,
-        LoreVisits loreVisits)
+        LoreVisits loreVisits,
+        MemoryBook memories,
+        Func<D47.Core.Engineers.EngineerPlanService?> unlocks)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -1376,6 +1462,11 @@ public sealed class AppHost : IDisposable
             // Phase 23. Below the warnings and above the ambient line: it is news, but it is news
             // about a place that will still be there in a minute.
             .Add(new LoreCallout(lore, loreVisits))
+
+            // Phase 31, and the lowest thing here that is not the ambient line: it fires once, at
+            // the start of a session, and it is about what was true before the Commander sat down.
+            // Everything above it is about now.
+            .Add(new ContinuityCallout(memories, checklists, unlocks))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -1413,6 +1504,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid);
         engine.SetEnabled("checklist", callouts.Checklist);
         engine.SetEnabled("ambient", callouts.Ambient);
+        engine.SetEnabled("continuity", callouts.Continuity);
 
         foreach (var callout in engine.Callouts)
         {
@@ -1510,6 +1602,76 @@ public sealed class AppHost : IDisposable
         Turns.Persona = Personas.RenderBlock(current.Llm.PersonalityEnabled);
 
         LlmAvailability.SetProviderConfigured(provider is not null, reason);
+    }
+
+    /// <summary>
+    /// Puts the recall block into the prompt, and <b>only when it has actually changed</b> (list.md
+    /// Phase 31, "Recall arrives above the cache breakpoint").
+    /// <para>
+    /// <b>The comparison is the whole point of this method existing.</b> Recall sits above the cache
+    /// breakpoint, so assigning it invalidates the entire cached prefix — the 39,000-odd bytes of
+    /// tool schemas serialize first and go cold with it. This runs ten times a second and almost
+    /// always produces the text that is already there, so an unconditional assignment would be a
+    /// cold prefix on every turn, which is the exact cost the placement was chosen to avoid.
+    /// </para>
+    /// <para>
+    /// <see cref="MemoryRecall"/> holds up its end: the rendered text carries no system, no ship and
+    /// no live figure, so flying through twenty systems d47 remembers nothing about renders
+    /// identically twenty times and this assigns nothing.
+    /// </para>
+    /// </summary>
+    private void ApplyRecall(string? recall)
+    {
+        if (string.Equals(Turns.Recall, recall, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Turns.Recall = recall;
+
+        _logger.LogInformation(
+            "Recall block {State} ({Bytes} characters)",
+            recall is null ? "cleared" : "changed",
+            recall?.Length ?? 0);
+    }
+
+    /// <summary>
+    /// Says what an expiry took, when it took something worth saying (list.md Phase 31, "Forgetting
+    /// is said out loud when it matters").
+    /// <para>
+    /// <b>Only the Commander's own words.</b> An observation aging out is d47 forgetting where
+    /// somebody parked four months ago, and an inference aging out is d47 forgetting something it
+    /// made up — neither is worth a sentence. A fact a person typed disappearing without a word is
+    /// the failure the item exists to prevent, and it is the one case where a Commander would
+    /// otherwise find out by noticing d47 no longer knew something.
+    /// </para>
+    /// </summary>
+    /// <param name="priming">
+    /// True on the startup tick. The expiry still <em>happens</em> — the file is the file — but it is
+    /// not announced, for the reason no callout announces a backlog: the Commander has just launched
+    /// d47 and a list of things it has forgotten is not what a session should open with. It reaches
+    /// the panel instead.
+    /// </param>
+    private void ReportExpiredMemories(IReadOnlyList<MemoryEntry> expired, bool priming)
+    {
+        var told = expired.Where(entry => entry.Tier == MemoryTier.Stated).ToArray();
+
+        if (told.Length == 0)
+        {
+            return;
+        }
+
+        var line = told.Length == 1
+            ? $"I have forgotten something you told me, because it was past its expiry: {told[0].Fact}"
+            : $"I have forgotten {told.Length} things you told me, because they were past their expiry. "
+              + $"The oldest was: {told[^1].Fact}";
+
+        Panel.Append($"{line}{Environment.NewLine}");
+
+        if (!priming)
+        {
+            _ = Voice.AnnounceAsync(line);
+        }
     }
 
     /// <summary>
@@ -1944,6 +2106,14 @@ public sealed class AppHost : IDisposable
     private static readonly TimeSpan AudioScanEvery = TimeSpan.FromSeconds(2);
 
     private TimeSpan _sinceAudioScan = TimeSpan.Zero;
+
+    /// <summary>
+    /// How often the memory store is checked for entries past their expiry (list.md Phase 31).
+    /// Coarse on purpose: an expiry is a boundary being crossed rather than something happening, so
+    /// the only cost of a wide interval is that a fact lives a few minutes longer than it was asked
+    /// to.
+    /// </summary>
+    private static readonly TimeSpan ExpiryEvery = TimeSpan.FromMinutes(10);
 
     private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
 

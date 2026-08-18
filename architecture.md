@@ -380,9 +380,20 @@ The API renders `tools` → `system` → `messages`, and caching is a **prefix m
 | 2 | Anti-invention guardrails | Never |
 | 3 | Persona block | Per persona selection |
 | 4 | Commander's About Me | Per session |
-| 5 | ← **cache breakpoint** | |
-| 6 | Conversation history | Per turn |
-| 7 | Live game state | Per turn |
+| 5 | Remembered facts about the Commander | Rarely, and never per turn |
+| 6 | ← **cache breakpoint** | |
+| 7 | Conversation history | Per turn |
+| 8 | Live game state | Per turn |
+
+**Amended 2026-08-18, Phase 31.** Position 5 is new and the breakpoint moved down one row to make
+room for it. It is above the breakpoint deliberately and the obvious placement is the wrong one:
+game state is where *changing* things go, memories change rarely, so paying for them once and reading
+them cached is strictly cheaper — and a block that moved every turn would invalidate the whole prefix
+rather than a tail of it, taking ~39,000 bytes of tool schema cold with it every time. What makes that
+safe is that the rendered text carries no system, no ship and no live figure, and the owner assigns it
+only when the bytes actually change (`MemoryRecall`, `AppHost.ApplyRecall`). A cache miss then happens
+when the Commander flies somewhere they have history, which is the turn where the memory is the reason
+they wanted it.
 
 **Guardrails sit above the persona**, which is what makes *Personality on/off* safe: switching the persona off truncates block 3 and invalidates from there down, but the guardrails are in the cached region and are structurally unremovable by any setting.
 
