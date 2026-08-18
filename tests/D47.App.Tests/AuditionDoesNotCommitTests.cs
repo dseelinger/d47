@@ -180,6 +180,17 @@ public class AuditionDoesNotCommitTests
 
         Glyph(picker, "en-GB-RyanNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Task.Yield();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        // The first audition has to be running before the second press, or there is nothing for it
+        // to cancel and this test asserts something it never arranged. A bare yield is one turn of
+        // the dispatcher, which was enough on a developer's machine and not on a loaded CI runner:
+        // the press was still queued, the second press cancelled nothing, and the wait below timed
+        // out after its full five seconds. Pumped and then asserted, the same way
+        // TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed does it just below.
+        Assert.True(
+            Rows(picker).First(item => item.Value == "en-GB-RyanNeural").Playing,
+            "the first audition never started, so the second press had nothing to cancel");
 
         Glyph(picker, "en-GB-SoniaNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
