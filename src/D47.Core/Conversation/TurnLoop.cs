@@ -168,6 +168,20 @@ public sealed class TurnLoop(
     public string? AboutMe { get; set; }
 
     /// <summary>
+    /// What d47 remembers about the Commander, already bounded and labelled by
+    /// <see cref="Memory.MemoryRecall"/> (list.md Phase 31).
+    /// <para>
+    /// <b>A value rather than a source, unlike everything below it, and that is the point.</b>
+    /// <see cref="LiveGameState"/> is a function because it must be as fresh as the turn; this must
+    /// be as <em>stale</em> as the last time it actually changed. It sits above the cache breakpoint,
+    /// so re-reading it per turn is how the whole cached prefix goes cold on a turn where nothing
+    /// about the Commander has changed. The owner assigns it when the rendered text differs and not
+    /// otherwise.
+    /// </para>
+    /// </summary>
+    public string? Recall { get; set; }
+
+    /// <summary>
     /// Live game state for the turn about to run. A source rather than a value: the tick loop
     /// is folding journal events continuously, so anything assigned here would be as old as the
     /// last time somebody remembered to assign it. Asked once per turn, at the moment the
@@ -372,6 +386,7 @@ public sealed class TurnLoop(
                     Tools = lastRound ? [] : advertised,
                     Persona = Persona,
                     AboutMe = AboutMe,
+                    Recall = Recall,
                     History = [.. _history, .. pending],
                     LiveGameState = LiveGameState?.Invoke(),
                 },

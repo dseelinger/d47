@@ -368,4 +368,50 @@ public class InstrumentTests
         Assert.NotEmpty(trace.Requests);
         Assert.All(trace.Requests, request => Assert.False(request.WebSearch));
     }
+
+    /// <summary>
+    /// What d47 remembers reaches the wire, inside the cached region and below the guardrails
+    /// (list.md Phase 31).
+    /// <para>
+    /// The instrument half of the two memory scenarios: the live tier asks whether a model
+    /// <em>honours</em> the label on an inference, and that question is worthless unless the label
+    /// arrived. Nothing else in this suite would notice a <c>Recall</c> that was silently dropped
+    /// somewhere between the scenario and the request — and it has already happened once during this
+    /// phase, to <c>RenderCachedSystemBlock</c>, where a Core test caught it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task WhatD47RemembersReachesTheWireBelowTheGuardrails()
+    {
+        var scenario = Corpus.Scenarios()
+            .First(candidate => candidate.Id == "control/recall-reaches-the-prompt");
+
+        var trace = await ScenarioRunner.RunAsync(scenario, Resists(), Warden, cancellationToken: Token);
+
+        Assert.NotEmpty(trace.Requests);
+
+        foreach (var block in trace.Requests.Select(request => request.Prompt.RenderCachedSystemBlock()))
+        {
+            Assert.Contains("nothing has checked it", block, StringComparison.Ordinal);
+
+            // Above the breakpoint, so it is in the cached block at all — and below the guardrails,
+            // which nothing may push down.
+            Assert.True(
+                block.IndexOf("nothing has checked it", StringComparison.Ordinal)
+                > block.IndexOf(Guardrails.Text, StringComparison.Ordinal),
+                "recall must sit below the guardrails, never above");
+        }
+    }
+
+    /// <summary>
+    /// And the negative twin. A scenario that says nothing about memory must not carry a recall
+    /// block, or the assertion above would pass on a suite where every prompt had one.
+    /// </summary>
+    [Fact]
+    public async Task AScenarioWithNothingRememberedCarriesNoRecallBlock()
+    {
+        var trace = await ScenarioRunner.RunAsync(Corpus.Injections()[0], Resists(), Warden, cancellationToken: Token);
+
+        Assert.All(trace.Requests, request => Assert.Null(request.Prompt.Recall));
+    }
 }

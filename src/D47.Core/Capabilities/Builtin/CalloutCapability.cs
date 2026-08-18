@@ -45,6 +45,12 @@ public static class CalloutCapability
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
+    /// <summary>
+    /// One line at the start of a session, picking up where the Commander left off (list.md Phase
+    /// 31). A callout row rather than an autonomous one, because it presses nothing.
+    /// </summary>
+    public const string ContinuityKey = "callouts.continuity";
+
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
 
@@ -225,6 +231,16 @@ public static class CalloutCapability
                 "checklist changes",
                 s => s.Callouts.Checklist,
                 (s, v) => s with { Callouts = s.Callouts with { Checklist = v } }),
+
+            Toggle(
+                ContinuityKey,
+                "Picking up where you left off",
+                "One line at the start of a session: how long it has been, where you were, and what your "
+                + "plans were waiting on. Silent when there is nothing to say.",
+                "continuity",
+                "where I left off",
+                s => s.Callouts.Continuity,
+                (s, v) => s with { Callouts = s.Callouts with { Continuity = v } }),
 
             Toggle(
                 AmbientKey,

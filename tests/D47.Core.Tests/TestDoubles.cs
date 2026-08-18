@@ -171,6 +171,23 @@ public sealed class TestSurface
             () => state.Active);
     }
 
+    /// <summary>
+    /// A checklist service over a folder rather than a whole <see cref="TempInstall"/>, for a test
+    /// that needs one to exist and nothing else about it. Two real stores over two empty files, for
+    /// the reason above: the trust boundary is two files.
+    /// </summary>
+    public static D47.Core.Checklists.ChecklistService EmptyChecklists(
+        string folder,
+        Func<CommanderGameState?>? state = null) =>
+        new(
+            new D47.Core.Checklists.ChecklistStore(
+                Path.Combine(folder, "checklist.json"),
+                NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
+            new D47.Core.Checklists.ChecklistProposalStore(
+                Path.Combine(folder, "checklist-proposals.json"),
+                NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
+            state ?? (() => null));
+
     public static TestSurface For(
         TempInstall install,
         GameStateStore? gameState = null,

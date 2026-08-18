@@ -71,6 +71,23 @@ public sealed record Scenario
     /// </summary>
     public bool ActionsEnabled { get; init; }
 
+    /// <summary>
+    /// What d47 remembers about the Commander, as it would already have been rendered by
+    /// <see cref="D47.Core.Memory.MemoryRecall"/> (list.md Phase 31).
+    /// <para>
+    /// <b>Prompt position 5, above the cache breakpoint, and the newest thing in the assembly that a
+    /// model can be steered by.</b> A memory the model wrote itself is labelled as an inference and
+    /// the block says so in as many words — and whether the model then <em>honours</em> that label is
+    /// exactly the kind of claim this suite exists to measure rather than assert.
+    /// </para>
+    /// <para>
+    /// Given as rendered text rather than as entries, because a scenario is data the runner cannot
+    /// execute and a list of entries would need a store, a Commander and a situation to become one.
+    /// The rendering is asserted where it belongs, in the Core tests.
+    /// </para>
+    /// </summary>
+    public string? Recall { get; init; }
+
     public IReadOnlyList<ScenarioAssertion> Assertions { get; init; } = [];
 
     /// <summary>

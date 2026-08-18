@@ -81,6 +81,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private LoreEditing? _lore;
 
     /// <summary>
+    /// What d47 remembers about the Commander, and the clock a hand-typed fact is stamped with
+    /// (list.md Phase 31). Null under the designer and in a test that is not about it, and the
+    /// button is then absent rather than dead.
+    /// </summary>
+    private (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? _memories;
+
+    /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
     /// capabilities that declare rows, and a phrase can come from one that does not.
@@ -112,7 +119,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         SwitchEditing? switches = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
         Func<Task>? setUpKeys = null,
-        LoreEditing? lore = null)
+        LoreEditing? lore = null,
+        (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -125,6 +133,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _checklists = checklists;
         _switches = switches;
         _lore = lore;
+        _memories = memories;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -1230,6 +1239,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == LoreCapability.BookKey && _lore is not null:
                 return BuildLore(row);
 
+            // The sixth row that offers a window. A fact about the Commander is not a settings
+            // value, and typing one is the act that makes an entry their own word rather than
+            // something d47 worked out — so, like the note above, it lives where the tool surface
+            // cannot reach (list.md Phase 31).
+            case SettingKind.Info when row.Key == MemoryCapability.StoreKey && _memories is not null:
+                return BuildMemories(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1295,6 +1311,38 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// the same reason: what is behind the button is the Commander's own writing, and the panel
     /// is the only place it can be written.
     /// </summary>
+    private (Control, Action, bool) BuildMemories(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenMemories",
+            Content = "Open what D47 remembers",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_memories is not { } memories || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.MemoryWindow(memories.Book, memories.Now).ShowDialog(owner);
+
+            // The window writes the file; this is what puts the new count on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
     private (Control, Action, bool) BuildLore(SettingRow row)
     {
         var (inset, refresh, _) = BuildInfo(row);

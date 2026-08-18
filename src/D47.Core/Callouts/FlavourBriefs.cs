@@ -39,8 +39,9 @@ public sealed record FlavourBrief
 /// Which callouts get said in character, and what the model is asked (list.md Phase 11, "with
 /// varied LLM arrival and departure responses").
 /// <para>
-/// Only the carrier's own lines and the ambient remarks. <b>A danger callout is never rewritten
-/// by a model</b>: those fire on the event and say exactly what happened, and "shields are down"
+/// Only the ambient remarks, the session's opening line and the carrier's own lines. <b>A danger
+/// callout is never rewritten by a model</b>: those fire on the event and say exactly what
+/// happened, and "shields are down"
 /// is not a line that benefits from personality (list.md Phase 8). That exclusion is the whole
 /// safety property here, and it was expressed as the default arm of a switch inside
 /// <c>AppHost.VaryAsync</c> — where nothing could assert it, and where adding a case above it
@@ -80,6 +81,32 @@ public static class FlavourBriefs
                     + "do not offer help, and do not comment on the Commander's decisions.",
                 NeedsPersona = true,
                 NeedsGameState = true,
+            };
+        }
+
+        // Phase 31's opening line. Eligible for the same reason the ambient remarks are: it is d47
+        // filling a moment rather than reporting an event, and it is the first thing a Commander
+        // hears in a session — which is precisely where a core sounding like itself is worth
+        // something.
+        //
+        // The facts are handed over already written and the instruction says not to add any. A
+        // model given a session to comment on embellishes, and the whole quality bar of the memory
+        // store is that nothing in it is stated more confidently than it arrived — so this is a
+        // rewording brief like the carrier's, never a composition brief like the ambient one.
+        if (string.Equals(announcement.Key, ContinuityCallout.Key, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander has just sat down. Say this back to them once, in your own voice, as a "
+                    + $"greeting: \"{announcement.Text}\" Keep every number and every name exactly as "
+                    + "written, add no facts of your own, and do not speculate about what they were doing "
+                    + "or why. Two sentences at most.",
+                NeedsPersona = true,
+
+                // No game state. The line is about what was true before this session, and handing
+                // over where they are now is how a model comes to write about the wrong one.
+                NeedsGameState = false,
             };
         }
 

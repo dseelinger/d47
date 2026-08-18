@@ -1,7 +1,7 @@
 ---
 title: Privacy
 group: Foundation
-nav_order: 138
+nav_order: 139
 ---
 
 Exactly what Directive 47 sends off this machine, to whom, and whether it is sending it right
@@ -119,6 +119,20 @@ route that changes a setting, so a sentence that only mentions it gets an answer
 
 **The model cannot reach this row.** It decides whether anything leaves at all, and a model that
 could switch that back on is a model that could be told to by text it read in an in-game message.
+
+### What Directive 47 remembers about you {#memory}
+
+A read-only summary of the [memory](memory.md) store — how many facts are kept, and how many of them
+you told it yourself — with one button that empties the file.
+
+**It empties every Commander in the file, not just the one currently aboard.** "Forget me" is not
+"forget the character I happen to be logged in as", and a privacy control that left three other
+characters' facts on disk would be one that reads as a control and is not.
+
+The button is here rather than in the memory section because this is where you would look for it.
+There is **no spoken phrase for it and no tool that can call it** — "forget everything about me" is a
+sentence a transcriber can produce out of a misheard one, and this is the one action in that feature
+that cannot be undone.
 
 ## The disclosure rows {#egress-llm}
 

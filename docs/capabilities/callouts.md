@@ -243,6 +243,25 @@ judge four hundred metres across a ridge, and getting it wrong wastes the sample
 how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
 in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
 
+### Picking up where you left off {#continuity}
+
+One line at the start of a session, assembled from what Directive 47
+[remembers](memory.md) about you, your [checklist](checklists.md) and your plans:
+
+```text
+It has been 3 days. You were last aboard in Deciat, docked at Farseer Inc. You were 3 Selenium
+short. Hera Tani is still two steps out.
+```
+
+**Silent when there is nothing to say.** A first run says nothing at all, and coming back after a
+crash twenty minutes later says nothing either — being told it has been twenty minutes is a clock,
+not continuity. It waits a few seconds after launch so the journal backlog has been folded, says its
+line once, and does not speak again for the life of the process.
+
+It is written by Directive 47 rather than by the model. Where a persona is on, the model is asked to
+say it back in its own voice with every number and name unchanged; with personality off it is said
+plainly.
+
 ## Settings
 
 ### Speak without being asked {#enabled}
