@@ -574,7 +574,12 @@ public partial class MainWindow : Window
                 // host owns both halves of "can this search at all", which is the thing the
                 // window has to say before anything is typed (list.md Phase 23).
                 _host.LoreEditing,
-                _host.Memories);
+                _host.Memories,
+
+                // And what it has noticed about them, with the way to look again (list.md Phase
+                // 32). The action is the host's, because mining runs off the UI thread and the
+                // panel is not the thing that decides where work happens.
+                _host.Habits);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is

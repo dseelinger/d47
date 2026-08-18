@@ -132,7 +132,19 @@ public static class BuiltinCapabilities
         // What d47 remembers about the Commander (list.md Phase 31). Null under the designer and in
         // tests that are not about it; the capability still registers, so its rows and its
         // documentation page exist, and every tool answers that there is nowhere to keep anything.
-        Memory.MemoryBook? memories = null) =>
+        Memory.MemoryBook? memories = null,
+
+        // What d47 has noticed the Commander keeps doing (list.md Phase 32). Null under the
+        // designer and in tests that are not about it, on the same terms as every other optional
+        // service: the capability still registers, so its rows and its documentation page exist,
+        // and every tool answers that nothing is reading the journals.
+        Habits.HabitBook? habits = null,
+
+        // What pressing "read my journals" does. A function returning an action rather than the
+        // action, because Core owns no thread and the pass is seven seconds long — the App decides
+        // what to run it on, and a caller with nowhere to run it answers null and gets a row with
+        // no button.
+        Func<Action?>? mineHabits = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -192,7 +204,12 @@ public static class BuiltinCapabilities
         // order is the registry index, which Phase 26 learned the expensive way.
         MemoryCapability.Create(memories, now ?? (() => DateTimeOffset.MinValue), settings),
 
-        PrivacyCapability.Create(settings, searchAvailable, memories),
+        // Immediately after Memory, which is the other capability about the person rather than the
+        // game — and here rather than earlier because nav_order is the registry index, so inserting
+        // near the end shifts two documentation pages instead of twenty-eight.
+        HabitsCapability.Create(habits, mineHabits ?? (() => null)),
+
+        PrivacyCapability.Create(settings, searchAvailable, memories, habits),
         SettingsCapability.Create(settings),
     ];
 }

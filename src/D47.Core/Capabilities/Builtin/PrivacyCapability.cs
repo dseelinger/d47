@@ -18,6 +18,12 @@ public static class PrivacyCapability
     /// <summary>The row carrying the one action that empties the memory store (list.md Phase 31).</summary>
     public const string MemoryKey = "privacy.memory";
 
+    /// <summary>
+    /// Throwing away what d47 worked out about the Commander from their journals (list.md Phase
+    /// 32). Beside the memory row, because a Commander wanting to be forgotten means both.
+    /// </summary>
+    public const string HabitsKey = "privacy.habits";
+
     /// <param name="searchAvailable">
     /// Whether the provider and model in use offer a server-side web search. Null is "assume it
     /// can", which is what a caller with no provider to ask is entitled to say — every test here
@@ -29,10 +35,14 @@ public static class PrivacyCapability
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
+    /// <param name="habits">
+    /// What d47 has noticed about the Commander (list.md Phase 32), on exactly the same terms.
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         Func<bool>? searchAvailable = null,
-        Memory.MemoryBook? memories = null)
+        Memory.MemoryBook? memories = null,
+        Habits.HabitBook? habits = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -87,7 +97,7 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories, habits),
         };
     }
 
@@ -95,7 +105,8 @@ public static class PrivacyCapability
         Func<bool> keyPresent,
         Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
-        Memory.MemoryBook? memories)
+        Memory.MemoryBook? memories,
+        Habits.HabitBook? habits)
     {
         var rows = new List<SettingRow>
         {
@@ -151,6 +162,31 @@ public static class PrivacyCapability
             Binding = new SettingBinding
             {
                 Read = _ => MemoryCapability.Summarise(memories),
+            },
+        });
+
+        // Beside the memory row, because "forget me" means both halves of what d47 knows about a
+        // person and a Commander who found only one of them would reasonably assume they were done.
+        //
+        // Info with a Press again, so nothing on the tool surface can reach it. Unlike the memory
+        // row this one does not erase everything in its file: the dismissals stay, because they are
+        // the Commander's own instructions rather than d47's observations, and clearing them would
+        // resurrect exactly the claims that had already been refused (list.md Phase 32, item 2).
+        rows.Add(new SettingRow
+        {
+            Key = HabitsKey,
+            Label = "What D47 has noticed about you",
+            Help =
+                "Patterns D47 found by reading the journals on this disk — what happened, how often, and "
+                + "out of how many chances. Throwing them away covers every Commander in the file. Anything "
+                + "you have told D47 to drop stays dropped.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "habits",
+            PressLabel = habits is null ? null : "Forget what you noticed",
+            Press = habits is null ? null : () => habits.Store.Empty(),
+            Binding = new SettingBinding
+            {
+                Read = _ => HabitsCapability.Summarise(habits),
             },
         });
 

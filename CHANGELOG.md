@@ -17,6 +17,109 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.32.0 — 2026-08-18 — It learns your mistakes
+
+list.md Phase 32. Directive 47 could tell you what you had told it. Now it can tell you what you
+keep doing — read out of the journals that have been sitting on your own disk for thirteen months
+with nothing ever having looked at them for this.
+
+### The most defensible thing D47 does
+
+Anybody can ship the same tables and the same personas. Nobody else has your history.
+
+Press **Read my journals** in the new **Habits** section, or say *what have you noticed about me*.
+A pass over 914 journals — 697,787 events — takes **3.6 seconds**. It never starts by itself, and it
+runs nowhere near the tick loop, so it costs nothing while you are flying.
+
+**Nothing leaves the machine and no journal reaches a model.** The conclusions do not either: every
+tool the phase registers is protected, and the miner, the store, the callout and the readback are
+all local. The one part of D47 that reads untrusted text is not the part that gets handed a list of
+your mistakes.
+
+Results are keyed **per Commander**, on the Frontier id rather than a character name. That is not
+tidiness — on the corpus this was built against, one Commander submitted to 24 of 24 interdictions
+and another had only 7 and is told nothing. Pooling them would have reported one person's flying to
+another.
+
+### A claim, with the count behind it
+
+Never *you always*. Every habit reads back as *what happened — N of M, over this window*, and there
+is no way to render one without its numbers.
+
+Three floors, none of them adjustable: **20 journals** before anything is examined at all, **5
+occurrences**, and **10 opportunities**. Fifty submissions out of fifty-two is a habit; two out of
+two is a Tuesday.
+
+**A pattern that was looked at and not claimed is reported as such.** "Nothing to say about you" and
+"not enough of you to say" are different answers, and giving you the first when the second is true is
+how a companion starts being wrong about a person. High-gravity landings ship as exactly that case:
+
+```
+landing on heavy worlds — you have not landed anywhere over one g, the heaviest of your 241
+landings was 0.69 g
+```
+
+### Five things it looks for
+
+Every one of them was measured against real journals before it was written.
+
+| Pattern | What it counts |
+|---|---|
+| Flying into things on the way in | Hull damage with nobody shooting, within five minutes of arriving |
+| Overshooting and going round again | A drop, a climb back within four minutes, and a second drop at the same body |
+| Submitting to interdictions | Whether you submitted, out of every interdiction |
+| Dying on foot at settlements | Deaths to suit AI or settlement turrets, out of all your deaths |
+| Landing on heavy worlds | Touchdowns over one g, out of landings on bodies you had scanned |
+
+### Two things Elite does not write down
+
+Both worth stating, because both are things a Commander reasonably expects to be detectable.
+
+**There is no impact or proximity event, in any form, and there never has been.** The wanted warning
+— *I set the throttle and head for the station and I miss the impact warnings* — describes a HUD
+element the journal has no counterpart for. So it is not built. What **is** detectable is the
+consequence: hull damage with no attacker anywhere near it, 31 of them across the corpus, and three
+of that Commander's twenty-three deaths are these with nobody shooting.
+
+**There is no landing-gear event either.** *You always forget the gear* is the classic example of a
+habit claim made without a count, and it turns out to be undetectable at any sample size. Which is
+rather the point.
+
+### It says it when the situation comes round, and only if you asked it to
+
+**Off by default** — the only callout in D47 that ships that way. Every other one fires because the
+game said something; this one fires because of a claim D47 made about *you*, and that is a different
+deal.
+
+Switched on, a habit is said at the moment its own circumstance arrives: arriving at a station,
+entering orbital cruise, being interdicted, walking up to a settlement. One claim stays quiet for
+four hours afterwards, and no two habit lines land within twenty minutes of each other.
+
+Two phrases work the moment one is said, both with no model in the path:
+
+> why did you say that
+
+> stop telling me that
+
+The first shows the working. The second drops that claim **permanently — and the dismissal survives
+re-mining.** Mining rebuilds every claim from scratch, so a refusal stored on a claim would be
+erased by the next run and the same wrong observation would arrive again a month later. That is the
+worst thing this feature could do, so the dismissals are their own list and even **Forget what you
+noticed** in Privacy leaves them standing.
+
+### Where it lives
+
+`data/habits.json`, beside the executable, plain text, keyed per Commander. Hand-editable and
+compared by content, so an edit made in a text editor while D47 is running is live without a restart.
+
+### Costing you nothing you were not already paying
+
+The advertised tool surface **did not move by one byte**. The SRV profile is still at 39,914 of
+40,000, exactly where 0.31.0 left it, because all three of the new tools are protected and the model
+can see none of them.
+
+---
+
 ## 0.31.0 — 2026-08-18 — It remembers you
 
 list.md Phase 31. Directive 47 could tell you which engineer to visit and what your plans were

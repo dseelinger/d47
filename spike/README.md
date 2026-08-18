@@ -18,6 +18,7 @@ be deleted once the answer is written down.
 | `MiningProbe` | What does a prospector limpet report, and does Elite's own `Content` grade track what a miner cares about? | [docs/spikes/mining-callouts.md](../docs/spikes/mining-callouts.md) |
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
 | `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
+| `HabitProbe` | What does Phase 32's miner actually claim about 914 real journals, and does each detector clear its own floor? | list.md Phase 32 — **instrument, kept: every figure in the plan and the changelog came out of it** |
 | `RadioAudition` | Does `RadioVoice` actually sound like a radio? | 0.22.0 shipped from it — **instrument, kept: the question recurs every time the filter is touched** |
 
 `RadioAudition` says a sentence through Edge Neural, optionally over the comms link, writes it as a
