@@ -457,9 +457,20 @@ public sealed class TurnLoop(
 
         availability.MarkAvailable();
 
-        var price = prices.For(activeProvider.Id, chosenModel);
-        var cost = price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true);
-        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel);
+        // A model on the Commander's own machine is free, and that is a fact about the address
+        // rather than about the model id — no table row could hold it, because the id is whatever
+        // the local server happens to call the weights it loaded (list.md Phase 29).
+        var price = activeProvider.RunsOnThisMachine
+            ? PriceTable.Free
+            : prices.For(activeProvider.Id, chosenModel);
+
+        // Usage the provider never sent is unpriced even when the model is in the table. Zero
+        // would report a paid session as free while claiming to be priced, which is the one
+        // reading worse than admitting the number is not known.
+        var cost = price is null || !usage.Reported
+            ? TurnCost.Unpriced(usage)
+            : new TurnCost(usage, price.DollarsFor(usage), true);
+        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(usage, providerCapabilities));
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer
         // about what it will do rather than a fault in the pipeline. A paused turn is unsure for
@@ -518,6 +529,42 @@ public sealed class TurnLoop(
     /// prevent, so the tests pin the money rather than the field.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether the prefix was there, in terms that mean the same thing on every provider
+    /// (list.md Phase 29, seam 3). Two signals, because no provider sends both.
+    /// <para>
+    /// A <b>cache write</b> is a cold prefix wherever one is reported, which is Anthropic and
+    /// GPT-5.6 onward. Reading <b>nothing</b> is the inverse signal and the one that works
+    /// everywhere else — if the prefix had not changed, something should have been read.
+    /// </para>
+    /// <para>
+    /// The minimum-cacheable check is what keeps that inverse signal honest. A prompt too short
+    /// to cache reads nothing every time and is not evidence of anything going wrong, so it is
+    /// reported as unmeasured rather than counted as a regression the Commander cannot fix.
+    /// </para>
+    /// </summary>
+    private static PrefixWarmth Warmth(LlmUsage usage, LlmProviderCapabilities capabilities)
+    {
+        if (!usage.Reported || !capabilities.SupportsPromptCaching)
+        {
+            return PrefixWarmth.Unknown;
+        }
+
+        if (usage.CacheCreationInputTokens > 0)
+        {
+            return PrefixWarmth.Cold;
+        }
+
+        if (usage.CacheReadInputTokens > 0)
+        {
+            return PrefixWarmth.Warm;
+        }
+
+        return usage.TotalInputTokens >= capabilities.MinimumCacheablePrefixTokens
+            ? PrefixWarmth.Cold
+            : PrefixWarmth.Unknown;
+    }
+
     private static LlmUsage Add(LlmUsage running, LlmUsage round) => new(
         running.InputTokens + round.InputTokens,
         running.OutputTokens + round.OutputTokens,
@@ -525,6 +572,11 @@ public sealed class TurnLoop(
         running.CacheReadInputTokens + round.CacheReadInputTokens)
     {
         WebSearchRequests = running.WebSearchRequests + round.WebSearchRequests,
+
+        // One silent round makes the whole turn unpriced, not partly priced. A sum of the rounds
+        // that did report is a smaller number than the truth wearing the same confidence as a
+        // complete one, which is the failure this flag exists to prevent (list.md Phase 29).
+        Reported = running.Reported && round.Reported,
     };
 
     /// <summary>

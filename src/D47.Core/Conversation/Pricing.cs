@@ -4,12 +4,31 @@ namespace D47.Core.Conversation;
 /// Per-million-token rates for one model. Cache rates are derived rather than listed: writing
 /// costs 1.25x input at the default 5-minute TTL and reading costs 0.1x, so quoting them
 /// separately would be two more numbers to keep in step with the first.
+/// <para>
+/// <b>Those two factors are Anthropic's terms, and were the defaults before anybody else was
+/// reachable</b> (list.md Phase 29). They stay the defaults, so no Anthropic row changes and no
+/// existing test moves — but they are per-row now, because OpenAI charges <em>nothing</em> to
+/// write a cache entry and discounts reads by its own factor. Left derived, every OpenAI turn
+/// would be invoiced for a cache write that does not exist, upward and silently.
+/// </para>
+/// <para>
+/// Factors rather than two more dollar figures, which keeps the reasoning above intact: a row
+/// that changes its input rate does not then have to remember to change three numbers, and a
+/// provider that bills cache writes at nothing says so as a zero rather than as a rate that has
+/// to be kept at zero.
+/// </para>
 /// </summary>
 public sealed record ModelPrice(decimal InputPerMillion, decimal OutputPerMillion)
 {
-    public decimal CacheWritePerMillion => InputPerMillion * 1.25m;
+    /// <summary>What writing a cache entry costs, as a multiple of the input rate.</summary>
+    public decimal CacheWriteFactor { get; init; } = 1.25m;
 
-    public decimal CacheReadPerMillion => InputPerMillion * 0.1m;
+    /// <summary>What reading one costs, as a multiple of the input rate.</summary>
+    public decimal CacheReadFactor { get; init; } = 0.1m;
+
+    public decimal CacheWritePerMillion => InputPerMillion * CacheWriteFactor;
+
+    public decimal CacheReadPerMillion => InputPerMillion * CacheReadFactor;
 
     /// <summary>
     /// What one server-side web search costs, on top of the tokens its results become. Listed
@@ -54,7 +73,47 @@ public sealed class PriceTable
         [("anthropic", "claude-sonnet-5")] = new(3m, 15m),
         [("anthropic", "claude-haiku-4-5")] = new(1m, 5m),
         [("anthropic", "claude-fable-5")] = new(10m, 50m),
+
+        // OpenAI list prices, read from developers.openai.com/api/docs/pricing on 2026-08-18
+        // rather than written from memory — the plan of record required that, and it was right
+        // to: two of the things it expected to find were no longer true. Cache reads discount to
+        // a tenth across this family, which happens to be Anthropic's factor; cache writes bill
+        // at 1.25x, which also happens to be Anthropic's factor, but only from GPT-5.6 on.
+        //
+        // The write factor is stated on every row anyway, including the rows where it is zero,
+        // because "the default is right here" is exactly the reasoning that made these numbers
+        // Anthropic's in the first place.
+        [("openai", "gpt-5.6-sol")] = new(5m, 30m) { CacheReadFactor = 0.1m },
+        [("openai", "gpt-5.6-terra")] = new(2m, 12m) { CacheReadFactor = 0.1m },
+        [("openai", "gpt-5.6-luna")] = new(0.20m, 1.20m) { CacheReadFactor = 0.1m },
+
+        // Before GPT-5.6, a cache write is free — and is also not counted, so this factor never
+        // multiplies anything. Zero rather than 1.25 all the same: the day one of these rows is
+        // copied to make a new one, the wrong half is the half nobody looked at.
+        [("openai", "gpt-5.5")] = new(5m, 30m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5.4")] = new(2.50m, 15m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5.4-mini")] = new(0.75m, 4.50m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5.4-nano")] = new(0.20m, 1.25m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5")] = new(1.25m, 10m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5-mini")] = new(0.25m, 2m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
+        [("openai", "gpt-5-nano")] = new(0.05m, 0.40m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
     });
+
+    /// <summary>
+    /// Every turn free, which is what a model running on the Commander's own machine costs.
+    /// <para>
+    /// Not a row in the table above, because the table is keyed by model id and the thing being
+    /// priced here is an <em>address</em> — no id is known in advance and none needs to be. The
+    /// caller decides an endpoint is loopback and asks for this; see
+    /// <see cref="LocalEndpoint.IsLoopback"/>, which is where that judgement lives.
+    /// </para>
+    /// <para>
+    /// An unknown model stays unpriced, which is the honest existing behaviour. A model served
+    /// from 127.0.0.1 is not unknown — it is free, and reporting "unknown" about it on every turn
+    /// forever is noise pretending to be rigour. The host is evidence rather than a guess.
+    /// </para>
+    /// </summary>
+    public static ModelPrice Free { get; } = new(0m, 0m) { CacheReadFactor = 0m, CacheWriteFactor = 0m };
 
     public ModelPrice? For(string providerId, string model) =>
         _prices.GetValueOrDefault((providerId, model));
@@ -67,6 +126,29 @@ public sealed class PriceTable
 public sealed record TurnCost(LlmUsage Usage, decimal Dollars, bool Priced)
 {
     public static TurnCost Unpriced(LlmUsage usage) => new(usage, 0m, Priced: false);
+}
+
+/// <summary>
+/// What the provider said about caching for one turn, in terms that mean the same thing whoever
+/// answered it (list.md Phase 29, seam 3).
+/// </summary>
+public enum PrefixWarmth
+{
+    /// <summary>
+    /// The turn cannot be read either way — no usage came back, or the endpoint does not cache
+    /// at all. Not counted, because an instrument that is not measuring must not report a
+    /// reading.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// The prefix was not there: cache was written, or nothing was read when a cacheable prefix
+    /// should have been waiting.
+    /// </summary>
+    Cold,
+
+    /// <summary>The prefix was found and read.</summary>
+    Warm,
 }
 
 /// <summary>
@@ -95,8 +177,28 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
     /// Cold prefixes with no sanctioned cause. Non-zero means caching is being defeated by
     /// something — non-deterministic tool schemas, a mutated descriptor, a prompt whose bytes
     /// vary per turn.
+    /// <para>
+    /// <b>What counts as cold had to stop being one provider's evidence for it</b> (list.md
+    /// Phase 29). This counted turns that <em>wrote</em> cache, which is Anthropic's way of
+    /// showing a cold prefix and is not universal: a provider that never reports a write cannot
+    /// trip it, so the counter would have sat at zero on OpenAI and read as <em>caching is
+    /// perfect</em> rather than as <em>this instrument is not measuring here</em> — the more
+    /// expensive of the two failures, because nobody investigates good news.
+    /// </para>
+    /// <para>
+    /// So the caller states the warmth and this counts it. The inverse signal is the other half:
+    /// a turn that read <em>nothing</em> when the prefix had not changed is a cold prefix
+    /// whether or not anybody billed for a write.
+    /// </para>
     /// </summary>
     public int UnexplainedColdPrefixes { get; private set; }
+
+    /// <summary>
+    /// Turns whose caching could not be read at all — no usage block, or an endpoint that does
+    /// not cache. Reported beside the count above so a zero can be told apart from a zero
+    /// nobody was in a position to measure.
+    /// </summary>
+    public int UnmeasuredPrefixes { get; private set; }
 
     public TurnCost? Last => _turns.Count > 0 ? _turns[^1] : null;
 
@@ -109,16 +211,35 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
     /// whatever is selected by the time somebody opens the dialog.
     /// </para>
     /// </summary>
+    /// <param name="warmth">
+    /// What the turn showed about its prefix. Defaulted to <see cref="PrefixWarmth.Unknown"/>,
+    /// which falls back to reading a cache write as cold — the rule this had before there was
+    /// anyone but Anthropic to ask, and the right answer for a caller that has not been taught
+    /// to work it out. A caller that passes a real value is believed instead.
+    /// </param>
     public void Record(
         TurnCost cost,
         bool coldPrefixExpected,
         string providerId = "",
-        string model = "")
+        string model = "",
+        PrefixWarmth warmth = PrefixWarmth.Unknown)
     {
         _turns.Add(cost);
         RunningTotalDollars += cost.Dollars;
 
-        if (cost.Usage.CacheCreationInputTokens > 0 && !coldPrefixExpected)
+        // An uninformed caller gets the original rule — a cache write with no sanctioned cause —
+        // which is still correct for the provider it was written against. An informed one has
+        // already reconciled the two signals and is taken at its word.
+        var observed = warmth is not PrefixWarmth.Unknown ? warmth
+            : !cost.Usage.Reported ? PrefixWarmth.Unknown
+            : cost.Usage.CacheCreationInputTokens > 0 ? PrefixWarmth.Cold
+            : PrefixWarmth.Warm;
+
+        if (observed is PrefixWarmth.Unknown)
+        {
+            UnmeasuredPrefixes++;
+        }
+        else if (observed is PrefixWarmth.Cold && !coldPrefixExpected)
         {
             UnexplainedColdPrefixes++;
         }

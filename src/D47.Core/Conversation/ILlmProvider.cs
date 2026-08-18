@@ -71,6 +71,28 @@ public sealed record LlmUsage(
     public static readonly LlmUsage None = new(0, 0, 0, 0);
 
     /// <summary>
+    /// A turn whose provider reported no usage at all, which is not the same as a turn that used
+    /// nothing (list.md Phase 29).
+    /// <para>
+    /// Streamed Chat Completions returns no usage block <em>unless it is asked for</em>, and
+    /// plenty of compatible servers do not send one even when asked. Priced as zero, that reports
+    /// a paid session as free — strictly worse than the unpriced path, because <c>Priced</c> would
+    /// be true and the running total would look authoritative while being wrong.
+    /// </para>
+    /// <para>
+    /// So it is carried as a flag rather than inferred from the numbers being zero, which is a
+    /// real state a turn can be in and means something else entirely.
+    /// </para>
+    /// </summary>
+    public static readonly LlmUsage Unreported = new(0, 0, 0, 0) { Reported = false };
+
+    /// <summary>
+    /// Whether these numbers came from the provider. False means "not known", and every consumer
+    /// that turns usage into money has to treat it as unpriced rather than as free.
+    /// </summary>
+    public bool Reported { get; init; } = true;
+
+    /// <summary>
     /// How many web searches the provider ran for this turn. An <c>init</c> property rather
     /// than a fifth positional field so that every existing construction still reads as the
     /// four token counts it always was.
@@ -85,8 +107,68 @@ public sealed record LlmUsage(
     /// <summary>
     /// Uncached input is only part of the prompt — the rest was written to or read from cache.
     /// Reading <see cref="InputTokens"/> alone under-reports a cached turn substantially.
+    /// <para>
+    /// That sum is only correct because <see cref="InputTokens"/> is defined as the
+    /// <em>uncached</em> part, which is Anthropic's convention and is not universal — see
+    /// <see cref="FromInclusiveInput"/>, which exists so the other convention is converted at
+    /// the seam rather than making this property mean two things.
+    /// </para>
     /// </summary>
     public int TotalInputTokens => InputTokens + CacheCreationInputTokens + CacheReadInputTokens;
+
+    /// <summary>
+    /// Usage from a provider whose input count <em>includes</em> the cached part, converted to
+    /// the convention above.
+    /// <para>
+    /// This is the whole of the difference and it is worth stating in one place, because it is
+    /// wrong quietly rather than loudly. Anthropic's <c>input_tokens</c> <b>excludes</b> what was
+    /// read from or written to cache, so <see cref="TotalInputTokens"/> adds the three fields up.
+    /// OpenAI's <c>prompt_tokens</c> <b>includes</b> both, so that same sum counts them twice —
+    /// on every cached turn, forever, producing a number plausible enough that nothing would ever
+    /// have reported it.
+    /// </para>
+    /// <para>
+    /// The type does not grow a mode. One convention reaches the ledger, the price table and the
+    /// panel, and a provider speaking the other one converts here — which also means a test can
+    /// assert the same turn prices identically whoever answered it.
+    /// </para>
+    /// <para>
+    /// <b>Both cache counts are subtracted, and the write half was nearly not there.</b> The plan
+    /// of record was written expecting OpenAI to bill nothing for a cache write and to report no
+    /// count for one, which was true before the GPT-5.6 family and is not true now: writes bill at
+    /// 1.25x uncached input — the same factor Anthropic uses — and arrive as
+    /// <c>cache_write_tokens</c> beside <c>cached_tokens</c>. Their own worked example is three
+    /// figures rather than two (2,000 read, 400 written, 200 neither, billed as 2,600 prompt
+    /// tokens), so a conversion that subtracted only the read half would have billed those 400
+    /// tokens at the uncached rate <em>and</em> at the write rate.
+    /// </para>
+    /// <para>
+    /// The counts are clamped rather than trusted, and against the remainder rather than against
+    /// the total: a server reporting more cached tokens than prompt tokens would otherwise produce
+    /// a negative uncached count and a turn priced below zero, and this phase is what makes a
+    /// stranger's endpoint reachable at all.
+    /// </para>
+    /// </summary>
+    /// <param name="promptTokens">The provider's inclusive input count.</param>
+    /// <param name="cachedInputTokens">How much of it was read from cache.</param>
+    /// <param name="cacheWriteTokens">
+    /// How much of it was written to cache. Zero on an endpoint that reports no such field, which
+    /// is every Chat Completions server and every OpenAI model before GPT-5.6 — and zero there is
+    /// the truth rather than a gap, because those writes are unbilled.
+    /// </param>
+    /// <param name="outputTokens">Completion tokens, which no convention disagrees about.</param>
+    public static LlmUsage FromInclusiveInput(
+        int promptTokens,
+        int cachedInputTokens,
+        int cacheWriteTokens,
+        int outputTokens)
+    {
+        var prompt = Math.Max(promptTokens, 0);
+        var read = Math.Clamp(cachedInputTokens, 0, prompt);
+        var written = Math.Clamp(cacheWriteTokens, 0, prompt - read);
+
+        return new LlmUsage(prompt - read - written, Math.Max(outputTokens, 0), written, read);
+    }
 }
 
 public enum LlmStopReason
@@ -197,6 +279,23 @@ public interface ILlmProvider
 {
     /// <summary>Stable identifier used by the price table — "anthropic", "openai".</summary>
     string Id { get; }
+
+    /// <summary>
+    /// Whether this provider is pointed at an address on the Commander's own machine
+    /// (list.md Phase 29).
+    /// <para>
+    /// Two things read it and they must agree: the disclosure says nothing leaves this machine,
+    /// and the price table charges zero. Defaulted to false so no existing implementation changes
+    /// and so the safe answer — disclosed in full, priced as unknown — is what an endpoint nobody
+    /// recognised gets.
+    /// </para>
+    /// <para>
+    /// The provider answers rather than the caller deciding, because the provider is what holds
+    /// the address it will actually connect to. <see cref="LocalEndpoint.IsLoopback"/> is the
+    /// shared judgement behind every implementation of it.
+    /// </para>
+    /// </summary>
+    bool RunsOnThisMachine => false;
 
     string DisplayName { get; }
 

@@ -33,13 +33,45 @@ internal sealed class RecordedEndpoint : IDisposable
     private readonly List<string> _requests = [];
     private readonly Lock _taken = new();
 
-    private RecordedEndpoint(int status, string contentType, string body)
+    /// <summary>
+    /// The responses to serve, in order. The last one repeats once the list runs out, which is
+    /// what makes a single-response fixture behave exactly as it did before there were several.
+    /// </summary>
+    private readonly IReadOnlyList<(int Status, string ContentType, string Body)> _responses;
+
+    private int _served;
+
+    /// <summary>Written and flushed before <see cref="_release"/> is awaited, or null.</summary>
+    private readonly string? _opening;
+
+    private readonly Task? _release;
+
+    private RecordedEndpoint(params (int Status, string ContentType, string Body)[] responses)
+        : this(null, responses, null)
     {
+    }
+
+    private RecordedEndpoint(
+        Task? release,
+        (int Status, string ContentType, string Body) response,
+        string? opening)
+        : this(release, [response], opening)
+    {
+    }
+
+    private RecordedEndpoint(
+        Task? release,
+        (int Status, string ContentType, string Body)[] responses,
+        string? opening)
+    {
+        _release = release;
+        _opening = opening;
+        _responses = responses;
         _listener = new TcpListener(IPAddress.Loopback, 0);
         _listener.Start();
 
         BaseUrl = $"http://127.0.0.1:{((IPEndPoint)_listener.LocalEndpoint).Port}";
-        _serving = Task.Run(() => ServeAsync(status, contentType, body, _stopping.Token));
+        _serving = Task.Run(() => ServeAsync(_stopping.Token));
     }
 
     public string BaseUrl { get; }
@@ -58,11 +90,41 @@ internal sealed class RecordedEndpoint : IDisposable
 
     /// <summary>Replays a server-sent-event stream, which is what a streaming turn looks like.</summary>
     public static RecordedEndpoint Streaming(params string[] events) =>
-        new(200, "text/event-stream", string.Concat(events));
+        new((200, "text/event-stream", string.Concat(events)));
 
     /// <summary>Replays an error, so the failure translation can be driven by status code.</summary>
     public static RecordedEndpoint Failing(int status, string body) =>
-        new(status, "application/json", body);
+        new((status, "application/json", body));
+
+    /// <summary>
+    /// Replays a stream that <em>stops part-way</em> and does not finish until the test says so.
+    /// <para>
+    /// The only fixture that can tell streaming from buffering. Every other recording arrives in
+    /// one write, so a decoder that holds the whole turn back produces exactly the same sequence
+    /// as one that passes it through — the difference is only ever <em>when</em>. Here the rest of
+    /// the body is withheld until the caller has seen the first part, so a decoder that waits for
+    /// the whole body sees nothing and fails on its own budget rather than hanging.
+    /// </para>
+    /// </summary>
+    /// <param name="release">Completed by the test once it has seen what the first part carried.</param>
+    public static RecordedEndpoint StreamingUntilReleased(Task release, string opening, params string[] rest) =>
+        new(release, (200, "text/event-stream", string.Concat(rest)), opening);
+
+    /// <summary>Replays one plain JSON body — a model list, or anything else that is not streamed.</summary>
+    public static RecordedEndpoint Json(string body) =>
+        new((200, "application/json", body));
+
+    /// <summary>
+    /// Replays a refusal and then a stream, which is the shape a demotion needs: the endpoint
+    /// names a field it will not accept, and the retry without that field succeeds.
+    /// <para>
+    /// Two responses rather than one is the whole point — a fixture that answers identically
+    /// every time cannot tell "retried once" from "sent once", which is exactly the property
+    /// being asserted.
+    /// </para>
+    /// </summary>
+    public static RecordedEndpoint RefusingThenStreaming(int status, string refusal, params string[] events) =>
+        new((status, "application/json", refusal), (200, "text/event-stream", string.Concat(events)));
 
     /// <summary>
     /// One recorded SSE frame. Named and formatted here so the recordings below read as the wire
@@ -70,7 +132,7 @@ internal sealed class RecordedEndpoint : IDisposable
     /// </summary>
     public static string Event(string name, string json) => $"event: {name}\ndata: {json}\n\n";
 
-    private async Task ServeAsync(int status, string contentType, string body, CancellationToken cancellationToken)
+    private async Task ServeAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -88,6 +150,11 @@ internal sealed class RecordedEndpoint : IDisposable
             {
                 return;
             }
+
+            // Taken before the response is served, so concurrent connections cannot both be
+            // handed the first entry. Clamped rather than wrapped: the last response repeats.
+            var which = Math.Min(Interlocked.Increment(ref _served) - 1, _responses.Count - 1);
+            var (status, contentType, body) = _responses[which];
 
             _ = Task.Run(
                 async () =>
@@ -171,20 +238,51 @@ internal sealed class RecordedEndpoint : IDisposable
             _requests.Add(Encoding.UTF8.GetString(all, headerEnd + 4, Math.Max(0, all.Length - (headerEnd + 4))));
         }
 
+        var opening = Encoding.UTF8.GetBytes(_opening ?? string.Empty);
         var payload = Encoding.UTF8.GetBytes(body);
 
+        // Chunked when the body is withheld, because Content-Length would have to state a total
+        // the server has not decided to send yet — and a client that knows the length is entitled
+        // to wait for all of it, which is the behaviour under test.
         var response = Encoding.UTF8.GetBytes(
             $"HTTP/1.1 {status} {Reason(status)}\r\n"
             + $"Content-Type: {contentType}\r\n"
-            + $"Content-Length: {payload.Length}\r\n"
+            + (_release is null
+                ? $"Content-Length: {opening.Length + payload.Length}\r\n"
+                : "Transfer-Encoding: chunked\r\n")
             + "Connection: close\r\n"
             + "\r\n");
 
         await stream.WriteAsync(response, cancellationToken).ConfigureAwait(false);
-        await stream.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_release is null)
+        {
+            await stream.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            await WriteChunkAsync(stream, opening, cancellationToken).ConfigureAwait(false);
+            await _release.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+            await WriteChunkAsync(stream, payload, cancellationToken).ConfigureAwait(false);
+            await stream.WriteAsync(Encoding.UTF8.GetBytes("0\r\n\r\n"), cancellationToken).ConfigureAwait(false);
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         client.Client.Shutdown(SocketShutdown.Send);
+    }
+
+    private static async Task WriteChunkAsync(Stream stream, byte[] payload, CancellationToken cancellationToken)
+    {
+        if (payload.Length == 0)
+        {
+            return;
+        }
+
+        await stream.WriteAsync(Encoding.UTF8.GetBytes($"{payload.Length:X}\r\n"), cancellationToken).ConfigureAwait(false);
+        await stream.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+        await stream.WriteAsync(Encoding.UTF8.GetBytes("\r\n"), cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static int IndexOfHeaderEnd(byte[] bytes)

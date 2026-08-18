@@ -239,6 +239,9 @@ public static class EgressDisclosure
     private static EgressEntry WebSearchEntry(D47Settings settings, bool keyPresent, bool available)
     {
         var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
+        // A provider whose key is optional is usable with an empty box, which is the change
+        // list.md Phase 29 made — and NeedsKey now says so, so this test needed no editing to
+        // become right. It is spelled out because it silently changed meaning.
         var usable = provider.Id != LlmProviderCatalog.NoneId && (!provider.NeedsKey || keyPresent);
 
         if (!settings.Llm.WebSearch)
@@ -362,10 +365,30 @@ public static class EgressDisclosure
                 $"{provider.Name} is selected but has no key stored, so no turn reaches it and nothing is sent.");
         }
 
+        var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
+
+        // The first time in d47's life that the honest answer to *what is leaving* is *nothing*
+        // (list.md Phase 29). Phase 4's amendment made local-only a matter of the enumeration
+        // being truthful rather than of a mode being promised, and this is what being truthful
+        // looks like when the endpoint is on this machine.
+        //
+        // Silent rather than active, because the row's whole job is to say what leaves and the
+        // answer here is nothing. The address is still named: a Commander should be able to read
+        // *why* it says that and check the address themselves.
+        if (LocalEndpoint.IsLoopback(destination))
+        {
+            return EgressEntry.Silent(
+                LanguageModel,
+                NameOf(LanguageModel),
+                $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
+                + "the reply, the persona and the game state D47 assembled from your journal all go to that "
+                + "address and no further — nothing leaves this machine, and no account or key is involved.");
+        }
+
         return new EgressEntry(
             LanguageModel,
             NameOf(LanguageModel),
-            settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name,
+            destination,
             $"{provider.Name} is selected. {provider.Egress}",
             Active: true);
     }
