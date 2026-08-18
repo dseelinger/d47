@@ -556,6 +556,7 @@
           control at all.
         -->
         <DockPanel x:Name="SearchRow"
+                   LastChildFill="True"
                    IsVisible="False"
                    VerticalAlignment="Center"
                    Margin="12,0,0,0">
@@ -599,9 +600,58 @@
             most of the time a Commander can see it.
           -->
           <!--
+            Docked innermost-last, and the box is the last child so it is the one that fills.
+            Order is load-bearing twice over. A DockPanel gives its first right-docked child the
+            rightmost slot, so the trio is declared next, previous, count to read left to right as
+            count, previous, next. And LastChildFill overrides the last child's own Dock: with the
+            steppers declared last, one of them stretched across the whole row and the count sat
+            outside it (remediation.md 11, item 2).
+          -->
+          <Button x:Name="SearchNext"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x203A;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Next match (Enter)"
+                  Click="OnSearchNextClick" />
+          <Button x:Name="SearchPrevious"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x2039;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Previous match (Shift+Enter)"
+                  Click="OnSearchPreviousClick" />
+          <TextBlock x:Name="SearchCount"
+                     DockPanel.Dock="Right"
+                     Margin="6,0,0,0"
+                     VerticalAlignment="Center"
+                     IsVisible="False"
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+          <!--
             Body, not Secondary. A field the Commander types into is not supporting text, and at
             13 beside a page of 14 it read as a smaller-than-everything control rather than as a
             quieter one — which is the exact drift TypeScale exists to stop.
+          -->
+          <!--
+            The child that gives, and the only one that can. It takes whatever width the row has
+            spare, so no other control has to hold a gap — which is the whole of item 2: the slack
+            has to go somewhere, and every other control here is the wrong place for it.
+            <para/>
+            Capping it and right-aligning the group was tried and does not work: a stretched child
+            with a MaxWidth is centred in what is left, which puts a gap on both sides of the box
+            instead of one beside it, and a child aligned Right does not stretch at all — it
+            collapses to MinWidth at every window size. So the box is wide on a wide window, which
+            is a cosmetic cost paid for having no gap at any width and still shrinking to 90 on a
+            narrow pane.
           -->
           <TextBox x:Name="SearchInput"
                    MinWidth="90"
@@ -630,36 +680,6 @@
                       Click="OnSearchClearClick" />
             </TextBox.InnerRightContent>
           </TextBox>
-          <TextBlock x:Name="SearchCount"
-                     DockPanel.Dock="Right"
-                     Margin="6,0,0,0"
-                     VerticalAlignment="Center"
-                     IsVisible="False"
-                     FontSize="{StaticResource D47.Type.Secondary}"
-                     Foreground="{DynamicResource D47.TextMuted}" />
-
-          <Button x:Name="SearchNext"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x203A;"
-                  Padding="8,0"
-                  MinWidth="0"
-                  Height="28"
-                  IsVisible="False"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  ToolTip.Tip="Next match (Enter)"
-                  Click="OnSearchNextClick" />
-          <Button x:Name="SearchPrevious"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x2039;"
-                  Padding="8,0"
-                  MinWidth="0"
-                  Height="28"
-                  IsVisible="False"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  ToolTip.Tip="Previous match (Shift+Enter)"
-                  Click="OnSearchPreviousClick" />
         </DockPanel>
       </DockPanel>
 

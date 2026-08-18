@@ -21,3 +21,20 @@ the changelog, which is why this file is the current batch and not a growing arc
   the other is a guaranteed no-op that still costs a sentence. A proposal identical to one already
   waiting is refused and says so. Two acts on one line are not duplicates, since proposing to
   finish something and proposing to drop it are opposite requests about the same words.
+
+- [x] **2. A hand's width of nothing between the two steppers.** Reported with a picture: the
+  search box, then `‹`, then a long gap, then `›` with the count stranded to the right of both.
+
+  **`LastChildFill` overrides the last child's own `Dock`.** The steppers were declared last, so
+  one of them was the filling child and stretched across the row while its `Dock="Right"` was
+  quietly ignored — the markup looked right, and every control in it carried the attribute that
+  was being disregarded. The box is the last child now, and the trio is declared next, previous,
+  count, because a `DockPanel` gives its *first* right-docked child the *rightmost* slot.
+
+  The spare width goes to the search box, which is the one control here that can use it and the
+  one that can give it back on a narrow pane. **Capping it was tried and does not work**: a
+  stretched child with a `MaxWidth` is centred in what is left, which puts a gap on *both* sides
+  of the box, and a child aligned right does not stretch at all — it collapses to its minimum at
+  every window size. So the box is wide on a wide window, which is the cosmetic cost of having no
+  gap at any width.
+
