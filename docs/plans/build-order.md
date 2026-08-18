@@ -244,8 +244,8 @@ Five phases from a design session on what to build once Phase 29 lands: prove th
 it remembers you, it learns your mistakes, the Commander's log, and the long arc. Appended under
 the same rule as 29, so they sit behind it and behind nothing else.
 
-**Phase 29 shipped on 2026-08-18, so Phase 30 is now next** — by the numbers, as every other time
-this document has said so.
+**Phase 29 shipped on 2026-08-18, and Phase 30 shipped the same day, so Phase 31 is now next** —
+by the numbers, as every other time this document has said so.
 
 **Phase 30 is not ranked on a guess, which makes it the first entry here that is not.** Every other
 ordering argument in this document weighs how much a Commander wants a thing. This one is about
@@ -254,11 +254,16 @@ anything about what a model does** — so every phase after 30 adds surface that
 and the cost of the gap grows with each of them rather than staying put. It is the only phase in
 the five that gets harder the longer it waits.
 
-The plan of record, including the four ways this suite would pass without looking at anything and
-the untrusted path that turned out not to reach the model at all, is
-[phase-30-prove-the-model-behaves.md](phase-30-prove-the-model-behaves.md).
+The plan of record, including the four ways this suite would pass without looking at anything, the
+untrusted path that turned out not to reach the model at all, and the three ways nobody predicted, is
+[phase-30-prove-the-model-behaves.md](phase-30-prove-the-model-behaves.md). **It ranked itself on
+decay and the ranking held**: building it found that a blanket "no tool was called" assertion fails
+on every competent model, that the fixture's inert action surface hid the highest-consequence
+assertion entirely, and that the weakened-guardrail proof list.md asks for does not reproduce against
+gpt-5.6-terra. None of those get easier by waiting, and each of 31 to 34 would have added surface on
+top of them.
 
-**31 to 34 are ranked on the same blind spot as everything else.** They are ordered by how much of
+**31 to 34 are ranked on the same blind spot as everything else, and 31 is now next.** They are ordered by how much of
 each is already built rather than by how much anybody wants them: 31 extends Phase 23's tiered
 truth and `SamplingStore`'s shape, 32 is arithmetic over a corpus that already replays in seven
 seconds, 33 needs no new data and no new trust boundary, and 34 generalises the engineer solver.

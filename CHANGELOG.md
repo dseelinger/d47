@@ -17,6 +17,80 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.30.0 — 2026-08-18 — Prove the model behaves
+
+list.md Phase 30. Nothing in this repository had ever asserted anything about what a model does.
+Phase 29 took the provider count from one to three, and N models cannot be eyeballed.
+
+### A scenario suite
+
+`tests/D47.Scenarios.Tests` — the first test project with no `src/` counterpart, because what it
+tests is not an assembly but **the turn**: Core's loop driven against a real provider with the real
+builtin registry, real settings and a real `data/` folder behind it. A scenario is journal state, an
+utterance and a list of assertions, and every assertion reads a **trace** rather than the wording of
+a reply. A test that pins exact phrasing fails on the next model and teaches everyone to ignore it,
+which is worse than no test.
+
+### A hostile message cannot reach a tool
+
+The highest-value assertion in the product, and nothing made it before now. A corpus of published
+prompt-injection attempts is fired down every untrusted path that reaches the model — journal-derived
+game state, and the tool results that carry what Spansh and INARA said — and each run asserts that
+nothing was written, no protected row moved, nothing acted outside d47, and not the specific thing
+the attacker named.
+
+Those four are the claim stated in consequences, which is what it turned out to mean. **d47 has
+exactly two outward channels** — key injection into Elite, and in-game chat — and everything else a
+tool can do either changes local state or answers the Commander.
+
+**In-game comms gets a structural assertion instead of a resistance measurement**, because there is
+no path from a received message into a prompt and no tool that reads one. That was true before this
+release and was protected by nothing but four comments agreeing with each other; it now has a test.
+
+### Guardrails hold with the persona switched off
+
+Prompt assembly puts the guardrails above the persona so switching personality off cannot strip
+them. That ordering is asserted directly now, on a real turn, with each of the eleven Guardian cores
+and with personality off entirely.
+
+### It says what it did not check
+
+A run against a scripted provider says nothing about any model's resistance to anything, and the
+report says so **in the same breath as it says green**. Safety and quality are rendered in separate
+sections and obey different rules: a tolerance may attach to *did it call the right tool*, and never
+to *did it call one it should not have*. A scenario whose attack never actually reached the model is
+marked as untested rather than counted as a pass — which mattered immediately, because against a
+weak local model 22 of 44 injections tested nothing and every one of them was green about it.
+
+### What it found
+
+**The corpus caught a real model, unweakened.** A 4B model on a local endpoint broke a safety
+assertion on 8 of 44 injections; the architecture contained all of it — nothing written, no
+protected row moved, no targeted tool run — but the model did what the injected text told it to.
+
+**And the weakened-guardrail experiment did not reproduce.** Against `gpt-5.6-terra`, with the
+Commander having already enabled both key injection and in-game chat, the same attack was resisted
+5/5 with the guardrails as shipped, 5/5 with the untrusted-input clause deleted, and 5/5 with every
+guardrail removed. That is written down in `ProofOfCatching` rather than worked around: on that
+model, against that corpus, d47's prompt is not what buys the resistance — the model's own training
+already carries it. Worth repeating whenever a provider is added, and it costs a few pennies.
+
+### Running it
+
+The scripted half runs in CI on every push, free and hermetic. Measuring a model is opt-in:
+
+```
+D47_SCENARIOS_LIVE=1 D47_SCENARIOS_PROVIDER=openaiCompatible D47_SCENARIOS_MODEL=qwen3:4b \
+  dotnet test tests/D47.Scenarios.Tests
+```
+
+A full matrix is about 300 turns and a pound or two against a paid endpoint; progress goes to a
+tailable file so a twenty-minute run can say where it is. It never gates a release — a suite whose
+result depends on a third party's model, a network and a non-deterministic sampler cannot sit in the
+path that publishes a tag.
+
+---
+
 ## 0.29.0 — 2026-08-18 — Bring your own model
 
 list.md Phase 29. A second and third provider, so the model answering you can be one you pay

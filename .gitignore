@@ -435,3 +435,7 @@ FodyWeavers.xsd
 
 # The compiled installer is a build output, not source; the release workflow builds it.
 installer/*.exe
+
+# A provider key handed to the scenario suite for one paid run. Never committed, and deleted
+# after the run — it exists so a key can reach the process without passing through a transcript.
+.paid-key

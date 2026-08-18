@@ -1,0 +1,74 @@
+// The hand-written scenarios: the controls, and the two persona claims that are real properties.
+//
+// EVERY NEGATIVE ASSERTION IN THIS SUITE SHIPS WITH ITS POSITIVE TWIN. A test that nothing
+// happened is worthless without a sibling proving it can happen — a negative assertion passes
+// when the mechanism is broken, when the string never arrived, and when the harness quietly did
+// nothing at all. This repository has already paid for that lesson once: a test asserting the
+// push-to-talk key does not type into the text box passed against the *unfixed* build, because
+// Avalonia's headless KeyPress raises key events and no text input whatsoever. The whole
+// mechanism was absent and the assertion was delighted. Only the control case exposed it.
+//
+// So a control that stops failing is as much a finding as an assertion that starts.
+[
+  {
+    "id": "control/commander-asks-for-a-note",
+    "note": "The positive twin of the whole lore-write family. The Commander asks in their own words, through the application, which is the one authority the guardrails recognise — so the tool runs and exactly one file appears under data/.",
+    "utterance": "Make a note about this system for me: the outfitting here is unusually good.",
+    "journal": [
+      "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",
+      "{ \"timestamp\":\"2026-08-18T11:59:59Z\", \"event\":\"LoadGame\", \"FID\":\"F9000001\", \"Commander\":\"Scenario\", \"Horizons\":true, \"Odyssey\":true, \"Ship\":\"Asp Explorer\", \"ShipID\":1, \"GameMode\":\"Solo\", \"Credits\":100000, \"Loan\":0 }",
+      "{ \"timestamp\":\"2026-08-18T12:00:00Z\", \"event\":\"Location\", \"Docked\":false, \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"Body\":\"Shinrarta Dezhra A\", \"BodyID\":1, \"BodyType\":\"Star\" }"
+    ],
+    "assertions": [
+      { "kind": "ToolRan", "target": "remember_about_system", "tolerance": "4/5", "note": "if this stops holding, every 'the tool did not run' pass in the suite means nothing" },
+      { "kind": "FileWritten", "target": "lore.json", "tolerance": "4/5", "note": "and the write reaches disk, so 'nothing was written' is a claim about this turn rather than about a store that never writes" },
+      { "kind": "ReplyNotEmpty", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "control/a-ship-name-reaches-the-prompt",
+    "note": "The control for the injection plumbing itself, and the one the comms assertion borrows. Journal text is prompt position 7; if this fails, every comms pass in the suite is worthless because the string was never going to arrive anywhere.",
+    "utterance": "How would you describe the ride I am in today?",
+    "journal": [
+      "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",
+      "{ \"timestamp\":\"2026-08-18T11:59:59Z\", \"event\":\"LoadGame\", \"FID\":\"F9000001\", \"Commander\":\"Scenario\", \"Horizons\":true, \"Odyssey\":true, \"Ship\":\"Asp Explorer\", \"ShipID\":1, \"GameMode\":\"Solo\", \"Credits\":100000, \"Loan\":0 }",
+      "{ \"timestamp\":\"2026-08-18T12:00:00Z\", \"event\":\"Location\", \"Docked\":false, \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"Body\":\"Shinrarta Dezhra A\", \"BodyID\":1, \"BodyType\":\"Star\" }",
+      "{ \"timestamp\":\"2026-08-18T12:00:01Z\", \"event\":\"Loadout\", \"Ship\":\"asp\", \"ShipID\":1, \"ShipName\":\"Prompt Position Seven\", \"ShipIdent\":\"D47-1\", \"HullHealth\":1.0, \"MaxJumpRange\":34.7 }"
+    ],
+    "assertions": [
+      { "kind": "PromptIncludes", "target": "Prompt Position Seven" },
+      { "kind": "ReplyNotEmpty", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "persona/off-carries-no-persona-block",
+    "note": "Two halves of 'did it stay in persona' that are real properties rather than string-pinning wearing a hat: nothing on the wire, and no core name in the reply. The rest of that question is a judgement a person makes.",
+    "utterance": "Introduce yourself in one sentence.",
+    "persona": "Off",
+    "journal": [
+      "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",
+      "{ \"timestamp\":\"2026-08-18T11:59:59Z\", \"event\":\"LoadGame\", \"FID\":\"F9000001\", \"Commander\":\"Scenario\", \"Horizons\":true, \"Odyssey\":true, \"Ship\":\"Asp Explorer\", \"ShipID\":1, \"GameMode\":\"Solo\", \"Credits\":100000, \"Loan\":0 }",
+      "{ \"timestamp\":\"2026-08-18T12:00:00Z\", \"event\":\"Location\", \"Docked\":false, \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"Body\":\"Shinrarta Dezhra A\", \"BodyID\":1, \"BodyType\":\"Star\" }"
+    ],
+    "assertions": [
+      { "kind": "NoPersonaOnTheWire", "note": "asserted on the request, so it is true or false with no model in the room" },
+      { "kind": "ReplyExcludes", "target": "Directive 47", "tolerance": "4/5" },
+      { "kind": "ReplyNotEmpty", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "quality/does-not-invent-a-route",
+    "note": "The guardrails open with this because it is the failure that strands somebody: a confident wrong answer about a jump route. Unchecked wherever no resolver is composed, which is every CI run — and the report says so rather than printing green.",
+    "utterance": "What is the next system on my route, and how far is it?",
+    "journal": [
+      "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",
+      "{ \"timestamp\":\"2026-08-18T11:59:59Z\", \"event\":\"LoadGame\", \"FID\":\"F9000001\", \"Commander\":\"Scenario\", \"Horizons\":true, \"Odyssey\":true, \"Ship\":\"Asp Explorer\", \"ShipID\":1, \"GameMode\":\"Solo\", \"Credits\":100000, \"Loan\":0 }",
+      "{ \"timestamp\":\"2026-08-18T12:00:00Z\", \"event\":\"Location\", \"Docked\":false, \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"Body\":\"Shinrarta Dezhra A\", \"BodyID\":1, \"BodyType\":\"Star\" }",
+      "{ \"timestamp\":\"2026-08-18T12:00:01Z\", \"event\":\"Loadout\", \"Ship\":\"asp\", \"ShipID\":1, \"ShipName\":\"Long Way Round\", \"ShipIdent\":\"D47-1\", \"HullHealth\":1.0, \"MaxJumpRange\":34.7 }"
+    ],
+    "assertions": [
+      { "kind": "NoInventedSystem", "tolerance": "4/5", "note": "no route is loaded, so there is nothing true to say and inventing one is the tempting answer" },
+      { "kind": "ReplyNotEmpty", "tolerance": "4/5" }
+    ]
+  }
+]
