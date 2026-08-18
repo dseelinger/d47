@@ -76,9 +76,11 @@ Each of these is cheap to break by accident and expensive to fix later.
   phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
   Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
   Phases 24 and 25 together on 2026-08-17, and Phases 26 and 27 on 2026-08-18 — and the set only ever
-  grows. **The set has a hole in it now**: Phase 22 is unbuilt and sits between two frozen
-  neighbours, so it is the one phase whose number is still free to move and the one that cannot be
-  renumbered by shifting anything around it.
+  grows. **22 is a retired number, not a hole.** Phase 22 was cut on 2026-08-18 with nothing built,
+  and it is **not reused**: a later phase renumbered into 22 would silently repoint every citation
+  that ever said "Phase 22" at a subject it was never about, which is the failure the rule above
+  exists to prevent arriving by a different road. It was also the only phase whose number was still
+  free to move, so nothing is now movable at all.
   The unfinished tail was renumbered **twice on 2026-08-15** — once into build order, and once again
   when three items were pulled into a new Phase 16 so the running order is the numbers themselves
   rather than a paragraph explaining them. Both passes are recorded with their mapping in

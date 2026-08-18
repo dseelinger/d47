@@ -76,7 +76,7 @@
       </Button>
 
       <!--
-        Hearing it is not choosing it (list.md Phase 19), and from Phase 22 that is a glyph on the
+        Hearing it is not choosing it (list.md Phase 19), and since 0.23.0 that is a glyph on the
         row rather than a button under the list (change-requests.md 18). The control that plays a
         voice is beside the voice it plays, which is what every list of audio a Commander has ever
         met does, and it takes the selection out of the question entirely.

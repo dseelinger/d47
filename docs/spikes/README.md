@@ -18,7 +18,6 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
 | [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 | [elevenlabs-voice-sources.md](elevenlabs-voice-sources.md) | What does an ElevenLabs account's voice list actually hold, is the picker empty on a fresh one, and does the named default survive? |
-| [screen-reading-licence-and-rules.md](screen-reading-licence-and-rules.md) | What do the computer-vision candidates *and their native payloads* actually license as, and does reading the screen sit inside Frontier's published rules? |
 | [journal-corpus-soak.md](journal-corpus-soak.md) | Phases 17, 18 and 19 shipped in one day — what do 692,631 real events say about them? One fix, two reports, and a crash hunt that came back empty. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
@@ -43,12 +42,15 @@ was checked against the page it came from, it differed — most sharply on a sui
 the excerpt said 33% and the page said 25%.
 
 **`www.frontier.co.uk/legal/…` answers 403 as well**, found 2026-08-16 — which is where the EULA and
-the Mod Policy live, the only *binding* documents in any of this. A fetch-only pass concludes that
-Frontier publishes no rules at all, the exact opposite of the truth. See
-[screen-reading-licence-and-rules.md](screen-reading-licence-and-rules.md) §10, which also adds a
-costume nobody had seen: **a fetch that succeeds and returns unreadable bytes.** Frontier's Player
-Journal manual is a PDF, and the most load-bearing quotation in that page sat inside 1.5 MB of
-compressed streams until the text was extracted. Not a 403 — and the same mistake.
+the Mod Policy live, the only *binding* documents Frontier publishes. A fetch-only pass concludes
+that Frontier publishes no rules at all, the exact opposite of the truth.
+
+And a fourth costume, found the same day: **a fetch that succeeds and returns unreadable bytes.**
+Frontier's Player Journal manual is a PDF, and the paragraph that mattered sat inside 1.5 MB of
+compressed streams until the text was extracted. Not a 403 — the fetch worked — and the same
+mistake, wearing better clothes. The page that recorded both of these was cut with Phase 22 on
+2026-08-18; the findings are restated here because they are facts about the method rather than about
+that phase.
 
 So the order of attack is: **browser first, then the file, then the excerpt, and never conclude
 absence from a fetch failure.** If it still cannot be found, say where the search stopped rather
