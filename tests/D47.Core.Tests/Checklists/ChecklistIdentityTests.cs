@@ -45,22 +45,68 @@ public class ChecklistIdentityTests
             reordered.Select(item => item.Key).Order(StringComparer.Ordinal));
     }
 
+    /// <summary>
+    /// Deciding on a grade for a slot planned without one is the same item changing its mind
+    /// (list.md Phase 26, "A plan is keyed to its slot").
+    /// <para>
+    /// This asserted the opposite until Phase 26, and the reversal is the point rather than a
+    /// relaxation: keying on the content was right while items were regenerated from scratch each
+    /// evaluation, and it does not survive a plan the Commander edits. Null is still wildcard
+    /// rather than unknown — that is about what the intent <em>means</em>, and this is about what
+    /// makes two of them the same slot.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void AWildcardGradeIsADifferentIntentFromANamedOne()
+    public void ChangingTheGradeOnASlotIsTheSameItem()
     {
-        // Null is wildcard, never unknown. "Dirty drives, I don't mind which grade" and "grade 5
-        // dirty drives" are two different things to want, and a plan that changes one into the
-        // other has changed its mind about that slot.
-        Assert.NotEqual(ChecklistKeys.For(Dirty()), ChecklistKeys.For(Dirty(grade: null)));
+        Assert.Equal(ChecklistKeys.For(Dirty()), ChecklistKeys.For(Dirty(grade: null)));
     }
 
+    /// <summary>
+    /// And so is changing what is planned for it. Swapping a long-range pulse laser for an
+    /// overcharged multi-cannon is not a delete and an add — <b>it is still the third hardpoint
+    /// on the same hull</b>, and reading it the other way threw away whatever history the slot
+    /// had the first time somebody changed their mind.
+    /// </summary>
     [Fact]
-    public void ADifferentBlueprintInTheSameSlotIsADifferentItem()
+    public void ADifferentBlueprintInTheSameSlotIsTheSameItem()
     {
         var burst = new ChecklistIntent(ChecklistIntentKind.Blueprint, "Hardpoint1") { Detail = "Sturdy", Grade = 5 };
         var cannon = new ChecklistIntent(ChecklistIntentKind.Blueprint, "Hardpoint1") { Detail = "Overcharged", Grade = 5 };
 
-        Assert.NotEqual(ChecklistKeys.For(burst), ChecklistKeys.For(cannon));
+        Assert.Equal(ChecklistKeys.For(burst), ChecklistKeys.For(cannon));
+    }
+
+    /// <summary>
+    /// A slot still holds a blueprint and an experimental at once, because those are two things
+    /// the game lets one module carry — so the kind is in the key even though the content is not.
+    /// </summary>
+    [Fact]
+    public void ABlueprintAndAnExperimentalOnOneSlotAreStillTwoItems()
+    {
+        var blueprint = new ChecklistIntent(ChecklistIntentKind.Blueprint, "Hardpoint1") { Detail = "Sturdy" };
+        var effect = new ChecklistIntent(ChecklistIntentKind.Experimental, "Hardpoint1") { Detail = "Thermal Shock" };
+
+        Assert.NotEqual(ChecklistKeys.For(blueprint), ChecklistKeys.For(effect));
+    }
+
+    /// <summary>
+    /// And the one-to-many kinds still key on what they are about. A suit takes several
+    /// modifications and a site wants several commodities, so collapsing those onto their subject
+    /// would be one item where the Commander has five.
+    /// </summary>
+    [Fact]
+    public void TheOneToManyKindsStillKeyOnTheirContent()
+    {
+        var stability = new ChecklistIntent(ChecklistIntentKind.Modification, "Maverick") { Detail = "Extra Ammo Capacity" };
+        var reach = new ChecklistIntent(ChecklistIntentKind.Modification, "Maverick") { Detail = "Greater Range" };
+
+        Assert.NotEqual(ChecklistKeys.For(stability), ChecklistKeys.For(reach));
+
+        var steel = new ChecklistIntent(ChecklistIntentKind.Commodity, "Orbital 1") { Detail = "Steel" };
+        var titanium = new ChecklistIntent(ChecklistIntentKind.Commodity, "Orbital 1") { Detail = "Titanium" };
+
+        Assert.NotEqual(ChecklistKeys.For(steel), ChecklistKeys.For(titanium));
     }
 
     [Fact]

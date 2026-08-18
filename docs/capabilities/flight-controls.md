@@ -1,7 +1,7 @@
 ---
 title: Flight and navigation
 group: Acting on the game
-nav_order: 126
+nav_order: 127
 ---
 
 Flies the parts of your ship that are switches: gear, lights, scoop, hardpoints and the frame

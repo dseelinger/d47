@@ -1,7 +1,7 @@
 ---
 title: Persona
 group: Conversation
-nav_order: 117
+nav_order: 118
 ---
 
 Eleven Guardian intelligences, recovered from a structure and running in your ship. You pick one.

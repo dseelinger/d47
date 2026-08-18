@@ -17,6 +17,87 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.26.0 — 2026-08-18 — Ships
+
+list.md Phase 26. The Loadout tab has its first surface: your fleet, the hulls you intend to buy,
+and one build per ship.
+
+### A plan is keyed to its slot
+
+**Changing your mind about a slot is an edit, not a delete and an add.** Swapping a long-range
+pulse laser for an overcharged multi-cannon leaves you with the same third hardpoint on the same
+hull, and with whatever history it had.
+
+The old rule keyed an item on what it wanted — the blueprint and the grade — which was right for
+as long as items were regenerated from scratch on every evaluation, and does not survive a plan you
+edit. Before this, the first time you changed your mind about a slot, everything that slot had been
+through was tombstoned and an identical-looking new item opened beside the corpse. It needs no
+counter and no tombstone bookkeeping, because a slot exists as long as the hull does.
+
+Only for the three intents that are shaped like a slot: a ship slot holds one module, that module
+carries at most one blueprint, and it carries at most one experimental effect. A suit takes several
+modifications and a construction site wants several commodities, so those still key on what they
+are about.
+
+### The plan owns what. The checklist owns when.
+
+Ships keeps its own store, in `data/ships.json`, and **nothing crosses into your checklist
+unasked**. Planning a slot writes the build and stops; promoting offers it, and accepting is still
+your own act.
+
+That separation is what lets you rearrange a build without your checklist reordering itself under
+you, and reorder your checklist without the build forgetting what you decided. **Promotion is
+one-to-many** — one planned change produces the modification plus whatever unlocking and ranking it
+needs — and **dropping a build keeps what it already put on your list**, because you ordered your
+list around those lines.
+
+### The fleet, and the fleet you intend
+
+**A hull you do not own is not in the fleet.** It has no ship id, because Elite's id is what a ship
+list is keyed by, so **acquiring the hull is the plan's first step** rather than a precondition
+sitting outside it.
+
+**Buying one adopts the plan rather than making you re-point it.** A build's identity is
+independent of the ship id from the moment it is created, which is what there is to rebind.
+
+One correction to the plan of record: list.md said `ShipyardBuy` names the hull and the new id.
+Measured against real journals it does not — it carries the hull, the price and the ship being
+stored, and **no id for the new one at all**. The id arrives in the `ShipyardNew` written
+immediately after. Matching on the event that actually carries it is the difference between
+adopting a plan and offering to adopt it onto nothing.
+
+### Fleet, ship, slot
+
+Three levels of the drill stack, so the breadcrumb, the reflow and the way back all come from
+Phase 25.
+
+The slot list is an **index rather than a table** — one line each, a mark where a plan exists, and
+everything else in the pane that opens — which is what lets one layout survive from 512 to 2048
+logical pixels.
+
+**Fitted and planned are two blocks and never one merged line**, because a plan is a second thing
+you want rather than an edit to the truth. A plan carries the journal's verdict and no checkbox,
+and a ship you are not flying says so: Elite reports the loadout of the ship you are sitting in and
+no other, so the page says that rather than showing a blank that implies disagreement.
+
+Cost is per plan and on the slot, with held, needed and short all three.
+
+### One build per ship
+
+Comparing a combat fit against an exploration fit for the same hull is a planner feature this
+deliberately does not have, and slot identity is what makes that a decision rather than an
+accident.
+
+### Also
+
+- The advertised tool surface got **smaller**, not bigger. The largest profile was measured at
+  39,840 bytes against a 40,000 byte ceiling before this phase, so Ships advertises nothing at all:
+  the one route that needs a model to understand free English is `plan_ship_build`, which already
+  existed and now writes to the build rather than proposing straight to the checklist. Everything
+  else is a phrase or a press. It ships at 39,693.
+
+---
+
 ## 0.25.0 — 2026-08-17 — The panel becomes a place, and it knows what time it is
 
 list.md Phases 24 and 25. Two phases in one release: the panel grew a bar of six surfaces, and the

@@ -1,7 +1,7 @@
 ---
 title: Exobiology
 group: Knowledge
-nav_order: 114
+nav_order: 115
 ---
 
 Plot a circuit through known biology, and read back what your own surface scan found on the body you

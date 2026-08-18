@@ -123,13 +123,15 @@ public sealed class VrHost : IDisposable
         Func<Control>? settingsPage = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
         D47.Core.Utilities.Timekeeper? timekeeper = null,
-        D47.Core.Utilities.AlarmStore? alarmStore = null)
+        D47.Core.Utilities.AlarmStore? alarmStore = null,
+        D47.Core.Ships.ShipPlanService? ships = null,
+        Func<D47.Core.Journal.CommanderGameState?>? gameState = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
-            checklists, timekeeper, alarmStore);
+            checklists, timekeeper, alarmStore, ships, gameState);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

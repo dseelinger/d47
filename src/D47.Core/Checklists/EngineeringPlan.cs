@@ -166,9 +166,12 @@ public static class EngineeringPlan
             }
         }
 
-        // Keyed, so two requests that say the same thing are one item rather than two. Identity
-        // is the intent, so this falls out of the key rather than needing a rule of its own.
-        return [.. items.GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase).Select(group => group.First())];
+        // Keyed, so two requests about the same slot are one item rather than two. Identity is
+        // the slot for the slot-shaped intents, so this falls out of the key rather than needing
+        // a rule of its own - and a later request about a slot already spoken for wins, because
+        // it is the Commander changing their mind rather than a second opinion to keep beside the
+        // first (list.md Phase 26).
+        return [.. items.GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase).Select(group => group.Last())];
     }
 
     private static ChecklistItem Item(ChecklistScope scope, string? hull, ChecklistIntent intent, string text) =>

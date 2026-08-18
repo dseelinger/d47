@@ -105,6 +105,11 @@ public class ChecklistDocumentTests
         Assert.True(kept.IsLive);
     }
 
+    /// <summary>
+    /// Designed out means the <em>slot</em> left the plan, since Phase 26. Changing what is
+    /// planned for a slot is an edit to the item rather than the loss of one — see
+    /// <see cref="ChangingWhatIsPlannedForASlotKeepsTheItemAndItsHistory"/>.
+    /// </summary>
     [Fact]
     public void AnItemDoneAndThenDesignedOutTombstonesAsSuperseded()
     {
@@ -113,10 +118,11 @@ public class ChecklistDocumentTests
 
         var document = Empty with { Items = [cannon with { State = ChecklistState.Done }] };
 
+        // A revision that has stopped caring about the hardpoint entirely.
         var revised = document.Revise(
             scope,
             ChecklistSource.EngineeringPlan,
-            [Derived("Hardpoint1", "Sturdy", 5, scope)]);
+            [Derived("MainEngines", "Dirty Drive Tuning", 5, scope)]);
 
         var gone = revised.Document.Find(cannon.Id);
 
@@ -127,6 +133,36 @@ public class ChecklistDocumentTests
         // forgets it is a history that lies.
         Assert.Equal(ChecklistTombstone.Superseded, gone.Tombstone);
         Assert.Contains("done and then designed out", revised.Report, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Changing a slot from one blueprint to another is the same item changing its mind (list.md
+    /// Phase 26, "A plan is keyed to its slot").
+    /// <para>
+    /// This is what the slot key buys, seen from the outside: before it, the first edit to a slot
+    /// tombstoned whatever history it had and opened an identical-looking new item beside the
+    /// corpse — which is exactly the failure item identity exists to prevent, arriving through a
+    /// door nobody had shut.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ChangingWhatIsPlannedForASlotKeepsTheItemAndItsHistory()
+    {
+        var scope = ChecklistScope.Ship(12);
+        var pulse = Derived("Hardpoint1", "Long Range", 5, scope);
+
+        var document = Empty with { Items = [pulse] };
+
+        var revised = document.Revise(
+            scope,
+            ChecklistSource.EngineeringPlan,
+            [Derived("Hardpoint1", "Overcharged", 3, scope)]);
+
+        // One item, still live, still the same identity — and nothing tombstoned beside it.
+        var item = Assert.Single(revised.Document.Items);
+
+        Assert.True(item.IsLive);
+        Assert.True(item.Id.Same(pulse.Id));
     }
 
     [Fact]

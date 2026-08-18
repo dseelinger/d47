@@ -34,7 +34,16 @@ public static class ChecklistCapability
 
     private static readonly string[] Groups = ["universal", "ship", "system", "suit", "weapon"];
 
-    public static CapabilityDescriptor Create(ChecklistService checklists) => new()
+        /// <param name="ships">
+    /// The Commander's ship builds (list.md Phase 26). <c>plan_ship_build</c> writes there rather
+    /// than proposing straight to the checklist, because the plan owns <em>what</em> and the
+    /// checklist owns <em>when</em>. Null under the designer and in tests that are not about
+    /// builds, and the tool then says it is tracking none rather than quietly doing the old thing
+    /// — a tool that behaves differently depending on how it was wired is one nobody can reason
+    /// about.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        ChecklistService checklists, Ships.ShipPlanService? ships = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -199,11 +208,10 @@ public static class ChecklistCapability
             {
                 Name = "plan_ship_build",
                 Description =
-                    "Propose what a ship's build should say about one slot: a blueprint, a grade, an "
-                    + "engineer, an experimental effect — any of which may be left out, and left out "
-                    + "means \"any\" rather than \"unknown\". Everything the plan says about other slots "
-                    + "is left alone, so changing one weapon is a revision rather than a rebuild. "
-                    + "Progress is then a diff against the live Loadout; nobody types in what is done.",
+                    "Set what a ship's build wants in one slot: a blueprint, a grade, an engineer, an "
+                    + "experimental effect — any may be left out, and left out means \"any\" rather than "
+                    + "\"unknown\". Other slots are untouched. It does not reach the checklist until the "
+                    + "Commander promotes the build.",
                 Parameters =
                 [
                     new ToolParameter
@@ -244,18 +252,17 @@ public static class ChecklistCapability
                     {
                         Name = "ship",
                         Type = ToolParameterType.String,
-                        Description = "A ship id. Omit for the one the Commander is flying.",
+                        Description =
+                            "A ship id, name, or a hull they do not own yet. Omit for the one they fly.",
                     },
                     new ToolParameter
                     {
                         Name = "drop",
                         Type = ToolParameterType.Boolean,
-                        Description =
-                            "Propose that the plan say nothing about this slot. What it already said is "
-                            + "kept as history rather than deleted.",
+                        Description = "Say nothing about this slot. What it already produced is kept.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Build(checklists, arguments))),
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Build(checklists, ships, arguments))),
             },
 
             new ToolDefinition
@@ -452,47 +459,76 @@ public static class ChecklistCapability
             arguments.TryGetString("group", out var group) ? group : null,
             arguments.TryGetString("name", out var name) ? name : null);
 
-    private static string Build(ChecklistService checklists, ToolArguments arguments)
+    /// <summary>
+    /// Writes one slot of a ship's build (list.md Phase 26, "A plan reaches the checklist when you
+    /// say so").
+    /// <para>
+    /// <b>It used to propose straight to the checklist, and no longer does.</b> The plan owns
+    /// <em>what</em> and the checklist owns <em>when</em>, so planning a slot changes the build
+    /// and nothing else — reaching the list is <c>promote_ship_plan</c>, which is a separate act
+    /// the Commander performs. That also makes this tool shorter to reason about: it says what a
+    /// ship should be, and stops.
+    /// </para>
+    /// <para>
+    /// The <c>ship</c> parameter is where a hull the Commander does not own starts an intended
+    /// build. That is one tool doing two things and it is deliberate: the advertised surface is
+    /// re-billed on every turn and had 160 bytes of headroom left when this phase began, so a
+    /// second tool for it was not available — see <see cref="ShipsCapability"/>.
+    /// </para>
+    /// </summary>
+    private static string Build(
+        ChecklistService checklists, Ships.ShipPlanService? ships, ToolArguments arguments)
     {
         if (!arguments.TryGetString("slot", out var slot) || string.IsNullOrWhiteSpace(slot))
         {
             return "No slot was named.";
         }
 
-        var scope = checklists.ScopeFor("ship", arguments.TryGetString("ship", out var ship) ? ship : null);
-
-        if (scope.Group != ChecklistGroup.Ship)
+        if (ships is null)
         {
-            return "I do not know which ship that is — no Loadout has arrived yet, and none was named.";
+            return "I am not tracking ship builds.";
         }
 
-        var dropping = arguments.TryGetBoolean("drop", out var drop) && drop;
+        var named = arguments.TryGetString("ship", out var ship) && !string.IsNullOrWhiteSpace(ship)
+            ? ship.Trim()
+            : null;
 
-        IReadOnlyList<ChecklistItem> items = dropping
-            ? []
-            : EngineeringPlan.Items(
-                scope,
-                checklists.HullFor(scope),
-                [
-                    new BuildRequest(
-                        slot,
-                        arguments.TryGetString("blueprint", out var blueprint) ? blueprint : null,
-                        arguments.TryGetInt32("grade", out var grade) ? grade : null,
-                        arguments.TryGetString("engineer", out var engineer) ? engineer : null,
-                        arguments.TryGetString("experimental", out var experimental) ? experimental : null),
-                ],
-                checklists.SlotFor);
+        if (Ships.ShipPlanService.Which(ships, named) is not { } build)
+        {
+            return named is null
+                ? "I do not know which ship that is - no Loadout has arrived yet, and none was named."
+                : $"I could not tell which ship \"{named}\" means, and it is not a hull I know of either.";
+        }
 
-        // The subjects this proposal speaks for are named the way the plan keys them, not the way
-        // the Commander said them — otherwise "thrusters" would fail to replace what the plan
-        // already says about MainEngines, and the two would sit side by side.
-        var subjects = new List<string> { checklists.SlotFor(slot) };
+        // The slot is named the way the plan keys it rather than the way the Commander said it,
+        // so "thrusters" replaces what the build already says about MainEngines instead of
+        // sitting beside it.
+        var canonical = checklists.SlotFor(slot);
 
-        subjects.AddRange(items
-            .Where(item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess)
-            .Select(item => item.Intent!.Subject));
+        if (arguments.TryGetBoolean("drop", out var drop) && drop)
+        {
+            return ships.Clear(build.Id, canonical)
+                ? $"{build.Describe()}: nothing is planned for {canonical} now. What it already put "
+                  + "on your checklist is kept."
+                : $"{build.Describe()} had nothing planned for {canonical}.";
+        }
 
-        return checklists.ProposePlan(scope, ChecklistSource.EngineeringPlan, items, subjects);
+        var plan = new Ships.SlotPlan(
+            canonical,
+            arguments.TryGetString("blueprint", out var blueprint) ? blueprint : null,
+            arguments.TryGetInt32("grade", out var grade) ? grade : null,
+            arguments.TryGetString("engineer", out var engineer) ? engineer : null,
+            arguments.TryGetString("experimental", out var experimental) ? experimental : null);
+
+        if (plan.IsEmpty)
+        {
+            return "That says nothing about the slot. What should go in it?";
+        }
+
+        return ships.Plan(build.Id, plan)
+            ? $"{build.Describe()}: {canonical} is planned for {plan.Describe()}. It is not on your "
+              + "checklist until you say so."
+            : "I could not write that down.";
     }
 
     private static string OnFoot(ChecklistService checklists, ToolArguments arguments)

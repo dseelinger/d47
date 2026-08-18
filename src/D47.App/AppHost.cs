@@ -14,6 +14,7 @@ using D47.Core.Capabilities;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
+using D47.Core.Ships;
 using D47.Core.Utilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -275,6 +276,12 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's timers and alarms (list.md Phase 24).</summary>
     public Timekeeper Timekeeper { get; private set; } = null!;
 
+    /// <summary>The Commander's ship builds, joined to the fleet (list.md Phase 26).</summary>
+    public ShipPlanService Ships { get; private set; } = null!;
+
+    /// <summary>Where the builds are kept, for the panel to follow and for a hand edit to reach.</summary>
+    public ShipBuildStore ShipBuilds { get; private set; } = null!;
+
     /// <summary>Where the alarms are kept, for the panel to follow and for a hand edit to reach.</summary>
     public AlarmStore Alarms { get; private set; } = null!;
 
@@ -525,9 +532,17 @@ public sealed class AppHost : IDisposable
         // this tick's events rather than the last tick's.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
 
+        // This tick's journal events, for the subscribers registered after the host exists and
+        // therefore too late to be inside the closure below. Read rather than re-polled: polling
+        // twice would give the second reader an empty list, because the first one consumed them.
+        // Registration order is what makes this safe - "journal" runs first, by design.
+        IReadOnlyList<JournalEvent> arrived = [];
+
         tick.Add("journal", context =>
         {
             var events = journal.Poll();
+
+            arrived = events;
             status.Poll();
             route.Poll();
 
@@ -558,6 +573,7 @@ public sealed class AppHost : IDisposable
             // is; the remark stamps are written only when one was actually made, which is at most
             // a handful of times a day.
             lore.Store.Poll();
+
 
             if (loreVisits.Dirty)
             {
@@ -602,6 +618,18 @@ public sealed class AppHost : IDisposable
         alarms.Poll();
 
         var timekeeper = new Timekeeper(alarms);
+
+        // The Commander's ship builds (list.md Phase 26). Its own store, because the plan owns
+        // what and the checklist owns when - nothing crosses between them unasked.
+        var shipBuilds = new ShipBuildStore(
+            Path.Combine(paths.Data, "ships.json"),
+            loggerFactory.CreateLogger<ShipBuildStore>());
+
+        shipBuilds.Poll();
+
+        // The fleet joined to the builds. It reads the checklist service to propose promotions
+        // and never writes to it directly: the plan owns what, the checklist owns when.
+        var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
 
         // Late-bound, because several things built here have to read something that does not
         // exist until the host does — the voice list, the headset report, and now the cue
@@ -894,7 +922,8 @@ public sealed class AppHost : IDisposable
 
                 // How to present an instant locally. Asked each time rather than captured, so a
                 // Commander whose machine changes zone mid-session sees it without restarting.
-                () => TimeZoneInfo.Local));
+                () => TimeZoneInfo.Local,
+                shipPlans));
 
         built = capabilities;
 
@@ -1051,6 +1080,8 @@ public sealed class AppHost : IDisposable
         host.Macros = macros;
         host.Checklists = checklists;
         host.Timekeeper = timekeeper;
+        host.Ships = shipPlans;
+        host.ShipBuilds = shipBuilds;
         host.Alarms = alarms;
 
         host.SwitchEditing = new Settings.SwitchEditing(
@@ -1173,6 +1204,23 @@ public sealed class AppHost : IDisposable
         {
             alarms.Poll();
             host.SoundReminders(timekeeper.Poll(context.Now));
+        });
+
+        // Ship builds are hand-editable, and buying a hull the Commander had planned for offers
+        // to adopt the plan onto it rather than making them re-point it (list.md Phase 26). Its
+        // own subscriber rather than a line in the journal one, because it needs the host that
+        // does not exist when that closure is written.
+        // The context is unused: what this reads is the events the journal subscriber above put
+        // in `arrived` a moment ago, and the store polls itself.
+        tick.Add("ships", _unused =>
+        {
+            shipBuilds.Poll();
+
+            foreach (var adopted in shipPlans.Observe(arrived))
+            {
+                host.Panel.Append($"{adopted}{Environment.NewLine}");
+                _ = host.Voice.AnnounceAsync(adopted);
+            }
         });
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
