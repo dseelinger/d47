@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.App.Windowing;
@@ -53,7 +54,7 @@ public class NavFollowsTheScrollTests
         window.Show();
         Jobs();
 
-        panel.Page = TranscriptPage.Settings;
+        panel.Tab = PanelTab.Settings;
         Jobs();
 
         return (window, view);

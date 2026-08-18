@@ -143,6 +143,45 @@ public enum ChecklistState
 }
 
 /// <summary>
+/// What each state means the Commander should do next (list.md Phase 25, "The checklist leaves
+/// its window").
+/// <para>
+/// <b>A state is a next action rather than a badge</b>, which is what <see cref="ChecklistState"/>
+/// asks for in its own summary: the states past Open exist because "not done" is several
+/// different next actions, and a page that printed the enum name back would be spending a line
+/// per item to say nothing the Commander can act on.
+/// </para>
+/// <para>
+/// Here rather than beside the page, so the drawn line and the spoken one are the same sentence.
+/// A state a Commander reads one way and hears another is two behaviours to keep in step.
+/// </para>
+/// </summary>
+public static class ChecklistNextAction
+{
+    /// <summary>What to do about an item in this state, or null when there is nothing to say.</summary>
+    public static string? For(ChecklistState state) => state switch
+    {
+        ChecklistState.Elsewhere => "You own this. Transfer it rather than grinding for another.",
+        ChecklistState.Blocked => "Nothing to do here until your rank with the engineer reaches the grade.",
+        ChecklistState.Unverified =>
+            "Your journal has something in this slot and I cannot confirm it is this one, so I will not claim it.",
+        ChecklistState.Stale => "This is about a hull that is not there any more.",
+        _ => null,
+    };
+
+    /// <summary>
+    /// Whether this state is something being <em>wrong</em> rather than something being underway.
+    /// <para>
+    /// What decides where colour is spent, and it is spent nowhere else. A page where six things
+    /// are coloured is a page where none of them is noticed, and Open is the ordinary condition
+    /// of every item on a list that runs for weeks.
+    /// </para>
+    /// </summary>
+    public static bool IsWrong(ChecklistState state) =>
+        state is ChecklistState.Stale or ChecklistState.Unverified;
+}
+
+/// <summary>
 /// Why an item is no longer live. <b>Completing is not removing and abandoning is not deleting</b>
 /// (list.md Phase 17).
 /// </summary>

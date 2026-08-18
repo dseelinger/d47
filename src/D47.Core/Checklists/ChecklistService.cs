@@ -628,6 +628,33 @@ public sealed class ChecklistService(
     public ChecklistChange Delete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Delete(id));
 
+    /// <summary>
+    /// Moves an item in the Commander's own order (list.md Phase 25). Reachable from the panel and
+    /// from a phrase, and — like every other write here — <b>not from the tool surface</b>: the
+    /// order is the Commander's answer to what they are working on next, which is not a thing an
+    /// in-game message gets to rearrange.
+    /// </summary>
+    public ChecklistChange Move(ChecklistItemId id, int by) =>
+        list.Apply(Fid, Name, document => document.Move(id, by));
+
+    /// <summary>
+    /// The same, for a phrase naming an item rather than an id — "move buy limpets up".
+    /// <para>
+    /// Through <see cref="ChecklistDocument.Match"/>, which answers null for nought and for
+    /// several rather than guessing: acting on the wrong item of two is worse than asking which.
+    /// </para>
+    /// </summary>
+    public ChecklistChange Move(string phrase, int by)
+    {
+        var document = Document;
+
+        return document.Match(phrase) is { } item
+            ? Move(item.Id, by)
+            : ChecklistChange.Refused(
+                document,
+                $"I could not tell which item \"{phrase}\" means.");
+    }
+
     public ChecklistChange Revise(
         ChecklistScope scope,
         ChecklistSource source,

@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Configuration;
@@ -107,7 +108,7 @@ public class SettingsIsATabTests
         window.Show();
 
         view.Page = TranscriptPage.Technical;
-        view.Page = TranscriptPage.Settings;
+        view.Tab = PanelTab.Settings;
 
         Assert.Equal(TranscriptPage.Technical, view.Page);
         Assert.True(Named(view, "TranscriptPane").IsVisible);
@@ -128,11 +129,11 @@ public class SettingsIsATabTests
 
         Assert.True(Named(view, "AskRow").IsVisible);
 
-        view.Page = TranscriptPage.Settings;
+        view.Tab = PanelTab.Settings;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.False(Named(view, "TranscriptPane").IsVisible);
-        Assert.True(Named(view, "SettingsPane").IsVisible);
+        Assert.True(Named(view, "PagePane").IsVisible);
         Assert.False(Named(view, "AskRow").IsVisible);
 
         // Effectively rather than directly: the provenance line shares a row with the microphone
@@ -166,9 +167,9 @@ public class SettingsIsATabTests
 
         Assert.Equal(0, built);
 
-        view.Page = TranscriptPage.Settings;
-        view.Page = TranscriptPage.Conversation;
-        view.Page = TranscriptPage.Settings;
+        view.Tab = PanelTab.Settings;
+        view.Tab = PanelTab.Transcript;
+        view.Tab = PanelTab.Settings;
 
         Assert.Equal(1, built);
 
@@ -187,14 +188,15 @@ public class SettingsIsATabTests
         window.Show();
 
         view.Page = TranscriptPage.Log;
-        view.Page = TranscriptPage.Settings;
+        view.Tab = PanelTab.Settings;
 
-        Assert.True(view.LeaveSettings());
+        Assert.True(view.GoBack());
+        Assert.Equal(PanelTab.Transcript, view.Tab);
         Assert.Equal(TranscriptPage.Log, view.Page);
 
         // And there is nothing to leave when it is not showing, so the key stays available to
         // whatever else wants it.
-        Assert.False(view.LeaveSettings());
+        Assert.False(view.GoBack());
 
         window.Close();
     }
@@ -214,13 +216,13 @@ public class SettingsIsATabTests
         window.Panel.EnableSettings(() => new TextBlock { Text = "settings" });
         window.Show();
 
-        window.Panel.Page = TranscriptPage.Settings;
+        window.Panel.Tab = PanelTab.Settings;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(TranscriptPage.Conversation, window.Panel.Page);
+        Assert.Equal(PanelTab.Transcript, window.Panel.Tab);
 
         window.Close();
     }
@@ -337,7 +339,7 @@ public class SettingsIsATabTests
         });
 
         window.Show();
-        window.Panel.Page = TranscriptPage.Settings;
+        window.Panel.Tab = PanelTab.Settings;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         // The push-to-talk row itself, which is the row this is about: F9 is the key it already

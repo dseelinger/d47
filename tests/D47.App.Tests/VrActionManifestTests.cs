@@ -67,9 +67,13 @@ public class VrActionManifestTests : IDisposable
     {
         var manifest = Read(VrActionManifest.Write(_folder));
 
+        var declared = manifest.GetProperty("actions").EnumerateArray()
+            .Select(action => action.GetProperty("name").GetString() ?? string.Empty)
+            .ToList();
+
         Assert.Equal(
-            VrActionManifest.GrabAction,
-            manifest.GetProperty("actions").EnumerateArray().Single().GetProperty("name").GetString());
+            new List<string> { VrActionManifest.GrabAction, VrActionManifest.BackAction },
+            declared);
 
         foreach (var file in Directory.GetFiles(_folder, "binding_*.json"))
         {
@@ -80,19 +84,34 @@ public class VrActionManifestTests : IDisposable
                 .EnumerateArray()
                 .ToArray();
 
-            // Both hands, bound to the one action: the panel does not care which hand takes it,
+            // Both hands, and both actions on each: the panel does not care which hand takes it,
             // and which one it was is recovered from the ray rather than from the button.
-            Assert.Equal(2, sources.Length);
+            Assert.Equal(4, sources.Length);
 
-            Assert.All(sources, source => Assert.Equal(
-                VrActionManifest.GrabAction,
-                source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()));
+            // Every source outputs one of the two actions the manifest declares, and nothing
+            // else. A binding naming an action that does not exist is a binding SteamVR drops
+            // with no error anybody sees.
+            Assert.All(sources, source => Assert.Contains(
+                source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
+                ?? string.Empty,
+                declared));
 
-            Assert.Contains(sources, source =>
-                source.GetProperty("path").GetString() == "/user/hand/left/input/trigger");
+            foreach (var hand in new[] { "left", "right" })
+            {
+                Assert.Contains(sources, source =>
+                    source.GetProperty("path").GetString() == $"/user/hand/{hand}/input/trigger"
+                    && source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
+                       == VrActionManifest.GrabAction);
 
-            Assert.Contains(sources, source =>
-                source.GetProperty("path").GetString() == "/user/hand/right/input/trigger");
+                // The grip rather than a face button, and on every profile: Touch and Index name
+                // their face buttons differently on each hand and the Vive wand has none, so a
+                // face button would be a binding that silently does not exist on somebody's
+                // controller — and one missing binding disables input for that profile entirely.
+                Assert.Contains(sources, source =>
+                    source.GetProperty("path").GetString() == $"/user/hand/{hand}/input/grip"
+                    && source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
+                       == VrActionManifest.BackAction);
+            }
         }
     }
 

@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Settings;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.App.Theming;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -344,10 +345,10 @@ public class SearchTheTabTests
 
         Assert.True(Nav(host) < navBefore, "the filter did not take");
 
-        host.Panel.Page = TranscriptPage.Conversation;
+        host.Panel.Tab = PanelTab.Transcript;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Panel.Page = TranscriptPage.Settings;
+        host.Panel.Tab = PanelTab.Settings;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(string.Empty, box.Text ?? string.Empty);

@@ -340,6 +340,30 @@ public static class VrCapability
             v => v.Zoom.ToString(CultureInfo.InvariantCulture),
             (v, x) => v with { Zoom = Interface.ZoomLadder.Snap((int)Parse(x, v.Zoom)) },
             [.. Interface.ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))]);
+
+        // The big panel only. Mini's pixel budget is not on this ladder and is not meant to be:
+        // it is a floor under a reduced content set rather than an aspect, which VrPanelSurface
+        // records at length (list.md Phase 25).
+        if (slot != PanelSlot)
+        {
+            yield break;
+        }
+
+        yield return Row(
+            "resolution",
+            "Resolution",
+            "How many pixels the panel is rendered at, and the third of three levers that are worth keeping "
+            + "apart: pixels decide how much the image can hold, Size decides how big it looks in the room, "
+            + "and Scale decides how much layout those pixels carry. More pixels cost more to render every "
+            + "frame, and past what the quad covers in your headset they buy nothing - so this is a trade "
+            + "you make by looking, not a number to maximise.",
+            SettingKind.Choice,
+            v => Interface.PanelResolution.Describe(v.Resolution),
+            (v, x) => v with
+            {
+                Pixels = Interface.PanelResolution.Describe(Interface.PanelResolution.Parse(x)),
+            },
+            [.. Interface.PanelResolution.Choices]);
     }
 
     private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);

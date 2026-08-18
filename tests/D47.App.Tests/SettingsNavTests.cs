@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.App.Settings;
 using D47.App.Theming;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -48,7 +49,7 @@ public class SettingsNavTests
         Jobs();
 
         // The click on the tab, after the window is already up on the transcript.
-        panel.Page = TranscriptPage.Settings;
+        panel.Tab = PanelTab.Settings;
         Jobs();
 
         return (window, panel, view);

@@ -203,6 +203,83 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>
+    /// Moves an item up or down the Commander's own order (list.md Phase 25, "The checklist
+    /// leaves its window").
+    /// <para>
+    /// <b>The order is one order, across every scope.</b> What gets reordered on a whim is
+    /// everything being worked on, not one ship's share of it — so scope is a label and a filter
+    /// and never a partition, and moving up means past the item above it whatever list that item
+    /// would have been in.
+    /// </para>
+    /// <para>
+    /// <b>Over the live items only.</b> Tombstones sit in <see cref="Items"/> so a history
+    /// survives, and stepping over them would make one press move an item by nothing visible —
+    /// which reads as the control being broken. Completed items count as live and are stepped
+    /// over normally: they are still on the list, below the line.
+    /// </para>
+    /// <para>
+    /// A step rather than a drag. <b>A drag is the worst gesture available to a ray at a metre</b>
+    /// — it needs a press, an aim held through motion, and a release, any one of which a hand at
+    /// arm's length gets wrong — and the spoken form of a drag does not exist at all, where the
+    /// spoken form of "move that up" is the phrase itself.
+    /// </para>
+    /// </summary>
+    /// <param name="by">How far, and which way. Negative is towards the top.</param>
+    public ChecklistChange Move(ChecklistItemId id, int by)
+    {
+        if (Find(id) is not { } item)
+        {
+            return ChecklistChange.Refused(this, "There is no such item on your checklist.");
+        }
+
+        if (!item.IsLive)
+        {
+            return ChecklistChange.Refused(
+                this,
+                $"\"{item.Text}\" was dropped by a later version of a plan, so it is a record rather "
+                + "than something to work on.");
+        }
+
+        if (by == 0)
+        {
+            return ChecklistChange.Refused(this, $"\"{item.Text}\" is already where it is.");
+        }
+
+        var live = Items.Where(other => other.IsLive).ToList();
+        var from = live.FindIndex(other => other.Id.Same(id));
+        var to = Math.Clamp(from + by, 0, live.Count - 1);
+
+        if (to == from)
+        {
+            return ChecklistChange.Refused(
+                this,
+                by < 0
+                    ? $"\"{item.Text}\" is already at the top."
+                    : $"\"{item.Text}\" is already at the bottom.");
+        }
+
+        live.RemoveAt(from);
+        live.Insert(to, item);
+
+        // Rebuilt by walking the original list and drawing a live item from the reordered
+        // sequence each time one is reached. That keeps every tombstone exactly where it was,
+        // which is what makes this a reordering of the Commander's work rather than of their
+        // history.
+        var reordered = new List<ChecklistItem>(Items.Count);
+        var next = 0;
+
+        foreach (var existing in Items)
+        {
+            reordered.Add(existing.IsLive ? live[next++] : existing);
+        }
+
+        return new ChecklistChange(
+            this with { Items = reordered },
+            Changed: true,
+            by < 0 ? $"Moved \"{item.Text}\" up." : $"Moved \"{item.Text}\" down.");
+    }
+
+    /// <summary>
     /// Replaces one plan's items in one scope with a new set — <b>as a diff, never as a rebuild</b>
     /// (list.md Phase 17).
     /// <list type="bullet">

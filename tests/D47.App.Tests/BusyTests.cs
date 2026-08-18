@@ -106,11 +106,17 @@ public class BusyTests
     }
 
     /// <summary>
-    /// The Log file tab reads a file off disk, so it is one of the things that says it is
-    /// working — on the tab, which is the affordance that was touched.
+    /// The Log file mode reads a file off disk, so it is one of the things that says it is
+    /// working — on the affordance that was touched.
+    /// <para>
+    /// On the <em>mode</em> rather than on the tab since Phase 25, and that is the asymmetry the
+    /// collapse deliberately keeps: Conversation and Technical are one exchange at two
+    /// verbosities and the log is a file, so only one of the three has anything to say about
+    /// being busy. It is also why the collapse is three modes rather than a single toggle.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheLogTabCarriesItsOwnGlyphOnBothSurfaces()
+    public void TheLogModeCarriesItsOwnGlyphOnBothSurfaces()
     {
         var model = new PanelViewModel();
 
@@ -120,7 +126,16 @@ public class BusyTests
             // rather than something the window hangs on it afterwards.
             var view = new PanelView { DataContext = model, Mode = mode };
 
-            var glyph = view.FindControl<BusyGlyph>("LogBusy");
+            // Through the logical tree rather than the visual one, because this view has never
+            // been shown: a RadioButton's content is not realised into visuals until it is
+            // templated, and the claim is about a panel that the headset rasterises offscreen.
+            var glyph = view.GetControl<StackPanel>("Modes").Children
+                .OfType<RadioButton>()
+                .Select(button => button.Content)
+                .OfType<StackPanel>()
+                .SelectMany(content => content.Children)
+                .OfType<BusyGlyph>()
+                .SingleOrDefault();
 
             Assert.NotNull(glyph);
             Assert.False(glyph.IsVisible);

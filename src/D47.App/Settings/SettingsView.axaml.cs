@@ -3,6 +3,7 @@ using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -1428,6 +1429,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         var (inset, refresh, _) = BuildInfo(row);
 
+        // A tab of this panel since Phase 25, rather than a dialog over it: a Window cannot appear
+        // in the headset at all, so the checklist was unreachable there for a Commander wearing
+        // one.
         var open = new Button
         {
             Name = "OpenChecklist",
@@ -1437,16 +1441,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        open.Click += async (_, _) =>
+        open.Click += (_, _) =>
         {
-            if (_checklists is null || TopLevel.GetTopLevel(this) is not Window owner)
+            // Its own panel, found up the tree rather than handed in. This surface is built by
+            // one method and instantiated twice - the window and the headset each get their own -
+            // so a panel captured at build time would be the window's, and pressing this in the
+            // headset would switch a tab on a screen nobody is looking at.
+            if (this.GetSelfAndVisualAncestors().OfType<Panel.PanelView>().FirstOrDefault() is { } panel)
             {
-                return;
+                panel.Tab = D47.Core.Interface.PanelTab.Checklist;
             }
 
-            await new Controls.ChecklistWindow(_checklists).ShowDialog(owner);
-
-            // The panel writes the file; this is what puts the new summary on the row without
+            // The tab writes the file; this is what puts the new summary on the row without
             // waiting for something else to notice.
             refresh();
         };

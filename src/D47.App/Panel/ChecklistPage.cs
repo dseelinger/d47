@@ -1,0 +1,601 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Automation;
+using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Threading;
+using D47.App.Theming;
+using D47.Core.Checklists;
+using D47.Core.Interface;
+
+namespace D47.App.Panel;
+
+/// <summary>
+/// The checklist, as a tab of the panel (list.md Phase 25, "The checklist leaves its window").
+/// <para>
+/// <b>The headline is not tidiness.</b> A <c>Window</c> cannot appear in the headset at all, so
+/// until this moved a Commander in VR could not see their checklist — the one surface that
+/// answers "what am I working on", unreachable from the place they spend the session. It also
+/// wants the big area for the reason the popup never had it: the list runs to hundreds of lines.
+/// </para>
+/// <para>
+/// <b>One list in the Commander's order</b>, with scope shown on each line rather than the page
+/// being carved into separate lists. What gets reordered on a whim is everything being worked
+/// on, not one ship's share of it — so <see cref="ChecklistScope"/> is a label and a filter and
+/// <b>never a partition</b>.
+/// </para>
+/// <para>
+/// <b>Colour is spent only where something is wrong.</b> A page where six things are coloured is
+/// a page where none of them is noticed.
+/// </para>
+/// </summary>
+public sealed class ChecklistPage : UserControl, IFilterablePage
+{
+    /// <summary>The filter entry that means no filter. The store's own word for it.</summary>
+    public const string Everything = "everything";
+
+    /// <summary>The crumb the suggestions page is pushed as.</summary>
+    public const string SuggestionsKey = "checklist.suggestions";
+
+    private readonly ChecklistService _checklists;
+    private readonly PanelNavigator _nav;
+    private readonly PanelPrompts _prompts;
+
+    private readonly StackPanel _list = new() { Spacing = 4 };
+    private readonly TextBlock _problems = new()
+    {
+        TextWrapping = TextWrapping.Wrap,
+        FontSize = TypeScale.Secondary,
+        IsVisible = false,
+    };
+
+    private readonly Button _scopeButton = new()
+    {
+        Padding = new Thickness(12, 4),
+        MinHeight = 30,
+    };
+
+    private readonly Button _suggestions = new()
+    {
+        Padding = new Thickness(12, 4),
+        MinHeight = 30,
+        IsVisible = false,
+    };
+
+    private string _chosen = Everything;
+
+    /// <summary>What the surface's own search box is narrowing the page to. Empty for nothing.</summary>
+    private string _query = string.Empty;
+
+    /// <summary>
+    /// Which line is selected, by id. <b>The movers belong to the selection</b> and to nothing
+    /// else: a pair of arrows on every one of several hundred rows is several hundred controls a
+    /// ray can hit by accident, and a row with permanent arrows reads as a row whose position is
+    /// the interesting thing about it.
+    /// </summary>
+    private string? _selected;
+
+    public ChecklistPage(ChecklistService checklists, PanelNavigator nav, PanelPrompts prompts)
+    {
+        _checklists = checklists;
+        _nav = nav;
+        _prompts = prompts;
+
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+
+        // A chooser rather than a combo box, and declared as a layer rather than as a page: the
+        // scopes on a working list are a handful, and taking the whole panel to answer a question
+        // the Commander did not think of as one is a level of navigation for nothing (list.md
+        // Phase 25, "Page or layer is declared per call site").
+        _scopeButton.Click += (_, _) => ChooseScope();
+
+        _suggestions.Click += (_, _) =>
+            _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
+
+        var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = 30 };
+        add.Click += (_, _) => AddLine();
+
+        var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+
+        var right = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Children = { _suggestions, add },
+        };
+
+        DockPanel.SetDock(right, Dock.Right);
+        bar.Children.Add(right);
+        bar.Children.Add(_scopeButton);
+
+        var root = new DockPanel { Margin = new Thickness(14) };
+
+        DockPanel.SetDock(bar, Dock.Top);
+        DockPanel.SetDock(_problems, Dock.Top);
+
+        _problems.Margin = new Thickness(0, 0, 0, 10);
+
+        root.Children.Add(bar);
+        root.Children.Add(_problems);
+        root.Children.Add(new ScrollViewer
+        {
+            Content = _list,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        });
+
+        Content = root;
+
+        checklists.List.Changed += OnChanged;
+        checklists.Proposals.Changed += OnChanged;
+
+        Rebuild();
+    }
+
+    /// <summary>
+    /// The surface's one search box, narrowing this page (list.md Phase 12). A filter rather than
+    /// a highlight, because a checklist is a list of things rather than a body of text — which is
+    /// exactly the per-page difference the one search affordance exists to allow.
+    /// </summary>
+    public void Filter(string? query)
+    {
+        _query = (query ?? string.Empty).Trim();
+        Rebuild();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        _checklists.List.Changed -= OnChanged;
+        _checklists.Proposals.Changed -= OnChanged;
+    }
+
+    /// <summary>
+    /// The suggestions page, built for the crumb the button above pushes (list.md Phase 25).
+    /// <para>
+    /// <b>Suggestions are a page rather than an interruption.</b> Everything
+    /// <see cref="ChecklistProposals"/> is holding waits in one place, and accepting stays the
+    /// Commander's own act — reachable from here and from a spoken yes, and from nothing else,
+    /// because accepting is <c>Protected</c>.
+    /// </para>
+    /// </summary>
+    public Control BuildSuggestions()
+    {
+        var page = new StackPanel { Spacing = 8, Margin = new Thickness(14) };
+
+        void Fill()
+        {
+            page.Children.Clear();
+
+            var pending = _checklists.Proposals.PendingFor(_checklists.Document.CommanderFid);
+
+            if (pending.Count == 0)
+            {
+                page.Children.Add(Muted(
+                    "Nothing waiting. D47 puts proposals here rather than on your list, and they stay "
+                    + "here until you accept them."));
+
+                return;
+            }
+
+            foreach (var proposal in pending)
+            {
+                page.Children.Add(Proposal(proposal, Fill));
+            }
+        }
+
+        Fill();
+
+        return new ScrollViewer
+        {
+            Content = page,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        };
+    }
+
+    /// <summary>
+    /// The store raises this from whichever thread wrote — the tick loop, most often — and every
+    /// control here belongs to the UI thread, so the hop is not optional.
+    /// </summary>
+    private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void Rebuild()
+    {
+        _list.Children.Clear();
+
+        var document = _checklists.Document;
+        var waiting = _checklists.Proposals.PendingFor(document.CommanderFid).Count;
+
+        _suggestions.IsVisible = waiting > 0;
+        _suggestions.Content = $"Suggestions ({waiting})";
+
+        _scopeButton.Content = _chosen == Everything ? "Showing everything" : $"Showing {_chosen}";
+
+        var live = document.Items.Where(item => item.IsLive && Matches(item)).ToList();
+
+        var open = live.Where(item => !item.IsComplete).ToList();
+        var done = live.Where(item => item.IsComplete).ToList();
+
+        if (live.Count == 0)
+        {
+            _list.Children.Add(Muted(_query.Length > 0 || _chosen != Everything
+                ? "Nothing on your list matches that."
+                : "Nothing here yet. Say \"add buy limpets to my checklist\", or ask for a build plan, "
+                  + "and D47 will propose it."));
+        }
+
+        // One list, in the Commander's order, and no headings between scopes. Scope rides each
+        // line instead: carving the page into per-ship lists would make the order several orders,
+        // and the thing being ordered is everything being worked on.
+        foreach (var item in open)
+        {
+            _list.Children.Add(Line(item));
+        }
+
+        if (done.Count > 0)
+        {
+            // Below the line and counted, never removed. Seeing how far you have come is most of
+            // the point of a list that runs for weeks.
+            _list.Children.Add(Heading($"Done ({done.Count})"));
+
+            foreach (var item in done)
+            {
+                _list.Children.Add(Line(item));
+            }
+        }
+
+        var tombstoned = document.Items.Count(item => !item.IsLive);
+
+        if (tombstoned > 0)
+        {
+            _list.Children.Add(Muted(
+                $"{tombstoned} item{(tombstoned == 1 ? string.Empty : "s")} dropped by a later version of a "
+                + "plan, kept so you can see what changed."));
+        }
+
+        ShowProblems();
+    }
+
+    private bool Matches(ChecklistItem item)
+    {
+        if (_query.Length > 0
+            && !item.Text.Contains(_query, StringComparison.OrdinalIgnoreCase)
+            && !item.Scope.ToString().Contains(_query, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (_chosen == Everything)
+        {
+            return true;
+        }
+
+        return _chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
+               || _chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
+               || _chosen.Equals(item.Scope.Group.ToString(), StringComparison.OrdinalIgnoreCase)
+               || _chosen.Equals(item.IsComplete ? "complete" : "open", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// One line: what it is, which scope it belongs to, and — when it is the selected one — the
+    /// pair of movers.
+    /// </summary>
+    private Control Line(ChecklistItem item)
+    {
+        var id = item.Id.ToString();
+        var selected = id == _selected;
+
+        var body = new StackPanel { Spacing = 2 };
+
+        if (item.TicksByHand)
+        {
+            var tick = new CheckBox { Content = item.Text, IsChecked = item.IsComplete };
+
+            tick.Click += (_, _) =>
+            {
+                var change = tick.IsChecked == true
+                    ? _checklists.Complete(item.Id)
+                    : _checklists.Uncomplete(item.Id);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                }
+            };
+
+            body.Children.Add(tick);
+        }
+        else
+        {
+            // No checkbox at all, rather than a disabled one. A greyed-out tick still asserts
+            // that ticking is the mechanism here, and it is not: the next journal read would
+            // either undo it or leave it standing and lying.
+            body.Children.Add(new TextBlock
+            {
+                Text = (item.IsComplete ? "✓  " : "•  ") + item.Text,
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+
+        // Scope on the line rather than as a heading over a group of them.
+        var aside = new List<string> { item.Scope.ToString() };
+
+        if (ChecklistNextAction.For(item.State) is { } next)
+        {
+            aside.Add(next);
+        }
+        else if (!item.TicksByHand && _checklists.Verdict(item)?.Reason is { } reason)
+        {
+            aside.Add(reason);
+        }
+
+        var caption = Muted(string.Join(" · ", aside));
+
+        // Colour only where something is wrong. Everything else — open, done, worked out from
+        // the journal — is the ordinary condition of a list that runs for weeks.
+        if (ChecklistNextAction.IsWrong(item.State))
+        {
+            Themed(caption, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        }
+
+        body.Children.Add(caption);
+
+        var row = new DockPanel();
+
+        if (selected)
+        {
+            row.Children.Add(Movers(item));
+        }
+
+        row.Children.Add(body);
+
+        var card = new Border
+        {
+            Padding = new Thickness(12, 8),
+            CornerRadius = new CornerRadius(4),
+            BorderThickness = new Thickness(1),
+            Child = row,
+
+            // Tall enough for a ray at a metre. A line a Commander has to aim at is a line they
+            // press twice, and the second press is on the one below it.
+            MinHeight = 34,
+        };
+
+        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(
+            card,
+            Border.BorderBrushProperty,
+            selected ? ThemeManager.AccentKey : ThemeManager.SurfaceAltKey);
+
+        // Selecting is what grows the movers, so the whole card takes the press rather than a
+        // handle somewhere on it.
+        card.PointerPressed += (_, _) =>
+        {
+            _selected = selected ? null : id;
+            Rebuild();
+        };
+
+        return card;
+    }
+
+    /// <summary>
+    /// Up and down, on the selected line.
+    /// <para>
+    /// <b>Reordering is not a drag</b> — a drag is the worst gesture available to a ray at a
+    /// metre, needing a press, an aim held through motion and a release, any one of which a hand
+    /// at arm's length gets wrong. And the phrase does it without aiming at all, which a drag has
+    /// no spoken form of.
+    /// </para>
+    /// </summary>
+    private Control Movers(ChecklistItem item)
+    {
+        var up = new Button
+        {
+            Content = "▲",
+            Padding = new Thickness(10, 2),
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var down = new Button
+        {
+            Content = "▼",
+            Padding = new Thickness(10, 2),
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        up.Click += (_, _) => Moved(item, -1);
+        down.Click += (_, _) => Moved(item, 1);
+
+        AutomationProperties.SetName(up, "Move up");
+        AutomationProperties.SetName(down, "Move down");
+
+        var movers = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+            Margin = new Thickness(10, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { up, down },
+        };
+
+        DockPanel.SetDock(movers, Dock.Right);
+        return movers;
+    }
+
+    private void Moved(ChecklistItem item, int by)
+    {
+        var change = _checklists.Move(item.Id, by);
+
+        if (!change.Changed)
+        {
+            Say(change.Report);
+            return;
+        }
+
+        Rebuild();
+    }
+
+    /// <summary>
+    /// The scope filter, as a chooser drawn into the panel's layer rather than as a dropdown.
+    /// A dropdown is a popup, and a popup cannot exist in the VR path at all.
+    /// </summary>
+    private void ChooseScope()
+    {
+        var options = new List<ChoiceOption>
+        {
+            new(Everything, "Everything"),
+        };
+
+        options.AddRange(_checklists.Filters().Select(filter => new ChoiceOption(filter, filter)));
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.scope",
+                "Show",
+                "Show",
+                "Scope is a label and a filter, never a partition — your order is one order across "
+                + "all of them.",
+                options,
+                _chosen,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                _chosen = option.Key;
+                Rebuild();
+            });
+    }
+
+    /// <summary>
+    /// The Commander's own line, said or typed. Voice first, because a checklist line is a
+    /// sentence and a sentence is far easier said than hunted for one key at a time.
+    /// </summary>
+    private void AddLine()
+    {
+        _prompts.Enter(
+            new EntryRequest(
+                "checklist.add",
+                "Add",
+                "Add a line",
+                "Your own note. It gets a checkbox, because it is yours to tick.",
+                string.Empty,
+                EntrySurface.Voice,
+                value => string.IsNullOrWhiteSpace(value)
+                    ? EntryVerdict.No("There was nothing to add.")
+                    : EntryVerdict.Ok),
+            value =>
+            {
+                var change = _checklists.AddNote(_checklists.ScopeFor(null, null), value);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                    return;
+                }
+
+                Rebuild();
+            });
+    }
+
+    /// <summary>
+    /// One proposal, with what it would do to the list.
+    /// <para>
+    /// <b>A revision arrives as a diff</b>, so an ordering the Commander spent time on survives a
+    /// plan change: the summary says what is added and what is dropped rather than presenting a
+    /// new list to replace the old one.
+    /// </para>
+    /// </summary>
+    private Control Proposal(ChecklistProposal proposal, Action refresh)
+    {
+        var accept = new Button { Content = "Accept", Padding = new Thickness(14, 4), MinHeight = 30 };
+
+        accept.Click += (_, _) =>
+        {
+            Say(_checklists.Accept(proposal.Id));
+            refresh();
+        };
+
+        var decline = new Button { Content = "Decline", Padding = new Thickness(14, 4), MinHeight = 30 };
+
+        decline.Click += (_, _) =>
+        {
+            Say(_checklists.Decline(proposal.Id));
+            refresh();
+        };
+
+        var body = new StackPanel
+        {
+            Spacing = 8,
+            Children =
+            {
+                new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap },
+                Muted("D47 proposed this and cannot accept it itself."),
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 8,
+                    Children = { accept, decline },
+                },
+            },
+        };
+
+        var card = new Border
+        {
+            Padding = new Thickness(12),
+            CornerRadius = new CornerRadius(4),
+            BorderThickness = new Thickness(1),
+            Child = body,
+        };
+
+        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(card, Border.BorderBrushProperty, ThemeManager.AccentKey);
+
+        return card;
+    }
+
+    private void ShowProblems()
+    {
+        var problems = _checklists.List.Problems.Concat(_checklists.Proposals.Problems).ToList();
+
+        _problems.IsVisible = problems.Count > 0;
+        _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
+    }
+
+    /// <summary>
+    /// A refusal is shown where the problems are, not swallowed. Trying to tick a computed item
+    /// has to say why rather than quietly doing nothing.
+    /// </summary>
+    private void Say(string message)
+    {
+        Rebuild();
+        _problems.IsVisible = true;
+        _problems.Text = message;
+    }
+
+    private static TextBlock Heading(string text) => new()
+    {
+        Text = text,
+        FontWeight = FontWeight.SemiBold,
+        Margin = new Thickness(0, 12, 0, 2),
+    };
+
+    private static TextBlock Muted(string text)
+    {
+        var block = new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        return block;
+    }
+
+    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
+        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
+}

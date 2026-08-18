@@ -24,14 +24,6 @@ namespace D47.App.Headset;
 public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 {
     /// <summary>
-    /// The panel's pixels, per mode. Sized deliberately: cost is linear in pixels, and there is
-    /// no reason to render more of them than the quad subtends. Mini is a genuinely smaller
-    /// image rather than the same one drawn small, because apparent text size in a headset is
-    /// pixel count and metres together.
-    /// </summary>
-    private static readonly PixelSize Full = new(1024, 640);
-
-    /// <summary>
     /// Mini, and it is 512 wide rather than 640 because that is the lever on apparent text size.
     /// <para>
     /// Apparent size is the pixel count and the quad's width in metres together, so the same
@@ -49,8 +41,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// the panel is unchanged and only the width moves; the quad is proportionally taller in the
     /// room as a result, which is what "bigger" looks like.
     /// </para>
+    /// <para>
+    /// Mini alone is fixed. The big panel is a setting since Phase 25 — see
+    /// <see cref="PanelResolution"/> — and mini is not on that ladder for the reason above: the
+    /// numbers here are not an aspect, they are a floor under a reduced content set.
+    /// </para>
     /// </summary>
-    private static readonly PixelSize Mini = new(512, 280);
+    private static readonly PixelSize Mini =
+        new(PanelResolution.Mini.Width, PanelResolution.Mini.Height);
 
     private readonly PanelViewModel _model;
     private readonly string? _dumpTo;
@@ -64,6 +62,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     private bool _dirty = true;
     private int _appliedZoom = ZoomLadder.Default;
+    private (int Width, int Height) _appliedPixels = PanelResolution.Default;
     private VrPose _head = VrPose.Origin;
 
     /// <param name="settingsPage">
@@ -83,7 +82,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Func<string, (VrPose Placed, VrPose Against)?> anchor,
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null,
-        Func<Control>? settingsPage = null)
+        Func<Control>? settingsPage = null,
+        D47.Core.Checklists.ChecklistService? checklists = null)
     {
         _dumpTo = dumpTo;
 
@@ -103,13 +103,23 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableSettings(settingsPage);
         }
 
+        if (checklists is not null)
+        {
+            // Unlike settings, this one is the point of the headset copy having it: a Window
+            // cannot appear here at all, so before Phase 25 a Commander wearing a headset could
+            // not see their checklist.
+            _view.EnableChecklist(checklists);
+        }
+
         // The same scaling host the desktop window zooms with, for the same reason: a render
         // transform would draw the panel larger and let the surface clip it, where a layout
         // transform re-measures so text rewraps and spacing grows with it. "Scale the big
         // panel" and "Zoom the desktop window" are one mechanism seen from two rooms.
+        var pixels = settings.Current.Vr.Panel.Resolution;
+
         _offscreen = new OffscreenSurface(
             new LayoutTransformControl { LayoutTransform = _scale, Child = _view },
-            Full);
+            new PixelSize(pixels.Width, pixels.Height));
 
         // Anything the panel shows changing is a reason to redraw, and nothing else is. This
         // is D1's second Phase 9 instruction in one line: the measured 4-10 Hz cost is the
@@ -118,6 +128,22 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     }
 
     public bool Enabled { get; set; }
+
+    /// <summary>
+    /// This surface's own prompts (list.md Phase 25). Its own, and not the window's: a chooser is
+    /// a level of one navigator's stack, and the Commander can be picking a module in the headset
+    /// while the window goes on showing the transcript.
+    /// </summary>
+    public Panel.PanelPrompts Prompts => _view.Prompts;
+
+    /// <summary>
+    /// Back one level on this surface, and whether there was anything to go back from — so the
+    /// controller button stays available to whatever else wants it at a root (list.md Phase 25).
+    /// </summary>
+    public bool Back() => _view.GoBack();
+
+    /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
+    public D47.Core.Interface.PanelNavigator Nav => _view.Nav;
 
     /// <summary>Which mode the Commander has the panel in. Read from settings, never held here.</summary>
     public PanelMode Mode =>
@@ -157,14 +183,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         ? D47.Core.Capabilities.Builtin.VrCapability.MiniSlot
         : D47.Core.Capabilities.Builtin.VrCapability.PanelSlot;
 
-    public (int Width, int Height) Size
-    {
-        get
-        {
-            var wanted = Mode == PanelMode.Mini ? Mini : Full;
-            return (wanted.Width, wanted.Height);
-        }
-    }
+    /// <summary>
+    /// How many pixels to render, which is the Commander's since Phase 25 for the big panel and
+    /// fixed for mini. Read fresh on every serve rather than held, so a resize takes on the next
+    /// frame — <see cref="Draw"/> resizes the offscreen surface from this, and
+    /// <see cref="Configure"/> is what marks it dirty when the setting moves.
+    /// </summary>
+    public (int Width, int Height) Size =>
+        Mode == PanelMode.Mini ? (Mini.Width, Mini.Height) : Settings().Resolution;
 
     public bool IsDirty => _dirty;
 
@@ -229,6 +255,17 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public void Configure()
     {
+        // Two levers, both read here and both only marking dirty when they actually moved: this
+        // runs on every tick of a live session, and a surface held dirty for a setting nobody
+        // touched re-renders the whole widget tree at frame rate for pixels that did not change.
+        var pixels = Size;
+
+        if (pixels != _appliedPixels)
+        {
+            _appliedPixels = pixels;
+            _dirty = true;
+        }
+
         var zoom = ZoomLadder.Snap(Settings().Zoom);
 
         if (zoom == _appliedZoom)

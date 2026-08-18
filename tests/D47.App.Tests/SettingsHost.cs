@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.App.Settings;
 using D47.Core;
 using D47.Core.Configuration;
@@ -75,7 +76,7 @@ internal sealed class SettingsHost
         });
 
         panel.EnableSearch();
-        panel.Page = TranscriptPage.Settings;
+        panel.Tab = PanelTab.Settings;
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();

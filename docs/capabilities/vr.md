@@ -83,7 +83,7 @@ front of you works the way you would expect.
 
 ### Placing a surface
 
-Six settings each, and the mini panel has its own copies of all six.
+Six settings each, and the mini panel has its own copies of all six. The big panel has a seventh.
 
 | Setting | What it does |
 |---|---|
@@ -93,6 +93,23 @@ Six settings each, and the mini panel has its own copies of all six.
 | Curvature {#panel-curve} | 0 is flat, 1 is wrapped around you |
 | Opacity {#panel-opacity} | How solid it is |
 | Scale {#panel-scale} | How large the content is drawn, on the same steps the desktop window zooms with |
+| Resolution {#panel-resolution} | How many pixels the big panel is rendered at. Big panel only |
+
+#### Three levers, and they do different things
+
+Size, Scale and Resolution all sound like "how big", and keeping them apart is worth a minute.
+
+- **Resolution decides how much the image can hold.** More pixels, more room for rows.
+- **Size decides how big it looks in the room.** Metres across, at whatever distance you put it.
+- **Scale decides how much layout those pixels carry.** It re-measures and rewraps rather than
+  simply magnifying, so it is a *density* control: at 75% the default panel presents 1365x853
+  worth of layout and a whole ship's slots fit; at 200% it presents 512x320 and you can read it
+  from across the cockpit.
+
+Every resolution is the same shape, so changing it never changes the proportions of the thing in
+front of you — only how much detail is in it. **More pixels cost more to render, every frame**,
+and past the point where the panel covers what your headset can actually resolve they buy you
+nothing. Pick by looking at it, not by picking the biggest number.
 
 Head-locked is what you want for something you glance at; world-locked for something that lives
 in a particular corner of the cockpit.

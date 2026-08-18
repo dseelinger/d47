@@ -2083,6 +2083,21 @@ public sealed class AppHost : IDisposable
                     .TranscribeAsync(utterance, nouns)
                     .ConfigureAwait(false);
 
+                // A panel is asking for a value and this is the answer to it (list.md Phase 25,
+                // "Say it, or type it").
+                //
+                // Ahead of both the empty check and the wake word, and both are deliberate.
+                // Hearing nothing is one of the three failures the entry loop detects and has to
+                // reach it to put the keyboard back with a reason, rather than being swallowed
+                // here as an uneventful cough. And a Commander answering a question d47 just
+                // asked them should not have to say its name first.
+                if (Prompted(new Core.Interface.Heard(
+                        transcription.Text, transcription.Confidence, Final: true)))
+                {
+                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
+                    return;
+                }
+
                 if (transcription.IsEmpty)
                 {
                     // Distinguished from a failure: the model ran and heard nothing worth
@@ -2150,6 +2165,66 @@ public sealed class AppHost : IDisposable
             }
         });
     }
+
+    /// <summary>
+    /// The surfaces that may be waiting on a spoken value (list.md Phase 25, "Say it, or type
+    /// it").
+    /// <para>
+    /// A list rather than one delegate, because there are two panels and either can have a
+    /// prompt open: the desktop window and the headset overlay each have their own navigator, so
+    /// which of them is asking is a fact about a surface. Registered by whoever built the
+    /// surface, since the host owns the view model and not the views.
+    /// </para>
+    /// </summary>
+    private readonly List<Func<Core.Interface.Heard, bool>> _prompts = [];
+
+    /// <summary>Adds a surface to the list of places a spoken value may be destined for.</summary>
+    public void RoutePrompts(Func<Core.Interface.Heard, bool> surface) => _prompts.Add(surface);
+
+    /// <summary>
+    /// The navigators a spoken "show me the checklist" moves (list.md Phase 25).
+    /// <para>
+    /// <b>Every surface, not one.</b> A phrase has no surface attached to it — the Commander said
+    /// it once, into the room — and moving only the window would leave a Commander in a headset
+    /// saying it twice with nothing happening either time. So both go, and the two surfaces agree
+    /// about where they are for as long as neither is driven separately, which is the only reading
+    /// of the phrase that is never surprising.
+    /// </para>
+    /// </summary>
+    private readonly List<Core.Interface.PanelNavigator> _navigators = [];
+
+    /// <summary>Adds a surface's navigator to the ones a spoken phrase moves.</summary>
+    public void RouteNavigation(Core.Interface.PanelNavigator nav) => _navigators.Add(nav);
+
+    /// <summary>
+    /// Moves every surface the phrase named somewhere, and says what happened — or null when it
+    /// named nowhere, which is the common case and falls through to the turn.
+    /// </summary>
+    public string? Navigate(string spoken)
+    {
+        string? said = null;
+
+        foreach (var nav in _navigators)
+        {
+            // Every one of them, and the first answer is the one said out loud. Two surfaces that
+            // are in different places answer differently — the window at a root and the headset
+            // three levels down — and what the Commander hears should describe the move rather
+            // than one surface's share of it.
+            var moved = Core.Interface.PanelPhrases.Apply(spoken, nav);
+
+            said ??= moved;
+        }
+
+        return said;
+    }
+
+    /// <summary>
+    /// Offers what was heard to each surface in turn, and says whether one took it. First come,
+    /// first served, and in practice there is at most one open at a time: a modal is a modal, and
+    /// a Commander is wearing the headset or looking at the window rather than both.
+    /// </summary>
+    private bool Prompted(Core.Interface.Heard heard) =>
+        _prompts.Any(surface => surface(heard));
 
     /// <summary>
     /// The plotted route, for proper-noun biasing. Set during composition because the reader

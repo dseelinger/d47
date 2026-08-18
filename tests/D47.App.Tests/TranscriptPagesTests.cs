@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using D47.App.Panel;
+using D47.Core.Interface;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -124,7 +125,7 @@ public class TranscriptPagesTests
         Assert.Contains("HIP 12099 1 b.", Shown(headset), StringComparison.Ordinal);
     }
 
-    /// <summary>Clicking a tab moves the page, so the strip and the property stay one thing.</summary>
+    /// <summary>Clicking a mode moves the page, so the control and the property stay one thing.</summary>
     [AvaloniaFact]
     public void CheckingATabMovesThePage()
     {
@@ -132,7 +133,7 @@ public class TranscriptPagesTests
 
         Assert.Equal(TranscriptPage.Conversation, panel.Page);
 
-        panel.GetControl<RadioButton>("LogTab").IsChecked = true;
+        Mode(panel, PanelView.LogRoot).IsChecked = true;
 
         Assert.Equal(TranscriptPage.Log, panel.Page);
     }
@@ -173,11 +174,11 @@ public class TranscriptPagesTests
 
         Assert.Equal(
             true,
-            window.GetControl<RadioButton>("ConversationTab").IsChecked);
+            Mode(window, PanelView.ConversationRoot).IsChecked);
 
         Assert.Equal(
             true,
-            headset.GetControl<RadioButton>("ConversationTab").IsChecked);
+            Mode(headset, PanelView.ConversationRoot).IsChecked);
     }
 
     /// <summary>
@@ -192,12 +193,25 @@ public class TranscriptPagesTests
         var window = Laid(new PanelView { DataContext = model });
         var headset = Laid(new PanelView { DataContext = model });
 
-        window.GetControl<RadioButton>("LogTab").IsChecked = true;
+        Mode(window, PanelView.LogRoot).IsChecked = true;
 
         Assert.Equal(TranscriptPage.Log, window.Page);
         Assert.Equal(TranscriptPage.Conversation, headset.Page);
-        Assert.Equal(true, headset.GetControl<RadioButton>("ConversationTab").IsChecked);
+        Assert.Equal(true, Mode(headset, PanelView.ConversationRoot).IsChecked);
     }
+
+    /// <summary>
+    /// One of the segmented mode buttons, by the root key it carries.
+    /// <para>
+    /// By tag rather than by name, because the control is built from the navigator's roots at
+    /// runtime rather than declared in the markup — so there is no name scope to ask, and the
+    /// root key is the stable identity a mode has (list.md Phase 25).
+    /// </para>
+    /// </summary>
+    private static RadioButton Mode(PanelView panel, string root) =>
+        panel.GetControl<StackPanel>("Modes").Children
+            .OfType<RadioButton>()
+            .First(button => (string?)button.Tag == root);
 
     private static string Shown(PanelView panel) =>
         PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript"));

@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using D47.App.Panel;
+using D47.Core.Interface;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -171,7 +172,7 @@ public class MicrophoneIsVisibleTests
         var model = new PanelViewModel { Microphone = MicrophoneState.Open };
         var view = Bind(model);
         view.EnableSettings(() => new Border());
-        view.Page = TranscriptPage.Settings;
+        view.Tab = PanelTab.Settings;
 
         Render(view, 1024, 640);
 

@@ -85,15 +85,53 @@ Accepting is unreachable from the AI entirely. Say it, or press the button:
 > "accept the proposal" · "accept that" · "add it to my checklist" · "do it then"
 > "decline the proposal" · "leave my checklist alone"
 
-## The panel
+## The Checklist tab
 
-Settings → Checklists → **Open the checklist**. Everything is there: open items by group, the
-finished ones below with their count, anything waiting for you to accept, and the filter row.
+**A tab of the panel**, on the bar beside Transcript — and on the headset panel too, which is the
+whole reason it moved: it used to be a separate window, and a window cannot appear in VR at all,
+so a Commander with a headset on could not see their checklist.
 
-The filter row is generated from what is actually on your list — kind, source, group and state — so
-a new kind of plan turns up in it without anybody remembering to add it.
+It is **one list, in your order**, with the scope shown on each line rather than the page being
+carved into a list per ship. What you reorder on a whim is everything you are working on, not one
+ship's share of it, so scope is a label and a filter and never a partition.
 
-The panel reflects changes live. It is a view of `data/checklist.json`, and that file is re-read
+### Reordering
+
+**Press a line to select it**; it grows a pair of arrows. Press them to move it up or down, past
+whatever is above or below it whichever scope that belongs to.
+
+Not a drag. A drag is the worst gesture available to a laser pointer at a metre — it needs a
+press, an aim held through movement, and a release — and it has no spoken form at all, where
+"move buy limpets up" is just the phrase.
+
+### What a state means
+
+A state is a **next action**, not a badge:
+
+| State | What to do about it |
+|---|---|
+| `Elsewhere` | You own this. Transfer it rather than grinding for another. |
+| `Blocked` | Nothing to do until your rank with the engineer reaches the grade. |
+| `Unverified` | Your journal has something in that slot and Directive 47 cannot confirm it is this one, so it will not claim it. |
+| `Stale` | This is about a hull that is not there any more. |
+
+**Colour is spent only on the last two**, because they are the two where something is actually
+wrong. A page where six things are coloured is a page where none of them is noticed.
+
+### Suggestions
+
+Anything Directive 47 has proposed waits on its **own page** — press **Suggestions** — rather
+than arriving as an interruption in the middle of your list. Accepting stays your own act, from
+there or by saying so, and from nowhere else.
+
+A revision arrives as a **diff**, so an ordering you spent time on survives a plan change.
+
+### The filter
+
+The filter is generated from what is actually on your list — kind, source, group and state — so a
+new kind of plan turns up in it without anybody remembering to add it.
+
+The tab reflects changes live. It is a view of `data/checklist.json`, and that file is re-read
 while Directive 47 is running, so a line edited in a text editor appears a moment later with no
 restart. A line the file gets wrong is **reported rather than silently dropped** — a checklist that
 quietly loses a line is worse than one that refuses it out loud.

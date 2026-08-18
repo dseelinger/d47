@@ -12,6 +12,7 @@ using D47.App.Input;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Interface;
 using D47.Core.Listening;
 using D47.Core.Audio;
 using D47.Core.Conversation;
@@ -121,6 +122,12 @@ public partial class MainWindow : Window
             // is handed nothing and therefore has no Settings tab (list.md Phase 12).
             Panel.EnableSettings(BuildSettingsPage);
 
+            // The checklist, on the other hand, goes to both surfaces — which is the whole
+            // headline of the item that moved it out of a Window. A Window cannot appear in the
+            // headset, so a Commander in VR could not see their checklist at all (list.md
+            // Phase 25).
+            Panel.EnableChecklist(host.Checklists);
+
             // And the same window is the one with a keyboard, so it is the one that gets a
             // search box. Two calls rather than one, because they are two affordances — but they
             // are made from the same line of the same file, which is where "desktop only" lives.
@@ -129,6 +136,25 @@ public partial class MainWindow : Window
             // And the same window is the one with somewhere to open a dialog, which is what the
             // turn line's figures need. The headset's copy is handed nothing.
             Panel.EnableTurnDetails(() => _ = ShowSpendAsync());
+
+            // A value being said rather than typed reaches this surface's open prompt, if it has
+            // one (list.md Phase 25). Registered rather than assigned: the headset's copy of this
+            // panel registers its own, and either can be the one asking.
+            host.RoutePrompts(heard =>
+            {
+                if (!Panel.Prompts.IsListening)
+                {
+                    return false;
+                }
+
+                // Onto the thread that owns the controls it is about to write into. Speech
+                // arrives from the transcriber's own task, which is not this one.
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.Prompts.Hear(heard));
+                return true;
+            });
+
+            // And a spoken "show me the checklist" moves this surface (list.md Phase 25).
+            host.RouteNavigation(Panel.Nav);
 
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
@@ -373,7 +399,7 @@ public partial class MainWindow : Window
         // unhandled Escape to close now that settings is not a window — and it runs last, so
         // anything with a better claim on the key (a picker, a search box with a query in it)
         // has already taken it.
-        if (e.Key == Key.Escape && !e.Handled && Panel.LeaveSettings())
+        if (e.Key == Key.Escape && !e.Handled && Panel.GoBack())
         {
             e.Handled = true;
         }
@@ -463,7 +489,7 @@ public partial class MainWindow : Window
             open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");
     }
 
-    private void OpenSettings() => Panel.Page = TranscriptPage.Settings;
+    private void OpenSettings() => Panel.Tab = PanelTab.Settings;
 
     /// <summary>
     /// The settings surface, built the first time the tab is selected.
@@ -588,6 +614,18 @@ public partial class MainWindow : Window
         // vocabulary include a bare "stop". Idle, "stop" is the opening word of "stop the ship"
         // and belongs to whatever answers that; mid-sentence it has one meaning. Context is the
         // disambiguator, so context is the gate.
+        // Moving the panel by saying so (list.md Phase 25). Before the in-flight gate for the same
+        // reason the silence command is: navigating is a thing about the surface rather than about
+        // the conversation, and a Commander who wants their checklist while d47 is mid-sentence
+        // should get it. Deterministic, provider-free, and never a tool — nothing an in-game
+        // message says gets to move the Commander's panel.
+        if (_host.Navigate(input) is { } moved)
+        {
+            _model.AskText = string.Empty;
+            _model.Append($"\n\n> {input}\n{moved}\n", TranscriptKind.Technical);
+            return;
+        }
+
         if ((_turnInFlight || _host.Audio.IsSpeaking)
             && _host.Router.MatchInterrupting(input) is { } interrupting)
         {
