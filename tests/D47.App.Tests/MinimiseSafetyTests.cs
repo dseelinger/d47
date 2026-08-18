@@ -25,6 +25,14 @@ public class MinimiseSafetyTests
         window.Show();
 
         using var headset = new VrPanelSurface(model, settings, _ => null);
+
+        // What VrHost.Configure does before the first serve, and without it this surface is a
+        // configuration production never reaches: the size says mini and the view still holds the
+        // full panel's chrome, so a 280-pixel surface is asked to carry a header, a tab strip and
+        // a page bar. It drew a few pixels of transcript under all that and this test passed on
+        // them, which is a thin thing to have been asserting (remediation.md 10, item 1).
+        headset.ApplyMode();
+
         model.Append("Fixture One, docked.");
 
         var before = Pixels(headset);
@@ -61,6 +69,39 @@ public class MinimiseSafetyTests
         model.Append("Fixture Anchorage, 12.4 ly.");
 
         Assert.NotEmpty(Pixels(headset));
+    }
+
+    /// <summary>
+    /// The same claim for the big panel, at the resolution a Commander actually runs it at.
+    /// <para>
+    /// Its own test because the two are different surfaces with different chrome: mini is the
+    /// transcript's tail and the provenance line, and the full panel carries the tab strip and the
+    /// page bar as well. A rendering fault in one says nothing about the other.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheFullHeadsetPanelRendersAndKeepsUp()
+    {
+        var (settings, _, _) = TestSurface.Create();
+
+        settings.Replace(
+            "the full headset panel is the subject here",
+            current => current with { Vr = current.Vr with { Mode = "full" } });
+
+        var model = new PanelViewModel();
+
+        using var headset = new VrPanelSurface(model, settings, _ => null);
+
+        headset.ApplyMode();
+
+        model.Append("Fixture One, docked.");
+        var before = Pixels(headset);
+
+        model.Append("\nStill talking.");
+        var after = Pixels(headset);
+
+        Assert.NotEmpty(after);
+        Assert.NotEqual(before, after);
     }
 
     /// <summary>

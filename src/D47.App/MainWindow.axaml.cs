@@ -63,6 +63,15 @@ public partial class MainWindow : Window
         var hotkeyLogger = host?.Loggers.CreateLogger<GlobalHotkey>()
                            ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GlobalHotkey>.Instance;
 
+        // Why the log will say d47 stopped (remediation.md 10, item 7). Closing this window is
+        // how d47 is quit -- there is no tray icon -- so anything that reaches Dispose without
+        // passing through here was not the Commander's doing, and the default says so rather
+        // than guessing which of the several other reasons it was.
+        if (host is not null)
+        {
+            Closing += (_, _) => host.StoppingBecause = "the window was closed";
+        }
+
         _shutUp = new GlobalHotkey(hotkeyLogger);
         _reanchor = new GlobalHotkey(hotkeyLogger);
 
@@ -956,6 +965,7 @@ public partial class MainWindow : Window
         // The successor starts before this one has exited, so the slot has to be handed over
         // first or it would find d47 "already running" and close itself — an accepted update
         // that looks like the app simply quitting.
+        _host.StoppingBecause = "an accepted update is replacing this build";
         _host.ReleaseSingleInstance?.Invoke();
 
         // Started before this one exits, so the Commander sees d47 come back rather than

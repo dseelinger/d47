@@ -272,7 +272,10 @@ public class ChecklistStoreTests
         // Everything actually on the list, and nothing that is not. A fourth kind of plan turns
         // up here without anybody remembering to add it.
         Assert.Contains("authored", filters);
-        Assert.Contains("universal", filters);
+
+        // The Commander's word, not the enum's (remediation.md 10, item 16). The group is still
+        // ChecklistGroup.Universal and still stored as "universal"; this row is what they read.
+        Assert.Contains("custom", filters);
         Assert.Contains("system", filters);
         Assert.Contains("open", filters);
         Assert.DoesNotContain("derived", filters);

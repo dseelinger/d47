@@ -32,7 +32,9 @@ public static class ChecklistCapability
 
     public const string SummaryKey = "checklists.summary";
 
-    private static readonly string[] Groups = ["universal", "ship", "system", "suit", "weapon"];
+    // The Commander's words rather than the enum's (remediation.md 10, item 16). ChecklistScope.Word
+    // is where the two spellings meet; nothing on disk moved.
+    private static readonly string[] Groups = ["custom", "ship", "system", "suit", "weapon"];
 
         /// <param name="ships">
     /// The Commander's ship builds (list.md Phase 26). <c>plan_ship_build</c> writes there rather
@@ -96,7 +98,7 @@ public static class ChecklistCapability
                         Name = "group",
                         Type = ToolParameterType.String,
                         Description =
-                            "Which list: universal, ship, system, suit or weapon. Omitted shows all of "
+                            "Which list: custom, ship, system, suit or weapon. Omitted shows all of "
                             + "them. With no name, each means the one the Commander is in or carrying "
                             + "right now.",
                         AllowedValues = Groups,
@@ -162,7 +164,7 @@ public static class ChecklistCapability
                     {
                         Name = "group",
                         Type = ToolParameterType.String,
-                        Description = "Which list it belongs on. Defaults to universal.",
+                        Description = "Which list it belongs on. Defaults to custom.",
                         AllowedValues = Groups,
                     },
                     new ToolParameter
@@ -392,14 +394,7 @@ public static class ChecklistCapability
                         Description = "One proposal by id. Omit for everything waiting.",
                     },
                 ],
-                Commands =
-                [
-                    new ToolCommandPhrase("accept the proposal", Nothing),
-                    new ToolCommandPhrase("accept the proposals", Nothing),
-                    new ToolCommandPhrase("accept that", Nothing),
-                    new ToolCommandPhrase("add it to my checklist", Nothing),
-                    new ToolCommandPhrase("do it then", Nothing),
-                ],
+                Commands = Answers(checklists, Accepting, Confirmations),
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                     checklists.Accept(arguments.TryGetString("id", out var id) ? id : null))),
             },
@@ -419,12 +414,7 @@ public static class ChecklistCapability
                         Description = "One proposal by id. Omit for everything waiting.",
                     },
                 ],
-                Commands =
-                [
-                    new ToolCommandPhrase("decline the proposal", Nothing),
-                    new ToolCommandPhrase("decline the proposals", Nothing),
-                    new ToolCommandPhrase("leave my checklist alone", Nothing),
-                ],
+                Commands = Answers(checklists, Declining, Refusals),
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                     checklists.Decline(arguments.TryGetString("id", out var id) ? id : null))),
             },
@@ -437,6 +427,68 @@ public static class ChecklistCapability
     /// </summary>
     private static readonly IReadOnlyDictionary<string, string> Nothing =
         new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Words that mean accept whatever else is going on. Saying one of these with nothing waiting
+    /// is answered honestly — "there is nothing waiting for you to accept" — which costs a
+    /// sentence and cannot act on anything.
+    /// </summary>
+    private static readonly string[] Accepting =
+    [
+        "accept", "accepted", "accept it", "accept the proposal", "accept the proposals",
+        "accept that", "add it to my checklist",
+    ];
+
+    /// <summary>The same, in the other direction.</summary>
+    private static readonly string[] Declining =
+    [
+        "decline", "declined", "decline it", "decline the proposal", "decline the proposals",
+        "leave my checklist alone",
+    ];
+
+    /// <summary>
+    /// Words that only mean accept while d47 is holding a question (remediation.md 10, item 10).
+    /// <para>
+    /// This is the list the reported defect was actually about. The Commander said "Accept.", which
+    /// matched none of the five phrases declared here, so it fell through to the model — which has
+    /// no tool for this, cannot get one, and said "Accepted. Removed from the list" regardless. The
+    /// bare word is in <see cref="Accepting"/> now; these are the rest of what a person says when
+    /// they are answering rather than instructing.
+    /// </para>
+    /// <para>
+    /// <b>Conditional, and they have to be.</b> "Yes" bound for a whole session would swallow every
+    /// yes in the conversation. Bound only while something is waiting, it is the answer to the
+    /// question that is waiting.
+    /// </para>
+    /// </summary>
+    private static readonly string[] Confirmations =
+    [
+        "yes", "yes please", "yep", "yeah", "go ahead", "go for it", "do it", "do it then",
+        "please do", "confirm", "confirmed", "affirmative", "make it so",
+    ];
+
+    /// <summary>The same, for saying no to the question that is waiting.</summary>
+    private static readonly string[] Refusals =
+    [
+        "no", "no thanks", "nope", "leave it", "leave that", "forget it", "never mind",
+        "negative", "cancel that", "drop it",
+    ];
+
+    /// <summary>
+    /// The phrases that answer a proposal: the plain ones always, the conversational ones only
+    /// while there is a proposal to be answering.
+    /// </summary>
+    private static IReadOnlyList<ToolCommandPhrase> Answers(
+        ChecklistService checklists,
+        IReadOnlyList<string> always,
+        IReadOnlyList<string> whileWaiting) =>
+    [
+        .. always.Select(phrase => new ToolCommandPhrase(phrase, Nothing)),
+        .. whileWaiting.Select(phrase => new ToolCommandPhrase(phrase, Nothing)
+        {
+            When = () => checklists.Proposals.PendingFor(checklists.Document.CommanderFid).Count > 0,
+        }),
+    ];
 
     /// <summary>
     /// The live half, for prompt position 7. Null when there is nothing on the list, so a

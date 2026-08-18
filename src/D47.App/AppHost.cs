@@ -468,7 +468,10 @@ public sealed class AppHost : IDisposable
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
-        logger.LogInformation("D47 {Version} starting; data folder {Data}", version, paths.Data);
+        // The earliest thing written, before settings, providers or the headset exist. It is
+        // deliberately thin: its job is to be the line that is there when startup dies before
+        // RecordStartup can say anything fuller (remediation.md 10, item 7).
+        logger.LogInformation("d47 {Version} is starting; data folder {Data}", version, paths.Data);
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
         var loaded = new D47Settings();
@@ -874,7 +877,13 @@ public sealed class AppHost : IDisposable
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
-        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory);
+        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory)
+        {
+            // What a voice is called, for the log line that says who spoke (remediation.md 10,
+            // item 9). Asked per utterance rather than copied, because the catalogue arrives from
+            // the provider after this and changes when the provider does.
+            VoiceName = id => id is { Length: > 0 } ? self?.VoiceNameFor(id) : null,
+        };
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn
         // returns, because the turn returns while the reply is still being spoken. Wired here
@@ -1230,6 +1239,11 @@ public sealed class AppHost : IDisposable
             ToolContext = () => actionSurface.Context,
             ActionsEnabled = () => settings.Current.Actions.Keyboard,
             WebSearchEnabled = () => settings.Current.Llm.WebSearch,
+
+            // A proposal the Commander has not answered, stated by the store rather than by the
+            // model (remediation.md 10, item 10). Asked either side of the turn, so it is silent
+            // on the turn that resolves it.
+            Standing = checklists.Standing,
 
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
@@ -1951,6 +1965,16 @@ public sealed class AppHost : IDisposable
     /// How the picker labels one — "Ava — Female, en-US" rather than the raw id. Falls back to
     /// the id, so a voice the Commander typed themselves still shows as what they typed.
     /// </summary>
+    /// <summary>
+    /// The voice's name on its own — "George" — or null when the catalogue does not know it, which
+    /// is the case for an id the Commander typed themselves and for every voice before the list
+    /// has been fetched. Null rather than the id, so the caller decides what to show
+    /// (remediation.md 10, item 9).
+    /// </summary>
+    internal string? VoiceNameFor(string id) =>
+        _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+            ?.Name;
+
     internal string VoiceLabelFor(string id) =>
         _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Label ?? id;
@@ -3110,6 +3134,14 @@ public sealed class AppHost : IDisposable
             Wake.Phrases,
             listening.PushToTalkKey is { } key ? Input.Gestures.Describe(key) : null,
             listening.PreRollMilliseconds);
+
+        // The same three facts, worded for a prompt that is waiting on one (remediation.md 10,
+        // item 12). Set from here rather than from the prompt, so both surfaces are told once and
+        // cannot disagree about one microphone.
+        Panel.ListeningPrompt = MicrophoneNarration.Prompt(
+            listening.Mode,
+            Wake.Phrases,
+            listening.PushToTalkKey is { } bound ? Input.Gestures.Describe(bound) : null);
     }
 
     /// <summary>
@@ -4220,8 +4252,61 @@ public sealed class AppHost : IDisposable
         return string.IsNullOrWhiteSpace(overridePath) ? JournalFolder.DefaultPath() : overridePath;
     }
 
+    /// <summary>
+    /// Why d47 is stopping, for the shutdown line (remediation.md 10, item 7).
+    /// <para>
+    /// Set by whoever knows — the window on its way closed, the updater handing over to the build
+    /// that replaces this one. The default is what is honestly knowable otherwise: a Windows
+    /// shutdown and a task manager kill both unwind through here saying nothing about themselves,
+    /// and a reason invented for them would be a reason a Commander might believe.
+    /// </para>
+    /// </summary>
+    public string StoppingBecause { get; set; } = "the process is ending";
+
+    /// <summary>
+    /// What this build is, what it is pointed at, and what came up — written once, at the moment
+    /// everything that can answer has (remediation.md 10, item 7).
+    /// <para>
+    /// Called from the composition root rather than from <see cref="Start"/>, because the headset
+    /// is brought up after the framework is and <see cref="Start"/> would have to guess at it. A
+    /// log that opens with this is a log that can answer "what was it even running" without the
+    /// Commander being asked.
+    /// </para>
+    /// </summary>
+    public void RecordStartup()
+    {
+        var current = Settings.Current;
+
+        _logger.LogInformation(
+            "d47 {Version} started. Model: {Provider}/{Model}. Speech: {Speech}. "
+            + "Hearing: {Whisper}, {Listening}. Headset: {Vr}. Data: {Data}",
+            Version,
+            LlmProviderCatalog.Selected(current.Llm.Provider)?.Name ?? current.Llm.Provider,
+
+            // A provider with no model chosen is the state on a fresh install, and "Anthropic/null"
+            // is a line that reads as a fault rather than as a setting nobody has set yet.
+            current.Llm.Model is { Length: > 0 } model ? model : "no model chosen",
+            current.Speech.Provider,
+            current.Listening.Model,
+            current.Listening.Mode,
+            Vr is { } headset
+                ? $"{headset.State}{(current.Vr.Enabled ? string.Empty : " (switched off)")}"
+                : "not started",
+            Paths.Data);
+
+        if (StartupError is { Length: > 0 } failure)
+        {
+            _logger.LogWarning("Settings did not load cleanly at startup: {Problem}", failure);
+        }
+    }
+
     public void Dispose()
     {
+        // First, so the reason survives whatever the teardown below does. The matching "stopped
+        // cleanly" line is the last thing written, and its absence is the marker: a shutdown that
+        // says it is starting and never says it finished died on the way out.
+        _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
+
         CoverageRecorder?.Save();
 
         Settings.Changed -= OnSettingsChanged;
@@ -4248,6 +4333,11 @@ public sealed class AppHost : IDisposable
         Audio.Dispose();
         _audioSink.Dispose();
         (_tts as IDisposable)?.Dispose();
+
+        // Before the factory that owns the sink it writes to. Reaching this line is the whole of
+        // the clean marker -- anything that threw above it leaves the "is stopping" line standing
+        // on its own, which is what tells a reader the teardown is where to look.
+        _logger.LogInformation("d47 stopped cleanly");
 
         _loggerFactory.Dispose();
         Log.CloseAndFlush();

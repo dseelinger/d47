@@ -49,6 +49,13 @@ public sealed class VoicePipeline(
 
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
+    /// <summary>
+    /// An id to what the voice is called, or null where nothing can say (remediation.md 10,
+    /// item 9). Set by the host, which is what holds the provider's voice list — Core has no
+    /// catalogue and no way to get one.
+    /// </summary>
+    public Func<string?, string?>? VoiceName { get; set; }
+
     public bool CuesEnabled { get; set; } = true;
 
     public bool BedEnabled { get; set; } = true;
@@ -107,7 +114,7 @@ public sealed class VoicePipeline(
                             speech = new SpeechPipeline(
                                 arbiter,
                                 provider,
-                                Voice,
+                                Introduce(Voice),
                                 group,
                                 loggers.CreateLogger<SpeechPipeline>(),
                                 speaker: "D47");
@@ -201,7 +208,7 @@ public sealed class VoicePipeline(
         await using var speech = new SpeechPipeline(
             arbiter,
             provider,
-            voice ?? Voice,
+            Introduce(voice ?? Voice),
             group,
             loggers.CreateLogger<SpeechPipeline>(),
             channel,
@@ -350,6 +357,17 @@ public sealed class VoicePipeline(
     }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
+
+    /// <summary>
+    /// The same selection with the voice's name attached, where the host can say what it is. It
+    /// is never sent to a provider — the id is still the value — and exists so that a log line
+    /// naming a voice can be read by a person rather than matched against a settings file
+    /// (remediation.md 10, item 9).
+    /// </summary>
+    internal VoiceSelection Introduce(VoiceSelection voice) =>
+        voice.Name is { Length: > 0 } || voice.VoiceId is not { Length: > 0 } id
+            ? voice
+            : voice with { Name = VoiceName?.Invoke(id) };
 
     private void OnVoiceRejected(string voiceId) => VoiceRejected?.Invoke(voiceId);
 }

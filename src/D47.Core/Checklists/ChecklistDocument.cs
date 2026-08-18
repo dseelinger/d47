@@ -179,6 +179,61 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>
+    /// Rewords a line the Commander wrote (remediation.md 10, item 13).
+    /// <para>
+    /// <b>Authored lines only</b>, and the refusal is the same one ticking already gives for the
+    /// same reason: a derived line's words are the plan's words, and rewriting them here would
+    /// leave the list saying one thing and the plan another until the next journal read silently
+    /// put the original back.
+    /// </para>
+    /// <para>
+    /// <b>The key does not move.</b> An item is identified by its key across a revision, and a
+    /// rename that minted a new one would break every citation of it — the goal it came from, a
+    /// tombstone, a proposal already waiting. What is edited is what is written on it and nothing
+    /// else, which is what makes this a correction rather than a delete and an add.
+    /// </para>
+    /// </summary>
+    public ChecklistChange Reword(ChecklistItemId id, string text)
+    {
+        if (Find(id) is not { } item)
+        {
+            return ChecklistChange.Refused(this, "There is no such item on your checklist.");
+        }
+
+        if (item.Kind != ChecklistItemKind.Authored)
+        {
+            return ChecklistChange.Refused(
+                this,
+                $"\"{item.Text}\" came from a plan, so its wording is the plan's. "
+                + "Revising the plan is what changes it.");
+        }
+
+        var wanted = text?.Trim() ?? string.Empty;
+
+        if (wanted.Length == 0)
+        {
+            return ChecklistChange.Refused(this, "A line with nothing written on it is not a line.");
+        }
+
+        if (wanted.Length > ChecklistLimits.MaxTextLength)
+        {
+            return ChecklistChange.Refused(
+                this,
+                $"That is {wanted.Length} characters; the most is {ChecklistLimits.MaxTextLength}.");
+        }
+
+        if (string.Equals(wanted, item.Text, StringComparison.Ordinal))
+        {
+            return ChecklistChange.Refused(this, "That is what it already says.");
+        }
+
+        return new ChecklistChange(
+            Replace(item with { Text = wanted }),
+            Changed: true,
+            $"Now reads \"{wanted}\".");
+    }
+
+    /// <summary>
     /// Removes an item outright. <b>A different act from completing</b>, and it can happen to an
     /// item whether or not it was ever finished — deleting is changing your mind.
     /// <para>

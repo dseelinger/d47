@@ -43,10 +43,6 @@ public class ThePanelIsAPlaceTests
         return Laid(panel, width);
     }
 
-    private static RadioButton Mode(PanelView panel, string root) =>
-        panel.GetControl<StackPanel>("Modes").Children
-            .OfType<RadioButton>()
-            .First(button => (string?)button.Tag == root);
 
     /// <summary>
     /// One tab for the three readings, and the tabs the host has not furnished are not drawn.
@@ -64,9 +60,9 @@ public class ThePanelIsAPlaceTests
             Assert.False(panel.GetControl<RadioButton>(name).IsVisible, name);
         }
 
-        // And there is no second tab strip: the three readings are a mode control in the tab
-        // strip's own row, not four more tabs beside it.
-        Assert.Equal(3, panel.GetControl<StackPanel>("Modes").Children.Count);
+        // And there is no second tab strip: the three readings are one drop-down inside the pane,
+        // not four more tabs beside it (remediation.md 10, item 1).
+        Assert.Equal(3, PanelModes.Count(panel));
     }
 
     /// <summary>
@@ -82,12 +78,12 @@ public class ThePanelIsAPlaceTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(panel.GetControl<Border>("ModeRow").IsVisible);
+        Assert.True(PanelModes.Offered(panel));
 
         panel.Nav.Drill(new NavCrumb("ship:12", "Corsair"));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(panel.GetControl<Border>("ModeRow").IsVisible);
+        Assert.False(PanelModes.Offered(panel));
     }
 
     /// <summary>
@@ -102,7 +98,7 @@ public class ThePanelIsAPlaceTests
         panel.Tab = PanelTab.Settings;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(panel.GetControl<Border>("ModeRow").IsVisible);
+        Assert.False(PanelModes.Offered(panel));
     }
 
     /// <summary>
@@ -205,8 +201,7 @@ public class ThePanelIsAPlaceTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        Mode(panel, "locker").IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
+        PanelModes.Choose(panel, "locker");
 
         Assert.Equal("locker", panel.Nav.RootKeyOf(PanelTab.Loadout));
     }

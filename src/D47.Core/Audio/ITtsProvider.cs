@@ -15,6 +15,19 @@ public sealed record VoiceInfo(string Id, string Name, string Locale, string? Ge
 public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
 {
     /// <summary>
+    /// What the voice is called, where the caller could find out. Null when it could not, and
+    /// never sent to a provider — this exists so a log line can be read by a person
+    /// (remediation.md 10, item 9).
+    /// <para>
+    /// <b>Not a positional parameter</b>, so nothing that constructs a selection had to change to
+    /// gain it, and a caller with no catalogue in reach simply leaves it unset. Resolving an id to
+    /// a name is the App's business: the catalogue is the provider's answer to a network call, and
+    /// this layer holds neither.
+    /// </para>
+    /// </summary>
+    public string? Name { get; init; }
+
+    /// <summary>
     /// No voice chosen, so the provider picks its own. Named argument because a positional
     /// `new(null)` binds the record's copy constructor rather than this one.
     /// </summary>

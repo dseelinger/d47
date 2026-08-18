@@ -222,9 +222,18 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// rendered, so a voice the provider refused is not recorded as having spoken.
     /// </para>
     /// <para>
-    /// The id rather than a name, because that is what this layer holds and what the settings
-    /// file and every other log line say. Edge's read as words; ElevenLabs' are opaque, and the
-    /// point of writing them down is to be able to tell two senders apart.
+    /// The role, the name and the id (remediation.md 10, item 9).
+    /// <para>
+    /// It used to be the id alone, on the argument that it is what this layer holds and what the
+    /// settings file says, and that opaque ids are still enough to tell two senders apart. That
+    /// is true and is not the point: a Commander read "Spoken by D47 in JBFqnCBsd6RMkjVDRZzb" in
+    /// their own log and could not tell which voice that was. Telling two senders apart is not
+    /// the same as knowing who either of them is.
+    /// </para>
+    /// <para>
+    /// So the name comes in on the selection, where a caller that can resolve one puts it, and
+    /// the id stays beside it — it is what the settings file holds and what a support question is
+    /// answered with. Where no name was resolved the line is exactly what it was.
     /// </para>
     /// </summary>
     private void Record()
@@ -237,13 +246,24 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _logger.LogInformation(
             "Spoken by {Who} in {Voice} ({Group}, {Link})",
             _speaker ?? "D47",
-            _voice.VoiceId is { Length: > 0 } id ? id : "the provider's own voice",
+            Named(_voice),
             _group,
 
             // Which side of the hull this came from, because "it did not sound like a radio" is
             // otherwise a report with nothing to check it against.
             _colour is null ? "in the room" : "over the air");
     }
+
+    /// <summary>
+    /// The voice as a person would say it: the name with the id beside it, the id alone when no
+    /// name was resolved, and a plain sentence when there is no voice at all.
+    /// </summary>
+    private static string Named(VoiceSelection voice) => voice switch
+    {
+        { VoiceId: { Length: > 0 } id, Name: { Length: > 0 } name } => $"{name} ({id})",
+        { VoiceId: { Length: > 0 } id } => id,
+        _ => "the provider's own voice",
+    };
 
     /// <summary>
     /// Drops the voice, and answers what it was — or null if it has already been dropped, which

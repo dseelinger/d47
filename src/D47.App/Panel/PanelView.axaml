@@ -54,9 +54,28 @@
         point to itself, drawn as a disc exactly as wide as the stroke, which keeps it in step
         with the hook for free.
       -->
+      <!--
+        Square, with the glyph centred in it by construction (remediation.md 10, item 4).
+        <para/>
+        It was a uniform padding around a 17x17 Path, which reads as centred and is not. Two things
+        were off. The button was as wide as the glyph plus its padding and as tall as the glyph
+        plus the same, but the ink is a question mark — about half as wide as it is tall — and
+        <c>Stretch="Uniform"</c> scales the geometry's own bounds, so the drawn mark filled the
+        height and left slack across the width that the padding then did not account for. And the
+        button's content alignment was whatever the default theme said rather than centre.
+        <para/>
+        So the button is a fixed square, the content is centred on both axes explicitly, and the
+        Path's box is the shape of the ink rather than a square the ink sits inside. The highlight
+        is the button's own background, so a glyph centred in the button is centred in the
+        highlight — which is what was being asked for.
+      -->
       <Button x:Name="HelpButton"
               DockPanel.Dock="Right"
-              Padding="9"
+              Width="35"
+              Height="35"
+              Padding="0"
+              HorizontalContentAlignment="Center"
+              VerticalContentAlignment="Center"
               VerticalAlignment="Top"
               CornerRadius="4"
               Background="Transparent"
@@ -65,9 +84,16 @@
               Click="OnHelpClick"
               PointerEntered="OnHelpPointerEntered"
               PointerExited="OnHelpPointerExited">
+        <!--
+          Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
+          and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
+          pixels of nothing on each side of the mark and hang it left of centre.
+        -->
         <Path x:Name="HelpGlyph"
-              Width="17" Height="17"
+              Width="8.4" Height="17"
               Stretch="Uniform"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
               Stroke="{DynamicResource D47.TextMuted}"
               StrokeThickness="2.8"
               StrokeLineCap="Round"
@@ -302,134 +328,59 @@
     <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
 
       <!--
-        One search affordance for the surface, on the tab that is selected — not four features
-        bolted to four pages (list.md Phase 12). What a match does differs by page and that
-        difference is the design: the transcript pages highlight and step, and Settings filters,
-        so the count and the steppers are hidden where they would mean nothing.
-
-        Hidden until a host enables it, which only the desktop window does. Mini shows no strip
-        and the headset has no keyboard, and a search box the Commander cannot type into is
-        worse than no search at all.
+        The steppers, for when the tabs do not fit (remediation.md 10, item 1).
+        <para/>
+        The strip used to carry the tabs, the mode control and the search box in one row, and
+        below a certain width they simply overlapped: a DockPanel gives its docked children what
+        they ask for and lets the filling child have whatever is left, which below a threshold is
+        a negative number rather than a scrollbar. The mode control and the search box have moved
+        into the pane, which is most of the fix; these are what makes the remainder reachable at
+        any width at all, including the headset's, where the strip is narrower still.
+        <para/>
+        Docked outside the scroller rather than floating over it, so a tab is never underneath the
+        control that scrolls to it. Hidden entirely when everything fits, which is the ordinary
+        case on a desktop — a pair of dead arrows either side of six tabs is two controls that do
+        nothing, permanently.
       -->
-      <StackPanel x:Name="SearchRow"
-                  DockPanel.Dock="Right"
-                  Orientation="Horizontal"
-                  Spacing="6"
-                  IsVisible="False"
-                  VerticalAlignment="Bottom"
-                  Margin="12,0,0,4">
-        <!--
-          One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy
-          log"). Beside the search box because both are about the page rather than about the
-          conversation, and because this is the row a Commander looks at when they are reading
-          rather than talking.
-
-          The text is selectable and Ctrl+C already works on a selection; this is the case that
-          is tedious by hand — several hundred lines of a log, to paste into an issue.
-        -->
-        <!-- Centred like everything else in this row. Without it the button takes the strip's
-             full height and its label sits wherever the stack put it, which beside a 28-pixel
-             search box reads as one control hanging lower than its neighbours. -->
-        <Button x:Name="CopyButton"
-                Height="28"
-                VerticalAlignment="Center"
-                Padding="10,0"
-                FontSize="{StaticResource D47.Type.Secondary}"
-                Content="Copy"
-                Click="OnCopyClick" />
-        <!--
-          The clear affordance sits inside the field, not beside it. Another sibling in this
-          StackPanel would sit outside the border and read as a fourth button in a row that
-          already has Copy and the two steppers, rather than as part of the box it empties.
-
-          U+00D7, the multiplication sign, and deliberately not the letter x — the same reason
-          the steppers above are U+2039 and U+203A rather than angle brackets.
-
-          Hidden until there is something to clear, or it is a control that does nothing for
-          most of the time a Commander can see it.
-        -->
-        <!--
-          Body, not Secondary. A field the Commander types into is not supporting text, and at
-          13 beside a page of 14 it read as a smaller-than-everything control rather than as a
-          quieter one — which is the exact drift TypeScale exists to stop.
-        -->
-        <TextBox x:Name="SearchInput"
-                 Width="200"
-                 Height="28"
-                 Padding="8,3"
-                 FontSize="{StaticResource D47.Type.Body}"
-                 VerticalContentAlignment="Center"
-                 PlaceholderText="Search this page"
-                 TextChanged="OnSearchChanged"
-                 KeyDown="OnSearchKeyDown">
-          <TextBox.InnerRightContent>
-            <Button x:Name="SearchClear"
-                    Content="&#x00D7;"
-                    Padding="6,0"
-                    MinWidth="0"
-                    Margin="0,0,2,0"
-                    IsVisible="False"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    VerticalAlignment="Center"
-                    FontSize="{StaticResource D47.Type.Body}"
-                    Foreground="{DynamicResource D47.TextMuted}"
-                    Cursor="Hand"
-                    ToolTip.Tip="Clear the search (Esc)"
-                    AutomationProperties.Name="Clear the search"
-                    Click="OnSearchClearClick" />
-          </TextBox.InnerRightContent>
-        </TextBox>
-        <TextBlock x:Name="SearchCount"
-                   VerticalAlignment="Center"
-                   IsVisible="False"
-                   FontSize="{StaticResource D47.Type.Secondary}"
-                   Foreground="{DynamicResource D47.TextMuted}" />
-        <Button x:Name="SearchPrevious"
-                Content="&#x2039;"
-                Padding="8,0"
-                MinWidth="0"
-                Height="28"
-                IsVisible="False"
-                FontSize="{StaticResource D47.Type.Body}"
-                ToolTip.Tip="Previous match (Shift+Enter)"
-                Click="OnSearchPreviousClick" />
-        <Button x:Name="SearchNext"
-                Content="&#x203A;"
-                Padding="8,0"
-                MinWidth="0"
-                Height="28"
-                IsVisible="False"
-                FontSize="{StaticResource D47.Type.Body}"
-                ToolTip.Tip="Next match (Enter)"
-                Click="OnSearchNextClick" />
-      </StackPanel>
+      <Button x:Name="TabsLeft"
+              DockPanel.Dock="Left"
+              Content="&#x2039;"
+              IsVisible="False"
+              Padding="7,0"
+              MinWidth="0"
+              Height="30"
+              Margin="0,0,4,0"
+              VerticalAlignment="Bottom"
+              FontSize="{StaticResource D47.Type.Body}"
+              ToolTip.Tip="Earlier tabs"
+              AutomationProperties.Name="Show earlier tabs"
+              Click="OnTabsLeftClick" />
+      <Button x:Name="TabsRight"
+              DockPanel.Dock="Right"
+              Content="&#x203A;"
+              IsVisible="False"
+              Padding="7,0"
+              MinWidth="0"
+              Height="30"
+              Margin="4,0,0,0"
+              VerticalAlignment="Bottom"
+              FontSize="{StaticResource D47.Type.Body}"
+              ToolTip.Tip="Later tabs"
+              AutomationProperties.Name="Show later tabs"
+              Click="OnTabsRightClick" />
 
       <!--
-        The modes of whichever tab is showing - Conversation, Technical and the log file for
-        Transcript; Ships, Suits and weapons and Gap analysis for Loadout when it arrives.
+        The strip itself, which scrolls rather than wraps. Wrapping would move the tabs into a
+        second row and take the join to the panel with them, and the join is the whole idiom —
+        a tab that is not touching its page does not read as a tab.
 
-        In the tab strip's own row, docked right, and this is the whole of "the mode control is
-        not a second tab strip under the first" (list.md Phase 25). Two stacked strips read
-        worse than the eight flat tabs the collapse avoids, so the second control shares the
-        first's row and is drawn as a segmented pill rather than as tabs.
-
-        Filled in code, because the roots come from the navigator: a tab declares its own, and a
-        tab with one root shows no control at all. Hidden below the root for the reason the
-        theme records.
+        No visible scrollbar: a horizontal bar under a tab strip reads as a second, thinner strip.
+        The arrows above are the affordance, and the wheel and a drag still work.
       -->
-      <Border x:Name="ModeRow"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              VerticalAlignment="Bottom"
-              Margin="12,0,0,4"
-              Padding="2"
-              CornerRadius="4"
-              Background="{DynamicResource D47.SurfaceAlt}"
-              BorderBrush="{DynamicResource D47.Border}"
-              BorderThickness="1">
-        <StackPanel x:Name="Modes" Orientation="Horizontal" Spacing="2" />
-      </Border>
+      <ScrollViewer x:Name="TabsScroller"
+                    HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollBarVisibility="Disabled"
+                    SizeChanged="OnTabsResized">
 
       <!--
         No GroupName, deliberately. Avalonia groups named radio buttons across the whole
@@ -497,6 +448,8 @@
                      IsCheckedChanged="OnTabChecked" />
       </StackPanel>
 
+      </ScrollViewer>
+
     </DockPanel>
 
     <!--
@@ -526,16 +479,193 @@
       this window rather than a second window - and what makes every surface Phases 24 and 26-28
       add a page of it too, on the same terms.
     -->
-    <Panel>
-      <!-- Top-left corner square, because a tab is sitting on it. Rounding it there would leave
-           a visible notch between the first tab and the panel it belongs to. -->
+    <!--
+      One bordered container for the whole content region, with the page's own controls inside it
+      (remediation.md 10, items 1, 2 and 3).
+      <para/>
+      It used to be two borders side by side in a Panel — one for the transcript, one for every
+      furnished page — because the two want different fills: the transcript is Surface and the
+      settings page is Background, since a card the colour of its page is not a card. That is
+      still true and is still the rule; what changed is that one border can carry either fill, so
+      the difference is a property rather than a second control. ApplyChrome sets it.
+      <para/>
+      Top-left corner square, because a tab is sitting on it. Rounding it there would leave a
+      visible notch between the first tab and the panel it belongs to.
+    -->
+    <Border x:Name="ContentPane"
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="1"
+            CornerRadius="0,4,4,4">
+      <DockPanel>
+
+      <!--
+        The page's own bar: which reading of the page is showing, and the two things that act on
+        it (remediation.md 10, items 1, 2 and 3).
+        <para/>
+        <b>Inside the panel rather than beside the tabs.</b> The mode control was a segmented pill
+        riding in the tab strip's own row, on the argument that two stacked strips read worse than
+        eight flat tabs. That argument was about a second strip of <em>tabs</em>; what it produced
+        was a row with three unrelated controls competing for one width, which below a certain
+        window size stopped being a layout at all. A control that says which reading of this page
+        you are looking at belongs to the page, and a page is what is inside the border.
+        <para/>
+        And it is a drop-down now rather than a row of segments, so it costs one control's width
+        whatever the tab offers — three readings or six.
+      -->
+      <DockPanel x:Name="PageBar"
+                 DockPanel.Dock="Top"
+                 IsVisible="False"
+                 Margin="14,12,14,0">
+        <!--
+          Which reading of this page is showing. A button rather than a ComboBox, because a
+          ComboBox is a popup and a popup has no top level to hang from on a window that is never
+          shown — the headset's host is exactly that. It opens the panel's own chooser in the
+          layer, like every other choice here.
+
+          Filled in code, because the roots come from the navigator: a tab declares its own, and a
+          tab with one root shows no control at all. Hidden below the root, where the breadcrumb
+          is already answering which stack you are in.
+        -->
+        <Button x:Name="ModeButton"
+                DockPanel.Dock="Left"
+                Margin="0,0,12,0"
+                VerticalAlignment="Center"
+                Height="28"
+                Padding="10,0"
+                CornerRadius="4"
+                IsVisible="False"
+                FontSize="{StaticResource D47.Type.Secondary}"
+                Click="OnModeClick" />
+        <!--
+          One search affordance for the surface, on the tab that is selected — not four features
+          bolted to four pages (list.md Phase 12). What a match does differs by page and that
+          difference is the design: the transcript pages highlight and step, and Settings filters,
+          so the count and the steppers are hidden where they would mean nothing.
+
+          Hidden until a host enables it, which only the desktop window does. Mini shows no strip
+          and the headset has no keyboard, and a search box the Commander cannot type into is
+          worse than no search at all.
+        -->
+        <!--
+          A DockPanel rather than a horizontal stack, and the search box is the child that flexes
+          (remediation.md 10, item 1). A stack with a fixed 200-pixel box in it takes the width it
+          wants and leaves the mode button beside it whatever is left, which on a narrow pane is a
+          sliver — the same failure this batch removed from the tab strip, reproduced one row
+          down. Everything here keeps its size and the box gives, because a search box that is
+          narrower is still a search box and a mode button that is four pixels wide is not a
+          control at all.
+        -->
+        <DockPanel x:Name="SearchRow"
+                   IsVisible="False"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0">
+          <!--
+            One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy
+            log"). Beside the search box because both are about the page rather than about the
+            conversation, and because this is the row a Commander looks at when they are reading
+            rather than talking. The tedious case is several hundred lines of a log, to paste into
+            an issue.
+
+            "Copy All", not "Copy" (remediation.md 10, item 3). The text on this page is selectable
+            and Ctrl+C already works on a selection, so a button beside it saying "Copy" reads as
+            copying that selection — which is the one thing it does not do.
+
+            Centred on both axes, and the content alignment is the half that was missing: the
+            height made the button the right size and the label still sat where the default put
+            it, which beside a 28-pixel search box reads as one control hanging lower than its
+            neighbours.
+          -->
+          <Button x:Name="CopyButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
+                  Height="28"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="10,0"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  Content="Copy All"
+                  ToolTip.Tip="Copy this whole page to the clipboard"
+                  Click="OnCopyClick" />
+          <!--
+            The clear affordance sits inside the field, not beside it. Another sibling in this
+            StackPanel would sit outside the border and read as a fourth button in a row that
+            already has Copy and the two steppers, rather than as part of the box it empties.
+
+            U+00D7, the multiplication sign, and deliberately not the letter x — the same reason
+            the steppers above are U+2039 and U+203A rather than angle brackets.
+
+            Hidden until there is something to clear, or it is a control that does nothing for
+            most of the time a Commander can see it.
+          -->
+          <!--
+            Body, not Secondary. A field the Commander types into is not supporting text, and at
+            13 beside a page of 14 it read as a smaller-than-everything control rather than as a
+            quieter one — which is the exact drift TypeScale exists to stop.
+          -->
+          <TextBox x:Name="SearchInput"
+                   MinWidth="90"
+                   Height="28"
+                   Padding="8,3"
+                   FontSize="{StaticResource D47.Type.Body}"
+                   VerticalContentAlignment="Center"
+                   PlaceholderText="Search this page"
+                   TextChanged="OnSearchChanged"
+                   KeyDown="OnSearchKeyDown">
+            <TextBox.InnerRightContent>
+              <Button x:Name="SearchClear"
+                      Content="&#x00D7;"
+                      Padding="6,0"
+                      MinWidth="0"
+                      Margin="0,0,2,0"
+                      IsVisible="False"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      VerticalAlignment="Center"
+                      FontSize="{StaticResource D47.Type.Body}"
+                      Foreground="{DynamicResource D47.TextMuted}"
+                      Cursor="Hand"
+                      ToolTip.Tip="Clear the search (Esc)"
+                      AutomationProperties.Name="Clear the search"
+                      Click="OnSearchClearClick" />
+            </TextBox.InnerRightContent>
+          </TextBox>
+          <TextBlock x:Name="SearchCount"
+                     DockPanel.Dock="Right"
+                     Margin="6,0,0,0"
+                     VerticalAlignment="Center"
+                     IsVisible="False"
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+
+          <Button x:Name="SearchNext"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x203A;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Next match (Enter)"
+                  Click="OnSearchNextClick" />
+          <Button x:Name="SearchPrevious"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x2039;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Previous match (Shift+Enter)"
+                  Click="OnSearchPreviousClick" />
+        </DockPanel>
+      </DockPanel>
+
+      <Panel>
       <Border x:Name="TranscriptPane"
-              Background="{DynamicResource D47.Surface}"
-              BorderBrush="{DynamicResource D47.Border}"
-              BorderThickness="1"
-              CornerRadius="0,4,4,4"
-              Padding="14"
-              Margin="0,0,0,0">
+              Padding="14">
         <Panel>
           <ScrollViewer x:Name="TranscriptScroller" ScrollChanged="OnTranscriptScrolled">
             <!-- No Text binding: the content is written as runs from code-behind, because a
@@ -593,11 +723,7 @@
       -->
       <Border x:Name="PagePane"
               IsVisible="False"
-              ClipToBounds="True"
-              Background="{DynamicResource D47.Background}"
-              BorderBrush="{DynamicResource D47.Border}"
-              BorderThickness="1"
-              CornerRadius="0,4,4,4" />
+              ClipToBounds="True" />
 
       <!--
         A chooser, or a value being said or typed. It takes the whole content region because that
@@ -625,7 +751,10 @@
         finds it exactly as it finds everything else.
       -->
       <Panel x:Name="Layer" IsVisible="False" />
-    </Panel>
+      </Panel>
+
+      </DockPanel>
+    </Border>
 
   </DockPanel>
 </UserControl>

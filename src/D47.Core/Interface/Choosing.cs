@@ -82,6 +82,18 @@ public sealed record ChoiceRequest(
     string? Current,
     ChoiceSurface Surface)
 {
+    /// <summary>
+    /// What the option the Commander is already on is called, in words.
+    /// <para>
+    /// Said rather than only coloured, because a fact carried by a hue alone is a fact some of the
+    /// Commanders reading it do not have. It is a parameter rather than a constant because the
+    /// chooser is general and its callers are not: "fitted now" is right for a hardpoint and wrong
+    /// for the reading of a page you are looking at (remediation.md 10, item 1), which is what it
+    /// said when the mode control became a chooser.
+    /// </para>
+    /// </summary>
+    public string CurrentWord { get; init; } = "fitted now";
+
     /// <summary>Which option a spoken label names, or null when none of them does.</summary>
     /// <remarks>
     /// Whole-label and case-insensitive, deliberately. The router's own rule applies here for the

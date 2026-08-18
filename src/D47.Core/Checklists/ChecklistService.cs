@@ -569,7 +569,7 @@ public sealed class ChecklistService(
         var kinds = live.Select(item => item.Kind.ToString().ToLowerInvariant());
         var sources = live.Where(item => item.Source != ChecklistSource.Commander)
             .Select(item => item.Source.ToString().ToLowerInvariant());
-        var scopes = live.Select(item => item.Scope.Group.ToString().ToLowerInvariant());
+        var scopes = live.Select(item => ChecklistScope.Word(item.Scope.Group));
         var states = live.Select(item => item.IsComplete ? "complete" : "open");
 
         return [.. kinds.Concat(sources).Concat(scopes).Concat(states).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
@@ -655,6 +655,86 @@ public sealed class ChecklistService(
                 $"I could not tell which item \"{phrase}\" means.");
     }
 
+    /// <summary>
+    /// Rewords a line the Commander wrote (remediation.md 10, item 13). Not reachable from the
+    /// tool surface, like every other write here.
+    /// </summary>
+    public ChecklistChange Reword(ChecklistItemId id, string text) =>
+        list.Apply(Fid, Name, document => document.Reword(id, text));
+
+    /// <summary>
+    /// This Commander's whole checklist as JSON — every line, derived ones and tombstones
+    /// included, with their provenance (remediation.md 10, item 15).
+    /// <para>
+    /// <b>Everything, deliberately.</b> Settled with the Commander as a move-machines feature
+    /// rather than a share-with-a-friend one: a derived line and the plan it came from are what
+    /// make the list mean anything on the other side, and a tombstone is the answer to "why did
+    /// you stop tracking that". Dropping them would produce a file that imports into something
+    /// subtly different from what was exported, which is the one thing a round trip must not do.
+    /// </para>
+    /// <para>
+    /// One Commander, not the file. Somebody else's list is not this Commander's to carry, and a
+    /// whole-file export would put another Frontier id in a document they are about to send
+    /// somewhere.
+    /// </para>
+    /// </summary>
+    public string Export() =>
+        System.Text.Json.JsonSerializer.Serialize(Document, ChecklistStore.Json);
+
+    /// <summary>
+    /// Replaces this Commander's checklist with an exported one (remediation.md 10, item 15).
+    /// <para>
+    /// <b>Checked before anything is written, and refused as a whole.</b> The store already drops
+    /// a bad line on load and reports it, which is right for a file somebody hand-edited and
+    /// wrong for an import: half a checklist arriving with a note about the other half is worse
+    /// than the import not happening. So every line is validated first and one bad line refuses
+    /// the lot.
+    /// </para>
+    /// <para>
+    /// <b>The Commander in the file is ignored.</b> An import is "put this list on my account",
+    /// not "become whoever exported it" — the document is re-stamped with this Commander's own
+    /// id, which is also what stops an import writing over somebody else's document.
+    /// </para>
+    /// </summary>
+    public ChecklistChange Import(string json)
+    {
+        ChecklistDocument? incoming;
+
+        try
+        {
+            incoming = System.Text.Json.JsonSerializer.Deserialize<ChecklistDocument>(json, ChecklistStore.Json);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            return ChecklistChange.Refused(Document, $"That is not a checklist file: {ex.Message}");
+        }
+
+        if (incoming is null)
+        {
+            return ChecklistChange.Refused(Document, "That file has nothing in it.");
+        }
+
+        foreach (var item in incoming.Items)
+        {
+            if (ChecklistValidation.Problem(item) is { } wrong)
+            {
+                return ChecklistChange.Refused(Document, $"Nothing was imported: {wrong}");
+            }
+        }
+
+        var items = incoming.Items;
+
+        return list.Apply(
+            Fid,
+            Name,
+            document => new ChecklistChange(
+                document with { Items = items },
+                Changed: true,
+                items.Count == 1
+                    ? "Imported 1 line."
+                    : $"Imported {items.Count} lines."));
+    }
+
     public ChecklistChange Revise(
         ChecklistScope scope,
         ChecklistSource source,
@@ -682,6 +762,33 @@ public sealed class ChecklistService(
         }
 
         return string.Join(" ", said);
+    }
+
+    /// <summary>
+    /// The one line about a proposal the Commander has not answered, or null when there is none
+    /// (remediation.md 10, item 10).
+    /// <para>
+    /// Written by the thing that knows, and appended by <see cref="Conversation.TurnLoop.Standing"/>
+    /// only when it reads the same before and after a turn — so a turn that actually accepted
+    /// says nothing extra, and a turn that only claimed to is corrected on the spot.
+    /// </para>
+    /// <para>
+    /// It names the proposal rather than counting one, because the identity is what tells the two
+    /// cases apart: accepting one of two leaves a different sentence, not the same one again.
+    /// </para>
+    /// </summary>
+    public string? Standing()
+    {
+        var waiting = proposals.PendingFor(Fid);
+
+        return waiting.Count switch
+        {
+            0 => null,
+            1 => $"Still waiting on you: {waiting[0].Summary.TrimEnd('.')}. "
+                 + "Say \"accept\" or \"decline\".",
+            _ => $"Still waiting on you: {waiting.Count} proposals, including "
+                 + $"{waiting[0].Summary.TrimEnd('.')}. Say \"accept\" or \"decline\".",
+        };
     }
 
     public string Decline(string? id = null)

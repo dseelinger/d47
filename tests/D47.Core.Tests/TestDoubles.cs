@@ -115,9 +115,11 @@ public sealed class TestSurface
         GameStateStore gameState,
         LlmAvailabilityState availability,
         SpendTracker spend,
-        FakeVerbosityControl verbosity)
+        FakeVerbosityControl verbosity,
+        D47.Core.Checklists.ChecklistService checklists)
     {
         Verbosity = verbosity;
+        ChecklistService = checklists;
         Paths = paths;
         Store = store;
         Secrets = secrets;
@@ -147,6 +149,14 @@ public sealed class TestSurface
     public SpendTracker Spend { get; }
 
     public FakeVerbosityControl Verbosity { get; }
+
+    /// <summary>
+    /// The same instance the registry was built with, so a test can put a proposal in front of a
+    /// router that reads the state of one. Exposed because some command phrases are only live
+    /// while something is waiting (remediation.md 10, item 10) and a second service over the same
+    /// files would not be the one being asked.
+    /// </summary>
+    public D47.Core.Checklists.ChecklistService ChecklistService { get; }
 
     public KeywordRouter Router => new(Registry);
 
@@ -206,6 +216,7 @@ public sealed class TestSurface
             store, secrets, settings ?? store.Load(), NullLogger<SettingsService>.Instance);
 
         var verbosity = new FakeVerbosityControl();
+        var checklists = Checklists(install.Paths, state);
 
         CapabilityRegistry? built = null;
 
@@ -222,7 +233,7 @@ public sealed class TestSurface
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
-            Checklists(install.Paths, state)));
+            checklists));
 
         built = registry;
 
@@ -234,7 +245,8 @@ public sealed class TestSurface
         verbosity.FollowSettings(service);
 
         return new TestSurface(
-            install.Paths, store, secrets, service, registry, state, availability, spend, verbosity);
+            install.Paths, store, secrets, service, registry, state, availability, spend, verbosity,
+            checklists);
     }
 
     /// <summary>

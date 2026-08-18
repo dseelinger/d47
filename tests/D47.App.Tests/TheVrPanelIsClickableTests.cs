@@ -32,6 +32,33 @@ public class TheVrPanelIsClickableTests
     private static Control Tab(PanelView view, string name) =>
         view.GetVisualDescendants().OfType<RadioButton>().First(tab => (tab.Content as string) == name);
 
+    /// <summary>
+    /// The control carrying a word, whatever kind of control it is. The readings of a page are
+    /// answers in a chooser now rather than segments in a strip (remediation.md 10, item 1), and
+    /// what this file is about is a ray landing on a thing and the thing responding — not which
+    /// class the thing happens to be.
+    /// </summary>
+    private static Control Saying(PanelView view, string word) =>
+        view.GetVisualDescendants()
+            .OfType<Control>()
+            .Last(control => control is Button or RadioButton
+                             && control.GetVisualDescendants()
+                                 .OfType<TextBlock>()
+                                 .Any(text => text.Text == word));
+
+    /// <summary>
+    /// Opens the readings of this page the way a ray does: a press on the button that offers
+    /// them. Rendered in between, because a control that has just appeared has no bounds until
+    /// the next layout pass and a press aimed at it would land on whatever was there before.
+    /// </summary>
+    private static void OpenModes(PanelView view, OffscreenSurface surface)
+    {
+        surface.Render();
+        Assert.True(surface.Click(Centre(view, view.GetControl<Button>("ModeButton"))), "the press landed on something");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        surface.Render();
+    }
+
     [AvaloniaFact]
     public void PressingATabChangesThePage()
     {
@@ -43,12 +70,16 @@ public class TheVrPanelIsClickableTests
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
 
-        Assert.True(surface.Click(Centre(view, Tab(view, "Technical"))), "the press landed on something");
+        OpenModes(view, surface);
+
+        Assert.True(surface.Click(Centre(view, Saying(view, "Technical"))), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TranscriptPage.Technical, view.Page);
 
-        surface.Click(Centre(view, Tab(view, "Conversation")));
+        OpenModes(view, surface);
+
+        surface.Click(Centre(view, Saying(view, "Conversation")));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
@@ -71,7 +102,9 @@ public class TheVrPanelIsClickableTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var before = Frame(surface);
 
-        surface.Click(Centre(view, Tab(view, "Technical")));
+        OpenModes(view, surface);
+
+        surface.Click(Centre(view, Saying(view, "Technical")));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.NotEqual(before, Frame(surface));

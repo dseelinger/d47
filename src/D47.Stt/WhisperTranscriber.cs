@@ -43,6 +43,13 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
     private WhisperFactory? _factory;
     private WhisperProcessor? _processor;
+
+    /// <summary>
+    /// The names the current processor was built to expect, or null for none. Compared rather
+    /// than recomputed, so a conversation in one system costs one processor
+    /// (remediation.md 10, item 17).
+    /// </summary>
+    private string? _prompt;
     private string? _loadedFrom;
     private bool _disposed;
 
@@ -132,13 +139,8 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                     UseGpu = useGpu,
                 });
 
-                _processor = _factory.CreateBuilder()
-                    .WithLanguage("en")
-
-                    // One segment callback per utterance is what d47 wants; token timestamps
-                    // and per-token probabilities are work with nothing reading them.
-                    .WithProbabilities()
-                    .Build();
+                _processor = Processor(_factory, prompt: null);
+                _prompt = null;
 
                 _loadedFrom = modelPath;
                 Model = modelId;
@@ -190,6 +192,92 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
     }
 
+    /// <summary>
+    /// One processor, optionally primed with the names to expect (remediation.md 10, item 17).
+    /// <para>
+    /// The prompt is a builder setting rather than a per-call argument, so biasing towards a
+    /// different set of names means a new processor. See <see cref="Prime"/> for why that is
+    /// affordable.
+    /// </para>
+    /// </summary>
+    private static WhisperProcessor Processor(WhisperFactory factory, string? prompt)
+    {
+        var builder = factory.CreateBuilder()
+            .WithLanguage("en")
+
+            // One segment callback per utterance is what d47 wants; token timestamps
+            // and per-token probabilities are work with nothing reading them.
+            .WithProbabilities();
+
+        if (prompt is { Length: > 0 })
+        {
+            builder = builder.WithPrompt(prompt);
+        }
+
+        return builder.Build();
+    }
+
+    /// <summary>
+    /// Points the processor at the names this utterance might contain, rebuilding it only when
+    /// they have changed (remediation.md 10, item 17).
+    /// <para>
+    /// <b>This is the half that was missing.</b> <c>properNouns</c> has been a parameter of this
+    /// method since Phase 6, and the list has been built from the journal, capped and handed over
+    /// on every utterance the whole time — and then counted in a log line and dropped on the
+    /// floor. The log said "with 23 name hints" while nothing was biased by anything, which is
+    /// the worst shape a gap can have: it reports as working.
+    /// </para>
+    /// <para>
+    /// <b>Rebuilt on change rather than per utterance.</b> Whisper takes an initial prompt when
+    /// the processor is built, so a different set of names is a different processor. The names
+    /// come from where the Commander is and what they fly, so the set is stable across a
+    /// conversation and turns over on a jump — a handful of rebuilds an hour, against one per
+    /// utterance if this were unconditional. The factory and the loaded weights are untouched
+    /// either way; only the processor around them is remade.
+    /// </para>
+    /// </summary>
+    /// <summary>
+    /// The names as an initial prompt, or null when there are none.
+    /// <para>
+    /// Comma-separated, which is how an initial prompt is meant to carry a vocabulary: Whisper
+    /// reads it as text that came just before the audio, and a list of names is exactly the
+    /// context that makes the next name likelier. Blanks are dropped rather than joined into
+    /// ", , " — a Commander whose ship has no name should not spend prompt on the fact.
+    /// </para>
+    /// </summary>
+    internal static string? Vocabulary(IReadOnlyList<string> properNouns)
+    {
+        var wanted = string.Join(
+            ", ",
+            properNouns.Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name.Trim()));
+
+        return wanted.Length == 0 ? null : wanted;
+    }
+
+    private void Prime(IReadOnlyList<string> properNouns)
+    {
+        if (_factory is not { } factory)
+        {
+            return;
+        }
+
+        var wanted = Vocabulary(properNouns);
+
+        if (string.Equals(wanted, _prompt, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var replacement = Processor(factory, wanted);
+
+        _processor?.Dispose();
+        _processor = replacement;
+        _prompt = wanted;
+
+        _logger.LogDebug(
+            "Biasing transcription towards {Count} names", properNouns.Count);
+    }
+
     public async Task<Transcription> TranscribeAsync(
         Utterance utterance,
         IReadOnlyList<string> properNouns,
@@ -208,6 +296,9 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         try
         {
+            // Before the processor is read, because it is what may replace it.
+            Prime(properNouns);
+
             if (_processor is not { } processor)
             {
                 return new Transcription(string.Empty);
@@ -317,6 +408,9 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     {
         _processor?.Dispose();
         _processor = null;
+
+        // Or the next processor built for the same names would be skipped as already primed.
+        _prompt = null;
 
         _factory?.Dispose();
         _factory = null;

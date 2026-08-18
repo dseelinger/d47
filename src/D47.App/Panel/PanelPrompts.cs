@@ -30,17 +30,38 @@ public sealed class PanelPrompts
     private readonly Avalonia.Controls.Panel _layer;
 
     /// <summary>
-    /// The keys, in rows, as they are drawn.
+    /// The keys, in rows, as they are drawn. <b>The one table</b>: <c>OffscreenSurface</c> draws
+    /// this same array rather than a copy of it, because two boards that are meant to be the same
+    /// board and are declared twice are two boards that eventually are not.
     /// <para>
-    /// A staggered alphabetic board rather than a strict QWERTY, because what is typed into these
-    /// is a system name, a commander name or a number — hunted for one key at a time with a ray,
-    /// where alphabetical order is faster to hunt in than muscle memory that only works with ten
-    /// fingers on a desk. The same board <c>OffscreenSurface</c> already draws, for the same
-    /// reason, and stated once.
+    /// <b>QWERTY</b> (remediation.md 10, item 18). It was a staggered alphabetic board, declared
+    /// twice, with the same argument written out in both places: what is typed here is a system
+    /// name or a commander name, hunted one key at a time with a ray, and alphabetical order is
+    /// faster to hunt in than muscle memory that needs ten fingers on a desk.
+    /// </para>
+    /// <para>
+    /// That argument is wrong about where the hunting starts. A Commander does not arrive at this
+    /// board without a keyboard in their head — they have one, it is QWERTY, and it tells them
+    /// roughly where a letter is before they start looking. An alphabetical board throws that away
+    /// and makes every letter a fresh search of thirty boxes. The Commander asked for QWERTY, and
+    /// the ordering that is already in their hands beats the one that is merely sorted.
     /// </para>
     /// </summary>
     public static readonly string[] Keys =
-        ["1234567890", "abcdefghij", "klmnopqrst", "uvwxyz-_.", " "];
+        ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm-_.", " "];
+
+    /// <summary>
+    /// True in every listening mode, and what is shown until a host says something better. The
+    /// view model starts on this same string, so the two cannot drift.
+    /// </summary>
+    internal const string WaitingFallback = "Say it, or type it instead.";
+
+    /// <summary>
+    /// What a prompt waiting on speech says about itself — set by the surface from
+    /// <see cref="PanelViewModel.ListeningPrompt"/>, which the host fills from the listening
+    /// settings (remediation.md 10, item 12).
+    /// </summary>
+    public Func<string?>? Waiting { get; set; }
 
     /// <summary>What each open prompt is, by the crumb key it was pushed as.</summary>
     private readonly Dictionary<string, Func<Control>> _pages = [];
@@ -275,11 +296,12 @@ public sealed class PanelPrompts
 
             if (current)
             {
-                // Said rather than only coloured. "Fitted" is a fact about the ship, and a fact
-                // carried only by a hue is a fact half the Commanders reading it do not have.
+                // Said rather than only coloured. A fact carried only by a hue is a fact some of
+                // the Commanders reading it do not have. The word is the caller's, because this
+                // chooser is general and they are not.
                 stack.Children.Add(new TextBlock
                 {
-                    Text = "fitted now",
+                    Text = request.CurrentWord,
                     FontSize = TypeScale.Small,
                     [!TextBlock.ForegroundProperty] =
                         App.Current!.GetResourceObservable(ThemeManager.AccentKey).ToBinding(),
@@ -341,14 +363,30 @@ public sealed class PanelPrompts
 
         /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at
-        /// a blank page (list.md Phase 25). Worded for both listening modes: under push-to-talk
-        /// the microphone is not open until a key is held, and the panel's own indicator row is
-        /// on the same surface saying which state it is actually in.
+        /// a blank page (list.md Phase 25).
+        /// <para>
+        /// Read per show rather than held as a constant. It used to be the one sentence "Say it —
+        /// I am listening.", with a comment arguing it was worded for both modes; the Commander
+        /// reported it as untrue under push-to-talk, and they are right — the microphone is shut
+        /// until the key is held (remediation.md 10, item 12). The wording now comes from the
+        /// host, which is the only thing here that knows the mode, and is chosen in Core where a
+        /// test reads what a Commander reads.
+        /// </para>
         /// </summary>
-        private const string Waiting = "Say it — I am listening.";
+        private string Waiting => _host.Waiting?.Invoke() is { Length: > 0 } said
+            ? said
+            : WaitingFallback;
 
         private string _typed;
         private bool _keyboard;
+
+        /// <summary>
+        /// Whether the box is being filled from <see cref="_typed"/> rather than the other way
+        /// round. A drawn key and a heard word both write the box, and the box now writes back;
+        /// without this the two chase each other and a partial transcription lands in the value
+        /// that only Done is allowed to set.
+        /// </summary>
+        private bool _writingBack;
 
         public EntryPage(PanelPrompts host, EntryRequest request, Action<string> done)
         {
@@ -357,13 +395,30 @@ public sealed class PanelPrompts
             _done = done;
             _typed = request.Initial;
 
+            // Writable, which it was not (remediation.md 10, item 11). It was read-only because
+            // the drawn board and the microphone were the only two ways in, and on the surface
+            // that has neither of those problems -- a window, with a keyboard in front of it and a
+            // clipboard behind it -- that made the obvious thing to do the one thing that did not
+            // work. Ctrl+V comes with the control; nothing had to be invented for it.
+            //
+            // It costs the headset nothing. Nothing there sends a keystroke at this box, so it
+            // behaves exactly as it did; what changes is that the surface which can type, can.
             _shown = new TextBox
             {
                 Text = _typed,
-                IsReadOnly = true,
                 FontSize = TypeScale.Heading,
                 Padding = new Thickness(12, 10),
                 Margin = new Thickness(0, 0, 0, 10),
+            };
+
+            // The box is the value when the Commander types into it. Without this, what they typed
+            // is shown and then thrown away on Done, which reads as the keyboard being decorative.
+            _shown.TextChanged += (_, _) =>
+            {
+                if (!_writingBack)
+                {
+                    _typed = _shown.Text ?? string.Empty;
+                }
             };
 
             _state = new TextBlock
@@ -424,6 +479,13 @@ public sealed class PanelPrompts
                 });
 
             Show(request.Surface == EntrySurface.Keyboard);
+
+            // Focused once it is actually in a tree, so a Commander at a desk can simply type or
+            // paste (remediation.md 10, item 11). Harmless where there is no keyboard: nothing in
+            // the headset sends a keystroke, and the panel already swallows the push-to-talk key
+            // before any control sees it, which is what stops holding it filling the box with
+            // brackets.
+            AttachedToVisualTree += (_, _) => _shown.Focus();
         }
 
         /// <summary>Swaps between listening and typing, and says which one is on.</summary>
@@ -442,6 +504,26 @@ public sealed class PanelPrompts
 
             _state.Text = Waiting;
             _host.Attend(OnHeard);
+        }
+
+        /// <summary>
+        /// Puts the value into the box without the box putting it back. The drawn board edits
+        /// <see cref="_typed"/> and shows the result; the keyboard edits the box and it is read
+        /// back. Both are correct, and they must not chase each other.
+        /// </summary>
+        private void WriteBack()
+        {
+            _writingBack = true;
+
+            try
+            {
+                _shown.Text = _typed;
+                _shown.CaretIndex = _typed.Length;
+            }
+            finally
+            {
+                _writingBack = false;
+            }
         }
 
         private void OnHeard(Heard heard)
@@ -515,7 +597,7 @@ public sealed class PanelPrompts
                     pressed.Click += (_, _) =>
                     {
                         _typed += character;
-                        _shown.Text = _typed;
+                        WriteBack();
                     };
 
                     line.Children.Add(pressed);
@@ -528,14 +610,14 @@ public sealed class PanelPrompts
             back.Click += (_, _) =>
             {
                 _typed = _typed.Length > 0 ? _typed[..^1] : _typed;
-                _shown.Text = _typed;
+                WriteBack();
             };
 
             var clear = new Button { Content = "clear", Height = 40, Padding = new Thickness(16, 0) };
             clear.Click += (_, _) =>
             {
                 _typed = string.Empty;
-                _shown.Text = _typed;
+                WriteBack();
             };
 
             _board.Children.Add(new StackPanel

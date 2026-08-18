@@ -106,34 +106,35 @@ public class BusyTests
     }
 
     /// <summary>
-    /// The Log file mode reads a file off disk, so it is one of the things that says it is
+    /// The Log file reading is the one that touches a disk, so it is the one that says it is
     /// working — on the affordance that was touched.
     /// <para>
-    /// On the <em>mode</em> rather than on the tab since Phase 25, and that is the asymmetry the
-    /// collapse deliberately keeps: Conversation and Technical are one exchange at two
-    /// verbosities and the log is a file, so only one of the three has anything to say about
-    /// being busy. It is also why the collapse is three modes rather than a single toggle.
+    /// On the <em>mode control</em> rather than on the tab since Phase 25, and that is the
+    /// asymmetry the collapse deliberately keeps: Conversation and Technical are one exchange at
+    /// two verbosities and the log is a file, so only one of the three has anything to say about
+    /// being busy.
+    /// </para>
+    /// <para>
+    /// The control is a drop-down inside the pane now rather than a row of segments beside the
+    /// tabs (remediation.md 10, item 1), so the glyph rides the button that opens it — which is
+    /// still the thing the Commander pressed.
     /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheLogModeCarriesItsOwnGlyphOnBothSurfaces()
+    public void TheModeControlCarriesTheGlyphOnBothSurfaces()
     {
         var model = new PanelViewModel();
 
         foreach (var mode in new[] { PanelMode.Full, PanelMode.Mini })
         {
-            // The headset renders this same view, so the glyph has to be part of the panel
-            // rather than something the window hangs on it afterwards.
+            // The headset renders this same view, so the glyph has to be part of the panel rather
+            // than something the window hangs on it afterwards.
             var view = new PanelView { DataContext = model, Mode = mode };
 
             // Through the logical tree rather than the visual one, because this view has never
-            // been shown: a RadioButton's content is not realised into visuals until it is
-            // templated, and the claim is about a panel that the headset rasterises offscreen.
-            var glyph = view.GetControl<StackPanel>("Modes").Children
-                .OfType<RadioButton>()
-                .Select(button => button.Content)
-                .OfType<StackPanel>()
-                .SelectMany(content => content.Children)
+            // been shown and the claim is about a panel the headset rasterises offscreen.
+            var glyph = (view.GetControl<Button>("ModeButton").Content as StackPanel)
+                ?.Children
                 .OfType<BusyGlyph>()
                 .SingleOrDefault();
 

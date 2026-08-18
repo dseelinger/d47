@@ -12,6 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      So the prompt the transcriber is biased with can be asserted without a 75 MB model on disk
+      (remediation.md 10, item 17).
+    -->
+    <InternalsVisibleTo Include="D47.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Whisper.net" Version="1.9.1" />
 
     <!--

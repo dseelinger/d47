@@ -128,6 +128,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string? _switchesText;
     private string _microphoneDetail = string.Empty;
 
+    // True in every mode, and replaced by the host's own wording within a tick. A default that
+    // named a key or claimed to be listening would be a guess about a setting this model does
+    // not read, and one of the two guesses is the defect item 12 is about.
+    private string _listeningPrompt = PanelPrompts.WaitingFallback;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
@@ -244,6 +249,21 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     {
         get => _microphoneDetail;
         set => Set(ref _microphoneDetail, value);
+    }
+
+    /// <summary>
+    /// What an open prompt says while it waits on a spoken value (remediation.md 10, item 12).
+    /// <para>
+    /// Here rather than on <see cref="PanelPrompts"/> for the reason the line above is here: what
+    /// opens the gate is a settings question, and one model serves both surfaces — so the headset
+    /// and the window cannot end up telling the Commander two different things about one
+    /// microphone.
+    /// </para>
+    /// </summary>
+    public string ListeningPrompt
+    {
+        get => _listeningPrompt;
+        set => Set(ref _listeningPrompt, value);
     }
 
     /// <summary>

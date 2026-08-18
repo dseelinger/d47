@@ -74,8 +74,15 @@ public static class Gestures
         if (parsed.KeyModifiers.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
         if (parsed.KeyModifiers.HasFlag(KeyModifiers.Meta)) parts.Add("Win");
 
-        parts.Add(Printed.GetValueOrDefault(parsed.Key, parsed.Key.ToString()));
+        parts.Add(Describe(parsed.Key));
 
         return string.Join("+", parts);
     }
+
+    /// <summary>
+    /// One key, as it is printed on it. The same table <see cref="Describe(string?)"/> reads, so
+    /// a log line naming a single key cannot drift from a settings row naming a whole gesture —
+    /// which is how "bound to Oem4" survived the first fix.
+    /// </summary>
+    public static string Describe(Key key) => Printed.GetValueOrDefault(key, key.ToString());
 }
