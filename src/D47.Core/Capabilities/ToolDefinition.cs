@@ -57,7 +57,26 @@ public delegate Task<ToolResult> ToolHandler(ToolArguments arguments, Cancellati
 /// cannot change a byte of the cached prefix (architecture.md §6).
 /// </para>
 /// </summary>
-public sealed record ToolCommandPhrase(string Phrase, IReadOnlyDictionary<string, string> Arguments);
+public sealed record ToolCommandPhrase(string Phrase, IReadOnlyDictionary<string, string> Arguments)
+{
+    /// <summary>
+    /// Whether this phrase is live right now. Null is the normal case and means always.
+    /// <para>
+    /// It exists for the answers to a question d47 just asked (remediation.md 10, item 10). "Yes",
+    /// "go ahead" and "do it" are the words a Commander actually uses to accept a proposal, and
+    /// they cannot be bound to the checklist for the whole session — "yes" is the most common
+    /// word in the conversation, and a router that swallowed every one of them would be worse
+    /// than the gap it closed. Live only while something is waiting, they are the natural answer;
+    /// the rest of the time they are not a command at all and fall through to the model.
+    /// </para>
+    /// <para>
+    /// Read at match time rather than baked in, and this does <b>not</b> mutate a descriptor: it
+    /// is the same live read <c>dynamicCommands</c> already does. Commands are deliberately not
+    /// part of the tool's schema, so nothing here can move a byte of the cached prefix.
+    /// </para>
+    /// </summary>
+    public Func<bool>? When { get; init; }
+}
 
 public sealed record ToolDefinition
 {

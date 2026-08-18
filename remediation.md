@@ -48,9 +48,38 @@ states for its own entries.
 
 ## The checklist
 
-- [ ] **10. Accepting a removal did not remove it.** Reported verbatim: d47 proposed removing the
+- [x] **10. Accepting a removal did not remove it.** Reported verbatim: d47 proposed removing the
   one item on the list, the Commander accepted, d47 said "Removed from the list", and it was still
   there. A defect, and the only one here that is a lie rather than a rough edge.
+
+  **The removal was never reached, and the removal code was never wrong.** Three tests walk the
+  whole path over the two real files and pass unchanged. `accept_proposal` is protected — never
+  advertised to the model, refused if it asks — so the only ways in are the panel and five exact
+  whole-utterance phrases: *accept the proposal*, *accept the proposals*, *accept that*, *add it to
+  my checklist*, *do it then*. The Commander said **"Accept."**, which is none of them, so it fell
+  through to the model, which has no tool for this and said it had done it anyway.
+
+  Two changes, settled with the Commander. The **bare words now route** — *accept*, *accepted*,
+  *accept it*, and the same for declining — and they are live at all times, because saying one with
+  nothing pending is answered honestly and cannot act on anything. The **conversational answers**
+  — *yes*, *go ahead*, *do it*, *confirm*, *no*, *forget it* — route **only while a proposal is
+  waiting**, which needed a `When` condition on a command phrase. Bound for a whole session, "yes"
+  would swallow every yes in the conversation; bound to the moment there is a question, it is the
+  answer to it. Command phrases are deliberately outside the tool schema, so none of this moved a
+  byte of the cached prefix.
+
+  And the model can no longer be the only witness to what happened. **Four prompt-side defences
+  were already in place** when this was reported — the tool is protected, the prompt says every
+  turn that d47 cannot accept on the Commander's behalf, the reply says "I cannot make this change
+  myself", and the guardrails say never to claim an untaken action — and a model said "Accepted.
+  Removed from the list" through all four. So the turn loop now asks the store what is outstanding
+  before the model speaks and again after, and states the answer itself when nothing changed. It is
+  silent on the turn that resolves the thing, which is what keeps it a fact rather than a nag.
+
+  **One residual, stated rather than hidden:** a proposal outlives the session it was raised in, so
+  a Commander who leaves one unanswered has "yes" and "no" bound until they answer it. That is the
+  cost of the option chosen, and the standing line above is also what makes the pending proposal
+  impossible to forget about.
 - [ ] **11. Add a line will not take the keyboard.** In the desktop window it should accept typing
   and Ctrl+V, not only speech and the on-screen board.
 - [x] **12. "Say it — I am listening" is not true under push-to-talk.** It is not listening until

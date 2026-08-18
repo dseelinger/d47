@@ -125,6 +125,26 @@ public sealed class TurnLoop(
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
     /// <summary>
+    /// Business the Commander has left open, in one line, or null when there is none
+    /// (remediation.md 10, item 10).
+    /// <para>
+    /// <b>Asked twice — once before the model speaks and once after — and appended only when the
+    /// same answer comes back both times.</b> That is what makes it a statement of fact rather
+    /// than a nag: if the turn resolved the thing, the second answer differs and nothing is added.
+    /// </para>
+    /// <para>
+    /// It exists because the prompt-side defences are not enough and were demonstrated not to be.
+    /// A checklist proposal is <see cref="Capabilities.ToolDefinition.Protected"/>, the model is
+    /// told every turn that it cannot accept on the Commander's behalf, the reply it is answering
+    /// says "I cannot make this change myself", and the guardrails say never to claim an action
+    /// that was not taken. All four were in place, and a model still answered "Accepted. Removed
+    /// from the list" for a removal that never ran. Text the model writes cannot be trusted to
+    /// describe what the model did; this line is written by the thing that knows.
+    /// </para>
+    /// </summary>
+    public Func<string?>? Standing { get; set; }
+
+    /// <summary>
     /// How many times in one turn the model may ask for tools and be answered.
     /// <para>
     /// A stop, not a tuning knob. Each round is a billed request, and a model that answers every
@@ -364,6 +384,10 @@ public sealed class TurnLoop(
         var answer = string.Empty;
         var stopReason = LlmStopReason.Completed;
 
+        // Taken before the model is asked anything, so that a turn which resolves it can be told
+        // apart from a turn which merely says it did.
+        var standingBefore = Standing?.Invoke();
+
         for (var round = 1; ; round++)
         {
             // The last round is offered no tools at all. That is what turns the ceiling into an
@@ -471,6 +495,18 @@ public sealed class TurnLoop(
         }
 
         availability.MarkAvailable();
+
+        // Still open, and the model has finished talking about it. Appended rather than
+        // substituted: the reply may well be right, and the Commander is owed the state either
+        // way. Nothing is added to an empty answer -- a model that said nothing has not
+        // misdescribed anything.
+        if (answer.Length > 0
+            && standingBefore is { Length: > 0 }
+            && string.Equals(standingBefore, Standing?.Invoke(), StringComparison.Ordinal))
+        {
+            yield return new TurnEvent.TextDelta(" " + standingBefore);
+            answer = $"{answer} {standingBefore}";
+        }
 
         // A model on the Commander's own machine is free, and that is a fact about the address
         // rather than about the model id — no table row could hold it, because the id is whatever

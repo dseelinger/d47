@@ -254,6 +254,11 @@ public sealed class KeywordRouter(
             from tool in capability.Descriptor.Tools
             from command in tool.Commands
             where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+
+            // A phrase that is only an answer while there is a question. See
+            // ToolCommandPhrase.When -- this is what keeps "yes" out of the router except at the
+            // one moment it means something.
+            where command.When?.Invoke() ?? true
             orderby command.Phrase.Length descending
             select new ToolCommandMatch(
                 capability.Descriptor.Id,

@@ -1231,6 +1231,11 @@ public sealed class AppHost : IDisposable
             ActionsEnabled = () => settings.Current.Actions.Keyboard,
             WebSearchEnabled = () => settings.Current.Llm.WebSearch,
 
+            // A proposal the Commander has not answered, stated by the store rather than by the
+            // model (remediation.md 10, item 10). Asked either side of the turn, so it is silent
+            // on the turn that resolves it.
+            Standing = checklists.Standing,
+
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
                 Join(

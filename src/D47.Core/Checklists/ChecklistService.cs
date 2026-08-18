@@ -684,6 +684,33 @@ public sealed class ChecklistService(
         return string.Join(" ", said);
     }
 
+    /// <summary>
+    /// The one line about a proposal the Commander has not answered, or null when there is none
+    /// (remediation.md 10, item 10).
+    /// <para>
+    /// Written by the thing that knows, and appended by <see cref="Conversation.TurnLoop.Standing"/>
+    /// only when it reads the same before and after a turn — so a turn that actually accepted
+    /// says nothing extra, and a turn that only claimed to is corrected on the spot.
+    /// </para>
+    /// <para>
+    /// It names the proposal rather than counting one, because the identity is what tells the two
+    /// cases apart: accepting one of two leaves a different sentence, not the same one again.
+    /// </para>
+    /// </summary>
+    public string? Standing()
+    {
+        var waiting = proposals.PendingFor(Fid);
+
+        return waiting.Count switch
+        {
+            0 => null,
+            1 => $"Still waiting on you: {waiting[0].Summary.TrimEnd('.')}. "
+                 + "Say \"accept\" or \"decline\".",
+            _ => $"Still waiting on you: {waiting.Count} proposals, including "
+                 + $"{waiting[0].Summary.TrimEnd('.')}. Say \"accept\" or \"decline\".",
+        };
+    }
+
     public string Decline(string? id = null)
     {
         var taken = TakeOne(id);
