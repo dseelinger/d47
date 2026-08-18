@@ -35,7 +35,15 @@ internal static class Resolve
 
         foreach (var file in files)
         {
-            foreach (var line in File.ReadLines(file))
+            // Shared, because the newest journal is open in Elite while a Commander is playing —
+            // which is exactly when somebody runs this. JournalReader has always opened this way;
+            // this pass did not, so the soak crashed after reporting a clean run.
+            using var stream = new FileStream(
+                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
             {
                 if (line.Length == 0)
                 {

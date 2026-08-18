@@ -17,14 +17,87 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
-## 0.23.2 — 2026-08-17 — The panel flickered all the time, and every voice arrives at one level
+## 0.24.0 — 2026-08-17 — Systems worth remarking on, and the panel stopped flickering
 
-Two reports against 0.23.1. The first is a regression that 0.22.1 had already fixed once in a
-narrower form, which is the interesting part of it.
+list.md Phase 23. Jump into somewhere with a story attached and Directive 47 says so — once a day
+per system, and never twice because you came back for fuel. The plan of record, including the four
+calls settled before any code, is
+[docs/plans/phase-23-systems-worth-remarking-on.md](docs/plans/phase-23-systems-worth-remarking-on.md).
+
+### Twenty systems it ships knowing about
+
+Sol, Hutton Orbital's ninety-minute supercruise, Founders World, the Old Worlds, Jameson's wreck on
+HIP 12099 1 B, the first Thargoid barnacle in Merope, the first Guardian ruins in Synuefe XR-H
+d11-102, the Zurara derelict at the end of the Formidine Rift, Jaques Station's misjump, and the
+long way out — the Great Annihilator, Eta Carinae, Sagittarius A*, Explorer's Anchorage, Beagle
+Point.
+
+The selection is the maintainer's own compilation rather than a community list copied across; the
+facts in it are Frontier's, as `NOTICE` says. `tools/gen-lore.py` resolves every system's address
+through two independent services that have to agree, which caught two bad rows before they shipped:
+one system that had been renamed, and one that never existed.
+
+### Once a day, and the number was measured rather than picked
+
+Across 913 real journals, **30.1% of all 7,966 jumps re-enter a system visited within the last
+day** — so without the rule nearly a third of arrivals would be a repeat. Stretching the window to
+a week suppresses only 4.2 points more, because 88% of repeat visits happen inside the first day.
+The stamps are absolute and survive a restart, so logging off somewhere and coming back an hour
+later is quiet.
+
+A carrier jump counts as arriving.
+
+### Then, if you want it, a web search
+
+Set **Remark on arrival** to *Remark, and look it up* and the bare fact is followed by whatever a
+search turns up, spoken as a search result and never in the table's flat voice. It needs web search
+switched on and an endpoint that offers one — and if it cannot search, the first sentence says so
+rather than leaving you waiting for a second that never comes. A result that lands after you have
+jumped again is dropped. Nothing a search returns is ever written into a table.
+
+**This is the first search Directive 47 runs without being asked a question**, so the Privacy page's
+web-search row now says as much. It opens no new destination: the provider does the searching, on
+the connection that already carries your turns.
+
+### Your own notes, and three sentences that stay apart
+
+**Settings → Lore → Your own notes** is where you tell Directive 47 about a system it does not
+know. It searches first and records what happened, and what you get back later depends on which:
+
+```text
+Earth is here.                                              ← the shipped table
+You added this one, and the search agreed at the time: …    ← corroborated
+You told me: …                                              ← your word
+I wrote this one down myself, and nothing has checked it: … ← D47's own tool call
+```
+
+**Nothing is ever promoted.** Surviving a lookup is a label, not a verdict — an obscure but real
+site finds nothing, and a search can appear to agree with something a model half-invented.
+
+Directive 47 may write a note itself, which is a departure from how the checklist and the callouts
+are handled: adding one presses no key and silences no warning, so it is answered with a label
+rather than a lock. An entry the model wrote says so out loud every time, whatever the turn looked
+like from the inside — which is the honest reading, since a turn steered by a hostile in-game
+message is indistinguishable from one you asked for. Writing a note is limited to the system you
+are in, because a note is keyed on its address and addresses come out of your journal.
+
+One file for the installation, in `data/lore.json`, editable by hand — changes are noticed by
+comparing the contents, so an edit is never missed.
+
+### Also
+
+`spike/CorpusReplay` could not run while Elite was running: its second pass opened journals
+unshared, so the file the game holds open threw after the soak had already reported clean. Fixed —
+a gate that only runs with the game closed is a gate that gets skipped.
+
+### Two more, reported against 0.23.1
+
+The first is a regression, and a narrower form of it had already been fixed once in 0.22.2 —
+which is the interesting part of it.
 
 ### The VR panel flickered constantly
 
-0.22.1 fixed a flicker that happened *while the panel was being carried*, and the cause was that
+0.22.2 fixed a flicker that happened *while the panel was being carried*, and the cause was that
 carrying marked the surface dirty on every frame: the serving loop re-rendered the widget tree,
 converted it and handed the whole image back to SteamVR thirty times a second for pixels that had
 not changed.

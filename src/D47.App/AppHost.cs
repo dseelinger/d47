@@ -21,6 +21,7 @@ using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Listening;
+using D47.Core.Lore;
 using D47.Core.Persona;
 using D47.Core.Ticking;
 using D47.Llm;
@@ -284,6 +285,12 @@ public sealed class AppHost : IDisposable
     public Settings.SwitchEditing? SwitchEditing { get; private set; }
 
     /// <summary>
+    /// What the settings surface needs to show and write the Commander's own lore notes
+    /// (list.md Phase 23). Null under the designer, where the row shows a summary and no button.
+    /// </summary>
+    public Settings.LoreEditing? LoreEditing { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -450,6 +457,23 @@ public sealed class AppHost : IDisposable
 
         sampling.Load();
 
+        // Systems worth remarking on, in two files with two different characters (list.md
+        // Phase 23). The book is the Commander's own words, so it is polled for hand edits and
+        // reports problems rather than dropping lines; the visits are derived stamps, so a bad
+        // file is discarded and the worst it costs is hearing one remark twice. One set each for
+        // the installation rather than per Commander: a note about a system is true whichever
+        // character is flying, and the 24-hour rule is about not repeating yourself to a person.
+        var lore = new LoreBook(new LoreStore(
+            Path.Combine(paths.Data, "lore.json"),
+            loggerFactory.CreateLogger<LoreStore>()));
+
+        var loreVisits = new LoreVisits(
+            Path.Combine(paths.Data, "lore-visits.json"),
+            loggerFactory.CreateLogger<LoreVisits>());
+
+        lore.Store.Poll();
+        loreVisits.Load();
+
         var gameState = new GameStateStore { Restore = sampling.For };
 
         // The two state files Elite rewrites in place. Same folder as the journal, different
@@ -479,7 +503,7 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger<ChecklistProposalStore>()),
             () => gameState.Active);
 
-        var callouts = BuildCallouts(loaded, loggerFactory, checklists);
+        var callouts = BuildCallouts(loaded, loggerFactory, checklists, lore, loreVisits);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -521,6 +545,16 @@ public sealed class AppHost : IDisposable
             if (events.Any(journalEvent => journalEvent.Kind == "ScanOrganic"))
             {
                 sampling.Save(gameState.All);
+            }
+
+            // The Commander's lore notes are hand-editable, so they are polled like the checklist
+            // is; the remark stamps are written only when one was actually made, which is at most
+            // a handful of times a day.
+            lore.Store.Poll();
+
+            if (loreVisits.Dirty)
+            {
+                loreVisits.Save();
             }
         });
 
@@ -832,7 +866,8 @@ public sealed class AppHost : IDisposable
                     States = () => reconciler.States,
                     Unavailable = () => controllers.Unavailable,
                     Problems = () => switches.Problems,
-                }));
+                },
+                lore));
 
         built = capabilities;
 
@@ -986,6 +1021,16 @@ public sealed class AppHost : IDisposable
             reconciler,
             () => DateTimeOffset.Now,
             Path.Combine(paths.Data, "switch-capture.txt"));
+        // Whether a lookup is possible is asked at the moment the window opens rather than
+        // captured now: the Commander can change the setting or the provider between launching
+        // d47 and writing a note, and the window's own first sentence depends on the answer.
+        host.LoreEditing = new Settings.LoreEditing(
+            lore,
+            () => LoreCapability.PlaceOf(host.GameState.Active),
+            () => host.CanSearch,
+            host.SearchForAsync,
+            () => DateTimeOffset.Now);
+
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
         host.CoverageRecorder = coverage;
@@ -1124,7 +1169,9 @@ public sealed class AppHost : IDisposable
     private static CalloutEngine BuildCallouts(
         D47Settings settings,
         ILoggerFactory loggers,
-        ChecklistService checklists)
+        ChecklistService checklists,
+        LoreBook lore,
+        LoreVisits loreVisits)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -1161,6 +1208,10 @@ public sealed class AppHost : IDisposable
             // anything above it — a remark about enemy territory arriving as somebody opens fire
             // is worse than silence (list.md Phase 15).
             .Add(new RivalTerritoryCallout())
+
+            // Phase 23. Below the warnings and above the ambient line: it is news, but it is news
+            // about a place that will still be there in a minute.
+            .Add(new LoreCallout(lore, loreVisits))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -1213,6 +1264,13 @@ public sealed class AppHost : IDisposable
 
                 case ArrivalCallout arrival:
                     arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+
+                case LoreCallout lore:
+                    // Read through the settings the switch was handed rather than captured once,
+                    // so a Commander who turns the lookup off is obeyed on the next arrival
+                    // rather than on the next launch — the same shape the ambient row below has.
+                    lore.Remarks = () => callouts.Lore;
                     break;
 
                 case AmbientCallout ambient:
@@ -2699,6 +2757,125 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// Whether a web lookup could actually be run right now. <b>Both halves, and the endpoint
+    /// half is not the Commander's doing</b> — pointing <c>llm.endpoint</c> at a gateway turns
+    /// this off whatever the setting says, because a server-side search tool is the provider's to
+    /// offer. The same pair <see cref="TurnLoop"/> checks, read the same way.
+    /// </summary>
+    private bool CanSearch =>
+        Settings.Current.Llm.WebSearch
+        && Turns.Provider is { } provider
+        && provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;
+
+    /// <summary>
+    /// The same lore remark, told that nothing further is coming when nothing further can.
+    /// Everything that is not a lore remark, or that is owed nothing, passes through untouched.
+    /// </summary>
+    private Announcement Owing(Announcement announcement) =>
+        LoreCallout.AddressOf(announcement.Key) is not null
+        && Settings.Current.Callouts.Lore == LoreRemarks.Lookup
+        && !CanSearch
+            ? announcement with { Text = $"{announcement.Text} {LoreLookup.CannotSearch}" }
+            : announcement;
+
+    /// <summary>
+    /// One web search about a system, for the notes window — the same call the arrival lookup
+    /// makes, so a note is corroborated by exactly what a Commander would have heard.
+    /// </summary>
+    private Task<string?> SearchForAsync(string systemName, CancellationToken cancellationToken) =>
+        FlavourTurn.AskAsync(
+            Turns.Provider,
+            Turns.Model,
+            persona: null,
+            LoreLookup.Instruction(systemName),
+            gameState: null,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            cancellationToken,
+            webSearch: true);
+
+    /// <summary>
+    /// The second half of an arrival remark: a web search, and what it found (list.md Phase 23,
+    /// "Look it up, and say where the answer came from").
+    /// <para>
+    /// Fire and forget by design. Nothing is waiting on it, the Commander has already been told
+    /// the fact, and a result that never arrives is a result that is simply not spoken — which is
+    /// the same contract every flavour line has.
+    /// </para>
+    /// </summary>
+    private void LookUpLore(Announcement announcement)
+    {
+        if (LoreCallout.AddressOf(announcement.Key) is not { } address
+            || Settings.Current.Callouts.Lore != LoreRemarks.Lookup
+            || !CanSearch)
+        {
+            return;
+        }
+
+        // The name as the journal spelled it, taken now rather than when the answer lands: by
+        // then the Commander may be somewhere else, and this is the system being asked about.
+        var name = GameState.Active?.Location.StarSystem
+                   ?? Core.Knowledge.LoreDirectory.ByAddress(address)?.Name;
+
+        if (name is null)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            using var budget = new CancellationTokenSource(LoreLookup.Budget);
+
+            var found = await FlavourTurn.AskAsync(
+                Turns.Provider,
+                Turns.Model,
+
+                // No persona block. This is a report of what a search returned, and a core's
+                // voice is for what d47 has to say rather than for what somebody else wrote —
+                // which is the whole of the rule the attribution below carries.
+                persona: null,
+                LoreLookup.Instruction(name),
+                gameState: null,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                budget.Token,
+                webSearch: true).ConfigureAwait(false);
+
+            // Dropped rather than spoken when the Commander has moved on. They may be interdicted
+            // or three jumps away by now, and a sentence about a system they left is worse than
+            // silence.
+            if (LoreLookup.Spoken(found) is not { } line)
+            {
+                return;
+            }
+
+            if (!LoreLookup.StillHere(address, GameState.Active?.Location.SystemAddress))
+            {
+                _logger.LogInformation("A lore lookup for {System} landed after the Commander had left", name);
+                return;
+            }
+
+            await _speaking.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                await SayAsync(new Announcement($"{LoreCallout.KeyPrefix}search.{address}", line))
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "A lore lookup could not be spoken");
+            }
+            finally
+            {
+                _speaking.Release();
+            }
+        });
+    }
+
+    /// <summary>
     /// A turn the Commander addressed to a crew member. Swaps the prompt block and the voice for
     /// the duration and puts the ship's AI back afterwards, which is why it is a scope rather
     /// than two calls somebody has to remember to pair.
@@ -2806,6 +2983,12 @@ public sealed class AppHost : IDisposable
                 lines.Add(await VaryAsync(announcement).ConfigureAwait(false));
             }
 
+            // Whether the lore remarks in this batch are owed a second part, decided here rather
+            // than inside the speaking loop: a Commander who asked for a lookup the endpoint
+            // cannot run is told so in the first sentence, and the alternative is leaving them
+            // waiting for something that was never coming (list.md Phase 23).
+            lines = [.. lines.Select(Owing)];
+
             // One at a time, and in order. A previous batch still being spoken holds this one
             // until it finishes rather than talking over it.
             await _speaking.WaitAsync().ConfigureAwait(false);
@@ -2815,6 +2998,11 @@ public sealed class AppHost : IDisposable
                 foreach (var announcement in lines)
                 {
                     await SayAsync(announcement).ConfigureAwait(false);
+
+                    // After the fact has been spoken, and not awaited: the search is a round trip
+                    // through somebody else's index, and the rest of this batch is where a danger
+                    // callout would be waiting. It takes the speaking lock again when it lands.
+                    LookUpLore(announcement);
                 }
             }
             catch (Exception ex)

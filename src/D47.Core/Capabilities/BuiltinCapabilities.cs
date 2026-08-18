@@ -86,7 +86,12 @@ public static class BuiltinCapabilities
         // in tests that are not about them; the capability still registers, so its rows and its
         // documentation page exist, and it reports that it is reading nothing — which is what a
         // machine with no stick honestly looks like.
-        SwitchSurface? switches = null) =>
+        SwitchSurface? switches = null,
+
+        // The Commander's own notes about systems (list.md Phase 23). Null under the designer and
+        // in tests that are not about them; the capability still registers and still answers from
+        // the shipped table, because that table is compiled in rather than composed.
+        Lore.LoreBook? lore = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -101,6 +106,10 @@ public static class BuiltinCapabilities
         ChecklistCapability.Create(checklists),
         ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
         SystemNameCapability.Create(() => gameState.Active),
+        LoreCapability.Create(
+            lore,
+            () => LoreCapability.PlaceOf(gameState.Active),
+            now ?? (() => DateTimeOffset.MinValue)),
         ExobiologyCapability.Create(routes, () => gameState.Active, gameStatus),
         CommunityGoalCapability.Create(
             () => gameState.Active,

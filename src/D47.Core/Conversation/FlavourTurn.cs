@@ -41,6 +41,22 @@ public static class FlavourTurn
     /// breakpoint, never as the instruction itself (architecture.md §7).
     /// </param>
     /// <param name="gameState">Live state for the line to be about. Untrusted, and positioned as such.</param>
+    /// <param name="webSearch">
+    /// Whether the provider may search the web while writing this line (list.md Phase 23, "Look
+    /// it up, and say where the answer came from").
+    /// <para>
+    /// The caller decides, and has to have checked both halves first —
+    /// <see cref="LlmCapabilities.SupportsWebSearch"/> and the Commander's own setting — exactly
+    /// as <see cref="TurnLoop"/> does. A request declaring a tool the endpoint does not offer
+    /// fails outright rather than degrading.
+    /// </para>
+    /// <para>
+    /// <b>What comes back is a search result and is never anything else.</b> It is prose in a
+    /// turn: no row is written from it, and there is no code path here that could — which is what
+    /// keeps the standing rule a property of the design rather than a policy somebody remembers.
+    /// It is also untrusted, in the ordinary way that everything a model returns is.
+    /// </para>
+    /// </param>
     public static async Task<string?> AskAsync(
         ILlmProvider? provider,
         string? model,
@@ -50,7 +66,8 @@ public static class FlavourTurn
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool webSearch = false)
     {
         if (provider is null)
         {
@@ -70,6 +87,11 @@ public static class FlavourTurn
             // Short on purpose. This is a sentence or two spoken over a cockpit, and a budget
             // is a cheaper guarantee of that than an instruction the model may talk past.
             MaxOutputTokens = 400,
+
+            // Off for every line that came before Phase 23. A remark about being in supercruise
+            // has nothing to look up, and a search declared on a prompt that never needs one is
+            // a different cached prefix for no gain.
+            WebSearch = webSearch,
             Prompt = new PromptAssembly
             {
                 // No tools. There is nothing here for the model to do except speak, and an

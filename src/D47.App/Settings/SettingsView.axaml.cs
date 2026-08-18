@@ -77,6 +77,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     private SwitchEditing? _switches;
 
+    private LoreEditing? _lore;
+
     /// <summary>
     /// Phrases d47 already answers to, so the editor can refuse a macro that would shadow
     /// one. Supplied rather than derived here: the settings surface only knows the
@@ -108,7 +110,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         IReadOnlyList<string>? reservedPhrases = null,
         SwitchEditing? switches = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
-        Func<Task>? setUpKeys = null)
+        Func<Task>? setUpKeys = null,
+        LoreEditing? lore = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -120,6 +123,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _macros = macros;
         _checklists = checklists;
         _switches = switches;
+        _lore = lore;
         _reserved = reservedPhrases ?? [];
 
         StorageLine.Text =
@@ -1219,6 +1223,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == SwitchCapability.ListKey && _switches is not null:
                 return BuildSwitches(row);
 
+            // The fifth row that offers a window. A note about a system is not a settings value
+            // either — and writing one is the act that makes an entry the Commander's own word
+            // rather than the model's, so it has to live where the tool surface cannot reach.
+            case SettingKind.Info when row.Key == LoreCapability.BookKey && _lore is not null:
+                return BuildLore(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1279,6 +1289,43 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// A disclosure with the button that clears it. Refreshed on the press, so the row states
     /// the new answer rather than leaving the Commander to wonder whether anything happened.
     /// </summary>
+    /// <summary>
+    /// The lore summary, plus the way into the notes. Built like the checklist row above and for
+    /// the same reason: what is behind the button is the Commander's own writing, and the panel
+    /// is the only place it can be written.
+    /// </summary>
+    private (Control, Action, bool) BuildLore(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenLore",
+            Content = "Open your notes",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_lore is not { } editing || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.LoreWindow(editing).ShowDialog(owner);
+
+            // The window writes the file; this is what puts the new count on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
     private (Control, Action, bool) BuildPressable(SettingRow row)
     {
         var (inset, refresh, _) = BuildInfo(row);

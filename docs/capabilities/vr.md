@@ -1,7 +1,7 @@
 ---
 title: Headset
 group: Interface
-nav_order: 122
+nav_order: 123
 ---
 
 Directive 47 in your headset, drawn over Elite in your own cockpit.

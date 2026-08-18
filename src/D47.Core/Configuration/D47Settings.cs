@@ -522,6 +522,21 @@ public sealed record CalloutSettings
     /// <see cref="SettingsStore"/>, which converts it and clears it.
     /// </summary>
     public int? AmbientMinutes { get; init; }
+
+    /// <summary>
+    /// What to say on arriving in a system d47 knows something about (list.md Phase 23).
+    /// <para>
+    /// Three states rather than a switch and a switch, because a lookup with the remark off is
+    /// detail about something that was never announced.
+    /// </para>
+    /// <para>
+    /// <b>The lookup half is subordinate to <see cref="LlmSettings.WebSearch"/>, which is off
+    /// until a Commander turns it on.</b> That is what makes this default to the fullest setting
+    /// without defaulting anybody into unprompted spending: the consent for searching was already
+    /// asked for once, on its own row, and this does not ask for it again.
+    /// </para>
+    /// </summary>
+    public Callouts.LoreRemarks Lore { get; init; } = Callouts.LoreRemarks.Lookup;
 }
 
 public sealed record LlmSettings

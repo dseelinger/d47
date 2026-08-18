@@ -1,7 +1,7 @@
 ---
 title: HOTAS switches
 group: Acting on the game
-nav_order: 133
+nav_order: 134
 ---
 
 A maintained toggle on your stick or throttle that means a **state** rather than a press.
