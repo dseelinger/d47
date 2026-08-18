@@ -227,6 +227,20 @@ key stored. On a custom [endpoint](#endpoint) it stays off whatever this row say
 gateway can search is not something Directive 47 can know, and asking one that cannot would fail
 the turn rather than answer it without searching.
 
+**When it cannot search, it says so instead of answering from memory.** Directive 47 tells the
+model which half is missing, because the two have different answers:
+
+| What is missing | What you hear |
+|---|---|
+| This row is off | It cannot look things up, and you can turn this row on |
+| The endpoint offers no search | It cannot look things up from this endpoint — Anthropic's own offers search, a gateway or a local model may not |
+
+The endpoint wins when both apply. Being told to flip a switch that will not help is worse than
+being told nothing, because you flip it, nothing changes, and the next explanation is one you have
+a reason to distrust.
+
+Nothing is said at all when search works, so having it on costs you no words about it.
+
 ### About Me {#about-me}
 
 Standing context about you — how you fly, what you are working towards, what to call you — sent

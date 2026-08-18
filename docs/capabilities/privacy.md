@@ -48,7 +48,12 @@ information, your provider runs the search and reads the pages; Directive 47 onl
 reply. It is listed separately even though it adds no new address, because "your provider gets
 your question" and "your provider will go and fetch pages about it" are not the same disclosure,
 and organising this list by host rather than by what is done would have hidden the second behind
-the first. Off by default, and inactive whenever no model is usable.
+the first. Off by default, and inactive whenever no model is usable — **and inactive on an
+endpoint that offers no search**, which a custom endpoint generally is. Until v0.26.1 that last
+case read as active and went on to describe pages being fetched and a penny being billed, none of
+which could happen there. Claiming a transfer that cannot occur is the safe direction to be wrong
+in and is still wrong: a disclosure is only worth reading if it describes this machine, these
+settings, right now.
 
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which

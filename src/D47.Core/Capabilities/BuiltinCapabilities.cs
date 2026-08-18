@@ -105,7 +105,13 @@ public static class BuiltinCapabilities
         // The Commander's ship builds (list.md Phase 26). Null under the designer and in tests
         // that are not about them; the capability still registers, so its page exists, and every
         // tool answers that nothing is being tracked.
-        Ships.ShipPlanService? ships = null) =>
+        Ships.ShipPlanService? ships = null,
+
+        // Whether the provider and model in use offer a server-side web search. Null is "assume
+        // it can", which is what a caller with no provider to ask is entitled to say — the
+        // designer and every test that is not about egress. The app supplies the real answer, or
+        // the disclosure describes searches at an endpoint that will never make one.
+        Func<bool>? searchAvailable = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -155,7 +161,7 @@ public static class BuiltinCapabilities
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         UtilitiesCapability.Create(timekeeper, now, zone),
 
-        PrivacyCapability.Create(settings),
+        PrivacyCapability.Create(settings, searchAvailable),
         SettingsCapability.Create(settings),
     ];
 }
