@@ -91,7 +91,8 @@ public static class ConversationCapability
         TurnCancellation cancellation,
         Action silence,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
-        Func<Audio.SpeechSpend?>? speechSpend = null)
+        Func<Audio.SpeechSpend?>? speechSpend = null,
+        Func<IReadOnlyList<string>>? endpointModels = null)
     {
         return new CapabilityDescriptor
         {
@@ -157,7 +158,7 @@ public static class ConversationCapability
                         ToolResult.Ok(DescribeModel(settings.Current, availability, spend, speechSpend))),
                 },
             ],
-            Settings = BuildSettingRows(verifyKey),
+            Settings = BuildSettingRows(verifyKey, endpointModels),
         };
     }
 
@@ -199,8 +200,14 @@ public static class ConversationCapability
         return report.ToString().TrimEnd();
     }
 
+    /// <param name="endpointModels">
+    /// What the endpoint itself said it serves, when d47 has asked it (list.md Phase 29). Null
+    /// for a caller with nobody to ask — every test, and the app before the first handshake
+    /// answers — which leaves the picker exactly as it was.
+    /// </param>
     private static IReadOnlyList<SettingRow> BuildSettingRows(
-        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey)
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey,
+        Func<IReadOnlyList<string>>? endpointModels = null)
     {
         var rows = new List<SettingRow>
         {
@@ -229,6 +236,15 @@ public static class ConversationCapability
                     new SettingCommandPhrase("go local only", LlmProviderCatalog.NoneId),
                     new SettingCommandPhrase("use anthropic", LlmProviderCatalog.AnthropicId),
                     new SettingCommandPhrase("turn on the language model", LlmProviderCatalog.AnthropicId),
+                    new SettingCommandPhrase("use openai", LlmProviderCatalog.OpenAiId),
+                    new SettingCommandPhrase("use open ai", LlmProviderCatalog.OpenAiId),
+
+                    // Said the way a Commander would say it. Every one of these maps to a fixed
+                    // value from the closed provider set — never free-text extraction, which is
+                    // how a router points d47 at an endpoint nobody named. The *address* stays
+                    // panel-only for exactly that reason.
+                    new SettingCommandPhrase("use my own model", LlmProviderCatalog.OpenAiCompatibleId),
+                    new SettingCommandPhrase("use my local model", LlmProviderCatalog.OpenAiCompatibleId),
                 ],
                 Binding = new SettingBinding
                 {
@@ -275,7 +291,23 @@ public static class ConversationCapability
                 // A custom endpoint has models d47 has never heard of, so the list can be empty
                 // and a typed value has to be accepted (list.md Phase 4, the picker's contract).
                 AllowsFreeText = true,
-                ChoiceSource = s => LlmProviderCatalog.Selected(s.Llm.Provider).ModelsFor(s.Llm.Endpoint),
+
+                // The provider's own list where it has one, and the endpoint's own where it does
+                // not (list.md Phase 29). The order matters and is not a preference: every id in
+                // a catalog list is one the price table can quote, which is that field's whole
+                // contract, and a discovered id is priced as unknown. So the curated list is
+                // never displaced — it is only filled in behind where there was nothing.
+                //
+                // ModelsFor still answers nothing for an address d47 does not recognise, and that
+                // is still right: a model id belongs to its endpoint's namespace, and carrying
+                // one across is a stale selection waiting to fail at the first turn. What changed
+                // is that there is now somebody else to ask.
+                ChoiceSource = s =>
+                {
+                    var known = LlmProviderCatalog.Selected(s.Llm.Provider).ModelsFor(s.Llm.Endpoint);
+
+                    return known.Count > 0 ? known : endpointModels?.Invoke() ?? [];
+                },
                 AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
                 Binding = new SettingBinding
                 {
@@ -285,17 +317,26 @@ public static class ConversationCapability
             },
         };
 
-        // One key row per provider that needs one, rather than a single row whose secret name
+        // One key row per provider that has one, rather than a single row whose secret name
         // shifts underneath it. Each declares when it applies, so only the selected provider's
         // key is on screen.
+        //
+        // Every provider that *accepts* a key, not every provider that requires one (list.md
+        // Phase 29). A local server needs no account, and the row is still here because the same
+        // protocol is spoken by gateways that do want one — so the row's help says which of the
+        // two this is, and nothing gates on the box being filled in.
         rows.AddRange(
             from provider in LlmProviderCatalog.All
-            where provider.NeedsKey
+            where provider.AcceptsKey
             select new SettingRow
             {
                 Key = KeyRowFor(provider),
-                Label = $"{provider.Name} API key",
-                Help = "Stored encrypted for this Windows account. Write-only: D47 will never show it back to you.",
+                Label = provider.KeyOptional ? $"{provider.Name} API key (if it wants one)" : $"{provider.Name} API key",
+                Help = provider.KeyOptional
+                    ? "Optional — a model running on this machine needs no key, and leaving this empty is a "
+                      + "complete configuration. Fill it in only if the endpoint asks for one. Stored encrypted "
+                      + "for this Windows account, and write-only: D47 will never show it back to you."
+                    : "Stored encrypted for this Windows account. Write-only: D47 will never show it back to you.",
                 Kind = SettingKind.Secret,
                 SecretName = provider.KeySecretName,
                 DocsAnchor = "api-key",

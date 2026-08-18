@@ -92,7 +92,9 @@ sitting there greyed out.
 | Choice | What it is |
 |---|---|
 | `none` | No model at all. Directive 47 still answers what it recognises on its own, and says so when it cannot. |
-| `anthropic` | Claude models. |
+| `anthropic` | Claude models, over the Anthropic Messages API. |
+| `openai` | GPT models, over the OpenAI Responses API. Also reaches xAI and OpenRouter, which speak the same protocol at their own addresses. |
+| `openaiCompatible` | A model **you** run — Ollama, LM Studio, vLLM, llama.cpp — or any gateway speaking the older Chat Completions protocol. |
 
 **The model cannot change this.** Picking a provider picks where your turns go, so it is the
 panel's to change and not the model's.
@@ -100,14 +102,43 @@ panel's to change and not the model's.
 Changing it clears the model choice with it — model names belong to their provider, and carrying
 one across is how you end up with a selection that fails at the first question.
 
+**Why the last two are separate entries** and not one row you retarget: what leaves your machine
+is written per provider, and no single sentence can say both *everything goes to OpenAI* and
+*nothing leaves this machine*. Splitting them splits the key as well, which is right on its own
+terms — an OpenRouter key is not an OpenAI key — and it splits the prices, which matters because
+one set is published and the other cannot be.
+
+The protocol split is the same line. Server-side web search now lives in the tools array on the
+Responses API everywhere it exists, and Chat Completions is where every local server lives. No
+local server has a web search anyway, so the two halves land exactly where they belong.
+
 ### Endpoint {#endpoint}
 
 Only appears for providers where pointing somewhere else means something — a gateway, a proxy, a
 local server speaking the same protocol. Anthropic has one address and no reason to accept
 another, so with Anthropic selected there is no row here to worry about.
 
-Where it does appear, changing it empties the model list: Directive 47 knows which models live at
-the provider's own address and has no idea what lives at yours. You can still type one.
+For the two OpenAI-shaped providers this is the row that matters most. **Include the version
+segment**, the way every OpenAI-compatible client wants it:
+
+```text
+http://127.0.0.1:11434/v1
+```
+
+That is Ollama's default and the value the row starts with. LM Studio is usually
+`http://127.0.0.1:1234/v1`; a vLLM or llama.cpp server is whatever port you started it on. If you
+paste a bare origin with no path at all, Directive 47 fills the `/v1` in for you — anything else
+you type is left exactly as typed, because a client that rewrites addresses is a client that
+cannot reach the one place you needed.
+
+Changing it empties the model list, and then Directive 47 **asks the endpoint what it serves** and
+fills the list back in with the endpoint's own answer. Directive 47 still knows nothing about
+which models live at an address it has never heard of — that has not changed and should not, since
+a model name carried across from another provider is a selection that fails at the first question.
+What changed is that there is now somebody to ask.
+
+If the endpoint does not answer, or answers with an empty catalogue, the list stays empty and you
+type the name yourself. That has always been supported.
 
 ### Model {#model}
 
@@ -116,15 +147,31 @@ chosen" stays distinguishable from "I chose that one".
 
 Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5**. A companion answering
 questions about a game in flight is not the work the Opus tiers are priced for, and the Opus
-models are the next entries in the list if you want one.
+models are the next entries in the list if you want one. OpenAI's default is the middle tier for
+the same reason.
+
+**The OpenAI-compatible provider has no default at all**, and that is deliberate: your server
+serves whatever you loaded into it, so any guess would fail at the first question. Pick from the
+list the endpoint gave back, or type the name.
 
 The offered list is every model Directive 47 can price, so anything picked from it keeps the
 running cost honest. Type one by hand and it is accepted, but counted as unknown rather than as
-free.
+free. Models the *endpoint* offered are in that second category — Directive 47 has no published
+rate for a model it has never heard of, and inventing one would be worse than saying so.
+
+**A model on your own machine is priced at zero, and says why.** If the endpoint is a loopback
+address, the turn is free — that is a fact about the address rather than a guess about the model,
+and reporting "unknown" forever about something that genuinely costs nothing is noise pretending
+to be rigour.
 
 ### API key {#api-key}
 
 Encrypted for your Windows account and kept in `data/secrets.json` beside the executable.
+
+**For the OpenAI-compatible provider the key is optional**, and the row says so. A model running
+on your machine has no account and no key to paste, and leaving the box empty is a complete
+configuration rather than an unfinished one. The row is still there because a gateway speaking the
+same protocol may want one.
 
 **It is only ever written, never read back.** Directive 47 can tell you whether a key is stored
 and can replace it; nothing — not the panel, not the model, not the logs — can show you the key
@@ -157,14 +204,53 @@ looking at Directive 47 not answering rather than at a key not working.
 at all — offline, blocked, timed out — it says so and says nothing about the key. Being told a good
 key is bad would send you to your account page to issue another one that fails the same way.
 
+**On an OpenAI-shaped endpoint the check asks for the model list instead**, and answers something
+like `OpenAI answered — 5 models.` That is the better probe here for three reasons: it works with
+no key, which is the whole point of running your own model; it works with no model chosen, which a
+local server may well be; and it is the exact call Directive 47 makes anyway to fill the picker,
+rather than a proxy for it. A server that is simply not started yet reads as unreachable, not as a
+wrong address.
+
 If you already keep `ANTHROPIC_API_KEY` in your environment, that still works and is used when
 nothing is stored here.
+
+### When your endpoint cannot do something {#demotion}
+
+An OpenAI-compatible server is a moving target: the protocol has a dozen implementations and they
+do not agree about the optional parts. Whether tool calls work, whether reasoning effort is a
+field it knows, whether it will report token usage — none of that is in a model list, and
+Directive 47 does not guess.
+
+So it **advertises, then demotes**. Every request offers everything. If the endpoint refuses and
+names the field it refused, that one capability is switched off for that address and the turn is
+sent again without it. You see an answer, not an error and not a retry.
+
+Four things can be dropped this way, and each costs something small rather than the turn:
+
+| Refused | What you lose |
+|---|---|
+| Tool definitions | A model that can talk but not act. |
+| Reasoning effort | The effort router's lever; the endpoint decides for itself. |
+| Usage reporting | The turn is **unpriced** rather than mispriced. A session reported as free when it was paid for is worse than one that admits it does not know. |
+| The newer token-limit field | Nothing visible — the older field is sent instead. A reply still has to stop. |
+
+**Once per capability per address, and only for as long as Directive 47 is running.** It is never
+retried in a loop, because a client hunting for a request shape the server will accept is
+indistinguishable from an outage from where you are sitting. And it is never written to disk,
+because a demotion saved to a file outlives the server upgrade that fixed it — and you would have
+no way of knowing why the tools quietly stopped being offered.
+
+Nothing is demoted on a guess. A refusal that names no field turns nothing off.
 
 ### The first run {#first-run}
 
 On a fresh install there is no key, so the first thing you would otherwise do is hunt for this row
 in a surface with fourteen sections. Directive 47 offers the two that matter instead — this one,
 and the voice key as optional — with what each one sends and where.
+
+If you have picked the OpenAI-compatible provider, there may be nothing to offer: a key that is
+not required is not a missing one, so a local model is a complete configuration with an empty box
+and the first run has nothing to ask you for.
 
 **It is not a wall.** Decline everything and Directive 47 still runs: you get a typed companion
 that reads your journal and answers from what it can see, rather than one that talks back. That is

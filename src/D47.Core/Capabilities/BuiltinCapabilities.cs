@@ -121,7 +121,13 @@ public static class BuiltinCapabilities
         // it can", which is what a caller with no provider to ask is entitled to say — the
         // designer and every test that is not about egress. The app supplies the real answer, or
         // the disclosure describes searches at an endpoint that will never make one.
-        Func<bool>? searchAvailable = null) =>
+        Func<bool>? searchAvailable = null,
+
+        // What the language-model endpoint said it serves, when d47 has asked it (list.md Phase
+        // 29). Null under the designer and in every test, and null again in the app until the
+        // first handshake answers — the model picker then behaves exactly as it did before there
+        // was anybody to ask, which is the state it was designed for.
+        Func<IReadOnlyList<string>>? endpointModels = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -154,7 +160,11 @@ public static class BuiltinCapabilities
             // different numbers depending on where it is asked (list.md Phase 19). Passed as the
             // surface's own late-bound function, because the host that owns it does not exist
             // yet at this point in composition.
-            speech.SpeechSpend),
+            speech.SpeechSpend,
+
+            // Late-bound like the voice list, and for the same reason: it is fetched from the
+            // endpoint over the network well after this point in composition.
+            endpointModels),
         PersonaCapability.Create(personas, settings),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),
