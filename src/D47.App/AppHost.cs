@@ -468,7 +468,10 @@ public sealed class AppHost : IDisposable
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
-        logger.LogInformation("D47 {Version} starting; data folder {Data}", version, paths.Data);
+        // The earliest thing written, before settings, providers or the headset exist. It is
+        // deliberately thin: its job is to be the line that is there when startup dies before
+        // RecordStartup can say anything fuller (remediation.md 10, item 7).
+        logger.LogInformation("d47 {Version} is starting; data folder {Data}", version, paths.Data);
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
         var loaded = new D47Settings();
@@ -4249,8 +4252,58 @@ public sealed class AppHost : IDisposable
         return string.IsNullOrWhiteSpace(overridePath) ? JournalFolder.DefaultPath() : overridePath;
     }
 
+    /// <summary>
+    /// Why d47 is stopping, for the shutdown line (remediation.md 10, item 7).
+    /// <para>
+    /// Set by whoever knows — the window on its way closed, the updater handing over to the build
+    /// that replaces this one. The default is what is honestly knowable otherwise: a Windows
+    /// shutdown and a task manager kill both unwind through here saying nothing about themselves,
+    /// and a reason invented for them would be a reason a Commander might believe.
+    /// </para>
+    /// </summary>
+    public string StoppingBecause { get; set; } = "the process is ending";
+
+    /// <summary>
+    /// What this build is, what it is pointed at, and what came up — written once, at the moment
+    /// everything that can answer has (remediation.md 10, item 7).
+    /// <para>
+    /// Called from the composition root rather than from <see cref="Start"/>, because the headset
+    /// is brought up after the framework is and <see cref="Start"/> would have to guess at it. A
+    /// log that opens with this is a log that can answer "what was it even running" without the
+    /// Commander being asked.
+    /// </para>
+    /// </summary>
+    public void RecordStartup()
+    {
+        var current = Settings.Current;
+
+        _logger.LogInformation(
+            "d47 {Version} started. Model: {Provider}/{Model}. Speech: {Speech}. "
+            + "Hearing: {Whisper}, {Listening}. Headset: {Vr}. Data: {Data}",
+            Version,
+            LlmProviderCatalog.Selected(current.Llm.Provider)?.Name ?? current.Llm.Provider,
+            current.Llm.Model,
+            current.Speech.Provider,
+            current.Listening.Model,
+            current.Listening.Mode,
+            Vr is { } headset
+                ? $"{headset.State}{(current.Vr.Enabled ? string.Empty : " (switched off)")}"
+                : "not started",
+            Paths.Data);
+
+        if (StartupError is { Length: > 0 } failure)
+        {
+            _logger.LogWarning("Settings did not load cleanly at startup: {Problem}", failure);
+        }
+    }
+
     public void Dispose()
     {
+        // First, so the reason survives whatever the teardown below does. The matching "stopped
+        // cleanly" line is the last thing written, and its absence is the marker: a shutdown that
+        // says it is starting and never says it finished died on the way out.
+        _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
+
         CoverageRecorder?.Save();
 
         Settings.Changed -= OnSettingsChanged;
@@ -4277,6 +4330,11 @@ public sealed class AppHost : IDisposable
         Audio.Dispose();
         _audioSink.Dispose();
         (_tts as IDisposable)?.Dispose();
+
+        // Before the factory that owns the sink it writes to. Reaching this line is the whole of
+        // the clean marker -- anything that threw above it leaves the "is stopping" line standing
+        // on its own, which is what tells a reader the teardown is where to look.
+        _logger.LogInformation("d47 stopped cleanly");
 
         _loggerFactory.Dispose();
         Log.CloseAndFlush();

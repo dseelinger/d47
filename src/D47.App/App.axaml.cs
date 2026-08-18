@@ -97,6 +97,11 @@ public partial class App(AppHost? host) : Application
             // And a spoken phrase moves the headset panel too. Both surfaces, because a phrase
             // has no surface attached to it - see AppHost.Navigate.
             host.RouteNavigation(host.Vr.Nav);
+
+            // Last, because it reports the headset and the headset is brought up above. One line
+            // saying what this build is and what it is pointed at, so a log can answer "what was
+            // it running" without the Commander being asked (remediation.md 10, item 7).
+            host.RecordStartup();
         }
 
         base.OnFrameworkInitializationCompleted();

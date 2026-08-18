@@ -39,7 +39,17 @@ states for its own entries.
   into view and draw the current one in a different theme colour from the rest.
 - [ ] **7. The log file has no startup or shutdown events.** On start: version, build, whether VR
   came up, which providers are configured, the data folder. On stop: why, and whether it was
-  clean.
+  clean. *Built; not yet ticked — `AppHost` is not constructible in a test, so this is confirmed by
+  running d47 and reading the log rather than by an assertion.*
+
+  Three lines. A thin one before settings or the headset exist, whose job is to be there when
+  startup dies before anything fuller can be said; the full one once the headset has been brought
+  up, since that is the last thing that can answer for itself; and on the way out the reason and a
+  **clean marker that is the absence of a line** — "is stopping" is written first and "stopped
+  cleanly" last, so a teardown that died leaves the first standing alone. The reason is only ever
+  something d47 actually knows: the window closed, or an update is replacing this build. A Windows
+  shutdown and a kill both unwind saying nothing about themselves, and the default says the process
+  is ending rather than inventing which.
 - [x] **8. "Push-to-talk is bound to Oem4."** It is bound to `[` and should say so. `Gestures`
   already does exactly this and even records having fixed this once; the log line does not call it.
 - [x] **9. `JBFqnCBsd6RMkjVDRZzb` means nothing to a human.** The spoken-line log should say the
