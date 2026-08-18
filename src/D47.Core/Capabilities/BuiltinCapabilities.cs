@@ -144,7 +144,13 @@ public static class BuiltinCapabilities
         // action, because Core owns no thread and the pass is seven seconds long — the App decides
         // what to run it on, and a caller with nowhere to run it answers null and gets a row with
         // no button.
-        Func<Action?>? mineHabits = null) =>
+        Func<Action?>? mineHabits = null,
+
+        // The Commander's log (list.md Phase 33). Null under the designer and in tests that are not
+        // about it, on the same terms as the two above: the capability still registers, so its four
+        // rows and its documentation page exist, and every tool answers that there is nothing set
+        // up to write with.
+        Logbook.LogbookBook? logbook = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -208,6 +214,11 @@ public static class BuiltinCapabilities
         // game — and here rather than earlier because nav_order is the registry index, so inserting
         // near the end shifts two documentation pages instead of twenty-eight.
         HabitsCapability.Create(habits, mineHabits ?? (() => null)),
+
+        // And immediately after Habits, for the third time and the same reason: this is the other
+        // thing d47 does with the journals rather than with the game, and the tail of the list is
+        // where a new capability costs two documentation pages a nav_order instead of twenty-nine.
+        LogbookCapability.Create(logbook),
 
         PrivacyCapability.Create(settings, searchAvailable, memories, habits),
         SettingsCapability.Create(settings),

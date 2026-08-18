@@ -19,6 +19,7 @@ be deleted once the answer is written down.
 | `ElevenLabsProbe` | What voices does an ElevenLabs account offer, does a fresh one see any, and is the shared library a second source? | [docs/spikes/elevenlabs-voice-sources.md](../docs/spikes/elevenlabs-voice-sources.md) |
 | `CorpusReplay` | Do Phases 17-19 survive 912 real journals, and where does Elite spell one thing two ways? | [docs/spikes/journal-corpus-soak.md](../docs/spikes/journal-corpus-soak.md) |
 | `HabitProbe` | What does Phase 32's miner actually claim about 914 real journals, and does each detector clear its own floor? | list.md Phase 32 — **instrument, kept: every figure in the plan and the changelog came out of it** |
+| `LogbookProbe` | What does Phase 33's digest make of a real session, what would writing it cost, and does the finished log survive being read against the journal by hand? | list.md Phase 33 — **instrument, kept: it is the acceptance test the item asks for, and its dry mode spends nothing** |
 | `RadioAudition` | Does `RadioVoice` actually sound like a radio? | 0.22.0 shipped from it — **instrument, kept: the question recurs every time the filter is touched** |
 
 `RadioAudition` says a sentence through Edge Neural, optionally over the comms link, writes it as a
