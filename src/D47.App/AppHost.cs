@@ -874,7 +874,13 @@ public sealed class AppHost : IDisposable
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
-        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory);
+        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory)
+        {
+            // What a voice is called, for the log line that says who spoke (remediation.md 10,
+            // item 9). Asked per utterance rather than copied, because the catalogue arrives from
+            // the provider after this and changes when the provider does.
+            VoiceName = id => id is { Length: > 0 } ? self?.VoiceNameFor(id) : null,
+        };
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn
         // returns, because the turn returns while the reply is still being spoken. Wired here
@@ -1956,6 +1962,16 @@ public sealed class AppHost : IDisposable
     /// How the picker labels one — "Ava — Female, en-US" rather than the raw id. Falls back to
     /// the id, so a voice the Commander typed themselves still shows as what they typed.
     /// </summary>
+    /// <summary>
+    /// The voice's name on its own — "George" — or null when the catalogue does not know it, which
+    /// is the case for an id the Commander typed themselves and for every voice before the list
+    /// has been fetched. Null rather than the id, so the caller decides what to show
+    /// (remediation.md 10, item 9).
+    /// </summary>
+    internal string? VoiceNameFor(string id) =>
+        _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+            ?.Name;
+
     internal string VoiceLabelFor(string id) =>
         _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Label ?? id;

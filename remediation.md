@@ -42,7 +42,7 @@ states for its own entries.
   clean.
 - [x] **8. "Push-to-talk is bound to Oem4."** It is bound to `[` and should say so. `Gestures`
   already does exactly this and even records having fixed this once; the log line does not call it.
-- [ ] **9. `JBFqnCBsd6RMkjVDRZzb` means nothing to a human.** The spoken-line log should say the
+- [x] **9. `JBFqnCBsd6RMkjVDRZzb` means nothing to a human.** The spoken-line log should say the
   role, the name and the id. **Overturns a comment** in `SpeechPipeline.Record` arguing for the
   bare id.
 
