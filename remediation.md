@@ -108,9 +108,26 @@ states for its own entries.
 
 ## Hearing
 
-- [ ] **17. "Unlock Lei Cheung" was heard as "Unlockly Chung".** Elite's proper nouns are exactly
+- [x] **17. "Unlock Lei Cheung" was heard as "Unlockly Chung".** Elite's proper nouns are exactly
   what Whisper invents around. d47 already holds engineer, system, ship and module names; the
   transcriber is to be biased toward them rather than corrected afterwards.
+
+  **The biasing was built in Phase 6 and never connected.** `properNouns` has been a parameter of
+  `TranscribeAsync` the whole time, the journal-derived list has been built and capped and handed
+  over on every utterance, and the transcriber counted it in a log line and dropped it. "Transcribed
+  2.4s of audio in 310ms with 23 name hints" was written while nothing was biased by anything —
+  the worst shape a gap can have, because it reports as working. It is an initial prompt now, and
+  the processor is rebuilt only when the names change, which is a handful of times an hour rather
+  than once per utterance.
+
+  **And the journal half could never have caught this one.** An engineer the Commander has not
+  unlocked appears nowhere in their journal, so the single name they were saying was the one name
+  the list could not offer. The engineers are a closed shipped set, so twenty of them are reserved
+  at the end of the list — journal names still come first, because where the Commander is now beats
+  every engineer in the galaxy, but a Commander with a large fleet no longer crowds them out.
+
+  *Whether it now hears the name is a question for a microphone, not an assertion.* What is
+  asserted is that the names become a prompt and that the prompt reaches the processor.
 
 ## The on-screen keyboard
 

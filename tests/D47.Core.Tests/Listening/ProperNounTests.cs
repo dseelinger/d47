@@ -30,11 +30,25 @@ public class ProperNounTests
         return store.Active!;
     }
 
+    /// <summary>
+    /// No Commander at all is no list. A Commander with nothing in their journal yet is a
+    /// different case and is no longer empty: the engineers are shipped rather than derived, so
+    /// they are offered from the first utterance (remediation.md 10, item 17). That is the whole
+    /// point of the shipped half — an engineer nobody has unlocked is in nobody's journal.
+    /// </summary>
     [Fact]
-    public void NothingKnownOffersNoNames()
+    public void NothingKnownOffersOnlyWhatD47AlreadyShips()
     {
         Assert.Empty(ProperNouns.From(null));
-        Assert.Empty(ProperNouns.From(StateFrom()));
+
+        var fresh = ProperNouns.From(StateFrom());
+
+        Assert.NotEmpty(fresh);
+        Assert.All(
+            fresh,
+            name => Assert.Contains(
+                name,
+                D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.Name)));
     }
 
     [Fact]
