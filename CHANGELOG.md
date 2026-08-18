@@ -17,6 +17,83 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.29.0 — 2026-08-18 — Bring your own model
+
+list.md Phase 29. A second and third provider, so the model answering you can be one you pay
+somebody else for or one running on your own machine.
+
+### Two more providers
+
+**OpenAI**, over the Responses API, and **any OpenAI-compatible endpoint**, over Chat Completions —
+Ollama, LM Studio, vLLM, llama.cpp, or a gateway at its own address. Both hand-rolled over HTTP and
+server-sent events rather than built on a vendor SDK: half of this exists to talk to implementations
+that get details wrong, and a strongly-typed client is exactly where tolerance for one goes to die.
+
+**Two entries rather than one you retarget**, because what leaves your machine is written per
+provider and no single sentence can say both *everything goes to OpenAI* and *nothing leaves this
+machine*. It splits the key as well, which is right on its own terms — an OpenRouter key is not an
+OpenAI key.
+
+**The protocol split falls on the same line.** Server-side web search is now a named entry in the
+tools array wherever it exists, and it lives on Responses; Chat Completions is where every local
+server lives, and no local server has a search anyway. So switching provider keeps the capability
+instead of watching it go dark.
+
+### A model on your own machine
+
+**The key is optional now, and that was a change rather than a setting.** It used to be derived from
+whether a key row existed at all, so a local server with no account was unreachable by construction
+rather than because anybody decided it should be. The row is still there — a gateway may want one —
+and it says which of the two it is.
+
+**A loopback endpoint is priced at zero and says why.** An unknown model stays unpriced, which is
+the honest answer; a model served from your own machine is not unknown, it is free, and reporting
+"unknown" about it forever is noise pretending to be rigour.
+
+**And the disclosure says nothing leaves this machine** — the first time the honest answer to *what
+is leaving* has been *nothing*. One judgement behind both, so a turn cannot be disclosed as private
+and billed as remote. It reads the address and never resolves it: a hostname that happens to point
+here today is treated as remote and disclosed in full.
+
+### Asking the endpoint what it can do
+
+Changing the endpoint empties the model list, and Directive 47 now **asks the endpoint what it
+serves** and fills the list back in with its own answer. Verifying a key does the same thing rather
+than spending a turn — it works with no key and no model chosen, which are the two configurations
+this release exists to reach.
+
+**What a model list cannot answer is learned from the first refusal.** Whether tool calls work,
+whether reasoning effort is a field it knows, whether it will report usage at all: every request
+offers everything, and an endpoint that refuses and names the field has that one capability switched
+off for that address while the turn is sent again without it. You see an answer, not an error.
+
+**Once per capability per address, and never written down.** A client hunting for a request shape
+the server will accept is indistinguishable from an outage, and a demotion saved to a file outlives
+the server upgrade that fixed it.
+
+### Token accounting stopped being one provider's arithmetic
+
+**Anthropic's input count excludes what was cached; OpenAI's includes it.** The same sum then counts
+those tokens twice, on every cached turn, and produces a number plausible enough that nothing would
+ever have reported it. Converted once, at the seam.
+
+**The published rates were read rather than remembered**, which caught two things that had moved.
+OpenAI bills cache writes now — 1.25x uncached input from the GPT-5.6 family, reported as their own
+count — so the input total includes the written part as well as the cached one. And the older models
+discount cache reads by half rather than by nine tenths, so those rates are per model now instead of
+derived from one provider's terms.
+
+**A turn whose provider reported no usage is unpriced rather than free.** Streamed Chat Completions
+sends no usage at all unless asked, and plenty of servers do not send one even when asked — a
+session reported as free when it was paid for is worse than one that admits it does not know.
+
+**The cold-prefix regression detector no longer means different things depending on who answered.**
+It watched for a cache *write*, which is one provider's evidence: on an endpoint that never reports
+one it would have sat at zero and read as caching being perfect rather than as the instrument not
+measuring. Turns nobody could measure are now counted separately from turns that measured fine.
+
+---
+
 ## 0.28.0 — 2026-08-18 — Engineers
 
 list.md Phase 28. A tab that answers who to go and get next, and shows you why it thinks so.
