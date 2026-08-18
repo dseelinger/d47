@@ -126,13 +126,14 @@ public sealed class VrHost : IDisposable
         D47.Core.Utilities.AlarmStore? alarmStore = null,
         D47.Core.Ships.ShipPlanService? ships = null,
         Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
-        D47.Core.Loadout.OnFootPlanService? onFoot = null)
+        D47.Core.Loadout.OnFootPlanService? onFoot = null,
+        D47.Core.Engineers.EngineerPlanService? unlocks = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
-            checklists, timekeeper, alarmStore, ships, gameState, onFoot);
+            checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -259,6 +260,7 @@ public sealed class VrHost : IDisposable
             // which is what keeps a ticking clock from re-rendering a transcript nobody moved
             // (list.md Phase 24).
             _panel.TickClocks();
+            _panel.TickEngineers();
 
             Serve(context.Now);
         });

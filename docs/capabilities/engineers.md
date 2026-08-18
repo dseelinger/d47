@@ -4,11 +4,13 @@ group: Knowledge
 nav_order: 107
 ---
 
-Where each engineer is, what they grade, and how far along you are with them.
+Where each engineer is, what they grade, how far along you are with them, and who to go and get
+next.
 
 > "which engineers have I unlocked"
 > "who grades frame shift drives"
 > "where is Felicity Farseer"
+> "who should I unlock next"
 
 Nothing here touches the network. Two halves that only mean something together: a shipped
 **directory** — who works where and modifies what — and your **standing**, folded from your own
@@ -121,7 +123,117 @@ generator and asserted by a test, so it cannot quietly stop applying.
 **The observed half still comes first where the two meet.** An engineer who has invited you *is* a
 referral that has already happened, and no table can be more right about that than your own journal.
 
+## The Engineers tab
+
+Two roots. The **Directory** is everybody, ordered by what you can act on today; the **Route** is
+the solver. Drilling a directory row opens the one engineer behind it. The search box filters on
+the name, the system and what they grade.
+
+### Who can I go and get
+
+```text
+1 of 38 unlocked, 12 within reach. 2 planned things are waiting on somebody you have not unlocked.
+
+You can go and get these now
+  * Felicity Farseer - 1 planned thing wants them     131 ly, about 5 jumps
+  * Elvira Martuuk - 1 planned thing wants them       182 ly, about 7 jumps
+    The Dweller                                        34 ly, about 2 jumps
+    Jude Navarro                                       67 ly, about 3 jumps
+```
+
+Sorted by what you can act on today — **within reach, then already yours, then behind somebody
+else** — rather than alphabetically or by speciality, because the question is nearly always *who
+can I go and get*. Alphabetical order answers that for nobody.
+
+The line at the top carries the count that belongs to the Loadout tab: **how many of your plans are
+waiting on somebody you have not unlocked.** A plan blocked on a person is not a plan blocked on
+materials, and the gap analysis cannot tell you which it is.
+
+One pane rather than two: a row already holds the name, where they are and what wants them, so a
+second column beside it would only repeat them.
+
+### How do I get everything my plans need
+
+```text
+Felicity Farseer — 1 step, 131 ly, about 5 jumps, and 1 planned thing covered.
+  Felicity Farseer at Farseer Inc in Deciat — 131 ly, about 5 jumps
+      first: Gain exploration rank Scout or higher.
+      hand over: Meta-alloys ×1
+      grade 3 with them takes 2,000,000 cr of profit sold there
+      covers: Long Way (Krait MkII) · FrameShiftDrive — grade 3 Increased FSD Range
+
+Professor Palin — 3 steps, 466 ly, about 18 jumps, and 2 planned things covered.
+  Elvira Martuuk at Long Sight Base in Khun — 182 ly, about 7 jumps
+      first: Attain a maximum distance from your career start location of at least 300 light years.
+      hand over: Soontill Relics ×3
+  Marco Qwent at Qwent Research Base in Sirius — 186 ly, about 7 jumps
+      first: Gain invitation from Sirius Corporation.
+      hand over: Modular Terminals ×25
+  Professor Palin at Abel Laboratory in Arque — 98 ly, about 4 jumps
+      first: Attain a maximum distance from your career start location of at least 5,000 light years.
+      hand over: Sensor Fragment ×25
+      covers: Bad Idea (Python) · MainEngines — grade 5 Dirty Drive Tuning
+      covers: Long Way (Krait MkII) · FrameShiftDrive — grade 3 Increased FSD Range
+```
+
+**A solver rather than a display.** Walking one engineer's referral chain is exact and cheap, and it
+answers the wrong question — a blueprint usually lists several engineers, and one unlock covers many
+plans. Marsha Hicks rolls multi-cannons, cannons, fragment cannons, fuel scoops, refineries and four
+limpet controllers, all at grade 5. So the best next unlock is the one that satisfies the most of
+what you have planned, not the shortest chain.
+
+**One unit, and it is jumps.** Distance converts at the range of the ship you are actually flying,
+and each stop carries its own leg, so a long chain of short hops and one long haul are compared on
+the same scale instead of being balanced by a tuning constant. **Colonia needs no rule of its own**:
+22,000 light years is hundreds of jumps and swamps any step count — and because the distance is
+measured from where you are standing, being in Colonia flips it automatically.
+
+**What is not a trip is not turned into one.** A tribute of fifty units is a shopping run to a system
+you know, and it is already inside the leg that reaches it. A combat rank is not a trip at all, so it
+is printed in Frontier's own words, breaks ties, and never becomes a number. That is also why the
+whole working is on the page: a ranking nobody can inspect is an oracle, and when it is wrong — or
+when you would simply rather go somewhere else — you cannot tell a bad answer from a bug.
+
+Distance stays the primary key deliberately. Making "you can just go and do it" a class above it
+would put an already-invited Colonia engineer ahead of one in the Bubble, and undo the thing Colonia
+needed no rule for.
+
+### The route reaches the checklist as a chain
+
+Pressing **Put this route on my checklist** proposes one item per stop, in flying order, each
+carrying the grade that stop actually needs:
+
+```text
+Rank 3 with Liz Ryder
+Rank 3 with Hera Tani
+Rank 5 with Broo Tarquin
+```
+
+A single line reading "unlock Broo Tarquin" hides two engineers and two rank climbs behind a tick you
+can never make progress on. It is a proposal, like every other plan promotion: accepting it is your
+own act.
+
+## Distance is arithmetic, and that is the whole point
+
+The coordinates ship in `Engineers.tsv`, generated rather than hand-written. `get_distance` computes
+the same figure correctly and is a network call — so ranking thirty-eight people through one every
+time a plan changes is a tab that is useless in flight and unusable offline.
+
+Your own position comes out of the journal: `Location`, `FSDJump` and `CarrierJump` each carry a
+`StarPos`, and across a 912-journal corpus all three carried one every time, 9,332 of 9,332. Nothing
+else does — so docking, which names your system and states no position, deliberately leaves it alone
+rather than making it unknown the moment you land.
+
+Where either end is unknown the answer is "distance unknown" rather than zero. Zero would sort an
+engineer nobody can place to the top of a list whose entire subject is who is nearest.
+
 ## Tools
+
+`get_engineer_route` and `promote_engineer_route` are `Protected`: reachable from the panel and from
+a phrase, never from the model. Cost rather than safety is the reason — the advertised tool surface
+is re-billed on every turn and the largest profile sat at 39,639 bytes against a 40,000 ceiling.
+Nothing is lost by it: "who should I unlock next" is a fixed question with no free-text argument in
+it, which is exactly the shape the keyword router handles with no round trip at all.
 
 ### `get_engineer_progress`
 
@@ -135,6 +247,22 @@ referral that has already happened, and no table can be more right about that th
 {"type":"object","properties":{"engineer":{"type":"string","description":"An engineer by name \u2014 for example \u0022Farseer\u0022 or \u0022Hera Tani\u0022."},"grades":{"type":"string","description":"A kind of module to find engineers for \u2014 for example \u0022Frame Shift Drive\u0022, \u0022Thrusters\u0022 or \u0022Shield Generator\u0022."}},"required":[],"additionalProperties":false}
 ```
 
+### `get_engineer_route`
+
+Say *"who should I unlock next"*, *"what is the fastest way in"* or *"which engineer next"*.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### `promote_engineer_route`
+
+Say *"put that route on my checklist"* or *"promote this unlock"*.
+
+```json
+{"type":"object","properties":{"engineer":{"type":"string","description":"Which engineer, by name. Omit for the best next unlock."}},"required":[],"additionalProperties":false}
+```
+
 ## Notes for anyone reading the code
 
 `tools/gen-engineers.py` builds the directory from four sources, each the authority on exactly
@@ -144,7 +272,8 @@ one thing:
   the id64 of the system and the market id of the base. It names neither place.
 - **spansh.co.uk** turns those two ids into names, at *generation* time. That one network call per
   engineer is made in the tool precisely so that asking "where is Farseer" at the controls reaches
-  nothing at all.
+  nothing at all. The same record carries the system's coordinates, so the ranking costs no call
+  the tool was not already making.
 - **msarilar/EDEngineer** (MIT) `blueprints.json` is what they grade: every blueprint names the
   engineers who offer it and the grade it reaches.
 - **EDDiscovery/EliteDangerousCore** (Apache-2.0) is the chain and the prose around it — who refers
@@ -170,6 +299,27 @@ distinction the materials inventory draws.
 
 Standings are keyed by engineer id rather than by name. A name is a string two sources can spell
 differently; an id is not.
+
+**Coordinates are agreed by two sources and checked against a third.** spansh states them and
+EDDiscovery states them, both exactly, on Elite's 1/32 ly grid — so a difference wider than one grid
+step is not rounding, and the generator refuses to write the table at all rather than ship a distance
+nobody can check. Run it with `--corpus` and Frontier's own `StarPos` becomes a third opinion
+wherever you have been there; the shipped table had all 38 placed and 31 of them confirmed that way.
+
+**Several referrers mean any of them, and one row argues with that.** Yi Shen's own meeting text
+reads "Complete referral tasks for Baltanos, Eleanor Bresa and Rosa Dayette" — three requirements
+rather than a choice of three. The directory has read it as a choice since the chain arrived and the
+solver keeps that reading; what it does about it is name the referrer it picked and print the meeting
+text underneath, so you read Frontier's sentence rather than only Directive 47's count of it. That is
+the whole reason a ranking has to show its work.
+
+**Who can roll a thing is read per grade**, because the blueprint table states it per grade: six
+engineers offer Increased FSD Range at grade 3 and three of them at grade 5. Deriving the list from
+an engineer's top grade instead would send you to Professor Palin for a grade 5 drive he does not
+roll. The directory's own speciality lists are unioned in beside it, and that half is not
+redundant — the four Colonia on-foot engineers have no rows in the blueprint table at all, so reading
+it alone tells a Colonia Commander that nobody within twenty-two thousand light years can do the
+thing three people next door do.
 
 Four engineers — Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen — have a location and no
 blueprint data. They are kept, and the answer says "I have no record of what they modify" rather

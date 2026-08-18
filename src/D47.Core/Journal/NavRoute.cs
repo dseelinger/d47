@@ -133,19 +133,10 @@ public sealed record RouteHop(string StarSystem, string? StarClass)
     public bool Hazardous => StarClasses.IsHazardous(StarClass);
 
     /// <summary>Light years to another hop, or null when either position is missing.</summary>
-    public double? DistanceTo(RouteHop other)
-    {
-        if (Position is not { } from || other.Position is not { } to)
-        {
-            return null;
-        }
-
-        var dx = from.X - to.X;
-        var dy = from.Y - to.Y;
-        var dz = from.Z - to.Z;
-
-        return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
-    }
+    public double? DistanceTo(RouteHop other) =>
+        Position is { } from && other.Position is { } to
+            ? StarPosition.Between(from, to)
+            : null;
 }
 
 /// <summary>

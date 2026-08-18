@@ -50,6 +50,24 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// </summary>
     public long? SystemAddress { get; init; }
 
+    /// <summary>
+    /// Where the system is, in light years on Frontier's axes (list.md Phase 28, "Where every
+    /// engineer is").
+    /// <para>
+    /// <b>Three events state it and nothing else does</b> — <c>Location</c>, <c>FSDJump</c> and
+    /// <c>CarrierJump</c> — and across a 912-journal corpus all three carried it on every
+    /// occurrence, 9,332 of 9,332. So this is set exactly where the system name is set by an
+    /// event that knows where the Commander now is, and left alone by everything else.
+    /// </para>
+    /// <para>
+    /// <b>Assigned rather than coalesced</b>, like <see cref="SystemAddress"/> and for a sharper
+    /// version of the same reason: a position carried over from the previous system is a wrong
+    /// distance to every engineer in the galaxy, stated confidently, and a ranking built on it
+    /// looks exactly like a ranking built on the right one.
+    /// </para>
+    /// </summary>
+    public StarPosition? StarPos { get; init; }
+
     /// <summary>Planet, star, station — as Elite words it, so d47 never invents a classification.</summary>
     public string? BodyType { get; init; }
 
@@ -121,6 +139,19 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         journalEvent.String("StarSystem") is null ? current : journalEvent.Long("SystemAddress");
 
     /// <summary>
+    /// The position for such an event, on the same rule and for a sharper version of the same
+    /// reason.
+    /// <para>
+    /// <b>Only for the three arms that carry a <c>StarPos</c>.</b> Every other event naming a
+    /// system — <c>Docked</c>, <c>SupercruiseExit</c>, <c>ApproachBody</c> — states no position,
+    /// so calling this there would read as the Commander's position having become unknown the
+    /// moment they landed.
+    /// </para>
+    /// </summary>
+    private static StarPosition? Placed(JournalEvent journalEvent, StarPosition? current) =>
+        journalEvent.String("StarSystem") is null ? current : StarPosition.Read(journalEvent.Raw);
+
+    /// <summary>
     /// Folds one event into the current location. The switch covers the events that state
     /// position; everything else falls through unchanged.
     /// </summary>
@@ -135,6 +166,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SystemAddress = Addressed(journalEvent, SystemAddress),
+            StarPos = Placed(journalEvent, StarPos),
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
             Docked = journalEvent.Bool("Docked"),
@@ -161,6 +193,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SystemAddress = Addressed(journalEvent, SystemAddress),
+            StarPos = Placed(journalEvent, StarPos),
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
             Docked = false,

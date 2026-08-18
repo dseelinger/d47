@@ -88,7 +88,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Utilities.AlarmStore? alarmStore = null,
         D47.Core.Ships.ShipPlanService? ships = null,
         Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
-        D47.Core.Loadout.OnFootPlanService? onFoot = null)
+        D47.Core.Loadout.OnFootPlanService? onFoot = null,
+        D47.Core.Engineers.EngineerPlanService? unlocks = null)
     {
         _dumpTo = dumpTo;
 
@@ -121,6 +122,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // The fleet, in the headset too (list.md Phase 26), and the suits beside it (Phase
             // 27). A Commander deciding what to fit is often the Commander sitting in the ship.
             _view.EnableLoadout(ships, checklists, gameState, onFoot);
+        }
+
+        if (unlocks is not null && ships is not null && gameState is not null)
+        {
+            // And who to go and get next (list.md Phase 28). The distances are arithmetic over a
+            // shipped table, so this page is exactly as useful in a headset in flight as it is at
+            // a desk with a browser open — which is the whole reason the coordinates ship.
+            _view.EnableEngineers(unlocks, ships, gameState, onFoot);
         }
 
         if (timekeeper is not null && alarmStore is not null)
@@ -178,6 +187,22 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         }
 
         _view.TickClocks();
+        _dirty = true;
+    }
+
+    /// <summary>
+    /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody
+    /// (list.md Phase 28). Marks the surface dirty only when something actually moved: unlike a
+    /// clock, a ranking with nothing behind it has not changed.
+    /// </summary>
+    public void TickEngineers()
+    {
+        if (_view.Tab != D47.Core.Interface.PanelTab.Engineers)
+        {
+            return;
+        }
+
+        _view.TickEngineers();
         _dirty = true;
     }
 

@@ -133,6 +133,12 @@ public partial class MainWindow : Window
             Panel.EnableLoadout(
                 host.Ships, host.Checklists, () => host.GameState.Active, host.OnFootPlans);
 
+            // Who to go and unlock next, read across both plan stores (list.md Phase 28). Both
+            // surfaces again, because a Commander deciding where to fly is usually already in
+            // the ship.
+            Panel.EnableEngineers(
+                host.Unlocks, host.Ships, () => host.GameState.Active, host.OnFootPlans);
+
             // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at
             // a wall clock.
@@ -176,6 +182,13 @@ public partial class MainWindow : Window
             // at all until the tab has been opened once.
             host.Tick.Add("clocks", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickClocks));
+
+            // The engineer pages move for a different reason: nothing has to happen for a clock
+            // to change, and everything has to happen for a ranking to. So this one asks whether
+            // the Commander has moved, re-fitted or unlocked somebody, and redraws only then
+            // (list.md Phase 28).
+            host.Tick.Add("engineers", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickEngineers));
 
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
