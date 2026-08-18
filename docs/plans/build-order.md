@@ -200,46 +200,6 @@ Fully specced, and the hardest to verify — it needed the physical hardware in 
 building it, and the failure modes were all about a switch and the game disagreeing. Narrow audience
 by construction: it does nothing for a Commander without a switch panel.
 
-## ~~Phase 22 — Reading the screen~~ — **cut 2026-08-18**
-
-**Cut by the maintainer as more trouble than it was worth, with the measurement that gated it never
-taken.** This section is kept rather than deleted, because a phase that was ranked, researched,
-instrumented and then abandoned is the most useful entry this document has — every other one records
-a decision to build something.
-
-**What it was.** Reading Elite's rendered output for the two things the journal cannot say: system
-names on the Galaxy Map, and the contacts panel. It was ranked last deliberately, as the only phase
-whose own spike might close it outright, and it was also the only one that would have retired another
-phase's impossibility — the contacts panel that Phase 15's rival-Power warning is written around.
-
-**How far it got.** Both desk questions were answered on 2026-08-16: a licence-clean computer-vision
-path, and the finding that the phase's two use cases carry *different* exposure under Frontier's
-rules, which reversed the order `list.md` had them in. An enquiry to `community@frontier.co.uk` was
-drafted and **never sent** — the tool was registered with Frontier separately, which was worth doing
-on its own account and is unaffected by this. The instrument for the primary question was built and
-proved against real Elite pixels, and **the frames it existed to judge were never taken.** So the
-question this phase turned on has no answer and now never will: nobody knows whether a world-space
-panel can be located in the desktop mirror at all.
-
-**What was given up, stated plainly.** Phase 15's rival-Power warning stays unreachable **for good**.
-Across 221 event types there is no contact, spawn or proximity event, and this was the only route to
-one. Anyone reading Phase 15 and wondering why that item is written as impossible should find the
-answer here rather than rediscovering it.
-
-**What went with it.** Two plan documents, two spike pages and `spike/MirrorProbe`, all deleted at
-the maintainer's instruction. Recoverable from git at the commit that removed them, live nowhere.
-The two spike pages carried findings that were not really about this phase — Emgu.CV is GPL-3.0,
-`OpenCvSharp4.runtime.win` declares Apache-2.0 while packing an LGPL-2.1 FFmpeg binary, and
-Frontier's legal pages answer 403 to an automated fetch — and anyone who ever needs those should go
-and read the deleted pages rather than trust this summary of them. The last of the three survives
-independently in [the spikes index](../spikes/README.md), because it is a fact about the method
-rather than about screen reading.
-
-**The number is retired, not freed.** No later phase takes 22. Several hundred comments in this
-repository cite `list.md Phase N` to say why a thing exists, and renumbering something into 22 would
-silently repoint every citation that ever said "Phase 22" at a phase about something else — which is
-the failure the appended-only rule exists to prevent, arriving by a different road.
-
 ## Phase 29 — Bring your own model — **appended 2026-08-18, and it does not jump the queue**
 
 An OpenAI provider, plus any endpoint speaking its protocol. Added under the appended-only rule, and
@@ -247,16 +207,16 @@ the sequencing question was asked and answered explicitly on the day it was writ
 run before Phase 22.**
 
 **Phase 22 was cut the same day, which settles that question by removing it rather than by
-answering it.** The record is kept because the reasoning still applies to the phases that remain: it
+answering it** — see the tombstone in [list.md](../../list.md), which is all that is kept of it. The
+record of the decision stays here because the reasoning still applies to the phases that remain: it
 was declined for jumping ahead even though the argument was a good one — unblocked, self-contained,
 no spike, no source, no hardware — because *the phase numbers are the order* is the rule this
 document exists to keep, and the first line of it is that nothing runs ahead of them. That rule did
 not stop applying when the phase in front of it went away.
 
-**So Phase 29 now runs after 27 and 28, and nothing has been decided about that.** It follows from
-the numbers rather than from a judgement about the three of them, and the cut above changed which
-phases are in front of it, not the rule that puts them there. If it should overtake those, that is
-an argument to be made here. It is not a change to the numbers.
+**Phase 29 is now next, and nothing was decided to make it so.** 27 and 28 shipped on 2026-08-18 and
+22 was cut the same day, so the queue in front of it emptied by the same rule that made it wait — the
+numbers, rather than a judgement about any of them. That is the point: the rule decided both times.
 
 **It is ranked on a guess, and the guess is named.** The value of the compatible half depends on how
 many Commanders want to run a local model, which is the one input this document cannot measure and
