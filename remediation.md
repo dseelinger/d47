@@ -253,6 +253,41 @@ rather than prettifying a symbol into something that looks like one.
   keeps its name and size; the space to the right carries the full specification of the highlighted
   module. One layout pattern, both choosers.
 
+  **The formula is validated against an independent reference.** The Commander supplied EDOMH's
+  panel for a 1G turreted Pulse Laser. Every figure coriolis carries matches it — damage 1.19, cost
+  26,000, mass 2, power 0.38, distributor draw and thermal load 0.19, piercing 20, range 3,000,
+  falloff 500 — and so do **both computed values**: RoF `1/0.3` = 3.333 against EDOMH's 3.33/s, and
+  DPS `1.19 x 3.333` = 3.967 against its 3.97HP/s. Only `breachdmg` differs, 1 against 1.01, which is
+  below anything worth showing. **EDOMH calls `fireint` "Burst Interval" and shows rate of fire
+  derived from it**, so d47 says *rate of fire* too: that is the number people read.
+
+  **Ten figures, which is what "relatively simple" came to.** Damage per second, damage and its
+  type, rate of fire, maximum range, thermal load and distributor draw, beside the four the table
+  already carries — mass, power draw, integrity, cost. Left out and available later: armour
+  piercing, jitter, breach damage and its chances, damage falloff start, boot time, and the seven
+  boolean flags. None of them answer *which of these two should I buy*.
+
+  **Damage type is not one value, and engineering moves it.** Raised by the Commander and measured:
+
+  - **156 of 178 distributions sum to exactly 1** — real proportions. A Rail Gun is 67% thermal and
+    33% kinetic, a Plasma Accelerator 60% absolute, 20% kinetic, 20% thermal.
+  - **22 sum to 2, and they are exactly the 22 carrying `X`.** So `X present` and `sums to 2` are
+    the same set, which makes the rule exact rather than a guess: on an anti-xeno weapon `X` is a
+    **marker beside a real type**, not a share of it. Rendering it as a percentage would print
+    "100% AX, 100% kinetic", which reads as broken.
+  - **Six experimentals convert damage type** — Inertial Impact to kinetic, High Yield Shell to
+    explosive, Incendiary Rounds and Overload Munitions to thermal.
+
+  **And the source will not say by how much.** Those effects are recorded as
+  `Damage partially kinetic|✓|good` — the delta is a **tick, not a number**. So the line says the
+  conversion happens and quotes no figure, which is the Phase 36 saturation rule again: say plainly
+  what is not modelled rather than print something that looks computed. Three renderings follow —
+  proportions as percentages, `X` as *"effective against Thargoids"*, and a converting experimental
+  as a statement with no number.
+
+  **One incidental to fix before building on this column**: `effects` separates entries with `;`,
+  not `,`. An attribute tally here split on the comma and undercounted.
+
 - [x] **3. A searchable chooser should take the keyboard when it appears.** *Built.* Reported against the
   module chooser: *"I should not have to click it."* The precedent already ships — `PanelPrompts`
   focuses the text-entry prompt on `AttachedToVisualTree` (remediation 10 item 11), and the comment
@@ -443,6 +478,47 @@ rather than prettifying a symbol into something that looks like one.
   fuzzy, and `Same` is already case-insensitive, so an unknown share of those already resolve.
   **Reading the matcher will not settle it and running it will.** That classification is the fix's
   input, and nothing else produces it.
+
+  **Decided 2026-08-19: re-key the blueprint table, and no classification by hand is needed after
+  all.** The whole difficulty above came from solving the wrong join.
+
+  **The rarity-weighted scoring the note suggests as "the obvious next try" is worse than useless.**
+  It resolves 27 groups instead of 25 and gets some of them **wrong** — `hs` (Heat Sink Launcher),
+  `ec` (Electronic Countermeasure) and `po` (Point Defence) all come out as *Chaff Launcher*. Those
+  four take an **identical blueprint set**, so from the guid side they carry no information that
+  tells them apart, and scoring simply picks one with confidence. A confident wrong answer is thread
+  A's own failure mode, so that path is closed permanently rather than under-tuned.
+
+  **`modifications/modules.json` maps group to blueprint *fdname* exactly** — `bh` to
+  `Armour_Advanced`, `ss` to `Sensor_Expanded`. That answers *which blueprints can this module take*
+  with no ambiguity for all 87 groups. The ambiguity was only ever in mapping a group to
+  **EDEngineer's `Type`**, which was needed only because `Blueprints.tsv` happens to be keyed on
+  `Type` — an accident of how the table was built, not something the data forces.
+
+  So: **key the blueprint table on coriolis's fdname and carry the group.** The offer becomes exact,
+  the 19 unresolved groups stop existing, and nothing is hand-written. EDEngineer stays the source of
+  ingredients, engineers and effects, joined on the guid, which it is reliable for.
+
+  **What the disagreements actually were.** Every module name in the specification table, checked
+  for whether its group carries blueprints against whether the running `ForModule` finds any — 275
+  disagreements, and they are three causes plus a mistake of mine:
+
+  | Cause | Count | |
+  |---|---|---|
+  | **Bulkheads** | **241** | The name carries the hull, the table keys on `Armour`. **This is ask #7, and it is one fix** |
+  | **Variant modules** | ~30 | Bi-Weave and Prismatic Shield Generator, Frame Shift Drive (SCO), Detailed Surface Scanner, Cargo Scanner, Pack-Hound Missile Rack, Retributor Beam Laser, the Mk II thrusters, Guardian Hybrid Power Plant and Distributor |
+  | **A measurement error** | 4 | Guardian Gauss, Plasma and Shard Cannon, and Shock Cannon. I tested only the `blueprints` key and ignored `specials`, which 22 groups carry. Not defects |
+  | **Agreeing** | 85 | 34 engineerable, 51 correctly with none — `ft` among them, which is **ask #12** answered by the data |
+
+  **Not to be built as a lookup from names.** The group answers *whether*, exactly; the fdname
+  answers *which*, exactly; and a module whose group has blueprints but whose name resolves to none
+  is a **generator-time report**, never a silent fallback. That is thread A's rule applied to its own
+  worst case.
+
+  One residue, and it is cosmetic: where a single fdname is shared by 23 module types, EDEngineer
+  gives it two display names — `Lightweight` and `Lightweight Mount`. That is the same ambiguity in
+  miniature, but it now decides only **what a row is called** and never **whether it is offered**.
+  Report it and take the majority spelling.
 
 - [x] **7. Never ask a question with one answer — or with none.** *Built, with one exception below.* Reported against Life Support:
   *"there is only one choice, it can't be anything else."* `AskModule` early-outs when
