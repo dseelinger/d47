@@ -218,14 +218,45 @@ public sealed record ShipLoadout
     /// <summary>
     /// How the Commander refers to the ship: the name they gave it where there is one, and the
     /// type otherwise.
+    /// <para>
+    /// The type is the journal's own localised name where it wrote one, then the specification
+    /// table, and only then the raw symbol. Frontier does not always send `Ship_Localised` — it is
+    /// absent for a Type-10 Defender, whose symbol is `type9_military` — so without the middle step
+    /// this said *"Oxen, a type9_military is not bound to a core"* while the fleet page one tab
+    /// over said "Oxen (Type-10 Defender)" off the same table. Remediation 15 item 14: the name was
+    /// in hand and the id was printed anyway.
+    /// </para>
     /// </summary>
-    public string? Describe() => (Name, TypeName ?? Type) switch
+    public string? Describe() => (Name, TypeSaid) switch
     {
         ({ } name, { } type) => $"{name}, a {type}",
         (null, { } type) => type,
         ({ } name, null) => name,
         _ => null,
     };
+
+    /// <summary>
+    /// The hull as it should be said: Frontier's localised name where they sent one, then the
+    /// specification table, and only then the raw symbol.
+    /// <para>
+    /// <b><see cref="TypeName"/> cannot be tested for null here.</b> It is built from
+    /// <c>JournalJson.Named</c>, which is <c>Ship_Localised ?? Ship</c> — so it is never null when
+    /// the event names a ship at all, and a fallback hung off it would be unreachable code that
+    /// looks like a fix. What says Frontier omitted the localised name is that the two are the
+    /// <i>same string</i>, which is the test made here.
+    /// </para>
+    /// <para>
+    /// The table last but before the symbol, and never over the journal: where Frontier sends a
+    /// localised name it is what the Commander reads in game. Same idiom as
+    /// <see cref="Ships.ShipBuild.HullName"/>, which is where the fleet page gets the spelling this
+    /// used to disagree with. Remediation 15 item 14.
+    /// </para>
+    /// </summary>
+    private string? TypeSaid =>
+        Type is not { } symbol ? TypeName
+        : TypeName is { } localised && !string.Equals(localised, symbol, StringComparison.Ordinal)
+            ? localised
+            : Knowledge.EliteSpecifications.Ship(symbol)?.Name ?? symbol;
 
     public ShipLoadout Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {

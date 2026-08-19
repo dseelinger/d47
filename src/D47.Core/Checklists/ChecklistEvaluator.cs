@@ -214,7 +214,12 @@ public static class ChecklistEvaluator
 
         return new ChecklistVerdict(
             ChecklistState.Open,
-            $"{Describe(module)} is not engineered."
+            // "is not currently engineered", because this verdict is a reading taken at a moment
+            // and not a property of the module. The plan carries the journal's verdict with its
+            // date, standing as of when it was taken, and it ships as ChecklistState.Open — still
+            // to do. "Point Defence is not engineered" reads as a fact about Point Defence; the
+            // only thing d47 knows is a fact about right now. Remediation 15 item 5.
+            $"{Describe(module)} is not currently engineered."
             + (total is { } rolls ? $" Grade {intent.Grade} is {Rolls(rolls)} from here." : string.Empty));
     }
 

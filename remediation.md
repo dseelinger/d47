@@ -147,7 +147,7 @@ rather than prettifying a symbol into something that looks like one.
   change and becomes a question about what d47 can honestly claim, which is the same shape as
   Phase 36's saturation figure: measure it, or say plainly that it is not modelled.
 
-- [ ] **3. A searchable chooser should take the keyboard when it appears.** Reported against the
+- [x] **3. A searchable chooser should take the keyboard when it appears.** *Built.* Reported against the
   module chooser: *"I should not have to click it."* The precedent already ships — `PanelPrompts`
   focuses the text-entry prompt on `AttachedToVisualTree` (remediation 10 item 11), and the comment
   there already disposes of both objections: nothing in the headset sends a keystroke, and the
@@ -191,7 +191,7 @@ rather than prettifying a symbol into something that looks like one.
   you* — or stays quiet on a page already carrying a materials list, is a judgement about nagging
   rather than a defect.
 
-- [ ] **5. "Point Defence is not engineered" should be "is not currently engineered".**
+- [x] **5. "Point Defence is not engineered" should be "is not currently engineered".** *Built.*
   `ChecklistEvaluator` line 217. Right for a reason beyond taste: that verdict is a **reading taken
   at a moment**, not a property of the module — list.md Phase 26 has a plan carrying the journal's
   verdict with its date, standing as of when it was taken, and the state it ships with is
@@ -230,14 +230,53 @@ rather than prettifying a symbol into something that looks like one.
 
   **First step is a harness, and its job is classification rather than counting.** Push all 125
   module names through `ForModule`, print which return empty, then sort those into case 2 and case 3
-  by hand. 35 of them near-miss a blueprint key on a substring test — `Advanced Multi-Cannon`,
+  by hand.
+
+  **The harness ran, and the classification does not have to be done by hand after all.**
+  119 non-bulkhead module names reach the Loadout tab. **38 find blueprints and 81 find none** — so
+  the fallback is not a corner case, it is what two thirds of the modules in the game hit.
+
+  `Blueprints.tsv` has only **63 module keys**, and a third of them are not modules: `Limpets`,
+  `SRV Refuel`, `AFM Refill`, `FSD Injection`, `Suit`, `Weapon`, `Unlock` and the munitions rows are
+  Elite's *synthesis* and tech-broker recipes, which is what `kind` already separates. Of the 25
+  keys nothing reaches, only four are real case 2: **`Armour`**, **`Surface Scanner`**,
+  **`Wake Scanner`** and **`Manifest Scanner`**.
+
+  **Do not hand-write the alias table.** The `module` column is EDEngineer's `Type` field verbatim
+  — a free-text vocabulary of its own — and EDEngineer carries no FDev symbol, so name-to-name is
+  the only join available *from that side*. A hand-authored map from "Detailed Surface Scanner" to
+  "Surface Scanner" is precisely the game data the invariant forbids, and it would need re-checking
+  every time Frontier ships a module.
+
+  **It is derivable, exactly, and the loop closes in coriolis.** `modifications/modules.json` maps a
+  coriolis **group code** to the blueprints that group accepts, by `fdname` — `bh` to
+  `Armour_Advanced` and the rest, `ss` to `Sensor_Expanded`, `ws` and `cs` to `Sensor_FastScan`. The
+  `modules/*.json` files are keyed by those same group codes and carry each module's **symbol**, and
+  the specification table is keyed on symbol. So:
+
+      blueprint guid -> coriolis blueprint fdname -> group code -> module symbols -> the spec table
+
+  Every step is an id join in data d47 already fetches, and `gen-blueprints.py` already joins the
+  guid. That makes case 2 and case 3 a **property of the data rather than a judgement**: a module's
+  group either appears in `modules.json` with blueprints or it does not, and the panel can be told
+  which without anybody deciding it.
+
+  Two consequences worth stating. The join stops going through `Catalogue.Match` at all, so the
+  fuzziness the report worried about becomes moot rather than tuned. And it wants a column: the
+  module rows need their coriolis group, which `gen-elite-specs.py` iterates already and throws away.
+
+  **One thing v0.38.1 changed here.** `int_detailedsurfacescanner_tiny` used to be named
+  *Surface Scanner*, which joined to the blueprint key of that name by accident; item 2a corrects it
+  to **Detailed Surface Scanner**, which does not. Nothing regressed that was not already broken for
+  the other 80 — but it means the case-2 list above is measured against v0.38.1 and not against
+  v0.38.0. 35 of them near-miss a blueprint key on a substring test — `Advanced Multi-Cannon`,
   `Bi-Weave Shield Generator`, `Retributor Beam Laser`, `Frame Shift Drive (SCO)`,
   `Pack-Hound Missile Rack` and so on — but `ForModule` goes through `Catalogue.Match`, which is
   fuzzy, and `Same` is already case-insensitive, so an unknown share of those already resolve.
   **Reading the matcher will not settle it and running it will.** That classification is the fix's
   input, and nothing else produces it.
 
-- [ ] **7. Never ask a question with one answer — or with none.** Reported against Life Support:
+- [x] **7. Never ask a question with one answer — or with none.** *Built, with one exception below.* Reported against Life Support:
   *"there is only one choice, it can't be anything else."* `AskModule` early-outs when
   `offered.Count == 0` and not when it is 1, so one module name still draws a two-row page —
   "Anything — I only want the engineering" plus the only answer. Skipping to `AskVariant` lands on
@@ -254,6 +293,23 @@ rather than prettifying a symbol into something that looks like one.
   would suppress a question that needs asking. The rule is *one option, take it*, wherever it
   occurs, and `AskVariant`, `AskEffect` and `AskGrade` want the same check while the fix is open.
   Item 6's case 3 is the same rule one notch further: never ask a question with **no** answers.
+
+  **Built in `AskModule` and `AskGrade`. `AskVariant` already had the check** — it early-outs at
+  `offered.Count <= 1` and says why. So the sweep found one of the three already done, which is
+  worth knowing before the next item generalises from the same list.
+
+  **`AskEffect` is deliberately excluded, and the report's grouping is wrong on it.** The rule
+  rests on the item's own argument — that *anything* and *the one thing it takes* are the same
+  want — and that is true of a module socket and false of an experimental. The decline on the
+  effect page is **"No effect"**, which the single effect does not satisfy; they are opposite
+  wants, not the same one. Auto-taking it would put an experimental on the plan nobody asked for,
+  which is a worse defect than the extra press. The exclusion is commented at the site so the next
+  sweep does not "fix" it.
+
+  One consequence worth noting for item 4: `AskGrade` now takes a lone offered grade without
+  asking, which covers the reported Ammo Capacity case (grade 1 only) on its own. What item 4 asks
+  for beyond that — the highest offered grade rather than the number five, and the stepper — is
+  untouched and still open.
 
 - [ ] **8. A blueprint row should say what the blueprint does.** *"Since you have all this space,
   show what each of the engineering choices do in general — not each specific grade."*
@@ -374,7 +430,7 @@ rather than prettifying a symbol into something that looks like one.
   dropdown removes it while leaving the protection untouched: still the panel, still deliberate,
   still one act.
 
-- [ ] **14. `type9_military` shown where a hull name belongs.** *"Oxen, a type9_military is not
+- [x] **14. `type9_military` shown where a hull name belongs.** *Built.* *"Oxen, a type9_military is not
   bound to a core, so whoever is aboard stays aboard."* `EliteSpecifications` resolves that symbol —
   `type9_military` is **Type-10 Defender**, by Lakon — and the fleet page one tab over already
   prints "Oxen (Type-10 Defender)". Thread B, and the cheap half of it: the name was in hand and the

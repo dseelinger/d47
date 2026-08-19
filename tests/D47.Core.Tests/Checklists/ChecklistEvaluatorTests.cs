@@ -227,4 +227,26 @@ public class ChecklistEvaluatorTests
 
         Assert.Null(ChecklistEvaluator.Evaluate(item, State()));
     }
+
+    [Fact]
+    public void AnUnengineeredModuleIsSaidToBeUnengineeredRightNow()
+    {
+        // Remediation 15 item 5. "Point Defence is not engineered" reads as a fact about Point
+        // Defence; "is not currently engineered" reads as a fact about right now, which is the
+        // only thing d47 knows. The verdict is a reading taken at a moment — the plan carries the
+        // journal's verdict with its date — and it ships as Open, meaning still to do.
+        //
+        // In Core, so it lands on the spoken path as well as the drawn one.
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "Slot01_Size4")
+            {
+                Detail = "Reinforced",
+                Grade = 1,
+                Engineer = "Felicity Farseer",
+            }),
+            State());
+
+        Assert.Equal(ChecklistState.Open, verdict!.Value.State);
+        Assert.Contains("is not currently engineered", verdict.Value.Reason, StringComparison.Ordinal);
+    }
 }

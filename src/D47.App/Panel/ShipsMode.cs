@@ -561,6 +561,35 @@ public sealed class ShipsMode(
             return;
         }
 
+        if (offered.Count == 1)
+        {
+            // One name, so there is nothing to choose. Reported against Life Support: "there is
+            // only one choice, it can't be anything else" — and the page drew two rows anyway,
+            // "Anything — I only want the engineering" and the single answer. Remediation 15
+            // item 7. Skipping to the variant lands on the 5A-5E question, which is a real choice,
+            // so nothing is lost.
+            //
+            // Taken rather than declined: this records Module = "Life Support" where "Anything"
+            // would leave it null, and for a socket that accepts one type those are the same want.
+            // The plan line then reads properly instead of opening with a bare grade.
+            //
+            // Deliberately not "core internals do not ask". The Frame Shift Drive socket is a core
+            // internal offering three names — Frame Shift Drive, Frame Shift Drive (SCO) and the
+            // Mk II — and SCO is a real decision. The rule is one option, take it, wherever it is.
+            var only = offered[0];
+
+            AskVariant(
+                build,
+                slot,
+                plan,
+                Spelling(only),
+                only,
+                prompts,
+                variant => chosen(Spelling(only), variant));
+
+            return;
+        }
+
         prompts.Choose(
             new ChoiceRequest(
                 "loadout.module",
@@ -761,6 +790,16 @@ public sealed class ShipsMode(
     {
         const int Usual = 5;
 
+        if (offered.Count == 1)
+        {
+            // One grade the recipe offers, so "any grade" and that grade are the same want — the
+            // same argument as the module step above. Remediation 15 item 7. The reported case is
+            // Ammo Capacity, which stops at grade 1: a two-row page with one real answer, and
+            // nothing preselected because the preselection below looks for five.
+            chosen(offered[0]);
+            return;
+        }
+
         var current = plan?.Grade?.ToString(CultureInfo.InvariantCulture)
                       ?? (offered.Contains(Usual) ? Usual.ToString(CultureInfo.InvariantCulture) : null);
 
@@ -816,6 +855,13 @@ public sealed class ShipsMode(
             chosen(plan?.Experimental);
             return;
         }
+
+        // Deliberately no "one option, take it" here, though remediation 15 item 7 groups this
+        // step with the others. The rule there rests on "anything" and "the only thing it takes"
+        // being the same want, which is true of a module socket and false of an experimental: the
+        // decline on this page is "No effect", which the single effect does not satisfy. Taking it
+        // would put an experimental on the plan that nobody asked for — the opposite of the step
+        // it would be copying.
 
         prompts.Choose(
             new ChoiceRequest(
