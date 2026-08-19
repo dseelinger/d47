@@ -575,7 +575,7 @@ public static class ChecklistCapability
         var plan = new Ships.SlotPlan(
             canonical,
             arguments.TryGetString("blueprint", out var blueprint) ? blueprint : null,
-            arguments.TryGetInt32("grade", out var grade) ? grade : null,
+            arguments.TryGetInt32("grade", out var grade) ? grade : 0,
             arguments.TryGetString("engineer", out var engineer) ? engineer : null,
             arguments.TryGetString("experimental", out var experimental) ? experimental : null);
 

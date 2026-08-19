@@ -532,22 +532,15 @@ public class LoadoutTabTests
         Pick(surface.Panel, "Lightweight Mount").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        // The grade is a short closed list, so it is the in-tree layer rather than a page --
-        // which is the same call the settings enums make. Grade 5 leads it and is marked as the
-        // usual answer (remediation.md 13, item 9): ascending order put grade 1 at the top, which
-        // is the grade nobody writes down.
+        // **No grade page at all** (remediation.md 15, item 4). It used to be asked here, and the
+        // Commander's report was that 999 times out of 1000 the answer is 5 — measured, 155 of 160
+        // module-and-blueprint pairs reach it. The grade is now taken as the highest the blueprint
+        // offers and adjusted with a stepper on the slot page, where moving it re-costs the block
+        // underneath it. So the flow goes straight from the roll to the effect.
         var grades = Text(surface.Panel).ToList();
 
-        Assert.Contains("the usual", grades);
-        Assert.True(
-            grades.IndexOf("Grade 5") < grades.IndexOf("Grade 1"),
-            "grade 5 is offered before grade 1");
-        Assert.True(
-            grades.IndexOf("Grade 5") < grades.IndexOf("Any grade"),
-            "and before the row that declines the question");
-
-        Press(surface.Panel, "Grade 5").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain("Grade 5", grades);
+        Assert.DoesNotContain("Any grade", grades);
 
         // And then the experimental effects a pulse laser supports (remediation.md 13, item 10).
         var effects = Offered(surface.Panel);

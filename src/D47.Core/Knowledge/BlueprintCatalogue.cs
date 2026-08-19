@@ -333,6 +333,45 @@ public static class BlueprintCatalogue
     public static IReadOnlyList<Blueprint> ExperimentalsFor(string? spoken) =>
         [.. ForModule(spoken).Where(b => b.Kind == BlueprintKind.Experimental)];
 
+    /// <summary>
+    /// Whether a blueprint offers exactly one grade, in which case saying which is superfluous.
+    /// <para>
+    /// Three of 160 module-and-blueprint pairs: Chaff Launcher, Heat Sink Launcher and Point
+    /// Defence, all on Ammo Capacity, all grade 1. Asked by name and narrowed by module because a
+    /// name can belong to several, and answered false for a name nothing knows — a grade omitted
+    /// on a guess is worse than one said unnecessarily.
+    /// </para>
+    /// </summary>
+    public static bool HasOneGrade(string? blueprint, string? module)
+    {
+        var grades = Named(blueprint, module)
+            .Where(recipe => recipe.Grade is not null)
+            .Select(recipe => recipe.Grade)
+            .Distinct()
+            .ToList();
+
+        return grades.Count == 1;
+    }
+
+    /// <summary>
+    /// Every grade a blueprint offers, highest first — what a stepper clamps to.
+    /// <para>
+    /// <b>The default is the highest offered rather than the number five</b> (remediation.md 15,
+    /// item 4). 155 of 160 pairs reach grade 5 and the whole exception set is five: Chaff Launcher,
+    /// Heat Sink Launcher and Point Defence stop at 1 on Ammo Capacity, and Shield Cell Bank stops
+    /// at 4 on both Rapid Charge and Specialised. Landing on "any" when 5 was not offered was worse
+    /// than landing on the top of what is.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<int> GradesFor(string? blueprint, string? module) =>
+    [
+        .. Named(blueprint, module)
+            .Where(recipe => recipe.Grade is not null)
+            .Select(recipe => recipe.Grade!.Value)
+            .Distinct()
+            .OrderDescending(),
+    ];
+
     /// <summary>Blueprint names close enough to offer back when nothing matched.</summary>
     public static IReadOnlyList<string> Near(string spoken) =>
         Catalogue.Near([.. Loaded.Value.Select(b => b.Name).Distinct(StringComparer.Ordinal)], spoken);

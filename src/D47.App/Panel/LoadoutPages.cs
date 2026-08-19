@@ -274,6 +274,57 @@ public static class LoadoutPages
     }
 
     /// <summary>One line of a page, drawn the way its tone says.</summary>
+    /// <summary>
+    /// A line, with its stepper beside it where it has one (remediation.md 15, item 4).
+    /// <para>
+    /// <b>Beside the text and not inside it.</b> The line is one string that is both shown and
+    /// spoken — <see cref="Ships.SlotPlan.Describe"/> — so the grade stays part of the sentence and
+    /// the control sits next to it, rather than the sentence being cut into pieces around a
+    /// widget.
+    /// </para>
+    /// </summary>
+    internal static Control Stepped(LoadoutLine line)
+    {
+        if (line.Step is not { } step)
+        {
+            return Line(line);
+        }
+
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        row.Children.Add(Line(line));
+
+        // Highest first, which is how the offer is ordered and how a Commander reads a grade: up
+        // is better. The buttons stop where the recipe stops rather than at five.
+        var at = step.Offered.ToList().IndexOf(step.Value);
+
+        row.Children.Add(Nudge("▲", at > 0, () => step.Set(step.Offered[at - 1])));
+        row.Children.Add(Nudge("▼", at >= 0 && at < step.Offered.Count - 1, () => step.Set(step.Offered[at + 1])));
+
+        return row;
+    }
+
+    private static Button Nudge(string glyph, bool live, Action pressed)
+    {
+        var button = new Button
+        {
+            Content = glyph,
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(8, 2),
+            IsEnabled = live,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
     internal static TextBlock Line(LoadoutLine line) => line.Tone switch
     {
         LoadoutTone.Heading => Heading(line.Text),
@@ -694,7 +745,9 @@ public sealed class SlotPage : LoadoutPage
 
         foreach (var line in Mode.Planned(_item, _slot))
         {
-            _body.Children.Add(LoadoutPages.Line(line));
+            // Stepped, because the grade on this page is a control: moving it re-costs the block
+            // below without leaving the page (remediation.md 15, item 4).
+            _body.Children.Add(LoadoutPages.Stepped(line));
         }
 
         Buttons(Mode.HasPlan(_item, _slot));

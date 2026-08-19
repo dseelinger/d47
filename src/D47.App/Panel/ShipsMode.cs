@@ -474,7 +474,32 @@ public sealed class ShipsMode(
             return [new LoadoutLine("Nothing planned for this slot.")];
         }
 
-        var lines = new List<LoadoutLine> { new(plan.Describe(), LoadoutTone.Body) };
+        // The grade, steppable in place (remediation.md 15, item 4). Absent where there is no
+        // blueprint, and absent where the blueprint offers one grade — there is nothing to step,
+        // and the line does not print the grade either.
+        var offered = BlueprintCatalogue.GradesFor(plan.Blueprint, plan.Module);
+
+        var step = offered.Count > 1
+            ? new LoadoutStep(plan.Grade, offered, grade =>
+                ships.Plan(build.Id, plan with { Grade = grade }))
+            : null;
+
+        var lines = new List<LoadoutLine>
+        {
+            new(plan.Describe(), LoadoutTone.Body) { Step = step },
+        };
+
+        // What the engineering does, where something has been chosen. Asked for as an area
+        // describing the effects of the particular engineering choices (item 8), and it moves with
+        // the stepper because the figures are the top grade's.
+        if (BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+                .Where(recipe => recipe.Grade == plan.Grade || recipe.Grade is null)
+                .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe()
+            is { Length: > 0 } does)
+        {
+            lines.Add(new LoadoutLine("Effect", LoadoutTone.Heading));
+            lines.Add(new LoadoutLine(does, LoadoutTone.Engineered));
+        }
 
         if (build.Scope is not { } scope)
         {
@@ -716,7 +741,7 @@ public sealed class ShipsMode(
         string? module,
         string? variant,
         PanelPrompts prompts,
-        Action<string?, int?, string?> chosen)
+        Action<string?, int, string?> chosen)
     {
         // What the blueprints are listed for: the module just chosen, or the one already planned,
         // and otherwise everything — which is a long list and is exactly what the search is for.
@@ -731,7 +756,7 @@ public sealed class ShipsMode(
         // every blueprint in the game: a Type-10's armour was offered Dirty Drive Tuning.
         if (offer is { Count: 0 })
         {
-            chosen(null, null, null);
+            chosen(null, 0, null);
             return;
         }
 
@@ -774,7 +799,7 @@ public sealed class ShipsMode(
                 {
                     // No roll means no grade and no effect: both are properties of a roll, and
                     // asking about them anyway is two questions with one answer.
-                    chosen(null, null, null);
+                    chosen(null, 0, null);
                     return;
                 }
 
@@ -786,9 +811,11 @@ public sealed class ShipsMode(
                     .OrderDescending()
                     .ToList();
 
-                AskGrade(build, slot, plan, blueprint, offered, prompts, grade =>
-                    AskEffect(build, slot, plan, wanted, prompts, effect =>
-                        chosen(blueprint, grade, effect)));
+                // Straight past the grade, which is decided rather than asked.
+                var grade = Grade(plan, offered);
+
+                AskEffect(build, slot, plan, wanted, prompts, effect =>
+                    chosen(blueprint, grade, effect));
             });
     }
 
@@ -807,49 +834,39 @@ public sealed class ShipsMode(
     /// keeps its row.
     /// </para>
     /// </summary>
-    private void AskGrade(
-        ShipBuild build,
-        ShipSlot slot,
-        SlotPlan? plan,
-        string? blueprint,
-        IReadOnlyList<int> offered,
-        PanelPrompts prompts,
-        Action<int?> chosen)
+    /// <summary>
+    /// The grade, <b>decided rather than asked</b> (remediation.md 15, item 4).
+    /// <para>
+    /// Reported as "I should be able to skip choose an engineering grade — 999 times out of 1000
+    /// it will be 5". Measured: of 160 module-and-blueprint pairs, 155 reach grade 5, and the whole
+    /// exception set is five. So the rule is <b>the highest grade the blueprint offers</b>, never
+    /// the number five — landing on "any" when 5 was not offered was worse than landing on the top
+    /// of what is.
+    /// </para>
+    /// <para>
+    /// <b>The page is gone entirely.</b> The grade becomes a stepper on the slot page, where
+    /// changing it changes what is underneath it: <see cref="EngineeringRules.RollsFor"/> turns
+    /// grade and engineer rank into a roll count, which drives the "What it costs" block, so a
+    /// stepper answers "what would grade 4 cost me instead" in place. A link that reopened a
+    /// chooser got you back where you started.
+    /// </para>
+    /// <para>
+    /// <b>Any grade is not a thing</b>, on the Commander's ruling, which is why nothing here offers
+    /// it and why <see cref="SlotPlan.Grade"/> is an <c>int</c>.
+    /// </para>
+    /// </summary>
+    private static int Grade(SlotPlan? plan, IReadOnlyList<int> offered)
     {
-        const int Usual = 5;
-
-        if (offered.Count == 1)
+        if (offered.Count == 0)
         {
-            // One grade the recipe offers, so "any grade" and that grade are the same want — the
-            // same argument as the module step above. Remediation 15 item 7. The reported case is
-            // Ammo Capacity, which stops at grade 1: a two-row page with one real answer, and
-            // nothing preselected because the preselection below looks for five.
-            chosen(offered[0]);
-            return;
+            return 0;
         }
 
-        var current = plan?.Grade?.ToString(CultureInfo.InvariantCulture)
-                      ?? (offered.Contains(Usual) ? Usual.ToString(CultureInfo.InvariantCulture) : null);
-
-        prompts.Choose(
-            new ChoiceRequest(
-                "loadout.grade",
-                "Grade",
-                blueprint is { Length: > 0 } roll ? $"Which grade of {roll}?" : "Which grade?",
-                Context(build, slot),
-                [
-                    .. offered.Select(grade => new ChoiceOption(
-                        grade.ToString(CultureInfo.InvariantCulture),
-                        $"Grade {grade.ToString(CultureInfo.InvariantCulture)}")),
-                    new ChoiceOption(string.Empty, "Any grade"),
-                ],
-                current,
-                ChoiceSurface.Layer)
-            {
-                CurrentWord = plan?.Grade is null ? "the usual" : "planned now",
-            },
-            option => chosen(
-                int.TryParse(option.Key, CultureInfo.InvariantCulture, out var grade) ? grade : null));
+        // What was planned, where it is still on offer. A recipe that lost a grade drops to the
+        // top of what remains rather than keeping a number nobody can roll.
+        return plan is { Grade: > 0 } wanted && offered.Contains(wanted.Grade)
+            ? wanted.Grade
+            : offered[0];
     }
 
     /// <summary>
@@ -1182,13 +1199,13 @@ public sealed class ShipsMode(
                     value => value.Trim().Length == 0
                              || (int.TryParse(value.Trim(), out var grade) && grade is >= 1 and <= 5)
                         ? EntryVerdict.Ok
-                        : EntryVerdict.No("A grade is 1 to 5, or nothing at all for any.")),
+                        : EntryVerdict.No("A grade is 1 to 5.")),
                 grade =>
                 {
                     ships.Plan(build.Id, new SlotPlan(
                         slot,
                         string.IsNullOrWhiteSpace(blueprint) ? null : blueprint.Trim(),
-                        int.TryParse(grade.Trim(), out var level) ? level : null));
+                        int.TryParse(grade.Trim(), out var level) ? level : 0));
 
                     done();
                 }));
