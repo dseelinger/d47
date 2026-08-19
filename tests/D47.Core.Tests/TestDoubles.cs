@@ -116,10 +116,12 @@ public sealed class TestSurface
         LlmAvailabilityState availability,
         SpendTracker spend,
         FakeVerbosityControl verbosity,
-        D47.Core.Checklists.ChecklistService checklists)
+        D47.Core.Checklists.ChecklistService checklists,
+        D47.Core.Memory.MemoryBook memories)
     {
         Verbosity = verbosity;
         ChecklistService = checklists;
+        Memories = memories;
         Paths = paths;
         Store = store;
         Secrets = secrets;
@@ -157,6 +159,9 @@ public sealed class TestSurface
     /// files would not be the one being asked.
     /// </summary>
     public D47.Core.Checklists.ChecklistService ChecklistService { get; }
+
+    /// <summary>What d47 remembers about the Commander, so the privacy surface has a store to empty.</summary>
+    public D47.Core.Memory.MemoryBook Memories { get; }
 
     public KeywordRouter Router => new(Registry);
 
@@ -218,6 +223,17 @@ public sealed class TestSurface
         var verbosity = new FakeVerbosityControl();
         var checklists = Checklists(install.Paths, state);
 
+        // Wired, where it used to be left null. The privacy surface's "Forget everything" button
+        // only exists when there is a store to empty, so a surface without one could not be asked
+        // whether the Commander can make d47 forget them — which is the one control in this
+        // repository whose whole value is that it can be trusted (remediation.md 11, item 10).
+        var memories = new D47.Core.Memory.MemoryBook(
+            new D47.Core.Memory.MemoryStore(
+                Path.Combine(install.Paths.Data, "memory.json"),
+                NullLogger<D47.Core.Memory.MemoryStore>.Instance),
+            () => state.Active?.Identity.FrontierId,
+            () => new D47.Core.Memory.MemorySituation());
+
         CapabilityRegistry? built = null;
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
@@ -233,7 +249,8 @@ public sealed class TestSurface
                 Path.Combine(install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
-            checklists));
+            checklists,
+            memories: memories));
 
         built = registry;
 
@@ -246,7 +263,7 @@ public sealed class TestSurface
 
         return new TestSurface(
             install.Paths, store, secrets, service, registry, state, availability, spend, verbosity,
-            checklists);
+            checklists, memories);
     }
 
     /// <summary>

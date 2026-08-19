@@ -113,3 +113,23 @@ the changelog, which is why this file is the current batch and not a growing arc
   the zone is applied to one side and the years to the other, and neither is computed from the
   other's presentation.
 
+- [x] **10. Memory must be erasable on demand (protected).** **Already built, and already
+  protected** — Phase 31 put it on the privacy page as *What D47 remembers about you*, with a
+  **Forget everything** button that empties every Commander in the file. It is an `Info` row with a
+  `Press`, which is what makes `SettingsService.Apply` refuse it, so nothing on the tool surface
+  can reach it however the request is worded. A second erase button elsewhere is the thing its own
+  comments warn against, so nothing was added.
+
+  **What was missing was the proof.** The one action here that cannot be undone, and the one whose
+  whole value is that it can be trusted, had no test: "it is written down somewhere that this is
+  protected" is the weakest form that claim can take. Six now assert it — the button exists, it
+  empties every Commander, it survives a restart, the model is refused, the row is not in the
+  model's vocabulary, and no spoken phrase reaches it.
+
+  The test surface was never given a memory store, which is why this had gone uncovered: without
+  one the privacy row has no button at all, so the question could not be asked.
+
+  **One deliberate gap, left as it is.** There is no voice route to the total erase, because
+  "forget everything about me" is a sentence a transcriber can produce out of a misheard one. Say
+  so if that should change — it would be overturning a decision rather than filling a hole.
+
