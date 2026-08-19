@@ -443,9 +443,6 @@ public sealed record TradeQuery
     /// <summary>How stale a reported price may be, in hours.</summary>
     public int MaxPriceAge { get; init; } = 720;
 
-    /// <summary>Whether a station may be visited more than once on the route.</summary>
-    public bool Unique { get; init; } = true;
-
     public static bool TryParse(
         string? system,
         string? station,
