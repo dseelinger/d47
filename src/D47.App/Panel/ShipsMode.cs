@@ -104,6 +104,20 @@ public sealed class ShipsMode(
             ? $"{build.Describe()}. One build per ship: a slot holds one plan."
             : $"{build.Describe()}. Buying one will point this plan at it.";
 
+    /// <summary>
+    /// The hull's slots, grouped, whole, and with the cosmetics off them
+    /// (remediation.md 12, items 1, 2, 3 and 6).
+    /// <para>
+    /// <b>The layout leads and the journal fills it in.</b> It used to be the other way round —
+    /// the list was whatever the <c>Loadout</c> event happened to mention — which meant an empty
+    /// hardpoint did not exist as far as this page was concerned, and a paint job did.
+    /// </para>
+    /// <para>
+    /// A hull the table has no layout for still gets a list, from the journal and the plans as
+    /// before; what it does not get is a slot no hull outfits, because that question is answered
+    /// by the table as a whole rather than by the one hull's row in it.
+    /// </para>
+    /// </summary>
     public IReadOnlyList<LoadoutRow> Slots(string item)
     {
         if (Resolve(item) is not { } build)
@@ -111,39 +125,83 @@ public sealed class ShipsMode(
             return [];
         }
 
-        // Every slot the journal reports for the ship being flown, and every slot planned for any
-        // other. A ship in another dock reports no modules at all, which is why the planned ones
-        // have to stand on their own rather than being drawn as annotations on a fitted list.
         var fitted = Modules(build);
-        var slots = new List<string>();
+        var layout = EliteSpecifications.Slots(build.Hull);
 
-        slots.AddRange(fitted.Select(module => module.Slot));
-
-        foreach (var plan in build.Slots)
-        {
-            if (!slots.Any(slot => string.Equals(slot, plan.Slot, StringComparison.OrdinalIgnoreCase)))
-            {
-                slots.Add(plan.Slot);
-            }
-        }
+        var slots = layout.Count > 0
+            ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe()))]
+            : Unlaid(build, fitted);
 
         return
         [
             .. slots.Select(slot =>
             {
-                var plan = build.For(slot);
+                var plan = build.For(slot.Name);
                 var module = fitted.FirstOrDefault(candidate =>
-                    string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(candidate.Slot, slot.Name, StringComparison.OrdinalIgnoreCase));
 
                 return new LoadoutRow(
-                    $"{build.Id}|{slot}",
-                    slot,
-                    slot,
-                    plan is not null ? plan.Describe() : Describe(module),
-                    plan is not null);
+                    $"{build.Id}|{slot.Name}",
+                    slot.Word,
+                    slot.Word,
+
+                    // The plan where there is one, what is fitted where there is not, and the
+                    // word for neither — because a row with a blank note reads as a row d47 has
+                    // nothing to say about rather than as an empty slot.
+                    plan is not null ? plan.Describe() : Describe(module) ?? Vacant(build, fitted),
+                    plan is not null)
+                {
+                    Group = ShipSlot.Heading(slot.Kind),
+                };
             }),
         ];
     }
+
+    /// <summary>
+    /// The list for a hull with no layout: what the journal mentioned and what is planned, minus
+    /// anything no hull outfits.
+    /// <para>
+    /// Frontier ships hulls faster than the table is rebuilt, so this is the state a brand new
+    /// ship is in for a release or two. Ordering follows the same four blocks where the name is
+    /// one the table recognises, and anything else falls to the end rather than being dropped —
+    /// an unrecognised slot on an unrecognised hull is more likely a new kind of slot than a new
+    /// kind of decoration.
+    /// </para>
+    /// </summary>
+    private static List<(string Name, ShipSlotKind Kind, string Word)> Unlaid(
+        ShipBuild build, IReadOnlyList<ShipModule> fitted)
+    {
+        var names = new List<string>();
+
+        names.AddRange(fitted.Select(module => module.Slot));
+
+        foreach (var plan in build.Slots)
+        {
+            if (!names.Any(name => string.Equals(name, plan.Slot, StringComparison.OrdinalIgnoreCase)))
+            {
+                names.Add(plan.Slot);
+            }
+        }
+
+        return
+        [
+            .. names
+                .Select(name => (Name: name, Kind: EliteSpecifications.KindOf(name)))
+                .Where(slot => slot.Kind is not null)
+                .OrderBy(slot => slot.Kind)
+                .Select(slot => (slot.Name, slot.Kind!.Value, Word: slot.Name)),
+        ];
+    }
+
+    /// <summary>
+    /// What an empty slot says. Two answers, and the difference is whether d47 can see the ship:
+    /// "empty" is a fact about the slot, and it is only a fact when the Commander is sitting in
+    /// the ship that reported it.
+    /// </summary>
+    private string Vacant(ShipBuild build, IReadOnlyList<ShipModule> fitted) =>
+        fitted.Count > 0 || state()?.Ship is { IsKnown: true, ShipId: var id } && id == build.ShipId
+            ? "empty"
+            : "not seen";
 
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
@@ -198,7 +256,7 @@ public sealed class ShipsMode(
 
         var lines = new List<LoadoutLine>
         {
-            new(ChecklistNaming.Readable(module.Item), LoadoutTone.Body),
+            new(EliteSpecifications.ModuleName(module.Item) ?? "Nothing.", LoadoutTone.Body),
         };
 
         if (module.Blueprint is { Length: > 0 } blueprint)
@@ -410,6 +468,11 @@ public sealed class ShipsMode(
             : byHull.Count == 1 ? byHull[0].Build : null;
     }
 
+    /// <summary>
+    /// A fitted module, named the way the outfitting screen names it (remediation.md 12, item 4).
+    /// The reading that only strips the decoration off the symbol said "int powerplant size6
+    /// class5"; the table ships both spellings, so it can say "6A Power Plant".
+    /// </summary>
     private static string? Describe(ShipModule? module) =>
-        module is null ? null : ChecklistNaming.Readable(module.Item);
+        module is null ? null : EliteSpecifications.ModuleName(module.Item);
 }

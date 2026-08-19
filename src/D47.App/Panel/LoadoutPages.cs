@@ -517,8 +517,19 @@ public sealed class ItemPage : LoadoutPage
             return;
         }
 
+        // A heading wherever the group changes, so a ship's slots read as the four blocks of the
+        // outfitting screen rather than as thirty-odd names in journal order
+        // (remediation.md 12, item 1). A mode that groups nothing draws nothing extra.
+        var group = (string?)null;
+
         foreach (var row in rows)
         {
+            if (row.Group is { Length: > 0 } heading && heading != group)
+            {
+                group = heading;
+                _list.Children.Add(LoadoutPages.Heading(heading));
+            }
+
             _list.Children.Add(LoadoutPages.Row(
                 row.Text,
                 row.Aside,

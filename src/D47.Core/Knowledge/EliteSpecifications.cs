@@ -297,6 +297,55 @@ public static class EliteSpecifications
             ? []
             : Loaded.Value.Slots.GetValueOrDefault(hull.Trim().ToLowerInvariant()) ?? [];
 
+    /// <summary>
+    /// Which kind of slot a name is on any hull at all, or null for one no hull outfits
+    /// (remediation.md 12, item 2).
+    /// <para>
+    /// <b>The answer to "is this part of outfitting" for a hull the table does not know.</b> A
+    /// paint job, a bobble and a ship kit are slots in the journal and are in no hull's layout, so
+    /// a name absent from every one of them is a name nothing outfits — which keeps the cosmetics
+    /// off the list even where the layout itself cannot be looked up.
+    /// </para>
+    /// </summary>
+    public static ShipSlotKind? KindOf(string? slot) =>
+        !string.IsNullOrWhiteSpace(slot)
+        && Kinds.Value.TryGetValue(slot.Trim(), out var kind)
+            ? kind
+            : null;
+
+    private static readonly Lazy<IReadOnlyDictionary<string, ShipSlotKind>> Kinds =
+        new(
+            () => Loaded.Value.Slots.Values
+                .SelectMany(slots => slots)
+                .GroupBy(slot => slot.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First().Kind, StringComparer.OrdinalIgnoreCase),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>
+    /// What a fitted module is called, out loud (remediation.md 12, item 4).
+    /// <para>
+    /// Elite writes a module as a symbol, and the reading that only strips the decoration off it
+    /// produces "int powerplant size6 class5" — ugly and true, which was the right answer while
+    /// nothing shipped both spellings. This table does ship both, so a module it knows is said the
+    /// way the outfitting screen says it: <b>6A Power Plant</b>.
+    /// </para>
+    /// <para>
+    /// The ugly form is still the fallback rather than a shrug, because a module the table has
+    /// never heard of is one Frontier has just added and the symbol still says what it is.
+    /// </para>
+    /// </summary>
+    public static string? ModuleName(string? symbol)
+    {
+        if (Module(symbol) is not { } module)
+        {
+            return Journal.ModuleNames.ReadableOrNull(symbol);
+        }
+
+        var said = module.IsBulkhead ? module.Name : $"{module.Size} {module.Name}";
+
+        return module.Mount is { Length: > 0 } mount ? $"{said}, {mount}" : said;
+    }
+
     /// <summary>One slot of one hull, by the name the journal writes, or null for neither.</summary>
     public static ShipSlot? Slot(string? hull, string? slot) =>
         string.IsNullOrWhiteSpace(slot)
