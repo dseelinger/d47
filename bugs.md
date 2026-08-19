@@ -60,3 +60,17 @@ dispatcher immediately before the second lookup would close it, if that is what 
 Reproducing it is the first job and has not been done: the runner's timing is what triggers it, and
 a fix landed without a failing test to watch is a fix nobody can check. Per the standing rule,
 reintroduce the fault afterwards and watch the new test fail.
+
+**And a second one, on the release build of the same version.** `RowWidthTests.TheWholeChoiceLabel-
+IsOnTheTooltipWhenTheBoxClipsIt` failed as a *cleanup* failure —
+`InvalidOperationException: The calling thread cannot access this object because a different thread
+owns it`, thrown inside `Avalonia.Headless.XUnit.AvaloniaTestRunner` rather than inside the test.
+That test has no flake history of its own and its body is synchronous, so the suspicion is leaked
+state from an earlier test in the same headless session rather than anything about this one — the
+audition test above being the obvious candidate, since what it leaves behind when it goes wrong is
+an infinite delay awaiting a token nobody cancelled.
+
+Both cleared on a re-run of the same commit, and 583 of 584 App tests passed in the failing runs.
+Three consecutive Release runs of the whole App suite locally are clean, so nothing about this
+reproduces off the runner yet. **Treat them as one investigation**: two symptoms, one session, and
+a shared suspect.
