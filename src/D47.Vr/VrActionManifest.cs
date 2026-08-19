@@ -112,10 +112,12 @@ public static class VrActionManifest
     {
         action_sets = new[] { new { name = ActionSet, usage = "leftright" } },
 
-        // Boolean, and only one. The panel is not clickable — the trigger picks it up and nothing
-        // else — so a second action would be one nobody could ever use.
-        // Two, and only two. The panel is not clickable — the trigger picks it up — so the second
-        // is the one thing a Commander three levels into a ship needs a button for: back.
+        // Two, and only two, and the count is about the controllers rather than about ambition:
+        // the trigger and the grip are the only inputs that exist identically on all four
+        // profiles below. The Vive wand has no face buttons at all and a trackpad where the
+        // others have a stick, and Touch puts A and B on the right hand and X and Y on the left —
+        // so a third action is per-profile work with a different answer for the wand, not one
+        // more line here.
         actions = new[]
         {
             new { name = GrabAction, requirement = "suggested", type = "boolean" },

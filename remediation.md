@@ -72,8 +72,22 @@ the changelog, which is why this file is the current batch and not a growing arc
 
   Dragging from one row to another is that third condition exactly. So this is not a missing
   capability, it is a collision: on the headset, pressing a row and then moving already means
-  *pick the panel up*. Every other candidate is taken too — dwell is carry, travel is carry, and
-  the grip is Back (list.md Phase 25).
+  *pick the panel up*. Dwell is carry, travel is carry, and the grip is Back (list.md Phase 25).
+
+  **"Every other candidate is taken" was too strong.** d47 binds two actions, not two buttons:
+  trigger to carry and grip to back, on both hands. A controller has more — face buttons, a stick
+  that clicks — and a third action is a declaration in `VrActionManifest` plus a binding, which is
+  ordinary work. What it is not is free: bindings are written per profile, and of the four d47
+  supports, **the Vive wand has no face buttons at all** and carries a trackpad where Touch and
+  Index have a stick, while Touch names its face buttons A and B on the right hand and X and Y on
+  the left. Trigger and grip are the only two inputs that exist identically everywhere, which is
+  why they are the two that are bound.
+
+  So there are two honest shapes for a headset modifier: **grip held with the trigger**, which
+  needs no new binding and works on all four — Back is only acted on when it moves the panel
+  somewhere, so a grip squeezed with the trigger already down is unambiguous — or **a third
+  action**, bound to A on Touch and Index and to the trackpad click on the wand, which is a better
+  gesture bought with per-profile binding work.
 
   The one lever still free is the trick the scrollbar uses: **decide at press time by what was
   hit.** That points at a design which needs no new gesture and works the same on both surfaces —
