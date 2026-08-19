@@ -379,6 +379,21 @@ rather than prettifying a symbol into something that looks like one.
   **One sibling to decide**: `EngineeringCapability` appends a compact `not engineered` to a report
   line. Match it, or leave it terse because a dash-separated report already reads as a snapshot.
 
+  **The sibling was never asked for, and is left terse.** Ask #6 is one string in one place, and it
+  shipped. The "one sibling to decide" above was added by this write-up rather than by the
+  Commander, and carrying it forward as a decision awaiting them cost a round of discussion for
+  nothing — the first of the three cases that put `## The original asks` at the top of this file.
+
+  Left alone on its merits as well as on scope. `EngineeringCapability.Line` has two callers, and
+  the `— not engineered` branch is **dead** on the one that iterates `engineered`; the only place it
+  renders is the disambiguation list — *"3 fitted modules match 'shield'"* — where it is a
+  **discriminator in a picker**, not a verdict, and sits beside `Reinforced, grade 3, complete`,
+  which is equally a reading-at-a-moment stated flat. If *not engineered* needs "currently", so does
+  *complete*, and that ends in hedging every row.
+
+  One thing noticed in passing and not fixed: that dead branch means `Line` serves two callers with
+  different contracts. Worth a note rather than a change.
+
 - [ ] **6. A chooser offers blueprints that cannot exist.** Two reports, needing **opposite**
   answers, which is what proves the defect is the fallback rather than the data.
 
@@ -718,6 +733,17 @@ rather than prettifying a symbol into something that looks like one.
   pane already keeps them. Applies to the blueprint and variant pages too, which share the header
   and the gap.
 
+  **No decision needed — the contract already says this and one call site inverts it.**
+  `ChoiceRequest`'s own documentation says `Context` is *"the slot's size, and what is fitted now"*
+  and `Current` is *"which option is fitted now, by key"*. What `ShipsMode` passes is
+  `"{ship} · {slot}. It does not reach your checklist until you promote the build."` — no size, no
+  fitted — and `plan?.Module` as `Current` with `CurrentWord = "planned now"`. Both documented facts,
+  neither delivered, and the marker reserved for *fitted* spent on *planned*.
+
+  **This is item 15's root cause.** With the header saying *"currently empty"*, *"Anything — I only
+  want the engineering"* would have read as obviously wrong on sight rather than merely odd. Build
+  them together.
+
 - [ ] **12. "Put this build on my checklist" does not put it on the checklist.** Reported as *"not
   showing my just-entered engineering in the checklist"*, and diagnosed from the installed build's
   own data rather than from reading code. `checklist.json` holds **one** item, the Commander's
@@ -787,6 +813,30 @@ rather than prettifying a symbol into something that looks like one.
   to be **flying** the ship — that constraint arrived from the row being scoped to *this* ship. A
   dropdown removes it while leaving the protection untouched: still the panel, still deliberate,
   still one act.
+
+  **Decided 2026-08-19: two dropdowns — ship, then core — and the ship selection becomes a setting.**
+
+  Ship as the **selector** (which ship am I editing), core as the **value**. That also absorbs the
+  separate *Forget this ship's core* button: a **"nobody — whoever is aboard stays aboard"** entry in
+  the core dropdown is the unbind, which is one control rather than two and reads as what it does.
+
+  **The wrinkle is in the mechanism, not the design.** `SettingBinding`'s `Read` and `Write` both go
+  through `D47Settings`, but a ship-core binding lives in `ship-cores.json`, and the ship dropdown's
+  value is not a setting at all. Three ways out were weighed: persist the ship selection as a real
+  setting; widen `SettingBinding` to read and write something that is not `D47Settings`; or give
+  ship-cores its own panel section outside the declared-row model.
+
+  **Persisting the selection wins.** Smallest change, no contract to widen, and the row stays inside
+  the mechanism that gives it keyword-router reachability and its protection. "Which ship am I
+  editing" surviving a restart is a convenience rather than a wart. The core dropdown's `Write`
+  binds and returns settings unchanged, which is mildly impure and contained to one row.
+
+  **The cost, stated because the rule says so**: the settings file is append-only, so this is one new
+  property that can never be removed. Cheap against changing an architecture contract for one row.
+
+  Phase 35's protection is untouched — still the panel, still deliberate, still one act — and nothing
+  in the phase ever required the Commander to be *flying* the ship. That constraint came from the row
+  being scoped to *this* ship, and the dropdown removes it.
 
 - [x] **14. `type9_military` shown where a hull name belongs.** *Built.* *"Oxen, a type9_military is not
   bound to a core, so whoever is aboard stays aboard."* `EliteSpecifications` resolves that symbol —
