@@ -14,6 +14,38 @@ archive, which is why 14 is gone from it.
 **Nearly all of this batch is the Loadout tab**, and most of it was found by one Commander
 planning one Type-10 in one sitting. That concentration is the finding as much as the items are.
 
+## The original asks
+
+**This file is an interpretation, and the difference has already cost something.** The items below
+were written up from sixteen requests made one at a time against a running build. The write-up
+added framing, and in at least three places the framing was mistaken for the request: item 5 grew a
+"sibling to decide" nobody asked for, item 4 closed off a choice that had been left open
+(*"a clickable link **or** an up-down clicker"*), and item 12 turned a bug report into a design
+coin-flip. So the requests are recorded here in the Commander's own words, and **where an item and
+an ask disagree, the ask wins.**
+
+| # | The ask, as made | Item |
+|---|---|---|
+| 1 | I expected to drag "Medium Hardpoint 3" onto "Small Hardpoint 1" and couldn't. | 1 |
+| 2 | I should be able to tell the first two lasers apart by something besides price. The more expensive one should be more powerful, and I should know how. | 2a, 2b |
+| 3 | When this page appears it should focus the Search box. I shouldn't have to click it. If what I want is on the list without scrolling, no harm done. | 3 |
+| 4 | I should be able to skip "choose an engineering grade". 999 times out of 1000 it's 5. Make the grade a clickable link or an up-down clicker where it says "grade 5". | 4 |
+| 5 | Same for a maximum grade of 1 — so it's whatever the maximum grade is, not always 5. | 4 |
+| 6 | "Point Defence is not engineered" should be "is not currently engineered". | 5 |
+| 7 | These are not the correct engineering options for armour. | 6 |
+| 8 | Planning a Core Internal shouldn't make me choose when there's only one choice. It can't be anything else. | 7 |
+| 9 | You have all this space — show what each engineering choice does in general. Not per grade; that goes on the grade page. | 8 |
+| 10 | What's special about a Guardian Distributor? It should say. | 9 |
+| 11 | If something's already engineered: a gear glyph next to its name in the slot list, and the engineering font in a different colour in the details pane. | 10 |
+| 12 | Fuel tanks can't be engineered. | 6 |
+| 13 | Every choice for what goes into a slot should show what's currently in the slot, if anything. | 11 |
+| 14 | Not showing my just-entered engineering in the checklist. The Suggestions button is there, but it only says 1. | 12 |
+| 15 | There should be a dropdown with each of my ships in it, so I don't have to switch ships in-game before setting a core. | 13 |
+| 16 | `type9_military` where the hull name belongs. | 14 |
+
+Fifteen from the Commander, plus #16 spotted in a screenshot. Sixteen asks, fourteen items: #5 folds
+into #4, and #12 into #7.
+
 ## Two things run through this batch
 
 Stated once here rather than fourteen times below, because most items are an instance of one or
@@ -191,6 +223,42 @@ rather than prettifying a symbol into something that looks like one.
   you* — or stays quiet on a page already carrying a materials list, is a judgement about nagging
   rather than a defect.
 
+  **Decided 2026-08-19, and two of the three questions above were not the Commander's.** Asks #4
+  and #5 say only: don't ask for the grade, default to the blueprint's highest, and make it *"a
+  clickable link or an up-down clicker"*. The write-up above picked the clicker and argued for it;
+  the Commander has now confirmed the **stepper**, so the argument was right and the closing-off
+  was still wrong. The engineer-rank question was invented here and is answered below on its own
+  merits.
+
+  | Question | Settled |
+  |---|---|
+  | Control | **Stepper.** Confirmed, not assumed |
+  | Default | **The blueprint's highest offered grade**, never the number 5 |
+  | "Any grade" | **Deleted. It is not a thing** |
+  | `SlotPlan.Grade` | **`int`, not `int?`** |
+  | A blueprint offering one grade | **Do not print the grade at all** — it is superfluous |
+
+  **`int` rather than `int?` is the decision that carries the others.** The wildcard cannot come
+  back through a nullable field nobody is watching. Two consequences follow and neither needs
+  deciding: a stored plan carrying `"Grade": null` from the wildcard era reads as the blueprint's
+  highest offered grade, which is where a new plan would land anyway; and a plan naming a module
+  with no engineering has no grade to hold, so it holds `0` and never renders it — `Describe()`
+  already prints a grade only beside a blueprint, and its grade-without-a-blueprint branch becomes
+  dead code to remove.
+
+  **The suppression rule keys on *offers one grade*, not on *the maximum is 1*.** Measured: 3 of
+  160 module-and-blueprint pairs offer a single grade — Chaff Launcher, Heat Sink Launcher and
+  Point Defence, all on Ammo Capacity, all grade 1 — so the two rules select the same rows today
+  and would not if Frontier shipped a single-grade-3 recipe. Those three get no stepper either:
+  there is nothing to step. The grade stays in the data, because the checklist and the costing need
+  it; only `Describe()` omits it, which is the one string that is both shown and spoken.
+
+  **The rank question, answered.** `EngineeringRules.RollsFor` returns **null** when `rank < grade`,
+  so stepping past the Commander's rank does not produce a wrong cost — it produces **no cost**, and
+  the *What it costs* block goes blank on its own. So this was never a choice between nagging and
+  staying quiet; it is whether an already-blank block explains itself. It should: one line, only
+  when the cost is unavailable, and nothing at all when it is not.
+
 - [x] **5. "Point Defence is not engineered" should be "is not currently engineered".** *Built.*
   `ChecklistEvaluator` line 217. Right for a reason beyond taste: that verdict is a **reading taken
   at a moment**, not a property of the module — list.md Phase 26 has a plan carrying the journal's
@@ -361,6 +429,42 @@ rather than prettifying a symbol into something that looks like one.
   grade, watch the numbers move. That is a better place for them than a page passed through once,
   and it is the second independent reason the grade should be a stepper.
 
+  **The layout, drawn by the Commander on the running build 2026-08-19.** Ask #9 said the per-grade
+  numbers *"go on the grade page"*, and item 4 deletes that page — so this settles where both halves
+  live, and it is cheaper than the note above assumed.
+
+  **The blueprint page**, which is the wide chooser the ask was pointing at. Per row:
+
+  - **On the button**: the blueprint's name, and under it the *general* line — *"less mass, at the
+    cost of integrity"*. That is `ChoiceOption.Detail`, which the chooser already renders, so the
+    half of this item the ask actually asked for needs no new mechanism at all.
+  - **In the empty space to the right**: the *exact* figures, for the grade currently selected.
+  - **At the far right**: the grade stepper — **beside the row and deliberately not part of it**.
+
+  That last detail is the whole design. A stepper *on* the button would have to modify a selection
+  that has not been made yet, which means the blueprint step stops being a `ChoiceRequest` and
+  becomes a bespoke page. A stepper *beside* the button does not: the row stays commit-on-click, the
+  Commander sets the grade and then picks the blueprint, and it commits at that grade. **The generic
+  chooser survives untouched**, and only the module, variant and effect steps go on using it
+  unchanged.
+
+  **One stepper for the page rather than one per row.** Not the Commander's call and recorded as
+  mine, so it is cheap to reverse: the point of the right-hand column is comparing blueprints, and
+  comparing them at different grades is not a comparison. Each row shows its effect at the page's
+  grade, clamped to its own maximum.
+
+  **The Fitted pane** — what the Commander calls the details pane, on the right of Loadout > Ships >
+  Slot — carries the same two things:
+
+  - the grade inside the *Planned* line becomes a **stepper**, so it can be nudged without reopening
+    the chooser, and the *What it costs* block below re-costs as it moves;
+  - an **Effect** block describing what the chosen engineering does, shown only where something has
+    been chosen.
+
+  **Still to settle by measurement rather than by asking**: 34 of 160 blueprints change their
+  attribute set across grades, so the general line is built either from the union or from the top
+  grade where that is a superset. Check, do not assume.
+
 - [ ] **9. A module row should say what is special about that module.** *"What's special about a
   Guardian Distributor? It should say."* Two answers, and they are different.
 
@@ -461,3 +565,28 @@ rather than prettifying a symbol into something that looks like one.
   `type9_military` is **Type-10 Defender**, by Lakon — and the fleet page one tab over already
   prints "Oxen (Type-10 Defender)". Thread B, and the cheap half of it: the name was in hand and the
   id was printed anyway.
+
+- [ ] **15. "Anything — I only want the engineering" is offered on an empty slot.** Reported
+  2026-08-19 against v0.38.0, on the module chooser: *"is that supposed to be on the current module?
+  If so, fine, but say so. However, I went to an optional slot with nothing in it and it said the
+  same thing. You can't engineer an empty slot."*
+
+  `AskModule` adds that row **unconditionally** — it is the first `ChoiceOption` on every module
+  page, whatever the slot holds — and taking it leaves `Module` null. On a fitted slot that is a
+  real want and merely unsaid. On an empty slot it is a plan to engineer nothing.
+
+  Two fixes for the two cases, and the second is the defect:
+
+  | Slot | Today | Wanted |
+  |---|---|---|
+  | Something fitted | "Anything — I only want the engineering" | Name it: *"Keep the 7A Thrusters — I only want the engineering"* |
+  | Empty | The same row | **Not offered at all** |
+
+  **This is item 11 arriving from the other side.** Had the header carried what is fitted — which
+  `ChoiceRequest`'s own documentation says it should, and which item 11 exists to restore — the row
+  would have read as obviously wrong on an empty slot rather than merely odd. They share a cause and
+  are worth building together, but they are separate defects with separate acceptance tests, so this
+  is not folded into 11.
+
+  Not to be confused with item 7, which is about a question with *one* answer. This is about the
+  decline being wrong, and it fires on pages that have plenty of answers.
