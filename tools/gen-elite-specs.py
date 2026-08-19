@@ -80,6 +80,7 @@ import csv
 import datetime
 import io
 import json
+import re
 import urllib.request
 from pathlib import Path
 
@@ -88,6 +89,8 @@ FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 CORIOLIS_RAW = "https://raw.githubusercontent.com/EDCD/coriolis-data/master/"
 
 CORIOLIS_TREE = "https://api.github.com/repos/EDCD/coriolis-data/git/trees/master?recursive=1"
+
+EDSY_DB = "https://raw.githubusercontent.com/taleden/EDSY/master/eddb.js"
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "EliteSpecifications.tsv"
 
@@ -100,7 +103,14 @@ MODULE_COLUMNS = [
     "symbol", "name", "class", "rating", "mount", "mass", "power", "integrity", "cost",
     "optimal_mass", "max_fuel", "fuel_power", "fuel_multiplier",
     "hull_boost", "kinetic_res", "thermal_res", "explosive_res", "caustic_res",
+
+    # What kind of thing it is, and where it is allowed. See `build_slots`.
+    "mtype", "hulls", "exact_size",
 ]
+
+SLOT_COLUMNS = ["hull", "slot", "kind", "size", "restrict"]
+
+SLOT_KIND_COLUMNS = ["kind", "mtypes"]
 
 PADS = {1: "small", 2: "medium", 3: "large"}
 
@@ -250,6 +260,9 @@ def build_modules(paths: list[str], outfitting: dict[int, dict]) -> tuple[list[l
 
                     # And only a bulkhead carries these five. See build_bulkheads.
                     "", "", "", "", "",
+
+                    # Filled from EDSY in main(), where the join happens.
+                    "", "", "",
                 ])
 
     return built, unnamed
@@ -318,6 +331,9 @@ def build_bulkheads(
             number(bulkhead.get("thermres")),
             number(bulkhead.get("explres")),
             number(bulkhead.get("causres")),
+
+            # Filled from EDSY in main(), where the join happens.
+            "", "", "",
         ])
 
     # Whatever is left in `figures` had figures and no name. Nothing can be keyed to it, so
@@ -395,6 +411,328 @@ def disambiguate(built: list[list[str]]) -> list[list[str]]:
     return kept
 
 
+# ------------------------------------------------------------------ the slot layout
+
+# The eight core internals, in the order every ship's `component` list gives them. The
+# journal's own names, which is what makes this table joinable to a Loadout event.
+CORE_SLOTS = [
+    "Armour", "PowerPlant", "MainEngines", "FrameShiftDrive", "LifeSupport",
+    "PowerDistributor", "Radar", "FuelTank",
+]
+
+HARDPOINT_SIZES = ["Tiny", "Small", "Medium", "Large", "Huge"]
+
+
+def edsy_database() -> str:
+    """EDSY's `eddb.js`, whole.
+
+    A third source, and it is here for one fact neither of the other two carries: what the
+    journal calls a slot that is empty. A `Loadout` event lists fitted modules only, so a
+    page that wants to show an empty hardpoint has to know the hull's slots before anything
+    is in them — and the name is the identity a plan is keyed on, so a derived one that is
+    merely plausible would key plans to slots that do not exist.
+
+    coriolis-data cannot supply it. It carries the sizes, which is why the `hardpoints` and
+    `internals` columns above come from it, but its lists are positional and the journal's
+    numbering is not: an Anaconda's twelve optional internals are `Slot01` to `Slot10` and
+    then `Slot13` and `Slot14`, a Type-9's start at `Slot00`, and a Type-8 has no
+    `SmallHardpoint3`. Those gaps are Frontier's own and are not computable from a list of
+    sizes — measured against 915 real journals, every rule that tries gets four hulls wrong.
+
+    EDSY carries the exception list. Its ships are declared with the same size lists plus a
+    `slotnames` override wherever Frontier's numbering is irregular — thirteen hulls — and
+    its `group` table says which kinds of module each kind of slot accepts, which is the
+    other half of "offer the valid choices for this slot".
+
+    Same standing as the other two sources on the data itself, and it says so in its own
+    header: EDSY's code is CC BY-NC and the game data in the file remains the property of
+    Frontier Developments, used under the same media usage rules d47 uses it under. See
+    NOTICE.
+
+    The check is the corpus rather than the source. Every slot name this produces is
+    asserted against what Frontier actually wrote across 915 real journals, so a source that
+    goes stale fails a test rather than quietly inventing a slot.
+    """
+    return fetch(EDSY_DB).decode("utf-8-sig")
+
+
+def section(text: str, name: str) -> str:
+    """One top-level block of `eddb.js`, by the comment it closes with."""
+    opened = text.index("\n\t" + name)
+    closed = text.index("}, // eddb." + name, opened)
+
+    return text[opened:closed]
+
+
+def numbers(text: str, key: str) -> list[int]:
+    found = re.search(r"\b%s\s*:\s*\[([^\]]*)\]" % key, text)
+
+    if not found or not found.group(1).strip():
+        return []
+
+    return [int(cell) for cell in found.group(1).replace("\n", "").split(",") if cell.strip()]
+
+
+def strings(text: str, key: str) -> list[str]:
+    found = re.search(r"\b%s\s*:\s*\[([^\]]*)\]" % key, text)
+
+    if not found:
+        return []
+
+    return [cell.strip().strip("'") for cell in found.group(1).replace("\n", "").split(",")
+            if cell.strip()]
+
+
+def restrictions(text: str, key: str) -> list[str]:
+    """One `{mtype:1, ...}` or `null` per slot of a group, for the ships that restrict any."""
+    found = re.search(r"\b%s\s*:\s*\[(.*?)\]" % key, text, re.S)
+
+    if not found:
+        return []
+
+    return [
+        "" if cell == "null" else " ".join(sorted(re.findall(r"(\w+)\s*:", cell)))
+        for cell in re.findall(r"null|\{[^}]*\}", found.group(1))
+    ]
+
+
+def entries(text: str) -> list[tuple[int, str]]:
+    """`123 : { ... }` pairs, counting braces rather than forbidding them.
+
+    A pattern that stops at the first `}` reads eight hundred of EDSY's modules and silently
+    drops the rest: a power distributor carries `noblueprints:{misc_agzr:1}` and a hardpoint
+    carries `mats:{...}`, so the nested brace ends the match early and the entry is never
+    seen. It failed quietly — every power plant and every power distributor came out
+    untyped, which reads exactly like a source that does not carry the field.
+    """
+    found = []
+
+    for start in re.finditer(r"(\d+)\s*:\s*\{", text):
+        depth, at = 1, start.end()
+
+        while depth > 0 and at < len(text):
+            depth += 1 if text[at] == "{" else -1 if text[at] == "}" else 0
+            at += 1
+
+        found.append((int(start.group(1)), text[start.end(): at - 1]))
+
+    return found
+
+
+def edsy_ships(database: str) -> dict[str, dict]:
+    """Every hull EDSY declares, keyed by the symbol the journal writes."""
+    ships = {}
+    block = section(database, "ship")
+
+    for found in re.finditer(r"\n\t\t *\d+\s*:\s*\{", block):
+        start = found.end()
+        stock = block.find("stock:", start)
+        head = block[start: stock if stock > 0 else len(block)]
+
+        symbol = re.search(r"fdname\s*:\s*'([^']+)'", head)
+        identifier = re.search(r"\bid\s*:\s*(\d+)", head)
+        slots = re.search(r"slots:\{(.*?)\n\t\t\t\},", head, re.S)
+
+        if not symbol or not slots:
+            continue
+
+        named = re.search(r"\n\t\t\tslotnames:\{(.*?)\n\t\t\t\},", head, re.S)
+        reserved = re.search(r"\n\t\t\treserved:\{(.*?)\n\t\t\t\},", head, re.S)
+        groups = ("hardpoint", "utility", "component", "military", "internal")
+
+        ships[symbol.group(1).lower()] = {
+            "id": int(identifier.group(1)) if identifier else None,
+            "sizes": {group: numbers(slots.group(1), group) for group in groups},
+            "names": {group: strings(named.group(1), group) for group in groups} if named else {},
+            "restrict": {group: restrictions(reserved.group(1), group) for group in groups}
+                        if reserved else {},
+        }
+
+    return ships
+
+
+def edsy_groups(database: str) -> list[list[str]]:
+    """Which module types each kind of slot accepts.
+
+    `component` is a list rather than a map — one entry per core slot, in the order
+    `CORE_SLOTS` gives — because a power plant and a fuel tank are both core internals and
+    neither goes in the other's socket.
+    """
+    # Commented out rather than deleted is how EDSY takes a type back out of a group — an
+    # AX explosive is not a hardpoint any more and a shield booster was never an internal —
+    # so reading past the comments would offer two kinds of module in slots that refuse them.
+    block = re.sub(r"/\*.*?\*/", "", section(database, "group"), flags=re.S)
+
+    def mtypes(text: str) -> str:
+        return " ".join(sorted(re.findall(r"(\w+)\s*:\s*1", text)))
+
+    built = []
+
+    for group in ("hardpoint", "utility"):
+        found = re.search(r"\b%s\s*:\s*\{\s*mtypes:\{([^}]*)\}" % group, block)
+        built.append([group, mtypes(found.group(1)) if found else ""])
+
+    component = re.search(r"component\s*:\s*\[(.*?)\n\t\t\]", block, re.S)
+    cells = re.findall(r"mtypes:\{([^}]*)\}", component.group(1)) if component else []
+
+    for name, cell in zip(CORE_SLOTS, cells):
+        built.append([name, mtypes(cell)])
+
+    for group, kind in (("military", "military"), ("internal", "optional")):
+        found = re.search(r"\b%s\s*:\s*\{\s*mtypes:\{([^}]*)\}" % group, block, re.S)
+        built.append([kind, mtypes(found.group(1)) if found else ""])
+
+    return built
+
+
+def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, str, str]]:
+    """Symbol to (module type, the hulls it is restricted to, whether it must fill its slot).
+
+    Two passes, because a bulkhead is declared twice. The generic modules carry their own
+    `mtype`; a hull's armour is listed inside that hull with the id of the generic entry and
+    no type of its own, so the type is joined back through the id — the same shape as the
+    bulkhead join two functions up, for the same reason.
+
+    A bulkhead found inside a hull is restricted to that hull, which is not a rule anybody
+    had to write down: it is what being declared there means. Everything else takes its
+    restriction from EDSY's own `reserved`, mapped out of EDSY's ship numbering here so
+    nothing downstream has to know EDSY exists. Empty means every hull, which is almost all
+    of them — the ones that carry a list are fighter hangars, luxury cabins and the Mk II
+    range.
+    """
+    def field(cell: str, key: str) -> str:
+        found = re.search(r"\b%s\s*:\s*'([^']+)'" % key, cell)
+        return found.group(1) if found else ""
+
+    generic = {}
+
+    for identifier, cell in entries(section(database, "module")):
+        generic[identifier] = cell
+
+    built = {}
+
+    def record(symbol: str, cell: str, mtype: str, hull: str = "") -> None:
+        reserved = re.search(r"reserved\s*:\s*\{([^}]*)\}", cell)
+        ships = sorted(
+            hulls[int(identifier)]
+            for identifier in re.findall(r"(\d+)\s*:", reserved.group(1) if reserved else "")
+            if int(identifier) in hulls
+        )
+
+        built[symbol.lower()] = (
+            mtype,
+            hull or " ".join(ships),
+            "1" if "noundersize" in cell else "",
+        )
+
+    for identifier, cell in generic.items():
+        if field(cell, "fdname"):
+            record(field(cell, "fdname"), cell, field(cell, "mtype"))
+
+    ships = section(database, "ship")
+
+    for found in re.finditer(r"\n\t\t *\d+\s*:\s*\{", ships):
+        head = ships[found.end(): ships.find("\n\t\t},", found.end())]
+        hull = field(head, "fdname").lower()
+
+        armoury = re.search(r"module:\{(.*?)\n\t\t\t\},", head, re.S)
+
+        if not hull or not armoury:
+            continue
+
+        for identifier, cell in entries(armoury.group(1)):
+            symbol = field(cell, "fdname")
+
+            if not symbol:
+                continue
+
+            record(
+                symbol,
+                cell,
+                field(cell, "mtype") or field(generic.get(identifier, ""), "mtype"),
+                hull)
+
+    return built
+
+
+def build_slots(ships: dict[str, dict]) -> list[list[str]]:
+    """Every outfitting slot of every hull, as the journal names it.
+
+    Cosmetics are not here at all. A paint job, a bobble and a ship kit are slots in the
+    `Loadout` event and are not things anybody outfits, so a table of what can be fitted
+    would be lying to include them — which also makes this table the answer to "is this slot
+    part of outfitting", asked the one way that cannot go stale: by the slot not being in it.
+    """
+    built = []
+
+    for hull, ship in sorted(ships.items()):
+        def named(group: str, index: int, ship=ship) -> str:
+            override = ship["names"].get(group) or []
+            return override[index] if index < len(override) else ""
+
+        def restrict(group: str, index: int, ship=ship) -> str:
+            cells = ship["restrict"].get(group) or []
+            return cells[index] if index < len(cells) else ""
+
+        hardpoints = ship["sizes"]["hardpoint"]
+
+        for index, size in enumerate(hardpoints):
+            word = HARDPOINT_SIZES[size] if size < len(HARDPOINT_SIZES) else "Unknown"
+            ordinal = sum(1 for other in hardpoints[:index + 1] if other == size)
+
+            built.append([
+                hull,
+                named("hardpoint", index) or "%sHardpoint%d" % (word, ordinal),
+                "hardpoint",
+                str(size),
+                restrict("hardpoint", index),
+            ])
+
+        for index, _ in enumerate(ship["sizes"]["utility"]):
+            built.append([
+                hull,
+                named("utility", index) or "TinyHardpoint%d" % (index + 1),
+                "utility",
+                "0",
+                restrict("utility", index),
+            ])
+
+        for index, size in enumerate(ship["sizes"]["component"]):
+            if index >= len(CORE_SLOTS):
+                continue
+
+            built.append([
+                hull,
+                named("component", index) or CORE_SLOTS[index],
+                "core",
+                str(size),
+                restrict("component", index),
+            ])
+
+        # Military compartments are optional internals that only take reinforcement, so they
+        # are that kind carrying a restriction rather than a kind of their own — which is
+        # what the outfitting screen shows and what a Commander means by "my internals".
+        for index, size in enumerate(ship["sizes"]["military"]):
+            built.append([
+                hull,
+                named("military", index) or "Military%02d" % (index + 1),
+                "optional",
+                str(size),
+                restrict("military", index) or "military",
+            ])
+
+        for index, size in enumerate(ship["sizes"]["internal"]):
+            built.append([
+                hull,
+                named("internal", index) or "Slot%02d_Size%d" % (index + 1, size),
+                "optional",
+                str(size),
+                restrict("internal", index),
+            ])
+
+    return built
+
+
 def main() -> None:
     sha, ship_paths, module_paths = coriolis_files()
 
@@ -410,18 +748,40 @@ def main() -> None:
     unique = {row[0]: row for row in sorted(generic + bulkheads)}
     modules = disambiguate(sorted(unique.values()))
 
+    database = edsy_database()
+    hulls = edsy_ships(database)
+    kinds = edsy_groups(database)
+    slots = build_slots(hulls)
+
+    # The join, and its miss is reported rather than hidden: a module with no type is one no
+    # slot will offer, which is a quiet hole in a picker rather than a wrong figure anywhere.
+    types = edsy_modules(database, {ship["id"]: hull for hull, ship in hulls.items()})
+    untyped = []
+
+    for row in modules:
+        if row[0] in types:
+            row[18], row[19], row[20] = types[row[0]]
+        else:
+            untyped.append(row[0])
+
     lines = [
         "# Generated by tools/gen-elite-specs.py. Do not edit by hand — rerun the tool.",
         "# Derived from EDCD/FDevIDs (shipyard.csv, outfitting.csv) for names and the symbols",
         "# the journal writes, joined on Frontier's own ids with EDCD/coriolis-data for the",
         "# figures. See that script for why this table is derived rather than written.",
+        "# The slot layout is EDSY's, which is the only one of the three that carries what",
+        "# the journal calls an empty slot — see edsy_database() for why neither other source",
+        "# can supply it. Cosmetic slots are deliberately absent: this table is what can be",
+        "# outfitted, so a paint job is not in it.",
         "# Bulkheads are per-hull and live in coriolis-data's ship files rather than its",
         "# modules/, and their names carry the hull because forty-eight hulls have a",
         "# Lightweight Alloy. Class and rating are placeholders for armour and are dropped.",
         "# Game data is Frontier's, used under their media usage rules — see NOTICE.",
         f"# Ships: {len(ships)}. Modules: {len(modules)}, of which bulkheads {len(bulkheads)}. "
         f"Known but unmeasured: {len(unkeyed)}.",
-        f"# coriolis-data tree {sha[:12]}. Built: {datetime.date.today().isoformat()}.",
+        f"# Slots: {len(slots)} across {len(hulls)} hulls. Modules with no type: {len(untyped)}.",
+        f"# coriolis-data tree {sha[:12]}. EDSY eddb.js as of the same day.",
+        f"# Built: {datetime.date.today().isoformat()}.",
         "[ships]",
         "\t".join(SHIP_COLUMNS),
     ]
@@ -429,6 +789,12 @@ def main() -> None:
     lines += ["\t".join(row) for row in ships]
     lines += ["[modules]", "\t".join(MODULE_COLUMNS)]
     lines += ["\t".join(row) for row in modules]
+
+    # What each kind of slot accepts, then every hull's slots in outfitting-screen order.
+    lines += ["[slot-kinds]", "\t".join(SLOT_KIND_COLUMNS)]
+    lines += ["\t".join(row) for row in kinds]
+    lines += ["[slots]", "\t".join(SLOT_COLUMNS)]
+    lines += ["\t".join(row) for row in slots]
 
     # Named and nothing else. A ship in this section exists and d47 has no figures for it,
     # which is a different answer from never having heard of it.
@@ -444,6 +810,12 @@ def main() -> None:
 
     if unnamed:
         print(f"{unnamed} modules had no outfitting.csv row and were named from their file")
+
+    print(f"Wrote {len(slots)} slots across {len(hulls)} hulls")
+
+    if untyped:
+        print(f"{len(untyped)} modules have no EDSY type, so no slot will offer them: "
+              f"{', '.join(untyped[:12])}{' …' if len(untyped) > 12 else ''}")
 
     if unmeasured:
         print(f"{len(unmeasured)} bulkheads had no coriolis-data figures and carry a name "
