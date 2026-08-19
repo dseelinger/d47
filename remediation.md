@@ -58,10 +58,16 @@ the changelog, which is why this file is the current batch and not a growing arc
   within one kind of slot: Hardpoints to Hardpoints, Utility Mounts to Utility Mounts, Optional
   Internal to Optional Internal. **Core Internal is not draggable at all** and is not a target.
 
-  **Held for its own session, on the headset half.** The desktop half is ordinary: pointer
+  **Settled: it is a desktop-only item, because the headset no longer has the page.** Checklist
+  and Loadout were withdrawn from the big VR panel on 2026-08-19 at the Commander's instruction,
+  and the slot rows this item drags between live at Loadout › Ships › Slot. So there is no
+  headset half left to design. What ships is the Core operation and the mouse: pointer
   pressed with the modifier down, capture, the row under the pointer on move, commit on release —
   plus a Core rule for picking the copy's size, which is the largest variant of the same module
   and mount that fits the target, and is the easiest part to get right and test.
+
+  **The headset analysis is kept below rather than struck**, because the tab could come back and
+  the collision would come back with it. Read as a record of what was found, not as work to do.
 
   **The headset half is not ordinary, and the reason is sharper than "there is no drag".** Read
   properly, `VrHost` already gives the trigger three meanings and disambiguates them after the
@@ -89,15 +95,30 @@ the changelog, which is why this file is the current batch and not a growing arc
   action**, bound to A on Touch and Index and to the trackpad click on the wand, which is a better
   gesture bought with per-profile binding work.
 
-  The one lever still free is the trick the scrollbar uses: **decide at press time by what was
-  hit.** That points at a design which needs no new gesture and works the same on both surfaces —
-  a *Copy this plan to…* control on the slot page arms the copy, the slot list marks the legal
-  targets, and one press on a target completes it. Ctrl and drag then becomes the mouse's
-  shortcut for the same operation rather than a second mechanism, so one Core operation carries
-  the rules and the tests and neither surface has a gesture the other cannot do.
+  **One measured correction to the three paragraphs above, recorded because it reverses their
+  conclusion.** "There is no pointer motion on the headset" is true only of Avalonia's pointer
+  events, and the implication drawn from it was wrong. `VrRay.PointingAt` computes a `Hit.U`,
+  `Hit.V` on the panel **every frame**, and the panel already consumes that stream twice —
+  `_panel.Aim` lights the row under the ray continuously, and `_panel.Scroll` is a drag that
+  already works. A row-to-row drag is that same stream a third time, not a new one. The carry
+  itself never touches the widget tree at all: it is `VrPlacementMath` moving the overlay quad,
+  which is why the panel's content is unaware of it.
 
-  Shipping the desktop half alone would leave a gesture that does nothing on the other surface,
-  which is worse than not having it yet.
+  So the headset half was **ordinary work after all**, and its shape was settled before the tab
+  was withdrawn: sample the grip **at the moment the trigger goes down**, exactly as
+  `_scrolling = _panel.GrabsScroll(u, v)` already decides scrolling and never revisits it. That
+  ordering — grip before trigger — is forced, because a grip arriving later races the 400 ms
+  dwell and the panel is already in hand. Its one price is that Back would move from grip
+  **press** to grip **release** (`VrActionInput.BackPressed` is a rising edge today), suppressed
+  if a trigger press happened while the grip was down. On its own that is imperceptible.
+
+  None of which is built, because there is nothing in the headset to drag. **It is written down
+  rather than struck** so that if Loadout ever returns to the big panel, the collision returns
+  with it and this is the answer, already argued.
+
+  The arm-and-press alternative — a *Copy this plan to…* control that marks legal targets — is
+  **not** what ships. It was only ever the price of making one gesture work on both surfaces,
+  and it costs a step the mouse does not need.
 
 - [ ] **6. A core per ship.** Each ship remembers the core that flew it — Sentinel on the combat
   ships, Quartermaster on the haulers — set at the Commander's command rather than by watching.

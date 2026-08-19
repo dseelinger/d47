@@ -47,6 +47,18 @@ Each of these is cheap to break by accident and expensive to fix later.
   logical tree it rasterises as an empty quad with no error. Minimise-safety does not rest on
   there being no window; it rests on the VR path never depending on the state of the window the
   Commander can see. See architecture.md D1, amended in Phase 9.
+- **Feature parity between the two surfaces is a nice-to-have, not a constraint.** *Amended
+  2026-08-19.* The invariant above is about the **mechanism** — one view definition, no second UI
+  codebase, no screenshot of the desktop window — and that is untouched and still binding
+  (architecture.md §1). What is **not** a rule is that both surfaces must show the same things.
+  Settings has been desktop-only since Phase 12; Checklist and Loadout were withdrawn from the big
+  VR panel on the Commander's instruction, undoing on purpose what Phases 25 and 26 built there.
+  So a tab may live on one surface and not the other, and **VR reaching parity with the window is
+  a someday-maybe** rather than something a design has to be bent around. Take what works quickly.
+  The mechanism is already the default rather than something to build: a tab appears only where a
+  host calls `Furnish`, and `PanelView.Tab` declines to select one nobody furnished. So a tab is
+  withdrawn from a surface by *not* making that one call, and neither the drawn route nor the
+  spoken one needs teaching a special case.
 - **All audio goes through the one arbiter**, which exposes the render reference tap from day one.
 - **No telemetry.** Permissive licenses only, no copyleft — verify the transitive graph, not
   just direct references. **This is a rule about code**, and it was applied to game data once
