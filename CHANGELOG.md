@@ -17,6 +17,77 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.36.0 — 2026-08-18 — The module list is the outfitting screen
+
+Ten items of remediation 12, nine of them about one page. The module list showed whatever the
+journal happened to mention, in the order it mentioned it — so an empty hardpoint did not exist,
+a paint job did, and a power plant read as *int powerplant size6 class5*.
+
+### Every slot your ship has, in the blocks you already know
+
+**Hardpoints, Utility Mounts, Core Internal, Optional Internal**, in that order, and a
+`TinyHardpoint` sits under Utility Mounts where the game puts it rather than under Hardpoints
+where its name does.
+
+**An empty slot is still a slot.** They are all there now, each saying `empty` rather than
+carrying a blank note — so there is somewhere to press to plan a weapon into a hardpoint that has
+none.
+
+**Nothing that is not outfitting is on the list.** Paint jobs, decals, bobbles, ship kits, the
+voice pack, the cockpit, the cargo hatch, the planetary approach suite: all of them arrive in the
+`Loadout` event exactly as a power plant does, and none of them is a thing anybody outfits.
+
+**A module is named the way the outfitting screen names it** — *5A Thrusters*, *3E Pulse Laser,
+gimballed* — instead of Frontier's symbol with the underscores taken out.
+
+### Planning a slot is three lists and nothing to spell
+
+It used to ask for a blueprint by voice and a grade on the keyboard, so a plan depended on getting
+*Increased FSD Range* right, and there was no way at all to say what should go in an empty
+compartment — only what should be rolled on whatever was already in it.
+
+Now: **the module, then the roll, then the grade**, each a list of the valid choices for *that*
+slot. What fits a size 4 hardpoint is not what fits a size 4 compartment; the rolls offered are the
+ones that module can take; the grades are the ones that blueprint actually has. Undersizing is
+allowed where the game allows it and refused where it does not — life support, sensors and the SCO
+drive have to fill their slot. A Vulture's armour is not offered on an Anaconda and a fighter
+hangar is not offered on a Sidewinder.
+
+**The long lists narrow as you type.** A filter rather than a spelling test: it takes rows away and
+never refuses a value, and the drawn keyboard is one press away for the headset.
+
+### Where the slot layout came from
+
+A `Loadout` event lists fitted modules and nothing else, so knowing that a compartment is empty
+means knowing the hull's slots before anything is in them — and the slot's name is what a plan is
+keyed on, so a derived one that merely looks right would key plans to slots that do not exist.
+
+Neither source D47's table already reads carries it. Frontier's numbering is not positional: an
+Anaconda's compartments run 01 to 10 and then 13 and 14, a Type-9's start at 00, a Vulture has no
+04 and a Type-8 no `SmallHardpoint3`. **EDSY** carries the exception list, and its own header puts
+the game data in it on exactly the footing the other two sources are on — Frontier's, used under
+their Media Usage Rules. It is credited in `NOTICE` with the rest.
+
+**The check is 915 real journals rather than the source.** Every slot name the table now carries
+was matched against what Frontier actually wrote across every `Loadout` event in the corpus, and
+the only names left over were the cosmetics — which is what says they are cosmetics.
+
+### The Engineers tab says what the game says
+
+**Unlocked**, **Ready for Unlock** and **Requires Engineer Intro First**, where three sentences
+used to explain the same three states in D47's own words. And **an engineer's name opens that
+engineer** everywhere it appears, not only on the directory rows — the ranked candidates on the
+Route, and every stop of a chain, which is where somebody you have never met is first put in front
+of you.
+
+### Also
+
+- The module picker offered *AX Missile Rack* and *Ax Missile Rack* as two things. The id list
+  spells one weapon both ways — fixed mounts one way, turrets the other.
+- `PersonaCatalog.All` is the eleven shipped cores plus the ones you have written, and four test
+  assertions read it where they meant the shipped cast. "Eleven cores ship" counted twelve whenever
+  the custom-core tests happened to run at the same moment.
+
 ## 0.35.0 — 2026-08-18 — Write your own core, and one thing at a time
 
 Fifteen items of remediation 11. Most are small, and three of them were not what they were
