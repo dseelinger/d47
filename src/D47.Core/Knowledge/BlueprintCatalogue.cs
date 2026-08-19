@@ -81,6 +81,31 @@ public sealed record Blueprint
     public string? CoriolisGuid { get; init; }
 
     /// <summary>
+    /// Frontier's own names for this blueprint — <c>Engine_Dirty</c>, <c>Weapon_LongRange</c>.
+    /// <para>
+    /// <b>This is what the journal writes.</b> <c>Engineering.BlueprintName</c> on a fitted module
+    /// is exactly one of these, which is what lets a roll the Commander already has be named
+    /// properly instead of read back as its own symbol with the underscore taken out.
+    /// </para>
+    /// <para>
+    /// More than one, occasionally, because coriolis files a single recipe under several names.
+    /// Ten rows carry two; every other named row carries one.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> Symbols { get; init; } = [];
+
+    /// <summary>
+    /// The module types this recipe belongs to, in the vocabulary
+    /// <see cref="ModuleSpecification.Type"/> speaks.
+    /// <para>
+    /// <b>A shared blueprint has one row per module kind and they are not interchangeable</b> —
+    /// "Double Braced" has eight recipes and "Lightweight" fifteen. Matching on the name alone
+    /// drew all fifteen for one module, so this says which one is actually its own.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> ModuleTypes { get; init; } = [];
+
+    /// <summary>
     /// What a full grade actually costs a Commander at a given rank, or null when the rank
     /// cannot reach the grade or the recipe is not per-application.
     /// <para>
@@ -129,7 +154,73 @@ public static class BlueprintCatalogue
     private static readonly Lazy<IReadOnlyList<Blueprint>> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    private static readonly Lazy<IReadOnlyDictionary<string, IReadOnlyList<string>>> Offers =
+        new(LoadOffers, LazyThreadSafetyMode.ExecutionAndPublication);
+
     public static IReadOnlyList<Blueprint> All => Loaded.Value;
+
+    /// <summary>
+    /// What a module type can be engineered with, or null for a type the table does not know.
+    /// <para>
+    /// <b>Three answers, not two</b> (remediation.md 15, item 6). An empty list means the module
+    /// <em>genuinely takes no engineering</em> — a fuel tank is the reported case — and null means
+    /// d47 has never heard of the type. Those were indistinguishable before, so the panel fell back
+    /// to offering all forty blueprints in both, which is how a Type-10's armour came to be offered
+    /// Dirty Drive Tuning and a fuel tank anything at all.
+    /// </para>
+    /// <para>
+    /// Keyed on EDSY's <c>mtype</c>, which <see cref="ModuleSpecification.Type"/> already carries
+    /// against every module. Frontier's blueprint names come back, so this joins to
+    /// <see cref="Blueprint.Symbols"/> by id and never by a name.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string>? OfferedTo(string? moduleType) =>
+        moduleType is { Length: > 0 } type && Offers.Value.TryGetValue(type, out var offered)
+            ? offered
+            : null;
+
+    /// <summary>
+    /// Every recipe a module can take, by the module's own specification. Empty where it takes
+    /// none, and null where the module's type is unknown — see <see cref="OfferedTo"/>.
+    /// </summary>
+    public static IReadOnlyList<Blueprint>? For(ModuleSpecification? module)
+    {
+        if (module is null || OfferedTo(module.Type) is not { } offered)
+        {
+            return null;
+        }
+
+        var wanted = offered.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Both halves, and each catches what the other cannot. The type says which rows are *this
+        // module's own*, because a shared blueprint has one row per kind carrying different
+        // ingredients. The offer says which of that module's rows Frontier actually lets it take.
+        return
+        [
+            .. Loaded.Value
+                .Where(recipe => recipe.ModuleTypes.Contains(module.Type, StringComparer.OrdinalIgnoreCase))
+                .Where(recipe => recipe.Symbols.Any(wanted.Contains))
+                .OrderBy(recipe => recipe.Name, StringComparer.Ordinal)
+                .ThenBy(recipe => recipe.Grade),
+        ];
+    }
+
+    /// <summary>
+    /// What the Commander calls the blueprint the journal named, or null for one nothing knows.
+    /// <para>
+    /// <b>The join that nothing shipped</b> (remediation.md 15, item 10). A fitted module's
+    /// <c>Engineering.BlueprintName</c> is <c>PowerDistributor_PrioritySystems</c>, and until this
+    /// existed it reached the Commander as "PowerDistributor PrioritySystems" — the symbol with its
+    /// underscore taken out, which <see cref="Checklists.ChecklistNaming"/> called "ugly and true".
+    /// It is called <b>System Focused</b>.
+    /// </para>
+    /// </summary>
+    public static string? NameOf(string? symbol) =>
+        symbol is not { Length: > 0 } wanted
+            ? null
+            : Loaded.Value
+                .FirstOrDefault(recipe => recipe.Symbols.Contains(wanted, StringComparer.OrdinalIgnoreCase))
+                ?.Name;
 
     /// <summary>Module kinds anything can be engineered on, as a Commander would say them.</summary>
     public static IReadOnlyList<string> Modules =>
@@ -202,6 +293,54 @@ public static class BlueprintCatalogue
     private static bool Same(string left, string right) =>
         string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// The <c>[mtypes]</c> section: what each module type can be engineered with.
+    /// <para>
+    /// A second pass over the same resource rather than a second file, because the two are
+    /// generated together and a Commander who never opens the Loadout tab pays for neither.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> LoadOffers()
+    {
+        using var stream = typeof(BlueprintCatalogue).GetTypeInfo().Assembly
+            .GetManifestResourceStream(ResourceName);
+
+        if (stream is null)
+        {
+            return new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        using var reader = new StreamReader(stream);
+
+        var built = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        var inside = false;
+
+        while (reader.ReadLine() is { } line)
+        {
+            if (line.StartsWith('['))
+            {
+                inside = line.StartsWith("[mtypes]", StringComparison.Ordinal);
+                continue;
+            }
+
+            if (!inside || line.Length == 0 || line[0] == '#'
+                || line.StartsWith("mtype	", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var cells = line.Split('	');
+
+            // An empty second cell is the answer for a module type that takes no engineering, so
+            // the row is kept rather than skipped. That distinction is the whole point of the
+            // section: "nothing" and "I do not know" are different, and one of them used to be
+            // rendered as all forty blueprints.
+            built[cells[0]] = Split(cells, 1);
+        }
+
+        return built;
+    }
+
     private static IReadOnlyList<Blueprint> Load()
     {
         using var stream = typeof(BlueprintCatalogue).GetTypeInfo().Assembly
@@ -250,6 +389,8 @@ public static class BlueprintCatalogue
         Ingredients = Ingredients(cells, 5),
         Effects = Effects(cells, 6),
         CoriolisGuid = Text(cells, 7),
+        Symbols = Split(cells, 8),
+        ModuleTypes = Split(cells, 9),
     };
 
     /// <summary>

@@ -115,7 +115,12 @@ COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effec
 
            # Frontier's own name for the blueprint, which is what the journal writes into
            # `Engineering.BlueprintName` and what coriolis keys its recipes on. See `symbols`.
-           "symbol"]
+           "symbol",
+
+           # The module types this recipe belongs to. A shared blueprint has one row per kind and
+           # they are not interchangeable — "Double Braced" has eight recipes — so a module needs
+           # the row that is *its own*, not merely one carrying the right name.
+           "mtypes"]
 
 
 # Which blueprints each module type can take. See `edsy_offers`.
@@ -533,6 +538,10 @@ def main() -> None:
             # to, because coriolis files one recipe under more than one. Filled from EDSY below for
             # the rows carrying no guid at all.
             ",".join(sorted(fdnames.get(entry.get("CoriolisGuid") or "", set()))),
+
+            # The module types this recipe belongs to, filled below once the passes have worked
+            # out which type each kind is.
+            "",
         ])
 
     if unresolved:
@@ -645,21 +654,6 @@ def main() -> None:
 
     recipes = [row for row in built if row[0] in ("modification", "experimental")]
 
-    # Narrow the names the guid supplied to the ones this row's own module type actually offers.
-    # coriolis files a single recipe under several names — the armour Lightweight roll answers to
-    # seven, six of them belonging to limpet controllers and weapons — so an unnarrowed row matches
-    # every module type that offers any of them. A Collector Limpet Controller would be offered the
-    # armour recipe, which is the defect this whole item is about arriving by a side door.
-    for row in recipes:
-        if "," not in row[8]:
-            continue
-
-        scope = scope_for(row[1])
-        kept = [name for name in row[8].split(",") if offering.get(name, set()) & scope]
-
-        if kept:
-            row[8] = ",".join(kept)
-
     # First pass: the rows a label settles on its own, or that the module type d47 already knows
     # settles. Everything Frontier and d47 spell the same way lands here.
     left = [row for row in recipes if not row[8]
@@ -674,7 +668,8 @@ def main() -> None:
 
     for row in recipes:
         if row[8]:
-            revealed.setdefault(relax(row[1]), set()).update(offering.get(row[8], set()))
+            for name in row[8].split(","):
+                revealed.setdefault(relax(row[1]), set()).update(offering.get(name, set()))
 
     unnamed = []
 
@@ -730,6 +725,115 @@ def main() -> None:
         if kept:
             row[8] = ",".join(kept)
 
+    # Which module type each recipe kind *is*, and so which recipes a module may take.
+    #
+    # Matched on the blueprint names themselves, which are now ids on both sides: a kind's whole
+    # set of blueprints should sit inside the offer of the module type it belongs to, and the
+    # right type is the **smallest** offer that contains it. A Manifest Scanner's six names are
+    # exactly `ucs`'s six; a Chaff Launcher's four sit inside `ucl`'s four and inside nothing
+    # smaller. Every earlier attempt scored overlap instead and tied the scanners with the Chaff
+    # Launcher, because overlap rewards a big offer and containment does not.
+    # One entry per recipe, holding the names that recipe answers to — **alternatives, not a
+    # requirement**. A row carrying three names needs any one of them offered, because the three
+    # are coriolis's aliases for a single roll and only one belongs to this module.
+    wanted: dict[str, list[set]] = {}
+
+    offered_by = {code: set(listed.split(",")) - {""} for code, listed in offers}
+
+    anywhere = set().union(*offered_by.values()) if offered_by else set()
+
+    stranded = []
+
+    for row in recipes:
+        names = {name for name in row[8].split(",") if name}
+
+        if not names:
+            continue
+
+        # A recipe no module type offers at all cannot say anything about which type its kind is,
+        # so it is set aside rather than allowed to veto every candidate. coriolis and EDSY spell
+        # one blueprint differently — `Scanner_WideAngle` against `Sensor_WideAngle` — and that one
+        # row was enough to leave the Manifest Scanner, the Kill Warrant Scanner and three limpet
+        # controllers belonging to nothing.
+        if not names & anywhere:
+            stranded.append(f"{row[1]} / {row[2]} ({row[8]})")
+            continue
+
+        wanted.setdefault(relax(row[1]), []).append(names)
+
+    fits = {
+        kind: [code for code, offer in sorted(offered_by.items())
+               if offer and all(names & offer for names in rows)]
+        for kind, rows in wanted.items()
+    }
+
+    belongs, contested = {}, []
+
+    # The module's own name first, wherever it picks out exactly one of the types that fit.
+    # EDEngineer's "Wake Scanner" sits inside d47's "Frame Shift Wake Scanner"; its "Life Support"
+    # is a Life Support. Size cannot settle those — Life Support's three generic rolls fit inside
+    # the AFM Unit's three just as well — and a name can.
+    for kind, codes in sorted(fits.items()):
+        named = [code for code in codes if code in scope_for(kind)]
+
+        if len(named) == 1:
+            belongs[kind] = named[0]
+
+    # Then the rest, smallest offer first and never a type another kind already answers to. Two
+    # kinds on one type would leave the other type with no recipes, which reads as a module that
+    # cannot be engineered — the very defect this item is about.
+    claimed = set(belongs.values())
+
+    for kind, codes in sorted(fits.items()):
+        if kind in belongs:
+            continue
+
+        free = [code for code in codes if code not in claimed]
+
+        if not free:
+            continue
+
+        smallest = min(len(offered_by[code]) for code in free)
+        tied = [code for code in free if len(offered_by[code]) == smallest]
+
+        if len(tied) > 1:
+            contested.append(f"{kind}: {', '.join(tied)}")
+
+        belongs[kind] = tied[0]
+        claimed.add(tied[0])
+
+    for row in recipes:
+        row[9] = belongs.get(relax(row[1]), "")
+
+    # One more naming pass, now that each kind's module type is settled. It is the scope the
+    # earlier passes wanted and could not have: "Manifest Scanner / Long Range Scanner" is
+    # `Sensor_LongRange` and not `Weapon_LongRange`, and only the type says which.
+    for row in recipes:
+        if not row[9]:
+            continue
+
+        # Also re-named where the row's own module type disowns the name it carries. coriolis and
+        # EDSY spell one blueprint differently — `Scanner_WideAngle` against `Sensor_WideAngle` —
+        # and the guid handed over coriolis's, which no module type offers, so a Cargo Scanner lost
+        # a blueprint it really has.
+        if row[8] and not ({name for name in row[8].split(",") if name}
+                           & offered_by.get(row[9], set())):
+            was = row[8]
+            row[8] = ""
+
+            # Put it back where nothing better is available. A name its own type does not offer is
+            # still the name coriolis has for it, and is better than none.
+            if not assign(row, {row[9]}):
+                row[8] = was
+
+        if not row[8]:
+            assign(row, {row[9]})
+
+    unnamed = [line for line in unnamed
+               if line not in {f"{row[1]} / {row[2]}" for row in recipes if row[8]}]
+
+    unplaced = sorted({row[1] for row in recipes if not row[9]})
+    stranded = sorted(set(stranded))
 
     stamp = datetime.date.today().isoformat()
 
@@ -780,6 +884,21 @@ def main() -> None:
         print(f"{len(absent)} blueprints are offered by a module type and carry no recipe here:")
         for name in absent:
             print(f"  {name}")
+
+    if contested:
+        print(f"{len(contested)} recipe kinds fit two module types of the same size:")
+        for line in contested:
+            print(f"  {line}")
+
+    if stranded:
+        print(f"{len(stranded)} recipes name a blueprint no module type offers, so they were set "
+              f"aside when working out what their kind is:")
+        for line in stranded:
+            print(f"  {line}")
+
+    if unplaced:
+        print(f"{len(unplaced)} recipe kinds sit inside no module type's offer, so no module "
+              f"reaches them: {', '.join(unplaced)}")
 
     if unnamed:
         print(f"{len(unnamed)} recipes carry neither an id nor a name EDSY knows, so no module "
