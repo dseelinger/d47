@@ -74,3 +74,9 @@ the changelog, which is why this file is the current batch and not a growing arc
   the saturation figure is to be measured from the Commander's own `MarketSell` events rather than
   guessed at.
 
+- [x] **8. Nothing heard should be nothing said.** Mouse clicking with no speech behind it drew
+  *"Nothing spoken, Commander. Only hands at work. I'll hold the channel open."* — and a cue after
+  it. Neither should happen.
+
+- [x] **9. The transcript's context menu should copy the selection.**
+

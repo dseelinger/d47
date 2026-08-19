@@ -139,12 +139,71 @@ public class ClearingTheTranscriptKeepsTheRecordTests
     {
         var (panel, _) = Said();
 
-        var item = panel.GetControl<SelectableTextBlock>("Transcript").ContextMenu!
-            .Items
-            .OfType<MenuItem>()
-            .Single();
+        var item = Menu(panel).Single(entry => entry.Name == "ClearTranscriptItem");
 
         Assert.Equal("Clear what is shown", item.Header);
         Assert.Equal("Ctrl+L", item.InputGesture?.ToString());
     }
+
+    /// <summary>
+    /// And Copy is on it (remediation.md 14, item 9).
+    /// <para>
+    /// Declaring a menu replaces the one <c>SelectableTextBlock</c> comes with, so Copy left the
+    /// place a reader looks for it when Clear arrived. Ctrl+C never stopped working; nothing said
+    /// it did.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMenuCopiesTheSelection()
+    {
+        var (panel, _) = Said();
+
+        var copy = Menu(panel).Single(entry => entry.Name == "CopySelectionItem");
+
+        Assert.Equal("Copy", copy.Header);
+        Assert.Equal("Ctrl+C", copy.InputGesture?.ToString());
+
+        // It comes before Clear: one reads the page and the other empties it, and the destructive
+        // one is not what a hand lands on first.
+        Assert.True(
+            Menu(panel).ToList().IndexOf(copy)
+            < Menu(panel).ToList().FindIndex(entry => entry.Name == "ClearTranscriptItem"));
+    }
+
+    /// <summary>
+    /// Greyed with nothing selected, and lit by a selection (remediation.md 14, item 9).
+    /// <para>
+    /// A Copy that copies nothing is the same complaint as a search box on a page that cannot
+    /// search. It follows the selection rather than the menu opening, because
+    /// <c>ContextMenu.Opening</c> does not fire when the menu is opened in code — measured — so a
+    /// rule hung there is one nothing can assert.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void CopyFollowsTheSelection()
+    {
+        var (panel, _) = Said();
+
+        var transcript = panel.GetControl<SelectableTextBlock>("Transcript");
+        var copy = Menu(panel).Single(entry => entry.Name == "CopySelectionItem");
+
+        Assert.Empty(transcript.SelectedText ?? string.Empty);
+        Assert.False(copy.IsEnabled);
+
+        transcript.SelectionStart = 0;
+        transcript.SelectionEnd = 7;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEmpty(transcript.SelectedText ?? string.Empty);
+        Assert.True(copy.IsEnabled, "a selection lights Copy");
+
+        // And a selection collapsed by a click puts it back.
+        transcript.SelectionEnd = 0;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(copy.IsEnabled);
+    }
+
+    private static IEnumerable<MenuItem> Menu(PanelView panel) =>
+        panel.GetControl<SelectableTextBlock>("Transcript").ContextMenu!.Items.OfType<MenuItem>();
 }

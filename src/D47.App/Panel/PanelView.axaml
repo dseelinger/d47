@@ -712,6 +712,20 @@
               -->
               <SelectableTextBlock.ContextMenu>
                 <ContextMenu>
+                  <!--
+                    Copy of the selection (remediation.md 14, item 9). Declaring a menu of our own
+                    replaced the one the control comes with, which is where a reader's hand goes
+                    for Copy and where it had stopped being — so the shortcut that still worked
+                    had nothing telling anybody it did. Greyed rather than absent when there is
+                    nothing selected or nowhere to copy to, so the gesture is discoverable at the
+                    moment it cannot be used as well as the moment it can.
+                  -->
+                  <MenuItem x:Name="CopySelectionItem"
+                            Header="Copy"
+                            IsEnabled="False"
+                            InputGesture="Ctrl+C"
+                            Click="OnCopySelectionClick" />
+                  <Separator />
                   <MenuItem x:Name="ClearTranscriptItem"
                             Header="Clear what is shown"
                             InputGesture="Ctrl+L"

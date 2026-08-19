@@ -2765,7 +2765,11 @@ public sealed class AppHost : IDisposable
                     // Distinguished from a failure: the model ran and heard nothing worth
                     // reporting, which a Commander who coughed should not be told is an error.
                     _logger.LogInformation("Nothing intelligible in {Seconds:0.#}s", utterance.Duration.TotalSeconds);
-                    Voice.EnterState(Core.Audio.LoopState.Idle);
+
+                    // Without a cue, like every other path here that has nothing to say
+                    // (remediation.md 14, item 8). A chime after a cough is d47 reporting that it
+                    // noticed the room, which is the same intrusion as answering it out loud.
+                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
                     return;
                 }
 

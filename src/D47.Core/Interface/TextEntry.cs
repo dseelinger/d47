@@ -143,11 +143,15 @@ public static class TextEntryLoop
     {
         verdict = null;
 
-        if (heard is null || !heard.Final || string.IsNullOrWhiteSpace(heard.Text))
+        if (heard is null || !heard.Final || Listening.SpeechNoise.IsNothingSaid(heard.Text))
         {
             // A partial is not a failure and is not an answer. Callers distinguish the two by
             // whether the loop was asked at all; this is the "heard nothing" case, and a partial
             // never reaches here because a partial is never judged.
+            //
+            // Heard nothing includes a transcription that is only Whisper describing the room —
+            // "(mouse clicking)" is not the value somebody was asked for, and committing it would
+            // put it in a plan (remediation.md 14, item 8).
             return heard is { Final: false } ? null : EntryFallback.NothingHeard;
         }
 

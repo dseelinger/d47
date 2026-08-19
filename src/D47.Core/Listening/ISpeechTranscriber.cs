@@ -29,7 +29,13 @@ public sealed record Transcription(string Text)
     /// </summary>
     public double Confidence { get; init; } = 1;
 
-    public bool IsEmpty => string.IsNullOrWhiteSpace(Text);
+    /// <summary>
+    /// Whether nothing was said. Blank, or <b>an annotation and nothing else</b> — Whisper
+    /// describes what it hears when it cannot transcribe it, so a stretch of mouse clicks comes
+    /// back as <c>(mouse clicking)</c> rather than as nothing (remediation.md 14, item 8). See
+    /// <see cref="SpeechNoise"/>.
+    /// </summary>
+    public bool IsEmpty => SpeechNoise.IsNothingSaid(Text);
 }
 
 /// <summary>

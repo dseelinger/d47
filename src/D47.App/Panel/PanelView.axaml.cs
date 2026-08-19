@@ -204,6 +204,17 @@ public partial class PanelView : UserControl
         // wrong, and those are different reasons.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyChrome());
 
+        // Copy follows the selection (remediation.md 14, item 9). Both ends, because a selection
+        // dragged backwards moves the start and a selection cleared by a click collapses them.
+        Transcript.PropertyChanged += (_, changed) =>
+        {
+            if (changed.Property == SelectableTextBlock.SelectionStartProperty
+                || changed.Property == SelectableTextBlock.SelectionEndProperty)
+            {
+                ShowCopySelection();
+            }
+        };
+
         // The three readings of one exchange, registered as the Transcript tab's roots. They are
         // roots rather than levels for the reason Fleet, Locker and Directory are: the tab is the
         // root, so pressing Transcript while three levels into something returns to whichever of
@@ -1918,6 +1929,39 @@ public partial class PanelView : UserControl
                             && (ModeButton.IsVisible || SearchRow.IsVisible);
 
     private void OnClearTranscriptClick(object? sender, RoutedEventArgs e) => ClearTranscript();
+
+    /// <summary>
+    /// Copies what is selected in the transcript (remediation.md 14, item 9).
+    /// <para>
+    /// <b>The selection, where the button above copies the page.</b> Two different acts that a
+    /// Commander asks for in two different ways, and the reason this one went missing is that
+    /// declaring a context menu replaces the one <c>SelectableTextBlock</c> comes with — Ctrl+C
+    /// never stopped working, but the place a reader looks to find out that it does was taken
+    /// away and given to Clear.
+    /// </para>
+    /// </summary>
+    private void OnCopySelectionClick(object? sender, RoutedEventArgs e) => Transcript.Copy();
+
+    /// <summary>
+    /// Greys Copy when there is nothing to copy or nowhere to put it.
+    /// <para>
+    /// Two ways for it to be useless and the same answer to both: nothing is selected, or the
+    /// surface has no clipboard — which is the headset, whose host window is never shown and
+    /// whose <c>TopLevel.Clipboard</c> is null. A control that exists to be pressed and does
+    /// nothing teaches the wrong thing about what the panel can do, which is the same call the
+    /// search box makes about the pages it cannot narrow.
+    /// </para>
+    /// <para>
+    /// <b>Off the selection rather than off the menu opening.</b> <c>ContextMenu.Opening</c> does
+    /// not fire when the menu is opened in code — measured — so a rule hung there is one no test
+    /// can reach and one nothing guarantees ran. The selection is what the answer depends on, so
+    /// that is what it watches.
+    /// </para>
+    /// </summary>
+    internal void ShowCopySelection() =>
+        CopySelectionItem.IsEnabled =
+            Transcript.SelectedText is { Length: > 0 }
+            && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
 
