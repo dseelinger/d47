@@ -299,8 +299,24 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// Asks for the blueprint, then the grade. Voice first for the name and the keyboard for the
-    /// number: a blueprint is a phrase and a grade is a digit.
+    /// What the Commander wants in this slot: the module, then the blueprint, then the grade
+    /// (remediation.md 12, item 5).
+    /// <para>
+    /// <b>Three lists rather than a name to spell.</b> It used to ask for the blueprint by voice
+    /// and the grade on the keyboard, which meant a plan for a slot depended on getting a phrase
+    /// like "Increased FSD Range" right — and there was no way at all to say what should go in an
+    /// empty compartment, only what should be rolled on whatever was already there.
+    /// </para>
+    /// <para>
+    /// Every list is the slot's own. What can go in a size 4 hardpoint is not what can go in a
+    /// size 4 compartment, and the modules a blueprint applies to are not every blueprint — so
+    /// each step narrows the next rather than offering the whole catalogue three times.
+    /// </para>
+    /// <para>
+    /// <b>Each step can also be skipped</b>, because the three are separate wants. "A shield
+    /// generator, I don't care what grade" is a plan; so is "grade 5 dirty drives on whatever is
+    /// in there". The first row of each list is the one that declines it.
+    /// </para>
     /// </summary>
     public void Ask(string item, string slot, PanelPrompts prompts, Action done)
     {
@@ -309,6 +325,219 @@ public sealed class ShipsMode(
             return;
         }
 
+        var known = EliteSpecifications.Slot(build.Hull, slot);
+
+        if (known is null)
+        {
+            // A hull the table has no layout for. Nothing can be listed, so the old way in stays
+            // rather than the slot becoming unplannable while the table catches up.
+            Spell(build, slot, prompts, done);
+            return;
+        }
+
+        var plan = build.For(slot);
+
+        AskModule(build, known, plan, prompts, module =>
+            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade) =>
+            {
+                ships.Plan(build.Id, new SlotPlan(slot, blueprint, grade, plan?.Engineer)
+                {
+                    Module = module,
+                    Experimental = plan?.Experimental,
+                });
+
+                done();
+            }));
+    }
+
+    /// <summary>The modules this slot takes, by name — the variants are the slot's business.</summary>
+    private static void AskModule(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        PanelPrompts prompts,
+        Action<string?> chosen)
+    {
+        // By name rather than one row per class and rating. A size 6 compartment takes over a
+        // hundred parts and around forty things; the Commander is choosing the thing, and which
+        // 6A of it they buy is what the slot's size already decided.
+        var modules = EliteSpecifications.ModulesFor(slot)
+            .GroupBy(module => module.Name, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new ChoiceOption(
+                group.Key,
+                group.Key,
+                Sizes(group)))
+            .ToList();
+
+        if (modules.Count == 0)
+        {
+            chosen(plan?.Module);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.module",
+                "Module",
+                $"What goes in {slot.Describe()}?",
+                Context(build, slot),
+                [new ChoiceOption(string.Empty, "Anything — I only want the engineering"), .. modules],
+                plan?.Module,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option => chosen(option.Key.Length == 0 ? null : option.Key));
+    }
+
+    /// <summary>
+    /// The blueprint, then the grade. Two steps because the grades on offer are the ones that
+    /// blueprint actually has — five is not universal, and offering a grade nobody rolls is a
+    /// plan that can never be met.
+    /// </summary>
+    private static void AskBlueprint(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string? module,
+        PanelPrompts prompts,
+        Action<string?, int?> chosen)
+    {
+        // What the blueprints are listed for: the module just chosen, or the one already planned,
+        // and otherwise everything — which is a long list and is exactly what the search is for.
+        var recipes = BlueprintCatalogue.ForModule(module ?? plan?.Module)
+            .Where(recipe => recipe.Kind == BlueprintKind.Modification)
+            .ToList();
+
+        if (recipes.Count == 0)
+        {
+            recipes = [.. BlueprintCatalogue.All.Where(recipe => recipe.Kind == BlueprintKind.Modification)];
+        }
+
+        var names = recipes
+            .GroupBy(recipe => recipe.Name, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.blueprint",
+                "Blueprint",
+                module is { Length: > 0 } wanted ? $"What roll on the {wanted}?" : "What roll?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, "No engineering — the module as it comes"),
+                    .. names.Select(group => new ChoiceOption(
+                        group.Key,
+                        group.Key,
+                        Grades(group))),
+                ],
+                plan?.Blueprint,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option =>
+            {
+                var blueprint = option.Key.Length == 0 ? null : option.Key;
+
+                var offered = blueprint is null
+                    ? [1, 2, 3, 4, 5]
+                    : names.First(group => group.Key == blueprint)
+                        .Select(recipe => recipe.Grade)
+                        .Where(grade => grade is not null)
+                        .Select(grade => grade!.Value)
+                        .Distinct()
+                        .Order()
+                        .ToList();
+
+                AskGrade(build, slot, plan, blueprint, offered, prompts, chosen);
+            });
+    }
+
+    /// <summary>
+    /// The grade, from the ones that blueprint has. <b>Any is a real answer</b> rather than an
+    /// unknown, which is why it is the first row rather than a way out of the question.
+    /// </summary>
+    private static void AskGrade(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string? blueprint,
+        IReadOnlyList<int> offered,
+        PanelPrompts prompts,
+        Action<string?, int?> chosen)
+    {
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.grade",
+                "Grade",
+                blueprint is { Length: > 0 } roll ? $"Which grade of {roll}?" : "Which grade?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, "Any grade"),
+                    .. offered.Select(grade => new ChoiceOption(
+                        grade.ToString(CultureInfo.InvariantCulture),
+                        $"Grade {grade.ToString(CultureInfo.InvariantCulture)}")),
+                ],
+                plan?.Grade?.ToString(CultureInfo.InvariantCulture),
+                ChoiceSurface.Layer)
+            {
+                CurrentWord = "planned now",
+            },
+            option => chosen(
+                blueprint,
+                int.TryParse(option.Key, CultureInfo.InvariantCulture, out var grade) ? grade : null));
+    }
+
+    /// <summary>
+    /// The header's second line: which slot, how big, and what is in it. The one thing a dropdown
+    /// cannot do, and the reason taking the panel is worth it.
+    /// </summary>
+    private static string Context(ShipBuild build, ShipSlot slot) =>
+        $"{build.Describe()} · {slot.Describe()}. It does not reach your checklist until you "
+        + "promote the build.";
+
+    /// <summary>The sizes a module comes in, so a row says what it would cost the slot.</summary>
+    private static string Sizes(IEnumerable<ModuleSpecification> variants)
+    {
+        var said = variants
+            .Select(module => module.Size)
+            .Distinct(StringComparer.Ordinal)
+            .Take(8)
+            .ToList();
+
+        return said.Count == 0 ? string.Empty : string.Join(", ", said);
+    }
+
+    /// <summary>The grades a blueprint offers, said as a range rather than as a list of five.</summary>
+    private static string Grades(IEnumerable<Blueprint> recipes)
+    {
+        var grades = recipes
+            .Select(recipe => recipe.Grade)
+            .Where(grade => grade is not null)
+            .Select(grade => grade!.Value)
+            .Distinct()
+            .Order()
+            .ToList();
+
+        return grades.Count switch
+        {
+            0 => string.Empty,
+            1 => $"grade {grades[0].ToString(CultureInfo.InvariantCulture)}",
+            _ => $"grades {grades[0].ToString(CultureInfo.InvariantCulture)} to "
+                 + grades[^1].ToString(CultureInfo.InvariantCulture),
+        };
+    }
+
+    /// <summary>
+    /// The way in for a hull the table has no layout for: a blueprint said, and a grade typed, as
+    /// it was for every slot before there was anything to list.
+    /// </summary>
+    private void Spell(ShipBuild build, string slot, PanelPrompts prompts, Action done) =>
         prompts.Enter(
             new EntryRequest(
                 "loadout.blueprint",
@@ -339,7 +568,6 @@ public sealed class ShipsMode(
 
                     done();
                 }));
-    }
 
     /// <summary>
     /// The journal's verdict, as of when it was taken. <b>No checkbox</b>: a derived item's

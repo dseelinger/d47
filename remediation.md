@@ -20,7 +20,7 @@ the changelog, which is why this file is the current batch and not a growing arc
 - [x] **4. No `int` in a description.** The symbol was printed with its underscores taken out, so
   a power plant read as *int powerplant size6 class5*.
 
-- [ ] **5. "Plan this slot" should offer the valid choices for that slot.** A list to pick from
+- [x] **5. "Plan this slot" should offer the valid choices for that slot.** A list to pick from
   rather than a name to spell, and searchable, because an Optional Internal has hundreds.
 
 - [x] **6. `TinyHardpoint` is a Utility Mount.**
