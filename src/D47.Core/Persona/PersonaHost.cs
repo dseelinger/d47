@@ -28,13 +28,56 @@ public enum PersonaArrival
     Introduction,
 
     /// <summary>
-    /// Selected again after time away. The pack calls this a gap reaction and it replaces the
-    /// switch-in bark: the core returns to a ship that has moved, and it explains the missing
+    /// Selected again after a long time away. The pack calls this a gap reaction and it replaces
+    /// the switch-in bark: the core returns to a ship that has moved, and it explains the missing
     /// time according to its own damage. Needs a model, because the reaction is to a telemetry
-    /// delta that no authored line could anticipate; with none, it falls back to
-    /// <see cref="Introduction"/>.
+    /// delta that no authored line could anticipate; with none, it falls back to the authored
+    /// return line.
+    /// <para>
+    /// <b>Long means <see cref="PersonaHost.GapAfter"/>, and it used to mean any measurable
+    /// stretch at all.</b> A core remarking on the missing time every single time it was picked
+    /// made the reaction the normal case, which is the opposite of what a reaction is. The
+    /// Commander's correction, taken on 2026-08-19 with Phase 35: occasional, not automatic.
+    /// </para>
     /// </summary>
     Gap,
+
+    /// <summary>
+    /// Aboard, and saying nothing. Three arrivals are silent and they are all the same argument
+    /// — the core is not new to this Commander and nothing has happened worth remarking on.
+    /// <list type="bullet">
+    /// <item>A core reselected inside <see cref="PersonaHost.GapAfter"/>.</item>
+    /// <item>A core arriving because the Commander boarded the ship they bound it to. They said
+    /// what should fly this ship; d47 doing it is keeping the deal rather than announcing
+    /// it (list.md Phase 35).</item>
+    /// <item>The binding for the ship d47 finds them already in at startup.</item>
+    /// </list>
+    /// The switch is still real — the voice, the wake word and the transcript all change. What
+    /// is skipped is a line, and with it a model call.
+    /// </summary>
+    Quiet,
+}
+
+/// <summary>
+/// Why the core changed. Not <em>who</em> asked — the caller trust question is the settings
+/// surface's and is answered by <see cref="Configuration.SettingsCaller"/> — but what kind of
+/// event this is, which is what decides whether the arriving core says anything (list.md
+/// Phase 35).
+/// </summary>
+public enum PersonaSwitch
+{
+    /// <summary>The Commander picked this core: a panel row, a phrase, a gesture.</summary>
+    Selected,
+
+    /// <summary>They boarded a ship they had bound to this core.</summary>
+    Ship,
+
+    /// <summary>
+    /// The binding for the ship they were already in when d47 started. Silent, and it does not
+    /// spend the core's introduction either: a core that has never spoken to this Commander has
+    /// still never spoken to them, and it introduces itself the next time it arrives.
+    /// </summary>
+    Adopted,
 }
 
 /// <summary>What a returning core is reacting to. All of it is already-known ship telemetry.</summary>
@@ -103,6 +146,26 @@ public sealed class PersonaHost
 
     /// <summary>The core aboard. Never null — "personality off" is a prompt decision, not an empty seat.</summary>
     public Persona Current { get; private set; }
+
+    /// <summary>
+    /// How long a core has to have been away before it remarks on the missing time.
+    /// <para>
+    /// A month, set by the Commander on 2026-08-19: <em>comments on gaps should normally be
+    /// occasional, not automatic</em>. It was previously any measurable stretch, which made a
+    /// core switched away from and back inside an evening open by explaining its own absence.
+    /// </para>
+    /// <para>
+    /// A threshold rather than a dice roll, because "occasional" has to be a property somebody
+    /// can predict: a core that reacts to a fortnight one time in four is a core whose silence
+    /// the Commander cannot read. And a month is the span that makes the reaction true — the
+    /// telemetry delta it is reacting to is a ship that really has moved on.
+    /// </para>
+    /// <para>
+    /// Reachable only across sessions, which is why the elapsed time handed in has to survive a
+    /// restart. Nothing in Core does that; <c>ViewState.CoresLastAboard</c> does.
+    /// </para>
+    /// </summary>
+    public static readonly TimeSpan GapAfter = TimeSpan.FromDays(30);
 
     /// <summary>
     /// The cores that have already introduced themselves, in catalog order. Exposed because the
@@ -186,11 +249,17 @@ public sealed class PersonaHost
     /// What changed aboard while it was away, already rendered. The one thing every core can
     /// see regardless of which of them was running.
     /// </param>
+    /// <param name="cause">
+    /// What kind of switch this is. Decides only whether the arriving core speaks — the switch
+    /// itself is identical either way, which is what keeps the isolation model untouched: a core
+    /// still has no way to know why it was switched on or what was on before it.
+    /// </param>
     /// <returns>True if the core changed.</returns>
     public bool Apply(
         PersonaSettings settings,
         TimeSpan? away = null,
-        string? telemetryDelta = null)
+        string? telemetryDelta = null,
+        PersonaSwitch cause = PersonaSwitch.Selected)
     {
         _shipNameOverride = settings.ShipName;
 
@@ -204,16 +273,7 @@ public sealed class PersonaHost
         var previous = Current;
         Current = incoming;
 
-        // First selection introduces; a return gets the gap reaction. The introduction is the
-        // fallback for a return with nothing to react to, because a core that says nothing at
-        // all on being picked reads as a core that failed to load.
-        var firstTime = _introduced.Add(incoming.Id);
-        var arrival = firstTime || away is null ? PersonaArrival.Introduction : PersonaArrival.Gap;
-
-        if (firstTime)
-        {
-            Remember();
-        }
+        var arrival = Arriving(incoming, away, cause);
 
         Changed?.Invoke(new PersonaChanged(
             previous,
@@ -222,6 +282,37 @@ public sealed class PersonaHost
             arrival == PersonaArrival.Gap ? new PersonaGap(away!.Value, telemetryDelta) : null));
 
         return true;
+    }
+
+    /// <summary>
+    /// Which of the three arrivals this is, and the only place that decides it.
+    /// <para>
+    /// Read as a ladder rather than as three cases. A core this Commander has never had aboard
+    /// introduces itself however it arrived — that is the one line worth hearing and it is heard
+    /// once ever. Everything after that is silent unless the core has genuinely been gone, which
+    /// is <see cref="GapAfter"/>.
+    /// </para>
+    /// <para>
+    /// A startup adoption is outside the ladder entirely: it neither speaks nor spends the
+    /// introduction, because nothing was heard and an introduction nobody heard is not spent.
+    /// </para>
+    /// </summary>
+    private PersonaArrival Arriving(Persona incoming, TimeSpan? away, PersonaSwitch cause)
+    {
+        if (cause == PersonaSwitch.Adopted)
+        {
+            return PersonaArrival.Quiet;
+        }
+
+        if (_introduced.Add(incoming.Id))
+        {
+            Remember();
+            return PersonaArrival.Introduction;
+        }
+
+        return cause == PersonaSwitch.Selected && away is { } gap && gap >= GapAfter
+            ? PersonaArrival.Gap
+            : PersonaArrival.Quiet;
     }
 
     private List<ConversationMessage> TranscriptFor(string id)

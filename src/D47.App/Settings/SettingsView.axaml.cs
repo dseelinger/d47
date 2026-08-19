@@ -1544,7 +1544,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         press.Click += (_, _) =>
         {
             row.Press!();
-            refresh();
+
+            // The whole surface rather than this row, because a press is not always about the row
+            // it is on: binding a core to a ship changes what the row above says *and* what the
+            // list below it says, and refreshing only the one pressed left the other one stating
+            // the state before the press (list.md Phase 35). A press is a rare, deliberate act, so
+            // reading ninety rows once is not a cost anybody can perceive.
+            Refresh();
         };
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, press } };

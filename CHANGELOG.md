@@ -17,6 +17,85 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.38.0 — 2026-08-19 — A core per ship
+
+**Phase 35.** A ship can now remember the core that flies it. Sentinel on the combat ships,
+Quartermaster on the haulers, and you stop picking one every time you change ship.
+
+### You say it once, and boarding does the rest
+
+Sitting in the ship, say *"remember this core for this ship"*, press the button on the Persona
+card, or use `Ctrl+Alt+B` — which works while Elite has the foreground, because that is when you
+will want it. Pressing the gesture again with that core already bound takes the binding back.
+
+**Nothing is ever bound by watching.** Directive 47 does not work a binding out from which core
+happened to be running while you were flying something; a preference you did not state is not a
+preference. What it does with a binding you *did* state is act on it without asking again — the
+binding is the standing instruction, so honouring it is keeping the deal rather than changing it.
+
+The key is the ship's own id rather than the hull, so two Kraits are two ships and renaming one
+changes nothing.
+
+### Boarding a bound ship is silent
+
+The core changes — its voice, its own memory of talking to you, the name it answers to — and it
+says nothing about it. The one exception is a core you have never had aboard, which introduces
+itself, once ever.
+
+**A shipyard shuffle costs one switch.** A ship has to stay the ship for thirty seconds before its
+binding acts, and every change restarts that window, so five ships in five minutes is one switch
+and one line — for the ship you were actually still in.
+
+**The ship you are already in when Directive 47 starts** has its binding applied quietly. Launching
+the app is not a ship change you just made, and a core that has never introduced itself keeps that
+line in hand for the next time it arrives.
+
+A ship you have not bound changes nothing at all: whoever is aboard stays aboard.
+
+### The model can read a binding and never write one
+
+Binding a core to a ship changes who is speaking every time that ship is boarded from then on, so
+it is protected exactly as picking a core is: reachable from the panel, from the model-free phrase
+router and from the gesture, and refused outright to the model. Directive 47 reads your journal and
+your in-game messages, and other people write those.
+
+Being protected also costs nothing on the advertised tool surface, which had under a hundred bytes
+of room. What the model may do is tell you what a ship flies with, and that arrives as one more
+sentence in a tool it already had.
+
+### Gap reactions are for gaps
+
+A core coming back after time away used to remark on the missing time **every time you picked it**,
+which made the reaction the normal case rather than a reaction. It now needs the core to have been
+away **a month**; under that it comes aboard and says nothing.
+
+For that to mean anything, when each core was last aboard is now written to
+`data/view-state.json` — a month-long absence spans launches by definition, and the elapsed time
+previously started again at zero every time Directive 47 started.
+
+### Where it is kept
+
+`data/ship-cores.json`, beside the executable. One line per ship, hand-editable, with the hull and
+the name you gave the ship written beside the number the game knows it by. A line naming a core
+that does not exist is refused and reported on the **Cores by ship** row, and the rest of the file
+still loads.
+
+Its own file rather than a column on `ships.json`: a record there is a *build*, which exists for
+hulls you do not own yet and does not exist for most of the ships you fly. Hanging a core off one
+would mean a plan created as a side effect of stating a preference, and a binding lost with a plan
+deleted.
+
+### Also
+
+A press on a settings button now refreshes the whole settings surface rather than only the row it
+is on, because binding a core changes what two rows say and only one of them was being re-read.
+
+The documentation gate's list of shipped default gestures is now read off the hotkey record rather
+than hand-maintained. It had to be, twice: this phase added a gesture the list did not know about,
+which is exactly the drift that gate exists to catch.
+
+---
+
 ## 0.37.0 — 2026-08-19 — Four tabs in the headset
 
 **The big VR panel drops Checklist and Loadout**, on the Commander's instruction. Nothing was

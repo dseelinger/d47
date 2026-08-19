@@ -316,18 +316,21 @@ public partial class DocumentationGateTests
     {
         var settings = new D47Settings();
 
+        // Every gesture on the hotkey record, read off the record rather than listed here. A
+        // hand-written list is a second place to remember, and the twelfth hotkey added would be
+        // documented, shipped, and invisible to the gate that exists to check exactly that
+        // (list.md Phase 35 added one and this list did not notice).
+        var hotkeys = typeof(HotkeySettings)
+            .GetProperties()
+            .Where(property => property.PropertyType == typeof(string))
+            .Select(property => (string?)property.GetValue(settings.Hotkeys));
+
         return
         [
-            .. new[]
-            {
-                settings.Hotkeys.OpenSettings,
-                settings.Hotkeys.FocusAsk,
-                settings.Hotkeys.Reanchor,
-                settings.Speech.ShutUpHotkey,
-                settings.Listening.PushToTalkKey,
-            }
-            .Where(gesture => !string.IsNullOrWhiteSpace(gesture))
-            .Select(Readable!),
+            .. hotkeys
+                .Concat([settings.Speech.ShutUpHotkey, settings.Listening.PushToTalkKey])
+                .Where(gesture => !string.IsNullOrWhiteSpace(gesture))
+                .Select(Readable!),
         ];
     }
 

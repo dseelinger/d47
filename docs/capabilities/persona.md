@@ -47,10 +47,68 @@ same instrument panel and none of them can see each other.
 
 Transcripts are per session. Closing Directive 47 clears them.
 
+## A core per ship {#core-for-this-ship}
+
+A ship can remember the core that flies it — Sentinel on the combat ships, Quartermaster on the
+haulers — so you stop picking one every time you change ship. Board a bound ship and that core
+comes aboard.
+
+**Nothing is bound until you say so.** Directive 47 never works one out by watching which core
+happened to be running while you were flying something; a binding that appeared on its own is a
+preference you never stated. Sitting in the ship, say it, press it, or use the gesture:
+
+```text
+"remember this core for this ship"    "you fly this ship"    "this ship flies with you"
+"forget this ship's core"             "this ship has no core"
+```
+
+`Ctrl+Alt+B` does the same thing, and works while Elite has the foreground — which is when you
+will want it. Pressing it again with that same core already bound takes the binding back.
+
+**The model cannot bind anything.** It can tell you what a ship flies with, and that is all. A
+tool that could bind a core to a ship is a tool that changes who is speaking one ship swap later,
+and Directive 47 reads your journal and your in-game messages, which other people write.
+
+**Boarding a bound ship is silent.** The core changes — its voice, its own memory of talking to
+you, the name it answers to — and it says nothing about it, because you already said what should
+fly this ship and doing it is keeping that deal rather than news. The one exception is a core you
+have never had aboard: it introduces itself, once ever.
+
+**A shipyard shuffle costs one switch.** Boarding five ships in five minutes does not start five
+companions; a ship has to stay the ship for half a minute before its binding acts, and only the
+one you actually leave in applies.
+
+**The ship you are already in when Directive 47 starts** has its binding applied quietly — no
+introduction, no remark. Launching the app is not a ship change you just made.
+
+A ship you have not bound changes nothing: whoever is aboard stays aboard. And picking a
+different core while flying a bound ship stands — a binding acts when you board, not
+continuously — until the next time you board it.
+
+### Where it is kept
+
+`data/ship-cores.json`, beside the executable, one line per ship. It is meant to be read and
+edited by hand, so the hull and the name you gave the ship are written beside the number the game
+knows it by:
+
+```json
+{
+  "ships": [
+    { "shipId": 12, "core": "sentinel", "hull": "krait_mkii", "name": "Bad Idea" },
+    { "shipId": 27, "core": "quartermaster", "hull": "type9", "name": "Slow Money" }
+  ]
+}
+```
+
+The key is the ship's own id, not the hull — two Kraits are two ships, and renaming one changes
+nothing. A line naming a core that does not exist is refused and reported, and the rest of the
+file still loads.
+
 ## It says something when you switch
 
-A core you have never used introduces itself. One you are coming back to reacts to the time it
-was switched off instead, and it is handed what changed while it was away:
+A core you have never used introduces itself. One you are coming back to after **a month or
+more** reacts to the time it was switched off instead, and it is handed what changed while it was
+away:
 
 ```text
 While you were not running:
@@ -62,6 +120,11 @@ While you were not running:
 Where the ship is now:
   ...
 ```
+
+Under a month it says nothing at all. A companion that explains its own absence every time you
+pick it has made the reaction the normal case, which is the opposite of a reaction — so it is
+kept for an absence worth remarking on. When each core was last aboard is kept in
+`data/view-state.json`, because a month-long gap spans launches by definition.
 
 What it does with that is the character. Cora logs the gap and assigns it a sequence number.
 Sentinel demands the combat log for damage he did not witness. Chart measures how long he was
@@ -168,9 +231,9 @@ its own and there is nothing for this to decide.
 
 ### Introductions
 
-A core introduces itself the first time you ever pick it. Every time after that it reacts to the
-gap instead, which is the better line once you have heard the first one — and the wrong line when
-you are working through the cast and want to hear how each of them opens.
+A core introduces itself the first time you ever pick it. After that it is silent unless it has
+been off for a month, which is the better arrangement once you have heard the first line — and
+the wrong one when you are working through the cast and want to hear how each of them opens.
 
 **That is remembered between sessions**, so restarting Directive 47 no longer brings the opening
 lines back. Which cores are spent is kept in `data/view-state.json` beside the rest of how you
@@ -184,6 +247,19 @@ The core currently aboard is forgotten with the rest, but hearing it again means
 and back — selecting the core that is already running is not a switch, and never has been.
 
 This row is not reachable by the model, for the same reason the persona row above is not.
+
+### Core for this ship
+
+What the ship you are in flies with, and the button that binds it to the core aboard. See
+[A core per ship](#core-for-this-ship) above for what a binding does.
+
+Not reachable by the model — it reports what a binding is and nothing writes one but you.
+
+### Cores by ship {#cores-by-ship}
+
+Every ship you have bound and what it flies with, and the button that forgets the one you are in.
+A line the file refused — a core that does not exist, a ship bound twice — is reported here
+rather than silently dropped.
 
 ## Personality off
 
@@ -220,6 +296,30 @@ no arguments.
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
+
+### `bind_ship_core`
+
+Binds the ship the Commander is in to the core aboard. Takes no arguments — the ship and the core
+are both read from where they already are.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### `forget_ship_core`
+
+Unbinds the ship the Commander is in. Takes no arguments.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+**Both are protected, so neither is advertised.** They are reachable from the panel, from the
+model-free keyword router and from the gesture, and refused outright to the model — the same rule
+the `persona.id` row carries, for a stronger reason: a binding changes who is speaking every time
+that ship is boarded from then on. Being protected also means they cost nothing on the advertised
+surface, which is inside a hundred bytes of its budget. What the model *may* do is read a
+binding, and that arrives in `describe_persona`'s output rather than as a tool of its own.
 
 There is deliberately no tool for *changing* persona. The `persona.id` row is marked protected,
 so `set_setting` refuses it like any other protected row, and the model is never shown the row in

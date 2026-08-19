@@ -911,6 +911,24 @@ public sealed record HotkeySettings
     /// </para>
     /// </summary>
     public string? Reanchor { get; init; } = "Ctrl+Alt+R";
+
+    /// <summary>
+    /// Binds the core aboard to the ship the Commander is in, and unbinds it when it is already
+    /// that core (list.md Phase 35, "The binding is the Commander's, and unreachable from the
+    /// model").
+    /// <para>
+    /// System-wide, like re-anchoring and for the same reason: the moment this is wanted is the
+    /// moment they are flying the ship, which is a moment Elite has the foreground. A gesture
+    /// needing d47 focused would be a gesture that only works when the question is theoretical.
+    /// </para>
+    /// <para>
+    /// One gesture for both directions rather than two. The act is a Commander saying "this one,
+    /// for this ship" while sitting in it, and saying it again about the same core is them taking
+    /// it back — which is the only reading of a second press that means anything, since binding
+    /// the core already bound is a no-op.
+    /// </para>
+    /// </summary>
+    public string? BindShipCore { get; init; } = "Ctrl+Alt+B";
 }
 
 public sealed record UpdateSettings

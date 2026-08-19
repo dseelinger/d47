@@ -65,6 +65,7 @@ public sealed class AppHost : IDisposable
         UpdateInstaller installer,
         TurnLoop turns,
         PersonaHost personas,
+        ShipCoreService shipCores,
         LlmAvailabilityState llmAvailability,
         SpendTracker spend,
         SpendLedger spendLedger,
@@ -100,6 +101,7 @@ public sealed class AppHost : IDisposable
         Installer = installer;
         Turns = turns;
         Personas = personas;
+        ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
         SpendLedger = spendLedger;
@@ -116,6 +118,15 @@ public sealed class AppHost : IDisposable
         _transcriber = transcriber;
         Version = version;
         StartupError = startupError;
+
+        // When each core was last aboard, from previous runs (list.md Phase 35). Without this the
+        // elapsed time a gap reaction is measured against would start at zero every launch, and a
+        // month-long absence — which is the only kind that earns one — spans launches by
+        // definition. No session goes with it: see the field.
+        foreach (var (core, at) in viewState.Load().CoresLastAboard)
+        {
+            _personaLastSeen[core] = (at, null);
+        }
     }
 
     public AppPaths Paths { get; }
@@ -201,6 +212,13 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Which Guardian core is aboard, and what it remembers (list.md Phase 11).</summary>
     public PersonaHost Personas { get; }
+
+    /// <summary>
+    /// Which core flies which ship (list.md Phase 35). Public because the gesture reaches it:
+    /// a system-wide hotkey is bound in the window and has to be able to perform the act, on
+    /// exactly the same footing as the panel button and the phrase.
+    /// </summary>
+    public ShipCoreService ShipCores { get; }
 
     /// <summary>
     /// The Commander's own per-state avatar frames, if they have supplied any. Null until
@@ -806,6 +824,17 @@ public sealed class AppHost : IDisposable
         // and never writes to it directly: the plan owns what, the checklist owns when.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
 
+        // Which core flies which ship (list.md Phase 35). Its own file rather than a column on the
+        // one above: a build is a plan, so hanging a preference off one would create a plan as a
+        // side effect of stating the preference, and lose the preference when the plan was deleted.
+        var shipCoreStore = new ShipCoreStore(
+            Path.Combine(paths.Data, "ship-cores.json"),
+            loggerFactory.CreateLogger<ShipCoreStore>());
+
+        shipCoreStore.Poll();
+
+        var shipCores = new ShipCoreService(shipCoreStore, () => gameState.Active);
+
         // And the same arrangement on foot (list.md Phase 27). Its own file rather than a second
         // array in the ship one, because the game separates ship and on-foot hard and a Commander
         // hand-editing a suit should not be reading past twenty hardpoints to find it.
@@ -1209,7 +1238,12 @@ public sealed class AppHost : IDisposable
                 goalBook,
 
                 // What the "read my journals" button does for the arcs' ages.
-                () => BackfillGoals));
+                () => BackfillGoals,
+
+                // Which core flies which ship (list.md Phase 35). Read by the persona capability
+                // for its two rows, its two protected tools, and the one sentence the model is
+                // allowed to know about a binding.
+                shipCores));
 
         built = capabilities;
 
@@ -1303,6 +1337,7 @@ public sealed class AppHost : IDisposable
             installer,
             turns,
             personas,
+            shipCores,
             llmAvailability,
             spend,
             spendLedger,
@@ -1535,6 +1570,22 @@ public sealed class AppHost : IDisposable
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
+            }
+        });
+
+        // A core per ship (list.md Phase 35). The store is read first so a hand edit is live, then
+        // the ship the Commander is in is compared against the one whose binding is already
+        // aboard. Nothing here writes a binding: this reads what they already said.
+        //
+        // Registered after the loop was primed, which is deliberate — the first ship this sees is
+        // "the ship d47 found them in", and that one is adopted silently rather than announced.
+        tick.Add("ship cores", context =>
+        {
+            shipCoreStore.Poll();
+
+            if (shipCores.Observe(context.Since) is { } due)
+            {
+                host.PutCoreAboard(due);
             }
         });
 
@@ -2344,8 +2395,88 @@ public sealed class AppHost : IDisposable
 
     private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
 
-    private readonly Dictionary<string, (DateTimeOffset At, SessionSummary Session)> _personaLastSeen =
+    /// <summary>
+    /// When each core was last aboard, and what the ship's ledger looked like then.
+    /// <para>
+    /// The session is null for a stamp read back from a previous run: a
+    /// <see cref="SessionSummary"/> does not survive a restart, and comparing against an empty
+    /// one would have a returning core remark on a delta that is an artefact of d47 having been
+    /// closed rather than of anything the Commander did.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<string, (DateTimeOffset At, SessionSummary? Session)> _personaLastSeen =
         new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// What kind of switch the settings write about to arrive is (list.md Phase 35). A field
+    /// rather than a parameter because the write goes through the settings row like every other
+    /// caller — that is what keeps the ship-AI-name rule and the protected rule in one place —
+    /// and the row cannot carry a reason. Set immediately before the write and cleared after it,
+    /// which is safe because the change is raised synchronously from inside it.
+    /// </summary>
+    private PersonaSwitch _personaCause = PersonaSwitch.Selected;
+
+    /// <summary>
+    /// Puts the core the Commander bound to this ship aboard (list.md Phase 35, "Switching ships
+    /// switches the core").
+    /// <para>
+    /// Through the settings row rather than straight into the host, so this is a persona change
+    /// like any other: the ship AI's name follows or does not according to its own row, the
+    /// voice and the wake word are re-read, and each core keeps its own transcript. What the
+    /// binding decides is <em>which</em> core; nothing about the switch itself is special, which
+    /// is what leaves the isolation model untouched — a core still cannot tell why it was
+    /// switched on or what was on before it.
+    /// </para>
+    /// </summary>
+    public void PutCoreAboard(ShipCoreSwitch due)
+    {
+        _personaCause = due.Announce ? PersonaSwitch.Ship : PersonaSwitch.Adopted;
+
+        try
+        {
+            var applied = Settings.Apply(
+                PersonaCapability.PersonaKey, due.Core, SettingsCaller.ShipBinding);
+
+            _logger.LogInformation(
+                "Ship {ShipId} asks for {Core}: {Status} ({Cause})",
+                due.ShipId,
+                due.Core,
+                applied.Status,
+                _personaCause);
+        }
+        finally
+        {
+            _personaCause = PersonaSwitch.Selected;
+        }
+    }
+
+    /// <summary>
+    /// Writes down when the core aboard stopped being aboard, so a gap reaction can be about a
+    /// month rather than about an evening (list.md Phase 35). A read-modify-write, like every
+    /// other writer of this file: it carries every surface's state, and a copy taken earlier and
+    /// written back later would revert whatever the settings page or the headset had saved since.
+    /// </summary>
+    private void RememberCoreAboard(string id, DateTimeOffset at)
+    {
+        try
+        {
+            var state = ViewState.Load();
+
+            ViewState.Save(state with
+            {
+                CoresLastAboard = new Dictionary<string, DateTimeOffset>(state.CoresLastAboard, StringComparer.Ordinal)
+                {
+                    [id] = at,
+                },
+            });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Losing this costs one core one gap reaction it will not give. Losing the app over
+            // it is not a trade anybody would make.
+            _logger.LogDebug(ex, "Could not record when {Core} was last aboard", id);
+        }
+    }
 
     private void ApplyPersonaSettings()
     {
@@ -2359,11 +2490,11 @@ public sealed class AppHost : IDisposable
         var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
 
         var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
-        var delta = seen.At == default
-            ? null
-            : TelemetryDelta.Between(seen.Session, GameState.Active?.Session, GameState.Active);
+        var delta = seen.At != default && seen.Session is { } session
+            ? TelemetryDelta.Between(session, GameState.Active?.Session, GameState.Active)
+            : null;
 
-        if (!Personas.Apply(Settings.Current.Persona, away, delta))
+        if (!Personas.Apply(Settings.Current.Persona, away, delta, _personaCause))
         {
             // The name may still have changed underneath an unchanged core, and that is part of
             // the persona block, so the prompt is rebuilt either way.
@@ -2372,6 +2503,10 @@ public sealed class AppHost : IDisposable
         }
 
         _personaSelectedAt = DateTimeOffset.Now;
+
+        // The core that just left, written where the next session can read it. Only on a real
+        // switch, which is what the early return above has already established.
+        RememberCoreAboard(outgoing.Id, _personaLastSeen[outgoing.Id].At);
 
         // Each core owns its transcript, handed over by reference so the turns land in it
         // directly. This is the line that makes the isolation model real rather than stated:
@@ -2415,6 +2550,16 @@ public sealed class AppHost : IDisposable
         // after it. A gap reaction can take a model round trip to resolve, and the mark should
         // not wait behind it.
         Noted?.Invoke($"Switched to {change.Current.Name}");
+
+        // A quiet arrival is a real switch with nothing to say (list.md Phase 35). The voice, the
+        // wake word, the transcript and the mark above have all already changed; what is skipped
+        // is a spoken line and the model call behind it. Three cases reach here — a core the
+        // Commander has met arriving because they boarded the ship they bound it to, the binding
+        // for the ship d47 found them already in, and a core reselected inside PersonaHost.GapAfter.
+        if (change.Arrival == PersonaArrival.Quiet)
+        {
+            return;
+        }
 
         _ = Task.Run(async () =>
         {
@@ -4352,6 +4497,12 @@ public sealed class AppHost : IDisposable
         _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
 
         CoverageRecorder?.Save();
+
+        // When the core aboard stopped being aboard, which is now (list.md Phase 35). Every other
+        // core's stamp was written as it was switched away from; this is the one that never is,
+        // and without it the core a Commander closes d47 on is the one core that could never earn
+        // a gap reaction. A crash loses it, which costs one reaction and nothing else.
+        RememberCoreAboard(Personas.Current.Id, DateTimeOffset.Now);
 
         Settings.Changed -= OnSettingsChanged;
         Personas.Changed -= OnPersonaChanged;

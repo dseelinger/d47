@@ -19,7 +19,16 @@ public static class PersonaCapability
 
     public const string IntroductionsKey = "persona.introductions";
 
-    public static CapabilityDescriptor Create(PersonaHost host, SettingsService settings) => new()
+    /// <summary>The row that reads what the ship the Commander is in flies with, and binds it.</summary>
+    public const string ShipCoreKey = "persona.shipCore";
+
+    /// <summary>The row that reads every binding, and forgets the current ship's.</summary>
+    public const string ShipCoresKey = "persona.shipCores";
+
+    public static CapabilityDescriptor Create(
+        PersonaHost host,
+        SettingsService settings,
+        ShipCoreService? ships = null) => new()
     {
         Id = Id,
         Group = "Conversation",
@@ -57,13 +66,74 @@ public static class PersonaCapability
                 Description =
                     "Report which persona is currently active, what the Commander calls it, and which "
                     + "other personas are available to switch to.",
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current))),
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current, ships))),
             },
+            ..ships is null ? Array.Empty<ToolDefinition>() : ShipCoreTools(host, ships),
         ],
-        Settings = Rows(host),
+        Settings = Rows(host, ships),
     };
 
-    private static IReadOnlyList<SettingRow> Rows(PersonaHost host) =>
+    /// <summary>
+    /// Binding a core to a ship, and unbinding it (list.md Phase 35, "The binding is the
+    /// Commander's, and unreachable from the model").
+    /// <para>
+    /// <b>Both protected, and this is the case the invariant was written for.</b> Persona
+    /// selection is protected because in-game comms are untrusted input and "switch persona" is
+    /// exactly the shape of thing a hostile message would try. A tool that could bind a core to a
+    /// ship is that same tool with a delay on it: it changes who is speaking one ship swap later,
+    /// and it does so every time that ship is boarded from then on. So it is reachable the way
+    /// every protected act is — a panel button, a phrase, a gesture — and advertised to nothing.
+    /// </para>
+    /// <para>
+    /// Protected also means these cost no tool-surface bytes, which matters: the advertised
+    /// surface is inside a hundred bytes of <see cref="Conversation.ToolProfiles.ComfortableBytes"/>
+    /// and this phase adds no room. What the model <em>may</em> do is read the binding, and that
+    /// arrives in <c>describe_persona</c>'s output rather than as a tool of its own — an existing
+    /// tool saying one sentence more is free.
+    /// </para>
+    /// </summary>
+    private static ToolDefinition[] ShipCoreTools(PersonaHost host, ShipCoreService ships) =>
+    [
+        new ToolDefinition
+        {
+            Name = "bind_ship_core",
+            Description =
+                "Remember the core aboard as the core that flies the ship the Commander is in. "
+                + "Boarding that ship puts it aboard from then on.",
+            Protected = true,
+            Commands =
+            [
+                new ToolCommandPhrase("remember this core for this ship", NoArguments),
+                new ToolCommandPhrase("remember your core for this ship", NoArguments),
+                new ToolCommandPhrase("bind this core to this ship", NoArguments),
+                new ToolCommandPhrase("you fly this ship", NoArguments),
+                new ToolCommandPhrase("this ship flies with you", NoArguments),
+            ],
+            Handler = (_, _) => Task.FromResult(ToolResult.Ok(ships.Bind(host.Current.Id))),
+        },
+        new ToolDefinition
+        {
+            Name = "forget_ship_core",
+            Description =
+                "Forget which core flies the ship the Commander is in. Boarding it then changes "
+                + "nothing about who is answering them.",
+            Protected = true,
+            Commands =
+            [
+                new ToolCommandPhrase("forget this ship's core", NoArguments),
+                new ToolCommandPhrase("unbind this ship's core", NoArguments),
+                new ToolCommandPhrase("this ship has no core", NoArguments),
+            ],
+            Handler = (_, _) => Task.FromResult(ToolResult.Ok(ships.Forget())),
+        },
+    ];
+
+    /// <summary>A phrase that fills nothing in, which is every phrase here: both acts read the
+    /// ship the Commander is in and the core aboard, and neither takes a value.</summary>
+    private static readonly IReadOnlyDictionary<string, string> NoArguments =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    private static IReadOnlyList<SettingRow> Rows(PersonaHost host, ShipCoreService? ships) =>
     [
         new SettingRow
         {
@@ -172,6 +242,52 @@ public static class PersonaCapability
             // protected, and here it comes free rather than as a flag.
             Binding = new SettingBinding { Read = _ => Introductions(host) },
         },
+        ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
+    ];
+
+    /// <summary>
+    /// A core per ship, on the panel (list.md Phase 35). Two rows rather than one, because the
+    /// two acts are not a toggle: binding is about the core aboard and forgetting is about the
+    /// ship, and one button whose meaning flips depending on state is a button nobody can aim.
+    /// <para>
+    /// <see cref="SettingKind.Info"/> with a <see cref="SettingRow.Press"/>, which is how every
+    /// act that is not a value reaches the panel. It also settles the protection question
+    /// without a flag: an Info row is refused to every caller by
+    /// <c>SettingsService.Apply</c>, so there is no value here for a model to write even if it
+    /// found the key.
+    /// </para>
+    /// </summary>
+    private static SettingRow[] ShipCoreRows(PersonaHost host, ShipCoreService ships) =>
+    [
+        new SettingRow
+        {
+            Key = ShipCoreKey,
+            Label = "Core for this ship",
+            Help =
+                "A ship can remember the core that flies it, so changing ship changes who answers "
+                + "you. Nothing is bound until you say so, and boarding a ship you have not bound "
+                + "leaves whoever is aboard aboard.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "core-for-this-ship",
+            PressLabel = "Remember this core for this ship",
+            Press = () => ships.Bind(host.Current.Id),
+            Binding = new SettingBinding { Read = _ => ships.DescribeCurrent() },
+        },
+        new SettingRow
+        {
+            Key = ShipCoresKey,
+            Label = "Cores by ship",
+            Help =
+                "Every ship you have bound, and what it flies with. The file behind it is "
+                + "ship-cores.json beside d47.exe, and it is meant to be readable — one line per "
+                + "ship, hand-editable, with the hull and the name written beside the id so you "
+                + "can tell which ship is which.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "cores-by-ship",
+            PressLabel = "Forget this ship's core",
+            Press = () => ships.Forget(),
+            Binding = new SettingBinding { Read = _ => ships.DescribeAll() },
+        },
     ];
 
     /// <summary>
@@ -264,7 +380,7 @@ public static class PersonaCapability
 
     private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static string Describe(PersonaHost host, D47Settings settings)
+    private static string Describe(PersonaHost host, D47Settings settings, ShipCoreService? ships)
     {
         var report = new StringBuilder();
         var current = host.Current;
@@ -279,6 +395,15 @@ public static class PersonaCapability
         report.AppendLine(settings.Llm.PersonalityEnabled
             ? "Personality is on."
             : "Personality is off, so you are answering plainly and this persona's voice is not in play.");
+
+        // The binding, read and never written (list.md Phase 35). Here rather than in a tool of
+        // its own: the model is allowed to know which core the Commander's ship asks for, and an
+        // existing tool saying one sentence more costs nothing on the advertised surface.
+        if (ships is not null)
+        {
+            report.AppendLine(ships.DescribeCurrent()
+                + " That is the Commander's own binding — you can say what it is, and only they can change it.");
+        }
 
         report.AppendLine();
         report.AppendLine("Available personas (the Commander changes these from the panel or by saying so):");

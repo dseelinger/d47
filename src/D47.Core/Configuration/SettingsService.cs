@@ -23,6 +23,19 @@ public enum SettingsCaller
 
     /// <summary>A tool call. The only caller that can be steered by text d47 did not author.</summary>
     Model,
+
+    /// <summary>
+    /// A binding the Commander made, acting (list.md Phase 35). Same trust as the panel and for a
+    /// stronger reason than the hotkey has: the value was not merely typed by them, it was written
+    /// down by them and is being replayed unchanged. Nothing is interpreted between the file and
+    /// the row.
+    /// <para>
+    /// Its own name rather than borrowing <see cref="Panel"/>, because the log line saying which
+    /// caller changed the core is read when a Commander is asking why their companion changed —
+    /// and "the panel" would be a lie told at exactly the moment it mattered.
+    /// </para>
+    /// </summary>
+    ShipBinding,
 }
 
 public enum SettingApplyStatus

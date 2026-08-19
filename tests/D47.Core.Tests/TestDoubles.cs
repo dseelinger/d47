@@ -250,7 +250,18 @@ public sealed class TestSurface
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
             checklists,
-            memories: memories));
+            memories: memories,
+
+            // A real store over a real (empty) file, like the two above and for a reason of its
+            // own: the documentation gate reads this registry, and a persona capability built
+            // without one registers without its two protected ship-core tools — so the gate would
+            // report a fully documented capability while the shipped app carried two tools it had
+            // never seen (list.md Phase 35).
+            shipCores: new D47.Core.Persona.ShipCoreService(
+                new D47.Core.Persona.ShipCoreStore(
+                    Path.Combine(install.Paths.Data, "ship-cores.json"),
+                    NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
+                () => state.Active)));
 
         built = registry;
 

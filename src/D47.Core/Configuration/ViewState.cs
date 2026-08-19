@@ -74,6 +74,26 @@ public sealed record ViewState
     public IReadOnlyList<string> IntroducedCores { get; init; } = [];
 
     /// <summary>
+    /// When each core was last aboard, so a gap reaction can be about a gap that spans launches
+    /// (list.md Phase 35).
+    /// <para>
+    /// <b>Without this the reaction is unreachable.</b> A core remarks on missing time only past
+    /// <see cref="Persona.PersonaHost.GapAfter"/>, which is a month, and the elapsed time was
+    /// measured from a dictionary that died with the process — so nothing could ever have been
+    /// away long enough. Persisting the stamp is what turns a threshold the Commander asked for
+    /// into behaviour they will actually see.
+    /// </para>
+    /// <para>
+    /// The time and nothing else. The telemetry delta a returning core reacts to is a comparison
+    /// against the session it left, and a session does not survive a restart — so a core coming
+    /// back across one reacts to the missing time with nothing to say about the ship, which is
+    /// honest, rather than to a delta measured from an empty session, which would be invented.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, DateTimeOffset> CoresLastAboard { get; init; } =
+        new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+
+    /// <summary>
     /// Whether a card should be open, given what the capability asked for and what the
     /// Commander has since said. Their choice wins in both directions.
     /// </summary>

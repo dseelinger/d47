@@ -175,7 +175,7 @@ public class PersonaHostTests
     }
 
     [Fact]
-    public void ACoreIntroducesItselfOnceAndReactsToTheGapAfterThat()
+    public void ACoreIntroducesItselfOnceAndReactsToTheGapAfterAMonth()
     {
         var host = new PersonaHost();
         var arrivals = new List<PersonaArrival>();
@@ -184,19 +184,30 @@ public class PersonaHostTests
         host.Apply(Choose("cora"));
         host.Apply(Choose("warden"));
 
-        // Back to Cora, who has been away for a measured stretch.
+        // Back to Cora after an evening away, which is not a gap worth remarking on.
         host.Apply(Choose("cora"), TimeSpan.FromHours(2), "14 jumps");
 
         Assert.Equal(
-            [PersonaArrival.Introduction, PersonaArrival.Introduction, PersonaArrival.Gap],
+            [PersonaArrival.Introduction, PersonaArrival.Introduction, PersonaArrival.Quiet],
             arrivals);
+
+        // And after a real absence, which is what the reaction was always about: the core comes
+        // back to a ship that has moved on. The Commander's rule, taken with Phase 35 — gap
+        // reactions occasional, not automatic, and a month is what occasional means.
+        host.Apply(Choose("warden"));
+        host.Apply(Choose("cora"), PersonaHost.GapAfter + TimeSpan.FromDays(1), "312 jumps");
+
+        Assert.Equal(PersonaArrival.Gap, arrivals[^1]);
     }
 
     [Fact]
-    public void AReturnWithNothingToMeasureFallsBackToTheIntroduction()
+    public void AReturnWithNothingToMeasureSaysNothing()
     {
-        // A core that says nothing at all on being picked reads as a core that failed to load,
-        // so "no elapsed time to react to" has to still produce something.
+        // The core has already introduced itself to this Commander and nothing says it has been
+        // anywhere, so there is nothing to open with. This used to replay the introduction on the
+        // reasoning that a core saying nothing reads as a core that failed to load — which was
+        // true when arriving in silence was impossible, and became the wrong trade the moment
+        // silence was the normal case (list.md Phase 35).
         var host = new PersonaHost();
         PersonaChanged? last = null;
         host.Changed += change => last = change;
@@ -205,8 +216,78 @@ public class PersonaHostTests
         host.Apply(Choose("warden"));
         host.Apply(Choose("kex"), away: null);
 
-        Assert.Equal(PersonaArrival.Introduction, last!.Arrival);
+        Assert.Equal(PersonaArrival.Quiet, last!.Arrival);
         Assert.Null(last.Gap);
+    }
+
+    /// <summary>
+    /// The switch is real whatever the arrival is. Everything the surface does on a change — the
+    /// voice, the wake word, the transcript — hangs off the event, so a quiet arrival that raised
+    /// nothing would be a core aboard speaking in the last one's voice.
+    /// </summary>
+    [Fact]
+    public void AQuietArrivalIsStillARealSwitch()
+    {
+        var host = new PersonaHost();
+        PersonaChanged? last = null;
+        host.Changed += change => last = change;
+
+        host.Apply(Choose("cora"));
+        host.Apply(Choose("warden"));
+
+        Assert.True(host.Apply(Choose("cora"), TimeSpan.FromHours(2)));
+        Assert.Equal(PersonaArrival.Quiet, last!.Arrival);
+        Assert.Equal("cora", last.Current.Id);
+        Assert.Equal("warden", last.Previous!.Id);
+        Assert.Same(host.Transcript, host.Transcript);
+    }
+
+    /// <summary>
+    /// A core arriving because the Commander boarded the ship they bound it to says nothing —
+    /// unless they have never met it, which is the one line worth hearing and is heard once ever
+    /// (list.md Phase 35).
+    /// </summary>
+    [Fact]
+    public void BoardingABoundShipIsSilentUnlessTheCoreIsNew()
+    {
+        var host = new PersonaHost();
+        var arrivals = new List<PersonaArrival>();
+        host.Changed += change => arrivals.Add(change.Arrival);
+
+        // Never met, arriving by ship: it introduces itself.
+        host.Apply(Choose("sentinel"), cause: PersonaSwitch.Ship);
+
+        // Met, arriving by ship after a very long time: still silent. The gap reaction is about
+        // the Commander picking a core again, not about which ship they climbed into.
+        host.Apply(Choose("warden"));
+        host.Apply(Choose("sentinel"), PersonaHost.GapAfter + TimeSpan.FromDays(400), "900 jumps", PersonaSwitch.Ship);
+
+        Assert.Equal(
+            [PersonaArrival.Introduction, PersonaArrival.Introduction, PersonaArrival.Quiet],
+            arrivals);
+    }
+
+    /// <summary>
+    /// The ship d47 finds the Commander already in says nothing at all — and does not spend the
+    /// core's introduction either, because an introduction nobody heard is not spent.
+    /// </summary>
+    [Fact]
+    public void AdoptingAtStartupIsSilentAndKeepsTheIntroductionInHand()
+    {
+        var host = new PersonaHost();
+        var arrivals = new List<PersonaArrival>();
+        host.Changed += change => arrivals.Add(change.Arrival);
+
+        host.Apply(Choose("sentinel"), cause: PersonaSwitch.Adopted);
+
+        Assert.Equal([PersonaArrival.Quiet], arrivals);
+        Assert.Empty(host.Introduced);
+
+        // So the next time it arrives, it says the line the Commander has still never heard.
+        host.Apply(Choose("warden"));
+        host.Apply(Choose("sentinel"), cause: PersonaSwitch.Ship);
+
+        Assert.Equal(PersonaArrival.Introduction, arrivals[^1]);
     }
 
     [Fact]
@@ -240,9 +321,9 @@ public class PersonaHostTests
             ],
             arrivals);
 
-        // And the gap reaction comes back on the next return, rather than the forgetting
+        // And the gap reaction comes back on the next long return, rather than the forgetting
         // having disabled it.
-        host.Apply(Choose("cora"), TimeSpan.FromHours(2), "14 jumps");
+        host.Apply(Choose("cora"), PersonaHost.GapAfter, "14 jumps");
         Assert.Equal(PersonaArrival.Gap, arrivals[^1]);
     }
 
@@ -282,10 +363,11 @@ public class PersonaHostTests
 
         Assert.Equal(["Cora"], next.Introduced.Select(p => p.Name));
 
-        // A return, so it reacts to the gap rather than opening with a line this Commander has
-        // already heard — which before this was only true inside one run.
+        // A return, so it does not open with a line this Commander has already heard — which
+        // before this was only true inside one run. Three hours is not a month, so it says
+        // nothing at all rather than remarking on the gap (list.md Phase 35).
         next.Apply(Choose("cora"), TimeSpan.FromHours(3), "9 jumps");
-        Assert.Equal([PersonaArrival.Gap], arrivals);
+        Assert.Equal([PersonaArrival.Quiet], arrivals);
     }
 
     /// <summary>
@@ -341,7 +423,7 @@ public class PersonaHostTests
         host.Apply(Choose("kex"));
         Assert.Equal(2, memory.Writes);
 
-        // Back to one that has already introduced itself: a gap reaction, and nothing to record.
+        // Back to one that has already introduced itself: a quiet arrival, and nothing to record.
         host.Apply(Choose("cora"), TimeSpan.FromHours(1), "2 jumps");
         Assert.Equal(2, memory.Writes);
     }

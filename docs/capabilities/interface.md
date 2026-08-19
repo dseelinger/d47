@@ -95,6 +95,15 @@ other application, so a bare key is refused when you press it, with a note sayin
 
 Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box.
 
+### Remember this core for this ship {#bind-ship-core}
+
+Binds the ship you are sitting in to the core aboard, so boarding it puts that core aboard from
+then on. `Ctrl+Alt+B` out of the box, and it works **anywhere** — the moment you want it is a
+moment Elite has the foreground. Press it again with that core already bound and the binding is
+taken back. Directive 47 says what happened out loud, because you are not looking at its window.
+
+See [A core per ship](persona.md#core-for-this-ship).
+
 ---
 
 **The model cannot change any of these rows.** A bound key is one of the ways to reach a

@@ -160,7 +160,14 @@ public static class BuiltinCapabilities
 
         // What pressing "read my journals" does for the arcs. A function returning an action for
         // the reason mineHabits gives — Core owns no thread, and the pass is seconds long.
-        Func<Action?>? backfillGoals = null) =>
+        Func<Action?>? backfillGoals = null,
+
+        // Which core flies which ship (list.md Phase 35). Null under the designer and in tests
+        // that are not about it, on the same terms as every other optional service — and here the
+        // absence is more than a row: with no store there is nothing to bind, so the persona
+        // capability registers without its two protected tools rather than registering tools that
+        // would answer that they cannot act.
+        Persona.ShipCoreService? shipCores = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -198,7 +205,7 @@ public static class BuiltinCapabilities
             // Late-bound like the voice list, and for the same reason: it is fetched from the
             // endpoint over the network well after this point in composition.
             endpointModels),
-        PersonaCapability.Create(personas, settings),
+        PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),
         ListeningCapability.Create(settings, listening),

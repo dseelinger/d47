@@ -23,6 +23,17 @@ public static class InterfaceCapability
 
     public const string ReanchorHotkeyKey = "hotkeys.reanchor";
 
+    /// <summary>
+    /// The gesture that binds the core aboard to the ship the Commander is in (list.md Phase 35).
+    /// <para>
+    /// Here with the other gestures rather than beside the persona rows it acts on, because this
+    /// is where a Commander looks for a key to change — every hotkey in d47 is on one page, and a
+    /// twelfth one filed somewhere else on the grounds that it is really about personas is a key
+    /// they will not find.
+    /// </para>
+    /// </summary>
+    public const string BindShipCoreHotkeyKey = "hotkeys.bindShipCore";
+
     public static CapabilityDescriptor Create() => new()
     {
         Id = Id,
@@ -88,6 +99,13 @@ public static class InterfaceCapability
                 "reanchor",
                 s => s.Hotkeys.Reanchor,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { Reanchor = v } },
+                systemWide: true),
+            HotkeyRow(
+                BindShipCoreHotkeyKey,
+                "Remember this core for this ship",
+                "bind-ship-core",
+                s => s.Hotkeys.BindShipCore,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { BindShipCore = v } },
                 systemWide: true),
         ],
     };

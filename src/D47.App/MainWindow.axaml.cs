@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private readonly AppHost? _host;
     private readonly GlobalHotkey _shutUp;
     private readonly GlobalHotkey _reanchor;
+    private readonly GlobalHotkey _bindShipCore;
     private readonly PanelViewModel _model;
 
     private AvailableUpdate? _availableUpdate;
@@ -74,6 +75,7 @@ public partial class MainWindow : Window
 
         _shutUp = new GlobalHotkey(hotkeyLogger);
         _reanchor = new GlobalHotkey(hotkeyLogger);
+        _bindShipCore = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -273,6 +275,7 @@ public partial class MainWindow : Window
         DescribeHotkeys();
         BindShutUp();
         BindReanchor();
+        BindShipCore();
 
         // Spoken input runs the same turn as typed input, deliberately. A second path would be
         // a second place for the in-flight gate, the interrupt vocabulary and the cancellation
@@ -317,6 +320,11 @@ public partial class MainWindow : Window
             if (change.Key == InterfaceCapability.ReanchorHotkeyKey)
             {
                 BindReanchor();
+            }
+
+            if (change.Key == InterfaceCapability.BindShipCoreHotkeyKey)
+            {
+                BindShipCore();
             }
         });
 
@@ -843,6 +851,49 @@ public partial class MainWindow : Window
             _model.ErrorText =
                 $"The re-anchor hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
                 "Another application is probably holding it — pick another in Settings.";
+        }
+    }
+
+    /// <summary>
+    /// The gesture that binds the core aboard to the ship the Commander is in (list.md Phase 35).
+    /// <para>
+    /// System-wide, because the moment it is wanted is a moment they are sitting in the ship with
+    /// Elite in front of them. Pressing it again with the same core already bound takes it back,
+    /// which is the only reading of a second press that means anything.
+    /// </para>
+    /// <para>
+    /// The answer is spoken rather than only shown, for the reason every act performed while the
+    /// game has the foreground is: the Commander pressing this is not looking at d47's window,
+    /// and a confirmation they cannot see is a press they will make twice.
+    /// </para>
+    /// </summary>
+    private void BindShipCore()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var gesture = _host.Settings.Current.Hotkeys.BindShipCore;
+
+        if (!_bindShipCore.Bind(gesture, Toggle) && !string.IsNullOrWhiteSpace(gesture))
+        {
+            _model.ErrorText =
+                $"The ship-core hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
+                "Another application is probably holding it — pick another in Settings.";
+        }
+
+        void Toggle()
+        {
+            var aboard = _host.Personas.Current.Id;
+
+            var said = _host.ShipCores.Current is { } bound
+                       && string.Equals(bound.Core, aboard, StringComparison.Ordinal)
+                ? _host.ShipCores.Forget()
+                : _host.ShipCores.Bind(aboard);
+
+            _model.Mark(said);
+            _ = _host.Voice.AnnounceAsync(said);
         }
     }
 
