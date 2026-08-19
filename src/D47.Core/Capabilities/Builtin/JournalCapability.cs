@@ -339,7 +339,14 @@ public static class JournalCapability
             }
             else
             {
-                report.AppendLine($"{fleet.Ships.Count} other ship{(fleet.Ships.Count == 1 ? "" : "s")} stored:");
+                // Dated, exactly as stored modules already are (remediation.md 14, item 3). This
+                // is a snapshot Elite writes when the Commander docks at a shipyard and never
+                // between, so an undated list reads as the state of the fleet now — and it is
+                // the state of the fleet whenever that was.
+                report.AppendLine(
+                    $"{fleet.Ships.Count} other ship{(fleet.Ships.Count == 1 ? "" : "s")} stored"
+                    + (fleet.TakenAt is { } read ? $", as of {read:yyyy-MM-dd HH:mm} UTC" : string.Empty)
+                    + ":");
 
                 foreach (var group in fleet.Ships
                              .GroupBy(ship => ship.StarSystem, StringComparer.OrdinalIgnoreCase)
@@ -353,8 +360,16 @@ public static class JournalCapability
 
                 if (inTransit.Length > 0)
                 {
+                    // Past tense, and it says why (remediation.md 14, item 3). "In transit" was
+                    // read out as a fact about now — "Sacred Fire is mid-manoeuvre" — of a
+                    // transfer that had landed the day before. Nothing tells d47 when one
+                    // arrives: the flag is only rewritten by the next snapshot, so the only
+                    // honest tense is the one the snapshot was taken in.
                     report.AppendLine(
-                        "In transit: " + string.Join(", ", inTransit.Select(ship => ship.Describe())) + ".");
+                        "In transit when that was read: "
+                        + string.Join(", ", inTransit.Select(ship => ship.Describe()))
+                        + ". A transfer that has landed since would look exactly the same here, so "
+                        + "do not say one is still moving.");
                 }
             }
         }

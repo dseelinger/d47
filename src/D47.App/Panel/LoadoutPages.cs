@@ -134,7 +134,24 @@ public static class LoadoutPages
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var body = new DockPanel();
+        // A grid rather than a dock, because a right-docked child takes as much width as it asks
+        // for and the fill child gets what is left (remediation.md 14, item 1). A plan naming a
+        // module, a blueprint, a grade and an experimental effect asked for all of it, so "Large
+        // Hardpoint 1" was left with nothing — measured at zero pixels — and wrapped one
+        // character per line into a row three hundred pixels tall.
+        //
+        // The name's column keeps a floor and the note gives, which is the right way round: the
+        // note says what is in the slot and the name says which slot, and a row whose name cannot
+        // be read is a row that cannot be pressed on purpose.
+        var body = new Grid
+        {
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Star) { MinWidth = 120 },
+                new ColumnDefinition(GridLength.Auto),
+            ],
+        };
 
         if (aside is { Length: > 0 })
         {
@@ -144,11 +161,23 @@ public static class LoadoutPages
                 FontSize = TypeScale.Secondary,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(12, 0, 0, 0),
+
+                // Wrapped, so a note too long for what is left of the row becomes two lines
+                // rather than pushing the name out of the way.
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Right,
             };
 
             Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-            DockPanel.SetDock(note, Dock.Right);
+            Grid.SetColumn(note, 2);
             body.Children.Add(note);
+
+            // Capped against the row's own width, because an Auto column measures a wrapping
+            // block as though it had forever: without this the note asks for its whole width on
+            // one line, is given less, and is cut off mid-word rather than wrapping. A share
+            // rather than a number, so it holds from a 512-pixel panel to a 2048-pixel one.
+            body.SizeChanged += (_, size) =>
+                note.MaxWidth = Math.Max(80, size.NewSize.Width * 0.6);
         }
 
         // The mark, and it is a mark rather than a column: "this slot has a plan" is a boolean,
@@ -164,9 +193,10 @@ public static class LoadoutPages
             };
 
             Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-            DockPanel.SetDock(mark, Dock.Left);
             body.Children.Add(mark);
         }
+
+        Grid.SetColumn(label, 1);
 
         body.Children.Add(label);
 

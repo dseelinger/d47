@@ -205,7 +205,21 @@ public sealed class ContinuityCallout(
             : $"You were {shortfall.Short} {shortfall.Material.Name} short.";
     }
 
-    /// <summary>The engineer the solver would go and get next, and how far out it is.</summary>
+    /// <summary>
+    /// The engineer the solver would go and get next, and <b>only when it is one stop</b>
+    /// (remediation.md 14, item 2).
+    /// <para>
+    /// Reported as not useful, and the reason is the rule the clause above already follows: the
+    /// nearest shortfall is picked because "you are two short" is an errand and "you are ninety
+    /// short" is a project. "Broo Tarquin is still three steps out" is a project — three unlocks
+    /// and two rank climbs — and it says the same thing every session until they are done, which
+    /// is how a Commander learns to stop listening to the opening line.
+    /// </para>
+    /// <para>
+    /// One step is the case worth saying: somebody they could go and get today, in the one moment
+    /// they are deciding what today is for.
+    /// </para>
+    /// </summary>
     private string? Unlock()
     {
         if (unlocks()?.Report().Route is not [{ } best, ..])
@@ -213,11 +227,9 @@ public sealed class ContinuityCallout(
             return null;
         }
 
-        var steps = best.Chain.Steps.Count;
-
-        return steps == 0
-            ? null
-            : $"{best.Engineer.Name} is still {Steps(steps)} out.";
+        return best.Chain.Steps.Count == 1
+            ? $"{best.Engineer.Name} is one stop away."
+            : null;
     }
 
     /// <summary>
@@ -247,11 +259,4 @@ public sealed class ContinuityCallout(
         return months <= 1 ? "a month" : $"{months} months";
     }
 
-    private static string Steps(int steps) => steps switch
-    {
-        1 => "one step",
-        2 => "two steps",
-        3 => "three steps",
-        _ => $"{steps} steps",
-    };
 }

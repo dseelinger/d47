@@ -674,4 +674,69 @@ public class LoadoutTabTests
         surface.Window.Close();
     }
 
+    /// <summary>
+    /// A long note beside a row does not squeeze the row's own name away
+    /// (remediation.md 14, item 1).
+    /// <para>
+    /// Reported with a picture: the hardpoint carrying a plan was three hundred pixels tall, with
+    /// "Large Hardpoint 1" wrapped one character per line down the left edge while the plan took
+    /// the rest of the width. A right-docked child takes as much as it asks for, and what is left
+    /// is what the name gets — which for a plan naming a module, a blueprint, a grade and an
+    /// experimental effect was a few pixels.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ALongNoteDoesNotSqueezeTheRowsName()
+    {
+        var surface = Open();
+
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(
+            build.Id,
+            new SlotPlan("LargeHardpoint1", "Overcharged Weapon", 5, Experimental: "Flow Control")
+            {
+                Module = "Pulse Laser",
+                Variant = "hpt_pulselaser_gimbal_large",
+            });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var row = Row(surface.Panel, "Large Hardpoint 1");
+        var name = row.GetVisualDescendants().OfType<TextBlock>()
+            .First(block => block.Text == "Large Hardpoint 1");
+
+        Assert.True(
+            name.Bounds.Width >= 100,
+            $"the row's name got {name.Bounds.Width:N0} pixels");
+
+        // And the row stays a row rather than becoming a paragraph.
+        Assert.True(row.Bounds.Height <= 80, $"the row is {row.Bounds.Height:N0} pixels tall");
+
+        // Narrow enough that the note cannot fit beside the name on one line. It has to wrap
+        // rather than be cut off mid-word, which is what an Auto column does to a wrapping block:
+        // it measures as though it had forever, asks for its whole width, and is clipped to what
+        // it is given.
+        surface.Window.Width = 900;
+        Dispatcher.UIThread.RunJobs();
+
+        row = Row(surface.Panel, "Large Hardpoint 1");
+
+        var note = row.GetVisualDescendants().OfType<TextBlock>()
+            .First(block => block.Text is { } said && said.StartsWith("3E Pulse Laser", StringComparison.Ordinal));
+
+        Assert.True(note.Bounds.Height > note.FontSize, "the note wrapped rather than being cut");
+        Assert.True(
+            note.Bounds.Width <= row.Bounds.Width,
+            $"the note is {note.Bounds.Width:N0} pixels in a {row.Bounds.Width:N0} pixel row");
+
+        Assert.True(
+            Row(surface.Panel, "Large Hardpoint 1").GetVisualDescendants().OfType<TextBlock>()
+                .First(block => block.Text == "Large Hardpoint 1").Bounds.Width >= 100,
+            "and the name still has room at that width");
+
+        surface.Window.Close();
+    }
+
 }
