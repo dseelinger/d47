@@ -60,6 +60,9 @@ public class AHullYouDoNotOwnCanBeDroppedTests
         return (panel, ships);
     }
 
+    private static IReadOnlyList<string> Shown(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+
     private static Button? Named(PanelView panel, string label) =>
         panel.GetVisualDescendants()
             .OfType<Button>()
@@ -166,4 +169,76 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         Assert.Equal("Drop this hull", mode.DropLabel(intended.Id));
     }
+    /// <summary>
+    /// And it leaves the fleet list (remediation.md 13, item 1).
+    /// <para>
+    /// The store lost the build and the list beside it went on showing the hull, which is the
+    /// only place the Commander looks to find out whether the drop took. A wide panel keeps the
+    /// index on screen next to the ship, so the row was still there to press.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AndTheHullLeavesTheFleetList()
+    {
+        var (panel, ships) = Fleet();
+
+        OpenTheHull(panel, ships);
+
+        Assert.Contains(Shown(panel), line => line.Contains("Python", StringComparison.Ordinal));
+
+        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Option(panel, "Drop it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(ships.Store.Builds);
+
+        // The index says the fleet is empty, rather than listing a hull nothing has a plan for.
+        Assert.DoesNotContain(
+            Shown(panel), line => line.Contains("Python (Python)", StringComparison.Ordinal));
+
+        // And going back to it does not bring the row back either — the level was cached.
+        panel.Nav.Back();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            Shown(panel), line => line.Contains("Python (Python)", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// And it leaves the list on a narrow panel too, which is the case that was broken
+    /// (remediation.md 13, item 1).
+    /// <para>
+    /// One pane, so opening the ship scrolls the index out of the strip — which the strip caches
+    /// rather than rebuilds. The cached page had unsubscribed on the way out and heard nothing
+    /// afterwards, so coming back showed a hull that no longer had a plan behind it.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AndLeavesItOnANarrowPanelToo()
+    {
+        var (panel, ships) = Fleet();
+
+        ((Window)panel.Parent!).Width = 700;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(1, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
+
+        OpenTheHull(panel, ships);
+
+        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Option(panel, "Drop it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Nav.Back();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Shown(panel), line => line.Contains("Python", StringComparison.Ordinal));
+        Assert.Contains(
+            Shown(panel), line => line.Contains("have not seen your fleet", StringComparison.Ordinal));
+    }
+
 }

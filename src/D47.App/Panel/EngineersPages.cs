@@ -112,15 +112,24 @@ public static class EngineersPages
 /// </summary>
 public abstract class EngineerPageBase : UserControl
 {
-    protected EngineerPageBase(EngineerSource source)
-    {
-        Source = source;
-        source.Changed += OnChanged;
-    }
+    protected EngineerPageBase(EngineerSource source) => Source = source;
 
     protected EngineerSource Source { get; }
 
     protected abstract void Refresh();
+
+    /// <summary>
+    /// Attach to detach, for the reason <see cref="LoadoutPage"/> spells out
+    /// (remediation.md 13, item 1). These levels are cached by the same strip and were the same
+    /// mismatched pair; nobody has reported it here, and it is the same bug waiting.
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        Source.Changed += OnChanged;
+        Refresh();
+    }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
