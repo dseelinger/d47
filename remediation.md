@@ -65,8 +65,9 @@ rather than prettifying a symbol into something that looks like one.
   report what did not* is different work from *refuse the copy*, and it wants deciding rather than
   discovering.
 
-- [ ] **2a. A mining missile is shipping as a Pulse Laser.** Reported as *"I should be able to
-  differentiate between the first two lasers by something besides the price"* — and the honest
+- [x] **2a. A mining missile is shipping as a Pulse Laser.** *Shipped in v0.38.1.* Reported as
+  *"I should be able to differentiate between the first two lasers by something besides the
+  price"* — and the honest
   answer is that the expensive one is not a laser. `hpt_mining_subsurfdispmisle_turret_small` is a
   **Sub-surface Displacement Missile**, turreted, and the table carries it as `name: Pulse Laser,
   mount: Fixed, 1B, 38,750 cr`. It reaches the pulse-laser chooser because `AskModule` groups the
@@ -88,6 +89,44 @@ rather than prettifying a symbol into something that looks like one.
   the two-resolver shape that already caught a renamed system and an invented one in Phase 23.
   **These rows are in the shipped table**, so this is a candidate for its own patch ahead of the
   rest of the batch.
+
+  **What shipped, and the one correction.** Every measured claim above held: nine hardpoints
+  disagreed with their ids, four names carried a raw fragment, two of those in core sockets. The
+  cause is upstream — five coriolis `edID`s do not lead where they claim, three of them pointing at
+  `hpt_pulselaser_fixed_small`, which is where "Pulse Laser" came from.
+
+  **The mount assertion works and is in.** Flagged 4 rows across all of `outfitting.csv`, every one
+  a genuine defect, no false positives — and made two-sided, since a symbol with *no* infix must
+  carry no mount, which is what catches `Int_MkIIAgileBoost_Engine_Size5_Class5` filed under the
+  literal mount `"mount"`.
+
+  **The name-against-stem assertion does not, and was replaced.** Measured before wiring: it flags
+  **427 of ~1030 rows**, nearly all correct. Frontier's symbols carry no textual rule to the display
+  name — `hpt_drunkmissilerack` is a Pack-Hound Missile Rack, `hpt_crimescanner` a Kill Warrant
+  Scanner, `hpt_mrascanner` a Pulse Wave Analyser. There is no threshold that separates those from
+  `subsurfdispmisle` reading "Pulse Laser".
+
+  What replaced it is exact rather than fuzzy, and serves the same goal better: **both sources carry
+  the symbol**, so the id that claims to link two rows is asked whether it landed on the row it says
+  it did. Five mis-keys, no false positives, no heuristic. The fallback when it misses is a **lookup
+  by symbol**, which named 33 modules that were previously named from their source file — including
+  both Mk II core modules, whose real names Frontier had all along.
+
+  **Three things the report had not reached**, all the same defect class:
+  1. **35 symbols are declared twice by coriolis**, one of each pair a husk with no cost. The winner
+     was whichever `sorted()` put last, and it had already landed badly — the large AX Missile Rack
+     shipped priced at **zero**, in the chooser whose complaint is that price is the only
+     discriminator. The keyed entry now wins.
+  2. `int_expmodulestabiliser_size5_class3` read **"Experemental Weapon Stabilizer"** — two typos,
+     beside a correctly spelled size 3.
+  3. `hpt_missing_hardpoint` and `hpt_missing_utility` were in the table, both named "Missing
+     Hardpoint". `PLACEHOLDERS` matched `int_missing_` only.
+
+  Five assertions now run **in CI against the shipped table**, not only in the generator, which is
+  not part of the build. All five were confirmed to fail against the old table before the fix was
+  kept. `disambiguate` now alters no name at all, and that is asserted too: every module in the
+  table is named by the naming authority, and a qualifier reappearing means a name went missing
+  upstream.
 
 - [ ] **2b. Nothing in the table says what a module does.** The reported ask: *"the more expensive
   one should be more powerful, and I should know how"*. `EliteSpecifications.tsv` carries mass,

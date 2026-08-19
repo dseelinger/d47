@@ -17,6 +17,78 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.38.1 — 2026-08-19 — The mining missile is a mining missile
+
+**Remediation 15 item 2a**, shipped on its own ahead of the rest of the batch because the wrong
+rows were in the table a Commander already has.
+
+### A Sub-surface Displacement Missile was shipping as a Pulse Laser
+
+Reported as *"I should be able to differentiate between the first two lasers by something besides
+the price"*. The honest answer was that the expensive one is not a laser:
+`hpt_mining_subsurfdispmisle_turret_small` is a turreted Sub-surface Displacement Missile, and the
+table carried it as a **fixed 1B Pulse Laser at 38,750 credits**. Because the module chooser groups
+what it offers by name, that is worse than a mislabelled row — a mining missile was filed inside the
+pulse laser list, where nobody hunting for it would look and everybody picking a laser would find it.
+
+Ten hardpoints were wrong in all. Both Sub-surface Displacement Missile pairs read each other's
+mount, the AX Missile Rack, Heat Sink Launcher, Caustic Sink Launcher and Point Defence carried no
+mount at all where their symbol states one, and the Seismic Charge Launcher was a Pulse Laser too.
+
+### The cause was a join that was trusted rather than checked
+
+Directive 47's specification table is derived by joining two community sources on Frontier's own
+module ids. Five of those ids do not lead where they claim: three mining hardpoints are filed under
+the id of a small fixed pulse laser, and the two missiles have their fixed and turreted ids swapped
+with each other.
+
+Both sources also carry Frontier's *symbol* — the string the journal writes — so the id that claims
+to link two rows can simply be asked whether it landed on the row it says it did. It now is, and an
+id that lands elsewhere is discarded rather than believed. When it is discarded, or when a source
+gives no id at all, the module is looked up **by symbol instead**, which is exact rather than a guess.
+
+That second route fixed more than the mis-keys. Thirty-three modules carrying no id were previously
+named from the file they were found in; they are now named by the naming authority, which had them
+all along:
+
+- **Mk II Supercharge Optimised Frame Shift Drive (SCO)**, previously *Frame Shift Drive (mkii overchargebooster)*
+- **Mk II Agile Boost Thrusters**, previously *Thrusters (mkiiagileboost)*
+- **Detailed Surface Scanner**, previously *Surface Scanner*
+- **Experimental Weapon Stabiliser**, previously *Experemental Weapon Stabilizer* — two typos, in the shipped table, beside a correctly spelled one
+- **AX Missile Rack**, previously *Ax Missile Rack*
+
+Both Mk II modules sit in core sockets, so every Commander flying one met them.
+
+The **Corrosion Resistant Cargo Rack** in sizes 5 and 6 read *Cargo Rack (corrosionproof)* and so sat
+inside the plain cargo rack's list — a rack whose entire point is that it resists corrosion, one
+letter of a symbol away from being findable. Neither source names those two, so the name is taken
+from their own siblings at sizes 1 and 4, and only where those agree. Nothing is invented.
+
+### Modules that cost nothing now cost what they cost
+
+The same sources declare 35 symbols **twice**, one of each pair a husk with no price and sometimes a
+stale damage figure. Which of the two won was whichever the sort put last — a coin toss on every
+figure the row carried, and it had already landed badly: the large **AX Missile Rack** shipped at a
+price of zero, in the very chooser where the complaint was that price is the only thing telling two
+modules apart. It costs 1,352,250 credits. The entry the source keyed to Frontier's id now wins, and
+where both are keyed the more complete row does.
+
+Frontier's own empty-slot placeholders, `hpt_missing_hardpoint` and `hpt_missing_utility`, are also
+gone from the table. Both were named "Missing Hardpoint", so they drew their own two-row group in a
+chooser that groups by name.
+
+### Nothing about this can come back quietly
+
+The point of the batch this belongs to is that **a failed join produced either everything or nothing,
+and both read exactly like the feature working**. So the generator now reports every id it discarded,
+every module it could not name, and every duplicated symbol, by name rather than as a count — and
+five assertions run in CI against the shipped table itself, because the generator is not part of the
+build and nothing would otherwise notice. Every mount must agree with its own symbol, no name may be
+built from a raw symbol fragment, no placeholder may appear, and the reported missile must be a
+missile.
+
+---
+
 ## 0.38.0 — 2026-08-19 — A core per ship
 
 **Phase 35.** A ship can now remember the core that flies it. Sentinel on the combat ships,

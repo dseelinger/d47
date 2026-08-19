@@ -10,10 +10,10 @@
 # modules/, and their names carry the hull because forty-eight hulls have a
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
-# Ships: 44. Modules: 1166, of which bulkheads 241. Known but unmeasured: 3.
-# Slots: 1247 across 48 hulls. Modules with no type: 4.
+# Ships: 44. Modules: 1164, of which bulkheads 241. Known but unmeasured: 3.
+# Slots: 1247 across 48 hulls. Modules with no type: 2.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-08-18.
+# Built: 2026-08-19.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1
@@ -188,9 +188,9 @@ hpt_advancedtorppylon_fixed_medium	Torpedo Pylon	2	I	Fixed	4	0.4	51	44800							
 hpt_advancedtorppylon_fixed_small	Torpedo Pylon	1	I	Fixed	2	0.4	40	11200										htp		
 hpt_antiunknownshutdown_tiny	Shutdown Field Neutraliser	0	F		1.3	0.2	35	63000										uex		
 hpt_antiunknownshutdown_tiny_v2	Thargoid Pulse Neutraliser	0	E		3	0.4	70	150000										uex		
-hpt_atdumbfiremissile_fixed_large	Ax Missile Rack	3	C		8.5	1.62	64	0										hexxm		
+hpt_atdumbfiremissile_fixed_large	AX Missile Rack	3	A	Fixed	8	1.62	64	1352250										hexxm		
 hpt_atdumbfiremissile_fixed_large_v2	Enhanced AX Missile Rack	3	B	Fixed	8	1.72	64	1703835										hexxm		
-hpt_atdumbfiremissile_fixed_medium	Ax Missile Rack	2	E		4.25	1.2	51	540900										hexxm		
+hpt_atdumbfiremissile_fixed_medium	AX Missile Rack	2	B	Fixed	4	1.2	51	540900										hexxm		
 hpt_atdumbfiremissile_fixed_medium_v2	Enhanced AX Missile Rack	2	D	Fixed	4	1.3	51	681534										hexxm		
 hpt_atdumbfiremissile_turret_large	AX Missile Rack	3	A	Turreted	8	1.75	64	4056750										hexxm		
 hpt_atdumbfiremissile_turret_large_v2	Enhanced AX Missile Rack	3	D	Turreted	8	1.85	64	5347534										hexxm		
@@ -241,7 +241,7 @@ hpt_cargoscanner_size0_class3	Cargo Scanner	0	C		1.3	0.8	40	121899										ucs
 hpt_cargoscanner_size0_class4	Cargo Scanner	0	B		1.3	1.6	56	365698										ucs		
 hpt_cargoscanner_size0_class5	Cargo Scanner	0	A		1.3	3.2	48	1097095										ucs		
 hpt_causticmissile_fixed_medium	Enzyme Missile Rack	2	B	Fixed	4	1.2	51	480501										hex		
-hpt_causticsinklauncher_turret_tiny	Caustic Sink Launcher	0	I		1.7	0.6	45	50000										uhsl		
+hpt_causticsinklauncher_turret_tiny	Caustic Sink Launcher	0	I	Turreted	1.7	0.6	45	50000										uhsl		
 hpt_chafflauncher_tiny	Chaff Launcher	0	I		1.3	0.2	20	8500										ucl		
 hpt_cloudscanner_size0_class1	Frame Shift Wake Scanner	0	E		1.3	0.2	32	13544										ufsws		
 hpt_cloudscanner_size0_class2	Frame Shift Wake Scanner	0	D		1.3	0.4	24	40633										ufsws		
@@ -279,27 +279,25 @@ hpt_guardian_shardcannon_fixed_small	Guardian Shard Cannon	1	D	Fixed	2	0.87	34	1
 hpt_guardian_shardcannon_turret_large	Guardian Shard Cannon	3	D	Turreted	8	1.39	51	5865026										hexgs		
 hpt_guardian_shardcannon_turret_medium	Guardian Shard Cannon	2	D	Turreted	4	1.16	42	1767001										hexgs		
 hpt_guardian_shardcannon_turret_small	Guardian Shard Cannon	1	F	Turreted	2	0.72	34	502000										hexgs		
-hpt_heatsinklauncher_turret_tiny	Heat Sink Launcher	0	I		1.3	0.2	20	3500										uhsl		
+hpt_heatsinklauncher_turret_tiny	Heat Sink Launcher	0	I	Turreted	1.3	0.2	20	3500										uhsl		
 hpt_human_extraction_fixed_medium	Sub-Surface Extraction Missile	2	B	Fixed	4	1	50	822091										hmtm		
 hpt_minelauncher_fixed_medium	Mine Launcher	2	I	Fixed	4	0.4	51	294080										hm		
 hpt_minelauncher_fixed_small	Mine Launcher	1	I	Fixed	2	0.4	40	24260										hm		
 hpt_minelauncher_fixed_small_impulse	Shock Mine Launcher	1	I	Fixed	2	0.4	40	36390										hm		
 hpt_mining_abrblstr_fixed_small	Abrasion Blaster	1	D	Fixed	2	0.34	40	9700										hmtl		
 hpt_mining_abrblstr_turret_small	Abrasion Blaster	1	D	Turreted	2	0.47	40	27480										hmtl		
-hpt_mining_seismchrgwarhd_fixed_medium	Pulse Laser (fixed seismchrgwarhd)	2	B	Fixed	4	1.2	51	153110										hmtm		
+hpt_mining_seismchrgwarhd_fixed_medium	Seismic Charge Launcher	2	B	Fixed	4	1.2	51	153110										hmtm		
 hpt_mining_seismchrgwarhd_turret_medium	Seismic Charge Launcher	2	B	Turreted	4	1.2	51	445570										hmtm		
-hpt_mining_subsurfdispmisle_fixed_medium	Sub-Surface Displacement Missile	2	B	Turreted	4	1.01	51	122170										hmtm		
-hpt_mining_subsurfdispmisle_fixed_small	Sub-Surface Displacement Missile	1	B	Turreted	2	0.42	40	12600										hmtm		
-hpt_mining_subsurfdispmisle_turret_medium	Pulse Laser (subsurfdispmisle turret)	2	B	Fixed	4	0.93	51	381750										hmtm		
-hpt_mining_subsurfdispmisle_turret_small	Pulse Laser	1	B	Fixed	2	0.42	40	38750										hmtm		
+hpt_mining_subsurfdispmisle_fixed_medium	Sub-Surface Displacement Missile	2	B	Fixed	4	1.01	51	122170										hmtm		
+hpt_mining_subsurfdispmisle_fixed_small	Sub-Surface Displacement Missile	1	B	Fixed	2	0.42	40	12600										hmtm		
+hpt_mining_subsurfdispmisle_turret_medium	Sub-Surface Displacement Missile	2	B	Turreted	4	0.93	51	381750										hmtm		
+hpt_mining_subsurfdispmisle_turret_small	Sub-Surface Displacement Missile	1	B	Turreted	2	0.42	40	38750										hmtm		
 hpt_mininglaser_fixed_medium	Mining Laser	2	D	Fixed	2	0.75	51	22576										hmtl		
 hpt_mininglaser_fixed_small	Mining Laser	1	D	Fixed	2	0.5	40	6800										hmtl		
 hpt_mininglaser_fixed_small_advanced	Mining Lance	1	D	Fixed	2	0.7	40	13600										hmtl		
 hpt_mininglaser_turret_medium	Mining Laser	2	D	Turreted	2	0.75	51	32576										hmtl		
 hpt_mininglaser_turret_small	Mining Laser	1	D	Turreted	2	0.5	40	9400										hmtl		
 hpt_miningtoolv2_fixed_large	Mining Volley Repeater	3	C	Fixed	8	1.5	61	149910										hmtl	lakonminer	
-hpt_missing_hardpoint	Missing Hardpoint	0	Z		0	0	0	10												
-hpt_missing_utility	Missing Hardpoint	0	I		0	0	0	0												
 hpt_mkiiplasmashockautocannon_fixed_large	Mk II Plasma Shock Accelerator	3	B	Fixed	8	1.51	64	3051200										hpa	smallcombat01_nx	
 hpt_mrascanner_size0_class1	Pulse Wave Analyser	0	E		1.3	0.2	24	13544										upwa		
 hpt_mrascanner_size0_class2	Pulse Wave Analyser	0	D		1.3	0.4	24	40633										upwa		
@@ -324,7 +322,7 @@ hpt_plasmaaccelerator_fixed_huge	Plasma Accelerator	4	A	Fixed	16	2.63	80	1379360
 hpt_plasmaaccelerator_fixed_large	Plasma Accelerator	3	B	Fixed	8	1.97	64	3051200										hpa		
 hpt_plasmaaccelerator_fixed_large_advanced	Advanced Plasma Accelerator	3	B	Fixed	8	1.97	64	4119120										hpa		
 hpt_plasmaaccelerator_fixed_medium	Plasma Accelerator	2	C	Fixed	4	1.43	51	834200										hpa		
-hpt_plasmapointdefence_turret_tiny	Point Defence	0	I		0.5	0.2	30	18550										upd		
+hpt_plasmapointdefence_turret_tiny	Point Defence	0	I	Turreted	0.5	0.2	30	18550										upd		
 hpt_plasmashockcannon_fixed_large	Shock Cannon	3	C	Fixed	8	0.89	64	1015750										hexsc		
 hpt_plasmashockcannon_fixed_medium	Shock Cannon	2	D	Fixed	4	0.57	51	367501										hexsc		
 hpt_plasmashockcannon_fixed_small	Shock Cannon	1	D	Fixed	2	0.41	40	65941										hexsc		
@@ -401,9 +399,9 @@ int_cargorack_size8_class1	Cargo Rack	8	E		0			3829866										icr
 int_corrosionproofcargorack_size1_class1	Corrosion Resistant Cargo Rack	1	E		0			6250										icr		
 int_corrosionproofcargorack_size1_class2	Corrosion Resistant Cargo Rack	1	F		0			0										icr		
 int_corrosionproofcargorack_size4_class1	Corrosion Resistant Cargo Rack	4	E		0			94330										icr		
-int_corrosionproofcargorack_size5_class1	Cargo Rack (corrosionproof)	5	E		0			0										icr		
-int_corrosionproofcargorack_size6_class1	Cargo Rack (corrosionproof)	6	E		0			0										icr		
-int_detailedsurfacescanner_tiny	Surface Scanner	1	I		0	0		0										iss		
+int_corrosionproofcargorack_size5_class1	Corrosion Resistant Cargo Rack	5	E		0			0										icr		
+int_corrosionproofcargorack_size6_class1	Corrosion Resistant Cargo Rack	6	E		0			0										icr		
+int_detailedsurfacescanner_tiny	Detailed Surface Scanner	1	I		0	0		250000										iss		
 int_dockingcomputer_advanced	Advanced Docking Computer	1	E			0.45	10	13507										ifa		
 int_dockingcomputer_standard	Standard Docking Computer	1	E			0.39	10	4500										ifa		
 int_dronecontrol_collection_size1_class1	Collector Limpet Controller	1	E		0.5	0.14		600										iclc		
@@ -554,7 +552,7 @@ int_engine_size8_class3	Thrusters	8	C		160	9	150	18065165	2800									ct
 int_engine_size8_class4	Thrusters	8	B		256	9.9	180	54195495	3080									ct		
 int_engine_size8_class5	Thrusters	8	A		160	10.8	165	162586486	3360									ct		
 int_expmodulestabiliser_size3_class3	Experimental Weapon Stabiliser	3	F		8	0		2000000										iex		
-int_expmodulestabiliser_size5_class3	Experemental Weapon Stabilizer	5	F		20	0		4000000										iex		
+int_expmodulestabiliser_size5_class3	Experimental Weapon Stabiliser	5	F		20	0		4000000										iex		
 int_fighterbay_size5_class1	Fighter Hangar	5	D		20	0.25	60	575643										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2	
 int_fighterbay_size6_class1	Fighter Hangar	6	D		40	0.35	80	1869340										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2	
 int_fighterbay_size7_class1	Fighter Hangar	7	D		60	0.35	120	2369320										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2	
@@ -716,12 +714,12 @@ int_hyperdrive_overcharge_size7_class2	Frame Shift Drive (SCO)	7	D		32	0.75	2700
 int_hyperdrive_overcharge_size7_class3	Frame Shift Drive (SCO)	7	C		80	0.75	150	20515645	2700	12.8	2.75	0.012						cfsdo		1
 int_hyperdrive_overcharge_size7_class4	Frame Shift Drive (SCO)	7	B		80	0.75	150	20515645	2700	12.8	2.75	0.012						cfsdo		1
 int_hyperdrive_overcharge_size7_class5	Frame Shift Drive (SCO)	7	A		80	0.9	164	61546935	3000	13.1	2.75	0.013						cfsdo		1
-int_hyperdrive_overcharge_size8_class1	Frame Shift Drive	8	E		160	0.7	150	6838550	2800	13.6	2.9	0.008						cfsdo		1
-int_hyperdrive_overcharge_size8_class2	Frame Shift Drive	8	D		64	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
-int_hyperdrive_overcharge_size8_class3	Frame Shift Drive	8	C		160	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
-int_hyperdrive_overcharge_size8_class4	Frame Shift Drive	8	B		160	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
-int_hyperdrive_overcharge_size8_class5	Frame Shift Drive	8	A		160	1.05	188	61546940	4670	20.7	2.9	0.013						cfsdo		1
-int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii	Frame Shift Drive (mkii overchargebooster)	8	A		160	1.05	188	82042060	4670	6.8	2.5025	0.011						cfsdo	explorer_nx	1
+int_hyperdrive_overcharge_size8_class1	Frame Shift Drive (SCO)	8	E		160	0.7	150	6838550	2800	13.6	2.9	0.008						cfsdo		1
+int_hyperdrive_overcharge_size8_class2	Frame Shift Drive (SCO)	8	D		64	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
+int_hyperdrive_overcharge_size8_class3	Frame Shift Drive (SCO)	8	C		160	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
+int_hyperdrive_overcharge_size8_class4	Frame Shift Drive (SCO)	8	B		160	0.88	169	20515650	4200	20.4	2.9	0.012						cfsdo		1
+int_hyperdrive_overcharge_size8_class5	Frame Shift Drive (SCO)	8	A		160	1.05	188	61546940	4670	20.7	2.9	0.013						cfsdo		1
+int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii	Mk II Supercharge Optimised Frame Shift Drive (SCO)	8	A		160	1.05	188	82042060	4670	6.8	2.5025	0.011						cfsdo	explorer_nx	1
 int_hyperdrive_size2_class1	Frame Shift Drive	2	E		2.5	0.16	46	1978	48	0.6	2	0.011						cfsd		
 int_hyperdrive_size2_class2	Frame Shift Drive	2	D		1	0.18	41	5934	54	0.6	2	0.01						cfsd		
 int_hyperdrive_size2_class3	Frame Shift Drive	2	C		2.5	0.2	51	17803	60	0.6	2	0.008						cfsd		
@@ -804,7 +802,7 @@ int_metaalloyhullreinforcement_size4_class1	Meta Alloy Hull Reinforcement	4	E		1
 int_metaalloyhullreinforcement_size4_class2	Meta Alloy Hull Reinforcement	4	D		8			292501										imahrp		
 int_metaalloyhullreinforcement_size5_class1	Meta Alloy Hull Reinforcement	5	E		32			225001										imahrp		
 int_metaalloyhullreinforcement_size5_class2	Meta Alloy Hull Reinforcement	5	D		16			675001										imahrp		
-int_mkiiagileboost_engine_size5_class5	Thrusters (mkiiagileboost)	5	A		20	6.29	106	6637629	840									ct	smallcombat01_nx	
+int_mkiiagileboost_engine_size5_class5	Mk II Agile Boost Thrusters	5	A		20	6.29	106	6637629	840									ct	smallcombat01_nx	
 int_modulereinforcement_size1_class1	Module Reinforcement Package	1	E		2		77	5000										imrp		
 int_modulereinforcement_size1_class2	Module Reinforcement Package	1	D		1		70	15000										imrp		
 int_modulereinforcement_size2_class1	Module Reinforcement Package	2	E		4		115	12000										imrp		

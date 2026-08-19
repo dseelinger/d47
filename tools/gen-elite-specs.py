@@ -114,6 +114,11 @@ SLOT_KIND_COLUMNS = ["kind", "mtypes"]
 
 PADS = {1: "small", 2: "medium", 3: "large"}
 
+# The three mounts, spelled as `outfitting.csv` spells them, keyed by the infix Frontier puts
+# in the symbol. The symbol is the authority: it is what the journal writes and what a
+# Commander's Loadout is keyed on, and `outfitting.csv` disagrees with it on four rows.
+MOUNTS = {"fixed": "Fixed", "turret": "Turreted", "gimbal": "Gimballed"}
+
 
 def fetch(url: str) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": "d47-gen-elite-specs"})
@@ -213,8 +218,52 @@ def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
     return sorted(built), sorted(missing)
 
 
-def build_modules(paths: list[str], outfitting: dict[int, dict]) -> tuple[list[list[str]], int]:
-    built, unnamed = [], 0
+def mount_of(symbol: str) -> str:
+    """The mount Frontier's own symbol states, or empty for a module that is not mounted."""
+    found = [word for infix, word in MOUNTS.items() if infix in symbol.lower().split("_")]
+
+    return found[0] if len(found) == 1 else ""
+
+
+def build_modules(
+    paths: list[str], outfitting: dict[int, dict], by_symbol: dict[str, dict]
+) -> tuple[
+    list[list[str]], list[tuple[str, str]], list[tuple[str, str, str]], list[str]
+]:
+    """Every generic module, named from `outfitting.csv` and measured from coriolis-data.
+
+    The join is `edID`, and **the join is checked** rather than trusted. Both sources carry
+    Frontier's symbol, so the id that claims to link two rows can be asked whether it landed
+    on the row it says it did — and on 2026-08-19 it did not, five times. coriolis-data files
+    three mining hardpoints under `128049381`, which is a small fixed pulse laser, and
+    transposes the two sub-surface missiles' fixed and turreted ids with each other. The
+    result shipped: `hpt_mining_subsurfdispmisle_turret_small` reached a Commander as a 1B
+    *Pulse Laser*, fixed, and because `AskModule` groups the modules it offers by name, a
+    mining missile was filed under a weapon it has nothing to do with.
+
+    So a resolved row whose symbol is not the symbol asked for is **discarded, not used** —
+    an id that lands on the wrong row carries a wrong name, a wrong mount and a wrong class,
+    and there is nothing in it worth keeping.
+
+    Then the fallback, which is exact rather than a guess: **look the symbol up directly**.
+    `outfitting.csv` is keyed by id and also carries the symbol, so a module coriolis-data
+    gives no usable id for can still be named by the naming authority — 33 of the 35 rows
+    carrying `edID: null` are in `outfitting.csv` under their own symbol, including both Mk II
+    modules, whose real names are "Mk II Supercharge Optimised Frame Shift Drive (SCO)" and
+    "Mk II Agile Boost Thrusters". Those two previously fell through to the file-stem name and
+    reached the table as `Frame Shift Drive (mkii overchargebooster)` and
+    `Thrusters (mkiiagileboost)`, and both sit in core sockets, so every Commander with that
+    ship met them.
+
+    Only when both misses does the file stem name it, which is a description and not a claim
+    about what Frontier calls it — and every one of those is reported by name at the end of
+    the run rather than counted, because a count cannot be checked and a list can.
+
+    The mount comes from the symbol and not from the row. See `mount_of`: Frontier's infix is
+    unambiguous and `outfitting.csv` contradicts it on four rows — three tiny launchers left
+    blank where the symbol says Turreted, and one cell holding the literal string `mount`.
+    """
+    seen, duplicated, mismatched, unnamed = {}, {}, [], []
 
     for path in paths:
         for group in json.loads(fetch(CORIOLIS_RAW + path)).values():
@@ -227,21 +276,34 @@ def build_modules(paths: list[str], outfitting: dict[int, dict]) -> tuple[list[l
                 if not symbol:
                     continue
 
+                symbol = symbol.lower()
+
                 identity = outfitting.get(module.get("edID"))
 
+                # The check that the id landed where it claims. Both sources carry the
+                # symbol, so this costs one comparison and is exact.
+                if identity is not None and identity["symbol"].lower() != symbol:
+                    mismatched.append((symbol, identity["symbol"].lower()))
+                    identity = None
+
+                # Whether coriolis-data keyed this entry to Frontier's id *and* landed on the
+                # right row. An id that resolves elsewhere vouches for nothing.
+                keyed = identity is not None
+
+                identity = identity or by_symbol.get(symbol)
+
                 if identity is None:
-                    # Unlike a ship, a module with no id row is still worth having: it is
-                    # keyed by the same symbol the journal writes, so it can be looked up.
-                    # Only its Frontier name is missing, and the file name carries one.
-                    unnamed += 1
+                    # Named from its file, which describes the family and does not claim to
+                    # be Frontier's name for this module. Reported by name below.
                     name = Path(path).stem.replace("_", " ").title()
-                    mount = ""
+                    unnamed.append((symbol, name, Path(path).name))
                 else:
                     name = identity["name"]
-                    mount = identity["mount"]
 
-                built.append([
-                    symbol.lower(),
+                mount = mount_of(symbol)
+
+                candidate = [
+                    symbol,
                     name,
                     number(module.get("class")),
                     module.get("rating") or "",
@@ -263,9 +325,83 @@ def build_modules(paths: list[str], outfitting: dict[int, dict]) -> tuple[list[l
 
                     # Filled from EDSY in main(), where the join happens.
                     "", "", "",
-                ])
+                ]
 
-    return built, unnamed
+                # coriolis-data lists 35 symbols twice, and one of the two is a husk: a
+                # duplicate carrying `edID: null`, no cost and sometimes a stale damage
+                # figure, sitting in the same file beside the real entry. Both are keyed by
+                # the same symbol, so one of them has to win, and until now the winner was
+                # whichever `sorted()` happened to put last — a coin toss on every figure the
+                # row carries. It landed tails often enough to matter: a Rail Gun and a Seeker
+                # Missile Rack costing 0 credits, in a chooser where the item this fix is
+                # about says price is the only thing telling two modules apart.
+                #
+                # The rule is that the entry coriolis-data keyed to Frontier's id is the one
+                # it vouches for, so it wins. Where both carry the id — the fuel tanks, which
+                # are declared in two files, and two cargo racks — the more complete row wins,
+                # counting the figures it actually carries. Neither branch averages, guesses
+                # or invents: both pick one of the two rows whole.
+                figures = sum(1 for cell in candidate[5:18] if cell)
+                rank = (keyed, figures)
+
+                if symbol not in seen or rank > seen[symbol][0]:
+                    seen[symbol] = (rank, candidate)
+
+                duplicated.setdefault(symbol, 0)
+                duplicated[symbol] += 1
+
+    built = [row for _, row in seen.values()]
+
+    return built, mismatched, unnamed, sorted(s for s, n in duplicated.items() if n > 1)
+
+
+def family_of(symbol: str) -> str:
+    """A symbol with its size and class struck out, so the members of one family share a key."""
+    return "_".join(
+        token for token in symbol.split("_")
+        if not token.startswith("size") and not token.startswith("class")
+    )
+
+
+def inherit_family_names(
+    built: list[list[str]], unnamed: list[tuple[str, str, str]]
+) -> list[tuple[str, str, str]]:
+    """Name a module its own family already names, and report only what is left over.
+
+    `outfitting.csv` indexes `int_corrosionproofcargorack` at sizes 1 and 4 and not at 5 or 6,
+    so two of the four fell through to the file stem and reached the table as
+    "Cargo Rack (corrosionproof)" — the parenthetical added by `disambiguate` because the stem
+    had collided them with the plain rack. That is the failure this whole item is about rather
+    than a cosmetic one: `AskModule` groups what it offers by name, so a corrosion-resistant
+    rack filed under "Cargo Rack" is a module hiding inside a different module's list.
+
+    Derived, not written. The name is taken from the module's own siblings — the same symbol
+    with a different size or class — and only when they agree unanimously, so this can copy a
+    name Frontier gave the family and cannot invent one. A family whose members disagree, or
+    one with no named member at all, keeps the file stem and stays in the report.
+    """
+    authoritative: dict[str, set[str]] = {}
+    fell_through = {symbol for symbol, _, _ in unnamed}
+
+    for row in built:
+        if row[0] not in fell_through:
+            authoritative.setdefault(family_of(row[0]), set()).add(row[1])
+
+    left = []
+
+    for symbol, name, source in unnamed:
+        offered = authoritative.get(family_of(symbol), set())
+
+        if len(offered) == 1:
+            inherited = next(iter(offered))
+
+            for row in built:
+                if row[0] == symbol:
+                    row[1] = inherited
+        else:
+            left.append((symbol, name, source))
+
+    return left
 
 
 def build_bulkheads(
@@ -346,7 +482,11 @@ def build_bulkheads(
 
 # Frontier's own placeholder rows. Not modules anybody can fit, and a "0Z Frame Shift Drive"
 # in a list of the sizes a drive comes in is a lie about the game.
-PLACEHOLDERS = ("int_missing_",)
+#
+# Matched on the `_missing_` infix rather than on `int_missing_`, which reached only the seven
+# internals and left `hpt_missing_hardpoint` and `hpt_missing_utility` in the table — both
+# named "Missing Hardpoint", both offered by a hardpoint chooser that groups by name.
+PLACEHOLDERS = ("_missing_",)
 
 # Tokens every module symbol carries, so they never distinguish one from another.
 NOISE = {"int", "hpt", "size", "class"}
@@ -382,7 +522,7 @@ def disambiguate(built: list[list[str]]) -> list[list[str]]:
     apart. A group left ambiguous by it keeps its raw tokens and reads badly rather than
     reading wrong.
     """
-    kept = [row for row in built if not row[0].startswith(PLACEHOLDERS)]
+    kept = [row for row in built if not any(mark in row[0] for mark in PLACEHOLDERS)]
 
     groups: dict[tuple, list[list[str]]] = {}
     for row in kept:
@@ -736,11 +876,19 @@ def build_slots(ships: dict[str, dict]) -> list[list[str]]:
 def main() -> None:
     sha, ship_paths, module_paths = coriolis_files()
 
-    outfitting = {int(row["id"]): row for row in rows("outfitting.csv")}
+    identities = rows("outfitting.csv")
+    outfitting = {int(row["id"]): row for row in identities}
+
+    # The same rows keyed the other way, so a module coriolis-data gives no usable id for can
+    # still be named by the naming authority. See build_modules.
+    by_symbol = {row["symbol"].lower(): row for row in identities}
+
     documents = ship_documents(ship_paths)
 
     ships, unkeyed = build_ships(documents)
-    generic, unnamed = build_modules(module_paths, outfitting)
+    generic, mismatched, unnamed, duplicated = build_modules(
+        module_paths, outfitting, by_symbol)
+    unnamed = inherit_family_names(generic, unnamed)
     bulkheads, unmeasured, unkeyed_bulkheads = build_bulkheads(documents, outfitting)
 
     # One symbol can appear in more than one coriolis file. Last wins would be arbitrary;
@@ -763,6 +911,19 @@ def main() -> None:
             row[18], row[19], row[20] = types[row[0]]
         else:
             untyped.append(row[0])
+
+    # Every mount agrees with the symbol it sits beside. True by construction — `build_modules`
+    # takes the mount from `mount_of` and not from the row — so this is here to stop a future
+    # edit quietly handing the column back to `outfitting.csv`, which is wrong on four rows.
+    # The same assertion runs in CI against the shipped table, in SpecificationTests, because
+    # this script is not part of the build and nothing would otherwise notice.
+    disagreeing = [(row[0], row[4]) for row in modules if row[4] != mount_of(row[0])]
+
+    if disagreeing:
+        raise SystemExit(
+            "modules whose mount contradicts their own symbol: "
+            + ", ".join(f"{symbol} says {mount!r}" for symbol, mount in disagreeing)
+        )
 
     lines = [
         "# Generated by tools/gen-elite-specs.py. Do not edit by hand — rerun the tool.",
@@ -808,8 +969,28 @@ def main() -> None:
     if unkeyed:
         print(f"No shipyard.csv row, recorded as known but unmeasured: {', '.join(unkeyed)}")
 
+    # Named by symbol rather than counted. A count says how much was lost and a list says
+    # what, and only the second can be checked against the outfitting screen by hand.
     if unnamed:
-        print(f"{unnamed} modules had no outfitting.csv row and were named from their file")
+        print(f"{len(unnamed)} modules are in neither outfitting.csv index and were named "
+              f"from their file:")
+        for symbol, name, source in sorted(unnamed):
+            print(f"    {symbol} -> {name!r} (from {source})")
+
+    # The ids coriolis-data got wrong. Reported every run rather than pinned to a known list:
+    # this is upstream data that can be fixed upstream, and a run that stops mentioning a
+    # symbol is the signal that it was.
+    if mismatched:
+        print(f"{len(mismatched)} coriolis-data edIDs resolve to a different module and were "
+              f"discarded in favour of the symbol:")
+        for symbol, landed in sorted(mismatched):
+            print(f"    {symbol} -> {landed}")
+
+    # Counted rather than listed: this one is upstream housekeeping rather than a fault in
+    # anything d47 ships, and the rule that resolves it is stated in build_modules.
+    if duplicated:
+        print(f"{len(duplicated)} symbols are declared more than once by coriolis-data; the "
+              f"entry it keyed to Frontier's id was kept")
 
     print(f"Wrote {len(slots)} slots across {len(hulls)} hulls")
 
