@@ -18,12 +18,16 @@ capability that is off rather than an error.
 ## Plotting is not searching
 
 A search is a request and a reply. A plot is a **job**: it is submitted, queued, and waited on.
-Measured on 2026-08-14, a Sol-to-Colonia neutron route came back in about three seconds, a Road to
-Riches loop on the first poll, and a four-hop trade route took forty-eight seconds.
+Measured on 2026-08-14, a Sol-to-Colonia neutron route came back in about three seconds and a Road
+to Riches loop on the first poll.
 
 So the wait here is longer than a search gets — ninety seconds, against fifteen. A Commander who
 asks for a route across the galaxy has knowingly asked for arithmetic. Past that, the answer says
 so and says what to change: a shorter route, fewer hops, a smaller radius.
+
+**The trade route is the exception, and it is not a plot at all.** It asks for markets and then
+does the arithmetic here, which is what lets it hold cargo past a station and come home again — see
+[`plot_trade_route`](#plot_trade_route) below.
 
 ## Your ship fills in its own numbers
 
@@ -55,7 +59,7 @@ The first 5:
 The neutron flag is the only line that changes what you do on arrival, so it is on the waypoint
 rather than in a preamble.
 
-Trade hops carry **when the market was last reported**, for the same reason outfitting stock does.
+Trade stops carry **when the market was last reported**, for the same reason outfitting stock does.
 A route can be arithmetically perfect against a four-year-old price and worth nothing at all.
 
 ## Mining routes
@@ -112,37 +116,135 @@ that decides whether the stop is worth making at all.
 
 ### `plot_trade_route`
 
-A chain of buy-and-sell runs starting from the station you are docked at.
+A chain of buy-and-sell runs starting from the station you are docked at — **worked out here**,
+over markets d47 fetched, rather than handed to somebody else's planner.
 
 ```json
-{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 8. Defaults to 4."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"max_hop_distance":{"type":"number","description":"The longest single leg, in light years. Defaults to 40."},"max_price_age":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
+{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_hop_distance":{"type":"number","description":"The longest single leg, in light years. Defaults to 40."},"max_price_age":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
+  Stack Trace:
+     at D47.Core.Tests.DocumentationGateTests.EveryPageQuotesTheCurrentToolSchema(String id) in C:\dev\d47\tests\D47.Core.Tests\DocumentationGateTests.cs:line 81
 ```
 
-It cannot be plotted from supercruise. The service keys the whole plot on a starting **station**
-id, so there is no version of this question that can be asked in flight — and d47 says that rather
-than sending a request it knows will be refused.
+It cannot be planned from supercruise. The whole plan is anchored on the market you are standing
+in, so there is no version of this question that can be asked in flight — and d47 says that rather
+than making a request it knows is pointless.
 
-There is no round-trip option. `loop` is a parameter the Road to Riches planner honours and the
-trade planner drops; a trade chain comes back as a loop when the arithmetic makes one, and it
-cannot be asked for.
+#### The hold does not have to be emptied
+
+The thing no other planner does. A leg that sells everything is what every planner assumes, and it
+is not always the best move: holding a commodity past a station that pays poorly for it, to a later
+one that pays well, can beat taking the money now.
+
+That is why the plan reads as a sequence of **stops** rather than of legs — sell these, keep those,
+buy that, go:
+
+```text
+3 hops from Abraham Lincoln, 412,800 credits on 50,000,000 over 44 light years.
+
+Abraham Lincoln in Sol
+  buy 384 × Gold at 9,400 — 3,609,600 cr
+  your own prices, read 2026-08-19
+
+Diaz Chemical Holdings in RR Caeli — 20.9 ly, 120 ls in
+  keep 384 × Gold — this station only pays 11,200
+  prices reported 2026-08-18
+```
+
+A `keep` line always says what declining to sell here is worth. A Commander who is not told why
+they are flying past a buyer will sell there, and then the plan they were given stops being the
+plan.
+
+#### Round trips
+
+`loop` ends the route back at the station it started from, so an evening's trading finishes at your
+own base rather than four systems away. A shorter loop that pays better than the long one you asked
+for is a better answer, not a shortfall, so it is taken.
+
+#### What it will not promise
+
+**It does not model market saturation.** Selling far more of a commodity than a station has demand
+for drops what the rest of it fetches, and by how much is *not known*. A constant guessed here
+would make every profit in every plan wrong in a way that reads exactly like the feature working,
+so no leg ever sells more than a station asked for, and the plan says so every time. The honest
+version of that figure is derivable from your own `MarketSell` events, and that is a different
+piece of work.
+
+**Fleet carriers are left out**, and the plan says how many. They set their own prices and then
+move: measured on 2026-08-19, the best Gold price within 50 light years of Sol was 4,760,900
+credits at a carrier against 52,282 at the best station. A planner that ranks on price and does not
+know what a carrier is builds every plan around one, and half of them have jumped by the time you
+get there.
+
+**Rares are left out.** They are priced per station, capped at a handful of tonnes by the game
+itself, and worth less the closer they are sold to home — none of which is modelled, so they are
+not planned with rather than mispriced.
+
+#### Where the prices come from
+
+Two places, and each stop says which.
+
+Everything beyond where you have been is [spansh.co.uk](https://spansh.co.uk) — the same host, the
+same setting and the same disclosure as the searches, because it is the same decision you are
+making. Every station in a search result carries its whole market, so this needs no galaxy dump and
+no extra permission; it is third-party data and it is treated as untrusted, like the journal and
+in-game comms.
+
+Where you have docked and opened the commodity board, Elite wrote `Market.json` and d47 kept it.
+Those are your own prices — exact, free, and covering almost nothing of the galaxy. The rule is
+**newer wins**: your reading of the board an hour ago beats a report from last week, and a report
+from this morning beats what you saw a month ago. The last 25 markets you have seen live in
+`data/markets.json`, which is readable and hand-editable like everything else in `data/`.
+
+Every stop carries when its prices were reported, for the same reason outfitting stock does. A
+route can be arithmetically perfect against a four-year-old market and worth nothing at all.
+
+#### How long it takes
+
+Ten hops, and in seconds rather than minutes.
+
+The arithmetic was never the problem. Holding cargo makes the state carried between hops *credits
+and cargo* rather than credits, so a plain search over ten hops is the reachable set raised to the
+tenth power — the version that does not finish. d47 runs a bounded one instead: a beam of the best
+200 partial routes carried hop to hop, with each leg's buy-and-sell decision solved inside it.
+Measured at the real shape — ten hops, 150 markets, 30 commodities — that is 300,000 leg
+evaluations and tens of milliseconds.
+
+What costs is asking. A station search answers in 1.1 to 1.3 seconds whatever it returns, so the
+bill is the number of requests and hardly the size of them: d47 asks for the largest pages the
+service gives, and caches what comes back, because a market does not move between two plans made a
+minute apart.
+
+For scale: the planner this replaced took **forty-eight seconds** to answer four hops.
 
 ## Notes for anyone reading the code
 
 The route endpoints have a property the search endpoints do not: **they echo back the parameters
 they understood, and only those.** That is a local oracle for which keys are real, and it is how
-these were established rather than guessed. Measured on a trade plot:
+these were established rather than guessed. A dropped key is not an error — the plot runs with that
+parameter at its default, which is the quietest way to be given a wrong answer.
 
-| Sent | In the echo |
+**The borrowed trade planner used to be behind this tool and is not.** `api/trade/route` is still
+real and still answers; d47 stopped asking. It could not hold cargo between legs, it silently
+dropped `loop` and `capital` alike — a trade plot with no capital finds nothing affordable and
+reports an empty route, which looks exactly like a correct answer about a Commander with no money —
+and it took forty-eight seconds over four hops. Those are not parameters of somebody else's planner
+but a different problem. It was **replaced rather than kept as a fallback**: two tools that both
+plan trade routes and disagree is worse than either alone.
+
+What the station search will and will not do, measured on 2026-08-19, because both halves shaped
+the design:
+
+| | |
 |---|---|
-| `starting_capital` | kept |
-| `max_cargo` | kept |
-| `capital`, `cargo_capacity`, `capacity`, `cargo`, `credits` | dropped |
-| `requires_large_pad`, `max_price_age`, `unique`, `permit` | kept |
-| `loop` | dropped |
+| Narrowable server-side | distance from a reference system, pad size, station type, which commodities a station deals in |
+| Accepted and **silently ignored** | any bound on price or demand — 203 stations for `demand >= 1`, 203 for `demand >= 50000`, 203 for no bound at all |
+| Rejected outright | every sort shape tried against a commodity's price, HTTP 400 |
 
-A dropped key is not an error. The plot runs with that parameter at its default — and for capital
-that means nothing is affordable and the route comes back empty, which looks exactly like a
-correct answer about a Commander with no money.
+So the shortlist arrives unranked and d47 ranks it. Two more habits worth not rediscovering: a
+commodity filter must be a list of **objects** (`[{"name":"Gold"}]`) — a bare string list is
+ignored and returns everything — and the commodity filter is coarse, matching what a station
+*deals in* rather than what it currently pays for. 49 of 200 "Gold importers" near Sol had any Gold
+demand at all.
 
 "No route exists" arrives as a **completed** job whose status is `failed`, not as an outage. It is
 reported as an answer, because retrying will fail identically every time. An outage, a rate limit
@@ -152,8 +254,8 @@ text is third-party and on its way into a prompt, so it is single-lined and leng
 goes anywhere.
 
 The poll interval is fixed rather than backing off. The wait is bounded and short, jobs that finish
-quickly finish on the first or second poll anyway, and a backoff would leave the forty-eight-second
-case waiting well past finishing before anybody noticed. The delay is injected, so the whole loop —
+quickly finish on the first or second poll anyway, and a backoff would leave the slowest case
+waiting well past finishing before anybody noticed. The delay is injected, so the whole loop —
 including the ninety-second budget — is tested without a second of real time passing.
 
 **The galaxy plotter is not wired up.** `api/generic/route` is real and it does not take a jump

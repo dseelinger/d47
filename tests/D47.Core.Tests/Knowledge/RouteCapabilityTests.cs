@@ -20,16 +20,11 @@ public class RouteCapabilityTests
 
         public RichesQuery? LastRiches { get; private set; }
 
-        public TradeQuery? LastTrade { get; private set; }
-
         public PlottedRoute? Route { get; set; } =
             new("Sol", "Colonia", 22_000, 168, [new RouteWaypoint("PSR J1752-2806", 10, 21_629, true)]);
 
         public RichesRoute? Riches { get; set; } =
             new([new RichesStop("Aries Dark Region FW-W d1-59", 3, [new RichesBody("A 4", "Water world")])]);
-
-        public TradeRoute? Trade { get; set; } =
-            new([new TradeHop("Sol", "Abraham Lincoln", "RR Caeli", "Diaz Chemical Holdings")]);
 
         public Exception? Throws { get; set; }
 
@@ -51,8 +46,39 @@ public class RouteCapabilityTests
             ExobiologyQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult<ExobiologyRoute?>(null);
+    }
 
-        public Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken)
+    /// <summary>
+    /// The trade planner, which is d47's own since Phase 36 and so a separate seam: lookups and
+    /// arithmetic here, rather than a job somebody else queues.
+    /// </summary>
+    private sealed class FakeTrade : ITradePlanService
+    {
+        public TradeQuery? LastTrade { get; private set; }
+
+        public TradeRoute? Trade { get; set; } =
+            new([
+                new TradeStop("Sol", "Abraham Lincoln")
+                {
+                    Buy = [new TradeLot("Gold", 384, 9_400)],
+                    Credits = 46_390_400,
+                },
+                new TradeStop("RR Caeli", "Diaz Chemical Holdings")
+                {
+                    Distance = 20.9,
+                    Sell = [new TradeLot("Gold", 384, 52_282)],
+                    Credits = 66_466_688,
+                },
+            ])
+            {
+                Capital = 50_000_000,
+                TotalProfit = 16_466_688,
+                MarketsConsidered = 132,
+            };
+
+        public Exception? Throws { get; set; }
+
+        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken)
         {
             LastTrade = query;
             return Throws is not null ? Task.FromException<TradeRoute?>(Throws) : Task.FromResult(Trade);
@@ -65,7 +91,7 @@ public class RouteCapabilityTests
         gameState.Apply(parsed!);
     }
 
-    private static (CapabilityRegistry Registry, FakeRoutes Routes) Build(
+    private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade) Build(
         TempInstall install,
         bool enabled = true,
         bool docked = true)
@@ -83,13 +109,15 @@ public class RouteCapabilityTests
                 : """{"timestamp":"2026-01-01T00:00:02Z","event":"FSDJump","StarSystem":"Sol"}""");
 
         var routes = new FakeRoutes();
+        var trade = new FakeTrade();
         var settings = TestSurface.For(install).Settings;
 
         settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
 
         return (
-            CapabilityRegistry.Build([RouteCapability.Create(routes, () => gameState.Active, settings)]),
-            routes);
+            CapabilityRegistry.Build([RouteCapability.Create(routes, trade, () => gameState.Active, settings)]),
+            routes,
+            trade);
     }
 
     private static ToolArguments Args(params (string Name, string Value)[] values) =>
@@ -100,7 +128,7 @@ public class RouteCapabilityTests
     {
         // Nobody says "plot me a route to Colonia from Sol at 52.31 light years a jump".
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -118,7 +146,7 @@ public class RouteCapabilityTests
         // Accepted and then failed to route, measured Sol to Colonia on 2026-08-14. Clamping it
         // here turns a mystifying "no route exists" into a route.
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         await registry.InvokeAsync(
             "plot_route",
@@ -132,7 +160,7 @@ public class RouteCapabilityTests
     public async Task AShipTooShortRangedToPlotForIsToldSoRatherThanRefusedByTheService()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -148,7 +176,7 @@ public class RouteCapabilityTests
     public async Task ALongRouteSaysHowManyWaypointsThereAreRatherThanReadingThemAllOut()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         routes.Route = new PlottedRoute(
             "Sol",
@@ -174,7 +202,7 @@ public class RouteCapabilityTests
     public async Task NoRouteIsAnAnswerRatherThanAFailure()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         routes.Route = null;
 
@@ -196,7 +224,7 @@ public class RouteCapabilityTests
         // The one figure here that is about the Commander rather than their ship. It is in the
         // journal and it does not leave without them saying a number.
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         // Required in the schema, so the model is stopped before a turn is spent on it…
         var omitted = await registry.InvokeAsync(
@@ -215,14 +243,14 @@ public class RouteCapabilityTests
 
         Assert.True(zero.IsError);
         Assert.Contains("balance", zero.Content, StringComparison.Ordinal);
-        Assert.Null(routes.LastTrade);
+        Assert.Null(trade.LastTrade);
     }
 
     [Fact]
     public async Task ATradeRouteDoesFillInTheHoldFromTheShip()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         await registry.InvokeAsync(
             "plot_trade_route",
@@ -230,15 +258,15 @@ public class RouteCapabilityTests
             TestContext.Current.CancellationToken);
 
         // A property of the hull, and the plot means nothing without it.
-        Assert.Equal(384, routes.LastTrade?.CargoCapacity);
-        Assert.Equal("Abraham Lincoln", routes.LastTrade?.Station);
+        Assert.Equal(384, trade.LastTrade?.CargoCapacity);
+        Assert.Equal("Abraham Lincoln", trade.LastTrade?.Station);
     }
 
     [Fact]
     public async Task ATradeRouteCannotBePlottedFromSupercruise()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install, docked: false);
+        var (registry, routes, trade) = Build(install, docked: false);
 
         var result = await registry.InvokeAsync(
             "plot_trade_route",
@@ -249,14 +277,14 @@ public class RouteCapabilityTests
         // this question that can be asked in flight.
         Assert.True(result.IsError);
         Assert.Contains("not docked", result.Content, StringComparison.Ordinal);
-        Assert.Null(routes.LastTrade);
+        Assert.Null(trade.LastTrade);
     }
 
     [Fact]
     public async Task ARichesRouteReportsWhatItIsWorthAndHowFarItGoes()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         routes.Riches = new RichesRoute(
         [
@@ -291,7 +319,7 @@ public class RouteCapabilityTests
     public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install, enabled: false);
+        var (registry, routes, trade) = Build(install, enabled: false);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -307,7 +335,7 @@ public class RouteCapabilityTests
     public async Task AnUnreachablePlotterIsAnErrorResultNotAnException()
     {
         using var install = new TempInstall();
-        var (registry, routes) = Build(install);
+        var (registry, routes, trade) = Build(install);
 
         routes.Throws = new GalaxyUnavailableException("The route plotter is still working after 90 seconds.");
 

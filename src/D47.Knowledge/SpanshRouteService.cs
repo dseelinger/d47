@@ -11,16 +11,22 @@ namespace D47.Knowledge;
 /// A different protocol from the searches, which is why it is a different class. A plot is
 /// submitted as a form post, answered with <c>202</c> and a job id, and then polled at
 /// <c>api/results/&lt;job&gt;</c> until it stops saying <c>queued</c>. Measured on 2026-08-14:
-/// Sol to Colonia came back on the third poll, a Road to Riches loop on the first, and a four-hop
-/// trade route took forty-eight seconds.
+/// Sol to Colonia came back on the third poll, and a Road to Riches loop on the first.
 /// </para>
 /// <para>
 /// <b>The route endpoints echo back the parameters they understood, and only those.</b> That is a
 /// local oracle the search endpoints do not offer, and it is how the parameter names here were
-/// established rather than guessed: <c>capital</c>, <c>cargo_capacity</c>, <c>capacity</c> and
-/// <c>loop</c> all vanish from a trade plot's echo, while <c>starting_capital</c> and
-/// <c>max_cargo</c> survive. A dropped key is not an error — the plot runs with the parameter at
-/// its default, which for capital means nothing is affordable and the route comes back empty.
+/// established rather than guessed: <c>from</c> comes home as <c>source</c> on the exobiology
+/// plot, and a dropped key is not an error — the plot runs with that parameter at its default.
+/// </para>
+/// <para>
+/// <b>The trade plot used to be here and is not (list.md Phase 36).</b> <c>api/trade/route</c> is
+/// still real and still answers; d47 stopped asking. It could not hold cargo between legs, could
+/// not be asked for a round trip — <c>loop</c> was one of the keys it silently dropped — and took
+/// forty-eight seconds over four hops. Those are not parameters of somebody else's planner but a
+/// different problem, so the arithmetic moved to <see cref="TradePlanner"/> and this class kept
+/// the three plots that really are jobs. Two planners that both plan trade routes and disagree is
+/// worse than either alone, which is why the borrowed one went rather than staying as a fallback.
 /// </para>
 /// </summary>
 public sealed class SpanshRouteService : IRouteService, IDisposable
@@ -143,33 +149,6 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
             cancellationToken).ConfigureAwait(false);
 
         return result is null ? null : SpanshResponse.ReadExobiology(result.Value);
-    }
-
-    public async Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken)
-    {
-        var result = await RunAsync(
-            "api/trade/route",
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["system"] = query.System,
-                ["station"] = query.Station,
-
-                // Not `capital` and not `cargo_capacity`. Both are silently dropped, and a trade
-                // plot with no capital finds nothing affordable and reports an empty route — a
-                // wrong answer that looks exactly like a correct one about a poor Commander.
-                ["starting_capital"] = query.Capital.ToString(CultureInfo.InvariantCulture),
-                ["max_cargo"] = query.CargoCapacity.ToString(CultureInfo.InvariantCulture),
-                ["max_hops"] = query.MaxHops.ToString(CultureInfo.InvariantCulture),
-                ["max_hop_distance"] = Number(query.MaxHopDistance),
-                ["max_system_distance"] = Number(query.MaxSystemDistance),
-                ["max_price_age"] = query.MaxPriceAge.ToString(CultureInfo.InvariantCulture),
-                ["requires_large_pad"] = query.LargePadOnly ? "1" : "0",
-                ["unique"] = query.Unique ? "1" : "0",
-            },
-            "the trade planner",
-            cancellationToken).ConfigureAwait(false);
-
-        return result is null ? null : SpanshResponse.ReadTrade(result.Value);
     }
 
     /// <summary>

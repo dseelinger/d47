@@ -21,6 +21,14 @@ namespace D47.Core.Capabilities.Builtin;
 /// rich the reserves are. Naming a mining route tool that quietly did a body search would be a
 /// worse answer than not having one.
 /// </para>
+/// <para>
+/// <b>The trade route is no longer a plot at all (list.md Phase 36).</b> Three of these four tools
+/// hand the question to a service and read back the answer; <c>plot_trade_route</c> now asks for
+/// markets and does the arithmetic here, which is what lets it hold cargo past a station and come
+/// home again. It kept its name because it answers the same question, and it replaced the borrowed
+/// planner rather than standing beside it: two tools that both plan trade routes and disagree is
+/// worse than either alone.
+/// </para>
 /// </summary>
 public static class RouteCapability
 {
@@ -35,8 +43,14 @@ public static class RouteCapability
     /// route starts from, and the ship's jump range and hold — the three things every plot needs
     /// and nobody wants to say out loud.
     /// </param>
+    /// <param name="trade">
+    /// d47's own trade planner, or null where none is composed. Separate from
+    /// <paramref name="routes"/> because it is a different protocol — lookups and arithmetic
+    /// rather than a job that is queued and polled for — and the seam says so.
+    /// </param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
+        ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings) => new()
     {
@@ -160,9 +174,9 @@ public static class RouteCapability
             {
                 Name = "plot_trade_route",
                 Description =
-                    "Plan a chain of profitable trade runs starting from the station the Commander is "
-                    + "docked at. Needs to be told how many credits to plan around — the Commander's "
-                    + "balance is never sent unless they say a figure.",
+                    "Work out a chain of profitable trade runs from the station the Commander is docked "
+                    + "at, holding cargo past a station where a later one pays better. Needs to be told "
+                    + "how many credits to trade with; their balance is never used unless they say it.",
                 Parameters =
                 [
                     new ToolParameter
@@ -183,7 +197,13 @@ public static class RouteCapability
                     {
                         Name = "hops",
                         Type = ToolParameterType.Integer,
-                        Description = "How many legs to plan, 1 to 8. Defaults to 4.",
+                        Description = "How many legs to plan, 1 to 10. Defaults to 5.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "loop",
+                        Type = ToolParameterType.Boolean,
+                        Description = "End back where it started. Defaults to false.",
                     },
                     new ToolParameter
                     {
@@ -213,7 +233,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotTradeAsync(routes, commander, settings, arguments, cancellationToken),
+                    PlanTradeAsync(trade, commander, settings, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Route planning", Order = 48 },
@@ -451,14 +471,14 @@ public static class RouteCapability
 
     private const int BodiesSpoken = 4;
 
-    private static async Task<ToolResult> PlotTradeAsync(
-        IRouteService? routes,
+    private static async Task<ToolResult> PlanTradeAsync(
+        ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!Ready(routes, settings))
+        if (trade is null || !settings.Current.Knowledge.GalaxySearch)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -478,6 +498,7 @@ public static class RouteCapability
                 Number(arguments, "max_station_distance"),
                 arguments.TryGetBoolean("large_pad", out var largePad) && largePad,
                 arguments.TryGetInt32("max_price_age", out var age) ? age : null,
+                Flag(arguments, "loop"),
                 out var query,
                 out var failure))
         {
@@ -486,13 +507,25 @@ public static class RouteCapability
 
         try
         {
-            var route = await routes!.PlotTradeAsync(query, cancellationToken).ConfigureAwait(false);
+            var route = await trade.PlanAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return route is null || route.Hops.Count == 0
+            // Null and empty are different answers and are worded differently. Null is "I could
+            // not read the board you are standing in front of" — the origin's own market was not
+            // among anything fetched — and empty is "nothing near here pays".
+            if (route is null)
+            {
+                return ToolResult.Ok(
+                    $"I can't see the commodity market at {query.Station}. Nobody has reported its "
+                    + "prices, and the Commander has not opened it while I was watching — dock and open "
+                    + "the commodity board once and I will have it.");
+            }
+
+            return route.Stops.Count == 0
                 ? ToolResult.Ok(
                     $"No trade run out of {query.Station} pays with {query.Capital:N0} credits and "
-                    + $"{query.CargoCapacity} tonnes. More capital, a longer hop distance or a station "
-                    + "further out will find something.")
+                    + $"{query.CargoCapacity} tonnes, across {route.MarketsConsidered} markets within "
+                    + $"{query.MaxHopDistance:N0} light years. More capital, a longer hop distance or a "
+                    + "wider price age will find something.")
                 : ToolResult.Ok(Describe(route, query));
         }
         catch (GalaxyUnavailableException ex)
@@ -501,43 +534,110 @@ public static class RouteCapability
         }
     }
 
+    /// <summary>
+    /// A trade route as prose. Written as a sequence of stops rather than of legs, because that is
+    /// what the Commander flies: dock, sell these, keep those, buy that, go.
+    /// </summary>
     private static string Describe(TradeRoute route, TradeQuery query)
     {
         var report = new StringBuilder();
+        var legs = route.Stops.Count - 1;
 
         report.AppendLine(
-            $"{route.Hops.Count} hop{(route.Hops.Count == 1 ? "" : "s")} from {query.Station}, "
-            + $"{route.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} credits in total.");
+            $"{legs} hop{(legs == 1 ? "" : "s")} from {query.Station}"
+            + $"{(route.Loop ? " and back" : "")}, "
+            + $"{route.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} credits on "
+            + $"{query.Capital.ToString("N0", CultureInfo.InvariantCulture)} over "
+            + $"{route.TotalDistance.ToString("N0", CultureInfo.InvariantCulture)} light years.");
 
-        foreach (var hop in route.Hops)
+        var capped = false;
+
+        foreach (var stop in route.Stops)
         {
             report.AppendLine();
-            report.Append($"{hop.FromStation} in {hop.FromSystem} → {hop.ToStation} in {hop.ToSystem}");
+            report.Append($"{stop.Station} in {stop.System}");
 
-            if (hop.Distance is { } distance)
+            if (stop.Distance is { } distance)
             {
                 report.Append($" — {distance.ToString("N1", CultureInfo.InvariantCulture)} ly");
             }
 
-            if (hop.DistanceToArrival is { } arrival)
+            if (stop.DistanceToArrival is { } arrival)
             {
                 report.Append($", {arrival.ToString("N0", CultureInfo.InvariantCulture)} ls in");
             }
 
-            report.AppendLine($"; {hop.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} cr");
+            report.AppendLine();
 
-            foreach (var commodity in hop.Commodities)
+            foreach (var lot in stop.Sell)
             {
-                report.AppendLine($"  {commodity.Amount} × {commodity.Name}");
+                report.AppendLine(
+                    $"  sell {lot.Amount} × {lot.Commodity} at "
+                    + $"{lot.UnitPrice.ToString("N0", CultureInfo.InvariantCulture)} — "
+                    + $"{lot.Value.ToString("N0", CultureInfo.InvariantCulture)} cr");
             }
 
-            // Prices are crowd-reported, and a route that is arithmetically perfect against a
-            // four-year-old market is worth nothing at all.
-            if (hop.MarketSeen is { } seen)
+            // The line that is the whole phase. A Commander who is not told why they are flying
+            // past a buyer will sell there, and the plan they were given stops being the plan.
+            foreach (var lot in stop.Hold)
             {
-                report.AppendLine($"  prices last reported {seen:yyyy-MM-dd}");
+                report.AppendLine(
+                    lot.UnitPrice > 0
+                        ? $"  keep {lot.Amount} × {lot.Commodity} — this station only pays "
+                          + $"{lot.UnitPrice.ToString("N0", CultureInfo.InvariantCulture)}"
+                        : $"  keep {lot.Amount} × {lot.Commodity} — no buyer here");
+            }
+
+            foreach (var lot in stop.Buy)
+            {
+                report.AppendLine(
+                    $"  buy {lot.Amount} × {lot.Commodity} at "
+                    + $"{lot.UnitPrice.ToString("N0", CultureInfo.InvariantCulture)} — "
+                    + $"{lot.Value.ToString("N0", CultureInfo.InvariantCulture)} cr");
+            }
+
+            capped |= stop.CappedByDemand;
+
+            // Prices are crowd-reported unless the Commander read them off the board themselves,
+            // and a route that is arithmetically perfect against a four-year-old market is worth
+            // nothing at all.
+            if (stop.PricesSeen is { } seen)
+            {
+                report.AppendLine(
+                    stop.PricesAreYours
+                        ? $"  your own prices, read {seen:yyyy-MM-dd}"
+                        : $"  prices reported {seen:yyyy-MM-dd}");
             }
         }
+
+        report.AppendLine();
+        report.Append($"Worked out over {route.MarketsConsidered} market");
+        report.Append(route.MarketsConsidered == 1 ? "" : "s");
+
+        if (route.MarketsSeenInPerson > 0)
+        {
+            report.Append($", {route.MarketsSeenInPerson} of them yours");
+        }
+
+        if (route.CarriersIgnored > 0)
+        {
+            report.Append(
+                $"; {route.CarriersIgnored} fleet carrier{(route.CarriersIgnored == 1 ? "" : "s")} left "
+                + "out, because they set their own prices and then move");
+        }
+
+        report.AppendLine(".");
+
+        // The honest half of the saturation answer, and it is said every time rather than only
+        // when it bites: d47 does not model the price drop from dumping past demand, so it never
+        // plans past demand — and a profit that assumed otherwise would be wrong in a way that
+        // reads exactly like the feature working (list.md Phase 36).
+        report.Append(
+            capped
+                ? "No leg sells more than a station asked for, and some were cut short by that. I "
+                  + "don't model what dumping past demand does to the price, so I never plan past it."
+                : "I don't model what dumping past demand does to the price, so no leg here sells "
+                  + "more than a station asked for.");
 
         return report.ToString().TrimEnd();
     }
