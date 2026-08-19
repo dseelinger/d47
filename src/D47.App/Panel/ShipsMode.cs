@@ -331,6 +331,11 @@ public sealed class ShipsMode(
                     plan is not null)
                 {
                     Group = ShipSlot.Heading(slot.Kind),
+
+                    // Read off the fitted module rather than off the plan, because they answer
+                    // different questions (remediation.md 15, item 10): the dot beside this says a
+                    // plan exists, and the gear says a roll has already been done.
+                    Engineered = module?.Blueprint is { Length: > 0 },
                 };
             }),
         ];
@@ -444,9 +449,14 @@ public sealed class ShipsMode(
                 ? $"grade {level.ToString(CultureInfo.InvariantCulture)} "
                 : string.Empty;
 
+            // Its own tone, and now a name rather than a symbol. The colour was asked for on the
+            // strength of the line being worth noticing; until the blueprint join existed it would
+            // have made "grade 5 PowerDistributor PrioritySystems" more prominent, which is worse
+            // than leaving it grey. It reads "grade 5 System Focused" now.
             lines.Add(new LoadoutLine(
                 $"{grade}{ChecklistNaming.Readable(blueprint)}"
-                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty)));
+                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty),
+                LoadoutTone.Engineered));
         }
 
         return lines;

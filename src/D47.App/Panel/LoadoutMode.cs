@@ -36,6 +36,16 @@ public enum LoadoutTone
 
     /// <summary>The head of a block — "Fitted", "Planned", "What it costs".</summary>
     Heading,
+
+    /// <summary>
+    /// What a module has been engineered with (remediation.md 15, item 10).
+    /// <para>
+    /// Its own tone rather than <see cref="Body"/> because it answers a different question from the
+    /// rest of the block: the module's name says what is fitted, and this says what was done to it.
+    /// Asked for as "the engineering font in a different colour in the details pane".
+    /// </para>
+    /// </summary>
+    Engineered,
 }
 
 /// <summary>One line of a loadout page, as content rather than as a control.</summary>
@@ -55,6 +65,17 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 /// <param name="Marked">Whether a plan exists here. A mark, never a column.</param>
 public sealed record LoadoutRow(string Key, string Word, string Text, string? Aside, bool Marked)
 {
+    /// <summary>
+    /// Whether the thing this row names has been engineered (remediation.md 15, item 10).
+    /// <para>
+    /// <b>Independent of <c>Marked</c>, and the two are read at a glance.</b> The dot means a plan
+    /// exists and this means a roll has been done, so a row carries neither, either or both — in
+    /// the reported screenshot the Power Distributor was engineered with no plan while the Power
+    /// Plant was both.
+    /// </para>
+    /// </summary>
+    public bool Engineered { get; init; }
+
     /// <summary>
     /// The heading this row sits under, where the index is grouped (remediation.md 12, item 1).
     /// <para>

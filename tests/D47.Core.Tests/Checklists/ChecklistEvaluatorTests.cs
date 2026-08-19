@@ -76,11 +76,17 @@ public class ChecklistEvaluatorTests
     }
 
     [Fact]
-    public void APlanNamingTheTablesSpellingIsUnverifiedRatherThanWrong()
+    public void APlanNamingTheTablesSpellingIsNowConfirmedRatherThanUnverifiable()
     {
-        // Everything checkable passes. What is left is a name that Frontier and the shipped table
-        // spell differently, with no join between them — so this says so rather than guessing.
-        // Guessing "not done" would tell a Commander their finished module is unfinished.
+        // **This used to assert the opposite**, and it was right to. Frontier writes the blueprint
+        // as `Engine_Dirty` and the shipped table calls it "Dirty Drive Tuning", and nothing d47
+        // shipped carried both spellings — so the honest answer was Unverified and a sentence
+        // saying why. Guessing "not done" would have told a Commander their finished module was
+        // unfinished.
+        //
+        // Remediation 15 item 10: the symbol Elite writes is coriolis-data's own key for the same
+        // blueprint, and `Blueprints.tsv` now carries it against all 940 recipes. So the join
+        // exists, the plan is confirmed outright, and the sentence that admitted the gap is gone.
         var verdict = ChecklistEvaluator.Evaluate(
             Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
             {
@@ -89,9 +95,36 @@ public class ChecklistEvaluatorTests
             }),
             State());
 
+        Assert.Equal(ChecklistState.Done, verdict!.Value.State);
+        Assert.DoesNotContain("cannot confirm", verdict.Value.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ABlueprintTheTableDoesNotCarryIsStillUnverifiedRatherThanWrong()
+    {
+        // The remainder, and the reason null is kept. Four blueprints EDSY offers have no recipe in
+        // the table, and Frontier can add one at any time — so a symbol nothing knows still answers
+        // "I cannot check this" rather than being guessed either way.
+        const string unknown =
+            """
+            { "timestamp":"2026-08-19T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[
+                { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
+                  "Engineering":{"BlueprintName":"Engine_NotAThing","Level":5,"Quality":1.0,
+                                 "Engineer":"Felicity Farseer","EngineerID":300100} } ]
+            }
+            """;
+
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+            {
+                Detail = "Dirty Drive Tuning",
+                Grade = 5,
+            }),
+            State(unknown));
+
         Assert.Equal(ChecklistState.Unverified, verdict!.Value.State);
-        Assert.Contains("grade 5 and finished", verdict.Value.Reason, StringComparison.Ordinal);
-        Assert.Contains("nothing I ship joins the two spellings", verdict.Value.Reason, StringComparison.Ordinal);
+        Assert.Contains("no recipe under that name", verdict.Value.Reason, StringComparison.Ordinal);
     }
 
     [Fact]

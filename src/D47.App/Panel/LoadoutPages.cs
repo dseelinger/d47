@@ -124,7 +124,8 @@ public static class LoadoutPages
     /// where a plan exists, and everything else in the pane that opens — which is what lets one
     /// layout survive from 512 to 2048 logical pixels.
     /// </summary>
-    internal static Control Row(string text, string? aside, bool marked, Action pressed)
+    internal static Control Row(
+        string text, string? aside, bool marked, Action pressed, bool engineered = false)
     {
         var label = new TextBlock
         {
@@ -180,20 +181,53 @@ public static class LoadoutPages
                 note.MaxWidth = Math.Max(80, size.NewSize.Width * 0.6);
         }
 
-        // The mark, and it is a mark rather than a column: "this slot has a plan" is a boolean,
-        // and a column for it would be a column that is empty on most rows of most ships.
-        if (marked)
+        // The marks, and they are marks rather than columns: "this slot has a plan" and "this
+        // module is engineered" are booleans, and a column for either would be a column that is
+        // empty on most rows of most ships.
+        //
+        // **Two independent facts, and which is which has to be readable at a glance**
+        // (remediation.md 15, item 10). The dot means a plan exists and the gear means a roll has
+        // been done, so a row carries neither, either or both — in the reported screenshot the
+        // Power Distributor was engineered with no plan while the Power Plant was both. Different
+        // glyphs and different colours, because two marks distinguished only by hue are one mark
+        // to a Commander who cannot separate the hues.
+        if (marked || engineered)
         {
-            var mark = new TextBlock
+            var marks = new StackPanel
             {
-                Text = "●",
-                FontSize = TypeScale.Secondary,
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
             };
 
-            Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-            body.Children.Add(mark);
+            if (engineered)
+            {
+                var gear = new TextBlock
+                {
+                    Text = "⚙",
+                    FontSize = TypeScale.Secondary,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                Themed(gear, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+                marks.Children.Add(gear);
+            }
+
+            if (marked)
+            {
+                var mark = new TextBlock
+                {
+                    Text = "●",
+                    FontSize = TypeScale.Secondary,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+                marks.Children.Add(mark);
+            }
+
+            body.Children.Add(marks);
         }
 
         Grid.SetColumn(label, 1);
@@ -250,6 +284,11 @@ public static class LoadoutPages
             TextWrapping = TextWrapping.Wrap,
         },
         LoadoutTone.Danger => Toned(line.Text, ThemeManager.DangerKey),
+
+        // What was done to the module, in its own colour (remediation.md 15, item 10). Info
+        // rather than Accent, because Accent already means "a plan exists" on the dot beside the
+        // row and the two facts are independent — a module can be engineered with no plan.
+        LoadoutTone.Engineered => Toned(line.Text, ThemeManager.InfoKey),
         _ => Muted(line.Text),
     };
 
@@ -406,7 +445,8 @@ public sealed class IndexPage : LoadoutPage
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.Crumb(Mode, row))));
+                () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
+                row.Engineered));
         }
     }
 
@@ -593,7 +633,8 @@ public sealed class ItemPage : LoadoutPage
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row))));
+                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
+                row.Engineered));
         }
     }
 }
