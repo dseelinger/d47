@@ -627,6 +627,34 @@ rather than prettifying a symbol into something that looks like one.
   table says **`Guardian Hybrid Power Distributor`** and the tech-broker table says
   **`Guardian Power Distributor`**. Thread A again.
 
+  **Decided 2026-08-19: lead with Frontier's own description, figures underneath.**
+
+  **The answer was in the source and nobody had looked.** coriolis carries **`ukDiscript`** — Frontier's
+  own description of the module — on **732 of 970 modules (75%)**, and `ukName` on 76%. For the
+  reported example it says outright: *"Enhanced with Guardian technology to speed up capacitor
+  recharge rates, at the cost of smaller capacitors and increased heat generation. Also boosts
+  overall power output of any power plant it is hooked into."* That is ask #10 answered in one
+  sentence, from an id-keyed field, in **Frontier's own words** — which is the shape the game-data
+  invariant already prefers and `NOTICE` already practises.
+
+  The figures corroborate it: a 7A Guardian distributor against a standard one is WEP 43 at 8.5/s
+  against 61 at 6.1/s, SYS and ENG 31 at 5.2/s against 41 at 4/s, integrity 56 against 144, and
+  roughly twice the price. Smaller capacitors, faster recharge, exactly as described.
+
+  **A correction to item 2b's field set, which was mine.** The ten figures listed there are
+  **hardpoint-specific** — damage, DPS, rate of fire, range — and *none of them apply to a
+  distributor*, which carries `wepcap/weprate`, `syscap/sysrate` and `engcap/engrate`. The table
+  already carries drive-specific and armour-specific columns, so per-kind figures are the established
+  pattern; the error was proposing a weapons-only set as though it were general.
+
+  **The tech-broker join is worse than reported and matters less.** Only **7 of 51** tech-broker rows
+  match a module name. Around 30 are parenthetical variants — *"Guardian Plasma Charger (Fixed,
+  Large)"* — which strip mechanically; 3 are ship-launched fighters, correctly not modules; the rest
+  are pre-engineered *Modified* / *Engineered V1* / *Sirius Modified* variants. And **`ukName` bridges
+  the reported mismatch outright**: coriolis calls it *"Guardian Power Distributor"*, which is the
+  tech-broker table's spelling, where FDevIDs says *"Guardian Hybrid Power Distributor"*. Lower
+  priority regardless, because the description usually implies the unlock anyway.
+
 - [ ] **10. An engineered module should look engineered.** Two asks, and the mechanisms exist:
   `LoadoutLine` already carries a `LoadoutTone` (the module name takes `LoadoutTone.Body` and the
   engineering line takes the default), and `LoadoutRow`'s last field is already a mark flag.
@@ -645,6 +673,32 @@ rather than prettifying a symbol into something that looks like one.
   case: the method calls its own output *"ugly and true"*, and `CannotConfirm` says out loud that
   nothing d47 ships joins the two spellings. Making a wrong string more prominent is worse than
   leaving it grey.
+
+  **The blocker is gone, and it was item 6's missing join all along.** Measured 2026-08-19.
+
+  **The journal's `BlueprintName` and coriolis's blueprint `fdname` are the same namespace.**
+  `PowerDistributor_PrioritySystems` — the exact string in the reported screenshot — is a key in
+  `modifications/blueprints.json`, and so are `Engine_Dirty`, `Weapon_LongRange`,
+  `ShieldGenerator_Kinetic` and every other journal symbol probed. Following it through the guid to
+  EDEngineer gives the name the Commander should have read:
+
+  | The journal writes | Shown today | Should read |
+  |---|---|---|
+  | `PowerDistributor_PrioritySystems` | *PowerDistributor PrioritySystems* | **System Focused** |
+  | `Engine_Dirty` | — | **Dirty Drive Tuning** |
+
+  **70 of 81 fdnames resolve to exactly one display name.** The other 11 are the shared blueprints,
+  where the whole variation is *"Lightweight"* against *"Lightweight Mount"* — both correct, neither
+  embarrassing, and the fitted module says which applies.
+
+  So **`CannotConfirm` is about to be lying.** It tells the Commander outright that *"nothing I ship
+  joins the two spellings"*, and `ChecklistNaming.Readable` calls its own output *"ugly and true"*.
+  Both were accurate when written and both stop being so the moment item 6's re-key lands — that
+  same re-key is what creates this join. **Fix them together**: the colour this item asks for would
+  otherwise make a wrong string more prominent, which is the one thing worse than leaving it grey.
+
+  The two marks stay independent as the note says — the orange dot means *a plan exists*, the gear
+  glyph means *this is engineered*, and a row can carry neither, either or both.
 
 - [ ] **11. Every chooser should show what is fitted.** *"Every choice for what goes into the slot
   should show what's currently in the slot, if anything."* The design already says so, twice, in
