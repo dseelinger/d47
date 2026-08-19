@@ -74,3 +74,22 @@ Both cleared on a re-run of the same commit, and 583 of 584 App tests passed in 
 Three consecutive Release runs of the whole App suite locally are clean, so nothing about this
 reproduces off the runner yet. **Treat them as one investigation**: two symptoms, one session, and
 a shared suspect.
+
+**A third occurrence, 2026-08-19, and it moved again.** The release run for v0.39.0 failed on
+`PickerShowsEverythingTests.EveryChoiceIsListedAndTheIdIsNotInTheBox` — same exception, same
+*cleanup* framing, same `AvaloniaTestRunner` frame, and this time with the throw landing inside
+`HeadlessUnitTestSession.EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` →
+`DefaultRenderLoop.Add`. So the failing call is the headless platform being **stood up** on a thread
+that does not own the dispatcher, rather than anything the named test does.
+
+That third data point is worth more than the two above put together, because it settles the part
+that was still a suspicion: the test that reports the failure is **arbitrary**. Three different
+tests have now carried it — `RowWidthTests`, and now this one — and none of them has anything in
+common beyond running late in one headless session. The suspect is the session, and the specific
+frame now names where to look: a session that is being re-initialised at all, mid-run, is already
+the anomaly, since `EnsureIsolatedApplication` should have nothing left to do by then.
+
+586 of 589 App tests passed in the failing run, `ci` had gone green on the identical commit minutes
+earlier, and two consecutive local Release runs of the whole suite were clean. It cleared on a
+re-run of the same tag. **This has now cost a release run**, which is the first time it has cost
+anything beyond a retry, and it is the reason to stop treating it as noise.
