@@ -17,6 +17,80 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.36.1 — 2026-08-19 — Twelve, mostly about two tabs
+
+The twelve items of remediation 13, reported against 0.36.0 while it was being used. Two of them
+were the same fault reported twice from either side of a workaround, and one was a bug this
+project had already fixed once somewhere else.
+
+### The Loadout tab
+
+**Dropping a ship left it on the fleet list**, which is the one place a Commander looks to find
+out whether the drop took. The drill strip caches its levels, so a level scrolled out of the
+visible panes is detached and put back later — and these pages subscribed in their constructor and
+unsubscribed on detach, which is not a pair. The index went deaf on the way out. It is the same
+fault and the same fix as the checklist got in 0.35.0, in the pages that one did not touch, and it
+only ever showed on a narrow panel: at 1024 pixels the index stays beside the ship and never
+detaches.
+
+**A ship you are not flying now says what it is.** Where it is parked and what it is worth, from
+the journal; the manufacturer, pad, speed, armour and list price, from the shipped table, because
+those are true of every Anaconda ever built. Jump range, cargo, rebuy and hull health stay behind
+"only while you are in it" — Elite reports one loadout at a time, and modelling the rest from a
+ship D47 cannot see is the thing the whole table is built to avoid.
+
+**"Transfer" on the checklist bar now says Import/Export.** One tidy word for two directions, and
+it is also what Elite calls moving a ship between stations.
+
+**The panel says "ship" where it meant the model you buy** — plan a ship, which ship do you intend
+to buy, drop this ship. Where "hull" means the armour between you and vacuum it stays, because
+that is Elite's word for it.
+
+### Planning a slot
+
+**It asks which one.** Picking *Pulse Laser* planned a pulse laser and stopped; large or small,
+fixed or gimballed was never asked, and the code that answers it is 3F. The variants are listed
+the way a Commander says them — **Large, gimballed** — with `3E · 8.0 t · 0.92 MW · 140,600 cr`
+underneath. Declining is still a plan.
+
+**Grade 5 leads the grades and is marked as the usual.** They ran 1 to 5, which put the grade
+nobody writes down at the top.
+
+**An experimental effect is offered after the roll**, on the modules that support one, per module
+kind — because the recipe for Double Braced on a beam laser is not the recipe on a power plant.
+
+### The Engineers tab
+
+**One engineer at a time.** Their crumb was not levelled, so a wide panel — which keeps the
+directory pressable beside the open engineer — pushed each name on top of the last and showed two
+and three people at once. Backing out to the Directory first was the obvious workaround and was
+reported as a second fault; it is the same one, because the way back out was never the problem.
+
+**The Colonia engineers can be hidden**, one press, shown by default. Which eight is measured from
+the coordinates that already shipped rather than written down: thirty engineers sit within 877 ly
+of Sol and eight between 21,988 and 22,017, so the cut has ten thousand light years of daylight on
+either side of it and does not go stale when Frontier adds a ninth.
+
+**An unlock criterion already met carries a checkmark.** All of them, not only what is
+outstanding: a referral earned a month ago vanishing from the list reads as a requirement that was
+never there. Three marks rather than two — Elite does not publish whether you have scanned enough
+wakes, so those lines carry a question mark rather than a claim in either direction.
+
+### Everywhere
+
+**Pressing a tab goes to that tab**, even with a question up. Nothing navigating away mid-choice
+is right for every gesture inside the panel and wrong for the tabs: pressing Engineers while
+"which ship do you intend to buy" is showing is somebody saying they are done with the question.
+Back is taken for them, the whole stack of prompts goes with it, and nothing is committed.
+
+### Also
+
+- The module picker offered *AX Missile Rack* and *Ax Missile Rack* as two things to choose
+  between. The id list spells one weapon both ways — fixed mounts one way, turrets the other.
+- Nine test assertions read `PersonaCatalog.All` where they meant the shipped cast, which is the
+  eleven plus whatever you have written. The custom-core tests deliberately hold a core with an
+  empty body, so the full suite failed about one run in eight.
+
 ## 0.36.0 — 2026-08-18 — The module list is the outfitting screen
 
 Ten items of remediation 12, nine of them about one page. The module list showed whatever the
