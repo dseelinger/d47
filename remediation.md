@@ -133,3 +133,22 @@ the changelog, which is why this file is the current batch and not a growing arc
   "forget everything about me" is a sentence a transcriber can produce out of a misheard one. Say
   so if that should change — it would be overturning a decision rather than filling a hole.
 
+- [x] **11. Popup windows should use the same font sizes as the main page.** They already used the
+  same type scale; what they did not use was the **zoom**. Every dialog opened over a zoomed panel
+  came up at 100%, so its text was smaller than the page behind it.
+
+  `ZoomHost` was written to be attached to a window rather than built into one, with a comment
+  saying that a zoom stopping at the panel's edge would be a zoom the Commander has to remember the
+  boundaries of — and exactly one window ever attached it. The settings surface escaped by becoming
+  a tab rather than by being fixed.
+
+  A dialog now copies its owner's level, and its window grows with it or it would open showing a
+  scaled corner of itself. Copied rather than bound: a dialog is modal, so nothing can change the
+  zoom while one is open, and the gestures are deliberately not bound inside one — Ctrl and the
+  wheel in a modal would change a level whose effect the Commander cannot see until they close it.
+  At 100% nothing is wrapped at all.
+
+  **One way in**, and a test that reads the sources and fails if anything opens a dialog the other
+  way. Without it the next dialog is one more window at 100%, and the fault only shows on a machine
+  with zoom turned on.
+

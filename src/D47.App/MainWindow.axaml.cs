@@ -413,7 +413,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        await new FirstRunWindow(steps, host.Settings).ShowDialog(this);
+        await new FirstRunWindow(steps, host.Settings).Over(this);
     }
 
     /// <summary>
@@ -898,7 +898,7 @@ public partial class MainWindow : Window
             _host.SpeechSpend,
             _host.SpendLedger,
             _host.Settings.Current,
-            TimeZoneInfo.Local).ShowDialog(this);
+            TimeZoneInfo.Local).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

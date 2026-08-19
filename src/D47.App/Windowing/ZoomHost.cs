@@ -45,6 +45,64 @@ public sealed class ZoomHost
     public int Percent => ZoomLadder.Snap(_settings.Current.Ui.ZoomPercent);
 
     /// <summary>
+    /// Draws a dialog at the size the window that opened it is drawn at
+    /// (remediation.md 11, item 11).
+    /// <para>
+    /// <b>The class comment already said this and only one window ever got it.</b> Zoom was
+    /// attached to a window rather than built into one precisely so it would not stop at the
+    /// panel's edge — and then <c>MainWindow</c> was the only caller, so every dialog opened over
+    /// a zoomed panel came up at 100% and read as a different application's window. Settings
+    /// escaped it by becoming a tab rather than by being fixed.
+    /// </para>
+    /// <para>
+    /// The level is copied rather than followed: a dialog is modal, so nothing can change the
+    /// zoom while one is open, and a dialog that bound to the setting would be a second thing to
+    /// keep in step for a state that cannot arise. The gestures are not bound either — Ctrl and
+    /// the wheel inside a modal would change a level the Commander cannot see the effect of until
+    /// they close it.
+    /// </para>
+    /// </summary>
+    public static void Match(Window dialog, Window? owner)
+    {
+        if (owner is null
+            || !Hosts.TryGetValue(owner, out var host)
+            || host.Percent == 100
+            || dialog.Content is not Control content)
+        {
+            return;
+        }
+
+        var scale = host.Percent / 100d;
+
+        // Detached first: a control belongs to exactly one logical tree, and handing it straight
+        // to a new parent throws rather than reparenting.
+        dialog.Content = null;
+
+        dialog.Content = new ScrollViewer
+        {
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Content = new LayoutTransformControl
+            {
+                LayoutTransform = new ScaleTransform(scale, scale),
+                Child = content,
+            },
+        };
+
+        // The window was sized for its content at 100%, so it has to grow with it or the dialog
+        // opens showing a scaled corner of itself.
+        if (!double.IsNaN(dialog.Width))
+        {
+            dialog.Width *= scale;
+        }
+
+        if (!double.IsNaN(dialog.Height))
+        {
+            dialog.Height *= scale;
+        }
+    }
+
+    /// <summary>
     /// Wraps the window's content in a scaling host and binds the four gestures.
     /// <para>
     /// Handlers are added at the tunnel stage on purpose. A <see cref="ScrollViewer"/> handles
@@ -53,9 +111,20 @@ public sealed class ZoomHost
     /// exact gesture collision this borrows the browser's answer for.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Which window carries which host, so a dialog can be drawn at the same size as the window
+    /// that opened it (remediation.md 11, item 11).
+    /// <para>
+    /// Weak, so a closed window is collected rather than kept alive by a table nobody empties.
+    /// </para>
+    /// </summary>
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window, ZoomHost> Hosts = [];
+
     public static ZoomHost Attach(Window window, SettingsService settings)
     {
         var host = new ZoomHost(settings);
+
+        Hosts.AddOrUpdate(window, host);
 
         if (window.Content is Control content)
         {

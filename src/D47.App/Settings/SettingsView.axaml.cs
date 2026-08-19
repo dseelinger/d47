@@ -20,6 +20,8 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Coverage;
 
+using D47.App.Windowing;
+
 namespace D47.App.Settings;
 
 /// <summary>
@@ -686,7 +688,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         if (_paths is not null && TopLevel.GetTopLevel(this) is Window owner)
         {
-            await new Controls.AboutWindow(_paths, _setUpKeys).ShowDialog(owner);
+            await new Controls.AboutWindow(_paths, _setUpKeys).Over(owner);
         }
     }
 
@@ -1363,7 +1365,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 return;
             }
 
-            await new Controls.MemoryWindow(memories.Book, memories.Now).ShowDialog(owner);
+            await new Controls.MemoryWindow(memories.Book, memories.Now).Over(owner);
 
             // The window writes the file; this is what puts the new count on the row without
             // waiting for something else to notice.
@@ -1395,7 +1397,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 return;
             }
 
-            await new Controls.LoreWindow(editing).ShowDialog(owner);
+            await new Controls.LoreWindow(editing).Over(owner);
 
             // The window writes the file; this is what puts the new count on the row without
             // waiting for something else to notice.
@@ -1437,7 +1439,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 return;
             }
 
-            await new Controls.HabitsWindow(habits.Book, habits.Mine).ShowDialog(owner);
+            await new Controls.HabitsWindow(habits.Book, habits.Mine).Over(owner);
             refresh();
         };
 
@@ -1497,7 +1499,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 return;
             }
 
-            await new Controls.LogbookWindow(logbook).ShowDialog(owner);
+            await new Controls.LogbookWindow(logbook).Over(owner);
             refresh();
         };
 
@@ -1563,7 +1565,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             if (_coverage is not null && TopLevel.GetTopLevel(this) is Window owner)
             {
-                await new Controls.CoverageWindow(_coverage()).ShowDialog(owner);
+                await new Controls.CoverageWindow(_coverage()).Over(owner);
             }
         };
 
@@ -1596,7 +1598,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 return;
             }
 
-            await new Controls.MacroWindow(_macros) { ReservedPhrases = _reserved }.ShowDialog(owner);
+            await new Controls.MacroWindow(_macros) { ReservedPhrases = _reserved }.Over(owner);
 
             // The editor writes the file; this is what puts the new summary on the row without
             // waiting for something else to notice.
@@ -1676,7 +1678,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             await new Controls.SwitchWindow(
                 editing.Store, editing.Reader, editing.Reconciler, editing.Now, editing.ExportPath)
-                .ShowDialog(owner);
+                .Over(owner);
 
             // The editor writes the file; this is what puts the new summary on the row without
             // waiting for something else to notice.

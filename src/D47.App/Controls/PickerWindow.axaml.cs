@@ -5,6 +5,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
+using D47.App.Windowing;
+
 namespace D47.App.Controls;
 
 /// <summary>What the picker was asked to choose between.</summary>
@@ -206,7 +208,7 @@ public partial class PickerWindow : Window
             picker.Opened += (_, _) => onListed();
         }
 
-        return await picker.ShowDialog<PickerResult?>(owner);
+        return await picker.Over<PickerResult?>(owner);
     }
 
     /// <summary>
