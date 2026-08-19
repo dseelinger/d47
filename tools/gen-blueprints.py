@@ -585,42 +585,151 @@ def main() -> None:
             if name:
                 offering.setdefault(name, set()).add(code)
 
-    unnamed = []
+    def candidates_for(name: str) -> list[str]:
+        """Every blueprint EDSY publishes under this label, exactly then by containment.
 
-    for row in built:
-        if row[8] or row[0] not in ("modification", "experimental"):
-            continue
+        De-duplicated, which is not tidying: a label reached both exactly and by containment
+        appeared twice, so "one candidate" counted as two and the row went unnamed. Kill Warrant
+        Scanner's Wide Angle and every Multi-cannon experimental were lost to that alone.
+        """
+        label = relax(name)
+        found = list(by_label.get(label, []))
 
-        label = relax(row[2])
-
-        candidates = by_label.get(label, [])
-
-        # The two sources spell a few labels differently — "Fast Scanner" against "Fast Scan",
-        # "Expanded Probe Scanning Radius" against "Expanded Radius". Where one name contains the
-        # other they are taken as the same blueprint, which is a weaker claim than it looks: it is
-        # only ever consulted after the exact match fails, and it still has to agree on the module
-        # type below.
-        if not candidates:
-            candidates = [
-                name
-                for known_label, names in by_label.items()
+        if not found:
+            # The two sources spell a few labels differently — "Fast Scanner" against "Fast Scan".
+            # Consulted only after the exact match fails, and still narrowed by module type below.
+            found = [
+                symbol
+                for known_label, symbols in by_label.items()
                 if known_label.startswith(label) or label.startswith(known_label)
-                for name in names
+                for symbol in symbols
             ]
 
-        # The one whose module type covers a module of this row's kind. A single candidate needs no
-        # deciding; several with no agreeing type is a miss, and it is reported rather than guessed.
-        fitting = [
-            name for name in candidates
-            if offering.get(name, set()) & types_of.get(relax(row[1]), set())
-        ]
+        return sorted(set(found))
 
-        if len(candidates) == 1:
-            row[8] = candidates[0]
-        elif len(fitting) == 1:
+    def assign(row: list[str], scope: set) -> bool:
+        found = candidates_for(row[2])
+
+        if len(found) == 1:
+            row[8] = found[0]
+            return True
+
+        fitting = [name for name in found if offering.get(name, set()) & scope]
+
+        if len(fitting) == 1:
             row[8] = fitting[0]
-        else:
-            unnamed.append(f"{row[1]} / {row[2]}")
+            return True
+
+        return False
+
+    def scope_for(module: str) -> set:
+        """The module types a recipe's own kind covers, by name then by containment.
+
+        EDEngineer names three modules something d47 does not, and two of the three it names with
+        a *part* of d47's name: its "Surface Scanner" is a Detailed Surface Scanner and its "Wake
+        Scanner" a Frame Shift Wake Scanner. Containment reaches those without anybody writing the
+        pair down. Its "Manifest Scanner" is a Cargo Scanner and shares no word at all, which is
+        what the revealed pass below is for.
+        """
+        name = relax(module)
+
+        if name in types_of:
+            return types_of[name]
+
+        return {
+            code
+            for known, codes in types_of.items()
+            if known.startswith(name) or name.startswith(known) or name in known
+            for code in codes
+        }
+
+    recipes = [row for row in built if row[0] in ("modification", "experimental")]
+
+    # Narrow the names the guid supplied to the ones this row's own module type actually offers.
+    # coriolis files a single recipe under several names — the armour Lightweight roll answers to
+    # seven, six of them belonging to limpet controllers and weapons — so an unnarrowed row matches
+    # every module type that offers any of them. A Collector Limpet Controller would be offered the
+    # armour recipe, which is the defect this whole item is about arriving by a side door.
+    for row in recipes:
+        if "," not in row[8]:
+            continue
+
+        scope = scope_for(row[1])
+        kept = [name for name in row[8].split(",") if offering.get(name, set()) & scope]
+
+        if kept:
+            row[8] = ",".join(kept)
+
+    # First pass: the rows a label settles on its own, or that the module type d47 already knows
+    # settles. Everything Frontier and d47 spell the same way lands here.
+    left = [row for row in recipes if not row[8]
+            and not assign(row, scope_for(row[1]))]
+
+    # What the first pass revealed. EDEngineer calls three modules something d47 does not — its
+    # "Manifest Scanner" is a Cargo Scanner, its "Wake Scanner" a Frame Shift Wake Scanner — so
+    # nothing above could scope them. But a kind whose *other* rows resolved has named its own
+    # module type in doing so, and that is the scope its remaining rows want. Derived from the
+    # data rather than from a list of three aliases somebody has to maintain.
+    revealed: dict[str, set] = {}
+
+    for row in recipes:
+        if row[8]:
+            revealed.setdefault(relax(row[1]), set()).update(offering.get(row[8], set()))
+
+    unnamed = []
+
+    for row in left:
+        if not assign(row, revealed.get(relax(row[1]), set())):
+            unnamed.append(row)
+
+    # Last resort, and the narrowest one there is. A module type offering exactly one blueprint
+    # nothing has claimed, whose kind has exactly one recipe still unnamed, has only one pairing
+    # available — which is how "Expanded Probe Scanning Radius" meets `Sensor_Expanded`, two names
+    # for one thing that share no word.
+    claimed = {row[8] for row in recipes if row[8]}
+
+    for row in list(unnamed):
+        # The revealed scope where a sibling row named one, and the module's own name otherwise —
+        # a kind with a single recipe has no sibling to reveal anything, which is exactly the
+        # Detailed Surface Scanner's position.
+        scope = revealed.get(relax(row[1])) or scope_for(row[1])
+        spare = {name for name, codes in offering.items()
+                 if codes & scope and name not in claimed}
+        siblings = {other[2] for other in unnamed if other[1] == row[1]}
+
+        if len(spare) == 1 and len(siblings) == 1:
+            # Every grade of it, not the first one met. A blueprint is one thing with five rows,
+            # and claiming the name on row one left the other four looking unnamed.
+            found = next(iter(spare))
+
+            for grade in [other for other in unnamed
+                          if other[1] == row[1] and other[2] == row[2]]:
+                grade[8] = found
+                unnamed.remove(grade)
+
+            claimed.add(found)
+
+    unnamed = [f"{row[1]} / {row[2]}" for row in unnamed]
+
+    # Narrow the names the guid supplied to the ones this row's own module type actually offers.
+    # coriolis files a single recipe under several names — the armour Lightweight roll answers to
+    # seven, six of them belonging to limpet controllers and weapons — so an unnarrowed row matches
+    # every module type that offers any of them. A Collector Limpet Controller would be offered the
+    # armour recipe, which is the defect this whole item is about arriving by a side door.
+    #
+    # Last, because it needs the scope the passes above revealed: EDEngineer calls a hull's armour
+    # "Armour" and d47 calls it "Type-10 Defender Lightweight Alloy", so nothing but those passes
+    # knows the two are the same thing.
+    for row in recipes:
+        if "," not in row[8]:
+            continue
+
+        scope = revealed.get(relax(row[1])) or scope_for(row[1])
+        kept = [name for name in row[8].split(",") if offering.get(name, set()) & scope]
+
+        if kept:
+            row[8] = ",".join(kept)
+
 
     stamp = datetime.date.today().isoformat()
 
