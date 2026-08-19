@@ -1,210 +1,34 @@
-# Remediation 11
+# Remediation 12
 
-**Shipped whole in [v0.35.0](CHANGELOG.md)**, which is its permanent record from here.
+Reported from 2026-08-18 against v0.35.0, one item at a time. Each is checked off as it ships,
+and **checked only once it has been seen to work** — a change that compiles is not a fixed item.
 
-Reported from 2026-08-18 against v0.34.1, one item at a time. Each is checked off as it ships, and
-**checked only once it has been seen to work** — a change that compiles is not a fixed item.
-
-Remediation 10 shipped whole in [v0.34.1](CHANGELOG.md); its permanent record is that section of
+Remediation 11 shipped whole in [v0.35.0](CHANGELOG.md); its permanent record is that section of
 the changelog, which is why this file is the current batch and not a growing archive.
 
-- [x] **1. "Accept" answered the same sentence twice.** Reported verbatim: *There is no such item
-  on your checklist. There is no such item on your checklist.* One outcome, said twice, which read
-  out loud is indistinguishable from a stutter.
+- [ ] **1. The module list should be grouped by type.** Hardpoints, Utility Mounts, Core Internal
+  (including Armour), Optional Internal.
 
-  **Two faults, one in front of the other.** Accepting joins every proposal's own sentence end to
-  end, so two proposals with the same outcome say it twice — that is now collapsed, and two
-  *different* outcomes are still both reported, because a Commander who accepted two things is
-  owed what became of each. Counting them instead ("that happened twice") was rejected: how many
-  proposals were waiting is d47's bookkeeping, and the question was what happened to the list.
+- [ ] **2. Everything that is not outfitting should be off the list.** Named in the report:
+  `PlanetaryApproachSuite`, `WeaponColour`, `EngineColour`, `StringLights`, `VesselVoice`,
+  `ShipCockpit`, `CargoHatch`, `PaintJob`, `Decals`, `ShipName` — "or anything else that is not a
+  part of Outfitting", which is the rule rather than the list.
 
-  **And there should not have been two.** Asking for the same change twice recorded it twice, and
-  the second copy can never do anything the first did not — accepting one applies the change and
-  the other is a guaranteed no-op that still costs a sentence. A proposal identical to one already
-  waiting is refused and says so. Two acts on one line are not duplicates, since proposing to
-  finish something and proposing to drop it are opposite requests about the same words.
+- [ ] **3. An empty slot is still a slot.** Nothing with a module in it was listed, so an empty
+  hardpoint did not exist as far as the page was concerned.
 
-- [x] **2. A hand's width of nothing between the two steppers.** Reported with a picture: the
-  search box, then `‹`, then a long gap, then `›` with the count stranded to the right of both.
+- [ ] **4. No `int` in a description.** The symbol was printed with its underscores taken out, so
+  a power plant read as *int powerplant size6 class5*.
 
-  **`LastChildFill` overrides the last child's own `Dock`.** The steppers were declared last, so
-  one of them was the filling child and stretched across the row while its `Dock="Right"` was
-  quietly ignored — the markup looked right, and every control in it carried the attribute that
-  was being disregarded. The box is the last child now, and the trio is declared next, previous,
-  count, because a `DockPanel` gives its *first* right-docked child the *rightmost* slot.
+- [ ] **5. "Plan this slot" should offer the valid choices for that slot.** A list to pick from
+  rather than a name to spell, and searchable, because an Optional Internal has hundreds.
 
-  The spare width goes to the search box, which is the one control here that can use it and the
-  one that can give it back on a narrow pane. **Capping it was tried and does not work**: a
-  stretched child with a `MaxWidth` is centred in what is left, which puts a gap on *both* sides
-  of the box, and a child aligned right does not stretch at all — it collapses to its minimum at
-  every window size. So the box is wide on a wide window, which is the cosmetic cost of having no
-  gap at any width.
+- [ ] **6. `TinyHardpoint` is a Utility Mount.**
 
-- [x] **3. A spoken yes left the card on screen.** Reported with a picture: "Yes" was heard, d47
-  answered *Added "Run to the supermarket" to the custom list*, and the panel went on showing the
-  proposal card, `Suggestions (1)`, and a list without the new line on it.
+- [ ] **7. An engineer's name should open that engineer.**
 
-  **Two subscriptions, both wrong, and both invisible until the change came from somewhere else.**
-  The suggestions page refreshed itself from its own Accept and Decline buttons and from nothing
-  else, so it never followed a proposal answered by voice. And the checklist page subscribed in its
-  constructor and unsubscribed on detach, which is not a pair — drilling into Suggestions reflows
-  the tab into two panes and reparents the page, so it detached, unsubscribed, and was deaf for the
-  rest of the session.
+- [ ] **8. "Already yours" should read "Unlocked".**
 
-  Both listen from attach to detach now, and both catch up on the way in, since being reparented by
-  a reflow means missing whatever happened in between. Each half fails on its own with the other in
-  place, which is what says they were two faults rather than one.
+- [ ] **9. "You can go and get these now" should read "Ready for Unlock".**
 
-- [x] **4. The goals band should scroll.** Reported with a picture: nine arcs, the third clipped at
-  the bottom edge, and the checklist underneath gone entirely.
-
-  **A docked child takes the height it asks for**, and nine arcs ask for all of it. The band is a
-  window onto the arcs now, bounded to a share of the page, and what does not fit scrolls. Below
-  the cap it takes only what it needs, so two arcs are two arcs and no scrollbar.
-
-  **A share alone was not enough.** The row of buttons above the list costs the same fifty pixels
-  on a tall window and a short one, so a purely proportional band left the list fifty-six pixels —
-  a scrollbar and half a line. The list keeps a floor and the band gives, which is the right way
-  round: the band is the thing the Commander opened and can close again. The gap between the two
-  sits outside the scroller, or the last arc came to rest against the first checklist line and they
-  read as one list.
-
-- [x] **5. `Ships › Tulimiekka › Reaper › Cartage` — a trail through three ships at once.** A wide
-  panel shows the level you are on beside the one above it, so the fleet list is still on screen
-  and still pressable while a ship is open — and pressing another ship there pushed it on top of
-  the first rather than in place of it.
-
-  A crumb can now say what **kind** of level it is, and pushing one replaces the level of its own
-  kind that is already open along with everything underneath it: a slot of the Tulimiekka is not a
-  slot of the Reaper. Declared on the crumb by the page that pushes rather than worked out from
-  key prefixes, and a crumb that names no kind nests exactly as it always did — so no other tab
-  changed.
-
-- [x] **6. A search box on a page that cannot search.** "Reaper" typed on the Ships page, the list
-  unmoved. The box was drawn wherever a surface had one, whether or not the page answered it.
-
-  A page now says whether a query would do anything to it as it is showing, and the box is drawn
-  only where the answer is yes. A drill strip answers for the levels it currently shows, which is
-  the case that has to be live: it changes as the Commander drills. The transcript is the exception
-  with no page to ask — it highlights and steps rather than filtering, which is not a filterable
-  page and is still a search.
-
-  *The alternative was to make the fleet list filterable instead of hiding the box. Hiding it is
-  what was asked for; making Ships searchable is a small change on top if it is wanted.*
-
-- [x] **7. No way to drop a hull you do not own.** The button that plans one is on the index and
-  nothing undid it, so a Python planned by mistake was on the fleet list for good.
-
-  A planned item offers to be dropped, and asks first — it is authored work with no way back, and
-  the confirmation is a chooser rather than a dialog because a popup cannot exist in the VR path.
-  **An owned ship does not offer it**: it comes out of the journal and is not d47's to remove,
-  which is the same rule the checklist draws between a computed line and a written one. Absent
-  rather than disabled, because a control that exists to be refused teaches the wrong thing about
-  what the page can do. Suits and weapons get it on the same terms, since the two services already
-  had the same delete.
-
-- [x] **8. Galactic time should be UTC.** Reported from a Commander on UTC, where the two clocks
-  were two boxes side by side reading 19:44 and 19:44 — the one zone in which the fault is
-  invisible as a disagreement and obvious as a duplication.
-
-  **Overturns a comment.** The galactic side was derived from the Commander's own presentation, on
-  the argument that the in-game date beside theirs should change over at their midnight rather than
-  at Greenwich's. Reasonable to want, and not what the game does: Elite runs galactic time on UTC,
-  and every station clock, mission expiry and journal timestamp is on it — so a galactic clock
-  following the Commander's zone was wrong in the one place it can be checked. Still one instant;
-  the zone is applied to one side and the years to the other, and neither is computed from the
-  other's presentation.
-
-- [x] **10. Memory must be erasable on demand (protected).** **Already built, and already
-  protected** — Phase 31 put it on the privacy page as *What D47 remembers about you*, with a
-  **Forget everything** button that empties every Commander in the file. It is an `Info` row with a
-  `Press`, which is what makes `SettingsService.Apply` refuse it, so nothing on the tool surface
-  can reach it however the request is worded. A second erase button elsewhere is the thing its own
-  comments warn against, so nothing was added.
-
-  **What was missing was the proof.** The one action here that cannot be undone, and the one whose
-  whole value is that it can be trusted, had no test: "it is written down somewhere that this is
-  protected" is the weakest form that claim can take. Six now assert it — the button exists, it
-  empties every Commander, it survives a restart, the model is refused, the row is not in the
-  model's vocabulary, and no spoken phrase reaches it.
-
-  The test surface was never given a memory store, which is why this had gone uncovered: without
-  one the privacy row has no button at all, so the question could not be asked.
-
-  **One deliberate gap, left as it is.** There is no voice route to the total erase, because
-  "forget everything about me" is a sentence a transcriber can produce out of a misheard one. Say
-  so if that should change — it would be overturning a decision rather than filling a hole.
-
-- [x] **11. Popup windows should use the same font sizes as the main page.** They already used the
-  same type scale; what they did not use was the **zoom**. Every dialog opened over a zoomed panel
-  came up at 100%, so its text was smaller than the page behind it.
-
-  `ZoomHost` was written to be attached to a window rather than built into one, with a comment
-  saying that a zoom stopping at the panel's edge would be a zoom the Commander has to remember the
-  boundaries of — and exactly one window ever attached it. The settings surface escaped by becoming
-  a tab rather than by being fixed.
-
-  A dialog now copies its owner's level, and its window grows with it or it would open showing a
-  scaled corner of itself. Copied rather than bound: a dialog is modal, so nothing can change the
-  zoom while one is open, and the gestures are deliberately not bound inside one — Ctrl and the
-  wheel in a modal would change a level whose effect the Commander cannot see until they close it.
-  At 100% nothing is wrapped at all.
-
-  **One way in**, and a test that reads the sources and fails if anything opens a dialog the other
-  way. Without it the next dialog is one more window at 100%, and the fault only shows on a machine
-  with zoom turned on.
-
-- [x] **9. A core the Commander writes themselves.** Settled first: **several**, each named, and
-  each carrying a **name, what it is like, and how it should sound** — the tagline is generated and
-  the first-meeting and welcome-back lines fall back, so a working companion comes out of a name
-  and a paragraph rather than out of seven boxes.
-
-  **The frame is not on offer.** The shared preamble and the standing instructions wrap what is
-  written exactly as they wrap a shipped core: they are what hold the cast together and what stops
-  a model sanding a persona toward pleasant and helpful over a long session. A core stays
-  unreachable from the tool surface, like persona selection already was.
-
-  One file beside the executable, polled, with bad entries reported rather than dropped — the same
-  shape as the macros, on the same reasoning: a persona is a piece of writing, not a setting. The
-  editor writes the file a text editor writes. Ids are minted with a prefix so nothing a Commander
-  writes can shadow a shipped core, and they do not follow the name, so correcting a typo does not
-  leave somebody talking to Warden.
-
-  **Two things this turned up on the way past.** The picker's choices were computed once at
-  registration, so a new core could never appear in it — descriptors are registered once and never
-  mutated, which is what the `ChoiceSource` seam is for. And declaring that source silently
-  reclassified the row as an *open vocabulary* and turned an eleven-item drop-down into a search
-  window. "Does it compute its choices" was the wrong question; "does anything know the shape of
-  the list" is the right one, and a row that declares both is a closed list that happens to be
-  computed.
-
-- [x] **12. "But I do have a provider selected."** The Commander's log window answered *There is no
-  model selected, so I cannot write anything. Choose a provider first* — two different things said
-  in one breath, to somebody whose provider was set and whose model was not. Being told to do the
-  thing you have already done is worse than being told nothing: it sends you to check a setting
-  that was never the problem. The two states are separate now, and the no-model sentence says the
-  provider half is already done.
-
-- [x] **13. Two non-custom personas should not use the same voice.** **A voice already spoken for
-  was refused and the core was then left with nothing** — and a core with no pairing speaks in the
-  provider's default, so two unpaired cores are two cores in one voice. That is the mechanism: not
-  a duplicate written down, but two absences sounding alike.
-
-  A core whose chosen voice is taken now gets the nearest free one **of its own sex**, and stays
-  unpaired only when nothing suitable is free. The two stronger rules already in place are
-  untouched: a core written as a man is never given a woman's voice, and a core the model said
-  nothing usable about keeps the voice in force rather than being dealt one on a guess. The first
-  version of this fix broke both, and their own tests caught it.
-
-- [x] **14. Clear the transcript view.** Ctrl+L and a right-click menu that says so. **The page,
-  not the record** — the model's own history lives in the turn loop and is what a follow-up is
-  answered against, and the log file is Serilog's. Both readings clear together, because they are
-  one set of runs seen two ways. Refused on the log page, where a control that appeared to empty it
-  would be offering to delete a log. The shortcut sits above the search guard, so it works on the
-  headset, which has no search box and still has a transcript.
-
-- [x] **15. An intended ship blocked the rest of the fleet.** **Already fixed by item 5**, and the
-  test proves it: two of its three assertions fail with that change backed out. The intended hull
-  was never special — the trail was nesting, so pressing another ship pushed a crumb the panes did
-  not follow, and the fleet list appeared dead.
-
+- [ ] **10. "Behind somebody else" should read "Requires Engineer Intro First".**
