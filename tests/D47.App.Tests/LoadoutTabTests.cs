@@ -494,6 +494,14 @@ public class LoadoutTabTests
         Assert.DoesNotContain("Shield Generator", offered);
         Assert.DoesNotContain("Shield Booster", offered);
 
+        // And nothing twice. The id list spells one weapon both "AX Missile Rack" and "Ax
+        // Missile Rack", which grouped exactly is one thing to choose between two of.
+        var names = offered.Where(line => line.Length > 0).ToList();
+
+        Assert.Equal(
+            names.Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            names.Distinct(StringComparer.Ordinal).Count());
+
         Pick(surface.Panel, "Pulse Laser").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 

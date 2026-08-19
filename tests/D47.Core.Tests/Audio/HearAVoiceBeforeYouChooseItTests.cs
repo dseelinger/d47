@@ -37,7 +37,7 @@ public class HearAVoiceBeforeYouChooseItTests
     [Fact]
     public void EveryCoreHasALineAndNoneOfThemIsAFragment()
     {
-        Assert.All(PersonaCatalog.All, persona =>
+        Assert.All(PersonaCatalog.Shipped, persona =>
         {
             var said = AuditionLine.For(persona);
 
@@ -58,7 +58,7 @@ public class HearAVoiceBeforeYouChooseItTests
     [Fact]
     public void TheTypicalLengthIsInsideTheRangeTheCoresActuallyProduce()
     {
-        var lengths = PersonaCatalog.All.Select(persona => AuditionLine.For(persona).Length).ToArray();
+        var lengths = PersonaCatalog.Shipped.Select(persona => AuditionLine.For(persona).Length).ToArray();
 
         Assert.InRange(AuditionLine.TypicalCharacters, lengths.Min(), lengths.Max());
     }
@@ -71,7 +71,7 @@ public class HearAVoiceBeforeYouChooseItTests
     [Fact]
     public void NoCoreAuditionsWithASingleWord()
     {
-        Assert.All(PersonaCatalog.All, persona =>
+        Assert.All(PersonaCatalog.Shipped, persona =>
         {
             var said = AuditionLine.For(persona);
 

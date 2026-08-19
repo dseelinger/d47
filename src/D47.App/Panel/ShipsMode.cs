@@ -361,12 +361,18 @@ public sealed class ShipsMode(
         // By name rather than one row per class and rating. A size 6 compartment takes over a
         // hundred parts and around forty things; the Commander is choosing the thing, and which
         // 6A of it they buy is what the slot's size already decided.
+        // Grouped without regard to case, because the id list spells one weapon two ways:
+        // `hpt_atdumbfiremissile_turret_large` is an "AX Missile Rack" and
+        // `hpt_atdumbfiremissile_fixed_large` is an "Ax Missile Rack". Grouped exactly, that is
+        // one weapon offered twice, which reads as two things a Commander has to choose between.
+        // The spelling shown is the first in ordinal order, which is a rule rather than a taste —
+        // and it lands on Frontier's own capitals here.
         var modules = EliteSpecifications.ModulesFor(slot)
-            .GroupBy(module => module.Name, StringComparer.Ordinal)
+            .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
             .Select(group => new ChoiceOption(
-                group.Key,
-                group.Key,
+                Spelling(group),
+                Spelling(group),
                 Sizes(group)))
             .ToList();
 
@@ -500,6 +506,10 @@ public sealed class ShipsMode(
     private static string Context(ShipBuild build, ShipSlot slot) =>
         $"{build.Describe()} · {slot.Describe()}. It does not reach your checklist until you "
         + "promote the build.";
+
+    /// <summary>One spelling for a name the id list writes more than one way.</summary>
+    private static string Spelling(IEnumerable<ModuleSpecification> variants) =>
+        variants.Select(module => module.Name).Order(StringComparer.Ordinal).First();
 
     /// <summary>The sizes a module comes in, so a row says what it would cost the slot.</summary>
     private static string Sizes(IEnumerable<ModuleSpecification> variants)
