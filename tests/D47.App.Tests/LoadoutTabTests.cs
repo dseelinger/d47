@@ -506,6 +506,21 @@ public class LoadoutTabTests
         Pick(surface.Panel, "Pulse Laser").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
+        // Then which one of it, in the words a Commander uses rather than the code the outfitting
+        // screen files it under (remediation.md 13, item 8).
+        var variants = Offered(surface.Panel);
+
+        Assert.Contains("Large, gimballed", variants);
+        Assert.Contains("Small, fixed", variants);
+        Assert.Contains("3E · 8.0 t · 0.92 MW · 140,600 cr", variants);
+
+        // Nothing bigger than the slot, and the decline is still a real plan.
+        Assert.DoesNotContain("Huge, fixed", variants);
+        Assert.Contains("Any Pulse Laser — size and mount do not matter", variants);
+
+        Pick(surface.Panel, "Large, gimballed").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
         // Then the rolls that apply to a pulse laser, rather than every blueprint in the game.
         var rolls = Offered(surface.Panel);
 
@@ -516,8 +531,29 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         // The grade is a short closed list, so it is the in-tree layer rather than a page --
-        // which is the same call the settings enums make.
+        // which is the same call the settings enums make. Grade 5 leads it and is marked as the
+        // usual answer (remediation.md 13, item 9): ascending order put grade 1 at the top, which
+        // is the grade nobody writes down.
+        var grades = Text(surface.Panel).ToList();
+
+        Assert.Contains("the usual", grades);
+        Assert.True(
+            grades.IndexOf("Grade 5") < grades.IndexOf("Grade 1"),
+            "grade 5 is offered before grade 1");
+        Assert.True(
+            grades.IndexOf("Grade 5") < grades.IndexOf("Any grade"),
+            "and before the row that declines the question");
+
         Press(surface.Panel, "Grade 5").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // And then the experimental effects a pulse laser supports (remediation.md 13, item 10).
+        var effects = Offered(surface.Panel);
+
+        Assert.Contains("Concordant Sequence", effects);
+        Assert.Contains("No effect", effects);
+
+        Pick(surface.Panel, "No effect").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         var plan = surface.Ships.Store.Builds
@@ -525,8 +561,10 @@ public class LoadoutTabTests
             .Single(slot => slot.Slot == "LargeHardpoint2");
 
         Assert.Equal("Pulse Laser", plan.Module);
+        Assert.Equal("hpt_pulselaser_gimbal_large", plan.Variant);
         Assert.Equal("Lightweight Mount", plan.Blueprint);
         Assert.Equal(5, plan.Grade);
+        Assert.Null(plan.Experimental);
 
         surface.Window.Close();
     }

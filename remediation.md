@@ -22,13 +22,13 @@ the changelog, which is why this file is the current batch and not a growing arc
 - [x] **7. And backing out to the Directory first does not help** — clicking another engineer
   still does not replace the one already open.
 
-- [ ] **8. The module chooser should ask for size and mount.** Hardpoint → Plan this slot → Pulse
+- [x] **8. The module chooser should ask for size and mount.** Hardpoint → Plan this slot → Pulse
   Laser offers no way to pick the size, or fixed against gimballed against turreted. Commanders
   do not remember "3F" either; they remember the size and the mount.
 
-- [ ] **9. Grade 5 should be the default.**
+- [x] **9. Grade 5 should be the default.**
 
-- [ ] **10. An experimental effect should be offered after the blueprint**, on the modules that
+- [x] **10. An experimental effect should be offered after the blueprint**, on the modules that
   support one.
 
 - [ ] **11. The engineer list should be able to hide the Colonia engineers.**

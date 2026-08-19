@@ -29,6 +29,18 @@ public sealed record SlotPlan(
     string? Experimental = null,
     string? Module = null)
 {
+    /// <summary>
+    /// The exact module, as the journal's symbol, where the Commander picked a size and a mount
+    /// (remediation.md 13, item 8).
+    /// <para>
+    /// <b>Beside <see cref="Module"/> rather than instead of it.</b> "A pulse laser, I do not
+    /// mind which" is a real plan and is the name alone; "a large gimballed one" is that plan made
+    /// exact. The symbol is what carries the size, the rating and the mount without this record
+    /// having to hold three more fields that could disagree with each other.
+    /// </para>
+    /// </summary>
+    public string? Variant { get; init; }
+
     /// <summary>Whether anything is actually wanted here, or the line is an empty shell.</summary>
     public bool IsEmpty =>
         Blueprint is null && Grade is null && Experimental is null && Module is null;
@@ -42,7 +54,12 @@ public sealed record SlotPlan(
     {
         var parts = new List<string>();
 
-        if (Module is { Length: > 0 } module)
+        if (Variant is { Length: > 0 } variant
+            && Knowledge.EliteSpecifications.ModuleName(variant) is { Length: > 0 } exact)
+        {
+            parts.Add(exact);
+        }
+        else if (Module is { Length: > 0 } module)
         {
             parts.Add(module);
         }

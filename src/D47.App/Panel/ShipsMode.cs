@@ -478,23 +478,25 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// What the Commander wants in this slot: the module, then the blueprint, then the grade
-    /// (remediation.md 12, item 5).
+    /// What the Commander wants in this slot: the module, which one of it, the blueprint, the
+    /// grade, and the experimental effect (remediation.md 12, item 5; 13, items 8, 9 and 10).
     /// <para>
-    /// <b>Three lists rather than a name to spell.</b> It used to ask for the blueprint by voice
-    /// and the grade on the keyboard, which meant a plan for a slot depended on getting a phrase
-    /// like "Increased FSD Range" right — and there was no way at all to say what should go in an
-    /// empty compartment, only what should be rolled on whatever was already there.
+    /// <b>Lists rather than a name to spell.</b> It used to ask for the blueprint by voice and the
+    /// grade on the keyboard, so a plan depended on getting a phrase like "Increased FSD Range"
+    /// right — and there was no way at all to say what should go in an empty compartment, only
+    /// what should be rolled on whatever was already there.
     /// </para>
     /// <para>
     /// Every list is the slot's own. What can go in a size 4 hardpoint is not what can go in a
-    /// size 4 compartment, and the modules a blueprint applies to are not every blueprint — so
-    /// each step narrows the next rather than offering the whole catalogue three times.
+    /// size 4 compartment, the rolls offered are the ones that module can take, the grades are the
+    /// ones that blueprint has, and the experimentals are the ones that module supports — so each
+    /// step narrows the next rather than offering the whole catalogue five times.
     /// </para>
     /// <para>
-    /// <b>Each step can also be skipped</b>, because the three are separate wants. "A shield
-    /// generator, I don't care what grade" is a plan; so is "grade 5 dirty drives on whatever is
-    /// in there". The first row of each list is the one that declines it.
+    /// <b>Each step can be declined</b>, because they are separate wants. "A shield generator, I
+    /// do not mind which grade" is a plan; so is "grade 5 dirty drives on whatever is in there".
+    /// The first row of each list is the one that declines it, and a step with nothing to offer is
+    /// not shown at all.
     /// </para>
     /// </summary>
     public void Ask(string item, string slot, PanelPrompts prompts, Action done)
@@ -516,48 +518,46 @@ public sealed class ShipsMode(
 
         var plan = build.For(slot);
 
-        AskModule(build, known, plan, prompts, module =>
-            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade) =>
+        AskModule(build, known, plan, prompts, (module, variant) =>
+            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade, experimental) =>
             {
                 ships.Plan(build.Id, new SlotPlan(slot, blueprint, grade, plan?.Engineer)
                 {
                     Module = module,
-                    Experimental = plan?.Experimental,
+                    Variant = variant,
+                    Experimental = experimental,
                 });
 
                 done();
             }));
     }
 
-    /// <summary>The modules this slot takes, by name — the variants are the slot's business.</summary>
+    /// <summary>The modules this slot takes, by name — then which one of it.</summary>
     private static void AskModule(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
         PanelPrompts prompts,
-        Action<string?> chosen)
+        Action<string?, string?> chosen)
     {
         // By name rather than one row per class and rating. A size 6 compartment takes over a
         // hundred parts and around forty things; the Commander is choosing the thing, and which
-        // 6A of it they buy is what the slot's size already decided.
+        // one of it is the next question rather than part of this one.
+        //
         // Grouped without regard to case, because the id list spells one weapon two ways:
         // `hpt_atdumbfiremissile_turret_large` is an "AX Missile Rack" and
         // `hpt_atdumbfiremissile_fixed_large` is an "Ax Missile Rack". Grouped exactly, that is
         // one weapon offered twice, which reads as two things a Commander has to choose between.
         // The spelling shown is the first in ordinal order, which is a rule rather than a taste —
         // and it lands on Frontier's own capitals here.
-        var modules = EliteSpecifications.ModulesFor(slot)
+        var offered = EliteSpecifications.ModulesFor(slot)
             .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group => new ChoiceOption(
-                Spelling(group),
-                Spelling(group),
-                Sizes(group)))
             .ToList();
 
-        if (modules.Count == 0)
+        if (offered.Count == 0)
         {
-            chosen(plan?.Module);
+            chosen(plan?.Module, plan?.Variant);
             return;
         }
 
@@ -567,8 +567,90 @@ public sealed class ShipsMode(
                 "Module",
                 $"What goes in {slot.Describe()}?",
                 Context(build, slot),
-                [new ChoiceOption(string.Empty, "Anything — I only want the engineering"), .. modules],
+                [
+                    new ChoiceOption(string.Empty, "Anything — I only want the engineering"),
+                    .. offered.Select(group => new ChoiceOption(
+                        Spelling(group),
+                        Spelling(group),
+                        Sizes(group))),
+                ],
                 plan?.Module,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option =>
+            {
+                if (option.Key.Length == 0)
+                {
+                    chosen(null, null);
+                    return;
+                }
+
+                AskVariant(
+                    build,
+                    slot,
+                    plan,
+                    option.Key,
+                    offered.First(group => group.Key.Equals(option.Key, StringComparison.OrdinalIgnoreCase)),
+                    prompts,
+                    variant => chosen(option.Key, variant));
+            });
+    }
+
+    /// <summary>
+    /// Which one of it: the size and the mount (remediation.md 13, item 8).
+    /// <para>
+    /// <b>Said the way a Commander says it.</b> "Large, gimballed" is how somebody asks for a
+    /// weapon and "3F" is how the outfitting screen files it — the second is derivable from the
+    /// first and nobody remembers it, so the row leads with the words and carries the code
+    /// underneath. A module with no mount says its size and rating instead, because that is what
+    /// distinguishes one shield generator from another.
+    /// </para>
+    /// <para>
+    /// Declinable, and the decline is a real plan rather than a way out: "a pulse laser, I do not
+    /// mind which" is a slot the Commander has an opinion about, and it is the opinion the fleet
+    /// page draws.
+    /// </para>
+    /// </summary>
+    private static void AskVariant(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string module,
+        IEnumerable<ModuleSpecification> variants,
+        PanelPrompts prompts,
+        Action<string?> chosen)
+    {
+        var offered = variants
+            .OrderByDescending(variant => variant.Class)
+            .ThenBy(variant => variant.Mount, StringComparer.Ordinal)
+            .ThenBy(variant => variant.Rating, StringComparer.Ordinal)
+            .ToList();
+
+        if (offered.Count <= 1)
+        {
+            // One of it, so there is nothing to choose. Taken rather than asked: a chooser with a
+            // single row is a press that teaches the Commander the panel wastes their time.
+            chosen(offered.Count == 1 ? offered[0].Symbol : null);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.variant",
+                "Which one",
+                $"Which {module}?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, $"Any {module} — size and mount do not matter"),
+                    .. offered.Select(variant => new ChoiceOption(
+                        variant.Symbol,
+                        Wording(variant),
+                        Figures(variant))),
+                ],
+                plan?.Variant,
                 ChoiceSurface.Page)
             {
                 CurrentWord = "planned now",
@@ -578,9 +660,9 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// The blueprint, then the grade. Two steps because the grades on offer are the ones that
-    /// blueprint actually has — five is not universal, and offering a grade nobody rolls is a
-    /// plan that can never be met.
+    /// The blueprint, then the grade, then the effect. Three steps because the grades on offer are
+    /// the ones that blueprint actually has — five is not universal, and offering a grade nobody
+    /// rolls is a plan that can never be met.
     /// </summary>
     private static void AskBlueprint(
         ShipBuild build,
@@ -588,11 +670,13 @@ public sealed class ShipsMode(
         SlotPlan? plan,
         string? module,
         PanelPrompts prompts,
-        Action<string?, int?> chosen)
+        Action<string?, int?, string?> chosen)
     {
         // What the blueprints are listed for: the module just chosen, or the one already planned,
         // and otherwise everything — which is a long list and is exactly what the search is for.
-        var recipes = BlueprintCatalogue.ForModule(module ?? plan?.Module)
+        var wanted = module ?? plan?.Module;
+
+        var recipes = BlueprintCatalogue.ForModule(wanted)
             .Where(recipe => recipe.Kind == BlueprintKind.Modification)
             .ToList();
 
@@ -610,7 +694,7 @@ public sealed class ShipsMode(
             new ChoiceRequest(
                 "loadout.blueprint",
                 "Blueprint",
-                module is { Length: > 0 } wanted ? $"What roll on the {wanted}?" : "What roll?",
+                wanted is { Length: > 0 } named ? $"What roll on the {named}?" : "What roll?",
                 Context(build, slot),
                 [
                     new ChoiceOption(string.Empty, "No engineering — the module as it comes"),
@@ -629,23 +713,42 @@ public sealed class ShipsMode(
             {
                 var blueprint = option.Key.Length == 0 ? null : option.Key;
 
-                var offered = blueprint is null
-                    ? [1, 2, 3, 4, 5]
-                    : names.First(group => group.Key == blueprint)
-                        .Select(recipe => recipe.Grade)
-                        .Where(grade => grade is not null)
-                        .Select(grade => grade!.Value)
-                        .Distinct()
-                        .Order()
-                        .ToList();
+                if (blueprint is null)
+                {
+                    // No roll means no grade and no effect: both are properties of a roll, and
+                    // asking about them anyway is two questions with one answer.
+                    chosen(null, null, null);
+                    return;
+                }
 
-                AskGrade(build, slot, plan, blueprint, offered, prompts, chosen);
+                var offered = names.First(group => group.Key == blueprint)
+                    .Select(recipe => recipe.Grade)
+                    .Where(grade => grade is not null)
+                    .Select(grade => grade!.Value)
+                    .Distinct()
+                    .OrderDescending()
+                    .ToList();
+
+                AskGrade(build, slot, plan, blueprint, offered, prompts, grade =>
+                    AskEffect(build, slot, plan, wanted, prompts, effect =>
+                        chosen(blueprint, grade, effect)));
             });
     }
 
     /// <summary>
-    /// The grade, from the ones that blueprint has. <b>Any is a real answer</b> rather than an
-    /// unknown, which is why it is the first row rather than a way out of the question.
+    /// The grade, from the ones that blueprint has, <b>best first and grade 5 the default</b>
+    /// (remediation.md 13, item 9).
+    /// <para>
+    /// Ascending order put grade 1 at the top, which is the grade nobody plans: a Commander
+    /// writing down what they want writes down the finished thing. So the list runs 5 down to 1
+    /// and 5 is marked as the usual answer — marked rather than pre-selected, because a chooser
+    /// that opens with a row already chosen invites a press that changes nothing and the
+    /// Commander cannot tell whether it took.
+    /// </para>
+    /// <para>
+    /// <b>Any is still a real answer</b> rather than a way out of the question, which is why it
+    /// keeps its row.
+    /// </para>
     /// </summary>
     private static void AskGrade(
         ShipBuild build,
@@ -654,8 +757,13 @@ public sealed class ShipsMode(
         string? blueprint,
         IReadOnlyList<int> offered,
         PanelPrompts prompts,
-        Action<string?, int?> chosen)
+        Action<int?> chosen)
     {
+        const int Usual = 5;
+
+        var current = plan?.Grade?.ToString(CultureInfo.InvariantCulture)
+                      ?? (offered.Contains(Usual) ? Usual.ToString(CultureInfo.InvariantCulture) : null);
+
         prompts.Choose(
             new ChoiceRequest(
                 "loadout.grade",
@@ -663,19 +771,119 @@ public sealed class ShipsMode(
                 blueprint is { Length: > 0 } roll ? $"Which grade of {roll}?" : "Which grade?",
                 Context(build, slot),
                 [
-                    new ChoiceOption(string.Empty, "Any grade"),
                     .. offered.Select(grade => new ChoiceOption(
                         grade.ToString(CultureInfo.InvariantCulture),
                         $"Grade {grade.ToString(CultureInfo.InvariantCulture)}")),
+                    new ChoiceOption(string.Empty, "Any grade"),
                 ],
-                plan?.Grade?.ToString(CultureInfo.InvariantCulture),
+                current,
                 ChoiceSurface.Layer)
             {
-                CurrentWord = "planned now",
+                CurrentWord = plan?.Grade is null ? "the usual" : "planned now",
             },
             option => chosen(
-                blueprint,
                 int.TryParse(option.Key, CultureInfo.InvariantCulture, out var grade) ? grade : null));
+    }
+
+    /// <summary>
+    /// The experimental effect, on the modules that support one (remediation.md 13, item 10).
+    /// <para>
+    /// <b>Per module kind, because that is how the game works</b>: the recipe for Double Braced on
+    /// a beam laser is not the recipe on a power plant, and the shipped table carries them
+    /// separately for that reason. A module with none is not asked about at all.
+    /// </para>
+    /// <para>
+    /// After the blueprint rather than beside it, because it is a second thing bought at the same
+    /// bench and it is its own checklist item on the same slot.
+    /// </para>
+    /// </summary>
+    private static void AskEffect(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string? module,
+        PanelPrompts prompts,
+        Action<string?> chosen)
+    {
+        var effects = BlueprintCatalogue.ExperimentalsFor(module)
+            .Select(recipe => recipe.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (effects.Count == 0)
+        {
+            chosen(plan?.Experimental);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.experimental",
+                "Effect",
+                module is { Length: > 0 } named
+                    ? $"An experimental effect on the {named}?"
+                    : "An experimental effect?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, "No effect"),
+                    .. effects.Select(effect => new ChoiceOption(effect, effect)),
+                ],
+                plan?.Experimental,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option => chosen(option.Key.Length == 0 ? null : option.Key));
+    }
+
+    /// <summary>
+    /// One variant, in the words a Commander uses for it. The size and the mount for anything
+    /// mounted, and the size and the rating for everything else.
+    /// </summary>
+    private static string Wording(ModuleSpecification variant)
+    {
+        var size = variant.Class switch
+        {
+            1 => "Small",
+            2 => "Medium",
+            3 => "Large",
+            4 => "Huge",
+            _ => null,
+        };
+
+        if (variant.Mount is { Length: > 0 } mount && size is not null)
+        {
+            return $"{size}, {mount}";
+        }
+
+        return variant.Class is { } cls && variant.Rating is { Length: > 0 } rating
+            ? $"Size {cls.ToString(CultureInfo.InvariantCulture)}, rating {rating}"
+            : variant.Name;
+    }
+
+    /// <summary>The code underneath the words, and what it costs the ship to carry.</summary>
+    private static string Figures(ModuleSpecification variant)
+    {
+        var parts = new List<string> { variant.Size };
+
+        if (variant.Mass is { } mass)
+        {
+            parts.Add($"{mass.ToString("N1", CultureInfo.InvariantCulture)} t");
+        }
+
+        if (variant.Power is { } power)
+        {
+            parts.Add($"{power.ToString("N2", CultureInfo.InvariantCulture)} MW");
+        }
+
+        if (variant.Cost is { } cost)
+        {
+            parts.Add(Credits(cost));
+        }
+
+        return string.Join(" · ", parts);
     }
 
     /// <summary>
