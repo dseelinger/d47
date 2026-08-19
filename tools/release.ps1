@@ -272,18 +272,24 @@ else {
 
     # The run does not exist the instant the push returns. Two minutes of looking is generous for
     # a webhook and short enough that a genuine failure to start is still noticed.
+    #
+    # `--commit` does the matching on GitHub's side, and that is not a style preference. Matching
+    # in PowerShell went wrong twice: Windows PowerShell hands a JSON array through the pipeline
+    # as one object, so `Where-Object { $_.headSha -eq $head }` compares the whole *collection* of
+    # head shas against one value and lets every run through — the first cut printed ten run ids
+    # and watched whichever gh took first, which happened to be the right one. Moving the match
+    # into a jq expression then broke on quoting, because a jq pipe inside a double-quoted
+    # PowerShell string is a pipe PowerShell reads first. A flag has neither problem.
     foreach ($attempt in 1..24) {
-        $listed = Invoke-Native {
-            & gh run list --branch $Main --workflow ci.yml --limit 10 --json headSha,databaseId,status,conclusion
+        $ids = Invoke-Native {
+            & gh run list --branch $Main --workflow ci.yml --commit $head --limit 5 `
+                --json databaseId -q '.[].databaseId'
         }
 
-        $found = $listed |
-            ConvertFrom-Json |
-            Where-Object { $_.headSha -eq $head } |
-            Select-Object -First 1
+        $ids = @($ids | Where-Object { $_ -match '^\d+$' })
 
-        if ($found) {
-            $run = $found
+        if ($ids.Count -gt 0) {
+            $run = $ids[0]
             break
         }
 
@@ -294,9 +300,15 @@ else {
         throw "No CI run appeared for $($head.Substring(0, 12)). Nothing has been tagged."
     }
 
-    Write-Note "Run $($run.databaseId)"
+    # One id, and it is checked rather than assumed: watching the wrong run reports a green that
+    # belongs to somebody else's commit, which is the one failure this whole wait exists to stop.
+    if ($run -isnot [string]) {
+        throw "Expected one CI run id for $($head.Substring(0, 12)), got: $($run -join ', ')"
+    }
 
-    Invoke-Native { & gh run watch $($run.databaseId) --exit-status } | Out-Null
+    Write-Note "Run $run"
+
+    Invoke-Native { & gh run watch $run --exit-status } | Out-Null
 
     if ($LASTEXITCODE -ne 0) {
         throw 'CI is not green. Nothing has been tagged.'
