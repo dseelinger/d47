@@ -16,6 +16,14 @@ namespace D47.Core.Audio;
 /// and every press of a play glyph is a synthesis request billed by the character. The opening is
 /// where a core's voice is most itself anyway — it is written as the opening.
 /// </para>
+/// <para>
+/// <b>Verbatim, and it is the exception.</b> A core's introduction goes through a model everywhere
+/// else it is spoken, because <c>guardian-personas.md</c> files those as sample lines rather than
+/// as a script — see <see cref="Callouts.FlavourBriefs.Introducing"/>. Here it must not: this is a
+/// sample being synthesised so two voices can be compared, and a line that came out differently on
+/// each press would compare them on different words. It is also a model turn per press of a play
+/// glyph, to answer a question about the voice rather than about the writing.
+/// </para>
 /// </summary>
 public static class AuditionLine
 {

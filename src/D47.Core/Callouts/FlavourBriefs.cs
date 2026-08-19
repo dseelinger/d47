@@ -55,6 +55,54 @@ public sealed record FlavourBrief
 public static class FlavourBriefs
 {
     /// <summary>
+    /// What a core is asked when it introduces itself, or null when the authored line is to be
+    /// said exactly as written.
+    /// <para>
+    /// <b>The authored intro is a sample rather than a script.</b> <c>guardian-personas.md</c>
+    /// files these under <em>sample lines, not intended to be verbatim</em> — they demonstrate
+    /// how a core sounds, and reading one out word for word means every Commander who ever picks
+    /// Warden hears the same paragraph every time.
+    /// </para>
+    /// <para>
+    /// A rewording brief and never a composition one, the same call the opening line makes: the
+    /// substance is the persona pack's and only the sentences are the model's. A core's first
+    /// words carry things a Commander needs — Cora states the arrangement and asks them to
+    /// confirm it — and a model asked to improvise a greeting would lose them.
+    /// </para>
+    /// <para>
+    /// Here rather than at the call site for the reason the rest of this file is here: the
+    /// decision about what d47 is asked used to live inside the composition root, where nothing
+    /// could assert it.
+    /// </para>
+    /// </summary>
+    /// <param name="intro">The core's authored first line, which is also the fallback.</param>
+    public static FlavourBrief? Introducing(string? intro, bool personalityEnabled)
+    {
+        // Personality off means said exactly as written, which is the same rule the announcements
+        // below follow — and with nothing authored there is nothing to reword.
+        if (!personalityEnabled || string.IsNullOrWhiteSpace(intro))
+        {
+            return null;
+        }
+
+        return new FlavourBrief
+        {
+            Instruction =
+                "You have just been switched on and the Commander is meeting you for the first "
+                + "time. This is how you would introduce yourself, as an example of your voice "
+                + $"rather than a script: \"{intro}\" Say it again in your own words — the same "
+                + "substance and the same things said, not the same sentences. Do not greet them "
+                + "formally, do not offer a list of what you can do, and add nothing you were not "
+                + "given.",
+            NeedsPersona = true,
+
+            // No game state. A core's first line is about itself, and where the Commander happens
+            // to be is how a model comes to open with the wrong subject.
+            NeedsGameState = false,
+        };
+    }
+
+    /// <summary>
     /// The brief for one announcement, or null when it is to be said exactly as written.
     /// </summary>
     /// <param name="personalityEnabled">

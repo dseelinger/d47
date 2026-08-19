@@ -9,9 +9,21 @@ namespace D47.Core.Persona;
 public enum PersonaArrival
 {
     /// <summary>
-    /// First time this session. It introduces itself with its authored intro — text from the
-    /// persona pack, spoken rather than prompted, because putting written material through a
-    /// model to get it back slightly worse is not a use of a turn.
+    /// First time this session. It introduces itself in its own voice, from its authored intro.
+    /// <para>
+    /// <b>Overturns a comment.</b> This said the authored text was "spoken rather than prompted,
+    /// because putting written material through a model to get it back slightly worse is not a
+    /// use of a turn" — which is right about finished writing and wrong about what this is.
+    /// <c>guardian-personas.md</c> files these under <em>sample lines, not intended to be
+    /// verbatim</em>: they are a demonstration of how a core sounds, not the script it reads.
+    /// Every Commander who picked Warden heard the same paragraph, word for word, every time.
+    /// </para>
+    /// <para>
+    /// So the authored line is put through the model when there is one, as a rewording rather
+    /// than a composition — the substance is the persona pack's and only the sentences are the
+    /// model's. It stays the fallback, so a Commander with no provider, no personality or a
+    /// failed call hears exactly what they heard before.
+    /// </para>
     /// </summary>
     Introduction,
 

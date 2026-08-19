@@ -142,4 +142,53 @@ public class OnlySomeLinesAreSaidInCharacterTests
         Assert.Equal(
             AmbientSituation.None, FlavourBriefs.SituationOf($"{AmbientCallout.KeyPrefix}Spelunking"));
     }
+    /// <summary>
+    /// A core's first line goes through the model too, as a rewording.
+    /// <para>
+    /// <c>guardian-personas.md</c> files these under <em>sample lines, not intended to be
+    /// verbatim</em>. They were spoken exactly as authored on the argument that putting written
+    /// material through a model returns it slightly worse — right about finished writing, wrong
+    /// about a sample, and it meant every Commander who ever picked Warden heard the same
+    /// paragraph word for word every time.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ACoresFirstLineIsRewordedRatherThanRead()
+    {
+        var brief = FlavourBriefs.Introducing("Systems answering, Commander.", personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.True(brief.NeedsPersona);
+
+        // The authored line is handed over, because this is a rewording and not a composition:
+        // a first line carries things a Commander needs, and a model asked to improvise a
+        // greeting would lose them.
+        Assert.Contains("Systems answering, Commander.", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("not the same sentences", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("add nothing you were not given", brief.Instruction, StringComparison.Ordinal);
+
+        // And nothing about where the Commander is: the line is about the core.
+        Assert.False(brief.NeedsGameState);
+    }
+
+    /// <summary>
+    /// Personality off means said exactly as written — the same rule every announcement follows,
+    /// and the reason a Commander who has turned it off hears the authored line unchanged.
+    /// </summary>
+    [Fact]
+    public void WithPersonalityOffTheAuthoredFirstLineIsSaidAsWritten()
+    {
+        Assert.Null(FlavourBriefs.Introducing("Systems answering, Commander.", personalityEnabled: false));
+    }
+
+    /// <summary>A core with no authored line has nothing to reword, which is not an error.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ACoreWithNothingAuthoredIsNotAsked(string? intro)
+    {
+        Assert.Null(FlavourBriefs.Introducing(intro, personalityEnabled: true));
+    }
+
 }

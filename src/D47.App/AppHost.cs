@@ -2456,6 +2456,30 @@ public sealed class AppHost : IDisposable
                         line = generated;
                     }
                 }
+                else if (FlavourBriefs.Introducing(
+                             change.Current.Intro,
+                             Settings.Current.Llm.PersonalityEnabled) is { } brief)
+                {
+                    // The authored intro is a sample of how this core sounds rather than the
+                    // script it reads, so it goes through the model like everything else d47 says
+                    // in character. What is asked lives in FlavourBriefs with the rest of those
+                    // decisions; the authored line stays the fallback, so no provider, no
+                    // personality or a failed call all sound exactly as they did before.
+                    var generated = await FlavourTurn.AskAsync(
+                        Turns.Provider,
+                        Turns.Model,
+                        Personas.RenderBlock(brief.NeedsPersona),
+                        brief.Instruction,
+                        gameState: null,
+                        Spend,
+                        PriceTable.Default,
+                        _logger).ConfigureAwait(false);
+
+                    if (generated is not null)
+                    {
+                        line = generated;
+                    }
+                }
             }
             finally
             {
