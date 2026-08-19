@@ -714,6 +714,28 @@ public class LoadoutTabTests
         // And the row stays a row rather than becoming a paragraph.
         Assert.True(row.Bounds.Height <= 80, $"the row is {row.Bounds.Height:N0} pixels tall");
 
+        // Narrow enough that the note cannot fit beside the name on one line. It has to wrap
+        // rather than be cut off mid-word, which is what an Auto column does to a wrapping block:
+        // it measures as though it had forever, asks for its whole width, and is clipped to what
+        // it is given.
+        surface.Window.Width = 900;
+        Dispatcher.UIThread.RunJobs();
+
+        row = Row(surface.Panel, "Large Hardpoint 1");
+
+        var note = row.GetVisualDescendants().OfType<TextBlock>()
+            .First(block => block.Text is { } said && said.StartsWith("3E Pulse Laser", StringComparison.Ordinal));
+
+        Assert.True(note.Bounds.Height > note.FontSize, "the note wrapped rather than being cut");
+        Assert.True(
+            note.Bounds.Width <= row.Bounds.Width,
+            $"the note is {note.Bounds.Width:N0} pixels in a {row.Bounds.Width:N0} pixel row");
+
+        Assert.True(
+            Row(surface.Panel, "Large Hardpoint 1").GetVisualDescendants().OfType<TextBlock>()
+                .First(block => block.Text == "Large Hardpoint 1").Bounds.Width >= 100,
+            "and the name still has room at that width");
+
         surface.Window.Close();
     }
 
