@@ -31,6 +31,6 @@ the changelog, which is why this file is the current batch and not a growing arc
 - [x] **10. An experimental effect should be offered after the blueprint**, on the modules that
   support one.
 
-- [ ] **11. The engineer list should be able to hide the Colonia engineers.**
+- [x] **11. The engineer list should be able to hide the Colonia engineers.**
 
-- [ ] **12. An unlock criterion that has already been met should carry a checkmark.**
+- [x] **12. An unlock criterion that has already been met should carry a checkmark.**

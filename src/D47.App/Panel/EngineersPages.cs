@@ -179,20 +179,42 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     };
 
     private readonly StackPanel _list = new() { Spacing = 3 };
+    private readonly Button _colonia;
     private string? _query;
+
+    /// <summary>
+    /// Whether the eight engineers out at Colonia are on the list (remediation.md 13, item 11).
+    /// <para>
+    /// <b>On by default</b>, because hiding a third of the directory from a Commander who has
+    /// never said they want it hidden is the panel deciding what they own. One press takes them
+    /// off, and the button says which question it is answering rather than merely which state it
+    /// is in — the same shape the gap page's filter has.
+    /// </para>
+    /// </summary>
+    private bool _far = true;
 
     public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav)
         : base(source)
     {
         _nav = nav;
 
+        _colonia = LoadoutPages.Press(string.Empty, () =>
+        {
+            _far = !_far;
+            Refresh();
+        });
+
+        _colonia.Margin = new Thickness(0, 0, 0, 10);
+
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(_summary, Dock.Top);
+        DockPanel.SetDock(_colonia, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(_summary);
+        root.Children.Add(_colonia);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
@@ -222,7 +244,11 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         _summary.Text = report.Summary();
         _list.Children.Clear();
 
-        var shown = report.Directory.Where(Matches).ToList();
+        // Short enough to survive a narrow pane: a button does not wrap, and the first draft of
+        // this label was cut off mid-word at the default panel width.
+        _colonia.Content = _far ? "Hide the Colonia eight" : "Show Colonia again";
+
+        var shown = report.Directory.Where(Matches).Where(Near).ToList();
 
         if (shown.Count == 0)
         {
@@ -257,6 +283,17 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
                 () => _nav.Drill(EngineersPages.Crumb(entry.Engineer))));
         }
     }
+
+    /// <summary>
+    /// Whether this engineer survives the Colonia filter (remediation.md 13, item 11).
+    /// <para>
+    /// An engineer d47 has no position for is <b>kept</b> whichever way the filter is set: the
+    /// question the button asks is "are they out at Colonia", and "I do not know where they are"
+    /// is not a yes.
+    /// </para>
+    /// </summary>
+    private bool Near(EngineerEntry entry) =>
+        _far || entry.Engineer.IsFarFromTheBubble != true;
 
     private bool Matches(EngineerEntry entry) =>
         _query is not { } query
@@ -360,6 +397,30 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(LoadoutPages.Heading("Where you stand"));
         _body.Children.Add(LoadoutPages.Muted(entry.Status));
+
+        // What it takes, with what is already done marked (remediation.md 13, item 12). All of
+        // it rather than only what is outstanding: the chain below says what to go and do, and a
+        // referral earned a month ago vanishing from the list reads as a requirement that was
+        // never there.
+        if (entry.Criteria.Count > 0)
+        {
+            _body.Children.Add(LoadoutPages.Heading("What it takes"));
+
+            foreach (var criterion in entry.Criteria)
+            {
+                _body.Children.Add(new TextBlock
+                {
+                    Text = criterion.Describe(),
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                    [!TextBlock.ForegroundProperty] = App.Current!
+                        .GetResourceObservable(criterion.Met == true
+                            ? ThemeManager.AccentKey
+                            : ThemeManager.TextMutedKey)
+                        .ToBinding(),
+                });
+            }
+        }
 
         // The way in, stop by stop. Nothing here is a summary of the chain — a summary is what a
         // Commander cannot act on.

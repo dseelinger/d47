@@ -146,6 +146,35 @@ public sealed record UnlockChain(IReadOnlyList<UnlockStep> Steps)
 }
 
 /// <summary>
+/// One thing that has to be true before an engineer will work for the Commander, and whether it
+/// is (remediation.md 13, item 12).
+/// <para>
+/// <b>Three states, not two.</b> Met and unmet are what a checkmark says; the third is the one
+/// that matters here — d47 cannot see whether a Commander has scanned thirty jump wakes or sold
+/// enough exploration data, because Elite does not publish either. Marking those unmet would be a
+/// claim, and marking them met would be a worse one, so they carry neither mark and say so.
+/// </para>
+/// </summary>
+/// <param name="Text">The criterion, in the game's own words where they exist.</param>
+/// <param name="Met">
+/// True where the journal settles it, false where the journal settles it the other way, and null
+/// where nothing d47 can read decides it.
+/// </param>
+public sealed record UnlockCriterion(string Text, bool? Met)
+{
+    /// <summary>The mark in front of it. A space where there is nothing honest to draw.</summary>
+    public string Mark => Met switch
+    {
+        true => "✓",
+        false => "·",
+        _ => "?",
+    };
+
+    /// <summary>The line as a surface with no columns draws it.</summary>
+    public string Describe() => $"{Mark} {Text}";
+}
+
+/// <summary>
 /// How far along the Commander is with one engineer, and what the way in looks like from where
 /// they are standing (list.md Phase 28, "Who can roll this").
 /// <para>
@@ -173,6 +202,18 @@ public sealed record EngineerEntry
 
     /// <summary>What is still to be done to reach them. Empty once they are unlocked.</summary>
     public UnlockChain Chain { get; init; } = UnlockChain.Done;
+
+    /// <summary>
+    /// Everything that has to be true before they will work, with the ones already true marked
+    /// (remediation.md 13, item 12).
+    /// <para>
+    /// <b>All of them, not only the ones outstanding.</b> The chain above lists what is left,
+    /// which is what to go and do; this lists what it takes, which is what a Commander is asking
+    /// when they open somebody they have not met — and a referral they earned a month ago
+    /// disappearing from the list reads as a requirement that was never there.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<UnlockCriterion> Criteria { get; init; } = [];
 
     /// <summary>The right-hand note: where they are, and how far that is.</summary>
     public string Aside =>
@@ -215,6 +256,69 @@ public sealed record EngineerEntry
 /// </summary>
 public static class EngineerAccess
 {
+    /// <summary>
+    /// What it takes to reach one engineer, with the parts already done marked
+    /// (remediation.md 13, item 12).
+    /// <para>
+    /// <b>Only the journal decides a checkmark.</b> A referral is settled by the grade the
+    /// Commander holds with the referrer, and being invited or unlocked is settled by
+    /// <c>EngineerProgress</c> — those three are read. Everything else Frontier states as prose
+    /// about scanning wakes or selling data, and nothing in the journal answers it, so those lines
+    /// carry a question mark rather than a claim in either direction.
+    /// </para>
+    /// <para>
+    /// <b>Unlocked means all of it is met</b>, including the prose, because the game has already
+    /// said so — which is the one case where an unreadable criterion becomes readable.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<UnlockCriterion> CriteriaFor(
+        Engineer engineer, EngineerProgressState? progress)
+    {
+        var standing = progress?.For(engineer.Id);
+        var unlocked = standing?.IsUnlocked == true;
+        var criteria = new List<UnlockCriterion>();
+
+        foreach (var referrer in engineer.ReferredBy)
+        {
+            var wanted = engineer.ReferralGrade ?? EngineeringRules.ReferralGrade;
+            var held = EngineerDirectory.ByName(referrer) is { } known
+                ? progress?.For(known.Id)
+                : null;
+
+            var met = unlocked
+                      || (held is { IsUnlocked: true } && (held.Rank ?? 0) >= wanted);
+
+            criteria.Add(new UnlockCriterion(
+                engineer.ReferredBy.Count > 1
+                    ? $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer} "
+                      + "(any one of the referrals will do)"
+                    : $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer}",
+                met));
+        }
+
+        if (engineer.Meeting is { Length: > 0 } meeting)
+        {
+            // Their invitation task, in Frontier's words. Met once the invitation has been
+            // offered, which the journal does say; unreadable before that, which it does not.
+            criteria.Add(new UnlockCriterion(
+                meeting,
+                unlocked || standing?.IsInvited == true ? true : null));
+        }
+
+        if (engineer.Unlock is { Length: > 0 } tribute)
+        {
+            criteria.Add(new UnlockCriterion(tribute, unlocked ? true : null));
+        }
+
+        // Last, and it is the one line that is always decidable: the others are how you get here
+        // and this is whether you have.
+        criteria.Add(new UnlockCriterion(
+            $"{engineer.Name} works for you",
+            unlocked));
+
+        return criteria;
+    }
+
     /// <summary>
     /// Whether the Commander can act on this engineer today, from their journal and the table.
     /// <para>
