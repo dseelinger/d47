@@ -392,8 +392,22 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(LoadoutPages.Muted(entry.Aside));
 
+        // One per line rather than one running clause (remediation.md 16, item 6). Nine of them
+        // set as prose wrap into a paragraph that has to be read to find out whether the one you
+        // came for is in it, and the commas between entries look like the commas inside them.
         _body.Children.Add(LoadoutPages.Heading("Grades"));
-        _body.Children.Add(LoadoutPages.Muted(entry.Specialities));
+
+        if (entry.SpecialityLines.Count == 0)
+        {
+            _body.Children.Add(LoadoutPages.Muted(entry.Specialities));
+        }
+        else
+        {
+            foreach (var speciality in entry.SpecialityLines)
+            {
+                _body.Children.Add(LoadoutPages.Muted("•  " + speciality));
+            }
+        }
 
         _body.Children.Add(LoadoutPages.Heading("Where you stand"));
         _body.Children.Add(LoadoutPages.Muted(entry.Status));

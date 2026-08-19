@@ -245,7 +245,7 @@ public static class SpeechCapability
             "stop speaking",
             "quiet please",
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Speech", Order = 30 },
+        Display = new CapabilityDisplay { PanelTitle = "Speech", Order = 2 },
         Tools =
         [
             new ToolDefinition

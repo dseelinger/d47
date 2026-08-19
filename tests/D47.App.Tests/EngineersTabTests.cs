@@ -193,7 +193,11 @@ public class EngineersTabTests
 
         Assert.Contains("Farseer Inc in Deciat", shown);
         Assert.Contains("The way in", shown);
-        Assert.Contains(shown, line => line.Contains("Frame Shift Drive to 5", StringComparison.Ordinal));
+        // One speciality per line, not one running clause (remediation.md 16, item 6). The
+        // sentence form — "Frame Shift Drive to 5" — is still what get_engineer says out loud;
+        // what changed is that a panel is read rather than heard.
+        Assert.Contains(shown, line => line.Contains("•  Frame Shift Drive (G5)", StringComparison.Ordinal));
+        Assert.DoesNotContain(shown, line => line.Contains("Frame Shift Drive to 5", StringComparison.Ordinal));
 
         // Frontier's own sentence, printed rather than summarised away.
         Assert.Contains(shown, line => line.Contains("exploration rank Scout", StringComparison.Ordinal));

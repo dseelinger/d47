@@ -135,10 +135,32 @@ public sealed class VrOverlay : IDisposable
     /// than as an error.
     /// </para>
     /// </summary>
-    public void Submit(IntPtr pixels, int width, int height) =>
+    /// <returns>
+    /// Whether the runtime took it. <b>This used to return nothing</b>, and a refused frame was
+    /// therefore dropped and never drawn again — the surface's dirty flag having already been
+    /// cleared by the draw that produced it. See <see cref="Core.Vr.FrameDelivery"/> for what the
+    /// answer is now used for.
+    /// </returns>
+    public bool Submit(IntPtr pixels, int width, int height) =>
         Went(
             OpenVR.Overlay.SetOverlayRaw(_handle, pixels, (uint)width, (uint)height, 4),
             "Setting the pixels");
+
+    /// <summary>
+    /// Whether SteamVR is drawing this quad right now.
+    /// <para>
+    /// Asked outright rather than tracked from <c>PollNextOverlayEvent</c>. A flag rebuilt from a
+    /// stream of edges is a flag that a single missed <c>OverlayShown</c> — or one that arrived
+    /// before this process owned the handle to hear it on — leaves wrong for the rest of the
+    /// session. One direct question makes that unreachable rather than merely unlikely.
+    /// </para>
+    /// <para>
+    /// Not the same question as <c>Show(true)</c>, which is what d47 <em>asked</em> for. This is
+    /// what the runtime decided, and the two differ whenever the dashboard is up or the headset
+    /// is in standby or off the Commander's head.
+    /// </para>
+    /// </summary>
+    public bool Visible => OpenVR.Overlay.IsOverlayVisible(_handle);
 
     /// <summary>
     /// Hangs the quad off the headset itself, which is what head-locked means to OpenVR.

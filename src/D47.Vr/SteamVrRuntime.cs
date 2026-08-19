@@ -103,6 +103,12 @@ public sealed class SteamVrRuntime(
     private readonly HashSet<VrSurface> _served = [];
 
     /// <summary>
+    /// Each surface's last upload — whether the compositor refused it and whether that has been
+    /// said. See <see cref="FrameDelivery"/>; this is only where the answer is kept.
+    /// </summary>
+    private readonly Dictionary<VrSurface, FrameHeld> _frames = [];
+
+    /// <summary>
     /// The last thing each surface said about itself, and when it said it. A read-back identical
     /// to the one before it is not news, and printing it anyway is how the one that <em>is</em>
     /// news gets missed. When that amounts to a line in the log is
@@ -620,6 +626,26 @@ public sealed class SteamVrRuntime(
         }
     }
 
+    /// <summary>
+    /// Says that a surface the compositor was turning down is going through again.
+    /// <para>
+    /// <b>The recovery is the half that was missing.</b> <see cref="_complaints"/> is add-only, so
+    /// a refusal was said once for the life of the process and then never again — which meant a
+    /// log could say frames were refused and never say whether that lasted a second or the whole
+    /// session, and a second run an hour later left no trace at all. Forgetting the complaint here
+    /// is what lets the next run be reported as its own event.
+    /// </para>
+    /// </summary>
+    private void Recovered(VrSurface surface)
+    {
+        logger.LogInformation("{Surface}: SteamVR is taking frames again", surface);
+
+        // Only the one that stalled. Every complaint carries the overlay key it came from, so
+        // clearing by prefix cannot forget a different quad's unrelated grievance.
+        _complaints.RemoveWhere(complaint =>
+            complaint.Contains($"'{Keys[surface].Key}'", StringComparison.Ordinal));
+    }
+
     private bool Serve(IVrSurfaceSource source)
     {
         var overlay = OverlayFor(source.Surface);
@@ -638,26 +664,71 @@ public sealed class SteamVrRuntime(
         var placement = source.Placement.Sane();
         var (width, height) = source.Size;
 
+        var reallocated = false;
+
         if (!_buffers.TryGetValue(source.Surface, out var pixels))
         {
             pixels = new VrPixels(width, height);
             _buffers[source.Surface] = pixels;
+            reallocated = true;
         }
         else
         {
+            reallocated = pixels.Width != width || pixels.Height != height;
             pixels.Resize(width, height);
         }
 
-        if (source.IsDirty)
+        var held = _frames.TryGetValue(source.Surface, out var carried) ? carried : default;
+
+        // A held frame lives in the buffer it was drawn into, so a reallocation throws it away
+        // along with the pixels. Nothing is lost: a surface whose size changed is a surface whose
+        // mode changed, and every path that changes the mode marks it dirty.
+        if (reallocated)
+        {
+            held = default;
+        }
+
+        // Asked only when something is actually waiting to go again. IsOverlayVisible is a call
+        // into the runtime, and the ordinary frame — nothing held, nothing refused — has no use
+        // for the answer.
+        var drawnByTheRuntime = held.Pending && overlay.Visible;
+
+        // Whether a refused frame is retried, and whether it is retried now, is decided in Core
+        // where a test can drive a session's worth of them without a headset. See FrameDelivery
+        // for why the retry re-sends rather than re-draws, and why it waits for the quad to be
+        // visible (remediation.md 16, item 1).
+        var plan = FrameDelivery.Plan(held, source.IsDirty, drawnByTheRuntime);
+
+        if (plan.Draw)
         {
             source.Draw(pixels.Address, pixels.RowBytes);
             pixels.ToRgba();
-            overlay.Submit(pixels.Address, pixels.Width, pixels.Height);
-
-            // Onto the next buffer of the ring, so the one the runtime was just handed is not the
-            // one the next frame is drawn into. See VrPixels.InFlight for why that matters.
-            pixels.Rotate();
         }
+
+        if (plan.Submit)
+        {
+            var outcome = FrameDelivery.Took(
+                held,
+                overlay.Submit(pixels.Address, pixels.Width, pixels.Height));
+
+            if (outcome.Recovered)
+            {
+                Recovered(source.Surface);
+            }
+
+            if (outcome.Rotate)
+            {
+                // Onto the next buffer of the ring, so the one the runtime was just handed is not
+                // the one the next frame is drawn into. See VrPixels.InFlight for why that
+                // matters — and note that a refused frame does not rotate, because the runtime
+                // never took it and it is about to be sent again.
+                pixels.Rotate();
+            }
+
+            held = outcome.Held;
+        }
+
+        _frames[source.Surface] = held;
 
         // Head-locked rides the headset; only something put down in the room needs a room
         // position. Splitting them is what keeps the tracking universe out of the common case.

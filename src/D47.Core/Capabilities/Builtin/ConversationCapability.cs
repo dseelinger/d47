@@ -122,7 +122,7 @@ public static class ConversationCapability
             // for the same reason. It only means this while there is a turn to abandon; idle,
             // it belongs to whatever else might want it.
             InterruptKeywords = ["cancel", "cancel that", "never mind", "nevermind", "forget it"],
-            Display = new CapabilityDisplay { PanelTitle = "Language model", Order = 30 },
+            Display = new CapabilityDisplay { PanelTitle = "Language model", Order = 1 },
             Tools =
             [
                 new ToolDefinition

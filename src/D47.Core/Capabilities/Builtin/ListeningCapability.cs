@@ -151,7 +151,7 @@ public static class ListeningCapability
             "can you hear me",
             "are you listening",
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Listening", Order = 32 },
+        Display = new CapabilityDisplay { PanelTitle = "Listening", Order = 3 },
         Tools =
         [
             new ToolDefinition

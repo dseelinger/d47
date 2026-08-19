@@ -226,13 +226,43 @@ public sealed record EngineerEntry
     /// <summary>Their standing in one clause, whether or not the journal has said anything.</summary>
     public string Status => Standing?.Describe() ?? "not met";
 
-    /// <summary>What they grade, in the order the table states — best grade first.</summary>
+    /// <summary>
+    /// What they grade, in the order the table states — best grade first, as one spoken clause.
+    /// <para>
+    /// This is the form for <em>saying</em>, and it stays a sentence: "Beam Laser to 5, Burst
+    /// Laser to 5" is how somebody reads it aloud. What a panel wants is
+    /// <see cref="SpecialityLines"/> — see there for why the two exist.
+    /// </para>
+    /// </summary>
     public string Specialities =>
         Engineer.Specialities.Count == 0
             ? "nothing I have a record of"
             : string.Join(", ", Engineer.Specialities.Select(speciality => speciality.IsGraded
                 ? $"{speciality.Kind} to {speciality.MaxGrade.ToString(CultureInfo.InvariantCulture)}"
                 : speciality.Kind));
+
+    /// <summary>
+    /// The same list, one entry at a time (remediation.md 16, item 6).
+    /// <para>
+    /// Reported against the Engineers tab: <em>"This should not be laid out on a single line. Hard
+    /// to get what I need from that."</em> Nine specialities set as running prose wrap into a
+    /// paragraph a Commander has to read to find out whether the one they came for is in it, and
+    /// the commas that separate the entries look exactly like the commas inside them.
+    /// </para>
+    /// <para>
+    /// <b>Not a formatting of <see cref="Specialities"/>.</b> Splitting that string on its commas
+    /// would be a second parser of d47's own sentence, wrong the day a speciality has a comma in
+    /// its name. Both are projections of the same table, which is why the grade reads
+    /// <c>(G5)</c> here and <c>to 5</c> there: a list is scanned and a sentence is heard, and they
+    /// are allowed to differ.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> SpecialityLines =>
+    [
+        .. Engineer.Specialities.Select(speciality => speciality.IsGraded
+            ? $"{speciality.Kind} (G{speciality.MaxGrade.ToString(CultureInfo.InvariantCulture)})"
+            : speciality.Kind),
+    ];
 }
 
 /// <summary>

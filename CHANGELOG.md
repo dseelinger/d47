@@ -17,6 +17,66 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.38.2 — 2026-08-19 — Two silences and four things you can read
+
+Remediation 16, all six items. Four are the Commander's, reported against 0.38.1. **Two were found
+by reading somebody else's code** — [EliteIntel](https://github.com/SudoKrondor/EliteIntel), a Java
+companion for the same game — on a research pass with no change intended. Neither of those two had
+been reported by anybody, because neither has a symptom: both are faults that produce *silence*.
+
+### A ship you are not flying can be planned again
+
+*"I have lost the ability to modify the loadout. Don't see how to modify Reaper."* The page opened,
+named the hull, gave its speed, boost, armour and price, said where it was parked and what it was
+worth — and then offered no slots at all.
+
+`StoredShips` carries the **localised** hull name, which is deliberate and is what the fleet page
+prints as *Reaper (Cobra MkV)*. That name is what a build started from a parked ship holds. One
+lookup resolved it and the other did not: the hull's figures came out right and its slot layout came
+back empty. Two lookups of one hull, disagreeing, and the disagreement read as a capability that had
+gone away. Both now go through the same resolver, so they agree by construction rather than by
+being remembered.
+
+### The headset no longer holds a stale panel in silence
+
+When SteamVR refuses a frame, d47 used to lose it. The surface's dirty flag was cleared by the draw
+that produced the frame, and the submit's answer was discarded — so the headset held whatever it
+last showed until something unrelated happened to redraw it, with nothing in the log. A refused
+frame is now **held** rather than dropped, and re-sent rather than re-drawn: what the compositor
+turned down was the upload, not the picture. It waits while the quad is not being drawn at all —
+the dashboard being up, or the headset off — so a Commander in the SteamVR menu is not paying for
+nine megabytes a tick to re-send a picture nobody can see.
+
+A run of refusals is reported once, **and so is its recovery**, which is new. The log could
+previously say frames were refused and never say whether that lasted a second or the session.
+
+### A control you rebind in Elite is picked up without a restart
+
+The bindings file was read once at startup. The reason recorded for that was that the Commander
+cannot edit their controls while d47 is the foreground window — true, and beside the point: they
+edit them in *Elite's* options menu, most often right after d47 has told them an action is not
+bound. Every injection after that sent the old scancode.
+
+It is re-read when it moves, on the tick, comparing write stamps before parsing anything. Both
+files are watched: a rebind rewrites the `.binds` file, and switching preset rewrites `StartPreset`
+and changes which `.binds` file is the answer.
+
+### Three things you can read
+
+**An engineer's grades are a list.** *"This should not be laid out on a single line."* Nine
+specialities set as running prose wrapped into a paragraph, with the commas between entries looking
+like the commas inside them. Now one per line — *Beam Laser (G5)*. What d47 says out loud is
+unchanged: a list is scanned and a sentence is heard.
+
+**Language model, Speech and Listening are at the top of Settings.** They were seventh, eighth and
+ninth, behind Help, Persona, Memory, Habits, Commander's log, Goals and Location — and they are the
+three that have to be set before d47 does anything at all.
+
+**A rule between the persona rows and the ship-core pair**, with a heading on it, so the two
+dropdowns read as one thought rather than as more of the column above them.
+
+---
+
 ## 0.38.1 — 2026-08-19 — The Loadout tab, told properly
 
 **Remediation 15, all fifteen items.** Nearly all of it is the Loadout tab, and most of it was found

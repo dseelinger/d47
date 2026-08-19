@@ -77,7 +77,7 @@ public sealed class AppHost : IDisposable
         EchoCanceller echo,
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
-        EliteBinds binds,
+        BindsWatch binds,
         HttpModelStore models,
         WhisperTranscriber transcriber,
         string version,
@@ -111,7 +111,7 @@ public sealed class AppHost : IDisposable
         Voice = voice;
         Listening = gate;
         Echo = echo;
-        Binds = binds;
+        _binds = binds;
         _microphone = microphone;
         _pushToTalk = pushToTalk;
         Models = models;
@@ -278,10 +278,15 @@ public sealed class AppHost : IDisposable
     public WakeWordGate Wake { get; } = new();
 
     /// <summary>
-    /// The Commander's Elite bindings, read once at startup. Read-only, and the same parse the
-    /// double-bind check and Phase 10's reachability both use.
+    /// The Commander's Elite bindings. Read-only, and the same parse the double-bind check and
+    /// Phase 10's reachability both use.
+    /// <para>
+    /// Asked for each time rather than held, because it is re-read whenever Elite rewrites the
+    /// file — a control rebound in the game's own options menu used to need a restart of d47
+    /// before anything here knew about it (remediation.md 16, item 2).
+    /// </para>
     /// </summary>
-    public EliteBinds Binds { get; }
+    public EliteBinds Binds => _binds.Current;
 
     /// <summary>The Commander's macros. The panel's editor writes through this, not past it.</summary>
     public MacroStore Macros { get; private set; } = null!;
@@ -446,6 +451,8 @@ public sealed class AppHost : IDisposable
     }
 
     private readonly WhisperTranscriber _transcriber;
+
+    private readonly BindsWatch _binds;
 
     private readonly WasapiMicrophone _microphone;
 
@@ -975,15 +982,18 @@ public sealed class AppHost : IDisposable
         // disagree about what is reachable.
         ActionSurface actionSurface;
 
-        // Read once at startup. The bindings file changes only when the Commander edits their
-        // controls, which they cannot do while d47 is the foreground window, so re-reading it
-        // ten times a second would be polling for an event that cannot happen.
-        var binds = BindsResolver.Resolve(
+        // Read at startup and re-read when Elite rewrites it. The old comment here said the file
+        // changes only when the Commander edits their controls, "which they cannot do while d47
+        // is the foreground window" — true, and beside the point: controls are edited in Elite's
+        // options menu, with Elite in front, and most often right after d47 has said an action is
+        // not bound (remediation.md 16, item 2). The stamp comparison is what makes polling it on
+        // the tick cost nothing.
+        var binds = new BindsWatch(
             BindsResolver.DefaultBindingsDirectory(),
             EliteInstallations(),
             loggerFactory.CreateLogger<AppHost>());
 
-        bindsRef = () => binds;
+        bindsRef = () => binds.Current;
 
         // The Commander's own macros, beside the executable like everything else d47 writes.
         // Re-read on the tick, so a macro edited in a text editor is live without a restart.
@@ -1113,7 +1123,7 @@ public sealed class AppHost : IDisposable
                         transcriber.IsReady,
                         transcriber.Model,
                         transcriber.Unavailable ?? "No speech model is selected."),
-                    Binds = () => binds,
+                    Binds = () => binds.Current,
                     InstalledModels = () => models.Installed(),
 
                     // What the gate policy is actually doing, which is the question a Commander
@@ -1140,7 +1150,7 @@ public sealed class AppHost : IDisposable
                 },
                 actionSurface = new ActionSurface
                 {
-                    Binds = () => binds,
+                    Binds = () => binds.Current,
 
                     Status = () => status.Current,
                     Input = gameInput,
@@ -1514,6 +1524,11 @@ public sealed class AppHost : IDisposable
         // Registered here rather than beside the journal readers because it needs both the
         // store and the finished registry, and neither exists that early.
         tick.Add("macros", _ => macros.Poll(PhrasesAlreadyTaken(capabilities)));
+
+        // Same shape, same reason: a file Elite owns, re-read only when it moves. A Commander who
+        // rebinds a control in the game's own options menu had, until now, to restart d47 before
+        // it knew (remediation.md 16, item 2).
+        tick.Add("binds", _ => binds.Poll());
 
         // The switch path, in the tick's own shape: read the file if it changed, read the
         // hardware, decide. Nothing here presses anything — the drain below does that, on the

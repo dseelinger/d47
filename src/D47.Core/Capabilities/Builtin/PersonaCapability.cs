@@ -285,6 +285,12 @@ public static class PersonaCapability
             Kind = SettingKind.Choice,
             DocsAnchor = "core-for-this-ship",
 
+            // What puts a rule between this pair and the persona rows above (remediation.md 16,
+            // item 3). Reported as wanting a dividing line under "Forget introductions", and a
+            // group is that line plus the one thing a bare rule cannot carry — a name saying what
+            // the rows beneath it are for. Both rows name the same group, so it is drawn once.
+            Group = "A core per ship",
+
             // Protected, which is what keeps Phase 35's rule after these stopped being Info rows.
             // Binding a core changes who speaks every time that ship is boarded, so it stays
             // reachable from the panel, the gesture and the model-free router, and is refused to
@@ -320,6 +326,10 @@ public static class PersonaCapability
             Kind = SettingKind.Choice,
             DocsAnchor = "core-for-this-ship",
             Protected = true,
+
+            // The same group as the row above, so the pair sits under one heading and the rule is
+            // drawn once rather than between two rows that are one thought.
+            Group = "A core per ship",
 
             // Nobody first, because it is the unbind and it used to be a separate button. One
             // control that can say "not this one" is fewer than two that cannot.

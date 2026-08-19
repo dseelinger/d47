@@ -319,11 +319,21 @@ public static class EliteSpecifications
     /// Empty for a hull the table does not know, which is a real answer: it means the page falls
     /// back to what the journal reported rather than inventing a layout.
     /// </para>
+    /// <para>
+    /// <b>By symbol or by name, because both arrive</b> (remediation.md 16, item 5). This used to
+    /// key straight off the string it was handed, so it answered <c>cobramkv</c> and not
+    /// <c>Cobra MkV</c> — and <c>StoredShips</c> carries the localised name, which is what the
+    /// fleet page prints and therefore what a build started from a parked ship holds. The result
+    /// was a ship the Commander could open, read the figures of, and then find had no slots to
+    /// plan: <see cref="Ship"/> resolved the same string and this did not. Going through
+    /// <see cref="Ship"/> is what makes the two agree by construction rather than by both being
+    /// remembered.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<ShipSlot> Slots(string? hull) =>
-        string.IsNullOrWhiteSpace(hull)
-            ? []
-            : Loaded.Value.Slots.GetValueOrDefault(hull.Trim().ToLowerInvariant()) ?? [];
+        Ship(hull) is { } ship
+            ? Loaded.Value.Slots.GetValueOrDefault(ship.Symbol.ToLowerInvariant()) ?? []
+            : [];
 
     /// <summary>
     /// Which kind of slot a name is on any hull at all, or null for one no hull outfits
