@@ -18,7 +18,7 @@ the changelog, which is why this file is the current batch and not a growing arc
 - [x] **3. A stale fact spoken in the present tense.** *"Sacred Fire is mid-manoeuvre — a jump
   inside Laksak"*, said of a jump that completed the day before.
 
-- [ ] **4. Warden talked about another core.** *"Cora used to count like that when she was
+- [x] **4. Warden talked about another core.** *"Cora used to count like that when she was
   checking a relay."* A core does not know or care that the others exist.
 
   **Held: this line is prescribed, and the reading may be the other way round.**
@@ -38,6 +38,19 @@ the changelog, which is why this file is the current batch and not a growing arc
   core's body and keep the unnamed ones like *the quiet one*; rename the dead so no shipped core
   shares a name; or leave it. The first two are edits to eleven pieces of writing and an amendment
   to `guardian-personas.md`, which is why nothing was changed on a guess.
+
+  **Settled by the pack.** The rewrite struck Warden's *On the dead* entry outright, and porting
+  it carried that into the shipped text — so the reported line cannot be produced. Every other
+  core's reference to another was already unnamed, which is the pack working as designed and
+  stays: *my secondary core*, *a preservation core from a rival clan*, *an archival core*.
+
+  **Analyst Prime keeps Cora by name**, because he is about her and the rewrite strengthened that
+  rather than removing it. So the rule shipped is "no core names another core, except that one",
+  and it is a test rather than a promise — the property drifted in silently once and was found by
+  a Commander hearing it. Reintroducing Warden's line fails two assertions by name.
+
+  One line the pack had and the code never did is now in: the Archivist on the most complete
+  records any of them kept belonging to the one they cast out. Unnamed, like every other.
 
 - [ ] **5. Copy a plan to another slot by dragging.** Ctrl and left button held, dragged from one
   slot to another — by mouse, or by motion controller on the headset — copies the module, the
