@@ -101,3 +101,15 @@ the changelog, which is why this file is the current batch and not a growing arc
   what the page can do. Suits and weapons get it on the same terms, since the two services already
   had the same delete.
 
+- [x] **8. Galactic time should be UTC.** Reported from a Commander on UTC, where the two clocks
+  were two boxes side by side reading 19:44 and 19:44 — the one zone in which the fault is
+  invisible as a disagreement and obvious as a duplication.
+
+  **Overturns a comment.** The galactic side was derived from the Commander's own presentation, on
+  the argument that the in-game date beside theirs should change over at their midnight rather than
+  at Greenwich's. Reasonable to want, and not what the game does: Elite runs galactic time on UTC,
+  and every station clock, mission expiry and journal timestamp is on it — so a galactic clock
+  following the Commander's zone was wrong in the one place it can be checked. Still one instant;
+  the zone is applied to one side and the years to the other, and neither is computed from the
+  other's presentation.
+
