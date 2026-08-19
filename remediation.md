@@ -63,13 +63,24 @@ the changelog, which is why this file is the current batch and not a growing arc
   plus a Core rule for picking the copy's size, which is the largest variant of the same module
   and mount that fits the target, and is the easiest part to get right and test.
 
-  The headset half is not ordinary. `VrPanelSurface` has no press-move-release at all: a ray
-  gives `Press(u, v)`, which synthesises a *click*. The one drag that exists there — the
-  scrollbar — is built as its own trio of geometric hit tests (`GrabsScroll`, `Scroll`) rather
-  than out of pointer events, so a carry between rows needs a third gesture of the same shape,
-  a controller binding for a modifier a motion controller does not have, and something drawn to
-  say what is being carried. None of that can be checked without the headset on, and this repo
-  has a memory file of VR traps that fail silently and look like working code.
+  **The headset half is not ordinary, and the reason is sharper than "there is no drag".** Read
+  properly, `VrHost` already gives the trigger three meanings and disambiguates them after the
+  fact: a **press** is down and up having neither dwelt nor travelled; a **scroll** is decided at
+  the moment of the press by whether the ray landed on a scrollbar; and a **carry of the whole
+  panel** begins at 400 ms of dwell *or* five percent of the panel travelled
+  (`VrPress.BecomesACarry`).
+
+  Dragging from one row to another is that third condition exactly. So this is not a missing
+  capability, it is a collision: on the headset, pressing a row and then moving already means
+  *pick the panel up*. Every other candidate is taken too — dwell is carry, travel is carry, and
+  the grip is Back (list.md Phase 25).
+
+  The one lever still free is the trick the scrollbar uses: **decide at press time by what was
+  hit.** That points at a design which needs no new gesture and works the same on both surfaces —
+  a *Copy this plan to…* control on the slot page arms the copy, the slot list marks the legal
+  targets, and one press on a target completes it. Ctrl and drag then becomes the mouse's
+  shortcut for the same operation rather than a second mechanism, so one Core operation carries
+  the rules and the tests and neither surface has a gesture the other cannot do.
 
   Shipping the desktop half alone would leave a gesture that does nothing on the other surface,
   which is worse than not having it yet.
