@@ -58,3 +58,19 @@ the changelog, which is why this file is the current batch and not a growing arc
   Shipping the desktop half alone would leave a gesture that does nothing on the other surface,
   which is worse than not having it yet.
 
+- [ ] **6. A core per ship.** Each ship remembers the core that flew it — Sentinel on the combat
+  ships, Quartermaster on the haulers — set at the Commander's command rather than by watching.
+
+  **Written up as [Phase 35](list.md) rather than here**, because it is a capability rather than
+  a defect and that is where capabilities live. This line is a pointer so the next session finds
+  it; the detail, the invariant it has to respect and the one open question that changes the shape
+  of the work are all in list.md.
+
+- [ ] **7. Trade routes d47 works out itself.** A hold that is not always emptied, round trips, and
+  the profit a station pays less for being flooded.
+
+  **Written up as [Phase 36](list.md)**, and asked for as its own session. The note there records
+  what already exists — today's `plot_trade_route` is Spansh's answer rather than d47's — and that
+  the saturation figure is to be measured from the Commander's own `MarketSell` events rather than
+  guessed at.
+
