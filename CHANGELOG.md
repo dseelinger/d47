@@ -17,6 +17,58 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.37.0 — 2026-08-19 — Four tabs in the headset
+
+**The big VR panel drops Checklist and Loadout**, on the Commander's instruction. Nothing was
+broken about either; this is a decision about what belongs on a quad a metre away, and it may be
+temporary.
+
+### The panel travels lighter
+
+The headset's copy now carries **Transcript, Engineers, Utilities and Settings**, and no more. The
+desktop window is untouched and keeps all six.
+
+The two tabs are gone by **not being furnished**, which is the rule Settings has followed since
+Phase 12 rather than a new mechanism. A tab appears only where a host asks for it, so one that
+nobody asks for has no builder and registers no root — and the panel already declines to select a
+tab it was not given. That is what keeps the spoken route honest as well as the drawn one: *show me
+the checklist* is a no-op in a headset now, rather than an empty pane with no way back.
+
+Reversing it is two calls coming back. The services both tabs need are still wired through to the
+headset surface and left unused, precisely so that reversing it stays two calls rather than a
+re-plumbing.
+
+**One test asserted the exact opposite**, and it was not a stale one — Phase 25 put the checklist in
+a headset because a `Window` cannot appear there at all, and Phase 26 put the fleet beside it. It is
+inverted rather than deleted, with the desktop window's half pinned next to it, so the withdrawal
+reads as a decision that was taken rather than as a tab somebody forgot to wire up.
+
+### Parity between the two surfaces is a nice-to-have
+
+Stated in `CLAUDE.md` because it was previously only implied, and a design was already bent around
+the implication. *One widget tree renders to both surfaces* is about the **mechanism** — one view
+definition, no second UI codebase, no screenshot of the desktop window — and that is untouched and
+still binding. It was never a promise that both surfaces show the same things, and Settings has
+been desktop-only since Phase 12.
+
+So a tab may live on one surface and not the other, and **VR catching up with the window is a
+someday-maybe** rather than a constraint to design around.
+
+### Copying a plan between slots is a desktop item
+
+Remediation 14's fifth item wanted Ctrl and drag to copy a plan from one slot to another, by mouse
+**or by motion controller**. The headset half of it was the hard half, and it has not been solved
+so much as removed: the slot rows live under Loadout, and Loadout is no longer there.
+
+The analysis is kept in `remediation.md` rather than struck, because the tab could come back. It
+carries one correction that reverses its own conclusion — *there is no pointer motion on the
+headset* turned out to be true only of the framework's own pointer events. The ray's position on
+the panel is computed every frame and already drives two things: the row under the ray lights up,
+and the scrollbars are dragged with it. A row-to-row drag would have been a third reader of a
+stream that already runs, not a new one to build.
+
+---
+
 ## 0.36.2 — 2026-08-19 — Nothing heard is nothing said
 
 Seven items of remediation 14, and the persona pack's rewrite reaching the build. Two of the
