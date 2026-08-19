@@ -87,6 +87,7 @@ Note on the data: game data is Frontier's, used under their media usage rules. S
 import collections
 import datetime
 import json
+import re
 import urllib.request
 from pathlib import Path
 
@@ -97,13 +98,28 @@ EDENGINEER = ("https://raw.githubusercontent.com/msarilar/EDEngineer/master/"
 
 CORIOLIS = "https://raw.githubusercontent.com/EDCD/coriolis-data/master/modifications/"
 
+# The third source, and the only one that says which blueprints a *module kind* can take. See
+# `edsy_offers`. Same standing on the data as the other two: EDSY's code is CC BY-NC and the game
+# data in it remains Frontier's, used under their media usage rules. See NOTICE.
+EDSY_DB = "https://raw.githubusercontent.com/taleden/EDSY/master/eddb.js"
+
 ROOT = Path(__file__).resolve().parent.parent
 
 MATERIALS = ROOT / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 
+SPECIFICATIONS = ROOT / "src" / "D47.Core" / "Knowledge" / "EliteSpecifications.tsv"
+
 OUTPUT = ROOT / "src" / "D47.Core" / "Knowledge" / "Blueprints.tsv"
 
-COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effects", "guid"]
+COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effects", "guid",
+
+           # Frontier's own name for the blueprint, which is what the journal writes into
+           # `Engineering.BlueprintName` and what coriolis keys its recipes on. See `symbols`.
+           "symbol"]
+
+
+# Which blueprints each module type can take. See `edsy_offers`.
+MTYPE_COLUMNS = ["mtype", "blueprints"]
 
 # EDEngineer's pseudo-engineers. Everything they front is a recipe of some other kind, and
 # telling them apart this way means a new munitions row classifies itself rather than waiting
@@ -235,6 +251,202 @@ def kind_of(entry: dict) -> str:
     return "modification" if entry.get("Grade") else "experimental"
 
 
+def symbols() -> dict[str, set]:
+    """Every coriolis blueprint uuid, mapped to Frontier's own name for that blueprint.
+
+    **This is the join the whole Loadout tab was missing** (remediation 15, items 6 and 10). The
+    key of `modifications/blueprints.json` is an `fdname` — `Engine_Dirty`,
+    `PowerDistributor_PrioritySystems`, `Armour_Advanced` — and that is *the same string the
+    journal writes* into `Engineering.BlueprintName`. So carrying it turns two spellings that
+    nothing joined into one id.
+
+    What it fixes is not cosmetic. `ChecklistNaming.Readable` called its own output "ugly and
+    true" and `CannotConfirm` told the Commander outright that nothing d47 shipped joined the two
+    spellings, so a grade 5 System Focused roll was read back as
+    "grade 5 PowerDistributor PrioritySystems". Both statements were accurate when written; this
+    column is what makes them false.
+
+    Specials carry a uuid each rather than a grade ladder, so they are folded in here too — an
+    experimental effect is a blueprint the journal names the same way.
+
+    **A uuid can belong to more than one name**, so this keeps every one rather than the last read.
+    coriolis files the same recipe under `Armour_Advanced` and `Misc_LightWeight`, and taking one
+    left the other reachable from nothing.
+    """
+    found: dict[str, set] = {}
+
+    for fdname, record in load_json(CORIOLIS + "blueprints.json").items():
+        for grade in (record.get("grades") or {}).values():
+            if grade.get("uuid"):
+                found.setdefault(grade["uuid"], set()).add(fdname)
+
+    for fdname, record in load_json(CORIOLIS + "specials.json").items():
+        if record.get("uuid"):
+            found.setdefault(record["uuid"], set()).add(fdname)
+
+    return found
+
+
+def relax(text: str) -> str:
+    """Letters and digits, lower case. `Catalogue.Relax` in Core, for the same reason."""
+    return "".join(character.lower() for character in text if character.isalnum())
+
+
+def specification_modules() -> dict[str, set]:
+    """Every module name each EDSY module type covers, read from the sibling table.
+
+    Not a fetch. `gen-elite-specs.py` already resolved every module's `mtype` from the same EDSY
+    file, so reading its output is cheaper than doing it twice and cannot disagree with it.
+
+    Used to settle a label that belongs to several blueprints: `Stripped Down` is an experimental
+    on six different module types, and the row saying "Thrusters / Stripped Down" wants the one
+    whose type covers a module called Thrusters.
+    """
+    found: dict[str, set] = {}
+    section, columns = None, None
+
+    for line in SPECIFICATIONS.read_text(encoding="utf-8").splitlines():
+        if line.startswith("#"):
+            continue
+
+        if line.startswith("["):
+            section, columns = line.strip("[]"), None
+            continue
+
+        if columns is None:
+            columns = line.split("	")
+            continue
+
+        if section != "modules":
+            continue
+
+        cells = dict(zip(columns, line.split("	")))
+
+        if cells.get("mtype") and cells.get("name"):
+            found.setdefault(cells["mtype"], set()).add(relax(cells["name"]))
+
+    return found
+
+
+def edsy_database() -> str:
+    """EDSY's `eddb.js`, whole. Fetched once; three things below read it."""
+    request = urllib.request.Request(EDSY_DB, headers={"User-Agent": "d47-gen-blueprints"})
+
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return response.read().decode("utf-8-sig")
+
+
+def edsy_section(database: str, name: str) -> str:
+    """One top-level block of `eddb.js`, by the comment it closes with."""
+    opened = database.index("\n\t" + name)
+
+    return database[opened: database.index("}, // eddb." + name, opened)]
+
+
+def edsy_named(block: str) -> dict[str, tuple[str, str]]:
+    """`id : { name:'...', fdname:'...' }` pairs, as id to (Frontier's name, EDSY's label).
+
+    Commented-out entries are skipped rather than read. EDSY retires a blueprint by commenting it
+    out — `misc_lw4` sits directly under `misc_lw` with the same `fdname` — so reading past the
+    comments would offer a grade ladder Frontier withdrew.
+    """
+    found = {}
+
+    for line in block.splitlines():
+        text = line.strip()
+
+        if text.startswith("//"):
+            continue
+
+        entry = re.match(r"(\w+)\s*:\s*\{", text)
+        symbol = re.search(r"fdname\s*:\s*'([^']+)'", text)
+        label = re.search(r"\bname\s*:\s*'([^']+)'", text)
+
+        if entry and symbol:
+            found[entry.group(1)] = (symbol.group(1), label.group(1) if label else "")
+
+    return found
+
+
+def edsy_offers(database: str) -> tuple[list[list[str]], dict[str, str]]:
+    """What each module type can be engineered with, and every blueprint's name.
+
+    **This is the join the Loadout tab was missing** (remediation 15 item 6), and EDSY is the only
+    one of the three sources that carries it. Its `mtype` section lists, per module type, the
+    `blueprints` and `expeffects` that type accepts — and `EliteSpecifications.tsv` already carries
+    that same `mtype` against every module, from the same file. So a slot's module resolves to a
+    type, and the type says exactly what it takes.
+
+    Every hop is an id. That matters because the two obvious routes are both dead ends, and both
+    fail *confidently*, which is worse than failing:
+
+    - coriolis groups its recipes by its own code and EDEngineer names them by module kind, and
+      the two cannot be joined. Scoring the overlap ties every scanner with the Chaff Launcher,
+      because they share the generic Lightweight and Reinforced rolls; scoring the similarity
+      instead still put a Cargo Rack under Torpedo Pylon and a Pulse Laser under Burst Laser.
+    - Matching on names is what the panel already did, and it is why a Type-10's armour was
+      offered Dirty Drive Tuning.
+
+    Under EDSY the same cases come out right: a Cargo Scanner takes Fast Scan, Long Range and Wide
+    Angle rather than a Chaff Launcher's set, a Cargo Rack takes Expanded Cargo Rack, and a
+    **Fuel Tank takes nothing at all** — which is the second half of the report, stated by the data
+    instead of inferred from an empty list.
+
+    Returns the per-type offer, and Frontier's name for every blueprint keyed by EDSY's label, which
+    is what names the rows that carry no id of their own.
+    """
+    blueprints = edsy_named(edsy_section(database, "blueprint"))
+    effects = edsy_named(edsy_section(database, "expeffect"))
+
+    known = {**blueprints, **effects}
+
+    # EDSY's label to every name that carries it, for the second pass in `main`. **A list and not
+    # a value**: `Stripped Down` is the label of six different blueprints — one each for thrusters,
+    # the drive, the distributor, the power plant, shields and cell banks — and `Double Braced` of
+    # eight. Keeping one stranded the rest, which is how a common experimental went missing.
+    by_label: dict[str, list[str]] = {}
+
+    for symbol, label in known.values():
+        if label:
+            by_label.setdefault(relax(label), []).append(symbol)
+
+    types = edsy_section(database, "mtype")
+    built = []
+
+    for found in re.finditer(r"\n\t\t(\w+)\s*:\s*\{", types):
+        depth, at = 1, found.end()
+
+        while depth > 0 and at < len(types):
+            depth += 1 if types[at] == "{" else -1 if types[at] == "}" else 0
+            at += 1
+
+        body = types[found.end(): at - 1]
+
+        def listed(key: str, body=body) -> list[str]:
+            cell = re.search(r"%s\s*:\s*\[([^\]]*)\]" % key, body)
+
+            if not cell:
+                return []
+
+            return [
+                item.strip().strip("'")
+                for item in cell.group(1).replace("\n", " ").split(",")
+                if item.strip()
+            ]
+
+        # Paint is not engineering. EDSY carries the four Decorative blueprints because it models
+        # what can be applied to a module; a Commander planning a build is not choosing a colour.
+        offered = sorted({
+            known[item][0]
+            for item in listed("blueprints") + listed("expeffects")
+            if item in known and not known[item][0].startswith("Decorative_")
+        })
+
+        built.append([found.group(1), ",".join(offered)])
+
+    return sorted(built), by_label
+
+
 def coriolis_recipes() -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
     """Components per uuid, for blueprints and for experimental effects."""
     blueprints = {}
@@ -256,6 +468,8 @@ def main() -> None:
     entries = load_json(EDENGINEER)
     by_name, ambiguous = materials()
     blueprints, specials = coriolis_recipes()
+    fdnames = symbols()
+    offers, by_label = edsy_offers(edsy_database())
 
     built: list[list[str]] = []
     unresolved: list[str] = []
@@ -314,6 +528,11 @@ def main() -> None:
             ",".join(ingredients),
             effects,
             entry.get("CoriolisGuid") or "",
+
+            # Frontier's own name for the blueprint, via the guid — every name the guid belongs
+            # to, because coriolis files one recipe under more than one. Filled from EDSY below for
+            # the rows carrying no guid at all.
+            ",".join(sorted(fdnames.get(entry.get("CoriolisGuid") or "", set()))),
         ])
 
     if unresolved:
@@ -342,6 +561,67 @@ def main() -> None:
 
     built.sort(key=lambda row: (row[0], row[1], row[2], row[3]))
 
+    # Second pass, for the rows the guid could not name. EDEngineer leaves `CoriolisGuid` off 193
+    # of its 940 module recipes — most of the experimentals among them — so without this every
+    # `special_*` effect is a blueprint EDSY offers and nothing here can supply.
+    #
+    # Matched on the label both sources publish, which is evidence rather than a guess: EDSY says
+    # `special_corrosive_shell` is called "Corrosive Shell" and EDEngineer has a row of that name.
+    # The vocabulary is closed at 151 entries and every miss is named at the end of the run.
+    # Which module names each type covers, from the sibling table — so a label shared by six
+    # blueprints resolves to the one belonging to *this* row's module rather than to whichever was
+    # read last. Exact wherever the two sources spell a module the same way, which is most of them.
+    modules_of = specification_modules()
+    types_of: dict[str, set] = {}
+
+    for code, names in modules_of.items():
+        for name in names:
+            types_of.setdefault(name, set()).add(code)
+
+    offering: dict[str, set] = {}
+
+    for code, listed in offers:
+        for name in listed.split(","):
+            if name:
+                offering.setdefault(name, set()).add(code)
+
+    unnamed = []
+
+    for row in built:
+        if row[8] or row[0] not in ("modification", "experimental"):
+            continue
+
+        label = relax(row[2])
+
+        candidates = by_label.get(label, [])
+
+        # The two sources spell a few labels differently — "Fast Scanner" against "Fast Scan",
+        # "Expanded Probe Scanning Radius" against "Expanded Radius". Where one name contains the
+        # other they are taken as the same blueprint, which is a weaker claim than it looks: it is
+        # only ever consulted after the exact match fails, and it still has to agree on the module
+        # type below.
+        if not candidates:
+            candidates = [
+                name
+                for known_label, names in by_label.items()
+                if known_label.startswith(label) or label.startswith(known_label)
+                for name in names
+            ]
+
+        # The one whose module type covers a module of this row's kind. A single candidate needs no
+        # deciding; several with no agreeing type is a miss, and it is reported rather than guessed.
+        fitting = [
+            name for name in candidates
+            if offering.get(name, set()) & types_of.get(relax(row[1]), set())
+        ]
+
+        if len(candidates) == 1:
+            row[8] = candidates[0]
+        elif len(fitting) == 1:
+            row[8] = fitting[0]
+        else:
+            unnamed.append(f"{row[1]} / {row[2]}")
+
     stamp = datetime.date.today().isoformat()
 
     text = [
@@ -364,9 +644,39 @@ def main() -> None:
 
     text += ["\t".join(row) for row in built]
 
+    # What each module type can be engineered with. Keyed by EDSY's `mtype`, which
+    # EliteSpecifications.tsv carries against every module — see edsy_offers.
+    text += ["[mtypes]", "\t".join(MTYPE_COLUMNS)]
+    text += ["\t".join(row) for row in offers]
+
     OUTPUT.write_text("\n".join(text) + "\n", encoding="utf-8", newline="\n")
 
+    named = sum(1 for row in built if row[8])
+
     print(f"Wrote {len(built)} rows to {OUTPUT}")
+    print(f"Blueprints carrying Frontier's own name: {named} of {len(built)} "
+          f"({len(built) - named} carry no guid, so nothing to key them by)")
+
+    engineerable = sum(1 for row in offers if row[1])
+    print(f"Module types: {len(offers)}, of which {engineerable} can be engineered and "
+          f"{len(offers) - engineerable} genuinely cannot")
+
+    # The one direction that is not survivable quietly. A blueprint EDSY offers that nothing here
+    # supplies is a row a Commander can be shown and d47 cannot cost.
+    supplied = {name for row in built for name in row[8].split(",") if name}
+    wanted = {name for row in offers for name in row[1].split(",") if name}
+    absent = sorted(wanted - supplied)
+
+    if absent:
+        print(f"{len(absent)} blueprints are offered by a module type and carry no recipe here:")
+        for name in absent:
+            print(f"  {name}")
+
+    if unnamed:
+        print(f"{len(unnamed)} recipes carry neither an id nor a name EDSY knows, so no module "
+              f"type can reach them:")
+        for line in sorted(set(unnamed))[:20]:
+            print(f"  {line}")
     print("Per kind: " + ", ".join(f"{kind}={count}" for kind, count in sorted(counts.items())))
     print(f"Ingredient references resolved: "
           f"{sum(len(row[5].split(',')) for row in built if row[5])}, unresolved 0")

@@ -220,7 +220,15 @@ public static class BlueprintCatalogue
 
         while (reader.ReadLine() is { } line)
         {
-            if (line.Length == 0 || line[0] == '#' || line[0] == '['
+            // Sections after the recipes are other tables in the same resource, and their rows are
+            // not blueprints. Stopping at the first one is what keeps `[groups]` from being read as
+            // 86 nameless recipes — a header row is two cells wide and parses without complaint.
+            if (line.Length > 0 && line[0] == '[')
+            {
+                break;
+            }
+
+            if (line.Length == 0 || line[0] == '#'
                 || line.StartsWith("kind\t", StringComparison.Ordinal))
             {
                 continue;
