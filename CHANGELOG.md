@@ -19,8 +19,8 @@ it ships, and the line it gets here is its permanent record.
 
 ## 0.38.1 — 2026-08-19 — The mining missile is a mining missile
 
-**Remediation 15 item 2a**, shipped on its own ahead of the rest of the batch because the wrong
-rows were in the table a Commander already has.
+**Remediation 15 items 2a, 3, 5, 7 and 14.** Item 2a led it, because the wrong rows were in the
+table a Commander already has; the other four are small, independent and were ready alongside it.
 
 ### A Sub-surface Displacement Missile was shipping as a Pulse Laser
 
@@ -86,6 +86,36 @@ five assertions run in CI against the shipped table itself, because the generato
 build and nothing would otherwise notice. Every mount must agree with its own symbol, no name may be
 built from a raw symbol fragment, no placeholder may appear, and the reported missile must be a
 missile.
+
+### Four smaller things in the Loadout tab and the Persona card
+
+**A searchable chooser takes the keyboard when it appears.** Reported as *"I should not have to
+click it"*. Every searchable chooser now focuses its search box, not only the module one — the same
+line the text-entry prompt has always carried, and safe for the same two reasons: nothing in the
+headset sends a keystroke, and the panel swallows the push-to-talk key before any control sees it.
+
+**A question with one answer is not asked.** Reported against Life Support: *"there is only one
+choice, it can't be anything else"* — and the page drew two rows anyway, "Anything — I only want the
+engineering" and the single answer. The module step and the grade step now take a lone option and
+move on. For a socket that accepts one type, *anything* and *the one thing it takes* are the same
+want, so the plan records the module instead of leaving it blank, and the line reads properly rather
+than opening with a bare grade.
+
+The experimental-effect step deliberately keeps asking. Its decline is **"No effect"**, which the
+single effect does not satisfy — those are opposite wants, not the same one, and taking it would put
+an experimental on the plan nobody asked for.
+
+**"Point Defence is not currently engineered."** That verdict is a reading taken at a moment, not a
+property of the module: the plan carries the journal's verdict with its date, and it ships as still
+to do. *Is not engineered* reads as a fact about Point Defence; the only thing Directive 47 knows is
+a fact about right now. It is in Core, so it reads that way aloud as well.
+
+**A hull is named even when Frontier does not name it.** Reported as *"Oxen, a type9_military is not
+bound to a core"*. Elite does not always send a localised ship name, and the Type-10 Defender is one
+it omits — its internal symbol is `type9_military`, which is not even the hull it names. The
+specification table has resolved that symbol all along, and the fleet page one tab over was already
+printing "Oxen (Type-10 Defender)" off it. The journal's own name still wins wherever Frontier sends
+one; the table is the fallback, and the raw symbol only the last resort.
 
 ---
 
