@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using System.Text;
 using D47.Core.Journal;
 
@@ -983,7 +985,90 @@ public sealed class ChecklistService(
     /// The subjects this proposal has an opinion about. Anything the plan currently says about one
     /// of these and this proposal does not repeat is being dropped on purpose.
     /// </param>
+    /// <summary>
+    /// Puts a build on the checklist outright, and says what landed there.
+    /// <para>
+    /// <b>Because the button says so</b> (remediation.md 15, item 12). "Put this build on my
+    /// checklist" made a *proposal* and said nothing about where forty items had gone, so a
+    /// Commander who pressed it, went to the Checklist tab and found one custom note reasonably
+    /// concluded nothing had saved. Everything had saved; it was waiting behind a button showing a
+    /// "1", at the far edge of the bar.
+    /// </para>
+    /// <para>
+    /// <b>Phase 25's rule is not weakened.</b> "Suggestions are a page rather than an interruption,
+    /// and accepting stays the Commander's act" governs what d47 raises <em>unbidden</em>. This is
+    /// not unbidden: the Commander found the build and pressed a button labelled with exactly this
+    /// outcome, and that press <em>is</em> the act of accepting. Routing it through a proposal asks
+    /// for a decision already given. <see cref="ProposePlan"/> stays, for the plans d47 offers on
+    /// its own — a bought hull adopting a prospective build, and the like.
+    /// </para>
+    /// </summary>
+    public string AdoptPlan(
+        ChecklistScope scope,
+        ChecklistSource source,
+        IReadOnlyList<ChecklistItem> items,
+        IReadOnlyCollection<string> replacing)
+    {
+        var wanted = Wanted(scope, source, items, replacing);
+
+        if (wanted.Count == 0)
+        {
+            return "That would leave the plan empty, and I would rather you dropped it from the panel.";
+        }
+
+        var change = Revise(scope, source, wanted);
+
+        // The count, said out loud. Forty items arriving is an event, and the interface used to
+        // report it by changing a hidden button into one showing a 1.
+        var landed = items.Count;
+
+        return landed == 0
+            ? change.Report
+            : $"{landed.ToString(CultureInfo.InvariantCulture)} "
+              + $"{(landed == 1 ? "item is" : "items are")} on your checklist now, "
+              + "under the Checklist tab.";
+    }
+
     public string ProposePlan(
+        ChecklistScope scope,
+        ChecklistSource source,
+        IReadOnlyList<ChecklistItem> items,
+        IReadOnlyCollection<string> replacing,
+        string? describing = null)
+    {
+        var wanted = Wanted(scope, source, items, replacing);
+
+        if (wanted.Count == 0)
+        {
+            return "That would leave the plan empty, and I would rather you dropped it from the panel.";
+        }
+
+        // The Commander's word for the ship where the caller has one, and the scope's own
+        // "ship 53" only where it does not (remediation.md 15, item 12, thread B). A caller
+        // holding the build knows it is called Oxen; the scope holds an id and nothing else.
+        var whose = describing is { Length: > 0 } named ? named : scope.ToString();
+
+        var said = items.Count == 0
+            ? $"Drop {string.Join(", ", replacing)} from the {whose} plan"
+            : $"Set the {whose} plan's {string.Join(", ", replacing)} to {string.Join("; ", items.Select(item => item.Text))}";
+
+        return Record(new ChecklistProposal
+        {
+            Id = "pending",
+            CommanderFid = Fid,
+            Kind = ProposalKind.Plan,
+            Scope = scope,
+            Source = source,
+            Items = wanted,
+            Summary = Trim(said),
+        });
+    }
+
+    /// <summary>
+    /// What the checklist should hold for this scope and source once a build is applied: what is
+    /// already standing for slots this build has no opinion about, plus what it does want.
+    /// </summary>
+    private List<ChecklistItem> Wanted(
         ChecklistScope scope,
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
@@ -1001,31 +1086,13 @@ public sealed class ChecklistService(
             .Where(item => item.Intent is { } intent && !touched.Contains(ChecklistKeys.Compact(intent.Subject)))
             .ToList();
 
-        var wanted = standing
-            .Concat(items)
-            .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.Last())
-            .ToList();
-
-        if (wanted.Count == 0)
-        {
-            return "That would leave the plan empty, and I would rather you dropped it from the panel.";
-        }
-
-        var said = items.Count == 0
-            ? $"Drop {string.Join(", ", replacing)} from the {scope} plan"
-            : $"Set the {scope} plan's {string.Join(", ", replacing)} to {string.Join("; ", items.Select(item => item.Text))}";
-
-        return Record(new ChecklistProposal
-        {
-            Id = "pending",
-            CommanderFid = Fid,
-            Kind = ProposalKind.Plan,
-            Scope = scope,
-            Source = source,
-            Items = wanted,
-            Summary = Trim(said),
-        });
+        return
+        [
+            .. standing
+                .Concat(items)
+                .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.Last()),
+        ];
     }
 
     private string Record(ChecklistProposal proposal)

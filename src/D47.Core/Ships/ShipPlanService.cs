@@ -349,8 +349,13 @@ public sealed class ShipPlanService(
     /// the slot that caused it in its intent, which is what lets a later revision find them again.
     /// </para>
     /// <para>
-    /// Through <see cref="ChecklistService.ProposePlan"/>, so accepting stays the Commander's act
-    /// and a revision is a diff rather than a rebuild: the ordering they spent time on survives.
+    /// <b>Straight onto the list, because the button says so</b> (remediation.md 15, item 12). This
+    /// used to make a proposal and say nothing about where the items had gone, so a Commander who
+    /// pressed "Put this build on my checklist" and then looked at their checklist found it
+    /// unchanged. Phase 25's rule that accepting stays the Commander's act is not weakened: it
+    /// governs what d47 raises unbidden, and pressing a button labelled with the outcome <em>is</em>
+    /// the act of accepting. A revision is still a diff rather than a rebuild, so the ordering they
+    /// spent time on survives.
     /// </para>
     /// </summary>
     public string Promote(string buildId)
@@ -382,7 +387,7 @@ public sealed class ShipPlanService(
             [.. planned.Select(slot => slot.ToRequest())],
             checklists.SlotFor);
 
-        return checklists.ProposePlan(
+        return checklists.AdoptPlan(
             scope,
             ChecklistSource.EngineeringPlan,
             items,

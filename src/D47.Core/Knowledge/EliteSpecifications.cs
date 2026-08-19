@@ -122,6 +122,34 @@ public sealed record ModuleSpecification
 
     public double? CausticResistance { get; init; }
 
+    /// <summary>
+    /// What separates this module from the next one of its kind, as name-and-value pairs in the
+    /// order a Commander reads them (remediation.md 15, items 2b and 9).
+    /// <para>
+    /// <b>Per kind rather than one set for everything.</b> A weapon leads with damage per second
+    /// and its damage type; a power distributor with three capacitors and how fast each refills.
+    /// The reported complaint was that price was the only thing telling two modules apart, and the
+    /// answer is not one list of figures but the right few for what the thing is.
+    /// </para>
+    /// <para>
+    /// Damage per second is computed by coriolis's own formula rather than by arithmetic invented
+    /// here — see <c>dps</c> in the generator, and the licence distinction that makes lifting it
+    /// the allowed half.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<(string Name, string Value)> Figures { get; init; } = [];
+
+    /// <summary>
+    /// Frontier's own description of the module, or null for one they do not describe.
+    /// <para>
+    /// <b>The answer to "what's special about a Guardian Distributor?" in their words</b> — that it
+    /// speeds up capacitor recharge at the cost of smaller capacitors and more heat. 707 modules
+    /// carry one. Attributing Frontier in their own words is what <c>NOTICE</c> already does and
+    /// what the game-data invariant asks for.
+    /// </para>
+    /// </summary>
+    public string? About { get; init; }
+
     public bool IsDrive => OptimalMass is not null;
 
     /// <summary>
@@ -569,6 +597,8 @@ public static class EliteSpecifications
         Class = Integer(cells, 2),
         Rating = Text(cells, 3),
         Mount = Mounts.GetValueOrDefault(Text(cells, 4) ?? string.Empty),
+        Figures = Pairs(cells, 21),
+        About = Text(cells, 22),
         Mass = Real(cells, 5),
         Power = Real(cells, 6),
         Integrity = Integer(cells, 7),
@@ -616,6 +646,15 @@ public static class EliteSpecifications
         ["Gimballed"] = "gimballed",
         ["Turreted"] = "turreted",
     };
+
+    /// <summary>The `name=value;name=value` bag the generator writes, in the order it wrote it.</summary>
+    private static IReadOnlyList<(string, string)> Pairs(string[] cells, int index) =>
+        Text(cells, index) is not { } text
+            ? []
+            : [.. text.Split(';')
+                .Select(part => part.Split('=', 2))
+                .Where(parts => parts.Length == 2 && parts[0].Length > 0 && parts[1].Length > 0)
+                .Select(parts => (parts[0], parts[1]))];
 
     private static string? Text(string[] cells, int index) =>
         index < cells.Length && cells[index].Length > 0 ? cells[index] : null;

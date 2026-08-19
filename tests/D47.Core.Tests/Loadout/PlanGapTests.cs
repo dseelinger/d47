@@ -225,7 +225,7 @@ public class PlanGapTests
     {
         var build = Ship() with
         {
-            Slots = [new SlotPlan("MainEngines", "Dirty Drive Tuning", Grade: null)],
+            Slots = [new SlotPlan("MainEngines", "Dirty Drive Tuning", Grade: 0)],
         };
 
         var report = PlanGap.Of([build], [], State());

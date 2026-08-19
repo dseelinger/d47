@@ -36,10 +36,44 @@ public enum LoadoutTone
 
     /// <summary>The head of a block — "Fitted", "Planned", "What it costs".</summary>
     Heading,
+
+    /// <summary>
+    /// What a module has been engineered with (remediation.md 15, item 10).
+    /// <para>
+    /// Its own tone rather than <see cref="Body"/> because it answers a different question from the
+    /// rest of the block: the module's name says what is fitted, and this says what was done to it.
+    /// Asked for as "the engineering font in a different colour in the details pane".
+    /// </para>
+    /// </summary>
+    Engineered,
 }
 
 /// <summary>One line of a loadout page, as content rather than as a control.</summary>
-public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Muted);
+public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Muted)
+{
+    /// <summary>
+    /// The grade this line's plan is at, where the line carries one that can be stepped.
+    /// <para>
+    /// <b>A stepper rather than a link</b> (remediation.md 15, item 4). Changing the grade changes
+    /// what is underneath it — the roll count, and so the whole "What it costs" block — so the
+    /// control belongs where the numbers are and moves them in place. A link that reopened a
+    /// chooser got the Commander back where they started.
+    /// </para>
+    /// <para>
+    /// Null on every other line, and null on a blueprint offering one grade, because there is
+    /// nothing to step.
+    /// </para>
+    /// </summary>
+    public LoadoutStep? Step { get; init; }
+}
+
+/// <summary>
+/// A number on a line that the Commander can move, and what happens when they do.
+/// </summary>
+/// <param name="Value">Where it is now.</param>
+/// <param name="Offered">What it may be, highest first — the stepper clamps to these.</param>
+/// <param name="Set">Applies a new value.</param>
+public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<int> Set);
 
 /// <summary>
 /// One pressable line of a loadout index.
@@ -55,6 +89,17 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 /// <param name="Marked">Whether a plan exists here. A mark, never a column.</param>
 public sealed record LoadoutRow(string Key, string Word, string Text, string? Aside, bool Marked)
 {
+    /// <summary>
+    /// Whether the thing this row names has been engineered (remediation.md 15, item 10).
+    /// <para>
+    /// <b>Independent of <c>Marked</c>, and the two are read at a glance.</b> The dot means a plan
+    /// exists and this means a roll has been done, so a row carries neither, either or both — in
+    /// the reported screenshot the Power Distributor was engineered with no plan while the Power
+    /// Plant was both.
+    /// </para>
+    /// </summary>
+    public bool Engineered { get; init; }
+
     /// <summary>
     /// The heading this row sits under, where the index is grouped (remediation.md 12, item 1).
     /// <para>
@@ -139,6 +184,19 @@ public interface ILoadoutMode
 
     /// <summary>Offers the whole item to the checklist, and says what happened.</summary>
     string Promote(string item);
+
+    /// <summary>
+    /// Whether a plan may be dragged from one slot to another, without moving it
+    /// (remediation.md 15, item 1). Asked while the mouse is still down, so an invalid target can
+    /// simply not highlight rather than accepting the drop and explaining afterwards.
+    /// </summary>
+    bool CanCopy(string item, string from, string to);
+
+    /// <summary>
+    /// Copies a slot's plan onto another slot, and says what happened. Overwrites whatever the
+    /// target held, because that is what dragging means.
+    /// </summary>
+    string Copy(string item, string from, string to);
 
     string PromoteLabel { get; }
 

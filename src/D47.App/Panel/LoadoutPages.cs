@@ -2,6 +2,9 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -110,7 +113,7 @@ public static class LoadoutPages
     public static NavCrumb SlotCrumb(ILoadoutMode mode, LoadoutRow row) =>
         new(mode.SlotPrefix + row.Key, row.Word) { Level = mode.SlotPrefix };
 
-    private static (string Item, string Slot) SplitSlot(string key)
+    internal static (string Item, string Slot) SplitSlot(string key)
     {
         var at = key.IndexOf('|', StringComparison.Ordinal);
 
@@ -124,7 +127,8 @@ public static class LoadoutPages
     /// where a plan exists, and everything else in the pane that opens — which is what lets one
     /// layout survive from 512 to 2048 logical pixels.
     /// </summary>
-    internal static Control Row(string text, string? aside, bool marked, Action pressed)
+    internal static Control Row(
+        string text, string? aside, bool marked, Action pressed, bool engineered = false)
     {
         var label = new TextBlock
         {
@@ -180,20 +184,53 @@ public static class LoadoutPages
                 note.MaxWidth = Math.Max(80, size.NewSize.Width * 0.6);
         }
 
-        // The mark, and it is a mark rather than a column: "this slot has a plan" is a boolean,
-        // and a column for it would be a column that is empty on most rows of most ships.
-        if (marked)
+        // The marks, and they are marks rather than columns: "this slot has a plan" and "this
+        // module is engineered" are booleans, and a column for either would be a column that is
+        // empty on most rows of most ships.
+        //
+        // **Two independent facts, and which is which has to be readable at a glance**
+        // (remediation.md 15, item 10). The dot means a plan exists and the gear means a roll has
+        // been done, so a row carries neither, either or both — in the reported screenshot the
+        // Power Distributor was engineered with no plan while the Power Plant was both. Different
+        // glyphs and different colours, because two marks distinguished only by hue are one mark
+        // to a Commander who cannot separate the hues.
+        if (marked || engineered)
         {
-            var mark = new TextBlock
+            var marks = new StackPanel
             {
-                Text = "●",
-                FontSize = TypeScale.Secondary,
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
             };
 
-            Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-            body.Children.Add(mark);
+            if (engineered)
+            {
+                var gear = new TextBlock
+                {
+                    Text = "⚙",
+                    FontSize = TypeScale.Secondary,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                Themed(gear, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+                marks.Children.Add(gear);
+            }
+
+            if (marked)
+            {
+                var mark = new TextBlock
+                {
+                    Text = "●",
+                    FontSize = TypeScale.Secondary,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+                marks.Children.Add(mark);
+            }
+
+            body.Children.Add(marks);
         }
 
         Grid.SetColumn(label, 1);
@@ -240,6 +277,57 @@ public static class LoadoutPages
     }
 
     /// <summary>One line of a page, drawn the way its tone says.</summary>
+    /// <summary>
+    /// A line, with its stepper beside it where it has one (remediation.md 15, item 4).
+    /// <para>
+    /// <b>Beside the text and not inside it.</b> The line is one string that is both shown and
+    /// spoken — <see cref="Ships.SlotPlan.Describe"/> — so the grade stays part of the sentence and
+    /// the control sits next to it, rather than the sentence being cut into pieces around a
+    /// widget.
+    /// </para>
+    /// </summary>
+    internal static Control Stepped(LoadoutLine line)
+    {
+        if (line.Step is not { } step)
+        {
+            return Line(line);
+        }
+
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        row.Children.Add(Line(line));
+
+        // Highest first, which is how the offer is ordered and how a Commander reads a grade: up
+        // is better. The buttons stop where the recipe stops rather than at five.
+        var at = step.Offered.ToList().IndexOf(step.Value);
+
+        row.Children.Add(Nudge("▲", at > 0, () => step.Set(step.Offered[at - 1])));
+        row.Children.Add(Nudge("▼", at >= 0 && at < step.Offered.Count - 1, () => step.Set(step.Offered[at + 1])));
+
+        return row;
+    }
+
+    private static Button Nudge(string glyph, bool live, Action pressed)
+    {
+        var button = new Button
+        {
+            Content = glyph,
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(8, 2),
+            IsEnabled = live,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
     internal static TextBlock Line(LoadoutLine line) => line.Tone switch
     {
         LoadoutTone.Heading => Heading(line.Text),
@@ -250,6 +338,11 @@ public static class LoadoutPages
             TextWrapping = TextWrapping.Wrap,
         },
         LoadoutTone.Danger => Toned(line.Text, ThemeManager.DangerKey),
+
+        // What was done to the module, in its own colour (remediation.md 15, item 10). Info
+        // rather than Accent, because Accent already means "a plan exists" on the dot beside the
+        // row and the two facts are independent — a module can be engineered with no plan.
+        LoadoutTone.Engineered => Toned(line.Text, ThemeManager.InfoKey),
         _ => Muted(line.Text),
     };
 
@@ -406,7 +499,8 @@ public sealed class IndexPage : LoadoutPage
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.Crumb(Mode, row))));
+                () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
+                row.Engineered));
         }
     }
 
@@ -589,13 +683,97 @@ public sealed class ItemPage : LoadoutPage
                 _list.Children.Add(LoadoutPages.Heading(heading));
             }
 
-            _list.Children.Add(LoadoutPages.Row(
+            var control = LoadoutPages.Row(
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row))));
+                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
+                row.Engineered);
+
+            Draggable(control, row);
+
+            _list.Children.Add(control);
         }
     }
+
+    /// <summary>
+    /// Ctrl and the left button held, dragged from one slot row to another, copies the plan
+    /// (remediation.md 15, item 1).
+    /// <para>
+    /// <b>Pointer events rather than the drag-and-drop framework.</b> The copy never leaves this
+    /// page — there is no other window to drop on and nothing to negotiate a format with — so the
+    /// framework would buy a clipboard round trip and an API that has already moved once, in
+    /// exchange for nothing. Two events and a field do it, and they can be raised by a test.
+    /// </para>
+    /// <para>
+    /// <b>Ctrl rather than a bare drag</b>, because a slot row's first job is to be pressed: a
+    /// plain drag would turn every mis-aimed click into a plan being moved.
+    /// </para>
+    /// <para>
+    /// <b>An invalid target refuses during the drag rather than after the drop.</b> The row under
+    /// the pointer is asked whether it would take the plan and greyed where it would not, so a
+    /// Plasma Accelerator that does not come small enough shows that while the mouse is still
+    /// down — not in a dialog a second later.
+    /// </para>
+    /// </summary>
+    private void Draggable(Control control, LoadoutRow row)
+    {
+        var slot = LoadoutPages.SplitSlot(row.Key).Slot;
+
+        control.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) =>
+            {
+                var point = args.GetCurrentPoint(control);
+
+                if (point.Properties.IsLeftButtonPressed
+                    && args.KeyModifiers.HasFlag(KeyModifiers.Control))
+                {
+                    _dragging = slot;
+                    args.Handled = true;
+                }
+            },
+            RoutingStrategies.Tunnel);
+
+        control.AddHandler(
+            InputElement.PointerReleasedEvent,
+            (_, args) =>
+            {
+                if (_dragging is not { } from || from == slot)
+                {
+                    _dragging = null;
+                    return;
+                }
+
+                _dragging = null;
+                args.Handled = true;
+
+                // Refused rather than explained, matching what the row showed during the drag.
+                if (!Mode.CanCopy(_item, from, slot))
+                {
+                    return;
+                }
+
+                _summary.Text = Mode.Copy(_item, from, slot);
+                Refresh();
+            },
+            RoutingStrategies.Tunnel);
+
+        // What the row looks like while a plan is over it: dimmed where it would refuse, so the
+        // Commander learns the rule from the interface rather than from a message.
+        control.PointerEntered += (_, _) =>
+        {
+            if (_dragging is { } from && from != slot)
+            {
+                control.Opacity = Mode.CanCopy(_item, from, slot) ? 1 : 0.4;
+            }
+        };
+
+        control.PointerExited += (_, _) => control.Opacity = 1;
+    }
+
+    /// <summary>The slot a plan is being dragged from, or null when nothing is in flight.</summary>
+    private string? _dragging;
 }
 
 /// <summary>
@@ -653,7 +831,9 @@ public sealed class SlotPage : LoadoutPage
 
         foreach (var line in Mode.Planned(_item, _slot))
         {
-            _body.Children.Add(LoadoutPages.Line(line));
+            // Stepped, because the grade on this page is a control: moving it re-costs the block
+            // below without leaving the page (remediation.md 15, item 4).
+            _body.Children.Add(LoadoutPages.Stepped(line));
         }
 
         Buttons(Mode.HasPlan(_item, _slot));

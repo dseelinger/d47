@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Automation;
@@ -394,10 +395,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _list.Children.Clear();
 
         var document = _checklists.Document;
-        var waiting = _checklists.Proposals.PendingFor(document.CommanderFid).Count;
+        var pending = _checklists.Proposals.PendingFor(document.CommanderFid);
 
-        _suggestions.IsVisible = waiting > 0;
-        _suggestions.Content = $"Suggestions ({waiting})";
+        // **Items, not proposals** (remediation.md 15, item 12). One proposal carrying forty items
+        // rendered as "Suggestions (1)", which beside a checklist holding one custom note read as
+        // one small thing waiting. The number that makes somebody press a button is how much is
+        // behind it, and the page itself still draws one card per proposal, so nothing is lost by
+        // counting the other way.
+        var waiting = pending.Sum(proposal => Math.Max(1, proposal.Items.Count));
+
+        _suggestions.IsVisible = pending.Count > 0;
+        _suggestions.Content = $"Suggestions ({waiting.ToString(CultureInfo.InvariantCulture)})";
 
         _scopeButton.Content = _chosen == Everything ? "Showing everything" : $"Showing {_chosen}";
 

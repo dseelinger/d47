@@ -355,6 +355,18 @@ public sealed class PanelPrompts
             Padding = new Thickness(10, 8),
         };
 
+        // Focused once it is actually in a tree, so a Commander who opened a chooser to look
+        // something up can simply type it — reported against the module chooser as "I should not
+        // have to click it" (remediation 15 item 3). The same line the text-entry prompt already
+        // carries, for the same two reasons it is safe: nothing in the headset sends a keystroke,
+        // and the panel swallows the push-to-talk key before any control sees it, which is what
+        // stops holding it filling the box with brackets.
+        //
+        // Every searchable chooser rather than only the module one. The box is built from
+        // `request.Searchable`, and where the list is short enough not to need scrolling, focusing
+        // it has not cost anything either.
+        box.AttachedToVisualTree += (_, _) => box.Focus();
+
         var board = new StackPanel { Spacing = 6, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
 
         void Typed(string text)

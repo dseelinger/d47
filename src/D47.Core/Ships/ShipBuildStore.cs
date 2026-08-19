@@ -266,7 +266,12 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 slots.Add(new SlotPlan(
                     name,
                     Blank(slot.Blueprint),
-                    slot.Grade,
+
+                    // A stored plan from before grades stopped being nullable reads as none rather
+                    // than failing the load, the same way a retired persona id does. The stepper
+                    // then lands it on the blueprint's highest offered grade, which is where a new
+                    // plan would land anyway (remediation.md 15, item 4).
+                    slot.Grade ?? 0,
                     Blank(slot.Engineer),
                     Blank(slot.Experimental),
                     Blank(slot.Module))

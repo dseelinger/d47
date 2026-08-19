@@ -85,17 +85,27 @@ public class ShipCoreTrustBoundaryTests
         var persona = surface.Settings.Find(D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey);
         Assert.True(persona!.Protected);
 
+        // The read-only row keeps its shape: nothing to write and nothing to press wrongly.
+        var listing = surface.Settings.Find(
+            D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoresKey);
+
+        Assert.NotNull(listing);
+        Assert.Equal(SettingKind.Info, listing!.Kind);
+
+        // The two that bind became dropdowns (remediation.md 15, item 13), so they are writable by
+        // somebody — and the somebody is the Commander at the panel, never the model. Protection
+        // moved from "there is no value to write" to the flag that exists to say so, which is the
+        // invariant's own wording: protected is a property of the caller, not the modality.
         foreach (var key in new[]
                  {
                      D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoreKey,
+                     D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoreShipKey,
                      D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoresKey,
                  })
         {
             var row = surface.Settings.Find(key);
 
             Assert.NotNull(row);
-            Assert.Equal(SettingKind.Info, row!.Kind);
-            Assert.NotNull(row.Press);
 
             var applied = surface.Settings.Apply(key, "sentinel", SettingsCaller.Model);
 

@@ -199,6 +199,27 @@ public sealed record PersonaSettings
         new Dictionary<string, string>();
 
     /// <summary>
+    /// Which ship the core-binding rows are pointed at, by its <c>ShipID</c>.
+    /// <para>
+    /// <b>A selector rather than a preference</b> (remediation.md 15, item 13). Binding a core used
+    /// to be scoped to the ship being flown, so setting one meant boarding that ship in game first;
+    /// two dropdowns replace that, and the first needs somewhere to keep what it points at.
+    /// </para>
+    /// <para>
+    /// <b>It lives here because <see cref="D47.Core.Capabilities.SettingBinding"/> reads and writes
+    /// through settings and nothing else.</b> The alternative was widening that contract for one
+    /// row, which is architecture.md §5 D5 territory and touches every capability. The cost is one
+    /// property that can never be removed, and "which ship am I editing" surviving a restart is a
+    /// convenience rather than a wart.
+    /// </para>
+    /// <para>
+    /// Zero means none chosen. A ship the Commander no longer owns reads as none rather than
+    /// failing the load, the same way a retired persona id does.
+    /// </para>
+    /// </summary>
+    public int ShipCoreShip { get; init; }
+
+    /// <summary>
     /// Whether the background voice pairing has run. A flag rather than "is
     /// <see cref="Voices"/> empty", because a Commander who cleared every pairing by hand
     /// should not have them silently regenerated on the next launch.

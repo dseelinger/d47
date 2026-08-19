@@ -21,10 +21,17 @@ namespace D47.Core.Ships;
 /// <param name="Engineer">Who would roll it, where the Commander has an opinion.</param>
 /// <param name="Experimental">An experimental effect, which is its own item on the same slot.</param>
 /// <param name="Module">The module itself, where the plan is to fit one at all.</param>
+/// <param name="Grade">
+/// The grade wanted, and <b>an <c>int</c> rather than an <c>int?</c></b> (remediation.md 15,
+/// item 4). Null used to be a documented wildcard meaning "any grade"; the Commander's ruling is
+/// that any grade is not a thing, and a nullable field is how the wildcard would come back through
+/// a door nobody was watching. Meaningless where <paramref name="Blueprint"/> is null — a plan can
+/// name a module and no engineering — and it holds 0 there and is never rendered.
+/// </param>
 public sealed record SlotPlan(
     string Slot,
     string? Blueprint = null,
-    int? Grade = null,
+    int Grade = 0,
     string? Engineer = null,
     string? Experimental = null,
     string? Module = null)
@@ -43,7 +50,7 @@ public sealed record SlotPlan(
 
     /// <summary>Whether anything is actually wanted here, or the line is an empty shell.</summary>
     public bool IsEmpty =>
-        Blueprint is null && Grade is null && Experimental is null && Module is null;
+        Blueprint is null && Grade == 0 && Experimental is null && Module is null;
 
     /// <summary>What this plan asks <see cref="EngineeringPlan"/> for.</summary>
     public BuildRequest ToRequest() =>
@@ -66,13 +73,18 @@ public sealed record SlotPlan(
 
         if (Blueprint is { Length: > 0 } blueprint)
         {
-            parts.Add(Grade is { } grade
-                ? $"grade {grade.ToString(CultureInfo.InvariantCulture)} {blueprint}"
+            // **The grade is not printed where the blueprint has only one** (remediation.md 15,
+            // item 4): "grade 1 Ammo Capacity" on a Point Defence says the same thing as "Ammo
+            // Capacity" and takes longer. Three of 160 module-and-blueprint pairs are in that
+            // position, and the rule is keyed on *offers one grade* rather than on *the maximum is
+            // 1*, which is the thing actually meant and stays right if Frontier ships a
+            // single-grade-3 recipe.
+            //
+            // The grade stays in the data throughout — the checklist and the costing need it — and
+            // is omitted only here, which is the one string that is both shown and spoken.
+            parts.Add(Grade > 0 && !Knowledge.BlueprintCatalogue.HasOneGrade(blueprint, Module)
+                ? $"grade {Grade.ToString(CultureInfo.InvariantCulture)} {blueprint}"
                 : blueprint);
-        }
-        else if (Grade is { } only)
-        {
-            parts.Add($"grade {only.ToString(CultureInfo.InvariantCulture)}");
         }
 
         if (Experimental is { Length: > 0 } effect)

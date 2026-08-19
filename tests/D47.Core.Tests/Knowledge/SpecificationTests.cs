@@ -219,17 +219,53 @@ public class SpecificationTests
     // ---- Names that tell things apart --------------------------------------------------------
 
     [Fact]
-    public void AQualifierThatOnlyRestatesTheNameIsNotAdded()
+    public void ARackThatResistsCorrosionSaysSoRatherThanCarryingASymbolFragment()
     {
-        // outfitting.csv calls int_corrosionproofcargorack_size5_class1 a "Cargo Rack", the same
-        // as the plain rack, so the tokens separating them are `cargorack` and
-        // `corrosionproofcargorack`. "Cargo Rack (cargorack)" says the same word twice, is harder
-        // to hear than the name it qualifies, and tells a listener strictly less.
+        // These two used to collide. outfitting.csv indexes the corrosion-resistant rack at sizes
+        // 1 and 4 and not at 5 or 6, so the larger two fell through to a name taken from their
+        // file — "Cargo Rack", the same as the plain rack — and `disambiguate` then separated
+        // them with the only thing that told them apart, giving "Cargo Rack (corrosionproof)".
+        //
+        // Remediation 15 item 2a: that is not a cosmetic blemish, because `AskModule` groups what
+        // it offers by name. A rack whose whole point is that it resists corrosion sat inside the
+        // plain rack's list, one letter of a symbol away from being findable.
+        //
+        // The generator now takes the name from the module's own siblings when the naming
+        // authority has none for it, so all four read alike and nothing collides.
         Assert.Equal("Cargo Rack", EliteSpecifications.Module("int_cargorack_size5_class1")?.Name);
         Assert.Equal("Cargo Rack", EliteSpecifications.Module("int_cargorack_size6_class1")?.Name);
+
+        foreach (var size in new[] { 1, 4, 5, 6 })
+        {
+            Assert.Equal(
+                "Corrosion Resistant Cargo Rack",
+                EliteSpecifications.Module($"int_corrosionproofcargorack_size{size}_class1")?.Name);
+        }
+    }
+
+    [Fact]
+    public void NoShippedModuleNeedsAQualifierToTellItApart()
+    {
+        // `disambiguate` is the generator's last resort: where two modules would otherwise share a
+        // name, class, rating and mount, it separates them with whatever token their symbols do
+        // not share. As of remediation 15 item 2a it alters nothing — every module in the table is
+        // named by FDevIDs, by id or by symbol or through its own family — so the only
+        // parentheses left are Frontier's own, in "Frame Shift Drive (SCO)".
+        //
+        // Asserted rather than assumed, because a qualifier is how a wrong name used to arrive:
+        // all four of the raw-fragment names in the reported batch were `disambiguate` doing its
+        // job honestly on top of a name that was already wrong. A new one firing means a name went
+        // missing upstream, and that is worth a look rather than a shrug.
+        var qualified = EliteSpecifications.Modules
+            .Where(module => module.Name.Contains(" (", StringComparison.Ordinal))
+            .Select(module => module.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
         Assert.Equal(
-            "Cargo Rack (corrosionproof)",
-            EliteSpecifications.Module("int_corrosionproofcargorack_size6_class1")?.Name);
+            ["Frame Shift Drive (SCO)", "Mk II Supercharge Optimised Frame Shift Drive (SCO)"],
+            qualified);
     }
 
     [Fact]

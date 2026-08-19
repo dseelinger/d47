@@ -331,6 +331,11 @@ public sealed class ShipsMode(
                     plan is not null)
                 {
                     Group = ShipSlot.Heading(slot.Kind),
+
+                    // Read off the fitted module rather than off the plan, because they answer
+                    // different questions (remediation.md 15, item 10): the dot beside this says a
+                    // plan exists, and the gear says a roll has already been done.
+                    Engineered = module?.Blueprint is { Length: > 0 },
                 };
             }),
         ];
@@ -381,6 +386,47 @@ public sealed class ShipsMode(
         fitted.Count > 0 || state()?.Ship is { IsKnown: true, ShipId: var id } && id == build.ShipId
             ? "empty"
             : "not seen";
+
+    /// <summary>
+    /// Whether this drag is allowed, asked while the mouse is still down (remediation.md 15,
+    /// item 1). The rules are <see cref="SlotCopy"/>'s and are tested without a window.
+    /// </summary>
+    public bool CanCopy(string item, string from, string to) => Moved(item, from, to) is not null;
+
+    /// <summary>
+    /// Copies a slot's plan onto another, overwriting whatever was there — which is what dragging
+    /// means, and why nothing asks first.
+    /// </summary>
+    public string Copy(string item, string from, string to)
+    {
+        if (Resolve(item) is not { } build || Moved(item, from, to) is not { } moved)
+        {
+            return "That cannot go there.";
+        }
+
+        ships.Plan(build.Id, moved);
+
+        return $"Copied to {moved.Slot}: {moved.Describe()}.";
+    }
+
+    /// <summary>What the dragged plan would become in the target slot, or null where it may not go.</summary>
+    private SlotPlan? Moved(string item, string from, string to)
+    {
+        if (Resolve(item) is not { } build || build.For(from) is not { } plan)
+        {
+            return null;
+        }
+
+        var layout = EliteSpecifications.Slots(build.Hull);
+
+        var source = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, from, StringComparison.OrdinalIgnoreCase));
+
+        var target = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, to, StringComparison.OrdinalIgnoreCase));
+
+        return source is null || target is null ? null : SlotCopy.Resolve(plan, source, target);
+    }
 
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
@@ -444,9 +490,14 @@ public sealed class ShipsMode(
                 ? $"grade {level.ToString(CultureInfo.InvariantCulture)} "
                 : string.Empty;
 
+            // Its own tone, and now a name rather than a symbol. The colour was asked for on the
+            // strength of the line being worth noticing; until the blueprint join existed it would
+            // have made "grade 5 PowerDistributor PrioritySystems" more prominent, which is worse
+            // than leaving it grey. It reads "grade 5 System Focused" now.
             lines.Add(new LoadoutLine(
                 $"{grade}{ChecklistNaming.Readable(blueprint)}"
-                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty)));
+                + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty),
+                LoadoutTone.Engineered));
         }
 
         return lines;
@@ -464,7 +515,32 @@ public sealed class ShipsMode(
             return [new LoadoutLine("Nothing planned for this slot.")];
         }
 
-        var lines = new List<LoadoutLine> { new(plan.Describe(), LoadoutTone.Body) };
+        // The grade, steppable in place (remediation.md 15, item 4). Absent where there is no
+        // blueprint, and absent where the blueprint offers one grade — there is nothing to step,
+        // and the line does not print the grade either.
+        var offered = BlueprintCatalogue.GradesFor(plan.Blueprint, plan.Module);
+
+        var step = offered.Count > 1
+            ? new LoadoutStep(plan.Grade, offered, grade =>
+                ships.Plan(build.Id, plan with { Grade = grade }))
+            : null;
+
+        var lines = new List<LoadoutLine>
+        {
+            new(plan.Describe(), LoadoutTone.Body) { Step = step },
+        };
+
+        // What the engineering does, where something has been chosen. Asked for as an area
+        // describing the effects of the particular engineering choices (item 8), and it moves with
+        // the stepper because the figures are the top grade's.
+        if (BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+                .Where(recipe => recipe.Grade == plan.Grade || recipe.Grade is null)
+                .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe()
+            is { Length: > 0 } does)
+        {
+            lines.Add(new LoadoutLine("Effect", LoadoutTone.Heading));
+            lines.Add(new LoadoutLine(does, LoadoutTone.Engineered));
+        }
 
         if (build.Scope is not { } scope)
         {
@@ -519,7 +595,7 @@ public sealed class ShipsMode(
         var plan = build.For(slot);
 
         AskModule(build, known, plan, prompts, (module, variant) =>
-            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade, experimental) =>
+            AskBlueprint(build, known, plan, module, variant, prompts, (blueprint, grade, experimental) =>
             {
                 ships.Plan(build.Id, new SlotPlan(slot, blueprint, grade, plan?.Engineer)
                 {
@@ -533,7 +609,7 @@ public sealed class ShipsMode(
     }
 
     /// <summary>The modules this slot takes, by name — then which one of it.</summary>
-    private static void AskModule(
+    private void AskModule(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
@@ -561,6 +637,35 @@ public sealed class ShipsMode(
             return;
         }
 
+        if (offered.Count == 1)
+        {
+            // One name, so there is nothing to choose. Reported against Life Support: "there is
+            // only one choice, it can't be anything else" — and the page drew two rows anyway,
+            // "Anything — I only want the engineering" and the single answer. Remediation 15
+            // item 7. Skipping to the variant lands on the 5A-5E question, which is a real choice,
+            // so nothing is lost.
+            //
+            // Taken rather than declined: this records Module = "Life Support" where "Anything"
+            // would leave it null, and for a socket that accepts one type those are the same want.
+            // The plan line then reads properly instead of opening with a bare grade.
+            //
+            // Deliberately not "core internals do not ask". The Frame Shift Drive socket is a core
+            // internal offering three names — Frame Shift Drive, Frame Shift Drive (SCO) and the
+            // Mk II — and SCO is a real decision. The rule is one option, take it, wherever it is.
+            var only = offered[0];
+
+            AskVariant(
+                build,
+                slot,
+                plan,
+                Spelling(only),
+                only,
+                prompts,
+                variant => chosen(Spelling(only), variant));
+
+            return;
+        }
+
         prompts.Choose(
             new ChoiceRequest(
                 "loadout.module",
@@ -568,11 +673,17 @@ public sealed class ShipsMode(
                 $"What goes in {slot.Describe()}?",
                 Context(build, slot),
                 [
-                    new ChoiceOption(string.Empty, "Anything — I only want the engineering"),
+                    // Only where there is something to engineer (remediation.md 15, item 15).
+                    // Reported as "I went to an optional slot with nothing in it and it said the
+                    // same thing. You can't engineer an empty slot" — and it was offered
+                    // unconditionally, so taking it on an empty slot planned engineering for a
+                    // module that is not there. Named where there is one, because "if so, fine,
+                    // but say so": keeping what is fitted is a real want and was left unsaid.
+                    .. Keeping(build, slot),
                     .. offered.Select(group => new ChoiceOption(
                         Spelling(group),
                         Spelling(group),
-                        Sizes(group))),
+                        Detail(Sizes(group), About(group)))),
                 ],
                 plan?.Module,
                 ChoiceSurface.Page)
@@ -614,7 +725,7 @@ public sealed class ShipsMode(
     /// page draws.
     /// </para>
     /// </summary>
-    private static void AskVariant(
+    private void AskVariant(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
@@ -664,26 +775,38 @@ public sealed class ShipsMode(
     /// the ones that blueprint actually has — five is not universal, and offering a grade nobody
     /// rolls is a plan that can never be met.
     /// </summary>
-    private static void AskBlueprint(
+    private void AskBlueprint(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
         string? module,
+        string? variant,
         PanelPrompts prompts,
-        Action<string?, int?, string?> chosen)
+        Action<string?, int, string?> chosen)
     {
         // What the blueprints are listed for: the module just chosen, or the one already planned,
         // and otherwise everything — which is a long list and is exactly what the search is for.
         var wanted = module ?? plan?.Module;
 
-        var recipes = BlueprintCatalogue.ForModule(wanted)
-            .Where(recipe => recipe.Kind == BlueprintKind.Modification)
-            .ToList();
+        var offer = Offered(wanted, variant ?? plan?.Variant);
 
-        if (recipes.Count == 0)
+        // Three states, where there used to be two (remediation.md 15, item 6). A module that
+        // genuinely takes no engineering is not asked about at all — a fuel tank is the reported
+        // case, and it is still a plannable slot, just not an engineerable one. Before, that was
+        // indistinguishable from a name that failed to match, and both fell through to offering
+        // every blueprint in the game: a Type-10's armour was offered Dirty Drive Tuning.
+        if (offer is { Count: 0 })
         {
-            recipes = [.. BlueprintCatalogue.All.Where(recipe => recipe.Kind == BlueprintKind.Modification)];
+            chosen(null, 0, null);
+            return;
         }
+
+        // Everything, for a slot with no module decided yet or a module whose type d47 does not
+        // know. The first is a real want — "I only care about the engineering" — and the second is
+        // a hole in the table rather than a claim that nothing can be rolled.
+        var recipes = offer is { Count: > 0 }
+            ? offer.Where(recipe => recipe.Kind == BlueprintKind.Modification).ToList()
+            : [.. BlueprintCatalogue.All.Where(recipe => recipe.Kind == BlueprintKind.Modification)];
 
         var names = recipes
             .GroupBy(recipe => recipe.Name, StringComparer.Ordinal)
@@ -701,7 +824,7 @@ public sealed class ShipsMode(
                     .. names.Select(group => new ChoiceOption(
                         group.Key,
                         group.Key,
-                        Grades(group))),
+                        Detail(Grades(group), Does(group)))),
                 ],
                 plan?.Blueprint,
                 ChoiceSurface.Page)
@@ -717,7 +840,7 @@ public sealed class ShipsMode(
                 {
                     // No roll means no grade and no effect: both are properties of a roll, and
                     // asking about them anyway is two questions with one answer.
-                    chosen(null, null, null);
+                    chosen(null, 0, null);
                     return;
                 }
 
@@ -729,9 +852,11 @@ public sealed class ShipsMode(
                     .OrderDescending()
                     .ToList();
 
-                AskGrade(build, slot, plan, blueprint, offered, prompts, grade =>
-                    AskEffect(build, slot, plan, wanted, prompts, effect =>
-                        chosen(blueprint, grade, effect)));
+                // Straight past the grade, which is decided rather than asked.
+                var grade = Grade(plan, offered);
+
+                AskEffect(build, slot, plan, wanted, prompts, effect =>
+                    chosen(blueprint, grade, effect));
             });
     }
 
@@ -750,39 +875,39 @@ public sealed class ShipsMode(
     /// keeps its row.
     /// </para>
     /// </summary>
-    private static void AskGrade(
-        ShipBuild build,
-        ShipSlot slot,
-        SlotPlan? plan,
-        string? blueprint,
-        IReadOnlyList<int> offered,
-        PanelPrompts prompts,
-        Action<int?> chosen)
+    /// <summary>
+    /// The grade, <b>decided rather than asked</b> (remediation.md 15, item 4).
+    /// <para>
+    /// Reported as "I should be able to skip choose an engineering grade — 999 times out of 1000
+    /// it will be 5". Measured: of 160 module-and-blueprint pairs, 155 reach grade 5, and the whole
+    /// exception set is five. So the rule is <b>the highest grade the blueprint offers</b>, never
+    /// the number five — landing on "any" when 5 was not offered was worse than landing on the top
+    /// of what is.
+    /// </para>
+    /// <para>
+    /// <b>The page is gone entirely.</b> The grade becomes a stepper on the slot page, where
+    /// changing it changes what is underneath it: <see cref="EngineeringRules.RollsFor"/> turns
+    /// grade and engineer rank into a roll count, which drives the "What it costs" block, so a
+    /// stepper answers "what would grade 4 cost me instead" in place. A link that reopened a
+    /// chooser got you back where you started.
+    /// </para>
+    /// <para>
+    /// <b>Any grade is not a thing</b>, on the Commander's ruling, which is why nothing here offers
+    /// it and why <see cref="SlotPlan.Grade"/> is an <c>int</c>.
+    /// </para>
+    /// </summary>
+    private static int Grade(SlotPlan? plan, IReadOnlyList<int> offered)
     {
-        const int Usual = 5;
+        if (offered.Count == 0)
+        {
+            return 0;
+        }
 
-        var current = plan?.Grade?.ToString(CultureInfo.InvariantCulture)
-                      ?? (offered.Contains(Usual) ? Usual.ToString(CultureInfo.InvariantCulture) : null);
-
-        prompts.Choose(
-            new ChoiceRequest(
-                "loadout.grade",
-                "Grade",
-                blueprint is { Length: > 0 } roll ? $"Which grade of {roll}?" : "Which grade?",
-                Context(build, slot),
-                [
-                    .. offered.Select(grade => new ChoiceOption(
-                        grade.ToString(CultureInfo.InvariantCulture),
-                        $"Grade {grade.ToString(CultureInfo.InvariantCulture)}")),
-                    new ChoiceOption(string.Empty, "Any grade"),
-                ],
-                current,
-                ChoiceSurface.Layer)
-            {
-                CurrentWord = plan?.Grade is null ? "the usual" : "planned now",
-            },
-            option => chosen(
-                int.TryParse(option.Key, CultureInfo.InvariantCulture, out var grade) ? grade : null));
+        // What was planned, where it is still on offer. A recipe that lost a grade drops to the
+        // top of what remains rather than keeping a number nobody can roll.
+        return plan is { Grade: > 0 } wanted && offered.Contains(wanted.Grade)
+            ? wanted.Grade
+            : offered[0];
     }
 
     /// <summary>
@@ -797,7 +922,7 @@ public sealed class ShipsMode(
     /// bench and it is its own checklist item on the same slot.
     /// </para>
     /// </summary>
-    private static void AskEffect(
+    private void AskEffect(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
@@ -816,6 +941,13 @@ public sealed class ShipsMode(
             chosen(plan?.Experimental);
             return;
         }
+
+        // Deliberately no "one option, take it" here, though remediation 15 item 7 groups this
+        // step with the others. The rule there rests on "anything" and "the only thing it takes"
+        // being the same want, which is true of a module socket and false of an experimental: the
+        // decline on this page is "No effect", which the single effect does not satisfy. Taking it
+        // would put an experimental on the plan that nobody asked for — the opposite of the step
+        // it would be copying.
 
         prompts.Choose(
             new ChoiceRequest(
@@ -890,13 +1022,150 @@ public sealed class ShipsMode(
     /// The header's second line: which slot, how big, and what is in it. The one thing a dropdown
     /// cannot do, and the reason taking the panel is worth it.
     /// </summary>
-    private static string Context(ShipBuild build, ShipSlot slot) =>
-        $"{build.Describe()} · {slot.Describe()}. It does not reach your checklist until you "
-        + "promote the build.";
+    /// <summary>
+    /// The "keep what is there, I only want the engineering" row, where there is anything to keep.
+    /// <para>
+    /// Empty on a slot that is known to be empty: engineering nothing is not a plan. Empty as well
+    /// where d47 cannot see into the ship, because the row would then be an offer to keep a module
+    /// nobody can name.
+    /// </para>
+    /// </summary>
+    private IReadOnlyList<ChoiceOption> Keeping(ShipBuild build, ShipSlot slot) =>
+        FittedIn(build, slot) is not { } module
+            ? []
+            : [new ChoiceOption(
+                string.Empty,
+                EliteSpecifications.ModuleName(module.Item) is { Length: > 0 } named
+                    ? $"Keep the {named} — I only want the engineering"
+                    : "Keep what is fitted — I only want the engineering")];
+
+    /// <summary>
+    /// The module fitted in this slot right now, or null where nothing is or nothing can see.
+    /// <para>
+    /// <b>Null and "empty" are different answers</b> and the callers need both: Elite reports the
+    /// loadout of the ship the Commander is sitting in and no other, so a slot on a ship in another
+    /// dock is unknown rather than empty.
+    /// </para>
+    /// </summary>
+    private ShipModule? FittedIn(ShipBuild build, ShipSlot slot)
+    {
+        var loadout = state()?.Ship;
+
+        return loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId
+            ? null
+            : loadout.Modules.FirstOrDefault(candidate =>
+                string.Equals(candidate.Slot, slot.Name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Whether this slot is known to be empty — as opposed to holding something, or being on a ship
+    /// nothing can see into.
+    /// </summary>
+    private bool KnownEmpty(ShipBuild build, ShipSlot slot) =>
+        state()?.Ship is { IsKnown: true } loadout
+        && loadout.ShipId == build.ShipId
+        && FittedIn(build, slot) is null;
+
+    /// <summary>
+    /// What a module can be engineered with, or null where d47 does not know its type.
+    /// <para>
+    /// The exact variant first, because it names one module and answers exactly. A bare name is
+    /// enough where the Commander declined the variant — every size of a pulse laser takes the
+    /// same rolls — so the first module of that name answers for all of them.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<Blueprint>? Offered(string? module, string? variant)
+    {
+        if (variant is { Length: > 0 } symbol
+            && BlueprintCatalogue.For(EliteSpecifications.Module(symbol)) is { } exact)
+        {
+            return exact;
+        }
+
+        if (module is not { Length: > 0 } named)
+        {
+            return null;
+        }
+
+        return EliteSpecifications.ModulesNamed(named, null, null) is [var first, ..]
+            ? BlueprintCatalogue.For(first)
+            : null;
+    }
+
+    /// <summary>
+    /// The chooser's second line: what is being chosen for, and what is in it now.
+    /// <para>
+    /// <b>The record's own documentation asked for this and the call site delivered neither</b>
+    /// (remediation.md 15, item 11). <see cref="ChoiceRequest.Context"/> is described as "the
+    /// slot's size, and what is fitted now"; what it received was the ship, the slot and the
+    /// promote sentence. The marker reserved for <em>fitted</em> was meanwhile spent on
+    /// <em>planned</em>, so the one thing a dropdown cannot do was the one thing missing.
+    /// </para>
+    /// <para>
+    /// Fitted and planned stay two facts and never one merged line, which is Phase 26's rule: this
+    /// carries fitted, and the row marker goes on keeping "planned now".
+    /// </para>
+    /// </summary>
+    private string Context(ShipBuild build, ShipSlot slot)
+    {
+        // A utility mount is size 0, which is not a size a Commander says.
+        var size = slot.Size > 0
+            ? $" (size {slot.Size.ToString(CultureInfo.InvariantCulture)})"
+            : string.Empty;
+
+        var fitted = FittedIn(build, slot) is { } module
+            ? EliteSpecifications.ModuleName(module.Item) ?? module.Item
+            : KnownEmpty(build, slot) ? "empty" : null;
+
+        var now = fitted is null
+            ? "I cannot see into this ship from here"
+            : $"currently {fitted}";
+
+        return $"{build.Describe()} · {slot.Describe()}{size}, {now}. "
+               + "It does not reach your checklist until you promote the build.";
+    }
+
+    /// <summary>Two facts on a row's second line, with the separator only where both are there.</summary>
+    private static string Detail(string first, string second) =>
+        first.Length == 0 ? second
+        : second.Length == 0 ? first
+        : $"{first} · {second}";
 
     /// <summary>One spelling for a name the id list writes more than one way.</summary>
     private static string Spelling(IEnumerable<ModuleSpecification> variants) =>
         variants.Select(module => module.Name).Order(StringComparer.Ordinal).First();
+
+    /// <summary>
+    /// The few figures that answer "why is this one better", under a module's name.
+    /// <para>
+    /// Reported as "I should be able to tell the first two lasers apart by something besides the
+    /// price" (remediation.md 15, item 2b). Frontier's own sentence first where they wrote one,
+    /// because "enhanced with Guardian technology to speed up capacitor recharge rates, at the cost
+    /// of smaller capacitors" answers the question better than any number does (item 9).
+    /// </para>
+    /// <para>
+    /// Capped, because a row is a row: a rail gun carries fourteen figures and the first three are
+    /// the ones anybody compares.
+    /// </para>
+    /// </summary>
+    private static string About(IEnumerable<ModuleSpecification> variants)
+    {
+        var best = variants.FirstOrDefault(module => module.Figures.Count > 0)
+                   ?? variants.FirstOrDefault();
+
+        if (best is null)
+        {
+            return string.Empty;
+        }
+
+        var said = string.Join(
+            " · ",
+            best.Figures.Take(3).Select(pair => $"{pair.Name} {pair.Value}"));
+
+        return best.About is { Length: > 0 } described
+            ? said.Length > 0 ? $"{said}. {described}" : described
+            : said;
+    }
 
     /// <summary>The sizes a module comes in, so a row says what it would cost the slot.</summary>
     private static string Sizes(IEnumerable<ModuleSpecification> variants)
@@ -909,6 +1178,22 @@ public sealed class ShipsMode(
 
         return said.Count == 0 ? string.Empty : string.Join(", ", said);
     }
+
+    /// <summary>
+    /// What a blueprint does in general, from its highest grade (remediation.md 15, item 8).
+    /// <para>
+    /// <b>The top grade rather than the union, and measured rather than assumed.</b> 34 of 160
+    /// module-and-blueprint pairs change their attribute set across grades, and in every one of
+    /// the 34 the highest grade's set contains all the others — so the top grade says everything
+    /// the union would and says it with real numbers rather than with the widest of five.
+    /// </para>
+    /// </summary>
+    private static string Does(IEnumerable<Blueprint> recipes) =>
+        recipes
+            .Where(recipe => recipe.Effects.Count > 0)
+            .OrderByDescending(recipe => recipe.Grade ?? 0)
+            .FirstOrDefault()
+            ?.Describe() ?? string.Empty;
 
     /// <summary>The grades a blueprint offers, said as a range rather than as a list of five.</summary>
     private static string Grades(IEnumerable<Blueprint> recipes)
@@ -955,13 +1240,13 @@ public sealed class ShipsMode(
                     value => value.Trim().Length == 0
                              || (int.TryParse(value.Trim(), out var grade) && grade is >= 1 and <= 5)
                         ? EntryVerdict.Ok
-                        : EntryVerdict.No("A grade is 1 to 5, or nothing at all for any.")),
+                        : EntryVerdict.No("A grade is 1 to 5.")),
                 grade =>
                 {
                     ships.Plan(build.Id, new SlotPlan(
                         slot,
                         string.IsNullOrWhiteSpace(blueprint) ? null : blueprint.Trim(),
-                        int.TryParse(grade.Trim(), out var level) ? level : null));
+                        int.TryParse(grade.Trim(), out var level) ? level : 0));
 
                     done();
                 }));
