@@ -106,6 +106,53 @@ public sealed record Blueprint
     public IReadOnlyList<string> ModuleTypes { get; init; } = [];
 
     /// <summary>
+    /// What this blueprint does, in a sentence, gains before costs.
+    /// <para>
+    /// <b>Derived, never written</b> (remediation.md 15, item 8). The <c>effects</c> column carries
+    /// an attribute, a change and a good-or-bad flag per line, and that flag hands over the
+    /// ordering for free — so d47 never has to be taught which way is better. A hand-authored
+    /// blurb per blueprint is exactly the game data the invariant forbids, and it is the call
+    /// Phase 34 already made in refusing to hand-write Frontier's rank ladders.
+    /// </para>
+    /// <para>
+    /// The attribute names are <b>Frontier's</b> — "Optimal Multiplier", "Optimal Mass" — opaque
+    /// out of context and matching the outfitting screen, which is the same argument the slot
+    /// headings already won.
+    /// </para>
+    /// <para>
+    /// <b>A conversion is stated without a figure.</b> Six experimentals change a weapon's damage
+    /// type and the source records the change as a tick rather than a number, so the line says the
+    /// conversion happens and quotes nothing — the Phase 36 saturation rule again.
+    /// </para>
+    /// </summary>
+    public string Describe()
+    {
+        var good = Effects.Where(effect => effect.IsGood).ToList();
+        var bad = Effects.Where(effect => !effect.IsGood).ToList();
+
+        return (Said(good), Said(bad)) switch
+        {
+            ("", "") => string.Empty,
+            (var gains, "") => gains,
+            ("", var costs) => $"at the cost of {costs}",
+            var (gains, costs) => $"{gains}, at the cost of {costs}",
+        };
+    }
+
+    /// <summary>
+    /// One side of <see cref="Describe"/>: the attributes, each with its change where the source
+    /// gives a number and bare where it gives a tick.
+    /// </summary>
+    private static string Said(IReadOnlyList<BlueprintEffect> effects) =>
+        string.Join(
+            ", ",
+            effects
+                .Select(effect => effect.Change is { Length: > 0 } change && change != "✓"
+                    ? $"{effect.Property} {change}"
+                    : effect.Property)
+                .Distinct(StringComparer.Ordinal));
+
+    /// <summary>
     /// What a full grade actually costs a Commander at a given rank, or null when the rank
     /// cannot reach the grade or the recipe is not per-application.
     /// <para>

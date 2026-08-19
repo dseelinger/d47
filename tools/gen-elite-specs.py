@@ -106,7 +106,72 @@ MODULE_COLUMNS = [
 
     # What kind of thing it is, and where it is allowed. See `build_slots`.
     "mtype", "hulls", "exact_size",
+
+    # What the module does, and what makes one better than another. See `figures` and
+    # `describe`. Remediation 15 items 2b and 9.
+    "figures", "about",
 ]
+
+# The per-kind figures, keyed by coriolis's own field name and said the way a Commander reads
+# them. **Not one set for everything**: the ten numbers that separate two weapons say nothing
+# about a power distributor, which is why the table already carries drive and armour columns of
+# its own. A bag rather than twenty more columns, because the set is per kind and most rows would
+# carry blanks in most of them.
+FIGURES = {
+    # Weapons. `damage` and `fireint` are also what DPS is computed from — see `dps`.
+    "damage": "damage",
+    "fireint": "fire interval",
+    "range": "range",
+    "falloff": "damage falls off from",
+    "thermload": "thermal load",
+    "distdraw": "distributor draw",
+    "pierce": "armour piercing",
+    "piercing": "armour piercing",
+    "clip": "clip",
+    "ammo": "ammo",
+    "reload": "reload",
+    "roundspershot": "rounds per shot",
+    "burst": "shots per burst",
+    "burstrof": "burst rate",
+
+    # Power distributors: the three capacitors and how fast each refills.
+    "wepcap": "weapons capacity",
+    "weprate": "weapons recharge",
+    "syscap": "systems capacity",
+    "sysrate": "systems recharge",
+    "engcap": "engines capacity",
+    "engrate": "engines recharge",
+
+    # Shields, shield boosters and cell banks.
+    "shieldmul": "shield multiplier",
+    "minmass": "minimum mass",
+    "maxmass": "maximum mass",
+    "minmul": "multiplier at minimum",
+    "optmul": "multiplier at optimal",
+    "maxmul": "multiplier at maximum",
+    "spinup": "spin-up",
+    "duration": "duration",
+
+    # Everything else that answers "what is this for".
+    "rangeLS": "range",
+    "scanrate": "scan rate",
+    "scantime": "scan time",
+    "maxangle": "scan angle",
+    "rate": "rate",
+    "capacity": "capacity",
+    "refuel": "refuel rate",
+    "repair": "repair rate",
+    "brokenregen": "regeneration when broken",
+    "regen": "regeneration",
+    "bays": "fighter bays",
+    "passengers": "passengers",
+}
+
+# The damage a weapon does, by type. `X` is anti-xeno and is a marker beside a real type rather
+# than a share of it: those distributions sum to 2 where every other sums to 1.
+DAMAGE_TYPES = {
+    "T": "thermal", "K": "kinetic", "E": "explosive", "A": "absolute", "X": "anti-xeno",
+}
 
 SLOT_COLUMNS = ["hull", "slot", "kind", "size", "restrict"]
 
@@ -218,6 +283,93 @@ def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
     return sorted(built), sorted(missing)
 
 
+def dps(module: dict) -> str:
+    """Damage per second, by coriolis's own formula rather than by arithmetic invented here.
+
+    `DPS = damage x roundspershot x RoF`, with
+    `RoF = burst / (((burst - 1) / burstRoF) + 1/intRoF + charge)` — lifted from
+    `EDCD/coriolis`, `src/app/shipyard/Module.js`, whose LICENSE.md says outright that the code is
+    MIT and the JSON data is Frontier's. Taking the formula takes the half that is offered, which
+    is the same distinction the game-data invariant already draws, used in the direction it allows.
+
+    Checked against an independent reference: for a 1G turreted Pulse Laser this gives 3.967 and a
+    rate of fire of 3.333, against EDOMH's 3.97HP/s and 3.33/s.
+
+    **Three weapon models and one formula.** A beam laser carries no `fireint` because it does not
+    fire shots — its `damage` already is damage per second — and coriolis's own `|| 1` fallback
+    lands on exactly that. Burst weapons carry `burst` and `burstrof`; everything else is the
+    simple case. Which applies is stated by the fields present rather than guessed at.
+    """
+    damage = module.get("damage")
+
+    if damage is None:
+        return ""
+
+    burst = module.get("burst") or 1
+    burst_rate = module.get("burstrof") or 1
+    charge = module.get("charge") or 0
+    interval = module.get("fireint")
+
+    if interval:
+        divisor = ((burst - 1) / burst_rate) + interval + charge
+        rate = burst / divisor if divisor else 1
+    else:
+        # No interval: a continuous weapon, whose damage figure is already per second.
+        rate = 1
+
+    return str(round(damage * (module.get("roundspershot") or 1) * rate, 2))
+
+
+def damage_types(module: dict) -> str:
+    """The damage split, as words, or empty for a module that does none.
+
+    Two shapes under one field. **156 of 178 distributions sum to 1** and are real proportions — a
+    Rail Gun is 67% thermal and 33% kinetic. **22 sum to 2, and they are exactly the 22 carrying
+    `X`**, where anti-xeno is a marker beside a real type rather than a share of it. Rendering
+    those as percentages would print "100% anti-xeno, 100% kinetic", which reads as broken.
+    """
+    spread = module.get("damagedist") or {}
+
+    if not spread:
+        return ""
+
+    marked = "X" in spread
+    real = {key: value for key, value in spread.items() if key != "X"}
+
+    if len(real) == 1:
+        said = DAMAGE_TYPES.get(next(iter(real)), next(iter(real)))
+    else:
+        said = ", ".join(
+            f"{round(value * 100)}% {DAMAGE_TYPES.get(key, key)}"
+            for key, value in sorted(real.items(), key=lambda pair: -pair[1]))
+
+    return f"{said}, effective against Thargoids" if marked else said
+
+
+def figures(module: dict) -> str:
+    """What separates this module from the next one of its kind, as `name=value` pairs.
+
+    Per kind rather than one set for everything: the ten numbers that tell two weapons apart say
+    nothing about a power distributor. Remediation 15 item 2b, and the correction item 9 made to
+    it — the first list of figures was hardpoint-specific and applied to no distributor at all.
+    """
+    found = []
+
+    if dps(module) is not None and (said := dps(module)):
+        found.append(f"damage per second={said}")
+
+    if (types := damage_types(module)):
+        found.append(f"damage type={types}")
+
+    for key, name in FIGURES.items():
+        value = module.get(key)
+
+        if value is not None and value != "" and not isinstance(value, dict):
+            found.append(f"{name}={number(value)}")
+
+    return ";".join(found)
+
+
 def mount_of(symbol: str) -> str:
     """The mount Frontier's own symbol states, or empty for a module that is not mounted."""
     found = [word for infix, word in MOUNTS.items() if infix in symbol.lower().split("_")]
@@ -325,6 +477,14 @@ def build_modules(
 
                     # Filled from EDSY in main(), where the join happens.
                     "", "", "",
+
+                    # What it does, and what Frontier says about it. `ukDiscript` is their own
+                    # description of the module and answers "what's special about a Guardian
+                    # Distributor?" in one sentence, in their words — which is the shape the
+                    # game-data invariant prefers and NOTICE already practises. 732 of 970 modules
+                    # carry one. Remediation 15 items 2b and 9.
+                    figures(module),
+                    " ".join((module.get("ukDiscript") or "").split()),
                 ]
 
                 # coriolis-data lists 35 symbols twice, and one of the two is a husk: a
@@ -341,8 +501,8 @@ def build_modules(
                 # are declared in two files, and two cargo racks — the more complete row wins,
                 # counting the figures it actually carries. Neither branch averages, guesses
                 # or invents: both pick one of the two rows whole.
-                figures = sum(1 for cell in candidate[5:18] if cell)
-                rank = (keyed, figures)
+                measured = sum(1 for cell in candidate[5:18] if cell)
+                rank = (keyed, measured)
 
                 if symbol not in seen or rank > seen[symbol][0]:
                     seen[symbol] = (rank, candidate)
@@ -470,6 +630,10 @@ def build_bulkheads(
 
             # Filled from EDSY in main(), where the join happens.
             "", "", "",
+
+            # Armour's own figures are the five resistance columns above.
+            "",
+            " ".join((bulkhead.get("ukDiscript") or "").split()),
         ])
 
     # Whatever is left in `figures` had figures and no name. Nothing can be keyed to it, so

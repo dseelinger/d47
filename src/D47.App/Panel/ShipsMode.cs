@@ -617,7 +617,7 @@ public sealed class ShipsMode(
                     .. offered.Select(group => new ChoiceOption(
                         Spelling(group),
                         Spelling(group),
-                        Sizes(group))),
+                        Detail(Sizes(group), About(group)))),
                 ],
                 plan?.Module,
                 ChoiceSurface.Page)
@@ -758,7 +758,7 @@ public sealed class ShipsMode(
                     .. names.Select(group => new ChoiceOption(
                         group.Key,
                         group.Key,
-                        Grades(group))),
+                        Detail(Grades(group), Does(group)))),
                 ],
                 plan?.Blueprint,
                 ChoiceSurface.Page)
@@ -1067,9 +1067,47 @@ public sealed class ShipsMode(
                + "It does not reach your checklist until you promote the build.";
     }
 
+    /// <summary>Two facts on a row's second line, with the separator only where both are there.</summary>
+    private static string Detail(string first, string second) =>
+        first.Length == 0 ? second
+        : second.Length == 0 ? first
+        : $"{first} · {second}";
+
     /// <summary>One spelling for a name the id list writes more than one way.</summary>
     private static string Spelling(IEnumerable<ModuleSpecification> variants) =>
         variants.Select(module => module.Name).Order(StringComparer.Ordinal).First();
+
+    /// <summary>
+    /// The few figures that answer "why is this one better", under a module's name.
+    /// <para>
+    /// Reported as "I should be able to tell the first two lasers apart by something besides the
+    /// price" (remediation.md 15, item 2b). Frontier's own sentence first where they wrote one,
+    /// because "enhanced with Guardian technology to speed up capacitor recharge rates, at the cost
+    /// of smaller capacitors" answers the question better than any number does (item 9).
+    /// </para>
+    /// <para>
+    /// Capped, because a row is a row: a rail gun carries fourteen figures and the first three are
+    /// the ones anybody compares.
+    /// </para>
+    /// </summary>
+    private static string About(IEnumerable<ModuleSpecification> variants)
+    {
+        var best = variants.FirstOrDefault(module => module.Figures.Count > 0)
+                   ?? variants.FirstOrDefault();
+
+        if (best is null)
+        {
+            return string.Empty;
+        }
+
+        var said = string.Join(
+            " · ",
+            best.Figures.Take(3).Select(pair => $"{pair.Name} {pair.Value}"));
+
+        return best.About is { Length: > 0 } described
+            ? said.Length > 0 ? $"{said}. {described}" : described
+            : said;
+    }
 
     /// <summary>The sizes a module comes in, so a row says what it would cost the slot.</summary>
     private static string Sizes(IEnumerable<ModuleSpecification> variants)
@@ -1082,6 +1120,22 @@ public sealed class ShipsMode(
 
         return said.Count == 0 ? string.Empty : string.Join(", ", said);
     }
+
+    /// <summary>
+    /// What a blueprint does in general, from its highest grade (remediation.md 15, item 8).
+    /// <para>
+    /// <b>The top grade rather than the union, and measured rather than assumed.</b> 34 of 160
+    /// module-and-blueprint pairs change their attribute set across grades, and in every one of
+    /// the 34 the highest grade's set contains all the others — so the top grade says everything
+    /// the union would and says it with real numbers rather than with the widest of five.
+    /// </para>
+    /// </summary>
+    private static string Does(IEnumerable<Blueprint> recipes) =>
+        recipes
+            .Where(recipe => recipe.Effects.Count > 0)
+            .OrderByDescending(recipe => recipe.Grade ?? 0)
+            .FirstOrDefault()
+            ?.Describe() ?? string.Empty;
 
     /// <summary>The grades a blueprint offers, said as a range rather than as a list of five.</summary>
     private static string Grades(IEnumerable<Blueprint> recipes)
