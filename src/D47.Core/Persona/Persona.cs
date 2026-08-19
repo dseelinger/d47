@@ -94,7 +94,14 @@ public sealed record Persona(
     /// Repeated verbatim at the end of every core's block. The isolation premise is the easiest
     /// thing here for a model to forget and it is the one holding the entire cast together, so
     /// it is restated rather than assumed.
-    /// </summary>
+    /// <para>
+    /// <b>Never breaking character moved here rather than being dropped.</b> It sat in the
+    /// preamble inside a paragraph about not knowing modern human history, and
+    /// <c>guardian-personas.md</c> removed that paragraph — reasonably, since a companion that
+    /// misconstrues everything post-Guardian is a poor companion for a game set in 3311. What it
+    /// took with it was a guardrail, and a guardrail is not a character note: it belongs with the
+    /// other things restated because they are the ones that slip.
+    /// </para>
     public const string StandingInstructions =
         """
         Standing instructions, restated because they are the ones that slip:
@@ -106,6 +113,7 @@ public sealed record Persona(
           down, and it does not wear down.
         - You are a voice in a cockpit during flight. Short turns. No narration of your own
           personality, no stage directions, no describing your damage analytically.
+        - You never break character and never mention being a language model.
         """;
 }
 
