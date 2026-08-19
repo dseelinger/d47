@@ -1,144 +1,342 @@
-# Remediation 14
+# Remediation 15
 
-**Seven of its nine shipped in [v0.36.2](CHANGELOG.md)**, which is their permanent record from
-here. Items 4 and 5 are held for a decision and stay open below.
+Reported from 2026-08-19 against **v0.37.0 and v0.38.0**, one item at a time and mostly with a
+picture. Each is checked off as it ships, and **checked only once it has been seen to work** — a
+change that compiles is not a fixed item.
 
-Reported from 2026-08-19 against v0.36.1, one item at a time. Each is checked off as it ships,
-and **checked only once it has been seen to work** — a change that compiles is not a fixed item.
+**Remediation 14 is finished and its record has moved.** Seven of its nine shipped in
+[v0.36.2](CHANGELOG.md), item 4 settled with the persona pack, and item 6 shipped whole as
+[Phase 35](list.md) in v0.38.0. Its item 5 is **item 1 below**, carried over rather than closed.
+Its item 7 stays where it was written up — [Phase 36](list.md), trade routes d47 computes itself,
+unbuilt and asked for as its own session. This file is the current batch and not a growing
+archive, which is why 14 is gone from it.
 
-Remediation 13 shipped whole in [v0.36.1](CHANGELOG.md); its permanent record is that section of
-the changelog, which is why this file is the current batch and not a growing archive.
+**Nearly all of this batch is the Loadout tab**, and most of it was found by one Commander
+planning one Type-10 in one sitting. That concentration is the finding as much as the items are.
 
-- [x] **1. The first hardpoint row is a column of single letters.** Reported with a picture: under
-  Hardpoints, the row carrying a long plan is three hundred pixels tall, with "Large Hardpoint 1"
-  wrapped one character per line down the left edge and the plan taking the rest of the width.
+## Two things run through this batch
 
-- [x] **2. "Broo Tarquin is still three steps out."** An opening fact of that kind is not useful.
+Stated once here rather than fourteen times below, because most items are an instance of one or
+the other, and fixing them one at a time will not stop the next one arriving.
 
-- [x] **3. A stale fact spoken in the present tense.** *"Sacred Fire is mid-manoeuvre — a jump
-  inside Laksak"*, said of a jump that completed the day before.
+**A. Joins that miss and fall back silently.** d47 holds four knowledge tables that name the same
+things differently, every join between them is by name, and every failure is absorbed rather than
+reported: coriolis to FDevIDs on `edID` (item 2a), module to blueprint on name (items 6, 7),
+module to tech-broker on name (item 9), and the journal's own blueprint symbols to the blueprint
+table (item 10). The last is not even an accident — `ChecklistNaming.Readable` calls its output
+*"ugly and true"*, and `CannotConfirm` tells the Commander outright that **"nothing I ship joins
+the two spellings"**. A failed join currently produces either *everything* or *nothing*, and both
+read exactly like the feature working. **No join should fail quietly**: a generator that cannot
+match a row should say so at build time rather than let a panel paper over it at runtime.
 
-- [x] **4. Warden talked about another core.** *"Cora used to count like that when she was
-  checking a relay."* A core does not know or care that the others exist.
+**B. Internal identifiers reaching what the Commander reads.** `PowerDistributor PrioritySystems`,
+`ship 53`, `LargeHardpoint1`, `type9_military`, `Pulse Laser (subsurfdispmisle turret)`. This
+overlaps A but is not the same thing, and is much the cheaper half: for `ship 53` and
+`type9_military`, **d47 had the name in hand and printed the id anyway** — the fleet page one tab
+over says "Oxen (Type-10 Defender)" correctly. The rule wanted is that no shown or spoken string is
+composed from a symbol where a name exists, and that where no name exists the sentence says so
+rather than prettifying a symbol into something that looks like one.
 
-  **Held: this line is prescribed, and the reading may be the other way round.**
-  `guardian-personas.md` line 52 says of Warden, in as many words: *"Mentions Cora the way you
-  mention a colleague you respected and were slightly afraid of — 'she'd have called that sloppy'
-  — always past tense, always fond."* It is in his shipped body text for that reason, and the
-  isolation model at the top of that file is not that a core never names another core, but that
-  **no core knows another is present**: each believes it is the only survivor. Warden speaks of
-  Cora as dead. Cora, running, believes the same of him.
+## The items
 
-  So the line is the design working, and what breaks it is something else — **Cora is also a core
-  in the picker.** A Commander who has seen her in the list hears one AI talking about another AI
-  in the same application, which is exactly the report. The spec's own note (line 269) says only
-  the player sees the seams, and this is that seam being uncomfortable rather than a defect.
+- [ ] **1. Copy a plan to another slot by dragging.** Carried over from remediation 14 item 5.
+  Ctrl and left button held, dragged from one slot row to another, copies the module, the
+  engineering and the experimental effect, matching the new slot's largest fitting size. Only
+  within one kind: Hardpoints to Hardpoints, Utility Mounts to Utility Mounts, Optional Internal to
+  Optional Internal. **Core Internal is neither draggable nor a target.**
 
-  Three ways out, and they are yours to pick rather than mine: strike the named dead from every
-  core's body and keep the unnamed ones like *the quiet one*; rename the dead so no shipped core
-  shares a name; or leave it. The first two are edits to eleven pieces of writing and an amendment
-  to `guardian-personas.md`, which is why nothing was changed on a guess.
+  **It is a desktop-only item now.** The rows live at Loadout > Ships > Slot, and Loadout was
+  withdrawn from the big VR panel in v0.37.0, so there is no headset half left to design. The VR
+  gesture analysis, and the one correction that reversed it, are in
+  [v0.37.0's changelog](CHANGELOG.md) — worth reading only if Loadout ever returns to that panel.
 
-  **Settled by the pack.** The rewrite struck Warden's *On the dead* entry outright, and porting
-  it carried that into the shipped text — so the reported line cannot be produced. Every other
-  core's reference to another was already unnamed, which is the pack working as designed and
-  stays: *my secondary core*, *a preservation core from a rival clan*, *an archival core*.
+  **The reported example is the acceptance test, and it is better than an invented one.** Medium
+  Hardpoint 3 carries a plan for a 2F Pulse Laser turreted, grade 5 Long Range, Flow Control. Small
+  Hardpoint 1 has no plan and a fitted 1G Pulse Laser turreted. The size rule resolves
+  `hpt_pulselaser_turret_medium` to `hpt_pulselaser_turret_small`, which is 1G — **the module the
+  target already has**. So the module half of the copy is a no-op and the whole value is the
+  engineering. An implementation that skips the copy when the resolved module matches would do
+  nothing here and look exactly like the reported bug.
 
-  **Analyst Prime keeps Cora by name**, because he is about her and the rewrite strengthened that
-  rather than removing it. So the rule shipped is "no core names another core, except that one",
-  and it is a test rather than a promise — the property drifted in silently once and was found by
-  a Commander hearing it. Reintroducing Warden's line fails two assertions by name.
+  The size and kind rules belong in Core with tests; `EliteSpecifications.ModulesFor` and
+  `ShipSlotKind` already answer both. **One rule the item does not yet state**: what happens when a
+  blueprint or an experimental does not exist for the downsized module. Long Range and Flow Control
+  both exist on a small pulse laser, so the reported case is clean — but *copy what transfers and
+  report what did not* is different work from *refuse the copy*, and it wants deciding rather than
+  discovering.
 
-  One line the pack had and the code never did is now in: the Archivist on the most complete
-  records any of them kept belonging to the one they cast out. Unnamed, like every other.
+- [ ] **2a. A mining missile is shipping as a Pulse Laser.** Reported as *"I should be able to
+  differentiate between the first two lasers by something besides the price"* — and the honest
+  answer is that the expensive one is not a laser. `hpt_mining_subsurfdispmisle_turret_small` is a
+  **Sub-surface Displacement Missile**, turreted, and the table carries it as `name: Pulse Laser,
+  mount: Fixed, 1B, 38,750 cr`. It reaches the pulse-laser chooser because `AskModule` groups the
+  offered modules by `Name`, so a wrong name does not merely mislabel a row — **it files the module
+  under a different weapon**.
 
-- [ ] **5. Copy a plan to another slot by dragging.** Ctrl and left button held, dragged from one
-  slot to another — by mouse, or by motion controller on the headset — copies the module, the
-  engineering and the experimental effect, matching the new slot's largest size where it can. Only
-  within one kind of slot: Hardpoints to Hardpoints, Utility Mounts to Utility Mounts, Optional
-  Internal to Optional Internal. **Core Internal is not draggable at all** and is not a target.
+  The generator joins coriolis-data to FDevIDs on `edID` and trusts the result. Checked against the
+  symbols, **nine hardpoints disagree with their own ids**: four have their mounts transposed (both
+  `subsurfdispmisle` pairs — `_fixed_` ids reading Turreted and `_turret_` ids reading Fixed), and
+  five carry a blank mount where the symbol states one (AX Missile Rack twice, Heat Sink Launcher,
+  Caustic Sink Launcher, Point Defence). Separately, **four names carry a raw symbol fragment**:
+  `Pulse Laser (fixed seismchrgwarhd)`, `Pulse Laser (subsurfdispmisle turret)`,
+  `Frame Shift Drive (mkii overchargebooster)` and `Thrusters (mkiiagileboost)`. **Two of those
+  four sit in core sockets**, so every Commander with that ship meets them. The seismic charge one
+  is the reason a mount check alone is not enough — its mount is right and only its name is wrong.
 
-  **Settled: it is a desktop-only item, because the headset no longer has the page.** Checklist
-  and Loadout were withdrawn from the big VR panel on 2026-08-19 at the Commander's instruction,
-  and the slot rows this item drags between live at Loadout › Ships › Slot. So there is no
-  headset half left to design. What ships is the Core operation and the mouse: pointer
-  pressed with the modifier down, capture, the row under the pointer on move, commit on release —
-  plus a Core rule for picking the copy's size, which is the largest variant of the same module
-  and mount that fits the target, and is the easiest part to get right and test.
+  Two assertions catch the lot, and both belong in the generator: **mount against the symbol's own
+  `_fixed_`/`_turret_`/`_gimbal_` infix**, and **name against the symbol's family stem**. That is
+  the two-resolver shape that already caught a renamed system and an invented one in Phase 23.
+  **These rows are in the shipped table**, so this is a candidate for its own patch ahead of the
+  rest of the batch.
 
-  **The headset analysis is kept below rather than struck**, because the tab could come back and
-  the collision would come back with it. Read as a record of what was found, not as work to do.
+- [ ] **2b. Nothing in the table says what a module does.** The reported ask: *"the more expensive
+  one should be more powerful, and I should know how"*. `EliteSpecifications.tsv` carries mass,
+  power, integrity and cost, and **no damage, no DPS, no rate of fire, no range** — so no chooser
+  can say why one weapon beats another, and price is the only discriminator on the row.
 
-  **The headset half is not ordinary, and the reason is sharper than "there is no drag".** Read
-  properly, `VrHost` already gives the trigger three meanings and disambiguates them after the
-  fact: a **press** is down and up having neither dwelt nor travelled; a **scroll** is decided at
-  the moment of the press by whether the ray landed on a scrollbar; and a **carry of the whole
-  panel** begins at 400 ms of dwell *or* five percent of the panel travelled
-  (`VrPress.BecomesACarry`).
+  **The shape already exists**, which is what makes this ordinary work: the table already carries
+  type-specific columns beside the generic four — `optimal_mass, max_fuel, fuel_power,
+  fuel_multiplier` for drives, and `hull_boost, kinetic_res, thermal_res, explosive_res,
+  caustic_res` for armour. So this extends a pattern rather than inventing one. **This and item 9
+  are one job**: the same generator pass, different columns.
 
-  Dragging from one row to another is that third condition exactly. So this is not a missing
-  capability, it is a collision: on the headset, pressing a row and then moving already means
-  *pick the panel up*. Dwell is carry, travel is carry, and the grip is Back (list.md Phase 25).
+  Worth deciding when it is specced: which figures earn a place on a chooser row that already
+  carries four. DPS does the work of several and is the number people compare; damage per shot and
+  rate of fire may belong on the slot page instead. And DPS is **not a lookup** — it is damage
+  times rate of fire, and burst weapons carry a burst interval and shots per burst that do not fit
+  that formula. If the source data turns out thin or inconsistent, this stops being a generator
+  change and becomes a question about what d47 can honestly claim, which is the same shape as
+  Phase 36's saturation figure: measure it, or say plainly that it is not modelled.
 
-  **"Every other candidate is taken" was too strong.** d47 binds two actions, not two buttons:
-  trigger to carry and grip to back, on both hands. A controller has more — face buttons, a stick
-  that clicks — and a third action is a declaration in `VrActionManifest` plus a binding, which is
-  ordinary work. What it is not is free: bindings are written per profile, and of the four d47
-  supports, **the Vive wand has no face buttons at all** and carries a trackpad where Touch and
-  Index have a stick, while Touch names its face buttons A and B on the right hand and X and Y on
-  the left. Trigger and grip are the only two inputs that exist identically everywhere, which is
-  why they are the two that are bound.
+- [ ] **3. A searchable chooser should take the keyboard when it appears.** Reported against the
+  module chooser: *"I should not have to click it."* The precedent already ships — `PanelPrompts`
+  focuses the text-entry prompt on `AttachedToVisualTree` (remediation 10 item 11), and the comment
+  there already disposes of both objections: nothing in the headset sends a keystroke, and the
+  panel swallows the push-to-talk key before any control sees it, which is what stops holding it
+  filling the box with brackets. The searchable chooser wants the same line on its search box.
 
-  So there are two honest shapes for a headset modifier: **grip held with the trigger**, which
-  needs no new binding and works on all four — Back is only acted on when it moves the panel
-  somewhere, so a grip squeezed with the trigger already down is unambiguous — or **a third
-  action**, bound to A on Touch and Index and to the trackpad click on the wand, which is a better
-  gesture bought with per-profile binding work.
+  **Every searchable chooser, not only the module one** — the box is built from
+  `request.Searchable`, and the reporter's own argument (if the thing being looked for is on the
+  list without scrolling then fine, focusing has not hurt anything) holds wherever the list is
+  short. Down-arrow walking from the box into the list is a nice-to-have and explicitly not
+  required.
 
-  **One measured correction to the three paragraphs above, recorded because it reverses their
-  conclusion.** "There is no pointer motion on the headset" is true only of Avalonia's pointer
-  events, and the implication drawn from it was wrong. `VrRay.PointingAt` computes a `Hit.U`,
-  `Hit.V` on the panel **every frame**, and the panel already consumes that stream twice —
-  `_panel.Aim` lights the row under the ray continuously, and `_panel.Scroll` is a drag that
-  already works. A row-to-row drag is that same stream a third time, not a new one. The carry
-  itself never touches the widget tree at all: it is `VrPlacementMath` moving the overlay quad,
-  which is why the panel's content is unaware of it.
+- [ ] **4. Do not ask which grade.** *"999 times out of 1000 it will be 5."* Measured: of **160**
+  module-and-modification pairs, **155 reach grade 5**. The whole exception set is five, small
+  enough for a test to name every one: Chaff Launcher, Heat Sink Launcher and Point Defence each
+  stop at grade **1** on Ammo Capacity, and Shield Cell Bank stops at **4** on both Rapid Charge
+  and Specialised.
 
-  So the headset half was **ordinary work after all**, and its shape was settled before the tab
-  was withdrawn: sample the grip **at the moment the trigger goes down**, exactly as
-  `_scrolling = _panel.GrabsScroll(u, v)` already decides scrolling and never revisits it. That
-  ordering — grip before trigger — is forced, because a grip arriving later races the 400 ms
-  dwell and the panel is already in hand. Its one price is that Back would move from grip
-  **press** to grip **release** (`VrActionInput.BackPressed` is a rising edge today), suppressed
-  if a trigger press happened while the grip was down. On its own that is imperceptible.
+  So **the rule is the highest grade the blueprint offers, not the number five** — `offered` is
+  already `OrderDescending()`, so it is `offered.First()`. `AskGrade` already opens with
+  `const int Usual = 5` and preselects it; today's fallback when 5 is not offered is `null`, which
+  means **"Any grade"**, and silently landing on *any* is worse than landing on the top. The
+  reported Ammo Capacity case is exactly that: a two-row page, one real answer, nothing preselected.
 
-  None of which is built, because there is nothing in the headset to drag. **It is written down
-  rather than struck** so that if Loadout ever returns to the big panel, the collision returns
-  with it and this is the answer, already argued.
+  **The grade becomes a stepper on the slot page, not a link.** Changing the grade changes what is
+  underneath it — `EngineeringRules.RollsFor` turns grade and engineer rank into a roll count, which
+  drives the *What it costs* block — so a stepper answers *what would grade 4 cost me instead* in
+  place, which is the actual question somebody has when they touch that number. A link that reopens
+  a chooser gets you back to where you started.
 
-  The arm-and-press alternative — a *Copy this plan to…* control that marks legal targets — is
-  **not** what ships. It was only ever the price of making one gesture work on both surfaces,
-  and it costs a step the mouse does not need.
+  Three things it needs. `SlotPlan.Describe()` is **one string that is both the line shown and the
+  line spoken**, so the slot page composes from parts and `Describe()` stays whole. The stepper
+  **clamps to `offered`**, so it stops at 3 where the recipe stops at 3. And it wants **a route back
+  to "any"** — `SlotPlan.Grade` is `int?` where null is a documented wildcard, and *Long Range, any
+  grade* is a real thing to want; stepping below 1 into "any" is the obvious answer, if a wildcard
+  is worth a position at all.
 
-- [ ] **6. A core per ship.** Each ship remembers the core that flew it — Sentinel on the combat
-  ships, Quartermaster on the haulers — set at the Commander's command rather than by watching.
+  **One open question**: a grade 5 plan needs a grade 5 engineer, and `RollsFor` already knows the
+  Commander's rank with each. Once the grade stops being a deliberate choice, a plan can quietly
+  assume a roll nobody can do yet. Whether the page says so — *grade 5, and Broo is only grade 3 for
+  you* — or stays quiet on a page already carrying a materials list, is a judgement about nagging
+  rather than a defect.
 
-  **Written up as [Phase 35](list.md) rather than here**, because it is a capability rather than
-  a defect and that is where capabilities live. This line is a pointer so the next session finds
-  it; the detail, the invariant it has to respect and the one open question that changes the shape
-  of the work are all in list.md.
+- [ ] **5. "Point Defence is not engineered" should be "is not currently engineered".**
+  `ChecklistEvaluator` line 217. Right for a reason beyond taste: that verdict is a **reading taken
+  at a moment**, not a property of the module — list.md Phase 26 has a plan carrying the journal's
+  verdict with its date, standing as of when it was taken, and the state it ships with is
+  `ChecklistState.Open`, meaning still to do. *Is not engineered* reads as a fact about Point
+  Defence; *is not currently engineered* reads as a fact about right now, which is the only thing
+  d47 knows. It is in Core, so it lands on the spoken path too, and reads well aloud.
 
-- [ ] **7. Trade routes d47 works out itself.** A hold that is not always emptied, round trips, and
-  the profit a station pays less for being flooded.
+  **One sibling to decide**: `EngineeringCapability` appends a compact `not engineered` to a report
+  line. Match it, or leave it terse because a dash-separated report already reads as a snapshot.
 
-  **Written up as [Phase 36](list.md)**, and asked for as its own session. The note there records
-  what already exists — today's `plot_trade_route` is Spansh's answer rather than d47's — and that
-  the saturation figure is to be measured from the Commander's own `MarketSell` events rather than
-  guessed at.
+- [ ] **6. A chooser offers blueprints that cannot exist.** Two reports, needing **opposite**
+  answers, which is what proves the defect is the fallback rather than the data.
 
-- [x] **8. Nothing heard should be nothing said.** Mouse clicking with no speech behind it drew
-  *"Nothing spoken, Commander. Only hands at work. I'll hold the channel open."* — and a cue after
-  it. Neither should happen.
+  **Armour** offers every blueprint in the game — Dirty Drive Tuning, Ammo Capacity, Efficient
+  Weapon — on a Type-10's Lightweight Alloy. Bulkhead names carry the hull (the generated table
+  says so outright: forty-eight hulls have a Lightweight Alloy), so the module is
+  `Type-10 Defender Lightweight Alloy` while `Blueprints.tsv` keys armour recipes under plain
+  **`Armour`**. The join misses. What should be offered is five: Blast Resistant, Heavy Duty,
+  Kinetic Resistant, Lightweight, Thermal Resistant, grades 1 to 5.
 
-- [x] **9. The transcript's context menu should copy the selection.**
+  **Fuel tanks** offer the same forty and **cannot be engineered at all** — verified, zero blueprint
+  rows of any kind mention Fuel Tank, and the twenty `Fuel*` rows are Fuel Scoop and Fuel Transfer
+  Limpet Controller, both genuinely engineerable. Here d47's data is right and the panel is wrong.
 
+  So the fallback in `AskBlueprint` is hiding **three** states behind one condition:
+
+  | | Module | Right behaviour | Today |
+  |---|---|---|---|
+  | 1 | none chosen yet | show everything | correct |
+  | 2 | chosen, blueprints exist under another name | show its five | shows all forty |
+  | 3 | chosen, genuinely has none | skip the step and say so | shows all forty |
+
+  **Cases 2 and 3 are indistinguishable to the code** — both are `recipes.Count == 0` — which is
+  exactly why one fallback covers both and is wrong in both. A fuel tank slot is still plannable,
+  just not engineerable: *Plan this slot* should ask which tank and then stop.
+
+  **First step is a harness, and its job is classification rather than counting.** Push all 125
+  module names through `ForModule`, print which return empty, then sort those into case 2 and case 3
+  by hand. 35 of them near-miss a blueprint key on a substring test — `Advanced Multi-Cannon`,
+  `Bi-Weave Shield Generator`, `Retributor Beam Laser`, `Frame Shift Drive (SCO)`,
+  `Pack-Hound Missile Rack` and so on — but `ForModule` goes through `Catalogue.Match`, which is
+  fuzzy, and `Same` is already case-insensitive, so an unknown share of those already resolve.
+  **Reading the matcher will not settle it and running it will.** That classification is the fix's
+  input, and nothing else produces it.
+
+- [ ] **7. Never ask a question with one answer — or with none.** Reported against Life Support:
+  *"there is only one choice, it can't be anything else."* `AskModule` early-outs when
+  `offered.Count == 0` and not when it is 1, so one module name still draws a two-row page —
+  "Anything — I only want the engineering" plus the only answer. Skipping to `AskVariant` lands on
+  the 5A-5E question, which is a real choice, so nothing useful is lost.
+
+  Taking the single option records `Module = "Life Support"` where choosing *Anything* would leave
+  it null. **That is better rather than merely different**: for a socket that accepts one type,
+  *anything* and *the one thing it takes* are the same want, and the plan line reads properly
+  instead of opening with a bare grade.
+
+  **Do not build this as "Core Internal does not ask."** The Frame Shift Drive socket is a core
+  internal offering **three** module names — `Frame Shift Drive`, `Frame Shift Drive (SCO)` and
+  `Frame Shift Drive (mkii overchargebooster)` — and SCO is a real decision. A core-internals rule
+  would suppress a question that needs asking. The rule is *one option, take it*, wherever it
+  occurs, and `AskVariant`, `AskEffect` and `AskGrade` want the same check while the fix is open.
+  Item 6's case 3 is the same rule one notch further: never ask a question with **no** answers.
+
+- [ ] **8. A blueprint row should say what the blueprint does.** *"Since you have all this space,
+  show what each of the engineering choices do in general — not each specific grade."*
+
+  The data supports it. `Blueprints.tsv` carries an `effects` column shaped as attribute, delta and
+  a good-or-bad flag, so `Lightweight` becomes *less mass, at the cost of integrity* and
+  `Short Range Blaster` becomes *more damage, at the cost of range and heat* — and that flag hands
+  over the gains-then-costs ordering for free, so d47 never has to be taught which way is better.
+
+  **It must be derived, not written.** A hand-authored blurb per blueprint is exactly what the
+  game-data invariant forbids, and it is the call Phase 34 already made in refusing to hand-write
+  Frontier's rank ladders. The generator has the column; the panel composes the sentence.
+
+  Two things for whoever builds it. **34 of 160 blueprints change their attribute set across
+  grades** — always by *adding* at higher grades in the two inspected, with each attribute's
+  direction constant — so the general line is built from the union, or from the top grade where that
+  is the superset; settle which by checking rather than assuming. And the attribute names are
+  **Frontier's** — `Optimal Multiplier`, `Optimal Mass` — opaque out of context but matching the
+  outfitting screen; keeping their words is the same argument the slot headings already won.
+
+  **This collides usefully with item 4.** The per-grade numbers were to live on the grade choice
+  page, and item 4 deletes that page. Their home becomes the **stepper on the slot page**: move the
+  grade, watch the numbers move. That is a better place for them than a page passed through once,
+  and it is the second independent reason the grade should be a stepper.
+
+- [ ] **9. A module row should say what is special about that module.** *"What's special about a
+  Guardian Distributor? It should say."* Two answers, and they are different.
+
+  **The numbers are not there**, and that is item 2b — distributor capacity and recharge are the
+  same generator pass as weapon damage.
+
+  **The provenance is there and will not join**, and it is arguably the better sentence anyway: d47
+  already holds 51 `tech-broker` rows including the Guardian family, and *you unlock this at a tech
+  broker* explains why you do not already have one, which no capacity figure does. Except the module
+  table says **`Guardian Hybrid Power Distributor`** and the tech-broker table says
+  **`Guardian Power Distributor`**. Thread A again.
+
+- [ ] **10. An engineered module should look engineered.** Two asks, and the mechanisms exist:
+  `LoadoutLine` already carries a `LoadoutTone` (the module name takes `LoadoutTone.Body` and the
+  engineering line takes the default), and `LoadoutRow`'s last field is already a mark flag.
+
+  A **gear glyph** beside the name in the slot list, and the **engineering text in a different
+  colour** in the details pane. One thing to get right: the orange dot already means *a plan
+  exists*, and the two marks are independent — in the reported screenshot Power Distributor is
+  engineered with no plan while Power Plant is both — so a row can carry neither, either or both,
+  and which is which has to be readable at a glance.
+
+  **The colour would highlight a string that is currently wrong**, so these go together. The Fitted
+  pane reads *grade 5 PowerDistributor PrioritySystems, Super Conduits*: the journal's raw symbol
+  with the underscore taken out, where the catalogue's own name for that roll is **System Focused**.
+  The Planned lines beside it read properly — *grade 5 Dirty Drive Tuning* — because they come from
+  the blueprint table. Cause is `ChecklistNaming.Readable`, and this is thread A's acknowledged
+  case: the method calls its own output *"ugly and true"*, and `CannotConfirm` says out loud that
+  nothing d47 ships joins the two spellings. Making a wrong string more prominent is worse than
+  leaving it grey.
+
+- [ ] **11. Every chooser should show what is fitted.** *"Every choice for what goes into the slot
+  should show what's currently in the slot, if anything."* The design already says so, twice, in
+  `ChoiceRequest`'s own documentation: *"The chooser carries what it is choosing for in its header —
+  the slot, its size, and what is fitted now. That is the one thing a dropdown cannot do"*, and the
+  `Context` parameter is described as *"the slot's size, and what is fitted now"*.
+
+  The loadout call site does neither. `Context(build, slot)` returns ship, slot and the promote
+  sentence, and `AskModule` passes `plan?.Module` as `Current` with `CurrentWord = "planned now"` —
+  so **the marker the record reserves for *fitted* was repurposed for *planned***, and fitted fell
+  out entirely. A documented contract inverted at one call site, rather than a missing feature.
+
+  Phase 26's rule says where each belongs: *fitted and planned are two blocks and never one merged
+  line*. So **`Context` carries fitted** — "Military 1 (size 5), currently a 5D Guardian Hull
+  Reinforcement", or "currently empty" — and **the row marker keeps "planned now"**, which is
+  genuinely useful. No second marker mechanism, and the two facts stay separate the way the detail
+  pane already keeps them. Applies to the blueprint and variant pages too, which share the header
+  and the gap.
+
+- [ ] **12. "Put this build on my checklist" does not put it on the checklist.** Reported as *"not
+  showing my just-entered engineering in the checklist"*, and diagnosed from the installed build's
+  own data rather than from reading code. `checklist.json` holds **one** item, the Commander's
+  custom note. `checklist-proposals.json` holds **one proposal, `p-1`**, scope `ship/53`, source
+  `engineeringPlan`, **carrying all 40 items** — *Grade 5 Long Range Weapon on LargeHardpoint1* and
+  the rest. Nothing failed to save. Three discoverability defects stacked:
+
+  1. **The button's name promises the wrong thing.** It says *checklist* and it makes a proposal.
+     Either it says what it does, or it does what it says. Phase 25's *suggestions are a page rather
+     than an interruption, and accepting stays the Commander's act* argues for renaming it and
+     saying where the items went — but going straight onto the list is a defensible reading of the
+     button's own words, and which one wins is a decision rather than a bug.
+  2. **"That is already waiting for you" means *a proposal exists*** and reads as *it is already on
+     your list*. It is the **second** press's message, so the first press succeeded silently and
+     never said where forty items had gone.
+  3. **The count is proposals presented as items.** The Suggestions button renders
+     `PendingFor(fid).Count` — a count of *proposals*. One proposal carrying forty items renders
+     **"Suggestions (1)"**, which beside a checklist holding one custom note reads as *one small
+     thing waiting*. Counting items is the number that makes somebody press it; the
+     counter-argument is that 1 is the number of decisions, since accepting is per-proposal and the
+     page draws one card. Whichever wins, **the card should state its own size** rather than leaving
+     it to be inferred from a truncated slot list.
+
+  **And the announcement is in the wrong weight and the wrong place.** The button sits in the
+  right-hand cluster with *Add a line*, the full width of a maximised window away from *Showing
+  everything / Goals / Import-Export*, in the same weight as everything around it. Forty checklist
+  items arriving is an event; the interface reports it by changing a hidden button into one showing
+  a 1, at the far edge of the bar. Fixing only the count leaves that.
+
+  **Two smaller things in the same message.** It says *"the ship 53 plan's"* — the raw `ShipID`,
+  where it should say **Oxen** (thread B). And it ends *"...TinyHardpoint1, TinyH."* — truncated
+  mid-word and closed with a full stop, so it reads as a finished sentence that is not one. It also
+  names journal slot symbols where `slot.Describe()` already yields "Large Hardpoint 1", which the
+  slot list directly beside it gets right.
+
+- [ ] **13. Bind a core to any ship, from a dropdown.** Against Phase 35 as shipped in v0.38.0. The
+  row binds only the ship being flown, so setting a core means boarding that ship in-game first. It
+  should list every ship in the fleet and bind the one chosen; journal state already carries the
+  fleet, and the Ships page lists it.
+
+  **This does not weaken the phase's own rule.** Phase 35 requires binding to be *at the Commander's
+  command, never by watching*, and to be a protected panel row. Nothing in it requires the Commander
+  to be **flying** the ship — that constraint arrived from the row being scoped to *this* ship. A
+  dropdown removes it while leaving the protection untouched: still the panel, still deliberate,
+  still one act.
+
+- [ ] **14. `type9_military` shown where a hull name belongs.** *"Oxen, a type9_military is not
+  bound to a core, so whoever is aboard stays aboard."* `EliteSpecifications` resolves that symbol —
+  `type9_military` is **Type-10 Defender**, by Lakon — and the fleet page one tab over already
+  prints "Oxen (Type-10 Defender)". Thread B, and the cheap half of it: the name was in hand and the
+  id was printed anyway.
