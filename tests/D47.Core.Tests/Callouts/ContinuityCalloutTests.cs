@@ -262,4 +262,54 @@ public class ContinuityCalloutTests : IDisposable
 
         Assert.Null(FlavourBriefs.For(announcement, personalityEnabled: false));
     }
+    /// <summary>
+    /// The engineer clause is only said when they are one stop away (remediation.md 14, item 2).
+    /// <para>
+    /// Reported as not useful: <em>"Broo Tarquin is still three steps out."</em> Three steps is
+    /// three unlocks and two rank climbs — a project — and it says the same thing every session
+    /// until it is done, which is how a Commander learns to stop listening to the opening line.
+    /// The clause above it already draws this distinction for materials, picking the nearest
+    /// shortfall because two short is an errand and ninety short is a project.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnEngineerIsOnlyMentionedWhenTheyAreOneStopAway()
+    {
+        var book = Book();
+        Seen(book, Now.AddDays(-7));
+
+        var state = State();
+        var checklists = TestSurface.EmptyChecklists(_folder, () => state);
+
+        var ships = new D47.Core.Ships.ShipBuildStore(
+            Path.Combine(_folder, "ships.json"),
+            NullLogger<D47.Core.Ships.ShipBuildStore>.Instance);
+
+        var onFoot = new D47.Core.Loadout.OnFootBuildStore(
+            Path.Combine(_folder, "onfoot.json"),
+            NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
+
+        var unlocks = new D47.Core.Engineers.EngineerPlanService(
+            ships, onFoot, checklists, () => state);
+
+        var line = new ContinuityCallout(book, checklists, () => unlocks).Compose(Now, state)!;
+
+        var route = unlocks.Report().Route;
+        var best = route.Count > 0 ? route[0] : null;
+
+        if (best is { Chain.Steps.Count: 1 })
+        {
+            Assert.Contains($"{best.Engineer.Name} is one stop away.", line, StringComparison.Ordinal);
+        }
+        else
+        {
+            // Nothing about engineers at all, whatever the solver ranked first.
+            Assert.DoesNotContain(" steps out", line, StringComparison.Ordinal);
+            Assert.DoesNotContain(" step out", line, StringComparison.Ordinal);
+        }
+
+        // Whatever the fixture ranks, the sentence never counts steps at a Commander.
+        Assert.DoesNotContain("three steps", line, StringComparison.Ordinal);
+    }
+
 }

@@ -120,4 +120,39 @@ public class JournalCapabilityTests
         // has established. This says which event would establish it.
         Assert.Contains("dock at a station with outfitting", result.Content, StringComparison.Ordinal);
     }
+    /// <summary>
+    /// The stored fleet is a snapshot and says when it was taken (remediation.md 14, item 3).
+    /// <para>
+    /// Reported from a running d47: <em>"Sacred Fire is mid-manoeuvre — a jump inside Laksak"</em>,
+    /// said of a transfer that had landed the day before. Elite rewrites this list when the
+    /// Commander docks at a shipyard and never between, and nothing announces a transfer
+    /// arriving — so an undated list reads as the state of the fleet now, and "in transit" reads
+    /// as a thing happening at this moment.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TheStoredFleetIsDatedAndInTransitIsPastTense()
+    {
+        var gameState = new GameStateStore();
+
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:03Z","event":"StoredShips","StationName":"Jameson Memorial","StarSystem":"Shinrarta Dezhra","ShipsHere":[],"ShipsRemote":[{"ShipID":13,"ShipType":"krait_mkii","Name":"Sacred Fire","StarSystem":"Laksak","InTransit":true}]}""");
+
+        var registry = CapabilityRegistry.Build([JournalCapability.Create(gameState)]);
+
+        var result = await registry.InvokeAsync(
+            "get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        // When the list was read, so nothing downstream can present it as the state of now.
+        Assert.Contains("as of 2026-01-01 00:00 UTC", result.Content, StringComparison.Ordinal);
+
+        // And the tense the snapshot was taken in, with the reason attached: a transfer that has
+        // since landed looks exactly the same from here.
+        Assert.Contains("In transit when that was read", result.Content, StringComparison.Ordinal);
+        Assert.Contains("do not say one is still moving", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("In transit: ", result.Content, StringComparison.Ordinal);
+    }
+
 }
