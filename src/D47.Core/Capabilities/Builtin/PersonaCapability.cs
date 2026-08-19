@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Persona;
@@ -24,6 +26,15 @@ public static class PersonaCapability
 
     /// <summary>The row that reads every binding, and forgets the current ship's.</summary>
     public const string ShipCoresKey = "persona.shipCores";
+
+    /// <summary>The row that picks which ship the core row above is about.</summary>
+    public const string ShipCoreShipKey = "persona.shipCoreShip";
+
+    /// <summary>The core-row value that means "take the binding back".</summary>
+    private const string Nobody = "nobody";
+
+    /// <summary>A ship id as a choice key.</summary>
+    private static string Keyed(int shipId) => shipId.ToString(CultureInfo.InvariantCulture);
 
     public static CapabilityDescriptor Create(
         PersonaHost host,
@@ -259,19 +270,84 @@ public static class PersonaCapability
     /// </summary>
     private static SettingRow[] ShipCoreRows(PersonaHost host, ShipCoreService ships) =>
     [
+        // Two rows, and they read as one sentence: which ship, and who flies it. The ship is the
+        // **selector** and the core is the **value** (remediation.md 15, item 13). Binding used to
+        // be scoped to the ship being flown, so setting a core meant boarding that ship in game
+        // first; nothing in Phase 35 asked for that. It asks for the binding to be deliberate and
+        // protected, and a pair of dropdowns in the panel is both.
+        new SettingRow
+        {
+            Key = ShipCoreShipKey,
+            Label = "Ship",
+            Help =
+                "Which ship the core below belongs to. Every ship in your fleet is here, so you do "
+                + "not have to be sitting in one to give it a core.",
+            Kind = SettingKind.Choice,
+            DocsAnchor = "core-for-this-ship",
+
+            // Protected, which is what keeps Phase 35's rule after these stopped being Info rows.
+            // Binding a core changes who speaks every time that ship is boarded, so it stays
+            // reachable from the panel, the gesture and the model-free router, and is refused to
+            // the model outright — d47 reads the Commander's journal and their in-game messages,
+            // and other people write those.
+            Protected = true,
+            ChoiceSource = _ => [.. ships.Fleet().Select(entry => Keyed(entry.ShipId))],
+            ChoiceLabel = key => ships.Fleet()
+                .FirstOrDefault(entry => Keyed(entry.ShipId) == key)
+                .Said ?? key,
+            WhyNoChoices = _ =>
+                "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it.",
+            Binding = new SettingBinding
+            {
+                Read = settings => settings.Persona.ShipCoreShip is var id and not 0 ? Keyed(id) : null,
+                Write = (settings, value) => settings with
+                {
+                    Persona = settings.Persona with
+                    {
+                        ShipCoreShip = int.TryParse(value, CultureInfo.InvariantCulture, out var id) ? id : 0,
+                    },
+                },
+            },
+        },
         new SettingRow
         {
             Key = ShipCoreKey,
-            Label = "Core for this ship",
+            Label = "Core for that ship",
             Help =
                 "A ship can remember the core that flies it, so changing ship changes who answers "
                 + "you. Nothing is bound until you say so, and boarding a ship you have not bound "
-                + "leaves whoever is aboard aboard.",
-            Kind = SettingKind.Info,
+                + "leaves whoever is aboard aboard. Choosing nobody takes a binding back.",
+            Kind = SettingKind.Choice,
             DocsAnchor = "core-for-this-ship",
-            PressLabel = "Remember this core for this ship",
-            Press = () => ships.Bind(host.Current.Id),
-            Binding = new SettingBinding { Read = _ => ships.DescribeCurrent() },
+            Protected = true,
+
+            // Nobody first, because it is the unbind and it used to be a separate button. One
+            // control that can say "not this one" is fewer than two that cannot.
+            Choices = [Nobody, .. PersonaCatalog.Shipped.Select(persona => persona.Id)],
+            ChoiceSource = _ => [Nobody, .. PersonaCatalog.All.Select(persona => persona.Id)],
+            ChoiceLabel = id => id == Nobody
+                ? "Nobody — whoever is aboard stays aboard"
+                : PersonaCatalog.Resolve(id).Name,
+            Binding = new SettingBinding
+            {
+                Read = settings => settings.Persona.ShipCoreShip is var id and not 0
+                    ? ships.Store.For(id)?.Core ?? Nobody
+                    : null,
+
+                // The write is the binding, and it returns the settings unchanged: what it changes
+                // lives in ship-cores.json, not here. Contained to this one row, and the reason is
+                // in D47Settings.ShipCoreShip — widening SettingBinding for it would have been an
+                // architecture change for one control.
+                Write = (settings, value) =>
+                {
+                    if (settings.Persona.ShipCoreShip is var id and not 0)
+                    {
+                        ships.BindTo(id, value == Nobody ? null : value);
+                    }
+
+                    return settings;
+                },
+            },
         },
         new SettingRow
         {

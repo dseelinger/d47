@@ -33,6 +33,14 @@ public class SettingsByVoiceTests
             "A key gesture, same as the silence key.",
         ["llm.endpoint"] =
             "A URL. There is no closed set of them, and a misheard host is a silent misconfiguration.",
+        ["persona.shipCoreShip"] =
+            "A ship id, and every Commander's are different — there is no phrase-to-value pair to "
+            + "write down. Binding keeps its own voice route: the Ctrl+Alt+B gesture and the "
+            + "model-free phrase both bind the core aboard to the ship being flown, which is what "
+            + "Phase 35 built and what remediation 15 item 13 widened rather than replaced.",
+        ["persona.shipCore"] =
+            "The value is a core and the subject is whichever ship the row above points at, so one "
+            + "phrase would have to carry both. Same voice route as the row above.",
     };
 
     [Fact]

@@ -77,6 +77,92 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     public ShipCoreBinding? Current => CurrentShipId is { } id ? store.For(id) : null;
 
     /// <summary>
+    /// Every ship the Commander could bind a core to, as an id and the words they call it by.
+    /// <para>
+    /// <b>The fleet, not the ship they are sitting in</b> (remediation.md 15, item 13). Binding
+    /// used to be scoped to the ship being flown, so setting a core meant boarding that ship in
+    /// game first. Nothing in Phase 35 required that — it asks for the binding to be deliberate and
+    /// protected, and a dropdown is both.
+    /// </para>
+    /// <para>
+    /// The flown ship is included even though <c>StoredShips</c> never lists it: Elite reports the
+    /// fleet as what is in storage, so the one underneath the Commander has to be added back or the
+    /// list is missing exactly the ship they are most likely to want.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<(int ShipId, string Said)> Fleet()
+    {
+        var state = game();
+
+        if (state is null)
+        {
+            return [];
+        }
+
+        var found = new Dictionary<int, string>();
+
+        foreach (var ship in state.Fleet.Ships)
+        {
+            found[ship.ShipId] = ship.Describe();
+        }
+
+        if (state.Ship is { ShipId: { } aboard } flown && flown.Describe() is { Length: > 0 } said)
+        {
+            found[aboard] = said;
+        }
+
+        return [.. found.Select(pair => (pair.Key, pair.Value)).OrderBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>
+    /// Binds a named ship to a core, or unbinds it when the core is null, and says what happened.
+    /// <para>
+    /// The ship is named rather than assumed, which is the whole of item 13. Everything else is
+    /// <see cref="Bind(string)"/>'s: the key is the ship's own id, so two Kraits are two ships.
+    /// </para>
+    /// </summary>
+    public string BindTo(int shipId, string? core)
+    {
+        var known = Fleet().FirstOrDefault(entry => entry.ShipId == shipId);
+
+        if (known.Said is not { Length: > 0 } said)
+        {
+            return "I do not know that ship. Dock somewhere with a shipyard and I will read your fleet.";
+        }
+
+        if (core is not { Length: > 0 })
+        {
+            return store.Forget(shipId)
+                ? $"{said} no longer asks for a core. Whoever is aboard stays aboard."
+                : $"{said} was not bound to a core.";
+        }
+
+        var persona = PersonaCatalog.Resolve(core);
+        var hull = game()?.Ship;
+
+        store.Bind(new ShipCoreBinding(
+            shipId,
+            persona.Id,
+            hull?.ShipId == shipId ? hull.Type : known.Said,
+            hull?.ShipId == shipId ? hull.Name : null));
+
+        // Marked as handled where it is the ship they are in, so it does not then read as a change
+        // and switch to the core that is already aboard.
+        if (CurrentShipId == shipId)
+        {
+            lock (_gate)
+            {
+                _started = true;
+                _aboard = shipId;
+                _waiting = null;
+                _waited = TimeSpan.Zero;
+            }
+        }
+
+        return $"{persona.Name} now flies {said}.";
+    }
+
+    /// <summary>
     /// What the ship change on this tick means, or null for the ordinary case of nothing having
     /// changed. Called once per tick with the time since the last one.
     /// </summary>
