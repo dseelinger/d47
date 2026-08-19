@@ -25,10 +25,10 @@ the changelog, which is why this file is the current batch and not a growing arc
 
 - [x] **6. `TinyHardpoint` is a Utility Mount.**
 
-- [ ] **7. An engineer's name should open that engineer.**
+- [x] **7. An engineer's name should open that engineer.**
 
-- [ ] **8. "Already yours" should read "Unlocked".**
+- [x] **8. "Already yours" should read "Unlocked".**
 
-- [ ] **9. "You can go and get these now" should read "Ready for Unlock".**
+- [x] **9. "You can go and get these now" should read "Ready for Unlock".**
 
-- [ ] **10. "Behind somebody else" should read "Requires Engineer Intro First".**
+- [x] **10. "Behind somebody else" should read "Requires Engineer Intro First".**

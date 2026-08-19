@@ -8,6 +8,7 @@ using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -139,14 +140,14 @@ public class EngineersTabTests
         Assert.Contains(shown, line => line.Contains(
             "waiting on somebody you have not unlocked", StringComparison.Ordinal));
 
-        Assert.Contains("You can go and get these now", shown);
-        Assert.Contains("Already yours", shown);
-        Assert.Contains("Behind somebody else", shown);
+        Assert.Contains("Ready for Unlock", shown);
+        Assert.Contains("Unlocked", shown);
+        Assert.Contains("Requires Engineer Intro First", shown);
 
         // The heading that can be acted on comes before the one that cannot.
         Assert.True(
-            shown.ToList().IndexOf("You can go and get these now")
-            < shown.ToList().IndexOf("Behind somebody else"));
+            shown.ToList().IndexOf("Ready for Unlock")
+            < shown.ToList().IndexOf("Requires Engineer Intro First"));
 
         // And the say-line, on this level as on every other.
         Assert.Contains(shown, line => line.StartsWith("Say:", StringComparison.Ordinal));
@@ -267,4 +268,77 @@ public class EngineersTabTests
 
         surface.Window.Close();
     }
+
+    /// <summary>
+    /// A ranked name on the Route opens that engineer (remediation.md 12, item 7).
+    /// <para>
+    /// The Route is where somebody the Commander has never met is first put in front of them, so
+    /// it is exactly where "who is that, and where are they" gets asked. It headed a block and did
+    /// nothing.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ARankedNameOpensThatEngineer()
+    {
+        var surface = Open();
+
+        Assert.True(surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot));
+        Dispatcher.UIThread.RunJobs();
+
+        var first = Text(surface.Panel)
+            .First(line => EngineerDirectory.All.Any(engineer => engineer.Name == line));
+
+        Press(surface.Panel, first).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(first, surface.Panel.Nav.Trail[^1].Word);
+        Assert.StartsWith(EngineersPages.WhoPrefix, surface.Panel.Nav.Trail[^1].Key, StringComparison.Ordinal);
+
+        // And it is the engineer's own page rather than a level that merely carries their name.
+        Assert.Contains(Text(surface.Panel), line => line.Contains("Where you stand", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// So does a stop on the way in (remediation.md 12, item 7). A chain names people the
+    /// Commander has to go through, and going and looking at one of them is the obvious next
+    /// question.
+    /// </summary>
+    [AvaloniaFact]
+    public void AStopOnTheWayInOpensThatEngineerToo()
+    {
+        var surface = Open();
+
+        // Somebody behind a referral, so their chain has a stop on it that is not themselves.
+        var behind = EngineerDirectory.All.First(engineer => engineer.Name == "Broo Tarquin");
+
+        surface.Panel.Nav.Drill(EngineersPages.Crumb(behind));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Text(surface.Panel), line => line.Contains("The way in", StringComparison.Ordinal));
+
+        // Inside the engineer's own page, not the directory beside it: a wide panel keeps the
+        // list on screen, and its rows have opened an engineer since Phase 28 — so a test that
+        // searched the whole panel would pass without this change ever having been made.
+        var page = surface.Panel.GetVisualDescendants().OfType<EngineerPage>().Single();
+
+        var pressable = page.GetVisualDescendants().OfType<Button>()
+            .Select(button => (Button: button, Label: button.GetVisualDescendants()
+                .OfType<TextBlock>().FirstOrDefault()?.Text))
+            .Where(found => found.Label is { } label
+                            && label != behind.Name
+                            && EngineerDirectory.All.Any(engineer => engineer.Name == label))
+            .ToList();
+
+        var stop = Assert.Single(pressable);
+
+        stop.Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(stop.Label, surface.Panel.Nav.Trail[^1].Word);
+
+        surface.Window.Close();
+    }
+
 }
