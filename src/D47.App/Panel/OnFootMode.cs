@@ -61,6 +61,14 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
     public string PromoteLabel => "Put this plan on my checklist";
 
+    /// <summary>
+    /// Never. A suit's modules are a fixed set of named slots with no sizes to resolve between, so
+    /// there is no drag to allow — remediation 15 item 1 is about ship slots.
+    /// </summary>
+    public bool CanCopy(string item, string from, string to) => false;
+
+    public string Copy(string item, string from, string to) => "That cannot go there.";
+
     public string SayAtIndex => "what have I planned on foot";
 
     public string SayAtItem => "put that on my checklist";

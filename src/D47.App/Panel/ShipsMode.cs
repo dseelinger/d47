@@ -387,6 +387,47 @@ public sealed class ShipsMode(
             ? "empty"
             : "not seen";
 
+    /// <summary>
+    /// Whether this drag is allowed, asked while the mouse is still down (remediation.md 15,
+    /// item 1). The rules are <see cref="SlotCopy"/>'s and are tested without a window.
+    /// </summary>
+    public bool CanCopy(string item, string from, string to) => Moved(item, from, to) is not null;
+
+    /// <summary>
+    /// Copies a slot's plan onto another, overwriting whatever was there — which is what dragging
+    /// means, and why nothing asks first.
+    /// </summary>
+    public string Copy(string item, string from, string to)
+    {
+        if (Resolve(item) is not { } build || Moved(item, from, to) is not { } moved)
+        {
+            return "That cannot go there.";
+        }
+
+        ships.Plan(build.Id, moved);
+
+        return $"Copied to {moved.Slot}: {moved.Describe()}.";
+    }
+
+    /// <summary>What the dragged plan would become in the target slot, or null where it may not go.</summary>
+    private SlotPlan? Moved(string item, string from, string to)
+    {
+        if (Resolve(item) is not { } build || build.For(from) is not { } plan)
+        {
+            return null;
+        }
+
+        var layout = EliteSpecifications.Slots(build.Hull);
+
+        var source = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, from, StringComparison.OrdinalIgnoreCase));
+
+        var target = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, to, StringComparison.OrdinalIgnoreCase));
+
+        return source is null || target is null ? null : SlotCopy.Resolve(plan, source, target);
+    }
+
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
 

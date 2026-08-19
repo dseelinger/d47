@@ -185,6 +185,19 @@ public interface ILoadoutMode
     /// <summary>Offers the whole item to the checklist, and says what happened.</summary>
     string Promote(string item);
 
+    /// <summary>
+    /// Whether a plan may be dragged from one slot to another, without moving it
+    /// (remediation.md 15, item 1). Asked while the mouse is still down, so an invalid target can
+    /// simply not highlight rather than accepting the drop and explaining afterwards.
+    /// </summary>
+    bool CanCopy(string item, string from, string to);
+
+    /// <summary>
+    /// Copies a slot's plan onto another slot, and says what happened. Overwrites whatever the
+    /// target held, because that is what dragging means.
+    /// </summary>
+    string Copy(string item, string from, string to);
+
     string PromoteLabel { get; }
 
     /// <summary>

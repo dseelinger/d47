@@ -2,6 +2,9 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -110,7 +113,7 @@ public static class LoadoutPages
     public static NavCrumb SlotCrumb(ILoadoutMode mode, LoadoutRow row) =>
         new(mode.SlotPrefix + row.Key, row.Word) { Level = mode.SlotPrefix };
 
-    private static (string Item, string Slot) SplitSlot(string key)
+    internal static (string Item, string Slot) SplitSlot(string key)
     {
         var at = key.IndexOf('|', StringComparison.Ordinal);
 
@@ -680,14 +683,97 @@ public sealed class ItemPage : LoadoutPage
                 _list.Children.Add(LoadoutPages.Heading(heading));
             }
 
-            _list.Children.Add(LoadoutPages.Row(
+            var control = LoadoutPages.Row(
                 row.Text,
                 row.Aside,
                 row.Marked,
                 () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
-                row.Engineered));
+                row.Engineered);
+
+            Draggable(control, row);
+
+            _list.Children.Add(control);
         }
     }
+
+    /// <summary>
+    /// Ctrl and the left button held, dragged from one slot row to another, copies the plan
+    /// (remediation.md 15, item 1).
+    /// <para>
+    /// <b>Pointer events rather than the drag-and-drop framework.</b> The copy never leaves this
+    /// page — there is no other window to drop on and nothing to negotiate a format with — so the
+    /// framework would buy a clipboard round trip and an API that has already moved once, in
+    /// exchange for nothing. Two events and a field do it, and they can be raised by a test.
+    /// </para>
+    /// <para>
+    /// <b>Ctrl rather than a bare drag</b>, because a slot row's first job is to be pressed: a
+    /// plain drag would turn every mis-aimed click into a plan being moved.
+    /// </para>
+    /// <para>
+    /// <b>An invalid target refuses during the drag rather than after the drop.</b> The row under
+    /// the pointer is asked whether it would take the plan and greyed where it would not, so a
+    /// Plasma Accelerator that does not come small enough shows that while the mouse is still
+    /// down — not in a dialog a second later.
+    /// </para>
+    /// </summary>
+    private void Draggable(Control control, LoadoutRow row)
+    {
+        var slot = LoadoutPages.SplitSlot(row.Key).Slot;
+
+        control.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) =>
+            {
+                var point = args.GetCurrentPoint(control);
+
+                if (point.Properties.IsLeftButtonPressed
+                    && args.KeyModifiers.HasFlag(KeyModifiers.Control))
+                {
+                    _dragging = slot;
+                    args.Handled = true;
+                }
+            },
+            RoutingStrategies.Tunnel);
+
+        control.AddHandler(
+            InputElement.PointerReleasedEvent,
+            (_, args) =>
+            {
+                if (_dragging is not { } from || from == slot)
+                {
+                    _dragging = null;
+                    return;
+                }
+
+                _dragging = null;
+                args.Handled = true;
+
+                // Refused rather than explained, matching what the row showed during the drag.
+                if (!Mode.CanCopy(_item, from, slot))
+                {
+                    return;
+                }
+
+                _summary.Text = Mode.Copy(_item, from, slot);
+                Refresh();
+            },
+            RoutingStrategies.Tunnel);
+
+        // What the row looks like while a plan is over it: dimmed where it would refuse, so the
+        // Commander learns the rule from the interface rather than from a message.
+        control.PointerEntered += (_, _) =>
+        {
+            if (_dragging is { } from && from != slot)
+            {
+                control.Opacity = Mode.CanCopy(_item, from, slot) ? 1 : 0.4;
+            }
+        };
+
+        control.PointerExited += (_, _) => control.Opacity = 1;
+    }
+
+    /// <summary>The slot a plan is being dragged from, or null when nothing is in flight.</summary>
+    private string? _dragging;
 }
 
 /// <summary>
