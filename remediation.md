@@ -264,6 +264,32 @@ rather than prettifying a symbol into something that looks like one.
   Two consequences worth stating. The join stops going through `Catalogue.Match` at all, so the
   fuzziness the report worried about becomes moot rather than tuned. And it wants a column: the
   module rows need their coriolis group, which `gen-elite-specs.py` iterates already and throws away.
+  **Measured, and it is two thirds of the way there rather than all of it.** The chain above is
+  right about the group codes and wrong about the guid. `CoriolisGuid` is **not** a per-module key:
+  coriolis models `Lightweight` as *one* blueprint that 23 module types share, and EDEngineer
+  splits it into 23 entries that all carry the same guid. So group → fdname → guid → Type fans out
+  to all 23 and identifies nothing. Fifty guids are shared this way, of 488.
+
+  Matching on **guid-set equality** instead — a group's whole set of blueprint guids against a
+  Type's whole set — is much better, and settles the cases the item leads with:
+
+  - **25 of 87 groups resolve to exactly one Type.** `bh` → `Armour` is one, which is the reported
+    armour case. So are all three shield generators — `sg`, `bsg` and `psg` all → `Shield Generator`
+    — so **Bi-Weave and Prismatic are case 2 as well**, which the report had not listed.
+  - **43 groups carry no blueprints at all**, which is case 3 stated by the data rather than
+    inferred. `ft` is among them: fuel tanks genuinely cannot be engineered, exactly as reported.
+  - **19 groups do not resolve**, and two are case-2s from the list above — `cs` (Cargo Scanner /
+    `Manifest Scanner`) and `ws` (Frame Shift Wake Scanner / `Wake Scanner`). Their sets differ
+    from any Type's by the shared `Lightweight` guids, so equality is too strict and containment is
+    too loose.
+
+  **Stopped here deliberately.** The remaining 19 want either a further derivation — scoring on the
+  guids a group does *not* share is the obvious next try — or a decision, and hand-writing the
+  mapping for them is the thing the game-data invariant exists to prevent. Everything above is
+  reproducible from the skipped harness in `BlueprintJoinHarness`. None of the fix is built, and
+  the `group` column the chain needs was written, verified against all 1,164 modules and then
+  **backed out again**, so the shipped table carries nothing inert while the fix is unbuilt.
+
 
   **One thing v0.38.1 changed here.** `int_detailedsurfacescanner_tiny` used to be named
   *Surface Scanner*, which joined to the blueprint key of that name by accident; item 2a corrects it
