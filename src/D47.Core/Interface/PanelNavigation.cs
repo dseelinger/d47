@@ -59,7 +59,28 @@ public enum PanelTab
 /// mid-choice</b>. Held on the crumb rather than on the navigator so that popping it clears the
 /// state rather than requiring somebody to remember to.
 /// </param>
-public sealed record NavCrumb(string Key, string Word, bool Modal = false);
+public sealed record NavCrumb(string Key, string Word, bool Modal = false)
+{
+    /// <summary>
+    /// What kind of level this is, where the kind has alternatives — a ship, a slot
+    /// (remediation.md 11, item 5). Null for a level that is only ever itself, which is most of
+    /// them, and which nests exactly as it always did.
+    /// <para>
+    /// <b>Two crumbs of one level are alternatives rather than a path.</b> A wide panel shows the
+    /// level you are on beside the one above it, so the list you drilled from is still on screen
+    /// and still pressable — and pressing another ship there produced
+    /// <c>Ships › Tulimiekka › Reaper › Cartage</c>, which reads as a route through three ships and
+    /// is not a thing that can be true. Pushing a level replaces the one of its own kind that is
+    /// already open, and everything that was underneath it, because a slot of one ship is not a
+    /// slot of another.
+    /// </para>
+    /// <para>
+    /// Declared on the crumb rather than worked out from the key, so it is a statement by the page
+    /// that pushes rather than a rule about string prefixes that a rename would silently break.
+    /// </para>
+    /// </summary>
+    public string? Level { get; init; }
+}
 
 /// <summary>
 /// Where the Commander is, per tab and per root, and every way of changing it (list.md Phase
@@ -352,6 +373,21 @@ public sealed class PanelNavigator
         if (trail is null || trail[^1].Key == crumb.Key)
         {
             return false;
+        }
+
+        // A level with alternatives replaces the one of its kind that is already open, and takes
+        // whatever was below it — see NavCrumb.Level. From index 1, because the root is the tab
+        // and a tab is not an alternative to anything.
+        if (crumb.Level is { Length: > 0 } level)
+        {
+            for (var i = 1; i < trail.Count; i++)
+            {
+                if (string.Equals(trail[i].Level, level, StringComparison.Ordinal))
+                {
+                    trail.RemoveRange(i, trail.Count - i);
+                    break;
+                }
+            }
         }
 
         trail.Add(crumb);

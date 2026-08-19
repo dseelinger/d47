@@ -34,6 +34,7 @@ public sealed class AboutWindow : Window
     /// working install can return to — and About is where a Commander already goes when
     /// something is not working.
     /// </param>
+    
     public AboutWindow(AppPaths paths, Func<Task>? setUpKeys = null)
     {
         Title = "About Directive 47";

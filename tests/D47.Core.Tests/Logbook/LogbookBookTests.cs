@@ -273,6 +273,52 @@ public class LogbookBookTests : IDisposable
                 "Docked",
                 "\"StarSystem\":\"Deciat\",\"StationName\":\"Garay Terminal\""));
 
+    /// <summary>
+    /// A provider with no model beneath it, which is the state on a fresh install and the state
+    /// the Commander was in (remediation.md 11, item 12).
+    /// </summary>
+    [Fact]
+    public void AProviderWithNoModelIsNotToldToChooseAProvider()
+    {
+        Evening1();
+
+        _context = _context with { Model = null };
+
+        var book = Book(FakeLlmProvider.Answering("..."));
+
+        _context = _context with { Model = null };
+
+        Assert.Null(book.Estimate(null, null, null, out var said));
+
+        Assert.Contains("no model selected", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("Choose a provider", said, StringComparison.Ordinal);
+
+        // And it says the half that is already done, so the Commander is not sent to check a
+        // setting that was never the problem.
+        Assert.Contains("provider is set", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>And no provider at all is still told to choose one.</summary>
+    [Fact]
+    public void NoProviderIsStillToldToChooseOne()
+    {
+        Evening1();
+
+        var book = new LogbookBook(
+            new LogFolder(_folder, NullLogger<LogFolder>.Instance),
+            new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
+            new LogWriter(NullLogger<LogWriter>.Instance),
+            () => _settings,
+            () => _corpus.Files,
+            () => Evening.AddHours(5),
+            () => new LogbookContext(),
+            NullLogger<LogbookBook>.Instance);
+
+        Assert.Null(book.Estimate(null, null, null, out var said));
+
+        Assert.Contains("no provider selected", said, StringComparison.Ordinal);
+    }
+
     private LogbookBook Book(ILlmProvider provider)
     {
         _context = _context with { Provider = provider, Model = _context.Model ?? "claude-opus-5" };

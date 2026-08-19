@@ -91,17 +91,62 @@ public static class VoicePairing
         var chosen = await AskAsync(voices, unpaired, provider, model, spend, prices, logger, cancellationToken)
             .ConfigureAwait(false);
 
+        var taken = new HashSet<string>(paired.Values, StringComparer.OrdinalIgnoreCase);
+
         foreach (var persona in unpaired)
         {
-            if (chosen.GetValueOrDefault(persona.Id) is { } voice)
+            // The model's answer where it gave one and nothing else has it, and the nearest unused
+            // voice otherwise (remediation.md 11, item 13).
+            //
+            // <b>Leaving a core unpaired is what made two of them sound alike.</b> A voice already
+            // spoken for is refused when the answer is read, which is right — and the core it was
+            // meant for was then left with nothing, and a core with no pairing speaks in the
+            // provider's default. Two cores with no pairing are two cores in one voice, which is
+            // the one mistake in the cast a Commander notices immediately and cannot unhear.
+            if (chosen.GetValueOrDefault(persona.Id) is not { } wanted)
             {
-                paired[persona.Id] = voice;
+                // The model said nothing usable about this core — an invented voice, or one whose
+                // sex its description refuses. That stays unpaired, which is the established
+                // answer: it keeps the voice in force rather than being dealt one on a guess.
+                continue;
+            }
+
+            if (taken.Add(wanted))
+            {
+                paired[persona.Id] = wanted;
+                continue;
+            }
+
+            if (Spare(voices, taken, persona) is { } instead)
+            {
+                taken.Add(instead);
+                paired[persona.Id] = instead;
             }
         }
 
         logger?.LogInformation("Paired {Count} personas to voices", paired.Count - existing.Count);
 
         return paired;
+    }
+
+    /// <summary>
+    /// A voice nobody has yet, for a core the model could not be given one for
+    /// (remediation.md 11, item 13).
+    /// <para>
+    /// Its own sex only. A core described as a woman answering in a man's voice is a worse error
+    /// than two cores sharing one, and leaving a core unpaired is the established answer where
+    /// nothing fits — it keeps the voice in force rather than being dealt one on a guess. Null
+    /// when nothing suitable is free, where sharing stops being a fault and becomes arithmetic.
+    /// </para>
+    /// </summary>
+    private static string? Spare(
+        IReadOnlyList<VoiceInfo> voices,
+        IReadOnlySet<string> taken,
+        Persona persona)
+    {
+        var free = voices.Where(voice => !taken.Contains(voice.Id)).ToArray();
+
+        return free.FirstOrDefault(voice => persona.VoiceHint.Admits(voice.Gender))?.Id;
     }
 
     /// <summary>

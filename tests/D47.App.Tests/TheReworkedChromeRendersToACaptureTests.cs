@@ -107,6 +107,22 @@ public class TheReworkedChromeRendersToACaptureTests
         window.Close();
     }
 
+    /// <summary>
+    /// The search row with matches in it, which is the state the gap was reported in
+    /// (remediation.md 11, item 2).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSearchRowWithMatches()
+    {
+        var (window, panel) = Open(1900);
+
+        panel.GetControl<TextBox>("SearchInput").Text = "beacon";
+        Dispatcher.UIThread.RunJobs();
+
+        Save(window, "chrome-search.png");
+        window.Close();
+    }
+
     /// <summary>A furnished page, where Copy All must not be.</summary>
     [AvaloniaFact]
     public void AFurnishedPage()

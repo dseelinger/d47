@@ -73,7 +73,15 @@ public static class PersonaCapability
             Kind = SettingKind.Choice,
             DefaultDisplay = PersonaCatalog.Resolve(null).Name,
             DocsAnchor = "persona",
-            Choices = [.. PersonaCatalog.All.Select(p => p.Id)],
+            // A source rather than a list, so a core the Commander wrote appears in the picker the
+            // moment they write it (remediation.md 11, item 9). A list here is computed once, at
+            // registration, and a descriptor is registered once and never mutated — so a fixed
+            // list would have been the eleven shipped cores forever.
+            // Both: the shipped ids say the shape of the list, and the source says what is in it
+            // right now. Declaring only the source would make this an open vocabulary and turn a
+            // drop-down of eleven named cores into a search window (see SettingRow.IsOpenVocabulary).
+            Choices = [.. PersonaCatalog.Shipped.Select(persona => persona.Id)],
+            ChoiceSource = _ => [.. PersonaCatalog.All.Select(persona => persona.Id)],
             ChoiceLabel = id => PersonaCatalog.Resolve(id).Name,
 
             // Protected, and this is the one row in the phase where that is a judgement call
@@ -86,7 +94,10 @@ public static class PersonaCapability
             // and the model-free keyword router all still reach it — which is the checklist's
             // own definition of settable by voice (architecture.md §7).
             Protected = true,
-            Commands = [.. PersonaCatalog.All.SelectMany(SelectionPhrases)],
+            // The shipped cores only. A phrase is matched against a closed grammar written down in
+            // advance, and a core somebody names next week cannot be in one — so custom cores are
+            // chosen from the picker rather than by name, and the eleven keep the phrases they had.
+            Commands = [.. PersonaCatalog.Shipped.SelectMany(SelectionPhrases)],
             Binding = new SettingBinding
             {
                 Read = s => s.Persona.Id,
@@ -183,6 +194,22 @@ public static class PersonaCapability
     /// router that guesses at values is a router that changes the wrong setting with total
     /// confidence.
     /// </summary>
+    /// <summary>The row that opens the editor for the Commander's own cores.</summary>
+    public const string OwnKey = "persona.own";
+
+    /// <summary>
+    /// What that row reads. Here rather than in the App, so the panel and the tool surface cannot
+    /// describe the same set differently.
+    /// </summary>
+    public static string SummariseOwn()
+    {
+        var names = Persona.PersonaCatalog.Own?.Invoke().Select(core => core.Name).ToArray() ?? [];
+
+        return names.Length == 0
+            ? "None yet. A core needs a name and a paragraph saying what it is like."
+            : $"{names.Length} of your own: {string.Join(", ", names)}.";
+    }
+
     private static IEnumerable<SettingCommandPhrase> SelectionPhrases(Persona.Persona persona)
     {
         var name = persona.Name.ToLowerInvariant();

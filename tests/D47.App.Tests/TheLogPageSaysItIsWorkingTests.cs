@@ -60,12 +60,12 @@ public class TheLogPageSaysItIsWorkingTests
 
         await reading.Task;
 
-        // Past the delay the helper waits before saying anything, so the glyph has had its chance
-        // to appear.
-        await Task.Delay(Busy.Delay + TimeSpan.FromMilliseconds(120));
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(glyph.IsVisible, "nothing said the log was being read");
+        // Waited for rather than slept through. The helper holds off for Busy.Delay before saying
+        // anything, and a fixed sleep just past that is a test that passes on this bench and fails
+        // on a loaded runner — which is the one thing a green local suite says nothing about.
+        Assert.True(
+            await Eventually(() => glyph.IsVisible),
+            "nothing said the log was being read");
         Assert.False(view.GetControl<Button>("ModeButton").IsEnabled, "the control was still pressable");
 
         release.TrySetResult();
@@ -91,15 +91,42 @@ public class TheLogPageSaysItIsWorkingTests
 
         view.Page = TranscriptPage.Log;
 
-        await Task.Delay(Busy.Delay + Busy.Minimum + TimeSpan.FromMilliseconds(200));
-        Dispatcher.UIThread.RunJobs();
-
         var glyph = (view.GetControl<Button>("ModeButton").Content as StackPanel)!
             .Children
             .OfType<BusyGlyph>()
             .Single();
 
+        Assert.True(
+            await Eventually(() => !glyph.IsVisible && view.GetControl<Button>("ModeButton").IsEnabled),
+            "the glyph was left spinning after the read failed");
+
         Assert.False(glyph.IsVisible);
         Assert.True(view.GetControl<Button>("ModeButton").IsEnabled, "a page that failed once can never be opened again");
     }
+
+    /// <summary>
+    /// Pumps the dispatcher until a condition holds, or gives up. A generous ceiling and a short
+    /// step, so a slow machine waits longer rather than failing and a broken one still fails
+    /// quickly enough to be worth running.
+    /// </summary>
+    private static async Task<bool> Eventually(Func<bool> held)
+    {
+        for (var waited = TimeSpan.Zero; waited < TimeSpan.FromSeconds(5); waited += Step)
+        {
+            Dispatcher.UIThread.RunJobs();
+
+            if (held())
+            {
+                return true;
+            }
+
+            await Task.Delay(Step);
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        return held();
+    }
+
+    private static readonly TimeSpan Step = TimeSpan.FromMilliseconds(20);
 }

@@ -53,7 +53,35 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly Func<DateTimeOffset> _now;
 
     /// <summary>The arcs band, rebuilt with the page because an arc's figure moves with the journal.</summary>
-    private readonly StackPanel _arcs = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 10) };
+    private readonly StackPanel _arcs = new() { Spacing = 4 };
+
+    /// <summary>
+    /// The band's window onto the arcs (remediation.md 11, item 4).
+    /// <para>
+    /// It used to be the <see cref="_arcs"/> stack itself, docked to the top of the page — and a
+    /// docked child takes the height it asks for. Nine arcs ask for all of it, so opening the band
+    /// left the checklist underneath nought pixels tall and clipped the third arc at the bottom
+    /// edge, which is neither a list nor a readable band.
+    /// </para>
+    /// <para>
+    /// Bounded to a share of the page rather than to a fixed number of arcs: what matters is that
+    /// the list keeps a working share of the tab, and how many arcs fit in the rest is whatever the
+    /// window is tall enough for. Below the cap it takes only what it needs, so a Commander with
+    /// two arcs sees two arcs and no scrollbar.
+    /// </para>
+    /// </summary>
+    private readonly ScrollViewer _band = new()
+    {
+        Name = "GoalsBand",
+
+        // Outside the scroller, so the gap between the band and the list survives being scrolled
+        // to the bottom. Inside it, the last arc came to rest against the first checklist line and
+        // the two read as one list.
+        Margin = new Thickness(0, 0, 0, 10),
+        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        IsVisible = false,
+    };
 
     private readonly Button _arcsButton = new()
     {
@@ -114,6 +142,24 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// to know where the year is going, not a permanent third of the tab.
     /// </summary>
     private bool _showArcs;
+
+    /// <summary>
+    /// The most of the page the arcs may take, as a share of it (remediation.md 11, item 4). Under
+    /// half, because the list is what the tab is for and the band is a header opened over it.
+    /// </summary>
+    private const double BandShare = 0.45;
+
+    /// <summary>
+    /// What the list keeps whatever the band would like, in pixels: the filter row above it plus
+    /// enough rows underneath to still be a list.
+    /// <para>
+    /// A share alone is not enough, because the row of buttons above the list costs the same fifty
+    /// pixels on a tall window and a short one. On a short one a proportional band left the list
+    /// with fifty-six pixels, which is a scrollbar and half a line. The band gives instead: it is
+    /// the thing a Commander opened and can close again.
+    /// </para>
+    /// </summary>
+    private const double ListKeeps = 150;
 
     /// <summary>Which arc is open, by key. Its next step and its two buttons belong to it.</summary>
     private string? _openArc;
@@ -186,10 +232,19 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
-        DockPanel.SetDock(_arcs, Dock.Top);
+        _band.Content = _arcs;
+
+        DockPanel.SetDock(_band, Dock.Top);
+
+        // A share of the page, so the list keeps a working share of the tab whatever the window is
+        // doing. Recomputed on resize rather than set once: this panel is instantiated for the
+        // desktop window and again for the headset, and those are very different heights.
+        SizeChanged += (_, e) => _band.MaxHeight = Math.Max(
+            0,
+            Math.Min(e.NewSize.Height * BandShare, e.NewSize.Height - ListKeeps));
 
         root.Children.Add(bar);
-        root.Children.Add(_arcs);
+        root.Children.Add(_band);
         root.Children.Add(_problems);
         root.Children.Add(new ScrollViewer
         {
@@ -200,14 +255,34 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Content = root;
 
-        checklists.List.Changed += OnChanged;
-        checklists.Proposals.Changed += OnChanged;
+        Rebuild();
+    }
 
-        if (goals is not null)
+    /// <summary>
+    /// Starts listening, and catches up on anything missed while this page was not on screen
+    /// (remediation.md 11, item 3).
+    /// <para>
+    /// <b>Paired with the detach below, and it has to be.</b> The subscription used to be made in
+    /// the constructor and dropped on detach, which is not a pair: drilling into Suggestions
+    /// reflows the tab into two panes and reparents this page, so it detached, unsubscribed, and
+    /// was deaf for the rest of the session. A "Yes" heard out loud then changed the list and the
+    /// page went on showing what it had.
+    /// </para>
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _checklists.List.Changed += OnChanged;
+        _checklists.Proposals.Changed += OnChanged;
+
+        if (_goals is not null)
         {
-            goals.Store.Changed += OnChanged;
+            _goals.Store.Changed += OnChanged;
         }
 
+        // The world moved while this was off screen, which is the ordinary case for a page that is
+        // reparented by a reflow.
         Rebuild();
     }
 
@@ -216,6 +291,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// a highlight, because a checklist is a list of things rather than a body of text — which is
     /// exactly the per-page difference the one search affordance exists to allow.
     /// </summary>
+    /// <summary>A list of lines is always narrowable.</summary>
+    public bool Filters => true;
+
     public void Filter(string? query)
     {
         _query = (query ?? string.Empty).Trim();
@@ -228,6 +306,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _checklists.List.Changed -= OnChanged;
         _checklists.Proposals.Changed -= OnChanged;
+
+        if (_goals is not null)
+        {
+            _goals.Store.Changed -= OnChanged;
+        }
     }
 
     /// <summary>
@@ -266,12 +349,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Fill();
 
-        return new ScrollViewer
+        var scroller = new ScrollViewer
         {
             Content = page,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
+
+        // The store raises this from whichever thread wrote, so the hop is not optional.
+        void Follow() => Dispatcher.UIThread.Post(Fill);
+
+        // <b>Accepting from this page refreshed it and nothing else did</b>, which is why the gap
+        // was invisible until a spoken yes accepted the same proposal from somewhere else: the
+        // card stayed on screen after the line was already on the list (remediation.md 11, item 3).
+        //
+        // On attach rather than here, and dropped on detach, so the page is not holding a handler
+        // after it has been navigated away from — and so it catches up on whatever happened while
+        // it was gone.
+        scroller.AttachedToVisualTree += (_, _) =>
+        {
+            _checklists.Proposals.Changed += Follow;
+            Fill();
+        };
+
+        scroller.DetachedFromVisualTree += (_, _) => _checklists.Proposals.Changed -= Follow;
+
+        return scroller;
     }
 
     /// <summary>
@@ -355,7 +458,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         if (_goals is null)
         {
             _arcsButton.IsVisible = false;
-            _arcs.IsVisible = false;
+            _band.IsVisible = false;
             return;
         }
 
@@ -364,7 +467,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _arcsButton.IsVisible = true;
         _arcsButton.Content = _showArcs ? "Hide goals" : $"Goals ({running} running)";
-        _arcs.IsVisible = _showArcs;
+        _band.IsVisible = _showArcs;
 
         if (!_showArcs)
         {

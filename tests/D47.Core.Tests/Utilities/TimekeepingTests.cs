@@ -58,12 +58,15 @@ public class TimekeepingTests
         var utc = GalacticTime.Read(Instant, TimeZoneInfo.Utc);
         var local = GalacticTime.Read(Instant, ahead);
 
-        Assert.Equal("21:04", utc.GalacticTimeOfDay);
-        Assert.Equal("00:04", local.GalacticTimeOfDay);
+        Assert.Equal("21:04", utc.LocalTimeOfDay);
+        Assert.Equal("00:04", local.LocalTimeOfDay);
 
-        // And the galactic date follows the local one over midnight, because the in-game date a
-        // Commander sees beside their own changes at their midnight rather than at Greenwich's.
-        Assert.Equal("18 August 3312", local.GalacticDate);
+        // The galactic side does not follow it. Elite runs galactic time on UTC, so the same
+        // instant reads the same out there whoever is looking at it — which is what makes it
+        // agree with the station clock the Commander is docked at (remediation.md 11, item 8).
+        Assert.Equal("21:04", utc.GalacticTimeOfDay);
+        Assert.Equal("21:04", local.GalacticTimeOfDay);
+        Assert.Equal("17 August 3312", local.GalacticDate);
     }
 
     /// <summary>

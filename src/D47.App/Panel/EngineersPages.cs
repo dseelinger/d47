@@ -133,6 +133,9 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     /// away rather than only colouring them. It matches on the name, the system and what they
     /// grade, which are the three things anybody types looking for one.
     /// </summary>
+    /// <summary>The directory is a long list of names, which is exactly what a query is for.</summary>
+    public bool Filters => true;
+
     public void Filter(string? query)
     {
         _query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();

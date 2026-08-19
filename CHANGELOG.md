@@ -17,6 +17,103 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.35.0 — 2026-08-18 — Write your own core, and one thing at a time
+
+Fifteen items of remediation 11. Most are small, and three of them were not what they were
+reported as — the trail through three ships at once turned out to be two bugs, the two cores
+sharing a voice turned out to be two cores sharing an *absence*, and one item was already fixed by
+another before it was reached.
+
+### A core you wrote yourself
+
+Eleven Guardian cores ship. Now there is a twelfth onwards: **a name, what it is like, and how it
+should sound**, in your own words. The tagline is generated and the first-meeting and welcome-back
+lines fall back, so a working companion comes out of a name and a paragraph rather than out of
+seven empty boxes. They sit in the picker beside the eleven, which come first — writing a core does
+not move Warden.
+
+**The frame is not on offer.** The shared preamble and the standing instructions wrap what you write
+exactly as they wrap a shipped core: they are what hold the cast together and what stops a model
+sanding a persona toward pleasant and helpful over a long session. A core stays unreachable from
+the tool surface, as persona selection already was, and ids are prefixed so nothing you write can
+shadow one of D47's. The id does not follow the name either — correcting a typo should not leave
+you talking to Warden.
+
+One file beside the executable, polled, with bad entries reported rather than dropped. The editor
+writes the file a text editor writes.
+
+### The panel stops fighting itself
+
+**The breadcrumb read `Ships › Tulimiekka › Reaper › Cartage`** — a route through three ships at
+once. A wide panel shows the level you are on beside the one above it, so the list you drilled from
+is still pressable, and pressing another ship pushed it on top of the first rather than in place of
+it. A crumb can now say what *kind* of level it is, and pushing one replaces the level of its own
+kind along with everything underneath: a slot of the Tulimiekka is not a slot of the Reaper. That
+also fixed the separate report that an intended hull made the rest of the fleet unclickable — same
+bug, seen from the other side.
+
+**The goals band pushed the checklist off the page.** Nine arcs, the third clipped at the bottom,
+and no list underneath. It is a bounded window now: below the cap it takes only what it needs, and
+above it what does not fit scrolls. A share of the page was not enough on its own, because the row
+of buttons above the list costs the same fifty pixels whatever the window is tall — the list keeps
+a floor and the band gives, which is the right way round.
+
+**A hand's width of nothing between the search steppers.** `LastChildFill` overrides the last
+child's own `Dock`, so one stepper was quietly the filling child and stretched across the row while
+carrying an attribute that was being ignored.
+
+**A search box on a page that cannot search.** A page now says whether a query would do anything to
+it as it is showing, and the box is drawn only where the answer is yes. A drill strip answers for
+the levels it is showing, because that changes as you drill.
+
+**A hull you do not own can be dropped again.** It asks first — it is authored work with no way
+back. An owned ship does not offer it: that comes out of your journal and is not D47's to remove.
+
+**Dialogs are drawn at the panel's size.** Zoom was written to be attached to a window rather than
+built into one, precisely so it would not stop at the panel's edge, and exactly one window ever
+attached it — so every dialog over a zoomed panel came up at 100% and read as another application.
+
+**Ctrl+L, or right-click, clears what the transcript is showing** — the page, not the record. The
+model's own history is the turn loop's and the log file is Serilog's, and neither is that page.
+
+### Galactic time is UTC
+
+It was derived from your own clock, on the argument that the in-game date beside yours should
+change over at your midnight rather than at Greenwich's. Reasonable to want, and not what the game
+does: Elite runs galactic time on UTC, and every station clock, mission expiry and journal
+timestamp is on it. Reported by a Commander on UTC, where the two clocks were two boxes side by
+side reading the same thing.
+
+### Two cores no longer sound alike
+
+Not a duplicate written down — **two absences**. A voice already spoken for was refused, and the
+core it was meant for was then left with no pairing at all; a core with no pairing speaks in the
+provider's default, so two of them are two cores in one voice. A core whose chosen voice is taken
+now gets the nearest free one of its own sex, and stays unpaired only when nothing suitable is
+free.
+
+### Saying things once, and saying them accurately
+
+**"Accept" answered the same sentence twice.** Two proposals with the same outcome said it twice,
+and there should not have been two: asking for the same change twice recorded it twice, and the
+second copy can never do anything the first did not. Identical proposals are refused now, and
+repeated outcomes are collapsed — while two *different* outcomes are still both reported.
+
+**A spoken yes left the proposal card on screen.** Two subscriptions were wrong, and both were
+invisible until the change came from somewhere other than the page itself: the suggestions page
+refreshed only from its own buttons, and the checklist page subscribed in its constructor while
+unsubscribing on detach — which is not a pair, so drilling in reparented it and it went deaf for
+the rest of the session.
+
+**The Commander's log told you to choose a provider when you had one.** It is the model beneath it
+that was missing, and the two states now say so separately.
+
+### And the memory erase, proved rather than added
+
+*Forget everything* was already there and already protected. What it did not have was a test — the
+one action here that cannot be undone, and the one whose whole value is that it can be trusted. Six
+now assert it, including that no phrase and no model can reach it.
+
 ## 0.34.1 — 2026-08-18 — The panel stopped overlapping itself, and four things were only half-wired
 
 The eighteen items of remediation 10, from a session with the panel open. Four of them turned out

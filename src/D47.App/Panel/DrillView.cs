@@ -240,6 +240,17 @@ public sealed class DrillView : UserControl, IFilterablePage
     /// search box, which is bugs.md 2 exactly. A level that is not filterable ignores it.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether any level currently on screen answers a query. Only the levels being shown, not
+    /// every level ever built: a filterable page two steps back up the stack is not a reason to
+    /// offer a search box over the one in front of the Commander.
+    /// </summary>
+    public bool Filters =>
+        _showing
+            .Select(key => _built.TryGetValue(key, out var pane) ? pane : null)
+            .OfType<IFilterablePage>()
+            .Any(page => page.Filters);
+
     public void Filter(string? query)
     {
         foreach (var pane in _built.Values.OfType<IFilterablePage>())

@@ -48,25 +48,32 @@ public static class GalacticTime
     /// <summary>
     /// Both clocks, as the panel and the prompt say them.
     /// <para>
-    /// The galactic date is derived from the <em>local</em> presentation rather than from UTC, and
-    /// that is deliberate: the in-game date a Commander sees beside their own is the one that
-    /// changes over at their midnight, not at Greenwich's. It is still one instant — the zone is
-    /// applied once and the years are added to the result.
+    /// <b>The galactic side is UTC</b> (remediation.md 11, item 8). It used to be derived from the
+    /// <em>local</em> presentation, on the argument that the in-game date a Commander sees beside
+    /// their own should change over at their midnight rather than at Greenwich's. That is a
+    /// reasonable thing to want and it is not what the game does: Elite runs galactic time on UTC,
+    /// and every station clock, mission expiry and timestamp in the Commander's own journal is on
+    /// it. A galactic clock that agreed with the panel and disagreed with the game would be wrong
+    /// in the one place it is checkable.
+    /// </para>
+    /// <para>
+    /// It also made the two clocks identical for a Commander living in UTC, which is how this was
+    /// noticed: two boxes side by side reading 19:44 and 19:44.
+    /// </para>
+    /// <para>
+    /// Still one instant. The zone is applied to one side and the years to the other, and neither
+    /// is computed from the other's presentation.
     /// </para>
     /// </summary>
-    public static Clocks Read(DateTimeOffset instant, TimeZoneInfo zone)
-    {
-        var local = Local(instant, zone);
-
-        return new Clocks(local, Galactic(local));
-    }
+    public static Clocks Read(DateTimeOffset instant, TimeZoneInfo zone) =>
+        new(Local(instant, zone), Galactic(instant.ToUniversalTime()));
 }
 
 /// <summary>
 /// One instant, presented twice.
 /// </summary>
 /// <param name="Local">The Commander's own clock.</param>
-/// <param name="Galactic">The same moment, 1286 years on.</param>
+/// <param name="Galactic">The same moment in UTC, 1286 years on — which is what the game runs on.</param>
 public sealed record Clocks(DateTimeOffset Local, DateTimeOffset Galactic)
 {
     /// <summary>

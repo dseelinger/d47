@@ -158,12 +158,24 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
     /// Records a proposal. Refuses once there are already too many outstanding — a model that
     /// proposed forever would bury the one the Commander was about to answer, and this is the one
     /// store an untrusted path can grow.
+    /// <para>
+    /// It also refuses one already waiting (remediation.md 11, item 1). A second copy can never do
+    /// anything the first did not: accepting one applies the change, and the other is then a
+    /// guaranteed no-op that still costs the Commander a sentence — which is how "There is no such
+    /// item on your checklist." came to be said twice in one breath. It is the cheaper half of the
+    /// cap above, too, since the surest way to fill it is to ask for the same thing repeatedly.
+    /// </para>
     /// </summary>
     public string? Add(ChecklistProposal proposal)
     {
         Poll();
 
         var pending = Pending;
+
+        if (pending.FirstOrDefault(waiting => Same(waiting, proposal)) is { } already)
+        {
+            return $"That is already waiting for you: {already.Summary}.";
+        }
 
         if (pending.Count >= ChecklistLimits.MaxPendingProposals)
         {
@@ -232,6 +244,26 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
         _stamp = default;
         Poll();
     }
+
+    /// <summary>
+    /// Whether two proposals are the same request.
+    /// <para>
+    /// The id is excluded because it is minted here, so no two records ever share one and a record
+    /// comparison would answer no to every question this is asked. What makes two proposals the
+    /// same is what they would do: to whom, of what kind, about which item, in which scope. Two
+    /// acts on one line are <em>not</em> the same — proposing to finish something and proposing to
+    /// drop it are opposite requests about the same words — and nor are the lines a plan or an add
+    /// carries, which is why those compare their items too.
+    /// </para>
+    /// </summary>
+    private static bool Same(ChecklistProposal waiting, ChecklistProposal wanted) =>
+        waiting.Kind == wanted.Kind
+        && string.Equals(waiting.CommanderFid, wanted.CommanderFid, StringComparison.Ordinal)
+        && waiting.Scope.Same(wanted.Scope)
+        && string.Equals(waiting.TargetKey ?? string.Empty, wanted.TargetKey ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+        && waiting.Items.Select(item => item.Text).SequenceEqual(
+            wanted.Items.Select(item => item.Text),
+            StringComparer.OrdinalIgnoreCase);
 
     private static int Next(IEnumerable<ChecklistProposal> pending)
     {

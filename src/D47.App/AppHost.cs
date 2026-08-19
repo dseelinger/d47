@@ -268,6 +268,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's macros. The panel's editor writes through this, not past it.</summary>
     public MacroStore Macros { get; private set; } = null!;
 
+    /// <summary>The cores the Commander wrote themselves (remediation.md 11, item 9).</summary>
+    public OwnPersonaStore OwnPersonas { get; private set; } = null!;
+
     /// <summary>
     /// The Commander's checklist, and the proposals waiting on it (list.md Phase 17). The panel
     /// writes through this like the macro editor does — and it is the surface that accepts a
@@ -970,6 +973,18 @@ public sealed class AppHost : IDisposable
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
+        // The cores the Commander wrote, beside the executable and polled like the macros above
+        // (remediation.md 11, item 9). Pointed at the catalogue before the persona host resolves
+        // the selected id, or a Commander whose chosen core is one of their own starts the app as
+        // Warden and is switched a tick later.
+        var ownPersonas = new OwnPersonaStore(
+            Path.Combine(paths.Data, "personas.json"),
+            loggerFactory.CreateLogger<OwnPersonaStore>());
+
+        ownPersonas.Poll();
+
+        PersonaCatalog.Own = () => [.. ownPersonas.Cores.Select(core => core.AsPersona())];
+
         // Built before the registry, because the persona capability declares settings rows from
         // it and which rows exist has to be settled before registration — descriptors are
         // registered once and never mutated (architecture.md D5).
@@ -1363,6 +1378,7 @@ public sealed class AppHost : IDisposable
         settings.Changed += host.OnSettingsChanged;
 
         host.Macros = macros;
+        host.OwnPersonas = ownPersonas;
         host.Checklists = checklists;
         host.Timekeeper = timekeeper;
         host.Ships = shipPlans;

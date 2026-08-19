@@ -5,6 +5,8 @@ using Avalonia.Media;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using D47.App.Theming;
 
+using D47.App.Windowing;
+
 namespace D47.App.Controls;
 
 /// <summary>
@@ -83,7 +85,7 @@ public sealed class ConfirmWindow : Window
     /// <summary>Shows the dialog and waits for the answer. False if it was dismissed.</summary>
     public async Task<bool> AskAsync(Window owner)
     {
-        await ShowDialog(owner).ConfigureAwait(true);
+        await this.Over(owner).ConfigureAwait(true);
         return await _answer.Task.ConfigureAwait(true);
     }
 }
