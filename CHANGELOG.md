@@ -17,10 +17,12 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
-## 0.38.1 — 2026-08-19 — The mining missile is a mining missile
+## 0.38.1 — 2026-08-19 — The Loadout tab, told properly
 
-**Remediation 15 items 2a, 3, 5, 7 and 14.** Item 2a led it, because the wrong rows were in the
-table a Commander already has; the other four are small, independent and were ready alongside it.
+**Remediation 15, all fifteen items.** Nearly all of it is the Loadout tab, and most of it was found
+by one Commander planning one Type-10 in one sitting. That concentration was the finding as much as
+the items were: the batch has two threads running through it — joins that miss and fall back
+silently, and internal identifiers reaching what a Commander reads — and this release closes both.
 
 ### A Sub-surface Displacement Missile was shipping as a Pulse Laser
 
@@ -87,35 +89,131 @@ build and nothing would otherwise notice. Every mount must agree with its own sy
 built from a raw symbol fragment, no placeholder may appear, and the reported missile must be a
 missile.
 
-### Four smaller things in the Loadout tab and the Persona card
+### The Loadout tab knows what a module can be engineered with
 
-**A searchable chooser takes the keyboard when it appears.** Reported as *"I should not have to
-click it"*. Every searchable chooser now focuses its search box, not only the module one — the same
-line the text-entry prompt has always carried, and safe for the same two reasons: nothing in the
-headset sends a keystroke, and the panel swallows the push-to-talk key before any control sees it.
+**A Type-10's armour was offered every blueprint in the game** — Dirty Drive Tuning, Ammo Capacity,
+Efficient Weapon — and a **fuel tank**, which cannot be engineered at all, was offered the same
+forty. One fallback caused both: a module whose name failed to match and a module that genuinely
+takes no engineering produced the identical empty result, so nothing could tell them apart.
 
-**A question with one answer is not asked.** Reported against Life Support: *"there is only one
-choice, it can't be anything else"* — and the page drew two rows anyway, "Anything — I only want the
-engineering" and the single answer. The module step and the grade step now take a lone option and
-move on. For a socket that accepts one type, *anything* and *the one thing it takes* are the same
-want, so the plan records the module instead of leaving it blank, and the line reads properly rather
-than opening with a bare grade.
+There are three answers now, not two. Armour gets its nine. A fuel tank is told it takes none, and
+the slot stays plannable — just not engineerable. And a module type Directive 47 has never heard of
+says so rather than pretending it knows.
 
-The experimental-effect step deliberately keeps asking. Its decline is **"No effect"**, which the
-single effect does not satisfy — those are opposite wants, not the same one, and taking it would put
-an experimental on the plan nobody asked for.
+The join behind it goes through Frontier's own ids at every step, which took four sources and a
+false start. The obvious route — matching module kinds to recipe kinds by what they have in common —
+produced confident wrong answers: a Cargo Scanner came out as a Chaff Launcher, because the two
+share the generic Lightweight and Reinforced rolls and nothing else separated them. **A confident
+wrong answer is worse than none**, so that route was abandoned rather than tuned.
 
-**"Point Defence is not currently engineered."** That verdict is a reading taken at a moment, not a
-property of the module: the plan carries the journal's verdict with its date, and it ships as still
-to do. *Is not engineered* reads as a fact about Point Defence; the only thing Directive 47 knows is
-a fact about right now. It is in Core, so it reads that way aloud as well.
+### Engineering reads as engineering
 
-**A hull is named even when Frontier does not name it.** Reported as *"Oxen, a type9_military is not
-bound to a core"*. Elite does not always send a localised ship name, and the Type-10 Defender is one
-it omits — its internal symbol is `type9_military`, which is not even the hull it names. The
-specification table has resolved that symbol all along, and the fleet page one tab over was already
-printing "Oxen (Type-10 Defender)" off it. The journal's own name still wins wherever Frontier sends
-one; the table is the fallback, and the raw symbol only the last resort.
+A grade 5 System Focused roll on your power distributor used to read back as **grade 5
+PowerDistributor PrioritySystems** — Frontier's internal symbol with the underscore taken out.
+Directive 47 said outright that nothing it shipped joined the two spellings, and that was true.
+
+It is not any more. Every one of the 940 recipes now carries the name Elite writes into your
+journal, so a roll you already have is named the way you know it. **System Focused.** Dirty Drive
+Tuning. Lightweight.
+
+With the naming sound, the two marks the Commander asked for are worth drawing: a **gear** beside a
+module that has been engineered, and the engineering line in **its own colour**. They are
+independent of the orange dot that means a plan exists — a module can be engineered with no plan, or
+planned and never touched — so they are different glyphs in different colours rather than two
+shades of one.
+
+### The grade stops being a question
+
+*"999 times out of 1000 it will be 5."* Measured: of 160 module-and-blueprint pairs, **155 reach
+grade 5**, and the whole exception set is five — Chaff Launcher, Heat Sink Launcher and Point
+Defence stop at 1 on Ammo Capacity, and Shield Cell Bank stops at 4.
+
+So the page is gone. The grade is the **highest that blueprint offers**, never the number five, and
+it becomes a **stepper on the slot page** where moving it re-costs the materials block underneath —
+which answers *what would grade 4 cost me instead* where you are standing, rather than sending you
+back through a chooser. A blueprint with only one grade does not print it: "grade 1 Ammo Capacity"
+says the same as "Ammo Capacity" and takes longer.
+
+**"Any grade" is gone entirely**, on the Commander's ruling that it is not a thing.
+
+### Telling two modules apart
+
+*"I should be able to tell the first two lasers apart by something besides the price. The more
+expensive one should be more powerful, and I should know how."*
+
+The honest answer to that particular pair was that **the expensive one is not a laser** — see below
+— but the ask stands for modules that really are comparable. Rows now carry the few figures that
+answer it, chosen per kind rather than one list for everything: a weapon leads with **damage per
+second** and its damage type, a power distributor with its three capacitors and how fast each
+refills.
+
+Damage per second is computed with coriolis's own published formula rather than arithmetic invented
+here, and checked against an independent reference — 3.97 for a 1G turreted Pulse Laser, matching
+what other tools show. Damage type is stated as a proportion where it is one: a Rail Gun is 67%
+thermal, 33% kinetic. On an anti-xeno weapon it is a marker beside a real type rather than a share
+of it, because that is what it is.
+
+And where Frontier describe a module themselves, that description is shown. *"What's special about
+a Guardian Distributor?"* — **"Enhanced with Guardian technology to speed up capacitor recharge
+rates, at the cost of smaller capacitors and increased heat generation."** Their words, on 707
+modules.
+
+Blueprint rows say what the roll does, gains before costs — *less mass, at the cost of integrity* —
+derived from the effects table rather than written by hand, and taken from the top grade, which was
+checked to contain everything the lower grades say.
+
+### Put this build on my checklist now puts the build on the checklist
+
+It made a **proposal** and said nothing about where forty items had gone, so a Commander who pressed
+it and then looked at their checklist found one custom note and reasonably concluded nothing had
+saved. Everything had saved; it was behind a button showing a "1", at the far edge of the bar.
+
+Pressing a button labelled with the outcome **is** the act of accepting. Suggestions stay a page
+rather than an interruption for everything Directive 47 raises on its own — that rule is about
+unbidden proposals and is untouched. The message now says how much landed, and the Suggestions
+counter counts **items** rather than proposals, since one proposal carrying forty read as one small
+thing waiting.
+
+### Drag a plan onto another slot
+
+Hold Ctrl and drag a slot row onto another of the same kind, and its module, engineering and
+experimental effect go with it, resized to the largest thing the target will take. Core Internal is
+neither draggable nor a target.
+
+A slot that cannot take it dims **while the mouse is still down**, rather than accepting the drop
+and explaining afterwards. That happens for real: 20 of 60 hardpoint types do not come in size 1 at
+all, so a Plasma Accelerator has nowhere to go on a Small hardpoint.
+
+Working out "the largest fitting size" has a trap in it worth recording. **Six limpet controllers
+come in odd sizes only** — 1, 3, 5 and 7 — and the Planetary Vehicle Hangar in even ones, so simply
+capping at the slot's size would resolve a size 7 Collector Limpet Controller onto a size 4
+compartment as a size 4, which does not exist. It searches downward for a size that is really there.
+
+### Choosing what goes in a slot
+
+- **The search box takes the keyboard** when a chooser appears. No clicking it first.
+- **A question with one answer is not asked.** Life Support has one module name, and the page drew
+  two rows anyway. The experimental-effect step deliberately still asks: declining it is a real
+  choice, where a socket that accepts one type has nothing to decline.
+- **The header says what is fitted** — "Large Hardpoint 1 (size 3), currently a 2F Pulse Laser
+  turreted" — which is the one thing a dropdown cannot do, and which the chooser's own design always
+  called for.
+- **"Anything — I only want the engineering" names what it would keep**, and does not appear on an
+  empty slot. You cannot engineer an empty slot.
+
+### Bind a core to any ship
+
+Two dropdowns — the ship, then the core — so giving a ship a core no longer means boarding it in
+game first. Choosing **nobody** takes a binding back. Binding stays protected exactly as it was:
+reachable from the panel and the gesture, and refused to the model outright.
+
+### Smaller things
+
+- *"Point Defence is not **currently** engineered."* That verdict is a reading taken at a moment, not
+  a property of the module.
+- **"Oxen, a Type-10 Defender"** where it said `type9_military`. Elite does not always send a
+  localised ship name, and the Type-10 is one it omits — its internal symbol is not even the hull it
+  names. The table has resolved it all along.
 
 ---
 

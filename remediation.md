@@ -71,7 +71,7 @@ rather than prettifying a symbol into something that looks like one.
 
 ## The items
 
-- [ ] **1. Copy a plan to another slot by dragging.** Carried over from remediation 14 item 5.
+- [x] **1. Copy a plan to another slot by dragging.** *Built.* Carried over from remediation 14 item 5.
   Ctrl and left button held, dragged from one slot row to another, copies the module, the
   engineering and the experimental effect, matching the new slot's largest fitting size. Only
   within one kind: Hardpoints to Hardpoints, Utility Mounts to Utility Mounts, Optional Internal to
@@ -191,7 +191,7 @@ rather than prettifying a symbol into something that looks like one.
   table is named by the naming authority, and a qualifier reappearing means a name went missing
   upstream.
 
-- [ ] **2b. Nothing in the table says what a module does.** The reported ask: *"the more expensive
+- [x] **2b. Nothing in the table says what a module does.** *Built.* The reported ask: *"the more expensive
   one should be more powerful, and I should know how"*. `EliteSpecifications.tsv` carries mass,
   power, integrity and cost, and **no damage, no DPS, no rate of fire, no range** — so no chooser
   can say why one weapon beats another, and price is the only discriminator on the row.
@@ -301,7 +301,7 @@ rather than prettifying a symbol into something that looks like one.
   short. Down-arrow walking from the box into the list is a nice-to-have and explicitly not
   required.
 
-- [ ] **4. Do not ask which grade.** *"999 times out of 1000 it will be 5."* Measured: of **160**
+- [x] **4. Do not ask which grade.** *Built.* *"999 times out of 1000 it will be 5."* Measured: of **160**
   module-and-modification pairs, **155 reach grade 5**. The whole exception set is five, small
   enough for a test to name every one: Chaff Launcher, Heat Sink Launcher and Point Defence each
   stop at grade **1** on Ammo Capacity, and Shield Cell Bank stops at **4** on both Rapid Charge
@@ -394,7 +394,7 @@ rather than prettifying a symbol into something that looks like one.
   One thing noticed in passing and not fixed: that dead branch means `Line` serves two callers with
   different contracts. Worth a note rather than a change.
 
-- [ ] **6. A chooser offers blueprints that cannot exist.** Two reports, needing **opposite**
+- [x] **6. A chooser offers blueprints that cannot exist.** *Built.* Two reports, needing **opposite**
   answers, which is what proves the defect is the fallback rather than the data.
 
   **Armour** offers every blueprint in the game — Dirty Drive Tuning, Ammo Capacity, Efficient
@@ -570,7 +570,7 @@ rather than prettifying a symbol into something that looks like one.
   for beyond that — the highest offered grade rather than the number five, and the stepper — is
   untouched and still open.
 
-- [ ] **8. A blueprint row should say what the blueprint does.** *"Since you have all this space,
+- [x] **8. A blueprint row should say what the blueprint does.** *Built.* *"Since you have all this space,
   show what each of the engineering choices do in general — not each specific grade."*
 
   The data supports it. `Blueprints.tsv` carries an `effects` column shaped as attribute, delta and
@@ -630,7 +630,7 @@ rather than prettifying a symbol into something that looks like one.
   attribute set across grades, so the general line is built either from the union or from the top
   grade where that is a superset. Check, do not assume.
 
-- [ ] **9. A module row should say what is special about that module.** *"What's special about a
+- [x] **9. A module row should say what is special about that module.** *Built.* *"What's special about a
   Guardian Distributor? It should say."* Two answers, and they are different.
 
   **The numbers are not there**, and that is item 2b — distributor capacity and recharge are the
@@ -670,7 +670,7 @@ rather than prettifying a symbol into something that looks like one.
   tech-broker table's spelling, where FDevIDs says *"Guardian Hybrid Power Distributor"*. Lower
   priority regardless, because the description usually implies the unlock anyway.
 
-- [ ] **10. An engineered module should look engineered.** Two asks, and the mechanisms exist:
+- [x] **10. An engineered module should look engineered.** *Built.* Two asks, and the mechanisms exist:
   `LoadoutLine` already carries a `LoadoutTone` (the module name takes `LoadoutTone.Body` and the
   engineering line takes the default), and `LoadoutRow`'s last field is already a mark flag.
 
@@ -715,7 +715,7 @@ rather than prettifying a symbol into something that looks like one.
   The two marks stay independent as the note says — the orange dot means *a plan exists*, the gear
   glyph means *this is engineered*, and a row can carry neither, either or both.
 
-- [ ] **11. Every chooser should show what is fitted.** *"Every choice for what goes into the slot
+- [x] **11. Every chooser should show what is fitted.** *Built.* *"Every choice for what goes into the slot
   should show what's currently in the slot, if anything."* The design already says so, twice, in
   `ChoiceRequest`'s own documentation: *"The chooser carries what it is choosing for in its header —
   the slot, its size, and what is fitted now. That is the one thing a dropdown cannot do"*, and the
@@ -744,7 +744,7 @@ rather than prettifying a symbol into something that looks like one.
   want the engineering"* would have read as obviously wrong on sight rather than merely odd. Build
   them together.
 
-- [ ] **12. "Put this build on my checklist" does not put it on the checklist.** Reported as *"not
+- [x] **12. "Put this build on my checklist" does not put it on the checklist.** *Built.* Reported as *"not
   showing my just-entered engineering in the checklist"*, and diagnosed from the installed build's
   own data rather than from reading code. `checklist.json` holds **one** item, the Commander's
   custom note. `checklist-proposals.json` holds **one proposal, `p-1`**, scope `ship/53`, source
@@ -803,7 +803,7 @@ rather than prettifying a symbol into something that looks like one.
   counts proposals where a Commander reads items. Whichever number wins, **the card states its own
   size** rather than leaving it inferred from a truncated slot list.
 
-- [ ] **13. Bind a core to any ship, from a dropdown.** Against Phase 35 as shipped in v0.38.0. The
+- [x] **13. Bind a core to any ship, from a dropdown.** *Built.* Against Phase 35 as shipped in v0.38.0. The
   row binds only the ship being flown, so setting a core means boarding that ship in-game first. It
   should list every ship in the fleet and bind the one chosen; journal state already carries the
   fleet, and the Ships page lists it.
@@ -844,7 +844,7 @@ rather than prettifying a symbol into something that looks like one.
   prints "Oxen (Type-10 Defender)". Thread B, and the cheap half of it: the name was in hand and the
   id was printed anyway.
 
-- [ ] **15. "Anything — I only want the engineering" is offered on an empty slot.** Reported
+- [x] **15. "Anything — I only want the engineering" is offered on an empty slot.** *Built.* Reported
   2026-08-19 against v0.38.0, on the module chooser: *"is that supposed to be on the current module?
   If so, fine, but say so. However, I went to an optional slot with nothing in it and it said the
   same thing. You can't engineer an empty slot."*
