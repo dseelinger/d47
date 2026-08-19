@@ -1,5 +1,8 @@
 # Remediation 14
 
+**Seven of its nine shipped in [v0.36.2](CHANGELOG.md)**, which is their permanent record from
+here. Items 4 and 5 are held for a decision and stay open below.
+
 Reported from 2026-08-19 against v0.36.1, one item at a time. Each is checked off as it ships,
 and **checked only once it has been seen to work** — a change that compiles is not a fixed item.
 

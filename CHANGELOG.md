@@ -17,6 +17,78 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.36.2 — 2026-08-19 — Nothing heard is nothing said
+
+Seven items of remediation 14, and the persona pack's rewrite reaching the build. Two of the
+twelve are held for a decision rather than fixed, and both are written up in `remediation.md`.
+
+### A core's first line is its own
+
+**Every Commander who picked Warden heard the same paragraph, word for word, every time.** The
+authored introduction was spoken exactly as written, on the argument that putting written material
+through a model returns it slightly worse — which is right about finished writing and wrong about
+what these are. The persona pack files them as *sample lines, not intended to be verbatim*.
+
+So a core's first line now goes through the model when there is one, as a **rewording and never a
+composition**: the substance is the pack's and only the sentences are the model's. A first line
+carries things a Commander needs — Cora states the arrangement and asks them to confirm it — and a
+model asked to improvise a greeting would lose them. With no provider, no personality, or a failed
+call, it is the authored line exactly as before.
+
+**The pack itself was rewritten, and the shipped text has caught up.** Warden no longer speaks of
+Cora at all. Nine cores have new introductions. Kex's seams are cracks, Sentinel remarks on the
+fallen at Guardian sites, the Quartermaster finds dropping cargo painful, and Analyst Prime's
+feelings about a woman one menu item away are now stated outright in his brief rather than left to
+be inferred.
+
+### Nothing heard is nothing said
+
+**Whisper describes what it hears when it cannot transcribe it.** A stretch of mouse clicks does
+not come back as nothing — it comes back as `(mouse clicking)`, which is not blank, so every check
+written as *is the text empty* passed it through. A Commander clicking around with the microphone
+open got a turn, and D47 answered it: *"Nothing spoken, Commander. Only hands at work."*
+
+The rule is a shape rather than a list of phrases — naming "mouse clicking" leaves "keyboard
+typing" and several hundred others — and what every one of them has in common is the bracket. A
+transcription with nothing outside its brackets is a transcription of no speech, and it now ends
+the turn before it starts, without a chime after it. Only when it is the whole of it: *"(clears
+throat) what is my fuel"* is somebody asking about their fuel.
+
+It lands in the panel's prompts too, where it mattered more — the same text was being committed as
+the value the panel had asked for.
+
+### The Loadout tab
+
+**A long note no longer squeezes a row's name away.** Under Hardpoints, the row carrying a plan was
+three hundred pixels tall with *Large Hardpoint 1* wrapped one character per line down its left
+edge: a right-docked child takes as much width as it asks for, and a plan naming a module, a
+blueprint, a grade and an experimental effect asked for all of it. The name measured zero pixels.
+It keeps a floor now, and the note wraps instead of being cut off mid-word.
+
+### Said out loud
+
+**The opening line stops counting engineer steps.** *"Broo Tarquin is still three steps out"* is
+three unlocks and two rank climbs — a project — and it said the same thing every session until it
+was done. The clause above it already draws this distinction for materials, picking the nearest
+shortfall because two short is an errand and ninety short is a project. It now holds unless they
+are one stop away.
+
+**A snapshot is spoken in the tense it was taken in.** *"Sacred Fire is mid-manoeuvre"* was said of
+a transfer that had landed the day before. Elite rewrites the stored-ship list when you dock at a
+shipyard and never between, and nothing announces a transfer arriving — so the list now says when
+it was read, says the in-transit line in that tense, and says why.
+
+### Also
+
+- **Copy is back on the transcript's context menu.** Declaring a menu replaces the one the control
+  ships with, so Copy left the place a reader looks for it when Clear arrived in 0.35.0. Ctrl+C
+  never stopped working; nothing said so.
+- `tools/release.ps1` cuts a release in one command — commit, merge, test in Release, push, wait
+  for CI to go green, then tag. The three waits are each a rule that has already cost a version
+  number that could not be reused.
+- Nine test assertions read the persona catalogue's *all* where they meant the shipped eleven,
+  which failed the full suite about one run in eight.
+
 ## 0.36.1 — 2026-08-19 — Twelve, mostly about two tabs
 
 The twelve items of remediation 13, reported against 0.36.0 while it was being used. Two of them
