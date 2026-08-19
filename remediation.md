@@ -210,6 +210,49 @@ rather than prettifying a symbol into something that looks like one.
   change and becomes a question about what d47 can honestly claim, which is the same shape as
   Phase 36's saturation figure: measure it, or say plainly that it is not modelled.
 
+  **Decided 2026-08-19: carry the components, and compute DPS with coriolis's own formula.**
+
+  **The reported pair is answered by 2a rather than by figures, and the premise was wrong.** Named
+  correctly, the small fixed Pulse Laser does 2.05 damage every 0.26s and costs 2,200; the
+  Sub-Surface Displacement Missile does 5 every 2.0s and costs 38,750. The expensive one is *less*
+  powerful — about 2.5 damage per second against 7.9 — because it is a mining tool. "The more
+  expensive one should be more powerful" does not hold, and it stopped needing to the moment the
+  thing stopped calling itself a laser.
+
+  **The source is rich, not thin.** Of 215 hardpoints, **178 carry damage**; the other 37 are
+  scanners, chaff, heat sinks and limpet controllers, correctly carrying none. Also present:
+  `range` (74%), `thermload`, `distdraw`, `piercing`, `clip`, `reload`, `ammo`, and `damagedist` —
+  the damage *type* split, which is thermal 59, kinetic 49, explosive 28, absolute 8 and 34 mixed.
+  **`damagedist` is probably the best discriminator on the page and nobody asked for it**: why one
+  weapon beats another is usually thermal-versus-kinetic against what you are shooting, not a bigger
+  number.
+
+  **The note above missed a case.** It warned that burst weapons break `damage x rate`. True, but
+  **18 weapons carry no `fireint` at all — every beam laser and every mining laser** — because they
+  are *continuous*: their `damage` already is damage per second. Dividing by a missing interval
+  would not merely be wrong, it would be arithmetic on nothing.
+
+  **The formula is lifted rather than derived**, which is the whole point:
+
+  ```js
+  RoF = burst / (((burst - 1) / burstRoF) + 1/intRoF + charge)
+  DPS = damage * roundspershot * RoF
+  ```
+
+  from `EDCD/coriolis`, `src/app/shipyard/Module.js`. Its `LICENSE.md` says outright that **the code
+  is MIT and the JSON data is Frontier's**, so taking the formula takes the MIT half — the same
+  distinction the game-data invariant already draws, applied in the direction that is allowed. There
+  is also `getSustainedFactor()`, folding clip and reload into a sustained figure.
+
+  One formula covers all three models, and the continuous case falls out of `getDps`'s own
+  `|| 1`: a beam has no `rof`, so the expression is `NaN`, `NaN || 1` is 1, and `DPS = damage`.
+  **Verify that reading against the running site before relying on it** rather than trusting this
+  paragraph.
+
+  **Where it is shown is item 8's layout**, which the Commander drew on the *module* chooser. Row
+  keeps its name and size; the space to the right carries the full specification of the highlighted
+  module. One layout pattern, both choosers.
+
 - [x] **3. A searchable chooser should take the keyboard when it appears.** *Built.* Reported against the
   module chooser: *"I should not have to click it."* The precedent already ships — `PanelPrompts`
   focuses the text-entry prompt on `AttachedToVisualTree` (remediation 10 item 11), and the comment
