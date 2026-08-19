@@ -92,6 +92,24 @@ public sealed class LogbookBook(
     /// Reads the window, prices it, and arms the writer. The expensive half — a month's journals
     /// is a real read — and the half that spends nothing.
     /// </summary>
+    /// <summary>
+    /// Why a log cannot be written yet, or null when one can (remediation.md 11, item 12).
+    /// <para>
+    /// <b>Two states, not one.</b> Both halves used to answer "There is no model selected, so I
+    /// cannot write anything. Choose a provider first." — which is two different things said in one
+    /// breath, and the Commander who read it had a provider selected and no model. Being told to do
+    /// the thing you have already done is worse than being told nothing: it sends somebody to check
+    /// a setting that was never the problem.
+    /// </para>
+    /// </summary>
+    private static string? NotReady(LogbookContext host) =>
+        host.Provider is null
+            ? "There is no provider selected, so I cannot write anything. Choose one in Settings."
+            : string.IsNullOrWhiteSpace(host.Model)
+                ? "There is no model selected, so I cannot write anything. Your provider is set — "
+                  + "it is the model beneath it that is not."
+                : null;
+
     public LogEstimate? Estimate(string? spanId, DateTimeOffset? from, DateTimeOffset? to, out string message)
     {
         var current = settings();
@@ -104,12 +122,14 @@ public sealed class LogbookBook(
         var digest = digests.Build(files, range);
         var host = context();
 
-        if (host.Provider is not { } provider || string.IsNullOrWhiteSpace(host.Model))
+        if (NotReady(host) is { } why)
         {
             Disarm();
-            message = "There is no model selected, so I cannot write anything. Choose a provider first.";
+            message = why;
             return null;
         }
+
+        var provider = host.Provider!;
 
         var asked = LogVoices.Parse(current.Voice);
         var used = LogVoices.Resolve(asked, host.PersonalityEnabled);
@@ -176,10 +196,12 @@ public sealed class LogbookBook(
 
         var host = context();
 
-        if (host.Provider is not { } provider || string.IsNullOrWhiteSpace(host.Model))
+        if (NotReady(host) is { } why)
         {
-            return new LogOutcome(false, "There is no model selected, so I cannot write anything.");
+            return new LogOutcome(false, why);
         }
+
+        var provider = host.Provider!;
 
         if (!string.Equals(provider.Id, estimate.ProviderId, StringComparison.Ordinal) ||
             !string.Equals(host.Model, estimate.Model, StringComparison.Ordinal))

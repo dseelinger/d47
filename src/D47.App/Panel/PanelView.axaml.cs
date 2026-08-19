@@ -811,6 +811,30 @@ public partial class PanelView : UserControl
 
     private void OnTurnDetailsClick(object? sender, RoutedEventArgs e) => _showTurnDetails?.Invoke();
 
+    /// <summary>
+    /// Empties what this page is showing, leaving the record alone (remediation.md 11, item 14).
+    /// <para>
+    /// Refused on the log page, where there is nothing of d47's to clear: that page is a file on
+    /// disk read a screenful at a time, and a control that appeared to empty it would be offering
+    /// to delete a log.
+    /// </para>
+    /// </summary>
+    public bool ClearTranscript()
+    {
+        if (Page == TranscriptPage.Log || Model is not { } model)
+        {
+            return false;
+        }
+
+        model.ClearTranscript();
+
+        // The query counted matches in text that has gone, so it goes with it.
+        DropSearch();
+        DrawTranscript();
+
+        return true;
+    }
+
     /// <summary>Puts the cursor in the search box. Ctrl+F does this; a host may too.</summary>
     public void FocusSearch()
     {
@@ -845,6 +869,15 @@ public partial class PanelView : UserControl
 
     private void OnSurfaceKeyDown(object? sender, KeyEventArgs e)
     {
+        // Above the search guard, because clearing the page is not a search affordance: a surface
+        // with no search box still has a transcript, and the headset is exactly that surface
+        // (remediation.md 11, item 14).
+        if (e.Key == Key.L && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            e.Handled = ClearTranscript();
+            return;
+        }
+
         if (!_searchable)
         {
             return;
@@ -1878,6 +1911,8 @@ public partial class PanelView : UserControl
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
                             && (ModeButton.IsVisible || SearchRow.IsVisible);
+
+    private void OnClearTranscriptClick(object? sender, RoutedEventArgs e) => ClearTranscript();
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
 

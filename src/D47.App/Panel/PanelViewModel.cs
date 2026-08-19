@@ -446,6 +446,36 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Empties what the transcript is showing (remediation.md 11, item 14).
+    /// <para>
+    /// <b>The page, not the record.</b> Nothing here is the conversation: the model's own history
+    /// lives in the turn loop and is what a follow-up question is answered against, and the log
+    /// file on disk is written by Serilog and is not this. Clearing the page is a reader tidying
+    /// what is in front of them, which is why it needs no confirmation and costs nothing to get
+    /// wrong.
+    /// </para>
+    /// <para>
+    /// Both readings at once, because they are one set of runs seen two ways — clearing the
+    /// conversation and leaving the technical page holding the same lines would be a page that
+    /// disagreed with the one beside it about what had happened.
+    /// </para>
+    /// </summary>
+    public void ClearTranscript()
+    {
+        lock (_appendLock)
+        {
+            _runs.Clear();
+        }
+
+        // Outside the lock, like Append: these raise PropertyChanged, and holding a lock across a
+        // handler that marshals to the UI thread is how a deadlock is built.
+        TranscriptText = string.Empty;
+        ConversationText = string.Empty;
+
+        TranscriptAppended?.Invoke();
+    }
+
+    /// <summary>
     /// Notes something that happened to the conversation rather than something said in it — the
     /// core changing under it being the case this exists for.
     /// <para>

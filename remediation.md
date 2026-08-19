@@ -176,3 +176,33 @@ the changelog, which is why this file is the current batch and not a growing arc
   the list" is the right one, and a row that declares both is a closed list that happens to be
   computed.
 
+- [x] **12. "But I do have a provider selected."** The Commander's log window answered *There is no
+  model selected, so I cannot write anything. Choose a provider first* — two different things said
+  in one breath, to somebody whose provider was set and whose model was not. Being told to do the
+  thing you have already done is worse than being told nothing: it sends you to check a setting
+  that was never the problem. The two states are separate now, and the no-model sentence says the
+  provider half is already done.
+
+- [x] **13. Two non-custom personas should not use the same voice.** **A voice already spoken for
+  was refused and the core was then left with nothing** — and a core with no pairing speaks in the
+  provider's default, so two unpaired cores are two cores in one voice. That is the mechanism: not
+  a duplicate written down, but two absences sounding alike.
+
+  A core whose chosen voice is taken now gets the nearest free one **of its own sex**, and stays
+  unpaired only when nothing suitable is free. The two stronger rules already in place are
+  untouched: a core written as a man is never given a woman's voice, and a core the model said
+  nothing usable about keeps the voice in force rather than being dealt one on a guess. The first
+  version of this fix broke both, and their own tests caught it.
+
+- [x] **14. Clear the transcript view.** Ctrl+L and a right-click menu that says so. **The page,
+  not the record** — the model's own history lives in the turn loop and is what a follow-up is
+  answered against, and the log file is Serilog's. Both readings clear together, because they are
+  one set of runs seen two ways. Refused on the log page, where a control that appeared to empty it
+  would be offering to delete a log. The shortcut sits above the search guard, so it works on the
+  headset, which has no search box and still has a transcript.
+
+- [x] **15. An intended ship blocked the rest of the fleet.** **Already fixed by item 5**, and the
+  test proves it: two of its three assertions fail with that change backed out. The intended hull
+  was never special — the trail was nesting, so pressing another ship pushed a crumb the panes did
+  not follow, and the fleet list appeared dead.
+
