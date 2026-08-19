@@ -49,9 +49,28 @@ public static class EngineersPages
             : new EngineerDirectoryPage(source, nav);
     }
 
-    /// <summary>The crumb for one engineer, keyed on the id the journal writes rather than a name.</summary>
+    /// <summary>
+    /// The crumb for one engineer, keyed on the id the journal writes rather than a name.
+    /// <para>
+    /// <b>Levelled</b>, so choosing another engineer replaces the one that is open rather than
+    /// nesting under it (remediation.md 13, items 6 and 7). Without it a wide panel showed two and
+    /// three engineers side by side, and the trail read <c>Directory › Farseer › Tani › Ryder</c>
+    /// — a route through three people at once. It is the same fault the Loadout tab had, fixed
+    /// the same way (remediation.md 11, item 5); this tab pushes its crumb from a different place
+    /// and never got the same treatment.
+    /// </para>
+    /// <para>
+    /// It is also why backing out to the Directory first did not help: the trail was
+    /// <c>Directory › Farseer</c>, Back made it <c>Directory</c>, and pressing another name
+    /// pushed onto <em>that</em> — which is the correct behaviour of a stack and the wrong
+    /// behaviour for a chooser. Levelling makes both routes do the same thing.
+    /// </para>
+    /// </summary>
     public static NavCrumb Crumb(Engineer engineer) =>
-        new(WhoPrefix + engineer.Id.ToString(CultureInfo.InvariantCulture), engineer.Name);
+        new(WhoPrefix + engineer.Id.ToString(CultureInfo.InvariantCulture), engineer.Name)
+        {
+            Level = WhoPrefix,
+        };
 
     /// <summary>
     /// An engineer's name, pressable, wherever it is shown (remediation.md 12, item 7).
@@ -112,15 +131,24 @@ public static class EngineersPages
 /// </summary>
 public abstract class EngineerPageBase : UserControl
 {
-    protected EngineerPageBase(EngineerSource source)
-    {
-        Source = source;
-        source.Changed += OnChanged;
-    }
+    protected EngineerPageBase(EngineerSource source) => Source = source;
 
     protected EngineerSource Source { get; }
 
     protected abstract void Refresh();
+
+    /// <summary>
+    /// Attach to detach, for the reason <see cref="LoadoutPage"/> spells out
+    /// (remediation.md 13, item 1). These levels are cached by the same strip and were the same
+    /// mismatched pair; nobody has reported it here, and it is the same bug waiting.
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        Source.Changed += OnChanged;
+        Refresh();
+    }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -151,20 +179,42 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     };
 
     private readonly StackPanel _list = new() { Spacing = 3 };
+    private readonly Button _colonia;
     private string? _query;
+
+    /// <summary>
+    /// Whether the eight engineers out at Colonia are on the list (remediation.md 13, item 11).
+    /// <para>
+    /// <b>On by default</b>, because hiding a third of the directory from a Commander who has
+    /// never said they want it hidden is the panel deciding what they own. One press takes them
+    /// off, and the button says which question it is answering rather than merely which state it
+    /// is in — the same shape the gap page's filter has.
+    /// </para>
+    /// </summary>
+    private bool _far = true;
 
     public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav)
         : base(source)
     {
         _nav = nav;
 
+        _colonia = LoadoutPages.Press(string.Empty, () =>
+        {
+            _far = !_far;
+            Refresh();
+        });
+
+        _colonia.Margin = new Thickness(0, 0, 0, 10);
+
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(_summary, Dock.Top);
+        DockPanel.SetDock(_colonia, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(_summary);
+        root.Children.Add(_colonia);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
@@ -194,7 +244,11 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         _summary.Text = report.Summary();
         _list.Children.Clear();
 
-        var shown = report.Directory.Where(Matches).ToList();
+        // Short enough to survive a narrow pane: a button does not wrap, and the first draft of
+        // this label was cut off mid-word at the default panel width.
+        _colonia.Content = _far ? "Hide the Colonia eight" : "Show Colonia again";
+
+        var shown = report.Directory.Where(Matches).Where(Near).ToList();
 
         if (shown.Count == 0)
         {
@@ -229,6 +283,17 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
                 () => _nav.Drill(EngineersPages.Crumb(entry.Engineer))));
         }
     }
+
+    /// <summary>
+    /// Whether this engineer survives the Colonia filter (remediation.md 13, item 11).
+    /// <para>
+    /// An engineer d47 has no position for is <b>kept</b> whichever way the filter is set: the
+    /// question the button asks is "are they out at Colonia", and "I do not know where they are"
+    /// is not a yes.
+    /// </para>
+    /// </summary>
+    private bool Near(EngineerEntry entry) =>
+        _far || entry.Engineer.IsFarFromTheBubble != true;
 
     private bool Matches(EngineerEntry entry) =>
         _query is not { } query
@@ -332,6 +397,30 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(LoadoutPages.Heading("Where you stand"));
         _body.Children.Add(LoadoutPages.Muted(entry.Status));
+
+        // What it takes, with what is already done marked (remediation.md 13, item 12). All of
+        // it rather than only what is outstanding: the chain below says what to go and do, and a
+        // referral earned a month ago vanishing from the list reads as a requirement that was
+        // never there.
+        if (entry.Criteria.Count > 0)
+        {
+            _body.Children.Add(LoadoutPages.Heading("What it takes"));
+
+            foreach (var criterion in entry.Criteria)
+            {
+                _body.Children.Add(new TextBlock
+                {
+                    Text = criterion.Describe(),
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                    [!TextBlock.ForegroundProperty] = App.Current!
+                        .GetResourceObservable(criterion.Met == true
+                            ? ThemeManager.AccentKey
+                            : ThemeManager.TextMutedKey)
+                        .ToBinding(),
+                });
+            }
+        }
 
         // The way in, stop by stop. Nothing here is a summary of the chain — a summary is what a
         // Commander cannot act on.

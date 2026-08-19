@@ -275,20 +275,40 @@ public static class LoadoutPages
 /// <summary>
 /// A page that redraws itself when its mode changes underneath. The three levels all do, and
 /// unsubscribing on detach is the part that is easy to forget once rather than three times.
+/// <para>
+/// <b>Attach to detach, and catch up on the way in</b> (remediation.md 13, item 1; the same fault
+/// and the same fix as remediation.md 11, item 3). Subscribing in the constructor and
+/// unsubscribing on detach is not a pair: the drill strip <em>caches</em> its levels, so a level
+/// that scrolls out of the visible panes is detached and put back later — and in between it had
+/// unsubscribed and gone deaf for the rest of the session. Dropping a hull then left it on the
+/// fleet list, which is the one place a Commander looks to find out whether the drop took.
+/// </para>
+/// <para>
+/// It only shows on a narrow panel, which is why it survived a batch that fixed the identical
+/// thing on the checklist: at 1024 pixels the index stays beside the ship, never detaches, and
+/// keeps hearing. One pane, and it does not.
+/// </para>
 /// </summary>
 public abstract class LoadoutPage : UserControl
 {
     private readonly ILoadoutMode _mode;
 
-    protected LoadoutPage(ILoadoutMode mode)
-    {
-        _mode = mode;
-        mode.Changed += OnChanged;
-    }
+    protected LoadoutPage(ILoadoutMode mode) => _mode = mode;
 
     protected ILoadoutMode Mode => _mode;
 
     protected abstract void Refresh();
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _mode.Changed += OnChanged;
+
+        // Being put back by the strip means having missed whatever happened while it was out, so
+        // a page catches up rather than trusting what it last drew.
+        Refresh();
+    }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -509,6 +529,14 @@ public sealed class ItemPage : LoadoutPage
 
         _summary.Text = summary;
 
+        // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
+        // scroller rather than docked above it, or a hull's figures would cost the slot list the
+        // same rows on every window.
+        foreach (var line in Mode.Details(_item))
+        {
+            _list.Children.Add(LoadoutPages.Line(line));
+        }
+
         var rows = Mode.Slots(_item);
 
         if (rows.Count == 0)
@@ -516,6 +544,7 @@ public sealed class ItemPage : LoadoutPage
             _list.Children.Add(LoadoutPages.Muted(Mode.EmptySlots));
             return;
         }
+
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the
         // outfitting screen rather than as thirty-odd names in journal order

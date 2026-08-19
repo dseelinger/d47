@@ -19,6 +19,13 @@ namespace D47.Core.Journal;
 /// </summary>
 public readonly record struct StarPosition(double X, double Y, double Z)
 {
+    /// <summary>
+    /// Sol, which is where Elite's axes are measured from. Named rather than written as three
+    /// zeroes at the call site, because "distance from the origin" and "distance from Sol" are
+    /// the same number and only one of them means anything to a Commander.
+    /// </summary>
+    public static readonly StarPosition Origin = new(0, 0, 0);
+
     /// <summary>Light years to another point. Euclidean, which is what Elite's axes are.</summary>
     public double DistanceTo(StarPosition other) => Between(
         (X, Y, Z), (other.X, other.Y, other.Z));

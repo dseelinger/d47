@@ -154,6 +154,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     Engineer = plan.Engineer,
                     Experimental = plan.Experimental,
                     Module = plan.Module,
+                    Variant = plan.Variant,
                 })],
             })],
         };
@@ -268,7 +269,10 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     slot.Grade,
                     Blank(slot.Engineer),
                     Blank(slot.Experimental),
-                    Blank(slot.Module)));
+                    Blank(slot.Module))
+                {
+                    Variant = Blank(slot.Variant),
+                });
             }
 
             builds.Add(new ShipBuild(id, hull, line.ShipId, Blank(line.Name), slots));
@@ -319,5 +323,8 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
         public string? Experimental { get; init; }
 
         public string? Module { get; init; }
+
+        /// <summary>The exact module by symbol, where one was chosen. Never removed or renamed.</summary>
+        public string? Variant { get; init; }
     }
 }

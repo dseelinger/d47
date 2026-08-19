@@ -1,36 +1,36 @@
-# Remediation 12
+# Remediation 13
 
-**Shipped whole in [v0.36.0](CHANGELOG.md)**, which is its permanent record from here.
-
-Reported from 2026-08-18 against v0.35.0, one item at a time. Each is checked off as it ships,
+Reported from 2026-08-19 against v0.36.0, one item at a time. Each is checked off as it ships,
 and **checked only once it has been seen to work** — a change that compiles is not a fixed item.
 
-Remediation 11 shipped whole in [v0.35.0](CHANGELOG.md); its permanent record is that section of
+Remediation 12 shipped whole in [v0.36.0](CHANGELOG.md); its permanent record is that section of
 the changelog, which is why this file is the current batch and not a growing archive.
 
-- [x] **1. The module list should be grouped by type.** Hardpoints, Utility Mounts, Core Internal
-  (including Armour), Optional Internal.
+- [x] **1. Dropping a hull should take it off the ship list.**
 
-- [x] **2. Everything that is not outfitting should be off the list.** Named in the report:
-  `PlanetaryApproachSuite`, `WeaponColour`, `EngineColour`, `StringLights`, `VesselVoice`,
-  `ShipCockpit`, `CargoHatch`, `PaintJob`, `Decals`, `ShipName` — "or anything else that is not a
-  part of Outfitting", which is the rule rather than the list.
+- [x] **2. Clicking an owned hull should show its details.**
 
-- [x] **3. An empty slot is still a slot.** Nothing with a module in it was listed, so an empty
-  hardpoint did not exist as far as the page was concerned.
+- [x] **3. "Transfer" on the Checklist should read "Import/Export".**
 
-- [x] **4. No `int` in a description.** The symbol was printed with its underscores taken out, so
-  a power plant read as *int powerplant size6 class5*.
+- [x] **4. The UI should say "Ship" where it says "Hull".**
 
-- [x] **5. "Plan this slot" should offer the valid choices for that slot.** A list to pick from
-  rather than a name to spell, and searchable, because an Optional Internal has hundreds.
+- [x] **5. A tab press should go to that tab even with a sub-page up.** "Which hull do you intend
+  to buy" held the panel, and Back is implied by pressing a tab.
 
-- [x] **6. `TinyHardpoint` is a Utility Mount.**
+- [x] **6. Engineers should show one engineer at a time.**
 
-- [x] **7. An engineer's name should open that engineer.**
+- [x] **7. And backing out to the Directory first does not help** — clicking another engineer
+  still does not replace the one already open.
 
-- [x] **8. "Already yours" should read "Unlocked".**
+- [x] **8. The module chooser should ask for size and mount.** Hardpoint → Plan this slot → Pulse
+  Laser offers no way to pick the size, or fixed against gimballed against turreted. Commanders
+  do not remember "3F" either; they remember the size and the mount.
 
-- [x] **9. "You can go and get these now" should read "Ready for Unlock".**
+- [x] **9. Grade 5 should be the default.**
 
-- [x] **10. "Behind somebody else" should read "Requires Engineer Intro First".**
+- [x] **10. An experimental effect should be offered after the blueprint**, on the modules that
+  support one.
+
+- [x] **11. The engineer list should be able to hide the Colonia engineers.**
+
+- [x] **12. An unlock criterion that has already been met should carry a checkmark.**

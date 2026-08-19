@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -337,6 +338,121 @@ public class EngineersTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(stop.Label, surface.Panel.Nav.Trail[^1].Word);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// One engineer at a time (remediation.md 13, items 6 and 7).
+    /// <para>
+    /// A wide panel shows the level you are on beside the one above it, so the directory stays
+    /// pressable while an engineer is open — and pressing another name there pushed it on top of
+    /// the first rather than in place of it, which put two and three engineers on screen at once.
+    /// </para>
+    /// <para>
+    /// Backing out to the Directory first was the obvious workaround and is the same report: it
+    /// did not help, because the way back out was never the problem. Both routes are asserted
+    /// here, and it is the first that fails without the fix.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void OnlyOneEngineerIsOpenAtATime()
+    {
+        var surface = Open();
+
+        // Pressed rather than navigated, because the row in the directory pane beside the open
+        // engineer is the control the report is about.
+        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+
+        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Felicity Farseer"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
+
+        // And the same by way of the directory, which is what the second report tried.
+        surface.Panel.Nav.Back();
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The eight engineers out at Colonia can be taken off the list (remediation.md 13, item 11).
+    /// <para>
+    /// Shown by default: hiding a fifth of the directory from a Commander who never asked for it
+    /// hidden is the panel deciding what they own.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheColoniaEngineersCanBeHidden()
+    {
+        var surface = Open();
+
+        // StartsWith, because a row carries the count of plans waiting on them after the name.
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+
+        Press(surface.Panel, "Hide the Colonia eight").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Petra Olmanova", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+
+        // And back, because a filter that cannot be undone is a setting nobody meant to change.
+        Press(surface.Panel, "Show Colonia again").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// An unlock criterion already met carries a checkmark (remediation.md 13, item 12).
+    /// <para>
+    /// The fixture is unlocked with Liz Ryder alone, and Hera Tani comes through her — so one
+    /// engineer's list has a met referral and an unreadable invitation task on it at the same
+    /// time, which is the whole point: d47 marks what the journal settles and says nothing about
+    /// what Frontier states as prose about selling exploration data.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AMetCriterionIsMarkedAndAnUnreadableOneIsNot()
+    {
+        var surface = Open();
+
+        surface.Panel.Nav.Drill(
+            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Liz Ryder")));
+
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("What it takes", shown);
+        Assert.Contains("✓ Liz Ryder works for you", shown);
+
+        // Somebody behind her, where the referral is met and the rest is not readable.
+        surface.Panel.Nav.Drill(
+            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Hera Tani")));
+
+        Dispatcher.UIThread.RunJobs();
+
+        shown = Text(surface.Panel);
+
+        Assert.Contains(shown, line => line.StartsWith("✓ Grade 3 with Liz Ryder", StringComparison.Ordinal));
+        Assert.Contains("· Hera Tani works for you", shown);
+        Assert.Contains(shown, line => line.StartsWith("?", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

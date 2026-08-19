@@ -94,6 +94,23 @@ public sealed record Engineer
     public double? DistanceFrom(StarPosition? from) =>
         from is { } here && Position is { } there ? here.DistanceTo(there) : null;
 
+    /// <summary>
+    /// Whether they are out at Colonia rather than in the bubble (remediation.md 13, item 11).
+    /// <para>
+    /// <b>Measured rather than listed.</b> The coordinates already shipped, so this is arithmetic
+    /// on them and not a set of names anybody has to keep up to date — which is what would go
+    /// stale the day Frontier adds a ninth. The split is not close: thirty engineers sit within
+    /// 877 ly of Sol and eight sit between 21,988 and 22,017, so the cut is a threshold with ten
+    /// thousand light years of daylight on either side of it.
+    /// </para>
+    /// <para>
+    /// Null for an engineer with no position, which is a different answer from "in the bubble":
+    /// a filter cannot honestly hide something it does not know the whereabouts of.
+    /// </para>
+    /// </summary>
+    public bool? IsFarFromTheBubble =>
+        Position is { } there ? there.DistanceTo(StarPosition.Origin) > 5000 : null;
+
     /// <summary>How the Commander learns they exist, in prose.</summary>
     public string? Discovery { get; init; }
 

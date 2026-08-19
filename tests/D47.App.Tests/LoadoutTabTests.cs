@@ -63,8 +63,9 @@ public class LoadoutTabTests
         foreach (var line in new[]
                  {
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000}],"ShipsRemote":[]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
@@ -505,6 +506,21 @@ public class LoadoutTabTests
         Pick(surface.Panel, "Pulse Laser").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
+        // Then which one of it, in the words a Commander uses rather than the code the outfitting
+        // screen files it under (remediation.md 13, item 8).
+        var variants = Offered(surface.Panel);
+
+        Assert.Contains("Large, gimballed", variants);
+        Assert.Contains("Small, fixed", variants);
+        Assert.Contains("3E · 8.0 t · 0.92 MW · 140,600 cr", variants);
+
+        // Nothing bigger than the slot, and the decline is still a real plan.
+        Assert.DoesNotContain("Huge, fixed", variants);
+        Assert.Contains("Any Pulse Laser — size and mount do not matter", variants);
+
+        Pick(surface.Panel, "Large, gimballed").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
         // Then the rolls that apply to a pulse laser, rather than every blueprint in the game.
         var rolls = Offered(surface.Panel);
 
@@ -515,8 +531,29 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         // The grade is a short closed list, so it is the in-tree layer rather than a page --
-        // which is the same call the settings enums make.
+        // which is the same call the settings enums make. Grade 5 leads it and is marked as the
+        // usual answer (remediation.md 13, item 9): ascending order put grade 1 at the top, which
+        // is the grade nobody writes down.
+        var grades = Text(surface.Panel).ToList();
+
+        Assert.Contains("the usual", grades);
+        Assert.True(
+            grades.IndexOf("Grade 5") < grades.IndexOf("Grade 1"),
+            "grade 5 is offered before grade 1");
+        Assert.True(
+            grades.IndexOf("Grade 5") < grades.IndexOf("Any grade"),
+            "and before the row that declines the question");
+
         Press(surface.Panel, "Grade 5").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // And then the experimental effects a pulse laser supports (remediation.md 13, item 10).
+        var effects = Offered(surface.Panel);
+
+        Assert.Contains("Concordant Sequence", effects);
+        Assert.Contains("No effect", effects);
+
+        Pick(surface.Panel, "No effect").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         var plan = surface.Ships.Store.Builds
@@ -524,8 +561,10 @@ public class LoadoutTabTests
             .Single(slot => slot.Slot == "LargeHardpoint2");
 
         Assert.Equal("Pulse Laser", plan.Module);
+        Assert.Equal("hpt_pulselaser_gimbal_large", plan.Variant);
         Assert.Equal("Lightweight Mount", plan.Blueprint);
         Assert.Equal(5, plan.Grade);
+        Assert.Null(plan.Experimental);
 
         surface.Window.Close();
     }
@@ -567,6 +606,70 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Fuel Scoop", Offered(surface.Panel));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A ship you are not flying says what it is and where it is (remediation.md 13, item 2).
+    /// <para>
+    /// The page carried one sentence about builds and a list of slots reading "not seen", which
+    /// is less than the row you pressed to get there already told you.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AnOwnedShipShowsItsDetails()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        // Where it is, from the journal, and what it is worth.
+        Assert.Contains("Parked at Jameson Memorial, Shinrarta Dezhra.", shown);
+        Assert.Contains("Worth 150,000,000 cr.", shown);
+
+        // And what the hull is, from the shipped table — true of every Anaconda ever built, which
+        // is why it can be said for a ship in another dock.
+        Assert.Contains("The ship", shown);
+        Assert.Contains("Anaconda, by Faulcon DeLacy. Needs a large pad.", shown);
+        Assert.Contains("180 m/s, 240 boosting.", shown);
+
+        // What it cannot say, and why. A jump range for a ship d47 cannot see would have to be
+        // modelled, and a modelled figure that reads like a measured one is the whole thing the
+        // specification table is built the way it is to avoid.
+        Assert.Contains(shown, line => line.Contains(
+            "only known while you are in it", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("As it is fitted", shown);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// And the one you are flying adds the figures that depend on what is fitted, because those
+    /// are the ones Elite actually reports (remediation.md 13, item 2).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheShipYouAreFlyingAddsWhatIsFitted()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("You are flying it.", shown);
+        Assert.Contains("As it is fitted", shown);
+        // 34.25 formats to 34.2, not 34.3: N1 rounds a midpoint to the even digit.
+        Assert.Contains("34.2 ly a jump, full tank and empty hold.", shown);
+        Assert.Contains("128 tonnes of hold.", shown);
+        Assert.Contains("Worth 100,000,000 cr, ship and modules together.", shown);
+        Assert.Contains("Rebuy is 5,000,000 cr.", shown);
+        Assert.Contains("Hull at 87%.", shown);
 
         surface.Window.Close();
     }

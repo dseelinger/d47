@@ -30,7 +30,14 @@ public class PersonaCatalogTests
     {
         // A core with an empty intro is a core that says nothing when you pick it, which reads
         // as a core that failed to load rather than as a design choice.
-        foreach (var persona in PersonaCatalog.All)
+        //
+        // Shipped rather than All, here and in every loop below. All is the eleven plus whatever
+        // the Commander has written, and its source is a process-wide static that the custom-core
+        // tests point at a store of their own — one of which deliberately holds a core with an
+        // empty body, to prove a bad entry is reported rather than dropped. Read All and this
+        // fails whenever xUnit happens to run the two classes at the same moment, which it did
+        // about one run in eight.
+        foreach (var persona in PersonaCatalog.Shipped)
         {
             Assert.False(string.IsNullOrWhiteSpace(persona.Name), persona.Id);
             Assert.False(string.IsNullOrWhiteSpace(persona.Tagline), persona.Id);
@@ -63,7 +70,7 @@ public class PersonaCatalogTests
         // The isolation line is restated at the end of every block on purpose: the persona pack
         // calls it the easiest premise for a model to forget and the one holding the whole cast
         // together.
-        foreach (var persona in PersonaCatalog.All)
+        foreach (var persona in PersonaCatalog.Shipped)
         {
             var block = persona.RenderBlock();
 
@@ -79,7 +86,7 @@ public class PersonaCatalogTests
         // The persona block sits above the cache breakpoint. Text that varied for any reason
         // other than the Commander picking a different core would be paying for a cold prefix
         // nobody asked for (architecture.md §6).
-        foreach (var persona in PersonaCatalog.All)
+        foreach (var persona in PersonaCatalog.Shipped)
         {
             Assert.Equal(persona.RenderBlock(), persona.RenderBlock());
             Assert.Equal(persona.RenderBlock("Fred"), persona.RenderBlock("Fred"));
@@ -363,7 +370,7 @@ public class GuardrailsSurvivePersonaTests
     [Fact]
     public void EveryCoreLeavesTheGuardrailsIntactAboveIt()
     {
-        foreach (var persona in PersonaCatalog.All)
+        foreach (var persona in PersonaCatalog.Shipped)
         {
             var prompt = new PromptAssembly { Persona = persona.RenderBlock() };
             var block = prompt.RenderCachedSystemBlock();
@@ -438,7 +445,7 @@ public class PersonaIsNotTheModelsToChangeTests
 
         var phrases = surface.Settings.Find(PersonaCapability.PersonaKey)!.Commands;
 
-        foreach (var persona in PersonaCatalog.All)
+        foreach (var persona in PersonaCatalog.Shipped)
         {
             Assert.Contains(phrases, phrase => phrase.Value == persona.Id);
         }

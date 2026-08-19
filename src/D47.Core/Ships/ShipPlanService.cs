@@ -366,7 +366,7 @@ public sealed class ShipPlanService(
             // rather than invented: scoping them to the Commander's universal list would put a
             // Corsair's hardpoints somewhere they would outlive the decision to buy one.
             return $"You do not own that {build.HullName} yet, so there is no ship list to put it "
-                   + "on. Buy the hull and I will offer to adopt this plan onto it.";
+                   + "on. Buy the ship and I will offer to adopt this plan onto it.";
         }
 
         var planned = build.Slots.Where(slot => !slot.IsEmpty).ToList();

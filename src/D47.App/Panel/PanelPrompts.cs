@@ -119,6 +119,38 @@ public sealed class PanelPrompts
     /// </summary>
     public void Hear(Heard heard) => _listening?.Invoke(heard);
 
+    /// <summary>
+    /// Drops whatever prompt is open, committing nothing (remediation.md 13, item 5).
+    /// <para>
+    /// <b>For a Commander who pressed a tab.</b> A prompt behaves as a modal and nothing
+    /// navigates away from one, which is right for every gesture <em>inside</em> the panel and
+    /// wrong for the tabs: pressing Engineers while "Which ship do you intend to buy?" is up is
+    /// not an accident to be refused, it is somebody saying they are done with the question. Back
+    /// is implied, so it is taken for them.
+    /// </para>
+    /// <para>
+    /// <b>Nothing is committed on the way out</b>, which is the rule the chooser already had: the
+    /// callback is dropped rather than called, so abandoning a question and answering it are
+    /// different things. The listening arm is cleared with it, or the next thing the Commander
+    /// says would be posted to a prompt that is no longer on screen.
+    /// </para>
+    /// </summary>
+    public void Abandon()
+    {
+        Attend(null);
+
+        _layer.Children.Clear();
+        _layer.IsVisible = false;
+
+        // Every prompt level, not only the top one: a chooser can open a chooser, and a tab press
+        // means the Commander is done with the whole stack of them.
+        while (_nav.Trail.Count > 0 && _nav.Trail[^1].Modal)
+        {
+            _pages.Remove(_nav.Trail[^1].Key);
+            _nav.Back();
+        }
+    }
+
     /// <summary>Whether a prompt is waiting on speech, so the host knows to route it here.</summary>
     public bool IsListening => _listening is not null;
 

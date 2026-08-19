@@ -40,13 +40,13 @@ public sealed class ShipsMode(
 
     public string EmptyIndex =>
         "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it — or "
-        + "plan a hull you do not own, and buying one will point the plan at it.";
+        + "plan a ship you do not own, and buying one will point the plan at it.";
 
     public string EmptySlots =>
         "Nothing is planned, and I cannot see this ship's modules — Elite only reports the loadout "
         + "of the ship you are sitting in. Plan a slot and it will appear here.";
 
-    public string NewLabel => "Plan a hull you do not own";
+    public string NewLabel => "Plan a ship you do not own";
 
     public string PromoteLabel => "Put this build on my checklist";
 
@@ -84,13 +84,13 @@ public sealed class ShipsMode(
         prompts.Enter(
             new EntryRequest(
                 "loadout.intend",
-                "Hull",
-                "Which hull do you intend to buy?",
+                "Ship",
+                "Which ship do you intend to buy?",
                 "It is not in your fleet until you own one — acquiring it is the plan's first step.",
                 string.Empty,
                 EntrySurface.Voice,
                 value => EliteSpecifications.Ship(value) is null
-                    ? EntryVerdict.No($"I do not know a hull called “{value}”.")
+                    ? EntryVerdict.No($"I do not know a ship called “{value}”.")
                     : EntryVerdict.Ok),
             hull =>
             {
@@ -103,6 +103,185 @@ public sealed class ShipsMode(
         : build.IsOwned
             ? $"{build.Describe()}. One build per ship: a slot holds one plan."
             : $"{build.Describe()}. Buying one will point this plan at it.";
+
+    /// <summary>
+    /// What this ship is, where it is, and what it can do (remediation.md 13, item 2).
+    /// <para>
+    /// <b>Two sources, and they are kept apart.</b> Where it is and what it is worth come from
+    /// the journal and are facts about <em>this</em> ship; speed, boost and pad come from the
+    /// shipped table and are facts about the hull, true of every one ever built. The figures that
+    /// depend on what is fitted — jump range, cargo, rebuy — are only said for the ship being
+    /// flown, because those are Loadout's and Elite reports the loadout of one ship at a time.
+    /// </para>
+    /// <para>
+    /// Nothing here is computed from anything else. A jump range for a ship in another dock would
+    /// have to be modelled from a loadout d47 cannot see, and a modelled figure that reads like a
+    /// measured one is the failure the whole specification table is built the way it is to avoid.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<LoadoutLine> Details(string item)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [];
+        }
+
+        var entry = ships.Fleet().FirstOrDefault(candidate => candidate.Build?.Id == build.Id);
+        var lines = new List<LoadoutLine>();
+
+        // Where it is, said in full rather than in the row's one phrase: the row has to fit a
+        // line and this does not, so "here" becomes the station it is parked at.
+        if (entry?.Stored is { } stored)
+        {
+            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body));
+
+            if (stored.TransferPrice is { } price)
+            {
+                lines.Add(new LoadoutLine(
+                    $"Transferring it here costs {Credits(price)}."));
+            }
+
+            if (stored.Value is { } worth)
+            {
+                lines.Add(new LoadoutLine($"Worth {Credits(worth)}."));
+            }
+        }
+        else if (entry is not null)
+        {
+            lines.Add(new LoadoutLine("Not bought yet.", LoadoutTone.Body));
+        }
+
+        lines.AddRange(Hull(build));
+        lines.AddRange(Flying(build));
+
+        return lines;
+    }
+
+    /// <summary>Where the ship is, in a sentence rather than in the row's one phrase.</summary>
+    private static string Whereabouts(StoredShip stored, bool active)
+    {
+        if (active)
+        {
+            return "You are flying it.";
+        }
+
+        if (stored.InTransit)
+        {
+            return $"In transit to {stored.StarSystem}.";
+        }
+
+        return stored.StationName is { Length: > 0 } station
+            ? $"Parked at {station}, {stored.StarSystem}."
+            : $"Parked in {stored.StarSystem}.";
+    }
+
+    /// <summary>
+    /// What the hull is, from the shipped table. True of every one ever built, which is why it is
+    /// said for a ship in another dock as readily as for the one underneath the Commander.
+    /// </summary>
+    private static IReadOnlyList<LoadoutLine> Hull(ShipBuild build)
+    {
+        if (EliteSpecifications.Ship(build.Hull) is not { } hull)
+        {
+            return [new LoadoutLine("I have no figures for this ship.")];
+        }
+
+        var lines = new List<LoadoutLine> { new("The ship", LoadoutTone.Heading) };
+
+        var made = hull.Manufacturer is { Length: > 0 } maker ? $"{hull.Name}, by {maker}" : hull.Name;
+
+        lines.Add(new LoadoutLine(
+            hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}."));
+
+        if (hull.Speed is { } speed && hull.Boost is { } boost)
+        {
+            lines.Add(new LoadoutLine(
+                $"{speed.ToString(CultureInfo.InvariantCulture)} m/s, "
+                + $"{boost.ToString(CultureInfo.InvariantCulture)} boosting."));
+        }
+
+        if (hull.Armour is { } armour && hull.Shields is { } shields)
+        {
+            lines.Add(new LoadoutLine(
+                $"{armour.ToString(CultureInfo.InvariantCulture)} armour and "
+                + $"{shields.ToString(CultureInfo.InvariantCulture)} shields before anything is "
+                + "fitted."));
+        }
+
+        if (hull.Cost is { } cost)
+        {
+            lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}."));
+        }
+
+        return lines;
+    }
+
+    /// <summary>
+    /// The figures that depend on what is fitted, and <b>only for the ship being flown</b>. Elite
+    /// reports the loadout of one ship at a time, so these are measured for that one and unknown
+    /// for every other — which is a different thing from being zero.
+    /// </summary>
+    private IReadOnlyList<LoadoutLine> Flying(ShipBuild build)
+    {
+        var loadout = state()?.Ship;
+
+        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
+        {
+            return
+            [
+                new LoadoutLine(
+                    "Elite reports the loadout of the ship you are sitting in and no other, so its "
+                    + "jump range, cargo and rebuy are only known while you are in it."),
+            ];
+        }
+
+        var lines = new List<LoadoutLine>();
+
+        if (loadout.MaxJumpRange is { } range)
+        {
+            lines.Add(new LoadoutLine(
+                $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump, full tank and "
+                + "empty hold."));
+        }
+
+        if (loadout.CargoCapacity is { } cargo)
+        {
+            lines.Add(new LoadoutLine($"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold."));
+        }
+
+        if (loadout.UnladenMass is { } mass)
+        {
+            lines.Add(new LoadoutLine(
+                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen."));
+        }
+
+        if (loadout.TotalValue is { } worth)
+        {
+            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, ship and modules together."));
+        }
+
+        if (loadout.Rebuy is { } rebuy)
+        {
+            // Its own line and its own tone. The rebuy is the one figure here that is a warning
+            // rather than a statistic.
+            lines.Add(new LoadoutLine($"Rebuy is {Credits(rebuy)}.", LoadoutTone.Danger));
+        }
+
+        if (loadout.HullHealth is { } health && health < 100)
+        {
+            lines.Add(new LoadoutLine(
+                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.", LoadoutTone.Danger));
+        }
+
+        // The heading last, and only if anything is under it. A `Loadout` carrying none of these
+        // is unusual and possible, and a heading with nothing beneath it reads as a block that
+        // failed to load rather than as one with nothing to say.
+        return lines.Count == 0 ? [] : [new LoadoutLine("As it is fitted", LoadoutTone.Heading), .. lines];
+    }
+
+    /// <summary>Credits, grouped, because a nine-digit number without separators is unreadable.</summary>
+    private static string Credits(long amount) =>
+        $"{amount.ToString("N0", CultureInfo.InvariantCulture)} cr";
 
     /// <summary>
     /// The hull's slots, grouped, whole, and with the cosmetics off them
@@ -212,7 +391,7 @@ public sealed class ShipsMode(
     /// which is the same rule the checklist draws between a computed line and a written one.
     /// </summary>
     public string? DropLabel(string item) =>
-        Resolve(item) is { IsOwned: false } ? "Drop this hull" : null;
+        Resolve(item) is { IsOwned: false } ? "Drop this ship" : null;
 
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";
@@ -299,23 +478,25 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// What the Commander wants in this slot: the module, then the blueprint, then the grade
-    /// (remediation.md 12, item 5).
+    /// What the Commander wants in this slot: the module, which one of it, the blueprint, the
+    /// grade, and the experimental effect (remediation.md 12, item 5; 13, items 8, 9 and 10).
     /// <para>
-    /// <b>Three lists rather than a name to spell.</b> It used to ask for the blueprint by voice
-    /// and the grade on the keyboard, which meant a plan for a slot depended on getting a phrase
-    /// like "Increased FSD Range" right — and there was no way at all to say what should go in an
-    /// empty compartment, only what should be rolled on whatever was already there.
+    /// <b>Lists rather than a name to spell.</b> It used to ask for the blueprint by voice and the
+    /// grade on the keyboard, so a plan depended on getting a phrase like "Increased FSD Range"
+    /// right — and there was no way at all to say what should go in an empty compartment, only
+    /// what should be rolled on whatever was already there.
     /// </para>
     /// <para>
     /// Every list is the slot's own. What can go in a size 4 hardpoint is not what can go in a
-    /// size 4 compartment, and the modules a blueprint applies to are not every blueprint — so
-    /// each step narrows the next rather than offering the whole catalogue three times.
+    /// size 4 compartment, the rolls offered are the ones that module can take, the grades are the
+    /// ones that blueprint has, and the experimentals are the ones that module supports — so each
+    /// step narrows the next rather than offering the whole catalogue five times.
     /// </para>
     /// <para>
-    /// <b>Each step can also be skipped</b>, because the three are separate wants. "A shield
-    /// generator, I don't care what grade" is a plan; so is "grade 5 dirty drives on whatever is
-    /// in there". The first row of each list is the one that declines it.
+    /// <b>Each step can be declined</b>, because they are separate wants. "A shield generator, I
+    /// do not mind which grade" is a plan; so is "grade 5 dirty drives on whatever is in there".
+    /// The first row of each list is the one that declines it, and a step with nothing to offer is
+    /// not shown at all.
     /// </para>
     /// </summary>
     public void Ask(string item, string slot, PanelPrompts prompts, Action done)
@@ -337,48 +518,46 @@ public sealed class ShipsMode(
 
         var plan = build.For(slot);
 
-        AskModule(build, known, plan, prompts, module =>
-            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade) =>
+        AskModule(build, known, plan, prompts, (module, variant) =>
+            AskBlueprint(build, known, plan, module, prompts, (blueprint, grade, experimental) =>
             {
                 ships.Plan(build.Id, new SlotPlan(slot, blueprint, grade, plan?.Engineer)
                 {
                     Module = module,
-                    Experimental = plan?.Experimental,
+                    Variant = variant,
+                    Experimental = experimental,
                 });
 
                 done();
             }));
     }
 
-    /// <summary>The modules this slot takes, by name — the variants are the slot's business.</summary>
+    /// <summary>The modules this slot takes, by name — then which one of it.</summary>
     private static void AskModule(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
         PanelPrompts prompts,
-        Action<string?> chosen)
+        Action<string?, string?> chosen)
     {
         // By name rather than one row per class and rating. A size 6 compartment takes over a
         // hundred parts and around forty things; the Commander is choosing the thing, and which
-        // 6A of it they buy is what the slot's size already decided.
+        // one of it is the next question rather than part of this one.
+        //
         // Grouped without regard to case, because the id list spells one weapon two ways:
         // `hpt_atdumbfiremissile_turret_large` is an "AX Missile Rack" and
         // `hpt_atdumbfiremissile_fixed_large` is an "Ax Missile Rack". Grouped exactly, that is
         // one weapon offered twice, which reads as two things a Commander has to choose between.
         // The spelling shown is the first in ordinal order, which is a rule rather than a taste —
         // and it lands on Frontier's own capitals here.
-        var modules = EliteSpecifications.ModulesFor(slot)
+        var offered = EliteSpecifications.ModulesFor(slot)
             .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group => new ChoiceOption(
-                Spelling(group),
-                Spelling(group),
-                Sizes(group)))
             .ToList();
 
-        if (modules.Count == 0)
+        if (offered.Count == 0)
         {
-            chosen(plan?.Module);
+            chosen(plan?.Module, plan?.Variant);
             return;
         }
 
@@ -388,8 +567,90 @@ public sealed class ShipsMode(
                 "Module",
                 $"What goes in {slot.Describe()}?",
                 Context(build, slot),
-                [new ChoiceOption(string.Empty, "Anything — I only want the engineering"), .. modules],
+                [
+                    new ChoiceOption(string.Empty, "Anything — I only want the engineering"),
+                    .. offered.Select(group => new ChoiceOption(
+                        Spelling(group),
+                        Spelling(group),
+                        Sizes(group))),
+                ],
                 plan?.Module,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option =>
+            {
+                if (option.Key.Length == 0)
+                {
+                    chosen(null, null);
+                    return;
+                }
+
+                AskVariant(
+                    build,
+                    slot,
+                    plan,
+                    option.Key,
+                    offered.First(group => group.Key.Equals(option.Key, StringComparison.OrdinalIgnoreCase)),
+                    prompts,
+                    variant => chosen(option.Key, variant));
+            });
+    }
+
+    /// <summary>
+    /// Which one of it: the size and the mount (remediation.md 13, item 8).
+    /// <para>
+    /// <b>Said the way a Commander says it.</b> "Large, gimballed" is how somebody asks for a
+    /// weapon and "3F" is how the outfitting screen files it — the second is derivable from the
+    /// first and nobody remembers it, so the row leads with the words and carries the code
+    /// underneath. A module with no mount says its size and rating instead, because that is what
+    /// distinguishes one shield generator from another.
+    /// </para>
+    /// <para>
+    /// Declinable, and the decline is a real plan rather than a way out: "a pulse laser, I do not
+    /// mind which" is a slot the Commander has an opinion about, and it is the opinion the fleet
+    /// page draws.
+    /// </para>
+    /// </summary>
+    private static void AskVariant(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string module,
+        IEnumerable<ModuleSpecification> variants,
+        PanelPrompts prompts,
+        Action<string?> chosen)
+    {
+        var offered = variants
+            .OrderByDescending(variant => variant.Class)
+            .ThenBy(variant => variant.Mount, StringComparer.Ordinal)
+            .ThenBy(variant => variant.Rating, StringComparer.Ordinal)
+            .ToList();
+
+        if (offered.Count <= 1)
+        {
+            // One of it, so there is nothing to choose. Taken rather than asked: a chooser with a
+            // single row is a press that teaches the Commander the panel wastes their time.
+            chosen(offered.Count == 1 ? offered[0].Symbol : null);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.variant",
+                "Which one",
+                $"Which {module}?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, $"Any {module} — size and mount do not matter"),
+                    .. offered.Select(variant => new ChoiceOption(
+                        variant.Symbol,
+                        Wording(variant),
+                        Figures(variant))),
+                ],
+                plan?.Variant,
                 ChoiceSurface.Page)
             {
                 CurrentWord = "planned now",
@@ -399,9 +660,9 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// The blueprint, then the grade. Two steps because the grades on offer are the ones that
-    /// blueprint actually has — five is not universal, and offering a grade nobody rolls is a
-    /// plan that can never be met.
+    /// The blueprint, then the grade, then the effect. Three steps because the grades on offer are
+    /// the ones that blueprint actually has — five is not universal, and offering a grade nobody
+    /// rolls is a plan that can never be met.
     /// </summary>
     private static void AskBlueprint(
         ShipBuild build,
@@ -409,11 +670,13 @@ public sealed class ShipsMode(
         SlotPlan? plan,
         string? module,
         PanelPrompts prompts,
-        Action<string?, int?> chosen)
+        Action<string?, int?, string?> chosen)
     {
         // What the blueprints are listed for: the module just chosen, or the one already planned,
         // and otherwise everything — which is a long list and is exactly what the search is for.
-        var recipes = BlueprintCatalogue.ForModule(module ?? plan?.Module)
+        var wanted = module ?? plan?.Module;
+
+        var recipes = BlueprintCatalogue.ForModule(wanted)
             .Where(recipe => recipe.Kind == BlueprintKind.Modification)
             .ToList();
 
@@ -431,7 +694,7 @@ public sealed class ShipsMode(
             new ChoiceRequest(
                 "loadout.blueprint",
                 "Blueprint",
-                module is { Length: > 0 } wanted ? $"What roll on the {wanted}?" : "What roll?",
+                wanted is { Length: > 0 } named ? $"What roll on the {named}?" : "What roll?",
                 Context(build, slot),
                 [
                     new ChoiceOption(string.Empty, "No engineering — the module as it comes"),
@@ -450,23 +713,42 @@ public sealed class ShipsMode(
             {
                 var blueprint = option.Key.Length == 0 ? null : option.Key;
 
-                var offered = blueprint is null
-                    ? [1, 2, 3, 4, 5]
-                    : names.First(group => group.Key == blueprint)
-                        .Select(recipe => recipe.Grade)
-                        .Where(grade => grade is not null)
-                        .Select(grade => grade!.Value)
-                        .Distinct()
-                        .Order()
-                        .ToList();
+                if (blueprint is null)
+                {
+                    // No roll means no grade and no effect: both are properties of a roll, and
+                    // asking about them anyway is two questions with one answer.
+                    chosen(null, null, null);
+                    return;
+                }
 
-                AskGrade(build, slot, plan, blueprint, offered, prompts, chosen);
+                var offered = names.First(group => group.Key == blueprint)
+                    .Select(recipe => recipe.Grade)
+                    .Where(grade => grade is not null)
+                    .Select(grade => grade!.Value)
+                    .Distinct()
+                    .OrderDescending()
+                    .ToList();
+
+                AskGrade(build, slot, plan, blueprint, offered, prompts, grade =>
+                    AskEffect(build, slot, plan, wanted, prompts, effect =>
+                        chosen(blueprint, grade, effect)));
             });
     }
 
     /// <summary>
-    /// The grade, from the ones that blueprint has. <b>Any is a real answer</b> rather than an
-    /// unknown, which is why it is the first row rather than a way out of the question.
+    /// The grade, from the ones that blueprint has, <b>best first and grade 5 the default</b>
+    /// (remediation.md 13, item 9).
+    /// <para>
+    /// Ascending order put grade 1 at the top, which is the grade nobody plans: a Commander
+    /// writing down what they want writes down the finished thing. So the list runs 5 down to 1
+    /// and 5 is marked as the usual answer — marked rather than pre-selected, because a chooser
+    /// that opens with a row already chosen invites a press that changes nothing and the
+    /// Commander cannot tell whether it took.
+    /// </para>
+    /// <para>
+    /// <b>Any is still a real answer</b> rather than a way out of the question, which is why it
+    /// keeps its row.
+    /// </para>
     /// </summary>
     private static void AskGrade(
         ShipBuild build,
@@ -475,8 +757,13 @@ public sealed class ShipsMode(
         string? blueprint,
         IReadOnlyList<int> offered,
         PanelPrompts prompts,
-        Action<string?, int?> chosen)
+        Action<int?> chosen)
     {
+        const int Usual = 5;
+
+        var current = plan?.Grade?.ToString(CultureInfo.InvariantCulture)
+                      ?? (offered.Contains(Usual) ? Usual.ToString(CultureInfo.InvariantCulture) : null);
+
         prompts.Choose(
             new ChoiceRequest(
                 "loadout.grade",
@@ -484,19 +771,119 @@ public sealed class ShipsMode(
                 blueprint is { Length: > 0 } roll ? $"Which grade of {roll}?" : "Which grade?",
                 Context(build, slot),
                 [
-                    new ChoiceOption(string.Empty, "Any grade"),
                     .. offered.Select(grade => new ChoiceOption(
                         grade.ToString(CultureInfo.InvariantCulture),
                         $"Grade {grade.ToString(CultureInfo.InvariantCulture)}")),
+                    new ChoiceOption(string.Empty, "Any grade"),
                 ],
-                plan?.Grade?.ToString(CultureInfo.InvariantCulture),
+                current,
                 ChoiceSurface.Layer)
             {
-                CurrentWord = "planned now",
+                CurrentWord = plan?.Grade is null ? "the usual" : "planned now",
             },
             option => chosen(
-                blueprint,
                 int.TryParse(option.Key, CultureInfo.InvariantCulture, out var grade) ? grade : null));
+    }
+
+    /// <summary>
+    /// The experimental effect, on the modules that support one (remediation.md 13, item 10).
+    /// <para>
+    /// <b>Per module kind, because that is how the game works</b>: the recipe for Double Braced on
+    /// a beam laser is not the recipe on a power plant, and the shipped table carries them
+    /// separately for that reason. A module with none is not asked about at all.
+    /// </para>
+    /// <para>
+    /// After the blueprint rather than beside it, because it is a second thing bought at the same
+    /// bench and it is its own checklist item on the same slot.
+    /// </para>
+    /// </summary>
+    private static void AskEffect(
+        ShipBuild build,
+        ShipSlot slot,
+        SlotPlan? plan,
+        string? module,
+        PanelPrompts prompts,
+        Action<string?> chosen)
+    {
+        var effects = BlueprintCatalogue.ExperimentalsFor(module)
+            .Select(recipe => recipe.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (effects.Count == 0)
+        {
+            chosen(plan?.Experimental);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "loadout.experimental",
+                "Effect",
+                module is { Length: > 0 } named
+                    ? $"An experimental effect on the {named}?"
+                    : "An experimental effect?",
+                Context(build, slot),
+                [
+                    new ChoiceOption(string.Empty, "No effect"),
+                    .. effects.Select(effect => new ChoiceOption(effect, effect)),
+                ],
+                plan?.Experimental,
+                ChoiceSurface.Page)
+            {
+                CurrentWord = "planned now",
+                Searchable = true,
+            },
+            option => chosen(option.Key.Length == 0 ? null : option.Key));
+    }
+
+    /// <summary>
+    /// One variant, in the words a Commander uses for it. The size and the mount for anything
+    /// mounted, and the size and the rating for everything else.
+    /// </summary>
+    private static string Wording(ModuleSpecification variant)
+    {
+        var size = variant.Class switch
+        {
+            1 => "Small",
+            2 => "Medium",
+            3 => "Large",
+            4 => "Huge",
+            _ => null,
+        };
+
+        if (variant.Mount is { Length: > 0 } mount && size is not null)
+        {
+            return $"{size}, {mount}";
+        }
+
+        return variant.Class is { } cls && variant.Rating is { Length: > 0 } rating
+            ? $"Size {cls.ToString(CultureInfo.InvariantCulture)}, rating {rating}"
+            : variant.Name;
+    }
+
+    /// <summary>The code underneath the words, and what it costs the ship to carry.</summary>
+    private static string Figures(ModuleSpecification variant)
+    {
+        var parts = new List<string> { variant.Size };
+
+        if (variant.Mass is { } mass)
+        {
+            parts.Add($"{mass.ToString("N1", CultureInfo.InvariantCulture)} t");
+        }
+
+        if (variant.Power is { } power)
+        {
+            parts.Add($"{power.ToString("N2", CultureInfo.InvariantCulture)} MW");
+        }
+
+        if (variant.Cost is { } cost)
+        {
+            parts.Add(Credits(cost));
+        }
+
+        return string.Join(" · ", parts);
     }
 
     /// <summary>

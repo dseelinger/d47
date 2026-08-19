@@ -116,6 +116,21 @@ public interface ILoadoutMode
     /// <summary>The line at the top of an item's page, or null when the item is gone.</summary>
     string? Summary(string item);
 
+    /// <summary>
+    /// What the item <em>is</em>, under the summary line (remediation.md 13, item 2).
+    /// <para>
+    /// <b>Facts about the thing rather than about its plan.</b> A ship the Commander is not flying
+    /// had a page carrying one sentence about builds and a list of slots reading "not seen", which
+    /// is less than the row they pressed to get there told them. Where it is, what it is worth,
+    /// what the hull can do — the questions somebody opens a ship to ask.
+    /// </para>
+    /// <para>
+    /// Empty is a real answer, and the block is not drawn at all for a mode that has nothing
+    /// extra to say.
+    /// </para>
+    /// </summary>
+    IReadOnlyList<LoadoutLine> Details(string item);
+
     /// <summary>That item's slots, as an index.</summary>
     IReadOnlyList<LoadoutRow> Slots(string item);
 

@@ -399,6 +399,7 @@ public static class UnlockPlanner
             Jumps = EngineerAccess.Jumps(light, range),
             Wanted = planned.Count(work => work.Engineers.Contains(engineer.Name, StringComparer.Ordinal)),
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
+            Criteria = EngineerAccess.CriteriaFor(engineer, progress),
         };
     }
 }
