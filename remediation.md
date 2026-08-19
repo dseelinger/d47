@@ -9,3 +9,28 @@ the changelog, which is why this file is the current batch and not a growing arc
 - [x] **1. Dropping a hull should take it off the ship list.**
 
 - [x] **2. Clicking an owned hull should show its details.**
+
+- [ ] **3. "Transfer" on the Checklist should read "Import/Export".**
+
+- [ ] **4. The UI should say "Ship" where it says "Hull".**
+
+- [ ] **5. A tab press should go to that tab even with a sub-page up.** "Which hull do you intend
+  to buy" held the panel, and Back is implied by pressing a tab.
+
+- [ ] **6. Engineers should show one engineer at a time.**
+
+- [ ] **7. And backing out to the Directory first does not help** — clicking another engineer
+  still does not replace the one already open.
+
+- [ ] **8. The module chooser should ask for size and mount.** Hardpoint → Plan this slot → Pulse
+  Laser offers no way to pick the size, or fixed against gimballed against turreted. Commanders
+  do not remember "3F" either; they remember the size and the mount.
+
+- [ ] **9. Grade 5 should be the default.**
+
+- [ ] **10. An experimental effect should be offered after the blueprint**, on the modules that
+  support one.
+
+- [ ] **11. The engineer list should be able to hide the Colonia engineers.**
+
+- [ ] **12. An unlock criterion that has already been met should carry a checkmark.**
