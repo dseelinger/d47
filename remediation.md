@@ -97,6 +97,37 @@ rather than prettifying a symbol into something that looks like one.
   report what did not* is different work from *refuse the copy*, and it wants deciding rather than
   discovering.
 
+  **Decided 2026-08-19, and the reserved decision turned out not to exist.**
+
+  **There is no partial-copy case.** `Blueprints.tsv` carries `kind, module, name, grade, engineers,
+  ingredients, effects, guid` — **no size, no class, no rating**. Blueprints and experimentals are
+  keyed on the module *name* alone, and downsizing preserves the name, so the whole set always
+  transfers. *Copy what transfers and report the rest* versus *refuse the copy* was a policy about
+  something that cannot happen.
+
+  **What replaces it: the module may not come small enough.** Measured over both kinds, and the
+  first measurement was scoped to hardpoints only and generalised, which the Commander corrected.
+
+  - **20 of 60 hardpoint names do not come in size 1** — Plasma Accelerator is 2-4, Pacifier
+    Frag-Cannon is 3 only, Pack-Hound Missile Rack is 2 only. Dropped on a Small hardpoint they
+    resolve to nothing.
+  - **10 of 59 non-hardpoint names have an interior hole.** Six limpet controllers are **odd sizes
+    only — 1, 3, 5, 7**; Planetary Vehicle Hangar is **2, 4, 6**; Experimental Weapon Stabiliser is
+    3 and 5; Corrosion Resistant Cargo Rack is 1, 4, 5, 6.
+
+  **So "the new slot's largest fitting size" must search, not clamp.** `min(slotSize, moduleMax)` is
+  wrong: it resolves a size-7 Collector Limpet Controller onto a size-4 slot as size 4, which does
+  not exist. The rule is `max(s in sizes where s <= slotSize)`, and where no such size exists there
+  is no target.
+
+  **A drop with no valid target is disallowed and shown as disallowed** — greyed, during the drag,
+  rather than accepted and then explained. An invalid target that never highlights is the ordinary
+  idiom, it is discoverable while the mouse is still down, and it needs no dialog. Same rule as the
+  kind constraint already stated, with one more condition: *and the module fits*.
+
+  **A drop overwrites whatever is in the target.** No confirmation, no merge: dragging an engineered
+  Multi-Cannon onto a slot planned for a pulse laser replaces it, which is what dragging means.
+
 - [x] **2a. A mining missile is shipping as a Pulse Laser.** *Shipped in v0.38.1.* Reported as
   *"I should be able to differentiate between the first two lasers by something besides the
   price"* — and the honest
@@ -548,6 +579,30 @@ rather than prettifying a symbol into something that looks like one.
   mid-word and closed with a full stop, so it reads as a finished sentence that is not one. It also
   names journal slot symbols where `slot.Describe()` already yields "Large Hardpoint 1", which the
   slot list directly beside it gets right.
+
+  **Decided 2026-08-19: make it do what it says.** The build goes straight onto the checklist.
+
+  > "If I wanted to dither about it more I wouldn't have pressed the button. That's not D47 making a
+  > decision, that's me telling D47 about my decision."
+
+  **The framing above was wrong and is corrected here.** Ask #14 is a bug report — the button says
+  `Put this build on my checklist`, and the build was not on the checklist — and the write-up turned
+  it into an even choice between renaming the button and honouring it. It was never even.
+
+  **Phase 25's rule does not apply, and the reason matters.** *Suggestions are a page rather than an
+  interruption, and accepting stays the Commander's act* governs what **d47 raises unbidden**. This
+  is not unbidden: the Commander found the build and pressed a button labelled with exactly this
+  outcome, and **that press is the act of accepting**. Routing it through a proposal makes d47 ask
+  for a decision it has already been given. The proposal machinery keeps doing its real job for
+  everything d47 raises on its own.
+
+  Three of the defects listed above dissolve with it: there is no second press to say *"that is
+  already waiting for you"*, this build never becomes a proposal to be miscounted as one item, and
+  the announcement becomes a real event rather than a hidden button quietly turning into a `1`.
+
+  **Defect 3 survives for other proposal sources** and is still worth fixing: `PendingFor(fid).Count`
+  counts proposals where a Commander reads items. Whichever number wins, **the card states its own
+  size** rather than leaving it inferred from a truncated slot list.
 
 - [ ] **13. Bind a core to any ship, from a dropdown.** Against Phase 35 as shipped in v0.38.0. The
   row binds only the ship being flown, so setting a core means boarding that ship in-game first. It
