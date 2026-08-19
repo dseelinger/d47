@@ -364,4 +364,52 @@ public class ThePanelIsAPlaceTests
         // And on the transcript at its root there is nothing left to leave.
         Assert.False(panel.GoBack());
     }
+    /// <summary>
+    /// A tab press goes to that tab even with a question up (remediation.md 13, item 5).
+    /// <para>
+    /// Nothing navigates away from a prompt, which is right for every gesture inside the panel
+    /// and wrong for the tabs: pressing one while "Which ship do you intend to buy?" is showing
+    /// is somebody saying they are done with the question, not an accident to be refused. Back is
+    /// implied and taken for them.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ATabPressAbandonsAQuestionRatherThanBeingRefused()
+    {
+        var panel = Furnished();
+
+        panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        var answered = false;
+
+        panel.Prompts.Enter(
+            new EntryRequest(
+                "loadout.intend",
+                "Ship",
+                "Which ship do you intend to buy?",
+                null,
+                string.Empty,
+                EntrySurface.Voice),
+            _ => answered = true);
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(panel.Nav.Modal);
+
+        var tab = panel.GetVisualDescendants().OfType<RadioButton>()
+            .First(button => (button.Content as string) == "Transcript");
+
+        tab.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.False(panel.Nav.Modal);
+
+        // And nothing was committed on the way out: abandoning a question and answering it are
+        // different things.
+        Assert.False(answered);
+        Assert.False(panel.Prompts.IsListening);
+    }
+
 }

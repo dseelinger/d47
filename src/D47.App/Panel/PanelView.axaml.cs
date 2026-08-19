@@ -1602,9 +1602,14 @@ public partial class PanelView : UserControl
         {
             if (ReferenceEquals(candidate, button))
             {
-                // Refused while a chooser holds the panel — which is what "no navigating away
-                // mid-choice" is, and why the button is put back rather than left showing a tab
-                // the panel is not on.
+                // A prompt is abandoned rather than obeyed (remediation.md 13, item 5). "No
+                // navigating away mid-choice" is right for every gesture inside the panel and
+                // wrong for the tabs: pressing Engineers while a question is up is somebody
+                // saying they are done with it, so Back is taken for them and nothing is
+                // committed. The button is still put back if the move is refused for any other
+                // reason, rather than left showing a tab the panel is not on.
+                Prompts.Abandon();
+
                 if (!Nav.Select(tab))
                 {
                     ApplyNavigation();

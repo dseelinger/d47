@@ -49,9 +49,28 @@ public static class EngineersPages
             : new EngineerDirectoryPage(source, nav);
     }
 
-    /// <summary>The crumb for one engineer, keyed on the id the journal writes rather than a name.</summary>
+    /// <summary>
+    /// The crumb for one engineer, keyed on the id the journal writes rather than a name.
+    /// <para>
+    /// <b>Levelled</b>, so choosing another engineer replaces the one that is open rather than
+    /// nesting under it (remediation.md 13, items 6 and 7). Without it a wide panel showed two and
+    /// three engineers side by side, and the trail read <c>Directory › Farseer › Tani › Ryder</c>
+    /// — a route through three people at once. It is the same fault the Loadout tab had, fixed
+    /// the same way (remediation.md 11, item 5); this tab pushes its crumb from a different place
+    /// and never got the same treatment.
+    /// </para>
+    /// <para>
+    /// It is also why backing out to the Directory first did not help: the trail was
+    /// <c>Directory › Farseer</c>, Back made it <c>Directory</c>, and pressing another name
+    /// pushed onto <em>that</em> — which is the correct behaviour of a stack and the wrong
+    /// behaviour for a chooser. Levelling makes both routes do the same thing.
+    /// </para>
+    /// </summary>
     public static NavCrumb Crumb(Engineer engineer) =>
-        new(WhoPrefix + engineer.Id.ToString(CultureInfo.InvariantCulture), engineer.Name);
+        new(WhoPrefix + engineer.Id.ToString(CultureInfo.InvariantCulture), engineer.Name)
+        {
+            Level = WhoPrefix,
+        };
 
     /// <summary>
     /// An engineer's name, pressable, wherever it is shown (remediation.md 12, item 7).

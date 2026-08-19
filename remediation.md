@@ -14,12 +14,12 @@ the changelog, which is why this file is the current batch and not a growing arc
 
 - [x] **4. The UI should say "Ship" where it says "Hull".**
 
-- [ ] **5. A tab press should go to that tab even with a sub-page up.** "Which hull do you intend
+- [x] **5. A tab press should go to that tab even with a sub-page up.** "Which hull do you intend
   to buy" held the panel, and Back is implied by pressing a tab.
 
-- [ ] **6. Engineers should show one engineer at a time.**
+- [x] **6. Engineers should show one engineer at a time.**
 
-- [ ] **7. And backing out to the Directory first does not help** — clicking another engineer
+- [x] **7. And backing out to the Directory first does not help** — clicking another engineer
   still does not replace the one already open.
 
 - [ ] **8. The module chooser should ask for size and mount.** Hardpoint → Plan this slot → Pulse

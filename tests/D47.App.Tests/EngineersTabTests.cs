@@ -341,4 +341,48 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
+    /// <summary>
+    /// One engineer at a time (remediation.md 13, items 6 and 7).
+    /// <para>
+    /// A wide panel shows the level you are on beside the one above it, so the directory stays
+    /// pressable while an engineer is open — and pressing another name there pushed it on top of
+    /// the first rather than in place of it, which put two and three engineers on screen at once.
+    /// </para>
+    /// <para>
+    /// Backing out to the Directory first was the obvious workaround and is the same report: it
+    /// did not help, because the way back out was never the problem. Both routes are asserted
+    /// here, and it is the first that fails without the fix.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void OnlyOneEngineerIsOpenAtATime()
+    {
+        var surface = Open();
+
+        // Pressed rather than navigated, because the row in the directory pane beside the open
+        // engineer is the control the report is about.
+        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+
+        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Felicity Farseer"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
+
+        // And the same by way of the directory, which is what the second report tried.
+        surface.Panel.Nav.Back();
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
+
+        surface.Window.Close();
+    }
+
 }
