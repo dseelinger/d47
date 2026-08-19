@@ -65,6 +65,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private Func<CoverageReport>? _coverage;
 
     private D47.Core.Actions.MacroStore? _macros;
+    private D47.Core.Persona.OwnPersonaStore? _ownPersonas;
 
     /// <summary>
     /// The Commander's checklist, for the row that offers the panel. Null under the designer and
@@ -137,7 +138,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         LoreEditing? lore = null,
         (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null,
         (D47.Core.Habits.HabitBook Book, Action? Mine)? habits = null,
-        D47.Core.Logbook.LogbookBook? logbook = null)
+        D47.Core.Logbook.LogbookBook? logbook = null,
+
+        // Appended rather than slotted in beside the macro store it most resembles: the callers
+        // pass these positionally, so a parameter added in the middle silently rebinds every
+        // argument after it (remediation.md 11, item 9).
+        D47.Core.Persona.OwnPersonaStore? ownPersonas = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -147,6 +153,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _paths = paths;
         _coverage = coverage;
         _macros = macros;
+        _ownPersonas = ownPersonas;
         _checklists = checklists;
         _switches = switches;
         _lore = lore;
@@ -1243,6 +1250,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == MacroCapability.ListKey && _macros is not null:
                 return BuildMacros(row);
 
+            // And the row that opens the persona editor. A core is a piece of writing rather than
+            // a settings value, so it gets a window for the reason a macro does.
+            case SettingKind.Info when row.Key == PersonaCapability.OwnKey && _ownPersonas is not null:
+                return BuildOwnPersonas(row);
+
             // The third row that offers a window. A list of things to do is not a settings value
             // and never could be — and it is where accepting a proposal lives, which is an act
             // the model is not allowed to perform.
@@ -1298,7 +1310,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Toggle:
                 return BuildToggle(row, message);
 
-            case SettingKind.Choice when row.AllowsFreeText || row.ChoiceSource is not null:
+            case SettingKind.Choice when row.AllowsFreeText || row.IsOpenVocabulary:
                 // Long or open vocabulary: the searchable picker, which stays usable when the
                 // list is empty because the value can be typed (list.md Phase 4).
                 return BuildPickerButton(row, message);
@@ -1575,6 +1587,39 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
+    /// The Commander's own cores, plus the way into the editor (remediation.md 11, item 9).
+    /// </summary>
+    private (Control, Action, bool) BuildOwnPersonas(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenOwnPersonas",
+            Content = "Write a core",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_ownPersonas is null || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.PersonaWindow(_ownPersonas).Over(owner);
+
+            // The editor writes the file; this is what puts the new summary on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh, false);
+    }
+
+    /// <summary>
     /// The macro summary, plus the way into the editor. Built the same way the coverage row is,
     /// and for the same reason: the thing behind the button does not belong inline.
     /// </summary>
@@ -1724,7 +1769,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         combo.SelectionChanged += (_, _) =>
             ToolTip.SetTip(combo, combo.SelectedItem as string);
 
-        var choices = row.Choices;
+        // Through ChoicesFor, not the bare list. A row may compute its choices — the model list
+        // belongs to the selected provider's endpoint, and the persona list now includes the cores
+        // the Commander wrote (remediation.md 11, item 9) — and reading the literal here left such
+        // a row with an empty combo box that rendered as no combo box at all.
+        var choices = row.ChoicesFor(_settings!.Current);
 
         // A clear item only where clearing means something. Provider and theme always hold a
         // value, so "(default: anthropic)" above "anthropic" would be the same answer twice.

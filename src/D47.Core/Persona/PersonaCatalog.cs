@@ -64,11 +64,32 @@ public static class PersonaCatalog
     /// app with a companion in it, not fail to start — this is not the settings loader's
     /// unknown-key case, it is a stale value in a known key.
     /// </summary>
-    public static Persona Resolve(string? id) =>
-        id is not null && ById.TryGetValue(id, out var found) ? found : ById[DefaultId];
+    public static Persona Resolve(string? id)
+    {
+        if (id is null)
+        {
+            return ById[DefaultId];
+        }
 
-    /// <summary>Whether this id names a core d47 ships. What a settings row validates against.</summary>
-    public static bool Knows(string? id) => id is not null && ById.ContainsKey(id);
+        if (ById.TryGetValue(id, out var shipped))
+        {
+            return shipped;
+        }
+
+        // The Commander's own, asked second so a shipped id can never be shadowed by one somebody
+        // wrote (remediation.md 11, item 9).
+        return Own?.Invoke().FirstOrDefault(core => string.Equals(core.Id, id, StringComparison.Ordinal))
+               ?? ById[DefaultId];
+    }
+
+    /// <summary>
+    /// Whether this id names a core that can be chosen — one d47 ships, or one the Commander
+    /// wrote. What a settings row validates against.
+    /// </summary>
+    public static bool Knows(string? id) =>
+        id is not null
+        && (ById.ContainsKey(id)
+            || Own?.Invoke().Any(core => string.Equals(core.Id, id, StringComparison.Ordinal)) == true);
 
     public static Persona Warden { get; } = new(
         Id: "warden",
@@ -602,7 +623,7 @@ public static class PersonaCatalog
     /// a list written above the properties it names is a list of eleven nulls.
     /// </para>
     /// </summary>
-    public static readonly IReadOnlyList<Persona> All =
+    public static readonly IReadOnlyList<Persona> Shipped =
     [
         Warden,
         Cora,
@@ -617,6 +638,34 @@ public static class PersonaCatalog
         Heretic,
     ];
 
+    /// <summary>
+    /// The cores the Commander wrote, where anything has supplied them (remediation.md 11, item 9).
+    /// <para>
+    /// A source rather than a list, because they live in a file that is polled: a list copied here
+    /// at startup would be the cores as they were when the app launched, and editing one in a text
+    /// editor is supposed to be live.
+    /// </para>
+    /// <para>
+    /// <b>Static, which is not how the rest of this repository passes things around.</b> The
+    /// alternative was threading a store through twelve call sites, several of which build
+    /// capability descriptors that are registered once and never mutated — so the store would have
+    /// had to be present before the composition root has one, and the row it feeds would still
+    /// have been computed at registration. This is the seam that costs least and mutates nothing.
+    /// </para>
+    /// </summary>
+    public static Func<IReadOnlyList<Persona>>? Own { get; set; }
+
+    /// <summary>
+    /// Every core that can be chosen: the eleven that ship, then the Commander's own.
+    /// <para>
+    /// Shipped first, and the order is deliberate — a Commander who has written four cores has not
+    /// stopped being able to reach Warden, and a picker that put the newest thing at the top would
+    /// move the eleven every time somebody wrote a twelfth.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<Persona> All =>
+        Own?.Invoke() is { Count: > 0 } own ? [.. Shipped, .. own] : Shipped;
+
     private static readonly IReadOnlyDictionary<string, Persona> ById =
-        All.ToDictionary(p => p.Id, StringComparer.Ordinal);
+        Shipped.ToDictionary(p => p.Id, StringComparer.Ordinal);
 }

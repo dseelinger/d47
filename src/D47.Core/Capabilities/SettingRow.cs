@@ -328,6 +328,21 @@ public sealed record SettingRow
         ChoiceSource?.Invoke(settings) ?? Choices;
 
     /// <summary>
+    /// Whether this row's vocabulary is open — a list nobody can write down in advance, like the
+    /// voices an account happens to have or the models an endpoint happens to serve. Those get the
+    /// searchable picker; a closed list gets a drop-down.
+    /// <para>
+    /// <b>A computed list is not the same as an open one</b> (remediation.md 11, item 9). The
+    /// persona row computes its choices so a core the Commander wrote appears the moment they
+    /// write it, and it is still eleven-or-so named things a person picks from — asking
+    /// "does it compute?" turned it into a search window the moment it gained a source. What
+    /// makes a vocabulary open is that nothing here knows its shape, which is exactly the case
+    /// where there is no <see cref="Choices"/> to fall back on.
+    /// </para>
+    /// </summary>
+    public bool IsOpenVocabulary => ChoiceSource is not null && Choices.Count == 0;
+
+    /// <summary>
     /// Why the list is empty, or null — either because it is not, or because this row has
     /// nothing more specific to say than the picker already does.
     /// </summary>

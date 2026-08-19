@@ -152,3 +152,27 @@ the changelog, which is why this file is the current batch and not a growing arc
   way. Without it the next dialog is one more window at 100%, and the fault only shows on a machine
   with zoom turned on.
 
+- [x] **9. A core the Commander writes themselves.** Settled first: **several**, each named, and
+  each carrying a **name, what it is like, and how it should sound** — the tagline is generated and
+  the first-meeting and welcome-back lines fall back, so a working companion comes out of a name
+  and a paragraph rather than out of seven boxes.
+
+  **The frame is not on offer.** The shared preamble and the standing instructions wrap what is
+  written exactly as they wrap a shipped core: they are what hold the cast together and what stops
+  a model sanding a persona toward pleasant and helpful over a long session. A core stays
+  unreachable from the tool surface, like persona selection already was.
+
+  One file beside the executable, polled, with bad entries reported rather than dropped — the same
+  shape as the macros, on the same reasoning: a persona is a piece of writing, not a setting. The
+  editor writes the file a text editor writes. Ids are minted with a prefix so nothing a Commander
+  writes can shadow a shipped core, and they do not follow the name, so correcting a typo does not
+  leave somebody talking to Warden.
+
+  **Two things this turned up on the way past.** The picker's choices were computed once at
+  registration, so a new core could never appear in it — descriptors are registered once and never
+  mutated, which is what the `ChoiceSource` seam is for. And declaring that source silently
+  reclassified the row as an *open vocabulary* and turned an eleven-item drop-down into a search
+  window. "Does it compute its choices" was the wrong question; "does anything know the shape of
+  the list" is the right one, and a row that declares both is a closed list that happens to be
+  computed.
+
