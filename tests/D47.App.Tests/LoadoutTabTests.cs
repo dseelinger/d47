@@ -295,7 +295,7 @@ public class LoadoutTabTests
     /// whole phase turns on: the plan owns what, the checklist owns when.
     /// </summary>
     [AvaloniaFact]
-    public void PromotingFromThePageProposesRatherThanWriting()
+    public void PromotingFromThePagePutsItOnTheChecklist()
     {
         var surface = Open();
 
@@ -311,8 +311,10 @@ public class LoadoutTabTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Empty(surface.Checklists.Document.Items);
-        Assert.NotEmpty(surface.Checklists.Proposals.Pending);
+        // Remediation 15 item 12, and the assertion is inverted from what it was: the button's own
+        // words are the contract, and it used to make a proposal instead.
+        Assert.NotEmpty(surface.Checklists.Document.Items);
+        Assert.Empty(surface.Checklists.Proposals.Pending);
 
         surface.Window.Close();
     }

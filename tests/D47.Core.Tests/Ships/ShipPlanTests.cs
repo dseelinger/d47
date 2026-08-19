@@ -180,7 +180,7 @@ public class ShipPlanTests
     /// Promotion goes through the proposal path, so nothing lands on the checklist unasked.
     /// </summary>
     [Fact]
-    public void PromotingProposesRatherThanWriting()
+    public void PromotingPutsTheBuildOnTheChecklistBecauseThatIsWhatTheButtonSays()
     {
         using var install = new TempInstall();
         var store = Store(install);
@@ -190,13 +190,17 @@ public class ShipPlanTests
         var build = ships.BuildFor(12, "python", "Bad Idea");
 
         ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
-        ships.Promote(build.Id);
+        var said = ships.Promote(build.Id);
 
-        // Nothing on the list, and something waiting.
-        Assert.Empty(checklists.Document.Items);
-        Assert.NotEmpty(checklists.Proposals.Pending);
+        // **This used to assert the opposite** — nothing on the list, something waiting — and that
+        // is the reported defect (remediation.md 15, item 12): the button says "Put this build on
+        // my checklist", so a Commander who pressed it and went to the checklist found it unchanged.
+        // Phase 25's rule governs what d47 raises unbidden, and pressing this button is the act of
+        // accepting rather than a request to be asked.
+        Assert.Empty(checklists.Proposals.Pending);
 
-        checklists.Accept();
+        // And it says how much arrived, because forty items landing is an event.
+        Assert.Contains("on your checklist now", said, StringComparison.Ordinal);
 
         // Promotion is one-to-many: the modification, plus the rank the grade needs.
         var items = checklists.Document.Items;
