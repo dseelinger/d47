@@ -65,6 +65,27 @@ public sealed record ModuleSpecification
     /// <summary>Fixed, gimballed or turreted, for the ones that have a mount.</summary>
     public string? Mount { get; init; }
 
+    /// <summary>
+    /// What kind of thing it is, in the vocabulary <see cref="SlotTakes"/> is keyed on — `cpp`
+    /// for a power plant, `isg` for a shield generator. Never shown; it exists so a slot can be
+    /// asked what it accepts without anybody writing down a list of module names by hand.
+    /// </summary>
+    public string? Type { get; init; }
+
+    /// <summary>
+    /// The hulls this module is restricted to, or empty for one every ship can carry. Armour is
+    /// the common case — a Vulture's is not an Anaconda's — and the rest are fighter hangars,
+    /// luxury cabins and the Mk II range.
+    /// </summary>
+    public IReadOnlyList<string> Hulls { get; init; } = [];
+
+    /// <summary>
+    /// Whether it has to fill its slot rather than merely fit in it. True of the SCO drive, which
+    /// is the one module a Commander can buy that will not sit in a compartment larger than
+    /// itself.
+    /// </summary>
+    public bool MustFillSlot { get; init; }
+
     public double? Mass { get; init; }
 
     public double? Power { get; init; }
@@ -151,7 +172,9 @@ public static class EliteSpecifications
     private sealed record Tables(
         IReadOnlyDictionary<string, ShipSpecification> Ships,
         IReadOnlyDictionary<string, ModuleSpecification> Modules,
-        IReadOnlyList<string> KnownButUnmeasured);
+        IReadOnlyList<string> KnownButUnmeasured,
+        IReadOnlyDictionary<string, IReadOnlyList<ShipSlot>> Slots,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> SlotKinds);
 
     public static IReadOnlyCollection<ShipSpecification> Ships => [.. Loaded.Value.Ships.Values];
 
@@ -256,6 +279,175 @@ public static class EliteSpecifications
         ];
     }
 
+    /// <summary>
+    /// Every outfitting slot of one hull, in the outfitting screen's own order
+    /// (remediation.md 12, item 3).
+    /// <para>
+    /// <b>Cosmetics are not in it.</b> A paint job and a bobble are slots in the journal and are
+    /// not things anybody outfits, so the table simply does not carry them — which makes this the
+    /// answer to "is this part of outfitting" as well, asked the one way that cannot go stale.
+    /// </para>
+    /// <para>
+    /// Empty for a hull the table does not know, which is a real answer: it means the page falls
+    /// back to what the journal reported rather than inventing a layout.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<ShipSlot> Slots(string? hull) =>
+        string.IsNullOrWhiteSpace(hull)
+            ? []
+            : Loaded.Value.Slots.GetValueOrDefault(hull.Trim().ToLowerInvariant()) ?? [];
+
+    /// <summary>
+    /// Which kind of slot a name is on any hull at all, or null for one no hull outfits
+    /// (remediation.md 12, item 2).
+    /// <para>
+    /// <b>The answer to "is this part of outfitting" for a hull the table does not know.</b> A
+    /// paint job, a bobble and a ship kit are slots in the journal and are in no hull's layout, so
+    /// a name absent from every one of them is a name nothing outfits — which keeps the cosmetics
+    /// off the list even where the layout itself cannot be looked up.
+    /// </para>
+    /// </summary>
+    public static ShipSlotKind? KindOf(string? slot) =>
+        !string.IsNullOrWhiteSpace(slot)
+        && Kinds.Value.TryGetValue(slot.Trim(), out var kind)
+            ? kind
+            : null;
+
+    private static readonly Lazy<IReadOnlyDictionary<string, ShipSlotKind>> Kinds =
+        new(
+            () => Loaded.Value.Slots.Values
+                .SelectMany(slots => slots)
+                .GroupBy(slot => slot.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First().Kind, StringComparer.OrdinalIgnoreCase),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>
+    /// What a fitted module is called, out loud (remediation.md 12, item 4).
+    /// <para>
+    /// Elite writes a module as a symbol, and the reading that only strips the decoration off it
+    /// produces "int powerplant size6 class5" — ugly and true, which was the right answer while
+    /// nothing shipped both spellings. This table does ship both, so a module it knows is said the
+    /// way the outfitting screen says it: <b>6A Power Plant</b>.
+    /// </para>
+    /// <para>
+    /// The ugly form is still the fallback rather than a shrug, because a module the table has
+    /// never heard of is one Frontier has just added and the symbol still says what it is.
+    /// </para>
+    /// </summary>
+    public static string? ModuleName(string? symbol)
+    {
+        if (Module(symbol) is not { } module)
+        {
+            return Journal.ModuleNames.ReadableOrNull(symbol);
+        }
+
+        var said = module.IsBulkhead ? module.Name : $"{module.Size} {module.Name}";
+
+        return module.Mount is { Length: > 0 } mount ? $"{said}, {mount}" : said;
+    }
+
+    /// <summary>One slot of one hull, by the name the journal writes, or null for neither.</summary>
+    public static ShipSlot? Slot(string? hull, string? slot) =>
+        string.IsNullOrWhiteSpace(slot)
+            ? null
+            : Slots(hull).FirstOrDefault(candidate =>
+                string.Equals(candidate.Name, slot.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Every module that can go in one slot, largest and best first
+    /// (remediation.md 12, item 5).
+    /// <para>
+    /// <b>Derived from what the slot is</b> rather than from a list anybody wrote down: the kind
+    /// decides which module types it takes, the size decides how big they may be, and a slot that
+    /// restricts itself further says so. Four rules, and each one is a rule the outfitting screen
+    /// enforces:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>a module bigger than its slot does not fit;</item>
+    /// <item>life support and sensors must fill their slot exactly, and so must an SCO drive;</item>
+    /// <item>a module restricted to some hulls is offered on those hulls only — which is what
+    /// keeps a Vulture's armour off an Anaconda and a fighter hangar off a Sidewinder;</item>
+    /// <item>a restricted compartment takes only the types it names.</item>
+    /// </list>
+    /// </summary>
+    public static IReadOnlyList<ModuleSpecification> ModulesFor(ShipSlot slot)
+    {
+        var takes = slot.Restrict.Count switch
+        {
+            0 => SlotTakes(slot),
+
+            // A military compartment names the kind rather than the types, because the same list
+            // is on every hull that has one and repeating it per slot would be a table that can
+            // disagree with itself.
+            _ => [.. slot.Restrict.SelectMany(name =>
+                Loaded.Value.SlotKinds.TryGetValue(name, out var listed) ? listed : [name])],
+        };
+
+        if (takes.Count == 0)
+        {
+            return [];
+        }
+
+        var wanted = new HashSet<string>(takes, StringComparer.OrdinalIgnoreCase);
+
+        return
+        [
+            .. Loaded.Value.Modules.Values
+                .Where(module => module.Type is { } type && wanted.Contains(type))
+                .Where(module => Fits(module, slot))
+                .Where(module => module.Hulls.Count == 0
+                                 || module.Hulls.Contains(slot.Hull, StringComparer.OrdinalIgnoreCase))
+                .OrderBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(module => module.Class)
+                .ThenBy(module => module.Rating, StringComparer.Ordinal)
+                .ThenBy(module => module.Mount, StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>
+    /// The module types a slot accepts before its own restriction narrows it. A core slot is
+    /// keyed on its journal name, because a power plant and a fuel tank are both core internals
+    /// and neither goes in the other's socket.
+    /// </summary>
+    private static IReadOnlyList<string> SlotTakes(ShipSlot slot) =>
+        Loaded.Value.SlotKinds.GetValueOrDefault(slot.Kind switch
+        {
+            ShipSlotKind.Hardpoint => "hardpoint",
+            ShipSlotKind.Utility => "utility",
+            ShipSlotKind.Core => slot.Name,
+            _ => "optional",
+        }) ?? [];
+
+    /// <summary>
+    /// Whether the module is the right size for the slot.
+    /// <para>
+    /// Undersizing is normal and is most of how a build is made — a 3A shield generator in a size
+    /// 5 compartment is a real choice. The exceptions are the three the game makes: life support
+    /// and sensors are the slot's size or nothing, and a module that says it must fill its slot
+    /// means it.
+    /// </para>
+    /// </summary>
+    private static bool Fits(ModuleSpecification module, ShipSlot slot)
+    {
+        // A bulkhead has no class at all — the id list files every one as 1 — so its fit is
+        // decided by whose hull it is, which the caller already checked.
+        if (module.Class is not { } size)
+        {
+            return true;
+        }
+
+        if (size > slot.Size)
+        {
+            return false;
+        }
+
+        var exact = module.MustFillSlot
+                    || (slot.Kind == ShipSlotKind.Core
+                        && slot.Name is "LifeSupport" or "Radar");
+
+        return !exact || size == slot.Size;
+    }
+
     /// <summary>Module names close enough to offer back when nothing matched.</summary>
     public static IReadOnlyList<string> NearModules(string spoken) =>
         Catalogue.Near(
@@ -275,7 +467,9 @@ public static class EliteSpecifications
             return new Tables(
                 new Dictionary<string, ShipSpecification>(StringComparer.Ordinal),
                 new Dictionary<string, ModuleSpecification>(StringComparer.Ordinal),
-                []);
+                [],
+                new Dictionary<string, IReadOnlyList<ShipSlot>>(StringComparer.Ordinal),
+                new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
         }
 
         using var reader = new StreamReader(stream);
@@ -283,6 +477,8 @@ public static class EliteSpecifications
         var ships = new Dictionary<string, ShipSpecification>(StringComparer.Ordinal);
         var modules = new Dictionary<string, ModuleSpecification>(StringComparer.Ordinal);
         var unmeasured = new List<string>();
+        var slots = new Dictionary<string, List<ShipSlot>>(StringComparer.Ordinal);
+        var kinds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
 
         var section = string.Empty;
 
@@ -311,13 +507,37 @@ public static class EliteSpecifications
                     modules[module.Symbol] = module;
                     break;
 
+                case "[slot-kinds]" when !line.StartsWith("kind	", StringComparison.Ordinal):
+                    var kind = line.Split('	');
+                    kinds[kind[0]] = Words(kind, 1);
+                    break;
+
+                case "[slots]" when !line.StartsWith("hull	", StringComparison.Ordinal):
+                    var slot = ReadSlot(line.Split('	'));
+
+                    if (!slots.TryGetValue(slot.Hull, out var hull))
+                    {
+                        slots[slot.Hull] = hull = [];
+                    }
+
+                    hull.Add(slot);
+                    break;
+
                 case "[known-but-unmeasured]":
                     unmeasured.Add(line);
                     break;
             }
         }
 
-        return new Tables(ships, modules, unmeasured);
+        return new Tables(
+            ships,
+            modules,
+            unmeasured,
+            slots.ToDictionary(
+                entry => entry.Key,
+                entry => (IReadOnlyList<ShipSlot>)entry.Value,
+                StringComparer.Ordinal),
+            kinds);
     }
 
     private static ShipSpecification ReadShip(string[] cells) => new()
@@ -362,7 +582,23 @@ public static class EliteSpecifications
         ThermalResistance = Real(cells, 15),
         ExplosiveResistance = Real(cells, 16),
         CausticResistance = Real(cells, 17),
+        Type = Text(cells, 18),
+        Hulls = Words(cells, 19),
+        MustFillSlot = Text(cells, 20) is not null,
     };
+
+    private static ShipSlot ReadSlot(string[] cells) => new(
+        Text(cells, 0) ?? "unknown",
+        Text(cells, 1) ?? "unknown",
+        Text(cells, 2) switch
+        {
+            "hardpoint" => ShipSlotKind.Hardpoint,
+            "utility" => ShipSlotKind.Utility,
+            "core" => ShipSlotKind.Core,
+            _ => ShipSlotKind.Optional,
+        },
+        Integer(cells, 3) ?? 0,
+        Words(cells, 4));
 
     /// <summary>
     /// Mounts, in the spelling a Commander hears. A closed set of three rather than per-module
@@ -399,6 +635,12 @@ public static class EliteSpecifications
         && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
             ? value
             : null;
+
+    /// <summary>A space-separated cell, as a list. Empty for a cell the generator left blank.</summary>
+    private static IReadOnlyList<string> Words(string[] cells, int index) =>
+        Text(cells, index) is not { } text
+            ? []
+            : [.. text.Split(' ', StringSplitOptions.RemoveEmptyEntries)];
 
     /// <summary>Slot sizes, largest first. An unparsable entry is dropped rather than read as a 0 slot.</summary>
     private static IReadOnlyList<int> Sizes(string[] cells, int index) =>

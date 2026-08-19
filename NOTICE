@@ -52,6 +52,14 @@ which remains Frontier's in every case.
 
     msarilar/EDEngineer    MIT.
 
+    taleden/EDSY           Code CC BY-NC 4.0. Its header states that the Elite
+                           Dangerous game logic and data in the file remain the
+                           property of Frontier Developments plc, used under the same
+                           Media Usage Rules quoted above. It is the source of the
+                           per-hull slot layout — what the journal calls a slot before
+                           anything is fitted to it — which neither source above
+                           carries.
+
 Sources examined and deliberately not used are recorded, with the reasons, in
 docs/spikes/README.md.
 

@@ -259,79 +259,254 @@ public sealed class PanelPrompts
     /// the selection invites a press that changes nothing, and the Commander cannot tell whether
     /// it took.
     /// </para>
+    /// <para>
+    /// A searchable chooser puts a box above the list and narrows it as the Commander types
+    /// (remediation.md 12, item 5). Narrowing rather than resolving: nothing here refuses a value
+    /// or asks for a spelling, so "cargo" leaves every cargo rack on screen and an empty box
+    /// leaves everything. The drawn board is one press away for the surface with no keyboard in
+    /// front of it, and it is the same board the entry page uses.
+    /// </para>
     /// </summary>
     private static Control Rows(ChoiceRequest request, Action<ChoiceOption> chosen)
     {
         var rows = new StackPanel { Spacing = 3 };
+        var query = string.Empty;
 
-        foreach (var option in request.Options)
+        void Draw()
         {
-            var current = option.Key == request.Current;
+            rows.Children.Clear();
 
-            var label = new TextBlock
+            var shown = request.Options.Where(option => Matches(option, query)).ToList();
+
+            if (shown.Count == 0)
             {
-                Text = option.Label,
-                FontSize = TypeScale.Body,
-                FontWeight = current ? FontWeight.SemiBold : FontWeight.Normal,
-                TextWrapping = TextWrapping.Wrap,
-            };
-
-            var stack = new StackPanel { Spacing = 1, Children = { label } };
-
-            if (!string.IsNullOrWhiteSpace(option.Detail))
-            {
-                var detail = new TextBlock
+                var nothing = new TextBlock
                 {
-                    Text = option.Detail,
-                    FontSize = TypeScale.Secondary,
+                    Text = $"Nothing here matches “{query}”.",
+                    FontSize = TypeScale.Body,
                     TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 6),
                 };
 
-                detail.Bind(
+                nothing.Bind(
                     TextBlock.ForegroundProperty,
                     App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
 
-                stack.Children.Add(detail);
+                rows.Children.Add(nothing);
+                return;
             }
 
-            if (current)
+            foreach (var option in shown)
             {
-                // Said rather than only coloured. A fact carried only by a hue is a fact some of
-                // the Commanders reading it do not have. The word is the caller's, because this
-                // chooser is general and they are not.
-                stack.Children.Add(new TextBlock
-                {
-                    Text = request.CurrentWord,
-                    FontSize = TypeScale.Small,
-                    [!TextBlock.ForegroundProperty] =
-                        App.Current!.GetResourceObservable(ThemeManager.AccentKey).ToBinding(),
-                });
+                rows.Children.Add(Option(request, option, chosen));
             }
-
-            var row = new Button
-            {
-                Content = stack,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-
-                // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
-                // is a row they press twice, and the second press is on the one below it.
-                MinHeight = 34,
-                Padding = new Thickness(12, 6),
-            };
-
-            var picked = option;
-            row.Click += (_, _) => chosen(picked);
-
-            rows.Children.Add(row);
         }
 
-        return new ScrollViewer
+        Draw();
+
+        var list = new ScrollViewer
         {
             Content = rows,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
+
+        if (!request.Searchable)
+        {
+            return list;
+        }
+
+        var box = new TextBox
+        {
+            PlaceholderText = "Search",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 8),
+        };
+
+        var board = new StackPanel { Spacing = 6, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
+
+        void Typed(string text)
+        {
+            query = text;
+
+            if (box.Text != text)
+            {
+                box.Text = text;
+                box.CaretIndex = text.Length;
+            }
+
+            Draw();
+        }
+
+        box.TextChanged += (_, _) =>
+        {
+            query = box.Text ?? string.Empty;
+            Draw();
+        };
+
+        board.Children.Add(Board(
+            character => Typed(query + character),
+            () => Typed(query.Length > 0 ? query[..^1] : query),
+            () => Typed(string.Empty)));
+
+        var swap = new Button { Content = "Type it instead", Padding = new Thickness(14, 6) };
+
+        swap.Click += (_, _) =>
+        {
+            board.IsVisible = !board.IsVisible;
+            swap.Content = board.IsVisible ? "Hide the keyboard" : "Type it instead";
+        };
+
+        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+
+        DockPanel.SetDock(swap, Dock.Right);
+        swap.Margin = new Thickness(8, 0, 0, 0);
+
+        head.Children.Add(swap);
+        head.Children.Add(box);
+
+        var body = new DockPanel { LastChildFill = true };
+
+        DockPanel.SetDock(head, Dock.Top);
+        DockPanel.SetDock(board, Dock.Bottom);
+
+        body.Children.Add(head);
+        body.Children.Add(board);
+        body.Children.Add(list);
+
+        return body;
+    }
+
+    /// <summary>
+    /// Whether a row survives the query. The label and the line under it, because the detail is
+    /// where a module's size and rating are and "5a" is a real thing to search for.
+    /// </summary>
+    private static bool Matches(ChoiceOption option, string query) =>
+        query.Trim().Length == 0
+        || option.Label.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase)
+        || (option.Detail?.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase) ?? false);
+
+    /// <summary>One option, as the pressable row it is drawn as.</summary>
+    private static Control Option(
+        ChoiceRequest request, ChoiceOption option, Action<ChoiceOption> chosen)
+    {
+        var current = option.Key == request.Current;
+
+        var label = new TextBlock
+        {
+            Text = option.Label,
+            FontSize = TypeScale.Body,
+            FontWeight = current ? FontWeight.SemiBold : FontWeight.Normal,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        var stack = new StackPanel { Spacing = 1, Children = { label } };
+
+        if (!string.IsNullOrWhiteSpace(option.Detail))
+        {
+            var detail = new TextBlock
+            {
+                Text = option.Detail,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            detail.Bind(
+                TextBlock.ForegroundProperty,
+                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+
+            stack.Children.Add(detail);
+        }
+
+        if (current)
+        {
+            // Said rather than only coloured. A fact carried only by a hue is a fact some of
+            // the Commanders reading it do not have. The word is the caller's, because this
+            // chooser is general and they are not.
+            stack.Children.Add(new TextBlock
+            {
+                Text = request.CurrentWord,
+                FontSize = TypeScale.Small,
+                [!TextBlock.ForegroundProperty] =
+                    App.Current!.GetResourceObservable(ThemeManager.AccentKey).ToBinding(),
+            });
+        }
+
+        var row = new Button
+        {
+            Content = stack,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+
+            // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
+            // is a row they press twice, and the second press is on the one below it.
+            MinHeight = 34,
+            Padding = new Thickness(12, 6),
+        };
+
+        row.Click += (_, _) => chosen(option);
+
+        return row;
+    }
+
+    /// <summary>
+    /// The drawn keyboard, as a control rather than as a method on the page that first needed one.
+    /// <para>
+    /// <b>One board.</b> The entry page and the searchable chooser both draw it, and two boards
+    /// declared separately are two boards that stop being the same board — which is the argument
+    /// <see cref="Keys"/> already carries for the surface's own copy.
+    /// </para>
+    /// </summary>
+    private static Control Board(Action<char> pressed, Action back, Action clear)
+    {
+        var board = new StackPanel { Spacing = 6 };
+
+        foreach (var row in Keys)
+        {
+            var line = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+
+            foreach (var key in row)
+            {
+                var character = key;
+
+                var button = new Button
+                {
+                    Content = character == ' ' ? "space" : character.ToString(),
+                    Width = character == ' ' ? 220 : 46,
+                    Height = 40,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                };
+
+                button.Click += (_, _) => pressed(character);
+
+                line.Children.Add(button);
+            }
+
+            board.Children.Add(line);
+        }
+
+        var erase = new Button { Content = "delete", Height = 40, Padding = new Thickness(16, 0) };
+        var empty = new Button { Content = "clear", Height = 40, Padding = new Thickness(16, 0) };
+
+        erase.Click += (_, _) => back();
+        empty.Click += (_, _) => clear();
+
+        board.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 4, 0, 0),
+            Children = { erase, empty },
+        });
+
+        return board;
     }
 
     /// <summary>
@@ -570,64 +745,26 @@ public sealed class PanelPrompts
             _done(value);
         }
 
-        private void BuildBoard()
-        {
-            foreach (var row in Keys)
+        /// <summary>
+        /// The one board, drawn by the host rather than here (remediation.md 12, item 5). It used
+        /// to be built in this page, which was the only place that needed one until the
+        /// searchable chooser did.
+        /// </summary>
+        private void BuildBoard() => _board.Children.Add(Board(
+            character =>
             {
-                var line = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 6,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                };
-
-                foreach (var key in row)
-                {
-                    var character = key;
-
-                    var pressed = new Button
-                    {
-                        Content = character == ' ' ? "space" : character.ToString(),
-                        Width = character == ' ' ? 220 : 46,
-                        Height = 40,
-                        HorizontalContentAlignment = HorizontalAlignment.Center,
-                        VerticalContentAlignment = VerticalAlignment.Center,
-                    };
-
-                    pressed.Click += (_, _) =>
-                    {
-                        _typed += character;
-                        WriteBack();
-                    };
-
-                    line.Children.Add(pressed);
-                }
-
-                _board.Children.Add(line);
-            }
-
-            var back = new Button { Content = "delete", Height = 40, Padding = new Thickness(16, 0) };
-            back.Click += (_, _) =>
+                _typed += character;
+                WriteBack();
+            },
+            () =>
             {
                 _typed = _typed.Length > 0 ? _typed[..^1] : _typed;
                 WriteBack();
-            };
-
-            var clear = new Button { Content = "clear", Height = 40, Padding = new Thickness(16, 0) };
-            clear.Click += (_, _) =>
+            },
+            () =>
             {
                 _typed = string.Empty;
                 WriteBack();
-            };
-
-            _board.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 4, 0, 0),
-                Children = { back, clear },
-            });
-        }
+            }));
     }
 }

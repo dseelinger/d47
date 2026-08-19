@@ -83,14 +83,24 @@ public sealed record UnlockStep(
         Grade > Math.Max(Held, 1) ? EngineeringRules.ReputationCost(Grade) : null;
 
     /// <summary>One stop, as a Commander hears it.</summary>
-    public string Describe()
-    {
-        var who = Held > 0
-            ? $"{Engineer.Name}, grade {Held.ToString(CultureInfo.InvariantCulture)} of "
-              + Grade.ToString(CultureInfo.InvariantCulture)
-            : $"{Engineer.Name} at {Engineer.Where}";
+    public string Describe() => Engineer.Name + Rest();
 
-        return who + EngineerSay.Trip(LightYears, Jumps);
+    /// <summary>
+    /// The same stop with the name taken off the front, so a surface can draw the name as
+    /// something pressable and the rest as ordinary text (remediation.md 12, item 7).
+    /// <para>
+    /// Split here rather than in the page, so the two halves cannot drift: <see cref="Describe"/>
+    /// is this with the name in front of it, and there is one sentence rather than two.
+    /// </para>
+    /// </summary>
+    public string Rest()
+    {
+        var standing = Held > 0
+            ? $", grade {Held.ToString(CultureInfo.InvariantCulture)} of "
+              + Grade.ToString(CultureInfo.InvariantCulture)
+            : $" at {Engineer.Where}";
+
+        return standing + EngineerSay.Trip(LightYears, Jumps);
     }
 }
 

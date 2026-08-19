@@ -41,17 +41,62 @@ public static class EngineersPages
     {
         if (crumb.Key.StartsWith(WhoPrefix, StringComparison.Ordinal))
         {
-            return new EngineerPage(source, crumb.Key[WhoPrefix.Length..]);
+            return new EngineerPage(source, crumb.Key[WhoPrefix.Length..], nav);
         }
 
         return crumb.Key == RouteRoot
-            ? new EngineerRoutePage(source)
+            ? new EngineerRoutePage(source, nav)
             : new EngineerDirectoryPage(source, nav);
     }
 
     /// <summary>The crumb for one engineer, keyed on the id the journal writes rather than a name.</summary>
     public static NavCrumb Crumb(Engineer engineer) =>
         new(WhoPrefix + engineer.Id.ToString(CultureInfo.InvariantCulture), engineer.Name);
+
+    /// <summary>
+    /// An engineer's name, pressable, wherever it is shown (remediation.md 12, item 7).
+    /// <para>
+    /// The directory's rows already opened the engineer behind them. Everywhere else a name
+    /// appeared it was ordinary text — the ranked candidates on the Route, and every stop of a
+    /// chain, which is exactly where a Commander is reading about somebody they have not met and
+    /// wants to know where they are.
+    /// </para>
+    /// <para>
+    /// A button styled as the text it replaces rather than a link: the surface has no hover on
+    /// the headset, so a name that only announced itself by changing colour under a pointer would
+    /// announce itself to nobody there.
+    /// </para>
+    /// </summary>
+    internal static Control Name(
+        Engineer engineer, PanelNavigator nav, double size, FontWeight weight = FontWeight.Normal)
+    {
+        var label = new TextBlock
+        {
+            Text = engineer.Name,
+            FontSize = size,
+            FontWeight = weight,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+
+        var button = new Button
+        {
+            Content = label,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0, 2),
+            HorizontalAlignment = HorizontalAlignment.Left,
+
+            // Tall enough for a ray at a metre, which is the floor every pressable thing on this
+            // surface has.
+            MinHeight = 30,
+        };
+
+        button.Click += (_, _) => nav.Drill(Crumb(engineer));
+
+        return button;
+    }
 
     /// <summary>What the directory's mark means: somebody one of the Commander's plans wants.</summary>
     internal static string Wanted(int many) =>
@@ -193,15 +238,21 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
             speciality.Kind.Contains(query, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// The heading over each group, and it says what the group <em>means</em> rather than naming
-    /// the state — "within reach" is a term this page invented and nobody has to learn a term to
-    /// read a list.
+    /// The heading over each group (remediation.md 12, items 8, 9 and 10).
+    /// <para>
+    /// <b>The game's vocabulary rather than this page's.</b> These were sentences — "You can go
+    /// and get these now", "Already yours", "Behind somebody else" — written on the argument that
+    /// nobody should have to learn a term to read a list. That argument is right about inventing
+    /// a term and wrong about this list: a Commander reading it has already learnt <em>unlock</em>
+    /// and <em>invitation</em> from the game, so a sentence that avoids both words is a
+    /// translation away from the vocabulary they came in with.
+    /// </para>
     /// </summary>
     private static string Caption(EngineerReach reach) => reach switch
     {
-        EngineerReach.WithinReach => "You can go and get these now",
-        EngineerReach.Unlocked => "Already yours",
-        _ => "Behind somebody else",
+        EngineerReach.WithinReach => "Ready for Unlock",
+        EngineerReach.Unlocked => "Unlocked",
+        _ => "Requires Engineer Intro First",
     };
 }
 
@@ -215,6 +266,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
 public sealed class EngineerPage : EngineerPageBase
 {
     private readonly string _id;
+    private readonly PanelNavigator _nav;
     private readonly StackPanel _body = new() { Spacing = 2 };
     private readonly TextBlock _said = new()
     {
@@ -224,10 +276,11 @@ public sealed class EngineerPage : EngineerPageBase
         Margin = new Thickness(0, 8, 0, 0),
     };
 
-    public EngineerPage(EngineerSource source, string id)
+    public EngineerPage(EngineerSource source, string id, PanelNavigator nav)
         : base(source)
     {
         _id = id;
+        _nav = nav;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("where is Felicity Farseer");
@@ -292,11 +345,23 @@ public sealed class EngineerPage : EngineerPageBase
 
             foreach (var step in entry.Chain.Steps)
             {
-                _body.Children.Add(new TextBlock
+                // The name opens that engineer, and the rest of the stop stays beside it
+                // (remediation.md 12, item 7). A chain is where somebody the Commander has never
+                // heard of is first mentioned, so it is the place the question is asked.
+                _body.Children.Add(new StackPanel
                 {
-                    Text = step.Describe(),
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
+                    Orientation = Orientation.Horizontal,
+                    Children =
+                    {
+                        EngineersPages.Name(step.Engineer, _nav, TypeScale.Body),
+                        new TextBlock
+                        {
+                            Text = step.Rest(),
+                            FontSize = TypeScale.Body,
+                            TextWrapping = TextWrapping.Wrap,
+                            VerticalAlignment = VerticalAlignment.Center,
+                        },
+                    },
                 });
 
                 if (step.Meeting is { Length: > 0 } meeting)
@@ -358,6 +423,8 @@ public sealed class EngineerRoutePage : EngineerPageBase
 {
     private const int Shown = 5;
 
+    private readonly PanelNavigator _nav;
+
     private readonly StackPanel _body = new() { Spacing = 2 };
     private readonly TextBlock _said = new()
     {
@@ -367,9 +434,10 @@ public sealed class EngineerRoutePage : EngineerPageBase
         Margin = new Thickness(0, 8, 0, 0),
     };
 
-    public EngineerRoutePage(EngineerSource source)
+    public EngineerRoutePage(EngineerSource source, PanelNavigator nav)
         : base(source)
     {
+        _nav = nav;
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
@@ -415,7 +483,10 @@ public sealed class EngineerRoutePage : EngineerPageBase
 
         foreach (var candidate in report.Route.Take(Shown))
         {
-            _body.Children.Add(LoadoutPages.Heading(candidate.Engineer.Name));
+            // The ranked name opens that engineer rather than merely heading a block
+            // (remediation.md 12, item 7).
+            _body.Children.Add(EngineersPages.Name(
+                candidate.Engineer, _nav, TypeScale.Body, FontWeight.SemiBold));
 
             _body.Children.Add(new TextBlock
             {

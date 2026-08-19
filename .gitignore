@@ -439,3 +439,8 @@ installer/*.exe
 # A provider key handed to the scenario suite for one paid run. Never committed, and deleted
 # after the run — it exists so a key can reach the process without passing through a transcript.
 .paid-key
+
+# The RadioAudition spike writes audition.wav beside the repo root by default. A three-megabyte
+# workbench artifact, and one `git add -A` away from being in the history for good — which is
+# how it got there once.
+/audition.wav

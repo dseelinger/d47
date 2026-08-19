@@ -64,7 +64,7 @@ public class LoadoutTabTests
                  {
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
@@ -76,6 +76,23 @@ public class LoadoutTabTests
 
     private static IReadOnlyList<string> Text(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+
+    private static Control Modal(PanelView panel) =>
+        panel.GetControl<Border>("ModalPane");
+
+    private static IReadOnlyList<string> Offered(PanelView panel) =>
+        [.. Modal(panel).GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)];
+
+    private static Button Pick(PanelView panel, string label) =>
+        Modal(panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text == label));
+
+    private static Button Press(PanelView panel, string label) =>
+        panel.GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text is { } said && said.Contains(label, StringComparison.Ordinal)));
 
     private static Button Row(PanelView panel, string label) =>
         panel.GetVisualDescendants().OfType<Button>()
@@ -148,13 +165,14 @@ public class LoadoutTabTests
 
         Assert.Equal(["Ships", "Bad Idea"], surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
-        // The slot index: one line each, drawn from what the journal reports for the ship being
-        // flown as well as from what is planned.
-        Row(surface.Panel, "MainEngines").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        // The slot index: one line each, for every slot the hull has rather than only the ones
+        // the journal mentioned, and said in words rather than in Frontier's spelling
+        // (remediation.md 12, items 1, 3 and 4).
+        Row(surface.Panel, "Main Engines").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Ships", "Bad Idea", "MainEngines"],
+            ["Ships", "Bad Idea", "Main Engines"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         surface.Window.Close();
@@ -320,4 +338,237 @@ public class LoadoutTabTests
 
         surface.Window.Close();
     }
+
+    /// <summary>
+    /// The module list is the outfitting screen's four blocks, in its order
+    /// (remediation.md 12, items 1 and 6).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheModuleListIsGroupedTheWayOutfittingIs()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel).ToList();
+
+        foreach (var heading in new[]
+                 {
+                     "Hardpoints", "Utility Mounts", "Core Internal", "Optional Internal",
+                 })
+        {
+            Assert.Contains(heading, shown);
+        }
+
+        // In that order, and the utility mounts under their own heading rather than among the
+        // hardpoints — which is where the journal's name for them would have put them.
+        Assert.True(shown.IndexOf("Hardpoints") < shown.IndexOf("Utility Mounts"));
+        Assert.True(shown.IndexOf("Utility Mounts") < shown.IndexOf("Core Internal"));
+        Assert.True(shown.IndexOf("Core Internal") < shown.IndexOf("Optional Internal"));
+
+        Assert.True(
+            shown.IndexOf("Utility Mount 1") > shown.IndexOf("Utility Mounts"),
+            "a utility mount is drawn under Utility Mounts");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// An empty slot is still a slot (remediation.md 12, item 3).
+    /// <para>
+    /// The fixture flies a Python with two modules on it. Every other slot the hull has is empty,
+    /// and before this the page showed none of them — so there was nowhere to press to plan a
+    /// weapon into an empty hardpoint.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AnEmptySlotIsStillASlot()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel).ToList();
+
+        // A Python has three large hardpoints and two medium; one of them is fitted.
+        Assert.Contains("Large Hardpoint 1", shown);
+        Assert.Contains("Large Hardpoint 2", shown);
+        Assert.Contains("Medium Hardpoint 1", shown);
+
+        // And the empty ones say so, rather than carrying a blank note that reads as d47 having
+        // nothing to say about them.
+        Assert.Contains("empty", shown);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// Nothing that is not outfitting is on the list (remediation.md 12, item 2).
+    /// <para>
+    /// The fixture fits a paint job, a voice pack and a planetary approach suite, all of which
+    /// arrive in the <c>Loadout</c> event exactly as a power plant does. None of them is a thing
+    /// anybody outfits.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void NothingCosmeticReachesTheModuleList()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = string.Join("\n", Text(surface.Panel));
+
+        Assert.DoesNotContain("PaintJob", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("paintjob", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("VesselVoice", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("voicepack", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PlanetaryApproachSuite", shown, StringComparison.OrdinalIgnoreCase);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A module is named the way the outfitting screen names it (remediation.md 12, item 4).
+    /// <para>
+    /// It used to be the journal's symbol with the underscores taken out, which is how "int" and
+    /// "class5" ended up in a sentence a Commander reads.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AFittedModuleIsNamedRatherThanSpelt()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel).ToList();
+        var joined = string.Join("\n", shown);
+
+        Assert.Contains("5A Thrusters", shown);
+        Assert.Contains("3E Pulse Laser, gimballed", shown);
+
+        Assert.DoesNotContain("int_engine", joined, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("int engine", joined, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("class5", joined, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("class 5", joined, StringComparison.OrdinalIgnoreCase);
+
+        surface.Window.Close();
+    }
+
+
+    /// <summary>
+    /// Planning a slot offers the valid choices for it, and never asks for a spelling
+    /// (remediation.md 12, item 5).
+    /// <para>
+    /// Three lists — the module, the roll, the grade — and the whole plan is made by pressing.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void PlanningASlotOffersWhatFitsIt()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Large Hardpoint 2").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(surface.Panel);
+
+        // A large hardpoint takes weapons, and it says which slot it is choosing for.
+        Assert.Contains("Pulse Laser", offered);
+        Assert.Contains("Plasma Accelerator", offered);
+        Assert.Contains(offered, line => line.Contains("Large Hardpoint 2", StringComparison.Ordinal));
+
+        // And nothing that goes somewhere else: a shield generator is an optional internal and a
+        // shield booster is a utility mount.
+        Assert.DoesNotContain("Shield Generator", offered);
+        Assert.DoesNotContain("Shield Booster", offered);
+
+        // And nothing twice. The id list spells one weapon both "AX Missile Rack" and "Ax
+        // Missile Rack", which grouped exactly is one thing to choose between two of.
+        var names = offered.Where(line => line.Length > 0).ToList();
+
+        Assert.Equal(
+            names.Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            names.Distinct(StringComparer.Ordinal).Count());
+
+        Pick(surface.Panel, "Pulse Laser").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Then the rolls that apply to a pulse laser, rather than every blueprint in the game.
+        var rolls = Offered(surface.Panel);
+
+        Assert.Contains("Lightweight Mount", rolls);
+        Assert.DoesNotContain("Increased FSD Range", rolls);
+
+        Pick(surface.Panel, "Lightweight Mount").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The grade is a short closed list, so it is the in-tree layer rather than a page --
+        // which is the same call the settings enums make.
+        Press(surface.Panel, "Grade 5").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var plan = surface.Ships.Store.Builds
+            .SelectMany(build => build.Slots)
+            .Single(slot => slot.Slot == "LargeHardpoint2");
+
+        Assert.Equal("Pulse Laser", plan.Module);
+        Assert.Equal("Lightweight Mount", plan.Blueprint);
+        Assert.Equal(5, plan.Grade);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The chooser narrows as the Commander types (remediation.md 12, item 5). A size 6
+    /// compartment offers around forty things, which is a scroll hunt without it.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheChooserNarrowsAsYouType()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Compartment 1 (size 6)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Fuel Scoop", Offered(surface.Panel));
+        Assert.Contains("Cargo Rack", Offered(surface.Panel));
+
+        var box = surface.Panel.GetVisualDescendants().OfType<TextBox>()
+            .Single(found => found.PlaceholderText == "Search");
+
+        box.Text = "cargo";
+        Dispatcher.UIThread.RunJobs();
+
+        var narrowed = Offered(surface.Panel);
+
+        Assert.Contains("Cargo Rack", narrowed);
+        Assert.DoesNotContain("Fuel Scoop", narrowed);
+
+        // And it is a filter rather than a spelling test: emptying it brings the list back.
+        box.Text = string.Empty;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Fuel Scoop", Offered(surface.Panel));
+
+        surface.Window.Close();
+    }
+
 }

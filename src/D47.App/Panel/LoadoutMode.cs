@@ -53,7 +53,19 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 /// <param name="Text">The line itself.</param>
 /// <param name="Aside">The right-hand note: where it is, or what is planned there.</param>
 /// <param name="Marked">Whether a plan exists here. A mark, never a column.</param>
-public sealed record LoadoutRow(string Key, string Word, string Text, string? Aside, bool Marked);
+public sealed record LoadoutRow(string Key, string Word, string Text, string? Aside, bool Marked)
+{
+    /// <summary>
+    /// The heading this row sits under, where the index is grouped (remediation.md 12, item 1).
+    /// <para>
+    /// <b>On the row rather than in a list of lists.</b> A mode answers with one ordered sequence
+    /// and the page draws a heading wherever the group changes, which is the same arrangement the
+    /// engineer directory already uses — and it means an index with no grouping needs no shape of
+    /// its own. Null on every row is a flat list, unchanged.
+    /// </para>
+    /// </summary>
+    public string? Group { get; init; }
+}
 
 /// <summary>
 /// One mode of the Loadout tab — Ships, or Suits and weapons (list.md Phase 27, "The same page, on

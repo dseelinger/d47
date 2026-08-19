@@ -15,9 +15,13 @@ public class PersonaCatalogTests
     [Fact]
     public void ElevenCoresShipAndTheirIdsAreUnique()
     {
-        Assert.Equal(11, PersonaCatalog.All.Count);
+        // Shipped rather than All. All is the eleven plus whatever the Commander has written, and
+        // the source of those is a static that the custom-core tests point at a store of their
+        // own — so this counted twelve whenever xUnit happened to run the two classes at once.
+        // Intermittent, and nothing to do with either change that produced it.
+        Assert.Equal(11, PersonaCatalog.Shipped.Count);
 
-        var ids = PersonaCatalog.All.Select(p => p.Id).ToArray();
+        var ids = PersonaCatalog.Shipped.Select(p => p.Id).ToArray();
         Assert.Equal(ids.Length, ids.Distinct(StringComparer.Ordinal).Count());
     }
 

@@ -94,6 +94,23 @@ public sealed record ChoiceRequest(
     /// </summary>
     public string CurrentWord { get; init; } = "fitted now";
 
+    /// <summary>
+    /// Whether the chooser narrows itself as the Commander types (remediation.md 12, item 5).
+    /// <para>
+    /// <b>Declared per call site</b>, like the surface above it and for the same reason. A
+    /// module picker for a size 6 compartment is well over a hundred rows and a scroll hunt
+    /// without one; a five-item settings enum with a search box above it is a control that draws
+    /// attention to itself for nothing.
+    /// </para>
+    /// <para>
+    /// It is a filter rather than a spelling test: it takes rows away and never refuses a value,
+    /// so the Commander who types "cargo" gets every cargo rack and the one who types nothing
+    /// gets the list. That is the whole difference from asking for the name — a name has to be
+    /// got right, and a list only has to be got near.
+    /// </para>
+    /// </summary>
+    public bool Searchable { get; init; }
+
     /// <summary>Which option a spoken label names, or null when none of them does.</summary>
     /// <remarks>
     /// Whole-label and case-insensitive, deliberately. The router's own rule applies here for the
