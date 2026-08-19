@@ -97,9 +97,25 @@ public class ChecklistTabTests
         Assert.True(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
     }
 
-    /// <summary>And the headset's own instantiation has it, which is what a Window could not do.</summary>
+    /// <summary>
+    /// And the headset's own instantiation does <em>not</em> have it, nor Loadout — withdrawn from
+    /// the big panel on the Commander's instruction, 2026-08-19.
+    /// <para>
+    /// <b>This assertion is the reverse of the one it replaces, and that is worth saying out
+    /// loud.</b> Phase 25 put the checklist in the headset because a <c>Window</c> cannot appear
+    /// there at all, and Phase 26 put the fleet beside it; both were the point of those items
+    /// rather than a side effect. So this is not the design being restored, it is the design being
+    /// overruled, and it is a test rather than a comment because the two calls that would undo it
+    /// are one line each and would otherwise come back the next time somebody read
+    /// <c>VrPanelSurface</c> and thought a tab had been forgotten.
+    /// </para>
+    /// <para>
+    /// Handed the services it would need, so the assertion is about the surface declining them
+    /// rather than about a test that never supplied them.
+    /// </para>
+    /// </summary>
     [AvaloniaFact]
-    public void TheHeadsetCopyHasItToo()
+    public void TheHeadsetCopyHasNeitherChecklistNorLoadout()
     {
         var (settings, _, _) = TestSurface.Create();
         var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
@@ -111,7 +127,23 @@ public class ChecklistTabTests
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(surface)!;
 
-        Assert.True(view.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.False(view.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.False(view.FindControl<Control>("LoadoutTab")!.IsVisible);
+    }
+
+    /// <summary>
+    /// The withdrawal is the headset's alone. The desktop window keeps both tabs, which is the
+    /// half of "one widget tree renders to both surfaces" that still holds.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWindowKeepsBoth()
+    {
+        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var (window, panel) = Open(checklists);
+
+        Assert.True(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
+
+        window.Close();
     }
 
     [AvaloniaFact]

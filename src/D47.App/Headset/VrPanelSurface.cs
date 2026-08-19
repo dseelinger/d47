@@ -114,20 +114,24 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableSettings(settingsPage);
         }
 
-        if (checklists is not null)
-        {
-            // Unlike settings, this one is the point of the headset copy having it: a Window
-            // cannot appear here at all, so before Phase 25 a Commander wearing a headset could
-            // not see their checklist.
-            _view.EnableChecklist(checklists, goals, backfillGoals);
-        }
-
-        if (ships is not null && checklists is not null && gameState is not null)
-        {
-            // The fleet, in the headset too (list.md Phase 26), and the suits beside it (Phase
-            // 27). A Commander deciding what to fit is often the Commander sitting in the ship.
-            _view.EnableLoadout(ships, checklists, gameState, onFoot);
-        }
+        // Checklist and Loadout are deliberately not furnished here, so the big panel carries
+        // Transcript, Engineers, Utilities and Settings and no more.
+        //
+        // <b>A withdrawal rather than a redesign, and possibly a temporary one.</b> Both tabs
+        // were built for this surface on purpose - Phase 25 made the checklist reachable in a
+        // headset at all, which a `Window` cannot be, and Phase 26 put the fleet beside it - so
+        // this is the Commander overruling that, not a discovery that they never worked.
+        //
+        // Done by not calling `EnableChecklist` and `EnableLoadout` rather than by hiding the
+        // tabs, because absent is the default: a tab nobody furnishes has no builder, registers
+        // no root, and `PanelView.Tab` already refuses to select one - so the spoken route and
+        // the drawn one agree without either being taught a special case. That is the rule
+        // Settings has followed since Phase 12, and it is why reversing this is these two calls
+        // coming back and nothing else. The constructor still takes `checklists`, `goals` and
+        // `backfillGoals` for exactly that reason; they are wired from `AppHost` and unused
+        // here, which is a smaller thing to carry than a re-plumbing when the decision flips.
+        //
+        // `ships`, `gameState` and `onFoot` are still read below - Engineers needs all three.
 
         if (unlocks is not null && ships is not null && gameState is not null)
         {
