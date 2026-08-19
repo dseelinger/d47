@@ -57,6 +57,10 @@ public static class BuiltinCapabilities
         // protocol, so a different seam (see RouteCapability).
         Knowledge.IRouteService? routes = null,
 
+        // And a third protocol against that same host: lookups plus arithmetic run here, rather
+        // than a job somebody else queues (list.md Phase 36).
+        Knowledge.ITradePlanService? trade = null,
+
         // Third of the same family, and the only one that needs a credential before it can do
         // anything at all. Null composes a capability that answers from the journal alone,
         // which is also what a machine with no Inara key gets.
@@ -174,7 +178,7 @@ public static class BuiltinCapabilities
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
-        RouteCapability.Create(routes, () => gameState.Active, settings),
+        RouteCapability.Create(routes, trade, () => gameState.Active, settings),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy),

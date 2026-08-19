@@ -76,6 +76,77 @@ internal static class SpanshResponse
     }
 
     /// <summary>
+    /// The markets behind d47's own trade planner (list.md Phase 36).
+    /// <para>
+    /// Every result of the station search carries its whole <c>market</c> array, which is the fact
+    /// the phase rests on: d47 does not need a galaxy dump and does not need anybody else's
+    /// planner, because the lookups it already makes carry the prices, the demand and the supply.
+    /// </para>
+    /// <para>
+    /// <b>A station with no coordinates is dropped.</b> Position is what makes a leg measurable,
+    /// and a market that cannot be routed to is not a candidate — it is a station that would be
+    /// silently treated as being at Sol.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<MarketSnapshot> ReadMarkets(JsonDocument document)
+    {
+        var markets = new List<MarketSnapshot>();
+
+        foreach (var result in document.RootElement.Items("results"))
+        {
+            var x = Number(result, "system_x");
+            var y = Number(result, "system_y");
+            var z = Number(result, "system_z");
+
+            if (x is null || y is null || z is null)
+            {
+                continue;
+            }
+
+            var quotes = new Dictionary<string, MarketQuote>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var commodity in result.Items("market"))
+            {
+                if (String(commodity, "commodity") is not { } name)
+                {
+                    continue;
+                }
+
+                quotes[name] = new MarketQuote(name)
+                {
+                    BuyPrice = (int)(Number(commodity, "buy_price") ?? 0),
+                    SellPrice = (int)(Number(commodity, "sell_price") ?? 0),
+                    Demand = (int)(Number(commodity, "demand") ?? 0),
+                    Supply = (int)(Number(commodity, "supply") ?? 0),
+                    IsRare = Boolean(commodity, "is_rare"),
+                };
+            }
+
+            if (quotes.Count == 0)
+            {
+                continue;
+            }
+
+            markets.Add(new MarketSnapshot
+            {
+                Station = String(result, "name") ?? "an unnamed station",
+                System = String(result, "system_name") ?? "an unnamed system",
+                X = x.Value,
+                Y = y.Value,
+                Z = z.Value,
+                DistanceToArrival = Number(result, "distance_to_arrival"),
+                HasLargePad = Boolean(result, "has_large_pad"),
+                Type = String(result, "type"),
+                UpdatedAt = Timestamp(result, "market_updated_at"),
+                Source = PriceSource.Reported,
+                Quotes = quotes,
+            });
+        }
+
+        return markets;
+    }
+
+    /// <summary>
     /// A plotted neutron or long-range route.
     /// <para>
     /// The first waypoint of a plot is the system it started from, carrying zero jumps. It is
@@ -216,58 +287,6 @@ internal static class SpanshResponse
         }
 
         return new ExobiologyRoute(stops);
-    }
-
-    public static TradeRoute? ReadTrade(JsonElement result)
-    {
-        if (result.ValueKind != JsonValueKind.Array)
-        {
-            return null;
-        }
-
-        var hops = new List<TradeHop>();
-
-        foreach (var hop in result.EnumerateArray())
-        {
-            var source = hop.Object("source");
-            var destination = hop.Object("destination");
-
-            if (source is not { } from || destination is not { } to)
-            {
-                continue;
-            }
-
-            var commodities = new List<TradeCommodity>();
-
-            foreach (var commodity in hop.Items("commodities"))
-            {
-                commodities.Add(new TradeCommodity(
-                    String(commodity, "name") ?? "an unnamed commodity",
-                    commodity.Int("amount") ?? 0,
-                    Integer(commodity, "total_profit") ?? 0));
-            }
-
-            hops.Add(new TradeHop(
-                String(from, "system") ?? "an unnamed system",
-                String(from, "station") ?? "an unnamed station",
-                String(to, "system") ?? "an unnamed system",
-                String(to, "station") ?? "an unnamed station")
-            {
-                Distance = Number(hop, "distance"),
-                DistanceToArrival = Number(to, "distance_to_arrival"),
-                TotalProfit = Integer(hop, "total_profit") ?? 0,
-                CumulativeProfit = Integer(hop, "cumulative_profit") ?? 0,
-                Commodities = commodities,
-
-                // Seconds since the epoch rather than a timestamp string, unlike every other
-                // date this service returns.
-                MarketSeen = Integer(to, "market_updated_at") is { } seconds
-                    ? DateTimeOffset.FromUnixTimeSeconds(seconds)
-                    : null,
-            });
-        }
-
-        return new TradeRoute(hops);
     }
 
     /// <summary>

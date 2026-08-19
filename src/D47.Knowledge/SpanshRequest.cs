@@ -375,6 +375,65 @@ internal static class SpanshRequest
         writer.WriteEndObject();
     }
 
+    /// <summary>
+    /// The market sweep behind d47's own trade planner (list.md Phase 36).
+    /// <para>
+    /// The same endpoint the station search uses, asked a different question: no module, no ship,
+    /// no service — just everything within a radius, for the <c>market</c> array each result
+    /// carries. Measured against the live service on 2026-08-19: Sol's Walz Depot came back with
+    /// 342 priced commodities, and a search answers in 1.1 to 1.3 seconds <em>whatever</em> it
+    /// returns — 25 stations at 125 KiB took 1.07s and 100 stations at 519 KiB took 1.27s. So the
+    /// bill is the number of requests and hardly the size of them, which is why the pages here are
+    /// as large as the service will give.
+    /// </para>
+    /// <para>
+    /// <b>No pad filter, deliberately.</b> It would narrow the pull, and it would also drop the
+    /// station the Commander is standing on when that station is an outpost — leaving the planner
+    /// unable to price the market it is planning from. The pad rule is applied by
+    /// <see cref="TradePlanner"/> instead, which knows to exempt the origin.
+    /// </para>
+    /// <para>
+    /// <b>And no price or demand bound</b>, because the service accepts them and ignores them:
+    /// 203 stations came back for <c>demand &gt;= 1</c>, 203 for <c>demand &gt;= 50000</c> and 203
+    /// for no bound at all, and every sort shape tried against a commodity's price answered
+    /// HTTP 400. The shortlist arrives unranked and d47 ranks it, which is the arrangement this
+    /// phase wanted anyway.
+    /// </para>
+    /// </summary>
+    public static string Markets(string referenceSystem, double radius, int size, int page)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("distance");
+            writer.WriteString("min", "0");
+            writer.WriteString("max", Number(radius));
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+            writer.WriteStartObject();
+            writer.WriteStartObject("distance");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", size);
+            writer.WriteNumber("page", page);
+            writer.WriteString("reference_system", referenceSystem);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     private static void WriteSignals(Utf8JsonWriter writer, string group, string? name, int? count)
     {
         if (name is null)

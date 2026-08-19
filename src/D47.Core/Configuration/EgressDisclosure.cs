@@ -150,9 +150,11 @@ public static class EgressDisclosure
                 + "economy, a module you want to buy, a body type or a mining material. Where you are goes "
                 + "with it whenever a question is relative to you, because "
                 + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
-                + "route also sends your ship's jump range and, for a trade run, the station you are docked "
-                + "at, how much your hold carries and the figure you gave to trade with — your actual "
-                + "balance is never read or sent. No key, no identifier, and nothing else from your journal.",
+                + "route also sends your ship's jump range. A trade route sends the system you are in and "
+                + "how far to look, and nothing else: the prices come back and the planning happens here, "
+                + "so how much your hold carries and the figure you gave to trade with never leave this "
+                + "machine — and neither does your actual balance, which is never read. No key, no "
+                + "identifier, and nothing else from your journal.",
                 Active: true)
             : EgressEntry.Silent(
                 GalaxySearch,

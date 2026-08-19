@@ -569,6 +569,20 @@ public sealed class AppHost : IDisposable
         var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
+        // A third file of the same kind, and the markets read out of it (list.md Phase 36). The
+        // book is loaded here so a plan made in the first minute already knows the stations this
+        // Commander has stood in; the reader files a new one whenever the game rewrites the file.
+        var marketBook = new D47.Core.Knowledge.MarketBook(
+            Path.Combine(paths.Data, "markets.json"),
+            loggerFactory.CreateLogger<D47.Core.Knowledge.MarketBook>());
+
+        marketBook.Load();
+
+        var markets = new D47.Core.Knowledge.MarketReader(
+            journalDirectory,
+            marketBook,
+            loggerFactory.CreateLogger<D47.Core.Knowledge.MarketReader>());
+
         // After the status reader, because the spine stamps a surface position onto events that
         // carry none — organic sampling is the whole reason (list.md Phase 18).
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory, () => status.Current);
@@ -745,6 +759,11 @@ public sealed class AppHost : IDisposable
             arrived = events;
             status.Poll();
             route.Poll();
+
+            // The commodity board the Commander is standing in front of, if they have opened one
+            // (list.md Phase 36). Given the position from the journal, because Market.json does
+            // not carry one and a market that cannot be placed cannot be routed to.
+            markets.Poll(gameState.Active?.Location.StarPos);
 
             // Before the callouts and inside this subscriber, so a verdict recomputed from this
             // tick's events is announced on this tick rather than the next. Polled unconditionally
@@ -1058,6 +1077,13 @@ public sealed class AppHost : IDisposable
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
 
+        // d47's own trade planner (list.md Phase 36). It reaches the same host the two above do
+        // and shares their one setting and their one disclosure, because it is the same decision a
+        // Commander is making.
+        var tradePlanner = new D47.Knowledge.SpanshTradePlanService(
+            loggerFactory.CreateLogger<D47.Knowledge.SpanshTradePlanService>(),
+            marketBook);
+
         // The key is read on every call rather than captured here, so pasting one in or clearing
         // it takes effect without a restart — the same rule the galaxy service's setting follows.
         var communityGoals = new D47.Knowledge.InaraCommunityGoalService(
@@ -1175,6 +1201,7 @@ public sealed class AppHost : IDisposable
                 // built only when the setting was already true could not (list.md Phase 4).
                 galaxy,
                 routePlanner,
+                tradePlanner,
                 communityGoals,
                 () => DateTimeOffset.Now,
 

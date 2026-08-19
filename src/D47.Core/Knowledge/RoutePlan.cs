@@ -166,37 +166,92 @@ public sealed record ExobiologyQuery
     }
 }
 
-public sealed record TradeCommodity(string Name, int Amount, long TotalProfit);
-
-/// <summary>One buy-and-sell leg of a trade route.</summary>
-public sealed record TradeHop(
-    string FromSystem,
-    string FromStation,
-    string ToSystem,
-    string ToStation)
+/// <summary>Some tonnes of one commodity, at the price they moved at.</summary>
+public sealed record TradeLot(string Commodity, int Amount, int UnitPrice)
 {
-    public double? Distance { get; init; }
-
-    /// <summary>Light seconds from the destination system's entry point to the station.</summary>
-    public double? DistanceToArrival { get; init; }
-
-    public long TotalProfit { get; init; }
-
-    public long CumulativeProfit { get; init; }
-
-    public IReadOnlyList<TradeCommodity> Commodities { get; init; } = [];
-
-    /// <summary>
-    /// When the destination's market was last reported. Crowd-sourced like outfitting stock, and
-    /// the reason a route can be arithmetically perfect and still worthless: a price from four
-    /// years ago is not a price.
-    /// </summary>
-    public DateTimeOffset? MarketSeen { get; init; }
+    public long Value => (long)Amount * UnitPrice;
 }
 
-public sealed record TradeRoute(IReadOnlyList<TradeHop> Hops)
+/// <summary>
+/// One station on a trade route, and everything that happens while the Commander is standing on
+/// it (list.md Phase 36).
+/// <para>
+/// <b>A stop rather than a hop, and that is the phase in one record.</b> A hop is a leg with a
+/// buy at one end and a sell at the other, which is the shape every planner assumes and the shape
+/// that cannot express holding a commodity past a station that pays poorly for it. A stop can:
+/// <see cref="Sell"/> is what was landed with and sold here, <see cref="Hold"/> is what was
+/// landed with and <em>kept</em>, and <see cref="Buy"/> is what leaves with the ship. The state
+/// carried between stops is credits and cargo, not credits.
+/// </para>
+/// </summary>
+public sealed record TradeStop(string System, string Station)
 {
-    public long TotalProfit => Hops.Count == 0 ? 0 : Hops[^1].CumulativeProfit;
+    /// <summary>Light years flown to get here from the previous stop. Null at the first.</summary>
+    public double? Distance { get; init; }
+
+    /// <summary>Light seconds from this system's entry point to the pad.</summary>
+    public double? DistanceToArrival { get; init; }
+
+    /// <summary>Sold on arrival, at this station's price.</summary>
+    public IReadOnlyList<TradeLot> Sell { get; init; } = [];
+
+    /// <summary>
+    /// Landed with and kept aboard — the twist. Priced at what this station <em>would</em> have
+    /// paid, so the Commander can see what declining to sell here is worth.
+    /// </summary>
+    public IReadOnlyList<TradeLot> Hold { get; init; } = [];
+
+    /// <summary>Bought here before leaving, at this station's price.</summary>
+    public IReadOnlyList<TradeLot> Buy { get; init; } = [];
+
+    /// <summary>Credits in hand on leaving this stop, after everything above.</summary>
+    public long Credits { get; init; }
+
+    /// <summary>
+    /// When these prices were reported. Crowd-sourced unless <see cref="PricesAreYours"/>, and the
+    /// reason a route can be arithmetically perfect and worth nothing: a price from four years ago
+    /// is not a price.
+    /// </summary>
+    public DateTimeOffset? PricesSeen { get; init; }
+
+    /// <summary>Whether this market is one the Commander stood in themselves.</summary>
+    public bool PricesAreYours { get; init; }
+
+    /// <summary>
+    /// Whether a lot leaving here was cut short by what the destination will take. The honest half
+    /// of the saturation answer: the plan never sells past demand, and says which legs that bit.
+    /// </summary>
+    public bool CappedByDemand { get; init; }
+}
+
+/// <summary>
+/// A trade route d47 worked out (list.md Phase 36).
+/// </summary>
+public sealed record TradeRoute(IReadOnlyList<TradeStop> Stops)
+{
+    /// <summary>What the Commander said they were trading with. Never inferred, ever.</summary>
+    public long Capital { get; init; }
+
+    /// <summary>Credits at the end, less the capital. The whole point.</summary>
+    public long TotalProfit { get; init; }
+
+    /// <summary>Light years over the whole route.</summary>
+    public double TotalDistance => Stops.Sum(stop => stop.Distance ?? 0);
+
+    /// <summary>Whether the route ends where it began.</summary>
+    public bool Loop { get; init; }
+
+    /// <summary>How many markets the arithmetic had to choose between.</summary>
+    public int MarketsConsidered { get; init; }
+
+    /// <summary>
+    /// Fleet carriers left out. Reported rather than hidden: a Commander who knows there were
+    /// forty of them nearby knows why d47's best price is not the best price on the board.
+    /// </summary>
+    public int CarriersIgnored { get; init; }
+
+    /// <summary>How many markets came from the Commander's own <c>Market.json</c>.</summary>
+    public int MarketsSeenInPerson { get; init; }
 }
 
 /// <summary>
@@ -364,9 +419,21 @@ public sealed record TradeQuery
 
     public int CargoCapacity { get; init; }
 
-    public int MaxHops { get; init; } = 4;
+    /// <summary>
+    /// How many stations to visit. <b>Ten is the target and not a holy number</b> (list.md Phase
+    /// 36): the naive formulation of a route that carries cargo between hops does not finish at
+    /// that depth, and the bounded one does — measured at 300,000 leg evaluations for ten hops
+    /// against a beam of 200, which is tens of milliseconds of arithmetic.
+    /// </summary>
+    public int MaxHops { get; init; } = 5;
 
     public double MaxHopDistance { get; init; } = 40;
+
+    /// <summary>
+    /// Whether the route comes back to the station it started from, so an evening's trading ends
+    /// at the Commander's own base rather than four systems away.
+    /// </summary>
+    public bool Loop { get; init; }
 
     /// <summary>Light seconds from the entry point that a station may sit at.</summary>
     public double MaxSystemDistance { get; init; } = 1_000;
@@ -389,6 +456,7 @@ public sealed record TradeQuery
         double? maxSystemDistance,
         bool largePadOnly,
         int? maxPriceAge,
+        bool? loop,
         out TradeQuery query,
         out string failure)
     {
@@ -425,11 +493,12 @@ public sealed record TradeQuery
             Station = station.Trim(),
             Capital = Math.Clamp(capital.Value, 1, 1_000_000_000_000),
             CargoCapacity = Math.Clamp(cargoCapacity.Value, 1, 100_000),
-            MaxHops = Math.Clamp(maxHops ?? 4, 1, 8),
+            MaxHops = Math.Clamp(maxHops ?? 5, 1, 10),
             MaxHopDistance = Math.Clamp(maxHopDistance ?? 40, 1, 500),
             MaxSystemDistance = Math.Clamp(maxSystemDistance ?? 1_000, 1, 1_000_000),
             LargePadOnly = largePadOnly,
             MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 1, 8_760),
+            Loop = loop ?? false,
         };
 
         return true;
@@ -457,8 +526,26 @@ public interface IRouteService
 
     Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken);
 
-    Task<TradeRoute?> PlotTradeAsync(TradeQuery query, CancellationToken cancellationToken);
-
-    /// <summary>The fifth plot type (list.md Phase 18, "Find the exobiology").</summary>
+    /// <summary>The fourth plot type (list.md Phase 18, "Find the exobiology").</summary>
     Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// The seam to whatever gathers markets and plans a trade route over them (list.md Phase 36).
+/// <para>
+/// <b>It left <see cref="IRouteService"/> when the planner became d47's own.</b> That interface
+/// exists to describe one protocol — a job submitted, queued and polled for — and the trade plot
+/// is no longer that: it is a handful of lookups and then arithmetic that runs here, which is a
+/// different shape of wait and a different set of failures. Keeping it behind the plotting
+/// interface would have hidden exactly the difference the interface exists to state.
+/// </para>
+/// <para>
+/// Null means the origin's market could not be read at all, which is a different answer from a
+/// route with no stops — the second is "nothing near here pays", and the first is "I could not
+/// see the board you are standing in front of".
+/// </para>
+/// </summary>
+public interface ITradePlanService
+{
+    Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken);
 }

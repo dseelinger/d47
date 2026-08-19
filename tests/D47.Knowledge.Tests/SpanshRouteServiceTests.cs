@@ -163,34 +163,6 @@ public class SpanshRouteServiceTests
     }
 
     [Fact]
-    public async Task ATradePlotSendsTheParameterNamesTheServiceActuallyKeeps()
-    {
-        // The route endpoints echo back only the keys they understood, which is how these names
-        // were established. `capital` and `cargo_capacity` are both silently dropped, and a trade
-        // plot with no capital finds nothing affordable — a wrong answer that looks like a right
-        // one about a poor Commander.
-        var recorder = new Recorder(
-            (HttpStatusCode.Accepted, Queued),
-            (HttpStatusCode.OK, """{"status":"ok","result":[]}"""));
-
-        using var service = Service(recorder, out _);
-
-        Assert.True(TradeQuery.TryParse(
-            "Sol", "Abraham Lincoln", 50_000_000, 384, 4, 40, 1000, false, 720, out var query, out _));
-
-        await service.PlotTradeAsync(query, TestContext.Current.CancellationToken);
-
-        var sent = Assert.Single(recorder.Requests)
-            .Split('&')
-            .ToDictionary(pair => pair.Split('=')[0], pair => pair.Split('=')[1], StringComparer.Ordinal);
-
-        Assert.Equal("50000000", sent["starting_capital"]);
-        Assert.Equal("384", sent["max_cargo"]);
-        Assert.DoesNotContain("capital", sent.Keys);
-        Assert.DoesNotContain("cargo_capacity", sent.Keys);
-    }
-
-    [Fact]
     public async Task ARichesStopWithNothingToScanIsNotAStop()
     {
         // The plotter includes the origin, and a loop includes the return leg. Both come back

@@ -17,6 +17,62 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.39.0 — 2026-08-19 — Trade routes that d47 works out
+
+Phase 36, and with it **every phase in `list.md` is now built** — 35 of them, 1 to 21 and 23 to 36.
+
+`plot_trade_route` used to hand the question to Spansh's planner and read back the answer. It now
+asks for markets and does the arithmetic here, which is what lets it do three things that planner
+could not.
+
+### The hold does not have to be emptied
+
+The one no other tool does. A leg that sells everything is what every planner assumes, and it is not
+always the best move: holding a commodity past a station that pays poorly for it, to a later one
+that pays well, can beat taking the money now.
+
+That makes the state carried between hops *credits and cargo* rather than credits — a different
+algorithm, not a flag on the old one — so a plan now reads as a sequence of **stops** rather than of
+legs: sell these, keep those, buy that, go. A `keep` line always says what declining to sell here is
+worth, because a Commander who is not told why they are flying past a buyer will sell there, and
+then the plan they were given stops being the plan.
+
+### Round trips, and ten hops in seconds
+
+`loop` ends the route back where it started, so an evening's trading finishes at your own base
+rather than four systems away. Spansh's planner silently dropped that parameter; this one is built
+around it, and a shorter loop that pays better than the ten you asked for is taken.
+
+Ten hops is the new ceiling, five the default, against four hops before. The bounded search — a beam
+of the best 200 partial routes carried hop to hop — does the measured shape of the problem in tens
+of milliseconds. **The planner this replaced took forty-eight seconds to answer four hops.**
+
+### Your own prices, where you have them
+
+Where you have docked and opened a commodity board, Elite wrote `Market.json` and d47 now keeps it:
+the last 25 markets you have stood in, in `data/markets.json`, readable and hand-editable like
+everything else in `data/`. Those are exact and free where a crowd report is neither. The rule is
+**newer wins** rather than yours-always: a report from this morning beats what you saw a month ago.
+
+**Less about you leaves this machine than before.** The old planner was sent your hold size and the
+figure you gave it to trade with. This one sends the system you are in and how far to look; the
+prices come back and everything else happens here. Your balance is still never read.
+
+### What it will not promise
+
+It does not model market saturation, and it says so in every plan. Dumping far more of a commodity
+than a station wants drops what the rest of it fetches — by a factor that is **not known**, and a
+constant guessed here would make every profit wrong in a way that reads exactly like the feature
+working. So no leg ever sells more than a station asked for, and a stop reports when a lot was cut
+short by that.
+
+Fleet carriers are left out, and the plan says how many. They set their own prices and then move:
+the best Gold price within 50 light years of Sol was 4,760,900 credits at a carrier, against 52,282
+at the best station. A planner that ranks on price and does not know what a carrier is builds every
+plan around one, and half of them have jumped by the time you arrive.
+
+---
+
 ## 0.38.2 — 2026-08-19 — Two silences and four things you can read
 
 Remediation 16, all six items. Four are the Commander's, reported against 0.38.1. **Two were found
