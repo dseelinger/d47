@@ -95,7 +95,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         OpenTheHull(panel, ships);
 
-        Assert.NotNull(Named(panel, "Drop this hull"));
+        Assert.NotNull(Named(panel, "Drop this ship"));
     }
 
     /// <summary>And asks before it acts, because there is no way back from it.</summary>
@@ -106,7 +106,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         OpenTheHull(panel, ships);
 
-        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named(panel, "Drop this ship")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(ships.Store.Builds);
@@ -124,7 +124,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         OpenTheHull(panel, ships);
 
-        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named(panel, "Drop this ship")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Option(panel, "Drop it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -167,7 +167,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         var intended = ships.Store.Builds.Single(build => !build.IsOwned);
 
-        Assert.Equal("Drop this hull", mode.DropLabel(intended.Id));
+        Assert.Equal("Drop this ship", mode.DropLabel(intended.Id));
     }
     /// <summary>
     /// And it leaves the fleet list (remediation.md 13, item 1).
@@ -186,7 +186,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         Assert.Contains(Shown(panel), line => line.Contains("Python", StringComparison.Ordinal));
 
-        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named(panel, "Drop this ship")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Option(panel, "Drop it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -227,7 +227,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         OpenTheHull(panel, ships);
 
-        Named(panel, "Drop this hull")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named(panel, "Drop this ship")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Option(panel, "Drop it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

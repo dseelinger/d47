@@ -186,6 +186,8 @@ public class TheChecklistTakesTheKeyboardTests
     {
         var (panel, _) = Page("buy limpets");
 
-        Assert.NotNull(Named(panel, "Transfer"));
+        // "Import/Export" rather than "Transfer" (remediation.md 13, item 3): transfer is what
+        // Elite calls moving a ship between stations, which is not this.
+        Assert.NotNull(Named(panel, "Import/Export"));
     }
 }

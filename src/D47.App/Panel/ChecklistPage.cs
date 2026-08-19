@@ -115,10 +115,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// Import and export, behind one button (remediation.md 10, item 15). One rather than two,
     /// because they are the same rare errand in two directions and two permanent buttons on a
     /// working bar is two things to read past every session.
+    /// <para>
+    /// It says <b>Import/Export</b> rather than "Transfer" (remediation.md 13, item 3). One word
+    /// for two directions was tidier and told a Commander nothing: transfer is also what Elite
+    /// calls moving a ship or a module between stations, so the one button on this bar named for
+    /// a rare errand was named after a different errand entirely.
+    /// </para>
     /// </summary>
     private readonly Button _transfer = new()
     {
-        Content = "Transfer",
+        Content = "Import/Export",
         Padding = new Thickness(12, 4),
         MinHeight = 30,
     };
@@ -1009,7 +1015,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _prompts.Choose(
             new ChoiceRequest(
                 "checklist.transfer",
-                "Transfer",
+                "Import/Export",
                 "Import or export",
                 "The whole list, as JSON — every line, what it came from, and the ones you have "
                 + "finished with. For moving to another machine.",

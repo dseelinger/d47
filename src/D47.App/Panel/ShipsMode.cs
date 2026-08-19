@@ -40,13 +40,13 @@ public sealed class ShipsMode(
 
     public string EmptyIndex =>
         "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it — or "
-        + "plan a hull you do not own, and buying one will point the plan at it.";
+        + "plan a ship you do not own, and buying one will point the plan at it.";
 
     public string EmptySlots =>
         "Nothing is planned, and I cannot see this ship's modules — Elite only reports the loadout "
         + "of the ship you are sitting in. Plan a slot and it will appear here.";
 
-    public string NewLabel => "Plan a hull you do not own";
+    public string NewLabel => "Plan a ship you do not own";
 
     public string PromoteLabel => "Put this build on my checklist";
 
@@ -84,13 +84,13 @@ public sealed class ShipsMode(
         prompts.Enter(
             new EntryRequest(
                 "loadout.intend",
-                "Hull",
-                "Which hull do you intend to buy?",
+                "Ship",
+                "Which ship do you intend to buy?",
                 "It is not in your fleet until you own one — acquiring it is the plan's first step.",
                 string.Empty,
                 EntrySurface.Voice,
                 value => EliteSpecifications.Ship(value) is null
-                    ? EntryVerdict.No($"I do not know a hull called “{value}”.")
+                    ? EntryVerdict.No($"I do not know a ship called “{value}”.")
                     : EntryVerdict.Ok),
             hull =>
             {
@@ -183,10 +183,10 @@ public sealed class ShipsMode(
     {
         if (EliteSpecifications.Ship(build.Hull) is not { } hull)
         {
-            return [new LoadoutLine("I have no figures for this hull.")];
+            return [new LoadoutLine("I have no figures for this ship.")];
         }
 
-        var lines = new List<LoadoutLine> { new("The hull", LoadoutTone.Heading) };
+        var lines = new List<LoadoutLine> { new("The ship", LoadoutTone.Heading) };
 
         var made = hull.Manufacturer is { Length: > 0 } maker ? $"{hull.Name}, by {maker}" : hull.Name;
 
@@ -210,7 +210,7 @@ public sealed class ShipsMode(
 
         if (hull.Cost is { } cost)
         {
-            lines.Add(new LoadoutLine($"The hull alone lists at {Credits(cost)}."));
+            lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}."));
         }
 
         return lines;
@@ -257,7 +257,7 @@ public sealed class ShipsMode(
 
         if (loadout.TotalValue is { } worth)
         {
-            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, hull and modules."));
+            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, ship and modules together."));
         }
 
         if (loadout.Rebuy is { } rebuy)
@@ -391,7 +391,7 @@ public sealed class ShipsMode(
     /// which is the same rule the checklist draws between a computed line and a written one.
     /// </summary>
     public string? DropLabel(string item) =>
-        Resolve(item) is { IsOwned: false } ? "Drop this hull" : null;
+        Resolve(item) is { IsOwned: false } ? "Drop this ship" : null;
 
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";

@@ -595,7 +595,7 @@ public class LoadoutTabTests
 
         // And what the hull is, from the shipped table — true of every Anaconda ever built, which
         // is why it can be said for a ship in another dock.
-        Assert.Contains("The hull", shown);
+        Assert.Contains("The ship", shown);
         Assert.Contains("Anaconda, by Faulcon DeLacy. Needs a large pad.", shown);
         Assert.Contains("180 m/s, 240 boosting.", shown);
 
@@ -629,7 +629,7 @@ public class LoadoutTabTests
         // 34.25 formats to 34.2, not 34.3: N1 rounds a midpoint to the even digit.
         Assert.Contains("34.2 ly a jump, full tank and empty hold.", shown);
         Assert.Contains("128 tonnes of hold.", shown);
-        Assert.Contains("Worth 100,000,000 cr, hull and modules.", shown);
+        Assert.Contains("Worth 100,000,000 cr, ship and modules together.", shown);
         Assert.Contains("Rebuy is 5,000,000 cr.", shown);
         Assert.Contains("Hull at 87%.", shown);
 

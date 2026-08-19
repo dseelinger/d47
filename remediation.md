@@ -10,9 +10,9 @@ the changelog, which is why this file is the current batch and not a growing arc
 
 - [x] **2. Clicking an owned hull should show its details.**
 
-- [ ] **3. "Transfer" on the Checklist should read "Import/Export".**
+- [x] **3. "Transfer" on the Checklist should read "Import/Export".**
 
-- [ ] **4. The UI should say "Ship" where it says "Hull".**
+- [x] **4. The UI should say "Ship" where it says "Hull".**
 
 - [ ] **5. A tab press should go to that tab even with a sub-page up.** "Which hull do you intend
   to buy" held the panel, and Back is implied by pressing a tab.
