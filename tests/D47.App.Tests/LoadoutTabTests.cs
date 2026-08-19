@@ -63,8 +63,9 @@ public class LoadoutTabTests
         foreach (var line in new[]
                  {
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000}],"ShipsRemote":[]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
@@ -567,6 +568,70 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Fuel Scoop", Offered(surface.Panel));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A ship you are not flying says what it is and where it is (remediation.md 13, item 2).
+    /// <para>
+    /// The page carried one sentence about builds and a list of slots reading "not seen", which
+    /// is less than the row you pressed to get there already told you.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AnOwnedShipShowsItsDetails()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        // Where it is, from the journal, and what it is worth.
+        Assert.Contains("Parked at Jameson Memorial, Shinrarta Dezhra.", shown);
+        Assert.Contains("Worth 150,000,000 cr.", shown);
+
+        // And what the hull is, from the shipped table — true of every Anaconda ever built, which
+        // is why it can be said for a ship in another dock.
+        Assert.Contains("The hull", shown);
+        Assert.Contains("Anaconda, by Faulcon DeLacy. Needs a large pad.", shown);
+        Assert.Contains("180 m/s, 240 boosting.", shown);
+
+        // What it cannot say, and why. A jump range for a ship d47 cannot see would have to be
+        // modelled, and a modelled figure that reads like a measured one is the whole thing the
+        // specification table is built the way it is to avoid.
+        Assert.Contains(shown, line => line.Contains(
+            "only known while you are in it", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("As it is fitted", shown);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// And the one you are flying adds the figures that depend on what is fitted, because those
+    /// are the ones Elite actually reports (remediation.md 13, item 2).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheShipYouAreFlyingAddsWhatIsFitted()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("You are flying it.", shown);
+        Assert.Contains("As it is fitted", shown);
+        // 34.25 formats to 34.2, not 34.3: N1 rounds a midpoint to the even digit.
+        Assert.Contains("34.2 ly a jump, full tank and empty hold.", shown);
+        Assert.Contains("128 tonnes of hold.", shown);
+        Assert.Contains("Worth 100,000,000 cr, hull and modules.", shown);
+        Assert.Contains("Rebuy is 5,000,000 cr.", shown);
+        Assert.Contains("Hull at 87%.", shown);
 
         surface.Window.Close();
     }

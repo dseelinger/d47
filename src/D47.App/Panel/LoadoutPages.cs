@@ -529,6 +529,14 @@ public sealed class ItemPage : LoadoutPage
 
         _summary.Text = summary;
 
+        // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
+        // scroller rather than docked above it, or a hull's figures would cost the slot list the
+        // same rows on every window.
+        foreach (var line in Mode.Details(_item))
+        {
+            _list.Children.Add(LoadoutPages.Line(line));
+        }
+
         var rows = Mode.Slots(_item);
 
         if (rows.Count == 0)
@@ -536,6 +544,7 @@ public sealed class ItemPage : LoadoutPage
             _list.Children.Add(LoadoutPages.Muted(Mode.EmptySlots));
             return;
         }
+
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the
         // outfitting screen rather than as thirty-odd names in journal order

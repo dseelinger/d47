@@ -8,4 +8,4 @@ the changelog, which is why this file is the current batch and not a growing arc
 
 - [x] **1. Dropping a hull should take it off the ship list.**
 
-- [ ] **2. Clicking an owned hull should show its details.**
+- [x] **2. Clicking an owned hull should show its details.**

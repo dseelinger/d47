@@ -105,6 +105,185 @@ public sealed class ShipsMode(
             : $"{build.Describe()}. Buying one will point this plan at it.";
 
     /// <summary>
+    /// What this ship is, where it is, and what it can do (remediation.md 13, item 2).
+    /// <para>
+    /// <b>Two sources, and they are kept apart.</b> Where it is and what it is worth come from
+    /// the journal and are facts about <em>this</em> ship; speed, boost and pad come from the
+    /// shipped table and are facts about the hull, true of every one ever built. The figures that
+    /// depend on what is fitted — jump range, cargo, rebuy — are only said for the ship being
+    /// flown, because those are Loadout's and Elite reports the loadout of one ship at a time.
+    /// </para>
+    /// <para>
+    /// Nothing here is computed from anything else. A jump range for a ship in another dock would
+    /// have to be modelled from a loadout d47 cannot see, and a modelled figure that reads like a
+    /// measured one is the failure the whole specification table is built the way it is to avoid.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<LoadoutLine> Details(string item)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [];
+        }
+
+        var entry = ships.Fleet().FirstOrDefault(candidate => candidate.Build?.Id == build.Id);
+        var lines = new List<LoadoutLine>();
+
+        // Where it is, said in full rather than in the row's one phrase: the row has to fit a
+        // line and this does not, so "here" becomes the station it is parked at.
+        if (entry?.Stored is { } stored)
+        {
+            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body));
+
+            if (stored.TransferPrice is { } price)
+            {
+                lines.Add(new LoadoutLine(
+                    $"Transferring it here costs {Credits(price)}."));
+            }
+
+            if (stored.Value is { } worth)
+            {
+                lines.Add(new LoadoutLine($"Worth {Credits(worth)}."));
+            }
+        }
+        else if (entry is not null)
+        {
+            lines.Add(new LoadoutLine("Not bought yet.", LoadoutTone.Body));
+        }
+
+        lines.AddRange(Hull(build));
+        lines.AddRange(Flying(build));
+
+        return lines;
+    }
+
+    /// <summary>Where the ship is, in a sentence rather than in the row's one phrase.</summary>
+    private static string Whereabouts(StoredShip stored, bool active)
+    {
+        if (active)
+        {
+            return "You are flying it.";
+        }
+
+        if (stored.InTransit)
+        {
+            return $"In transit to {stored.StarSystem}.";
+        }
+
+        return stored.StationName is { Length: > 0 } station
+            ? $"Parked at {station}, {stored.StarSystem}."
+            : $"Parked in {stored.StarSystem}.";
+    }
+
+    /// <summary>
+    /// What the hull is, from the shipped table. True of every one ever built, which is why it is
+    /// said for a ship in another dock as readily as for the one underneath the Commander.
+    /// </summary>
+    private static IReadOnlyList<LoadoutLine> Hull(ShipBuild build)
+    {
+        if (EliteSpecifications.Ship(build.Hull) is not { } hull)
+        {
+            return [new LoadoutLine("I have no figures for this hull.")];
+        }
+
+        var lines = new List<LoadoutLine> { new("The hull", LoadoutTone.Heading) };
+
+        var made = hull.Manufacturer is { Length: > 0 } maker ? $"{hull.Name}, by {maker}" : hull.Name;
+
+        lines.Add(new LoadoutLine(
+            hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}."));
+
+        if (hull.Speed is { } speed && hull.Boost is { } boost)
+        {
+            lines.Add(new LoadoutLine(
+                $"{speed.ToString(CultureInfo.InvariantCulture)} m/s, "
+                + $"{boost.ToString(CultureInfo.InvariantCulture)} boosting."));
+        }
+
+        if (hull.Armour is { } armour && hull.Shields is { } shields)
+        {
+            lines.Add(new LoadoutLine(
+                $"{armour.ToString(CultureInfo.InvariantCulture)} armour and "
+                + $"{shields.ToString(CultureInfo.InvariantCulture)} shields before anything is "
+                + "fitted."));
+        }
+
+        if (hull.Cost is { } cost)
+        {
+            lines.Add(new LoadoutLine($"The hull alone lists at {Credits(cost)}."));
+        }
+
+        return lines;
+    }
+
+    /// <summary>
+    /// The figures that depend on what is fitted, and <b>only for the ship being flown</b>. Elite
+    /// reports the loadout of one ship at a time, so these are measured for that one and unknown
+    /// for every other — which is a different thing from being zero.
+    /// </summary>
+    private IReadOnlyList<LoadoutLine> Flying(ShipBuild build)
+    {
+        var loadout = state()?.Ship;
+
+        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
+        {
+            return
+            [
+                new LoadoutLine(
+                    "Elite reports the loadout of the ship you are sitting in and no other, so its "
+                    + "jump range, cargo and rebuy are only known while you are in it."),
+            ];
+        }
+
+        var lines = new List<LoadoutLine>();
+
+        if (loadout.MaxJumpRange is { } range)
+        {
+            lines.Add(new LoadoutLine(
+                $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump, full tank and "
+                + "empty hold."));
+        }
+
+        if (loadout.CargoCapacity is { } cargo)
+        {
+            lines.Add(new LoadoutLine($"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold."));
+        }
+
+        if (loadout.UnladenMass is { } mass)
+        {
+            lines.Add(new LoadoutLine(
+                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen."));
+        }
+
+        if (loadout.TotalValue is { } worth)
+        {
+            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, hull and modules."));
+        }
+
+        if (loadout.Rebuy is { } rebuy)
+        {
+            // Its own line and its own tone. The rebuy is the one figure here that is a warning
+            // rather than a statistic.
+            lines.Add(new LoadoutLine($"Rebuy is {Credits(rebuy)}.", LoadoutTone.Danger));
+        }
+
+        if (loadout.HullHealth is { } health && health < 100)
+        {
+            lines.Add(new LoadoutLine(
+                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.", LoadoutTone.Danger));
+        }
+
+        // The heading last, and only if anything is under it. A `Loadout` carrying none of these
+        // is unusual and possible, and a heading with nothing beneath it reads as a block that
+        // failed to load rather than as one with nothing to say.
+        return lines.Count == 0 ? [] : [new LoadoutLine("As it is fitted", LoadoutTone.Heading), .. lines];
+    }
+
+    /// <summary>Credits, grouped, because a nine-digit number without separators is unreadable.</summary>
+    private static string Credits(long amount) =>
+        $"{amount.ToString("N0", CultureInfo.InvariantCulture)} cr";
+
+    /// <summary>
     /// The hull's slots, grouped, whole, and with the cosmetics off them
     /// (remediation.md 12, items 1, 2, 3 and 6).
     /// <para>

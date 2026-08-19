@@ -134,6 +134,14 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
               + "recoverable only by buying and re-upgrading a fresh item.";
     }
 
+    /// <summary>
+    /// Nothing beyond the summary. A suit's page is already its details — the grade, how many
+    /// slots that grade has, and that every one of them is permanent — where a ship's page had a
+    /// sentence about builds and a list of slots (remediation.md 13, item 2). Empty is a real
+    /// answer here rather than a gap waiting to be filled.
+    /// </summary>
+    public IReadOnlyList<LoadoutLine> Details(string item) => [];
+
     public IReadOnlyList<LoadoutRow> Slots(string item)
     {
         if (Resolve(item) is not { } build)
