@@ -373,6 +373,18 @@ public sealed class AppHost : IDisposable
     public (D47.Core.Goals.GoalBook Book, Action? Backfill)? Goals { get; private set; }
 
     /// <summary>
+    /// The last plan each planner produced (list.md Phase 37). Set during composition, like the
+    /// three books above, because the file it reads lives beside the executable rather than
+    /// anywhere Core can find on its own.
+    /// <para>
+    /// Shared deliberately: the model's path writes it through <c>RouteCapability</c> and the
+    /// Routing tab reads and writes the same one, so a route plotted by voice and a route drawn
+    /// on screen cannot be two different routes.
+    /// </para>
+    /// </summary>
+    public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -591,6 +603,15 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Knowledge.MarketBook>());
 
         marketBook.Load();
+
+        // And a fourth (list.md Phase 37). Loaded here for the same reason the market book is:
+        // the Routing tab is drawn before anybody plots anything, and a tab that is empty until
+        // the first plot of the session forgets what the Commander asked for last night.
+        var planBook = new D47.Core.Knowledge.RoutePlanBook(
+            Path.Combine(paths.Data, "route-plans.json"),
+            loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>());
+
+        planBook.Load();
 
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
@@ -1294,7 +1315,11 @@ public sealed class AppHost : IDisposable
                 // Which core flies which ship (list.md Phase 35). Read by the persona capability
                 // for its two rows, its two protected tools, and the one sentence the model is
                 // allowed to know about a binding.
-                shipCores));
+                shipCores,
+
+                // And where a plan goes once it is made (list.md Phase 37), so the spoken route
+                // and the drawn one are one answer rather than two.
+                planBook));
 
         built = capabilities;
 
@@ -1496,6 +1521,7 @@ public sealed class AppHost : IDisposable
         host.Habits = (habitBook, MineHabits);
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
+        host.Plans = planBook;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 

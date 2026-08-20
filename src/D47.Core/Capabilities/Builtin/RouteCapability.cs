@@ -48,11 +48,20 @@ public static class RouteCapability
     /// <paramref name="routes"/> because it is a different protocol — lookups and arithmetic
     /// rather than a job that is queued and polled for — and the seam says so.
     /// </param>
+    /// <param name="plans">
+    /// Where a plan is kept once it is made (list.md Phase 37), or null where nothing is drawing
+    /// them. The capability describes a route and forgets it, which is correct for speech and
+    /// leaves a surface with nothing to show — so what it worked out is written here, and the
+    /// Routing tab and this path stay one answer rather than two.
+    /// </param>
+    /// <param name="now">The clock, injected. Nothing in Core reads it directly.</param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
         ITradePlanService? trade,
         Func<CommanderGameState?> commander,
-        Configuration.SettingsService settings) => new()
+        Configuration.SettingsService settings,
+        RoutePlanBook? plans = null,
+        Func<DateTimeOffset>? now = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -111,7 +120,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, settings, arguments, cancellationToken),
+                    PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -168,7 +177,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotRichesAsync(routes, commander, settings, arguments, cancellationToken),
+                    PlotRichesAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -233,7 +242,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlanTradeAsync(trade, commander, settings, arguments, cancellationToken),
+                    PlanTradeAsync(trade, commander, settings, plans, now, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Route planning", Order = 48 },
@@ -250,6 +259,8 @@ public static class RouteCapability
         IRouteService? routes,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -281,11 +292,18 @@ public static class RouteCapability
         {
             var route = await routes!.PlotAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return route is null
-                ? ToolResult.Ok(
+            if (route is null)
+            {
+                return ToolResult.Ok(
                     $"No route from {query.From} to {query.To} at {query.JumpRange:N1} light years a jump. "
-                    + "A longer jump range, or a lower efficiency, gives the plotter more to work with.")
-                : ToolResult.Ok(Describe(route));
+                    + "A longer jump range, or a lower efficiency, gives the plotter more to work with.");
+            }
+
+            // Kept before it is described, so a surface has the whole route while the sentence
+            // keeps its five waypoints (list.md Phase 37).
+            plans?.Record(route, $"{route.Origin} to {route.Destination}", now?.Invoke() ?? default);
+
+            return ToolResult.Ok(Describe(route));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -360,6 +378,8 @@ public static class RouteCapability
         IRouteService? routes,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -392,12 +412,20 @@ public static class RouteCapability
         {
             var route = await routes!.PlotRichesAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return route is null || route.Stops.Count == 0
-                ? ToolResult.Ok(
+            if (route is null || route.Stops.Count == 0)
+            {
+                return ToolResult.Ok(
                     $"Nothing within {query.Radius:N0} light years of {query.From} is worth "
                     + $"{query.MinimumValue:N0} credits to map. A wider radius or a lower minimum will "
-                    + "find something.")
-                : ToolResult.Ok(Describe(route, query));
+                    + "find something.");
+            }
+
+            plans?.Record(
+                route,
+                $"{route.Stops.Count} stops from {query.From}",
+                now?.Invoke() ?? default);
+
+            return ToolResult.Ok(Describe(route, query));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -475,6 +503,8 @@ public static class RouteCapability
         ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -520,13 +550,21 @@ public static class RouteCapability
                     + "the commodity board once and I will have it.");
             }
 
-            return route.Stops.Count == 0
-                ? ToolResult.Ok(
+            if (route.Stops.Count == 0)
+            {
+                return ToolResult.Ok(
                     $"No trade run out of {query.Station} pays with {query.Capital:N0} credits and "
                     + $"{query.CargoCapacity} tonnes, across {route.MarketsConsidered} markets within "
                     + $"{query.MaxHopDistance:N0} light years. More capital, a longer hop distance or a "
-                    + "wider price age will find something.")
-                : ToolResult.Ok(Describe(route, query));
+                    + "wider price age will find something.");
+            }
+
+            plans?.Record(
+                route,
+                $"{route.Stops.Count} stops from {query.Station}",
+                now?.Invoke() ?? default);
+
+            return ToolResult.Ok(Describe(route, query));
         }
         catch (GalaxyUnavailableException ex)
         {
