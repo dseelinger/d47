@@ -150,6 +150,12 @@ public partial class MainWindow : Window
             Panel.EnableEngineers(
                 host.Unlocks, host.Ships, () => host.GameState.Active, host.OnFootPlans);
 
+            // Where the Commander is going, in three readings of one journey (list.md Phase 37).
+            // This window only: the plan forms want a keyboard the headset has not got. If VR
+            // ever gets this tab it gets Progress and nothing else, which is a different set of
+            // flags on this same call rather than a second page.
+            Panel.EnableRouting(() => host.Route, () => host.GameState.Active?.Location.StarSystem);
+
             // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at
             // a wall clock.
@@ -209,6 +215,14 @@ public partial class MainWindow : Window
             // Desktop only, deliberately: the Loadout tab is not furnished in the headset.
             host.Tick.Add("loadout", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickLoadout));
+
+            // And the route being flown, by the same route again (list.md Phase 37). A jump
+            // rewrites NavRoute.json and moves the Commander along it, and neither of those is
+            // something the page can notice by itself.
+            //
+            // Desktop only, like the loadout: the Routing tab is not furnished in the headset.
+            host.Tick.Add("routing", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickRouting));
 
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.

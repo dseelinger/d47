@@ -256,6 +256,7 @@ public partial class PanelView : UserControl
         };
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
+        _tabs[PanelTab.Routing] = RoutingTab;
         _tabs[PanelTab.Checklist] = ChecklistTab;
         _tabs[PanelTab.Loadout] = LoadoutTab;
         _tabs[PanelTab.Engineers] = EngineersTab;
@@ -786,6 +787,80 @@ public partial class PanelView : UserControl
     }
 
     private UtilitiesPage? _utilities;
+
+    /// <summary>
+    /// Gives this surface the Routing tab (list.md Phase 37): where the Commander is going, in
+    /// three readings of one journey.
+    /// <para>
+    /// <b>The roots are flags rather than a fixed three</b>, because the surfaces do not want the
+    /// same ones. Only the desktop window furnishes this at all today; if the headset ever gets
+    /// it, it gets <em>Progress</em> and only Progress — the mode that needs no keyboard and is
+    /// the one worth reading at a metre while actually flying the route. That is one call with a
+    /// different set of flags rather than a restructuring, which is the whole reason they are
+    /// flags.
+    /// </para>
+    /// </summary>
+    public void EnableRouting(
+        Func<D47.Core.Journal.NavRoute> route,
+        Func<string?> here,
+        bool progress = true)
+    {
+        var roots = new List<NavCrumb>();
+
+        if (progress)
+        {
+            roots.Add(new NavCrumb(RoutingPages.ProgressRoot, "Progress"));
+        }
+
+        if (roots.Count == 0)
+        {
+            return;
+        }
+
+        _routeState = route;
+        _routeHere = here;
+
+        Furnish(
+            PanelTab.Routing,
+            crumb => RoutingPages.Build(crumb, route, here, page => _routeProgress = page),
+            [.. roots]);
+    }
+
+    /// <summary>
+    /// Redraws the route being flown, from the host's tick.
+    /// <para>
+    /// Reference identity on the route and one string comparison on where the Commander is, which
+    /// is the same arrangement <see cref="TickLoadout"/> uses and for the same reason:
+    /// <c>NavRouteReader</c> hands back the same record until the file's write time moves, so
+    /// answering "nothing changed" costs a pointer comparison ten times a second rather than a
+    /// walk over a hundred and thirty hops.
+    /// </para>
+    /// </summary>
+    public void TickRouting()
+    {
+        if (_routeProgress is not { } page || Tab != PanelTab.Routing)
+        {
+            return;
+        }
+
+        var route = _routeState?.Invoke();
+        var here = _routeHere?.Invoke();
+
+        if (ReferenceEquals(route, _routeSeen) && string.Equals(here, _routeWhere, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _routeSeen = route;
+        _routeWhere = here;
+        page.Refresh();
+    }
+
+    private RouteProgressPage? _routeProgress;
+    private Func<D47.Core.Journal.NavRoute>? _routeState;
+    private Func<string?>? _routeHere;
+    private D47.Core.Journal.NavRoute? _routeSeen;
+    private string? _routeWhere;
 
     /// <summary>
     /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected,

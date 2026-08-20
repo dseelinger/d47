@@ -186,6 +186,89 @@ public sealed record NavRoute
 }
 
 /// <summary>
+/// Where the Commander is in a plotted route, and what is left of it (list.md Phase 37,
+/// "Progress").
+/// <para>
+/// In Core rather than in the page that draws it, because it is arithmetic over records and
+/// arithmetic is worth testing without a window — the same argument <c>PanelNavigator</c> sits
+/// here under. <c>RouteCallout</c> answers a neighbouring question one sentence at a time; this
+/// answers it for a surface that can show the whole route at once, which is the thing a spoken
+/// answer structurally cannot do.
+/// </para>
+/// </summary>
+/// <param name="Index">
+/// Which hop the Commander is standing on, or -1 when they are not on the route at all.
+/// </param>
+/// <param name="JumpsRemaining">Hops still ahead — the whole route when off it.</param>
+/// <param name="DistanceRemaining">
+/// Light years left along the route, or null when any leg of it has an unknown length. Null
+/// rather than a partial sum, for the reason <see cref="RouteHop.DistanceTo"/> gives: a total
+/// that quietly omits a leg reads as a shorter trip rather than as an incomplete answer.
+/// </param>
+public sealed record RouteProgress(int Index, int JumpsRemaining, double? DistanceRemaining)
+{
+    /// <summary>Nothing plotted at all.</summary>
+    public static readonly RouteProgress None = new(-1, 0, null);
+
+    /// <summary>
+    /// Whether the Commander is somewhere the route does not mention. Distinct from having
+    /// finished it: a completed route has them on its last hop, which is an index rather than
+    /// an absence.
+    /// </summary>
+    public bool OffRoute => Index < 0;
+
+    public static RouteProgress For(NavRoute route, string? currentSystem)
+    {
+        if (!route.IsPlotted)
+        {
+            return None;
+        }
+
+        var index = -1;
+
+        for (var candidate = 0; candidate < route.Hops.Count; candidate++)
+        {
+            if (string.Equals(route.Hops[candidate].StarSystem, currentSystem, StringComparison.OrdinalIgnoreCase))
+            {
+                index = candidate;
+                break;
+            }
+        }
+
+        // Off the route, everything is still ahead — the same reading NavRoute.Ahead takes, and
+        // for the same reason: none of it has been reached.
+        var from = index < 0 ? -1 : index;
+
+        return new RouteProgress(
+            index,
+            route.Hops.Count - from - 1,
+            DistanceFrom(route, Math.Max(from, 0)));
+    }
+
+    private static double? DistanceFrom(NavRoute route, int from)
+    {
+        if (route.Hops.Count <= from + 1)
+        {
+            return null;
+        }
+
+        var total = 0d;
+
+        for (var hop = from; hop + 1 < route.Hops.Count; hop++)
+        {
+            if (route.Hops[hop].DistanceTo(route.Hops[hop + 1]) is not { } leg)
+            {
+                return null;
+            }
+
+            total += leg;
+        }
+
+        return total;
+    }
+}
+
+/// <summary>
 /// Pull-based reads of NavRoute.json, on the same terms as every other reader here: no thread,
 /// no clock, re-read only when the file's write time moves.
 /// </summary>

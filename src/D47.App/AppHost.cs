@@ -3103,6 +3103,17 @@ public sealed class AppHost : IDisposable
     private Func<NavRoute>? _route;
 
     /// <summary>
+    /// The plotted route, for anything that wants to draw it (list.md Phase 37, "Progress").
+    /// <para>
+    /// The same reader the callout and the proper-noun biasing already use, rather than a second
+    /// one: two readers of one file is two answers to "where am I going" waiting to disagree.
+    /// <see cref="NavRoute.None"/> before composition has run, so a surface built early draws an
+    /// empty route rather than throwing.
+    /// </para>
+    /// </summary>
+    public NavRoute Route => _route?.Invoke() ?? NavRoute.None;
+
+    /// <summary>
     /// The model currently being fetched, or null. One at a time: applying listening settings
     /// happens on every change, and a second fetch of the same file over the first is bytes
     /// nobody asked for.
