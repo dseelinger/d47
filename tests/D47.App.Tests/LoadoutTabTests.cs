@@ -1149,6 +1149,254 @@ public class LoadoutTabTests
     }
 
     /// <summary>
+    /// A module the plan names can be kept while only the engineering changes (reported
+    /// 2026-08-20).
+    /// <para>
+    /// Reported as drag-copying a planned multi-cannon onto another slot, pressing <b>Change the
+    /// plan</b> to alter only the experimental effect, and finding no row that said so. The "keep
+    /// what is there" row was keyed on what is <em>fitted</em>, so a slot holding a plan and
+    /// nothing else offered nothing — and that is every slot of a ship being designed. The only
+    /// way through was to find the same module again in a list of forty and answer the variant
+    /// question a second time.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void APlannedModuleCanBeKeptWhileTheRollChanges()
+    {
+        var surface = Open();
+
+        // A medium hardpoint with a plan on it and nothing fitted — the state a drag-copy leaves,
+        // and the state every slot of a ship being designed is in.
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("MediumHardpoint1")
+        {
+            Blueprint = "Overcharged Weapon",
+            Grade = 5,
+            Experimental = "Auto Loader",
+            Module = "Multi-cannon",
+            Variant = "hpt_multicannon_fixed_medium",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Medium Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Change the plan").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Named with its class and rating, so it is the module they planned rather than a category.
+        Assert.Contains(
+            Offered(surface.Panel),
+            line => line.StartsWith("Keep the 2E Multi-Cannon", StringComparison.Ordinal)
+                    && line.Contains("only want the engineering", StringComparison.Ordinal));
+
+        Modal(surface.Panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text?.StartsWith("Keep the 2E Multi-Cannon", StringComparison.Ordinal) == true))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+
+        // Straight to the roll, with no second variant question: the plan already answered it.
+        Assert.Contains(Offered(surface.Panel), line => line.Contains("Overcharged", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// And keeping it does not quietly drop it. The fitted row answers "no module at all", which
+    /// is right for it and would have erased the module the Commander had just copied.
+    /// </summary>
+    [AvaloniaFact]
+    public void KeepingAPlannedModuleCarriesItThrough()
+    {
+        var surface = Open();
+
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("MediumHardpoint1")
+        {
+            Blueprint = "Overcharged Weapon",
+            Grade = 5,
+            Module = "Multi-cannon",
+            Variant = "hpt_multicannon_fixed_medium",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Row(surface.Panel, "Medium Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Press(surface.Panel, "Change the plan").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Modal(surface.Panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text?.StartsWith("Keep the 2E Multi-Cannon", StringComparison.Ordinal) == true))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+
+        Pick(surface.Panel, "Overcharged Weapon").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var after = surface.Ships.Store.Builds.Single(candidate => candidate.ShipId == 12).For("MediumHardpoint1");
+
+        Assert.NotNull(after);
+        Assert.Equal("Multi-cannon", after.Module);
+        Assert.Equal("hpt_multicannon_fixed_medium", after.Variant);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A module the ship already carries its limit of is not offered again (asked for
+    /// 2026-08-20: <i>"remove the option to add a module that is already present and only allows
+    /// 1 of that type, like Supercruise Assist or Guardian FSD Booster or Fuel Scoop"</i>).
+    /// <para>
+    /// The limit is EDSY's, and it is a <b>group</b> with a <b>count</b>: sixteen groups allow one
+    /// and the AX and Guardian weapons allow four. A plan counts the same as a fitted module,
+    /// because a plan for a second scoop is the same mistake made a step earlier.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ASecondFuelScoopIsNotOffered()
+    {
+        var surface = Open();
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("Slot01_Size6")
+        {
+            Module = "Fuel Scoop",
+            Variant = "int_fuelscoop_size6_class5",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Compartment 2 (size 6)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(surface.Panel);
+
+        Assert.DoesNotContain(offered, line => line == "Fuel Scoop");
+
+        // Narrowed, not emptied — the rule must leave the rest of the list alone.
+        Assert.Contains(offered, line => line == "Cargo Rack");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// And the slot that holds it still offers it, which is the Commander's own condition:
+    /// replacing the fuel scoop that is already there must still offer fuel scoops.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSlotHoldingTheOnlyOneStillOffersIt()
+    {
+        var surface = Open();
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("Slot01_Size6")
+        {
+            Module = "Fuel Scoop",
+            Variant = "int_fuelscoop_size6_class5",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Compartment 1 (size 6)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Change the plan").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Offered(surface.Panel), line => line == "Fuel Scoop");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A planned experimental says what it does, as a planned blueprint already did (asked for
+    /// 2026-08-20).
+    /// <para>
+    /// <b>The data was always there.</b> `Blueprints.tsv` carries an `effects` column for its 154
+    /// experimental rows as well as its 786 modification rows, and `Blueprint.Describe` derives
+    /// the sentence from the same three fields either way. The Effect block only ever asked about
+    /// the blueprint — so a Commander choosing between Auto Loader and Corrosive Shell read a
+    /// sentence about the roll underneath them, which is identical for both.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void APlannedExperimentalSaysWhatItDoes()
+    {
+        var surface = Open();
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("MediumHardpoint1")
+        {
+            Blueprint = "Overcharged Weapon",
+            Grade = 5,
+            Experimental = "Auto Loader",
+            Module = "Multi-Cannon",
+            Variant = "hpt_multicannon_fixed_medium",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Medium Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        // Named, because two sentences under one heading are two claims about the same slot and
+        // the Commander is trying to tell them apart.
+        Assert.Contains(shown, line => line.StartsWith("Auto Loader:", StringComparison.Ordinal));
+
+        // And the blueprint's own sentence is still there, unchanged.
+        Assert.Contains(shown, line => line.Contains("at the cost of", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// An experimental with no blueprint under it needs no name in front of it: the heading has
+    /// already said what the sentence is about.
+    /// </summary>
+    [AvaloniaFact]
+    public void AnExperimentalOnItsOwnIsNotPrefixed()
+    {
+        var surface = Open();
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("MediumHardpoint1")
+        {
+            Experimental = "Auto Loader",
+            Module = "Multi-Cannon",
+            Variant = "hpt_multicannon_fixed_medium",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Row(surface.Panel, "Medium Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains(shown, line => line == "Effect");
+        Assert.DoesNotContain(shown, line => line.StartsWith("Auto Loader:", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// A ship you are not flying says what it is and where it is (remediation.md 13, item 2).
     /// <para>
     /// The page carried one sentence about builds and a list of slots reading "not seen", which

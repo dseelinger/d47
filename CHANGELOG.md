@@ -17,6 +17,35 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.41.2 — 2026-08-20 — Three things the slot chooser was getting wrong
+
+**An experimental effect now says what it does.** The Effect line only ever described the
+blueprint, so choosing between Auto Loader and Corrosive Shell showed you a sentence about the
+*roll underneath them* — identical for both, and no help at all. `Blueprints.tsv` has carried the
+figures for all 154 experimentals as long as it has carried them for the 786 blueprints; nothing
+asked. Where both are planned the experimental is named, because two sentences under one heading
+are two claims about the same slot.
+
+**A planned module can be kept while only the roll changes.** *"Change the plan"* offered no
+**Keep the module — I only want the engineering** row unless something was *fitted* in the slot —
+which is never true of a ship you are designing, or of any ship you are not sitting in. Reported
+after drag-copying a multi-cannon and wanting only a different experimental; the way through was
+to find the same module again in a list of forty and answer the variant question a second time.
+Keeping it now carries the module through rather than clearing it, and skips straight to the roll.
+
+**And a module your ship may only carry so many of is no longer offered twice.** A second Fuel
+Scoop, a second Supercruise Assist, a second Guardian FSD Booster. The rule is Frontier's own, and
+two parts of it are easy to get wrong by hand: it applies to a **group** rather than a module — a
+Standard and an Advanced Docking Computer rule each other out, and Bi-Weave, Prismatic and stock
+are one shield generator between them — and it is a **count**, not a flag. Sixteen groups allow
+one; the AX and Guardian weapons allow **four**. The slot you are editing never counts against
+itself, so replacing the fuel scoop that is already there still offers fuel scoops.
+
+Measuring alone would have got the last one wrong: across 2,863 loadouts every limited group tops
+out at one, but not one of those ships carried an AX or Guardian weapon.
+
+---
+
 ## 0.41.1 — 2026-08-20 — Six things the Loadout tab was getting wrong
 
 **Engineering a module now registers the moment you roll it.** Elite writes no `Loadout` event

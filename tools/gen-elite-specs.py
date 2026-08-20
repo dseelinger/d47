@@ -110,6 +110,13 @@ MODULE_COLUMNS = [
     # What the module does, and what makes one better than another. See `figures` and
     # `describe`. Remediation 15 items 2b and 9.
     "figures", "about",
+
+    # The limited group this module belongs to — EDSY's own `limit`. How many of the group a
+    # ship may carry is in the `[module-limits]` section rather than here, because it is a
+    # property of the group and repeating it per module is a table that can disagree with
+    # itself. Empty means no limit at all, which is most of them. Appended rather than filed
+    # beside `mtype` so no existing column index moves; the reader indexes by position.
+    "limit",
 ]
 
 # The per-kind figures, keyed by coriolis's own field name and said the way a Commander reads
@@ -176,6 +183,12 @@ DAMAGE_TYPES = {
 SLOT_COLUMNS = ["hull", "slot", "kind", "size", "restrict"]
 
 SLOT_KIND_COLUMNS = ["kind", "mtypes"]
+
+# How many of one limit group a ship may carry. **A count and not a flag**: EDSY's own table
+# says 4 for `hex`, the AX and Guardian weapons, and 1 for the other sixteen — so "only one
+# fuel scoop" and "at most four Gauss Cannons" are the same rule with a different number, and
+# modelling it as a boolean would hide three quarters of an anti-xeno loadout.
+LIMIT_COLUMNS = ["group", "most"]
 
 PADS = {1: "small", 2: "medium", 3: "large"}
 
@@ -485,6 +498,9 @@ def build_modules(
                     # carry one. Remediation 15 items 2b and 9.
                     figures(module),
                     " ".join((module.get("ukDiscript") or "").split()),
+
+                    # Also filled from EDSY in main(). Last, so no index above it moves.
+                    "",
                 ]
 
                 # coriolis-data lists 35 symbols twice, and one of the two is a husk: a
@@ -634,6 +650,9 @@ def build_bulkheads(
             # Armour's own figures are the five resistance columns above.
             "",
             " ".join((bulkhead.get("ukDiscript") or "").split()),
+
+            # Also filled from EDSY in main(). Last, so no index above it moves.
+            "",
         ])
 
     # Whatever is left in `figures` had figures and no name. Nothing can be keyed to it, so
@@ -889,7 +908,27 @@ def edsy_groups(database: str) -> list[list[str]]:
     return built
 
 
-def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, str, str]]:
+def edsy_limits(database: str) -> list[list[str]]:
+    """`eddb.limit{}` — how many modules of one limit group a ship may carry.
+
+    The group itself is on each module, from `edsy_modules`; this is the maximum. Both halves
+    are needed and neither is derivable from the other. Measured over 2,863 `Loadout` events,
+    every group the corpus contains maxes out at one — but it contains no AX or Guardian
+    weapon at all, so measuring alone would have shipped `hex` as one-per-ship and hidden
+    three quarters of an anti-xeno loadout. The source says 4, and the source is right.
+    """
+    found = re.search(r"\n\tlimit\s*:\s*\{(.*?)\n\t\},", database, re.S)
+
+    if not found:
+        return []
+
+    return sorted(
+        [group, most]
+        for group, most in re.findall(r"'([a-z_]+)'\s*:\s*(\d+)", found.group(1))
+    )
+
+
+def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, str, str, str]]:
     """Symbol to (module type, the hulls it is restricted to, whether it must fill its slot).
 
     Two passes, because a bulkhead is declared twice. The generic modules carry their own
@@ -927,6 +966,7 @@ def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, s
             mtype,
             hull or " ".join(ships),
             "1" if "noundersize" in cell else "",
+            field(cell, "limit"),
         )
 
     for identifier, cell in generic.items():
@@ -1068,11 +1108,12 @@ def main() -> None:
     # The join, and its miss is reported rather than hidden: a module with no type is one no
     # slot will offer, which is a quiet hole in a picker rather than a wrong figure anywhere.
     types = edsy_modules(database, {ship["id"]: hull for hull, ship in hulls.items()})
+    limits = edsy_limits(database)
     untyped = []
 
     for row in modules:
         if row[0] in types:
-            row[18], row[19], row[20] = types[row[0]]
+            row[18], row[19], row[20], row[23] = types[row[0]]
         else:
             untyped.append(row[0])
 
@@ -1116,6 +1157,8 @@ def main() -> None:
     lines += ["\t".join(row) for row in modules]
 
     # What each kind of slot accepts, then every hull's slots in outfitting-screen order.
+    lines += ["[module-limits]", "\t".join(LIMIT_COLUMNS)]
+    lines += ["\t".join(row) for row in limits]
     lines += ["[slot-kinds]", "\t".join(SLOT_KIND_COLUMNS)]
     lines += ["\t".join(row) for row in kinds]
     lines += ["[slots]", "\t".join(SLOT_COLUMNS)]

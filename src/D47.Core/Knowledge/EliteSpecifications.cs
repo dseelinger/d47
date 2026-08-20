@@ -140,6 +140,18 @@ public sealed record ModuleSpecification
     public IReadOnlyList<(string Name, string Value)> Figures { get; init; } = [];
 
     /// <summary>
+    /// The limited group this module belongs to, or null for one a ship may carry any number of.
+    /// <para>
+    /// <b>A group rather than the module's own name</b>, which is what makes it useful: a Standard
+    /// and an Advanced Docking Computer share <c>ifa_dc</c>, so fitting either rules out the other,
+    /// and all three shield generator families share <c>isg</c>. How many the group allows is
+    /// <see cref="EliteSpecifications.MostOf"/> — it is 1 for sixteen of the seventeen groups and
+    /// <b>4</b> for the AX and Guardian weapons.
+    /// </para>
+    /// </summary>
+    public string? Limit { get; init; }
+
+    /// <summary>
     /// Frontier's own description of the module, or null for one they do not describe.
     /// <para>
     /// <b>The answer to "what's special about a Guardian Distributor?" in their words</b> — that it
@@ -202,7 +214,8 @@ public static class EliteSpecifications
         IReadOnlyDictionary<string, ModuleSpecification> Modules,
         IReadOnlyList<string> KnownButUnmeasured,
         IReadOnlyDictionary<string, IReadOnlyList<ShipSlot>> Slots,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> SlotKinds);
+        IReadOnlyDictionary<string, IReadOnlyList<string>> SlotKinds,
+        IReadOnlyDictionary<string, int> Limits);
 
     public static IReadOnlyCollection<ShipSpecification> Ships => [.. Loaded.Value.Ships.Values];
 
@@ -396,6 +409,26 @@ public static class EliteSpecifications
         return module.Mount is { Length: > 0 } mount ? $"{said}, {mount}" : said;
     }
 
+    /// <summary>
+    /// How many modules of one limit group a ship may carry, or null for a group nothing limits.
+    /// <para>
+    /// <b>A count, and reading it as a flag loses three quarters of an anti-xeno build.</b> EDSY's
+    /// table says 1 for sixteen groups — fuel scoop, supercruise assist, shield generator, docking
+    /// computer, refinery, interdictor, fighter hangar, surface scanner, the scanners and the
+    /// multi-limpet controllers — and <b>4</b> for <c>hex</c>, the AX and Guardian weapons.
+    /// </para>
+    /// <para>
+    /// Measured across 2,863 <c>Loadout</c> events, every group the corpus contains maxes out at
+    /// exactly one, which corroborates the sixteen. It contains no AX or Guardian weapon at all,
+    /// so the corpus could never have found the seventeenth — which is why the source is the
+    /// authority here and the corpus is the check.
+    /// </para>
+    /// </summary>
+    public static int? MostOf(string? group) =>
+        group is { Length: > 0 } named && Loaded.Value.Limits.TryGetValue(named, out var most)
+            ? most
+            : null;
+
     /// <summary>One slot of one hull, by the name the journal writes, or null for neither.</summary>
     public static ShipSlot? Slot(string? hull, string? slot) =>
         string.IsNullOrWhiteSpace(slot)
@@ -563,7 +596,8 @@ public static class EliteSpecifications
                 new Dictionary<string, ModuleSpecification>(StringComparer.Ordinal),
                 [],
                 new Dictionary<string, IReadOnlyList<ShipSlot>>(StringComparer.Ordinal),
-                new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+                new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
+                new Dictionary<string, int>(StringComparer.Ordinal));
         }
 
         using var reader = new StreamReader(stream);
@@ -573,6 +607,7 @@ public static class EliteSpecifications
         var unmeasured = new List<string>();
         var slots = new Dictionary<string, List<ShipSlot>>(StringComparer.Ordinal);
         var kinds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var limits = new Dictionary<string, int>(StringComparer.Ordinal);
 
         var section = string.Empty;
 
@@ -599,6 +634,16 @@ public static class EliteSpecifications
                 case "[modules]" when !line.StartsWith("symbol\t", StringComparison.Ordinal):
                     var module = ReadModule(line.Split('\t'));
                     modules[module.Symbol] = module;
+                    break;
+
+                case "[module-limits]" when !line.StartsWith("group	", StringComparison.Ordinal):
+                    var limit = line.Split('	');
+
+                    if (limit.Length > 1 && int.TryParse(limit[1], out var most))
+                    {
+                        limits[limit[0]] = most;
+                    }
+
                     break;
 
                 case "[slot-kinds]" when !line.StartsWith("kind	", StringComparison.Ordinal):
@@ -631,7 +676,8 @@ public static class EliteSpecifications
                 entry => entry.Key,
                 entry => (IReadOnlyList<ShipSlot>)entry.Value,
                 StringComparer.Ordinal),
-            kinds);
+            kinds,
+            limits);
     }
 
     private static ShipSpecification ReadShip(string[] cells) => new()
@@ -665,6 +711,7 @@ public static class EliteSpecifications
         Mount = Mounts.GetValueOrDefault(Text(cells, 4) ?? string.Empty),
         Figures = Pairs(cells, 21),
         About = Text(cells, 22),
+        Limit = Text(cells, 23),
         Mass = Real(cells, 5),
         Power = Real(cells, 6),
         Integrity = Integer(cells, 7),

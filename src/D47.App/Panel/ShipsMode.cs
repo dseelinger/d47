@@ -24,6 +24,14 @@ public sealed class ShipsMode(
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
 
+    /// <summary>
+    /// The chooser key for "keep the module this plan already names". Its own sentinel rather
+    /// than the empty string the fitted row uses, because the two answer differently: empty
+    /// plans no module at all, and this one carries the planned module through untouched. No
+    /// module name can collide with it — a colon is not in one.
+    /// </summary>
+    private const string KeepPlanned = "keep:planned";
+
     public string RootKey => LoadoutPages.FleetRoot;
 
     public string RootWord => "Ships";
@@ -798,13 +806,39 @@ public sealed class ShipsMode(
         // What the engineering does, where something has been chosen. Asked for as an area
         // describing the effects of the particular engineering choices (item 8), and it moves with
         // the stepper because the figures are the top grade's.
-        if (BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
-                .Where(recipe => recipe.Grade == plan.Grade || recipe.Grade is null)
-                .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe()
-            is { Length: > 0 } does)
+        var rolled = BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+            .Where(recipe => recipe.Kind == BlueprintKind.Modification)
+            .Where(recipe => recipe.Grade == plan.Grade || recipe.Grade is null)
+            .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe();
+
+        // **And what the experimental does, which was the half nobody drew** (asked for
+        // 2026-08-20). `Blueprints.tsv` has carried an `effects` column for its 154 experimental
+        // rows all along — "Hull Boost -3%, at the cost of Kinetic Resistance +8%" is derived by
+        // the same `Describe` from the same three fields — and the block above only ever asked
+        // about the blueprint. So a Commander choosing between Auto Loader and Corrosive Shell
+        // was reading a sentence about the *roll underneath them*, which is the same for both.
+        var special = BlueprintCatalogue.Named(plan.Experimental, plan.Module)
+            .Where(recipe => recipe.Kind == BlueprintKind.Experimental)
+            .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe();
+
+        if (rolled is { Length: > 0 } || special is { Length: > 0 })
         {
             lines.Add(new LoadoutLine("Effect", LoadoutTone.Heading));
+        }
+
+        if (rolled is { Length: > 0 } does)
+        {
             lines.Add(new LoadoutLine(does, LoadoutTone.Engineered));
+        }
+
+        // Named, and only where the blueprint is drawn beside it: two sentences under one heading
+        // are two claims about the same slot, and which one is the experimental's is the whole
+        // thing the Commander is trying to read. Alone, the heading has already said it.
+        if (special is { Length: > 0 } alsoDoes)
+        {
+            lines.Add(new LoadoutLine(
+                rolled is { Length: > 0 } ? $"{plan.Experimental}: {alsoDoes}" : alsoDoes,
+                LoadoutTone.Engineered));
         }
 
         if (build.Scope is not { } scope)
@@ -882,6 +916,60 @@ public sealed class ShipsMode(
             }));
     }
 
+    /// <summary>
+    /// Whether the ship has room for another of this module's limited group (asked for
+    /// 2026-08-20: <i>"remove the option to add a module that is already present and only allows
+    /// 1 of that type"</i>).
+    /// <para>
+    /// <b>The group is what is limited, not the module.</b> A Standard and an Advanced Docking
+    /// Computer share one, so fitting either rules out the other, and all three shield generator
+    /// families share another — so a list that only checked for the same module by name would
+    /// still offer a Bi-Weave beside the Prismatic already fitted.
+    /// </para>
+    /// <para>
+    /// <b>And it is a count.</b> Sixteen of the seventeen groups allow one; the AX and Guardian
+    /// weapons allow four. Treating it as a flag would have hidden three quarters of an anti-xeno
+    /// loadout.
+    /// </para>
+    /// <para>
+    /// <b>This slot never counts against itself</b>, which is the Commander's own condition:
+    /// replacing the fuel scoop that is already here must still offer fuel scoops. Everything
+    /// else on the ship counts, planned as well as fitted, because a plan for a second one is the
+    /// same mistake made a step earlier.
+    /// </para>
+    /// </summary>
+    private bool Room(ShipBuild build, ShipSlot slot, ModuleSpecification module)
+    {
+        if (module.Limit is not { Length: > 0 } group
+            || EliteSpecifications.MostOf(group) is not { } most)
+        {
+            return true;
+        }
+
+        var held = 0;
+
+        foreach (var other in EliteSpecifications.Slots(build.Hull))
+        {
+            if (string.Equals(other.Name, slot.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // The plan where the Commander has one for that slot, and what is in it otherwise:
+            // a plan is what the slot is going to hold, and it outranks what is there now.
+            var symbol = build.For(other.Name)?.Variant
+                         ?? (build.For(other.Name) is null ? FittedIn(build, other)?.Item : null);
+
+            if (EliteSpecifications.Module(symbol)?.Limit is { } occupied
+                && string.Equals(occupied, group, StringComparison.OrdinalIgnoreCase))
+            {
+                held++;
+            }
+        }
+
+        return held < most;
+    }
+
     /// <summary>The modules this slot takes, by name — then which one of it.</summary>
     private void AskModule(
         ShipBuild build,
@@ -901,6 +989,7 @@ public sealed class ShipsMode(
         // The spelling shown is the first in ordinal order, which is a rule rather than a taste —
         // and it lands on Frontier's own capitals here.
         var offered = EliteSpecifications.ModulesFor(slot)
+            .Where(module => Room(build, slot, module))
             .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -953,7 +1042,7 @@ public sealed class ShipsMode(
                     // unconditionally, so taking it on an empty slot planned engineering for a
                     // module that is not there. Named where there is one, because "if so, fine,
                     // but say so": keeping what is fitted is a real want and was left unsaid.
-                    .. Keeping(build, slot),
+                    .. Keeping(build, slot, plan),
                     .. offered.Select(group => new ChoiceOption(
                         Spelling(group),
                         Spelling(group),
@@ -970,6 +1059,14 @@ public sealed class ShipsMode(
                 if (option.Key.Length == 0)
                 {
                     chosen(null, null);
+                    return;
+                }
+
+                // Straight past the variant question: the plan already answers it, and asking a
+                // Commander who said "keep this module" which one they meant is asking twice.
+                if (option.Key == KeepPlanned)
+                {
+                    chosen(plan?.Module, plan?.Variant);
                     return;
                 }
 
@@ -1353,8 +1450,30 @@ public sealed class ShipsMode(
     /// nobody can name.
     /// </para>
     /// </summary>
-    private IReadOnlyList<ChoiceOption> Keeping(ShipBuild build, ShipSlot slot)
+    private IReadOnlyList<ChoiceOption> Keeping(ShipBuild build, ShipSlot slot, SlotPlan? plan)
     {
+        // **The plan first, where it names a module** (reported 2026-08-20). Reported as dragging
+        // a planned multi-cannon onto another slot, pressing "Change the plan" to alter only the
+        // experimental, and finding no way to say so. This row was keyed on what is *fitted*, so a
+        // slot holding a plan and nothing else — which is every slot on a ship being designed, and
+        // every slot on a ship the Commander is not sitting in — offered no way to keep the module
+        // and change the roll. The only route left was to pick the same module again from a list
+        // of forty and answer the variant question a second time.
+        //
+        // Keeping a *planned* module carries it through rather than clearing it, which is the
+        // other half: the fitted row means "do not plan a module at all" and answers null, and
+        // answering null here would silently drop the module the Commander had just copied.
+        if (plan?.Module is { Length: > 0 } planned)
+        {
+            var carried = Planned(plan) ?? planned;
+
+            return Offered(planned, plan.Variant) is { Count: 0 }
+                ? [new ChoiceOption(
+                    KeepPlanned,
+                    $"Keep the {carried} — I have no engineering for this module. Click to close.")]
+                : [new ChoiceOption(KeepPlanned, $"Keep the {carried} — I only want the engineering")];
+        }
+
         if (FittedIn(build, slot) is not { } module)
         {
             return [];
