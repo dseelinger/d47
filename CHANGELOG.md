@@ -17,6 +17,46 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.41.0 — 2026-08-20 — Routing you can see
+
+**A Routing tab, in the window.** Everything in it was already there and could only be spoken —
+and a route is the thing a voice is worst at. Three modes of one tab, in the idiom the transcript
+already uses: **Plan**, **Progress**, **Course**.
+
+**Progress is the one worth opening the tab for.** A Sol-to-Colonia plot is 131 waypoints, and
+reading that aloud is not an answer, so what d47 *says* is the totals and the next handful. That
+cap belongs to speech. The page draws the whole route: every hop, its class, which ones are
+neutron stars or white dwarfs, which cannot refuel you, and where you are in it. It reads the file
+Elite writes locally, so it costs no network and works with everything switched off.
+
+Two things it will not do, both deliberate. A leg whose length is unknown blanks the distance
+total rather than quietly shortening it. And a star class d47 does not recognise reads **scoop
+unknown**, never "no" — being told a star is unscoopable is how a Commander routes around one that
+would have refuelled them.
+
+**Plan is the three planners as forms** — jump route, Road to Riches, trade run — with the
+results drawn whole rather than cut to what would fit in a sentence. It shares the galaxy search
+setting, and switched off it says so and offers the row rather than failing. Your balance is still
+typed every time and still never saved: cargo capacity comes from the journal because it belongs
+to the hull, and what you are worth does not.
+
+**Course is the clipboard, in the order that matters** — the name goes on the clipboard first,
+whatever happens next, then the map is driven if you asked, then d47 checks whether it took. Every
+system name anywhere on the tab copies when you press it.
+
+**A route plotted by voice appears in the tab, and one plotted in the tab is the one d47 talks
+about.** Both write and read one plan in `data/route-plans.json`, so the two cannot drift into
+holding different routes.
+
+The headset does not get this tab. Its plan forms want a keyboard, and Progress may yet go there
+on its own.
+
+**And the published route-planning page had a test failure pasted into it**, inside the
+`plot_trade_route` schema block, since 0.39.0. Removed, and the documentation gate now requires a
+schema block to *be* the schema rather than merely contain one — which is what let it through.
+
+---
+
 ## 0.40.0 — 2026-08-20 — The loadout, the drag, and the engineer you are parked at
 
 **Ctrl-drag never worked, on any slot, since it shipped.** The pointer is captured by the row the

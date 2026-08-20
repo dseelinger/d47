@@ -115,12 +115,16 @@ to have. See [Settings](settings.md).
 One bar along the top, and each tab is a surface of its own:
 
 ```text
-Transcript   Checklist   Loadout   Engineers   Utilities   Settings
+Transcript   Routing   Checklist   Loadout   Engineers   Utilities   Settings
 ```
 
-**Settings is absent in the headset.** The settings surface wants a 1180-pixel navigation column,
-which at a metre is a wall rather than a page. Everything else is on both surfaces — including
-the checklist, which used to be a separate window and was therefore invisible in VR entirely.
+**The two surfaces do not carry the same tabs.** In the headset the panel is Transcript,
+Engineers, Utilities and Settings; Routing, Checklist and Loadout are the window's. That is a
+choice rather than a limitation — a tab appears where a host asks for it, and asking is one line
+— and the reasons differ. Settings wants a 1180-pixel navigation column, which at a metre is a
+wall rather than a page. Routing's plan forms want a keyboard the headset has not got, though its
+Progress page would read well at a metre and may yet go there. Checklist and Loadout were
+withdrawn on the Commander's own instruction.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
