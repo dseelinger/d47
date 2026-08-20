@@ -801,15 +801,26 @@ public partial class PanelView : UserControl
     /// </para>
     /// </summary>
     public void EnableRouting(
-        Func<D47.Core.Journal.NavRoute> route,
-        Func<string?> here,
-        bool progress = true)
+        RoutingSurface surface,
+        bool plan = true,
+        bool progress = true,
+        bool course = true)
     {
         var roots = new List<NavCrumb>();
+
+        if (plan)
+        {
+            roots.Add(new NavCrumb(RoutingPages.PlanRoot, "Plan"));
+        }
 
         if (progress)
         {
             roots.Add(new NavCrumb(RoutingPages.ProgressRoot, "Progress"));
+        }
+
+        if (course)
+        {
+            roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course"));
         }
 
         if (roots.Count == 0)
@@ -817,13 +828,34 @@ public partial class PanelView : UserControl
             return;
         }
 
-        _routeState = route;
-        _routeHere = here;
+        _routeState = surface.Route;
+        _routeHere = surface.Here;
 
         Furnish(
             PanelTab.Routing,
-            crumb => RoutingPages.Build(crumb, route, here, page => _routeProgress = page),
+            crumb =>
+            {
+                var page = RoutingPages.Build(crumb, surface, Nav);
+
+                // Held onto so the tick can redraw Progress and a plot made elsewhere can
+                // redraw Plan. Assigned rather than accumulated: a root is rebuilt when it is
+                // selected, so the last one built is the one on screen.
+                _routeProgress = page as RouteProgressPage ?? _routeProgress;
+                _routePlan = page as RoutePlanPage ?? _routePlan;
+
+                return page;
+            },
             [.. roots]);
+
+        // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the
+        // Plan page one redraw out of date, because "show the last one" is drawn from the book.
+        // The book being shared is precisely what makes this one subscription rather than a
+        // guess about who plotted. It redraws the page and never navigates: a Commander reading
+        // a result when a plot lands elsewhere should stay where they are.
+        if (surface.Plans is { } plans)
+        {
+            plans.Changed += () => _routePlan?.Refresh();
+        }
     }
 
     /// <summary>
@@ -857,6 +889,7 @@ public partial class PanelView : UserControl
     }
 
     private RouteProgressPage? _routeProgress;
+    private RoutePlanPage? _routePlan;
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
     private D47.Core.Journal.NavRoute? _routeSeen;

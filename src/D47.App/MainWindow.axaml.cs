@@ -154,7 +154,13 @@ public partial class MainWindow : Window
             // This window only: the plan forms want a keyboard the headset has not got. If VR
             // ever gets this tab it gets Progress and nothing else, which is a different set of
             // flags on this same call rather than a second page.
-            Panel.EnableRouting(() => host.Route, () => host.GameState.Active?.Location.StarSystem);
+            Panel.EnableRouting(new RoutingSurface(
+                () => host.Route,
+                () => host.GameState.Active?.Location.StarSystem,
+                host.Capabilities,
+                host.Plans,
+                () => host.Settings.Current.Knowledge.GalaxySearch,
+                OpenSettings));
 
             // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at

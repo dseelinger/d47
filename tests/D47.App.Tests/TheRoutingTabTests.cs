@@ -4,7 +4,10 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Interface;
+using D47.Core.Capabilities;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -34,11 +37,18 @@ public class TheRoutingTabTests
         return panel;
     }
 
+    /// <summary>
+    /// The tab with Progress alone — which is also the shape the headset would be given if it
+    /// ever got this tab, and is the reason the roots are flags.
+    /// </summary>
     private static PanelView Furnished(NavRoute route, string? here = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableRouting(() => route, () => here);
+        panel.EnableRouting(
+            new RoutingSurface(() => route, () => here),
+            plan: false,
+            course: false);
 
         return Laid(panel);
     }
@@ -165,5 +175,219 @@ public class TheRoutingTabTests
         Assert.Contains(
             TextOf(panel),
             text => text.Contains("not on this route", StringComparison.Ordinal));
+    }
+
+    private static RoutePlanBook Book(string folder)
+    {
+        Directory.CreateDirectory(folder);
+
+        return new RoutePlanBook(
+            Path.Combine(folder, "route-plans.json"),
+            NullLogger<RoutePlanBook>.Instance);
+    }
+
+    private static string Scratch() =>
+        Path.Combine(Path.GetTempPath(), "d47-routing-" + Guid.NewGuid().ToString("N"));
+
+    private static PanelView FullyFurnished(
+        NavRoute route,
+        RoutePlanBook plans,
+        bool lookups = true,
+        Action? openSettings = null)
+    {
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableRouting(new RoutingSurface(
+            () => route,
+            () => null,
+            CapabilityRegistry.Build([]),
+            plans,
+            () => lookups,
+            openSettings));
+
+        return Laid(panel);
+    }
+
+    /// <summary>
+    /// Three readings of one journey, in one tab and one mode control — the same collapse
+    /// Transcript makes for Conversation, Technical and the log file.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheTabCarriesThreeModesRatherThanThreeTabs()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder));
+
+            var words = panel.Nav.Roots(PanelTab.Routing).Select(root => root.Word).ToArray();
+
+            Assert.Equal(["Plan", "Progress", "Course"], words);
+
+            // And exactly one tab was spent on them.
+            Assert.True(panel.GetControl<RadioButton>("RoutingTab").IsVisible);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Plotting off is a capability that is off rather than an error, and it says which setting
+    /// turns it on — the same answer the tool gives.
+    /// </summary>
+    [AvaloniaFact]
+    public void PlanSaysPlottingIsOffRatherThanFailing()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var opened = 0;
+            var panel = FullyFurnished(NavRoute.None, Book(folder), lookups: false, () => opened++);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains(drawn, text => text.Contains("switched off", StringComparison.Ordinal));
+            Assert.Contains(drawn, text => text.Contains("Look things up in the galaxy", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public void PlanOffersTheThreePlannersWhenLookupsAreOn()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder));
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("Jump route", drawn);
+            Assert.Contains("Road to Riches", drawn);
+            Assert.Contains("Trade run", drawn);
+
+            // The one figure that is about the Commander rather than their ship.
+            Assert.Contains(drawn, text => text.Contains("never read from the journal", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// A stored plan opens as a level and is drawn whole. The capability speaks five waypoints
+    /// because 131 read aloud is not an answer; that cap belongs to speech and not to the plan.
+    /// </summary>
+    [AvaloniaFact]
+    public void AStoredPlanIsDrawnWholeRatherThanCutToWhatWasSpoken()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+
+            var waypoints = Enumerable
+                .Range(0, 30)
+                .Select(index => new RouteWaypoint($"Waypoint {index}", 3, 1000 - index, index % 7 == 0))
+                .ToArray();
+
+            plans.Record(
+                new PlottedRoute("Sol", "Colonia", 22_000, 168, waypoints),
+                "Sol to Colonia",
+                new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero));
+
+            var panel = FullyFurnished(NavRoute.None, plans);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("Waypoint 0", drawn);
+            Assert.Contains("Waypoint 29", drawn);
+            Assert.Contains(drawn, text => text.Contains("168 jumps", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// A plan can go away between the button being drawn and being pressed: the file is
+    /// hand-editable and another plot replaces what was there.
+    /// </summary>
+    [AvaloniaFact]
+    public void AResultLevelForAPlanThatIsGoneSaysSo()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder));
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, "gone"));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Contains(
+                TextOf(panel),
+                text => text.Contains("no longer here", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Course opens on the system the Commander is already going to, which is the one they
+    /// usually want, and says that the clipboard is the half that always works.
+    /// </summary>
+    [AvaloniaFact]
+    public void CourseStartsFromWhereTheRouteEnds()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(Route(Hop("Sol"), Hop("Colonia", 4)), Book(folder));
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.CourseRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            var boxes = panel.GetVisualDescendants().OfType<TextBox>().Select(box => box.Text).ToArray();
+
+            Assert.Contains("Colonia", boxes);
+            Assert.Contains(
+                TextOf(panel),
+                text => text.Contains("clipboard first", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 }
