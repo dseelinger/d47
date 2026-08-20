@@ -546,3 +546,26 @@ a row shows what is fitted as well, and a module is not a plan.
 
 **The next attempt is now diagnostic.** Try the drag again against 0.39.1: either it copies, or it
 says which rule turned it down. Either answer closes the item.
+
+## Where item 13 stands
+
+**Open, and the recovery half may already exist.** `SpeechPipeline` has a `VoiceRejected` path
+that forgets a refused voice, lets the provider choose, and tells whoever chose it — and
+`ElevenLabsTtsProvider.FaultFor` classifies a 400 or a 404 as exactly that. Whether the
+famous-voice refusal reaches it depends on the status ElevenLabs sends with that message, which
+the pasted log does not carry. Two possibilities, needing different work:
+
+- **It is a 400.** Recovery already fired on the first sentence, and the line reported is a later
+  one arriving after the voice had been forgotten once — `Forget()` answers only the first time,
+  by design.
+- **It is a 403, or anything else.** Then it is `TtsFault.Unknown`, nothing recovers, and every
+  sentence of every turn is dropped for the rest of the session.
+
+**Either way the listing is the real fix**, because a voice that cannot be spoken should never be
+offered at all. That needs the account's own `category` values, which one command prints:
+
+```
+ELEVENLABS_API_KEY=sk_... python spike/ElevenLabsProbe/probe_voices.py
+```
+
+The status code can come out of the same run, and the two together decide the whole item.
