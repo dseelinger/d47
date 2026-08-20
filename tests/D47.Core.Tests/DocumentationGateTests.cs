@@ -78,11 +78,19 @@ public partial class DocumentationGateTests
 
             // Quoting the canonical schema means the page cannot drift from the tool. When this
             // fails, the fix is to paste the schema below into the page.
+            //
+            // A fenced block has to *be* the schema rather than merely contain it (list.md Phase
+            // 37). Containment was the first version, and it let a pasted test failure sit inside
+            // routes.md's plot_trade_route fence for a whole phase: the schema was still in
+            // there, so the gate reported a documented tool while a Commander read a stack trace
+            // off the published page. Anything a page wants to say *about* a schema it can say
+            // outside the fence.
             Assert.True(
-                page.Contains(schema, StringComparison.Ordinal),
+                FencedBlocksIn(page).Any(block => string.Equals(block, schema.Trim(), StringComparison.Ordinal)),
                 $"""
-                 The documentation page for '{id}' does not quote the current schema for '{tool}'.
-                 Paste this into {CapabilityDocsFolder}/{id}.md:
+                 The documentation page for '{id}' does not quote the current schema for '{tool}'
+                 as a fenced block of its own. Paste this into {CapabilityDocsFolder}/{id}.md,
+                 inside a fence with nothing else in it:
 
                  {schema}
                  """);
@@ -358,6 +366,19 @@ public partial class DocumentationGateTests
 
     [GeneratedRegex(@"[`*]{1,2}(?<gesture>[A-Za-z0-9+,./=\-]+)[`*]{1,2},? (?:out of the box|by default)")]
     private static partial Regex DefaultGesturePattern();
+
+    /// <summary>
+    /// The contents of every fenced block on a page, trimmed. Used to assert that a schema is
+    /// quoted <em>as</em> a block rather than found somewhere inside one — see the assertion in
+    /// <see cref="EveryPageQuotesTheCurrentToolSchema"/> for what mere containment let through.
+    /// </summary>
+    private static IEnumerable<string> FencedBlocksIn(string page) =>
+        FencePattern()
+            .Matches(page)
+            .Select(match => match.Groups["body"].Value.Trim());
+
+    [GeneratedRegex(@"^```[A-Za-z]*[ \t]*\r?\n(?<body>.*?)^```", RegexOptions.Multiline | RegexOptions.Singleline)]
+    private static partial Regex FencePattern();
 
     /// <summary>
     /// A throwaway install: the gate cares about identity, schemas and settings rows, none of
