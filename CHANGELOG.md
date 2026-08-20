@@ -17,6 +17,25 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.39.2 — 2026-08-20 — A voice that cannot speak is not offered
+
+Remediation 17, item 13. Reported from the log: d47 went quiet, and behind the silence was
+*"Famous voices can only be used within the Reader App"* — a voice ElevenLabs will list for your
+account and then refuse to speak with. A sentence that will not synthesise is dropped, so from
+the Commander's side there is nothing to see and nothing to hear.
+
+**The obvious filter cannot work.** Those voices come back in the category `professional`, which is
+the same category as the several hundred ordinary ones beside them — *Burt Reynolds™*, *John
+Wayne™* and *Stan Lee™* are indistinguishable, by every field the service returns, from *"Brian -
+Clean, Professional and Balanced"*. Filtering on category would have hidden hundreds of voices you
+can actually use and still let the famous ones through.
+
+The trademark in the name is the only thing that separates them, so that is what the voice list
+now drops. And because that is a rule about somebody else's text, it is not the only defence: a
+refusal that mentions the Reader App is now treated as a fact about the voice rather than about
+the sentence, which makes d47 forget it, fall back to a voice that works, and say so. If the
+convention changes, it costs one sentence instead of an evening.
+
 ## 0.39.1 — 2026-08-19 — It knows what it said, and it says less of it
 
 Remediation 17, eleven of fourteen items. Ten were reported against 0.39.0 by the Commander; the
