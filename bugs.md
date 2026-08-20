@@ -65,7 +65,7 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
 
-## Open: PlayingASecondVoiceCancelsTheFirst fails on CI for the third time
+## Open: a headless-session cleanup failure that six different tests have now carried
 
 `D47.App.Tests.AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` timed out on the CI
 runner during the 0.38.0 release, at the `cancelled.Task.WaitAsync` on line 210 — the second press
@@ -188,3 +188,27 @@ reproduce it — it is to make the fifth occurrence arrive carrying evidence. Ca
 the managed thread id owning `Dispatcher.UIThread` against the session's dispatch thread id. That
 turns "the same stack again" into a name. `dotnet-trace` does not help here: the test process has
 already exited by the time the failure is reported.
+
+### Fifth and sixth, 2026-08-20, and one of them was local
+
+The release run for v0.41.1 hit it twice in one afternoon, and the pair is worth more than either.
+
+**On the runner:** `AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` — the *original*
+test from the first entry, back after three occurrences carried by three other tests. It cleared on
+a re-run of the identical commit, as every previous one has, and cost a third release run.
+
+**And, an hour earlier, locally:** `LoadoutTabTests.KeepingWhatIsFittedListsThatModulesRolls` failed
+in a local `dotnet test -c Release` with the same exception, the same *cleanup* framing, and the
+same `EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` → `Compositor..ctor` →
+`ServerCompositor..ctor` → `DefaultRenderLoop.Add` stack. It passed alone, and the whole App suite
+passed clean on the next run.
+
+**That is the first local occurrence, and it retires an argument rather than a theory.** "Three
+clean consecutive local Release runs" has been offered as evidence four times and has been the
+wrong evidence every time; the entry already says local runs stopped predicting the runner. What is
+now settled is stronger: this is *not* a property of the runner at all. It is rarer locally, which
+is a matter of timing and machine load, and nothing more. So the instrumentation described above no
+longer needs a runner to catch it — a local loop of the Release App suite will produce it, given
+enough repetitions, and can be watched under a debugger.
+
+A sixth carrier test, still unrelated to the other five, still not the subject.
