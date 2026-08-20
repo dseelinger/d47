@@ -1,9 +1,12 @@
+using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
@@ -126,10 +129,63 @@ public class LoadoutTabTests
             .First(button => button.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text is { } said && said.Contains(label, StringComparison.Ordinal)));
 
+    /// <summary>
+    /// The ctrl-drag as it really arrives: pressed on one row, moved over another, and released
+    /// <b>on the row it was pressed on</b> — because the pointer is captured there, which is what
+    /// made the copy silently do nothing for every slot kind since it shipped.
+    /// </summary>
+    private static void CtrlDrag(PanelView panel, Button from, Button to)
+    {
+        var pointer = new Pointer(1, PointerType.Mouse, isPrimary: true);
+        var over = Centre(panel, to);
+
+        from.RaiseEvent(new PointerPressedEventArgs(
+            from,
+            pointer,
+            panel,
+            Centre(panel, from),
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.Control));
+
+        from.RaiseEvent(new PointerEventArgs(
+            InputElement.PointerMovedEvent,
+            from,
+            pointer,
+            panel,
+            over,
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other),
+            KeyModifiers.Control));
+
+        from.RaiseEvent(new PointerReleasedEventArgs(
+            from,
+            pointer,
+            panel,
+            over,
+            0,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+            KeyModifiers.Control,
+            MouseButton.Left));
+
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>The middle of a control, in another visual's coordinates.</summary>
+    private static Point Centre(Visual within, Control control) =>
+        control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), within)
+        ?? throw new InvalidOperationException("That control is not in the same visual tree.");
+
+    /// <summary>
+    /// A row by what it is called. A slot row no longer <em>draws</em> its slot name — the row was
+    /// rebuilt around the loadout, so it leads with the size — but it still announces one, which
+    /// is what a screen reader reads and what this matches on.
+    /// </summary>
     private static Button Row(PanelView panel, string label) =>
         panel.GetVisualDescendants().OfType<Button>()
-            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == label));
+            .First(button => AutomationProperties.GetName(button) == label
+                             || button.GetVisualDescendants().OfType<TextBlock>()
+                                 .Any(text => text.Text == label));
 
     /// <summary>The tab arrives when the host furnishes it, on both surfaces.</summary>
     [AvaloniaFact]
@@ -218,7 +274,7 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         // The ship's slot index, which only exists if the pane followed the click.
-        Assert.Contains("Main Engines", Text(surface.Panel));
+        Assert.NotNull(Row(surface.Panel, "Main Engines"));
 
         surface.Window.Close();
     }
@@ -438,8 +494,15 @@ public class LoadoutTabTests
         Assert.True(shown.IndexOf("Utility Mounts") < shown.IndexOf("Core Internal"));
         Assert.True(shown.IndexOf("Core Internal") < shown.IndexOf("Optional Internal"));
 
+        // A utility mount is drawn under its own heading. Checked by position rather than by text
+        // order: the row no longer draws the slot's name, so what it announces is what says which
+        // row it is.
+        var mounts = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
+            .First(block => block.Text == "Utility Mounts");
+
         Assert.True(
-            shown.IndexOf("Utility Mount 1") > shown.IndexOf("Utility Mounts"),
+            Row(surface.Panel, "Utility Mount 1").TranslatePoint(default, surface.Panel)!.Value.Y
+            > mounts.TranslatePoint(default, surface.Panel)!.Value.Y,
             "a utility mount is drawn under Utility Mounts");
 
         surface.Window.Close();
@@ -463,14 +526,19 @@ public class LoadoutTabTests
 
         var shown = Text(surface.Panel).ToList();
 
-        // A Python has three large hardpoints and two medium; one of them is fitted.
-        Assert.Contains("Large Hardpoint 1", shown);
-        Assert.Contains("Large Hardpoint 2", shown);
-        Assert.Contains("Medium Hardpoint 1", shown);
+        // A Python has three large hardpoints and two medium; one of them is fitted. The rows no
+        // longer draw the slot's name — they lead with the size and the module — so they are found
+        // by what they announce, which is what a screen reader reads.
+        Assert.NotNull(Row(surface.Panel, "Large Hardpoint 1"));
+        Assert.NotNull(Row(surface.Panel, "Large Hardpoint 2"));
+        Assert.NotNull(Row(surface.Panel, "Medium Hardpoint 1"));
 
-        // And the empty ones say so, rather than carrying a blank note that reads as d47 having
+        // And the empty ones say so, rather than carrying a blank that reads as d47 having
         // nothing to say about them.
         Assert.Contains("empty", shown);
+
+        // The size leads the row, and a Python's large hardpoints are size 3.
+        Assert.Contains("3", shown);
 
         surface.Window.Close();
     }
@@ -564,31 +632,7 @@ public class LoadoutTabTests
         var from = Row(surface.Panel, "Large Hardpoint 2");
         var to = Row(surface.Panel, "Large Hardpoint 1");
 
-        var pointer = new Pointer(1, PointerType.Mouse, isPrimary: true);
-
-        from.RaiseEvent(new PointerPressedEventArgs(
-            from,
-            pointer,
-            surface.Panel,
-            default,
-            0,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.Control));
-
-        // Nothing holds the pointer, so the release is free to land on the row under the cursor.
-        Assert.Null(pointer.Captured);
-
-        to.RaiseEvent(new PointerReleasedEventArgs(
-            to,
-            pointer,
-            surface.Panel,
-            default,
-            0,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
-            KeyModifiers.Control,
-            MouseButton.Left));
-
-        Dispatcher.UIThread.RunJobs();
+        CtrlDrag(surface.Panel, from, to);
 
         var slots = surface.Ships.Store.Builds.SelectMany(each => each.Slots).ToList();
 
@@ -626,28 +670,7 @@ public class LoadoutTabTests
         var from = Row(surface.Panel, "Large Hardpoint 1");
         var to = Row(surface.Panel, "Large Hardpoint 2");
 
-        var pointer = new Pointer(1, PointerType.Mouse, isPrimary: true);
-
-        from.RaiseEvent(new PointerPressedEventArgs(
-            from,
-            pointer,
-            surface.Panel,
-            default,
-            0,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.Control));
-
-        to.RaiseEvent(new PointerReleasedEventArgs(
-            to,
-            pointer,
-            surface.Panel,
-            default,
-            0,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
-            KeyModifiers.Control,
-            MouseButton.Left));
-
-        Dispatcher.UIThread.RunJobs();
+        CtrlDrag(surface.Panel, from, to);
 
         var shown = Text(surface.Panel);
 
@@ -740,21 +763,25 @@ public class LoadoutTabTests
         Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
+        // The gear follows the *module's* name now, not the slot's — the row leads with the size
+        // and the module, so the module is what the mark belongs to.
         var label = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
             .First(block => block.Inlines is { Count: > 0 } inlines
                 && inlines[0] is Run named
-                && named.Text == "Large Hardpoint 1");
+                && named.Text is { } said
+                && said.StartsWith("3E Pulse Laser", StringComparison.Ordinal));
 
         // The name, then the mark, in that order and in one block.
         Assert.Equal(2, label.Inlines!.Count);
         Assert.Equal(" ⚙", ((Run)label.Inlines[1]).Text);
 
-        // And nothing before the name: an engineered row with no plan has no leading glyph at all.
+        // And it is not a glyph of its own anywhere on the row: the gear travels with the last
+        // word of the name rather than sitting in a column.
         var row = label.GetVisualAncestors().OfType<Button>().First();
 
         Assert.DoesNotContain(
             row.GetVisualDescendants().OfType<TextBlock>(),
-            block => block.Text == "⚙" || block.Text == "●");
+            block => block.Text == "⚙");
 
         surface.Window.Close();
     }
@@ -816,6 +843,111 @@ public class LoadoutTabTests
     }
 
     /// <summary>
+    /// The reported case, verbatim: Anaconda, Utility Mount 5 to Utility Mount 6
+    /// (reported 2026-08-20, "CTRL+drag is not copying mount 5 to mount 6").
+    /// <para>
+    /// <b>The fault was never the rules.</b> <c>SlotCopy</c> resolves TinyHardpoint5 to
+    /// TinyHardpoint6 with the plan intact, and this passed before the fix — because it, and the
+    /// older drag test above, raised the release on the <em>target</em> row. The app cannot: the
+    /// pointer is captured by the row the press landed on, so the release comes home, the handler
+    /// saw <c>from == slot</c>, and it did nothing at all. On every slot kind, since it shipped.
+    /// </para>
+    /// <para>
+    /// Both now drag through <see cref="CtrlDrag"/>, which releases where the app does.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void CtrlDraggingCopiesBetweenUtilityMounts()
+    {
+        var surface = Open();
+
+        var build = surface.Ships.BuildFor(7, "anaconda", "Big Slow");
+
+        surface.Ships.Plan(
+            build.Id,
+            new SlotPlan("TinyHardpoint5", "Heavy Duty", 5) { Experimental = "Super Capacitor" });
+
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var from = Row(surface.Panel, "Utility Mount 5");
+        var to = Row(surface.Panel, "Utility Mount 6");
+
+        CtrlDrag(surface.Panel, from, to);
+
+        var copied = surface.Ships.Store.Builds
+            .SelectMany(each => each.Slots)
+            .SingleOrDefault(slot => slot.Slot == "TinyHardpoint6");
+
+        Assert.NotNull(copied);
+        Assert.Equal("Heavy Duty", copied.Blueprint);
+        Assert.Equal("Super Capacitor", copied.Experimental);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// Keeping what is fitted still reaches the experimental effect (reported 2026-08-20).
+    /// <para>
+    /// Reported as *"Anaconda, utility mount, Shield Booster, Keep this module: after selecting
+    /// Heavy Duty it skipped allowing me to pick an experimental effect."* The two lists were
+    /// joined by different means — the blueprint list resolves the module's symbol, which is
+    /// exact, while the effect list matched on the name alone. "Keep this module" answers the
+    /// module question with null on purpose, so the subject falls back to
+    /// <c>EliteSpecifications.ModuleName</c>, which returns the size and rating with it —
+    /// "0A Shield Booster", which matches no module in the blueprint table.
+    /// </para>
+    /// <para>
+    /// So the roll list was right and the effect list was empty, and a step with nothing to offer
+    /// is not shown at all — correct behaviour reached from a wrong answer, and therefore silent.
+    /// The prefix is on every fitted module's name, so this was never about Shield Boosters.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void KeepingWhatIsFittedStillAsksAboutTheExperimentalEffect()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Large Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Modal(surface.Panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text?.StartsWith("Keep the 3E Pulse Laser", StringComparison.Ordinal) == true))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+
+        // The roll, which worked before this fix and must go on working.
+        Pick(surface.Panel, "Long Range Weapon").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The step that was skipped. A pulse laser's experimentals, and the row that declines it.
+        var effects = Offered(surface.Panel);
+
+        Assert.Contains("No effect", effects);
+
+        // A pulse laser's own, from the shipped table. Named rather than counted, because the
+        // fault was a list scoped to the wrong module rather than a list of the wrong length.
+        Assert.Contains("Thermal Shock", effects);
+        Assert.Contains("Scramble Spectrum", effects);
+
+        // And not one belonging to something else. Ammo Capacity is a modification rather than an
+        // experimental, so its presence would mean the whole catalogue again.
+        Assert.DoesNotContain("Ammo Capacity", effects);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// Planning a slot offers the valid choices for it, and never asks for a spelling
     /// (remediation.md 12, item 5).
     /// <para>
@@ -869,7 +1001,14 @@ public class LoadoutTabTests
 
         // Nothing bigger than the slot, and the decline is still a real plan.
         Assert.DoesNotContain("Huge, fixed", variants);
-        Assert.Contains("Any Pulse Laser — size and mount do not matter", variants);
+        Assert.Contains("Any Pulse Laser — I do not mind which", variants);
+
+        // **And it never claims the size or the mount is irrelevant** (reported 2026-08-20 against
+        // "Any Frame Shift Drive (SCO) — size and mount do not matter"). It is false about every
+        // module Elite has: an FSD's size is most of a jump range and a weapon's mount is the
+        // whole of how it tracks. The row is the Commander declining to specify, not d47 saying
+        // the choice is unimportant.
+        Assert.DoesNotContain(variants, said => said.Contains("do not matter", StringComparison.Ordinal));
 
         Pick(surface.Panel, "Large, gimballed").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -1048,6 +1187,39 @@ public class LoadoutTabTests
     }
 
     /// <summary>
+    /// The system a ship is parked in can be taken away on the clipboard, to be pasted into
+    /// Elite's Galaxy Map search (asked for 2026-08-20).
+    /// <para>
+    /// <b>The system, not the sentence.</b> The line reads "Parked at Jameson Memorial, Shinrarta
+    /// Dezhra." and the Galaxy Map will find none of that — only the system name, on its own.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSystemAShipIsInCanBeCopiedForTheGalaxyMap()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var copy = surface.Panel.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Content as string == "⧉");
+
+        // The pointer says what pressing it will do, and names the thing that goes on the
+        // clipboard — a glyph on its own is a control the Commander has to press to understand.
+        var tip = ToolTip.GetTip(copy) as string;
+
+        Assert.NotNull(tip);
+        Assert.Contains("Shinrarta Dezhra", tip, StringComparison.Ordinal);
+        Assert.Contains("Galaxy Map", tip, StringComparison.Ordinal);
+
+        // Not the station, which is on the same line and which the Galaxy Map does not take.
+        Assert.DoesNotContain("Jameson Memorial", tip, StringComparison.Ordinal);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// And the one you are flying adds the figures that depend on what is fitted, because those
     /// are the ones Elite actually reports (remediation.md 13, item 2).
     /// </summary>
@@ -1074,20 +1246,24 @@ public class LoadoutTabTests
     }
 
     /// <summary>
-    /// A long note beside a row does not squeeze the row's own name away
-    /// (remediation.md 14, item 1).
+    /// A row stays one line and trims, however much there is to say (asked for 2026-08-20: "use
+    /// ellipses rather than wrapping if space gets tight").
     /// <para>
-    /// Reported with a picture: the hardpoint carrying a plan was three hundred pixels tall, with
-    /// "Large Hardpoint 1" wrapped one character per line down the left edge while the plan took
-    /// the rest of the width. A right-docked child takes as much as it asks for, and what is left
-    /// is what the name gets — which for a plan naming a module, a blueprint, a grade and an
-    /// experimental effect was a few pixels.
+    /// This replaces a test of the two-column layout the row had until then, where a long plan was
+    /// docked to the right and the slot's name took whatever was left — reported as a hardpoint
+    /// three hundred pixels tall with its name wrapped one character per line. The row no longer
+    /// has two ends to fight over: everything is left-justified and the last run gives way.
+    /// </para>
+    /// <para>
+    /// <b>A wrapping row is worse than a truncated one.</b> It changes height, which moves every
+    /// row under it — so the list cannot be scanned, and a ray aimed at a row from a metre away
+    /// lands on the one below it.
     /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void ALongNoteDoesNotSqueezeTheRowsName()
+    public void ARowStaysOneLineAndTrimsRatherThanWrapping()
     {
-        var surface = Open();
+        var surface = Open(engineered: true);
 
         var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
 
@@ -1102,40 +1278,30 @@ public class LoadoutTabTests
         Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var row = Row(surface.Panel, "Large Hardpoint 1");
-        var name = row.GetVisualDescendants().OfType<TextBlock>()
-            .First(block => block.Text == "Large Hardpoint 1");
+        foreach (var width in new[] { 1400d, 900d, 620d })
+        {
+            surface.Window.Width = width;
+            Dispatcher.UIThread.RunJobs();
 
-        Assert.True(
-            name.Bounds.Width >= 100,
-            $"the row's name got {name.Bounds.Width:N0} pixels");
+            var row = Row(surface.Panel, "Large Hardpoint 1");
 
-        // And the row stays a row rather than becoming a paragraph.
-        Assert.True(row.Bounds.Height <= 80, $"the row is {row.Bounds.Height:N0} pixels tall");
+            // One line, at every width. The row's floor is 34 and its padding is 6 either side, so
+            // anything approaching double that is a second line.
+            Assert.True(
+                row.Bounds.Height <= 60,
+                $"the row is {row.Bounds.Height:N0} pixels tall at {width:N0}");
 
-        // Narrow enough that the note cannot fit beside the name on one line. It has to wrap
-        // rather than be cut off mid-word, which is what an Auto column does to a wrapping block:
-        // it measures as though it had forever, asks for its whole width, and is clipped to what
-        // it is given.
-        surface.Window.Width = 900;
-        Dispatcher.UIThread.RunJobs();
+            // Nothing in it wraps, and nothing spills past it.
+            foreach (var block in row.GetVisualDescendants().OfType<TextBlock>())
+            {
+                Assert.NotEqual(TextWrapping.Wrap, block.TextWrapping);
 
-        row = Row(surface.Panel, "Large Hardpoint 1");
-
-        var note = row.GetVisualDescendants().OfType<TextBlock>()
-            .First(block => block.Text is { } said && said.StartsWith("3E Pulse Laser", StringComparison.Ordinal));
-
-        Assert.True(note.Bounds.Height > note.FontSize, "the note wrapped rather than being cut");
-        Assert.True(
-            note.Bounds.Width <= row.Bounds.Width,
-            $"the note is {note.Bounds.Width:N0} pixels in a {row.Bounds.Width:N0} pixel row");
-
-        Assert.True(
-            Row(surface.Panel, "Large Hardpoint 1").GetVisualDescendants().OfType<TextBlock>()
-                .First(block => block.Text == "Large Hardpoint 1").Bounds.Width >= 100,
-            "and the name still has room at that width");
+                Assert.True(
+                    block.Bounds.Width <= row.Bounds.Width,
+                    $"“{block.Text}” is {block.Bounds.Width:N0} wide in a {row.Bounds.Width:N0} row");
+            }
+        }
 
         surface.Window.Close();
     }
-
 }

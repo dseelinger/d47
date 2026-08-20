@@ -564,18 +564,91 @@ public sealed class ChecklistService(
     /// same relationship the settings surface has to the capability registry: a projection, never
     /// a parallel list.
     /// </summary>
-    public IReadOnlyList<string> Filters()
+    public IReadOnlyList<string> Filters() => [.. FilterAxes().Select(filter => filter.Key)];
+
+    /// <summary>
+    /// The same filters, <b>each under the question it answers</b> (asked for 2026-08-20).
+    /// <para>
+    /// They were one flat list of lower-cased enum names — <c>derived</c>, <c>engineeringplan</c>,
+    /// <c>open</c>, <c>ship</c> — which reads as four alternatives and is nothing of the kind:
+    /// those are answers to four different questions, and an item is all four at once. Every item
+    /// promoted from a ship's build is a derived, engineering-plan, ship-scoped, open one, so all
+    /// four rows selected the identical set and the filter looked broken.
+    /// </para>
+    /// <para>
+    /// <b>Still a projection of the axes rather than a hand-written list</b>, which is the property
+    /// the flat version had and the one worth keeping: a fourth kind of plan appears here without
+    /// anybody remembering to add it. What is new is that each row carries the axis it came from
+    /// and a word a person would use, and <see cref="Key"/> is untouched — the matching in the
+    /// panel compares against enum names and must go on doing so.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
         var live = Document.Items.Where(item => item.IsLive).ToList();
 
-        var kinds = live.Select(item => item.Kind.ToString().ToLowerInvariant());
-        var sources = live.Where(item => item.Source != ChecklistSource.Commander)
-            .Select(item => item.Source.ToString().ToLowerInvariant());
-        var scopes = live.Select(item => ChecklistScope.Word(item.Scope.Group));
-        var states = live.Select(item => item.IsComplete ? "complete" : "open");
+        IEnumerable<ChecklistFilter> Axis<T>(
+            string heading, IEnumerable<T> values, Func<T, string> key, Func<T, string> word) =>
+            values.Select(value => new ChecklistFilter(key(value), word(value), heading))
+                .DistinctBy(filter => filter.Key, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(filter => filter.Word, StringComparer.OrdinalIgnoreCase);
 
-        return [.. kinds.Concat(sources).Concat(scopes).Concat(states).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+        return
+        [
+            .. Axis(
+                "Can d47 tell when it is done?",
+                live.Select(item => item.Kind),
+                kind => kind.ToString().ToLowerInvariant(),
+                kind => kind == ChecklistItemKind.Derived
+                    ? "Derived — d47 watches for it"
+                    : "Written down — you say when"),
+
+            .. Axis(
+                "What wrote it",
+                live.Where(item => item.Source != ChecklistSource.Commander).Select(item => item.Source),
+                source => source.ToString().ToLowerInvariant(),
+                Word),
+
+            // **No Ship row** (the Commander's ruling, 2026-08-20). Nearly everything derived is
+            // ship-scoped — every promoted build is — so it narrows almost nothing while reading
+            // like a real choice. The other scopes still earn their place: a construction site's
+            // deliveries are the System ones and an on-foot roll is Suit or Weapon, and each of
+            // those genuinely picks out a slice.
+            //
+            // The *scope* is untouched and still keyed on the journal's ShipID — it is what makes
+            // a ship's plan follow that ship through a swap. Only the filter row is gone.
+            .. Axis(
+                "What it belongs to",
+                live.Select(item => item.Scope.Group).Where(group => group != ChecklistGroup.Ship),
+                ChecklistScope.Word,
+                Capitalised),
+
+            .. Axis(
+                "Where it stands",
+                live.Select(item => item.IsComplete),
+                done => done ? "complete" : "open",
+                done => done ? "Finished" : "Still open"),
+        ];
     }
+
+    /// <summary>A scope's own word, with its first letter up. "ship" becomes "Ship".</summary>
+    private static string Capitalised(ChecklistGroup group)
+    {
+        var said = ChecklistScope.Word(group);
+
+        return said is { Length: > 0 } ? char.ToUpperInvariant(said[0]) + said[1..] : said;
+    }
+
+    /// <summary>What wrote an item, in words rather than in the enum's spelling.</summary>
+    private static string Word(ChecklistSource source) => Named(source);
+
+    private static string Named(ChecklistSource source) => source switch
+    {
+        ChecklistSource.EngineeringPlan => "A ship's build",
+        ChecklistSource.ColonisationPlan => "A construction site",
+        ChecklistSource.OnFootPlan => "A suit or weapon build",
+        _ => "You",
+    };
 
     private static string Heading(ChecklistScope scope) => scope.Group switch
     {
@@ -1109,3 +1182,15 @@ public sealed class ChecklistService(
     private static string Trim(string text) =>
         text.Length <= ChecklistLimits.MaxTextLength ? text : text[..ChecklistLimits.MaxTextLength];
 }
+
+/// <summary>
+/// One way of narrowing the checklist, and the question it answers.
+/// </summary>
+/// <param name="Key">
+/// What the panel matches against — an enum's own spelling, a scope word, or a state. Unchanged
+/// from the flat list this replaced, because the matching compares against these and must go on
+/// doing so.
+/// </param>
+/// <param name="Word">How it reads to a Commander.</param>
+/// <param name="Heading">The question it is an answer to.</param>
+public sealed record ChecklistFilter(string Key, string Word, string Heading);

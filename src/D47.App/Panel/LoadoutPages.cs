@@ -1,10 +1,12 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Documents;
 
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -285,6 +287,23 @@ public static class LoadoutPages
     /// </summary>
     internal static Control Stepped(LoadoutLine line)
     {
+        if (line.Copy is { } copy)
+        {
+            // Beside the text for the same reason the stepper is: the line is one string that is
+            // both shown and spoken, so it keeps its sentence and the control sits next to it.
+            var copyable = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            copyable.Children.Add(Line(line));
+            copyable.Children.Add(CopyGlyph(copy));
+
+            return copyable;
+        }
+
         if (line.Step is not { } step)
         {
             return Line(line);
@@ -326,6 +345,59 @@ public static class LoadoutPages
         row.Children.Add(Nudge("▼", at >= 0 && at < step.Offered.Count - 1, () => step.Set(step.Offered[at + 1])));
 
         return row;
+    }
+
+    /// <summary>
+    /// The glyph that puts one value on the clipboard — a system name, so it can be pasted into
+    /// the Galaxy Map's search.
+    /// <para>
+    /// <b>Asks its own visual root for the clipboard</b>, which is the call the transcript's Copy
+    /// already makes and for the same reason: the headset's host window is never shown and its
+    /// <c>TopLevel.Clipboard</c> is null. The button is then shut rather than throwing on a quad
+    /// a metre away — a control that can be pressed and does nothing teaches the wrong thing
+    /// about what the panel can do.
+    /// </para>
+    /// <para>
+    /// The confirmation is on the glyph itself. It is a one-click action, and a failure — another
+    /// application holding the clipboard — is otherwise indistinguishable from having worked.
+    /// </para>
+    /// </summary>
+    private static Button CopyGlyph(LoadoutCopy copy)
+    {
+        var button = new Button
+        {
+            Content = "⧉",
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(6, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(button, copy.Tip);
+
+        button.Click += async (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(button)?.Clipboard is not { } clipboard)
+            {
+                return;
+            }
+
+            try
+            {
+                await clipboard.SetTextAsync(copy.Value);
+                button.Content = "✓";
+            }
+            catch (Exception)
+            {
+                button.Content = "✗";
+            }
+        };
+
+        // Shut where there is nowhere to put it, decided when the line is drawn. Attached rather
+        // than asked for here because a control has no visual root until it is in a tree.
+        button.AttachedToVisualTree += (_, _) =>
+            button.IsEnabled = TopLevel.GetTopLevel(button)?.Clipboard is not null;
+
+        return button;
     }
 
     private static Button Nudge(string glyph, bool live, Action pressed)
@@ -408,13 +480,227 @@ public static class LoadoutPages
     /// margin on a <see cref="Run"/> is not a thing the text layout would honour.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The mark that says this module has been rolled.
+    /// <para>
+    /// <b>In the theme's accent</b> (asked for 2026-08-20), which is orange under Elite and
+    /// whatever the selected theme names under any other — bound to the key rather than to a
+    /// colour, so it follows a theme change without this knowing what the colour is.
+    /// </para>
+    /// <para>
+    /// It shares that accent with the plan dot, and the earlier note here worried that two marks
+    /// distinguished only by hue are one mark to a Commander who cannot separate the hues. They
+    /// are not: <c>⚙</c> and <c>●</c> are different shapes in different places — the gear travels
+    /// with the module's name and the dot sits in the gutter — so the hue is what they have in
+    /// common rather than what tells them apart.
+    /// </para>
+    /// </summary>
     private static Run Gear()
     {
         var gear = new Run(" ⚙");
 
-        Themed(gear, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(gear, Run.ForegroundProperty, ThemeManager.AccentKey);
 
         return gear;
+    }
+
+    /// <summary>
+    /// A slot row, drawn as the loadout rather than as the slot (asked for 2026-08-20).
+    /// <para>
+    /// <b>Left-justified throughout, with no gap in the middle.</b> The old row put the slot's
+    /// name at one end and everything about the module at the other, so the eye crossed the panel
+    /// once per row and the width went to whitespace. The slot's name was leading it, and the
+    /// slot's name is not the primary information about a loadout — what is fitted, what was
+    /// rolled on it and what that did are.
+    /// </para>
+    /// <para>
+    /// <b>Ellipsis rather than wrapping.</b> A row is one line: a wrapping row changes height,
+    /// which moves every row under it and makes a list impossible to scan or to aim a ray at.
+    /// </para>
+    /// </summary>
+    internal static Control SlotRow(LoadoutRow row, Action pressed)
+    {
+        var parts = row.Parts!;
+
+        var line = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // The size, bold, and absent where saying it adds nothing. A utility mount is size 0 by
+        // definition, so a 0 on all eight of them is noise in the one column the eye starts at.
+        if (parts.Size is { } size)
+        {
+            var said = new TextBlock
+            {
+                Text = size.ToString(CultureInfo.InvariantCulture),
+                FontSize = TypeScale.Body,
+                FontWeight = FontWeight.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 14,
+            };
+
+            line.Children.Add(said);
+        }
+
+        // The dot: a plan exists for this slot. Its own mark rather than a column, and it keeps
+        // the gutter position it has always had — a plan existing is a fact about the row.
+        var mark = new TextBlock
+        {
+            Text = "●",
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 8, 0),
+
+            // Kept in the layout when there is no plan, so the module names line up down the list
+            // rather than stepping in and out by the width of a dot.
+            Opacity = row.Marked ? 1 : 0,
+        };
+
+        Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        line.Children.Add(mark);
+
+        // What is fitted, bold — or the word for nothing, greyed, because a blank reads as a row
+        // d47 has nothing to say about rather than as an empty slot.
+        var module = new TextBlock
+        {
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        if (parts.Module is { Length: > 0 } fitted)
+        {
+            module.Text = fitted;
+            module.FontWeight = FontWeight.Bold;
+
+            // The gear travels with the last word of the name (remediation.md 17, item 10).
+            if (row.Engineered)
+            {
+                module.Inlines = [new Run(fitted) { FontWeight = FontWeight.Bold }, Gear()];
+            }
+        }
+        else
+        {
+            // Greyed, and in the mode's own word: "empty" is a fact about the slot and only a
+            // fact when d47 can see the ship, so a ship the Commander is not sitting in says it
+            // has not been seen instead.
+            module.Text = parts.Vacant;
+            Themed(module, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        }
+
+        line.Children.Add(module);
+
+        // Everything the roll did, in one run so it can be trimmed as one thing. Muted, because
+        // the module is the subject and this is what was done to it.
+        var rolled = new TextBlock
+        {
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(10, 0, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        Themed(rolled, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        line.Children.Add(rolled);
+
+        var head = Rolled(parts);
+
+        // **Re-figured whenever the row changes width**, which is what "dynamic" has to mean on a
+        // panel that runs from 512 to 2048 logical pixels and is resized by hand. Whole effects
+        // are dropped rather than the line being cut mid-word: "+3% pow…" says less than nothing.
+        line.SizeChanged += (_, _) => rolled.Text = Fitted(rolled, head, parts.Effects, line);
+
+        rolled.Text = Fitted(rolled, head, parts.Effects, line);
+
+        var button = new Button
+        {
+            Content = line,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            MinHeight = 34,
+            Padding = new Thickness(12, 6),
+        };
+
+        // The slot's name, for anything that cannot see the row. It stopped being drawn when the
+        // row was rebuilt around the loadout, and a row that no longer says which slot it is must
+        // still be able to say so to a screen reader — and to a test, which is the same need.
+        AutomationProperties.SetName(button, row.Word);
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
+    /// <summary>The roll itself — blueprint, grade, experimental — which never gets trimmed away.</summary>
+    private static string Rolled(LoadoutParts parts)
+    {
+        var said = new List<string>();
+
+        if (parts.Blueprint is { Length: > 0 } blueprint)
+        {
+            said.Add(parts.Grade is { } grade and > 0
+                ? $"{blueprint} (G{grade.ToString(CultureInfo.InvariantCulture)})"
+                : blueprint);
+        }
+
+        if (parts.Experimental is { Length: > 0 } experimental)
+        {
+            said.Add(experimental);
+        }
+
+        return string.Join(", ", said);
+    }
+
+    /// <summary>
+    /// As many effects as the row has room for, cut at a whole effect.
+    /// <para>
+    /// Measured rather than guessed: <see cref="FormattedText"/> is asked how wide each candidate
+    /// would be, and the longest one that fits wins. Guessing by character count is wrong the
+    /// moment the Commander changes the zoom, which this panel lets them do.
+    /// </para>
+    /// </summary>
+    private static string Fitted(
+        TextBlock block, string head, IReadOnlyList<string> effects, Control row)
+    {
+        if (effects.Count == 0)
+        {
+            return head;
+        }
+
+        // What is left after everything ahead of this run has taken its share. Below a floor there
+        // is no point measuring: the roll itself is what matters and it is already trimming.
+        var room = row.Bounds.Width - block.Bounds.X - 12;
+
+        if (room < 60)
+        {
+            return head;
+        }
+
+        var typeface = new Typeface(block.FontFamily, block.FontStyle, block.FontWeight);
+
+        for (var count = effects.Count; count > 0; count--)
+        {
+            var candidate = head.Length > 0
+                ? $"{head} · {string.Join(", ", effects.Take(count))}"
+                : string.Join(", ", effects.Take(count));
+
+            var measured = new FormattedText(
+                candidate,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                typeface,
+                block.FontSize,
+                Brushes.Black);
+
+            if (measured.Width <= room)
+            {
+                return candidate;
+            }
+        }
+
+        return head;
     }
 
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
@@ -608,7 +894,12 @@ public sealed class ItemPage : LoadoutPage
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
-        Content = root;
+        // The page, with a layer above it for the thing being carried. A Canvas so the ghost can
+        // be put at a point rather than laid out, and not hit-testable so it never takes the drop
+        // it is describing.
+        _overlay = new Canvas { IsHitTestVisible = false };
+
+        Content = new Avalonia.Controls.Panel { Children = { root, _overlay } };
 
         Refresh();
     }
@@ -691,7 +982,10 @@ public sealed class ItemPage : LoadoutPage
         // same rows on every window.
         foreach (var line in Mode.Details(_item))
         {
-            _list.Children.Add(LoadoutPages.Line(line));
+            // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system
+            // a ship is parked in goes on the clipboard from here, to be pasted into the Galaxy
+            // Map. A line with neither a step nor a copy is drawn exactly as before.
+            _list.Children.Add(LoadoutPages.Stepped(line));
         }
 
         var rows = Mode.Slots(_item);
@@ -716,12 +1010,15 @@ public sealed class ItemPage : LoadoutPage
                 _list.Children.Add(LoadoutPages.Heading(heading));
             }
 
-            var control = LoadoutPages.Row(
-                row.Text,
-                row.Aside,
-                row.Marked,
-                () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
-                row.Engineered);
+            // A slot row draws as the loadout; anything else is still a line with a note.
+            var control = row.Parts is not null
+                ? LoadoutPages.SlotRow(row, () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)))
+                : LoadoutPages.Row(
+                    row.Text,
+                    row.Aside,
+                    row.Marked,
+                    () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
+                    row.Engineered);
 
             Draggable(control, row);
 
@@ -753,18 +1050,54 @@ public sealed class ItemPage : LoadoutPage
     {
         var slot = LoadoutPages.SplitSlot(row.Key).Slot;
 
+        // What this row is, for the geometry that finds the row under the pointer. Read back off
+        // the control rather than kept in a second list, so a row and its slot cannot come apart
+        // across a Refresh — the children are rebuilt on every one of them.
+        control.Tag = slot;
+
         control.AddHandler(
             InputElement.PointerPressedEvent,
             (_, args) =>
             {
                 var point = args.GetCurrentPoint(control);
 
-                if (point.Properties.IsLeftButtonPressed
-                    && args.KeyModifiers.HasFlag(KeyModifiers.Control))
+                if (!point.Properties.IsLeftButtonPressed
+                    || !args.KeyModifiers.HasFlag(KeyModifiers.Control))
                 {
-                    _dragging = slot;
-                    args.Handled = true;
+                    return;
                 }
+
+                _dragging = slot;
+                _over = slot;
+                args.Handled = true;
+
+                Carry(row, args.GetPosition(this));
+            },
+            RoutingStrategies.Tunnel);
+
+        // **The pointer is captured by the row the press landed on**, so every move and the
+        // release itself arrive here rather than at the row under the cursor. That is the whole of
+        // the reported fault: the release saw `from == slot`, concluded the plan had been dropped
+        // where it started, and did nothing — on every slot kind, since the feature shipped.
+        //
+        // So the move is followed and the row under the pointer is worked out from geometry. That
+        // also buys what was missing anyway: with no ghost and no cursor there was nothing on
+        // screen to say a drag was happening, which is how a drag that never worked went unseen.
+        control.AddHandler(
+            InputElement.PointerMovedEvent,
+            (_, args) =>
+            {
+                if (_dragging is not { } from)
+                {
+                    return;
+                }
+
+                var at = args.GetPosition(this);
+
+                Carry(row, at);
+                _over = SlotUnder(at) ?? from;
+
+                Highlight(from);
             },
             RoutingStrategies.Tunnel);
 
@@ -772,52 +1105,162 @@ public sealed class ItemPage : LoadoutPage
             InputElement.PointerReleasedEvent,
             (_, args) =>
             {
-                if (_dragging is not { } from || from == slot)
+                if (_dragging is not { } from)
                 {
-                    _dragging = null;
                     return;
                 }
 
-                _dragging = null;
-                args.Handled = true;
+                // try/finally, so the cursor and the ghost come back whatever happens in between.
+                // A pointer left showing "copy" over a page that is no longer carrying anything is
+                // worse than the missing feedback this was added to fix.
+                try
+                {
+                    args.Handled = true;
 
-                // **Explained rather than refused in silence** (remediation.md 17, item 8). This
-                // used to return here when `CanCopy` said no, on the grounds that the dimmed row
-                // had already said it — and the Commander's report was *"module drag and copy is
-                // not working"*, with Ctrl held, on a drag that was being turned down for a
-                // reason nothing ever said out loud. `SlotCopy`'s own documentation names the
-                // hazard exactly: *a drag that silently does nothing is indistinguishable from a
-                // broken feature*.
-                //
-                // `Copy` answers both cases in one call — it refuses by returning the sentence
-                // saying why — so there is no second code path to keep in step with the rules.
-                var said = Mode.Copy(_item, from, slot);
+                    var target = SlotUnder(args.GetPosition(this)) ?? _over ?? from;
 
-                // **After the redraw, not before it.** `Refresh` opens by writing the build's own
-                // summary into this very block, so the line used to be overwritten in the same
-                // gesture that produced it — which means the *successful* copy never announced
-                // itself either. Nothing about this drag has ever said anything.
-                Refresh();
+                    if (target == from)
+                    {
+                        _summary.Text = $"{row.Word} is where that plan already is, so nothing was copied.";
+                        return;
+                    }
 
-                _summary.Text = said;
+                    // **Explained rather than refused in silence** (remediation.md 17, item 8).
+                    // This used to return here when `CanCopy` said no, on the grounds that the
+                    // dimmed row had already said it — and the report was *"module drag and copy
+                    // is not working"*, on a drag being turned down for a reason nothing ever said
+                    // out loud. `SlotCopy`'s own documentation names the hazard exactly: *a drag
+                    // that silently does nothing is indistinguishable from a broken feature*.
+                    //
+                    // `Copy` answers both cases in one call — it refuses by returning the sentence
+                    // saying why — so there is no second code path to keep in step with the rules.
+                    var said = Mode.Copy(_item, from, target);
+
+                    // **After the redraw, not before it.** `Refresh` opens by writing the build's
+                    // own summary into this very block, so the line used to be overwritten in the
+                    // same gesture that produced it.
+                    Refresh();
+
+                    _summary.Text = said;
+                }
+                finally
+                {
+                    Release();
+                }
             },
             RoutingStrategies.Tunnel);
+    }
 
-        // What the row looks like while a plan is over it: dimmed where it would refuse, so the
-        // Commander learns the rule from the interface rather than from a message.
-        control.PointerEntered += (_, _) =>
+    /// <summary>
+    /// The ghost of the plan being carried, put beside the pointer — and the copy cursor, so the
+    /// gesture says what it is while it is happening (asked for 2026-08-20).
+    /// </summary>
+    private void Carry(LoadoutRow row, Point at)
+    {
+        if (_ghost is null)
         {
-            if (_dragging is { } from && from != slot)
+            _ghost = new Border
             {
-                control.Opacity = Mode.CanCopy(_item, from, slot) ? 1 : 0.4;
-            }
-        };
+                Padding = new Thickness(8, 4),
+                CornerRadius = new CornerRadius(4),
+                BorderThickness = new Thickness(1),
+                Opacity = 0.85,
+                IsHitTestVisible = false,
+                Child = new TextBlock { FontSize = TypeScale.Secondary },
+            };
 
-        control.PointerExited += (_, _) => control.Opacity = 1;
+            LoadoutPages.Themed(_ghost, Border.BackgroundProperty, ThemeManager.SurfaceKey);
+            LoadoutPages.Themed(_ghost, Border.BorderBrushProperty, ThemeManager.AccentKey);
+
+            _overlay.Children.Add(_ghost);
+        }
+
+        if (_ghost.Child is TextBlock said)
+        {
+            // What is being carried rather than where it came from: the aside is the plan, and the
+            // plan is the thing being copied.
+            said.Text = row.Aside is { Length: > 0 } plan ? plan : row.Word;
+        }
+
+        _ghost.IsVisible = true;
+
+        // Beside the pointer rather than under it, so the ghost never hides the row it is about to
+        // land on.
+        Canvas.SetLeft(_ghost, at.X + 14);
+        Canvas.SetTop(_ghost, at.Y + 12);
+
+        Cursor = _copying ??= new Cursor(StandardCursorType.DragCopy);
+    }
+
+    /// <summary>Everything <see cref="Carry"/> turned on, turned off. Safe to call twice.</summary>
+    private void Release()
+    {
+        _dragging = null;
+        _over = null;
+
+        if (_ghost is not null)
+        {
+            _ghost.IsVisible = false;
+        }
+
+        Cursor = Cursor.Default;
+
+        foreach (var child in _list.Children)
+        {
+            child.Opacity = 1;
+        }
+    }
+
+    /// <summary>
+    /// Which row the pointer is over, by geometry rather than by hit-testing.
+    /// <para>
+    /// Hit-testing answers for the captured row whatever the pointer is over, which is the fault
+    /// this exists to route around. Geometry also means a test can drive it: a position is a
+    /// position, with no input pipeline to stand up.
+    /// </para>
+    /// </summary>
+    private string? SlotUnder(Point at)
+    {
+        foreach (var child in _list.Children)
+        {
+            if (child.Tag is not string slot || child.TranslatePoint(default, this) is not { } origin)
+            {
+                continue;
+            }
+
+            if (at.X >= origin.X && at.X <= origin.X + child.Bounds.Width
+                && at.Y >= origin.Y && at.Y <= origin.Y + child.Bounds.Height)
+            {
+                return slot;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// What the rows look like while a plan is over them: dimmed where the drop would be refused,
+    /// so the Commander learns the rule from the interface rather than from a message afterwards.
+    /// </summary>
+    private void Highlight(string from)
+    {
+        foreach (var child in _list.Children)
+        {
+            child.Opacity = child.Tag is string slot && slot == _over && slot != from
+                ? Mode.CanCopy(_item, from, slot) ? 1 : 0.4
+                : 1;
+        }
     }
 
     /// <summary>The slot a plan is being dragged from, or null when nothing is in flight.</summary>
     private string? _dragging;
+
+    /// <summary>The slot the pointer is over, which is where a drop lands.</summary>
+    private string? _over;
+
+    private readonly Canvas _overlay;
+    private Border? _ghost;
+    private Cursor? _copying;
 }
 
 /// <summary>

@@ -84,6 +84,43 @@ public sealed record VoiceCatalogue(IReadOnlyList<VoiceInfo> Voices, VoiceListin
     public int Count => Voices.Count;
 
     /// <summary>
+    /// How one voice id is shown to the Commander — the Voice rows, their tooltips and the picker
+    /// all end up here.
+    /// <para>
+    /// <b>An opaque id is never the answer.</b> Falling back to the raw id is right for Edge,
+    /// whose ids read as names, and wrong for ElevenLabs, whose do not: the Voice row showed
+    /// <c>JBFqnCBsd6RMkjVDRZzb</c> under a label promising which voice the core aboard speaks in.
+    /// Which kind a provider is, is <see cref="TtsProviderInfo.VoiceIdsAreOpaque"/> — a declared
+    /// property of the provider rather than a guess at the shape of the string.
+    /// </para>
+    /// <para>
+    /// Being unable to resolve one is not a fault and is usually temporary: the list is fetched
+    /// when a key arrives and when the provider changes, so a voice chosen last session is
+    /// unresolved until that returns. The two sentences say which of those it is rather than
+    /// naming an error.
+    /// </para>
+    /// </summary>
+    public string LabelFor(string id, TtsProviderInfo provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+
+        if (Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+            is { } known)
+        {
+            return known.Label;
+        }
+
+        if (!provider.VoiceIdsAreOpaque)
+        {
+            return id;
+        }
+
+        return Count == 0
+            ? $"(a {provider.Name} voice — the list has not been fetched yet)"
+            : $"(a voice not in {provider.Name}'s list)";
+    }
+
+    /// <summary>
     /// What a picker with nothing in it should say, or null when there is something in it.
     /// <para>
     /// One sentence per situation, in the second person, each naming the thing the Commander

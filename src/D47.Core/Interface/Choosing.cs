@@ -48,7 +48,26 @@ public enum ChoiceSurface
 /// Optional, because most lists do not need one and a blank second line on every row is a list
 /// that fits half as many.
 /// </param>
-public sealed record ChoiceOption(string Key, string Label, string? Detail = null);
+public sealed record ChoiceOption(string Key, string Label, string? Detail = null)
+{
+    /// <summary>
+    /// The heading this option sits under, where the list is grouped. Null on every option is a
+    /// flat list, unchanged.
+    /// <para>
+    /// <b>On the option rather than in a list of lists</b>, which is the arrangement
+    /// <see cref="LoadoutRow"/> and the engineer directory already use: the caller answers with one
+    /// ordered sequence and the chooser draws a heading wherever the group changes. It means a
+    /// grouped chooser needs no shape of its own, and a search that narrows the list cannot leave a
+    /// heading standing over nothing.
+    /// </para>
+    /// <para>
+    /// Asked for 2026-08-20 against the checklist's scope filter, which listed <c>derived</c>,
+    /// <c>engineeringplan</c>, <c>open</c> and <c>ship</c> as though they were alternatives. They
+    /// are answers to four different questions, and nothing said so.
+    /// </para>
+    /// </summary>
+    public string? Group { get; init; }
+}
 
 /// <summary>
 /// A question the panel is being asked to put to the Commander (list.md Phase 25, "Choosing takes

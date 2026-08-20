@@ -407,7 +407,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _suggestions.IsVisible = pending.Count > 0;
         _suggestions.Content = $"Suggestions ({waiting.ToString(CultureInfo.InvariantCulture)})";
 
-        _scopeButton.Content = _chosen == Everything ? "Showing everything" : $"Showing {_chosen}";
+        // The filter's own word rather than its key, so the button reads "Showing A ship's build"
+        // and not "Showing engineeringplan". Falls back to the key for a filter that has since
+        // stopped applying — the list can empty out from under a chosen one.
+        _scopeButton.Content = _chosen == Everything
+            ? "Showing everything"
+            : $"Showing {_checklists.FilterAxes().FirstOrDefault(filter => filter.Key == _chosen)?.Word ?? _chosen}";
 
         RebuildArcs();
 
@@ -993,7 +998,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             new(Everything, "Everything"),
         };
 
-        options.AddRange(_checklists.Filters().Select(filter => new ChoiceOption(filter, filter)));
+        // Each under the question it answers. They are not alternatives: an item is a kind *and* a
+        // source *and* a scope *and* a state all at once, and listed flat they read as four ways of
+        // saying the same thing — which is exactly how they looked when every item on the list came
+        // from a promoted ship build and all four rows selected it.
+        options.AddRange(_checklists.FilterAxes()
+            .Select(filter => new ChoiceOption(filter.Key, filter.Word) { Group = filter.Heading }));
 
         _prompts.Choose(
             new ChoiceRequest(

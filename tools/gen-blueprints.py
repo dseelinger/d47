@@ -126,6 +126,25 @@ COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effec
 # Which blueprints each module type can take. See `edsy_offers`.
 MTYPE_COLUMNS = ["mtype", "blueprints"]
 
+
+# Where coriolis and EDSY spell the same roll differently, and EDSY's is the spelling a module
+# type actually offers.
+#
+# The pattern is already documented below for `Scanner_WideAngle` against `Sensor_WideAngle`;
+# these are three more of it, and each one cost a whole module its engineering. EDSY files the
+# Shielded roll on every one of these internals under a single generic name, and coriolis gives
+# each module its own — so the row named a blueprint nothing offered, was set aside as stranded,
+# and its module ended up belonging to no type at all. Reported 2026-08-20 against an Auto
+# Field-Maintenance Unit whose row read "engineering is not available for this module".
+#
+# Applied only where the coriolis spelling is offered by nobody and EDSY's is offered by
+# somebody, so this heals itself the day either side renames and never overrides a live name.
+SPELLINGS = {
+    "AFM_Shielded": "Misc_Shielded",
+    "FuelScoop_Shielded": "Misc_Shielded",
+    "Refineries_Shielded": "Misc_Shielded",
+}
+
 # EDEngineer's pseudo-engineers. Everything they front is a recipe of some other kind, and
 # telling them apart this way means a new munitions row classifies itself rather than waiting
 # for somebody to add its type name to a list.
@@ -742,6 +761,21 @@ def main() -> None:
 
     anywhere = set().union(*offered_by.values()) if offered_by else set()
 
+    # coriolis's spelling for EDSY's, where only EDSY's is offered. See SPELLINGS.
+    respelt = []
+
+    for row in recipes:
+        names = [name for name in row[8].split(",") if name]
+
+        if not names or set(names) & anywhere:
+            continue
+
+        swapped = [SPELLINGS.get(name, name) for name in names]
+
+        if set(swapped) & anywhere:
+            respelt.append(f"{row[1]} / {row[2]}: {row[8]} -> {','.join(swapped)}")
+            row[8] = ",".join(swapped)
+
     stranded = []
 
     for row in recipes:
@@ -767,6 +801,44 @@ def main() -> None:
         for kind, rows in wanted.items()
     }
 
+    # **One mis-keyed row must not veto a whole module.**
+    #
+    # Containment above asks that *every* row of a kind sit inside the type's offer, and the pass
+    # before it already sets aside a row naming a blueprint nobody offers — on the grounds that
+    # such a row cannot say anything about which type its kind is. A row naming a blueprint some
+    # *other* type offers is just as uninformative and was not covered: it survived to veto.
+    #
+    # Measured cost, 2026-08-20: the Plasma Accelerator's "Plasma Slug" carries coriolis's
+    # `special_plasma_slug_cooled`, which is the Railgun's cooled variant and a real blueprint of
+    # its own — so aliasing it would be wrong. `hpa` offers plain `special_plasma_slug` and covers
+    # the other fifty rows exactly. That single row left all fifty-one belonging to nothing, and
+    # no Plasma Accelerator in the game could be engineered.
+    #
+    # **At most one dissenter, and it is named.** Two would mean something else is wrong and the
+    # answer is to look rather than to widen the tolerance until it passes.
+    outvoted = []
+
+    for kind, rows in sorted(wanted.items()):
+        if fits.get(kind) or len(rows) < 3:
+            continue
+
+        scored = [
+            (sum(1 for names in rows if names & offer), -len(offer), code)
+            for code, offer in sorted(offered_by.items()) if offer
+        ]
+
+        if not scored:
+            continue
+
+        covered, _, code = max(scored)
+
+        if covered != len(rows) - 1:
+            continue
+
+        fits[kind] = [code]
+        missed = sorted({name for names in rows if not names & offered_by[code] for name in names})
+        outvoted.append(f"{kind} -> {code}, outvoting one row naming {','.join(missed)}")
+
     belongs, contested = {}, []
 
     # The module's own name first, wherever it picks out exactly one of the types that fit.
@@ -779,28 +851,57 @@ def main() -> None:
         if len(named) == 1:
             belongs[kind] = named[0]
 
-    # Then the rest, smallest offer first and never a type another kind already answers to. Two
-    # kinds on one type would leave the other type with no recipes, which reads as a module that
-    # cannot be engineered — the very defect this item is about.
-    claimed = set(belongs.values())
+    # Then the rest, as a **maximum matching rather than first-come-first-served**.
+    #
+    # One kind to one type either way — two kinds on one type would leave the other type with no
+    # recipes, which reads as a module that cannot be engineered, the very defect this is about.
+    # What changed is that taking a type is no longer final: a kind that finds its only candidate
+    # already taken now asks the holder to move, and the holder moves if it has anywhere else to
+    # go. Greedy alphabetical order could not do that, and the Plasma Accelerator was the cost —
+    # every weapon type that fits it had been claimed by a laser earlier in the alphabet, so all
+    # fifty-one of its rows belonged to nothing and no Plasma Accelerator could be engineered.
+    #
+    # Kuhn's algorithm, which is the textbook one for this and is a dozen lines. Deterministic:
+    # kinds are taken in sorted order and each one's candidates in a fixed order — smallest offer
+    # first, which keeps the preference the greedy pass was reaching for, and the code as a
+    # tie-break so a rerun cannot shuffle two equal candidates.
+    pinned = set(belongs.values())
 
-    for kind, codes in sorted(fits.items()):
-        if kind in belongs:
-            continue
+    order = {
+        kind: sorted(
+            (code for code in codes if code not in pinned),
+            key=lambda code: (len(offered_by[code]), code))
+        for kind, codes in sorted(fits.items())
+        if kind not in belongs
+    }
 
-        free = [code for code in codes if code not in claimed]
+    owner: dict[str, str] = {}
 
-        if not free:
-            continue
+    def settle(kind: str, seen: set) -> bool:
+        """Give `kind` a type, moving whoever holds it if that one has somewhere else to go."""
+        for code in order.get(kind, []):
+            if code in seen:
+                continue
 
-        smallest = min(len(offered_by[code]) for code in free)
-        tied = [code for code in free if len(offered_by[code]) == smallest]
+            seen.add(code)
 
-        if len(tied) > 1:
-            contested.append(f"{kind}: {', '.join(tied)}")
+            if code not in owner or settle(owner[code], seen):
+                owner[code] = kind
+                return True
 
-        belongs[kind] = tied[0]
-        claimed.add(tied[0])
+        return False
+
+    for kind in order:
+        settle(kind, set())
+
+    for code, kind in owner.items():
+        belongs[kind] = code
+
+    # Said out loud, because a kind with no type is a module whose engineering nobody can reach —
+    # and this is the number that was silently 4 for as long as the greedy pass ran.
+    for kind, codes in order.items():
+        if kind not in belongs and codes:
+            contested.append(f"{kind}: fits {', '.join(codes)} and every one is taken")
 
     for row in recipes:
         row[9] = belongs.get(relax(row[1]), "")
@@ -885,8 +986,20 @@ def main() -> None:
         for name in absent:
             print(f"  {name}")
 
+    if respelt:
+        print(f"{len(respelt)} recipes carried a spelling no module type offers and were "
+              f"respelt to EDSY's — see SPELLINGS:")
+        for line in respelt:
+            print(f"  {line}")
+
+    if outvoted:
+        print(f"{len(outvoted)} recipe kinds were placed over one dissenting row — check each, a "
+              f"dissenter is usually another module's blueprint mis-keyed onto this one:")
+        for line in outvoted:
+            print(f"  {line}")
+
     if contested:
-        print(f"{len(contested)} recipe kinds fit two module types of the same size:")
+        print(f"{len(contested)} recipe kinds could not be given a module type of their own:")
         for line in contested:
             print(f"  {line}")
 

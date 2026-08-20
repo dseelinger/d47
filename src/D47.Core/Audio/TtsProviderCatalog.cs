@@ -55,6 +55,24 @@ public sealed record TtsProviderInfo
     /// </summary>
     public decimal? ListDollarsPerThousandCharacters { get; init; }
 
+    /// <summary>
+    /// Whether this provider's voice ids mean nothing to a person, so one must never be shown in
+    /// place of a voice's name.
+    /// <para>
+    /// Edge names a voice <c>en-US-AndrewMultilingualNeural</c>: not pretty, but it says who it
+    /// is, and falling back to it tells the Commander something. ElevenLabs names one
+    /// <c>JBFqnCBsd6RMkjVDRZzb</c>, which says nothing whatever — and that string appeared in the
+    /// Voice row, under a label promising "which voice the core aboard speaks in". A row that
+    /// answers a question about a voice with twenty characters of base62 has not answered it.
+    /// </para>
+    /// <para>
+    /// A property of the provider rather than a guess at the shape of the string, because that is
+    /// where the fact lives: the same reason <see cref="Billed"/> is declared rather than inferred
+    /// from <see cref="NeedsKey"/>.
+    /// </para>
+    /// </summary>
+    public bool VoiceIdsAreOpaque { get; init; }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>
@@ -107,6 +125,9 @@ public static class TtsProviderCatalog
         Label = "ElevenLabs (paid — needs a key)",
         KeySecretName = "elevenlabs.apiKey",
         Destination = "api.elevenlabs.io",
+
+        // "JBFqnCBsd6RMkjVDRZzb" is a real one, and it is what the Voice row showed.
+        VoiceIdsAreOpaque = true,
         Egress = "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, "
                  + "along with your API key. That includes re-voiced in-game messages when you have "
                  + "turned those on, which are written by other players. No journal content, game "

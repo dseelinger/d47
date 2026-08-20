@@ -38,7 +38,12 @@ public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsAct
     {
         if (IsActive)
         {
-            return "you are flying it";
+            // Named for the ship under the Commander too. It is where they are, so they know it —
+            // but the list is read as a list, and one row that declines to say where it is is the
+            // row the eye stops on.
+            return Stored is { HasSystem: true } flown
+                ? $"you are flying it — {flown.StarSystem}"
+                : "you are flying it";
         }
 
         if (Stored is null)
@@ -51,8 +56,12 @@ public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsAct
             return "in transit";
         }
 
-        return Stored.Here
-            ? "here"
+        // **The system is named either way** (asked for 2026-08-20: "print in the ship list what
+        // system the ship is in"). "here" alone answered a different question from the one the
+        // list is for — a Commander scanning the fleet is working out where to fly, and a row
+        // that says "here" makes them select the ship to find out where "here" is.
+        return Stored.Here && Stored.HasSystem
+            ? $"here — {Stored.StarSystem}"
             : Stored.StarSystem;
     }
 
@@ -117,7 +126,11 @@ public sealed class ShipPlanService(
 
             entries.Add(new FleetEntry(
                 build,
-                new StoredShip(activeId, active.Type ?? "unknown", active.Name, live?.Location.StarSystem ?? "here")
+                // "unknown" rather than "here" when the location is not known yet: it is the word
+                // every other path writes for a system nothing has named, and StoredShip.HasSystem
+                // is what asks. "here" read as a system name to anything that did not know better
+                // — including the glyph that copies one onto the clipboard.
+                new StoredShip(activeId, active.Type ?? "unknown", active.Name, live?.Location.StarSystem ?? "unknown")
                 {
                     Here = true,
                 },
