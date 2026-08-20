@@ -228,10 +228,13 @@ public sealed class RouteProgressPage : UserControl
 
     private static string Detail(RouteHop hop) => StarClasses.Speak(hop.StarClass);
 
+    /// <summary>
+    /// What the hazard means for the Commander, rather than what it is. The class beside it
+    /// already says <em>a neutron star</em>, so a badge repeating the noun is a second label for
+    /// the same fact; what is not said anywhere else is what to do on arrival.
+    /// </summary>
     private static string BadgeWord(RouteHop hop) =>
-        StarClasses.IsNeutron(hop.StarClass) ? "neutron"
-        : StarClasses.IsBlackHole(hop.StarClass) ? "black hole"
-        : "white dwarf";
+        StarClasses.IsNeutron(hop.StarClass) ? "supercharge here" : "exclusion zone";
 
     private static Control Badge(string word, string colourKey)
     {

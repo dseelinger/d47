@@ -31,6 +31,10 @@ public sealed class RouteCoursePage : UserControl
         PlaceholderText = "Shinrarta Dezhra",
         Width = 260,
         MinHeight = 30,
+
+        // A fixed width in a stretching slot centres itself, which puts the box in the middle of
+        // the page with its own label off on the left.
+        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     private readonly TextBlock _status;
@@ -144,6 +148,9 @@ public sealed class RouteCoursePage : UserControl
             FontSize = size,
             TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
             MaxWidth = wrap ? 520 : double.PositiveInfinity,
+
+            // Same trap as the box above: a capped width centres unless it is told not to.
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
 
         block.Bind(

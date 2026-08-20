@@ -338,6 +338,7 @@ public sealed class RoutePlanPage : UserControl
             PlaceholderText = placeholder,
             Width = 190,
             MinHeight = 30,
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
 
         public string? Text => _box.Text;
@@ -379,6 +380,10 @@ public sealed class RoutePlanPage : UserControl
             FontSize = size,
             TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
             MaxWidth = wrap ? 520 : double.PositiveInfinity,
+
+            // A capped width in a stretching slot centres itself, which lands a wrapped line in
+            // the middle of the card with nothing above it to line up with.
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
 
         block.Bind(
