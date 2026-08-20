@@ -190,6 +190,46 @@ public class HabitCalloutTests : IDisposable
         return new HabitBook(store, () => Cmdr);
     }
 
+    /// <summary>
+    /// A claim that is sound but uncommon is never volunteered, and is still readable
+    /// (remediation.md 17, item 12).
+    /// <para>
+    /// Reported as *"You have dropped short of where you were going and had to come back — 14 of
+    /// 490 approaches"*, said on a perfect approach. It cleared every count floor and was a thing
+    /// the Commander did once in thirty-five approaches; at that rate the moment the line fires is
+    /// almost always a moment when nothing is going wrong.
+    /// </para>
+    /// <para>
+    /// The second half of the assertion is the point: the claim is still in the book. What the
+    /// floor buys is silence, not deletion — asked about it, d47 still answers.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AClaimBelowTheRateIsNeverVolunteeredAndIsStillThere()
+    {
+        var uncommon = Claim("overshoot", HabitOccasion.ApproachingAPlanet) with
+        {
+            Evidence = new HabitEvidence
+            {
+                Occurrences = 14,
+                Opportunities = 490,
+                From = Now.AddYears(-1),
+                To = Now,
+                Journals = 236,
+            },
+        };
+
+        var book = Book(uncommon);
+
+        Assert.Empty(new HabitCallout(book).Examine(Context(Event("ApproachBody", "\"Body\":\"Nervi 2\""))));
+
+        var kept = Assert.Single(book.Claims);
+
+        Assert.Equal("overshoot", kept.Key);
+        Assert.True(kept.Evidence.ClearsTheFloor, "the counts are sound; it is the rate that is not");
+        Assert.False(kept.Evidence.WorthSaying);
+    }
+
     private static HabitClaim Claim(string key, HabitOccasion occasion) => new(key, key)
     {
         Observation = "You submit rather than run",

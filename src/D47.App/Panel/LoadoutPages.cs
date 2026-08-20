@@ -2,8 +2,9 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Documents;
 
-using Avalonia.Input;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -194,43 +195,39 @@ public static class LoadoutPages
         // Power Distributor was engineered with no plan while the Power Plant was both. Different
         // glyphs and different colours, because two marks distinguished only by hue are one mark
         // to a Commander who cannot separate the hues.
-        if (marked || engineered)
+        //
+        // **The gear goes after the name, and it goes inside it** (remediation.md 17, item 10).
+        // Reported as *"Gear Glyph should appear to the right of the Module Name, not leftmost"*.
+        //
+        // An inline rather than a fourth column, because the name's column is the star one: a
+        // glyph in a column of its own would sit against the note on the far side of the row, and
+        // the gap between the name and its own mark would grow every time the window widened. An
+        // inline travels with the last word — including when the name wraps, which a sibling in a
+        // panel would not.
+        if (engineered)
         {
-            var marks = new StackPanel
+            label.Inlines =
+            [
+                new Run(text),
+                Gear(),
+            ];
+        }
+
+        // The dot stays in the left gutter, which is the Commander's call rather than a
+        // consequence: the two marks answer different questions, and a plan existing is a fact
+        // about the *row* where a roll having been done is a fact about the module named in it.
+        if (marked)
+        {
+            var mark = new TextBlock
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 4,
+                Text = "●",
+                FontSize = TypeScale.Secondary,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
             };
 
-            if (engineered)
-            {
-                var gear = new TextBlock
-                {
-                    Text = "⚙",
-                    FontSize = TypeScale.Secondary,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-
-                Themed(gear, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-                marks.Children.Add(gear);
-            }
-
-            if (marked)
-            {
-                var mark = new TextBlock
-                {
-                    Text = "●",
-                    FontSize = TypeScale.Secondary,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-
-                Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-                marks.Children.Add(mark);
-            }
-
-            body.Children.Add(marks);
+            Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            body.Children.Add(mark);
         }
 
         Grid.SetColumn(label, 1);
@@ -301,6 +298,25 @@ public static class LoadoutPages
         };
 
         row.Children.Add(Line(line));
+
+        // **The grade last, then the buttons that move it** (remediation.md 17, item 11). Reported
+        // as *"it is not clear that the step controls for the engineering grade are associated with
+        // it"* — and they were not: the number was inside the sentence, with a blueprint name, an
+        // experimental effect and an engineer between it and the arrows at the end of the row.
+        //
+        // Drawn from the step's own value rather than lifted out of the sentence. Splitting
+        // `Describe()`'s output to find "grade 3" in it would be a second parser of d47's own
+        // prose, wrong the day a blueprint is named something with the word in it — so the
+        // sentence is asked to leave the grade out and this puts it back, from the same field the
+        // buttons move.
+        var grade = new TextBlock
+        {
+            Text = $"Grade {step.Value.ToString(CultureInfo.InvariantCulture)}",
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        row.Children.Add(grade);
 
         // Highest first, which is how the offer is ordered and how a Commander reads a grade: up
         // is better. The buttons stop where the recipe stops rather than at five.
@@ -382,6 +398,23 @@ public static class LoadoutPages
         button.Click += (_, _) => pressed();
 
         return button;
+    }
+
+    /// <summary>
+    /// The mark meaning a roll has been done, as an inline so it travels with the name it is
+    /// about (remediation.md 17, item 10).
+    /// <para>
+    /// A leading space rather than a margin: an inline's spacing is part of the text, and a
+    /// margin on a <see cref="Run"/> is not a thing the text layout would honour.
+    /// </para>
+    /// </summary>
+    private static Run Gear()
+    {
+        var gear = new Run(" ⚙");
+
+        Themed(gear, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        return gear;
     }
 
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
@@ -748,14 +781,25 @@ public sealed class ItemPage : LoadoutPage
                 _dragging = null;
                 args.Handled = true;
 
-                // Refused rather than explained, matching what the row showed during the drag.
-                if (!Mode.CanCopy(_item, from, slot))
-                {
-                    return;
-                }
+                // **Explained rather than refused in silence** (remediation.md 17, item 8). This
+                // used to return here when `CanCopy` said no, on the grounds that the dimmed row
+                // had already said it — and the Commander's report was *"module drag and copy is
+                // not working"*, with Ctrl held, on a drag that was being turned down for a
+                // reason nothing ever said out loud. `SlotCopy`'s own documentation names the
+                // hazard exactly: *a drag that silently does nothing is indistinguishable from a
+                // broken feature*.
+                //
+                // `Copy` answers both cases in one call — it refuses by returning the sentence
+                // saying why — so there is no second code path to keep in step with the rules.
+                var said = Mode.Copy(_item, from, slot);
 
-                _summary.Text = Mode.Copy(_item, from, slot);
+                // **After the redraw, not before it.** `Refresh` opens by writing the build's own
+                // summary into this very block, so the line used to be overwritten in the same
+                // gesture that produced it — which means the *successful* copy never announced
+                // itself either. Nothing about this drag has ever said anything.
                 Refresh();
+
+                _summary.Text = said;
             },
             RoutingStrategies.Tunnel);
 

@@ -573,7 +573,13 @@ public partial class PanelView : UserControl
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null)
     {
-        var modes = new List<ILoadoutMode> { new ShipsMode(ships, checklists, state) };
+        var shipsMode = new ShipsMode(ships, checklists, state);
+
+        // Kept, so the tick has something to invalidate (remediation.md 17, item 7).
+        _loadoutMode = shipsMode;
+        _loadoutState = state;
+
+        var modes = new List<ILoadoutMode> { shipsMode };
 
         if (onFoot is not null)
         {
@@ -684,6 +690,43 @@ public partial class PanelView : UserControl
     private EngineerSource? _engineers;
     private string _engineerStamp = string.Empty;
     private Func<D47.Core.Journal.CommanderGameState?>? _engineerState;
+
+    /// <summary>
+    /// Redraws the Loadout tab when the journal says the ship changed (remediation.md 17, item 7).
+    /// <para>
+    /// The tab had no game-state signal at all: its pages redrew when the plans file was saved,
+    /// which is half of what they show. Reported as a fleet whose modules read <em>not seen</em>
+    /// after switching to that very ship in Elite — the page was answering with the loadout it had
+    /// when it was opened.
+    /// </para>
+    /// <para>
+    /// <b>Reference identity rather than a computed stamp.</b> <c>ShipLoadout.Apply</c> returns the
+    /// same instance for every event that is not a <c>Loadout</c> or a rename, and a new record for
+    /// the ones that are — so a reference comparison is exact and costs nothing ten times a second,
+    /// where a stamp over thirty-odd modules would cost a string per tick to answer "no" with.
+    /// </para>
+    /// </summary>
+    public void TickLoadout()
+    {
+        if (_loadoutMode is not { } mode || Tab != PanelTab.Loadout)
+        {
+            return;
+        }
+
+        var current = _loadoutState?.Invoke()?.Ship;
+
+        if (ReferenceEquals(current, _loadoutSeen))
+        {
+            return;
+        }
+
+        _loadoutSeen = current;
+        mode.Invalidate();
+    }
+
+    private ShipsMode? _loadoutMode;
+    private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
+    private D47.Core.Journal.ShipLoadout? _loadoutSeen;
 
     /// <summary>
     /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").

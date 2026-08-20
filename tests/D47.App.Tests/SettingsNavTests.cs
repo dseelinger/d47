@@ -27,7 +27,8 @@ public class SettingsNavTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-    private static (Window Window, PanelView Panel, SettingsView View) OpenLikeTheApp()
+    private static (Window Window, PanelView Panel, SettingsView View) OpenLikeTheApp(
+        double height = 880)
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -44,7 +45,7 @@ public class SettingsNavTests
 
         panel.EnableSearch();
 
-        var window = new Window { Content = panel, Width = 1180, Height = 880 };
+        var window = new Window { Content = panel, Width = 1180, Height = height };
         window.Show();
         Jobs();
 
@@ -115,6 +116,47 @@ public class SettingsNavTests
 
         // The one it left goes back to the muted ink the rest of the column is drawn in.
         Assert.Equal(Colour(labels[1].Foreground), Colour(labels[0].Foreground));
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The nav scrolls, and the highlight is brought into view rather than being left off the
+    /// bottom (remediation.md 17, item 3).
+    /// <para>
+    /// Reported as *"the Settings left nav menu is too long and needs a scrollbar"* — there is one
+    /// entry per capability that declares settings and the list outgrew the window. <b>A scroller
+    /// alone would not have finished it</b>: the nav is a scroll-spy, so the entry it marks is
+    /// decided by the cards beside it, and on a short window that entry is off screen exactly when
+    /// it matters. So the test scrolls the cards to the end and asks where the mark went, not
+    /// whether a scroller exists.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheNavScrollsAndTheMarkedEntryIsBroughtIntoView()
+    {
+        var (window, _, view) = OpenLikeTheApp(height: 500);
+
+        var nav = (ScrollViewer)view.FindControl<Control>("NavScroller")!;
+        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children;
+        var cards = (ScrollViewer)view.FindControl<Control>("Scroller")!;
+
+        Assert.True(
+            nav.Extent.Height > nav.Viewport.Height,
+            "the nav is longer than the window, which is the reported condition");
+
+        // Nothing has moved it yet: the first section is the one being read.
+        Assert.Equal(0, nav.Offset.Y);
+
+        cards.Offset = new Vector(0, cards.Extent.Height);
+        Jobs();
+
+        var last = (Border)items[^1];
+        var top = last.Bounds.Y;
+        var bottom = top + last.Bounds.Height;
+
+        Assert.InRange(top, nav.Offset.Y, nav.Offset.Y + nav.Viewport.Height);
+        Assert.InRange(bottom, nav.Offset.Y, nav.Offset.Y + nav.Viewport.Height);
 
         window.Close();
     }

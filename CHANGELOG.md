@@ -17,6 +17,73 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.39.1 — 2026-08-19 — It knows what it said, and it says less of it
+
+Remediation 17, eleven of fourteen items. Ten were reported against 0.39.0 by the Commander; the
+rest came from reading what the code actually did next to what it claimed.
+
+### It can be asked about what it just said
+
+*"Elvira Martuuk is one stop away."* — *"Why would I care about that?"* — *"Care about what,
+Commander? I have no record of what I said before this."* That answer was exactly true.
+
+Conversation history was written in **one** place, the end of an answered model turn. Every callout,
+the line that picks up where you left off, every habit remark, every timer going off, every action
+d47 took on its own, and every answer the model-free router gave — all of them went to the speaker
+and to the on-screen transcript and nowhere else. The page you read and the conversation the model
+sees were two different things, and only one of them was the conversation.
+
+Now what d47 says unasked rides into the next thing you ask it, labelled as its own words, and stays
+in the transcript afterwards. Only ever **its** words: a re-voiced message from another Commander is
+somebody else's text and still has no path into a prompt.
+
+The transcript also has a ceiling for the first time. It never had one.
+
+### Two things it used to say that were not worth saying
+
+**"Shields are down"** on a hull with no shield generator. 527 of 2,853 loadouts in the corpus fit
+none — mining, hauling and exploration builds routinely fly unshielded — and boarding one crossed
+the edge into "shields off" with nothing dangerous having happened. It now checks what is fitted.
+
+**Only in the ship**, which the corpus had to settle: a Hauler with no generator and an SRV bay
+reports shields going down *and coming back*, because those are the SRV's, and they are real. So the
+ship's loadout answers for the ship and nothing else, and every unknown still says the warning.
+
+**"You have dropped short of where you were going — 14 of 490 approaches"**, said on a perfect
+approach. A habit was gated on three counts and never on the rate, though the code's own
+documentation says the denominator is *"the difference between a habit and a Tuesday"*. Something
+you do once in thirty-five approaches now goes unsaid — it is still on the Habits page, and it is
+never volunteered. Measured across the corpus, nothing falls between 2.8% and 50%.
+
+### The Loadout tab
+
+**Clicking a ship does something again.** Visiting another tab and coming back left the page unable
+to hear the navigator, so the fleet list stayed on screen looking perfectly correct while every
+click, breadcrumb and mode switch did nothing.
+
+**A ship page follows the journal.** It only ever redrew when the plans file was saved, so one left
+open across a ship swap kept its first answer all session — the reported *"still says not seen"*. A
+plan now also binds to a ship when you board it, not only when you buy it.
+
+**"Keep the 5D Hull Reinforcement Package"** offered every blueprint in the game, Ammo Capacity
+included. Keeping answers the module question with nothing on purpose, and the blueprint question
+lost its subject along with it.
+
+**A refused drag says why.** It used to return in silence, so a rule turning the copy down was
+indistinguishable from a broken feature — and the successful message was being overwritten by the
+redraw behind it, so neither outcome had ever said a word.
+
+### Things you can read
+
+The Settings nav scrolls, and the highlighted entry is brought into view — which a scrollbar alone
+would not have done, since the nav follows the cards beside it. The gear glyph sits after the module
+name instead of in a gutter to the left of it. The engineering grade reads last on its line, right
+next to the stepper that moves it, while the spoken sentence is unchanged.
+
+And in the headset, the Utilities tab has stopped flickering: it was tearing down and rebuilding
+every timer row ten times a second, which the window never showed because it composes its frame
+after the tick, and the headset does not.
+
 ## 0.39.0 — 2026-08-19 — Trade routes that d47 works out
 
 Phase 36, and with it **every phase in `list.md` is now built** — 35 of them, 1 to 21 and 23 to 36.

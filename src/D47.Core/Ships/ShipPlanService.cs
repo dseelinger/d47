@@ -398,8 +398,8 @@ public sealed class ShipPlanService(
     }
 
     /// <summary>
-    /// Watches for the Commander buying a hull they had planned for, and offers to adopt the plan
-    /// onto it (list.md Phase 26).
+    /// Watches for the Commander buying — or boarding — a hull they had planned for, and adopts the
+    /// plan onto it (list.md Phase 26; the boarding half is remediation.md 17, item 7).
     /// <para>
     /// <b>Buying one adopts the plan rather than making the Commander re-point it.</b> Doug's
     /// words: "don't make me re-point it".
@@ -425,15 +425,32 @@ public sealed class ShipPlanService(
 
         foreach (var journalEvent in events)
         {
-            if (journalEvent.Kind != "ShipyardNew")
+            // Two events, and the second is remediation.md 17 item 7. `ShipyardNew` is the moment
+            // of purchase and was the only one — which binds nothing for a Commander who bought
+            // the hull before planning it, or who bought it while d47 was not running. `Loadout`
+            // is the stronger signal anyway: it says the Commander is sitting in the thing.
+            //
+            // Without this a plan keeps `ShipId` null for ever, and since every question a ship
+            // page asks about what is fitted is keyed on that id, the page answers *not seen* while
+            // the Commander is flying the very ship — which is exactly what was reported.
+            var (hull, shipId) = journalEvent.Kind switch
+            {
+                "ShipyardNew" => (journalEvent.Named("ShipType"), journalEvent.Int("NewShipID")),
+                "Loadout" => (journalEvent.Named("Ship"), journalEvent.Int("ShipID")),
+                _ => (null, null),
+            };
+
+            if (hull is null || shipId is not { } id)
             {
                 continue;
             }
 
-            var hull = journalEvent.Named("ShipType");
-            var shipId = journalEvent.Int("NewShipID");
-
-            if (hull is null || shipId is not { } id)
+            // **Nothing is adopted onto a ship another build already holds.** One build per ship
+            // is the rule Phase 26 is built on, and a second Python planned to buy would otherwise
+            // bind itself to the Python already being flown the moment the Commander boarded it.
+            // `ShipyardNew` cannot collide — the id is brand new — so this guards the path added
+            // here, which can be raised for a ship that has been owned for a year.
+            if (store.Builds.Any(build => build.ShipId == id))
             {
                 continue;
             }

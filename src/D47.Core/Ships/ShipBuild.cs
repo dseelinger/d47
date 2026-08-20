@@ -57,7 +57,23 @@ public sealed record SlotPlan(
         new(Slot, Blueprint, Grade, Engineer, Experimental);
 
     /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
-    public string Describe()
+    /// <param name="withGrade">
+    /// Whether the grade belongs in the sentence (remediation.md 17, item 11).
+    /// <para>
+    /// <b>Only a drawn line ever says no</b>, and only where a stepper is about to carry the grade
+    /// instead. Reported as *"it is not clear that the step controls for the engineering grade are
+    /// associated with it — put Grade last on the line, followed by the stepper"*, and the number
+    /// sat mid-sentence with a blueprint, an effect and an engineer between it and its own buttons.
+    /// </para>
+    /// <para>
+    /// <b>The spoken line is untouched, which is the reason this is a parameter rather than a
+    /// reordering.</b> This one string is both shown and heard, and a sentence rearranged for the
+    /// panel would come out of the speakers as "Heavy Duty, Deep Plating, with Selene Jean, grade
+    /// 5" — changing what d47 sounds like as a side effect of moving a button, which is the
+    /// failure remediation 16 item 6 caught. The default is the sentence.
+    /// </para>
+    /// </param>
+    public string Describe(bool withGrade = true)
     {
         var parts = new List<string>();
 
@@ -82,7 +98,9 @@ public sealed record SlotPlan(
             //
             // The grade stays in the data throughout — the checklist and the costing need it — and
             // is omitted only here, which is the one string that is both shown and spoken.
-            parts.Add(Grade > 0 && !Knowledge.BlueprintCatalogue.HasOneGrade(blueprint, Module)
+            parts.Add(withGrade
+                      && Grade > 0
+                      && !Knowledge.BlueprintCatalogue.HasOneGrade(blueprint, Module)
                 ? $"grade {Grade.ToString(CultureInfo.InvariantCulture)} {blueprint}"
                 : blueprint);
         }

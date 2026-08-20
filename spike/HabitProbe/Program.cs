@@ -46,8 +46,13 @@ internal static class Program
 
             foreach (var claim in report.Claims)
             {
-                Console.WriteLine($"  CLAIM  {claim.Key,-20} {claim.Evidence.Occurrences}/{claim.Evidence.Opportunities}"
-                    + $" recent={claim.Evidence.Recent} occasion={claim.Occasion}");
+                // SAID and kept apart, because a claim below HabitFloor.Rate is still a claim and
+                // is still readable — it is only never volunteered (remediation.md 17, item 12).
+                // This is where the number was chosen from: the corpus says which claims survive it.
+                var said = claim.Evidence.WorthSaying ? "SAID " : "kept ";
+
+                Console.WriteLine($"  {said}  {claim.Key,-20} {claim.Evidence.Occurrences}/{claim.Evidence.Opportunities}"
+                    + $" ({claim.Evidence.Rate:P1}) recent={claim.Evidence.Recent} occasion={claim.Occasion}");
                 Console.WriteLine($"         {claim.Spoken()}");
             }
 

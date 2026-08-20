@@ -160,6 +160,153 @@ public sealed class TurnLoop(
     public IReadOnlyList<ConversationMessage> History => _history;
 
     /// <summary>
+    /// Records something d47 said without being asked, so the next turn knows it said it
+    /// (remediation.md 17, item 4).
+    /// <para>
+    /// Reported with the transcript: a route callout said <em>"Elvira Martuuk is one stop away"</em>,
+    /// the Commander asked <em>"why would I care about that?"</em>, and d47 answered <em>"I have no
+    /// record of what I said before this"</em>. It was telling the truth. History was written in
+    /// exactly one place — the end of an answered model turn — so callouts, the continuity line,
+    /// habit remarks, reminders, autonomous actions and the keyword router's own replies all went
+    /// to the speaker and to the panel and nowhere else. <b>The panel and the prompt are two
+    /// transcripts, and only one of them is the conversation.</b>
+    /// </para>
+    /// <para>
+    /// <b>Carried into the next user turn rather than appended as an assistant message.</b> An
+    /// assistant message with no user message before it, or two in a row, is not a shape every
+    /// endpoint accepts, and Phase 29 means d47 talks to more than one. Folding it into the turn
+    /// that follows is what this codebase already does with live game state, needs no provider to
+    /// be taught anything, and — because that user message is what gets committed — the line
+    /// persists in history for every later turn as well.
+    /// </para>
+    /// <para>
+    /// <b>Only d47's own words reach here.</b> The caller gates on
+    /// <see cref="Callouts.Announcement.ConversationLine"/>, which is d47 speaking and nothing
+    /// else: a re-voiced in-game message is another Commander's text, and architecture.md §7 names
+    /// in-game comms as the source whose attacker is any player in range. Laundering that into the
+    /// assistant's own voice would be the most trusted position in the transcript.
+    /// </para>
+    /// </summary>
+    public void Said(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        lock (_spokenLock)
+        {
+            _spoken.Add(line.Trim());
+
+            // A Commander who does not ask anything for an hour is not owed every ambient line of
+            // it. The most recent few are what a follow-up question can possibly be about.
+            while (_spoken.Count > SpokenCarried)
+            {
+                _spoken.RemoveAt(0);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The block that carries those lines into the turn, and empties itself doing it.
+    /// <para>
+    /// Labelled rather than merely prepended, because it is arriving inside a user message and is
+    /// not something the Commander said. The label is the same shape the game-state block uses.
+    /// </para>
+    /// </summary>
+    private string Spoken()
+    {
+        List<string> said;
+
+        lock (_spokenLock)
+        {
+            if (_spoken.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            said = [.. _spoken];
+            _spoken.Clear();
+        }
+
+        return
+            "<said-aloud>\nSince the last exchange you spoke these lines to the Commander without "
+            + "being asked. They are your own words, and the Commander heard them.\n"
+            + string.Join('\n', said.Select(line => $"- {line}"))
+            + "\n</said-aloud>\n\n";
+    }
+
+    /// <summary>
+    /// How many unprompted lines are carried into the next turn. Ambient chatter fires on a timer,
+    /// so an evening's flying could otherwise carry hundreds of them into a prompt.
+    /// </summary>
+    private const int SpokenCarried = 8;
+
+    /// <summary>
+    /// How many messages of one persona's transcript are kept (remediation.md 17, item 4).
+    /// <para>
+    /// <b>It was unbounded, and nothing had noticed.</b> Every answered turn appended its
+    /// question, its tool rounds and its answer for the life of the session, and the whole of it
+    /// is re-sent every turn — so a long evening's flying paid for its own morning, over and over.
+    /// It was survivable only because a Commander asks a handful of questions an hour; now that
+    /// d47's own unprompted lines join the transcript, it is not something to leave open.
+    /// </para>
+    /// <para>
+    /// <b>Messages rather than turns, and dropped from the front.</b> A turn is one to several
+    /// messages depending on how many tools it called, so a turn count is not a size. The oldest
+    /// go first, which is the ordinary meaning of a conversation you can still follow.
+    /// </para>
+    /// </summary>
+    public const int TranscriptKept = 80;
+
+    /// <summary>
+    /// Trims the transcript to <see cref="TranscriptKept"/>, <b>never leaving a tool call whose
+    /// result was dropped with it.</b>
+    /// <para>
+    /// That pairing is the whole difficulty: an assistant message carrying a
+    /// <see cref="ConversationContent.ToolUse"/> and the user message carrying its
+    /// <see cref="ConversationContent.ToolResult"/> are two messages, and a cut between them
+    /// leaves the model shown a call it never got an answer to — which providers reject outright
+    /// rather than merely finding odd. So the cut is moved forward until nothing above it is
+    /// answered below it.
+    /// </para>
+    /// </summary>
+    private void Bound()
+    {
+        if (_history.Count <= TranscriptKept)
+        {
+            return;
+        }
+
+        var cut = _history.Count - TranscriptKept;
+
+        // Forward past any message that would leave a dangling half: a tool result whose call is
+        // being dropped, and the assistant call it belongs to.
+        while (cut < _history.Count
+               && _history[cut].Content.Any(part => part is ConversationContent.ToolResult
+                                                     or ConversationContent.ToolUse))
+        {
+            cut++;
+        }
+
+        // A transcript that is all one enormous tool conversation would otherwise be emptied.
+        if (cut >= _history.Count)
+        {
+            return;
+        }
+
+        _history.RemoveRange(0, cut);
+    }
+
+    private readonly List<string> _spoken = [];
+
+    /// <summary>
+    /// Callouts are spoken from the tick loop and turns run on their own thread, so the two
+    /// genuinely race. The one piece of <see cref="TurnLoop"/> that is touched from two threads.
+    /// </summary>
+    private readonly Lock _spokenLock = new();
+
+    /// <summary>
     /// Points the loop at a different transcript. This is how separate memory per persona works
     /// (guardian-personas.md): each core owns a list, the host hands over the incoming one, and
     /// nothing is copied — a copy that is one turn stale is a core remembering a conversation
@@ -251,6 +398,12 @@ public sealed class TurnLoop(
                 settingCommand.Phrase,
                 applied.Status);
 
+            // Recorded, so a follow-up lands in a conversation that knows this happened
+            // (remediation.md 17, item 4). *"Stop calling things out"* answered by the router, and
+            // then *"why did you do that?"*, reproduces the reported transcript by a second road:
+            // none of these four routes ever wrote a word into history.
+            Said(applied.Message);
+
             yield return new TurnEvent.TextDelta(applied.Message);
             yield return new TurnEvent.Completed(new TurnResult(
                 applied.Ok ? TurnOutcome.Answered : TurnOutcome.Failed,
@@ -277,6 +430,8 @@ public sealed class TurnLoop(
                 toolCommand.ToolName,
                 toolCommand.Phrase);
 
+            Said(actioned.Content);
+
             yield return new TurnEvent.TextDelta(actioned.Content);
             yield return new TurnEvent.Completed(new TurnResult(
                 actioned.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
@@ -298,6 +453,8 @@ public sealed class TurnLoop(
 
             logger.LogInformation(
                 "Keyword router answered with {Capability}/{Tool}", match.CapabilityId, match.ToolName);
+
+            Said(result.Content);
 
             yield return new TurnEvent.TextDelta(result.Content);
             yield return new TurnEvent.Completed(new TurnResult(
@@ -376,7 +533,7 @@ public sealed class TurnLoop(
         // What this turn has said so far, tool rounds included. Kept apart from _history until
         // the turn succeeds, so a turn that fails commits nothing — a half-written exchange
         // ending in a tool call nobody answered is worse than no memory of it at all.
-        List<ConversationMessage> pending = [new ConversationMessage(ConversationRole.User, input)];
+        List<ConversationMessage> pending = [new ConversationMessage(ConversationRole.User, Spoken() + input)];
 
         yield return new TurnEvent.Routed(TurnRoute.Model, effort);
 
@@ -538,6 +695,8 @@ public sealed class TurnLoop(
             // conversation that accounts for how the last one was answered.
             _history.AddRange(pending);
             _history.Add(new ConversationMessage(ConversationRole.Assistant, answer));
+
+            Bound();
         }
 
         logger.LogInformation(
