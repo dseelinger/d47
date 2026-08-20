@@ -113,8 +113,9 @@ That third data point is worth more than the two above put together, because it 
 that was still a suspicion: the test that reports the failure is **arbitrary**. Three different
 tests have now carried it — `RowWidthTests`, and now this one — and none of them has anything in
 common beyond running late in one headless session. The suspect is the session, and the specific
-frame now names where to look: a session that is being re-initialised at all, mid-run, is already
-the anomaly, since `EnsureIsolatedApplication` should have nothing left to do by then.
+frame now names where to look: ~~a session that is being re-initialised at all, mid-run, is already
+the anomaly, since `EnsureIsolatedApplication` should have nothing left to do by then.~~ **Struck
+2026-08-20 — see the correction at the end of this entry.**
 
 586 of 589 App tests passed in the failing run, `ci` had gone green on the identical commit minutes
 earlier, and two consecutive local Release runs of the whole suite were clean. It cleared on a
@@ -130,11 +131,60 @@ exception and the same frame, now readable in full: `HeadlessUnitTestSession.Ens
 **Four tests have now carried it and none of them is the subject.** That is settled and should not
 be re-investigated. What the fourth adds is the middle of the stack: the session is constructing a
 *whole new* `Compositor` mid-run, and `DefaultRenderLoop.Add` then asserts dispatcher ownership
-from whichever thread xUnit scheduled that cleanup on. **The question is not why the thread is
-wrong. It is why an already-initialised session is being initialised again at all**, that late in
-a run — `EnsureIsolatedApplication` should have had nothing to do.
+from whichever thread xUnit scheduled that cleanup on. ~~The question is not why the thread is
+wrong. It is why an already-initialised session is being initialised again at all~~ — **struck
+2026-08-20, see the correction below. Re-initialisation mid-run is the design, not the anomaly,
+and that sentence sent the next reader at a question with no answer.**
 
 **It has now cost two release runs**, 0.39.0's and 0.39.1's, and cleared on a re-run of the
 identical commit both times. Three clean consecutive local Release runs preceded this one, as they
 did the last one; local runs have now failed to predict the runner four times, and should stop
 being offered as evidence that it is fixed.
+
+### Correction, 2026-08-20: the question above is malformed, and four theories are dead
+
+Read against Avalonia's own source rather than inferred from the stack
+(`src/Headless/Avalonia.Headless/HeadlessUnitTestSession.cs`). **Verified, not hypothesis:**
+
+**Re-initialising per test is the design.** `GetOrStartForAssembly` reads
+`AvaloniaTestIsolationAttribute` and defaults to `AvaloniaTestIsolationLevel.PerTest`;
+`D47.App.Tests` declares no such attribute, so `PerTest` is what is in effect. Every
+`[AvaloniaFact]` therefore runs `EnsureIsolatedApplication()`, which is `Dispatcher.-`
+`ResetBeforeUnitTests()` followed by `_appBuilder.SetupUnsafe()` — a fresh `Application`,
+`Compositor`, `ServerCompositor` and `DefaultRenderLoop` **every single test**. The entire stack
+recorded above is the ordinary per-test path. "An already-initialised session being initialised
+again" describes normal operation, so asking why it happens has no answer to find.
+
+**The real question is one step in.** `ResetBeforeUnitTests()` binds the dispatcher to the session's
+own dispatch thread, and `DefaultRenderLoop.Add` fails `VerifyAccess` microseconds later *on that
+same thread*. So something re-binds `Dispatcher.UIThread` in between. **Whatever that is, it is the
+bug.** Dispatcher state is process-global static; the session's queue is the only thing serialising
+access to it.
+
+**Four candidate explanations are eliminated**, each checked rather than assumed:
+
+- *The session was disposed and a second one started on a new thread.* Impossible. `Dispose()`
+  leaves the dead entry in the static `s_session` dictionary and `DispatchCore` then throws
+  `ObjectDisposedException` — a different exception from the one seen.
+- *xunit v3 is unsupported by the headless package.* No. `Avalonia.Headless.XUnit 12.1.1` declares a
+  dependency on `xunit.v3.extensibility.core 3.2.2`, which is exactly what this project references.
+  The "impossible with v3" issue predates 12.x.
+- *A plain `[Fact]` touches Avalonia on an xUnit worker thread, poisoning the statics.* No. The
+  assembly does mix 42 files using `[Fact]` with 60 using `[AvaloniaFact]`, and xunit v3
+  parallelises collections by default, so the shape was right — but no plain `[Fact]` in the
+  assembly touches an Avalonia type. The two apparent matches were `SettingsCaller.Panel`.
+- *`TechnicalPageTests.TheTranscriptSurvivesTwoThreadsWritingToIt` is the leak* — a plain `[Fact]`
+  driving a view model from four thread-pool tasks, which looked exactly like the culprit.
+  `PanelViewModel` is a bare `INotifyPropertyChanged` with three `System.*` usings and no
+  dispatcher use at all.
+
+**Still only a hypothesis**, and the one the first entry started with: something started by app code
+under test outlives its test and touches the dispatcher from its own thread during a later test's
+setup. No culprit named.
+
+**The next step is instrumentation, not another theory.** It fails on the runner and has never
+reproduced locally in eleven clean Release runs across four occurrences, so the goal is not to
+reproduce it — it is to make the fifth occurrence arrive carrying evidence. Capture, at throw time,
+the managed thread id owning `Dispatcher.UIThread` against the session's dispatch thread id. That
+turns "the same stack again" into a name. `dotnet-trace` does not help here: the test process has
+already exited by the time the failure is reported.

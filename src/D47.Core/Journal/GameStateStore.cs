@@ -27,6 +27,19 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, OrganicSampling?>? Restore { get; init; }
 
+    /// <summary>
+    /// This Commander's fleet as their older journals last recorded it, looked up on the same
+    /// terms as <see cref="Restore"/>. Null where nothing composed one.
+    /// <para>
+    /// The fleet is the one bucket the newest journal frequently cannot refold, because
+    /// <c>StoredShips</c> is written only on docking at a shipyard and a session may contain no
+    /// such docking. See <see cref="FleetBackfill"/>. Applied only when it actually knows
+    /// something, so a folder with no snapshot in it leaves the fleet unknown rather than empty —
+    /// those are different answers and the surface renders them differently.
+    /// </para>
+    /// </summary>
+    public Func<string, FleetRegistry?>? RestoreFleet { get; init; }
+
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
     /// <param name="at">
@@ -42,12 +55,18 @@ public sealed class GameStateStore
             {
                 state = new CommanderGameState(identity);
 
-                // Anything this Commander had before d47 last stopped. Only sampling needs it —
-                // everything else is refolded from the journal, and the spine tails only the newest
-                // file (list.md Phase 18).
+                // Anything this Commander had before d47 last stopped. Two buckets need it, and
+                // for different reasons: sampling because it is d47's own record and nothing in
+                // the journal restates it (list.md Phase 18), and the fleet because the newest
+                // journal often does not contain a StoredShips to refold from at all.
                 if (Restore?.Invoke(identity.FrontierId) is { } restored)
                 {
                     state.Sampling = restored;
+                }
+
+                if (RestoreFleet?.Invoke(identity.FrontierId) is { IsKnown: true } fleet)
+                {
+                    state.Fleet = fleet;
                 }
 
                 _byFrontierId[identity.FrontierId] = state;

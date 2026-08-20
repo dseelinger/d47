@@ -59,13 +59,53 @@ public sealed record FleetRegistry
     public IReadOnlyList<string> Systems =>
         [.. Ships.Select(ship => ship.StarSystem).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
 
-    public FleetRegistry Apply(JournalEvent journalEvent)
+    public FleetRegistry Apply(JournalEvent journalEvent) => Apply(journalEvent, null, null);
+
+    /// <param name="atSystem">Where the Commander is standing, for the events that store a ship
+    /// without naming a place. See <see cref="Stored"/>.</param>
+    /// <param name="atStation">The station they are docked at, on the same terms.</param>
+    public FleetRegistry Apply(JournalEvent journalEvent, string? atSystem, string? atStation)
     {
-        if (journalEvent.Kind != "StoredShips")
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        if (journalEvent.Kind == "StoredShips")
+        {
+            return FromSnapshot(journalEvent);
+        }
+
+        // A delta with no snapshot under it is not information, it is a fleet of one invented
+        // from a single event. Until a shipyard has been visited the honest answer is "unknown",
+        // which is what IsKnown reports and what the surface renders.
+        if (!IsKnown)
         {
             return this;
         }
 
+        return journalEvent.Kind switch
+        {
+            // The ship is gone. This is the event the whole delta path exists for: a snapshot
+            // read back out of an older journal is only safe if what happened since can take
+            // ships out of it again.
+            "ShipyardSell" => Without(journalEvent.Int("SellShipID")),
+
+            // Swapping takes one ship out of storage and puts one in. The taken ship becomes the
+            // flown one, and the flown ship is never in this registry.
+            "ShipyardSwap" => Without(journalEvent.Int("ShipID")).Stored(journalEvent, atSystem, atStation),
+
+            // Buying stores the ship being flown. The ship *bought* is not stored — it is flown
+            // out of the shipyard — and its id arrives on the ShipyardNew written immediately
+            // after, so there is deliberately nothing to do for that event here.
+            "ShipyardBuy" => Stored(journalEvent, atSystem, atStation),
+
+            // ShipyardTransfer is intentionally not handled. It moves a ship without changing
+            // who owns it, and this path exists to keep ownership honest across a gap. Where a
+            // ship is parked stays as of TakenAt, which is what that stamp is for.
+            _ => this,
+        };
+    }
+
+    private FleetRegistry FromSnapshot(JournalEvent journalEvent)
+    {
         var system = journalEvent.String("StarSystem");
         var station = journalEvent.String("StationName");
 
@@ -101,5 +141,49 @@ public sealed record FleetRegistry
             TakenAt = journalEvent.Timestamp,
             Ships = [.. here, .. remote],
         };
+    }
+
+    /// <summary>The same fleet without one ship, or unchanged where it held no such ship.</summary>
+    private FleetRegistry Without(int? shipId) =>
+        shipId is not { } id || !Ships.Any(ship => ship.ShipId == id)
+            ? this
+            : this with { Ships = [.. Ships.Where(ship => ship.ShipId != id)] };
+
+    /// <summary>
+    /// The ship named by <c>StoreOldShip</c>/<c>StoreShipID</c> joins the fleet — the one the
+    /// Commander stepped out of, on a swap or a purchase.
+    /// <para>
+    /// Neither event names a system or a station: a ship is stored wherever the Commander is
+    /// standing, and Elite leaves that implicit. So the place is passed in, exactly as the
+    /// colonisation depot's is and for the same reason.
+    /// </para>
+    /// <para>
+    /// It joins without a name. The events carry the hull and the id but never the Commander's
+    /// name for it, and inventing one would be worse than showing the hull — the next real
+    /// snapshot fills it in.
+    /// </para>
+    /// </summary>
+    private FleetRegistry Stored(JournalEvent journalEvent, string? atSystem, string? atStation)
+    {
+        if (journalEvent.Int("StoreShipID") is not { } id || Ships.Any(ship => ship.ShipId == id))
+        {
+            return this;
+        }
+
+        var ship = new StoredShip(
+            id,
+            journalEvent.Named("StoreOldShip") ?? "unknown",
+            Name: null,
+            atSystem ?? "unknown")
+        {
+            StationName = atStation,
+
+            // "Here" is relative to the snapshot, which is the only place this registry knows.
+            Here = atSystem is not null
+                   && string.Equals(atSystem, SnapshotSystem, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(atStation, SnapshotStation, StringComparison.OrdinalIgnoreCase),
+        };
+
+        return this with { Ships = [.. Ships, ship] };
     }
 }

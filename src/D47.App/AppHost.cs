@@ -561,7 +561,21 @@ public sealed class AppHost : IDisposable
         lore.Store.Poll();
         loreVisits.Load();
 
-        var gameState = new GameStateStore { Restore = sampling.For };
+        // Lazy, and deliberately so: it reads back through older journal files, and the answer is
+        // wanted once, the first time a Commander is seen. Nothing pays for it at startup, and a
+        // session that never establishes an identity never scans a thing.
+        var recoveredFleets = new Lazy<IReadOnlyDictionary<string, FleetRegistry>>(
+            () => FleetBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill))));
+
+        var gameState = new GameStateStore
+        {
+            Restore = sampling.For,
+
+            // The fleet cannot always be refolded from the newest journal: StoredShips is written
+            // only on docking at a shipyard, and a session may contain no such docking — which is
+            // how a Commander with eleven ships was shown the one they were sitting in.
+            RestoreFleet = fid => recoveredFleets.Value.TryGetValue(fid, out var fleet) ? fleet : null,
+        };
 
         // The two state files Elite rewrites in place. Same folder as the journal, different
         // shape: a log is appended to and these are replaced, which is entirely inside the

@@ -719,6 +719,12 @@ public static class SpeechCapability
                 DocsAnchor = "api-key",
                 EgressId = EgressDisclosure.TextToSpeech,
 
+                // This provider's own disclosure, not whichever one happens to be selected. The
+                // key row is offered before the provider is chosen — that is what the first-run
+                // window is for — so resolving by selection described the wrong service on the
+                // one screen where a Commander is deciding whether to trust d47 with a key.
+                EgressFor = _ => EgressDisclosure.TextToSpeechFor(provider),
+
                 // Verified against the provider's own voice list, which is the real call this key
                 // is for — and the one d47 makes anyway the moment the key lands.
                 Verify = surface.VerifyKey is { } verify

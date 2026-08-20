@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -12,6 +13,9 @@ public class SettingsServiceTests
 {
     private static readonly string AnthropicKeyRow =
         ConversationCapability.KeyRowFor(LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId)!);
+
+    private static readonly string ElevenLabsKeyRow =
+        SpeechCapability.KeyRowFor(TtsProviderCatalog.ElevenLabs);
 
     [Fact]
     public void AChangeIsPersistedWithoutASaveStep()
@@ -213,6 +217,59 @@ public class SettingsServiceTests
         var cleared = surface.Settings.Apply(AnthropicKeyRow, null, SettingsCaller.Panel);
         Assert.Equal(SettingApplyStatus.Applied, cleared.Status);
         Assert.False(surface.Settings.HasSecret(row.SecretName));
+    }
+
+    /// <summary>
+    /// A key can be stored before the provider it belongs to is the one selected.
+    /// <para>
+    /// The first-run window offers the ElevenLabs key row unconditionally, because a companion
+    /// that talks back is most of the point — and it does so while Edge is still the selected
+    /// voice, which is the state every fresh install is in. Gating the write on the row's
+    /// applicability made that paste impossible and reported it as
+    /// "does not apply with the current selection", which in front of a Commander holding a
+    /// valid key reads as d47 rejecting the key.
+    /// </para>
+    /// <para>
+    /// Applicability governs what the panel <em>shows</em> and what d47 <em>calls</em>. It does
+    /// not govern whether a credential may be kept. Secrets remain model-unreachable by the
+    /// separate rule above it, which this does not touch.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AProviderKeyIsStorableBeforeThatProviderIsSelected()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var row = surface.Settings.Find(ElevenLabsKeyRow)!;
+
+        // The state a fresh install is in, and the one the screenshot was taken in.
+        Assert.NotEqual(TtsProviderCatalog.ElevenLabsId, surface.Settings.Current.Speech.Provider);
+        Assert.False(row.Applies(surface.Settings.Current));
+
+        var result = surface.Settings.Apply(ElevenLabsKeyRow, "sk-a-valid-looking-key", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.True(surface.Settings.HasSecret(row.SecretName!));
+    }
+
+    /// <summary>
+    /// The half of the rule that did not change: a row that does not apply and is not a secret
+    /// is still rejected. Without this the fix above would read as "applicability stopped
+    /// meaning anything".
+    /// </summary>
+    [Fact]
+    public void ANonSecretRowThatDoesNotApplyIsStillRejected()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        // Anthropic has one address and no reason to accept another, so its endpoint row does
+        // not apply while Anthropic is selected.
+        var result = surface.Settings.Apply(
+            ConversationCapability.EndpointKey, "https://example.invalid", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Rejected, result.Status);
     }
 
     [Fact]

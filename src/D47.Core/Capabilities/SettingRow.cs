@@ -215,6 +215,23 @@ public sealed record SettingRow
     public string? EgressId { get; init; }
 
     /// <summary>
+    /// What <em>this row's own value</em> causes to leave, where that is not what the current
+    /// selection causes. Overrides <see cref="EgressId"/> where both are set.
+    /// <para>
+    /// A provider's key row is about that provider. Resolving <see cref="EgressId"/> against the
+    /// settings answers "what is leaving right now", which on a key row is a different question
+    /// from the one being asked — and answered it wrongly: with Edge selected, the ElevenLabs key
+    /// row described Edge Read Aloud and named Bing's address as where the key would go.
+    /// </para>
+    /// <para>
+    /// A function of settings rather than a fixed entry, so that this stays the same kind of
+    /// thing every other disclosure is — computed, never a stored sentence. A key row that does
+    /// not vary with settings simply ignores the argument, which is the point of it.
+    /// </para>
+    /// </summary>
+    public Func<D47Settings, EgressEntry>? EgressFor { get; init; }
+
+    /// <summary>
     /// Anchor within the owning capability's documentation page. The per-row setup-guide link
     /// points here; the docs gate asserts the anchor's heading exists (list.md Phase 4,
     /// "Link each settings row to its documentation").

@@ -22,7 +22,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public CarrierState Carrier { get; private set; } = CarrierState.None;
 
     /// <summary>Every other ship they own, and where.</summary>
-    public FleetRegistry Fleet { get; private set; } = FleetRegistry.Empty;
+    public FleetRegistry Fleet { get; internal set; } = FleetRegistry.Empty;
 
     /// <summary>Every module they have in storage, and where.</summary>
     public ModuleStore Modules { get; private set; } = ModuleStore.Empty;
@@ -86,7 +86,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Ship = Ship.Apply(journalEvent);
         OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
-        Fleet = Fleet.Apply(journalEvent);
+        // After Location, for the reason Colonisation below is: storing a ship happens wherever
+        // the Commander is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
+        Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);
         Modules = Modules.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);

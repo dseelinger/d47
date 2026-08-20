@@ -146,9 +146,17 @@ public static class FirstRun
         // leave if I paste this in", and answering it with "nothing is sent" is true, useless,
         // and answers a question nobody asked — the Commander is deciding precisely whether to
         // create the condition that makes it send.
-        var egress = row.EgressId is { } id
-            ? EgressDisclosure.Entry(id, settings, llmKeyPresent: true)
-            : null;
+        //
+        // A row that names its own destination is asked first, and for the same reason the
+        // paragraph above gives. "What will leave if I paste this in" is a question about the
+        // provider whose key this is; resolving it against the selection answered about a
+        // different provider entirely, which on this screen is not a stale sentence but a
+        // confident wrong one.
+        var egress = row.EgressFor is { } own
+            ? own(settings)
+            : row.EgressId is { } id
+                ? EgressDisclosure.Entry(id, settings, llmKeyPresent: true)
+                : null;
 
         return new FirstRunStep(row, required, egress) { Satisfied = satisfied };
     }

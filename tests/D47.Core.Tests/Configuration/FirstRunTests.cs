@@ -145,6 +145,45 @@ public class FirstRunTests
     }
 
     /// <summary>
+    /// A key row discloses <em>its own</em> provider's destination, not the selected provider's.
+    /// <para>
+    /// The step above asserts that something is said, which is why this went unnoticed: with Edge
+    /// selected — the state every fresh install is in — the ElevenLabs key row said "Spoken
+    /// replies → speech.platform.bing.com" and described Microsoft's Edge Read Aloud service.
+    /// Non-empty, computed, and false about every consequence of the key being pasted.
+    /// </para>
+    /// <para>
+    /// Pinned by destination rather than by the whole sentence: the wording is the catalog's to
+    /// change, the address is the claim being made.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AKeyRowDisclosesItsOwnProviderRatherThanTheSelectedOne()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        // The state the fault was reported in: a voice provider is selected, and it is not the
+        // one whose key is being offered.
+        Assert.Equal(Core.Audio.TtsProviderCatalog.EdgeId, surface.Settings.Current.Speech.Provider);
+
+        var steps = FirstRun.Steps(
+            surface.Registry,
+            surface.Settings.Current,
+            NeedsKey,
+            surface.Secrets.Has,
+            ConversationCapability.KeyRowFor(NeedsKey),
+            [SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs)]);
+
+        var voiceKey = steps.Single(
+            s => s.Row.Key == SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
+
+        Assert.Equal(Core.Audio.TtsProviderCatalog.ElevenLabs.Destination, voiceKey.Egress!.Destination);
+        Assert.DoesNotContain(Core.Audio.TtsProviderCatalog.Edge.Destination, voiceKey.Egress.Destination);
+        Assert.Contains("ElevenLabs", voiceKey.Egress.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A row key that matches nothing is skipped rather than throwing. Inara's row arrives in a
     /// later phase, and a guided path that crashes because an optional row does not exist yet is
     /// worse than one that guides through what does.

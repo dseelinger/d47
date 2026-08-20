@@ -285,7 +285,16 @@ public sealed class SettingsService
                 SettingApplyStatus.Refused, $"'{row.Label}' is something D47 reports, not something you set.");
         }
 
-        if (!row.Applies(Current))
+        // A key is data, not a mode. Which provider is selected decides whether a row is *shown*
+        // and which service d47 actually calls; it does not decide whether a credential may be
+        // stored. The first-run window offers the ElevenLabs key while Edge is still the selected
+        // voice on purpose (MainWindow.ShowKeySetupAsync) — a Commander pastes the key and then
+        // goes looking for the voice, and SpeechWiring is built for precisely that order. Gating
+        // the write on applicability made that order impossible, and said so in words that read
+        // as though the key itself had been rejected.
+        //
+        // Secrets stay model-unreachable regardless: that is refused above, before this.
+        if (row.Kind != SettingKind.Secret && !row.Applies(Current))
         {
             return new SettingApplyResult(
                 SettingApplyStatus.Rejected,

@@ -300,14 +300,31 @@ public static class EgressDisclosure
     /// is the setting that causes the transfer — every line D47 speaks goes out, so there is no
     /// weaker state than "a provider is chosen".
     /// </summary>
-    private static EgressEntry TextToSpeechEntry(D47Settings settings)
-    {
-        var provider = Audio.TtsProviderCatalog.Selected(settings.Speech.Provider);
+    private static EgressEntry TextToSpeechEntry(D47Settings settings) =>
+        TextToSpeechFor(Audio.TtsProviderCatalog.Selected(settings.Speech.Provider));
 
-        return provider.Speaks
+    /// <summary>
+    /// What <em>one named</em> voice provider receives, whether or not it is the one selected.
+    /// <para>
+    /// The selection is the right question almost everywhere: the privacy section is asking what
+    /// is leaving right now, and the answer to that is about whoever is configured. It is the
+    /// wrong question on a provider's own key row, where the Commander is deciding whether to
+    /// hand <em>that</em> provider a credential. Resolved by selection, ElevenLabs' key row
+    /// described Microsoft's Edge Read Aloud service and named <c>speech.platform.bing.com</c> as
+    /// the destination — true of the current setting, and false about every consequence of the
+    /// thing being pasted. A disclosure that is wrong on the one screen where trust is being
+    /// decided is worse than no disclosure, because it is believed.
+    /// </para>
+    /// <para>
+    /// Still computed from <see cref="Audio.TtsProviderCatalog"/> rather than written out beside
+    /// the row: the reason the disclosures live in the catalog is that a second hand-written copy
+    /// is the one that goes stale.
+    /// </para>
+    /// </summary>
+    public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider) =>
+        provider.Speaks
             ? new EgressEntry(TextToSpeech, NameOf(TextToSpeech), provider.Destination, provider.Egress, Active: true)
             : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), provider.Egress);
-    }
 
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,
