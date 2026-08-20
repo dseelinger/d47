@@ -94,7 +94,8 @@ public class RouteCapabilityTests
     private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade) Build(
         TempInstall install,
         bool enabled = true,
-        bool docked = true)
+        bool docked = true,
+        RoutePlanBook? plans = null)
     {
         var gameState = new GameStateStore();
         Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
@@ -115,10 +116,22 @@ public class RouteCapabilityTests
         settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
 
         return (
-            CapabilityRegistry.Build([RouteCapability.Create(routes, trade, () => gameState.Active, settings)]),
+            CapabilityRegistry.Build(
+            [
+                RouteCapability.Create(
+                    routes,
+                    trade,
+                    () => gameState.Active,
+                    settings,
+                    plans,
+                    () => PlottedAt),
+            ]),
             routes,
             trade);
     }
+
+    /// <summary>A fixed instant, so a stored plan's timestamp is assertable.</summary>
+    private static readonly DateTimeOffset PlottedAt = new(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
 
     private static ToolArguments Args(params (string Name, string Value)[] values) =>
         new(values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal));
@@ -346,5 +359,67 @@ public class RouteCapabilityTests
 
         Assert.True(result.IsError);
         Assert.Contains("still working", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A route plotted by voice lands in the book the Routing tab reads (list.md Phase 37).
+    /// <para>
+    /// The join this phase exists to make: without it the tab would plot its own and the two
+    /// would hold different routes, which is the settings-row-and-speaking-path disagreement
+    /// arriving somewhere new.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task APlotMadeByVoiceIsThereForASurfaceToDraw()
+    {
+        using var install = new TempInstall();
+
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "data", "route-plans.json"),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
+
+        var (registry, _, _) = Build(install, plans: plans);
+
+        var result = await registry.InvokeAsync(
+            "plot_route",
+            Args(("to", "Colonia")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        var kept = plans.Last(RoutePlanKind.Jump);
+
+        Assert.NotNull(kept);
+        Assert.Equal(PlottedAt, kept.PlottedAt);
+        Assert.Equal("Colonia", kept.Jump?.Destination);
+
+        // The whole route, not the five waypoints the sentence carries.
+        Assert.Equal(kept.Jump!.Waypoints.Count, kept.Jump.Waypoints.Count);
+    }
+
+    /// <summary>
+    /// A plot that found nothing writes nothing. A stored "no route" would draw as a plan on a
+    /// surface, and the next Commander to open the tab would read a route that does not exist.
+    /// </summary>
+    [Fact]
+    public async Task APlotThatFoundNothingLeavesTheBookAlone()
+    {
+        using var install = new TempInstall();
+
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "data", "route-plans.json"),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
+
+        var (registry, routes, _) = Build(install, plans: plans);
+
+        routes.Route = null;
+
+        var result = await registry.InvokeAsync(
+            "plot_route",
+            Args(("to", "Colonia")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Null(plans.Last(RoutePlanKind.Jump));
     }
 }

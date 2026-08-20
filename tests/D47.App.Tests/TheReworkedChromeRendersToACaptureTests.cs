@@ -6,7 +6,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using D47.App.Panel;
 using D47.App.Theming;
+using D47.Core.Capabilities;
 using D47.Core.Interface;
+using D47.Core.Journal;
+using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -23,6 +26,45 @@ namespace D47.App.Tests;
 /// </summary>
 public class TheReworkedChromeRendersToACaptureTests
 {
+    /// <summary>A short route with the two things a hop can carry: a hazard, and no scoop.</summary>
+    private static NavRoute Plotted => new()
+    {
+        Hops =
+        [
+            new RouteHop("Sol", "G") { Position = (0, 0, 0) },
+            new RouteHop("Alpha Centauri", "K") { Position = (3, 2, 1) },
+            new RouteHop("Jackson's Lighthouse", "N") { Position = (9, 4, 2) },
+            new RouteHop("Wolf 359", "T") { Position = (14, 6, 3) },
+            new RouteHop("Shinrarta Dezhra", "K") { Position = (22, 9, 5) },
+        ],
+    };
+
+    private static RoutePlanBook Plans()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "d47-capture-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+
+        var book = new RoutePlanBook(
+            Path.Combine(folder, "route-plans.json"),
+            NullLogger<RoutePlanBook>.Instance);
+
+        book.Record(
+            new PlottedRoute(
+                "Sol",
+                "Colonia",
+                22_000,
+                168,
+                [
+                    new RouteWaypoint("PSR J1752-2806", 10, 21_629, true),
+                    new RouteWaypoint("Nova Aquila No 3", 6, 21_350, true),
+                    new RouteWaypoint("Skaudai AM-B d14-138", 8, 18_902, false),
+                ]),
+            "Sol to Colonia",
+            new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero));
+
+        return book;
+    }
+
     private static (Window Window, PanelView Panel) Open(double width, PanelTab tab = PanelTab.Transcript)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
@@ -35,6 +77,13 @@ public class TheReworkedChromeRendersToACaptureTests
         model.Append("The beacon is quiet. Nothing on the board worth the detour.");
 
         var panel = new PanelView { DataContext = model };
+
+        panel.EnableRouting(new RoutingSurface(
+            () => Plotted,
+            () => "Alpha Centauri",
+            CapabilityRegistry.Build([]),
+            Plans(),
+            () => true));
 
         panel.Furnish(PanelTab.Checklist, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
         panel.Furnish(
@@ -131,5 +180,50 @@ public class TheReworkedChromeRendersToACaptureTests
 
         Save(window, "chrome-checklist.png");
         window.Close();
+    }
+
+    /// <summary>
+    /// Progress: the route being flown, all of it. The eye is checking that a hazard badge and a
+    /// scoop badge sit on their row rather than colliding, and that the hop you are on is
+    /// findable at a glance.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRouteBeingFlown()
+    {
+        var (window, panel) = Open(1180, PanelTab.Routing);
+
+        panel.Nav.SelectRoot(RoutingPages.ProgressRoot);
+        Save(window, "routing-progress.png");
+    }
+
+    /// <summary>Plan: three cards of form, and whether they read as three things or one mess.</summary>
+    [AvaloniaFact]
+    public void ThePlannersAsForms()
+    {
+        var (window, panel) = Open(1180, PanelTab.Routing);
+
+        panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        Save(window, "routing-plan.png");
+    }
+
+    /// <summary>A plan drawn whole, as a level under Plan.</summary>
+    [AvaloniaFact]
+    public void APlanThatWasMade()
+    {
+        var (window, panel) = Open(1180, PanelTab.Routing);
+
+        panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+        Save(window, "routing-result.png");
+    }
+
+    /// <summary>Course: the clipboard, and the drive that can fail.</summary>
+    [AvaloniaFact]
+    public void SettingACourse()
+    {
+        var (window, panel) = Open(1180, PanelTab.Routing);
+
+        panel.Nav.SelectRoot(RoutingPages.CourseRoot);
+        Save(window, "routing-course.png");
     }
 }

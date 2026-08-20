@@ -171,14 +171,25 @@ public static class BuiltinCapabilities
         // absence is more than a row: with no store there is nothing to bind, so the persona
         // capability registers without its two protected tools rather than registering tools that
         // would answer that they cannot act.
-        Persona.ShipCoreService? shipCores = null) =>
+        Persona.ShipCoreService? shipCores = null,
+
+        // Where a plan is kept once it is made (list.md Phase 37). Null where nothing draws them,
+        // which is every test that is not about the Routing tab: a plot still answers, it just
+        // leaves nothing behind for a surface to show.
+        Knowledge.RoutePlanBook? plans = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
-        RouteCapability.Create(routes, trade, () => gameState.Active, settings),
+        RouteCapability.Create(
+            routes,
+            trade,
+            () => gameState.Active,
+            settings,
+            plans,
+            now),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy),

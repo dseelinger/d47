@@ -410,6 +410,17 @@
                      Content="Transcript"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
+        <!--
+          Where the Commander is going, in three readings of one journey (list.md Phase 37).
+          Beside the transcript rather than out among the ledgers: a route is read while flying,
+          and the tab a hand reaches for in flight should not be the sixth one along.
+        -->
+        <RadioButton x:Name="RoutingTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Routing"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="ChecklistTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"

@@ -207,5 +207,9 @@ It is independent of everything else here and could land on its own at any time.
 5. **Item 3** — Plan.
 6. **Item 5** — Course, and the copy-anywhere join that needs 2 and 3 to exist first.
 
-A completed phase is a minor release, so whenever this is finished it lands as a `minor` through
-`tools/release.ps1` — v0.40.0 from where the repository stood on 2026-08-20.
+A completed phase is a minor release, so this lands as a `minor` through `tools/release.ps1`.
+
+**Built 2026-08-20, and it shipped as v0.41.0 rather than the v0.40.0 this line first predicted**:
+between the plan being written and the work starting, another branch shipped the loadout rows and
+the blueprint join and took 0.40.0. Left here as written, because a plan that quietly edits its own
+predictions is not a record of anything.

@@ -4,9 +4,11 @@ namespace D47.Core.Interface;
 /// The panel's surfaces, as the bar shows them (list.md Phase 25, "One transcript, three
 /// views").
 /// <para>
-/// Six, and the collapse is what pays for them: Conversation, Technical and the log file were
+/// Seven, and the collapse is what pays for them: Conversation, Technical and the log file were
 /// three tabs and are three <em>modes</em> of one, because they are three readings of one
 /// exchange rather than three destinations. The bar carries the surfaces below without growing.
+/// Routing arrived the same way and for the same reason (list.md Phase 37) — Plan, Progress and
+/// Course are three readings of one journey, so they cost one tab rather than three.
 /// </para>
 /// <para>
 /// In Core rather than beside the view, because a tab is something the Commander can say. The
@@ -18,6 +20,16 @@ public enum PanelTab
 {
     /// <summary>The conversation, at two verbosities, and today's log file.</summary>
     Transcript,
+
+    /// <summary>
+    /// Where the Commander is going, in three readings (list.md Phase 37): the plan, the route
+    /// being flown, and getting a system name into the game.
+    /// <para>
+    /// Second, beside the transcript rather than out among the ledgers, because it is read while
+    /// flying rather than administered between trips.
+    /// </para>
+    /// </summary>
+    Routing,
 
     /// <summary>What the Commander is working on, in their own order (list.md Phase 17).</summary>
     Checklist,

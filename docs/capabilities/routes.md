@@ -45,6 +45,11 @@ A Sol-to-Colonia plot is 131 waypoints and 168 jumps. Reading that out is not an
 totals come first and the next handful of waypoints follow — which is how the route is flown
 anyway. You plot the next waypoint when you reach this one.
 
+**That cap belongs to speech, not to the plan.** The whole route is kept, and the **Routing** tab
+in the window draws all of it — see [the panel](interface.md#panel). The same tab plots without
+speaking, and a route plotted by voice appears there the moment it is worked out, because both
+paths write and read one plan rather than each keeping their own.
+
 ```text
 Sol to Colonia: 22,000 light years, 168 jumps across 131 waypoints.
 
@@ -121,8 +126,6 @@ over markets d47 fetched, rather than handed to somebody else's planner.
 
 ```json
 {"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_hop_distance":{"type":"number","description":"The longest single leg, in light years. Defaults to 40."},"max_price_age":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
-  Stack Trace:
-     at D47.Core.Tests.DocumentationGateTests.EveryPageQuotesTheCurrentToolSchema(String id) in C:\dev\d47\tests\D47.Core.Tests\DocumentationGateTests.cs:line 81
 ```
 
 It cannot be planned from supercruise. The whole plan is anchored on the market you are standing
