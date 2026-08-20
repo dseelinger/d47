@@ -35,8 +35,35 @@ pose call itself is the same one four working implementations under `C:/dev` use
 
 **A lead is not a diagnosis.** `spike/GrabSpike` prints each controller's live position and how far
 it has strayed from where it was first seen; a range that stays at zero while the controllers are
-being waved is the fault, and anything else means the freeze is downstream of the pose. That run
-has not happened yet.
+being waved is the fault, and anything else means the freeze is downstream of the pose.
+
+**Run 2026-08-20, and it ruled the pose out.** `--poses` against the headset: the held controller
+moved on 837 of ~1,350 frames, over a 0.22 m range, and the ray's landing point on the panel
+tracked it continuously — `0.94,0.17` → `0.13,0.06` → `0.65,0.99`. The other controller was on the
+desk and the run ends with head and both hands frozen because the headset was taken off; both are
+explained and neither is a fault. **The Commander confirms the ray followed the hand in the spike.**
+
+That kills the recorded hypothesis. The spike drives the *real* `SteamVrRuntime`, `VrRay`,
+`VrActionInput` and the real beam and cursor quads — so the pose read, the ray arithmetic and
+`AimBeam` are all correct, and the fault is in **how the app drives them**, which is a far smaller
+search than the one this entry used to describe.
+
+**The difference between the two, and the new lead.** The spike updates the beam from its own tight
+loop, roughly every 11 ms. `VrHost` updates it from `Carry()`, which runs inside `Serve` on the
+**10 Hz tick**, dispatched to the **UI thread** through a `Dispatcher.UIThread.Post` that
+deliberately *coalesces* — `_pending` drops a frame rather than queueing it when the previous post
+has not run. So the app's ray is at best nine times slower than the one that visibly works, and at
+worst it stops entirely for as long as the UI thread is busy. **A ray that "appears where the
+controller was when it first showed" is what a Commander sees when those posts stop arriving.**
+
+Worth knowing beside it: until 0.39.1 the Utilities tab rebuilt every timer row on that same UI
+thread ten times a second (remediation.md 17, item 14). That is the kind of load this lead
+predicts would freeze the ray, and it is now gone — so **the first thing to do is look again on
+0.39.1** before changing anything, and say which tab was showing when it froze.
+
+**Still not a diagnosis.** What would settle it: whether the beam moves at all when it looks frozen
+— a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
+is idle.
 
 ## Open: PlayingASecondVoiceCancelsTheFirst fails on CI for the third time
 

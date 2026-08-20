@@ -165,6 +165,69 @@ def question_three():
             print(f"    {json.dumps(body)[:200]}")
 
 
+def question_five():
+    """What marks a voice the API will not speak, and what does it answer with?
+
+    remediation.md 17, item 13. d47 offered a voice the service then refused with
+    "Famous voices can only be used within the Reader App", and the fix everybody
+    reaches for first - filter on `category` - does not work: the ™ voices in the
+    shared library are `professional`, exactly like the hundreds of ordinary ones
+    beside them. So this asks the two things a filter needs and neither is a guess:
+    which field actually separates them, and what the refusal's status code is.
+    """
+    print("\n5. What marks a famous voice, and how the refusal arrives")
+
+    if not KEY:
+        print("  needs ELEVENLABS_API_KEY; skipping")
+        return
+
+    status, shared, _ = call("/v1/shared-voices?page_size=100", key=KEY)
+
+    if status != 200 or not shared.get("voices"):
+        print("  could not reach the shared library; skipping")
+        return
+
+    voices = shared["voices"]
+
+    # The trademark is the only thing visible from outside that the famous ones share.
+    famous = [v for v in voices if "™" in v.get("name", "")]
+
+    print(f"  {len(famous)} of {len(voices)} carry a ™ in the name")
+
+    if not famous:
+        print("  none on this page; nothing to test against")
+        return
+
+    # Every field that differs between a ™ voice and an ordinary one. This is the
+    # answer to "what should the filter key on", and it is read rather than assumed.
+    ordinary = next((v for v in voices if "™" not in v.get("name", "")), None)
+    subject = famous[0]
+
+    print(f"  subject: {subject['name']} ({subject['voice_id']})")
+
+    if ordinary is not None:
+        differing = sorted(
+            k for k in set(subject) | set(ordinary)
+            if k not in ("name", "voice_id", "preview_url", "description", "date_unix")
+            and subject.get(k) != ordinary.get(k))
+
+        print(f"    fields differing from an ordinary one: {differing}")
+
+        for field in differing:
+            print(f"      {field}: famous={subject.get(field)!r}  ordinary={ordinary.get(field)!r}")
+
+    status, body, size = call(
+        f"/v1/text-to-speech/{subject['voice_id']}?output_format=pcm_24000",
+        key=KEY,
+        method="POST",
+        body={"text": "Directive forty seven.", "model_id": "eleven_multilingual_v2"})
+
+    print(f"  POST tts, the ™ voice -> {status}, {size} bytes")
+
+    if status != 200:
+        print(f"    {json.dumps(body)[:300]}")
+
+
 def question_four():
     """Is adding a shared voice a call d47 could make?"""
     print("\n4. POST /v1/voices/add/{public_user_id}/{voice_id}")
@@ -198,6 +261,7 @@ def main():
     question_two()
     question_three()
     question_four()
+    question_five()
     return 0
 
 

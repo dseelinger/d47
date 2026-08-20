@@ -46,6 +46,50 @@ public class ElevenLabsTests
         Assert.Contains("API key", listed.WhyEmpty("ElevenLabs")!, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// A voice the API will not speak is never offered (remediation.md 17, item 13).
+    /// <para>
+    /// Reported from the log: *"ElevenLabs could not speak … Famous voices can only be used within
+    /// the Reader App"*, and what a Commander experiences is d47 going quiet, because a sentence
+    /// that will not synthesise is dropped.
+    /// </para>
+    /// <para>
+    /// <b>The fixture is the finding.</b> The obvious filter is `category` and it cannot work: the
+    /// ™ voices come back `professional`, exactly like the several hundred ordinary voices beside
+    /// them — which is why this fixture gives both the same category. The trademark in the name is
+    /// the only thing that separates them.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task AFamousVoiceIsNotOffered()
+    {
+        const string Listing = """
+            {"voices":[
+              {"voice_id":"ordinary","name":"Brian - Clean, Professional and Balanced","category":"professional"},
+              {"voice_id":"famous","name":"Burt Reynolds™ - Masculine Storyteller","category":"professional"},
+              {"voice_id":"premade","name":"George - Warm, Captivating Storyteller","category":"premade"}
+            ]}
+            """;
+
+        using var http = new HttpClient(new CannedResponse(Listing));
+        using var provider = new ElevenLabsTtsProvider(
+            () => "sk_test", NullLogger<ElevenLabsTtsProvider>.Instance, http);
+
+        var voices = (await provider.ListVoicesAsync(TestContext.Current.CancellationToken)).Voices;
+
+        Assert.Equal(["ordinary", "premade"], voices.Select(voice => voice.Id));
+    }
+
+    private sealed class CannedResponse(string body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
+            });
+    }
+
     [Fact]
     public async Task WithNoKeySynthesisSaysWhatIsMissing()
     {
@@ -205,6 +249,15 @@ public class ElevenLabsLiveTests
     // The service naming the id back is about the voice whatever it arrives as.
     [InlineData(HttpStatusCode.UnprocessableEntity,
         "An invalid ID has been received: 'en-US-RogerNeural'. Make sure to provide a correct one.",
+        TtsFault.VoiceRejected)]
+
+    // A voice the account holds and this API will not speak (remediation.md 17, item 13). Matched
+    // on what it says rather than the status it says it with: the listing filter that usually
+    // prevents this reads a ™ out of a display name, which ElevenLabs can change without telling
+    // anybody, so this half deliberately does not depend on the name. 403 stands in for "some
+    // status this does not otherwise treat as being about the voice".
+    [InlineData(HttpStatusCode.Forbidden,
+        "Famous voices can only be used within the Reader App.",
         TtsFault.VoiceRejected)]
 
     // And these are not. Discarding a good voice on the way to reporting a key or a balance

@@ -493,7 +493,7 @@ reparent**, and the panel now reparents on every tab switch.
   thirty-five approaches. `spike/HabitProbe` prints `SAID` or `kept` per claim, so the next
   detector can be held to the same line before it ships.
 
-- [ ] **13. ElevenLabs famous voices are offered, and cannot be spoken.** Reported against 0.39.0
+- [x] **13. ElevenLabs famous voices are offered, and cannot be spoken.** Reported against 0.39.0
   from the installed build's log:
 
   ```
@@ -513,17 +513,28 @@ reparent**, and the panel now reparents on every tab switch.
   from the Commander's side d47 simply stops talking — the failure mode this batch has now met
   three times in different clothes.
 
-  **The exact category string is not known and is not being guessed.** The anonymous listing is 21
-  voices, all `premade`, so the value that marks a famous one only appears against an account.
-  Running `ELEVENLABS_API_KEY=… python spike/ElevenLabsProbe/probe_voices.py` prints the account's
-  voices by category and settles it in one line. Until then the filter would be a guess, and a
-  guessed blacklist that is too wide silences voices the Commander has paid for.
+  **`category` is not the discriminator, and the probe run is what proved it.** That was the
+  obvious fix and it cannot work: the ™ voices come back **`professional`**, the same category as
+  the several hundred ordinary voices listed beside them — *Burt Reynolds™*, *John Wayne™*,
+  *Judy Garland™*, *Stan Lee™*, *Sir Michael Caine™*, *Richard Feynman™* all sit in the same bucket
+  as *"Brian - Clean, Professional and Balanced"*. A filter on category would have silenced
+  hundreds of voices the Commander can actually use and still let the famous ones through.
 
-  **Two halves, and the second does not depend on the first.** Exclude the unusable categories
-  from the catalogue so they are never offered; and treat a refusal at synthesis time as a fact
-  about that voice — say so once, on the surface, rather than dropping sentence after sentence
-  into the log. The second is what makes this recoverable if ElevenLabs adds another category d47
-  has never heard of.
+  **The trademark in the name is the only thing that separates them**, which the Commander named
+  outright. So that is what the listing filters on — and a match on somebody else's display text
+  is exactly the kind of rule this codebase distrusts, which is why it is not load-bearing alone.
+
+  **Two halves, and the second does not depend on the name.** The listing drops a ™ voice so it is
+  never offered; and `FaultFor` now reads *"Reader App"* in a refusal as `TtsFault.VoiceRejected`,
+  which is the fault the pipeline already knows how to recover from — it forgets the voice, lets
+  the provider choose, and tells whoever chose it. Matched on the message rather than the status,
+  because the status this arrives with was never captured. So if ElevenLabs renames the convention
+  tomorrow, it costs one sentence rather than a session of silence.
+
+  **`spike/ElevenLabsProbe` gained a fifth question** that prints every field differing between a
+  ™ voice and an ordinary one, and the status the refusal actually arrives with. Neither was needed
+  to ship this, and both would sharpen it — the filter could key on a field instead of a character
+  if one turns out to exist.
 
 - [x] **14. The Utilities tab flickers in the headset.** Reported against 0.39.0: *"in VR, the
   Utilities tab flickers a lot. Is it because we're trying to repaint too often (clock seconds) or
@@ -565,25 +576,3 @@ a row shows what is fitted as well, and a module is not a plan.
 **The next attempt is now diagnostic.** Try the drag again against 0.39.1: either it copies, or it
 says which rule turned it down. Either answer closes the item.
 
-## Where item 13 stands
-
-**Open, and the recovery half may already exist.** `SpeechPipeline` has a `VoiceRejected` path
-that forgets a refused voice, lets the provider choose, and tells whoever chose it — and
-`ElevenLabsTtsProvider.FaultFor` classifies a 400 or a 404 as exactly that. Whether the
-famous-voice refusal reaches it depends on the status ElevenLabs sends with that message, which
-the pasted log does not carry. Two possibilities, needing different work:
-
-- **It is a 400.** Recovery already fired on the first sentence, and the line reported is a later
-  one arriving after the voice had been forgotten once — `Forget()` answers only the first time,
-  by design.
-- **It is a 403, or anything else.** Then it is `TtsFault.Unknown`, nothing recovers, and every
-  sentence of every turn is dropped for the rest of the session.
-
-**Either way the listing is the real fix**, because a voice that cannot be spoken should never be
-offered at all. That needs the account's own `category` values, which one command prints:
-
-```
-ELEVENLABS_API_KEY=sk_... python spike/ElevenLabsProbe/probe_voices.py
-```
-
-The status code can come out of the same run, and the two together decide the whole item.

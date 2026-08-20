@@ -178,6 +178,23 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             [
                 .. (listed?.Voices ?? [])
                     .Where(voice => voice.VoiceId is not null)
+
+                    // **The famous ones are not offered** (remediation.md 17, item 13). Reported
+                    // from the log: *"ElevenLabs could not speak … Famous voices can only be used
+                    // within the Reader App"*, and what a Commander experiences is d47 going
+                    // silent, because a sentence that will not synthesise is dropped.
+                    //
+                    // <b>The trademark is the discriminator, and that is a measured finding
+                    // rather than a convenience.</b> The obvious filter is `category` and it does
+                    // not work: the ™ voices are `professional`, exactly like the several hundred
+                    // ordinary voices beside them in the same listing. Nothing else visible
+                    // separates them. So this matches what ElevenLabs themselves put in the name.
+                    //
+                    // It is a match on somebody else's prose, which this codebase distrusts for
+                    // good reason — so it is not load-bearing on its own. `FaultFor` treats the
+                    // refusal itself as a fact about the voice, which needs no name and catches
+                    // whatever this misses.
+                    .Where(voice => voice.Name?.Contains('™', StringComparison.Ordinal) != true)
                     .Select(voice => new VoiceInfo(
                         voice.VoiceId!,
                         voice.Name ?? voice.VoiceId!,
@@ -353,6 +370,18 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     internal static TtsFault FaultFor(HttpStatusCode status, string? said, string voiceId) =>
         status is HttpStatusCode.BadRequest or HttpStatusCode.NotFound
         || said?.Contains(voiceId, StringComparison.Ordinal) == true
+
+        // A voice this account may hold but this API will not speak — *"Famous voices can only be
+        // used within the Reader App"* (remediation.md 17, item 13). It is a fact about the voice
+        // and never about the sentence, so it is worth forgetting rather than retrying, which is
+        // exactly what this fault means.
+        //
+        // **Matched on what it says rather than on the status it says it with**, because the
+        // status is not known to be one this already covers, and because the listing filter that
+        // usually prevents this reads a ™ out of a display name — a rule ElevenLabs can change
+        // without telling anybody. This is the half that does not depend on the name, so a
+        // category d47 has never heard of still costs one sentence rather than a session.
+        || said?.Contains("Reader App", StringComparison.OrdinalIgnoreCase) == true
             ? TtsFault.VoiceRejected
             : TtsFault.Unknown;
 
