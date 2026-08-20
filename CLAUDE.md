@@ -80,6 +80,9 @@ Each of these is cheap to break by accident and expensive to fix later.
 - **Structure only where it buys quality.** Projects exist to enforce a dependency boundary
   or to be independently testable — not to express a taxonomy. Add the seam when the phase
   that needs it arrives.
+- **Surgical changes: every changed line traces to the task.** Match the surrounding style even
+  where you would write it differently, and remove only the imports and helpers *your* change
+  orphaned. Unrelated dead code gets mentioned, not deleted.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
