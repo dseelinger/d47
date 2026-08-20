@@ -130,7 +130,7 @@ reparent**, and the panel now reparents on every tab switch.
   This is a third window, later in the same sequence, and neither existing fix should be
   disturbed by whatever closes it.
 
-- [ ] **3. The Settings nav is longer than the window and cannot be scrolled.** Reported against
+- [x] **3. The Settings nav is longer than the window and cannot be scrolled.** Reported against
   0.39.0: the left-hand nav menu runs off the bottom of the page, and the entries past the bottom
   edge cannot be reached at all.
 
@@ -155,7 +155,7 @@ reparent**, and the panel now reparents on every tab switch.
   parties; a nav that yanks itself back on every card that passes is worse than one that clips.
   Move it only when the active entry is not already visible.
 
-- [ ] **4. Nothing d47 says of its own accord reaches the model, so it cannot be asked about.**
+- [x] **4. Nothing d47 says of its own accord reaches the model, so it cannot be asked about.**
   Reported against 0.39.0 with the transcript: a route callout said *"Elvira Martuuk is one stop
   away"*, the Commander asked *"Why would I care about that?"*, and d47 answered *"Care about
   what, Commander? I have no record of what I said before this."*
@@ -218,7 +218,7 @@ reparent**, and the panel now reparents on every tab switch.
   do not enter history, so nothing fails when this changes. Per the standing rule, the test comes
   first and the fault gets reintroduced afterwards to watch it fail.
 
-- [ ] **5. A tab that has been left once goes deaf, so clicking a ship does nothing.** Reported
+- [x] **5. A tab that has been left once goes deaf, so clicking a ship does nothing.** Reported
   against 0.39.0: Checklist, then Loadout, and the fleet no longer opens — a ship can be clicked
   and nothing happens.
 
@@ -254,7 +254,7 @@ reparent**, and the panel now reparents on every tab switch.
   their tab once and drill. The regression test is Loadout → Checklist → Loadout → click a ship
   → assert the ship page is showing, and per the standing rule it gets watched failing first.
 
-- [ ] **6. "Shields are down" on a ship that has no shields.** Reported against 0.39.0. A hull
+- [x] **6. "Shields are down" on a ship that has no shields.** Reported against 0.39.0. A hull
   without a shield generator — mining, exploration and racing builds routinely fly one — reports
   the shields-up flag as false forever, which is not a transition into danger. It is the ship.
 
@@ -281,7 +281,7 @@ reparent**, and the panel now reparents on every tab switch.
   a shipyard swap onto one looks like in sequence. That decides whether the fix is one branch or
   two, and it is the first job.
 
-- [ ] **7. A ship's slots read "not seen" while the Commander is sitting in it.** Reported against
+- [x] **7. A ship's slots read "not seen" while the Commander is sitting in it.** Reported against
   0.39.0: switched to the ship in Elite, opened outfitting, and the module list still says *not
   seen*.
 
@@ -348,7 +348,7 @@ reparent**, and the panel now reparents on every tab switch.
   the plan, so whether the destination row reacts at all separates "the drag is not in flight" from
   "the drop is going to the wrong row". That is a free diagnostic already in the code.
 
-- [ ] **9. "Keep what is fitted" offers every blueprint in the game.** Reported against 0.39.0:
+- [x] **9. "Keep what is fitted" offers every blueprint in the game.** Reported against 0.39.0:
   Oxen, Military 02, the *Keep the 5D Hull Reinforcement Package* row — and the blueprint list
   included Ammo Capacity, which no hull reinforcement has ever taken. Choosing the module by name
   instead gives the right list.
@@ -377,7 +377,7 @@ reparent**, and the panel now reparents on every tab switch.
   dropped on the way to the question. Same wrong output — *a Type-10's armour offered Dirty Drive
   Tuning* is the line already in that comment — by a different road.
 
-- [ ] **10. The gear glyph sits left of the module name.** Reported against 0.39.0: it should be
+- [x] **10. The gear glyph sits left of the module name.** Reported against 0.39.0: it should be
   to the right of the name, not leftmost.
 
   `LoadoutPages.Row` builds a three-column grid — marks, name, note — and puts the marks in
@@ -398,7 +398,7 @@ reparent**, and the panel now reparents on every tab switch.
   is worse than either arrangement. The reading taken here is that both move together and stay
   adjacent; say if it should be the gear alone.
 
-- [ ] **11. The grade stepper is not visibly attached to the grade.** Reported against 0.39.0:
+- [x] **11. The grade stepper is not visibly attached to the grade.** Reported against 0.39.0:
   it is not clear the step controls belong to the engineering grade. Asked for as *Grade last
   (rightmost) on the line, followed by the stepper.*
 
@@ -428,7 +428,7 @@ reparent**, and the panel now reparents on every tab switch.
 
   **And the spoken form gets a test saying it did not move**, for the same reason item 6 has one.
 
-- [ ] **12. A habit worth 2.9% is announced as a habit.** Reported against 0.39.0: *"You have
+- [x] **12. A habit worth 2.9% is announced as a habit.** Reported against 0.39.0: *"You have
   dropped short of where you were going and had to come back — 14 of 490 approaches, 2 of them in
   the last month"*, said **on a perfect approach to a landing**.
 
@@ -507,7 +507,7 @@ reparent**, and the panel now reparents on every tab switch.
   into the log. The second is what makes this recoverable if ElevenLabs adds another category d47
   has never heard of.
 
-- [ ] **14. The Utilities tab flickers in the headset.** Reported against 0.39.0: *"in VR, the
+- [x] **14. The Utilities tab flickers in the headset.** Reported against 0.39.0: *"in VR, the
   Utilities tab flickers a lot. Is it because we're trying to repaint too often (clock seconds) or
   something? Other tabs are fine."*
 
@@ -530,3 +530,19 @@ reparent**, and the panel now reparents on every tab switch.
 
   The test asserts reference identity across a tick that moves the clock eleven minutes, because
   identity is precisely what was wrong.
+
+## Where item 8 stands
+
+**Not ticked, and deliberately.** The gesture was found to work: a test now drives a real press
+and release across two rows and the plan copies, and the row does not capture the pointer, which
+is what lets the release land on the target. The Commander confirms Ctrl was held. So the reported
+failure is not explained, and a fix that cannot be pointed at the report is not a fix.
+
+What shipped is the thing that made it unreportable: **a refused drag now says why.** The release
+handler used to return without a word, and the success message was overwritten by the redraw that
+followed it — so neither outcome has ever said anything, and every refusal looked exactly like a
+broken feature. The most likely refusal is dragging a row that has nothing *planned* in it, since
+a row shows what is fitted as well, and a module is not a plan.
+
+**The next attempt is now diagnostic.** Try the drag again against 0.39.1: either it copies, or it
+says which rule turned it down. Either answer closes the item.

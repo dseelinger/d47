@@ -3590,14 +3590,18 @@ public sealed class AppHost : IDisposable
                         // refusal that stays in the log is one the Commander never learns about.
                         if (!result.Sent)
                         {
-                            await Voice.AnnounceAsync(new Announcement(
+                            // Through SayAsync rather than straight at the synthesiser
+                            // (remediation.md 17, item 4). Going direct is why an action d47 took
+                            // on its own was missing from the model's history *and* from the
+                            // Commander's own conversation page: this path raised neither.
+                            await SayAsync(new Announcement(
                                 action.Id, $"I could not use {action.Label}. {result.Reason}")).ConfigureAwait(false);
                         }
                     }
 
                     if (action.Decision.Say is { } say)
                     {
-                        await Voice.AnnounceAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
+                        await SayAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
                     }
                 }
             }
@@ -3649,6 +3653,16 @@ public sealed class AppHost : IDisposable
             // decided in Core, where it can be asserted against a callout rather than against a
             // running app.
             Said?.Invoke(spoken);
+
+            // **And into the conversation, not only onto the page** (remediation.md 17, item 4).
+            // The two used to be the same call and they are not the same thing: `Said` reaches
+            // the panel's transcript, which is a `StringBuilder` nobody sends anywhere. Reported
+            // as *"I have no record of what I said before this"*, which was exactly true.
+            //
+            // Gated on `ConversationLine` and therefore on this being d47's own voice — a
+            // re-voiced in-game message is somebody else's text and has no path into a prompt
+            // (architecture.md §7).
+            Turns.Said(spoken);
         }
 
         await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
@@ -3968,7 +3982,12 @@ public sealed class AppHost : IDisposable
             var said = missed ? reminder.AnnounceMissed(zone) : reminder.Announce();
 
             _ = Voice.AnnounceAsync(said);
+
             Said?.Invoke(said);
+
+            // A timer going off is d47 speaking unasked, like a callout (remediation.md 17,
+            // item 4). "Why did you just say that?" has to be answerable about this too.
+            Turns.Said(said);
         }
     }
 

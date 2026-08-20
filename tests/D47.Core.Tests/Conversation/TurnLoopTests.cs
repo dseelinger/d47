@@ -293,6 +293,118 @@ public class TurnLoopTests
         Assert.Equal(3, provider.LastRequest!.Prompt.History.Count);
     }
 
+    /// <summary>
+    /// What d47 says without being asked reaches the next turn (remediation.md 17, item 4).
+    /// <para>
+    /// Reported with the transcript: a route callout said *"Elvira Martuuk is one stop away"*, the
+    /// Commander asked *"why would I care about that?"*, and d47 answered *"I have no record of
+    /// what I said before this"* — which was exactly true. History was written in one place, the
+    /// end of an answered model turn, so every callout, continuity line, habit remark, reminder
+    /// and autonomous action went to the speaker and the panel and nowhere else.
+    /// </para>
+    /// <para>
+    /// It rides into the following user turn rather than being appended as an assistant message,
+    /// because an assistant message with nothing before it — or two in a row — is not a shape
+    /// every endpoint accepts, and Phase 29 means more than one is in play. The assertion is
+    /// therefore about what the provider is sent, and about it persisting afterwards.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task WhatItSaidUnpromptedReachesTheNextTurn()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        loop.Said("Commander. Elvira Martuuk is one stop away.");
+
+        await RunAsync(loop, "why would I care about that?");
+
+        var asked = Text(provider.LastRequest!.Prompt.History[0]);
+
+        Assert.Contains("Elvira Martuuk is one stop away", asked, StringComparison.Ordinal);
+        Assert.Contains("why would I care about that?", asked, StringComparison.Ordinal);
+
+        // Labelled as d47's own, because it is arriving inside a user message and the Commander
+        // did not say it.
+        Assert.Contains("said-aloud", asked, StringComparison.Ordinal);
+
+        // Said once. A line carried into every turn from here would be a callout repeating itself
+        // silently, for ever.
+        await RunAsync(loop, "and now?");
+
+        Assert.DoesNotContain(
+            "Elvira Martuuk is one stop away",
+            Text(provider.LastRequest!.Prompt.History[^1]),
+            StringComparison.Ordinal);
+
+        // But it is still in the transcript, which is what makes the *next* question about it
+        // answerable rather than only the first.
+        Assert.Contains(
+            loop.History,
+            message => Text(message).Contains("Elvira Martuuk", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The keyword router's own answers are recorded too (remediation.md 17, item 4). *"Stop
+    /// calling things out"* → *"done"* → *"why did you do that?"* reproduces the reported
+    /// transcript by a second road, and none of the four model-free routes wrote a word.
+    /// </summary>
+    [Fact]
+    public async Task TheRoutersOwnAnswerIsRecorded()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        var (routed, spoken) = await RunAsync(loop, "what are you watching for");
+
+        Assert.Equal(TurnRoute.KeywordRouter, routed.Route);
+
+        await RunAsync(loop, "tell me about hyperspace physics");
+
+        Assert.Contains(
+            spoken[..40],
+            Text(provider.LastRequest!.Prompt.History[0]),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The transcript has a ceiling (remediation.md 17, item 4). It was unbounded, which was
+    /// survivable while only answered turns accumulated and is not now that d47's own unprompted
+    /// lines join them.
+    /// </summary>
+    [Fact]
+    public async Task TheTranscriptIsBounded()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        for (var turn = 0; turn < TurnLoop.TranscriptKept; turn++)
+        {
+            await RunAsync(loop, $"question {turn.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
+
+        Assert.Equal(TurnLoop.TranscriptKept, loop.History.Count);
+
+        // The oldest went first, which is the ordinary meaning of a conversation you can follow.
+        Assert.DoesNotContain(
+            loop.History,
+            message => Text(message).Contains("question 0", StringComparison.Ordinal));
+
+        Assert.Contains(
+            loop.History,
+            message => Text(message).Contains(
+                $"question {(TurnLoop.TranscriptKept - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}",
+                StringComparison.Ordinal));
+    }
+
+    private static string Text(ConversationMessage message) =>
+        string.Join(
+            ' ',
+            message.Content.OfType<ConversationContent.Text>().Select(part => part.Value));
+
     [Fact]
     public async Task TheGuardrailsReachTheProviderOnEveryTurn()
     {
