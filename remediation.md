@@ -124,6 +124,24 @@ reparent**, and the panel now reparents on every tab switch.
   Reproducing it is the first job; a fix landed without a failing test to watch is a fix nobody
   can check.
 
+  **A fourth occurrence, 2026-08-19, on this batch's own release run.** `VrSurfaceTests.`
+  `EachModeReadsItsOwnPlacementSlot` failed exactly as the third did — cleanup framing, the same
+  `InvalidOperationException`, and the same frame: `HeadlessUnitTestSession.EnsureIsolated-`
+  `Application` → `AvaloniaHeadlessPlatform.Initialize` → `Compositor..ctor` →
+  `DefaultRenderLoop.Add`. **Four different tests have now carried it**, which closes the question
+  of whether the named test means anything: it does not.
+
+  It has now cost **two** release runs — 0.39.0's and 0.39.1's — and both cleared on a re-run of
+  the identical commit. Three consecutive local Release runs of the whole suite were clean before
+  this one was pushed, which is the fourth time that has been true and the fourth time it has not
+  predicted the runner.
+
+  **The compositor frame is the thing to read next.** `EnsureIsolatedApplication` is building a
+  *whole new* `Compositor` mid-run, and `DefaultRenderLoop.Add` then asserts dispatcher ownership
+  from whichever thread xUnit happened to schedule the cleanup on. So the question is not why the
+  thread is wrong — it is why a session that has already been initialised is being initialised
+  again at all, that late in a run.
+
   **Twice patched already, and both patches are still correct.** `670997f` closed a dispatcher
   race that had failed a release build, `5066025` closed a second one a seventh test project
   exposed. Both were about the *first* press being genuinely underway before the second arrives.

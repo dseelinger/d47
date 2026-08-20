@@ -93,3 +93,21 @@ the anomaly, since `EnsureIsolatedApplication` should have nothing left to do by
 earlier, and two consecutive local Release runs of the whole suite were clean. It cleared on a
 re-run of the same tag. **This has now cost a release run**, which is the first time it has cost
 anything beyond a retry, and it is the reason to stop treating it as noise.
+
+**A fourth, on the release run for v0.39.1, hours later.** `VrSurfaceTests.EachModeReadsItsOwn-
+PlacementSlot` — a fourth test, unrelated to the other three, failing as cleanup with the same
+exception and the same frame, now readable in full: `HeadlessUnitTestSession.EnsureIsolated-`
+`Application` → `AvaloniaHeadlessPlatform.Initialize` → `Compositor..ctor` → `ServerCompositor..ctor`
+→ `DefaultRenderLoop.Add`.
+
+**Four tests have now carried it and none of them is the subject.** That is settled and should not
+be re-investigated. What the fourth adds is the middle of the stack: the session is constructing a
+*whole new* `Compositor` mid-run, and `DefaultRenderLoop.Add` then asserts dispatcher ownership
+from whichever thread xUnit scheduled that cleanup on. **The question is not why the thread is
+wrong. It is why an already-initialised session is being initialised again at all**, that late in
+a run — `EnsureIsolatedApplication` should have had nothing to do.
+
+**It has now cost two release runs**, 0.39.0's and 0.39.1's, and cleared on a re-run of the
+identical commit both times. Three clean consecutive local Release runs preceded this one, as they
+did the last one; local runs have now failed to predict the runner four times, and should stop
+being offered as evidence that it is fixed.
