@@ -132,23 +132,57 @@ public sealed class UtilitiesPage : UserControl
         _local.Text = clocks.LocalTimeOfDay;
         _localDate.Text = clocks.LocalDate;
 
-        _running.Children.Clear();
-
         var running = _timekeeper.Running;
 
-        if (running.Count == 0)
+        // **Rebuilt only when the list itself changes** (remediation.md 17, item 14). Reported
+        // from the headset: *"the Utilities tab flickers a lot — other tabs are fine"*. This
+        // cleared the panel and built every row again on every tick, and the headset rasterises
+        // the tree on its own cadence rather than the window's: it catches the moment between the
+        // clear and the re-add, and draws an empty list. The desktop window never showed it
+        // because it composes the whole frame after the tick has finished.
+        //
+        // So a running timer's countdown is written into the row it already has, and controls are
+        // only made when the set of reminders is different from the set on screen. A clock that
+        // only redraws when something changed is a clock that stopped — but the thing that changed
+        // is a string, not a row.
+        var wanted = string.Join('|', running.Select(reminder => reminder.Id));
+
+        if (!string.Equals(wanted, _showing, StringComparison.Ordinal))
         {
-            _running.Children.Add(Muted(
-                "Nothing running. Say \"set a timer for forty minutes\", or press New timer."));
+            _showing = wanted;
+            _due.Clear();
+            _running.Children.Clear();
+
+            if (running.Count == 0)
+            {
+                _running.Children.Add(Muted(
+                    "Nothing running. Say \"set a timer for forty minutes\", or press New timer."));
+
+                return;
+            }
+
+            foreach (var reminder in running)
+            {
+                _running.Children.Add(Line(reminder, now, zone));
+            }
 
             return;
         }
 
         foreach (var reminder in running)
         {
-            _running.Children.Add(Line(reminder, now, zone));
+            if (_due.TryGetValue(reminder.Id, out var due))
+            {
+                due.Text = reminder.Describe(now, zone);
+            }
         }
     }
+
+    /// <summary>What is currently drawn, so a tick that changes nothing draws nothing.</summary>
+    private string _showing = string.Empty;
+
+    /// <summary>Each running reminder's countdown, so it can be written without rebuilding it.</summary>
+    private readonly Dictionary<string, TextBlock> _due = [];
 
     /// <summary>Shows what a store or a refusal had to say. Cleared by the next refresh.</summary>
     public void Say(string message)
@@ -177,6 +211,9 @@ public sealed class UtilitiesPage : UserControl
         };
 
         Themed(due, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+
+        // Kept, so the next tick writes the countdown rather than building this row again.
+        _due[reminder.Id] = due;
 
         // Protected, and this is the affordance that makes that mean something: cancelling is
         // reachable from here and from a phrase, and from nothing the model can call.

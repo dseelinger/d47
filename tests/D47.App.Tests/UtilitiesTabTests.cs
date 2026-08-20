@@ -23,14 +23,23 @@ public class UtilitiesTabTests
     private static readonly DateTimeOffset Instant =
         new(2026, 8, 17, 21, 4, 0, TimeSpan.Zero);
 
-    private static (Window Window, PanelView Panel, Timekeeper Timekeeper) Open(string root)
+    /// <summary>A clock a test can move, for the ticks that have to change something.</summary>
+    private sealed class Clock
+    {
+        public DateTimeOffset Now { get; set; } = Instant;
+    }
+
+    private static (Window Window, PanelView Panel, Timekeeper Timekeeper) Open(string root) =>
+        Open(root, new Clock());
+
+    private static (Window Window, PanelView Panel, Timekeeper Timekeeper) Open(string root, Clock clock)
     {
         var alarms = new AlarmStore(Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
         var timekeeper = new Timekeeper(alarms);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableUtilities(timekeeper, alarms, () => Instant, () => TimeZoneInfo.Utc);
+        panel.EnableUtilities(timekeeper, alarms, () => clock.Now, () => TimeZoneInfo.Utc);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -95,6 +104,50 @@ public class UtilitiesTabTests
         Assert.Contains("40 min", shown);
         Assert.Contains("wake up", shown);
         Assert.Contains("06:04", shown);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// A tick that changes only the countdown does not rebuild the row (remediation.md 17,
+    /// item 14).
+    /// <para>
+    /// Reported from the headset: *"the Utilities tab flickers a lot — other tabs are fine"*. The
+    /// running list was cleared and rebuilt on every tick, and the headset rasterises the tree on
+    /// its own cadence rather than the window's, so it catches the moment between the clear and
+    /// the re-add and draws an empty list. The desktop window never showed it because it composes
+    /// the frame after the tick has finished.
+    /// </para>
+    /// <para>
+    /// The assertion is reference identity, because that is the thing that was wrong: the text has
+    /// to change on every tick and the controls must not.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ATickWritesTheCountdownWithoutRebuildingTheRow()
+    {
+        var clock = new Clock();
+        var (window, panel, timekeeper) = Open(TempFolders.Create("d47-utilities-tests"), clock);
+
+        timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), Instant);
+
+        panel.TickClocks();
+        Dispatcher.UIThread.RunJobs();
+
+        var rows = panel.GetVisualDescendants().OfType<Border>().ToList();
+
+        Assert.Contains("40 min", Text(panel));
+
+        clock.Now = Instant.AddMinutes(11);
+
+        panel.TickClocks();
+        Dispatcher.UIThread.RunJobs();
+
+        // The countdown moved.
+        Assert.Contains("29 min", Text(panel));
+
+        // And every control that was on screen is the same object it was.
+        Assert.Equal(rows, panel.GetVisualDescendants().OfType<Border>().ToList());
 
         window.Close();
     }

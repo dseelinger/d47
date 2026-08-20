@@ -506,3 +506,27 @@ reparent**, and the panel now reparents on every tab switch.
   about that voice — say so once, on the surface, rather than dropping sentence after sentence
   into the log. The second is what makes this recoverable if ElevenLabs adds another category d47
   has never heard of.
+
+- [ ] **14. The Utilities tab flickers in the headset.** Reported against 0.39.0: *"in VR, the
+  Utilities tab flickers a lot. Is it because we're trying to repaint too often (clock seconds) or
+  something? Other tabs are fine."*
+
+  **The guess was right about the tick and wrong about the cost.** Writing four clock strings ten
+  times a second is nothing. What `UtilitiesPage.Refresh` also did on every one of those ticks was
+  `_running.Children.Clear()` and build every timer row again — new `Border`, new `DockPanel`, new
+  `Button`, new bindings — so the running list was destroyed and recreated continuously.
+
+  **Why only the headset sees it.** The window composes its frame after the tick has finished, so
+  the torn-down moment never reaches the screen. The VR path rasterises the tree on **its own**
+  cadence, which is not the tick's, so it lands between the clear and the re-add and sends a frame
+  with an empty list on it. That is the flicker, and it is why no other tab has it: no other tab
+  rebuilds itself unprompted.
+
+  **The countdown is written, the row is not rebuilt.** A key over the running reminders' ids says
+  whether the *list* changed; only then is anything constructed. Otherwise each row's countdown
+  block is written in place. The comment that stood over this — *a clock that only redraws when
+  something changed is a clock that stopped* — is still true and is still why the tick runs: what
+  changed is a string, not a row.
+
+  The test asserts reference identity across a tick that moves the clock eleven minutes, because
+  identity is precisely what was wrong.
