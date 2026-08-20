@@ -17,6 +17,16 @@ public sealed record StoredShip(int ShipId, string Type, string? Name, string St
     /// <summary>The ship the Commander is currently flying is not in the stored list.</summary>
     public bool Here { get; init; }
 
+    /// <summary>
+    /// Whether <see cref="StarSystem"/> actually names somewhere, rather than standing in for a
+    /// system nothing has reported. <c>"unknown"</c> is what every path here writes when it has no
+    /// name — so it is asked about in one place rather than compared against in several, and a
+    /// caller putting a system on the clipboard cannot hand the Commander the placeholder to
+    /// paste into the Galaxy Map.
+    /// </summary>
+    public bool HasSystem =>
+        StarSystem is { Length: > 0 } && !string.Equals(StarSystem, "unknown", StringComparison.OrdinalIgnoreCase);
+
     public string Describe() => Name is not null ? $"{Name} ({Type})" : Type;
 }
 

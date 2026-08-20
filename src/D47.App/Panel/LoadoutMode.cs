@@ -65,6 +65,12 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
     /// </para>
     /// </summary>
     public LoadoutStep? Step { get; init; }
+
+    /// <summary>
+    /// One value on this line the Commander can take away with them, where the line carries one.
+    /// Null on every other line.
+    /// </summary>
+    public LoadoutCopy? Copy { get; init; }
 }
 
 /// <summary>
@@ -74,6 +80,19 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 /// <param name="Offered">What it may be, highest first — the stepper clamps to these.</param>
 /// <param name="Set">Applies a new value.</param>
 public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<int> Set);
+
+/// <summary>
+/// Something on a line worth putting on the clipboard, and what to say it is.
+/// <para>
+/// <b>The value, not the sentence.</b> A ship's whereabouts reads "Parked at BNH-T2F, Laksak." and
+/// what the Commander wants out of it is <c>Laksak</c> — the system name, on the clipboard, to
+/// paste into Elite's Galaxy Map search. Copying the line they can see would hand them a sentence
+/// the Galaxy Map will not find.
+/// </para>
+/// </summary>
+/// <param name="Value">Exactly what goes on the clipboard.</param>
+/// <param name="Tip">What the pointer says the glyph will do.</param>
+public sealed record LoadoutCopy(string Value, string Tip);
 
 /// <summary>
 /// One pressable line of a loadout index.
@@ -110,7 +129,53 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
     /// </para>
     /// </summary>
     public string? Group { get; init; }
+
+    /// <summary>
+    /// The row broken into the parts a slot row is drawn from, or null for a row that is just a
+    /// line of text — a ship in the fleet, a suit, a gap.
+    /// <para>
+    /// Asked for 2026-08-20: the slot's <em>name</em> was leading the row and taking the width,
+    /// and it is not the primary information about a loadout. What is fitted, what was rolled on
+    /// it and what that did are.
+    /// </para>
+    /// </summary>
+    public LoadoutParts? Parts { get; init; }
 }
+
+/// <summary>
+/// A slot row, in the order it reads: size, then the plan dot, then the module, then what was
+/// done to it (asked for 2026-08-20).
+/// <para>
+/// <b>Parts rather than one string</b>, because they are drawn differently — the size and the
+/// module are bold, "empty" is greyed, the gear is a glyph — and because the effects are trimmed
+/// to whatever room is left, which cannot be decided until the row is measured.
+/// </para>
+/// </summary>
+/// <param name="Size">
+/// The class of module the slot takes, or null where saying it adds nothing — a utility mount is
+/// size 0 by definition, so the 0 is noise on every one of them.
+/// </param>
+/// <param name="Module">What is fitted, or null where nothing is.</param>
+/// <param name="Vacant">
+/// The word for a slot with nothing in it, which is <b>not always "empty"</b>: empty is a fact
+/// about the slot and it is only a fact when d47 can see the ship. For one the Commander is not
+/// sitting in, the honest word is that it has not been seen.
+/// </param>
+/// <param name="Blueprint">The roll, where one has been done or planned.</param>
+/// <param name="Grade">Its grade, shown as (G5). Null where there is no roll.</param>
+/// <param name="Experimental">The experimental effect, where there is one.</param>
+/// <param name="Effects">
+/// What the roll actually did, biggest first. Drawn until the row runs out of room and cut at a
+/// whole effect rather than mid-word.
+/// </param>
+public sealed record LoadoutParts(
+    int? Size,
+    string? Module,
+    string Vacant,
+    string? Blueprint,
+    int? Grade,
+    string? Experimental,
+    IReadOnlyList<string> Effects);
 
 /// <summary>
 /// One mode of the Loadout tab — Ships, or Suits and weapons (list.md Phase 27, "The same page, on

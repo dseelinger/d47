@@ -422,6 +422,74 @@ public class ShipPlanTests
         Assert.False(store.Poll());
     }
 
+    /// <summary>
+    /// Every row names the system the ship is in, asked for 2026-08-20: "print in the ship list
+    /// what system the ship is in".
+    /// <para>
+    /// "here" for a ship at the Commander's own station, and nothing at all for the one they are
+    /// flying, answered a different question from the one the list is for — a Commander scanning
+    /// the fleet is working out where to fly, and a row saying "here" makes them open the ship to
+    /// find out where "here" is.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryRowNamesTheSystemTheShipIsIn()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"BNH-T2F"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[]}"""));
+
+        // One in the rack beside them, one parked somewhere else entirely.
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:02Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[{"ShipID":37,"ShipType":"cobramkv","Name":"Reaper","Value":1}],"ShipsRemote":[{"ShipID":42,"ShipType":"python","Name":"Expedition","StarSystem":"Shinrarta Dezhra","Value":1}]}"""));
+
+        var ships = Service(install, Store(install), store.Active!);
+        var fleet = ships.Fleet();
+
+        var flown = fleet.Single(entry => entry.Stored?.ShipId == 51);
+        var beside = fleet.Single(entry => entry.Stored?.ShipId == 37);
+        var away = fleet.Single(entry => entry.Stored?.ShipId == 42);
+
+        Assert.Contains("Laksak", flown.Where(), StringComparison.Ordinal);
+        Assert.Contains("Laksak", beside.Where(), StringComparison.Ordinal);
+        Assert.Equal("Shinrarta Dezhra", away.Where());
+
+        // Still says which one is under the Commander — the system was added to that answer, not
+        // put in place of it.
+        Assert.Contains("flying", flown.Where(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// With no location yet, the row says what it knows and no more. The placeholder must not
+    /// reach the Commander as though it were a system: a glyph beside this line puts the system on
+    /// the clipboard for the Galaxy Map, and "unknown" is not somewhere anybody can fly.
+    /// </summary>
+    [Fact]
+    public void AShipWithNoKnownSystemDoesNotInventOne()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}"""));
+
+        var flown = Assert.Single(Service(install, Store(install), store.Active!).Fleet());
+
+        Assert.False(flown.Stored!.HasSystem);
+        Assert.Equal("you are flying it", flown.Where());
+    }
+
     private static JournalEvent Event(string json)
     {
         Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));

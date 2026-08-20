@@ -551,6 +551,27 @@ public partial class PanelView : UserControl
                 ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
                 : page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
             new NavCrumb("checklist", "Checklist"));
+
+        // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than
+        // every line**: a checklist's whole question is how much is left, and a count that never
+        // falls as the Commander works is a number they learn to ignore.
+        //
+        // Redrawn on the service's own event rather than on a tick, so it follows a line being
+        // ticked off, a plan being promoted and an import — all three change it and none of them
+        // is a clock.
+        void Count()
+        {
+            var open = checklists.Document.Items.Count(item => item.IsLive && !item.IsComplete);
+
+            ChecklistTab.Content = open > 0
+                ? $"Checklist ({open.ToString(System.Globalization.CultureInfo.InvariantCulture)})"
+                : "Checklist";
+        }
+
+        // The store's event, which is the one the page itself listens to — so the tab and the page
+        // cannot come to disagree about how many there are.
+        checklists.List.Changed += () => Dispatcher.UIThread.Post(Count);
+        Count();
     }
 
     /// <summary>

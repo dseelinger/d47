@@ -279,5 +279,17 @@ public class ChecklistStoreTests
         Assert.Contains("system", filters);
         Assert.Contains("open", filters);
         Assert.DoesNotContain("derived", filters);
+
+        // **No Ship row, ever** (the Commander's ruling, 2026-08-20). Nearly everything derived is
+        // ship-scoped, so it narrows almost nothing while reading like a real choice. The scope
+        // itself is untouched — it is what makes a ship's plan follow that ship through a swap.
+        checklists.AddNote(ChecklistScope.Ship(12), "swap the shield booster");
+
+        Assert.DoesNotContain("ship", checklists.Filters());
+
+        // And every row says which question it answers, rather than the four axes arriving as one
+        // flat list of enum spellings.
+        Assert.All(checklists.FilterAxes(), filter => Assert.NotEmpty(filter.Heading));
+        Assert.DoesNotContain(checklists.FilterAxes(), filter => filter.Word == filter.Key);
     }
 }

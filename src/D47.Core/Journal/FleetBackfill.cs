@@ -211,7 +211,19 @@ public static class FleetBackfill
 
         try
         {
-            foreach (var line in File.ReadLines(file))
+            // **FileShare.ReadWrite | Delete, exactly as JournalReader opens the same files**
+            // (architecture.md §4). Elite holds the live journal open for writing for the whole
+            // session, and File.ReadLines asks for a share mode that excludes that — so scanning
+            // the newest file threw IOException every single run, which was caught and logged and
+            // left the one file most likely to hold a fresh snapshot unread. Found in the debug
+            // log rather than by any test: every test writes its own journals and no test has
+            // Elite holding one open.
+            using var stream = new FileStream(
+                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
             {
                 if (owner is null && line.Contains("\"FID\":\"", StringComparison.Ordinal))
                 {

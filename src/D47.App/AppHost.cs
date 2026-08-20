@@ -2085,8 +2085,7 @@ public sealed class AppHost : IDisposable
     internal IReadOnlyList<string> VoiceIds() => [.. _voices.Voices.Select(voice => voice.Id)];
 
     /// <summary>
-    /// How the picker labels one — "Ava — Female, en-US" rather than the raw id. Falls back to
-    /// the id, so a voice the Commander typed themselves still shows as what they typed.
+    /// How the picker labels one — "Ava — Female, en-US" rather than the raw id.
     /// </summary>
     /// <summary>
     /// The voice's name on its own — "George" — or null when the catalogue does not know it, which
@@ -2098,9 +2097,13 @@ public sealed class AppHost : IDisposable
         _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Name;
 
+    /// <summary>
+    /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and
+    /// the picker all read this. The rule itself is <see cref="VoiceCatalogue.LabelFor"/>; this
+    /// supplies the two things it needs that only the host knows.
+    /// </summary>
     internal string VoiceLabelFor(string id) =>
-        _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
-            ?.Label ?? id;
+        _voices.LabelFor(id, TtsProviderCatalog.Selected(Settings.Current.Speech.Provider));
 
     /// <summary>
     /// Why the voice picker has nothing in it, when it has nothing in it (list.md Phase 19;

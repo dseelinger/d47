@@ -162,7 +162,16 @@ public sealed class ShipsMode(
         // line and this does not, so "here" becomes the station it is parked at.
         if (entry?.Stored is { } stored)
         {
-            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body));
+            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body)
+            {
+                // The system, on the clipboard, for Elite's Galaxy Map search. The sentence names
+                // the station too, and the station is not what the Galaxy Map takes.
+                Copy = stored.HasSystem
+                    ? new LoadoutCopy(
+                        stored.StarSystem,
+                        $"Copy “{stored.StarSystem}” — paste it into the Galaxy Map")
+                    : null,
+            });
 
             if (stored.TransferPrice is { } price)
             {
@@ -191,7 +200,12 @@ public sealed class ShipsMode(
     {
         if (active)
         {
-            return "You are flying it.";
+            // The system too, so the copy glyph beside this line has something to be about — the
+            // ship under the Commander is as good a reason to want the system name on the
+            // clipboard as any other, and often a better one.
+            return stored.HasSystem
+                ? $"You are flying it, in {stored.StarSystem}."
+                : "You are flying it.";
         }
 
         if (stored.InTransit)
@@ -337,7 +351,7 @@ public sealed class ShipsMode(
         var layout = EliteSpecifications.Slots(build.Hull);
 
         var slots = layout.Count > 0
-            ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe()))]
+            ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe(), slot.Size))]
             : Unlaid(build, fitted);
 
         return
@@ -365,10 +379,82 @@ public sealed class ShipsMode(
                     // different questions (remediation.md 15, item 10): the dot beside this says a
                     // plan exists, and the gear says a roll has already been done.
                     Engineered = module?.Blueprint is { Length: > 0 },
+
+                    Parts = Parted(slot, plan, module, build, fitted),
                 };
             }),
         ];
     }
+
+    /// <summary>
+    /// One slot row broken into the parts it is drawn from (asked for 2026-08-20).
+    /// <para>
+    /// <b>Fitted first, planned behind it.</b> The module named is what is actually in the slot
+    /// where Elite has said — a fact — and the plan's module only where it has not, which is every
+    /// ship the Commander is not sitting in. The roll is the other way round: a plan is what the
+    /// Commander wants and outranks what is on the hull now, because the row exists to be worked
+    /// towards.
+    /// </para>
+    /// <para>
+    /// <b>The effects are the fitted module's own</b> and are never a plan's. Elite reports what a
+    /// roll actually landed — 3,384 modifiers across the corpus, each with the figure before it —
+    /// and a planned roll has no figures at all. Showing modelled ones beside measured ones is the
+    /// failure the specification table is built the way it is to avoid.
+    /// </para>
+    /// </summary>
+    private LoadoutParts Parted(
+        (string Name, ShipSlotKind Kind, string Word, int Size) slot,
+        SlotPlan? plan,
+        ShipModule? module,
+        ShipBuild build,
+        IReadOnlyList<ShipModule> fitted) =>
+        new(
+            // No size on a utility mount: they are 0 by definition, so a 0 on all eight of them is
+            // noise in the first column the eye lands on.
+            slot.Kind == ShipSlotKind.Utility ? null : slot.Size,
+            // The full name — "3E Pulse Laser, gimballed" — beside the slot's own size, and the
+            // two are not the same fact: a size 3 slot can hold a class 2 module, and seeing a 2
+            // beside a 3 is how a Commander spots one. The rating and the mount are in it for the
+            // same reason, and the mount is the half that decides how a weapon behaves.
+            module is not null ? EliteSpecifications.ModuleName(module.Item) ?? module.Item : plan?.Module,
+            Vacant(build, fitted),
+            plan?.Blueprint ?? module?.Blueprint,
+            plan?.Grade ?? module?.BlueprintLevel,
+            plan?.Experimental ?? module?.Experimental,
+            Effects(module));
+
+    /// <summary>
+    /// What the roll actually did, biggest change first, in the shortest form that stays true.
+    /// <para>
+    /// Ordered by how far each figure moved <em>proportionally</em>, because a +300% mass and a
+    /// +38% shield are not comparable as raw numbers and the Commander is scanning for the
+    /// headline. Modifiers Elite reports without a before-figure carry no change to state, so they
+    /// are left out rather than shown as zero.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<string> Effects(ShipModule? module)
+    {
+        if (module is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. module.Modifiers
+                .Where(modifier => modifier.Change is not null && modifier.OriginalValue is not 0)
+                .OrderByDescending(modifier => Math.Abs(Proportion(modifier)))
+                .Select(modifier => $"{Signed(Proportion(modifier))} {modifier.Label}")
+        ];
+    }
+
+    private static double Proportion(ShipModifier modifier) =>
+        modifier.Change!.Value / Math.Abs(modifier.OriginalValue!.Value) * 100;
+
+    private static string Signed(double percent) =>
+        percent >= 0
+            ? $"+{percent.ToString("0.#", CultureInfo.InvariantCulture)}%"
+            : $"{percent.ToString("0.#", CultureInfo.InvariantCulture)}%";
 
     /// <summary>
     /// The list for a hull with no layout: what the journal mentioned and what is planned, minus
@@ -381,7 +467,7 @@ public sealed class ShipsMode(
     /// kind of decoration.
     /// </para>
     /// </summary>
-    private static List<(string Name, ShipSlotKind Kind, string Word)> Unlaid(
+    private static List<(string Name, ShipSlotKind Kind, string Word, int Size)> Unlaid(
         ShipBuild build, IReadOnlyList<ShipModule> fitted)
     {
         var names = new List<string>();
@@ -402,7 +488,7 @@ public sealed class ShipsMode(
                 .Select(name => (Name: name, Kind: EliteSpecifications.KindOf(name)))
                 .Where(slot => slot.Kind is not null)
                 .OrderBy(slot => slot.Kind)
-                .Select(slot => (slot.Name, slot.Kind!.Value, Word: slot.Name)),
+                .Select(slot => (slot.Name, slot.Kind!.Value, Word: slot.Name, Size: 0)),
         ];
     }
 
@@ -688,12 +774,21 @@ public sealed class ShipsMode(
         AskModule(build, known, plan, prompts, (module, variant) =>
             AskBlueprint(build, known, plan, module, variant, prompts, (blueprint, grade, experimental) =>
             {
-                ships.Plan(build.Id, new SlotPlan(slot, blueprint, grade, plan?.Engineer)
+                var wanted = new SlotPlan(slot, blueprint, grade, plan?.Engineer)
                 {
                     Module = module,
                     Variant = variant,
                     Experimental = experimental,
-                });
+                };
+
+                // **An empty plan is not a plan** and must not be stored. Keeping a module that
+                // takes no engineering answers every question with nothing, and the row for it
+                // says so and says pressing it only closes — which would be a lie if it left a
+                // plan behind, marking the slot with a dot for a want nobody expressed.
+                if (!wanted.IsEmpty)
+                {
+                    ships.Plan(build.Id, wanted);
+                }
 
                 done();
             }));
@@ -846,7 +941,13 @@ public sealed class ShipsMode(
                 $"Which {module}?",
                 Context(build, slot),
                 [
-                    new ChoiceOption(string.Empty, $"Any {module} — size and mount do not matter"),
+                    // **What the Commander means, not a claim about the game.** This row read
+                    // "size and mount do not matter", and that is false about every module in
+                    // Elite: an FSD's size is most of a jump range, and a weapon's mount is the
+                    // whole of how it tracks. The row is the *decline* — it says the plan is not
+                    // specifying which one — so it says that, in the words this method's own
+                    // documentation already uses for it.
+                    new ChoiceOption(string.Empty, $"Any {module} — I do not mind which"),
                     .. offered.Select(variant => new ChoiceOption(
                         variant.Symbol,
                         Wording(variant),
@@ -963,7 +1064,9 @@ public sealed class ShipsMode(
                 // Straight past the grade, which is decided rather than asked.
                 var grade = Grade(plan, offered);
 
-                AskEffect(build, slot, plan, wanted, prompts, effect =>
+                // The same offer the blueprint list was built from, rather than the module's name
+                // again. See AskEffect for why the name is not enough.
+                AskEffect(build, slot, plan, wanted, offer, prompts, effect =>
                     chosen(blueprint, grade, effect));
             });
     }
@@ -1029,16 +1132,40 @@ public sealed class ShipsMode(
     /// After the blueprint rather than beside it, because it is a second thing bought at the same
     /// bench and it is its own checklist item on the same slot.
     /// </para>
+    /// <para>
+    /// <b>From the offer the blueprint list was built from, not from the module's name.</b>
+    /// Reported 2026-08-20: keeping a fitted Shield Booster and rolling Heavy Duty went straight
+    /// past this step. The two lists were joined by different means — <see cref="Offered"/> tries
+    /// the module's <em>symbol</em> first, which is exact, and only falls back to the name, while
+    /// this asked <see cref="BlueprintCatalogue.ExperimentalsFor"/>, which matches on the name
+    /// alone. That is fine until the name is one nothing can match: "keep what is fitted" answers
+    /// the module question with null on purpose, so the subject comes from
+    /// <c>EliteSpecifications.ModuleName</c>, which returns <c>"0A Shield Booster"</c> — the size
+    /// and rating are in it. Measured: <c>ForModule("Shield Booster")</c> finds 31 recipes and six
+    /// experimentals, <c>ForModule("0A Shield Booster")</c> finds none.
+    /// </para>
+    /// <para>
+    /// So the blueprint list was right and this one was empty, and a step with nothing to offer is
+    /// not shown — which is correct behaviour reached from a wrong answer, and therefore silent.
+    /// <b>It was not a Shield Booster fault</b>: the prefix is on every fitted module's name, so
+    /// keeping <em>any</em> module skipped this step.
+    /// </para>
     /// </summary>
+    /// <param name="offer">
+    /// What this module can take, already resolved by <see cref="AskBlueprint"/>. Null where the
+    /// module is unknown or undecided, and the name is then the only thing left to ask by.
+    /// </param>
     private void AskEffect(
         ShipBuild build,
         ShipSlot slot,
         SlotPlan? plan,
         string? module,
+        IReadOnlyList<Blueprint>? offer,
         PanelPrompts prompts,
         Action<string?> chosen)
     {
-        var effects = BlueprintCatalogue.ExperimentalsFor(module)
+        var effects = (offer ?? BlueprintCatalogue.ForModule(module))
+            .Where(recipe => recipe.Kind == BlueprintKind.Experimental)
             .Select(recipe => recipe.Name)
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.OrdinalIgnoreCase)
@@ -1138,14 +1265,38 @@ public sealed class ShipsMode(
     /// nobody can name.
     /// </para>
     /// </summary>
-    private IReadOnlyList<ChoiceOption> Keeping(ShipBuild build, ShipSlot slot) =>
-        FittedIn(build, slot) is not { } module
-            ? []
-            : [new ChoiceOption(
+    private IReadOnlyList<ChoiceOption> Keeping(ShipBuild build, ShipSlot slot)
+    {
+        if (FittedIn(build, slot) is not { } module)
+        {
+            return [];
+        }
+
+        var named = EliteSpecifications.ModuleName(module.Item);
+        var what = named is { Length: > 0 } ? $"the {named}" : "what is fitted";
+
+        // **Whether there is any engineering to want** (asked for 2026-08-20, reported against an
+        // Auto Field-Maintenance Unit). The row promised "I only want the engineering" on modules
+        // that take none — a fuel tank, an AFMU — and pressing it walked the Commander into a
+        // blueprint question with no answers, which closed the whole prompt without a word.
+        //
+        // The same call AskBlueprint makes, and it has to be: a row that offers something the next
+        // step will refuse is worse than a row that says so. Null means the module is unknown
+        // rather than unengineerable, and an unknown one is still offered the catalogue.
+        // **"I have none" rather than "there is none."** The asked-for wording was "engineering is
+        // not available for this module", and that is a claim about Elite which d47 is not
+        // currently entitled to make: 369 of 1,243 rows in Blueprints.tsv carry no `mtypes`, and
+        // the join in BlueprintCatalogue.For needs one — so the Auto Field-Maintenance Unit this
+        // was reported against reads as unengineerable while its five Shielded rows sit in the
+        // table unreachable. Refinery, Fuel Scoop and Heat Sink Launcher are in the same state.
+        // Until the generator fills that column this says what d47 knows, which is true either
+        // way; a fuel tank, which really does take none, reads no worse for it.
+        return Offered(named, module.Item) is { Count: 0 }
+            ? [new ChoiceOption(
                 string.Empty,
-                EliteSpecifications.ModuleName(module.Item) is { Length: > 0 } named
-                    ? $"Keep the {named} — I only want the engineering"
-                    : "Keep what is fitted — I only want the engineering")];
+                $"Keep {what} — I have no engineering for this module. Click to close.")]
+            : [new ChoiceOption(string.Empty, $"Keep {what} — I only want the engineering")];
+    }
 
     /// <summary>
     /// The module fitted in this slot right now, or null where nothing is or nothing can see.

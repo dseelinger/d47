@@ -17,6 +17,44 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.40.0 — 2026-08-20 — The loadout, the drag, and the engineer you are parked at
+
+**Ctrl-drag never worked, on any slot, since it shipped.** The pointer is captured by the row the
+press lands on, so the release always came home; the handler saw the drop as landing where the drag
+started and did nothing at all. Neither drag test could see it — both raised the release on the
+*target* row, which the running app can never do. The drop target now comes from where the pointer
+actually is, and the gesture finally says what it is while it happens: a ghost carrying the plan
+follows the mouse, the cursor becomes a copy cursor, and both are put back in a `finally` so a
+failed drop cannot leave the pointer lying.
+
+**The slot rows are rebuilt around the loadout rather than the slot.** Size, the plan dot, the
+module, the gear where it has been rolled, the blueprint, the grade, the experimental, then what
+the roll actually did — left-justified on one line, with the effects re-fitted on every resize and
+cut at a whole effect rather than mid-word. The slot's name is announced to a screen reader rather
+than drawn, because it was leading the row and it is not the primary thing about a loadout.
+
+**Four modules could not be engineered at all, and the table always knew.** 66 of 940
+ship-engineering rows were unreachable by the module join, so the Auto Field-Maintenance Unit, Fuel
+Scoop, Refinery and Plasma Accelerator each read as taking no engineering. Three of them were a
+spelling coriolis and EDSY disagree on; the Plasma Accelerator lost all fifty-one of its rows to two
+flaws in the generator — a first-come-first-served type assignment, now a maximum matching, and a
+containment test that let one mis-keyed row veto a whole module. Now 0 of 940.
+
+**What the engineer you are parked at can actually do.** Asked "I'm in Laksak, what can I retire
+here?", d47 answered with the whole list, because no filter knew where the Commander was — while
+the opening line offered an unlock hint about somebody two hundred light years off. Every input had
+been on disk for phases and nothing joined them. `get_checklist` gains `here`, the continuity
+callout leads with the engineer under your feet, and "one stop away" now reads "one unlock step
+away", because it never meant distance.
+
+Also in this release: keeping a fitted module reaches its experimental effect again — the roll list
+matched by symbol and the effect list by name, so *every* kept module skipped that step; an opaque
+ElevenLabs id is never shown where a voice's name belongs; a ship's system is named in the fleet
+list and copies to the clipboard for the Galaxy Map; no chooser claims a module's size and mount do
+not matter, because that is false of every module in the game; the gear glyph takes the theme's
+accent; the Checklist tab carries its open count; and the scope filter's four axes are grouped under
+the questions they answer.
+
 ## 0.39.2 — 2026-08-20 — A voice that cannot speak is not offered
 
 Remediation 17, item 13. Reported from the log: d47 went quiet, and behind the silence was

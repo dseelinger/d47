@@ -328,8 +328,18 @@ public sealed class PanelPrompts
                 return;
             }
 
+            // A heading wherever the group changes, and only over options that survived the
+            // search — so narrowing the list cannot leave a heading standing over nothing.
+            var group = (string?)null;
+
             foreach (var option in shown)
             {
+                if (option.Group is { Length: > 0 } heading && heading != group)
+                {
+                    group = heading;
+                    rows.Children.Add(Heading(heading));
+                }
+
                 rows.Children.Add(Option(request, option, chosen));
             }
         }
@@ -431,6 +441,27 @@ public sealed class PanelPrompts
         || (option.Detail?.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase) ?? false);
 
     /// <summary>One option, as the pressable row it is drawn as.</summary>
+    /// <summary>
+    /// The heading over a group of options. Muted and smaller than the rows under it, because it
+    /// is a label for them rather than another thing to press.
+    /// </summary>
+    private static Control Heading(string text)
+    {
+        var said = new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Secondary,
+            FontWeight = FontWeight.Bold,
+            Margin = new Thickness(12, 10, 12, 4),
+        };
+
+        said.Bind(
+            TextBlock.ForegroundProperty,
+            App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+
+        return said;
+    }
+
     private static Control Option(
         ChoiceRequest request, ChoiceOption option, Action<ChoiceOption> chosen)
     {

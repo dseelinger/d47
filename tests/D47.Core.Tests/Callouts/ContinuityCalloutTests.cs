@@ -299,7 +299,12 @@ public class ContinuityCalloutTests : IDisposable
 
         if (best is { Chain.Steps.Count: 1 })
         {
-            Assert.Contains($"{best.Engineer.Name} is one stop away.", line, StringComparison.Ordinal);
+            Assert.Contains($"{best.Engineer.Name} is one unlock step away.", line, StringComparison.Ordinal);
+
+            // **Not "one stop away"** (reported 2026-08-20). A stop is a place you fly to, and
+            // the Commander read it as one — heard while parked in a different engineer's system it
+            // was navigation advice about somebody two hundred light years off.
+            Assert.DoesNotContain("one stop away", line, StringComparison.Ordinal);
         }
         else
         {

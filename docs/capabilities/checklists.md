@@ -277,8 +277,12 @@ Two moments, both switchable under Callouts → **Checklist changes**:
 Reads the list. Open items by group, then what is done with its count, then anything waiting for
 you. Derived items carry the journal's verdict as of right now.
 
+`here` narrows it to what an engineer in this system could roll today — the blueprint is theirs,
+you have unlocked them, and your grade with them reaches the grade you asked for. Anything they
+offer but cannot yet roll is left out of that answer rather than counted as work.
+
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list: custom, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["custom","ship","system","suit","weapon"]},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list: custom, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["custom","ship","system","suit","weapon"]},"here":{"type":"boolean","description":"Only what an engineer in this system could roll today."},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
 ```
 
 ### `get_plan_shortfall`
