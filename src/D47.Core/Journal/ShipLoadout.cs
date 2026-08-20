@@ -260,9 +260,10 @@ public sealed record ShipLoadout
 
     public ShipLoadout Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
-        // The whole picture, rewritten from scratch. Loadout fires on every change that matters
-        // — outfitting, module swap, ship swap — so folding it rather than replacing it would
-        // leave modules from the previous ship in the list.
+        // The whole picture, rewritten from scratch. Loadout fires on outfitting, module swap and
+        // ship swap, and carries the ship entire each time — so folding it rather than replacing
+        // it would leave modules from the previous ship in the list. It does **not** fire on
+        // engineering, which is why EngineerCraft is folded below rather than waited for here.
         "Loadout" => new ShipLoadout
         {
             Type = journalEvent.String("Ship"),
@@ -297,8 +298,78 @@ public sealed record ShipLoadout
                     ?? Ident,
         },
 
+        // Engineering is the change that matters and does not re-emit Loadout. Measured over the
+        // 917-journal corpus: of 6,485 EngineerCraft events, not one is followed by a Loadout
+        // within five seconds, 79 within a minute, and 1,378 are never followed by one at all in
+        // the same file. Without this a plan is diffed against the loadout from when the
+        // Commander last boarded, so the roll they have just finished reads as not started — and
+        // the moment worth speaking to, standing at the console, passes in silence.
+        "EngineerCraft" => Rolled(journalEvent),
+
         _ => this,
     };
+
+    /// <summary>
+    /// One slot, rewritten from the roll that just landed.
+    /// <para>
+    /// <b>EngineerCraft carries no ShipID</b>, and needs none: a Commander engineers the ship they
+    /// are sitting in and no other. What it does carry — measured across all 6,485 of them — is
+    /// <c>Slot</c>, <c>BlueprintName</c>, <c>Level</c>, <c>Quality</c> and a non-empty
+    /// <c>Modifiers</c> list, every time, with the engineer named. That is the whole
+    /// <c>Engineering</c> block, so nothing here is inferred.
+    /// </para>
+    /// <para>
+    /// <b>One slot rather than the whole picture</b>, which is the opposite of what <c>Loadout</c>
+    /// gets and for the same reason: this event describes one module and says nothing whatever
+    /// about the others.
+    /// </para>
+    /// </summary>
+    private ShipLoadout Rolled(JournalEvent journalEvent)
+    {
+        if (Blank(journalEvent.String("Slot")) is not { } slot)
+        {
+            return this;
+        }
+
+        var index = Modules.ToList()
+            .FindIndex(module => string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+        // A slot this loadout has never listed. Adding one would mean inventing its item, health
+        // and value to go with the roll, and putting that phantom in the fleet report; ignoring it
+        // costs nothing, because the next Loadout carries the truth. The same branch covers d47
+        // starting mid-session, with no picture of the ship to update at all.
+        if (index < 0)
+        {
+            return this;
+        }
+
+        var existing = Modules[index];
+        var modifiers = journalEvent.Items("Modifiers").Select(ShipModifier.From).ToList();
+
+        var rolled = existing with
+        {
+            Blueprint = journalEvent.Named("BlueprintName") ?? existing.Blueprint,
+            BlueprintLevel = journalEvent.Int("Level") ?? existing.BlueprintLevel,
+            Quality = journalEvent.Double("Quality") ?? existing.Quality,
+
+            // Localised first, exactly as the Loadout path does it — a plan names "Fast Charge"
+            // and Elite localises this one field. Falling back to the raw symbol keeps the
+            // ApplyExperimentalEffect spelling readable if the localised pair ever goes missing.
+            //
+            // **Kept where the event is silent.** A grade roll writes no experimental field at
+            // all, which is not Elite saying there is none — reading it that way would strip the
+            // effect off the moment the Commander improved the grade underneath it.
+            Experimental = Blank(journalEvent.Named("ExperimentalEffect")
+                                 ?? journalEvent.Named("ApplyExperimentalEffect"))
+                           ?? existing.Experimental,
+
+            Engineer = Blank(journalEvent.String("Engineer")) ?? existing.Engineer,
+            EngineerId = journalEvent.Long("EngineerID") ?? existing.EngineerId,
+            Modifiers = modifiers.Count > 0 ? modifiers : existing.Modifiers,
+        };
+
+        return this with { Modules = [.. Modules.Select((module, at) => at == index ? rolled : module)] };
+    }
 
     /// <summary>
     /// Elite writes an empty string for a ship that has never been named. Null is what the rest

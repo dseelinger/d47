@@ -18,6 +18,12 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What the Commander is flying, and its metrics.</summary>
     public ShipLoadout Ship { get; private set; } = ShipLoadout.Unknown;
 
+    /// <summary>
+    /// Every ship they have been seen sitting in, as it stood when they left it. Elite describes
+    /// one ship at a time; this is what stops that meaning d47 knows one ship at a time.
+    /// </summary>
+    public ShipLoadouts Loadouts { get; internal set; } = ShipLoadouts.Empty;
+
     /// <summary>Their fleet carrier, if they have one.</summary>
     public CarrierState Carrier { get; private set; } = CarrierState.None;
 
@@ -84,6 +90,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         Location = Location.Apply(journalEvent);
         Ship = Ship.Apply(journalEvent);
+
+        // After Ship and in one place, so every route that changes the flown ship is remembered by
+        // the same line — the Loadout, the rename, and the EngineerCraft that Elite writes no
+        // Loadout for. Dated off the event, because Core reads no clock.
+        Loadouts = Loadouts.Apply(journalEvent).Remember(Ship, journalEvent.Timestamp);
         OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever

@@ -74,9 +74,15 @@ public static class ChecklistEvaluator
 
         // A ShipID now reporting a different hull makes the list stale and says so, rather than
         // quietly diffing an exploration Krait against a Cutter.
+        //
+        // **Compared as hulls and not as strings** (reported 2026-08-20). A plan can carry either
+        // spelling — `StoredShips` writes `ShipType_Localised` where Frontier supplies one, so a
+        // build started from the fleet holds "Panther Clipper Mk II" where one started from a
+        // Loadout holds `panthermkii`. Matched by text those are two different ships, and every
+        // slot of that plan reported itself stale against the ship it was written for.
         if (item.Hull is { } hull
             && loadout.Type is { } type
-            && !string.Equals(hull, type, StringComparison.OrdinalIgnoreCase))
+            && !SameHull(hull, type))
         {
             return new ChecklistVerdict(
                 ChecklistState.Stale,
@@ -517,6 +523,21 @@ public static class ChecklistEvaluator
     /// <summary>A suit and a hand weapon answer the same three questions, so they share a shape.</summary>
     private readonly record struct OnFootSubject(
         string Name, int? Grade, IReadOnlyList<FittedModification> Modifications);
+
+    /// <summary>
+    /// Whether two hull spellings name the same ship. Text first, because that is the common case
+    /// and costs nothing; the table behind it, because a display name and a symbol are the same
+    /// hull and only <see cref="EliteSpecifications.Ship"/> knows it.
+    /// <para>
+    /// A spelling the table does not carry falls back to the text comparison, so an unknown hull
+    /// is still compared rather than being quietly called a match.
+    /// </para>
+    /// </summary>
+    private static bool SameHull(string planned, string flying) =>
+        string.Equals(planned, flying, StringComparison.OrdinalIgnoreCase)
+        || (EliteSpecifications.Ship(planned) is { } was
+            && EliteSpecifications.Ship(flying) is { } now
+            && string.Equals(was.Symbol, now.Symbol, StringComparison.OrdinalIgnoreCase));
 
     private static bool IsActive(ChecklistScope scope, ShipLoadout loadout) =>
         scope.Group == ChecklistGroup.Ship

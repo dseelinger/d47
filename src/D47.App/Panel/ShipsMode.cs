@@ -266,19 +266,25 @@ public sealed class ShipsMode(
     /// </summary>
     private IReadOnlyList<LoadoutLine> Flying(ShipBuild build)
     {
-        var loadout = state()?.Ship;
-
-        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
+        if (Picture(build) is not { } seen)
         {
             return
             [
                 new LoadoutLine(
                     "Elite reports the loadout of the ship you are sitting in and no other, so its "
-                    + "jump range, cargo and rebuy are only known while you are in it."),
+                    + "jump range, cargo and rebuy are only known once you have been in it."),
             ];
         }
 
+        var loadout = seen.Loadout;
         var lines = new List<LoadoutLine>();
+
+        // Dated where it is remembered, and silent where it is live. These are figures a
+        // Commander will act on, and a re-outfit d47 never watched would change every one of them.
+        if (seen.SeenAt is { } when)
+        {
+            lines.Add(new LoadoutLine($"As you left it, {Age(when)}.", LoadoutTone.Muted));
+        }
 
         if (loadout.MaxJumpRange is { } range)
         {
@@ -416,7 +422,9 @@ public sealed class ShipsMode(
             // two are not the same fact: a size 3 slot can hold a class 2 module, and seeing a 2
             // beside a 3 is how a Commander spots one. The rating and the mount are in it for the
             // same reason, and the mount is the half that decides how a weapon behaves.
-            module is not null ? EliteSpecifications.ModuleName(module.Item) ?? module.Item : plan?.Module,
+            module is not null
+                ? EliteSpecifications.ModuleName(module.Item) ?? module.Item
+                : Planned(plan),
             Vacant(build, fitted),
             plan?.Blueprint ?? module?.Blueprint,
             plan?.Grade ?? module?.BlueprintLevel,
@@ -496,11 +504,22 @@ public sealed class ShipsMode(
     /// What an empty slot says. Two answers, and the difference is whether d47 can see the ship:
     /// "empty" is a fact about the slot, and it is only a fact when the Commander is sitting in
     /// the ship that reported it.
+    /// <para>
+    /// <b>The other answer names the fix rather than the gap.</b> It read "not seen", which is
+    /// true and leaves the Commander holding a state with no action in it; boarding the ship is
+    /// what makes Elite write the <c>Loadout</c> this page is waiting for, so the row says so.
+    /// </para>
+    /// <para>
+    /// <b>And it is now rare rather than usual.</b> It used to be every slot of every ship the
+    /// Commander was not sitting in; since <see cref="ShipLoadouts"/> remembers what has been
+    /// watched, a remembered ship's empty slot is empty — it was seen to be — and this answer is
+    /// left for a ship genuinely never seen.
+    /// </para>
     /// </summary>
     private string Vacant(ShipBuild build, IReadOnlyList<ShipModule> fitted) =>
-        fitted.Count > 0 || state()?.Ship is { IsKnown: true, ShipId: var id } && id == build.ShipId
+        fitted.Count > 0 || Picture(build) is not null
             ? "empty"
-            : "not seen";
+            : "Use ship to refresh";
 
     /// <summary>
     /// Whether this drag is allowed, asked while the mouse is still down (remediation.md 15,
@@ -576,6 +595,21 @@ public sealed class ShipsMode(
                 + "for the other.";
         }
 
+        // Said before the size, because it is the more surprising refusal of the two and the
+        // Commander cannot work it out by looking: the slot is the right kind and the right size,
+        // and what is in it takes no engineering at all.
+        if (build.For(from) is { Blueprint: { Length: > 0 } wanted } dragged
+            && SlotCopy.Resolve(dragged, source, target) is { } would
+            && !Rollable(build, target, would))
+        {
+            var what = FittedIn(build, target) is { } inTheWay
+                ? EliteSpecifications.ModuleName(inTheWay.Item) ?? inTheWay.Item
+                : to;
+
+            return $"{what} cannot take {wanted} — Frontier offers it no engineering under that "
+                   + "name. Plan the module for that slot first and the roll will follow it.";
+        }
+
         // Same kind, so the module itself is what does not fit — it does not come small enough for
         // the target, which is the one real failure SlotCopy documents.
         return build.For(from)?.Module is { Length: > 0 } module
@@ -599,7 +633,53 @@ public sealed class ShipsMode(
         var target = layout.FirstOrDefault(slot =>
             string.Equals(slot.Name, to, StringComparison.OrdinalIgnoreCase));
 
-        return source is null || target is null ? null : SlotCopy.Resolve(plan, source, target);
+        if (source is null || target is null || SlotCopy.Resolve(plan, source, target) is not { } moved)
+        {
+            return null;
+        }
+
+        return Rollable(build, target, moved) ? moved : null;
+    }
+
+    /// <summary>
+    /// Whether the roll being dragged is one the target slot's module can actually take (reported
+    /// 2026-08-20: <i>"Module Reinforcement packages can't be engineered"</i>).
+    /// <para>
+    /// <b>The gap the copy rules could not see.</b> <see cref="SlotCopy"/> resizes the module and
+    /// carries the blueprint, which is sound while the plan names a module — downsizing keeps the
+    /// name and a blueprint belongs to a name. A plan that names <em>no</em> module is the hole:
+    /// "grade 5 Heavy Duty Hull Reinforcement, I do not mind which module" dropped on a
+    /// compartment holding a Module Reinforcement Package produced a row reading
+    /// <c>4D Module Reinforcement · Heavy Duty Hull Reinforcement (G5)</c>, which is a roll that
+    /// module cannot have. Frontier offers it none at all.
+    /// </para>
+    /// <para>
+    /// <b>Checked here rather than in <see cref="SlotCopy"/></b>, because the thing that decides
+    /// is what is <em>fitted</em> in the target, and Core's copy rules are given two slots and a
+    /// plan. This is the one caller that can see the ship.
+    /// </para>
+    /// <para>
+    /// Silent where nothing can be checked: a plan with no blueprint, a slot d47 cannot see into,
+    /// and a module whose type the table does not carry all pass. A refusal has to be a fact.
+    /// </para>
+    /// </summary>
+    private bool Rollable(ShipBuild build, ShipSlot target, SlotPlan moved)
+    {
+        if (moved.Blueprint is not { Length: > 0 } blueprint)
+        {
+            return true;
+        }
+
+        // The plan's own module decides where it names one — that is what the copy will fit — and
+        // what is in the slot only where it does not.
+        var offered = moved.Variant is { Length: > 0 } || moved.Module is { Length: > 0 }
+            ? Offered(moved.Module, moved.Variant)
+            : FittedIn(build, target) is { } module
+                ? Offered(EliteSpecifications.ModuleName(module.Item), module.Item)
+                : null;
+
+        return offered is null
+               || offered.Any(recipe => string.Equals(recipe.Name, blueprint, StringComparison.OrdinalIgnoreCase));
     }
 
     public string Promote(string item) =>
@@ -633,30 +713,38 @@ public sealed class ShipsMode(
             return [new LoadoutLine("That build is not there any more.")];
         }
 
-        var loadout = state()?.Ship;
-
-        if (loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId)
+        if (Picture(build) is not { } seen)
         {
             return
             [
                 new LoadoutLine(
-                    "Elite reports the loadout of the ship you are sitting in and no other, so I "
-                    + "cannot say what is in this slot right now."),
+                    "I have never seen inside this ship — Elite reports the loadout of the one you "
+                    + "are sitting in and no other. Board it once and I will remember it."),
             ];
         }
 
-        var module = loadout.Modules.FirstOrDefault(candidate =>
+        var module = seen.Loadout.Modules.FirstOrDefault(candidate =>
             string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+        // Said before the module rather than after it, because it qualifies everything below —
+        // and left off entirely for the ship being flown, where "now" is the honest tense.
+        var asOf = seen.SeenAt is { } when
+            ? new LoadoutLine($"As you left it, {Age(when)}.", LoadoutTone.Muted)
+            : null;
 
         if (module is null)
         {
-            return [new LoadoutLine("Nothing.")];
+            return asOf is null ? [new LoadoutLine("Nothing.")] : [asOf, new LoadoutLine("Nothing.")];
         }
 
-        var lines = new List<LoadoutLine>
+        var lines = new List<LoadoutLine>();
+
+        if (asOf is not null)
         {
-            new(EliteSpecifications.ModuleName(module.Item) ?? "Nothing.", LoadoutTone.Body),
-        };
+            lines.Add(asOf);
+        }
+
+        lines.Add(new LoadoutLine(EliteSpecifications.ModuleName(module.Item) ?? "Nothing.", LoadoutTone.Body));
 
         if (module.Blueprint is { Length: > 0 } blueprint)
         {
@@ -1306,24 +1394,16 @@ public sealed class ShipsMode(
     /// dock is unknown rather than empty.
     /// </para>
     /// </summary>
-    private ShipModule? FittedIn(ShipBuild build, ShipSlot slot)
-    {
-        var loadout = state()?.Ship;
-
-        return loadout is not { IsKnown: true } || loadout.ShipId != build.ShipId
-            ? null
-            : loadout.Modules.FirstOrDefault(candidate =>
-                string.Equals(candidate.Slot, slot.Name, StringComparison.OrdinalIgnoreCase));
-    }
+    private ShipModule? FittedIn(ShipBuild build, ShipSlot slot) =>
+        Picture(build)?.Loadout.Modules.FirstOrDefault(candidate =>
+            string.Equals(candidate.Slot, slot.Name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Whether this slot is known to be empty — as opposed to holding something, or being on a ship
     /// nothing can see into.
     /// </summary>
     private bool KnownEmpty(ShipBuild build, ShipSlot slot) =>
-        state()?.Ship is { IsKnown: true } loadout
-        && loadout.ShipId == build.ShipId
-        && FittedIn(build, slot) is null;
+        Picture(build) is not null && FittedIn(build, slot) is null;
 
     /// <summary>
     /// What a module can be engineered with, or null where d47 does not know its type.
@@ -1586,14 +1666,61 @@ public sealed class ShipsMode(
         return lines;
     }
 
-    private IReadOnlyList<ShipModule> Modules(ShipBuild build)
+    /// <summary>
+    /// The picture of this ship to read, live where the Commander is in it and remembered where
+    /// they are not (asked for 2026-08-20: <i>"Don't get amnesia"</i>).
+    /// <para>
+    /// <b>Two facts, not one.</b> <see cref="Seen.Loadout"/> is what the ship held; <c>SeenAt</c>
+    /// is when — null for the ship being flown, because that answer is current. Every caller that
+    /// puts a module in front of the Commander is expected to carry the date where there is one:
+    /// a remembered loadout is true about a moment, and the Commander may have re-outfitted at a
+    /// station d47 never watched.
+    /// </para>
+    /// </summary>
+    private sealed record Seen(ShipLoadout Loadout, DateTimeOffset? SeenAt)
     {
-        var loadout = state()?.Ship;
-
-        return loadout is { IsKnown: true } && loadout.ShipId == build.ShipId
-            ? loadout.Modules
-            : [];
+        public bool IsLive => SeenAt is null;
     }
+
+    private Seen? Picture(ShipBuild build)
+    {
+        var active = state();
+
+        if (active?.Ship is { IsKnown: true } loadout && loadout.ShipId == build.ShipId)
+        {
+            return new Seen(loadout, null);
+        }
+
+        return active?.Loadouts.For(build.ShipId) is { } remembered
+            ? new Seen(remembered.Loadout, remembered.SeenAt)
+            : null;
+    }
+
+    /// <summary>
+    /// What a planned module is called, with its class and rating (reported 2026-08-20: <i>"Size
+    /// five is missing the 5D designation"</i>).
+    /// <para>
+    /// <b>The variant first, because it names one module.</b> A plan stores both — <c>Variant</c>
+    /// is the journal's symbol for the exact module and <c>Module</c> is the group it belongs to —
+    /// and this drew the group, so a planned slot read "Hull Reinforcement Package" beside a
+    /// fitted one reading "4D Module Reinforcement". Same column, same row height, two different
+    /// amounts of fact.
+    /// </para>
+    /// <para>
+    /// The group name stands where the Commander declined the variant, which is a real answer:
+    /// "a hull reinforcement, I do not mind which".
+    /// </para>
+    /// </summary>
+    private static string? Planned(SlotPlan? plan) =>
+        plan?.Variant is { Length: > 0 } variant
+            ? EliteSpecifications.ModuleName(variant) ?? plan.Module
+            : plan?.Module;
+
+    /// <summary>How long ago a remembered picture was taken, in the Commander's words.</summary>
+    private static string Age(DateTimeOffset seenAt) =>
+        $"{D47.Core.Persona.TelemetryDelta.Spoken(DateTimeOffset.Now - seenAt)} ago";
+
+    private IReadOnlyList<ShipModule> Modules(ShipBuild build) => Picture(build)?.Loadout.Modules ?? [];
 
     private static string Key(FleetEntry entry) =>
         entry.Build?.Id

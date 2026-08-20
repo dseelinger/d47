@@ -579,6 +579,10 @@ public sealed class AppHost : IDisposable
         var recoveredFleets = new Lazy<IReadOnlyDictionary<string, FleetRegistry>>(
             () => FleetBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill))));
 
+        // The same deal for what is *in* those ships, and lazy for the same reason.
+        var recoveredLoadouts = new Lazy<IReadOnlyDictionary<string, ShipLoadouts>>(
+            () => LoadoutBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(LoadoutBackfill))));
+
         var gameState = new GameStateStore
         {
             Restore = sampling.For,
@@ -587,6 +591,10 @@ public sealed class AppHost : IDisposable
             // only on docking at a shipyard, and a session may contain no such docking — which is
             // how a Commander with eleven ships was shown the one they were sitting in.
             RestoreFleet = fid => recoveredFleets.Value.TryGetValue(fid, out var fleet) ? fleet : null,
+
+            // And Loadout describes one ship, so without this every parked ship's slots read as
+            // never seen the moment the Commander swapped out of it.
+            RestoreLoadouts = fid => recoveredLoadouts.Value.TryGetValue(fid, out var seen) ? seen : null,
         };
 
         // The two state files Elite rewrites in place. Same folder as the journal, different

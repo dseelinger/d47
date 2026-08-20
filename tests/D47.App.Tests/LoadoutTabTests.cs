@@ -707,14 +707,14 @@ public class LoadoutTabTests
         Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("not seen", Text(surface.Panel));
+        Assert.Contains("Use ship to refresh", Text(surface.Panel));
 
         surface.Board(Boarded("anaconda", 7));
         surface.Panel.TickLoadout();
         Dispatcher.UIThread.RunJobs();
 
         // The same page, still open, now answering from the ship underneath the Commander.
-        Assert.DoesNotContain("not seen", Text(surface.Panel));
+        Assert.DoesNotContain("Use ship to refresh", Text(surface.Panel));
         Assert.Contains("empty", Text(surface.Panel));
 
         surface.Window.Close();
@@ -1179,7 +1179,7 @@ public class LoadoutTabTests
         // modelled, and a modelled figure that reads like a measured one is the whole thing the
         // specification table is built the way it is to avoid.
         Assert.Contains(shown, line => line.Contains(
-            "only known while you are in it", StringComparison.Ordinal));
+            "only known once you have been in it", StringComparison.Ordinal));
 
         Assert.DoesNotContain("As it is fitted", shown);
 
