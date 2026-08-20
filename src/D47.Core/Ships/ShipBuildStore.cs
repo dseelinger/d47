@@ -201,13 +201,21 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
         foreach (var line in file?.Ships ?? [])
         {
-            var hull = (line.Hull ?? string.Empty).Trim();
+            var written = (line.Hull ?? string.Empty).Trim();
 
-            if (hull.Length == 0)
+            if (written.Length == 0)
             {
                 problems.Add(new ShipBuildProblem("a build", "it names no hull."));
                 continue;
             }
+
+            // Normalised on the way in, not refused: `ShipBuild.Hull` is the journal's own symbol
+            // — the slot layout is keyed on it and the checklist compares against it — and files
+            // already on disk hold display names, because the fleet's `StoredShip.Type` is
+            // `ShipType_Localised` where Frontier supplies one. This is also what a Commander
+            // hand-editing the file will write, since "Panther Clipper Mk II" is what they call
+            // it. An unknown spelling stands as given and is reported by the layout, not here.
+            var hull = Knowledge.EliteSpecifications.Ship(written)?.Symbol ?? written;
 
             var id = (line.Id ?? string.Empty).Trim();
 

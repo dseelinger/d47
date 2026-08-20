@@ -17,6 +17,60 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.41.1 — 2026-08-20 — Six things the Loadout tab was getting wrong
+
+**Engineering a module now registers the moment you roll it.** Elite writes no `Loadout` event
+when a module is engineered — measured across 918 journals: of 6,485 `EngineerCraft` events, *not
+one* is followed by a `Loadout` within five seconds, and 1,378 are never followed by one at all.
+d47 read the ship only from `Loadout`, so a checklist item was diffed against the loadout from
+when you last boarded and stayed open straight through the roll that finished it; swap ships and
+the stale verdict stood until you boarded that hull again. `EngineerCraft` is now folded into the
+ship, which is what puts *"that is done"* in your ear at the engineer's console rather than at the
+next boarding. A grade roll writes no experimental field at all, so one already applied is kept
+rather than stripped.
+
+**And d47 no longer forgets a ship the moment you get out of it.** The constraint is real — Elite
+reports the loadout of the ship you are sitting in and no other — but it is about what the game
+*sends*, not about what has been *seen*. Every ship you have sat in is remembered, dated off the
+journal, and recovered from the last 25 journals at startup the way the fleet already was. Parked
+ships show their modules again instead of a page of "not seen"; a remembered page says **"As you
+left it, three hours ago"**, because you may have re-outfitted somewhere d47 was not watching. A
+ship you have never sat in still says so, and a sold one is forgotten.
+
+**A plan is no longer stale against the ship it was written for.** `StoredShips` carries
+`ShipType_Localised`, so a build started from the fleet held "Panther Clipper Mk II" where one
+started from a `Loadout` held `panthermkii`. Compared as text those are two different ships, and
+every slot of that plan reported *"That ship id now reports a panthermkii, and this plan was
+written for a Panther Clipper Mk II"*. Hulls are compared as hulls now, and files already on disk
+are normalised as they are read, so nothing needs migrating. A genuine hull swap is still caught.
+
+**Four hulls got their slot layouts back.** The Mandalay, Cobra Mk V, Type-8 and Panther Clipper
+have every slot row in the shipped table and no *hull* row — Frontier shipped them ahead of the id
+sources. The layout lookup resolved the hull through the ships section first, so a missing row hid
+a layout sitting in the same file. On the Loadout tab that surfaced as the no-layout fallback: raw
+journal slot names (`TinyHardpoint1` rather than "Utility Mount 1"), a typed-out blueprint instead
+of the chooser, and no empty slots at all.
+
+**Thrusters that cannot lift the hull are no longer offered.** Each carries the heaviest ship it
+will move in its own figures — 120 tonnes for the size 2 Enhanced Performance Thrusters, 200 for
+the size 3 — and an Anaconda is 400 while a Type-10 is 1,200. The size rule alone let them through,
+because a small module does fit a large socket. It is the same arithmetic for any undersized
+thruster; the Enhanced ones are only where it bites first.
+
+**And two smaller things on a slot row.** A planned module is named with its class and rating —
+"4E Hull Reinforcement Package", not "Hull Reinforcement Package" — which is what a fitted one
+always got. And a roll can no longer be dragged onto a module that cannot take it: dropping a Heavy
+Duty Hull Reinforcement on a compartment holding a Module Reinforcement Package produced a row
+claiming a roll Frontier offers that module nowhere. The drag is refused and says which module and
+why.
+
+**A guardrail that made d47 lie about itself.** Some actions are deliberately out of the model's
+reach — raising Elite's window is one — so asked to do it, the model correctly reported having no
+tool and then went one step further and said the software could not do it either. It can; that is
+what "focus the game" is for. The rule now separates the two.
+
+---
+
 ## 0.41.0 — 2026-08-20 — Routing you can see
 
 **A Routing tab, in the window.** Everything in it was already there and could only be spoken —

@@ -247,7 +247,12 @@ public sealed class ShipPlanService(
             return existing;
         }
 
-        var build = new ShipBuild(NextId(), hull, shipId, name);
+        // The symbol, whatever the caller had. ShipBuild.Hull is contracted to be the journal's
+        // own spelling — the slot layout is keyed on it and the checklist compares against it —
+        // and the fleet hands out `StoredShip.Type`, which is `ShipType_Localised` where Frontier
+        // supplies one. A build holding "Panther Clipper Mk II" matched no layout and reported
+        // every one of its slots stale (reported 2026-08-20).
+        var build = new ShipBuild(NextId(), Knowledge.EliteSpecifications.Ship(hull)?.Symbol ?? hull, shipId, name);
 
         store.Save([.. store.Builds, build]);
         return build;

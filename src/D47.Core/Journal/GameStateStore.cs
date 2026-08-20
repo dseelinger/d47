@@ -40,6 +40,17 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, FleetRegistry?>? RestoreFleet { get; init; }
 
+    /// <summary>
+    /// What this Commander's ships were last seen holding, on the same terms as
+    /// <see cref="RestoreFleet"/>. Null where nothing composed one.
+    /// <para>
+    /// The newest journal describes the ship being flown and no other, so without this a fleet
+    /// recovered by <see cref="RestoreFleet"/> arrives with every slot of every parked ship
+    /// unknown — which is the state that was reported. See <see cref="LoadoutBackfill"/>.
+    /// </para>
+    /// </summary>
+    public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
+
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
     /// <param name="at">
@@ -67,6 +78,11 @@ public sealed class GameStateStore
                 if (RestoreFleet?.Invoke(identity.FrontierId) is { IsKnown: true } fleet)
                 {
                     state.Fleet = fleet;
+                }
+
+                if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
+                {
+                    state.Loadouts = loadouts;
                 }
 
                 _byFrontierId[identity.FrontierId] = state;

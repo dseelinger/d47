@@ -159,7 +159,8 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
 /// <param name="Vacant">
 /// The word for a slot with nothing in it, which is <b>not always "empty"</b>: empty is a fact
 /// about the slot and it is only a fact when d47 can see the ship. For one the Commander is not
-/// sitting in, the honest word is that it has not been seen.
+/// sitting in, the row names the fix instead — boarding it is what makes Elite write the
+/// <c>Loadout</c> the page is waiting for.
 /// </param>
 /// <param name="Blueprint">The roll, where one has been done or planned.</param>
 /// <param name="Grade">Its grade, shown as (G5). Null where there is no roll.</param>

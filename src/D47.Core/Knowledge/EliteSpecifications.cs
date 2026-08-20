@@ -330,10 +330,22 @@ public static class EliteSpecifications
     /// remembered.
     /// </para>
     /// </summary>
+    /// <para>
+    /// <b>And by the raw key behind that, because the two sections can disagree</b> (reported
+    /// 2026-08-20). Routing through <see cref="Ship"/> made a missing <c>[ships]</c> row hide a
+    /// <c>[slots]</c> block that is sitting in the same file: <c>explorer_nx</c> has all 35 of its
+    /// slots and no hull row, as do the other three hulls the soak reports Frontier shipped ahead
+    /// of the id sources. The symptom was the Loadout tab falling back to its no-layout path for
+    /// those ships — raw journal slot names, a typed blueprint instead of the chooser, and no
+    /// empty slots at all. The slots section is keyed on the symbol the journal writes, so asking
+    /// it directly is the more faithful lookup and not merely a wider one.
+    /// </para>
+    /// </summary>
     public static IReadOnlyList<ShipSlot> Slots(string? hull) =>
-        Ship(hull) is { } ship
-            ? Loaded.Value.Slots.GetValueOrDefault(ship.Symbol.ToLowerInvariant()) ?? []
-            : [];
+        hull is not { Length: > 0 }
+            ? []
+            : Loaded.Value.Slots.GetValueOrDefault(
+                (Ship(hull)?.Symbol ?? hull).Trim().ToLowerInvariant()) ?? [];
 
     /// <summary>
     /// Which kind of slot a name is on any hull at all, or null for one no hull outfits
@@ -483,8 +495,52 @@ public static class EliteSpecifications
                     || (slot.Kind == ShipSlotKind.Core
                         && slot.Name is "LifeSupport" or "Radar");
 
-        return !exact || size == slot.Size;
+        return (!exact || size == slot.Size) && CanLift(module, slot);
     }
+
+    /// <summary>
+    /// Whether a thruster can move this hull at all (reported 2026-08-20: <i>"If a ship cannot buy
+    /// Enhanced Performance Thrusters do not provide it as an option"</i>).
+    /// <para>
+    /// <b>A thruster carries the heaviest hull it will move</b>, in its own figures — 120 tonnes
+    /// for the size 2 Enhanced Performance Thrusters, 200 for the size 3 — and the ships section
+    /// carries every hull's mass. An Anaconda is 400 tonnes and a Type-10 is 1,200, so both were
+    /// being offered a pair of thrusters that cannot lift them; the size rule alone let them
+    /// through, because a small module does fit a large socket.
+    /// </para>
+    /// <para>
+    /// <b>Not an Enhanced Performance rule.</b> It is the same arithmetic for any undersized
+    /// thruster, and the Enhanced ones are merely where it bites first — they come in sizes 2 and
+    /// 3 only, so every hull above 200 tonnes is offered a module it can never use.
+    /// </para>
+    /// <para>
+    /// <b>Silent where either figure is missing.</b> A hull with no row in the ships section — four
+    /// have slots and no hull row today — has no mass to test, and a rule that cannot be evaluated
+    /// must not refuse. Nothing is filtered on a guess.
+    /// </para>
+    /// </summary>
+    private static bool CanLift(ModuleSpecification module, ShipSlot slot)
+    {
+        if (module.Type is not "ct" || Figure(module, "maximum mass") is not { } most)
+        {
+            return true;
+        }
+
+        return Ship(slot.Hull)?.HullMass is not { } mass || mass <= most;
+    }
+
+    /// <summary>One named figure off a module's own row, where it carries one and it is a number.</summary>
+    private static double? Figure(ModuleSpecification module, string name) =>
+        module.Figures
+            .Where(figure => string.Equals(figure.Name, name, StringComparison.OrdinalIgnoreCase))
+            .Select(figure => double.TryParse(
+                figure.Value,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : (double?)null)
+            .FirstOrDefault();
 
     /// <summary>Module names close enough to offer back when nothing matched.</summary>
     public static IReadOnlyList<string> NearModules(string spoken) =>
