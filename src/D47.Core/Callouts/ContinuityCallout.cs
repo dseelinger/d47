@@ -133,7 +133,16 @@ public sealed class ContinuityCallout(
             clauses.Add(shortfall);
         }
 
-        if (Unlock() is { } unlock)
+        // **The engineer under the Commander's feet outranks the one they might unlock next**
+        // (reported 2026-08-20). Standing in Lei Cheung's system with thirty items he could roll,
+        // d47 said "Selene Jean is one stop away" — an unlock hint about somebody else, which also
+        // reads as a distance and is not one. What is here is the errand; what is one unlock step
+        // out is a project, and the clause below already exists because projects were not wanted.
+        if (Here(state) is { } here)
+        {
+            clauses.Add(here);
+        }
+        else if (Unlock() is { } unlock)
         {
             clauses.Add(unlock);
         }
@@ -227,10 +236,27 @@ public sealed class ContinuityCallout(
             return null;
         }
 
+        // **"one unlock step away", not "one stop away"** (reported 2026-08-20). A stop is a place
+        // you fly to, and the Commander read it as one — heard while parked in a different
+        // engineer's system, it was navigation advice about somebody two hundred light years off.
+        // What it has always meant is that one step of their invitation chain remains.
         return best.Chain.Steps.Count == 1
-            ? $"{best.Engineer.Name} is one stop away."
+            ? $"{best.Engineer.Name} is one unlock step away."
             : null;
     }
+
+    /// <summary>
+    /// The engineer in this system and what of the list they could roll today, or null where there
+    /// is none or they can do nothing (asked for 2026-08-20).
+    /// <para>
+    /// <b>The most useful sentence available when a Commander docks at an engineer</b>, and the one
+    /// d47 had every input for and never said. See <see cref="Checklists.EngineersHere"/>.
+    /// </para>
+    /// </summary>
+    private string? Here(Journal.CommanderGameState? state) =>
+        Checklists.EngineersHere.For(checklists.Document.Items, state)
+            .FirstOrDefault(found => found.Ready.Count > 0)
+            ?.Describe();
 
     /// <summary>
     /// A gap in the words a person would use. Coarse on purpose: the difference between 61 and 78

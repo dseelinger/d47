@@ -305,10 +305,28 @@ public sealed class ChecklistService(
     /// their count</b>, because on something that runs for weeks seeing how far you have come is
     /// most of the point — and forty finished ones must not bury the six still open.
     /// </summary>
-    public string Report(string? group = null, string? key = null, string? state = null, string? kind = null)
+    public string Report(
+        string? group = null,
+        string? key = null,
+        string? state = null,
+        string? kind = null,
+        bool hereOnly = false)
     {
         var document = Document;
         var live = document.Items.Where(item => item.IsLive).ToList();
+
+        // **Only what the engineer in this system could roll** (asked for 2026-08-20). "I am in
+        // Laksak, what can I retire here?" used to answer with the whole list, because no filter
+        // knew where the Commander was — see EngineersHere for the join that was never made.
+        if (hereOnly)
+        {
+            var reachable = EngineersHere.For(live, State)
+                .SelectMany(engineer => engineer.Ready)
+                .Select(item => item.Id)
+                .ToHashSet();
+
+            live = [.. live.Where(item => reachable.Contains(item.Id))];
+        }
 
         if (group is { Length: > 0 })
         {

@@ -126,12 +126,19 @@ public static class ChecklistCapability
                             "Only the Commander's own lines (authored), only the computed ones (derived), "
                             + "or one plan's — engineeringPlan, colonisationPlan or onFootPlan.",
                     },
+                    new ToolParameter
+                    {
+                        Name = "here",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only what an engineer in this system could roll today.",
+                    },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(checklists.Report(
                     arguments.TryGetString("group", out var group) ? group : null,
                     arguments.TryGetString("name", out var name) ? name : null,
                     arguments.TryGetString("state", out var state) ? state : null,
-                    arguments.TryGetString("kind", out var kind) ? kind : null))),
+                    arguments.TryGetString("kind", out var kind) ? kind : null,
+                    arguments.TryGetBoolean("here", out var here) && here))),
             },
 
             new ToolDefinition
