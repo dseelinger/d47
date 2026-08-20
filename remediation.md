@@ -79,6 +79,18 @@ reparent**, and the panel now reparents on every tab switch.
   controllers are being waved is the fault; anything else puts the freeze downstream of the pose
   and the search starts somewhere else entirely. That run needs a headset and has not happened.
 
+  **Attempted 2026-08-19, and the spike is now its own obstacle.** The run captured the
+  controllers and did not give them back — the Commander could not get into VR at all, and the
+  capture outlived the process, so nothing was observed and the headset was unusable until
+  SteamVR was restarted. **It took them while the Commander was still in Virtual Desktop**, which
+  is the part that makes it a defect rather than an inconvenience: the spike grabs the controllers
+  the moment it starts rather than when somebody is ready to be watched, so it takes them out from
+  under whatever environment the Commander is actually standing in — before they have reached
+  SteamVR, let alone the thing being diagnosed. **So the first job is now the spike, not the ray**: it registers an
+  action set and leaves it registered, and a diagnostic that costs a SteamVR restart to run is
+  one nobody will run twice. It needs to release what it took on the way out, and to say in its
+  own output how to stop it. Item 1 stays open, and this is why it is not in 0.39.1.
+
 - [ ] **2. A headless test session fails late, and the test that reports it is arbitrary.** Three
   occurrences now, the third on 2026-08-19 during the **v0.39.0 release run**, which is the first
   time this has cost anything beyond a retry.

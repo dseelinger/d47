@@ -37,6 +37,17 @@ internal static class Program
     public static int Main(string[] args)
     {
         Console.WriteLine("d47 grab spike — Ctrl+C to stop.");
+
+        // Said on the way in rather than in a readme, because the thing a Commander needs to know
+        // before this runs is whether it is about to take their controllers.
+        Console.WriteLine(
+            args.Contains("--poses", StringComparer.Ordinal)
+                ? "--poses: controller poses only. The action set is never claimed, so Virtual "
+                  + "Desktop and the dashboard keep the controllers."
+                : "Claims the controllers whenever a ray lands on the panel, which standing in "
+                  + "front of it means most of the time. Run with --poses to diagnose a frozen "
+                  + "ray without taking them.");
+
         Console.WriteLine();
 
         using var loggers = LoggerFactory.Create(builder => builder
@@ -70,7 +81,10 @@ internal static class Program
 
         try
         {
-            Run(runtime, args.Contains("--head", StringComparer.Ordinal));
+            Run(
+                runtime,
+                args.Contains("--head", StringComparer.Ordinal),
+                args.Contains("--poses", StringComparer.Ordinal));
         }
         finally
         {
@@ -80,7 +94,25 @@ internal static class Program
         return 0;
     }
 
-    private static void Run(SteamVrRuntime runtime, bool headLocked)
+    /// <param name="posesOnly">
+    /// Answer question 1 and claim nothing (remediation.md 17, item 1).
+    /// <para>
+    /// <b>Why this exists.</b> The claim is the same one the app makes — the action set goes to
+    /// overlay global priority whenever a ray is on the panel — and the panel here is placed in
+    /// front of the Commander at startup, so simply standing there points at it and the
+    /// controllers are taken from whatever environment they are actually in. Run to diagnose a
+    /// frozen ray while standing in Virtual Desktop, it took the controllers before the Commander
+    /// had reached SteamVR, and the run had to be abandoned. A diagnostic that costs a session to
+    /// start is one nobody runs twice.
+    /// </para>
+    /// <para>
+    /// <b>And question 1 never needed the claim.</b> Controller poses are read from the system,
+    /// not through the action set, so "do the poses move?" — the whole of what the frozen ray needs
+    /// answering — can be asked while priority is never requested. The trigger and the carry are
+    /// the questions that need it, and they are the ones this flag declines to ask.
+    /// </para>
+    /// </param>
+    private static void Run(SteamVrRuntime runtime, bool headLocked, bool posesOnly)
     {
         var panel = VrOverlay.Create("com.dseelinger.D47.spike", "d47 spike panel", out var failure);
 
@@ -119,7 +151,7 @@ internal static class Program
             panel.Look(placement.WidthMetres, placement.Curvature, placement.Opacity);
             panel.Show(true);
 
-            Loop(runtime, panel, placement, extent, headLocked);
+            Loop(runtime, panel, placement, extent, headLocked, posesOnly);
         }
     }
 
@@ -128,7 +160,8 @@ internal static class Program
         VrOverlay panel,
         SurfacePlacement placement,
         VrExtent extent,
-        bool headLocked)
+        bool headLocked,
+        bool posesOnly)
     {
         VrPose? resting = null;
         Matrix4x4? carrying = null;
@@ -182,7 +215,11 @@ internal static class Program
                 : resting.Value;
 
             var found = VrRay.PointingAt(hands, surface, extent, placement.Curvature);
-            var held = runtime.Actions.TriggerHeld(found is not null || carrying is not null);
+
+            // Never asked for under --poses, which is the release: an action set is active only
+            // for the frame it is passed in, so declining to ask is declining to take.
+            var held = !posesOnly
+                && runtime.Actions.TriggerHeld(found is not null || carrying is not null);
 
             // Grab, carry, release — the same three rules the app uses.
             if (!held)

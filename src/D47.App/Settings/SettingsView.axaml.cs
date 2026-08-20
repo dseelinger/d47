@@ -466,6 +466,56 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         _activeSection = index;
         UpdateNavVisuals();
+        ShowActiveInNav();
+    }
+
+    /// <summary>
+    /// Brings the highlighted nav entry into view, and only when it is not already there
+    /// (remediation.md 17, item 3).
+    /// <para>
+    /// <b>A scrollbar alone would not have finished the item.</b> The nav is a scroll-spy index:
+    /// it highlights whichever card is topmost in the column beside it, so once the list is
+    /// longer than its own viewport the highlight lands off screen and the nav is as useless
+    /// below the fold as it was when it clipped — with the added confusion of nothing appearing
+    /// to be selected.
+    /// </para>
+    /// <para>
+    /// <b>Only when it is not already visible.</b> The Commander scrolling the nav by hand and the
+    /// nav following the cards are the same scroller driven by two parties, and one that yanks
+    /// itself back on every card that passes is worse than one that clips. So this asks first,
+    /// and the ordinary case — scrolling within the entries already on screen — moves nothing.
+    /// </para>
+    /// </summary>
+    private void ShowActiveInNav()
+    {
+        if (_activeSection < 0 || _activeSection >= _sections.Count)
+        {
+            return;
+        }
+
+        var item = _sections[_activeSection].NavItem;
+
+        if (item.Bounds.Height <= 0)
+        {
+            // Not laid out yet, which is the case during Build. The first scroll settles it, and
+            // the top of the list is already the right place to be looking.
+            return;
+        }
+
+        var top = item.Bounds.Y;
+        var bottom = top + item.Bounds.Height;
+        var seen = NavScroller.Offset.Y;
+        var floor = seen + NavScroller.Viewport.Height;
+
+        if (top >= seen && bottom <= floor)
+        {
+            return;
+        }
+
+        // Scrolled to whichever edge it went past, so the list moves the least it can. Landing a
+        // half-scrolled entry against the edge it came from is what "the least it can" means.
+        NavScroller.Offset = NavScroller.Offset.WithY(
+            top < seen ? top : bottom - NavScroller.Viewport.Height);
     }
 
     private void UpdateNavVisuals()

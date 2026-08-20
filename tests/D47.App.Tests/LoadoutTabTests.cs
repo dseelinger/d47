@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -26,7 +27,7 @@ public class LoadoutTabTests
     private sealed record Surface(
         Window Window, PanelView Panel, ShipPlanService Ships, ChecklistService Checklists);
 
-    private static Surface Open(bool flying = true)
+    private static Surface Open(bool flying = true, bool checklist = false, bool engineered = false)
     {
         var root = TempFolders.Create("d47-loadout-tests");
 
@@ -40,12 +41,18 @@ public class LoadoutTabTests
         var store = new ShipBuildStore(
             Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
 
-        var state = flying ? Flying() : null;
+        var state = flying ? Flying(engineered) : null;
         var ships = new ShipPlanService(store, checklists, () => state);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableLoadout(ships, checklists, () => state);
+
+        // A second tab, for the tests that need somewhere to go and come back from.
+        if (checklist)
+        {
+            panel.EnableChecklist(checklists);
+        }
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -56,7 +63,7 @@ public class LoadoutTabTests
         return new Surface(window, panel, ships, checklists);
     }
 
-    private static CommanderGameState Flying()
+    private static CommanderGameState Flying(bool engineered = false)
     {
         var store = new GameStateStore();
 
@@ -65,10 +72,19 @@ public class LoadoutTabTests
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000}],"ShipsRemote":[]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0ENGINEERING},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            // A rolled module where the test asks for one, so the mark that says "this has been
+            // engineered" has something to be drawn against.
+            var written = line.Replace(
+                "ENGINEERING",
+                engineered
+                    ? ""","Engineering":{"BlueprintName":"Weapon_LongRange","Level":5,"Quality":0.9,"Engineer":"Felicity Farseer"}"""
+                    : string.Empty,
+                StringComparison.Ordinal);
+
+            Assert.True(JournalEvent.TryParse(written, NullLogger.Instance, out var parsed));
             store.Apply(parsed!);
         }
 
@@ -151,6 +167,43 @@ public class LoadoutTabTests
 
         Assert.Contains("Anaconda", shown);
         Assert.Contains(shown, line => line.Contains("not bought yet", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A tab that has been left and come back to still drills (remediation.md 17, item 5).
+    /// <para>
+    /// Reported as *"clicking on the Checklist tab and then on the Loadout tab prevents navigating
+    /// to ships — clicking on a ship does nothing"*. The strip subscribed to the navigator in its
+    /// constructor and unsubscribed on detach, and switching tab reparents it, so it went deaf and
+    /// the pane stopped following the trail.
+    /// </para>
+    /// <para>
+    /// <b>The assertion is what is drawn, not where the trail is.</b> The trail moved perfectly
+    /// well throughout the fault — <c>Nav.Drill</c> pushes whether anybody is listening or not, and
+    /// the breadcrumb row is drawn by the panel rather than by the strip, so both looked right
+    /// while the content pane was frozen. A test watching the trail passes against the bug.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ATabThatHasBeenLeftStillDrills()
+    {
+        var surface = Open(checklist: true);
+
+        Assert.Contains("Bad Idea (Python)", Text(surface.Panel));
+
+        surface.Panel.Tab = PanelTab.Checklist;
+        Dispatcher.UIThread.RunJobs();
+
+        surface.Panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The ship's slot index, which only exists if the pane followed the click.
+        Assert.Contains("Main Engines", Text(surface.Panel));
 
         surface.Window.Close();
     }
@@ -465,6 +518,105 @@ public class LoadoutTabTests
 
 
     /// <summary>
+    /// The gear sits after the module name rather than in front of it (remediation.md 17,
+    /// item 10). Asked for as *"Gear Glyph should appear to the right of the Module Name, not
+    /// leftmost"*.
+    /// <para>
+    /// <b>An inline of the name, which is what "to the right of it" has to mean here.</b> The
+    /// name lives in the row's star column, so a glyph given a column of its own would sit against
+    /// the note at the far edge and drift further from the name every time the window widened. The
+    /// test therefore asks the label what its own last inline is, rather than asking the row what
+    /// is in it somewhere.
+    /// </para>
+    /// <para>
+    /// The dot stays where it was — a separate mark, a separate question, and the Commander asked
+    /// for the gear.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheGearFollowsTheModuleNameAndTheDotDoesNot()
+    {
+        var surface = Open(engineered: true);
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var label = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
+            .First(block => block.Inlines is { Count: > 0 } inlines
+                && inlines[0] is Run named
+                && named.Text == "Large Hardpoint 1");
+
+        // The name, then the mark, in that order and in one block.
+        Assert.Equal(2, label.Inlines!.Count);
+        Assert.Equal(" ⚙", ((Run)label.Inlines[1]).Text);
+
+        // And nothing before the name: an engineered row with no plan has no leading glyph at all.
+        var row = label.GetVisualAncestors().OfType<Button>().First();
+
+        Assert.DoesNotContain(
+            row.GetVisualDescendants().OfType<TextBlock>(),
+            block => block.Text == "⚙" || block.Text == "●");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// Keeping what is fitted still lists that module's rolls (remediation.md 17, item 9).
+    /// <para>
+    /// Reported against Oxen's Military 02: *"Keep the 5D Hull…" shows the wrong engineering
+    /// options — Ammo Capacity was one listed — but selecting "5D Hull Reinforcement Package" does
+    /// show the correct ones.* Keeping answers the module question with null on purpose, so that
+    /// the plan does not come to name a module the Commander only wanted left alone; what went
+    /// wrong is that the blueprint question lost its subject with it and fell through to the
+    /// "d47 does not know this module" branch, which offers the whole catalogue.
+    /// </para>
+    /// <para>
+    /// A pulse laser stands in for the hull reinforcement: same shape, and its seven rolls are all
+    /// weapon mounts, so an offer of Ammo Capacity — which belongs to things that carry ammunition
+    /// — is unambiguous evidence of the fallback rather than of a near miss.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void KeepingWhatIsFittedListsThatModulesRolls()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The one with the gimballed large pulse laser in it.
+        Row(surface.Panel, "Large Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The row names what is in the slot, which is the whole reason the question below has an
+        // answer to fall back on.
+        Assert.Contains(Offered(surface.Panel), line => line.StartsWith("Keep the 3E Pulse Laser", StringComparison.Ordinal));
+
+        Modal(surface.Panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text?.StartsWith("Keep the 3E Pulse Laser", StringComparison.Ordinal) == true))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+
+        var rolls = Offered(surface.Panel);
+
+        Assert.Contains("Focused Weapon", rolls);
+        Assert.Contains("Long Range Weapon", rolls);
+
+        // The reported symptom, and the one that says the catalogue was offered whole.
+        Assert.DoesNotContain("Ammo Capacity", rolls);
+
+        // It also says what it is asking about, which the fallback could not.
+        Assert.Contains(rolls, line => line.Contains("Pulse Laser", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// Planning a slot offers the valid choices for it, and never asks for a spelling
     /// (remediation.md 12, item 5).
     /// <para>
@@ -560,6 +712,59 @@ public class LoadoutTabTests
         Assert.Equal("Lightweight Mount", plan.Blueprint);
         Assert.Equal(5, plan.Grade);
         Assert.Null(plan.Experimental);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The grade reads last on the line, with its stepper next to it (remediation.md 17, item 11).
+    /// <para>
+    /// Reported as *"it is not clear that the step controls for the engineering grade are
+    /// associated with it — put Grade last (rightmost) on the line, followed by the stepper"*. The
+    /// number used to sit inside the sentence, with a blueprint name, an experimental effect and an
+    /// engineer between it and the arrows at the end of the row.
+    /// </para>
+    /// <para>
+    /// The order is the assertion, because everything here was already on screen before the fix —
+    /// what was wrong was where. And the sentence is checked for <em>not</em> carrying the grade,
+    /// so the two cannot both say it.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheGradeReadsLastAndTheStepperFollowsIt()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Large Hardpoint 2").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        foreach (var choice in new[] { "Pulse Laser", "Large, gimballed", "Lightweight Mount", "No effect" })
+        {
+            Pick(surface.Panel, choice).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        var line = surface.Panel.GetVisualDescendants().OfType<StackPanel>()
+            .First(panel => panel.Children.OfType<TextBlock>()
+                .Any(block => block.Text == "Grade 5"));
+
+        var order = line.Children.ToList();
+
+        // The sentence, then the grade, then the two arrows — in that order and nothing between.
+        var said = Assert.IsType<TextBlock>(order[0]);
+
+        Assert.Contains("Lightweight Mount", said.Text ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("grade 5", said.Text ?? string.Empty, StringComparison.Ordinal);
+
+        Assert.Equal("Grade 5", Assert.IsType<TextBlock>(order[1]).Text);
+        Assert.Equal("▲", Assert.IsType<Button>(order[2]).Content);
+        Assert.Equal("▼", Assert.IsType<Button>(order[3]).Content);
 
         surface.Window.Close();
     }

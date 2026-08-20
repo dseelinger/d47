@@ -527,7 +527,10 @@ public sealed class ShipsMode(
 
         var lines = new List<LoadoutLine>
         {
-            new(plan.Describe(), LoadoutTone.Body) { Step = step },
+            // Without the grade where a stepper is going to carry it, and with it where there is
+            // no stepper (remediation.md 17, item 11). The two are never both true, so the grade
+            // is said exactly once either way.
+            new(plan.Describe(withGrade: step is null), LoadoutTone.Body) { Step = step },
         };
 
         // What the engineering does, where something has been chosen. Asked for as an area
@@ -785,10 +788,27 @@ public sealed class ShipsMode(
         Action<string?, int, string?> chosen)
     {
         // What the blueprints are listed for: the module just chosen, or the one already planned,
-        // and otherwise everything — which is a long list and is exactly what the search is for.
-        var wanted = module ?? plan?.Module;
+        // or — where the Commander said to keep what is in the slot — the module that is in it.
+        //
+        // **That last one is remediation.md 17, item 6's whole fix.** "Keep the 5D Hull
+        // Reinforcement Package — I only want the engineering" answers the module question with
+        // null, deliberately: the plan must not name a module, or keeping becomes wanting. But
+        // the *question* still has a subject, and dropping it here sent the list through the
+        // "d47 does not know this module" fallback below and offered every blueprint in the game.
+        // Reported against Oxen's Military 02: a hull reinforcement offered Ammo Capacity.
+        //
+        // Asked of the slot rather than remembered from the chooser, because `Keeping` only
+        // offers that row when something is fitted and visible — so where this fallback can be
+        // reached at all, it has an answer, and where it cannot there was no row to take.
+        var fitted = FittedIn(build, slot);
 
-        var offer = Offered(wanted, variant ?? plan?.Variant);
+        var wanted = module
+            ?? plan?.Module
+            ?? (fitted is not null ? EliteSpecifications.ModuleName(fitted.Item) : null);
+
+        // The symbol answers exactly — size, rating and mount — where the name answers for every
+        // size of the thing. Same order of preference, so the two cannot disagree.
+        var offer = Offered(wanted, variant ?? plan?.Variant ?? fitted?.Item);
 
         // Three states, where there used to be two (remediation.md 15, item 6). A module that
         // genuinely takes no engineering is not asked about at all — a fuel tank is the reported

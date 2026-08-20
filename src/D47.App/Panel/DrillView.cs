@@ -90,8 +90,6 @@ public sealed class DrillView : UserControl, IFilterablePage
         _build = build;
 
         Content = _strip;
-
-        _nav.Changed += OnNavigated;
     }
 
     /// <summary>How many panes the strip is currently showing. One, two or three.</summary>
@@ -119,13 +117,28 @@ public sealed class DrillView : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The first draw. The navigator raises nothing on the way in — the Commander was already
-    /// where they are — and the arrange pass only redraws when the pane count moves, so without
-    /// this a strip built at one pane would be shown empty until the first navigation.
+    /// Starts listening, and draws. The navigator raises nothing on the way in — the Commander was
+    /// already where they are — and the arrange pass only redraws when the pane count moves, so
+    /// without the draw a strip built at one pane would be shown empty until the first navigation.
+    /// <para>
+    /// <b>Paired with the detach below, and it has to be</b> (remediation.md 17, item 5; the same
+    /// fault and the same fix as remediation.md 11 item 3 in <c>ChecklistPage</c> and 13 item 1 in
+    /// <c>LoadoutPage</c>). The subscription used to be made in the constructor and dropped on
+    /// detach, which is not a pair: switching tab reparents this strip, so it detached,
+    /// unsubscribed, and was deaf for the rest of the session. Coming back re-attached and drew
+    /// once, so the page looked right — and then a click that drilled changed the trail, raised
+    /// <c>Changed</c> to nobody, and the pane never followed it. The Commander's report was that
+    /// clicking a ship did nothing.
+    /// </para>
     /// </summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+
+        _nav.Changed += OnNavigated;
+
+        // The trail may have moved while this strip was off screen — a keyword route or a spoken
+        // command navigates whichever tab it belongs to, not the one being looked at.
         Draw();
     }
 

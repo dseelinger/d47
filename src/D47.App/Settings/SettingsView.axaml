@@ -39,7 +39,20 @@
                      TextWrapping="Wrap"
                      Foreground="{DynamicResource D47.TextMuted}" />
         </StackPanel>
-        <StackPanel x:Name="NavItems" Spacing="2" />
+        <!--
+          The nav scrolls (remediation.md 17, item 3). One entry per capability that declares any
+          settings, which is now more than twenty against a window that opens 640 tall, so the
+          tail of the list was off the bottom edge and unreachable.
+
+          Its own scroller rather than a taller column: the heading above it stays put while the
+          entries move, which is what makes the list feel like an index rather than a page.
+          Auto rather than Visible, so the bar is absent on a window tall enough not to need it.
+        -->
+        <ScrollViewer x:Name="NavScroller"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="NavItems" Spacing="2" />
+        </ScrollViewer>
       </DockPanel>
     </Border>
 

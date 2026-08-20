@@ -51,6 +51,29 @@ public class ShipPlanTests
         Assert.Contains("intended", build.Describe(), StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// What d47 <em>says</em> still carries the grade in the sentence (remediation.md 17,
+    /// item 11).
+    /// <para>
+    /// The panel now asks for the line without it, so the number can sit against the stepper that
+    /// moves it. This one string is both drawn and spoken, and the whole reason the panel asks
+    /// rather than reorders is that d47 must go on saying "grade 5 Lightweight Mount" out loud —
+    /// changing the voice as a side effect of moving a button is the failure remediation 16 item 6
+    /// caught, and this is the test that says it did not happen again.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheSpokenLineKeepsTheGradeAndOnlyTheDrawnOneDropsIt()
+    {
+        var plan = new SlotPlan("LargeHardpoint2", "Lightweight Mount", 5, null)
+        {
+            Module = "Pulse Laser",
+        };
+
+        Assert.Equal("Pulse Laser, grade 5 Lightweight Mount", plan.Describe());
+        Assert.Equal("Pulse Laser, Lightweight Mount", plan.Describe(withGrade: false));
+    }
+
     /// <summary>The shipped table is what answers "is that a hull", so a typo is refused.</summary>
     [Fact]
     public void AHullNoTableKnowsIsRefusedRatherThanInvented()
