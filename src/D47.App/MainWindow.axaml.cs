@@ -201,6 +201,15 @@ public partial class MainWindow : Window
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickEngineers));
 
+            // And the ship pages, for the same reason and by the same route (remediation.md 17,
+            // item 7). Half of what a ship page shows is the journal's — what is fitted, which
+            // slots can be seen, whether this is the ship being flown — and none of it moved the
+            // page, so one left open across a ship swap kept its first answer all session.
+            //
+            // Desktop only, deliberately: the Loadout tab is not furnished in the headset.
+            host.Tick.Add("loadout", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickLoadout));
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             WindowPlacementMemory.Attach(this, host.ViewState);

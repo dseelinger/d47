@@ -32,11 +32,40 @@ public sealed class ShipsMode(
 
     public string SlotPrefix => LoadoutPages.SlotPrefix;
 
+    /// <summary>
+    /// Two things move a ship page, and only one of them was wired (remediation.md 17, item 7).
+    /// <para>
+    /// The plans file changing is the obvious one and was the only one: <c>ShipBuildStore.Changed</c>
+    /// is raised when a build is saved or reloaded. But half of what these pages show is the
+    /// <em>journal's</em> — what is fitted, which slots are known, whether the Commander is flying
+    /// this ship at all — and no journal event raised anything. So a page open across a ship swap
+    /// kept its first answer for the rest of the session, and the report was a fleet whose modules
+    /// read *not seen* while the Commander sat in the ship.
+    /// </para>
+    /// <para>
+    /// <see cref="Invalidate"/> is the second source, driven by <c>PanelView.TickLoadout</c> — the
+    /// same shape as the Engineers tab, which had this from the day it shipped.
+    /// </para>
+    /// </summary>
     public event Action? Changed
     {
-        add => ships.Store.Changed += value;
-        remove => ships.Store.Changed -= value;
+        add
+        {
+            ships.Store.Changed += value;
+            _invalidated += value;
+        }
+
+        remove
+        {
+            ships.Store.Changed -= value;
+            _invalidated -= value;
+        }
     }
+
+    /// <summary>The journal moved under the page. Raised by the host's tick, never from in here.</summary>
+    public void Invalidate() => _invalidated?.Invoke();
+
+    private Action? _invalidated;
 
     public string EmptyIndex =>
         "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it — or "
@@ -399,14 +428,73 @@ public sealed class ShipsMode(
     /// </summary>
     public string Copy(string item, string from, string to)
     {
-        if (Resolve(item) is not { } build || Moved(item, from, to) is not { } moved)
+        if (Resolve(item) is not { } build)
         {
-            return "That cannot go there.";
+            return "That build is not there any more.";
+        }
+
+        if (Moved(item, from, to) is not { } moved)
+        {
+            return WhyNot(build, from, to);
         }
 
         ships.Plan(build.Id, moved);
 
         return $"Copied to {moved.Slot}: {moved.Describe()}.";
+    }
+
+    /// <summary>
+    /// Why a drop was turned down, in the Commander's terms (remediation.md 17, item 8).
+    /// <para>
+    /// It used to be *"That cannot go there"*, and worse, the page never even asked for that
+    /// sentence — the release handler returned early on a refusal and said nothing at all. Every
+    /// refused drag therefore looked identical to a feature that did not work, which is what was
+    /// reported.
+    /// </para>
+    /// <para>
+    /// <b>The most likely refusal is first and is not about the target at all:</b> dragging a slot
+    /// that has nothing planned in it. A row shows what is fitted as well as what is planned, so
+    /// the obvious thing to try is dragging a module — and a module is not a plan.
+    /// </para>
+    /// </summary>
+    private string WhyNot(ShipBuild build, string from, string to)
+    {
+        if (build.For(from) is null)
+        {
+            return $"Nothing is planned in {from}, so there is nothing to copy. "
+                + "Plan that slot first, and then it can be dragged.";
+        }
+
+        var layout = EliteSpecifications.Slots(build.Hull);
+
+        var source = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, from, StringComparison.OrdinalIgnoreCase));
+
+        var target = layout.FirstOrDefault(slot =>
+            string.Equals(slot.Name, to, StringComparison.OrdinalIgnoreCase));
+
+        if (source is null || target is null)
+        {
+            return "I do not know that ship's slot layout, so I cannot work out whether that fits.";
+        }
+
+        if (source.Kind == ShipSlotKind.Core || target.Kind == ShipSlotKind.Core)
+        {
+            return "Core internals are not copied between — a power plant socket and a thruster "
+                + "socket have nothing to say to each other.";
+        }
+
+        if (source.Kind != target.Kind)
+        {
+            return $"{from} and {to} are different kinds of slot, so a plan for one is not a plan "
+                + "for the other.";
+        }
+
+        // Same kind, so the module itself is what does not fit — it does not come small enough for
+        // the target, which is the one real failure SlotCopy documents.
+        return build.For(from)?.Module is { Length: > 0 } module
+            ? $"A {module} does not come small enough for {to}."
+            : $"That plan does not fit {to}.";
     }
 
     /// <summary>What the dragged plan would become in the target slot, or null where it may not go.</summary>

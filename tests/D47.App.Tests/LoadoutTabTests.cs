@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Input;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -25,7 +26,21 @@ namespace D47.App.Tests;
 public class LoadoutTabTests
 {
     private sealed record Surface(
-        Window Window, PanelView Panel, ShipPlanService Ships, ChecklistService Checklists);
+        Window Window, PanelView Panel, ShipPlanService Ships, ChecklistService Checklists, Sitting In)
+    {
+        /// <summary>The Commander gets into a ship, as the journal would say so.</summary>
+        public void Board(CommanderGameState state) => In.State = state;
+    }
+
+    /// <summary>
+    /// What the panel reads the game state through, so a test can move it after the page is open
+    /// (remediation.md 17, item 7). The panel is handed a func, and a captured local would freeze
+    /// the state at the moment the surface was built.
+    /// </summary>
+    private sealed class Sitting
+    {
+        public CommanderGameState? State { get; set; }
+    }
 
     private static Surface Open(bool flying = true, bool checklist = false, bool engineered = false)
     {
@@ -41,12 +56,12 @@ public class LoadoutTabTests
         var store = new ShipBuildStore(
             Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
 
-        var state = flying ? Flying(engineered) : null;
-        var ships = new ShipPlanService(store, checklists, () => state);
+        var sitting = new Sitting { State = flying ? Flying(engineered) : null };
+        var ships = new ShipPlanService(store, checklists, () => sitting.State);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableLoadout(ships, checklists, () => state);
+        panel.EnableLoadout(ships, checklists, () => sitting.State);
 
         // A second tab, for the tests that need somewhere to go and come back from.
         if (checklist)
@@ -60,7 +75,7 @@ public class LoadoutTabTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel, ships, checklists);
+        return new Surface(window, panel, ships, checklists, sitting);
     }
 
     private static CommanderGameState Flying(bool engineered = false)
@@ -516,6 +531,190 @@ public class LoadoutTabTests
         surface.Window.Close();
     }
 
+
+    /// <summary>
+    /// Ctrl-dragging a plan from one slot to another copies it (remediation.md 17, item 8).
+    /// <para>
+    /// Reported as *"module drag and copy is not working"*. The gesture had no test at all:
+    /// <c>SlotCopyTests</c> covers the rules in Core, deliberately without a window, and the rules
+    /// were never what failed.
+    /// </para>
+    /// <para>
+    /// <b>The capture assertion is the real one.</b> Raising a press on one control and a release
+    /// on another proves nothing on its own — a test picks both targets, where a mouse does not.
+    /// In the app the release goes to whatever holds the pointer, and a <c>Button</c> that handles
+    /// a press takes it; the release then comes back to the row the drag <em>started</em> on, the
+    /// handler sees <c>from == slot</c>, and the copy silently does not happen. So what is pinned
+    /// here is that the row does not capture, which is what lets the release land on the target.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void CtrlDraggingASlotPlanCopiesItToAnotherSlot()
+    {
+        var surface = Open();
+
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        surface.Ships.Plan(build.Id, new SlotPlan("LargeHardpoint2", "Lightweight Mount", 5));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var from = Row(surface.Panel, "Large Hardpoint 2");
+        var to = Row(surface.Panel, "Large Hardpoint 1");
+
+        var pointer = new Pointer(1, PointerType.Mouse, isPrimary: true);
+
+        from.RaiseEvent(new PointerPressedEventArgs(
+            from,
+            pointer,
+            surface.Panel,
+            default,
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.Control));
+
+        // Nothing holds the pointer, so the release is free to land on the row under the cursor.
+        Assert.Null(pointer.Captured);
+
+        to.RaiseEvent(new PointerReleasedEventArgs(
+            to,
+            pointer,
+            surface.Panel,
+            default,
+            0,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+            KeyModifiers.Control,
+            MouseButton.Left));
+
+        Dispatcher.UIThread.RunJobs();
+
+        var slots = surface.Ships.Store.Builds.SelectMany(each => each.Slots).ToList();
+
+        Assert.Equal("Lightweight Mount", slots.Single(slot => slot.Slot == "LargeHardpoint1").Blueprint);
+
+        // A copy rather than a move: the slot it came from still has its plan.
+        Assert.Equal("Lightweight Mount", slots.Single(slot => slot.Slot == "LargeHardpoint2").Blueprint);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A drag that is turned down says why (remediation.md 17, item 8).
+    /// <para>
+    /// The release handler used to return without a word when the rules refused, on the grounds
+    /// that the dimmed row had already said it during the drag. `SlotCopy`'s own documentation
+    /// names the hazard: *a drag that silently does nothing is indistinguishable from a broken
+    /// feature* — and it was reported as one, with Ctrl held.
+    /// </para>
+    /// <para>
+    /// The case asserted is the likeliest one and is not about the target at all: a row shows what
+    /// is fitted as well as what is planned, so the obvious thing to drag is a module, and a
+    /// module is not a plan.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ADragThatIsTurnedDownSaysWhy()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Fitted with a pulse laser and planned with nothing.
+        var from = Row(surface.Panel, "Large Hardpoint 1");
+        var to = Row(surface.Panel, "Large Hardpoint 2");
+
+        var pointer = new Pointer(1, PointerType.Mouse, isPrimary: true);
+
+        from.RaiseEvent(new PointerPressedEventArgs(
+            from,
+            pointer,
+            surface.Panel,
+            default,
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.Control));
+
+        to.RaiseEvent(new PointerReleasedEventArgs(
+            to,
+            pointer,
+            surface.Panel,
+            default,
+            0,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+            KeyModifiers.Control,
+            MouseButton.Left));
+
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains(shown, line => line.Contains("Nothing is planned in LargeHardpoint1", StringComparison.Ordinal));
+
+        // And it says what to do about it, rather than only that it declined.
+        Assert.Contains(shown, line => line.Contains("Plan that slot first", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A ship page open while the journal moves under it follows along (remediation.md 17,
+    /// item 7).
+    /// <para>
+    /// Reported as *"ship module list still says not seen even after switching to the ship in
+    /// Elite Dangerous"*. The Loadout tab had no game-state signal at all — its pages redrew when
+    /// the plans file was saved, and half of what they show is the journal's. So a page open
+    /// across a ship swap kept its first answer for the rest of the session.
+    /// </para>
+    /// <para>
+    /// The fixture starts with a loadout for a ship that is <em>not</em> the one being looked at,
+    /// so the page opens saying it cannot see the slots — which is correct, and is the state the
+    /// Commander was stuck in.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ASwapUnderAnOpenPageIsFollowed()
+    {
+        var surface = Open();
+
+        // The parked one. Elite reports the loadout of the ship you are sitting in and no other,
+        // so its slots are genuinely unknown while the Commander is in the Python.
+        Row(surface.Panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("not seen", Text(surface.Panel));
+
+        surface.Board(Boarded("anaconda", 7));
+        surface.Panel.TickLoadout();
+        Dispatcher.UIThread.RunJobs();
+
+        // The same page, still open, now answering from the ship underneath the Commander.
+        Assert.DoesNotContain("not seen", Text(surface.Panel));
+        Assert.Contains("empty", Text(surface.Panel));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The Commander in a different ship of the fleet, with that ship's loadout read.</summary>
+    private static CommanderGameState Boarded(string hull, int shipId)
+    {
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000}],"ShipsRemote":[]}""",
+                     $$"""{"timestamp":"2026-08-18T10:00:00Z","event":"Loadout","Ship":"{{hull}}","ShipID":{{shipId}},"ShipName":"Big Slow","Modules":[{"Slot":"MainEngines","Item":"int_engine_size6_class5","On":true,"Priority":0,"Health":1.0}]}""",
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        return store.Active!;
+    }
 
     /// <summary>
     /// The gear sits after the module name rather than in front of it (remediation.md 17,

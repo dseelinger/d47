@@ -118,6 +118,64 @@ public class ShipPlanTests
     }
 
     /// <summary>
+    /// Boarding the hull adopts it too, not only buying it (remediation.md 17, item 7).
+    /// <para>
+    /// <c>ShipyardNew</c> is the moment of purchase and was the only trigger, which binds nothing
+    /// for a Commander who bought the hull before planning it or bought it while d47 was not
+    /// running. The plan then keeps <c>ShipId</c> null for ever — and since every question a ship
+    /// page asks about what is fitted is keyed on that id, the page says <em>not seen</em> while
+    /// the Commander is sitting in the ship. That was the report.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void BoardingAPlannedHullAdoptsItToo()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var intended = ships.Intend("Python")!;
+
+        Assert.Null(intended.ShipId);
+
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea"}
+            """)]);
+
+        Assert.Single(said);
+        Assert.Equal(12, store.Find(intended.Id)?.ShipId);
+    }
+
+    /// <summary>
+    /// And never onto a ship another build already holds (remediation.md 17, item 7). One build
+    /// per ship is what Phase 26 is built on, so a second Python planned to buy must not bind
+    /// itself to the Python already being flown the moment the Commander boards it.
+    /// </summary>
+    [Fact]
+    public void BoardingDoesNotStealAShipAnotherBuildAlreadyHolds()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var owned = ships.Intend("Python", "the one I fly")!;
+
+        ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"ShipyardNew","ShipType":"python","NewShipID":12}
+            """)]);
+
+        var wanted = ships.Intend("Python", "the one I want")!;
+
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T10:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea"}
+            """)]);
+
+        Assert.Empty(said);
+        Assert.Equal(12, store.Find(owned.Id)?.ShipId);
+        Assert.Null(store.Find(wanted.Id)?.ShipId);
+    }
+
+    /// <summary>
     /// Two Corsairs planned and one bought is a question rather than a guess: adopting the wrong
     /// one silently is worse than adopting neither.
     /// </summary>

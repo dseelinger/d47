@@ -781,14 +781,25 @@ public sealed class ItemPage : LoadoutPage
                 _dragging = null;
                 args.Handled = true;
 
-                // Refused rather than explained, matching what the row showed during the drag.
-                if (!Mode.CanCopy(_item, from, slot))
-                {
-                    return;
-                }
+                // **Explained rather than refused in silence** (remediation.md 17, item 8). This
+                // used to return here when `CanCopy` said no, on the grounds that the dimmed row
+                // had already said it — and the Commander's report was *"module drag and copy is
+                // not working"*, with Ctrl held, on a drag that was being turned down for a
+                // reason nothing ever said out loud. `SlotCopy`'s own documentation names the
+                // hazard exactly: *a drag that silently does nothing is indistinguishable from a
+                // broken feature*.
+                //
+                // `Copy` answers both cases in one call — it refuses by returning the sentence
+                // saying why — so there is no second code path to keep in step with the rules.
+                var said = Mode.Copy(_item, from, slot);
 
-                _summary.Text = Mode.Copy(_item, from, slot);
+                // **After the redraw, not before it.** `Refresh` opens by writing the build's own
+                // summary into this very block, so the line used to be overwritten in the same
+                // gesture that produced it — which means the *successful* copy never announced
+                // itself either. Nothing about this drag has ever said anything.
                 Refresh();
+
+                _summary.Text = said;
             },
             RoutingStrategies.Tunnel);
 

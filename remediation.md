@@ -474,3 +474,35 @@ reparent**, and the panel now reparents on every tab switch.
   five things d47 watches for, the only one it could show about them was a thing they do once in
   thirty-five approaches. `spike/HabitProbe` prints `SAID` or `kept` per claim, so the next
   detector can be held to the same line before it ships.
+
+- [ ] **13. ElevenLabs famous voices are offered, and cannot be spoken.** Reported against 0.39.0
+  from the installed build's log:
+
+  ```
+  D47.Core.Audio.TtsException: ElevenLabs could not speak "We don't have to do this!":
+  Famous voices can only be used within the Reader App.
+  ```
+
+  **The catalogue takes whatever the service lists.** `ElevenLabsTtsProvider.ListVoicesAsync`
+  maps every entry of `GET /v1/voices` into the picker, keyed on `voice_id`, and the `ElevenVoice`
+  record it deserialises into carries **`voice_id`, `name` and `labels` only**. The `category`
+  field — which is how ElevenLabs distinguishes `premade` from a cloned, professional or famous
+  voice — is read by `spike/ElevenLabsProbe` and thrown away by the provider. So a voice the
+  account may list but the API will not speak is offered to the Commander exactly like one it will.
+
+  **What it costs is silence.** `SpeechPipeline` logs *"could not synthesise a sentence; it will
+  not be spoken"* and drops it. Nothing on the surface says the chosen voice cannot be used, so
+  from the Commander's side d47 simply stops talking — the failure mode this batch has now met
+  three times in different clothes.
+
+  **The exact category string is not known and is not being guessed.** The anonymous listing is 21
+  voices, all `premade`, so the value that marks a famous one only appears against an account.
+  Running `ELEVENLABS_API_KEY=… python spike/ElevenLabsProbe/probe_voices.py` prints the account's
+  voices by category and settles it in one line. Until then the filter would be a guess, and a
+  guessed blacklist that is too wide silences voices the Commander has paid for.
+
+  **Two halves, and the second does not depend on the first.** Exclude the unusable categories
+  from the catalogue so they are never offered; and treat a refusal at synthesis time as a fact
+  about that voice — say so once, on the surface, rather than dropping sentence after sentence
+  into the log. The second is what makes this recoverable if ElevenLabs adds another category d47
+  has never heard of.
