@@ -14,13 +14,16 @@ namespace D47.Core.Callouts;
 /// station, entering orbital cruise, being interdicted, walking up to a settlement.
 /// </para>
 /// <para>
-/// <b>The bar is higher than for a generic warning, and it is met four separate ways.</b> A shipped
+/// <b>The bar is higher than for a generic warning, and it is met five separate ways.</b> A shipped
 /// callout fires because the game said something; this one fires because of a claim d47 made about
 /// the Commander, so:
 /// <list type="number">
 /// <item>it is <b>off by default</b>, because a companion that starts commenting on your flying
 /// without being asked has changed the deal;</item>
 /// <item>a claim must clear all three of <see cref="HabitFloor"/> before it exists at all;</item>
+/// <item>and clear <see cref="HabitFloor.Rate"/> on top of that before it is <em>said</em>, which
+/// is the fifth and the newest — sound arithmetic about something a Commander does one time in
+/// thirty-five is still not a habit (remediation.md 17, item 12);</item>
 /// <item>each claim has a <see cref="PerClaim"/> cooldown of hours, because a line repeated on
 /// every approach is nagging rather than a habit report;</item>
 /// <item>and every claim can be refused for good, in one phrase, from the moment it is said.</item>
@@ -81,7 +84,11 @@ public sealed class HabitCallout(HabitBook book) : ICallout
                 continue;
             }
 
-            var claim = claims.FirstOrDefault(candidate => candidate.Occasion == occasion);
+            // Common enough to be worth interrupting for, which the counts alone did not test
+            // (remediation.md 17, item 12). A claim below the rate is still a claim — it is on the
+            // Habits page and answers a question asked of it — and is simply never volunteered.
+            var claim = claims.FirstOrDefault(candidate =>
+                candidate.Occasion == occasion && candidate.Evidence.WorthSaying);
 
             if (claim is null)
             {

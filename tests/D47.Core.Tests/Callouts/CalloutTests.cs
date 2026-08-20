@@ -238,6 +238,78 @@ public class CalloutTests
         Assert.Empty(callout.Examine(Context(StateFrom(), down, atSecond: 2)));
     }
 
+    /// <summary>
+    /// A hull with no shield generator is not warned about (remediation.md 17, item 6).
+    /// <para>
+    /// Reported as *"no need to announce this on a ship without shields"*. Mining, exploration and
+    /// hauling builds routinely fly unshielded, and the flag is then false for the whole session —
+    /// so the edge into it is crossed on boarding, when nothing has happened. Measured in the
+    /// 916-journal corpus: 527 of 2,853 Loadouts fit no generator, across 22 ships.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AShipWithNoShieldGeneratorIsNotWarnedAboutItsShields()
+    {
+        var unshielded = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"hauler","ShipID":3,"Modules":[{"Slot":"PowerPlant","Item":"int_powerplant_size2_class2"},{"Slot":"MainEngines","Item":"int_engine_size2_class2"}]}""");
+
+        var callout = new DangerCallout();
+
+        Assert.Empty(callout.Examine(Context(unshielded, Status(StatusFlags.ShieldsUp))));
+        Assert.Empty(callout.Examine(Context(unshielded, Status(StatusFlags.None), atSecond: 1)));
+
+        // And the journal's own transition says nothing either, which is the second road to the
+        // same line.
+        Assert.DoesNotContain(
+            callout.Examine(Context(
+                unshielded,
+                Status(StatusFlags.None),
+                atSecond: 2,
+                events: ["""{"timestamp":"3311-01-01T00:00:02Z","event":"ShieldState","ShieldsUp":false}"""])),
+            announced => announced.Key == "danger.shields");
+    }
+
+    /// <summary>
+    /// And an SRV's shields still are, on that same unshielded hull — which is the half the
+    /// corpus had to be asked about (remediation.md 17, item 6).
+    /// <para>
+    /// The Commander's Hauler carries no generator and an SRV bay, and it reports shields going
+    /// down <em>and coming back</em>: those are the SRV's, which are real and can be shot away. 22
+    /// such events under that one hull, plus 12 more inside an explicit <c>LaunchSRV</c>. A ship's
+    /// loadout answers for the ship and for nothing else.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnSrvsShieldsAreStillWarnedAboutUnderAnUnshieldedHull()
+    {
+        var unshielded = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"hauler","ShipID":3,"Modules":[{"Slot":"PowerPlant","Item":"int_powerplant_size2_class2"},{"Slot":"BuggyBay","Item":"int_buggybay_size2_class2"}]}""");
+
+        var inSrv = new GameStatus { Flags = StatusFlags.InSrv, ReadAt = Start };
+
+        var announced = Assert.Single(new DangerCallout().Examine(Context(
+            unshielded,
+            inSrv,
+            events: ["""{"timestamp":"3311-01-01T00:00:01Z","event":"ShieldState","ShieldsUp":false}"""])));
+
+        Assert.Equal("danger.shields", announced.Key);
+    }
+
+    /// <summary>
+    /// A loadout d47 has not read says the warning anyway. The suppression is evidence that the
+    /// ship has no shields, and absence of evidence is not that — a missed real shields-down call
+    /// costs far more than one spurious line.
+    /// </summary>
+    [Fact]
+    public void AnUnknownLoadoutStillWarns()
+    {
+        var callout = new DangerCallout();
+
+        Assert.Empty(callout.Examine(Context(StateFrom(), Status(StatusFlags.ShieldsUp))));
+
+        Assert.Single(callout.Examine(Context(StateFrom(), Status(StatusFlags.None), atSecond: 1)));
+    }
+
     [Fact]
     public void SubmittingToAnInterdictionIsNotAnnouncedAsAnEmergency()
     {

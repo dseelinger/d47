@@ -88,6 +88,30 @@ public sealed record HabitEvidence
         Journals >= HabitFloor.Journals &&
         Occurrences >= HabitFloor.Occurrences &&
         Opportunities >= HabitFloor.Opportunities;
+
+    /// <summary>
+    /// Whether this is common enough to be said out loud unprompted (remediation.md 17, item 12).
+    /// <para>
+    /// <b>The denominator was recorded, printed and never tested.</b> Reported as *"You have
+    /// dropped short of where you were going and had to come back — 14 of 490 approaches"*, said
+    /// on a perfect approach: 14 of 490 clears all three counts above while being something the
+    /// Commander does once in thirty-five approaches. <see cref="Opportunities"/> documents itself
+    /// as the difference between a habit and a Tuesday, and then only the numerator was asked.
+    /// </para>
+    /// <para>
+    /// <b>Separate from <see cref="ClearsTheFloor"/> rather than folded into it</b>, because the
+    /// two answer different questions. Clearing the counts is what makes the arithmetic sound
+    /// enough to record and to show; clearing the rate is what earns interrupting somebody with
+    /// it. A claim below the rate stays readable on the Habits page and is simply never spoken.
+    /// </para>
+    /// <para>
+    /// Measured across the three Commanders in the 916-journal corpus: overshoot rates 2.3%, 1.0%
+    /// and 2.8% and never speaks again; arrival collisions 0.4%; while *you submit rather than
+    /// run* is 19 of 21 and 24 of 24, and settlement security killing you on foot is 6 of 12.
+    /// The floor cleanly separates the two kinds.
+    /// </para>
+    /// </summary>
+    public bool WorthSaying => ClearsTheFloor && Rate >= HabitFloor.Rate;
 }
 
 /// <summary>
@@ -112,6 +136,19 @@ public static class HabitFloor
 
     /// <summary>Chances it had to happen. A rate with no denominator is a number pretending.</summary>
     public const int Opportunities = 10;
+
+    /// <summary>
+    /// How often it has to happen before d47 will say it unprompted — one time in five
+    /// (remediation.md 17, item 12).
+    /// <para>
+    /// The counts above say the arithmetic is sound. This says the thing is <em>characteristic</em>,
+    /// which is what the word habit means and what the counts alone could not test: at 2.9% almost
+    /// every approach is a good one, so a line of the form <em>you do this</em> arrives while the
+    /// Commander demonstrably is not doing it, 97 times in 100. No wording fixes that; only a
+    /// denominator does.
+    /// </para>
+    /// </summary>
+    public const double Rate = 0.20;
 
     /// <summary>What "recently" means in a claim's sentence.</summary>
     public static readonly TimeSpan RecentWindow = TimeSpan.FromDays(30);

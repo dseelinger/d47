@@ -47,6 +47,39 @@ public sealed class DangerCallout : ICallout
     }
 
     /// <summary>
+    /// Whether the ship the Commander is sitting in has no shield generator fitted, so a
+    /// shields-down report is the ship rather than an event (remediation.md 17, item 6).
+    /// <para>
+    /// Reported as *"no need to announce this on a ship without shields"*. A mining, exploration
+    /// or hauling build routinely flies unshielded, and the flag is then false for the whole
+    /// session; the edge into it is crossed on boarding, which is not a moment anything dangerous
+    /// happened. Measured in the 916-journal corpus: <b>527 of 2,853 Loadouts fit no generator</b>,
+    /// across 22 different ships.
+    /// </para>
+    /// <para>
+    /// <b>Only in the ship, and this is the half the corpus had to be asked about.</b> A
+    /// <c>ShieldState</c> event does not always describe the ship: the Commander's Hauler carries
+    /// no generator and an SRV bay, and it reports shields going down <em>and coming back</em> —
+    /// those are the SRV's shields, which are real and can be shot away. 22 such events under one
+    /// hull that has never had a generator, plus 12 more inside an explicit <c>LaunchSRV</c>. So
+    /// the ship's loadout answers for the ship and for nothing else, and in an SRV or a fighter
+    /// the warning stands.
+    /// </para>
+    /// <para>
+    /// <b>Every unknown says the warning.</b> A loadout not yet read, an empty module list, a
+    /// status that has not been seen — each of those means d47 cannot show the ship has no
+    /// shields, and a missed real shields-down call costs far more than one spurious line. This
+    /// suppresses only where the evidence is positive.
+    /// </para>
+    /// </summary>
+    private static bool HasNoShields(CalloutContext context) =>
+        context.Status.IsKnown
+        && context.Status.InShip
+        && context.State?.Ship is { IsKnown: true, Modules.Count: > 0 } loadout
+        && !loadout.Modules.Any(module =>
+            module.Item.StartsWith("int_shieldgenerator", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
     /// Transitions. Each of these is a thing that just happened, which is why they are worth
     /// interrupting for even though the condition may already have passed.
     /// </summary>
@@ -99,7 +132,7 @@ public sealed class DangerCallout : ICallout
                     yield return Urgent("danger.heat", "Taking heat damage.");
                     break;
 
-                case "ShieldState" when !journalEvent.Bool("ShieldsUp"):
+                case "ShieldState" when !journalEvent.Bool("ShieldsUp") && !HasNoShields(context):
                     yield return Urgent("danger.shields", "Shields are down.");
                     break;
 
@@ -144,7 +177,11 @@ public sealed class DangerCallout : ICallout
 
         var shieldsUp = status.ShieldsUp;
 
-        if (_shieldsWereUp && !shieldsUp && !context.IsPriming)
+        // The edge is still recorded when the ship has no shields — only the saying of it is
+        // declined (remediation.md 17, item 6). Skipping the assignment would leave the field
+        // remembering a ship the Commander is no longer in, and the first real loss on the next
+        // shielded hull would then be the edge that never came.
+        if (_shieldsWereUp && !shieldsUp && !context.IsPriming && !HasNoShields(context))
         {
             yield return Urgent("danger.shields", "Shields are down.");
         }

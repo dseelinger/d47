@@ -43,6 +43,7 @@ disagree, the ask wins.**
 | 7 | Oxen, Military 2 Optional Internal, "Keep the 5D Hull…" → shows the wrong engineering options (Ammo Capacity was one listed). But selecting "5D Hull Reinforcement Package" does show the correct engineering options. | 9 |
 | 8 | "Gear Glyph" should appear to the right of the Module Name, not leftmost. | 10 |
 | 9 | It is not clear that the step controls for the engineering grade are associated with it. Put Grade last (rightmost) on the line, followed by the stepper. | 11 |
+| 10 | *"You have dropped short of where you were going and had to come back — 14 of 490 approaches, 2 of them in the last month."* This was announced on a perfect approach to landing on a planet. | 12 |
 
 ## What runs through this batch
 
@@ -426,3 +427,50 @@ reparent**, and the panel now reparents on every tab switch.
   "Grade 1" the sentence deliberately does not have.
 
   **And the spoken form gets a test saying it did not move**, for the same reason item 6 has one.
+
+- [ ] **12. A habit worth 2.9% is announced as a habit.** Reported against 0.39.0: *"You have
+  dropped short of where you were going and had to come back — 14 of 490 approaches, 2 of them in
+  the last month"*, said **on a perfect approach to a landing**.
+
+  **Diagnosed: there is no rate floor.** `HabitFloor` gates on three counts — 20 journals, 5
+  occurrences, 10 opportunities — and `HabitEvidence.ClearsTheFloor` checks exactly those. 14 of
+  490 clears all three comfortably while being a thing the Commander does **once in every
+  thirty-five approaches**. Nothing anywhere asks whether the proportion is large enough to be
+  about the person.
+
+  **The design already knew.** `HabitEvidence.Opportunities` documents itself as *"the difference
+  between a habit and a Tuesday: fifty submissions out of fifty-two is a thing about a person, and
+  two out of two is a fortnight with two interdictions in it"* — and then the floor it feeds only
+  counts the numerator. A denominator that is recorded, printed, and never tested is the whole
+  defect in one line.
+
+  **Which is also why it landed on a perfect approach.** At 2.9% almost every approach is a good
+  one, so the moment the callout fires is almost always a moment when nothing is going wrong. A
+  remark of the form *you do this* arriving while the Commander demonstrably is not doing it reads
+  as an accusation the evidence does not support — and it will keep reading that way 97 times in
+  100, which no wording can fix.
+
+  **The fix is a floor on `Rate`, and the number is a judgement call**: too high and a real habit
+  goes unsaid, too low and this ships again with a different denominator. It belongs in
+  `HabitFloor` beside the other three, as a constant rather than a setting, for the reason stated
+  there — a Commander who could lower it would use it to confirm something they already believed.
+
+  **And every existing detector has to be re-measured against it**, because the floor is shared:
+  whatever number goes in, the corpus can say which claims survive it. That is the check, not a
+  unit test with a made-up count.
+
+  **Measured, with the floor in.** 20% was chosen against the corpus rather than by taste, and
+  the three Commanders' claims fall either side of a wide empty gap — nothing lands between 2.8%
+  and 50%:
+
+  | Claim | Rate | Spoken |
+  |---|---|---|
+  | *You submit rather than run* | 100.0%, 90.5% | yes |
+  | Settlement security killing you on foot | 50.0% | yes |
+  | Overshooting and going round again | 2.8%, 2.3%, 1.0% | no |
+  | Putting the hull into something on the way in | 0.4% | no |
+
+  So the reporting Commander now has **no spoken claim at all**, which is the right answer: of the
+  five things d47 watches for, the only one it could show about them was a thing they do once in
+  thirty-five approaches. `spike/HabitProbe` prints `SAID` or `kept` per claim, so the next
+  detector can be held to the same line before it ships.
