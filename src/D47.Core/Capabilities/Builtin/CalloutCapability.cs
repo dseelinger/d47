@@ -34,6 +34,9 @@ public static class CalloutCapability
     public const string ArrivalKey = "callouts.arrival";
     public const string MaterialsKey = "callouts.materials";
     public const string EmissionsKey = "callouts.emissions";
+    public const string LimpetsKey = "callouts.limpets";
+    public const string LimpetCargoFloorKey = "callouts.limpetCargoFloor";
+    public const string LimpetPercentKey = "callouts.limpetPercent";
 
     public const string ProspectorKey = "callouts.prospector";
 
@@ -196,6 +199,20 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { Emissions = v } }),
 
             Toggle(
+                LimpetsKey,
+                "Limpet reminders",
+                "On docking somewhere that sells limpets, with a big hold and few aboard. Off by default: "
+                + "it is for Commanders who fly limpets.",
+                "limpets",
+                "limpet reminders",
+                s => s.Callouts.Limpets,
+                (s, v) => s with { Callouts = s.Callouts with { Limpets = v } },
+
+                // Off, for the reason the row says. The habit callout is the other one that
+                // defaults this way.
+                defaultOn: false),
+
+            Toggle(
                 ProspectorKey,
                 "Prospector results",
                 "What a prospector limpet found in a rock, and whether it is the richest of the session.",
@@ -328,6 +345,57 @@ public static class CalloutCapability
                         RouteEveryNJumps = int.TryParse(v, out var jumps) && jumps >= 0
                             ? jumps
                             : s.Callouts.RouteEveryNJumps,
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = LimpetCargoFloorKey,
+            Label = "Only remind me about limpets above",
+            Help = "Cargo capacity, in tonnes. Below it you are not running limpets and the reminder is noise.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "64",
+            DocsAnchor = "limpet-floor",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Limpets: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.LimpetCargoFloor.ToString(),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        LimpetCargoFloor = int.TryParse(v, out var tonnes) && tonnes >= 0
+                            ? tonnes
+                            : s.Callouts.LimpetCargoFloor,
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = LimpetPercentKey,
+            Label = "Remind me when limpets are under",
+
+            // The denominator is on the row, in words. A percentage whose denominator is not
+            // written down is a number nobody can set confidently.
+            Help = "As a percentage of your cargo capacity. 5 means 12 limpets in a 256 tonne hold is low.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "5",
+            DocsAnchor = "limpet-percent",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Limpets: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.LimpetPercent.ToString(),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        LimpetPercent = int.TryParse(v, out var percent) && percent is >= 0 and <= 100
+                            ? percent
+                            : s.Callouts.LimpetPercent,
                     },
                 },
             },

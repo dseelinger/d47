@@ -17,6 +17,54 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.47.0 — 2026-08-21 — Limpets before you leave, and Oppi is not Federal
+
+**D47 can remind you to buy limpets.** Dock somewhere that sells them, with a hold worth filling and
+few enough aboard, and it says so:
+
+```
+No limpets aboard, and this station sells them. You have 256 tonnes to fill.
+```
+
+Three settings rows, and it is **off by default** — this is for Commanders who fly limpets, and one
+who never does should not have to switch it off. The other two are the thresholds: the smallest hold
+worth mentioning (**64 tonnes**) and how low counts as low, **as a percentage of that hold** (**5%**,
+so twelve limpets in a 256 tonne hold is low and thirteen is not). The denominator is written on the
+row, because a percentage whose denominator is not stated is a number nobody can set confidently.
+
+Two things were measured rather than assumed, and both changed the design. **Limpets are not a
+commodity** — they are bought through Advanced Maintenance, which is why D47 looks for the station's
+re-arm service instead of reading its market. Of the 136 limpet purchases in the journal history,
+that service was present at 133; the three misses are all one fleet carrier, which is a known and
+accepted gap rather than a fault. And **the hold cannot come from the journal**: not one docking in
+3,781 is followed by a cargo event listing what is aboard, so it comes from `Cargo.json`, which D47
+has been reading since colonisation tracking.
+
+No price is quoted. Limpets are nearly always 101 credits and occasionally not, and D47 has no
+reading of this station's price until after you have bought some.
+
+**Oppi is not a Federal system, and D47 stops saying it might be.** Reported against 0.46.0:
+*"Oppi could be running high grade emissions for Core Dynamics Composites. No, it couldn't."* Quite
+right. Oppi is Independent, holds one Federal faction out of seven, and none of them controls
+anything.
+
+The mistake was in how the rule was read. Contents depend on **individual faction states** and on
+**the allegiance of the controlling faction** — states are each faction's, allegiance is the
+system's — and D47 was reading both per faction. A minority superpower faction sits in roughly a
+fifth of populated systems, so this was wrong about a fifth of the galaxy. Naming several materials
+at once still works and never depended on that reading: it comes from two factions in *different
+states*, one in Boom beside one in Outbreak.
+
+**And five ambient remarks stop claiming things D47 never checked.** Reported: *"Mass lock is clear.
+The route is ours as far as I can see"*, heard an hour into a crossing. Mass lock clearing is a
+transition — true for a few seconds, nonsense afterwards — and "the route is ours" assumed a plotted
+route besides. Re-reading all seventy stock lines against that rule turned up four more making the
+same mistake, about atmosphere, gravity, and whether your hold is empty. All five are rewritten, and
+the rule they broke is now written where the next line gets added: an ambient remark has to be true
+of its situation at every moment inside it, because nothing checks.
+
+---
+
 ## 0.46.1 — 2026-08-21 — "Copy that"
 
 **Ask where to find a material, or the nearest trader, and D47 now offers to put the system on your

@@ -44,6 +44,24 @@ public enum AmbientSituation
 /// Written flat on purpose — observations about the ship and the situation, never about the
 /// Commander's judgement. An ambient remark is something you can ignore.
 /// </para>
+/// <para>
+/// <b>And never a claim about state d47 has not read.</b> <see cref="Pick"/> is given an index and
+/// nothing else — no ship, no status, no journal — so every line here has to be true of its
+/// situation at <em>every</em> moment inside it. Anything asserting a transition, a sensor reading
+/// or a figure is a claim nothing checked.
+/// </para>
+/// <para>
+/// <b>Reported 2026-08-21</b>, and it is what this rule was written for: <i>"Mass lock is clear.
+/// The route is ours as far as I can see"</i>, heard an hour into a crossing. Mass lock clearing is
+/// a transition — true for seconds, nonsense afterwards — and "the route is ours" assumed a plotted
+/// route besides. Four more lines were making the same mistake about atmosphere, gravity and cargo,
+/// and all five are rewritten below.
+/// </para>
+/// <para>
+/// <b>Hedging is the fix, not deletion.</b> "There is a queue on the pads outside. There always
+/// is." reads as a remark rather than a reading, and that is what makes it honest with nothing
+/// checked. A line either reads a value or does not claim one.
+/// </para>
 /// </summary>
 public static class AmbientLines
 {
@@ -148,8 +166,8 @@ public static class AmbientLines
     private static readonly string[] Landed =
     [
         "Landing gear is taking the weight. The ground under us is holding.",
-        "No atmosphere to speak of out there. The hull is the only thing between it and us.",
-        "Gravity here is doing very little. The ship barely knows it has landed.",
+        "Whatever is out there, the hull is the only thing between it and us.",
+        "The ship has settled into whatever gravity this place has.",
         "Dust on the sensors. It will clear when we lift.",
         "The horizon out there is closer than it looks. Small worlds do that.",
         "Nothing is moving within scanner range. Nothing has, for some time.",
@@ -163,7 +181,10 @@ public static class AmbientLines
     [
         "The drive is holding steady. Nothing ahead of us for a while.",
         "Frame shift is doing the work. We are covering ground you could not walk in a lifetime.",
-        "Mass lock is clear. The route is ours as far as I can see.",
+        // Not "mass lock is clear", which was the reported one: that is a transition, true for
+        // seconds and nonsense an hour later. Saying it *at the moment it clears* would be a good
+        // line and is a different feature, needing the status flag this class is not given.
+        "The way ahead is as clear as anything gets out here.",
         "The star ahead is getting closer at a rate that would alarm anyone unfamiliar with this.",
         "No contacts. Just distance, being crossed.",
         "The drive note has not changed in some minutes. That is what it sounds like when it is right.",
@@ -183,7 +204,7 @@ public static class AmbientLines
         "Shields are holding their charge. They have nothing to hold it against.",
         "Manoeuvring thrusters are doing more work than the main drive right now.",
         "Space here is not empty. It is only nearly empty, which is a different thing.",
-        "The ship handles better unloaded. You will notice it if you have not already.",
+        "The ship handles the way its mass says it should. It always does.",
         "No traffic on the scanner. That is either good or a matter of timing.",
     ];
 
@@ -210,7 +231,7 @@ public static class AmbientLines
         // (remediation.md, "The ship is holding position behind us").
         "The ship is holding position nearby. It will be there when you want it.",
         "This terrain would have taken a survey team a week. It is taking us an afternoon.",
-        "Wheel grip is marginal. It always is, at this gravity.",
+        "Wheel grip is a negotiation. It always is, on a surface nobody graded.",
         "The horizon keeps arriving sooner than it should out here.",
         "Fuel cell is fine. The drive draws almost nothing at this speed.",
         "Turret is stowed. Nothing out here to point it at.",

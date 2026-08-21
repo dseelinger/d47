@@ -30,6 +30,14 @@ Nothing open.
 
 ## Shipped
 
+### 23. Remind me to buy limpets — shipped 0.47.0
+
+Asked for 2026-08-21, built as list.md Phase 41. Two of the Commander's own corrections
+reshaped it mid-build: limpets are bought through **Advanced Maintenance** rather than the
+commodity market, which killed a design built on reading `Market.json`; and the carrier gap was
+ruled to be accepted rather than special-cased. The rulings and the measurements are in
+`list.md` Phase 41 and in `LimpetCallout`'s own summary.
+
 ### 22. Say when a system might be holding High Grade Emissions — shipped 0.46.0
 
 Asked for 2026-08-21: *"Notifies me when I am in a system that has a chance of having High Grade

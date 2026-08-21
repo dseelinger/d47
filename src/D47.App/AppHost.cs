@@ -1835,6 +1835,11 @@ public sealed class AppHost : IDisposable
             // about a stock that is finished.
             .Add(new EmissionCallout { Capacity = MaterialGrades.CapacityOf })
 
+            // Phase 41. Its two thresholds are pushed by ApplyCalloutSettings with the rest,
+            // which is what makes moving a slider take effect on the next docking rather than on
+            // the next restart.
+            .Add(new LimpetCallout())
+
             // Phase 11. The carrier speaks for itself; incoming chat speaks for whoever sent
             // it. Both are announcements in somebody else's voice rather than d47's, which is
             // what Announcement.Voice exists to carry.
@@ -1899,6 +1904,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("arrival", callouts.Arrival);
         engine.SetEnabled("materials", callouts.Materials);
         engine.SetEnabled("emissions", callouts.Emissions);
+        engine.SetEnabled("limpets", callouts.Limpets);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory);
         engine.SetEnabled("sampling", callouts.Sampling);
@@ -1923,6 +1929,11 @@ public sealed class AppHost : IDisposable
 
                 case ArrivalCallout arrival:
                     arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+
+                case LimpetCallout limpets:
+                    limpets.Floor = () => callouts.LimpetCargoFloor;
+                    limpets.Percent = () => callouts.LimpetPercent;
                     break;
 
                 case LoreCallout lore:
