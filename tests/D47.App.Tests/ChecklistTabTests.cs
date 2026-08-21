@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -59,6 +60,14 @@ public class ChecklistTabTests
 
         return (window, panel);
     }
+
+    /// <summary>
+    /// The movers on screen, by the name a screen reader reads. The glyphs are drawn rather than
+    /// typed, so there is no string on the button to look for.
+    /// </summary>
+    private static IReadOnlyList<Button> Movers(PanelView panel, string name) =>
+        [.. panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => AutomationProperties.GetName(button) == name)];
 
     private static ChecklistItem Derived(bool done = false)
     {
@@ -247,13 +256,20 @@ public class ChecklistTabTests
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Universal, "fit a fuel scoop");
 
+        // Adding selects (reported 2026-08-21), and this test is about a press selecting. Put back
+        // to nothing so the press below is the act being tested rather than a second one undoing
+        // what the fixture did; TheAddedLineIsTheSelectedOne covers the other half.
+        checklists.Select(null);
+
         var (window, panel) = Open(checklists);
 
-        // Nothing is selected, so no line is carrying arrows. Several hundred rows each with a
-        // permanent pair is several hundred controls a ray can hit by accident.
-        Assert.DoesNotContain(
-            panel.GetVisualDescendants().OfType<Button>(),
-            button => button.Content as string == "▲");
+        // Nothing is selected, so no line is carrying movers. Several hundred rows each with a
+        // permanent row of them is several hundred controls a ray can hit by accident.
+        //
+        // Found by the name rather than by a glyph, because the glyphs are drawn rather than
+        // typed: an end mover is the step mover with a bar on it, which no pair of unrelated
+        // codepoints gives and which no font can turn into tofu.
+        Assert.Empty(Movers(panel, "Move up"));
 
         // The innermost border that holds the line, which is the card. Descendants come out
         // outermost first, so Last is the card rather than the pane or the scroller around it.
@@ -274,10 +290,7 @@ public class ChecklistTabTests
 
         Dispatcher.UIThread.RunJobs();
 
-        var up = panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Content as string == "▲");
-
-        up.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Single(Movers(panel, "Move up")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
@@ -374,6 +387,39 @@ public class ChecklistTabTests
     }
 
     /// <summary>
+    /// Four movers on the selected line, not two (reported 2026-08-21). The list runs to several
+    /// hundred lines, so a line at 274 reaches the top in one press or in 273 — which makes "to
+    /// the top" a different errand from "up" rather than a faster one.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSelectedLineCarriesBothStepsAndBothEnds()
+    {
+        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+
+        checklists.AddNote(ChecklistScope.Universal, "buy limpets");
+        checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
+        checklists.AddNote(ChecklistScope.Universal, "fit a fuel scoop");
+
+        // The last line added is the selected one, which is the reported behaviour and what makes
+        // this test need no press of its own.
+        var (window, panel) = Open(checklists);
+
+        foreach (var name in new[] { "Move to the top", "Move up", "Move down", "Move to the bottom" })
+        {
+            Assert.Single(Movers(panel, name));
+        }
+
+        Assert.Single(Movers(panel, "Move to the top")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(
+            ["fit a fuel scoop", "buy limpets", "sell the cargo"],
+            checklists.Document.Items.Select(item => item.Text));
+
+        window.Close();
+    }
+
+    /// <summary>
     /// The page at the size the headset renders it, for a human to look at.
     /// </summary>
     [AvaloniaFact]
@@ -396,6 +442,67 @@ public class ChecklistTabTests
 
         window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "checklist-tab.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Every mover glyph is actually painted. <b>A blank button is the tofu failure by another
+    /// road</b> — a shape does not inherit a foreground the way a text block does, so the first
+    /// version of this drew four empty grey rectangles and every assertion about them passed.
+    /// </summary>
+    [AvaloniaFact]
+    public void NoMoverGlyphIsBlank()
+    {
+        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+
+        checklists.AddNote(ChecklistScope.Universal, "buy limpets");
+
+        var (window, panel) = Open(checklists);
+
+        var glyphs = panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => AutomationProperties.GetName(button)?.StartsWith("Move", StringComparison.Ordinal) == true)
+            .Select(button => button.Content)
+            .OfType<Avalonia.Controls.Shapes.Path>()
+            .ToList();
+
+        Assert.Equal(4, glyphs.Count);
+
+        foreach (var glyph in glyphs)
+        {
+            Assert.NotNull(glyph.Fill);
+            Assert.NotNull(glyph.Data);
+            Assert.True(glyph.Data!.Bounds.Width > 0, "the glyph has no geometry to draw");
+        }
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The four movers, drawn, for a human to look at. They are the one part of this that no
+    /// assertion can check: an end glyph has to read as the step glyph with a bar on it.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMoversRenderToACapture()
+    {
+        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+
+        checklists.AddNote(ChecklistScope.Universal, "buy limpets");
+        checklists.AddNote(ChecklistScope.Universal, "refill manufactured materials");
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        panel.EnableChecklist(checklists);
+
+        var window = new Window { Content = panel, Width = 1024, Height = 400 };
+        window.Show();
+
+        panel.Tab = PanelTab.Checklist;
+        Dispatcher.UIThread.RunJobs();
+
+        window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "checklist-movers.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         window.Close();

@@ -87,6 +87,7 @@ public static class JournalCapability
                     Description =
                         "Report the ship the Commander is flying: type, name, hull health, jump range, fuel "
                         + "and cargo capacity, and the modules fitted, from the last Loadout event.",
+                    Commands = Asking(Flying),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeShip(gameState))),
                 },
                 new ToolDefinition
@@ -95,6 +96,7 @@ public static class JournalCapability
                     Description =
                         "List the ships the Commander owns and which system each one is stored in, plus their "
                         + "fleet carrier and its location if they have one.",
+                    Commands = Asking(Owned),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeFleet(gameState))),
                 },
                 new ToolDefinition
@@ -124,6 +126,7 @@ public static class JournalCapability
                     Description =
                         "Report the Commander's material holdings — raw, manufactured and encoded — and their "
                         + "on-foot backpack and ship locker contents.",
+                    Commands = Asking(Held),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeMaterials(gameState))),
                 },
                 new ToolDefinition
@@ -132,11 +135,75 @@ public static class JournalCapability
                     Description =
                         "Report what the Commander has done since entering the game: credits earned by source, "
                         + "jumps made, distance travelled, materials gained and bodies scanned.",
+                    Commands = Asking(Done),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeSession(gameState))),
                 },
             ],
         };
     }
+
+    /// <summary>
+    /// The whole question, against the tool that answers it (reported 2026-08-21).
+    /// <para>
+    /// <b>A keyword names a capability and cannot name a tool.</b> The router takes the
+    /// capability's first tool with no required parameters, which here is <c>get_location</c> — so
+    /// <i>"where is my fleet carrier"</i> matched the keyword <c>my fleet</c> and was answered with
+    /// where the <em>Commander</em> was standing, under the Commander's own name, with the
+    /// Commander's own route attached. Every other question on this capability had the same
+    /// answer waiting for it.
+    /// </para>
+    /// <para>
+    /// <b>Declared phrases are matched first and name one tool each</b>, which is the mechanism
+    /// that already existed for accepting a proposal. They are whole utterances rather than
+    /// contained phrases, so a question about a carrier cannot be answered by a tool about a
+    /// position however the sentence is padded — and a phrasing nobody wrote down falls through to
+    /// the model, which is the ordinary outcome and not a failure.
+    /// </para>
+    /// <para>
+    /// <b>The keywords are left exactly as they are.</b> They are what makes the capability
+    /// reachable at all with no model, and narrowing them to fix this would trade one silent
+    /// wrong answer for a set of silent non-answers.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<ToolCommandPhrase> Asking(IReadOnlyList<string> phrases) =>
+        [.. phrases.Select(phrase => new ToolCommandPhrase(phrase, NoArguments))];
+
+    private static readonly IReadOnlyDictionary<string, string> NoArguments =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The carrier and the fleet. <b>The carrier phrasings lead</b> because they are the ones that
+    /// were reported, and because a carrier is the thing a Commander is most likely to ask the
+    /// position of after their own.
+    /// </summary>
+    private static readonly string[] Owned =
+    [
+        "where is my fleet carrier", "where is my carrier", "where's my fleet carrier",
+        "where's my carrier", "where is my fc", "my fleet carrier", "my carrier",
+        "where is my fleet carrier right now", "what system is my carrier in",
+        "what system is my fleet carrier in",
+        "what ships do i own", "what ships have i got", "my ships", "my fleet",
+        "where are my ships", "list my ships", "list my fleet",
+    ];
+
+    private static readonly string[] Flying =
+    [
+        "what am i flying", "what ship am i flying", "what am i in", "my ship", "my loadout",
+        "what is my jump range", "what's my jump range", "my jump range",
+    ];
+
+    private static readonly string[] Held =
+    [
+        "what materials am i carrying", "what materials do i have", "my materials",
+        "what is in my backpack", "what's in my backpack", "my backpack",
+        "what is in my ship locker", "what's in my ship locker", "my ship locker",
+    ];
+
+    private static readonly string[] Done =
+    [
+        "how have i done this session", "how have i done", "session summary",
+        "how has this session gone", "what have i done this session",
+    ];
 
     /// <summary>
     /// The one answer every other one needs first. Stated once here so five tools cannot each

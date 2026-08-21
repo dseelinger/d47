@@ -136,12 +136,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private string _query = string.Empty;
 
     /// <summary>
-    /// Which line is selected, by id. <b>The movers belong to the selection</b> and to nothing
-    /// else: a pair of arrows on every one of several hundred rows is several hundred controls a
-    /// ray can hit by accident, and a row with permanent arrows reads as a row whose position is
-    /// the interesting thing about it.
+    /// Which line is selected. <b>The movers belong to the selection</b> and to nothing else: a
+    /// row of arrows on every one of several hundred rows is several hundred controls a ray can
+    /// hit by accident, and a row with permanent arrows reads as a row whose position is the
+    /// interesting thing about it.
+    /// <para>
+    /// <b>Held on the service rather than here</b> (reported 2026-08-21). It was a string on this
+    /// page, so a spoken "move it up" had no antecedent and said so — while this page, a foot
+    /// away, was drawing a highlight round the very line that was meant.
+    /// </para>
     /// </summary>
-    private string? _selected;
+    private ChecklistItemId? Selected => _checklists.Selected;
 
     /// <summary>
     /// Whether the arcs are showing. <b>Closed by default</b>, because nine arcs above a working
@@ -727,8 +732,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private Control Line(ChecklistItem item)
     {
-        var id = item.Id.ToString();
-        var selected = id == _selected;
+        var selected = Selected is { } chosen && chosen.Same(item.Id);
 
         var body = new StackPanel { Spacing = 2 };
 
@@ -833,7 +837,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // handle somewhere on it.
         card.PointerPressed += (_, _) =>
         {
-            _selected = selected ? null : id;
+            _checklists.Select(selected ? null : item.Id);
             Rebuild();
         };
 
@@ -841,43 +845,26 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// Up and down, on the selected line.
+    /// The four reorders, on the selected line (reported 2026-08-21).
     /// <para>
     /// <b>Reordering is not a drag</b> — a drag is the worst gesture available to a ray at a
     /// metre, needing a press, an aim held through motion and a release, any one of which a hand
     /// at arm's length gets wrong. And the phrase does it without aiming at all, which a drag has
     /// no spoken form of.
     /// </para>
+    /// <para>
+    /// <b>Four rather than two, because a step is not a journey.</b> The list runs to several
+    /// hundred lines, so a line at 274 reaches the top in one press or in 273 — which makes "to
+    /// the top" a different errand from "up" rather than a faster one. Ends outside, steps inside,
+    /// so the pair a Commander reaches for most often is the pair in the middle.
+    /// </para>
     /// </summary>
     private Control Movers(ChecklistItem item)
     {
-        var up = new Button
-        {
-            Content = "▲",
-            Padding = new Thickness(10, 2),
-
-            // <see cref="TouchTarget"/> rather than whatever the padding came to, which was about
-            // twenty pixels: these four are the only controls on the page that were below the
-            // floor, and they went back into a headset with the tab (list.md Phase 39).
-            MinHeight = TouchTarget,
-            MinWidth = 0,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        var down = new Button
-        {
-            Content = "▼",
-            Padding = new Thickness(10, 2),
-            MinHeight = TouchTarget,
-            MinWidth = 0,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        up.Click += (_, _) => Moved(item, -1);
-        down.Click += (_, _) => Moved(item, 1);
-
-        AutomationProperties.SetName(up, "Move up");
-        AutomationProperties.SetName(down, "Move down");
+        var top = Mover(ChecklistMove.Top, "Move to the top", item);
+        var up = Mover(ChecklistMove.Up, "Move up", item);
+        var down = Mover(ChecklistMove.Down, "Move down", item);
+        var bottom = Mover(ChecklistMove.Bottom, "Move to the bottom", item);
 
         var movers = new StackPanel
         {
@@ -885,7 +872,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Spacing = 4,
             Margin = new Thickness(10, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { up, down },
+            Children = { top, up, down, bottom },
         };
 
         // Rewording and removing belong to the selection for the same reason the movers do: four
@@ -1000,16 +987,85 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                     return;
                 }
 
-                // The line that was selected has gone, so the selection goes with it rather than
-                // pointing at an id nothing answers to.
-                _selected = null;
                 Rebuild();
             });
     }
 
-    private void Moved(ChecklistItem item, int by)
+    /// <summary>
+    /// One mover: the glyph, the touch target, and the name a screen reader and a test both find
+    /// it by.
+    /// </summary>
+    private Button Mover(ChecklistMove move, string name, ChecklistItem item)
     {
-        var change = _checklists.Move(item.Id, by);
+        var glyph = Arrow(move);
+
+        var button = new Button
+        {
+            Content = glyph,
+            Padding = new Thickness(8, 2),
+
+            // <see cref="TouchTarget"/> rather than whatever the padding came to, which was about
+            // twenty pixels: these are the only controls on the page that were below the floor,
+            // and they went back into a headset with the tab (list.md Phase 39).
+            MinHeight = TouchTarget,
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // The glyph takes the button's own text colour rather than a theme key of its own. A
+        // shape does not inherit a foreground the way a text block does, so a key that fails to
+        // resolve leaves `Fill` null and the button blank — which is the tofu failure by another
+        // road, and it is exactly what the first capture of this showed. The button's foreground
+        // always has a value, comes from the same style the Edit and Delete labels use, and
+        // follows it through every state.
+        glyph.Bind(
+            Avalonia.Controls.Shapes.Shape.FillProperty,
+            button.GetObservable(TemplatedControl.ForegroundProperty));
+
+        button.Click += (_, _) => Moved(item, move);
+        AutomationProperties.SetName(button, name);
+
+        return button;
+    }
+
+    /// <summary>
+    /// The mover glyphs, <b>drawn rather than typed</b>.
+    /// <para>
+    /// A bar-and-arrow character exists — U+2912 — and whether it renders is a property of
+    /// whatever font the panel resolved. This repo has already paid for that once: a glyph nobody
+    /// can see is worse than no glyph, because the control then reads as blank rather than as
+    /// missing (list.md Phase 37, and the currency-sign reasoning in <c>ShipsMode.Coin</c>). Four
+    /// paths cannot be tofu in any font, and they let the end glyphs be the step glyph with a bar
+    /// on it — which is the whole of what the ask specified, and what no two unrelated codepoints
+    /// would have given.
+    /// </para>
+    /// </summary>
+    private static Avalonia.Controls.Shapes.Path Arrow(ChecklistMove move)
+    {
+        // One 12x12 box for all four, so the pair in the middle and the pair outside it line up
+        // on the same baseline and read as one row of controls.
+        var geometry = move switch
+        {
+            ChecklistMove.Up => "M 6,2 L 11,9.5 L 1,9.5 Z",
+            ChecklistMove.Down => "M 1,2.5 L 11,2.5 L 6,10 Z",
+            ChecklistMove.Top => "M 1,1 L 11,1 L 11,2.6 L 1,2.6 Z M 6,4 L 11,11 L 1,11 Z",
+            _ => "M 1,1 L 11,1 L 6,8 Z M 1,9.4 L 11,9.4 L 11,11 L 1,11 Z",
+        };
+
+        return new Avalonia.Controls.Shapes.Path
+        {
+            Data = Geometry.Parse(geometry),
+            Width = 12,
+            Height = 12,
+            Stretch = Stretch.None,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+    }
+
+    private void Moved(ChecklistItem item, ChecklistMove move)
+    {
+        var change = _checklists.Move(item.Id, move);
 
         if (!change.Changed)
         {
@@ -1220,7 +1276,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
                 if (change.Changed)
                 {
-                    _selected = null;
+                    // A whole list has been replaced, so whatever was selected is not in it.
+                    _checklists.Select(null);
                     Rebuild();
                 }
             });
