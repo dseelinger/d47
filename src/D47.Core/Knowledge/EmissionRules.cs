@@ -4,48 +4,47 @@ namespace D47.Core.Knowledge;
 /// One group of materials a High Grade Emission can hold, and the condition that produces it.
 /// </summary>
 /// <param name="Allegiance">
-/// The superpower the <b>system</b> answers to, or null for a condition that is about a faction
-/// state instead. <c>Federation</c> and <c>Empire</c> exactly as the journal spells them.
+/// The allegiance the <b>system</b> answers to, exactly as the journal spells it —
+/// <c>Federation</c>, <c>Empire</c>, <c>Independent</c>. <b>Never null</b>: every group names one,
+/// including the four that also name states.
 /// </param>
 /// <param name="States">
-/// The faction states that produce this group, in the journal's own spelling — <c>Boom</c>,
-/// <c>CivilWar</c>. Empty for an allegiance condition.
+/// The states the <b>controlling faction</b> must be in — any one of them — in the journal's own
+/// spelling. Empty for the two groups that are about allegiance alone.
 /// </param>
 /// <param name="Materials">The material symbols, as the journal writes them.</param>
 public sealed record EmissionGroup(
-    string? Allegiance,
+    string Allegiance,
     IReadOnlyList<string> States,
     IReadOnlyList<string> Materials);
 
 /// <summary>
 /// What a High Grade Emission holds, and where (list.md Phase 40).
 /// <para>
-/// <b>The mechanic, and it was read wrong once.</b> The wiki says contents depend on
-/// <i>"individual Faction States <b>and the allegiance of the controlling faction</b>"</i>. States
-/// are individual; <b>allegiance is the system's</b>. The first version of this made both
-/// per-faction, on the strength of the following sentence about signals being assigned to a
-/// faction — which governs the state half only.
+/// <b>This table is the Commander's, given 2026-08-21, and it supersedes what was derived from the
+/// sources.</b> Two published readings were tried before it and both shipped wrong, so what is
+/// written down here is the corrected table rather than the research that led to it —
+/// <c>docs/plans/change-requests.md</c> item 22 keeps the sources and the trail.
 /// </para>
 /// <para>
-/// <b>What that cost, reported 2026-08-21.</b> Oppi is an Independent system holding one Federal
-/// faction out of seven, none of them controlling anything, and d47 announced Federal composites
-/// there. The figure quoted in support of the per-faction reading — 84 of 400 recent jumps mix a
-/// Federal faction with an Independent or Alliance one — is real, and it argues the opposite: a
-/// minority Federal faction sits in roughly a fifth of populated systems, so per-faction allegiance
-/// mislabelled about a fifth of the galaxy.
+/// <b>Every group is allegiance + population, and four of them add a state.</b> There is no
+/// "superpower beats state" rule any more because no group needs one: the superpower groups are
+/// Federal and Imperial, the state groups are all <b>Independent</b>, and nothing overlaps. An
+/// <b>Alliance</b> system yields nothing at all, which is a real exclusion and is taken as written.
 /// </para>
 /// <para>
-/// <b>Several materials at once still falls out, and never depended on that reading.</b> It comes
-/// from two factions in different <em>states</em> — one in Boom beside one in Outbreak — which is
-/// untouched by this.
+/// <b>The state is the controlling faction's</b> — the journal's <c>SystemFaction</c> — and not any
+/// faction's. Two earlier readings got this wrong in opposite directions: the first made both
+/// allegiance and state per-faction, which had Federal composites announced in <b>Oppi</b>, an
+/// Independent system holding one Federal faction of seven; the correction moved allegiance to the
+/// system and left states per faction, which was still half wrong.
 /// </para>
 /// <para>
-/// <b>Superpower beats state, and never the other way.</b> A Federal or Imperial <em>system</em>
-/// yields composites or shielding respectively <em>and nothing else</em>, whatever states its
-/// factions are in. This is the single ruling the two sources disagree about — the 2017 forums
-/// guide says an Imperial system in Outbreak gives shielding and isolators together — and it is
-/// settled the wiki's way on the Commander's instruction (2026-08-21), because the wiki is newer
-/// and because its reading is the one consistent with the rank-order mechanic it also states.
+/// <b>Several materials at once survives, from one faction wearing several states.</b> A controlling
+/// faction's <c>ActiveStates</c> is a list, and in the corpus it genuinely holds pairs —
+/// <c>CivilUnrest + Expansion</c>, <c>Expansion + War</c>, <c>Boom + Expansion</c> — so one system
+/// can offer two unrelated groups. It no longer comes from two <em>factions</em>, which is what the
+/// previous reading rested it on.
 /// </para>
 /// <para>
 /// <b>Sourced, corroborated, and then checked against the shipped table.</b> The conditions are the
@@ -77,67 +76,84 @@ public static class EmissionRules
     /// <summary>
     /// The population a system needs before a High Grade Emission is worth mentioning at all.
     /// <para>
-    /// <b>Applied to every group rather than to Outbreak alone.</b> The wiki attaches it to
-    /// Pharmaceutical Isolators and states separately that emissions are commonest in systems of a
-    /// million or more; the Commander's ruling is that it is a condition of all of them. So a
-    /// sparsely populated system in Boom says nothing, which is the outcome that matches what a
-    /// Commander actually finds when they go and look.
+    /// <b>A condition of every group</b>, stated as such in the Commander's own table: each row
+    /// reads <i>allegiance + high pop</i>, with a state on four of them. So a sparsely populated
+    /// system says nothing whatever else is true of it.
     /// </para>
     /// </summary>
     public const long MinimumPopulation = 1_000_000;
 
     /// <summary>
-    /// The six groups, <b>in the wiki's stated rank order</b>. Order is load-bearing: where a
-    /// faction meets more than one condition Elite picks between them by a rank nobody has seen,
-    /// and this is the community's best reconstruction of it. The two allegiance groups lead,
-    /// which is the same claim as superpower beating state.
+    /// The six groups, exactly as the Commander wrote them.
+    /// <para>
+    /// <b>Order no longer disambiguates anything</b> — the groups do not overlap, so it is merely
+    /// the order things are said in. It used to be a reconstruction of a hidden rank, which the
+    /// superseded reading needed and this one does not.
+    /// </para>
     /// </summary>
     public static readonly IReadOnlyList<EmissionGroup> Groups =
     [
         new("Federation", [], ["fedcorecomposites", "fedproprietarycomposites"]),
         new("Empire", [], ["imperialshielding"]),
-        new(null, ["CivilUnrest"], ["improvisedcomponents"]),
-        new(null, ["War", "CivilWar"], ["militarygradealloys", "militarysupercapacitors"]),
-        new(null, ["Boom"], ["protoheatradiators", "protolightalloys", "protoradiolicalloys"]),
-        new(null, ["Outbreak"], ["pharmaceuticalisolators"]),
+        new("Independent", ["CivilUnrest"], ["improvisedcomponents"]),
+        new("Independent", ["War", "CivilWar"], ["militarygradealloys", "militarysupercapacitors"]),
+
+        // Expansion beside Boom. The Commander ruled Boom-only that morning, against the wiki, and
+        // corrected it the same day — and it is not a small widening: Expansion is the second
+        // commonest faction state in the corpus after None.
+        new("Independent", ["Boom", "Expansion"],
+            ["protoheatradiators", "protolightalloys", "protoradiolicalloys"]),
+
+        new("Independent", ["Outbreak"], ["pharmaceuticalisolators"]),
     ];
 
     /// <summary>
-    /// What one faction's emissions would hold, or null for one that produces none.
+    /// Every group a system offers — none, one, or two where its controlling faction wears two
+    /// states at once.
     /// <para>
-    /// <paramref name="systemAllegiance"/> is <b>the system's</b>, not the faction's — the journal's
-    /// <c>SystemAllegiance</c>, which is the controlling faction's. Passing the faction's own is the
-    /// defect reported on 2026-08-21 and is what the parameter is named to prevent.
+    /// <paramref name="systemAllegiance"/> is <b>the system's</b>: the journal's
+    /// <c>SystemAllegiance</c>. <paramref name="states"/> is <b>the controlling faction's</b> —
+    /// its <c>FactionState</c> and its <c>ActiveStates</c> together. Both parameters are named for
+    /// what they are because both have been passed the wrong thing once.
     /// </para>
     /// <para>
-    /// <paramref name="states"/> is every state that faction is actually in — the journal's
-    /// <c>ActiveStates</c> alongside its headline <c>FactionState</c> — because a faction in
-    /// several at once is a real thing and the headline reports only one of them.
+    /// <b>Several rather than one.</b> This used to answer a single group, which suited a table
+    /// where the groups competed; in the Commander's table they do not, and a faction in
+    /// <c>Expansion + War</c> really does offer the Proto materials and the Military ones.
+    /// </para>
+    /// <para>
+    /// Population is not checked here — it is not a property of a group, it is a property of the
+    /// system, and <see cref="MinimumPopulation"/> is the caller's to apply.
     /// </para>
     /// </summary>
-    public static EmissionGroup? For(string? systemAllegiance, IEnumerable<string>? states)
+    public static IReadOnlyList<EmissionGroup> For(string? systemAllegiance, IEnumerable<string>? states)
     {
-        // Superpower first and then stop. A Federal or Imperial system never yields anything but
-        // its own composites or shielding, whatever states its factions are in.
-        if (Groups.FirstOrDefault(group =>
-                group.Allegiance is { } superpower
-                && string.Equals(superpower, systemAllegiance, StringComparison.OrdinalIgnoreCase)) is { } owned)
+        if (systemAllegiance is not { Length: > 0 })
         {
-            return owned;
+            return [];
         }
 
-        if (states is null)
-        {
-            return null;
-        }
-
-        var held = states
+        var held = (states ?? [])
             .Where(state => !string.IsNullOrWhiteSpace(state))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // In rank order, so a faction in both Boom and Civil Unrest answers with the higher of the
-        // two rather than with whichever the journal happened to list first.
-        return Groups.FirstOrDefault(group =>
-            group.Allegiance is null && group.States.Any(held.Contains));
+        return
+        [
+            .. Groups.Where(group =>
+                string.Equals(group.Allegiance, systemAllegiance, StringComparison.OrdinalIgnoreCase)
+                && (group.States.Count == 0 || group.States.Any(held.Contains))),
+        ];
     }
+
+    /// <summary>
+    /// What one material needs, or null for one no emission carries. The other direction of
+    /// <see cref="Groups"/>, so a caller looking for a place to find something asks the same table
+    /// the callout answers from rather than deriving its own.
+    /// </summary>
+    public static EmissionGroup? Holding(string? symbol) =>
+        symbol is { Length: > 0 }
+            ? Groups.FirstOrDefault(group =>
+                group.Materials.Any(material =>
+                    string.Equals(material, symbol, StringComparison.OrdinalIgnoreCase)))
+            : null;
 }

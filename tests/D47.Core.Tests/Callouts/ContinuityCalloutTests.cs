@@ -70,11 +70,11 @@ public class ContinuityCalloutTests : IDisposable
         """;
 
     private ContinuityCallout Callout(MemoryBook book) =>
-        new(book, TestSurface.EmptyChecklists(_folder), () => null);
+        new(book, TestSurface.EmptyChecklists(_folder));
 
     /// <summary>
-    /// The same callout over a checklist that actually holds a plan, so the shortfall clause has
-    /// something to report. Accepted rather than proposed: a proposal is not the Commander's list
+    /// The same callout over a checklist that actually holds a plan, so the top of the list has
+    /// something on it. Accepted rather than proposed: a proposal is not the Commander's list
     /// yet, and the line is about what they were doing.
     /// </summary>
     private ContinuityCallout WithAPlan(MemoryBook book, CommanderGameState state)
@@ -89,7 +89,7 @@ public class ContinuityCalloutTests : IDisposable
         checklists.ProposePlan(scope, D47.Core.Checklists.ChecklistSource.EngineeringPlan, items, []);
         checklists.Accept();
 
-        return new ContinuityCallout(book, checklists, () => null);
+        return new ContinuityCallout(book, checklists);
     }
 
     /// <summary>Where the Commander was, as the observer would have written it.</summary>
@@ -210,7 +210,7 @@ public class ContinuityCalloutTests : IDisposable
     [Fact]
     public void ItIsSaidInCharacterWithTheFactsHandedOverAlreadyWritten()
     {
-        var announcement = new Announcement(ContinuityCallout.Key, "It has been 7 days. You were 3 Selenium short.");
+        var announcement = new Announcement(ContinuityCallout.Key, "It has been 7 days. Top of your list: buy limpets.");
 
         var brief = FlavourBriefs.For(announcement, personalityEnabled: true);
 
@@ -226,12 +226,12 @@ public class ContinuityCalloutTests : IDisposable
     }
 
     /// <summary>
-    /// The checklist's half of the checklist example — <em>you were three Selenium short</em>. One
-    /// material rather than the list: the shortfall report already exists and runs to a page, and
+    /// The checklist's half of the line since Phase 42: the top of the list, in the order the
+    /// Commander cares about. A few items rather than the list — the page holds the rest, and
     /// this is a sentence somebody hears while they are still putting a headset on.
     /// </summary>
     [Fact]
-    public void APlanWithAShortfallSaysWhatYouWereShortOf()
+    public void APlanPutsTheTopOfTheListInTheLine()
     {
         var state = State(FarseerAtRankOne);
         var book = Book();
@@ -239,10 +239,12 @@ public class ContinuityCalloutTests : IDisposable
 
         var line = WithAPlan(book, state).Compose(Now, state)!;
 
-        Assert.Contains("short.", line, StringComparison.Ordinal);
+        Assert.Contains("Top of your list:", line, StringComparison.Ordinal);
+        Assert.Contains("Dirty Drive Tuning", line, StringComparison.Ordinal);
 
-        // One clause about one material, not a ledger read aloud.
-        Assert.Single(line.Split(" short."), part => part.Contains("You were", StringComparison.Ordinal));
+        // Said whole, ship and all — there is no heading around a spoken sentence, and the hull
+        // is what the plan stored for exactly this.
+        Assert.Contains("Krait", line, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -252,7 +254,8 @@ public class ContinuityCalloutTests : IDisposable
         // useful half rather than silence.
         var state = State(FarseerAtRankOne);
 
-        Assert.Contains("short.", WithAPlan(Book(), state).Compose(Now, state)!, StringComparison.Ordinal);
+        Assert.Contains(
+            "Top of your list:", WithAPlan(Book(), state).Compose(Now, state)!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -263,58 +266,27 @@ public class ContinuityCalloutTests : IDisposable
         Assert.Null(FlavourBriefs.For(announcement, personalityEnabled: false));
     }
     /// <summary>
-    /// The engineer clause is only said when they are one stop away (remediation.md 14, item 2).
-    /// <para>
-    /// Reported as not useful: <em>"Broo Tarquin is still three steps out."</em> Three steps is
-    /// three unlocks and two rank climbs — a project — and it says the same thing every session
-    /// until it is done, which is how a Commander learns to stop listening to the opening line.
-    /// The clause above it already draws this distinction for materials, picking the nearest
-    /// shortfall because two short is an errand and ninety short is a project.
-    /// </para>
+    /// The line no longer holds an unlock opinion of its own (list.md Phase 42). Its
+    /// Gap → Short → Here-or-Unlock precedence existed because the checklist had no order to
+    /// read from; now it has one, an unlock is said only when an unlock item is genuinely near
+    /// the top of the Commander's own list — through the list read, not through a clause.
     /// </summary>
     [Fact]
-    public void AnEngineerIsOnlyMentionedWhenTheyAreOneStopAway()
+    public void TheLineReadsTheListRatherThanCountingUnlockSteps()
     {
         var book = Book();
         Seen(book, Now.AddDays(-7));
 
-        var state = State();
-        var checklists = TestSurface.EmptyChecklists(_folder, () => state);
+        var state = State(FarseerAtRankOne);
 
-        var ships = new D47.Core.Ships.ShipBuildStore(
-            Path.Combine(_folder, "ships.json"),
-            NullLogger<D47.Core.Ships.ShipBuildStore>.Instance);
+        var line = WithAPlan(book, state).Compose(Now, state)!;
 
-        var onFoot = new D47.Core.Loadout.OnFootBuildStore(
-            Path.Combine(_folder, "onfoot.json"),
-            NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
+        Assert.Contains("Top of your list:", line, StringComparison.Ordinal);
 
-        var unlocks = new D47.Core.Engineers.EngineerPlanService(
-            ships, onFoot, checklists, () => state);
-
-        var line = new ContinuityCallout(book, checklists, () => unlocks).Compose(Now, state)!;
-
-        var route = unlocks.Report().Route;
-        var best = route.Count > 0 ? route[0] : null;
-
-        if (best is { Chain.Steps.Count: 1 })
-        {
-            Assert.Contains($"{best.Engineer.Name} is one unlock step away.", line, StringComparison.Ordinal);
-
-            // **Not "one stop away"** (reported 2026-08-20). A stop is a place you fly to, and
-            // the Commander read it as one — heard while parked in a different engineer's system it
-            // was navigation advice about somebody two hundred light years off.
-            Assert.DoesNotContain("one stop away", line, StringComparison.Ordinal);
-        }
-        else
-        {
-            // Nothing about engineers at all, whatever the solver ranked first.
-            Assert.DoesNotContain(" steps out", line, StringComparison.Ordinal);
-            Assert.DoesNotContain(" step out", line, StringComparison.Ordinal);
-        }
-
-        // Whatever the fixture ranks, the sentence never counts steps at a Commander.
-        Assert.DoesNotContain("three steps", line, StringComparison.Ordinal);
+        // Whatever is on the list, the sentence never counts unlock steps at a Commander — that
+        // was the "fact about engineers" the 2026-08-21 report asked to be rid of.
+        Assert.DoesNotContain("unlock step away", line, StringComparison.Ordinal);
+        Assert.DoesNotContain(" steps out", line, StringComparison.Ordinal);
     }
 
 }

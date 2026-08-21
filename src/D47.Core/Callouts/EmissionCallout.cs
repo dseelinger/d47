@@ -13,12 +13,10 @@ namespace D47.Core.Callouts;
 /// fires on the events that put them in a system and on nothing else.
 /// </para>
 /// <para>
-/// <b>Allegiance is the system's; states are each faction's.</b> That split is the wiki's, it was
-/// read wrong in the first version of this, and the correction is why Oppi — an Independent system
-/// holding one Federal faction out of seven — no longer has Federal composites announced in it. A
-/// system still offers several unrelated groups at once, and always did for the right reason: two
-/// of its factions in different <em>states</em>. See <see cref="EmissionRules"/> for the conditions,
-/// where they were sourced, and the four readings the Commander ruled on.
+/// <b>Allegiance and state both come from the system's controlling faction.</b> Two earlier
+/// readings got this wrong in opposite directions — see <see cref="EmissionRules"/>, which holds
+/// the Commander's own table and the trail behind it. A system can still offer two unrelated
+/// groups, from one faction wearing two states at once.
 /// </para>
 /// <para>
 /// <b>What is already full is not mentioned.</b> Being told to go and collect a material there is
@@ -101,8 +99,8 @@ public sealed class EmissionCallout : ICallout
     }
 
     /// <summary>
-    /// Every material this system's factions could put in an emission and the Commander has room
-    /// for, each named once and in the rank order the groups are declared in.
+    /// Every material this system could put in an emission and the Commander has room for, each
+    /// named once and in the order the groups are declared in.
     /// </summary>
     private List<string> Sayable(JournalEvent journalEvent, CommanderGameState state)
     {
@@ -115,17 +113,8 @@ public sealed class EmissionCallout : ICallout
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Read once, outside the loop, because it is a fact about the system rather than about any
-        // faction in it — which is the whole of what was wrong here.
-        var allegiance = journalEvent.String("SystemAllegiance");
-
-        foreach (var faction in journalEvent.Items("Factions"))
+        foreach (var group in EmissionRules.For(journalEvent.String("SystemAllegiance"), States(journalEvent)))
         {
-            if (EmissionRules.For(allegiance, States(faction)) is not { } group)
-            {
-                continue;
-            }
-
             foreach (var symbol in group.Materials)
             {
                 if (!seen.Add(symbol) || IsFull(symbol, state))
@@ -141,27 +130,58 @@ public sealed class EmissionCallout : ICallout
     }
 
     /// <summary>
-    /// Every state a faction is actually in: the headline one plus <c>ActiveStates</c>.
+    /// Every state the <b>controlling</b> faction is in: its headline <c>FactionState</c> plus its
+    /// <c>ActiveStates</c>.
     /// <para>
-    /// Both, because neither is a superset of the other in practice — <c>FactionState</c> is what
-    /// Elite considers the faction's current state and <c>ActiveStates</c> is the list it is
-    /// drawn from, and a journal that carries one without the other is a journal d47 still has to
-    /// read.
+    /// <b>Found through <c>Factions</c> rather than read off <c>SystemFaction</c>, and that is not
+    /// tidiness.</b> Measured over 205 recent <c>FSDJump</c> events: <c>SystemFaction</c> carries
+    /// <c>Name</c> on all of them and <c>FactionState</c> on only <b>118</b> — absent two times in
+    /// five. The controlling faction is findable by name in the <c>Factions</c> array in 204 of the
+    /// 205, and that entry carries both the headline state and the list. So the name comes from
+    /// <c>SystemFaction</c> and everything else from the array.
+    /// </para>
+    /// <para>
+    /// Both the headline and the list, because neither is a superset of the other in practice, and
+    /// the list is what makes two groups at once expressible at all.
     /// </para>
     /// </summary>
-    private static IEnumerable<string> States(JsonElement faction)
+    private static IEnumerable<string> States(JournalEvent journalEvent)
     {
-        if (faction.String("FactionState") is { Length: > 0 } headline)
+        var controlling = journalEvent.Object("SystemFaction")?.String("Name");
+
+        if (controlling is not { Length: > 0 })
         {
-            yield return headline;
+            yield break;
         }
 
-        foreach (var active in faction.Items("ActiveStates"))
+        foreach (var faction in journalEvent.Items("Factions"))
         {
-            if (active.String("State") is { Length: > 0 } state)
+            if (!string.Equals(faction.String("Name"), controlling, StringComparison.OrdinalIgnoreCase))
             {
-                yield return state;
+                continue;
             }
+
+            if (faction.String("FactionState") is { Length: > 0 } headline)
+            {
+                yield return headline;
+            }
+
+            foreach (var active in faction.Items("ActiveStates"))
+            {
+                if (active.String("State") is { Length: > 0 } state)
+                {
+                    yield return state;
+                }
+            }
+
+            yield break;
+        }
+
+        // The one journal in 205 whose controlling faction is not in its own Factions array. The
+        // headline state on SystemFaction is all there is, and it is better than nothing.
+        if (journalEvent.Object("SystemFaction")?.String("FactionState") is { Length: > 0 } only)
+        {
+            yield return only;
         }
     }
 

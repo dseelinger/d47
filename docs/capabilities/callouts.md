@@ -199,25 +199,24 @@ Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composi
 Proprietary Composites and Pharmaceutical Isolators.
 ```
 
-**Allegiance is the system's; states are each faction's.** So a system offers several unrelated
-things at once when two of its factions are in different states:
+**Every row is the system's allegiance plus a population over a million**, and four of them add a
+state — which is the **controlling faction's**, not any faction's:
 
-| The system, or one of its factions | Emissions hold |
+| The system | Emissions hold |
 |---|---|
-| a Federal **system** | Core Dynamics Composites, Proprietary Composites |
-| an Imperial **system** | Imperial Shielding |
-| a faction in Civil Unrest | Improvised Components |
-| a faction in War or Civil War | Military Grade Alloys, Military Supercapacitors |
-| a faction in Boom | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
-| a faction in Outbreak | Pharmaceutical Isolators |
+| Federal | Core Dynamics Composites, Proprietary Composites |
+| Imperial | Imperial Shielding |
+| Independent, controlling faction in Civil Unrest | Improvised Components |
+| Independent, controlling faction in War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| Independent, controlling faction in Boom or Expansion | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| Independent, controlling faction in Outbreak | Pharmaceutical Isolators |
 
-A Federal or Imperial **system** yields its composites or shielding **and nothing else**, whatever
-states its factions are in — so the state-driven materials are found in Independent and Alliance
-space. Systems under a million population are not mentioned at all.
+**Alliance systems yield nothing**, and systems under a million people are not mentioned at all.
+A minority Federal faction in an Independent system does not make it Federal — that reading once
+had Core Dynamics Composites announced in Oppi.
 
-One Federal faction in an Independent system does **not** make it a Federal system. A minority
-superpower faction sits in roughly a fifth of populated systems, and reading it as the system's
-allegiance is what once had Core Dynamics Composites announced in Oppi.
+A system can still offer two unrelated groups, when its controlling faction is in two states at
+once. Civil Unrest *and* Expansion gives you Improvised Components and all three Proto materials.
 
 **Nothing is said about a material you are already full of**, and a system whose materials are all
 full says nothing. So once you have finished gathering, this goes quiet on its own without your

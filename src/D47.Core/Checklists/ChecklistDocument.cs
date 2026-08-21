@@ -66,6 +66,24 @@ public sealed record ChecklistDocument
 
     public IReadOnlyList<ChecklistItem> Items { get; init; } = [];
 
+    /// <summary>
+    /// The Commander's order <em>between</em> projects (list.md Phase 42), as project keys —
+    /// see <see cref="ChecklistOrdering.Key"/>. Empty until they rank one, which is the ordinary
+    /// state and means the reading falls back to what can be done now, where they are standing.
+    /// <para>
+    /// <b>This is the one stored half of the ordering, and it is a rank over a handful of
+    /// projects rather than a priority on six hundred items.</b> Everything below it is
+    /// recomputed on read by <see cref="ChecklistOrdering"/>, because a stored score is precisely
+    /// the figure that gets recited in October with nothing left to say where it came from —
+    /// the rule <see cref="ChecklistItem"/> already states as "no number is ever stored here".
+    /// </para>
+    /// <para>
+    /// A key naming a project that currently has no live items is kept, not pruned: a plan can
+    /// be revised empty and revived, and the rank the Commander gave it should survive the gap.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> ProjectOrder { get; init; } = [];
+
     public static ChecklistDocument For(string fid, string? name = null) =>
         new() { CommanderFid = fid, CommanderName = name };
 

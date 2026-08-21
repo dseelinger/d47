@@ -1,6 +1,5 @@
 using System.Text;
 using D47.Core.Checklists;
-using D47.Core.Engineers;
 using D47.Core.Memory;
 
 namespace D47.Core.Callouts;
@@ -13,8 +12,8 @@ namespace D47.Core.Callouts;
 /// deliberately last in the checklist and last in the plan.
 /// </para>
 /// <para>
-/// <b>Assembled in Core, with no model in the path.</b> The facts come from the memory store, the
-/// checklist and the engineer plans, and the sentence is authored here — then it goes through the
+/// <b>Assembled in Core, with no model in the path.</b> The facts come from the memory store and
+/// the checklist's own order, and the sentence is authored here — then it goes through the
 /// same <see cref="FlavourBriefs"/> path the ambient remarks and the carrier's lines already use, so
 /// a core can say it in its own words and personality-off says it plainly. A model handed a session
 /// to summarise embellishes: it promotes a routine three-material shortfall into a saga, and this is
@@ -32,21 +31,10 @@ namespace D47.Core.Callouts;
 /// </para>
 /// </summary>
 /// <param name="book">The memory store, for where the Commander was and how long ago.</param>
-/// <param name="checklists">The Commander's own list, for what a plan is short of.</param>
-/// <param name="unlocks">
-/// The engineer solver, or a function answering null where nothing composed one — which costs the
-/// second clause and not the callout, the shape every optional service in this repository has.
-/// <para>
-/// A function rather than the service, because of where the callouts are built: the engine has to
-/// exist before the tick loop, and the solver reads two stores that are composed after the journal
-/// readers. Asking for it when the line is written rather than when the engine is assembled is what
-/// keeps that ordering out of this type.
-/// </para>
-/// </param>
+/// <param name="checklists">The Commander's own list, whose top is most of what gets said.</param>
 public sealed class ContinuityCallout(
     MemoryBook book,
-    ChecklistService checklists,
-    Func<EngineerPlanService?> unlocks) : ICallout
+    ChecklistService checklists) : ICallout
 {
     public const string Key = "continuity.resume";
 
@@ -128,23 +116,27 @@ public sealed class ContinuityCallout(
             clauses.Add(gap);
         }
 
-        if (Short(state) is { } shortfall)
-        {
-            clauses.Add(shortfall);
-        }
-
-        // **The engineer under the Commander's feet outranks the one they might unlock next**
-        // (reported 2026-08-20). Standing in Lei Cheung's system with thirty items he could roll,
-        // d47 said "Selene Jean is one stop away" — an unlock hint about somebody else, which also
-        // reads as a distance and is not one. What is here is the errand; what is one unlock step
-        // out is a project, and the clause below already exists because projects were not wanted.
+        // **The engineer under the Commander's feet outranks everything the list says**
+        // (reported 2026-08-20, and the ruling survives Phase 42 intact). Standing in Lei Cheung's
+        // system with thirty items he could roll, d47 once said "Selene Jean is one stop away" —
+        // an unlock hint about somebody else, which also reads as a distance and is not one. What
+        // is under their feet is an errand, and an errand still outranks a project one unlock
+        // step away — including the top-ranked one.
         if (Here(state) is { } here)
         {
             clauses.Add(here);
         }
-        else if (Unlock() is { } unlock)
+
+        // The top of the list, said out loud (list.md Phase 42). This replaces the shortfall and
+        // unlock clauses outright: their Gap → Short → Here-or-Unlock precedence was this
+        // callout's own invention, needed only because the checklist had no order to read from.
+        // Now it has one, an unlock is mentioned when an unlock item is genuinely near the top of
+        // *this* Commander's list and not otherwise — which answers "I don't always care about
+        // the next engineer to unlock" structurally, instead of by deleting a clause somebody
+        // will want back.
+        if (Top(state) is { } top)
         {
-            clauses.Add(unlock);
+            clauses.Add(top);
         }
 
         if (clauses.Count == 0)
@@ -191,58 +183,25 @@ public sealed class ContinuityCallout(
     }
 
     /// <summary>
-    /// The nearest thing a plan is short of. <b>One material, not the list</b> — the shortfall
-    /// report already exists and is a page long, and this is a sentence somebody hears while they
-    /// are still putting their headset on.
+    /// The next few things on the list, in the order the Commander cares about (list.md Phase 42).
+    /// <b>Three, not the list</b> — the page holds the rest, and this is a sentence somebody hears
+    /// while they are still putting their headset on.
+    /// <para>
+    /// Said whole through <see cref="ChecklistWording.Line"/>, ship and all: there is no heading
+    /// around a spoken sentence, and the Commander has flown three ships since these were written.
+    /// </para>
     /// </summary>
-    private string? Short(Journal.CommanderGameState? state)
+    private string? Top(Journal.CommanderGameState? state)
     {
-        var items = checklists.Document.Items;
+        var next = ChecklistOrdering.Arrange(checklists.Document, state)
+            .Where(item => !item.IsComplete)
+            .Take(ChecklistOrdering.Spoken)
+            .Select(item => ChecklistWording.Line(item, state))
+            .ToList();
 
-        var shortfall = EngineeringPlan.Cost(items, state).Shortfall
-            .Concat(OnFootPlan.Cost(items, state).Shortfall)
-
-            // The closest to done, because that is the one worth doing something about today —
-            // and because "you are two short" is an errand where "you are ninety short" is a
-            // project (list.md Phase 31, "you were three Selenium short").
-            .OrderBy(ingredient => ingredient.Short)
-            .ThenBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)
-            .FirstOrDefault();
-
-        return shortfall is null
+        return next.Count == 0
             ? null
-            : $"You were {shortfall.Short} {shortfall.Material.Name} short.";
-    }
-
-    /// <summary>
-    /// The engineer the solver would go and get next, and <b>only when it is one stop</b>
-    /// (remediation.md 14, item 2).
-    /// <para>
-    /// Reported as not useful, and the reason is the rule the clause above already follows: the
-    /// nearest shortfall is picked because "you are two short" is an errand and "you are ninety
-    /// short" is a project. "Broo Tarquin is still three steps out" is a project — three unlocks
-    /// and two rank climbs — and it says the same thing every session until they are done, which
-    /// is how a Commander learns to stop listening to the opening line.
-    /// </para>
-    /// <para>
-    /// One step is the case worth saying: somebody they could go and get today, in the one moment
-    /// they are deciding what today is for.
-    /// </para>
-    /// </summary>
-    private string? Unlock()
-    {
-        if (unlocks()?.Report().Route is not [{ } best, ..])
-        {
-            return null;
-        }
-
-        // **"one unlock step away", not "one stop away"** (reported 2026-08-20). A stop is a place
-        // you fly to, and the Commander read it as one — heard while parked in a different
-        // engineer's system, it was navigation advice about somebody two hundred light years off.
-        // What it has always meant is that one step of their invitation chain remains.
-        return best.Chain.Steps.Count == 1
-            ? $"{best.Engineer.Name} is one unlock step away."
-            : null;
+            : $"Top of your list: {string.Join("; then ", next)}.";
     }
 
     /// <summary>

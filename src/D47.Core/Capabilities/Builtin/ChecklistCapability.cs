@@ -463,6 +463,44 @@ public static class ChecklistCapability
                             arguments.TryGetString("item", out var item) ? item : null, move).Report)
                         : ToolResult.Error("Say up, down, top or bottom.")),
             },
+
+            // The other level of the order (list.md Phase 42): a whole project at a time, on the
+            // same boundary as the line movers and for the same reason. Between projects the
+            // order is the Commander's and stored; within one it is derived on read and there is
+            // nothing to move.
+            new ToolDefinition
+            {
+                Name = "move_checklist_project",
+                Description =
+                    "Move a whole project — one ship's list, one system's, the custom list — up, "
+                    + "down, to the top or to the bottom of the Commander's order. The Commander's "
+                    + "own act: not offered to the model, and refused if it asks.",
+                Protected = true,
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "to",
+                        Type = ToolParameterType.String,
+                        Required = true,
+                        Description = "up, down, top or bottom.",
+                        AllowedValues = Ends,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "project",
+                        Type = ToolParameterType.String,
+                        Description = "The project by the name the list shows — a ship's name, a "
+                                      + "system, or custom. Omit for the selected line's project.",
+                    },
+                ],
+                Commands = ProjectMoves,
+                Handler = (arguments, _) => Task.FromResult(
+                    arguments.TryGetString("to", out var to) && Ending(to) is { } move
+                        ? ToolResult.Ok(checklists.Rank(
+                            arguments.TryGetString("project", out var project) ? project : null, move).Report)
+                        : ToolResult.Error("Say up, down, top or bottom.")),
+            },
         ],
     };
 
@@ -570,6 +608,27 @@ public static class ChecklistCapability
                              "move the selected item to the bottom",
                              "move the currently selected checklist item to the bottom",
                              "bottom of the list"]),
+    ];
+
+    /// <summary>
+    /// The same, a project at a time (list.md Phase 42). "This project" means the selected line's,
+    /// which is the line the tab is drawing a highlight round — the named form is the tool's
+    /// <c>project</c> parameter, reachable from the panel's chooser, because a declared phrase
+    /// carries fixed arguments and the name is the part that varies.
+    /// </summary>
+    private static readonly IReadOnlyList<ToolCommandPhrase> ProjectMoves =
+    [
+        .. Saying("up", ["move this project up", "move that project up", "move the project up"]),
+
+        .. Saying("down", ["move this project down", "move that project down", "move the project down"]),
+
+        .. Saying("top", ["move this project to the top", "move that project to the top",
+                          "move the project to the top", "put this project first",
+                          "put this project at the top"]),
+
+        .. Saying("bottom", ["move this project to the bottom", "move that project to the bottom",
+                             "move the project to the bottom", "put this project last",
+                             "put this project at the bottom"]),
     ];
 
     private static IEnumerable<ToolCommandPhrase> Saying(string to, IReadOnlyList<string> phrases) =>
