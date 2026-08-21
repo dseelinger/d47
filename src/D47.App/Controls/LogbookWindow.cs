@@ -39,6 +39,13 @@ public sealed class LogbookWindow : Window
 
     private CancellationTokenSource? _running;
 
+    // The window's own dispatcher, taken on the UI thread at construction. Changed can be
+    // raised on a worker — EstimateAsync runs the book there, and the book raises before
+    // returning — so OnChanged posts through this instance rather than reading the global,
+    // which from a worker is the read that hijacks the UI thread's identity under the
+    // headless harness (bugs.md, the headless-session entry).
+    private readonly Avalonia.Threading.Dispatcher _dispatcher = Avalonia.Threading.Dispatcher.UIThread;
+
     public LogbookWindow(LogbookBook book)
     {
         ArgumentNullException.ThrowIfNull(book);
@@ -87,7 +94,7 @@ public sealed class LogbookWindow : Window
         _estimate = new Button { Name = "EstimateLog", Content = "Work out what this would cost", MinWidth = 230 };
         _write = new Button { Name = "WriteLog", Content = "Write it", MinWidth = 130, IsEnabled = false };
 
-        _estimate.Click += (_, _) => Estimate();
+        _estimate.Click += async (_, _) => await EstimateAsync();
         _write.Click += async (_, _) => await WriteAsync();
 
         var open = new Button { Name = "OpenLogFolder", Content = "Open the folder", MinWidth = 150 };
@@ -141,9 +148,9 @@ public sealed class LogbookWindow : Window
         Refresh();
     }
 
-    private void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
+    private void OnChanged() => _dispatcher.Post(Refresh);
 
-    private void Estimate()
+    private async Task EstimateAsync()
     {
         _estimate.IsEnabled = false;
         _quote.Text = "Reading your journals…";
@@ -155,30 +162,29 @@ public sealed class LogbookWindow : Window
 
         // Off the UI thread, because a month of journals is a real read and Core is synchronous by
         // design — the App is what decides where a long fold runs, exactly as habit mining does.
-        _ = Task.Run(() =>
+        // The worker computes and this thread tells the window, after the await: a worker that
+        // reads the global dispatcher is the pattern behind the headless flake (bugs.md).
+        var message = await Task.Run(() =>
         {
-            string message;
-
             try
             {
                 _book.Estimate(
                     exact ? null : span,
                     from is { } start ? new DateTimeOffset(start.Date, start.Offset) : null,
                     to is { } end ? new DateTimeOffset(end.Date.AddDays(1).AddSeconds(-1), end.Offset) : null,
-                    out message);
+                    out var described);
+
+                return described;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                message = $"I could not read your journals: {ex.Message}";
+                return $"I could not read your journals: {ex.Message}";
             }
-
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                _quote.Text = message;
-                _estimate.IsEnabled = true;
-                Refresh();
-            });
         });
+
+        _quote.Text = message;
+        _estimate.IsEnabled = true;
+        Refresh();
     }
 
     private async Task WriteAsync()

@@ -126,9 +126,12 @@ dispatcher silently rebinding to any thread that reads it mid-reset — is Avalo
 or committed upstream addresses it, so the local fix is the fix, and the hazard class remains:
 **any** `PropertyChanged` raised off-thread on a bound view model, and any direct
 `Dispatcher.UIThread` touch from a worker, can re-arm this. One production copy of the shape
-exists, untested and therefore inert today: `LogbookWindow`'s background estimate ends in a
-`Dispatcher.UIThread.Post` from its worker (~line 158). Reshape it the same way before any test
-drives it.
+existed, untested and therefore inert: `LogbookWindow`'s background estimate ended in a
+`Dispatcher.UIThread.Post` from its worker — and its `Changed` subscription read the global from
+whatever thread the book raised on, which the worker did. Both were reshaped the same day on the
+same branch: the worker computes, the window is told after the await, and `OnChanged` posts
+through the window's own dispatcher instance, which a leaked test copy can only ever post into a
+dead queue.
 
 ## Open: the audition pair's five-second timeouts are a separate fault
 
