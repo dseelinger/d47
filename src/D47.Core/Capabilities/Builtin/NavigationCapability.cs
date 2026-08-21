@@ -98,12 +98,19 @@ public sealed class RecordingClipboard : IClipboard
 /// <para>
 /// <b>The drive is the Commander's own macro</b>, given 2026-08-21 after the original three-key
 /// attempt — open, paste, return — turned out to plot nothing: it assumed the search box had
-/// focus when the map opened, and it does not. The sequence below walks to the box explicitly,
-/// picks the result, gives the camera time to arrive, nudges it so the reticle lands on the star,
-/// holds select long enough to plot, and backs out of the map. Every wait in it is the
-/// Commander's figure, and the two things d47 <em>can</em> see — Status.json saying the map is
-/// showing, NavRoute.json saying a route exists — are checked where they fall rather than
-/// assumed.
+/// focus when the map opened, and it does not. The sequence below walks to the box explicitly
+/// (up, select), pastes, commits the search with return, gives the camera time to arrive, holds
+/// select long enough to plot, and toggles the map shut. Every wait in it is the Commander's
+/// figure, and the two things d47 <em>can</em> see — Status.json saying the map is showing,
+/// NavRoute.json saying a route exists — are checked where they fall rather than assumed.
+/// </para>
+/// <para>
+/// <b>Return, not "down".</b> The first cut of the macro stepped into the result list with the
+/// UI down key and selected the first entry, and the Commander watched it type an S into the
+/// search box instead: the text field keeps focus after the paste, so an interface key sent to
+/// it is a character. Return is what the field itself does with a search, and the map then
+/// flies to the first match on its own. The same reason the map is closed with its own toggle
+/// rather than with "back".
 /// </para>
 /// </summary>
 public static class NavigationCapability
@@ -113,8 +120,8 @@ public static class NavigationCapability
     public const string AutoPlotKey = "actions.autoPlot";
 
     /// <summary>
-    /// Between the paste and moving into the result list. Elite's map takes a moment to accept a
-    /// pasted name and populate its results, and stepping into an empty list selects nothing.
+    /// Between the paste and the return. Elite's map takes a moment to accept a pasted name and
+    /// populate its results, and a return into an empty list searches for nothing.
     /// </summary>
     private static readonly TimeSpan SearchSettle = TimeSpan.FromMilliseconds(600);
 
@@ -125,42 +132,14 @@ public static class NavigationCapability
     private static readonly TimeSpan BetweenKeys = TimeSpan.FromMilliseconds(150);
 
     /// <summary>
-    /// After selecting the result, for the camera to fly to the system. The Commander's figure —
-    /// long enough for the far side of the bubble, short enough not to be noticed for the next
-    /// system over — chosen over scaling it by distance.
+    /// After the search, for the camera to fly to the system. The Commander's figure — long
+    /// enough for the far side of the bubble, short enough not to be noticed for the next system
+    /// over — chosen over scaling it by distance.
     /// </summary>
     private static readonly TimeSpan CameraSettle = TimeSpan.FromSeconds(3);
 
-    /// <summary>A brush of the camera sideways, which is what puts the reticle on the star.</summary>
-    private static readonly TimeSpan Nudge = TimeSpan.FromMilliseconds(100);
-
     /// <summary>How long select is held on the star. A tap opens the system; a hold plots to it.</summary>
     private static readonly TimeSpan PlotHold = TimeSpan.FromMilliseconds(1200);
-
-    /// <summary>
-    /// The camera key, resolved here and advertised nowhere. It is not in <see cref="GameActions.All"/>
-    /// because that list is the <c>action</c> tool's closed vocabulary and its documentation page,
-    /// and a sideways camera brush is not something a Commander asks for by voice — it exists for
-    /// this macro alone. Right first, left as the fallback, since either puts the reticle on the
-    /// star and a Commander may have bound only one.
-    /// </summary>
-    private static readonly IReadOnlyList<GameAction> NudgeKeys =
-    [
-        new()
-        {
-            Id = "galaxy_map_nudge",
-            Label = "the galaxy map camera",
-            Group = GameActions.Interface,
-            Variants = [new ActionVariant("CamTranslateRight", ControlContext.AnyShip | ControlContext.Srv)],
-        },
-        new()
-        {
-            Id = "galaxy_map_nudge",
-            Label = "the galaxy map camera",
-            Group = GameActions.Interface,
-            Variants = [new ActionVariant("CamTranslateLeft", ControlContext.AnyShip | ControlContext.Srv)],
-        },
-    ];
 
     public static CapabilityDescriptor Create(NavigationSurface surface) => new()
     {
@@ -268,8 +247,8 @@ public static class NavigationCapability
 
         // The map is opened on its own and the rest waits for Status.json to say it is showing,
         // because the remaining keys are interface keys: typed into the cockpit instead of the
-        // map they are a W, an S and a space bar sent to a flying ship. A map that is already
-        // open is not toggled shut first.
+        // map they are a W and a space bar sent to a flying ship. A map that is already open is
+        // not toggled shut first.
         if (surface.Actions.Status().GuiFocus != GuiFocus.GalaxyMap)
         {
             var opened = await surface.Actions.Input.SendAsync(keys.Open(), cancellationToken).ConfigureAwait(false);
@@ -294,9 +273,9 @@ public static class NavigationCapability
             return ToolResult.Ok($"{copied} I could not drive the galaxy map: {sent.Reason}");
         }
 
-        // Plotted or not, the map is backed out of: the Commander asked for a course, not for a
-        // map left open over the cockpit. The check comes first so the backing-out cannot land
-        // on a route still being calculated.
+        // Plotted or not, the map is toggled shut: the Commander asked for a course, not for a
+        // map left open over the cockpit. The check comes first so the closing cannot land on a
+        // route still being calculated.
         var confirmed = await surface.ConfirmPlot(system, cancellationToken).ConfigureAwait(false);
         var closing = await surface.Actions.Input.SendAsync(keys.Close(), cancellationToken).ConfigureAwait(false);
         var closed = closing.Sent && await surface.AwaitGalaxyMap(false, cancellationToken).ConfigureAwait(false) is not false;
@@ -317,38 +296,33 @@ public static class NavigationCapability
     }
 
     /// <summary>
-    /// The six bindings the macro presses, resolved against the Commander's own file and the
+    /// The three bindings the macro presses, resolved against the Commander's own file and the
     /// mode they are in, and the three keystroke runs built from them.
     /// <para>
-    /// All six or none: a macro that gets as far as the search box and then has no key for
-    /// "down" leaves the map open with a name typed into it, which is worse than the clipboard
-    /// alone. So the first binding that cannot be pressed stops the whole attempt before a key
-    /// is sent, and its reason is the one the Commander hears.
+    /// All three or none: a macro that opens the map and then has no key for "select" leaves the
+    /// map open over the cockpit, which is worse than the clipboard alone. So the first binding
+    /// that cannot be pressed stops the whole attempt before a key is sent, and its reason is the
+    /// one the Commander hears.
     /// </para>
     /// <para>
-    /// The paste is a plain Ctrl+V rather than one of the Commander's bindings, because Elite
-    /// does not bind paste — it is the operating system's, and the search box is an ordinary
+    /// The paste and the return are plain keys rather than the Commander's bindings, because
+    /// Elite binds neither — they are the operating system's, and the search box is an ordinary
     /// text field.
     /// </para>
     /// </summary>
-    private sealed record MapKeys(
-        EliteBinding Map,
-        EliteBinding Up,
-        EliteBinding Down,
-        EliteBinding Select,
-        EliteBinding Back,
-        EliteBinding Nudge)
+    private sealed record MapKeys(EliteBinding Map, EliteBinding Up, EliteBinding Select)
     {
         private const uint Control = 0xA2;
         private const uint V = 0x56;
+        private const uint Return = 0x0D;
 
         public static (MapKeys? Keys, string Reason) Resolve(ActionSurface actions)
         {
             var binds = actions.Binds();
             var context = actions.Context;
-            var pressed = new List<EliteBinding>(5);
+            var pressed = new List<EliteBinding>(3);
 
-            foreach (var id in new[] { "galaxy_map", "ui_up", "ui_down", "ui_select", "ui_back" })
+            foreach (var id in new[] { "galaxy_map", "ui_up", "ui_select" })
             {
                 if (GameActions.Find(id) is not { } action)
                 {
@@ -365,24 +339,15 @@ public static class NavigationCapability
                 pressed.Add(reach.Binding!);
             }
 
-            // Either side will do, and the reason reported is the right-hand one's, which names
-            // the key a Commander who has bound neither would most naturally add.
-            var nudges = NudgeKeys.Select(key => ActionReachability.Resolve(key, binds, context)).ToArray();
-
-            if (nudges.FirstOrDefault(reach => reach.IsOffered) is not { } nudge)
-            {
-                return (null, nudges[0].Reason);
-            }
-
-            return (new MapKeys(pressed[0], pressed[1], pressed[2], pressed[3], pressed[4], nudge.Binding!), string.Empty);
+            return (new MapKeys(pressed[0], pressed[1], pressed[2]), string.Empty);
         }
 
         /// <summary>Step 1: open the map. Sent on its own so Status.json can confirm it showed.</summary>
         public IReadOnlyList<InputStep> Open() => InputSequence.Tap(Map);
 
         /// <summary>
-        /// Steps 2 to 9: walk to the search box, paste, pick the result, let the camera arrive,
-        /// nudge, and hold select to plot.
+        /// Steps 2 to 7: walk to the search box, paste, return to search, let the camera arrive,
+        /// and hold select to plot.
         /// </summary>
         public IReadOnlyList<InputStep> Search() =>
         [
@@ -398,23 +363,16 @@ public static class NavigationCapability
             new InputStep(InputStepKind.KeyUp, Control),
 
             InputStep.Wait(SearchSettle),
-            .. InputSequence.Tap(Down),
-            InputStep.Wait(BetweenKeys),
-            .. InputSequence.Tap(Select),
+            new InputStep(InputStepKind.KeyDown, Return),
+            InputStep.Wait(TimeSpan.FromMilliseconds(40)),
+            new InputStep(InputStepKind.KeyUp, Return),
 
             InputStep.Wait(CameraSettle),
-            .. InputSequence.Hold(Nudge, NavigationCapability.Nudge),
-            InputStep.Wait(BetweenKeys),
             .. InputSequence.Hold(Select, PlotHold),
         ];
 
-        /// <summary>Steps 10 and 11: back out of the system, then out of the map.</summary>
-        public IReadOnlyList<InputStep> Close() =>
-        [
-            .. InputSequence.Tap(Back),
-            InputStep.Wait(BetweenKeys),
-            .. InputSequence.Tap(Back),
-        ];
+        /// <summary>Step 8: the map key again, which toggles it shut.</summary>
+        public IReadOnlyList<InputStep> Close() => InputSequence.Tap(Map);
     }
 
     /// <summary>
@@ -426,7 +384,7 @@ public static class NavigationCapability
         Key = AutoPlotKey,
         Label = "Try to plot courses in the galaxy map",
         Help = "After copying a system name, opens the galaxy map, searches for it, plots to it and "
-               + "closes the map again, using your own map, up, down, select, back and camera keys. "
+               + "closes the map again, using your own galaxy map, UI up and UI select keys. "
                + "Best-effort: D47 checks afterwards whether a route actually appeared and tells you "
                + "if it did not. Needs key presses to be allowed too.",
         Kind = SettingKind.Toggle,

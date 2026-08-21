@@ -40,18 +40,15 @@ public class NavigationAndCommsTests
     };
 
     /// <summary>
-    /// Every key the galaxy-map macro presses, on the keyboard. The Commander's own file binds
-    /// exactly these six, and on these symbols.
+    /// Every binding the galaxy-map macro presses, on the keyboard. The Commander's own file binds
+    /// exactly these three, and on these symbols.
     /// </summary>
     private static EliteBinds MapBinds(params string[] without) => Binds(
         [.. new[]
         {
             ("GalaxyMapOpen", "Keyboard", "Key_M"),
             ("UI_Up", "Keyboard", "Key_W"),
-            ("UI_Down", "Keyboard", "Key_S"),
             ("UI_Select", "Keyboard", "Key_Space"),
-            ("UI_Back", "Keyboard", "Key_Backspace"),
-            ("CamTranslateRight", "Keyboard", "Key_R"),
         }.Where(entry => !without.Contains(entry.Item1))]);
 
     private static uint Code(string symbol) => EliteKeys.Resolve(symbol).Code;
@@ -225,9 +222,10 @@ public class NavigationAndCommsTests
     }
 
     /// <summary>
-    /// The Commander's own sequence (2026-08-21): map, up, select, paste, down, select, three
-    /// seconds for the camera, a tenth of a second of sideways camera, select held for 1.2
-    /// seconds, back, back. The figures are theirs and are asserted as such.
+    /// The Commander's own sequence (2026-08-21, second cut): map, up, select, paste, return,
+    /// three seconds for the camera, select held for 1.2 seconds, map again to close. The figures
+    /// are theirs and are asserted as such. Return rather than "down" because the first cut's
+    /// down key typed an S into the search box — the text field keeps focus after the paste.
     /// </summary>
     [Fact]
     public async Task TheMacroIsTheCommandersOwnSequence()
@@ -242,18 +240,17 @@ public class NavigationAndCommsTests
         var steps = input.Steps;
 
         Assert.Equal(
-            [Code("Key_M"), Code("Key_W"), Code("Key_Space"), 0xA2, 0x56, Code("Key_S"), Code("Key_Space"), Code("Key_R"), Code("Key_Space"), Code("Key_Backspace"), Code("Key_Backspace")],
+            [Code("Key_M"), Code("Key_W"), Code("Key_Space"), 0xA2, 0x56, 0x0D, Code("Key_Space"), Code("Key_M")],
             KeysPressed(steps));
 
-        // The camera gets its three seconds, then the brush, then the hold that plots.
+        // The camera gets its three seconds, then the hold that plots.
         Assert.Contains(steps, step => step.Kind == InputStepKind.Delay && step.Delay == TimeSpan.FromSeconds(3));
-        Assert.Equal([TimeSpan.FromMilliseconds(100)], Holds(steps, Code("Key_R")));
         Assert.Equal(TimeSpan.FromMilliseconds(1200), Holds(steps, Code("Key_Space"))[^1]);
     }
 
     /// <summary>
-    /// The interface keys are a W, an S and a space bar if they reach the cockpit instead of the
-    /// map, so nothing after the map key is sent until Status.json says the map is showing.
+    /// The interface keys are a W and a space bar if they reach the cockpit instead of the map,
+    /// so nothing after the map key is sent until Status.json says the map is showing.
     /// </summary>
     [Fact]
     public async Task AMapThatDoesNotOpenGetsNothingTypedIntoTheCockpit()
@@ -286,13 +283,14 @@ public class NavigationAndCommsTests
             "plot_course",
             ("system", "Colonia"));
 
-        Assert.DoesNotContain(Code("Key_M"), KeysPressed(input.Steps));
+        // The map key is pressed once — at the end, to close — and not first.
         Assert.Equal(Code("Key_W"), KeysPressed(input.Steps)[0]);
+        Assert.Single(KeysPressed(input.Steps), Code("Key_M"));
     }
 
     /// <summary>
-    /// All six keys or none. A macro that reaches the search box and then has no "down" leaves the
-    /// map open with a name typed into it, which is worse than the clipboard alone.
+    /// All three keys or none. A macro that opens the map and then has no "select" leaves the map
+    /// open over the cockpit, which is worse than the clipboard alone.
     /// </summary>
     [Fact]
     public async Task OneMissingInterfaceKeyStopsTheWholeAttemptBeforeAnyKeyIsSent()
@@ -301,13 +299,13 @@ public class NavigationAndCommsTests
         var clipboard = new RecordingClipboard();
 
         var result = await Invoke(
-            NavigationCapability.Create(Navigation(clipboard, Actions(MapBinds(without: "UI_Down"), input), autoPlot: true, confirm: true)),
+            NavigationCapability.Create(Navigation(clipboard, Actions(MapBinds(without: "UI_Select"), input), autoPlot: true, confirm: true)),
             "plot_course",
             ("system", "Colonia"));
 
         Assert.Empty(input.Steps);
         Assert.Equal("Colonia", clipboard.Last);
-        Assert.Contains("no binding for down", result.Content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("no binding for select", result.Content, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

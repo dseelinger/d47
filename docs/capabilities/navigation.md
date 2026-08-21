@@ -38,12 +38,13 @@ you, with your own keys, in this order:
 
 1. Open the galaxy map, and wait until the game reports it showing.
 2. **Up**, then **select** — that is the search box.
-3. Paste the name.
-4. **Down** into the results, then **select** the first one.
-5. Three seconds for the camera to fly there.
-6. A tenth of a second of sideways camera, which puts the reticle on the star.
-7. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
-8. **Back**, and **back** again, out of the map.
+3. Paste the name, then **return** — the map flies to the first match.
+4. Three seconds for the camera to get there.
+5. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
+6. The galaxy map key again, which closes it.
+
+Return rather than the UI down key, because the search box keeps focus after the paste and an
+interface key sent to it is a character — the first cut of this macro typed an S into the box.
 
 This is still best-effort. Directive 47 cannot see the map, so it cannot check that the search
 matched the system you meant rather than another that starts the same way, and it cannot see
@@ -66,19 +67,19 @@ None of them is "done" said hopefully. A companion that leaves you flying toward
 not have is worse than one that never tries.
 
 Two more things it watches for. If the map key is pressed and the game never reports the map
-open, nothing else is sent — the remaining keys are a W, an S and a space bar, and typed into the
-cockpit instead of the map they would fly the ship. And if the two **back** presses leave the
-map showing, it says so: *the galaxy map is still open*.
+open, nothing else is sent — the remaining keys are a W and a space bar, and typed into the
+cockpit instead of the map they would fly the ship. And if the closing press leaves the map
+showing, it says so: *the galaxy map is still open*.
 
-**It needs six keys**: the galaxy map, UI up, down, select and back, and either sideways camera
-translate. All on the keyboard or mouse — a key on a stick is one Directive 47 cannot press. It
-takes all six or none: a macro that reaches the search box and then has no "down" leaves the map
-open with a name typed into it, which is worse than the clipboard alone. So the first key it
-cannot press stops the whole attempt before anything is sent, and you hear which one:
+**It needs three keys**: the galaxy map, UI up and UI select. All on the keyboard or mouse — a
+key on a stick is one Directive 47 cannot press. It takes all three or none: a macro that opens
+the map and then has no "select" leaves it open over the cockpit, which is worse than the
+clipboard alone. So the first key it cannot press stops the whole attempt before anything is
+sent, and you hear which one:
 
 ```text
 Colonia is on your clipboard. I could not drive the galaxy map myself — You have no binding for
-down, so there is no key for me to press. Paste it into the map's search box to plot it.
+select, so there is no key for me to press. Paste it into the map's search box to plot it.
 ```
 
 Elite's own default keyboard preset ships the galaxy map **unbound**, so out of the box you will
@@ -118,9 +119,8 @@ places. The same split holds for the map itself: the app waits up to three secon
 `Status.json`'s `GuiFocus` for the map to open before the interface keys go, and again for it to
 close after the two backs.
 
-The sideways camera key is resolved inside the capability and is **not** in `GameActions.All`,
-because that list is the `control_interface` tool's closed vocabulary and its documentation page,
-and a camera brush is not something a Commander asks for by voice. Every wait in the sequence is
-the Commander's own figure (2026-08-21), not a measurement.
+Return and Ctrl+V are sent as plain virtual keys rather than resolved from the bindings file,
+because Elite binds neither. Every wait in the sequence is the Commander's own figure
+(2026-08-21), not a measurement.
 
 </details>

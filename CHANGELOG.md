@@ -17,6 +17,17 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.2 — 2026-08-21 — Return, not down
+
+**The galaxy-map macro commits the search with return.** 0.48.1's sequence stepped into the
+result list with the UI down key and the Commander watched it type an S into the search box
+instead: the text field keeps focus after the paste, so an interface key sent to it is a
+character. The sequence is now the Commander's second cut — map, up, select, paste, **return**,
+three seconds for the camera, select held for 1.2 seconds, and the map key again to close — which
+drops the down, the two backs and the camera brush, and needs three bindings rather than six:
+galaxy map, UI up and UI select. The open-and-closed checks against `Status.json` and the route
+check against `NavRoute.json` are unchanged.
+
 ## 0.48.1 — 2026-08-21 — The galaxy map macro that plots, and three things said better
 
 **"Set course" now plots a course.** The original galaxy-map drive — open, paste, return — assumed
