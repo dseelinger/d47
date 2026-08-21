@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Three open, one fixed and awaiting its release, and one partly confirmed.
+## Four open, one fixed and awaiting its release, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. Their record is
 those sections of the changelog.
@@ -212,3 +212,53 @@ record rather than from the game.
 eats them — the shortfall is netted across every live plan at once." That is honest and correct
 about what the tool returns, and it is also a capability the Commander asked for and did not get.
 If it is worth having, it is a `list.md` item, not this file.
+
+## Open: two Commanders share one ship id, in the core bindings and in the builds
+
+Found by inspection on 2026-08-21, while scoping `list.md` Phase 44. **Verified in the code and
+not yet observed in a running app** — which is the honest state of it, and the preamble's rule
+applies: reproduce before fixing.
+
+**Elite's `ShipID` is per Commander and starts small.** Two stores key on it and carry no
+Commander at all:
+
+- `ShipCoreStore.cs:25` — `ShipCoreBinding(int ShipId, string Core, …)`, looked up by
+  `For(int shipId)` at `ShipCoreStore.cs:107`, which is `Bindings.FirstOrDefault(b => b.ShipId
+  == shipId)` and nothing else.
+- `ShipBuild.cs:162` — `ShipBuild(string Id, string Hull, int? ShipId, …)`, looked up by
+  `ShipBuildStore.ForShip(int)` at `ShipBuildStore.cs:88`, and matched on `ShipId` again in
+  `ShipPlanService.cs:125`, `:147`, `:152` and `:486`.
+
+So one Commander's ship 7 and another's ship 7 are the same row. A core bound under one answers
+for the other, and `ShipDriftWatch` compares one Commander's build against the other's actual
+ship and asks about a drift that is not real.
+
+**The load-time guard makes it louder than a wrong answer.** Both files enforce one-per-ship
+where they are *read*, deliberately, because a hand edit is the route that would otherwise
+produce two — `ShipCoreStore.cs:274` refuses with *"ship 7 is bound twice, and a ship has one
+core"* and `ShipBuildStore.cs:237` with *"ship 7 already has a build, and a ship has one"*. Both
+sentences are true of a ship and false of two ships that share an id. The second Commander is
+therefore not merely given the wrong answer; **they cannot record their own** while the first
+Commander's entry exists, and the refusal names a rule that is not the one being broken.
+
+**The precedent was followed everywhere else.** `ChecklistScope.Ship(int)` is ship-id keyed too,
+but `ChecklistDocument` carries `CommanderFid`, so a checklist is per Commander *and* per ship.
+`SamplingStore`, `MemoryStore`, `GoalStore`, `HabitStore` and `LoreStore` all key per Commander
+with the key inside the document. These two stores are the ones that missed it. The identity is
+available at the point of use: `GameStateStore` has kept a bucket per Frontier id since Phase 2.
+
+**There is a live half, and keying the stores does not reach it.** Two objects hold the ship they
+have already acted on as a bare `int?` — `ShipCoreService._aboard` (`ShipCoreService.cs:57`) and
+`ShipDriftWatch._aboard`. Two Commanders both sitting in ship 7 read as *no change*, so the first
+Commander's core stays aboard even once the stores tell them apart. `ShipCoreService._started`
+has the mirror-image problem: left set across a switch, the second Commander's first ship reads
+as a swap and spends a gap reaction — a model round trip — on a boarding that never happened.
+
+**What would settle it.** Two Commanders on one installation, each flying a ship whose id the
+other also owns; bind a core under the first and read `data/`'s bindings file and the second
+Commander's panel. Ship ids are small and dense, so two Commanders each flying their main is
+enough — this does not need contrivance.
+
+**Fix and phase.** The keying is a defect and can ship on its own, ahead of `list.md` Phase 44,
+which assumes throughout that these two stores tell Commanders apart. The live half wants the
+switch signal Phase 44 describes and is better done there.
