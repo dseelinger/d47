@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Three open, and one partly confirmed.
+## Three open, one fixed and awaiting its release, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. Their record is
 those sections of the changelog.
@@ -65,228 +65,95 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
 
-## Open: a headless-session cleanup failure that ten different tests have now carried
+## Fixed on `flake-hunt`, awaiting release: the headless-session cleanup failure
 
-`D47.App.Tests.AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` timed out on the CI
-runner during the 0.38.0 release, at the `cancelled.Task.WaitAsync` on line 210 — the second press
-did not cancel the first audition inside five seconds. It passes locally in Release, every time,
-and the failing run was a green re-run away from tagging.
+*Diagnosed and fixed 2026-08-21, after ten recorded occurrences across five months and five more
+reproduced on the diagnosis day. The fix is on the `flake-hunt` branch; this entry leaves the file
+with the release that carries it, and the history it compresses is in this file's git log and in
+[docs/plans/flake-hunt.md](docs/plans/flake-hunt.md).*
 
-**Twice patched already, and the patches are the record.** `670997f` closed a dispatcher race that
-had failed a release build, and `5066025` closed a second one "a seventh test project exposed". Both
-fixes were about the *first* press being genuinely underway before the second arrives, and both are
-still in place and still correct — this is a third window, later in the same sequence.
+**The mechanism, verified against the shipped Avalonia 12.1.1 binaries and the tagged sources.**
+`Avalonia.Headless` runs every `[AvaloniaFact]` at per-test isolation: `EnsureIsolatedApplication`
+calls `Dispatcher.ResetBeforeUnitTests()` — which nulls the process-global `s_uiThread` — and then
+`SetupUnsafe()`. `Dispatcher.UIThread` is created lazily, its constructor captures whatever thread
+is running it, and the first construction after a reset wins the global slot (`s_uiThread ??= this`).
+So **the first thread to read `Dispatcher.UIThread` after a reset becomes the UI thread**. If any
+background thread reads it — even a bare `CheckAccess()` — in the window between the reset and the
+session thread's own first read inside `SetupUnsafe`, that thread hijacks the UI thread's identity,
+and the session thread's `DefaultRenderLoop.Add` → `VerifyAccess` throws: the recorded stack, as a
+*cleanup* failure on whichever test was being stood up. The next test's own reset wipes the poison,
+which is why every failing run lost exactly one test. The carrier was always arbitrary, and the
+change under release never mattered.
 
-**A lead is not a diagnosis.** The untested hypothesis is the control lookup: pressing a row's
-glyph makes that row rebuild (its glyph becomes stop while it is talking), and the test fetches the
-*second* row's glyph after that rebuild is queued but perhaps before it has run. A stale button
-detached from the visual tree raises its Click into nothing, and nothing then cancels — which is
-exactly the observed symptom, and exactly the shape a slower runner would expose. Pumping the
-dispatcher immediately before the second lookup would close it, if that is what it is.
+**The leak, named.** The only paths in the assembled system that read the static dispatcher from a
+foreign thread are Avalonia's `WeakEvents.ThreadSafePropertyChanged` handler — the subscription
+every XAML binding takes on an INPC view model, run on whatever thread raises `PropertyChanged` —
+and app code touching the static directly. The suite had exactly one live background raiser:
+`TheLogPageSaysItIsWorkingTests.TheGlyphIsUpForTheDrawAndNotOnlyForTheRead` releases its
+deliberately-held log read as its last line and exits, and the freed threadpool thread then ran
+`RefreshLog` — `LogText = read()` inside the `Task.Run` — raising `PropertyChanged` into the shown
+panel's eleven bindings, off-thread, a few milliseconds after its test had ended.
 
-Reproducing it is the first job and has not been done: the runner's timing is what triggers it, and
-a fix landed without a failing test to watch is a fix nobody can check. Per the standing rule,
-reintroduce the fault afterwards and watch the new test fail.
+**The evidence, in the order it was gathered.**
 
-**And a second one, on the release build of the same version.** `RowWidthTests.TheWholeChoiceLabel-
-IsOnTheTooltipWhenTheBoxClipsIt` failed as a *cleanup* failure —
-`InvalidOperationException: The calling thread cannot access this object because a different thread
-owns it`, thrown inside `Avalonia.Headless.XUnit.AvaloniaTestRunner` rather than inside the test.
-That test has no flake history of its own and its body is synchronous, so the suspicion is leaked
-state from an earlier test in the same headless session rather than anything about this one — the
-audition test above being the obvious candidate, since what it leaves behind when it goes wrong is
-an infinite delay awaiting a token nobody cancelled.
+- Reproduced on demand: 4 failures in 24 vanilla Release runs of the App suite (~1 in 6 that day).
+- In **all five** locally caught failures, the victim test began 13–44 ms after
+  `TheGlyphIsUpForTheDrawAndNotOnlyForTheRead` ended — five different victims, one predecessor,
+  read from the trx timestamps.
+- The instrumentation the third occurrence asked for was finally written
+  (`tests/D47.App.Tests/FlakeInstrumentation.cs`, armed only when `D47_FLAKE_LOG` names a file),
+  and the fifth catch carried it: at the moment of the throw the session thread was id 41 and
+  `Dispatcher.UIThread` was owned by **id 4, an anonymous threadpool worker**. The hijack,
+  observed rather than inferred.
+- With the fix in and the fault reintroduced by hand, the new regression test failed
+  deterministically, naming the property: *"raised off the drawing thread: LogText"*. Restored,
+  it passes.
+- 40 consecutive Release runs of the whole App suite with the fix: **zero failures**, and the
+  instrumentation — still armed — recorded not one `VerifyAccess` violation. The odds of 40 clean
+  runs with the fault still present were under 0.1%.
 
-Both cleared on a re-run of the same commit, and 583 of 584 App tests passed in the failing runs.
-Three consecutive Release runs of the whole App suite locally are clean, so nothing about this
-reproduces off the runner yet. **Treat them as one investigation**: two symptoms, one session, and
-a shared suspect.
+**The fix.** `PanelViewModel.RefreshLog` is split: `ReadLog()` is the file work with no property
+set, safe on any thread; `ShowLog(text)` is the property set, UI thread like every other setter
+there; and `PanelView.ReadLogAsync` reads on the worker, then tells the page after the await, on
+the drawing thread. A read a test abandons is now structurally inert — its continuation posts into
+that test's dead dispatcher instance and is dropped, and nothing in the tail can touch the global.
+Guarded by `TheLogPageSaysItIsWorkingTests.TheReadTellsThePageOnTheThreadThatDraws`, which fails
+on the exact reintroduced fault with no flake-looping required.
 
-**A third occurrence, 2026-08-19, and it moved again.** The release run for v0.39.0 failed on
-`PickerShowsEverythingTests.EveryChoiceIsListedAndTheIdIsNotInTheBox` — same exception, same
-*cleanup* framing, same `AvaloniaTestRunner` frame, and this time with the throw landing inside
-`HeadlessUnitTestSession.EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` →
-`DefaultRenderLoop.Add`. So the failing call is the headless platform being **stood up** on a thread
-that does not own the dispatcher, rather than anything the named test does.
+**Upstream, and the pattern to keep out of the tree.** The enabling behaviour — the global
+dispatcher silently rebinding to any thread that reads it mid-reset — is Avalonia's, reported as
+[AvaloniaUI/Avalonia#22021](https://github.com/AvaloniaUI/Avalonia/issues/22021); nothing shipped
+or committed upstream addresses it, so the local fix is the fix, and the hazard class remains:
+**any** `PropertyChanged` raised off-thread on a bound view model, and any direct
+`Dispatcher.UIThread` touch from a worker, can re-arm this. One production copy of the shape
+exists, untested and therefore inert today: `LogbookWindow`'s background estimate ends in a
+`Dispatcher.UIThread.Post` from its worker (~line 158). Reshape it the same way before any test
+drives it.
 
-That third data point is worth more than the two above put together, because it settles the part
-that was still a suspicion: the test that reports the failure is **arbitrary**. Three different
-tests have now carried it — `RowWidthTests`, and now this one — and none of them has anything in
-common beyond running late in one headless session. The suspect is the session, and the specific
-frame now names where to look: ~~a session that is being re-initialised at all, mid-run, is already
-the anomaly, since `EnsureIsolatedApplication` should have nothing left to do by then.~~ **Struck
-2026-08-20 — see the correction at the end of this entry.**
+## Open: the audition pair's five-second timeouts are a separate fault
 
-586 of 589 App tests passed in the failing run, `ci` had gone green on the identical commit minutes
-earlier, and two consecutive local Release runs of the whole suite were clean. It cleared on a
-re-run of the same tag. **This has now cost a release run**, which is the first time it has cost
-anything beyond a retry, and it is the reason to stop treating it as noise.
+Split out of the entry above, because the diagnosis disproved "treat them as one investigation":
+`PlayingASecondVoiceCancelsTheFirst` (three appearances, once alongside
+`TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed`) times out awaiting a cancellation, and
+that is **not** the dispatcher hijack. A test that dies this way leaves an un-cancelled token and
+an infinite delay that nothing will ever complete — a pure leak that *cannot* later touch the
+dispatcher, so it cannot cause the cleanup failure. Occurrence 9 in the old record — both timeouts,
+no cleanup failure in the run — was already evidence of independence.
 
-**A fourth, on the release run for v0.39.1, hours later.** `VrSurfaceTests.EachModeReadsItsOwn-
-PlacementSlot` — a fourth test, unrelated to the other three, failing as cleanup with the same
-exception and the same frame, now readable in full: `HeadlessUnitTestSession.EnsureIsolated-`
-`Application` → `AvaloniaHeadlessPlatform.Initialize` → `Compositor..ctor` → `ServerCompositor..ctor`
-→ `DefaultRenderLoop.Add`.
+**The recorded "stale detached button" lead is dead**, three ways, from the code as written:
+pressing a glyph does not rebuild the row — `PickerChoice.Playing` raises INPC on the same object,
+and rows rebuild only when filter text changes, which these tests never type; `Glyph()` walks
+`GetVisualDescendants()`, which cannot return a detached control — a vanished button would make
+`.First()` throw, a different failure; and a detached button still raises `Click` into its own
+handler, so "Click into nothing" has no mechanism.
 
-**Four tests have now carried it and none of them is the subject.** That is settled and should not
-be re-investigated. What the fourth adds is the middle of the stack: the session is constructing a
-*whole new* `Compositor` mid-run, and `DefaultRenderLoop.Add` then asserts dispatcher ownership
-from whichever thread xUnit scheduled that cleanup on. ~~The question is not why the thread is
-wrong. It is why an already-initialised session is being initialised again at all~~ — **struck
-2026-08-20, see the correction below. Re-initialisation mid-run is the design, not the anomaly,
-and that sentence sent the next reader at a question with no answer.**
-
-**It has now cost two release runs**, 0.39.0's and 0.39.1's, and cleared on a re-run of the
-identical commit both times. Three clean consecutive local Release runs preceded this one, as they
-did the last one; local runs have now failed to predict the runner four times, and should stop
-being offered as evidence that it is fixed.
-
-### Correction, 2026-08-20: the question above is malformed, and four theories are dead
-
-Read against Avalonia's own source rather than inferred from the stack
-(`src/Headless/Avalonia.Headless/HeadlessUnitTestSession.cs`). **Verified, not hypothesis:**
-
-**Re-initialising per test is the design.** `GetOrStartForAssembly` reads
-`AvaloniaTestIsolationAttribute` and defaults to `AvaloniaTestIsolationLevel.PerTest`;
-`D47.App.Tests` declares no such attribute, so `PerTest` is what is in effect. Every
-`[AvaloniaFact]` therefore runs `EnsureIsolatedApplication()`, which is `Dispatcher.-`
-`ResetBeforeUnitTests()` followed by `_appBuilder.SetupUnsafe()` — a fresh `Application`,
-`Compositor`, `ServerCompositor` and `DefaultRenderLoop` **every single test**. The entire stack
-recorded above is the ordinary per-test path. "An already-initialised session being initialised
-again" describes normal operation, so asking why it happens has no answer to find.
-
-**The real question is one step in.** `ResetBeforeUnitTests()` binds the dispatcher to the session's
-own dispatch thread, and `DefaultRenderLoop.Add` fails `VerifyAccess` microseconds later *on that
-same thread*. So something re-binds `Dispatcher.UIThread` in between. **Whatever that is, it is the
-bug.** Dispatcher state is process-global static; the session's queue is the only thing serialising
-access to it.
-
-**Four candidate explanations are eliminated**, each checked rather than assumed:
-
-- *The session was disposed and a second one started on a new thread.* Impossible. `Dispose()`
-  leaves the dead entry in the static `s_session` dictionary and `DispatchCore` then throws
-  `ObjectDisposedException` — a different exception from the one seen.
-- *xunit v3 is unsupported by the headless package.* No. `Avalonia.Headless.XUnit 12.1.1` declares a
-  dependency on `xunit.v3.extensibility.core 3.2.2`, which is exactly what this project references.
-  The "impossible with v3" issue predates 12.x.
-- *A plain `[Fact]` touches Avalonia on an xUnit worker thread, poisoning the statics.* No. The
-  assembly does mix 42 files using `[Fact]` with 60 using `[AvaloniaFact]`, and xunit v3
-  parallelises collections by default, so the shape was right — but no plain `[Fact]` in the
-  assembly touches an Avalonia type. The two apparent matches were `SettingsCaller.Panel`.
-- *`TechnicalPageTests.TheTranscriptSurvivesTwoThreadsWritingToIt` is the leak* — a plain `[Fact]`
-  driving a view model from four thread-pool tasks, which looked exactly like the culprit.
-  `PanelViewModel` is a bare `INotifyPropertyChanged` with three `System.*` usings and no
-  dispatcher use at all.
-
-**Still only a hypothesis**, and the one the first entry started with: something started by app code
-under test outlives its test and touches the dispatcher from its own thread during a later test's
-setup. No culprit named.
-
-**The next step is instrumentation, not another theory.** It fails on the runner and has never
-reproduced locally in eleven clean Release runs across four occurrences, so the goal is not to
-reproduce it — it is to make the fifth occurrence arrive carrying evidence. Capture, at throw time,
-the managed thread id owning `Dispatcher.UIThread` against the session's dispatch thread id. That
-turns "the same stack again" into a name. `dotnet-trace` does not help here: the test process has
-already exited by the time the failure is reported.
-
-### A fifth theory is dead: it is not test parallelism, 2026-08-20
-
-**Tried and reverted.** `D47.App.Tests` was given
-`[assembly: CollectionBehavior(DisableTestParallelization = true)]` on the reasoning that dispatcher
-state is process-global static, that this assembly mixes 42 files of plain `[Fact]` with 60 of
-`[AvaloniaFact]`, and that xunit runs collections in parallel by default — so serialising them
-should remove the window in which one test's leftovers touch the dispatcher while another test's
-session is being stood up.
-
-**It did not.** Seventeen local Release runs of the App suite with parallelism off produced
-**two failures** — roughly one in eight, which is the rate the parallel runs already showed. That
-is a counterexample to the mechanism, and the mechanism was the whole argument for the change.
-Reverted rather than shipped: a test-semantics change that does not do what it was added for is a
-change nobody can later justify.
-
-**So the window is not between two tests running at once.** Whatever touches the dispatcher from
-the wrong thread does so without a concurrently-running test to blame, which points harder at the
-first entry's surviving hypothesis — something started by app code under test outliving its test —
-and away from anything the runner schedules.
-
-**A measurement worth keeping**: serialised, the suite costs 28–37 seconds against 34–48 parallel.
-So if a future fix needs serial execution, it is free.
-
-**Still owed**, and now cheaper than ever: the instrumentation this entry asked for — the managed
-thread id owning `Dispatcher.UIThread` against the session's dispatch thread id, captured at throw
-time. It reproduces locally about once in eight runs, so a loop of eight under a debugger is a
-morning's work rather than a wait for the runner.
-
-### Fifth and sixth, 2026-08-20, and one of them was local
-
-The release run for v0.41.1 hit it twice in one afternoon, and the pair is worth more than either.
-
-**On the runner:** `AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` — the *original*
-test from the first entry, back after three occurrences carried by three other tests. It cleared on
-a re-run of the identical commit, as every previous one has, and cost a third release run.
-
-**And, an hour earlier, locally:** `LoadoutTabTests.KeepingWhatIsFittedListsThatModulesRolls` failed
-in a local `dotnet test -c Release` with the same exception, the same *cleanup* framing, and the
-same `EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` → `Compositor..ctor` →
-`ServerCompositor..ctor` → `DefaultRenderLoop.Add` stack. It passed alone, and the whole App suite
-passed clean on the next run.
-
-**That is the first local occurrence, and it retires an argument rather than a theory.** "Three
-clean consecutive local Release runs" has been offered as evidence four times and has been the
-wrong evidence every time; the entry already says local runs stopped predicting the runner. What is
-now settled is stronger: this is *not* a property of the runner at all. It is rarer locally, which
-is a matter of timing and machine load, and nothing more. So the instrumentation described above no
-longer needs a runner to catch it — a local loop of the Release App suite will produce it, given
-enough repetitions, and can be watched under a debugger.
-
-A sixth carrier test, still unrelated to the other five, still not the subject.
-
-### Seventh, 2026-08-21, and it adds nothing but a count
-
-The release run for v0.44.1 failed on
-`TheReworkedChromeRendersToACaptureTests.APlanThatWasMade` — same exception, same *cleanup*
-framing, same `EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` →
-`DefaultRenderLoop.Add` stack, and cleared on a re-run of the identical tag. A seventh carrier,
-unrelated to the six before it, and again not the subject.
-
-**Recorded because the count is the only thing it changes.** The instrumentation the third entry
-asks for still has not been written, and this occurrence would have been diagnosed by it and was
-not.
-
-**What it costs, counted rather than guessed.** Of the last twenty release-workflow runs, three
-needed a second attempt — v0.38.0, v0.39.0 and this one — and all three are entries above. That is
-the whole measurable cost: a re-run builds the same commit and publishes the same binary, so none
-of the seven occurrences has cost a version number, and none has put a wrong `d47.exe` behind a
-tag. The other four were caught before the tag, by `dotnet test -c Release` locally or on `ci`,
-which is where those two waits in `tools/release.ps1` are meant to catch things.
-
-
-### Eighth, ninth and tenth — 2026-08-21, three failures in four runs
-
-**The frequency changed, and that is the new information.** Cutting v0.46.0 took **four** attempts
-at the two workflows, and three of them failed on this:
-
-| Run | Test | Shape |
-|---|---|---|
-| `ci` | `EngineersTabTests.PromotingOffersTheChain` | cleanup, `EnsureIsolatedApplication` |
-| `ci` re-run | `AuditionDoesNotCommitTests.TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed` **and** `PlayingASecondVoiceCancelsTheFirst` | both 5 s timeouts |
-| `release` | `SearchTheTabTests.AFilterOpensTheCardItMatchedInAndClosesItAgainAfter` | cleanup, `EnsureIsolatedApplication` |
-
-Three more carrier tests, none of them related to each other or to the change being released, and
-the audition pair is the *original* entry from the top of this section returning for a third time.
-The whole App suite passed clean locally in Debug and in Release on the same commit, several times.
-
-**This retires the "three of the last twenty" figure recorded above.** That count was of *release*
-runs only and it was correct when written; the honest current statement is that on 2026-08-21 the
-failure rate was high enough to cost four workflow runs to publish one version. Nothing was
-mis-tagged — `tools/release.ps1` waits for CI precisely so this cannot — but the wait is now the
-most expensive part of shipping.
-
-**The investigation prompt is written down.** See
-[docs/plans/flake-hunt.md](docs/plans/flake-hunt.md), which carries every occurrence, the two
-distinct symptoms, what has been ruled out, and the instrumentation the third entry above asked
-for and nobody has written. It exists because this has now been re-diagnosed from scratch four
-times, and each time the reasoning was reconstructed rather than read.
+**The surviving lead is threadpool starvation.** The second press's cancellation callbacks run on
+a threadpool work item (`CancelAsync`), the wait is five seconds, and the suite loads the pool
+while the session runs: `EchoCancellationTests` spins three near-100% CPU threads for about a
+second as a plain `[Fact]`, in parallel with the Avalonia session. All three appearances were on
+busy CI runners. Unproven — a lead is not a diagnosis. What would settle it: a wall-clock trace
+around the second press on a loaded runner, or starving the pool deliberately and watching the
+same timeout arrive on demand.
 
 ## Open: an engineer was offered as a material trader, with rates attached
 

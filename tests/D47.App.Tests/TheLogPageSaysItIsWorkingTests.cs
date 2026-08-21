@@ -72,6 +72,47 @@ public class TheLogPageSaysItIsWorkingTests
     }
 
     /// <summary>
+    /// The file work runs off the drawing thread; the telling does not. Every PropertyChanged
+    /// out of the log path lands on the thread that draws, because Avalonia's binding table
+    /// answers an off-thread raise by reading the process-global dispatcher on the raising
+    /// thread — and under the headless harness that read can land inside the next test's
+    /// setup, hijack the UI thread's identity, and fail whichever unrelated test runs next.
+    /// That was the cleanup flake ten tests carried for five months (bugs.md, the
+    /// headless-session entry): this class's glyph test released its held read as its last
+    /// line, and the read's tail then set <c>LogText</c> from the worker a few milliseconds
+    /// after the test ended.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task TheReadTellsThePageOnTheThreadThatDraws()
+    {
+        var drawing = Environment.CurrentManagedThreadId;
+        var raisedOff = new List<string?>();
+
+        var model = new PanelViewModel { LogSource = () => "one line" };
+
+        model.PropertyChanged += (_, e) =>
+        {
+            if (Environment.CurrentManagedThreadId != drawing)
+            {
+                raisedOff.Add(e.PropertyName);
+            }
+        };
+
+        var view = new PanelView { DataContext = model };
+        var window = new Window { Content = view, Width = 900, Height = 600 };
+
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        view.Page = TranscriptPage.Log;
+
+        Assert.True(await Eventually(() => model.LogText == "one line"), "the read never landed");
+        Assert.True(
+            raisedOff.Count == 0,
+            $"raised off the drawing thread: {string.Join(", ", raisedOff)}");
+    }
+
+    /// <summary>
     /// And it is put away again, whatever the read did. A glyph left spinning is worse than one
     /// that never appeared: it says the page is still coming.
     /// </summary>

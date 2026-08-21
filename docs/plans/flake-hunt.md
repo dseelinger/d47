@@ -1,5 +1,26 @@
 # Hunting the headless-session flake
 
+## Resolved, 2026-08-21 — the brief below was run the day it was written
+
+The hunt is over; the current record is the *"Fixed on `flake-hunt`, awaiting release"* entry in
+[bugs.md](../../bugs.md), and its permanent one will be the changelog line under the release that
+carries the fix. In one paragraph: after `Dispatcher.ResetBeforeUnitTests()` nulls Avalonia's
+process-global dispatcher, **the first thread to read `Dispatcher.UIThread` becomes the UI
+thread** — and the suite's one live background raiser of `PropertyChanged` on a bound view model
+(`TheGlyphIsUpForTheDrawAndNotOnlyForTheRead`'s deliberately-held log read, released as the test's
+last line) landed exactly that read, via Avalonia's `ThreadSafePropertyChanged` binding handler, in
+the reset window of whichever test ran next. All five locally reproduced failures followed that
+test by 13–44 ms; the instrumented catch showed the dispatcher owned by a threadpool worker at the
+throw; the fix (read on the worker, set the property on the drawing thread) survived 40 clean
+Release runs against a 1-in-6 baseline; and the regression test was watched failing against the
+reintroduced fault. The two five-second audition timeouts turned out to be a **separate fault**,
+still open in bugs.md with its leads corrected.
+
+The rest of this document is the brief and the evidence as they stood before the run, kept because
+the occurrence table and the reasoning are cited from the record above.
+
+---
+
 **A prompt for a fresh session, written 2026-08-21.** Paste the section marked *The brief* into a
 new Claude Code session in this repository. Everything above it is context for a human deciding
 whether to run it; everything below it is the evidence the session should not have to rediscover.
