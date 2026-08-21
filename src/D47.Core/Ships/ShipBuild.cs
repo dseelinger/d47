@@ -52,9 +52,19 @@ public sealed record SlotPlan(
     public bool IsEmpty =>
         Blueprint is null && Grade == 0 && Experimental is null && Module is null;
 
-    /// <summary>What this plan asks <see cref="EngineeringPlan"/> for.</summary>
+    /// <summary>
+    /// What this plan asks <see cref="EngineeringPlan"/> for.
+    /// <para>
+    /// <b>Grade 0 becomes null across this boundary</b>, because the two types mean different
+    /// things by the number: here 0 is "no engineering stated" and is never rendered, and
+    /// <see cref="BuildRequest.Grade"/> is a nullable where a number is a grade the Commander
+    /// asked for. Passed straight through, a module-only plan reached the checklist as *"Grade 0
+    /// engineering on LargeHardpoint1"* and was refused by validation — reported 2026-08-20, four
+    /// lines of it in red.
+    /// </para>
+    /// </summary>
     public BuildRequest ToRequest() =>
-        new(Slot, Blueprint, Grade, Engineer, Experimental);
+        new(Slot, Blueprint, Grade > 0 ? Grade : null, Engineer, Experimental);
 
     /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
     /// <param name="withGrade">

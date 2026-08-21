@@ -4,8 +4,8 @@ The plan of record for a phase that is **not built**. Written 2026-08-20 from a 
 conversation, with the arithmetic checked against the shipped tables and the journal corpus
 before anything was promised.
 
-`list.md` has no Phase 38 entry yet. Writing one is the first act of building this, not a
-precondition for keeping the plan.
+`list.md` carries the Phase 38 entry as of 2026-08-20, unticked. This document is the reasoning
+behind those lines and the measurements they rest on; the list is the product description.
 
 ---
 
@@ -269,11 +269,35 @@ Each line carries its own acceptance criteria, in this repo's style.
   remaining bytes. Whether the model can *ask* for a power budget is a separate decision, and the
   cheaper one to make later.
 
+
+10. **Recipes for what Frontier engineers and EDEngineer does not carry.** Reported 2026-08-20
+    against a Guardian Gauss Cannon, which the page said had no engineering: it has **Anti-Guardian
+    Zone Resistance**, and Rapid Fire besides. The two shipped tables already disagree in a way that
+    names the gap exactly — EDSY's offer list says `hexgg` takes `Weapon_RapidFire` and
+    `GuardianModule_Sturdy`, while `Blueprints.tsv` has a row for neither, because **EDEngineer
+    carries no Guardian weapon recipes at all**. Every Guardian hardpoint is in that state, and
+    `misc_agzr` is offered to the power plant, power distributor, Guardian FSD Booster and the
+    hull, shield and module reinforcements too. EDSY has the missing half: name, `maxgrade: 1`,
+    materials and a Frontier symbol — which EDSY itself marks `// TODO: fdname`, so it is a lead
+    rather than an authority and the generator must say which source each row came from.
+    *Accepted when:* a Guardian Gauss Cannon offers Anti-Guardian Zone Resistance with a costed
+    recipe; `OfferedButNotCostedTests` — which today asserts the gap exists — is inverted to assert
+    it is closed; EDSY's material keys (`hasufr`, `cacr`, `tacoch`) resolve to `Materials.tsv`
+    symbols rather than being written through unmapped; and a symbol EDSY guesses at is recorded as
+    a guess rather than shipped as a fact.
+
+    Until then the surface tells the truth about itself rather than about Elite — *"Frontier
+    engineers this and I have no recipe for it"* — which is shipped and is not a substitute for
+    this item.
+
+---
+
 ## Sequencing
 
-Items 1 and 2 are data and unblock everything else; 3 and 5 are pure functions over that data and
-are testable against the corpus with no UI at all; 4, 6 and 7 are the surface; 8 is independent of
-all of it and could ship first if the glyph question resolves quickly.
+Items 1, 2 and 10 are data and unblock everything else; 3 and 5 are pure functions over that data
+and are testable against the corpus with no UI at all; 4, 6 and 7 are the surface; 8 and 10 are
+independent of the gauges entirely and either could ship first — 8 if the glyph question resolves
+quickly, 10 whenever somebody is in the generator.
 
 The honest risk is item 2. It is the only piece with no ground truth in the corpus to check
 against — a modelled figure can only be validated against modules that have *already* been rolled,

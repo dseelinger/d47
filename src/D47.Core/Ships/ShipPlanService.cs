@@ -392,7 +392,22 @@ public sealed class ShipPlanService(
                    + "on. Buy the ship and I will offer to adopt this plan onto it.";
         }
 
-        var planned = build.Slots.Where(slot => !slot.IsEmpty).ToList();
+        // **A plan that names a module and no engineering has nothing to promote** (reported
+        // 2026-08-20). `SlotPlan.Grade` is an int where 0 means "no engineering stated" and
+        // `BuildRequest.Grade` is an int? where a number means a real grade, so a module-only plan
+        // arrived at the checklist as *"Grade 0 engineering on LargeHardpoint1"* — which checklist
+        // validation then refused, four times over, in red at the top of the tab. The plan itself
+        // is legitimate: choosing a Guardian Gauss Cannon, which d47 holds no recipe for, stores
+        // the module and no roll.
+        //
+        // Skipped rather than promoted as something else: d47 has no *fit this module* checklist
+        // item yet — `ChecklistIntentKind.Module` exists and nothing on the ship-plan path emits
+        // one, because `BuildRequest` carries no module at all. That is a feature and is on
+        // Phase 38; inventing a grade to make the line valid would be planning engineering the
+        // Commander did not ask for and, on a Guardian weapon, cannot do.
+        var planned = build.Slots
+            .Where(slot => slot.Blueprint is not null || slot.Grade > 0 || slot.Experimental is not null)
+            .ToList();
 
         if (planned.Count == 0)
         {

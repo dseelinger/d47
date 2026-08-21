@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Interface;
 
@@ -375,7 +376,14 @@ public sealed class PanelPrompts
         // Every searchable chooser rather than only the module one. The box is built from
         // `request.Searchable`, and where the list is short enough not to need scrolling, focusing
         // it has not cost anything either.
-        box.AttachedToVisualTree += (_, _) => box.Focus();
+        // **Posted rather than called inline** (reported 2026-08-20: *"search bar should be the
+        // default focused control on this page"*). Focusing during the attach event runs before
+        // the chooser has finished building the rows under it, and whatever settles focus last
+        // wins — so the box was left unfocused and the Commander had to click it, which is the
+        // exact complaint remediation 15 item 3 was supposed to have closed. Queued at input
+        // priority, it runs after the page is up and it sticks.
+        box.AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(() => box.Focus(), DispatcherPriority.Input);
 
         var board = new StackPanel { Spacing = 6, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
 

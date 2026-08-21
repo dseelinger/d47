@@ -3,7 +3,8 @@
 The plan of record for a phase that is **not built**. Written 2026-08-20 on the Commander's
 instruction: *"Add the Checklist tab back into VR."*
 
-`list.md` has no Phase 39 entry yet. Writing one is the first act of building this.
+`list.md` carries the Phase 39 entry as of 2026-08-20, unticked. This document is the reasoning
+behind those lines and the measurements they rest on; the list is the product description.
 
 ---
 

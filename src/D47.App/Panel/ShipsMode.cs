@@ -403,11 +403,20 @@ public sealed class ShipsMode(
     /// <summary>
     /// One slot row broken into the parts it is drawn from (asked for 2026-08-20).
     /// <para>
-    /// <b>Fitted first, planned behind it.</b> The module named is what is actually in the slot
-    /// where Elite has said — a fact — and the plan's module only where it has not, which is every
-    /// ship the Commander is not sitting in. The roll is the other way round: a plan is what the
-    /// Commander wants and outranks what is on the hull now, because the row exists to be worked
-    /// towards.
+    /// <b>The plan first, and what is fitted where there is no plan.</b> This was the other way
+    /// round for a day — fitted first, on the argument that what is in the slot is a fact and a
+    /// plan is only a want — and the argument is sound about the <em>slot</em> and wrong about
+    /// <em>this row</em>. The row already carries the plan's roll and the dot that says a plan
+    /// exists, so naming the fitted module beside them produced a line describing a thing that
+    /// does not exist: reported twice on 2026-08-20, once as a Module Reinforcement Package
+    /// apparently carrying a Hull Reinforcement roll, and once as <i>"I just changed this to 6A,
+    /// but it still says 6D"</i>. Both are the same sentence: the roll came from the plan and the
+    /// module did not.
+    /// </para>
+    /// <para>
+    /// <b>The fitted module is not lost, it is one level down.</b> The slot drill names it under
+    /// its own <c>Fitted</c> heading, beside <c>Planned</c>, which is where the two are meant to
+    /// be told apart — and that page can afford to say both where a one-line row cannot.
     /// </para>
     /// <para>
     /// <b>The effects are the fitted module's own</b> and are never a plan's. Elite reports what a
@@ -430,9 +439,8 @@ public sealed class ShipsMode(
             // two are not the same fact: a size 3 slot can hold a class 2 module, and seeing a 2
             // beside a 3 is how a Commander spots one. The rating and the mount are in it for the
             // same reason, and the mount is the half that decides how a weapon behaves.
-            module is not null
-                ? EliteSpecifications.ModuleName(module.Item) ?? module.Item
-                : Planned(plan),
+            Planned(plan)
+            ?? (module is not null ? EliteSpecifications.ModuleName(module.Item) ?? module.Item : null),
             Vacant(build, fitted),
             plan?.Blueprint ?? module?.Blueprint,
             plan?.Grade ?? module?.BlueprintLevel,
@@ -970,6 +978,43 @@ public sealed class ShipsMode(
         return held < most;
     }
 
+    /// <summary>
+    /// What Frontier offers this module that d47 holds no recipe for, by name where the symbol
+    /// resolves to one and empty where nothing is offered at all.
+    /// <para>
+    /// <b>Two shipped tables disagreeing is the signal</b>, and the disagreement is information
+    /// rather than a fault: the offer list comes from EDSY, which says which blueprints a module
+    /// <em>type</em> may take, and the recipes come from EDEngineer, which says what each costs.
+    /// EDEngineer carries no Guardian weapon recipes, so every Guardian hardpoint has offers and
+    /// no rows. Reading that as "no engineering exists" was a claim about Elite; reading it as
+    /// "I have no recipe" is a claim about d47, and only the second is true.
+    /// </para>
+    /// <para>
+    /// A symbol with no row anywhere cannot be named — <c>GuardianModule_Sturdy</c> is Frontier's
+    /// spelling for Anti-Guardian Zone Resistance and nothing d47 ships says so — so it is dropped
+    /// rather than de-underscored into a plausible-looking invention. The sentence still says the
+    /// engineering is there, which is the part that was wrong.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<string> Unrecipied(string? variant)
+    {
+        if (EliteSpecifications.Module(variant) is not { } specification
+            || BlueprintCatalogue.OfferedTo(specification.Type) is not { Count: > 0 } offered)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. offered
+                .Select(BlueprintCatalogue.NameOf)
+                .Where(name => name is { Length: > 0 })
+                .Select(name => name!)
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal),
+        ];
+    }
+
     /// <summary>The modules this slot takes, by name — then which one of it.</summary>
     private void AskModule(
         ShipBuild build,
@@ -1301,6 +1346,12 @@ public sealed class ShipsMode(
 
         // What was planned, where it is still on offer. A recipe that lost a grade drops to the
         // top of what remains rather than keeping a number nobody can roll.
+        //
+        // **`offered` is highest-first**, so `[0]` is already the top grade and a fresh plan
+        // already opens at 5. Checked on 2026-08-20 by changing it to `[^1]` and watching
+        // `PlanningASlotOffersWhatFitsIt` and `TheGradeReadsLastAndTheStepperFollowsIt` both fail
+        // on a grade of 1 — the two tests encode this and are the reason the change was one line
+        // long and lived for two minutes.
         return plan is { Grade: > 0 } wanted && offered.Contains(wanted.Grade)
             ? wanted.Grade
             : offered[0];
@@ -1349,11 +1400,16 @@ public sealed class ShipsMode(
         PanelPrompts prompts,
         Action<string?> chosen)
     {
+        // Grouped rather than projected to a bare name (reported 2026-08-20: *"details on
+        // experimental effect should be somewhere"*). The page listed nine names — Double Braced,
+        // Fast Charge, Hi-cap, Lo-draw, Thermo Block — and nothing else, so choosing between them
+        // meant already knowing what they do. The blueprint page beside it has carried a `Does`
+        // line since remediation 15 item 8, off the same `effects` column, and an experimental
+        // row carries one too; taking the name off the recipe was what threw it away.
         var effects = (offer ?? BlueprintCatalogue.ForModule(module))
             .Where(recipe => recipe.Kind == BlueprintKind.Experimental)
-            .Select(recipe => recipe.Name)
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.OrdinalIgnoreCase)
+            .GroupBy(recipe => recipe.Name, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (effects.Count == 0)
@@ -1379,7 +1435,7 @@ public sealed class ShipsMode(
                 Context(build, slot),
                 [
                     new ChoiceOption(string.Empty, "No effect"),
-                    .. effects.Select(effect => new ChoiceOption(effect, effect)),
+                    .. effects.Select(group => new ChoiceOption(group.Key, group.Key, Does(group))),
                 ],
                 plan?.Experimental,
                 ChoiceSurface.Page)
@@ -1498,11 +1554,32 @@ public sealed class ShipsMode(
         // table unreachable. Refinery, Fuel Scoop and Heat Sink Launcher are in the same state.
         // Until the generator fills that column this says what d47 knows, which is true either
         // way; a fuel tank, which really does take none, reads no worse for it.
-        return Offered(named, module.Item) is { Count: 0 }
-            ? [new ChoiceOption(
+        if (Offered(named, module.Item) is not { Count: 0 })
+        {
+            return [new ChoiceOption(string.Empty, $"Keep {what} — I only want the engineering")];
+        }
+
+        // **Three states where there were two** (reported 2026-08-20 against a Guardian Gauss
+        // Cannon: *"it does have 1 engineering option — Anti-Guardian Zone Resistance"*, and it
+        // does). "No recipes I hold" and "no engineering exists" are different claims, and d47 was
+        // making the second while entitled only to the first.
+        //
+        // The distinction is already shipped and needed no new data: EDSY's offer table says the
+        // Gauss Cannon's `hexgg` takes `Weapon_RapidFire` and `GuardianModule_Sturdy`, while
+        // `Blueprints.tsv` — built from EDEngineer's recipes — carries a row for neither, because
+        // EDEngineer has no Guardian weapon recipes at all. So a non-empty offer with no recipes
+        // behind it is exactly "Frontier engineers this and I cannot cost it".
+        return Unrecipied(module.Item) switch
+        {
+            [] => [new ChoiceOption(
                 string.Empty,
-                $"Keep {what} — I have no engineering for this module. Click to close.")]
-            : [new ChoiceOption(string.Empty, $"Keep {what} — I only want the engineering")];
+                $"Keep {what} — I have no engineering for this module. Click to close.")],
+
+            var missing => [new ChoiceOption(
+                string.Empty,
+                $"Keep {what} — Frontier engineers this ({string.Join(", ", missing)}) and I have "
+                + "no recipe for it. Click to close.")],
+        };
     }
 
     /// <summary>
@@ -1566,8 +1643,11 @@ public sealed class ShipsMode(
     /// </summary>
     private string Context(ShipBuild build, ShipSlot slot)
     {
-        // A utility mount is size 0, which is not a size a Commander says.
-        var size = slot.Size > 0
+        // A utility mount is size 0, which is not a size a Commander says — and a compartment has
+        // already said its own, because `ShipSlot.Describe` reads it out of `Slot04_Size4`. Saying
+        // it again produced "Compartment 4 (size 4) (size 4)", which was on screen when the
+        // experimental page above was reported.
+        var size = slot.Size > 0 && slot.Kind is ShipSlotKind.Core or ShipSlotKind.Hardpoint
             ? $" (size {slot.Size.ToString(CultureInfo.InvariantCulture)})"
             : string.Empty;
 
