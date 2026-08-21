@@ -13,11 +13,12 @@ namespace D47.Core.Callouts;
 /// fires on the events that put them in a system and on nothing else.
 /// </para>
 /// <para>
-/// <b>Per faction, never per system.</b> A signal is assigned to one faction and its contents come
-/// from that faction, so a system holding an Independent faction in Boom beside a Federal one
-/// offers two entirely unrelated groups — which is the case the Commander asked for by name, and
-/// which falls out of evaluating factions rather than needing a rule of its own. See
-/// <see cref="EmissionRules"/> for the conditions and where they were sourced.
+/// <b>Allegiance is the system's; states are each faction's.</b> That split is the wiki's, it was
+/// read wrong in the first version of this, and the correction is why Oppi — an Independent system
+/// holding one Federal faction out of seven — no longer has Federal composites announced in it. A
+/// system still offers several unrelated groups at once, and always did for the right reason: two
+/// of its factions in different <em>states</em>. See <see cref="EmissionRules"/> for the conditions,
+/// where they were sourced, and the four readings the Commander ruled on.
 /// </para>
 /// <para>
 /// <b>What is already full is not mentioned.</b> Being told to go and collect a material there is
@@ -114,9 +115,13 @@ public sealed class EmissionCallout : ICallout
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // Read once, outside the loop, because it is a fact about the system rather than about any
+        // faction in it — which is the whole of what was wrong here.
+        var allegiance = journalEvent.String("SystemAllegiance");
+
         foreach (var faction in journalEvent.Items("Factions"))
         {
-            if (EmissionRules.For(faction.String("Allegiance"), States(faction)) is not { } group)
+            if (EmissionRules.For(allegiance, States(faction)) is not { } group)
             {
                 continue;
             }

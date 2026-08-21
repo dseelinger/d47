@@ -553,6 +553,29 @@ public sealed record CalloutSettings
     public bool Emissions { get; init; } = true;
 
     /// <summary>
+    /// A reminder to buy limpets on docking somewhere that sells them (list.md Phase 41).
+    /// <para>
+    /// <b>Off, unlike most callouts.</b> It is for Commanders who fly limpets, and one who never
+    /// does should not have to switch it off to stop hearing about it. Phase 32's habit callout is
+    /// the precedent for defaulting off with a reason.
+    /// </para>
+    /// </summary>
+    public bool Limpets { get; init; }
+
+    /// <summary>
+    /// The smallest cargo capacity worth reminding about, in tonnes. Below it the Commander is not
+    /// running a limpet operation and the reminder is noise.
+    /// </summary>
+    public int LimpetCargoFloor { get; init; } = 64;
+
+    /// <summary>
+    /// The limpet threshold, as a percentage <b>of cargo capacity</b> (the Commander's ruling,
+    /// 2026-08-21). The denominator is stated on the row itself, because a percentage whose
+    /// denominator is not written down is a number nobody can set confidently.
+    /// </summary>
+    public int LimpetPercent { get; init; } = 5;
+
+    /// <summary>
     /// An attack an NPC has announced but not yet made (list.md Phase 15). On, because it is the
     /// only warning here that arrives while there is still something to do about it.
     /// </summary>

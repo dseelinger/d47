@@ -199,21 +199,25 @@ Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composi
 Proprietary Composites and Pharmaceutical Isolators.
 ```
 
-**A signal belongs to a faction, not to a system**, which is why one system can offer two unrelated
-things at once. Each faction in the system is looked at on its own:
+**Allegiance is the system's; states are each faction's.** So a system offers several unrelated
+things at once when two of its factions are in different states:
 
-| That faction | Emissions hold |
+| The system, or one of its factions | Emissions hold |
 |---|---|
-| Federal | Core Dynamics Composites, Proprietary Composites |
-| Imperial | Imperial Shielding |
-| Civil Unrest | Improvised Components |
-| War or Civil War | Military Grade Alloys, Military Supercapacitors |
-| Boom | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
-| Outbreak | Pharmaceutical Isolators |
+| a Federal **system** | Core Dynamics Composites, Proprietary Composites |
+| an Imperial **system** | Imperial Shielding |
+| a faction in Civil Unrest | Improvised Components |
+| a faction in War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| a faction in Boom | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| a faction in Outbreak | Pharmaceutical Isolators |
 
-A Federal or Imperial faction yields its composites or shielding **and nothing else**, whatever
-state it is in — so the state-driven materials are found in Independent and Alliance space. Systems
-under a million population are not mentioned at all.
+A Federal or Imperial **system** yields its composites or shielding **and nothing else**, whatever
+states its factions are in — so the state-driven materials are found in Independent and Alliance
+space. Systems under a million population are not mentioned at all.
+
+One Federal faction in an Independent system does **not** make it a Federal system. A minority
+superpower faction sits in roughly a fifth of populated systems, and reading it as the system's
+allegiance is what once had Core Dynamics Composites announced in Oppi.
 
 **Nothing is said about a material you are already full of**, and a system whose materials are all
 full says nothing. So once you have finished gathering, this goes quiet on its own without your
@@ -222,6 +226,36 @@ you are full.
 
 Said once per system, and never for the backlog D47 reads at startup — the only jump in that
 backlog you could still act on is the last one.
+
+### Limpet reminders {#limpets}
+
+**Off by default** — this is for Commanders who fly limpets, and one who never does should not have
+to switch it off.
+
+When you dock somewhere that sells limpets, with a big enough hold and few enough aboard:
+
+```
+No limpets aboard, and this station sells them. You have 256 tonnes to fill.
+```
+
+Limpets are bought through **Advanced Maintenance**, not the commodity market — which is why D47
+looks for the station's re-arm service rather than reading its market. Most stations have it; the
+ones that do not are on-foot settlements, small outposts, and carriers whose owner has not fitted
+it. **Your own carrier may not be recognised**, which is a known and accepted gap rather than a
+fault: of 136 limpet purchases measured, three were at a carrier that reported no re-arm service.
+
+No price is quoted. Limpets are nearly always 101 credits and occasionally not, and D47 has no
+reading of this station's price until after you have bought some.
+
+#### Only remind me about limpets above {#limpet-floor}
+
+Cargo capacity, in tonnes. Default **64**. Below it you are not running a limpet operation and the
+reminder is noise.
+
+#### Remind me when limpets are under {#limpet-percent}
+
+A percentage **of your cargo capacity**. Default **5**, so twelve limpets in a 256 tonne hold is low
+and thirteen is not.
 
 ### Prospector results {#prospector}
 

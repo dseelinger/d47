@@ -4,8 +4,8 @@ namespace D47.Core.Knowledge;
 /// One group of materials a High Grade Emission can hold, and the condition that produces it.
 /// </summary>
 /// <param name="Allegiance">
-/// The superpower the owning faction answers to, or null for a condition that is about a state
-/// instead. <c>Federation</c> and <c>Empire</c> exactly as the journal spells them.
+/// The superpower the <b>system</b> answers to, or null for a condition that is about a faction
+/// state instead. <c>Federation</c> and <c>Empire</c> exactly as the journal spells them.
 /// </param>
 /// <param name="States">
 /// The faction states that produce this group, in the journal's own spelling — <c>Boom</c>,
@@ -20,20 +20,32 @@ public sealed record EmissionGroup(
 /// <summary>
 /// What a High Grade Emission holds, and where (list.md Phase 40).
 /// <para>
-/// <b>The mechanic first, because it is what makes the rest predictable.</b> A signal is assigned
-/// to <em>one faction</em>, and its contents come from that faction — not from the system. So a
-/// system is evaluated a faction at a time, and one holding an Independent faction in Boom beside
-/// a Federal one offers two entirely unrelated groups at once. That is ordinary rather than
-/// exotic: 84 of 400 recent jumps in the corpus are into systems mixing a Federal faction with an
-/// Independent or Alliance one.
+/// <b>The mechanic, and it was read wrong once.</b> The wiki says contents depend on
+/// <i>"individual Faction States <b>and the allegiance of the controlling faction</b>"</i>. States
+/// are individual; <b>allegiance is the system's</b>. The first version of this made both
+/// per-faction, on the strength of the following sentence about signals being assigned to a
+/// faction — which governs the state half only.
 /// </para>
 /// <para>
-/// <b>Superpower beats state, and never the other way.</b> A Federation or Imperial faction yields
-/// composites or shielding respectively <em>and nothing else</em>, whatever state it is in. This is
-/// the single ruling the two sources disagree about — the 2017 forums guide says an Imperial system
-/// in Outbreak gives shielding and isolators together — and it is settled the wiki's way on the
-/// Commander's instruction (2026-08-21), because the wiki is newer and because its reading is the
-/// one consistent with the rank-order mechanic it also states.
+/// <b>What that cost, reported 2026-08-21.</b> Oppi is an Independent system holding one Federal
+/// faction out of seven, none of them controlling anything, and d47 announced Federal composites
+/// there. The figure quoted in support of the per-faction reading — 84 of 400 recent jumps mix a
+/// Federal faction with an Independent or Alliance one — is real, and it argues the opposite: a
+/// minority Federal faction sits in roughly a fifth of populated systems, so per-faction allegiance
+/// mislabelled about a fifth of the galaxy.
+/// </para>
+/// <para>
+/// <b>Several materials at once still falls out, and never depended on that reading.</b> It comes
+/// from two factions in different <em>states</em> — one in Boom beside one in Outbreak — which is
+/// untouched by this.
+/// </para>
+/// <para>
+/// <b>Superpower beats state, and never the other way.</b> A Federal or Imperial <em>system</em>
+/// yields composites or shielding respectively <em>and nothing else</em>, whatever states its
+/// factions are in. This is the single ruling the two sources disagree about — the 2017 forums
+/// guide says an Imperial system in Outbreak gives shielding and isolators together — and it is
+/// settled the wiki's way on the Commander's instruction (2026-08-21), because the wiki is newer
+/// and because its reading is the one consistent with the rank-order mechanic it also states.
 /// </para>
 /// <para>
 /// <b>Sourced, corroborated, and then checked against the shipped table.</b> The conditions are the
@@ -91,20 +103,25 @@ public static class EmissionRules
     ];
 
     /// <summary>
-    /// What one faction's emissions would hold, or null for a faction that produces none.
+    /// What one faction's emissions would hold, or null for one that produces none.
     /// <para>
-    /// <paramref name="states"/> is every state the faction is actually in — the journal's
+    /// <paramref name="systemAllegiance"/> is <b>the system's</b>, not the faction's — the journal's
+    /// <c>SystemAllegiance</c>, which is the controlling faction's. Passing the faction's own is the
+    /// defect reported on 2026-08-21 and is what the parameter is named to prevent.
+    /// </para>
+    /// <para>
+    /// <paramref name="states"/> is every state that faction is actually in — the journal's
     /// <c>ActiveStates</c> alongside its headline <c>FactionState</c> — because a faction in
     /// several at once is a real thing and the headline reports only one of them.
     /// </para>
     /// </summary>
-    public static EmissionGroup? For(string? allegiance, IEnumerable<string>? states)
+    public static EmissionGroup? For(string? systemAllegiance, IEnumerable<string>? states)
     {
-        // Superpower first and then stop. A Federal or Imperial faction never yields anything but
-        // its own composites or shielding, whatever else is true of it.
+        // Superpower first and then stop. A Federal or Imperial system never yields anything but
+        // its own composites or shielding, whatever states its factions are in.
         if (Groups.FirstOrDefault(group =>
                 group.Allegiance is { } superpower
-                && string.Equals(superpower, allegiance, StringComparison.OrdinalIgnoreCase)) is { } owned)
+                && string.Equals(superpower, systemAllegiance, StringComparison.OrdinalIgnoreCase)) is { } owned)
         {
             return owned;
         }
