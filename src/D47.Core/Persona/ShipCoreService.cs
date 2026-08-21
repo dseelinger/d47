@@ -70,11 +70,22 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
 
     public ShipCoreStore Store => store;
 
+    /// <summary>
+    /// Whose bindings are being read and written. Half the store's key (the list.md Phase 44
+    /// defect item): Elite's ship ids are per Commander, so ship 7 alone does not name a ship.
+    /// </summary>
+    private string Fid => game()?.Identity.FrontierId ?? string.Empty;
+
+    private string? CommanderName => game()?.Identity.Name;
+
     /// <summary>The ship the Commander is in, where the journal has said.</summary>
     public int? CurrentShipId => game()?.Ship.ShipId;
 
+    /// <summary>This Commander's binding for one ship, or null when nothing is bound.</summary>
+    public ShipCoreBinding? For(int shipId) => store.For(Fid, shipId);
+
     /// <summary>The core bound to the ship they are in, or null.</summary>
-    public ShipCoreBinding? Current => CurrentShipId is { } id ? store.For(id) : null;
+    public ShipCoreBinding? Current => CurrentShipId is { } id ? For(id) : null;
 
     /// <summary>
     /// Every ship the Commander could bind a core to, as an id and the words they call it by.
@@ -132,7 +143,7 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
 
         if (core is not { Length: > 0 })
         {
-            return store.Forget(shipId)
+            return store.Forget(Fid, shipId)
                 ? $"{said} no longer asks for a core. Whoever is aboard stays aboard."
                 : $"{said} was not bound to a core.";
         }
@@ -141,10 +152,14 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
         var hull = game()?.Ship;
 
         store.Bind(new ShipCoreBinding(
+            Fid,
             shipId,
             persona.Id,
             hull?.ShipId == shipId ? hull.Type : known.Said,
-            hull?.ShipId == shipId ? hull.Name : null));
+            hull?.ShipId == shipId ? hull.Name : null)
+        {
+            CommanderName = CommanderName,
+        });
 
         // Marked as handled where it is the ship they are in, so it does not then read as a change
         // and switch to the core that is already aboard.
@@ -168,6 +183,14 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     /// </summary>
     public ShipCoreSwitch? Observe(TimeSpan since)
     {
+        // Bindings from before the file carried a Commander are claimed by the first one seen —
+        // a pre-existing file was written by the installation's one Commander, and leaving them
+        // unowned would silently unbind every core on the release that added the key.
+        if (game()?.Identity is { FrontierId.Length: > 0 } identity)
+        {
+            store.Adopt(identity.FrontierId, identity.Name);
+        }
+
         var shipId = CurrentShipId;
 
         lock (_gate)
@@ -249,7 +272,10 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
         var persona = PersonaCatalog.Resolve(core);
         var ship = state.Ship;
 
-        store.Bind(new ShipCoreBinding(shipId, persona.Id, ship.Type, ship.Name));
+        store.Bind(new ShipCoreBinding(Fid, shipId, persona.Id, ship.Type, ship.Name)
+        {
+            CommanderName = CommanderName,
+        });
 
         // Marked as handled, so the ship they are already in does not then read as a change and
         // switch to the core that is already aboard.
@@ -274,9 +300,9 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
             return "I do not know which ship you are in yet — nothing has said so this session.";
         }
 
-        var was = store.For(shipId);
+        var was = For(shipId);
 
-        if (!store.Forget(shipId))
+        if (!store.Forget(Fid, shipId))
         {
             return $"{Describe(state.Ship)} was not bound to a core.";
         }
@@ -300,7 +326,7 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
 
         var said = Describe(state.Ship);
 
-        return store.For(shipId) is { } binding
+        return For(shipId) is { } binding
             ? $"{said} flies with {PersonaCatalog.Resolve(binding.Core).Name}."
             : $"{said} is not bound to a core, so whoever is aboard stays aboard.";
     }
@@ -311,7 +337,13 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     /// </summary>
     public string DescribeAll()
     {
-        var bindings = store.Bindings;
+        // This Commander's, because the panel row is theirs — another Commander's bindings on the
+        // same installation are not this one's to read out.
+        var fid = Fid;
+
+        var bindings = store.Bindings
+            .Where(binding => string.Equals(binding.CommanderFid, fid, StringComparison.Ordinal))
+            .ToList();
 
         if (bindings.Count == 0)
         {
@@ -342,5 +374,5 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     private static string Describe(ShipLoadout ship) => ship.Describe() ?? "This ship";
 
     private ShipCoreSwitch? Switch(int shipId, bool announce) =>
-        store.For(shipId) is { } binding ? new ShipCoreSwitch(shipId, binding.Core, announce) : null;
+        For(shipId) is { } binding ? new ShipCoreSwitch(shipId, binding.Core, announce) : null;
 }

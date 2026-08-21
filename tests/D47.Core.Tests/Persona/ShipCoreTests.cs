@@ -18,12 +18,13 @@ public class ShipCoreStoreTests
         using var folder = new TempFolder();
         var store = Store(folder);
 
-        store.Bind(new ShipCoreBinding(12, "sentinel", "python", "Bad Idea"));
+        store.Bind(new ShipCoreBinding("F1", 12, "sentinel", "python", "Bad Idea"));
 
         var reopened = Store(folder);
         reopened.Poll();
 
         var binding = Assert.Single(reopened.Bindings);
+        Assert.Equal("F1", binding.CommanderFid);
         Assert.Equal(12, binding.ShipId);
         Assert.Equal("sentinel", binding.Core);
 
@@ -39,11 +40,71 @@ public class ShipCoreStoreTests
         using var folder = new TempFolder();
         var store = Store(folder);
 
-        store.Bind(new ShipCoreBinding(12, "sentinel"));
-        store.Bind(new ShipCoreBinding(12, "quartermaster"));
+        store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
+        store.Bind(new ShipCoreBinding("F1", 12, "quartermaster"));
 
         var binding = Assert.Single(store.Bindings);
         Assert.Equal("quartermaster", binding.Core);
+    }
+
+    /// <summary>
+    /// The Commander is half the key (the list.md Phase 44 defect item): Elite's ship ids are per
+    /// Commander and start small, so two Commanders' ship 12s are two ships — each binds their
+    /// own, and each reads back their own.
+    /// </summary>
+    [Fact]
+    public void TwoCommandersMayEachBindTheSameShipId()
+    {
+        using var folder = new TempFolder();
+        var store = Store(folder);
+
+        store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
+        store.Bind(new ShipCoreBinding("F2", 12, "quartermaster"));
+
+        var reopened = Store(folder);
+        reopened.Poll();
+
+        Assert.Equal(2, reopened.Bindings.Count);
+        Assert.Empty(reopened.Problems);
+        Assert.Equal("sentinel", reopened.For("F1", 12)!.Core);
+        Assert.Equal("quartermaster", reopened.For("F2", 12)!.Core);
+
+        // And forgetting one Commander's ship 12 leaves the other's alone.
+        Assert.True(reopened.Forget("F1", 12));
+        Assert.Null(reopened.For("F1", 12));
+        Assert.Equal("quartermaster", reopened.For("F2", 12)!.Core);
+    }
+
+    /// <summary>
+    /// A file from before bindings carried a Commander: claimed whole by the first one seen, the
+    /// way the checklist adopts unowned notes — a release must not silently unbind every core.
+    /// </summary>
+    [Fact]
+    public void ALegacyFileIsAdoptedByTheFirstCommanderSeen()
+    {
+        using var folder = new TempFolder();
+
+        File.WriteAllText(folder.File, """
+            {
+              "ships": [
+                { "shipId": 12, "core": "sentinel", "hull": "python", "name": "Bad Idea" }
+              ]
+            }
+            """);
+
+        var store = Store(folder);
+        store.Poll();
+
+        Assert.Null(store.For("F1", 12));
+        Assert.True(store.Adopt("F1", "Jameson"));
+        Assert.Equal("sentinel", store.For("F1", 12)!.Core);
+
+        // Written through, not merely held: the claim survives a restart.
+        var reopened = Store(folder);
+        reopened.Poll();
+
+        Assert.Equal("F1", Assert.Single(reopened.Bindings).CommanderFid);
+        Assert.False(reopened.Adopt("F1"));
     }
 
     [Fact]
@@ -52,11 +113,11 @@ public class ShipCoreStoreTests
         using var folder = new TempFolder();
         var store = Store(folder);
 
-        store.Bind(new ShipCoreBinding(12, "sentinel"));
-        store.Bind(new ShipCoreBinding(27, "quartermaster"));
+        store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
+        store.Bind(new ShipCoreBinding("F1", 27, "quartermaster"));
 
-        Assert.True(store.Forget(12));
-        Assert.False(store.Forget(12));
+        Assert.True(store.Forget("F1", 12));
+        Assert.False(store.Forget("F1", 12));
 
         Assert.Equal([27], store.Bindings.Select(binding => binding.ShipId));
     }
@@ -106,13 +167,15 @@ public class ShipCoreStoreTests
         var changes = 0;
         store.Changed += () => changes++;
 
-        store.Bind(new ShipCoreBinding(12, "sentinel"));
+        store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
         Assert.False(store.Poll());
 
-        File.WriteAllText(folder.File, """{ "ships": [ { "shipId": 12, "core": "kex" } ] }""");
+        File.WriteAllText(
+            folder.File,
+            """{ "ships": [ { "commanderFid": "F1", "shipId": 12, "core": "kex" } ] }""");
 
         Assert.True(store.Poll());
-        Assert.Equal("kex", store.For(12)!.Core);
+        Assert.Equal("kex", store.For("F1", 12)!.Core);
         Assert.Equal(2, changes);
     }
 
@@ -162,7 +225,7 @@ public class ShipCoreWatchTests
     public void TheShipAlreadyBeingFlownIsAdoptedSilently()
     {
         var state = State(12);
-        var service = Service(state, (12, "sentinel"));
+        var service = Service(state, ("F1", 12, "sentinel"));
 
         var due = service.Observe(TimeSpan.Zero);
 
@@ -175,7 +238,7 @@ public class ShipCoreWatchTests
     public void AShipWithNoBindingChangesNothing()
     {
         var state = State(12);
-        var service = Service(state, (27, "sentinel"));
+        var service = Service(state, ("F1", 27, "sentinel"));
 
         Assert.Null(service.Observe(TimeSpan.Zero));
 
@@ -189,7 +252,7 @@ public class ShipCoreWatchTests
     public void BoardingABoundShipSwitchesOnceTheChangeHasSettled()
     {
         var state = State(12);
-        var service = Service(state, (12, "sentinel"), (27, "quartermaster"));
+        var service = Service(state, ("F1", 12, "sentinel"), ("F1", 27, "quartermaster"));
 
         service.Observe(TimeSpan.Zero);
         Board(state, 27);
@@ -214,7 +277,7 @@ public class ShipCoreWatchTests
     public void ShufflingThroughShipsCostsOneSwitchForTheLastOne()
     {
         var state = State(12);
-        var service = Service(state, (12, "sentinel"), (27, "quartermaster"), (33, "kex"));
+        var service = Service(state, ("F1", 12, "sentinel"), ("F1", 27, "quartermaster"), ("F1", 33, "kex"));
 
         service.Observe(TimeSpan.Zero);
 
@@ -250,7 +313,7 @@ public class ShipCoreWatchTests
     public void ComingBackToTheShipAboardCancelsTheSwitch()
     {
         var state = State(12);
-        var service = Service(state, (12, "sentinel"), (27, "quartermaster"));
+        var service = Service(state, ("F1", 12, "sentinel"), ("F1", 27, "quartermaster"));
 
         service.Observe(TimeSpan.Zero);
 
@@ -275,8 +338,40 @@ public class ShipCoreWatchTests
         var said = service.Bind("sentinel");
 
         Assert.Contains("Sentinel", said, StringComparison.Ordinal);
-        Assert.Equal("sentinel", service.Store.For(12)!.Core);
+        Assert.Equal("sentinel", service.For(12)!.Core);
         Assert.Null(Settled(service));
+    }
+
+    /// <summary>
+    /// The bug the key exists for (the list.md Phase 44 defect item): another Commander's ship 12
+    /// is a different ship, so their binding must not put a core aboard this Commander's.
+    /// </summary>
+    [Fact]
+    public void AnotherCommandersBindingForTheSameShipIdDoesNotAnswer()
+    {
+        var state = State(12);
+        var service = Service(state, ("F2", 12, "quartermaster"));
+
+        Assert.Null(service.Observe(TimeSpan.Zero));
+        Assert.Null(Settled(service));
+        Assert.Null(service.Current);
+    }
+
+    /// <summary>
+    /// A file from before bindings carried a Commander still works on the release that added the
+    /// key: the first Commander seen claims it, and their core arrives as it always did.
+    /// </summary>
+    [Fact]
+    public void ALegacyBindingIsAdoptedAndStillAnswers()
+    {
+        var state = State(12);
+        var service = Service(state, ("", 12, "sentinel"));
+
+        var due = service.Observe(TimeSpan.Zero);
+
+        Assert.NotNull(due);
+        Assert.Equal("sentinel", due!.Core);
+        Assert.Equal("F1", service.Store.Bindings.Single().CommanderFid);
     }
 
     [Fact]
@@ -293,7 +388,7 @@ public class ShipCoreWatchTests
     public void ForgettingSaysSoWhetherOrNotThereWasAnything()
     {
         var state = State(12);
-        var service = Service(state, (12, "sentinel"));
+        var service = Service(state, ("F1", 12, "sentinel"));
 
         Assert.Contains("Sentinel", service.Forget(), StringComparison.Ordinal);
         Assert.Contains("was not bound", service.Forget(), StringComparison.Ordinal);
@@ -314,15 +409,15 @@ public class ShipCoreWatchTests
 
     private static ShipCoreService Service(
         GameStateStore state,
-        params (int Ship, string Core)[] bound)
+        params (string Fid, int Ship, string Core)[] bound)
     {
         var store = new ShipCoreStore(
             Path.Combine(Path.GetTempPath(), $"d47-ship-cores-{Guid.NewGuid():N}.json"),
             NullLogger<ShipCoreStore>.Instance);
 
-        foreach (var (ship, core) in bound)
+        foreach (var (fid, ship, core) in bound)
         {
-            store.Bind(new ShipCoreBinding(ship, core));
+            store.Bind(new ShipCoreBinding(fid, ship, core));
         }
 
         return new ShipCoreService(store, () => state.Active);

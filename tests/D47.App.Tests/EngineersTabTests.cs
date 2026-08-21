@@ -78,7 +78,7 @@ public class EngineersTabTests
         if (planned)
         {
             builds.Save([
-                new ShipBuild("ship-1", "python", 12, "Bad Idea",
+                new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
                     [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]),
             ]);
         }

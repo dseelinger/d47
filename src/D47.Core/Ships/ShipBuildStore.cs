@@ -84,9 +84,40 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
     public ShipBuild? Find(string id) =>
         Builds.FirstOrDefault(build => string.Equals(build.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The build bound to a journal ship id, or null when nothing is planned for it.</summary>
-    public ShipBuild? ForShip(int shipId) =>
-        Builds.FirstOrDefault(build => build.ShipId == shipId);
+    /// <summary>
+    /// One Commander's build for a journal ship id, or null when nothing is planned for it. The
+    /// Commander is half the key (the list.md Phase 44 defect item): ship ids are per Commander,
+    /// so two Commanders' ship 7s are two ships.
+    /// </summary>
+    public ShipBuild? ForShip(string? fid, int shipId) =>
+        Builds.FirstOrDefault(build =>
+            build.ShipId == shipId
+            && string.Equals(build.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal));
+
+    /// <summary>Everything one Commander has planned, owned hulls and intended ones alike.</summary>
+    public IReadOnlyList<ShipBuild> BuildsFor(string? fid) =>
+        [.. Builds.Where(build =>
+            string.Equals(build.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal))];
+
+    /// <summary>
+    /// Stamps this Commander's id onto every build from before the file carried one. A pre-existing
+    /// file was written by the installation's one Commander, so the first one seen claims it — the
+    /// same reasoning as <see cref="Checklists.ChecklistService"/> adopting unowned notes. True when
+    /// anything was claimed.
+    /// </summary>
+    public bool Adopt(string fid, string? name = null)
+    {
+        if (fid.Length == 0 || !Builds.Any(build => build.CommanderFid.Length == 0))
+        {
+            return false;
+        }
+
+        Save([.. Builds.Select(build => build.CommanderFid.Length == 0
+            ? build with { CommanderFid = fid, CommanderName = name }
+            : build)]);
+
+        return true;
+    }
 
     /// <summary>
     /// Re-reads if the file changed. Pull-based and clock-free like every other reader in Core, so
@@ -142,6 +173,8 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
         {
             Ships = [.. builds.Take(MaxBuilds).Select(build => new BuildLine
             {
+                CommanderFid = build.CommanderFid.Length > 0 ? build.CommanderFid : null,
+                CommanderName = build.CommanderName,
                 Id = build.Id,
                 Hull = build.Hull,
                 ShipId = build.ShipId,
@@ -233,8 +266,13 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
             }
 
             // One build per ship, enforced where the file is read rather than only where it is
-            // written: a hand edit is exactly the route that would otherwise produce two.
-            if (line.ShipId is { } shipId && builds.Any(existing => existing.ShipId == shipId))
+            // written: a hand edit is exactly the route that would otherwise produce two. Per
+            // Commander, because a ship id alone only names a ship within one Commander's journal.
+            var fid = (line.CommanderFid ?? string.Empty).Trim();
+
+            if (line.ShipId is { } shipId
+                && builds.Any(existing => existing.ShipId == shipId
+                                          && string.Equals(existing.CommanderFid, fid, StringComparison.Ordinal)))
             {
                 problems.Add(new ShipBuildProblem(
                     hull, $"ship {shipId} already has a build, and a ship has one."));
@@ -289,8 +327,9 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 });
             }
 
-            builds.Add(new ShipBuild(id, hull, line.ShipId, Blank(line.Name), slots)
+            builds.Add(new ShipBuild(fid, id, hull, line.ShipId, Blank(line.Name), slots)
             {
+                CommanderName = Blank(line.CommanderName),
                 Settled = Blank(line.Settled),
             });
         }
@@ -316,6 +355,10 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
     private sealed record BuildLine
     {
+        public string? CommanderFid { get; init; }
+
+        public string? CommanderName { get; init; }
+
         public string? Id { get; init; }
 
         public string? Hull { get; init; }

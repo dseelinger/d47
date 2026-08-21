@@ -14,6 +14,13 @@ namespace D47.Core.Persona;
 /// <see cref="Checklists.ChecklistScope.Ship(int)"/> is already keyed on.
 /// </para>
 /// </summary>
+/// <param name="CommanderFid">
+/// Whose binding this is — the Frontier id, <b>inside the document rather than in a path</b>, which
+/// is <see cref="Checklists.ChecklistDocument"/>'s rule for the same untrusted input. It is half
+/// the key: Elite's <c>ShipID</c> is per Commander and starts small, so without it one Commander's
+/// ship 7 answered for another's (the list.md Phase 44 defect item). Empty for a line written
+/// before this file carried a Commander; the first Commander seen adopts those.
+/// </param>
 /// <param name="ShipId">The journal's id for this ship.</param>
 /// <param name="Core">A core id from <see cref="PersonaCatalog"/>.</param>
 /// <param name="Hull">
@@ -22,7 +29,13 @@ namespace D47.Core.Persona;
 /// the file sees "python / Bad Idea" beside the number rather than a bare id they would have to go
 /// and look up. A hand edit that gets them wrong changes nothing.
 /// </param>
-public sealed record ShipCoreBinding(int ShipId, string Core, string? Hull = null, string? Name = null);
+public sealed record ShipCoreBinding(
+    string CommanderFid, int ShipId, string Core, string? Hull = null, string? Name = null)
+{
+    /// <summary>The Commander's name at the time of writing, for a person reading a file two
+    /// Commanders now share. Never the key.</summary>
+    public string? CommanderName { get; init; }
+}
 
 /// <summary>One binding the file was asked to hold, and why it was refused.</summary>
 public sealed record ShipCoreProblem(string Where, string Reason);
@@ -103,9 +116,34 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
         }
     }
 
-    /// <summary>The core bound to this ship, or null when nothing is.</summary>
-    public ShipCoreBinding? For(int shipId) =>
-        Bindings.FirstOrDefault(binding => binding.ShipId == shipId);
+    /// <summary>
+    /// The core this Commander bound to this ship, or null when nothing is. The Commander is half
+    /// the key: two Commanders' ship 7s are two ships.
+    /// </summary>
+    public ShipCoreBinding? For(string? fid, int shipId) =>
+        Bindings.FirstOrDefault(binding =>
+            binding.ShipId == shipId
+            && string.Equals(binding.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Stamps this Commander's id onto every binding from before the file carried one. A pre-existing
+    /// file was written by the installation's one Commander, so the first one seen claims it — the
+    /// same reasoning as <see cref="Checklists.ChecklistService"/> adopting unowned notes. True when
+    /// anything was claimed.
+    /// </summary>
+    public bool Adopt(string fid, string? name = null)
+    {
+        if (fid.Length == 0 || !Bindings.Any(binding => binding.CommanderFid.Length == 0))
+        {
+            return false;
+        }
+
+        Save([.. Bindings.Select(binding => binding.CommanderFid.Length == 0
+            ? binding with { CommanderFid = fid, CommanderName = name }
+            : binding)]);
+
+        return true;
+    }
 
     /// <summary>
     /// Re-reads if the file changed. Pull-based and clock-free like every other reader in Core, so
@@ -162,10 +200,11 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
     public ShipCoreBinding Bind(ShipCoreBinding binding)
     {
         var kept = Bindings
-            .Where(existing => existing.ShipId != binding.ShipId)
+            .Where(existing => !Same(existing, binding.CommanderFid, binding.ShipId))
             .Take(MaxBindings - 1)
             .Append(binding)
-            .OrderBy(existing => existing.ShipId)
+            .OrderBy(existing => existing.CommanderFid, StringComparer.Ordinal)
+            .ThenBy(existing => existing.ShipId)
             .ToArray();
 
         Save(kept);
@@ -173,18 +212,22 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
         return binding;
     }
 
-    /// <summary>Unbinds one ship. True when there was something to unbind.</summary>
-    public bool Forget(int shipId)
+    /// <summary>Unbinds one Commander's ship. True when there was something to unbind.</summary>
+    public bool Forget(string? fid, int shipId)
     {
-        if (For(shipId) is null)
+        if (For(fid, shipId) is null)
         {
             return false;
         }
 
-        Save([.. Bindings.Where(existing => existing.ShipId != shipId)]);
+        Save([.. Bindings.Where(existing => !Same(existing, fid ?? string.Empty, shipId))]);
 
         return true;
     }
+
+    private static bool Same(ShipCoreBinding binding, string fid, int shipId) =>
+        binding.ShipId == shipId
+        && string.Equals(binding.CommanderFid, fid, StringComparison.Ordinal);
 
     /// <summary>
     /// Writes a new set, and re-reads what landed so the store never believes something the file
@@ -196,6 +239,8 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
         {
             Ships = [.. bindings.Take(MaxBindings).Select(binding => new BindingLine
             {
+                CommanderFid = binding.CommanderFid.Length > 0 ? binding.CommanderFid : null,
+                CommanderName = binding.CommanderName,
                 ShipId = binding.ShipId,
                 Core = binding.Core,
                 Hull = binding.Hull,
@@ -271,7 +316,11 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
                 continue;
             }
 
-            if (bindings.Any(existing => existing.ShipId == shipId))
+            // Per Commander, because the ship id alone only names a ship within one Commander's
+            // journal. Two Commanders each binding their ship 7 is two ships, not a duplicate.
+            var fid = (line.CommanderFid ?? string.Empty).Trim();
+
+            if (bindings.Any(existing => Same(existing, fid, shipId)))
             {
                 problems.Add(new ShipCoreProblem(where, $"ship {shipId} is bound twice, and a ship has one core."));
                 continue;
@@ -283,7 +332,10 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
                 continue;
             }
 
-            bindings.Add(new ShipCoreBinding(shipId, core, Blank(line.Hull), Blank(line.Name)));
+            bindings.Add(new ShipCoreBinding(fid, shipId, core, Blank(line.Hull), Blank(line.Name))
+            {
+                CommanderName = Blank(line.CommanderName),
+            });
         }
 
         lock (_gate)
@@ -307,6 +359,10 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
 
     private sealed record BindingLine
     {
+        public string? CommanderFid { get; init; }
+
+        public string? CommanderName { get; init; }
+
         public int? ShipId { get; init; }
 
         public string? Core { get; init; }

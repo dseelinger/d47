@@ -341,7 +341,7 @@ public static class PersonaCapability
             Binding = new SettingBinding
             {
                 Read = settings => settings.Persona.ShipCoreShip is var id and not 0
-                    ? ships.Store.For(id)?.Core ?? Nobody
+                    ? ships.For(id)?.Core ?? Nobody
                     : null,
 
                 // The write is the binding, and it returns the settings unchanged: what it changes

@@ -12,10 +12,14 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Four open, one fixed and awaiting its release, and one partly confirmed.
+## Three open, and one partly confirmed.
 
-The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. Their record is
-those sections of the changelog.
+The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
+headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
+and added on 2026-08-21 — and the two-Commanders ship-id keying in 0.47.1, whose live half
+(`ShipCoreService._aboard` and `ShipDriftWatch._aboard` as bare ints) is recorded on list.md
+Phase 44 rather than here, because it needs the switch signal that phase builds. Each entry's
+record is its section of the changelog.
 
 The VR grab that 0.16.2 recorded as "fixed but not confirmed" was not fixed. The two flags it
 called are the wrong road entirely — they opt the quad in to SteamVR's own laser, which only runs
@@ -64,74 +68,6 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 **Still not a diagnosis.** What would settle it: whether the beam moves at all when it looks frozen
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
-
-## Fixed, awaiting release: the headless-session cleanup failure
-
-*Diagnosed and fixed 2026-08-21, after ten recorded occurrences across five months and five more
-reproduced on the diagnosis day. The fix is merged to `main`; this entry leaves the file
-with the release that carries it, and the history it compresses is in this file's git log and in
-[docs/plans/flake-hunt.md](docs/plans/flake-hunt.md).*
-
-**The mechanism, verified against the shipped Avalonia 12.1.1 binaries and the tagged sources.**
-`Avalonia.Headless` runs every `[AvaloniaFact]` at per-test isolation: `EnsureIsolatedApplication`
-calls `Dispatcher.ResetBeforeUnitTests()` — which nulls the process-global `s_uiThread` — and then
-`SetupUnsafe()`. `Dispatcher.UIThread` is created lazily, its constructor captures whatever thread
-is running it, and the first construction after a reset wins the global slot (`s_uiThread ??= this`).
-So **the first thread to read `Dispatcher.UIThread` after a reset becomes the UI thread**. If any
-background thread reads it — even a bare `CheckAccess()` — in the window between the reset and the
-session thread's own first read inside `SetupUnsafe`, that thread hijacks the UI thread's identity,
-and the session thread's `DefaultRenderLoop.Add` → `VerifyAccess` throws: the recorded stack, as a
-*cleanup* failure on whichever test was being stood up. The next test's own reset wipes the poison,
-which is why every failing run lost exactly one test. The carrier was always arbitrary, and the
-change under release never mattered.
-
-**The leak, named.** The only paths in the assembled system that read the static dispatcher from a
-foreign thread are Avalonia's `WeakEvents.ThreadSafePropertyChanged` handler — the subscription
-every XAML binding takes on an INPC view model, run on whatever thread raises `PropertyChanged` —
-and app code touching the static directly. The suite had exactly one live background raiser:
-`TheLogPageSaysItIsWorkingTests.TheGlyphIsUpForTheDrawAndNotOnlyForTheRead` releases its
-deliberately-held log read as its last line and exits, and the freed threadpool thread then ran
-`RefreshLog` — `LogText = read()` inside the `Task.Run` — raising `PropertyChanged` into the shown
-panel's eleven bindings, off-thread, a few milliseconds after its test had ended.
-
-**The evidence, in the order it was gathered.**
-
-- Reproduced on demand: 4 failures in 24 vanilla Release runs of the App suite (~1 in 6 that day).
-- In **all five** locally caught failures, the victim test began 13–44 ms after
-  `TheGlyphIsUpForTheDrawAndNotOnlyForTheRead` ended — five different victims, one predecessor,
-  read from the trx timestamps.
-- The instrumentation the third occurrence asked for was finally written
-  (`tests/D47.App.Tests/FlakeInstrumentation.cs`, armed only when `D47_FLAKE_LOG` names a file),
-  and the fifth catch carried it: at the moment of the throw the session thread was id 41 and
-  `Dispatcher.UIThread` was owned by **id 4, an anonymous threadpool worker**. The hijack,
-  observed rather than inferred.
-- With the fix in and the fault reintroduced by hand, the new regression test failed
-  deterministically, naming the property: *"raised off the drawing thread: LogText"*. Restored,
-  it passes.
-- 40 consecutive Release runs of the whole App suite with the fix: **zero failures**, and the
-  instrumentation — still armed — recorded not one `VerifyAccess` violation. The odds of 40 clean
-  runs with the fault still present were under 0.1%.
-
-**The fix.** `PanelViewModel.RefreshLog` is split: `ReadLog()` is the file work with no property
-set, safe on any thread; `ShowLog(text)` is the property set, UI thread like every other setter
-there; and `PanelView.ReadLogAsync` reads on the worker, then tells the page after the await, on
-the drawing thread. A read a test abandons is now structurally inert — its continuation posts into
-that test's dead dispatcher instance and is dropped, and nothing in the tail can touch the global.
-Guarded by `TheLogPageSaysItIsWorkingTests.TheReadTellsThePageOnTheThreadThatDraws`, which fails
-on the exact reintroduced fault with no flake-looping required.
-
-**Upstream, and the pattern to keep out of the tree.** The enabling behaviour — the global
-dispatcher silently rebinding to any thread that reads it mid-reset — is Avalonia's, reported as
-[AvaloniaUI/Avalonia#22021](https://github.com/AvaloniaUI/Avalonia/issues/22021); nothing shipped
-or committed upstream addresses it, so the local fix is the fix, and the hazard class remains:
-**any** `PropertyChanged` raised off-thread on a bound view model, and any direct
-`Dispatcher.UIThread` touch from a worker, can re-arm this. One production copy of the shape
-existed, untested and therefore inert: `LogbookWindow`'s background estimate ended in a
-`Dispatcher.UIThread.Post` from its worker — and its `Changed` subscription read the global from
-whatever thread the book raised on, which the worker did. Both were reshaped the same day on the
-same branch: the worker computes, the window is told after the await, and `OnChanged` posts
-through the window's own dispatcher instance, which a leaked test copy can only ever post into a
-dead queue.
 
 ## Open: the audition pair's five-second timeouts are a separate fault
 
@@ -212,53 +148,3 @@ record rather than from the game.
 eats them — the shortfall is netted across every live plan at once." That is honest and correct
 about what the tool returns, and it is also a capability the Commander asked for and did not get.
 If it is worth having, it is a `list.md` item, not this file.
-
-## Open: two Commanders share one ship id, in the core bindings and in the builds
-
-Found by inspection on 2026-08-21, while scoping `list.md` Phase 44. **Verified in the code and
-not yet observed in a running app** — which is the honest state of it, and the preamble's rule
-applies: reproduce before fixing.
-
-**Elite's `ShipID` is per Commander and starts small.** Two stores key on it and carry no
-Commander at all:
-
-- `ShipCoreStore.cs:25` — `ShipCoreBinding(int ShipId, string Core, …)`, looked up by
-  `For(int shipId)` at `ShipCoreStore.cs:107`, which is `Bindings.FirstOrDefault(b => b.ShipId
-  == shipId)` and nothing else.
-- `ShipBuild.cs:162` — `ShipBuild(string Id, string Hull, int? ShipId, …)`, looked up by
-  `ShipBuildStore.ForShip(int)` at `ShipBuildStore.cs:88`, and matched on `ShipId` again in
-  `ShipPlanService.cs:125`, `:147`, `:152` and `:486`.
-
-So one Commander's ship 7 and another's ship 7 are the same row. A core bound under one answers
-for the other, and `ShipDriftWatch` compares one Commander's build against the other's actual
-ship and asks about a drift that is not real.
-
-**The load-time guard makes it louder than a wrong answer.** Both files enforce one-per-ship
-where they are *read*, deliberately, because a hand edit is the route that would otherwise
-produce two — `ShipCoreStore.cs:274` refuses with *"ship 7 is bound twice, and a ship has one
-core"* and `ShipBuildStore.cs:237` with *"ship 7 already has a build, and a ship has one"*. Both
-sentences are true of a ship and false of two ships that share an id. The second Commander is
-therefore not merely given the wrong answer; **they cannot record their own** while the first
-Commander's entry exists, and the refusal names a rule that is not the one being broken.
-
-**The precedent was followed everywhere else.** `ChecklistScope.Ship(int)` is ship-id keyed too,
-but `ChecklistDocument` carries `CommanderFid`, so a checklist is per Commander *and* per ship.
-`SamplingStore`, `MemoryStore`, `GoalStore`, `HabitStore` and `LoreStore` all key per Commander
-with the key inside the document. These two stores are the ones that missed it. The identity is
-available at the point of use: `GameStateStore` has kept a bucket per Frontier id since Phase 2.
-
-**There is a live half, and keying the stores does not reach it.** Two objects hold the ship they
-have already acted on as a bare `int?` — `ShipCoreService._aboard` (`ShipCoreService.cs:57`) and
-`ShipDriftWatch._aboard`. Two Commanders both sitting in ship 7 read as *no change*, so the first
-Commander's core stays aboard even once the stores tell them apart. `ShipCoreService._started`
-has the mirror-image problem: left set across a switch, the second Commander's first ship reads
-as a swap and spends a gap reaction — a model round trip — on a boarding that never happened.
-
-**What would settle it.** Two Commanders on one installation, each flying a ship whose id the
-other also owns; bind a core under the first and read `data/`'s bindings file and the second
-Commander's panel. Ship ids are small and dense, so two Commanders each flying their main is
-enough — this does not need contrivance.
-
-**Fix and phase.** The keying is a defect and can ship on its own, ahead of `list.md` Phase 44,
-which assumes throughout that these two stores tell Commanders apart. The live half wants the
-switch signal Phase 44 describes and is better done there.

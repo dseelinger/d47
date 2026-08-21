@@ -82,7 +82,7 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     /// </summary>
     private string? Ask(int ship)
     {
-        if (ships.Store.ForShip(ship) is not { } build
+        if (ships.ForShip(ship) is not { } build
             || build.Scope is not { } scope
             || Drift(build) is not { } drift)
         {
@@ -128,7 +128,7 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     private void Settle()
     {
         if (_asked is not { } asked
-            || ships.Store.ForShip(asked.Ship) is not { } build
+            || ships.ForShip(asked.Ship) is not { } build
             || build.Scope is not { } scope)
         {
             _asked = null;

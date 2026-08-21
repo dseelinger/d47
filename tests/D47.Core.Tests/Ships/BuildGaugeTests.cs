@@ -42,7 +42,7 @@ public class BuildGaugeTests
     }
 
     private static ShipBuild Build(ShipLoadout loadout, params SlotPlan[] plans) =>
-        new("ship-1", loadout.Type ?? "unknown", loadout.ShipId, loadout.Name, plans);
+        new("F1", "ship-1", loadout.Type ?? "unknown", loadout.ShipId, loadout.Name, plans);
 
     [Fact]
     public void TheBestNeedleIsTheFigureEliteReports()
@@ -124,7 +124,7 @@ public class BuildGaugeTests
     [Fact]
     public void AShipD47HasNeverBeenInsideSaysSoRatherThanDrawingAFigure()
     {
-        var gauges = ShipGauges.Read(new ShipBuild("ship-2", "anaconda", 9), seen: null);
+        var gauges = ShipGauges.Read(new ShipBuild("F1", "ship-2", "anaconda", 9), seen: null);
 
         Assert.Null(gauges.Power);
         Assert.Null(gauges.Jump);

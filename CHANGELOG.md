@@ -17,6 +17,31 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.47.1 — 2026-08-21 — Two Commanders no longer share one ship id
+
+**Ship-to-core bindings and ship builds are now per Commander.** Elite's `ShipID` is per Commander
+and starts small, so one Commander's ship 7 and another's ship 7 were the same row in both
+`ship-cores.json` and `ships.json`: a core bound under one Commander answered for the other, the
+drift watch compared one Commander's build against the other's actual ship and asked about a drift
+that was not real, and — because both files refuse a second entry for a ship that already has one —
+the second Commander could not record their own at all, refused with a sentence that was true of a
+ship and false of two ships sharing an id. Found by inspection while scoping list.md Phase 44,
+which assumes throughout that these two stores tell Commanders apart.
+
+Both records now carry the Commander's Frontier id **inside the document, never in a path** — the
+rule the checklist set and every other per-Commander store already followed; these two were the
+ones that missed it. Files written by earlier releases carry no Commander, so **the first Commander
+seen claims them whole** — the same adoption the checklist gives notes taken before anyone was
+identified — and a hand-written line without a `commanderFid` is adopted the same way rather than
+refused. The Commander's name is written beside the id, for a person reading a file two Commanders
+now share; like the hull and the ship name, it is never read back.
+
+**The live half of the defect is not in this release, deliberately.** `ShipCoreService` and
+`ShipDriftWatch` each hold the ship they have already acted on as a bare int, so two Commanders
+both sitting in ship 7 still read as *no change* across a login switch even with the stores keyed.
+That needs the Commander-switch signal Phase 44 describes, and it ships there — the phase's own
+items record it.
+
 ## 0.47.0 — 2026-08-21 — Limpets before you leave, and Oppi is not Federal
 
 **D47 can remind you to buy limpets.** Dock somewhere that sells them, with a hold worth filling and
@@ -62,6 +87,19 @@ route besides. Re-reading all seventy stock lines against that rule turned up fo
 same mistake, about atmosphere, gravity, and whether your hold is empty. All five are rewritten, and
 the rule they broke is now written where the next line gets added: an ambient remark has to be true
 of its situation at every moment inside it, because nothing checks.
+
+**And the test suite's five-month cleanup flake is fixed** *(shipped in this release; its changelog
+line was missed and added 2026-08-21)*. Ten times across five months, one arbitrary test per failing
+run died in *cleanup* with a cross-thread error. The mechanism: Avalonia's global dispatcher rebinds
+to whichever thread reads it first after the per-test reset, and one test's abandoned background log
+read raised `PropertyChanged` off-thread a few milliseconds after its own test had ended, hijacking
+the UI thread's identity out from under whichever test was being stood up next. The read and the
+property set are split now — the worker computes, the page is told on the drawing thread — and the
+same pattern was closed in `LogbookWindow`, its one production copy. Reintroducing the fault fails
+the new regression test by name; 40 consecutive Release runs with the fix recorded zero failures.
+The enabling behaviour is reported upstream as
+[AvaloniaUI/Avalonia#22021](https://github.com/AvaloniaUI/Avalonia/issues/22021), and the full
+history is in [docs/plans/flake-hunt.md](docs/plans/flake-hunt.md).
 
 ---
 

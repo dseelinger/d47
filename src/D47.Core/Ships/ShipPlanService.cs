@@ -102,6 +102,21 @@ public sealed class ShipPlanService(
     public ShipBuildStore Store => store;
 
     /// <summary>
+    /// Whose plans are being read and written. Half the store's key (the list.md Phase 44 defect
+    /// item): Elite's ship ids are per Commander, so ship 7 alone does not name a ship, and one
+    /// Commander's fleet page must not offer another's builds.
+    /// </summary>
+    private string Fid => state()?.Identity.FrontierId ?? string.Empty;
+
+    private string? CommanderName => state()?.Identity.Name;
+
+    /// <summary>This Commander's builds — every read here goes through this, never the whole file.</summary>
+    private IReadOnlyList<ShipBuild> Mine => store.BuildsFor(Fid);
+
+    /// <summary>This Commander's build for a journal ship id, or null when nothing is planned.</summary>
+    public ShipBuild? ForShip(int shipId) => store.ForShip(Fid, shipId);
+
+    /// <summary>
     /// The fleet as the page shows it: every ship the Commander owns, and every hull they intend,
     /// in one list.
     /// <para>
@@ -114,7 +129,7 @@ public sealed class ShipPlanService(
     {
         var live = state();
         var active = live?.Ship;
-        var builds = store.Builds;
+        var builds = Mine;
         var entries = new List<FleetEntry>();
         var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -242,7 +257,7 @@ public sealed class ShipPlanService(
     /// </summary>
     public ShipBuild BuildFor(int shipId, string hull, string? name = null)
     {
-        if (store.ForShip(shipId) is { } existing)
+        if (ForShip(shipId) is { } existing)
         {
             return existing;
         }
@@ -252,7 +267,10 @@ public sealed class ShipPlanService(
         // and the fleet hands out `StoredShip.Type`, which is `ShipType_Localised` where Frontier
         // supplies one. A build holding "Panther Clipper Mk II" matched no layout and reported
         // every one of its slots stale (reported 2026-08-20).
-        var build = new ShipBuild(NextId(), Knowledge.EliteSpecifications.Ship(hull)?.Symbol ?? hull, shipId, name);
+        var build = new ShipBuild(Fid, NextId(), Knowledge.EliteSpecifications.Ship(hull)?.Symbol ?? hull, shipId, name)
+        {
+            CommanderName = CommanderName,
+        };
 
         store.Save([.. store.Builds, build]);
         return build;
@@ -279,7 +297,10 @@ public sealed class ShipPlanService(
             return null;
         }
 
-        var build = new ShipBuild(NextId(), specification.Symbol, ShipId: null, name);
+        var build = new ShipBuild(Fid, NextId(), specification.Symbol, ShipId: null, name)
+        {
+            CommanderName = CommanderName,
+        };
 
         store.Save([.. store.Builds, build]);
         return build;
@@ -454,6 +475,14 @@ public sealed class ShipPlanService(
     /// </summary>
     public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events)
     {
+        // Builds from before the file carried a Commander are claimed by the first one seen —
+        // a pre-existing file was written by the installation's one Commander, and leaving them
+        // unowned would empty every fleet page on the release that added the key.
+        if (state()?.Identity is { FrontierId.Length: > 0 } identity)
+        {
+            store.Adopt(identity.FrontierId, identity.Name);
+        }
+
         var said = new List<string>();
 
         foreach (var journalEvent in events)
@@ -483,12 +512,12 @@ public sealed class ShipPlanService(
             // bind itself to the Python already being flown the moment the Commander boarded it.
             // `ShipyardNew` cannot collide — the id is brand new — so this guards the path added
             // here, which can be raised for a ship that has been owned for a year.
-            if (store.Builds.Any(build => build.ShipId == id))
+            if (Mine.Any(build => build.ShipId == id))
             {
                 continue;
             }
 
-            var candidates = store.Builds
+            var candidates = Mine
                 .Where(build => !build.IsOwned
                                 && string.Equals(build.Hull, hull, StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -515,7 +544,7 @@ public sealed class ShipPlanService(
             return "There is no such build.";
         }
 
-        if (store.ForShip(shipId) is { } already && already.Id != buildId)
+        if (ForShip(shipId) is { } already && already.Id != buildId)
         {
             return $"Ship {shipId.ToString(CultureInfo.InvariantCulture)} already has a build, and a ship has one.";
         }

@@ -48,12 +48,12 @@ public class UnlockPlannerTests
 
     /// <summary>Dirty drives at grade 5, which only three people in the game roll.</summary>
     private static ShipBuild Thrusters() =>
-        new("ship-1", "python", 12, "Bad Idea",
+        new("F1", "ship-1", "python", 12, "Bad Idea",
             [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5)]);
 
     /// <summary>A second plan, on a module with a different and overlapping set of engineers.</summary>
     private static ShipBuild Drive() =>
-        new("ship-2", "krait_mkii", 13, "Long Way",
+        new("F1", "ship-2", "krait_mkii", 13, "Long Way",
             [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]);
 
     /// <summary>
@@ -61,12 +61,12 @@ public class UnlockPlannerTests
     /// people entirely, which is the per-grade point made twice over.
     /// </summary>
     private static ShipBuild SofterThrusters() =>
-        new("ship-3", "python", 12, "Bad Idea",
+        new("F1", "ship-3", "python", 12, "Bad Idea",
             [new SlotPlan("MainEngines", "Dirty Drive Tuning", 3)]);
 
     /// <summary>Armour, which Liz Ryder rolls and Felicity Farseer does not.</summary>
     private static ShipBuild Hull() =>
-        new("ship-4", "cobramkiii", 14, "Tin Can",
+        new("F1", "ship-4", "cobramkiii", 14, "Tin Can",
             [new SlotPlan("Armour", "Heavy Duty", 1, Module: "Armour")]);
 
     /// <summary>

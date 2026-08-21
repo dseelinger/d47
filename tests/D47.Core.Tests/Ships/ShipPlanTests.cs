@@ -258,6 +258,103 @@ public class ShipPlanTests
     }
 
     /// <summary>
+    /// The Commander is half the key (the list.md Phase 44 defect item): Elite's ship ids are per
+    /// Commander and start small, so two Commanders' ship 12s are two ships and neither build is a
+    /// duplicate of the other.
+    /// </summary>
+    [Fact]
+    public void TwoCommandersMayEachHaveABuildForTheSameShipId()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+
+        File.WriteAllText(path, """
+        {
+          "ships": [
+            { "commanderFid": "F1", "id": "ship-1", "hull": "python", "shipId": 12 },
+            { "commanderFid": "F2", "id": "ship-2", "hull": "anaconda", "shipId": 12 }
+          ]
+        }
+        """);
+
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        store.Poll();
+
+        Assert.Equal(2, store.Builds.Count);
+        Assert.Empty(store.Problems);
+        Assert.Equal("python", store.ForShip("F1", 12)!.Hull);
+        Assert.Equal("anaconda", store.ForShip("F2", 12)!.Hull);
+    }
+
+    /// <summary>
+    /// The other half of the same defect, seen from the service: another Commander's ship 12 is a
+    /// different ship, so their build must not answer for this Commander's — which is what had
+    /// <c>ShipDriftWatch</c> comparing one Commander's build against the other's actual ship.
+    /// </summary>
+    [Fact]
+    public void AnotherCommandersBuildDoesNotAnswerForThisCommandersShip()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+
+        store.Save([new ShipBuild("F2", "ship-1", "anaconda", 12, "Someone Else's")]);
+
+        var game = new GameStateStore();
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}"""));
+
+        var ships = Service(install, store, game.Active!);
+
+        Assert.Null(ships.ForShip(12));
+
+        // The fleet page is this Commander's: their flown ship with no plan on it, and the other
+        // Commander's build nowhere in the list.
+        var flown = Assert.Single(ships.Fleet());
+
+        Assert.True(flown.IsActive);
+        Assert.Null(flown.Build);
+    }
+
+    /// <summary>
+    /// A file from before builds carried a Commander: claimed whole by the first one seen, the way
+    /// the checklist adopts unowned notes — a release must not silently empty every fleet page.
+    /// </summary>
+    [Fact]
+    public void ALegacyBuildFileIsAdoptedByTheFirstCommanderSeen()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+
+        File.WriteAllText(path, """
+        {
+          "ships": [
+            { "id": "ship-1", "hull": "python", "shipId": 12 }
+          ]
+        }
+        """);
+
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        store.Poll();
+
+        var game = new GameStateStore();
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        var ships = Service(install, store, game.Active!);
+
+        Assert.Null(ships.ForShip(12));
+
+        ships.Observe([]);
+
+        Assert.Equal("F1", ships.ForShip(12)!.CommanderFid);
+    }
+
+    /// <summary>
     /// Promotion goes through the proposal path, so nothing lands on the checklist unasked.
     /// </summary>
     [Fact]

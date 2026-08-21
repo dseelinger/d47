@@ -48,7 +48,7 @@ public class PlanGapTests
     }
 
     private static ShipBuild Ship(int? shipId = 12) =>
-        new("ship-1", "python", shipId, "Bad Idea",
+        new("F1", "ship-1", "python", shipId, "Bad Idea",
             [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")]);
 
     private static OnFootBuild Suit(long? itemId = 7) =>

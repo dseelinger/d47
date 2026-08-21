@@ -146,11 +146,20 @@ public sealed record SlotPlan(
 /// first step rather than a precondition sitting outside it.
 /// </para>
 /// </summary>
+/// <param name="CommanderFid">
+/// Whose plan this is — the Frontier id, <b>inside the document rather than in a path</b>, which is
+/// <see cref="Checklists.ChecklistDocument"/>'s rule for the same untrusted input. It is half of
+/// what makes <see cref="ShipId"/> mean anything: Elite's ship ids are per Commander and start
+/// small, so without it one Commander's ship 7 answered for another's (the list.md Phase 44 defect
+/// item). Empty for a build written before this file carried a Commander, or planned before any
+/// Commander was known; the first Commander seen adopts those.
+/// </param>
 /// <param name="Id">
 /// This build's own identity, stable from the moment it is created and <b>independent of
 /// <see cref="ShipId"/></b>. That independence is load-bearing: buying the hull binds a real
 /// <c>ShipID</c> to a plan that already exists, and a plan identified by the id it does not have
-/// yet is a plan there is nothing to rebind.
+/// yet is a plan there is nothing to rebind. Unique across the whole file, not per Commander, so
+/// nothing that holds one needs to say whose it was.
 /// </param>
 /// <param name="Hull">
 /// The hull symbol as the journal writes it — <c>python</c>, <c>federation_corvette</c>. What a
@@ -160,6 +169,7 @@ public sealed record SlotPlan(
 /// <param name="Name">What the Commander calls it, where they have said.</param>
 /// <param name="Slots">One entry per slot they have an opinion about, in the order stated.</param>
 public sealed record ShipBuild(
+    string CommanderFid,
     string Id,
     string Hull,
     int? ShipId = null,
@@ -167,6 +177,10 @@ public sealed record ShipBuild(
     IReadOnlyList<SlotPlan>? Slots = null)
 {
     public IReadOnlyList<SlotPlan> Slots { get; init; } = Slots ?? [];
+
+    /// <summary>The Commander's name at the time of writing, for a person reading a file two
+    /// Commanders now share. Never the key.</summary>
+    public string? CommanderName { get; init; }
 
     /// <summary>
     /// The disagreement between this build and the checklist that the Commander has already said
