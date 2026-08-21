@@ -190,6 +190,10 @@ SLOT_KIND_COLUMNS = ["kind", "mtypes"]
 # modelling it as a boolean would hide three quarters of an anti-xeno loadout.
 LIMIT_COLUMNS = ["group", "most"]
 
+# A module EDSY knows and no naming source covers. See the `[known-but-unnamed]` block
+# in `main`.
+UNNAMED_COLUMNS = ["symbol", "mtype"]
+
 PADS = {1: "small", 2: "medium", 3: "large"}
 
 # The three mounts, spelled as `outfitting.csv` spells them, keyed by the infix Frontier puts
@@ -525,6 +529,40 @@ def build_modules(
 
                 duplicated.setdefault(symbol, 0)
                 duplicated[symbol] += 1
+
+    # **A module Frontier names and coriolis-data has no figures for still exists.** The same
+    # rule the bulkheads above already follow, applied to the rest: this loop iterates
+    # coriolis-data, so anything absent from it was silently dropped however plainly
+    # `outfitting.csv` named it. 28 of them on 2026-08-20 — the Mk II passenger cabins, the
+    # size 8 drives, the three discovery scanners and the `_free` starter variants — and every
+    # one is something a Commander can have fitted, reaching them as a de-underscored symbol.
+    #
+    # Figures are what is lost, not existence. A named row with no mass and no power still
+    # answers "that is your MkII Economy Class Passenger Cabin".
+    for identity in by_symbol.values():
+        symbol = identity["symbol"].lower()
+
+        # Bulkheads are per-hull and are built separately, from this same source.
+        if symbol in seen or identity.get("ship"):
+            continue
+
+        seen[symbol] = ((False, 0), [
+            symbol,
+            identity["name"],
+            identity.get("class", ""),
+            identity.get("rating", ""),
+            mount_of(symbol),
+
+            # Nothing measured it.
+            "", "", "", "",
+            "", "", "", "",
+            "", "", "", "", "",
+
+            # Filled from EDSY in main(), where the join happens.
+            "", "", "",
+            "", "",
+            "",
+        ])
 
     built = [row for _, row in seen.values()]
 
@@ -1109,6 +1147,12 @@ def main() -> None:
     # slot will offer, which is a quiet hole in a picker rather than a wrong figure anywhere.
     types = edsy_modules(database, {ship["id"]: hull for hull, ship in hulls.items()})
     limits = edsy_limits(database)
+
+    # Everything EDSY has a type for that never became a row: no `outfitting.csv` name and no
+    # coriolis-data figures, so `build_modules` never saw it.
+    named = {row[0] for row in modules}
+    unnamed_modules = sorted(
+        [symbol, edsy[0]] for symbol, edsy in types.items() if symbol not in named and edsy[0])
     untyped = []
 
     for row in modules:
@@ -1167,6 +1211,20 @@ def main() -> None:
     # Named and nothing else. A ship in this section exists and d47 has no figures for it,
     # which is a different answer from never having heard of it.
     lines += ["[known-but-unmeasured]", *unkeyed]
+
+    # The module equivalent, and it is not the same gap. A ship here has a *name* and no figures;
+    # a module here has neither, because `outfitting.csv` and coriolis-data both lack it entirely
+    # and only EDSY's slot database knows the symbol exists at all. Frontier ships modules ahead of
+    # the id sources — the Mk II fighter bay and the Mk II passenger cabins on 2026-08-20 — and
+    # until now they were dropped, so a fitted one reached the Commander as
+    # `int fighterbaymk2 size5 class1 free`: the symbol with its underscores taken out, which is
+    # what `ModuleNames.ReadableOrNull` does to anything it does not know.
+    #
+    # **The type is what makes this worth writing down.** EDSY says the Mk II bay is `ifh`, which
+    # is the type the three original Fighter Hangars carry, so d47 can name it by its group — a
+    # fact derived from its own table rather than a name invented for it.
+    lines += ["[known-but-unnamed]", "\t".join(UNNAMED_COLUMNS)]
+    lines += ["\t".join(row) for row in unnamed_modules]
 
     OUTPUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 

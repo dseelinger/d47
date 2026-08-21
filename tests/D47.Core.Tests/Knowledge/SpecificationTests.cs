@@ -263,8 +263,38 @@ public class SpecificationTests
             .Order(StringComparer.Ordinal)
             .ToList();
 
+        // **Amended 2026-08-20**, and the amendment is the gate working rather than being
+        // weakened. Keeping a module `outfitting.csv` names and coriolis-data has no figures for —
+        // the rule the bulkheads have always followed — added 28 modules, and ten of them collide
+        // with a name already in the table. Every qualifier below is Frontier's own symbol token
+        // and every one is true:
+        //
+        //   * `(free)` separates the starter-ship variants from the modules they share a name
+        //     with. A Sidewinder flies with them, so they are not hypothetical.
+        //   * `(size5)` and `(size6)` separate the Mk II cabins, which `outfitting.csv` files
+        //     under one name *and* one class — it rates the size 6 pair class 5. The symbol is the
+        //     only place the difference survives, which is exactly where `disambiguate` looks.
+        //
+        // A qualifier appearing that is not in this list still means a name went missing upstream.
         Assert.Equal(
-            ["Frame Shift Drive (SCO)", "Mk II Supercharge Optimised Frame Shift Drive (SCO)"],
+            [
+                "Basic Discovery Scanner (free)",
+                "Cargo Rack (free)",
+                "Frame Shift Drive (SCO)",
+                "Frame Shift Drive (free)",
+                "Fuel Tank (free)",
+                "Life Support (free)",
+                "Mk II Supercharge Optimised Frame Shift Drive (SCO)",
+                "MkII Business Class Passenger Cabin (size5)",
+                "MkII Business Class Passenger Cabin (size6)",
+                "MkII Economy Class Passenger Cabin (size5)",
+                "MkII Economy Class Passenger Cabin (size6)",
+                "Power Distributor (free)",
+                "Power Plant (free)",
+                "Sensors (free)",
+                "Shield Generator (free)",
+                "Thrusters (free)",
+            ],
             qualified);
     }
 

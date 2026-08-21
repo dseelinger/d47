@@ -17,6 +17,56 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.42.0 — 2026-08-20 — Reality and the goal, side by side
+
+**A slot row now holds both the module on the hull and the module planned for it.** The
+Commander's ruling, and it settles a row that had been wrong in both directions inside two days:
+naming the fitted module beside the plan's roll described something that exists nowhere, and
+naming only the plan's module dropped what is actually fitted. *One is reality, the other is the
+goal.* So the row says `5D Module Reinforcement → 5E Hull Reinforcement Package`, what is there
+muted and what is planned in bold, and grows a second name only where there is genuinely a second
+thing to say.
+
+**Twenty-eight modules Frontier names and d47 was dropping.** The specification table is built by
+walking coriolis-data and joining names to it, so anything coriolis has no figures for never became
+a row however plainly Frontier's own id list named it — the **Mk II passenger cabins**, the size 8
+drives, the three discovery scanners and the starter-ship variants every Sidewinder flies with.
+The bulkheads beside them have followed the opposite rule for months: figures are what a missing
+source costs, not existence. Now they all do.
+
+**And a module nobody names at all is said by its family.** The Mk II Fighter Hangar — the one
+that holds a Nomad — is in no naming source; only EDSY's slot database knows the symbol exists. It
+reached the Commander as `int fighterbaymk2 size5 class1 free`. EDSY does know its *type* is the
+one the three original Fighter Hangars carry, so it now reads **"Fighter Hangar (newer than my
+table)"**: derived from d47's own table, and honest about which half it knows. Where a family has
+more than one name — the passenger cabins hold Economy, Business, First and Luxury — nothing is
+guessed and the old spelling stands.
+
+**A drag carries the module the row was showing.** Dragging a hull reinforcement onto two empty
+compartments left them reading *"empty · Heavy Duty Hull Reinforcement (G5), Deep Plating"* — a
+roll with nothing to roll on. The source plan names no module on purpose, because *keep what is
+fitted, I only want the engineering* stores the roll alone; the drag now brings the fitted module
+along, resized to what the target takes.
+
+**And the module already in the slot can be kept.** *"No option to keep the Life Support I already
+have"*, and the same for Sensors. A socket offering one module name skips the page that carried
+the **keep what is fitted** row, so it was unreachable exactly where it was most wanted — nobody
+replaces their life support, they engineer it. The variant page now leads with it.
+
+**Two quality gates were amended rather than loosened.** Ten of the twenty-eight new modules
+collide with a name already in the table, and the generator separates them with a token from
+Frontier's own symbol: `(free)` for the starter variants, `(size5)` and `(size6)` for the Mk II
+cabins that the id list files under one name *and* one class. The gates exist to catch a name that
+went missing upstream; these are names that arrived. Both now list what is expected and why, so a
+new qualifier still fails them.
+
+**A theory about the headless-session failure was tested and killed.** Running the App suite one
+test at a time should have closed the window it needs; seventeen runs later it had failed twice
+anyway, at the same rate as before. Reverted, and written up in `bugs.md` — a mechanism that does
+not do what it was added for is worth less than the negative result.
+
+---
+
 ## 0.41.3 — 2026-08-20 — The slot row stops describing things that do not exist
 
 **A row now names the module you planned, not the one you are replacing.** Reported twice in an

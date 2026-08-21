@@ -10,8 +10,8 @@
 # modules/, and their names carry the hull because forty-eight hulls have a
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
-# Ships: 44. Modules: 1164, of which bulkheads 241. Known but unmeasured: 3.
-# Slots: 1247 across 48 hulls. Modules with no type: 2.
+# Ships: 44. Modules: 1192, of which bulkheads 241. Known but unmeasured: 3.
+# Slots: 1247 across 48 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
 # Built: 2026-08-20.
 [ships]
@@ -390,6 +390,7 @@ int_buggybay_size6_class1	Planetary Vehicle Hangar	6	H		34	0.6	30	576000								
 int_buggybay_size6_class2	Planetary Vehicle Hangar	6	G		17	1.8	30	691200										ipvh			fighter bays=4	A module designed to house ground-based vehicles.	
 int_cargorack_size1_class1	Cargo Rack	1	E		0			1000										icr				Standardised storage rack for use in automated cargo transfer system.	
 int_cargorack_size2_class1	Cargo Rack	2	E		0			3250										icr				Standardised storage rack for use in automated cargo transfer system.	
+int_cargorack_size2_class1_free	Cargo Rack (free)	2	E																				
 int_cargorack_size3_class1	Cargo Rack	3	E		0			10563										icr				Standardised storage rack for use in automated cargo transfer system.	
 int_cargorack_size4_class1	Cargo Rack	4	E		0			34328										icr				Standardised storage rack for use in automated cargo transfer system.	
 int_cargorack_size5_class1	Cargo Rack	5	E		0			111566										icr				Standardised storage rack for use in automated cargo transfer system.	
@@ -492,6 +493,7 @@ int_dronecontrol_repair_size7_class2	Repair Limpet Controller	7	D		32	0.41		8748
 int_dronecontrol_repair_size7_class3	Repair Limpet Controller	7	C		80	0.69		1749600										irlc			range=1.7	Controls a limpet that repairs an amount of damage to the hull of a targeted ship.	
 int_dronecontrol_repair_size7_class4	Repair Limpet Controller	7	B		128	0.97		3499200										irlc			range=2.04	Controls a limpet that repairs an amount of damage to the hull of a targeted ship.	
 int_dronecontrol_repair_size7_class5	Repair Limpet Controller	7	A		80	0.83		6998400										irlc			range=2.38	Controls a limpet that repairs an amount of damage to the hull of a targeted ship.	
+int_dronecontrol_resourcesiphon	Hatch Breaker Limpet Controller	1	I															ihblc					
 int_dronecontrol_resourcesiphon_size1_class1	Hatch Breaker Limpet Controller	1	E		1.3	0.12		600										ihblc			range=1.5	Control unit that can program a blank limpet to hack a target's hold, causing cargo ejection.	
 int_dronecontrol_resourcesiphon_size1_class2	Hatch Breaker Limpet Controller	1	D		0.5	0.16		1200										ihblc			range=2	Control unit that can program a blank limpet to hack a target's hold, causing cargo ejection.	
 int_dronecontrol_resourcesiphon_size1_class3	Hatch Breaker Limpet Controller	1	C		1.3	0.2		2400										ihblc			range=2.5	Control unit that can program a blank limpet to hack a target's hold, causing cargo ejection.	
@@ -514,6 +516,7 @@ int_dronecontrol_resourcesiphon_size7_class4	Hatch Breaker Limpet Controller	7	B
 int_dronecontrol_resourcesiphon_size7_class5	Hatch Breaker Limpet Controller	7	A		80	0.98		6998400										ihblc			range=6.02	Control unit that can program a blank limpet to hack a target's hold, causing cargo ejection.	
 int_dronecontrol_unkvesselresearch	Research Limpet Controller	1	E		1.3	0.4	20	1749600										islc			range=2		
 int_engine_size2_class1	Thrusters	2	E		2.5	2	46	1978	48									ct			minimum mass=24;maximum mass=72;multiplier at minimum=0.83;multiplier at optimal=1;multiplier at maximum=1.03	Normal-space propulsion system.	
+int_engine_size2_class1_free	Thrusters (free)	2	E																				
 int_engine_size2_class2	Thrusters	2	D		1	2.25	41	5934	54									ct			minimum mass=27;maximum mass=81;multiplier at minimum=0.86;multiplier at optimal=1;multiplier at maximum=1.06	Normal-space propulsion system.	
 int_engine_size2_class3	Thrusters	2	C		2.5	2.5	51	17803	60									ct			minimum mass=30;maximum mass=90;multiplier at minimum=0.9;multiplier at optimal=1;multiplier at maximum=1.1	Normal-space propulsion system.	
 int_engine_size2_class4	Thrusters	2	B		4	2.75	61	53408	66									ct			minimum mass=33;maximum mass=99;multiplier at minimum=0.93;multiplier at optimal=1;multiplier at maximum=1.13	Normal-space propulsion system.	
@@ -617,6 +620,7 @@ int_fuelscoop_size8_class3	Fuel Scoop	8	C			0.8		18065165										ifs			rate=12
 int_fuelscoop_size8_class4	Fuel Scoop	8	B			0.96		72260660										ifs			rate=1440	Fly close to the sun with an active fuel scoop to collect fuel.	ifs
 int_fuelscoop_size8_class5	Fuel Scoop	8	A			1.12		289042641										ifs			rate=1680	Fly close to the sun with an active fuel scoop to collect fuel.	ifs
 int_fueltank_size1_class3	Fuel Tank	1	C		0			1000										cft				Storage container for fuel used by ship's power plant.	
+int_fueltank_size1_class3_free	Fuel Tank (free)	1	C																				
 int_fueltank_size2_class3	Fuel Tank	2	C		0			3750										cft				Storage container for fuel used by ship's power plant.	
 int_fueltank_size3_class3	Fuel Tank	3	C		0			7063										cft				Storage container for fuel used by ship's power plant.	
 int_fueltank_size4_class3	Fuel Tank	4	C		0			24734										cft				Storage container for fuel used by ship's power plant.	
@@ -721,6 +725,7 @@ int_hyperdrive_overcharge_size8_class4	Frame Shift Drive (SCO)	8	B		160	0.88	169
 int_hyperdrive_overcharge_size8_class5	Frame Shift Drive (SCO)	8	A		160	1.05	188	61546940	4670	20.7	2.9	0.013						cfsdo		1		Faster-than-light capable ship drive, featuring experimental overcharge capabilities, necessary for supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii	Mk II Supercharge Optimised Frame Shift Drive (SCO)	8	A		160	1.05	188	82042060	4670	6.8	2.5025	0.011						cfsdo	explorer_nx	1		Faster-than-light capable ship drive, featuring experimental overcharge capabilities, necessary for supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_size2_class1	Frame Shift Drive	2	E		2.5	0.16	46	1978	48	0.6	2	0.011						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
+int_hyperdrive_size2_class1_free	Frame Shift Drive (free)	2	E																				
 int_hyperdrive_size2_class2	Frame Shift Drive	2	D		1	0.18	41	5934	54	0.6	2	0.01						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_size2_class3	Frame Shift Drive	2	C		2.5	0.2	51	17803	60	0.6	2	0.008						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_size2_class4	Frame Shift Drive	2	B		4	0.25	77	53408	75	0.8	2	0.01						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
@@ -750,9 +755,15 @@ int_hyperdrive_size7_class2	Frame Shift Drive	7	D		32	0.54	105	1899597	1620	8.5	
 int_hyperdrive_size7_class3	Frame Shift Drive	7	C		80	0.6	131	5698790	1800	8.5	2.75	0.008						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_size7_class4	Frame Shift Drive	7	B		128	0.75	197	17096371	2250	10.6	2.75	0.01						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
 int_hyperdrive_size7_class5	Frame Shift Drive	7	A		80	0.9	164	51289112	2700	12.8	2.75	0.012						cfsd				Device that allows supercruise travel and hyperspace jumps between star systems.	
+int_hyperdrive_size8_class1	Frame Shift Drive	8	E															cfsd					
+int_hyperdrive_size8_class2	Frame Shift Drive	8	D															cfsd					
+int_hyperdrive_size8_class3	Frame Shift Drive	8	C															cfsd					
+int_hyperdrive_size8_class4	Frame Shift Drive	8	B															cfsd					
+int_hyperdrive_size8_class5	Frame Shift Drive	8	A															cfsd					
 int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	panthermkii			Panther Clipper storage rack for use in automated cargo transfer system.	
 int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	panthermkii			Panther Clipper storage rack for use in automated cargo transfer system.	
 int_lifesupport_size1_class1	Life Support	1	E		1.3	0.32	32	517										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.	
+int_lifesupport_size1_class1_free	Life Support (free)	1	E																				
 int_lifesupport_size1_class2	Life Support	1	D		0.5	0.36	36	1293										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.	
 int_lifesupport_size1_class3	Life Support	1	C		1.3	0.4	40	3231										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.	
 int_lifesupport_size1_class4	Life Support	1	B		2	0.44	44	8078										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.	
@@ -802,6 +813,15 @@ int_metaalloyhullreinforcement_size4_class1	Meta Alloy Hull Reinforcement	4	E		1
 int_metaalloyhullreinforcement_size4_class2	Meta Alloy Hull Reinforcement	4	D		8			292501										imahrp				Increases the ship's hull integrity and resistance to caustic damage.	
 int_metaalloyhullreinforcement_size5_class1	Meta Alloy Hull Reinforcement	5	E		32			225001										imahrp				Increases the ship's hull integrity and resistance to caustic damage.	
 int_metaalloyhullreinforcement_size5_class2	Meta Alloy Hull Reinforcement	5	D		16			675001										imahrp				Increases the ship's hull integrity and resistance to caustic damage.	
+int_mkii_passengercabin_size2_class1	MkII Economy Class Passenger Cabin	2	D															ipc	mediumtransport01				
+int_mkii_passengercabin_size3_class1	MkII Economy Class Passenger Cabin	3	D															ipc	mediumtransport01				
+int_mkii_passengercabin_size3_class2	MkII Business Class Passenger Cabin	3	C															ipc	mediumtransport01				
+int_mkii_passengercabin_size4_class1	MkII Economy Class Passenger Cabin	4	D															ipc	mediumtransport01				
+int_mkii_passengercabin_size4_class2	MkII Business Class Passenger Cabin	4	C															ipc	mediumtransport01				
+int_mkii_passengercabin_size5_class1	MkII Economy Class Passenger Cabin (size5)	5	D															ipc	mediumtransport01				
+int_mkii_passengercabin_size5_class2	MkII Business Class Passenger Cabin (size5)	5	C															ipc	mediumtransport01				
+int_mkii_passengercabin_size6_class1	MkII Economy Class Passenger Cabin (size6)	5	D															ipc	mediumtransport01				
+int_mkii_passengercabin_size6_class2	MkII Business Class Passenger Cabin (size6)	5	C															ipc	mediumtransport01				
 int_mkiiagileboost_engine_size5_class5	Mk II Agile Boost Thrusters	5	A		20	6.29	106	6637629	840									ct	smallcombat01_nx		minimum mass=420;maximum mass=1260;multiplier at minimum=0.96;multiplier at optimal=1;multiplier at maximum=1.16	Normal-space propulsion system.	
 int_modulereinforcement_size1_class1	Module Reinforcement Package	1	E		2		77	5000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has high damage capacity but low absorption of module damage. I.e. it can absorb a small proportion of module damage each time over a long period before running out of damage capacity.	
 int_modulereinforcement_size1_class2	Module Reinforcement Package	1	D		1		70	15000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has low damage capacity but high absorption of module damage. I.e. it can absorb a large proportion of module damage each time over a short period before running out of damage capacity.	
@@ -841,6 +861,7 @@ int_passengercabin_size6_class4	Luxury Class Passenger Cabin	6	B		40			4974287		
 int_planetapproachsuite	Planetary Approach Suite	1	I		0	0		500														Assistant for planetary approach and landing.	
 int_planetapproachsuite_advanced	Advanced Planetary Approach Suite	1	I		0	0		500														Advanced assistant for planetary approach and landing.	
 int_powerdistributor_size1_class1	Power Distributor	1	E		1.3	0.32	46	517										cpd			weapons capacity=10;weapons recharge=1.2;systems capacity=8;systems recharge=0.4;engines capacity=8;engines recharge=0.4	Distribution system for ENG, SYS and WEP capacitors.	
+int_powerdistributor_size1_class1_free	Power Distributor (free)	1	E																				
 int_powerdistributor_size1_class2	Power Distributor	1	D		0.5	0.36	41	1293										cpd			weapons capacity=11;weapons recharge=1.4;systems capacity=9;systems recharge=0.5;engines capacity=9;engines recharge=0.5	Distribution system for ENG, SYS and WEP capacitors.	
 int_powerdistributor_size1_class3	Power Distributor	1	C		1.3	0.4	51	3231										cpd			weapons capacity=12;weapons recharge=1.5;systems capacity=10;systems recharge=0.5;engines capacity=10;engines recharge=0.5	Distribution system for ENG, SYS and WEP capacitors.	
 int_powerdistributor_size1_class4	Power Distributor	1	B		2	0.44	61	8078										cpd			weapons capacity=13;weapons recharge=1.7;systems capacity=11;systems recharge=0.6;engines capacity=11;engines recharge=0.6	Distribution system for ENG, SYS and WEP capacitors.	
@@ -881,6 +902,7 @@ int_powerdistributor_size8_class3	Power Distributor	8	C		160	0.8	150	4359903				
 int_powerdistributor_size8_class4	Power Distributor	8	B		256	0.88	180	10899756										cpd			weapons capacity=66;weapons recharge=6.6;systems capacity=44;systems recharge=4.4;engines capacity=44;engines recharge=4.4	Distribution system for ENG, SYS and WEP capacitors.	
 int_powerdistributor_size8_class5	Power Distributor	8	A		160	0.96	165	27249391										cpd			weapons capacity=72;weapons recharge=7.2;systems capacity=48;systems recharge=4.8;engines capacity=48;engines recharge=4.8	Distribution system for ENG, SYS and WEP capacitors.	
 int_powerplant_size2_class1	Power Plant	2	E		2.5		46	1977										cpp				Consumes fuel to power all ship modules.	
+int_powerplant_size2_class1_free	Power Plant (free)	2	E																				
 int_powerplant_size2_class2	Power Plant	2	D		1		41	5931										cpp				Consumes fuel to power all ship modules.	
 int_powerplant_size2_class3	Power Plant	2	C		1.3		51	17793										cpp				Consumes fuel to power all ship modules.	
 int_powerplant_size2_class4	Power Plant	2	B		2		61	53379										cpp				Consumes fuel to power all ship modules.	
@@ -976,6 +998,7 @@ int_repairer_size8_class3	Auto Field-Maintenance Unit	8	C			3		5509980										
 int_repairer_size8_class4	Auto Field-Maintenance Unit	8	B			3.45		16529941										iafmu			ammo=12000;repair rate=276	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.	
 int_repairer_size8_class5	Auto Field-Maintenance Unit	8	A			4.2		49589823										iafmu			ammo=11000;repair rate=308	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.	
 int_sensors_size1_class1	Sensors	1	E		1.3	0.16	46	517										cs			range=4	Standard suite providing basic detection, identification and targeting capabilities.	
+int_sensors_size1_class1_free	Sensors (free)	1	E																				
 int_sensors_size1_class2	Sensors	1	D		0.5	0.18	41	1293										cs			range=4.5	Standard suite providing basic detection, identification and targeting capabilities.	
 int_sensors_size1_class3	Sensors	1	C		1.3	0.2	51	3231										cs			range=5	Standard suite providing basic detection, identification and targeting capabilities.	
 int_sensors_size1_class4	Sensors	1	B		2	0.33	61	8078										cs			range=5.5	Standard suite providing basic detection, identification and targeting capabilities.	
@@ -1062,6 +1085,7 @@ int_shieldgenerator_size1_class3_fast	Bi-Weave Shield Generator	1	C		1.3	1.2	40	
 int_shieldgenerator_size1_class5	Shield Generator	1	A		1.3	1.68	48	88075	25									isg			distributor draw=0.6;minimum mass=13;maximum mass=63;multiplier at minimum=0.7;multiplier at optimal=1.2;multiplier at maximum=1.7;regeneration when broken=1.6;regeneration=1	Forms a continually regenerating protective energy shield around the vessel.	isg
 int_shieldgenerator_size1_class5_strong	Prismatic Shield Generator	1	A		2.5	2.52	48	132200	25									isg			distributor draw=0.6;minimum mass=13;maximum mass=63;multiplier at minimum=1;multiplier at optimal=1.5;multiplier at maximum=2;regeneration when broken=1.2;regeneration=1	An alternative shield generator that has higher than normal strength but requires a higher power draw and weight allowance.	isg
 int_shieldgenerator_size2_class1	Shield Generator	2	E		2.5	0.9	41	1978	55									isg			distributor draw=0.6;minimum mass=28;maximum mass=138;multiplier at minimum=0.3;multiplier at optimal=0.8;multiplier at maximum=1.3;regeneration when broken=1.6;regeneration=1	Forms a continually regenerating protective energy shield around the vessel.	isg
+int_shieldgenerator_size2_class1_free	Shield Generator (free)	2	E															isg					isg
 int_shieldgenerator_size2_class2	Shield Generator	2	D		1	1.2	31	5934	55									isg			distributor draw=0.6;minimum mass=28;maximum mass=138;multiplier at minimum=0.4;multiplier at optimal=0.9;multiplier at maximum=1.4;regeneration when broken=1.6;regeneration=1	Forms a continually regenerating protective energy shield around the vessel.	isg
 int_shieldgenerator_size2_class3	Shield Generator	2	C		2.5	1.5	51	17803	55									isg			distributor draw=0.6;minimum mass=28;maximum mass=138;multiplier at minimum=0.5;multiplier at optimal=1;multiplier at maximum=1.5;regeneration when broken=1.6;regeneration=1	Forms a continually regenerating protective energy shield around the vessel.	isg
 int_shieldgenerator_size2_class3_fast	Bi-Weave Shield Generator	2	C		2.5	1.5	51	26705	55									isg			distributor draw=0.6;minimum mass=28;maximum mass=138;multiplier at minimum=0.4;multiplier at optimal=0.9;multiplier at maximum=1.4;regeneration when broken=2.4;regeneration=1.8	An alternative shield generator that sacrifices overall shield strength for a much faster recharge rate.	isg
@@ -1110,6 +1134,10 @@ int_shieldgenerator_size8_class3_fast	Bi-Weave Shield Generator	8	C		160	4	150	2
 int_shieldgenerator_size8_class4	Shield Generator	8	B		256	4.8	210	54195495	1800									isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=0.6;multiplier at optimal=1.1;multiplier at maximum=1.6;regeneration when broken=9.6;regeneration=2.4	Forms a continually regenerating protective energy shield around the vessel.	isg
 int_shieldgenerator_size8_class5	Shield Generator	8	A		160	5.6	180	162586486	1800									isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=0.7;multiplier at optimal=1.2;multiplier at maximum=1.7;regeneration when broken=9.6;regeneration=2.4	Forms a continually regenerating protective energy shield around the vessel.	isg
 int_shieldgenerator_size8_class5_strong	Prismatic Shield Generator	8	A		320	8.4	180	243879730	1800									isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=1;multiplier at optimal=1.5;multiplier at maximum=2;regeneration when broken=5.4;regeneration=1.4	An alternative shield generator that has higher than normal strength but requires a higher power draw and weight allowance.	isg
+int_stellarbodydiscoveryscanner_advanced	Advanced Discovery Scanner	1	C															isbs					isbs
+int_stellarbodydiscoveryscanner_intermediate	Intermediate Discovery Scanner	1	D															isbs					isbs
+int_stellarbodydiscoveryscanner_standard	Basic Discovery Scanner	1	E															isbs					isbs
+int_stellarbodydiscoveryscanner_standard_free	Basic Discovery Scanner (free)	1	E																				
 int_supercruiseassist	Supercruise Assist	1	E		0	0.3		9121										ifa				Provides additional supercruise guidance to a predetermined destination.	ifa_sc
 krait_light_armour_grade1	Krait Phantom Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	krait_light				
 krait_light_armour_grade2	Krait Phantom Reinforced Alloy				26			14988900					1.52	-0.2	0	-0.4	0	cbh	krait_light				
@@ -2513,3 +2541,23 @@ vulture	Slot08_Size1	optional	1
 Caspian Explorer
 Corsair
 Kestrel Mk II
+[known-but-unnamed]
+symbol	mtype
+hpt_cannon_turret_huge	hc
+int_corrosionproofcargorack_size2_class1	icr
+int_fighterbay_size5_class1_free	ifh
+int_fighterbay_size6_class1_free	ifh
+int_fighterbay_size7_class1_free	ifh
+int_fighterbaymk2_size5_class1	ifh
+int_fighterbaymk2_size5_class1_free	ifh
+int_fighterbaymk2_size6_class1	ifh
+int_fighterbaymk2_size6_class1_free	ifh
+int_fighterbaymk2_size7_class1	ifh
+int_fighterbaymk2_size7_class1_free	ifh
+int_passengercabin_size2_class0	ipc
+int_passengercabin_size3_class0	ipc
+int_passengercabin_size4_class0	ipc
+int_passengercabin_size5_class0	ipc
+int_passengercabin_size6_class0	ipc
+int_shieldgenerator_size1_class4	isg
+modularcargobaydoor	cch

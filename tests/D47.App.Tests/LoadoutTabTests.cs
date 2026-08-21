@@ -90,7 +90,7 @@ public class LoadoutTabTests
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000}],"ShipsRemote":[]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0ENGINEERING},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":34.25,"CargoCapacity":128,"UnladenMass":350.5,"HullValue":55000000,"ModulesValue":45000000,"Rebuy":5000000,"HullHealth":0.87,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"LifeSupport","Item":"int_lifesupport_size4_class2","On":true,"Priority":0,"Health":1.0},{"Slot":"Radar","Item":"int_sensors_size6_class2","On":true,"Priority":0,"Health":1.0},{"Slot":"LargeHardpoint1","Item":"hpt_pulselaser_gimbal_large","On":true,"Priority":0,"Health":1.0ENGINEERING},{"Slot":"PaintJob","Item":"paintjob_python_metallic_gold","On":true,"Priority":0,"Health":1.0},{"Slot":"VesselVoice","Item":"voicepack_verity","On":true,"Priority":0,"Health":1.0},{"Slot":"PlanetaryApproachSuite","Item":"int_planetapproachsuite_advanced","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
             // A rolled module where the test asks for one, so the mark that says "this has been
@@ -1489,6 +1489,83 @@ public class LoadoutTabTests
         var box = Modal(surface.Panel).GetVisualDescendants().OfType<TextBox>().First();
 
         Assert.True(box.IsFocused, "the chooser's search box did not take focus");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The variant page offers the module already in the slot (reported 2026-08-20: <i>"no option
+    /// to keep the Life Support I already have"</i>, and again for Sensors).
+    /// <para>
+    /// The module page carries a *keep what is fitted* row — and a socket offering one module name
+    /// skips that page entirely (remediation 15 item 7) and lands on this one, so the row was
+    /// unreachable exactly where it was most wanted. Life Support and Sensors are the common case:
+    /// nobody replaces them, they engineer them.
+    /// </para>
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("Life Support", "4D Life Support")]
+    [InlineData("Radar", "6D Sensors")]
+    public void TheVariantPageOffersTheOneAlreadyFitted(string slot, string named)
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, slot).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(surface.Panel);
+
+        Assert.Contains(offered, line => line == $"Keep the {named} — the one fitted now");
+
+        // Once, not twice: it is lifted out of the list rather than added beside it.
+        Assert.DoesNotContain(offered, line => line == "Size 4, rating D" || line == "Size 6, rating D");
+
+        // And the decline is still there, because "I do not mind which" is a real plan.
+        Assert.Contains(offered, line => line.StartsWith("Any ", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The row <em>draws</em> both names, not merely models them (the Commander's ruling,
+    /// 2026-08-20). Read off the inlines rather than off <c>Text</c>, because a `TextBlock`
+    /// carrying inlines reports no text at all — which is how this nearly shipped invisible to
+    /// every test that reads the panel by text.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRowDrawsWhatIsFittedAndWhatIsPlanned()
+    {
+        var surface = Open();
+        var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
+
+        // MainEngines holds a 5A Thrusters. Plan a different one.
+        surface.Ships.Plan(build.Id, new SlotPlan("MainEngines")
+        {
+            Blueprint = "Dirty Drive Tuning",
+            Grade = 5,
+            Module = "Thrusters",
+            Variant = "int_engine_size5_class3",
+        });
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Inlines is null
+                ? block.Text ?? string.Empty
+                : string.Concat(block.Inlines.OfType<Run>().Select(run => run.Text)))
+            .ToList();
+
+        Assert.Contains(drawn, line =>
+            line.Contains("5A Thrusters", StringComparison.Ordinal)
+            && line.Contains("→", StringComparison.Ordinal)
+            && line.Contains("5C Thrusters", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

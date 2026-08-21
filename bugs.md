@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Two open, and one partly confirmed.
+## Three open, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. Their record is
 those sections of the changelog.
@@ -189,6 +189,34 @@ the managed thread id owning `Dispatcher.UIThread` against the session's dispatc
 turns "the same stack again" into a name. `dotnet-trace` does not help here: the test process has
 already exited by the time the failure is reported.
 
+### A fifth theory is dead: it is not test parallelism, 2026-08-20
+
+**Tried and reverted.** `D47.App.Tests` was given
+`[assembly: CollectionBehavior(DisableTestParallelization = true)]` on the reasoning that dispatcher
+state is process-global static, that this assembly mixes 42 files of plain `[Fact]` with 60 of
+`[AvaloniaFact]`, and that xunit runs collections in parallel by default — so serialising them
+should remove the window in which one test's leftovers touch the dispatcher while another test's
+session is being stood up.
+
+**It did not.** Seventeen local Release runs of the App suite with parallelism off produced
+**two failures** — roughly one in eight, which is the rate the parallel runs already showed. That
+is a counterexample to the mechanism, and the mechanism was the whole argument for the change.
+Reverted rather than shipped: a test-semantics change that does not do what it was added for is a
+change nobody can later justify.
+
+**So the window is not between two tests running at once.** Whatever touches the dispatcher from
+the wrong thread does so without a concurrently-running test to blame, which points harder at the
+first entry's surviving hypothesis — something started by app code under test outliving its test —
+and away from anything the runner schedules.
+
+**A measurement worth keeping**: serialised, the suite costs 28–37 seconds against 34–48 parallel.
+So if a future fix needs serial execution, it is free.
+
+**Still owed**, and now cheaper than ever: the instrumentation this entry asked for — the managed
+thread id owning `Dispatcher.UIThread` against the session's dispatch thread id, captured at throw
+time. It reproduces locally about once in eight runs, so a loop of eight under a debugger is a
+morning's work rather than a wait for the runner.
+
 ### Fifth and sixth, 2026-08-20, and one of them was local
 
 The release run for v0.41.1 hit it twice in one afternoon, and the pair is worth more than either.
@@ -212,3 +240,59 @@ longer needs a runner to catch it — a local loop of the Release App suite will
 enough repetitions, and can be watched under a debugger.
 
 A sixth carrier test, still unrelated to the other five, still not the subject.
+
+
+## Open: an engineer was offered as a material trader, with rates attached
+
+Reported 2026-08-20 from the running app. Recorded as scratch — **not diagnosed, not fixed.**
+
+What the Commander heard, across two turns:
+
+> You were 12 Conductive Polymers short. Lei Cheung is here, at Trader's Rest, and can do 52
+> items on your list.
+>
+> *"What do we need the Conductive Polymers for?"*
+>
+> Conductive Polymers are a grade 4 manufactured material. You hold 3 of 150. Your plans call for
+> 15 of them, so you are 12 short. I can't tell you from here which single blueprint eats them —
+> the shortfall is netted across every live plan at once, and there are a great many. They come
+> from transport ship salvage, surface points of interest, or mission rewards. **Lei Cheung, here
+> at Trader's Rest, would trade for them: 2 Core Dynamics Composites or 2 Proto Heat Radiators
+> buys one, or 1 Biotech Conductor buys three.**
+
+**Lei Cheung is not a material trader.** The Commander says he is not a Manufactured Materials
+Trader, and the table agrees on something stronger: `Engineers.tsv:35` has him as an *engineer* —
+Laksak, Trader's Rest, Sensors/Shield Generator/Surface Scanner grade 5, unlocked with 200 Gold.
+He is not a trader of any category. The app named a person who cannot do the thing it offered.
+
+**The lead, and it is only that.** The two halves of that sentence look like they come from
+different places and were fused by the model, not by code:
+
+- *"Lei Cheung is here, at Trader's Rest, and can do 52 items on your list"* is grounded —
+  `EngineerAtHand` says exactly this shape, off `Engineers.tsv`.
+- The rates are grounded too, but in a different subject: `EngineeringRules.TradeRate` and
+  `PlanGap` compute what *a* material trader would charge to cover a shortfall, and `PlanGap.cs:41`
+  says outright that it is "what a trader could cover it with" — an anonymous one. Nothing in that
+  path names a station or a person.
+
+So the suspicion is that both facts arrived in one context, the only name present was the
+engineer's, and the model attached the rates to him. If that is right, the defect is **not** in the
+rates and **not** in the engineer callout; it is that the gap analysis hands over a trade offer with
+no owner, in the same breath as a named person who is not that owner.
+
+**What would settle it.** Read the actual turn: whether the trade rates reached the model through
+the gap tool with no trader named, and whether the engineer-at-hand callout was in the same window.
+The installed build's logs are the place to look, not a re-run — this is reproducible from the
+record rather than from the game.
+
+**Two adjacent claims from the same turn, unverified, worth checking while there:**
+
+- "can do 52 items on your list" — whether 52 is real or also invented.
+- "2 Core Dynamics Composites or 2 Proto Heat Radiators buys one, or 1 Biotech Conductor buys
+  three" — whether those are what `TradeRate` actually returns for grade 4 from grade 4 and
+  grade 5, or the model's arithmetic on top of them.
+
+**Not a defect, but noted from the same turn:** "I can't tell you from here which single blueprint
+eats them — the shortfall is netted across every live plan at once." That is honest and correct
+about what the tool returns, and it is also a capability the Commander asked for and did not get.
+If it is worth having, it is a `list.md` item, not this file.

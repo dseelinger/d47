@@ -570,15 +570,49 @@ public static class LoadoutPages
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        if (parts.Module is { Length: > 0 } fitted)
+        if (parts.Module is { Length: > 0 } wanted)
         {
-            module.Text = fitted;
-            module.FontWeight = FontWeight.Bold;
+            // **Reality, then the goal** (the Commander's ruling, 2026-08-20: *"can you hold both
+            // the current module and the planned module? one is reality, the other is the goal"*).
+            // Where a plan names a different module from the one on the hull, the row says both —
+            // what is there muted, an arrow, and what is planned in bold, because the plan is the
+            // subject of a row the Commander is working through. Carrying one of them was wrong in
+            // both directions inside two days.
+            var inlines = new InlineCollection();
+
+            if (parts.Now is { Length: > 0 } standing)
+            {
+                var was = new Run(standing);
+
+                Themed(was, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(was);
+
+                var arrow = new Run("  →  ");
+
+                Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(arrow);
+            }
+
+            inlines.Add(new Run(wanted) { FontWeight = FontWeight.Bold });
 
             // The gear travels with the last word of the name (remediation.md 17, item 10).
             if (row.Engineered)
             {
-                module.Inlines = [new Run(fitted) { FontWeight = FontWeight.Bold }, Gear()];
+                inlines.Add(Gear());
+            }
+
+            // **`Text` where one run would do.** A `TextBlock` carrying `Inlines` reports no
+            // `Text` at all, so a row drawn as inlines is invisible to anything reading the panel
+            // by text — which is how the tests read it, and how the VR surface's capture check
+            // does. Inlines only where there is genuinely more than one thing to draw.
+            if (inlines.Count == 1)
+            {
+                module.Text = wanted;
+                module.FontWeight = FontWeight.Bold;
+            }
+            else
+            {
+                module.Inlines = inlines;
             }
         }
         else
