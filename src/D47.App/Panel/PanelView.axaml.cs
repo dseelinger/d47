@@ -1559,7 +1559,16 @@ public partial class PanelView : UserControl
         // runs unannounced — there is nothing to announce on.
         if (!ModeButton.IsVisible)
         {
-            await Task.Run(() => _bound?.RefreshLog());
+            // Read off this thread, tell the page on it. RefreshLog inside the Task.Run set a
+            // bound property from the worker, and a read that outlives its test then raised
+            // PropertyChanged into Avalonia's binding table at exactly the moment the headless
+            // harness had the global dispatcher down for reset — the flake ten tests carried
+            // (bugs.md, the headless-session entry).
+            if (_bound is { } bound)
+            {
+                bound.ShowLog(await Task.Run(bound.ReadLog));
+            }
+
             DrawTranscript();
             ScrollToEnd();
             return;
@@ -1571,7 +1580,11 @@ public partial class PanelView : UserControl
         // The continuation resumes here, so the glyph is still up while the page is built.
         await Controls.Busy.While(ModeButton, _logBusy, async () =>
         {
-            await Task.Run(() => _bound?.RefreshLog());
+            // The same split as above: the file work on a worker, the property set here.
+            if (_bound is { } bound)
+            {
+                bound.ShowLog(await Task.Run(bound.ReadLog));
+            }
 
             // After the read rather than before, or the page draws the log it had last time and
             // then redraws — a visible flicker on the one page opened to read something.

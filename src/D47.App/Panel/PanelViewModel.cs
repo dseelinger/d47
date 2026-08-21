@@ -184,24 +184,36 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// Re-reads the log. Called when a surface switches to it and when the Commander asks
     /// again - a log nobody is looking at is not worth a file read per tick.
     /// </summary>
-    public void RefreshLog()
+    public void RefreshLog() => ShowLog(ReadLog());
+
+    /// <summary>
+    /// The read alone, with no property set — the half that is safe off the UI thread.
+    /// Setting a bound property raises PropertyChanged on the calling thread, and Avalonia's
+    /// binding table answers an off-thread raise by reading the process-global dispatcher
+    /// right there, which under the headless harness can hijack the UI thread's identity
+    /// mid-reset and fail whichever test runs next (bugs.md, the headless-session entry).
+    /// So a surface runs this on a worker and brings the result to <see cref="ShowLog"/>.
+    /// </summary>
+    public string ReadLog()
     {
         if (LogSource is not { } read)
         {
-            LogText = "No log file is being written.";
-            return;
+            return "No log file is being written.";
         }
 
         try
         {
-            LogText = read();
+            return read();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // The log is a diagnostic. Failing to show it must not be a second fault to chase.
-            LogText = $"The log could not be read: {ex.Message}";
+            return $"The log could not be read: {ex.Message}";
         }
     }
+
+    /// <summary>Puts a read's result on the page. UI thread, like every property set here.</summary>
+    public void ShowLog(string text) => LogText = text;
 
     /// <summary>
     /// Where the conversation loop is (list.md Phase 11, "Ship's AI Avatar"). The panel has
