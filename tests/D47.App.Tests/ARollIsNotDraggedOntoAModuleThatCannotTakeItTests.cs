@@ -163,15 +163,52 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
     }
 
     [Fact]
-    public void AFittedModuleStillOutranksThePlansNameForIt()
+    public void WhereThePlanNamesNoModuleTheFittedOneIsNamed()
     {
-        // Unchanged, and it must be: what is in the slot is a fact and the plan is a want. Slot05
-        // holds a hull reinforcement, so the row names that with its own class and rating.
+        // The fallback, and the half that did not change. Slot05's plan is "grade 5 Heavy Duty
+        // Hull Reinforcement, I do not mind which module" — so there is no planned module to name
+        // and the row names what is in the slot, with its own class and rating.
         var (mode, ships) = InTheAnaconda();
 
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot05_Size5", StringComparison.Ordinal));
 
         Assert.StartsWith("5D ", row.Parts?.Module, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A plan that names a module outranks what is fitted, on the row (reported 2026-08-20:
+    /// <i>"I just changed this to 6A, but it still says 6D"</i>).
+    /// <para>
+    /// The row already carries the plan's roll and the dot that says a plan exists, so naming the
+    /// fitted module beside them described a thing that does not exist. The fitted module is not
+    /// lost — the slot drill names it under its own <c>Fitted</c> heading, beside <c>Planned</c>,
+    /// which is the page where the two are meant to be told apart.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void APlannedModuleOutranksTheFittedOneOnTheRow()
+    {
+        var (mode, ships) = InTheAnaconda();
+
+        // Slot07 holds a 5D Module Reinforcement. The Commander plans a hull reinforcement there
+        // instead, and names which one.
+        ships.Plan(ships.Store.Builds[0].Id, new SlotPlan("Slot07_Size5")
+        {
+            Blueprint = "Heavy Duty Hull Reinforcement",
+            Grade = 5,
+            Module = "Hull Reinforcement Package",
+            Variant = "int_hullreinforcement_size5_class1",
+        });
+
+        var row = mode.Slots(Item(ships))
+            .Single(candidate => candidate.Key.EndsWith("Slot07_Size5", StringComparison.Ordinal));
+
+        Assert.NotNull(row.Parts?.Module);
+        Assert.Contains("Hull Reinforcement", row.Parts.Module, StringComparison.Ordinal);
+        Assert.DoesNotContain("Module Reinforcement", row.Parts.Module, StringComparison.Ordinal);
+
+        // The class the Commander chose, not the class of the thing being replaced.
+        Assert.StartsWith("5E ", row.Parts.Module, StringComparison.Ordinal);
     }
 }

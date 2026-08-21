@@ -17,6 +17,42 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.41.3 — 2026-08-20 — The slot row stops describing things that do not exist
+
+**A row now names the module you planned, not the one you are replacing.** Reported twice in an
+hour and it was one sentence both times: the row carried the *plan's* roll beside the *fitted*
+module's name, so it described something that exists nowhere. Once as a Module Reinforcement
+Package apparently carrying a Hull Reinforcement roll, and once as *"I just changed this to 6A,
+but it still says 6D"*. Where a plan names no module the fitted one is still named, and the fitted
+module is never lost — the slot page has said it under its own **Fitted** heading all along, which
+is where the two are meant to be told apart.
+
+**Grade 0 no longer reaches your checklist.** Choosing a module d47 holds no engineering recipe
+for — a Guardian Gauss Cannon, say — stores the module and no roll, and that arrived on the
+checklist as *"Grade 0 engineering on LargeHardpoint1"*, which the list then refused, in red, four
+times over. A plan asking for no engineering is now simply not promoted. A **fit this module**
+checklist item is a real gap and is written down as one rather than papered over with an invented
+grade.
+
+**And d47 stops claiming Frontier engineers nothing.** *"I have no engineering for this module"*
+is a statement about d47; the page was using it to make a statement about Elite. A Guardian Gauss
+Cannon **does** take Anti-Guardian Zone Resistance, and Rapid Fire besides — d47 simply holds no
+recipe for either, because its recipe source carries no Guardian weapons at all. The sentence now
+says which of the two is true, and names what it knows is offered.
+
+**Experimental effects say what they do in the chooser too.** Nine bare names — Double Braced, Fast
+Charge, Hi-cap, Lo-draw, Thermo Block — meant choosing between them required already knowing. Each
+now carries the same derived line the blueprint page has had for months.
+
+**Two smaller ones.** A searchable chooser focuses its search box again — it had been quietly
+regressed, focusing during the attach event, before the rows under it existed. And a compartment
+says its size once rather than twice: *"Compartment 4 (size 4) (size 4)"*.
+
+Phases **38 — A build you can watch** and **39 — The checklist in the headset** are now in
+`list.md`, unticked, with their plans of record in `docs/plans/`.
+
+---
+
 ## 0.41.2 — 2026-08-20 — Three things the slot chooser was getting wrong
 
 **An experimental effect now says what it does.** The Effect line only ever described the

@@ -1397,6 +1397,103 @@ public class LoadoutTabTests
     }
 
     /// <summary>
+    /// The experimental chooser says what each effect does (reported 2026-08-20: <i>"details on
+    /// experimental effect should be somewhere"</i>).
+    /// <para>
+    /// The page listed nine bare names — Double Braced, Fast Charge, Hi-cap, Lo-draw, Thermo Block
+    /// — so choosing between them meant already knowing what they were. The blueprint page beside
+    /// it has carried the line since remediation 15 item 8, from the same `effects` column;
+    /// projecting each recipe to its name was what threw it away.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void EachExperimentalEffectSaysWhatItDoes()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Large Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Keep the pulse laser, take a roll, then the experimental page.
+        Modal(surface.Panel).GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text?.StartsWith("Keep the 3E Pulse Laser", StringComparison.Ordinal) == true))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Dispatcher.UIThread.RunJobs();
+
+        Pick(surface.Panel, "Efficient Weapon").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(surface.Panel);
+
+        // The decline is still first and still bare — there is nothing for it to describe.
+        Assert.Contains(offered, line => line == "No effect");
+
+        // And at least one effect now carries a sentence derived from its own figures.
+        Assert.Contains(offered, line => line.Contains("at the cost of", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A compartment says its size once (reported 2026-08-20, visible as "Compartment 4 (size 4)
+    /// (size 4)"). <c>ShipSlot.Describe</c> reads the size out of <c>Slot04_Size4</c> already, and
+    /// the chooser's header appended it a second time.
+    /// </summary>
+    [AvaloniaFact]
+    public void ACompartmentSaysItsSizeOnce()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Compartment 1 (size 6)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            Offered(surface.Panel),
+            line => line.Contains("(size 6) (size 6)", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A searchable chooser is ready to be typed into (asked for 2026-08-20: <i>"search bar should
+    /// be the default focused control on this page"</i>).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheChoosersSearchBoxTakesFocus()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Compartment 1 (size 6)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var box = Modal(surface.Panel).GetVisualDescendants().OfType<TextBox>().First();
+
+        Assert.True(box.IsFocused, "the chooser's search box did not take focus");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// A ship you are not flying says what it is and where it is (remediation.md 13, item 2).
     /// <para>
     /// The page carried one sentence about builds and a list of slots reading "not seen", which
