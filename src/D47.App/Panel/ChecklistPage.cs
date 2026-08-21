@@ -87,7 +87,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly Button _arcsButton = new()
     {
         Padding = new Thickness(12, 4),
-        MinHeight = 30,
+        MinHeight = TouchTarget,
         IsVisible = false,
     };
 
@@ -102,13 +102,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly Button _scopeButton = new()
     {
         Padding = new Thickness(12, 4),
-        MinHeight = 30,
+        MinHeight = TouchTarget,
     };
 
     private readonly Button _suggestions = new()
     {
         Padding = new Thickness(12, 4),
-        MinHeight = 30,
+        MinHeight = TouchTarget,
         IsVisible = false,
     };
 
@@ -127,7 +127,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     {
         Content = "Import/Export",
         Padding = new Thickness(12, 4),
-        MinHeight = 30,
+        MinHeight = TouchTarget,
     };
 
     private string _chosen = Everything;
@@ -168,6 +168,18 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private const double ListKeeps = 150;
 
+    /// <summary>
+    /// The floor under anything on this page a ray has to hit, in pixels.
+    /// <para>
+    /// Not a new number: it is the height every button on this page already had, named here
+    /// because Phase 39 put the tab back in the headset and four controls turned out to have been
+    /// left below it. At the big panel's shipped geometry — 1024 pixels across a 1.1 m quad at
+    /// 1.1 m, so 53° of view and 19 pixels to the degree — this is a target a degree and a half
+    /// tall, which is what a hand at arm's length can hold.
+    /// </para>
+    /// </summary>
+    private const double TouchTarget = 30;
+
     /// <summary>Which arc is open, by key. Its next step and its two buttons belong to it.</summary>
     private string? _openArc;
 
@@ -203,7 +215,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Rebuild();
         };
 
-        var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = 30 };
+        var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         add.Click += (_, _) => AddLine();
 
         // Import and export (remediation.md 10, item 15). Beside the filter rather than beside
@@ -512,7 +524,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             {
                 Content = "Read my journals",
                 Padding = new Thickness(12, 4),
-                MinHeight = 30,
+                MinHeight = TouchTarget,
                 Margin = new Thickness(0, 4, 0, 0),
             };
 
@@ -651,7 +663,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             {
                 Content = "Suggest a line",
                 Padding = new Thickness(12, 4),
-                MinHeight = 30,
+                MinHeight = TouchTarget,
             };
 
             promote.Click += (_, _) =>
@@ -667,7 +679,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Content = "Set aside",
             Padding = new Thickness(12, 4),
-            MinHeight = 30,
+            MinHeight = TouchTarget,
         };
 
         aside.Click += (_, _) =>
@@ -830,6 +842,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Content = "▲",
             Padding = new Thickness(10, 2),
+
+            // <see cref="TouchTarget"/> rather than whatever the padding came to, which was about
+            // twenty pixels: these four are the only controls on the page that were below the
+            // floor, and they went back into a headset with the tab (list.md Phase 39).
+            MinHeight = TouchTarget,
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -838,6 +855,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Content = "▼",
             Padding = new Thickness(10, 2),
+            MinHeight = TouchTarget,
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -870,6 +888,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             {
                 Content = "Edit",
                 Padding = new Thickness(10, 2),
+                MinHeight = TouchTarget,
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -878,6 +897,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             {
                 Content = "Delete",
                 Padding = new Thickness(10, 2),
+                MinHeight = TouchTarget,
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -1240,7 +1260,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private Control Proposal(ChecklistProposal proposal, Action refresh)
     {
-        var accept = new Button { Content = "Accept", Padding = new Thickness(14, 4), MinHeight = 30 };
+        var accept = new Button { Content = "Accept", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
 
         accept.Click += (_, _) =>
         {
@@ -1248,7 +1268,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             refresh();
         };
 
-        var decline = new Button { Content = "Decline", Padding = new Thickness(14, 4), MinHeight = 30 };
+        var decline = new Button { Content = "Decline", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
 
         decline.Click += (_, _) =>
         {
@@ -1312,12 +1332,31 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         Margin = new Thickness(0, 12, 0, 2),
     };
 
+    /// <summary>
+    /// The second line of a row: its scope, the arc it serves, and — on a derived item — the
+    /// sentence saying why it is not something to tick.
+    /// <para>
+    /// <b><see cref="TypeScale.Body"/> rather than <see cref="TypeScale.Secondary"/>, decided in
+    /// the headset's geometry rather than the window's (list.md Phase 39).</b> The big panel is
+    /// 1024 pixels across a 1.1 m quad at 1.1 m, which is 53° of view and 19 pixels to the degree,
+    /// so a 13-pixel line stands about 29 arcminutes tall <em>before</em> the compositor resamples
+    /// it — over the ~20 that is the floor for reading, but not by enough to also be the lowest
+    /// contrast text on the tab. And this is the line Phase 39 requires be readable there: a
+    /// derived item's refusal is written here and nowhere else.
+    /// </para>
+    /// <para>
+    /// Shared rather than conditioned on the surface, which is the invariant and is also the
+    /// better answer: one point of type is not what separates these two lines — the muted colour
+    /// is, and it is untouched. A mode branch would be the second UI codebase "one widget tree
+    /// renders to both surfaces" exists to prevent, bought for a single point.
+    /// </para>
+    /// </summary>
     private static TextBlock Muted(string text)
     {
         var block = new TextBlock
         {
             Text = text,
-            FontSize = TypeScale.Secondary,
+            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
         };
 

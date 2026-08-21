@@ -52,7 +52,9 @@ Each of these is cheap to break by accident and expensive to fix later.
   codebase, no screenshot of the desktop window — and that is untouched and still binding
   (architecture.md §1). What is **not** a rule is that both surfaces must show the same things.
   Settings has been desktop-only since Phase 12; Checklist and Loadout were withdrawn from the big
-  VR panel on the Commander's instruction, undoing on purpose what Phases 25 and 26 built there.
+  VR panel on the Commander's instruction, undoing on purpose what Phases 25 and 26 built there —
+  and **the checklist went back on the Commander's instruction in Phase 39**, which is the same rule
+  read the other way rather than a change of mind about parity. Loadout stays withdrawn.
   So a tab may live on one surface and not the other, and **VR reaching parity with the window is
   a someday-maybe** rather than something a design has to be bent around. Take what works quickly.
   The mechanism is already the default rather than something to build: a tab appears only where a
@@ -86,11 +88,11 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-21 and 23-38 are frozen.** Several hundred code comments
+- **Phase numbers are references, and phases 1-21 and 23-39 are frozen.** Several hundred code comments
   cite `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
   phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
   Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
-  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, and Phases 37 and 38 on 2026-08-20 —
+  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, and Phase 39 on 2026-08-21 —
   and the set only ever grows. **22 is a retired number, not a hole.** Phase 22 was cut on 2026-08-18 with nothing built,
   and it is **not reused**: a later phase renumbered into 22 would silently repoint every citation
   that ever said "Phase 22" at a subject it was never about, which is the failure the rule above

@@ -140,7 +140,10 @@ public partial class MainWindow : Window
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
-            // between them (list.md Phases 26 and 27). Both surfaces, like the checklist.
+            // between them (list.md Phases 26 and 27). This window only: withdrawn from the
+            // headset during the panel redesign and left there when the checklist went back
+            // (list.md Phase 39), because a three-level drill ending in a search field is a
+            // bigger surface than one list of short rows.
             Panel.EnableLoadout(
                 host.Ships,
                 host.Checklists,

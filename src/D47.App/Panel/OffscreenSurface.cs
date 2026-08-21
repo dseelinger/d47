@@ -167,12 +167,23 @@ public sealed class OffscreenSurface : IDisposable
         //
         // Affordable because it only runs on a frame being redrawn at all: the runtime calls Draw
         // only when the surface says it is dirty, which is when something has changed.
-        foreach (var element in _root.GetVisualDescendants().OfType<Avalonia.Layout.Layoutable>())
-        {
-            element.InvalidateMeasure();
-        }
+        Invalidate();
 
-        _root.InvalidateMeasure();
+        // <b>What the Commander has scrolled to, taken down before the pass can move it</b>
+        // (list.md Phase 39).
+        //
+        // The window's arrange hands a scroll viewer a viewport a good deal taller than the one
+        // it ends up with — measured at 566 pixels against a final 438 on the checklist tab — and
+        // an offset is clamped down to fit a viewport but never let back out when the viewport
+        // turns out to be smaller. The view's own arrange, two calls later, puts the viewport and
+        // the bar's range back and leaves the offset where the clamp left it. So every frame
+        // quietly dragged the document up by the difference: the last three lines of a long
+        // checklist could not be reached by pointing at the end of the bar, and the transcript's
+        // "newest" landed just short of the newest, on every surface this class draws.
+        var scrolled = _view.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .Select(viewer => (Viewer: viewer, Was: viewer.Offset))
+            .ToList();
 
         // The window's own layout pass is what applies styling and materialises the template.
         // Arranging the view afterwards is what makes it fill the surface rather than settle
@@ -181,8 +192,70 @@ public sealed class OffscreenSurface : IDisposable
         _root.Arrange(bounds);
         _view.Measure(bounds.Size);
         _view.Arrange(bounds);
+
+        // Put back once the view is its real size, and written through the viewer so an offset
+        // that genuinely no longer exists — the list got shorter while the ray was elsewhere — is
+        // clamped by it rather than forced.
+        if (Restore(scrolled))
+        {
+            // And laid out again, because an offset is applied by an arrange and there is no
+            // layout manager here to run one: setting it marks the presenter and stops, exactly
+            // as an invalidated measure does above. Without this the viewer reports the offset
+            // the Commander asked for and draws the one it was clamped to.
+            Invalidate();
+
+            _view.Measure(bounds.Size);
+            _view.Arrange(bounds);
+        }
+
         _surface.Measure(bounds.Size);
         _surface.Arrange(bounds);
+    }
+
+    /// <summary>Marks the whole tree as needing measure. See <see cref="Layout"/> for why.</summary>
+    private void Invalidate()
+    {
+        foreach (var element in _root.GetVisualDescendants().OfType<Avalonia.Layout.Layoutable>())
+        {
+            element.InvalidateMeasure();
+        }
+
+        _root.InvalidateMeasure();
+    }
+
+    /// <summary>
+    /// Puts each viewer back where it was before the pass, and tells its bar where that is.
+    /// Answers whether anything actually moved, because putting it back needs another arrange
+    /// and a frame where nothing scrolled should not pay for one.
+    /// </summary>
+    private static bool Restore(IReadOnlyList<(ScrollViewer Viewer, Vector Was)> scrolled)
+    {
+        var moved = false;
+
+        foreach (var (viewer, was) in scrolled)
+        {
+            if (viewer.Offset != was)
+            {
+                viewer.Offset = was;
+                moved = true;
+            }
+
+            // And the bar is told where the document ended up, because the same clamp moved it
+            // and the binding does not carry the correction back. A thumb resting short of the
+            // bottom of a list that is at its bottom is the bar lying about where the Commander
+            // is, and on this surface it is the only position indicator there is.
+            foreach (var bar in viewer.GetVisualDescendants().OfType<ScrollBar>())
+            {
+                if (bar.Orientation == Orientation.Vertical
+                    && bar.Maximum > 0
+                    && Math.Abs(bar.Value - viewer.Offset.Y) > 0.5)
+                {
+                    bar.Value = Math.Clamp(viewer.Offset.Y, bar.Minimum, bar.Maximum);
+                }
+            }
+        }
+
+        return moved;
     }
 
     /// <summary>
@@ -598,6 +671,23 @@ public sealed class OffscreenSurface : IDisposable
 
                 case ToggleButton toggle:
                     toggle.IsChecked = toggle.IsChecked != true;
+
+                    // And the click, which a real release also raises (list.md Phase 39).
+                    //
+                    // <b>Setting the property alone is a tick that does nothing.</b> A checkbox
+                    // whose handler hangs off <c>Click</c> — which is the right event for it,
+                    // because it is the one that means the Commander did this rather than a
+                    // rebuild did — saw the box change and never heard the press, so ticking a
+                    // checklist line in the headset drew a tick and left the line open until the
+                    // next rebuild rubbed it out. Found by pressing one through this surface for
+                    // the first time when the tab went back into the big panel; no checkbox on
+                    // any other page carries behaviour on <c>Click</c>, which is why it survived
+                    // Phase 25.
+                    //
+                    // Below the radio case, so the tab strip is untouched: selecting a tab is the
+                    // property changing, and a strip that also clicked would run its handler
+                    // twice.
+                    toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent) { Source = toggle });
                     return;
 
                 case Button button:

@@ -17,6 +17,47 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.44.0 — 2026-08-21 — The checklist in the headset
+
+**What you are working on is readable in a headset again.** The Checklist tab is back on the big
+VR panel, where a `Window` cannot go and where there is no second monitor to alt-tab to. It was
+withdrawn from there on the Commander's own instruction during the panel redesign, and it comes
+back on the same authority — **Loadout stays withdrawn**, which is a decision rather than an
+oversight: a three-level drill ending in a search field is a bigger surface than a list of short
+rows. Parity between the window and the headset is still a nice-to-have rather than a plan.
+
+Furnishing it took the one line the code had been keeping ready. Everything else in this release
+is what a headset does differently from a monitor, and two of those things were defects that
+nothing but pressing the tab through a ray could have found.
+
+**Ticking a line in VR drew a tick and did nothing.** A press through the panel toggled the box
+and never raised the click behind it, so the line stayed open and the next redraw rubbed the tick
+out. It is the event a checklist line hangs its work off, and no other checkbox on any VR page
+carries behaviour there — which is how it survived from Phase 25 to now unnoticed. Every toggle
+pressed in the headset now raises what a real release raises.
+
+**And a long list could not be scrolled to its end.** The offscreen host hands a scroll viewer a
+viewport a hundred and twenty-eight pixels taller than the one it really gets, an offset is
+clamped down to fit a viewport and never let back out, so every frame quietly dragged the
+document back up: the last three lines of a long checklist were unreachable by pointing at the
+end of the bar. The same fault had been landing the transcript's *newest* just short of the
+newest on every surface d47 draws offscreen. What you scrolled to is now held across the layout
+pass, and the bar is told where the document actually went.
+
+**Sized for a lens rather than for a desk.** The panel is 1024 pixels across a 1.1 m quad at
+1.1 m — 53° of view, 19 pixels to the degree — which puts the muted second line of a row at about
+29 arcminutes tall, over the floor for reading and not by enough to also be the lowest-contrast
+text on the tab. It is the line a derived item's refusal is written on, so it goes up one step
+and keeps its colour, on both surfaces: one view definition renders to both, and a tab that grew
+its own behaviour in the headset would be the second UI codebase that rule exists to prevent.
+*Edit*, *Delete* and the two reordering arrows were about twenty pixels tall — below the floor
+every other button on the page already stood on — and now carry it by name.
+
+Ticking, refusing, filtering and scrolling are all driven through the headset's own surface in
+the tests rather than through a window, and both defects above were reintroduced once to watch
+the new tests fail. The one thing no test can sign off is how it reads through the lens.
+
+---
 ## 0.43.0 — 2026-08-20 — A build you can watch
 
 **Two gauges at the head of a ship's slot list: power and jump range, live while the build is
