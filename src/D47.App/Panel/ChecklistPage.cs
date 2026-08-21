@@ -697,9 +697,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
     private bool Matches(ChecklistItem item)
     {
+        // Searched on what is drawn as well as on what is stored, so a Commander can type the
+        // name of the ship on the caption or the module on the line and find it. Both stored
+        // spellings stay searchable: the slot the plan was written against is still what a plan
+        // conversation used.
         if (_query.Length > 0
             && !item.Text.Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !item.Scope.ToString().Contains(_query, StringComparison.OrdinalIgnoreCase))
+            && !item.Scope.ToString().Contains(_query, StringComparison.OrdinalIgnoreCase)
+            && !_checklists.Said(item).Contains(_query, StringComparison.OrdinalIgnoreCase)
+            && !_checklists.Where(item).Contains(_query, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -726,9 +732,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var body = new StackPanel { Spacing = 2 };
 
+        // What it says now rather than what was stored: a derived line resolves its slot to the
+        // module sitting in it, so "Slot01_Size7" reads as "7A Shield Generator". An authored line
+        // is the Commander's own sentence and comes back unchanged.
+        var said = _checklists.Said(item);
+
         if (item.TicksByHand)
         {
-            var tick = new CheckBox { Content = item.Text, IsChecked = item.IsComplete };
+            var tick = new CheckBox { Content = said, IsChecked = item.IsComplete };
 
             tick.Click += (_, _) =>
             {
@@ -751,13 +762,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             // either undo it or leave it standing and lying.
             body.Children.Add(new TextBlock
             {
-                Text = (item.IsComplete ? "✓  " : "•  ") + item.Text,
+                Text = (item.IsComplete ? "✓  " : "•  ") + said,
                 TextWrapping = TextWrapping.Wrap,
             });
         }
 
-        // Scope on the line rather than as a heading over a group of them.
-        var aside = new List<string> { item.Scope.ToString() };
+        // Scope on the line rather than as a heading over a group of them, and named rather than
+        // numbered: "ship 51" is d47's key for the ship and nobody's name for one, so a page of
+        // finished rolls said which id they were on and not which ship (reported 2026-08-21).
+        var aside = new List<string> { _checklists.Where(item) };
 
         // And the arc it came from, where one proposed it (list.md Phase 34). Without this,
         // finishing the line visibly moves nothing bigger than itself, which is the phase's own

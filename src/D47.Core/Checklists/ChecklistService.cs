@@ -51,6 +51,16 @@ public sealed class ChecklistService(
     public ChecklistVerdict? Verdict(ChecklistItem item) => ChecklistEvaluator.Evaluate(item, State);
 
     /// <summary>
+    /// The line as a Commander reads it, with the slot resolved to the module in it. Exposed on
+    /// the same terms as <see cref="Verdict"/>: the panel and the spoken report say the same
+    /// sentence because they ask the same place for it.
+    /// </summary>
+    public string Said(ChecklistItem item) => ChecklistWording.Said(item, State);
+
+    /// <summary>The list an item is in, named — "Flamebrand (Anaconda)" rather than "ship 51".</summary>
+    public string Where(ChecklistItem item) => ChecklistWording.Where(item, State);
+
+    /// <summary>
     /// The scope a bare phrase means. "This ship" and "this system" are the two a Commander says
     /// without naming, and both are answerable from where they are right now.
     /// </summary>
@@ -212,15 +222,21 @@ public sealed class ChecklistService(
             // An unknown is said once and a contradiction every time — but a contradiction is
             // only ever *raised* once here, because the state it disagrees with has just been
             // written down. What repeats is the report, which says it whenever it is read.
+            //
+            // Said whole, ship and all. This is the one checklist sentence with nothing around it
+            // — no heading, no caption, no page — so a line that does not name its own ship is
+            // spoken into a session where the Commander has flown three of them.
+            var said = ChecklistWording.Line(item, state);
+
             if (item.IsComplete)
             {
                 news.Add(new ChecklistNews(
                     $"checklist.undone.{item.Id}",
-                    $"\"{item.Text}\" is no longer done. {verdict.Reason}"));
+                    $"\"{said}\" is no longer done. {verdict.Reason}"));
             }
             else if (verdict.State == ChecklistState.Done)
             {
-                news.Add(new ChecklistNews($"checklist.done.{item.Id}", $"\"{item.Text}\" is done. {verdict.Reason}"));
+                news.Add(new ChecklistNews($"checklist.done.{item.Id}", $"\"{said}\" is done. {verdict.Reason}"));
             }
             else if (verdict.State is ChecklistState.Blocked or ChecklistState.Stale)
             {
@@ -385,7 +401,7 @@ public sealed class ChecklistService(
 
             foreach (var item in done)
             {
-                report.AppendLine("  " + Line(item));
+                report.AppendLine("  " + Line(item, naming: true));
             }
         }
 
@@ -668,9 +684,14 @@ public sealed class ChecklistService(
         _ => "You",
     };
 
-    private static string Heading(ChecklistScope scope) => scope.Group switch
+    /// <summary>
+    /// The heading over one scope's open items. A ship is named rather than numbered — the hull
+    /// the plan was written for is not to hand here, and the loadout the ship is remembered by
+    /// carries a better one anyway.
+    /// </summary>
+    private string Heading(ChecklistScope scope) => scope.Group switch
     {
-        ChecklistGroup.Ship => $"Ship {scope.Key}",
+        ChecklistGroup.Ship => ChecklistWording.Where(scope, null, State),
         ChecklistGroup.System => scope.Key ?? "A system",
         _ => "Everything else",
     };
@@ -679,10 +700,15 @@ public sealed class ChecklistService(
     /// One line, carrying its own verdict. A derived item shows what the journal says now rather
     /// than what was stored, so the two can never silently disagree on screen.
     /// </summary>
-    private string Line(ChecklistItem item)
+    /// <param name="naming">
+    /// Whether the line has to name its own ship. True under the flat "Done" list, where there is
+    /// no heading over it saying which ship it was on — which is how three finished rolls on two
+    /// ships came to read as three lines about nothing in particular.
+    /// </param>
+    private string Line(ChecklistItem item, bool naming = false)
     {
         var box = item.IsComplete ? "[x]" : "[ ]";
-        var text = $"{box} {item.Text}";
+        var text = $"{box} {(naming ? ChecklistWording.Line(item, State) : Said(item))}";
 
         if (item.Kind == ChecklistItemKind.Authored)
         {
