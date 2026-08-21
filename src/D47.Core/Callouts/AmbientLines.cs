@@ -191,13 +191,18 @@ public static class AmbientLines
         "Fuel is going down slowly. That is expected at this speed.",
         "There is nothing out here but us and the arithmetic.",
         "Hull is cold, drive is warm, everything is where it should be.",
-        "We are travelling fast enough that the sky ahead and the sky behind are different colours.",
+        // Reported 2026-08-21 from the normal-space pool, where it had lived since Phase 11: heard
+        // at thruster speeds it reads as a remark about going slowly, and the Commander's ruling
+        // is that it belongs to the speeds a human could *not* have understood — supercruise and
+        // the jump, which Status.json reports under the same flag. It displaced the line about
+        // the sky being two colours, which was a claim about light nothing had checked.
+        "We are moving at a speed a human could once have understood.",
     ];
 
     private static readonly string[] NormalSpace =
     [
         "Thrusters have the ship. The drive is resting.",
-        "We are moving at a speed a human could once have understood.",
+        "Distances here are measured in kilometres, and they still take a while.",
         "Sensors are clear at this range. Not that range is much, down here.",
         "The hull is taking the usual small impacts. Nothing worth logging.",
         "Everything within reach is either rock or somebody else's problem.",

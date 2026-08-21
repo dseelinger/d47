@@ -33,19 +33,28 @@ route you are flying, a stop on a trade plan — copies when you press it.
 
 ## Letting it drive the map
 
-Turn on **Try to plot courses in the galaxy map** and Directive 47 will also open the map, paste
-the name in and press return.
+Turn on **Try to plot courses in the galaxy map** and Directive 47 will also drive the map for
+you, with your own keys, in this order:
 
-This is genuinely best-effort. It depends on where the map's focus happens to be when it opens,
-on the map's layout, and on your game's language. There is no way for Directive 47 to see any of
-that.
+1. Open the galaxy map, and wait until the game reports it showing.
+2. **Up**, then **select** — that is the search box.
+3. Paste the name.
+4. **Down** into the results, then **select** the first one.
+5. Three seconds for the camera to fly there.
+6. A tenth of a second of sideways camera, which puts the reticle on the star.
+7. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
+8. **Back**, and **back** again, out of the map.
 
-So it checks afterwards. Elite writes your whole route to a file the moment one is plotted, which
-means "did that work" has a real answer:
+This is still best-effort. Directive 47 cannot see the map, so it cannot check that the search
+matched the system you meant rather than another that starts the same way, and it cannot see
+where the camera landed. What it can see, it checks.
+
+Elite writes your whole route to a file the moment one is plotted, which means "did that work"
+has a real answer:
 
 ```text
 I tried to plot Colonia and no route appeared, so assume it did not work. Colonia is on your
-clipboard. The search box may not have had focus.
+clipboard. The search may have matched a different system.
 ```
 
 Three answers, and they mean different things. **Course plotted** means a route to that system
@@ -56,8 +65,24 @@ is not running.
 None of them is "done" said hopefully. A companion that leaves you flying towards a course you do
 not have is worse than one that never tries.
 
-The map needs a binding for this to be attempted at all. Elite's own default keyboard preset
-ships the galaxy map **unbound**, so out of the box you will get the clipboard and an explanation.
+Two more things it watches for. If the map key is pressed and the game never reports the map
+open, nothing else is sent — the remaining keys are a W, an S and a space bar, and typed into the
+cockpit instead of the map they would fly the ship. And if the two **back** presses leave the
+map showing, it says so: *the galaxy map is still open*.
+
+**It needs six keys**: the galaxy map, UI up, down, select and back, and either sideways camera
+translate. All on the keyboard or mouse — a key on a stick is one Directive 47 cannot press. It
+takes all six or none: a macro that reaches the search box and then has no "down" leaves the map
+open with a name typed into it, which is worse than the clipboard alone. So the first key it
+cannot press stops the whole attempt before anything is sent, and you hear which one:
+
+```text
+Colonia is on your clipboard. I could not drive the galaxy map myself — You have no binding for
+down, so there is no key for me to press. Paste it into the map's search box to plot it.
+```
+
+Elite's own default keyboard preset ships the galaxy map **unbound**, so out of the box you will
+get the clipboard and that explanation.
 
 ## Pasting is an ordinary paste
 
@@ -89,6 +114,13 @@ clipboard always works.
 The confirmation lives in the app rather than in Core, because it waits and no Core component
 reads the clock. It polls `NavRoute.json` for up to six seconds and distinguishes "no route
 appeared" from "the file was never readable" — the two answers send the Commander to different
-places.
+places. The same split holds for the map itself: the app waits up to three seconds on
+`Status.json`'s `GuiFocus` for the map to open before the interface keys go, and again for it to
+close after the two backs.
+
+The sideways camera key is resolved inside the capability and is **not** in `GameActions.All`,
+because that list is the `control_interface` tool's closed vocabulary and its documentation page,
+and a camera brush is not something a Commander asks for by voice. Every wait in the sequence is
+the Commander's own figure (2026-08-21), not a measurement.
 
 </details>

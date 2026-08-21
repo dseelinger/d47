@@ -46,6 +46,21 @@ public static class PanelPhrases
         "take me to the ",
         "switch to ",
         "switch to the ",
+        "select ",
+        "select the ",
+    ];
+
+    /// <summary>
+    /// What a destination may be called after its name. "Select the checklist tab" was the
+    /// reported miss (2026-08-21): the word "tab" is how a Commander looking at the bar names
+    /// what is on it, and the phrase fell through to the model, which has no tool for the
+    /// panel and said so. Bare — no suffix — is the first entry for the same reason bare is the
+    /// first opener.
+    /// </summary>
+    private static readonly IReadOnlyList<string> Suffixes =
+    [
+        string.Empty,
+        " tab",
     ];
 
     /// <summary>
@@ -122,14 +137,14 @@ public static class PanelPhrases
 
     /// <summary>
     /// Whether the phrase names this destination — the word itself, or one of the openers
-    /// followed by it, and nothing else.
+    /// followed by it, optionally followed by "tab", and nothing else.
     /// </summary>
     private static bool Named(string input, string word)
     {
         var wanted = Normalise(word);
 
         return wanted.Length > 0
-               && Openers.Any(opener => input == opener + wanted);
+               && Openers.Any(opener => Suffixes.Any(suffix => input == opener + wanted + suffix));
     }
 
     /// <summary>

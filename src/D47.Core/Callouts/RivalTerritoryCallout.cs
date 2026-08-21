@@ -50,6 +50,16 @@ public sealed class RivalTerritoryCallout : ICallout
     /// </summary>
     private static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(15);
 
+    /// <summary>
+    /// The Powers whose space has been explained this session. The first drop into a rival's
+    /// space says who controls it and who the Commander flies for; every one after that, for the
+    /// same Power, is the four words that matter. Reported 2026-08-21: the full explanation was
+    /// arriving at every station and signal source in Patreus space, and by the third hearing it
+    /// is not information. A <em>different</em> rival gets its own explanation once, because
+    /// which Power it is <em>is</em> the information then.
+    /// </summary>
+    private readonly HashSet<string> _explained = new(StringComparer.Ordinal);
+
     private bool _wasExposed;
     private DateTimeOffset? _quietUntil;
 
@@ -85,10 +95,13 @@ public sealed class RivalTerritoryCallout : ICallout
             yield break;
         }
 
-        yield return new Announcement(
-            $"territory.rival.{location!.StarSystem}",
-            $"{location.ControllingPower} controls this system, and you fly for "
-            + $"{state!.Pledge.Power}. You are exposed here.")
+        var power = location!.ControllingPower!;
+
+        var text = _explained.Add(power)
+            ? $"{power} controls this system, and you fly for {state!.Pledge.Power}. You are exposed here."
+            : "Hostile territory. Be on guard.";
+
+        yield return new Announcement($"territory.rival.{location.StarSystem}", text)
         {
             Cue = AlertCue.RivalTerritory,
             Cooldown = Cooldown,

@@ -73,6 +73,31 @@ public enum StatusFlags2 : uint
 }
 
 /// <summary>
+/// Which full-screen interface, if any, has the Commander's attention — the <c>GuiFocus</c>
+/// number Elite writes into Status.json. Only the values d47 acts on are named.
+/// <para>
+/// This is what makes driving the galaxy map verifiable step by step rather than only at the end:
+/// "the map is open" and "the map has closed again" are both readable here, so the macro that
+/// plots a course waits on the game rather than on a guess about how long the map takes to open.
+/// </para>
+/// </summary>
+public enum GuiFocus
+{
+    None = 0,
+    InternalPanel = 1,
+    ExternalPanel = 2,
+    CommsPanel = 3,
+    RolePanel = 4,
+    StationServices = 5,
+    GalaxyMap = 6,
+    SystemMap = 7,
+    Orrery = 8,
+    FssMode = 9,
+    SaaMode = 10,
+    Codex = 11,
+}
+
+/// <summary>
 /// The live state Elite writes to Status.json — the only continuous signal the game gives, and
 /// the one Phase 8's danger callouts need.
 /// <para>
@@ -98,6 +123,9 @@ public sealed record GameStatus
     /// reporting <see cref="StatusFlags.InMainShip"/> for a Commander who has got out.
     /// </summary>
     public bool OnFoot => Has2(StatusFlags2.OnFoot);
+
+    /// <summary>Which full-screen interface is showing, if any. See <see cref="GuiFocus"/>.</summary>
+    public GuiFocus GuiFocus { get; init; }
 
     public double? FuelMain { get; init; }
 
@@ -227,6 +255,7 @@ public sealed class GameStatusReader(string directory, ILogger logger)
             {
                 Flags = (StatusFlags)(root.Long("Flags") ?? 0),
                 Flags2 = (uint)(root.Long("Flags2") ?? 0),
+                GuiFocus = (GuiFocus)(root.Int("GuiFocus") ?? 0),
                 FuelMain = root.Object("Fuel")?.Double("FuelMain"),
                 FuelReservoir = root.Object("Fuel")?.Double("FuelReservoir"),
                 Cargo = root.Double("Cargo"),

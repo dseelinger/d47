@@ -146,10 +146,13 @@ cannot glance at a second monitor. Every crumb but the last can be pressed — *
 > "back"
 > "corsair"
 > "checklist"
+> "select the checklist tab"
 
 Back is three routes that agree: the breadcrumb, the **grip button** on either controller, and
 the phrase. Say the name of the tab you are already on and you go back to its top, exactly as
-pressing it does.
+pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
+"select" in front of it, and to "tab" after it — and to nothing looser, because a phrase that
+merely mentions a tab is not a request for it.
 
 **Voice jumps levels.** Asking for something three levels down takes you there with the whole
 trail behind it, rather than dropping you somewhere with nothing above.

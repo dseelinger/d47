@@ -25,13 +25,71 @@ public class NavigationAndCommsTests
         ReadAt = DateTimeOffset.UnixEpoch,
     };
 
-    private static ActionSurface Actions(EliteBinds binds, RecordingGameInput input, bool enabled = true) => new()
+    private static GameStatus FlyingWithTheMapOpen => Flying with { GuiFocus = GuiFocus.GalaxyMap };
+
+    private static ActionSurface Actions(
+        EliteBinds binds,
+        RecordingGameInput input,
+        bool enabled = true,
+        GameStatus? status = null) => new()
     {
         Binds = () => binds,
-        Status = () => Flying,
+        Status = () => status ?? Flying,
         Input = input,
         Enabled = () => enabled,
     };
+
+    /// <summary>
+    /// Every key the galaxy-map macro presses, on the keyboard. The Commander's own file binds
+    /// exactly these six, and on these symbols.
+    /// </summary>
+    private static EliteBinds MapBinds(params string[] without) => Binds(
+        [.. new[]
+        {
+            ("GalaxyMapOpen", "Keyboard", "Key_M"),
+            ("UI_Up", "Keyboard", "Key_W"),
+            ("UI_Down", "Keyboard", "Key_S"),
+            ("UI_Select", "Keyboard", "Key_Space"),
+            ("UI_Back", "Keyboard", "Key_Backspace"),
+            ("CamTranslateRight", "Keyboard", "Key_R"),
+        }.Where(entry => !without.Contains(entry.Item1))]);
+
+    private static uint Code(string symbol) => EliteKeys.Resolve(symbol).Code;
+
+    private static IReadOnlyList<uint> KeysPressed(IReadOnlyList<InputStep> steps) =>
+        [.. steps.Where(step => step.Kind == InputStepKind.KeyDown).Select(step => step.Code)];
+
+    /// <summary>How long each press of a key was held for, in the order they were made.</summary>
+    private static IReadOnlyList<TimeSpan> Holds(IReadOnlyList<InputStep> steps, uint code)
+    {
+        var holds = new List<TimeSpan>();
+
+        for (var index = 0; index < steps.Count; index++)
+        {
+            if (steps[index] is not { Kind: InputStepKind.KeyDown } down || down.Code != code)
+            {
+                continue;
+            }
+
+            var held = TimeSpan.Zero;
+
+            for (var after = index + 1; after < steps.Count; after++)
+            {
+                if (steps[after].Kind == InputStepKind.Delay)
+                {
+                    held += steps[after].Delay;
+                }
+                else if (steps[after].Kind == InputStepKind.KeyUp && steps[after].Code == code)
+                {
+                    break;
+                }
+            }
+
+            holds.Add(held);
+        }
+
+        return holds;
+    }
 
     private static async Task<ToolResult> Invoke(
         CapabilityDescriptor descriptor,
@@ -50,12 +108,15 @@ public class NavigationAndCommsTests
         RecordingClipboard clipboard,
         ActionSurface actions,
         bool autoPlot,
-        bool? confirm) => new()
+        bool? confirm,
+        bool? mapOpens = true,
+        bool? mapCloses = true) => new()
     {
         Clipboard = clipboard,
         Actions = actions,
         AutoPlotEnabled = () => autoPlot,
         ConfirmPlot = (_, _) => Task.FromResult(confirm),
+        AwaitGalaxyMap = (open, _) => Task.FromResult(open ? mapOpens : mapCloses),
     };
 
     [Fact]
@@ -99,7 +160,7 @@ public class NavigationAndCommsTests
         var result = await Invoke(
             NavigationCapability.Create(Navigation(
                 clipboard,
-                Actions(Binds(("GalaxyMapOpen", "Keyboard", "Key_F6")), input),
+                Actions(MapBinds(), input),
                 autoPlot: true,
                 confirm: false)),
             "plot_course",
@@ -115,7 +176,7 @@ public class NavigationAndCommsTests
         var result = await Invoke(
             NavigationCapability.Create(Navigation(
                 new RecordingClipboard(),
-                Actions(Binds(("GalaxyMapOpen", "Keyboard", "Key_F6")), new RecordingGameInput()),
+                Actions(MapBinds(), new RecordingGameInput()),
                 autoPlot: true,
                 confirm: true)),
             "plot_course",
@@ -131,7 +192,7 @@ public class NavigationAndCommsTests
         var result = await Invoke(
             NavigationCapability.Create(Navigation(
                 new RecordingClipboard(),
-                Actions(Binds(("GalaxyMapOpen", "Keyboard", "Key_F6")), new RecordingGameInput()),
+                Actions(MapBinds(), new RecordingGameInput()),
                 autoPlot: true,
                 confirm: null)),
             "plot_course",
@@ -161,6 +222,109 @@ public class NavigationAndCommsTests
         Assert.Equal("Colonia", clipboard.Last);
         Assert.Contains("no binding", result.Content, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(input.Steps);
+    }
+
+    /// <summary>
+    /// The Commander's own sequence (2026-08-21): map, up, select, paste, down, select, three
+    /// seconds for the camera, a tenth of a second of sideways camera, select held for 1.2
+    /// seconds, back, back. The figures are theirs and are asserted as such.
+    /// </summary>
+    [Fact]
+    public async Task TheMacroIsTheCommandersOwnSequence()
+    {
+        var input = new RecordingGameInput();
+
+        await Invoke(
+            NavigationCapability.Create(Navigation(new RecordingClipboard(), Actions(MapBinds(), input), autoPlot: true, confirm: true)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        var steps = input.Steps;
+
+        Assert.Equal(
+            [Code("Key_M"), Code("Key_W"), Code("Key_Space"), 0xA2, 0x56, Code("Key_S"), Code("Key_Space"), Code("Key_R"), Code("Key_Space"), Code("Key_Backspace"), Code("Key_Backspace")],
+            KeysPressed(steps));
+
+        // The camera gets its three seconds, then the brush, then the hold that plots.
+        Assert.Contains(steps, step => step.Kind == InputStepKind.Delay && step.Delay == TimeSpan.FromSeconds(3));
+        Assert.Equal([TimeSpan.FromMilliseconds(100)], Holds(steps, Code("Key_R")));
+        Assert.Equal(TimeSpan.FromMilliseconds(1200), Holds(steps, Code("Key_Space"))[^1]);
+    }
+
+    /// <summary>
+    /// The interface keys are a W, an S and a space bar if they reach the cockpit instead of the
+    /// map, so nothing after the map key is sent until Status.json says the map is showing.
+    /// </summary>
+    [Fact]
+    public async Task AMapThatDoesNotOpenGetsNothingTypedIntoTheCockpit()
+    {
+        var input = new RecordingGameInput();
+        var clipboard = new RecordingClipboard();
+
+        var result = await Invoke(
+            NavigationCapability.Create(Navigation(clipboard, Actions(MapBinds(), input), autoPlot: true, confirm: true, mapOpens: false)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Equal([Code("Key_M")], KeysPressed(input.Steps));
+        Assert.Contains("did not open", result.Content, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Colonia", clipboard.Last);
+    }
+
+    /// <summary>The map key is a toggle, so a map already showing is not shut by the first press.</summary>
+    [Fact]
+    public async Task AMapAlreadyOpenIsNotToggledShut()
+    {
+        var input = new RecordingGameInput();
+
+        await Invoke(
+            NavigationCapability.Create(Navigation(
+                new RecordingClipboard(),
+                Actions(MapBinds(), input, status: FlyingWithTheMapOpen),
+                autoPlot: true,
+                confirm: true)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.DoesNotContain(Code("Key_M"), KeysPressed(input.Steps));
+        Assert.Equal(Code("Key_W"), KeysPressed(input.Steps)[0]);
+    }
+
+    /// <summary>
+    /// All six keys or none. A macro that reaches the search box and then has no "down" leaves the
+    /// map open with a name typed into it, which is worse than the clipboard alone.
+    /// </summary>
+    [Fact]
+    public async Task OneMissingInterfaceKeyStopsTheWholeAttemptBeforeAnyKeyIsSent()
+    {
+        var input = new RecordingGameInput();
+        var clipboard = new RecordingClipboard();
+
+        var result = await Invoke(
+            NavigationCapability.Create(Navigation(clipboard, Actions(MapBinds(without: "UI_Down"), input), autoPlot: true, confirm: true)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Empty(input.Steps);
+        Assert.Equal("Colonia", clipboard.Last);
+        Assert.Contains("no binding for down", result.Content, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AMapLeftOpenIsSaidSo()
+    {
+        var result = await Invoke(
+            NavigationCapability.Create(Navigation(
+                new RecordingClipboard(),
+                Actions(MapBinds(), new RecordingGameInput()),
+                autoPlot: true,
+                confirm: true,
+                mapCloses: false)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Contains("Course plotted to Colonia", result.Content, StringComparison.Ordinal);
+        Assert.Contains("still open", result.Content, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

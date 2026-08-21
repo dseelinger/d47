@@ -244,6 +244,47 @@ public class Phase15WarningTests
     }
 
     /// <summary>
+    /// The explanation is given once per Power (reported 2026-08-21, after hearing it at every
+    /// signal source in Patreus space). The next drop into the same Power's space gets the four
+    /// words; a different Power gets its own explanation, because which one it is is the
+    /// information then.
+    /// </summary>
+    [Fact]
+    public void TheExplanationIsGivenOncePerPowerAndThenShortened()
+    {
+        var callout = new RivalTerritoryCallout();
+
+        var first = Assert.Single(callout.Examine(Context(InRivalSpace())));
+        Assert.Contains("Yuri Grom controls this system", first.Text, StringComparison.Ordinal);
+
+        // Back into supercruise, which ends the condition, then down again in another of Grom's systems.
+        var leaving = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-01T00:10:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""");
+        Assert.Empty(callout.Examine(Context(leaving, atSecond: 600)));
+
+        var again = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-01T00:10:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""",
+            """{"timestamp":"3311-01-01T00:11:00Z","event":"SupercruiseExit","StarSystem":"Sol","Body":"Earth"}""");
+        var second = Assert.Single(callout.Examine(Context(again, atSecond: 660)));
+        Assert.Equal("Hostile territory. Be on guard.", second.Text);
+        Assert.Equal(AlertCue.RivalTerritory, second.Cue);
+
+        var elsewhere = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-01T00:20:00Z","event":"FSDJump","StarSystem":"Cubeo","ControllingPower":"Denton Patreus"}""");
+        Assert.Empty(callout.Examine(Context(elsewhere, atSecond: 1200)));
+
+        var patreus = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-01T00:20:00Z","event":"FSDJump","StarSystem":"Cubeo","ControllingPower":"Denton Patreus"}""",
+            """{"timestamp":"3311-01-01T00:21:00Z","event":"SupercruiseExit","StarSystem":"Cubeo","Body":"Cubeo 1"}""");
+        var third = Assert.Single(callout.Examine(Context(patreus, atSecond: 1260)));
+        Assert.Contains("Denton Patreus controls this system", third.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The measured reason it is not on arrival: 0% of Power security contacts happened in
     /// supercruise, against 67% in normal space. Nothing can reach the Commander there.
     /// </summary>
