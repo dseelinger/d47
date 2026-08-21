@@ -1251,6 +1251,7 @@ public sealed class AppHost : IDisposable
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
                     ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
+                    AwaitGalaxyMap = (open, token) => AwaitGalaxyMap(status, open, token),
                 },
                 macros,
                 personas,
@@ -4542,6 +4543,52 @@ public sealed class AppHost : IDisposable
             try
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+        }
+
+        return sawTheFile ? false : null;
+    }
+
+    /// <summary>
+    /// Waits for Status.json to report the galaxy map showing, or no longer showing. True when it
+    /// did in time, false when it did not, null when the file was never readable at all.
+    /// <para>
+    /// Reads <see cref="GameStatusReader.Current"/> rather than polling the reader itself: the
+    /// tick loop already re-reads Status.json ten times a second, and a second poller on another
+    /// thread would race it over one stamp. Three seconds is several times what the map takes to
+    /// open or close, so a miss here means the key did not reach the game rather than that the
+    /// game was slow.
+    /// </para>
+    /// </summary>
+    private static async Task<bool?> AwaitGalaxyMap(
+        GameStatusReader status,
+        bool open,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTimeOffset.Now + TimeSpan.FromSeconds(3);
+        var sawTheFile = false;
+
+        while (DateTimeOffset.Now < deadline)
+        {
+            var current = status.Current;
+
+            if (current.IsKnown)
+            {
+                sawTheFile = true;
+
+                if ((current.GuiFocus == Core.Journal.GuiFocus.GalaxyMap) == open)
+                {
+                    return true;
+                }
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

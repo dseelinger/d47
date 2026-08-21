@@ -144,7 +144,16 @@ Power controls:
 Yuri Grom controls this system, and you fly for Edmund Mahon. You are exposed here.
 ```
 
-Said once as you enter the condition, then silent for as long as it lasts. It waits until you are
+Said once as you enter the condition, then silent for as long as it lasts. And **explained once
+per Power**: the next time you drop into that same Power's space — the next station, the next
+signal source — it is four words rather than the lecture:
+
+```text
+Hostile territory. Be on guard.
+```
+
+A different rival Power gets its own explanation, once, because which Power it is is the
+information then. It waits until you are
 in normal space rather than saying it as you arrive, because arriving happens in supercruise and
 nothing can reach you there — that is measured, not assumed: across every Power security contact in
 912 journals, none of them happened in supercruise and two thirds happened in normal space.

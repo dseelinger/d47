@@ -36,6 +36,10 @@ public class PanelPhrasesTests
     [InlineData("open checklist")]
     [InlineData("go to the checklist")]
     [InlineData("take me to the checklist")]
+    [InlineData("select the checklist tab")]
+    [InlineData("select checklist")]
+    [InlineData("checklist tab")]
+    [InlineData("show me the checklist tab")]
     public void ATabIsReachedByName(string spoken)
     {
         var nav = Furnished();

@@ -17,6 +17,37 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.1 — 2026-08-21 — The galaxy map macro that plots, and three things said better
+
+**"Set course" now plots a course.** The original galaxy-map drive — open, paste, return — assumed
+the search box had focus when the map opened, and it does not, so it plotted nothing and said so
+every time. It is replaced by the Commander's own sequence: map, up, select, paste, down, select,
+three seconds for the camera, a brush of sideways camera to put the reticle on the star, select
+held for 1.2 seconds, back, back. Two things d47 *can* see are now checked where they fall rather
+than assumed: `Status.json`'s `GuiFocus` says whether the map actually opened before any
+interface key is sent (a W, an S and a space bar reaching the cockpit instead of the map would fly
+the ship), and again whether it closed after the two backs. The route file still decides whether
+a course exists. It needs six keyboard bindings — map, UI up, down, select, back, and either
+sideways camera translate — and takes all six or none, naming the first it cannot press. The
+camera key is resolved inside the capability and not added to `GameActions.All`, so the
+`control_interface` vocabulary and its page are unchanged. Every wait is the Commander's figure.
+
+**"Select the checklist tab" selects it.** The panel phrases took "show", "open", "go to",
+"switch to" and the bare name, and nothing else — so "select the checklist tab" fell through to
+the model, which has no tool for d47's own panel and said so. "Select" is now an opener and
+"tab" a suffix, on every tab and crumb, with the whole-phrase rule untouched.
+
+**Rival territory is explained once per Power.** The full "X controls this system, and you fly
+for Y. You are exposed here." was arriving at every station and signal source in the same Power's
+space. The first drop into a rival's space still says it; every one after, for that Power, is
+"Hostile territory. Be on guard." A different rival gets its own explanation once.
+
+**One ambient line moved.** "We are moving at a speed a human could once have understood" was in
+the normal-space pool since Phase 11 and read there as a remark about going slowly; on the
+Commander's ruling it belongs to supercruise, where it replaces the line about the sky being two
+colours — a claim about light nothing had checked. Normal space gets a flat line in its place so
+both pools stay at ten.
+
 ## 0.47.1 — 2026-08-21 — Two Commanders no longer share one ship id
 
 **Ship-to-core bindings and ship builds are now per Commander.** Elite's `ShipID` is per Commander
