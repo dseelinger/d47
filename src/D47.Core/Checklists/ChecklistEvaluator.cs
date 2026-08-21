@@ -539,7 +539,9 @@ public static class ChecklistEvaluator
             && EliteSpecifications.Ship(flying) is { } now
             && string.Equals(was.Symbol, now.Symbol, StringComparison.OrdinalIgnoreCase));
 
-    private static bool IsActive(ChecklistScope scope, ShipLoadout loadout) =>
+    // Internal rather than private since Phase 42: the ordering asks the same question — is this
+    // ship-scoped line about the ship being flown — and two answers to it would drift.
+    internal static bool IsActive(ChecklistScope scope, ShipLoadout loadout) =>
         scope.Group == ChecklistGroup.Ship
         && loadout.ShipId is { } id
         && string.Equals(scope.Key, id.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);

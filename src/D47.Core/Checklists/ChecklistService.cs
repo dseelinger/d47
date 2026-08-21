@@ -366,7 +366,11 @@ public sealed class ChecklistService(
         bool hereOnly = false)
     {
         var document = Document;
-        var live = document.Items.Where(item => item.IsLive).ToList();
+
+        // In the Commander's order rather than the file's (list.md Phase 42): the scope headings
+        // below follow first appearance, so the projects arrive ranked and the lines within one
+        // arrive actionable-first without this method holding an opinion of its own.
+        var live = ChecklistOrdering.Arrange(document, State).ToList();
 
         // **Only what the engineer in this system could roll** (asked for 2026-08-20). "I am in
         // Laksak, what can I retire here?" used to answer with the whole list, because no filter
@@ -863,6 +867,61 @@ public sealed class ChecklistService(
     }
 
     /// <summary>
+    /// The list in the order the Commander cares about (list.md Phase 42): their project order,
+    /// then what can be done now, where they are standing. The one reading the panel, the report
+    /// and the opening line all take, so the drawn top of the list and the spoken one cannot
+    /// disagree.
+    /// </summary>
+    public IReadOnlyList<ChecklistItem> Arranged() => ChecklistOrdering.Arrange(Document, State);
+
+    /// <summary>The projects in that same order, for the panel's chooser.</summary>
+    public IReadOnlyList<ChecklistProject> Projects() => ChecklistOrdering.Projects(Document, State);
+
+    /// <summary>
+    /// Moves a whole project in the Commander's order (list.md Phase 42). Reachable from the
+    /// panel and from a phrase, and — like every other write here — <b>not from the tool
+    /// surface</b>: the order is the Commander's answer to what they are working on next, which
+    /// is not a thing an in-game message gets to rearrange.
+    /// </summary>
+    public ChecklistChange Rank(ChecklistScope scope, ChecklistMove move) =>
+        list.Apply(Fid, Name, document => ChecklistOrdering.Rank(document, State, scope, move));
+
+    /// <summary>
+    /// The spoken form: a phrase naming a project — "move the Sol project up" — or nothing at
+    /// all, which means the project of the selected line.
+    /// <para>
+    /// A named phrase is matched against each project's own word, unique-or-refused like
+    /// <see cref="ChecklistDocument.Match"/> and for the same reason: acting on the wrong list of
+    /// two is worse than asking which.
+    /// </para>
+    /// </summary>
+    public ChecklistChange Rank(string? phrase, ChecklistMove move)
+    {
+        var document = Document;
+
+        if (phrase is { Length: > 0 } named)
+        {
+            var wanted = ChecklistKeys.Compact(named);
+
+            var matches = Projects()
+                .Where(project => wanted.Length > 0
+                    && ChecklistKeys.Compact(project.Word).Contains(wanted, StringComparison.Ordinal))
+                .ToList();
+
+            return matches is [{ } only]
+                ? Rank(only.Scope, move)
+                : ChecklistChange.Refused(document, $"I could not tell which project \"{named}\" means.");
+        }
+
+        return Selected is { } selected && document.Find(selected) is { } item
+            ? Rank(item.Scope, move)
+            : ChecklistChange.Refused(
+                document,
+                "No line is selected, so I do not know which project you mean. Name it — "
+                + "\"move the Sol project up\" — or pick a line on the Checklist tab first.");
+    }
+
+    /// <summary>
     /// Rewords a line the Commander wrote (remediation.md 10, item 13). Not reachable from the
     /// tool surface, like every other write here.
     /// </summary>
@@ -931,11 +990,16 @@ public sealed class ChecklistService(
 
         var items = incoming.Items;
 
+        // The project order travels with the list (list.md Phase 42): it is part of what the
+        // export means, and an import that kept the items and dropped the ranking would arrive
+        // subtly different from what left — the one thing a round trip must not do.
+        var order = incoming.ProjectOrder;
+
         return list.Apply(
             Fid,
             Name,
             document => new ChecklistChange(
-                document with { Items = items },
+                document with { Items = items, ProjectOrder = order },
                 Changed: true,
                 items.Count == 1
                     ? "Imported 1 line."

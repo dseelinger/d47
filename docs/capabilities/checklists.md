@@ -379,6 +379,26 @@ steps.
 {"type":"object","properties":{"item":{"type":"string","description":"The line, in enough of its own words to tell it from the others. Omit for the selected one."},"to":{"type":"string","description":"up, down, top or bottom.","enum":["up","down","top","bottom"]}},"required":["to"],"additionalProperties":false}
 ```
 
+### `move_checklist_project`
+
+**The other level of the order** (Phase 42), on the same boundary and for the same reason. Between
+projects — one ship's list, one system's, the custom list — the order is yours and it is stored, so
+it survives a restart. Within a project nothing is stored at all: the lines are re-read every time
+in the order that matters right now, with what you can do in this ship, where you are standing, at
+the top and the blocked lines at the bottom. A project you have never ranked sorts below every one
+you have.
+
+Say **"move this project up"**, **"put this project first"**, **"move the project to the bottom"**
+— *this project* means the selected line's. The named form is the panel's Order button, which lists
+your projects in their current order and moves the one you pick.
+
+The opening line of a session reads the top of this order, so ranking a project is also choosing
+what d47 greets you with.
+
+```json
+{"type":"object","properties":{"project":{"type":"string","description":"The project by the name the list shows \u2014 a ship\u0027s name, a system, or custom. Omit for the selected line\u0027s project."},"to":{"type":"string","description":"up, down, top or bottom.","enum":["up","down","top","bottom"]}},"required":["to"],"additionalProperties":false}
+```
+
 ### `decline_proposal`
 
 The other half, with the same boundary.

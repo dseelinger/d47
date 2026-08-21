@@ -19,17 +19,23 @@ namespace D47.Core.Tests.Callouts;
 public class EmissionCalloutTests
 {
     /// <summary>
-    /// One arrival. <paramref name="allegiance"/> is the <b>system's</b> — the journal's
-    /// <c>SystemAllegiance</c>, which is the controlling faction's — and each faction carries its
-    /// own allegiance too, because a real journal does and because the defect reported on
-    /// 2026-08-21 was reading the wrong one of the two.
+    /// One arrival. <paramref name="allegiance"/> is the <b>system's</b> and
+    /// <paramref name="states"/> are the <b>controlling faction's</b> — the two things the
+    /// Commander's table is keyed on, and the two that earlier readings each took from the wrong
+    /// place.
+    /// <para>
+    /// A second, non-controlling Federal faction in Boom is always present, so every test here is
+    /// also a test that a minority superpower faction changes nothing.
+    /// </para>
     /// </summary>
     private static JournalEvent Arrival(
         string system,
         long population,
         string allegiance,
-        params (string Allegiance, string State)[] factions)
+        params string[] states)
     {
+        var controlling = $"Ruling party of {system}";
+
         var payload = new Dictionary<string, object?>
         {
             ["timestamp"] = "2026-08-21T09:00:00Z",
@@ -37,19 +43,33 @@ public class EmissionCalloutTests
             ["StarSystem"] = system,
             ["Population"] = population,
             ["SystemAllegiance"] = allegiance,
-            ["Factions"] = factions
-                .Select((faction, at) => new Dictionary<string, object?>
+            ["SystemFaction"] = new Dictionary<string, object?> { ["Name"] = controlling },
+            ["Factions"] = new object[]
+            {
+                new Dictionary<string, object?>
                 {
-                    ["Name"] = $"{faction.Allegiance} party {at + 1} of {system}",
-                    ["Allegiance"] = faction.Allegiance,
-                    ["FactionState"] = faction.State,
-                })
-                .ToArray(),
+                    ["Name"] = controlling,
+                    ["Allegiance"] = allegiance,
+                    ["FactionState"] = states.FirstOrDefault() ?? "None",
+                    ["ActiveStates"] = states
+                        .Select(state => new Dictionary<string, object?> { ["State"] = state })
+                        .ToArray(),
+                },
+                new Dictionary<string, object?>
+                {
+                    ["Name"] = $"Federal minority of {system}",
+                    ["Allegiance"] = "Federation",
+                    ["FactionState"] = "Boom",
+                },
+            },
         };
 
         Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
         return parsed!;
     }
+
+    private static IReadOnlyList<Announcement> Heard(JournalEvent arrival) =>
+        [.. new EmissionCallout().Examine(Context(Commander(), arrival))];
 
     private static CommanderGameState Commander() => new(new CommanderIdentity("F1", "Fixture"));
 
@@ -67,7 +87,7 @@ public class EmissionCalloutTests
         var said = Said(
             new EmissionCallout(),
             Commander(),
-            Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom")));
+            Arrival("Deciat", 5_000_000, "Independent", "Boom"));
 
         Assert.Contains("Proto Heat Radiators", said, StringComparison.Ordinal);
         Assert.Contains("Proto Light Alloys", said, StringComparison.Ordinal);
@@ -87,7 +107,7 @@ public class EmissionCalloutTests
         var said = Said(
             new EmissionCallout(),
             Commander(),
-            Arrival("Cubeo", 20_000_000, "Empire", ("Empire", "Outbreak")));
+            Arrival("Cubeo", 20_000_000, "Empire", "Outbreak"));
 
         Assert.Contains("Imperial Shielding", said, StringComparison.Ordinal);
         Assert.DoesNotContain("Pharmaceutical Isolators", said, StringComparison.Ordinal);
@@ -103,7 +123,7 @@ public class EmissionCalloutTests
         var said = Said(
             new EmissionCallout(),
             Commander(),
-            Arrival("Sol", 22_000_000, "Federation", ("Federation", "None")));
+            Arrival("Sol", 22_000_000, "Federation"));
 
         Assert.Contains("Core Dynamics Composites", said, StringComparison.Ordinal);
         Assert.Contains("Proprietary Composites", said, StringComparison.Ordinal);
@@ -126,60 +146,132 @@ public class EmissionCalloutTests
     /// </para>
     /// </summary>
     [Fact]
-    public void AMinorityFederalFactionDoesNotMakeAnIndependentSystemFederal()
+    public void OppiSaysNothing()
     {
         Assert.Empty(new EmissionCallout().Examine(Context(
             Commander(),
-            Arrival(
-                "Oppi",
-                4_626_551,
-                "Independent",
-                ("Federation", "None"),
-                ("Independent", "None"),
-                ("Independent", "None"),
-                ("Independent", "None"),
-                ("Independent", "None"),
-                ("Independent", "None"),
-                ("Independent", "None")))));
+            Arrival("Oppi", 4_626_551, "Independent"))));
     }
 
     /// <summary>
     /// <b>The case the Commander asked for by name</b> — *"not just Core Dynamics Composites plus
     /// the related one … but when completely different ones are there"*.
     /// <para>
-    /// <b>It comes from two factions in different states</b>, and never depended on reading
-    /// allegiance per faction. The first version of this test mixed a Federal faction with an
-    /// Independent one in Outbreak and passed for the wrong reason — it was asserting the defect
-    /// reported on 2026-08-21.
+    /// <b>It comes from the controlling faction wearing two states</b>, not from two factions.
+    /// This test has now been wrong twice: first mixing a Federal faction with an Independent one,
+    /// which asserted the Oppi defect; then two factions in different states, which the Commander's
+    /// corrected table retired. The corpus has <c>CivilUnrest + Expansion</c>,
+    /// <c>Expansion + War</c> and <c>Boom + Expansion</c> among controlling factions, so this shape
+    /// is ordinary rather than contrived.
     /// </para>
     /// </summary>
     [Fact]
-    public void TwoFactionsInDifferentStatesOfferTwoUnrelatedGroups()
+    public void AControllingFactionInTwoStatesOffersTwoUnrelatedGroups()
     {
         var said = Said(
             new EmissionCallout(),
             Commander(),
-            Arrival(
-                "Shinrarta Dezhra",
-                85_000_000,
-                "Independent",
-                ("Independent", "Boom"),
-                ("Independent", "Outbreak")));
+            Arrival("Shinrarta Dezhra", 85_000_000, "Independent", "CivilUnrest", "Expansion"));
 
+        Assert.Contains("Improvised Components", said, StringComparison.Ordinal);
         Assert.Contains("Proto Radiolic Alloys", said, StringComparison.Ordinal);
-        Assert.Contains("Pharmaceutical Isolators", said, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Boom only. Expansion is the second commonest state in the corpus, so reading the wiki's
-    /// "Boom or Expansion" the other way would have made this the chattiest callout d47 has.
+    /// <b>Expansion counts, beside Boom.</b> Ruled Boom-only that morning and corrected the same
+    /// day — and it is not a small widening, because Expansion is the second commonest faction
+    /// state in the corpus after None.
     /// </summary>
     [Fact]
-    public void ExpansionIsNotBoom()
+    public void ExpansionOffersTheProtoMaterialsToo()
     {
-        Assert.Empty(new EmissionCallout().Examine(Context(
-            Commander(),
-            Arrival("Alioth", 8_000_000, "Independent", ("Independent", "Expansion")))));
+        var said = Said(new EmissionCallout(), Commander(), Arrival("Alioth", 8_000_000, "Independent", "Expansion"));
+
+        Assert.Contains("Proto Heat Radiators", said, StringComparison.Ordinal);
+        Assert.Contains("Proto Light Alloys", said, StringComparison.Ordinal);
+        Assert.Contains("Proto Radiolic Alloys", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>Alliance yields nothing at all.</b> A real exclusion in the Commander's table, and what a
+    /// previous reading got wrong by treating the state groups as "anything not Federal or
+    /// Imperial".
+    /// </summary>
+    [Fact]
+    public void AnAllianceSystemOffersNothingWhateverItsState()
+    {
+        Assert.Empty(Heard(Arrival("Alioth", 8_000_000, "Alliance", "Boom")));
+        Assert.Empty(Heard(Arrival("Alioth", 8_000_000, "Alliance", "Outbreak")));
+    }
+
+    /// <summary>Every remaining row of the Commander's table, by name.</summary>
+    [Theory]
+    [InlineData("CivilUnrest", "Improvised Components")]
+    [InlineData("War", "Military Grade Alloys")]
+    [InlineData("CivilWar", "Military Supercapacitors")]
+    [InlineData("Outbreak", "Pharmaceutical Isolators")]
+    public void AnIndependentSystemOffersWhatItsControllingFactionsStateSays(string state, string material)
+    {
+        Assert.Contains(
+            material,
+            Said(new EmissionCallout(), Commander(), Arrival("Deciat", 5_000_000, "Independent", state)),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The state comes from the <c>Factions</c> array, not from <c>SystemFaction</c>.</b>
+    /// Measured: <c>SystemFaction</c> carries <c>FactionState</c> on only 118 of 205 recent jumps,
+    /// so reading it there loses two systems in five.
+    /// </summary>
+    [Fact]
+    public void AControllingFactionWithNoHeadlineStateOnSystemFactionIsStillRead()
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["timestamp"] = "2026-08-21T09:00:00Z",
+            ["event"] = "FSDJump",
+            ["StarSystem"] = "Deciat",
+            ["Population"] = 5_000_000,
+            ["SystemAllegiance"] = "Independent",
+
+            // Name only, which is how two jumps in five arrive.
+            ["SystemFaction"] = new Dictionary<string, object?> { ["Name"] = "Deciat Blue Society" },
+            ["Factions"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["Name"] = "Deciat Blue Society",
+                    ["Allegiance"] = "Independent",
+                    ["FactionState"] = "Outbreak",
+                },
+            },
+        };
+
+        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
+
+        Assert.Contains(
+            "Pharmaceutical Isolators",
+            Said(new EmissionCallout(), Commander(), parsed!),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And the other direction of the table answers for every material, which is what
+    /// <c>find_material</c> asks rather than deriving conditions of its own.
+    /// </summary>
+    [Fact]
+    public void EveryEmissionMaterialResolvesBackToItsGroup()
+    {
+        foreach (var group in EmissionRules.Groups)
+        {
+            foreach (var symbol in group.Materials)
+            {
+                Assert.Same(group, EmissionRules.Holding(symbol));
+            }
+        }
+
+        Assert.Null(EmissionRules.Holding("iron"));
+        Assert.Null(EmissionRules.Holding(null));
     }
 
     /// <summary>The population floor, applied to every group rather than to Outbreak alone.</summary>
@@ -188,7 +280,7 @@ public class EmissionCalloutTests
     {
         Assert.Empty(new EmissionCallout().Examine(Context(
             Commander(),
-            Arrival("Hyades Sector EG-X c1-8", 227_781, "Independent", ("Independent", "Boom")))));
+            Arrival("Hyades Sector EG-X c1-8", 227_781, "Independent", "Boom"))));
     }
 
     [Fact]
@@ -196,7 +288,7 @@ public class EmissionCalloutTests
     {
         Assert.Empty(new EmissionCallout().Examine(Context(
             Commander(),
-            Arrival("Deciat", 5_000_000, "Independent", ("Independent", "None")))));
+            Arrival("Deciat", 5_000_000, "Independent"))));
     }
 
     // ------------------------------------------------------------------ the filter
@@ -215,7 +307,7 @@ public class EmissionCalloutTests
         var said = Said(
             new EmissionCallout { Capacity = _ => 100 },
             state,
-            Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom")));
+            Arrival("Deciat", 5_000_000, "Independent", "Boom"));
 
         Assert.DoesNotContain("Proto Heat Radiators", said, StringComparison.Ordinal);
         Assert.Contains("Proto Radiolic Alloys", said, StringComparison.Ordinal);
@@ -233,7 +325,7 @@ public class EmissionCalloutTests
 
         Assert.Empty(new EmissionCallout { Capacity = _ => 100 }.Examine(Context(
             state,
-            Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom")))));
+            Arrival("Deciat", 5_000_000, "Independent", "Boom"))));
     }
 
     /// <summary>
@@ -250,7 +342,7 @@ public class EmissionCalloutTests
 
         Assert.Contains(
             "Proto Heat Radiators",
-            Said(new EmissionCallout(), state, Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom"))),
+            Said(new EmissionCallout(), state, Arrival("Deciat", 5_000_000, "Independent", "Boom")),
             StringComparison.Ordinal);
     }
 
@@ -262,7 +354,7 @@ public class EmissionCalloutTests
     {
         var callout = new EmissionCallout();
         var state = Commander();
-        var arrival = Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom"));
+        var arrival = Arrival("Deciat", 5_000_000, "Independent", "Boom");
 
         Assert.Single(callout.Examine(Context(state, arrival)));
         Assert.Empty(callout.Examine(Context(state, arrival)));
@@ -282,7 +374,7 @@ public class EmissionCalloutTests
             Commander(),
             GameStatus.Unknown,
             NavRoute.None,
-            [Arrival("Deciat", 5_000_000, "Independent", ("Independent", "Boom"))])));
+            [Arrival("Deciat", 5_000_000, "Independent", "Boom")])));
     }
 
     // ------------------------------------------------------ the table it agrees with
@@ -310,10 +402,10 @@ public class EmissionCalloutTests
                 Assert.Contains("High grade emissions", origins, StringComparison.OrdinalIgnoreCase);
 
                 // And the condition itself, in the words the generated table uses for it.
-                var wanted = group.Allegiance switch
+                var wanted = group switch
                 {
-                    "Federation" => "Federation systems",
-                    "Empire" => "Empire systems",
+                    { States.Count: 0, Allegiance: "Federation" } => "Federation systems",
+                    { States.Count: 0 } => "Empire systems",
                     _ => group.States[0] switch
                     {
                         "CivilUnrest" => "Civil unrest",

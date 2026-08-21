@@ -105,6 +105,19 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         MinHeight = TouchTarget,
     };
 
+    /// <summary>
+    /// The way into the project order (list.md Phase 42). A chooser rather than movers on the
+    /// page: projects are a handful where lines are hundreds, ordering them is a sit-down act
+    /// rather than a per-row one, and a chooser is the one control that works the same for a ray
+    /// at a metre and a phrase.
+    /// </summary>
+    private readonly Button _orderButton = new()
+    {
+        Content = "Order",
+        Padding = new Thickness(12, 4),
+        MinHeight = TouchTarget,
+    };
+
     private readonly Button _suggestions = new()
     {
         Padding = new Thickness(12, 4),
@@ -210,6 +223,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // the Commander did not think of as one is a level of navigation for nothing (list.md
         // Phase 25, "Page or layer is declared per call site").
         _scopeButton.Click += (_, _) => ChooseScope();
+        _orderButton.Click += (_, _) => ChooseProject();
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
@@ -246,7 +260,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { _scopeButton, _arcsButton, _transfer },
+            Children = { _scopeButton, _orderButton, _arcsButton, _transfer },
         });
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -433,7 +447,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         RebuildArcs();
 
-        var live = document.Items.Where(item => item.IsLive && Matches(item)).ToList();
+        // In the order the Commander cares about (list.md Phase 42): their project order, then
+        // what can be done now, where they are standing — with their own hand-moves as the
+        // tiebreak. A reading, never a rewrite: the stored file keeps its own order, so a hand
+        // edit still lands where they put it.
+        var live = _checklists.Arranged().Where(Matches).ToList();
 
         var open = live.Where(item => !item.IsComplete).ToList();
         var done = live.Where(item => item.IsComplete).ToList();
@@ -1110,6 +1128,79 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             option =>
             {
                 _chosen = option.Key;
+                Rebuild();
+            });
+    }
+
+    /// <summary>
+    /// The project order, as two choosers: which project, then where it goes (list.md Phase 42).
+    /// Two steps rather than movers-per-row because a chooser picks exactly one thing — and both
+    /// steps are drawn into the panel's layer, because a popup cannot exist in the VR path at all.
+    /// </summary>
+    private void ChooseProject()
+    {
+        var projects = _checklists.Projects();
+
+        if (projects.Count == 0)
+        {
+            Say("Nothing here yet, so there is no project order to set.");
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.project",
+                "Order",
+                "Order your projects",
+                "Between projects the order is yours and it keeps. Within one, what you can do "
+                + "now — in this ship, where you are standing — floats to the top by itself.",
+                [.. projects.Select(project => new ChoiceOption(project.Key, project.Word))],
+                projects[0].Key,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (projects.FirstOrDefault(project => project.Key == option.Key) is { } chosen)
+                {
+                    ChooseProjectMove(chosen);
+                }
+            });
+    }
+
+    /// <summary>The second step: where the chosen project goes.</summary>
+    private void ChooseProjectMove(ChecklistProject project)
+    {
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.project.move",
+                "Order",
+                $"Move the {project.Word} list",
+                "The order is stored, so it is still yours after a restart.",
+                [
+                    new ChoiceOption("top", "To the top"),
+                    new ChoiceOption("up", "Up one"),
+                    new ChoiceOption("down", "Down one"),
+                    new ChoiceOption("bottom", "To the bottom"),
+                ],
+                "top",
+                ChoiceSurface.Layer),
+            option =>
+            {
+                var move = option.Key switch
+                {
+                    "up" => ChecklistMove.Up,
+                    "down" => ChecklistMove.Down,
+                    "bottom" => ChecklistMove.Bottom,
+                    _ => ChecklistMove.Top,
+                };
+
+                var change = _checklists.Rank(project.Scope, move);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                    return;
+                }
+
                 Rebuild();
             });
     }

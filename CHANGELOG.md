@@ -42,6 +42,41 @@ both sitting in ship 7 still read as *no change* across a login switch even with
 That needs the Commander-switch signal Phase 44 describes, and it ships there — the phase's own
 items record it.
 
+## 0.48.0 — 2026-08-21 — The checklist in the order you care about, and one HGE table
+
+**Phase 42 — the checklist in the order you care about.** Its own section of this release, and the
+work stands on its own.
+
+**And High Grade Emissions now have one trigger table, which is yours.** Two readings derived from
+the community sources both shipped wrong, so the table D47 uses is now the one you gave it:
+
+| The system | Emissions hold |
+|---|---|
+| Federal | Core Dynamics Composites, Proprietary Composites |
+| Imperial | Imperial Shielding |
+| Independent, controlling faction in Civil Unrest | Improvised Components |
+| Independent, controlling faction in War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| Independent, controlling faction in Boom or Expansion | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| Independent, controlling faction in Outbreak | Pharmaceutical Isolators |
+
+Every row needs a population over a million. **Alliance systems yield nothing.** The state is the
+**controlling faction's**, not any faction's — and a system can still offer two unrelated groups
+when that faction is in two states at once, which is how Civil Unrest *and* Expansion gives you
+Improvised Components and all three Proto materials.
+
+**"Where can I find Imperial Shielding" was wrong for eight materials out of ten, and the reason is
+worth telling.** That search kept its own copy of the trigger table, derived by looking for state
+names inside each material's description. Almost every description ends *"; Mission reward"* — and
+**War** is spelled inside **reward**. So Imperial Shielding was searched for as *Empire and at war*,
+which is how it answered with a procedural system 41 light years out instead of a populous Imperial
+one. It also never applied the population floor at all.
+
+That second copy is gone. Both the callout and the search now read the one table, the search filters
+its results by population, and **it states the filter it used in the answer** — so a wrong one is
+visible to you rather than only to a test. This one was caught because you knew the parameters.
+
+---
+
 ## 0.47.0 — 2026-08-21 — Limpets before you leave, and Oppi is not Federal
 
 **D47 can remind you to buy limpets.** Dock somewhere that sells them, with a hold worth filling and

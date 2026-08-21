@@ -558,9 +558,9 @@ public static class EngineeringCapability
             {
                 report.Append(await BodiesAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
             }
-            else if (StateOf(material) is { } gate)
+            else if (EmissionRules.Holding(material.Symbol) is { } group)
             {
-                report.Append(await SystemsAsync(galaxy, gate, near, found, cancellationToken).ConfigureAwait(false));
+                report.Append(await SystemsAsync(galaxy, group, near, found, cancellationToken).ConfigureAwait(false));
             }
         }
         catch (GalaxyUnavailableException failure)
@@ -635,76 +635,85 @@ public static class EngineeringCapability
     }
 
     /// <summary>
-    /// The state and superpower a high-grade-emission origin names, matched against the shipped
-    /// vocabularies rather than parsed loosely — both lists are closed, so a word that is not in
-    /// one is a word d47 does not act on.
+    /// Where a high-grade-emission material can be found, from <see cref="EmissionRules"/> — the
+    /// same table the callout answers from.
+    /// <para>
+    /// <b>This used to derive its own conditions and they were wrong for eight materials of ten</b>
+    /// (reported 2026-08-21). It substring-matched each material's origins prose against the state
+    /// vocabulary, and almost every origins string ends <c>"; Mission reward"</c> — in which
+    /// <b><c>War</c> appears inside <c>reward</c></b>. So Imperial Shielding searched for Empire
+    /// <em>and War</em>, and returned a war-torn procedural system 41 light years away instead of a
+    /// populous Imperial one. The two materials that escaped are the two whose origins happen not
+    /// to contain the word.
+    /// </para>
+    /// <para>
+    /// <b>The population floor is applied to the rows rather than to the query</b>, and it has to
+    /// be. <see cref="GalaxyQuery"/> carries no population filter on purpose — measured 2026-08-16,
+    /// the service ignores the range shape entirely and, written as a choice, matches nothing. The
+    /// number is on every result, which is where this reads it and where <c>ColonisationScan</c>
+    /// already does.
+    /// </para>
+    /// <para>
+    /// <b>The filter is stated in the answer.</b> A wrong filter should be visible to the Commander
+    /// and not only to a test — this one was caught because they knew the parameters.
+    /// </para>
     /// </summary>
-    private static (IReadOnlyList<string> States, string? Allegiance)? StateOf(MaterialEntry material)
-    {
-        var origins = string.Join(" ", material.Origins);
-
-        if (!origins.Contains("High grade emission", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        IReadOnlyList<string> states = GalaxyFilters.Find("state") is { } filter
-            ? [.. filter.Choices.Where(state => origins.Contains(state, StringComparison.OrdinalIgnoreCase))]
-            : [];
-
-        var allegiance = GalaxyFilters.Find("allegiance")?.Choices
-            .FirstOrDefault(name => origins.Contains(name, StringComparison.OrdinalIgnoreCase));
-
-        return states.Count == 0 && allegiance is null ? null : (states, allegiance);
-    }
-
     private static async Task<string> SystemsAsync(
         IGalaxyService galaxy,
-        (IReadOnlyList<string> States, string? Allegiance) gate,
+        EmissionGroup group,
         string? near,
         Sourced found,
         CancellationToken cancellationToken)
     {
-        var requested = new Dictionary<string, string>(StringComparer.Ordinal) { ["distance"] = "50" };
-
-        if (gate.States.Count > 0)
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            requested["state"] = string.Join(",", gate.States);
+            ["distance"] = "50",
+            ["allegiance"] = group.Allegiance,
+        };
+
+        // Only where the group is about one. A superpower group carries no state, and adding one
+        // would narrow to the intersection — which is the opposite of what the table says.
+        if (group.States.Count > 0)
+        {
+            requested["state"] = string.Join(",", group.States.Select(Spaced));
         }
 
-        if (gate.Allegiance is { } allegiance)
-        {
-            requested["allegiance"] = allegiance;
-        }
-
-        if (!GalaxyQuery.TryParse(near, requested, size: 5, out var query, out var failure))
+        // Asked for well beyond the five that get read out, because the population floor is applied
+        // afterwards and a page of sparsely populated systems would otherwise leave nothing.
+        if (!GalaxyQuery.TryParse(near, requested, size: 50, out var query, out var failure))
         {
             return failure + Environment.NewLine;
         }
 
         var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-        if (result.Systems.Count == 0)
+        var populous = result.Systems
+            .Where(system => system.Population is { } people && people >= EmissionRules.MinimumPopulation)
+            .Take(5)
+            .ToList();
+
+        var described =
+            $"{group.Allegiance}-aligned"
+            + (group.States.Count > 0 ? $", in {string.Join(" or ", group.States.Select(Spaced))}" : string.Empty)
+            + $", over {EmissionRules.MinimumPopulation.ToString("N0", CultureInfo.InvariantCulture)} people";
+
+        if (populous.Count == 0)
         {
-            return "I found no system nearby matching that." + Environment.NewLine;
+            // Said as the filter rather than as "nothing found", so a Commander can tell a genuine
+            // shortage from a search that was looking for the wrong thing.
+            return $"No system within 50 light years is {described}." + Environment.NewLine;
         }
 
         var report = new StringBuilder();
 
-        // "Reported in" rather than "in". System state turns over on the background simulation's
-        // own tick and the index is a snapshot, so this is the same crowd-report framing the
-        // station stock already carries.
-        var described = gate.States.Count > 0
-            ? $"reported in {string.Join(" or ", gate.States)}"
-            : "reported";
+        // "Reported" rather than "in". System state turns over on the background simulation's own
+        // tick and the index is a snapshot, so this is the same crowd-report framing the station
+        // stock already carries.
+        report.AppendLine($"Nearest systems reported {described}:");
 
-        report.AppendLine(
-            $"Nearest systems {described}"
-            + (gate.Allegiance is { } superpower ? $", {superpower}-aligned:" : ":"));
+        found.System = populous[0].Name;
 
-        found.System = result.Systems[0].Name;
-
-        foreach (var system in result.Systems)
+        foreach (var system in populous)
         {
             report.Append($"  {system.Name}");
 

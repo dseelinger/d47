@@ -766,7 +766,7 @@ public sealed class AppHost : IDisposable
         }
 
         // Assigned once the ship and on-foot plans exist, below. A holder rather than a
-        // reordering, exactly as bindsRef above is one: the callouts have to be built before the
+        // reordering, exactly as bindsRef above is one: the goal book has to be built before the
         // tick loop and the engineer solver reads two stores that are built after the readers, and
         // neither of those orders is negotiable for a lambda's benefit.
         D47.Core.Engineers.EngineerPlanService? unlocksRef = null;
@@ -781,7 +781,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, () => unlocksRef);
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -1810,8 +1810,7 @@ public sealed class AppHost : IDisposable
         LoreBook lore,
         LoreVisits loreVisits,
         MemoryBook memories,
-        D47.Core.Habits.HabitBook habits,
-        Func<D47.Core.Engineers.EngineerPlanService?> unlocks)
+        D47.Core.Habits.HabitBook habits)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -1865,8 +1864,9 @@ public sealed class AppHost : IDisposable
 
             // Phase 31, and the lowest thing here that is not the ambient line: it fires once, at
             // the start of a session, and it is about what was true before the Commander sat down.
-            // Everything above it is about now.
-            .Add(new ContinuityCallout(memories, checklists, unlocks))
+            // Everything above it is about now. Since Phase 42 what it mostly says is the top of
+            // the checklist, in the Commander's own order.
+            .Add(new ContinuityCallout(memories, checklists))
 
             // Phase 32, and below the continuity line for the same reason it is below everything
             // else: it is an observation about the Commander rather than about the world, and

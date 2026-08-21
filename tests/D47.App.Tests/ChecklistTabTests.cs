@@ -220,8 +220,10 @@ public class ChecklistTabTests
     }
 
     /// <summary>
-    /// One list in the Commander's order: scope rides each line, and the page is not carved into
-    /// one list per ship. What gets reordered on a whim is everything being worked on.
+    /// One list: scope rides each line, and the page is not carved into one list per ship. Since
+    /// Phase 42 the reading groups the lines by project — with no rank set and no game state,
+    /// projects stand in the order they first appear in the file — but a project is an ordering,
+    /// never a heading: the page stays one list of lines.
     /// </summary>
     [AvaloniaFact]
     public void ScopeIsALabelOnTheLineRatherThanAHeadingOverAGroup()
@@ -238,8 +240,9 @@ public class ChecklistTabTests
             .Select(tick => tick.Content as string ?? string.Empty)
             .ToList();
 
-        // In the order they were added, across scopes, rather than gathered into two lists.
-        Assert.Equal(["buy limpets", "fit a fuel scoop", "sell the cargo"], lines);
+        // Grouped by project in first-appearance order (list.md Phase 42), no headings between
+        // them, and nothing lost.
+        Assert.Equal(["buy limpets", "sell the cargo", "fit a fuel scoop"], lines);
 
         window.Close();
     }

@@ -257,6 +257,21 @@ Matches against both the module's name and its slot, because "frame shift drive"
 ```
 
 
+### Where a grade 5 material is found
+
+Ask where to get one of the ten materials that come from High Grade Emissions and D47 searches on
+the conditions in [the callout's table](callouts.md#emissions) — the system's allegiance, the
+controlling faction's state where the material has one, and a population over a million:
+
+```
+Nearest systems reported Empire-aligned, over 1,000,000 people:
+  Cubeo — 12.4 ly, population 20,000,000
+```
+
+**The filter is stated in the answer**, so a wrong one is visible to you rather than only to a test.
+If nothing within 50 light years matches, D47 says which filter found nothing rather than offering
+the best of a bad list.
+
 ### Both searches offer the clipboard
 
 Either answer ends with an offer naming the best system it found — nearest for a material, or the
