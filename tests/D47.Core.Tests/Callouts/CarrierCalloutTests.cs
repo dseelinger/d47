@@ -51,6 +51,81 @@ public class CarrierCalloutTests
     private static CalloutContext Context(CommanderGameState? state, bool priming, params JournalEvent[] events) =>
         new(DateTimeOffset.UnixEpoch, priming, state, GameStatus.Unknown, NavRoute.None, events);
 
+    /// <summary>
+    /// Dropping out of supercruise at the Commander's own carrier is an exchange between two
+    /// people, in that order (asked for 2026-08-21).
+    /// </summary>
+    [Fact]
+    public void DroppingAtYourOwnCarrierIsATowerAndCaptainExchange()
+    {
+        var callout = new CarrierCallout();
+
+        var said = callout.Examine(Context(
+            WithCarrier(),
+            priming: false,
+            Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+            .ToList();
+
+        Assert.Equal(2, said.Count);
+
+        // The tower speaks first, and to the captain rather than to the Commander — which is the
+        // whole of what makes it an exchange rather than a greeting said twice.
+        Assert.Equal(CarrierCallout.InboundKey, said[0].Key);
+        Assert.Equal(VoiceRole.TowerControl, said[0].Voice);
+        Assert.Contains("Captain,", said[0].Text, StringComparison.Ordinal);
+        Assert.Contains("inbound", said[0].Text, StringComparison.Ordinal);
+
+        Assert.Equal(CarrierCallout.WelcomeKey, said[1].Key);
+        Assert.Equal(VoiceRole.CarrierCaptain, said[1].Voice);
+        Assert.Contains("Tower Control", said[1].Text, StringComparison.Ordinal);
+        Assert.Contains("Welcome home, Commander Fixture", said[1].Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>Somebody else's carrier gets nothing.</b> The corpus's 804 carrier drops include other
+    /// people's, and a welcome home from a stranger's crew is worse than silence.
+    /// </summary>
+    [Fact]
+    public void DroppingAtSomebodyElsesCarrierIsSilent()
+    {
+        var callout = new CarrierCallout();
+
+        Assert.Empty(callout.Examine(Context(
+            WithCarrier(),
+            priming: false,
+            Event("SupercruiseDestinationDrop", ("Type", "ETERNAL FLAME BNH-T2F"), ("Threat", 0)))));
+    }
+
+    /// <summary>
+    /// And an ordinary station drop is not a carrier at all. Most of the corpus's 3,819 drops are
+    /// this, so a target that merely fails to match must cost nothing.
+    /// </summary>
+    [Fact]
+    public void DroppingAtAStationIsSilent()
+    {
+        var callout = new CarrierCallout();
+
+        Assert.Empty(callout.Examine(Context(
+            WithCarrier(),
+            priming: false,
+            Event("SupercruiseDestinationDrop", ("Type", "Evans Port"), ("Threat", 0)))));
+    }
+
+    /// <summary>
+    /// Priming replays what already happened, so it must not greet the Commander for an arrival
+    /// that is minutes or hours old.
+    /// </summary>
+    [Fact]
+    public void PrimingSaysNothingAboutAnArrival()
+    {
+        var callout = new CarrierCallout();
+
+        Assert.Empty(callout.Examine(Context(
+            WithCarrier(),
+            priming: true,
+            Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0)))));
+    }
+
     [Fact]
     public void ACommanderWithNoCarrierHearsNothing()
     {

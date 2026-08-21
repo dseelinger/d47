@@ -11,8 +11,36 @@ namespace D47.Core.Checklists;
 /// </summary>
 public sealed record ChecklistChange(ChecklistDocument Document, bool Changed, string Report)
 {
+    /// <summary>
+    /// Which item the change was about, where it was about one. Null for a refusal and for the
+    /// changes that are about a whole plan.
+    /// <para>
+    /// Carried so a caller can say <em>that</em> one afterwards without matching on the report
+    /// sentence — which is what makes a line the Commander has just added the selected line, and
+    /// therefore the one <c>"move it up"</c> means (reported 2026-08-21).
+    /// </para>
+    /// </summary>
+    public ChecklistItemId? Subject { get; init; }
+
     public static ChecklistChange Refused(ChecklistDocument document, string why) =>
         new(document, Changed: false, why);
+}
+
+/// <summary>
+/// Where a reorder puts an item. <b>Four, not two</b> (reported 2026-08-21): a list that runs to
+/// several hundred lines makes "to the top" a different errand from "up", not a faster one — a
+/// line at 274 reaches the top in one press or in 273.
+/// <para>
+/// One vocabulary for the drawn control, the spoken phrase and the tool argument, so a button and
+/// a sentence cannot come to mean different things.
+/// </para>
+/// </summary>
+public enum ChecklistMove
+{
+    Up,
+    Down,
+    Top,
+    Bottom,
 }
 
 /// <summary>
@@ -137,7 +165,10 @@ public sealed record ChecklistDocument
         return new ChecklistChange(
             this with { Items = [.. Items, item] },
             Changed: true,
-            $"Added \"{trimmed}\" to the {scope} list.");
+            $"Added \"{trimmed}\" to the {scope} list.")
+        {
+            Subject = item.Id,
+        };
     }
 
     /// <summary>
@@ -337,7 +368,49 @@ public sealed record ChecklistDocument
         return new ChecklistChange(
             this with { Items = reordered },
             Changed: true,
-            by < 0 ? $"Moved \"{item.Text}\" up." : $"Moved \"{item.Text}\" down.");
+            by < 0 ? $"Moved \"{item.Text}\" up." : $"Moved \"{item.Text}\" down.")
+        {
+            Subject = item.Id,
+        };
+    }
+
+    /// <summary>
+    /// The same reorder said the way a Commander says it, one end included
+    /// (reported 2026-08-21: <i>"There should be a 'Move to Top', 'Move to Bottom' voice and UI
+    /// controls, as well as 'Move Up', and 'Move down'"</i>).
+    /// <para>
+    /// <b>Worked out as a step and handed to the one implementation above</b> rather than
+    /// reordering the list a second way. Everything that makes <see cref="Move(ChecklistItemId,int)"/>
+    /// careful — tombstones staying exactly where they are, the live sequence being what a step
+    /// counts over — is the part that must not be written twice.
+    /// </para>
+    /// <para>
+    /// <b>A step of nought is turned into a step of one, deliberately.</b> An item already at the
+    /// end it was sent to would otherwise be refused with "is already where it is", which is true
+    /// of every item and answers nothing; one step into the clamp reaches the sentence that says
+    /// which end it is already at.
+    /// </para>
+    /// </summary>
+    public ChecklistChange Move(ChecklistItemId id, ChecklistMove move)
+    {
+        if (move is ChecklistMove.Up or ChecklistMove.Down)
+        {
+            return Move(id, move is ChecklistMove.Up ? -1 : 1);
+        }
+
+        var live = Items.Where(other => other.IsLive).ToList();
+        var from = live.FindIndex(other => other.Id.Same(id));
+        var toTop = move is ChecklistMove.Top;
+
+        // A step that would be nought — including the item not being here at all, where `from` is
+        // -1 and there is nothing to compute — falls back to one, so the refusals below are the
+        // ones Move already writes rather than a second set saying the same things differently.
+        var by = from < 0 ? 0 : toTop ? -from : live.Count - 1 - from;
+        var change = Move(id, by == 0 ? (toTop ? -1 : 1) : by);
+
+        return change.Changed && Find(id) is { } item
+            ? change with { Report = $"Moved \"{item.Text}\" to the {(toTop ? "top" : "bottom")}." }
+            : change;
     }
 
     /// <summary>

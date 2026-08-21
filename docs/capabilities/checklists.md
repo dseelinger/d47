@@ -361,6 +361,24 @@ surface: protected is a property of the caller, not of the modality.
 {"type":"object","properties":{"id":{"type":"string","description":"One proposal by id. Omit for everything waiting."}},"required":[],"additionalProperties":false}
 ```
 
+### `move_checklist_item`
+
+**Ordering, on the same boundary.** The order is your answer to what you are working on next,
+which is not a thing an in-game message gets to rearrange — so this is reachable from the
+Checklist tab and from the phrases below, and refused if the AI asks for it.
+
+Say **"move it up"**, **"move it down"**, **"move it to the top"** or **"put it at the bottom"**.
+*It* means the selected line — the one the tab is drawing a highlight round, which is also the line
+you have just added, so a line and then "put it at the top" works in one breath. Nothing selected
+is answered by saying so and naming what to say instead.
+
+The four are also buttons on the selected line: the outer pair are the ends, the inner pair the
+steps.
+
+```json
+{"type":"object","properties":{"item":{"type":"string","description":"The line, in enough of its own words to tell it from the others. Omit for the selected one."},"to":{"type":"string","description":"up, down, top or bottom.","enum":["up","down","top","bottom"]}},"required":["to"],"additionalProperties":false}
+```
+
 ### `decline_proposal`
 
 The other half, with the same boundary.

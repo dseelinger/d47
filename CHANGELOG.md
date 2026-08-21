@@ -17,6 +17,55 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.45.0 — 2026-08-21 — Ordering the list, and a carrier that knows where it is
+
+**Your checklist reorders by voice, and it has both ends now.** *"Move it up"*, *"move it down"*,
+*"move it to the top"*, *"put it at the bottom"* — and **it** means the line the tab is
+highlighting, which is also the line you have just added. So a line and then *"put it at the top"*
+works in one breath, with nothing named in between. Beside the two arrows on a selected line there
+are now four: the ends outside, the steps inside, each end drawn as its step with a bar on it.
+
+This is the same boundary the checklist has always had. Writing to your list stays off the surface
+the AI can reach — the order is your answer to what you are working on next, and an in-game message
+does not get to rearrange it. What was missing was the route that boundary always allowed, and it
+is the one accepting a proposal already used: phrases the model-free router matches directly.
+Nothing you say about your checklist goes anywhere near the model to reorder it.
+
+**"Where is my fleet carrier" now answers about the carrier.** It was answering with where *you*
+were — your system, your body, your station, your route, under your own name — and there were two
+faults stacked to make that happen.
+
+The question was reaching the wrong tool. A keyword names a *capability*, and the router then takes
+that capability's first argument-free tool, which for Journal is the one that reports your position;
+*"my fleet carrier"* contains the keyword *my fleet*. **Every other question on that capability had
+the same answer waiting for it** — *what materials am I carrying*, *what ships do I own* and
+*session summary* would each have told you where you were standing. The whole questions are now
+declared against the tools that answer them.
+
+And underneath, d47 was holding the wrong carrier. Elite writes a location event for your own
+carrier **and** for a squadron's, seconds apart, and d47 kept whichever came last. Across 920
+journals, 173 carry both and in **152 of them the squadron's is last** — so the system you were
+told was reliably somebody else's, wearing your carrier's name, because the name comes from a
+different event. Filtered on the type Frontier stamps on it. Journals from before that field
+existed are unaffected: all 223 of them name a single carrier, so there is nothing to tell apart.
+
+**Your carrier's crew talk to each other when you drop in.** Come out of supercruise at your own
+carrier and the tower tells the captain you are inbound before the captain says anything to you.
+Written by your core where there is a model to ask, in the two crew voices, with authored lines
+underneath when there is not. It fires on the drop that names the carrier — not on arriving in the
+system, and never at somebody else's carrier, which the same journals show you drop at often enough
+for it to matter.
+
+**One thing asked for and not built.** A callout for systems that might be holding High Grade
+Emissions is written up in `docs/plans/change-requests.md` and is waiting on one answer. Everything
+except the table is in hand — the conditions are all in a single jump event, and "skip it if I am
+already full" is exact rather than estimated. What is missing is which conditions yield which grade
+5 material, which is community reverse-engineering that Frontier publishes nothing about; the corpus
+holds 19 such signals and cannot settle it. A callout naming the wrong material is worse than no
+callout, so it waits.
+
+---
+
 ## 0.44.1 — 2026-08-21 — A checklist line says which ship and which module
 
 **A finished roll now names the ship it happened on and the module it happened to.** Reported

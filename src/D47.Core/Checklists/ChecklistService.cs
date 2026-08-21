@@ -61,6 +61,43 @@ public sealed class ChecklistService(
     public string Where(ChecklistItem item) => ChecklistWording.Where(item, State);
 
     /// <summary>
+    /// The line the Commander is working on, which is what a phrase saying "it" means
+    /// (reported 2026-08-21).
+    /// <para>
+    /// <b>Here rather than on the page, because two surfaces have to agree what "it" is.</b> The
+    /// selection used to be a string inside <c>ChecklistPage</c>, so a spoken "move it up" had
+    /// nothing to refer to and said so — while the panel, a foot away, was drawing a highlight
+    /// round the very line that was meant.
+    /// </para>
+    /// <para>
+    /// <b>Not persisted, and that is the distinction.</b> A selection is where a Commander is
+    /// looking this minute, not a preference — reloading d47 with a line still highlighted from
+    /// last week would be asserting a train of thought that ended.
+    /// </para>
+    /// </summary>
+    public ChecklistItemId? Selected { get; private set; }
+
+    /// <summary>Raised when the selection moves and the list did not, so a page can redraw.</summary>
+    public event Action? SelectionChanged;
+
+    /// <summary>
+    /// Points the selection at a line, or clears it. Silently forgets an id nothing answers to,
+    /// which is what keeps a stale selection from outliving the line it named.
+    /// </summary>
+    public void Select(ChecklistItemId? id)
+    {
+        var wanted = id is { } named && Document.Find(named) is { IsLive: true } ? id : null;
+
+        if (Nullable.Equals(wanted, Selected))
+        {
+            return;
+        }
+
+        Selected = wanted;
+        SelectionChanged?.Invoke();
+    }
+
+    /// <summary>
     /// The scope a bare phrase means. "This ship" and "this system" are the two a Commander says
     /// without naming, and both are answerable from where they are right now.
     /// </summary>
@@ -735,8 +772,12 @@ public sealed class ChecklistService(
     /// proposes and this commits, which is what keeps a hostile in-game message to a proposal that
     /// gets declined.
     /// </summary>
+    /// <param name="goal">The arc that asked for the line, where one did (list.md Phase 34).</param>
     public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null) =>
-        list.Apply(Fid, Name, document => document.AddNote(scope, text, goal));
+        // The new line becomes the selected one (reported 2026-08-21). A Commander who has just
+        // said a line is thinking about that line, and "put it at the top" said in the next breath
+        // has to mean the one they were talking about rather than nothing.
+        Selecting(list.Apply(Fid, Name, document => document.AddNote(scope, text, goal)));
 
     public ChecklistChange Complete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Complete(id));
@@ -744,8 +785,31 @@ public sealed class ChecklistService(
     public ChecklistChange Uncomplete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Uncomplete(id));
 
-    public ChecklistChange Delete(ChecklistItemId id) =>
-        list.Apply(Fid, Name, document => document.Delete(id));
+    public ChecklistChange Delete(ChecklistItemId id)
+    {
+        var change = list.Apply(Fid, Name, document => document.Delete(id));
+
+        // The selected line has gone, so the selection goes with it rather than pointing at an id
+        // nothing answers to. Here rather than in the panel, so a line dropped by a phrase leaves
+        // the same nothing behind that a line dropped by a button does.
+        if (change.Changed && Selected is { } held && held.Same(id))
+        {
+            Select(null);
+        }
+
+        return change;
+    }
+
+    /// <summary>Points the selection at whatever a change was about, where it did anything.</summary>
+    private ChecklistChange Selecting(ChecklistChange change)
+    {
+        if (change is { Changed: true, Subject: { } subject })
+        {
+            Select(subject);
+        }
+
+        return change;
+    }
 
     /// <summary>
     /// Moves an item in the Commander's own order (list.md Phase 25). Reachable from the panel and
@@ -757,21 +821,45 @@ public sealed class ChecklistService(
         list.Apply(Fid, Name, document => document.Move(id, by));
 
     /// <summary>
-    /// The same, for a phrase naming an item rather than an id — "move buy limpets up".
+    /// The same, said the way a Commander says it — up, down, to the top, to the bottom
+    /// (reported 2026-08-21). The moved line stays selected, so a second "and again" means the
+    /// line that just moved.
+    /// </summary>
+    public ChecklistChange Move(ChecklistItemId id, ChecklistMove move) =>
+        Selecting(list.Apply(Fid, Name, document => document.Move(id, move)));
+
+    /// <summary>
+    /// The spoken form: a phrase naming an item — "move buy limpets to the top" — or nothing at
+    /// all, which means the selected line.
     /// <para>
-    /// Through <see cref="ChecklistDocument.Match"/>, which answers null for nought and for
-    /// several rather than guessing: acting on the wrong item of two is worse than asking which.
+    /// A named phrase goes through <see cref="ChecklistDocument.Match"/>, which answers null for
+    /// nought and for several rather than guessing: acting on the wrong item of two is worse than
+    /// asking which.
+    /// </para>
+    /// <para>
+    /// <b>Nothing selected is refused in words that say what to do about it.</b> "It" with no
+    /// antecedent is the one failure this path has, and a Commander who hears
+    /// <i>"nothing is selected"</i> and nothing else has been told they were wrong rather than
+    /// told what to say.
     /// </para>
     /// </summary>
-    public ChecklistChange Move(string phrase, int by)
+    public ChecklistChange Move(string? phrase, ChecklistMove move)
     {
         var document = Document;
 
-        return document.Match(phrase) is { } item
-            ? Move(item.Id, by)
+        if (phrase is { Length: > 0 } named)
+        {
+            return document.Match(named) is { } item
+                ? Move(item.Id, move)
+                : ChecklistChange.Refused(document, $"I could not tell which item \"{named}\" means.");
+        }
+
+        return Selected is { } selected
+            ? Move(selected, move)
             : ChecklistChange.Refused(
                 document,
-                $"I could not tell which item \"{phrase}\" means.");
+                "No line is selected, so I do not know which one you mean. Name it — "
+                + "\"move buy limpets to the top\" — or pick it on the Checklist tab first.");
     }
 
     /// <summary>

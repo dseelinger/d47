@@ -34,6 +34,19 @@ public sealed class CarrierCallout : ICallout
 
     public const string JumpKey = "carrier.jump";
 
+    /// <summary>
+    /// The Commander has dropped out of supercruise at their own carrier, and the tower tells the
+    /// captain before the captain says anything to anyone (asked for 2026-08-21).
+    /// <para>
+    /// <b>Two keys because it is two people talking to each other.</b> The tower's line is
+    /// addressed to the captain and the captain's answers the tower and then the Commander, which
+    /// is the whole of what makes it an exchange rather than a greeting said twice.
+    /// </para>
+    /// </summary>
+    public const string InboundKey = "carrier.inbound";
+
+    public const string WelcomeKey = "carrier.welcome";
+
     private string? _lastDockedAt;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
@@ -74,6 +87,32 @@ public sealed class CarrierCallout : ICallout
 
                     break;
 
+                // Dropping out of supercruise at the Commander's own carrier.
+                //
+                // **`SupercruiseDestinationDrop` is the event and `SupercruiseExit` is not.**
+                // Measured over the 920-journal corpus: not one of 1,889 station-type
+                // SupercruiseExit events names a carrier, because the body a drop is recorded
+                // against is whatever the carrier is orbiting. The destination drop names the
+                // target outright — `"ETERNAL FLAME BNH-T2F"` — and 779 of them are at a
+                // callsign the same journal establishes as the Commander's own.
+                //
+                // Matched on the callsign for the reason `Docked` is: the same 804 events include
+                // drops at other people's carriers, and a welcome home from somebody else's crew
+                // is worse than silence.
+                case "SupercruiseDestinationDrop" when !context.IsPriming
+                                                       && IsOwnCarrier(
+                                                           Target(journalEvent.String("Type"), state.Carrier),
+                                                           state.Carrier):
+                    yield return Tower(
+                        InboundKey,
+                        "Captain, our Commander is inbound. Just thought you'd like to know.");
+
+                    yield return Captain(
+                        WelcomeKey,
+                        $"Priority routing, Tower Control. Welcome home, {Owner(state)}.");
+
+                    break;
+
                 // The captain's business rather than the tower's: this is about the carrier
                 // itself moving, not about the Commander arriving.
                 case "CarrierJumpRequest" when !context.IsPriming:
@@ -87,6 +126,30 @@ public sealed class CarrierCallout : ICallout
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// The callsign out of a supercruise target, which Elite writes as the carrier's name and its
+    /// callsign together — <c>"Arx Dei B0X-79X"</c>. Null for a target that is not a carrier at
+    /// all, which is most of the 3,819 drops in the corpus.
+    /// <para>
+    /// The <em>last</em> word rather than a pattern for a callsign, because a callsign is
+    /// Frontier's format to change and the carrier's own name is free text a Commander chose —
+    /// one that ends in something callsign-shaped is a name d47 must not read as an identity.
+    /// The comparison below is against the callsign this Commander's journal already stated, so
+    /// the only question here is which word to hand it.
+    /// </para>
+    /// </summary>
+    private static string? Target(string? said, CarrierState carrier)
+    {
+        if (said is not { Length: > 0 } || carrier.CallSign is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        var at = said.LastIndexOf(' ');
+
+        return at < 0 ? said : said[(at + 1)..];
     }
 
     private static bool IsOwnCarrier(string? stationName, CarrierState carrier) =>

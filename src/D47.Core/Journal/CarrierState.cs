@@ -65,7 +65,41 @@ public sealed record CarrierState
 
     public bool JumpScheduled => DestinationSystem is not null;
 
-    public CarrierState Apply(JournalEvent journalEvent) => journalEvent.Kind switch
+    /// <summary>
+    /// Whether an event is about the Commander's own fleet carrier rather than a squadron's
+    /// (reported 2026-08-21: <i>"That's not where my Fleet Carrier is"</i>).
+    /// <para>
+    /// <b>Elite writes both to the same journal, seconds apart, and this state kept whichever
+    /// arrived last.</b> Measured over the 920-journal corpus: 628 <c>CarrierLocation</c> events
+    /// say <c>FleetCarrier</c> and 267 say <c>SquadronCarrier</c>, 173 journals carry both, and in
+    /// <b>152 of those 173 the squadron one is the last</b>. So a Commander in a squadron with a
+    /// carrier was told their own carrier was wherever the squadron's happened to be — reliably,
+    /// and with the right name on it, because the name comes from <c>CarrierStats</c>.
+    /// </para>
+    /// <para>
+    /// <b>An absent <c>CarrierType</c> is accepted, and that is not a gap.</b> Frontier added the
+    /// field partway through: all 223 <c>CarrierLocation</c> events without it are the same single
+    /// carrier id, so there is nothing to tell apart in the journals that predate it.
+    /// </para>
+    /// <para>
+    /// <b><c>CarrierStats</c> is not the discriminator</b>, which is worth writing down because it
+    /// looks like one. One account in the corpus receives <c>CarrierStats</c> for two carrier ids
+    /// in the same journal — its own and a squadron's — so pinning the id from stats would pin the
+    /// wrong carrier as readily as this fixes it.
+    /// </para>
+    /// </summary>
+    private static bool Mine(JournalEvent journalEvent) =>
+        journalEvent.String("CarrierType") is not { Length: > 0 } type
+        || string.Equals(type, "FleetCarrier", StringComparison.OrdinalIgnoreCase);
+
+    public CarrierState Apply(JournalEvent journalEvent)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return Mine(journalEvent) ? Folded(journalEvent) : this;
+    }
+
+    private CarrierState Folded(JournalEvent journalEvent) => journalEvent.Kind switch
     {
         "CarrierBuy" => this with
         {
@@ -104,6 +138,11 @@ public sealed record CarrierState
         // The carrier has arrived. Written to the owner's journal whether or not they were
         // aboard for it, which is what makes "where is my carrier" answerable after leaving it
         // parked and flying somewhere else.
+        //
+        // **It carries neither a carrier id nor a CarrierType**, so the filter above cannot see
+        // it, and it was worth measuring rather than assuming: across the corpus's 132 distinct
+        // CarrierJump systems, **not one** belongs only to the squadron carrier. So this event
+        // describes the Commander's own carrier in practice, and is folded unchanged.
         "CarrierJump" => this with
         {
             StarSystem = journalEvent.String("StarSystem") ?? DestinationSystem ?? StarSystem,

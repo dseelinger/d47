@@ -425,7 +425,57 @@ public static class ChecklistCapability
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                     checklists.Decline(arguments.TryGetString("id", out var id) ? id : null))),
             },
+
+            // Ordering, on the same boundary and for the same reason: the order is the
+            // Commander's answer to what they are working on next, which is not a thing an
+            // in-game message gets to rearrange. Reported 2026-08-21 as *"Ordering I cannot set"*,
+            // and the gap was never the boundary — it was that nothing had ever declared the
+            // phrases, so the one model-free route this is allowed to have did not exist.
+            new ToolDefinition
+            {
+                Name = "move_checklist_item",
+                Description =
+                    "Move a line up, down, to the top or to the bottom of the checklist. The "
+                    + "Commander's own act: not offered to the model, and refused if it asks.",
+                Protected = true,
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "to",
+                        Type = ToolParameterType.String,
+                        Required = true,
+                        Description = "up, down, top or bottom.",
+                        AllowedValues = Ends,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "item",
+                        Type = ToolParameterType.String,
+                        Description = "The line, in enough of its own words to tell it from the others. "
+                                      + "Omit for the selected one.",
+                    },
+                ],
+                Commands = Moves,
+                Handler = (arguments, _) => Task.FromResult(
+                    arguments.TryGetString("to", out var to) && Ending(to) is { } move
+                        ? ToolResult.Ok(checklists.Move(
+                            arguments.TryGetString("item", out var item) ? item : null, move).Report)
+                        : ToolResult.Error("Say up, down, top or bottom.")),
+            },
         ],
+    };
+
+    /// <summary>The four ends, in the one spelling the schema, the phrases and the panel share.</summary>
+    private static readonly string[] Ends = ["up", "down", "top", "bottom"];
+
+    private static ChecklistMove? Ending(string said) => said.Trim().ToLowerInvariant() switch
+    {
+        "up" => ChecklistMove.Up,
+        "down" => ChecklistMove.Down,
+        "top" => ChecklistMove.Top,
+        "bottom" => ChecklistMove.Bottom,
+        _ => null,
     };
 
     /// <summary>
@@ -480,6 +530,52 @@ public static class ChecklistCapability
         "no", "no thanks", "nope", "leave it", "leave that", "forget it", "never mind",
         "negative", "cancel that", "drop it",
     ];
+
+    /// <summary>
+    /// Every way a Commander says "move that", against the end it means.
+    /// <para>
+    /// <b>Declared rather than parsed.</b> The router is phrase-level on purpose — the rule
+    /// <c>JournalCapability</c> writes down is that a bare word hijacks any sentence containing
+    /// it — so "top" is not a phrase and "move it to the top" is. That costs a list and buys a
+    /// route that cannot fire on a sentence about the top of a gravity well.
+    /// </para>
+    /// <para>
+    /// <b>"It", "that" and "this" all mean the selected line</b>, which is what
+    /// <see cref="ChecklistService.Selected"/> exists for, and what a line the Commander has just
+    /// added already is. The named form — "move buy limpets to the top" — is not here and cannot
+    /// be: a declared phrase carries fixed arguments, and the item is the part that varies. It is
+    /// the tool's <c>item</c> parameter, reachable from the panel.
+    /// </para>
+    /// </summary>
+    private static readonly IReadOnlyList<ToolCommandPhrase> Moves =
+    [
+        .. Saying("up", ["move it up", "move that up", "move this up", "move it up one",
+                         "move the selected item up", "move the currently selected checklist item up",
+                         "move the selected checklist item up", "up one"]),
+
+        .. Saying("down", ["move it down", "move that down", "move this down", "move it down one",
+                           "move the selected item down", "move the currently selected checklist item down",
+                           "move the selected checklist item down", "down one"]),
+
+        .. Saying("top", ["move it to the top", "move that to the top", "move this to the top",
+                          "put it at the top", "put that at the top", "put this at the top",
+                          "move it to the top of the list", "move to the top", "move to top",
+                          "move the selected item to the top",
+                          "move the currently selected checklist item to the top",
+                          "top of the list", "straight to the top"]),
+
+        .. Saying("bottom", ["move it to the bottom", "move that to the bottom", "move this to the bottom",
+                             "put it at the bottom", "put that at the bottom", "put this at the bottom",
+                             "move it to the bottom of the list", "move to the bottom", "move to bottom",
+                             "move the selected item to the bottom",
+                             "move the currently selected checklist item to the bottom",
+                             "bottom of the list"]),
+    ];
+
+    private static IEnumerable<ToolCommandPhrase> Saying(string to, IReadOnlyList<string> phrases) =>
+        phrases.Select(phrase => new ToolCommandPhrase(
+            phrase,
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["to"] = to }));
 
     /// <summary>
     /// The phrases that answer a proposal: the plain ones always, the conversational ones only

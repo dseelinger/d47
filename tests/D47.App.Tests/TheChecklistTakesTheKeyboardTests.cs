@@ -35,6 +35,12 @@ public class TheChecklistTakesTheKeyboardTests
             checklists.AddNote(ChecklistScope.Universal, line);
         }
 
+        // Adding a line selects it (reported 2026-08-21), and these tests are about a page being
+        // opened rather than about a Commander having just spoken. Seeding a fixture is not that
+        // act, so the selection is put back to nothing and each test below selects for itself —
+        // which is what every one of them was already asserting.
+        checklists.Select(null);
+
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableChecklist(checklists);

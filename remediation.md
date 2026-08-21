@@ -44,6 +44,7 @@ disagree, the ask wins.**
 | 8 | "Gear Glyph" should appear to the right of the Module Name, not leftmost. | 10 |
 | 9 | It is not clear that the step controls for the engineering grade are associated with it. Put Grade last (rightmost) on the line, followed by the stepper. | 11 |
 | 10 | *"You have dropped short of where you were going and had to come back — 14 of 490 approaches, 2 of them in the last month."* This was announced on a perfect approach to landing on a planet. | 12 |
+| 12 | *"Where is my fleet carrier?"* → *"JOHN DEPARAGON is in Oppi, near Reiter City, docked at Reiter City. Next jump: Scorpii Sector CL-Y c30 (class K). 2 jumps left on the route."* — *"That's not where my Fleet Carrier is."* | 16 |
 | 11 | Of three finished checklist lines reading *Grade 5 Reinforced Shields on Slot01_Size7 / ship 51*: *"These should mention the ship and module they happened on — not like this. For example, line one could say something like: Grade 5 Reinforced Shields on 7A Shield Generator on Flamebrand (Anaconda). If 'Ship' is not an axis for Checklist, it needs to be. May be null for non-ship checklist."* | 15 |
 
 ## What runs through this batch
@@ -595,6 +596,39 @@ reparent**, and the panel now reparents on every tab switch.
   Generator* — two spellings of one module, a caption apart, leaving the Commander to work out
   whether they were the same one. `ChecklistEvaluator.Describe` is now the one place either says
   it. Nothing had pinned the old wording, which is why the alignment cost no test and gained one.
+
+- [ ] **16. "Where is my fleet carrier" answered with where the Commander was.** Reported against
+  0.44.0, with the answer quoted: the Commander's own system, their own body, their own station,
+  their own route — under their own name, offered as an answer about a carrier that was somewhere
+  else.
+
+  **Two faults, one on top of the other, and fixing either alone would still have been wrong.**
+
+  **The route.** A capability keyword names a *capability*, and the router then takes that
+  capability's first tool with no required parameters. For Journal that is `get_location`. The
+  question matched the keyword `my fleet` — which *"my fleet carrier"* contains — so it was
+  answered by the position tool. Every other question on that capability had the same answer
+  waiting for it: `what materials am I carrying`, `what ships do I own` and `session summary` would
+  each have reported where the Commander was standing. Fixed by declaring the whole questions as
+  phrases on the tools that answer them, which is matched ahead of keywords and names one tool
+  each. **The keywords are untouched** — they are what makes the capability reachable with no model
+  at all, and narrowing them would trade one wrong answer for a set of silences.
+
+  **The answer.** Underneath, `CarrierState` was holding the wrong carrier. Elite writes
+  `CarrierLocation` for the Commander's own fleet carrier **and** for a squadron's, seconds apart,
+  and the state kept whichever arrived last. Measured over the 920-journal corpus: 628 say
+  `FleetCarrier`, 267 say `SquadronCarrier`, 173 journals carry both, and **in 152 of those 173 the
+  squadron one is last**. So the position was reliably the squadron's, wearing the right name —
+  because the name comes from `CarrierStats`. Now filtered on `CarrierType`.
+
+  **Two things checked rather than assumed.** An absent `CarrierType` is accepted: all 223 such
+  events predate the field and name one carrier, so there is nothing to tell apart. And `CarrierJump`
+  carries neither an id nor a type, so it could not be filtered — of its 132 distinct systems across
+  the corpus, **not one** belongs only to the squadron carrier, so it is folded unchanged.
+
+  **`CarrierStats` is not the discriminator**, which is worth recording because it looks like one:
+  one account in the corpus receives it for two carrier ids in the same journal, so pinning the id
+  from stats would pin the wrong carrier as readily as this fixes it.
 
 ## Where item 8 stands
 
