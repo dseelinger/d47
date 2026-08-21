@@ -65,10 +65,10 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
 
-## Fixed on `flake-hunt`, awaiting release: the headless-session cleanup failure
+## Fixed, awaiting release: the headless-session cleanup failure
 
 *Diagnosed and fixed 2026-08-21, after ten recorded occurrences across five months and five more
-reproduced on the diagnosis day. The fix is on the `flake-hunt` branch; this entry leaves the file
+reproduced on the diagnosis day. The fix is merged to `main`; this entry leaves the file
 with the release that carries it, and the history it compresses is in this file's git log and in
 [docs/plans/flake-hunt.md](docs/plans/flake-hunt.md).*
 

@@ -2,7 +2,7 @@
 
 ## Resolved, 2026-08-21 — the brief below was run the day it was written
 
-The hunt is over; the current record is the *"Fixed on `flake-hunt`, awaiting release"* entry in
+The hunt is over; the current record is the *"Fixed, awaiting release"* entry in
 [bugs.md](../../bugs.md), and its permanent one will be the changelog line under the release that
 carries the fix. In one paragraph: after `Dispatcher.ResetBeforeUnitTests()` nulls Avalonia's
 process-global dispatcher, **the first thread to read `Dispatcher.UIThread` becomes the UI
