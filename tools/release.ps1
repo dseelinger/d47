@@ -336,7 +336,20 @@ if (-not $Yes) {
 Write-Step "Tagging $next"
 
 # Signed and annotated, as every published tag of this project is.
-Invoke-Git tag -s $next -m $Notes | Out-Null
+# The annotation goes through a file rather than through -m, because Windows PowerShell
+# re-parses quotes inside a native command's arguments: a CHANGELOG heading containing a
+# double quote — `"Copy that"` — was split, and git read the second word as a ref and failed
+# with `Failed to resolve 'that' as a valid ref`. Nothing was tagged, which is the script
+# working, but it cost a run. A file has no quoting rules for PowerShell to apply.
+$annotation = [System.IO.Path]::GetTempFileName()
+
+try {
+    [System.IO.File]::WriteAllText($annotation, $Notes, [System.Text.UTF8Encoding]::new($false))
+    Invoke-Git tag -s $next -F $annotation | Out-Null
+}
+finally {
+    Remove-Item $annotation -ErrorAction SilentlyContinue
+}
 Invoke-Git push $Remote $next | Out-Null
 
 Write-Step "$next is pushed. The release workflow builds, checksums and publishes it."
