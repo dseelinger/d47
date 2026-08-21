@@ -65,7 +65,7 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
 
-## Open: a headless-session cleanup failure that seven different tests have now carried
+## Open: a headless-session cleanup failure that ten different tests have now carried
 
 `D47.App.Tests.AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` timed out on the CI
 runner during the 0.38.0 release, at the `cancelled.Task.WaitAsync` on line 210 — the second press
@@ -260,6 +260,33 @@ of the seven occurrences has cost a version number, and none has put a wrong `d4
 tag. The other four were caught before the tag, by `dotnet test -c Release` locally or on `ci`,
 which is where those two waits in `tools/release.ps1` are meant to catch things.
 
+
+### Eighth, ninth and tenth — 2026-08-21, three failures in four runs
+
+**The frequency changed, and that is the new information.** Cutting v0.46.0 took **four** attempts
+at the two workflows, and three of them failed on this:
+
+| Run | Test | Shape |
+|---|---|---|
+| `ci` | `EngineersTabTests.PromotingOffersTheChain` | cleanup, `EnsureIsolatedApplication` |
+| `ci` re-run | `AuditionDoesNotCommitTests.TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed` **and** `PlayingASecondVoiceCancelsTheFirst` | both 5 s timeouts |
+| `release` | `SearchTheTabTests.AFilterOpensTheCardItMatchedInAndClosesItAgainAfter` | cleanup, `EnsureIsolatedApplication` |
+
+Three more carrier tests, none of them related to each other or to the change being released, and
+the audition pair is the *original* entry from the top of this section returning for a third time.
+The whole App suite passed clean locally in Debug and in Release on the same commit, several times.
+
+**This retires the "three of the last twenty" figure recorded above.** That count was of *release*
+runs only and it was correct when written; the honest current statement is that on 2026-08-21 the
+failure rate was high enough to cost four workflow runs to publish one version. Nothing was
+mis-tagged — `tools/release.ps1` waits for CI precisely so this cannot — but the wait is now the
+most expensive part of shipping.
+
+**The investigation prompt is written down.** See
+[docs/plans/flake-hunt.md](docs/plans/flake-hunt.md), which carries every occurrence, the two
+distinct symptoms, what has been ruled out, and the instrumentation the third entry above asked
+for and nobody has written. It exists because this has now been re-diagnosed from scratch four
+times, and each time the reasoning was reconstructed rather than read.
 
 ## Open: an engineer was offered as a material trader, with rates attached
 
