@@ -505,6 +505,227 @@ public static class LoadoutPages
     }
 
     /// <summary>
+    /// The coin: this module is behind a Powerplay pledge (list.md Phase 38).
+    /// <para>
+    /// <b>The danger hue, because it is a gate.</b> The gear says what was done to a module and
+    /// the dot says a plan exists; this says the Commander may not be able to buy the thing at
+    /// all, which is the only one of the three that can stop a build.
+    /// </para>
+    /// <para>
+    /// The character is <see cref="ShipsMode.Coin"/> — U+00A4 — chosen because it exists in every
+    /// Latin font rather than because it is the prettiest coin available. See there.
+    /// </para>
+    /// </summary>
+    private static Run Coin()
+    {
+        var coin = new Run($" {ShipsMode.Coin}");
+
+        Themed(coin, Run.ForegroundProperty, ThemeManager.DangerKey);
+
+        return coin;
+    }
+
+    /// <summary>
+    /// The waiting question, as a banner with two answers (list.md Phase 38).
+    /// <para>
+    /// <b>Buttons rather than a chooser.</b> A chooser is modal and would take the tab over the
+    /// moment it was opened; this is a question the Commander may want to look at the build before
+    /// answering, and a banner lets them.
+    /// </para>
+    /// <para>
+    /// <paramref name="answered"/> is handed what happened so the page can say it — accepting and
+    /// declining both produce a sentence, and a banner that vanished silently would leave a
+    /// Commander unsure whether they had pressed anything.
+    /// </para>
+    /// </summary>
+    internal static Control Notice(LoadoutNotice notice, Action<string> answered)
+    {
+        var text = new TextBlock
+        {
+            Text = notice.Text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 8),
+        };
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+        };
+
+        buttons.Children.Add(Press("Yes, revise my checklist", () => answered(notice.Yes())));
+        buttons.Children.Add(Press("No, leave both alone", () => answered(notice.No())));
+
+        var border = new Border
+        {
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(3),
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(0, 0, 0, 10),
+            Child = new StackPanel { Children = { text, buttons } },
+        };
+
+        Themed(border, Border.BorderBrushProperty, ThemeManager.AccentKey);
+        Themed(border, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+
+        return border;
+    }
+
+    /// <summary>
+    /// One gauge at the head of a slot list — a labelled horizontal bar (list.md Phase 38).
+    /// <para>
+    /// <b>A bar and not a dial</b> (the Commander's call, 2026-08-20). Three reasons and all of
+    /// them are about the headset: it reads at overlay resolution where small text on an arc does
+    /// not, it survives a narrow panel, and it is a rectangle inside a rectangle rather than
+    /// geometry that has to be drawn.
+    /// </para>
+    /// <para>
+    /// <b>The marks are drawn on the bar and read under it.</b> A mark is a hairline at a
+    /// position; what it means is in the reading below, because a label floating over a 6-pixel
+    /// bar is unreadable on a monitor and gone entirely through a lens.
+    /// </para>
+    /// <para>
+    /// <b>A modelled gauge is marked and is a different colour.</b> That is the condition on which
+    /// these gauges were allowed to show planned figures at all — see <see cref="LoadoutGauge"/> —
+    /// so the tilde and the hue are load-bearing rather than decoration.
+    /// </para>
+    /// </summary>
+    internal static Control Gauge(LoadoutGauge gauge)
+    {
+        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 6) };
+
+        var heading = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+        };
+
+        var name = new TextBlock
+        {
+            Text = gauge.Name,
+            FontSize = TypeScale.Secondary,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        heading.Children.Add(name);
+
+        // The reading, in the gauge's own tone: red where the build does not fit, and the muted
+        // Info hue where every figure in it was worked out rather than read off the game.
+        var reading = new TextBlock
+        {
+            Text = gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading,
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Themed(
+            reading,
+            TextBlock.ForegroundProperty,
+            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
+            : gauge.Modelled ? ThemeManager.InfoKey
+            : ThemeManager.TextKey);
+
+        heading.Children.Add(reading);
+        stack.Children.Add(heading);
+
+        stack.Children.Add(Bar(gauge));
+
+        // What the marks are, and anything wrong with the figures. One line, muted, under the bar.
+        var said = string.Join(
+            " · ",
+            gauge.Marks.Select(mark => mark.Label).Append(gauge.Note).Where(text => text is { Length: > 0 }));
+
+        if (said.Length > 0)
+        {
+            stack.Children.Add(Muted(said));
+        }
+
+        return stack;
+    }
+
+    /// <summary>
+    /// The bar itself: a track, a fill, and a hairline per mark.
+    /// <para>
+    /// <b>A Grid rather than a Canvas</b>, so the fill is a fraction of whatever width the panel
+    /// happens to be — the same bar has to work in a window the Commander can drag and in an
+    /// overlay quad that cannot be dragged at all. Columns in star widths do that with no layout
+    /// pass of anybody's own.
+    /// </para>
+    /// <para>
+    /// <b>Clamped, and deliberately not to 1.</b> A build 30% over its plant fills the bar and
+    /// stops; the number beside it is what says by how much, and a bar that grew past its own
+    /// track would just be a drawing bug.
+    /// </para>
+    /// </summary>
+    private static Control Bar(LoadoutGauge gauge)
+    {
+        var fill = Math.Clamp(double.IsFinite(gauge.Fill) ? gauge.Fill : 0, 0, 1);
+
+        var track = new Grid
+        {
+            Height = 8,
+            ColumnDefinitions = new ColumnDefinitions
+            {
+                new(new GridLength(fill, GridUnitType.Star)),
+                new(new GridLength(1 - fill, GridUnitType.Star)),
+            },
+        };
+
+        var background = new Border { CornerRadius = new CornerRadius(2) };
+
+        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Grid.SetColumnSpan(background, 2);
+        track.Children.Add(background);
+
+        var filled = new Border { CornerRadius = new CornerRadius(2) };
+
+        Themed(
+            filled,
+            Border.BackgroundProperty,
+            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
+            : gauge.Modelled ? ThemeManager.InfoKey
+            : ThemeManager.AccentKey);
+
+        Grid.SetColumn(filled, 0);
+        track.Children.Add(filled);
+
+        // Each mark, as its own two-column grid over the same track. Layered rather than inserted
+        // into the fill's columns, because a mark can sit before or after the fill and the two
+        // must not have to agree on an order.
+        foreach (var mark in gauge.Marks)
+        {
+            var at = Math.Clamp(double.IsFinite(mark.At) ? mark.At : 0, 0, 1);
+
+            var over = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions
+                {
+                    new(new GridLength(at, GridUnitType.Star)),
+                    new(new GridLength(1 - at, GridUnitType.Star)),
+                },
+            };
+
+            var hairline = new Border
+            {
+                Width = 2,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+
+            Themed(hairline, Border.BackgroundProperty, ThemeManager.TextKey);
+            Grid.SetColumn(hairline, 0);
+            over.Children.Add(hairline);
+
+            Grid.SetColumnSpan(over, 2);
+            track.Children.Add(over);
+        }
+
+        return track;
+    }
+
+    /// <summary>
     /// A slot row, drawn as the loadout rather than as the slot (asked for 2026-08-20).
     /// <para>
     /// <b>Left-justified throughout, with no gap in the middle.</b> The old row put the slot's
@@ -599,6 +820,14 @@ public static class LoadoutPages
             if (row.Engineered)
             {
                 inlines.Add(Gear());
+            }
+
+            // And the coin, for a module a Powerplay pledge is needed to buy (list.md Phase 38).
+            // Beside the gear rather than instead of it: a Prismatic Shield Generator can be both
+            // gated and engineered, and they are different facts.
+            if (parts.Gated)
+            {
+                inlines.Add(Coin());
             }
 
             // **`Text` where one run would do.** A `TextBlock` carrying `Inlines` reports no
@@ -838,6 +1067,18 @@ public sealed class IndexPage : LoadoutPage
     {
         _list.Children.Clear();
 
+        // A question left over from one d47 asked out loud (list.md Phase 38). At the head of the
+        // index because that is where a Commander lands on the tab, and above the empty case
+        // because a fleet d47 has not read yet can still have a question waiting about a build.
+        if (Mode.Notice() is { } notice)
+        {
+            _list.Children.Add(LoadoutPages.Notice(notice, said =>
+            {
+                Refresh();
+                _list.Children.Insert(0, LoadoutPages.Muted(said));
+            }));
+        }
+
         var rows = Mode.Items();
 
         if (rows.Count == 0)
@@ -1011,6 +1252,18 @@ public sealed class ItemPage : LoadoutPage
 
         _summary.Text = summary;
 
+        // The same question the index carries, here too (list.md Phase 38): a Commander who has
+        // drilled into the ship it is about is the likeliest one to answer it, and they would
+        // otherwise have to go back a level to find out it had been asked.
+        if (Mode.Notice() is { } notice)
+        {
+            _list.Children.Add(LoadoutPages.Notice(notice, said =>
+            {
+                Refresh();
+                _summary.Text = said;
+            }));
+        }
+
         // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
         // scroller rather than docked above it, or a hull's figures would cost the slot list the
         // same rows on every window.
@@ -1020,6 +1273,15 @@ public sealed class ItemPage : LoadoutPage
             // a ship is parked in goes on the clipboard from here, to be pasted into the Galaxy
             // Map. A line with neither a step nor a copy is drawn exactly as before.
             _list.Children.Add(LoadoutPages.Stepped(line));
+        }
+
+        // Power and jump range, at the head of the slot list and under the hull's own figures
+        // (list.md Phase 38). Here rather than docked above the scroller for the same reason the
+        // details are: two gauges would cost the slot list two rows on every window, and they are
+        // read once when the page opens rather than watched while scrolling.
+        foreach (var gauge in Mode.Gauges(_item))
+        {
+            _list.Children.Add(LoadoutPages.Gauge(gauge));
         }
 
         var rows = Mode.Slots(_item);

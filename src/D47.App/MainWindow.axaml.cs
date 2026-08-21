@@ -142,7 +142,11 @@ public partial class MainWindow : Window
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
             // between them (list.md Phases 26 and 27). Both surfaces, like the checklist.
             Panel.EnableLoadout(
-                host.Ships, host.Checklists, () => host.GameState.Active, host.OnFootPlans);
+                host.Ships,
+                host.Checklists,
+                () => host.GameState.Active,
+                host.OnFootPlans,
+                () => host.ModulePower);
 
             // Who to go and unlock next, read across both plan stores (list.md Phase 28). Both
             // surfaces again, because a Commander deciding where to fly is usually already in

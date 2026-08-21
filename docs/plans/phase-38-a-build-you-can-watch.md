@@ -1,8 +1,22 @@
 # Phase 38 — A build you can watch
 
-The plan of record for a phase that is **not built**. Written 2026-08-20 from a design
-conversation, with the arithmetic checked against the shipped tables and the journal corpus
-before anything was promised.
+> **Built 2026-08-20 and shipped in v0.43.0, except for half of item 10.** What the corpus
+> actually said — including three places this document was wrong — is in
+> [docs/spikes/build-gauges.md](../spikes/build-gauges.md), and the amendments are recorded on the
+> `list.md` lines themselves. In short: `powercapacity` is spelled `pgen`; the 694 `ModuleInfo`
+> events are bare markers carrying no figures at all, so that cross-check is live rather than
+> replayable; nothing d47 reads maps a Powerplay entitlement id to a Power's name, so the badge
+> says a pledge is needed and does not say whose; and **item 10 split in two** — the SCO drive's
+> eight uncosted blueprints were a join and are closed, while Anti-Guardian Zone Resistance cannot
+> be costed from any source d47 has and stays honestly uncosted. The honest risk this document
+> names — item 2 — came out exact: a blueprint and an experimental **compound**, and the model
+> lands on a *finished* grade.
+>
+> Two calls the Commander made on the day, which this document left open: **horizontal bars rather
+> than dials**, and **the priority ladder is out of scope**.
+
+The plan of record, written 2026-08-20 from a design conversation, with the arithmetic checked
+against the shipped tables and the journal corpus before anything was promised.
 
 `list.md` carries the Phase 38 entry as of 2026-08-20, unticked. This document is the reasoning
 behind those lines and the measurements they rest on; the list is the product description.

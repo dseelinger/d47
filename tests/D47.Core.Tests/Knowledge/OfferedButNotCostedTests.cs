@@ -16,6 +16,16 @@ namespace D47.Core.Tests.Knowledge;
 /// Before this, the surface read that as <i>"I have no engineering for this module"</i>, which is
 /// a claim about Elite. The true claim is about d47.
 /// </para>
+/// <para>
+/// <b>Half of the gap closed in list.md Phase 38, and the two halves are different kinds of thing.</b>
+/// Some offers were uncosted because EDSY <em>splits a module type EDEngineer does not</em> — the
+/// Supercharged drive against the ordinary one — so the recipe was on disk all along, filed under
+/// a sibling name. That is a join, it is settled by the corpus rather than by a resemblance, and
+/// it is closed. The rest is genuine absence: EDEngineer carries no Guardian weapon recipes at
+/// all, and nothing d47 reads names Anti-Guardian Zone Resistance's materials — FDevIDs has no row
+/// for any of the three, and EDSY marks both the blueprint's symbol and every one of those
+/// materials <c>// TODO</c> as its own guess. So that half stays uncosted and stays honest.
+/// </para>
 /// </summary>
 public class OfferedButNotCostedTests
 {
@@ -51,6 +61,32 @@ public class OfferedButNotCostedTests
     }
 
     [Fact]
+    public void TheSuperchargedDriveIsOfferedAndNowCosted()
+    {
+        // **The largest gap of the family, and it was never missing data** (list.md Phase 38,
+        // item 10). EDSY files the SCO drive as its own module type; EDEngineer has one "Frame
+        // Shift Drive" — so all eight of the drive's blueprints were offered to a Commander with
+        // no recipe behind any of them, on the drive almost everybody now flies.
+        var sco = EliteSpecifications.Module("int_hyperdrive_overcharge_size5_class5");
+
+        Assert.NotNull(sco);
+        Assert.Equal("cfsdo", sco.Type);
+
+        var offered = BlueprintCatalogue.OfferedTo(sco.Type);
+
+        Assert.NotNull(offered);
+        Assert.Contains("FSD_LongRange", offered);
+
+        var costed = BlueprintCatalogue.For(sco);
+
+        Assert.NotNull(costed);
+        Assert.Contains(costed, recipe => recipe.Name == "Increased FSD Range" && recipe.Grade == 5);
+        Assert.All(
+            costed.Where(recipe => recipe.Kind == BlueprintKind.Modification),
+            recipe => Assert.NotEmpty(recipe.Ingredients));
+    }
+
+    [Fact]
     public void AnOrdinaryWeaponIsOfferedAndCosted()
     {
         // The control. A multi-cannon has both halves, so neither refusal applies to it.
@@ -77,6 +113,34 @@ public class OfferedButNotCostedTests
             Assert.NotNull(module);
             Assert.NotEmpty(BlueprintCatalogue.OfferedTo(module.Type)!);
             Assert.Empty(BlueprintCatalogue.For(module)!);
+        }
+    }
+
+    [Fact]
+    public void AntiGuardianZoneResistanceIsNamedNowhereD47Reads()
+    {
+        // **Why the other half of item 10 did not ship, asserted rather than written down.**
+        // Every module EDSY offers `GuardianModule_Sturdy` to has no recipe for it, and the
+        // reason is that the recipe exists in none of d47's three sources — so shipping one
+        // would mean writing Frontier's game data out of somebody's memory of it, which is the
+        // thing the guardrails exist to prevent.
+        var offered = new[] { "hexgg", "hexgp", "hexgs", "cpp", "cpd", "ifsdb", "ihrp", "imrp", "isrp" };
+
+        foreach (var type in offered)
+        {
+            Assert.Contains("GuardianModule_Sturdy", BlueprintCatalogue.OfferedTo(type) ?? []);
+        }
+
+        Assert.DoesNotContain(
+            BlueprintCatalogue.All,
+            recipe => recipe.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
+
+        // And the materials EDSY names for it are in no naming source either, which is the second
+        // half of the same problem: a recipe whose ingredients cannot be keyed cannot be costed,
+        // gathered or put on a checklist.
+        foreach (var material in new[] { "Hardened Surface Fragments", "Caustic Crystal", "Tactical Core Chip" })
+        {
+            Assert.Empty(MaterialCatalogue.Near(material));
         }
     }
 }

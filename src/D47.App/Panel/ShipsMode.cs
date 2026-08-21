@@ -19,7 +19,8 @@ namespace D47.App.Panel;
 public sealed class ShipsMode(
     ShipPlanService ships,
     ChecklistService checklists,
-    Func<CommanderGameState?> state) : ILoadoutMode
+    Func<CommanderGameState?> state,
+    Func<ModulePower>? measured = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -60,12 +61,19 @@ public sealed class ShipsMode(
         add
         {
             ships.Store.Changed += value;
+
+            // And a third, added by list.md Phase 38: the tab now carries a question waiting on
+            // the Commander, so a question arriving or being answered moves these pages. Without
+            // it the banner is drawn on whichever pane was redrawn last and left standing on the
+            // other — a Commander who answers on the ship page finds the fleet page still asking.
+            checklists.Proposals.Changed += value;
             _invalidated += value;
         }
 
         remove
         {
             ships.Store.Changed -= value;
+            checklists.Proposals.Changed -= value;
             _invalidated -= value;
         }
     }
@@ -341,6 +349,186 @@ public sealed class ShipsMode(
         $"{amount.ToString("N0", CultureInfo.InvariantCulture)} cr";
 
     /// <summary>
+    /// The question left on the tab when one was asked out loud and not answered
+    /// (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+    /// <para>
+    /// <b>Read off the proposal itself rather than kept beside it.</b> The question <em>is</em> a
+    /// checklist proposal — the same accept-or-decline boundary the promote button uses — so the
+    /// banner cannot come to disagree with what is actually waiting, and answering it here and
+    /// answering it out loud are the same act.
+    /// </para>
+    /// <para>
+    /// <b>Narrowed to a ship's own list.</b> An engineer-unlock chain proposes plan items from the
+    /// same source and scopes them to the universal list, and those are the Engineers tab's
+    /// business rather than this one's — a question about a Krait belongs on the tab showing the
+    /// Krait.
+    /// </para>
+    /// </summary>
+    public LoadoutNotice? Notice()
+    {
+        var waiting = checklists.Proposals
+            .PendingFor(checklists.Document.CommanderFid)
+            .FirstOrDefault(proposal => proposal.Kind == ProposalKind.Plan
+                                        && proposal.Source == ChecklistSource.EngineeringPlan
+                                        && proposal.Scope.Group == ChecklistGroup.Ship);
+
+        if (waiting is null)
+        {
+            return null;
+        }
+
+        var id = waiting.Id;
+
+        return new LoadoutNotice(
+            $"{waiting.Summary.TrimEnd('.')}?",
+            () => checklists.Accept(id),
+            () => checklists.Decline(id));
+    }
+
+    /// <summary>
+    /// Power and jump range, live while the build is edited (list.md Phase 38).
+    /// <para>
+    /// <b>The two numbers a build is designed against</b>, and neither was visible until after the
+    /// credits were spent: a Commander answered both by alt-tabbing to Coriolis. Both are
+    /// panel-side and neither spends a byte of the tool surface — a gauge is not a tool.
+    /// </para>
+    /// <para>
+    /// <b>Silent rather than approximate for a ship d47 has never been inside.</b> Elite reports
+    /// the loadout of the ship the Commander is sitting in and no other, so a hull that has never
+    /// been boarded has nothing to total and says so where the gauges would be.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<LoadoutGauge> Gauges(string item)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return [];
+        }
+
+        var seen = Picture(build);
+
+        // Only the ship being flown, and only where the file describes *this* one. A Commander who
+        // swaps ships without re-outfitting leaves the previous ship's figures on disk, and those
+        // would put one hull's draw under another hull's plant.
+        var live = measured?.Invoke();
+        var draw = live is not null && seen is { IsLive: true } && live.Describes(seen.Loadout)
+            ? live.Draw
+            : null;
+
+        var gauges = ShipGauges.Read(build, seen?.Loadout, draw);
+
+        if (gauges.Silent is { Length: > 0 } why)
+        {
+            return [new LoadoutGauge("Power", why, 0, LoadoutTone.Muted)];
+        }
+
+        var drawn = new List<LoadoutGauge>();
+
+        if (gauges.Power is { } power)
+        {
+            drawn.Add(Gauge(power));
+        }
+
+        if (gauges.Jump is { } jump)
+        {
+            drawn.Add(Gauge(jump, gauges.Unmodelled));
+        }
+
+        return drawn;
+    }
+
+    /// <summary>
+    /// The power bar: filled to the deployed draw, marked where the retracted draw sits.
+    /// <para>
+    /// <b>Deployed is the fill</b> because it is the figure a build has to fit inside — a build
+    /// that fits until the guns come out does not fit. The retracted draw is the mark, so the
+    /// distance between them is the cost of the hardpoints, read at a glance.
+    /// </para>
+    /// <para>
+    /// <b>A percentage and, when it is over, the megawatts</b> (the Commander's call, 2026-08-20):
+    /// the percentage says whether there is a problem and the overage says how big a plant fixes
+    /// it.
+    /// </para>
+    /// </summary>
+    private static LoadoutGauge Gauge(PowerGauge power)
+    {
+        var modelled = power.Kind == FigureKind.Modelled;
+
+        if (power.Capacity is not { } made || made <= 0)
+        {
+            // A build with no plant d47 can see. The draw is still a real total and is worth
+            // saying; what it cannot be is a share of anything.
+            return new LoadoutGauge("Power", $"{Megawatts(power.Deployed)} drawn", 0, LoadoutTone.Muted)
+            {
+                Note = "No power plant I can see, so there is nothing to weigh that against.",
+                Modelled = modelled,
+            };
+        }
+
+        var reading =
+            $"{Megawatts(power.Deployed)} of {Megawatts(made)} · {Percent(power.DeployedShare)} deployed";
+
+        return new LoadoutGauge(
+            "Power",
+            reading,
+            power.Deployed / made,
+            power.Fits ? LoadoutTone.Body : LoadoutTone.Danger)
+        {
+            Marks = [new LoadoutMark(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted")],
+            Note = power.Overage is { } over
+                ? $"{Megawatts(over)} over with the hardpoints out."
+                : null,
+            Modelled = modelled,
+        };
+    }
+
+    /// <summary>
+    /// The jump bar, worst to best, with the game's own figure at the far end.
+    /// <para>
+    /// <b>The bar is filled to the laden range and marked at the other two</b>, because the filled
+    /// part is what the Commander gets whatever they are carrying and the marks are what they get
+    /// as they burn fuel and sell cargo.
+    /// </para>
+    /// </summary>
+    private static LoadoutGauge Gauge(JumpGauge jump, int unmodelled)
+    {
+        var span = jump.Best > 0 ? jump.Best : 1;
+
+        return new LoadoutGauge(
+            "Jump range",
+            $"{LightYears(jump.Worst)} – {LightYears(jump.Best)} ly",
+            jump.Worst / span,
+            LoadoutTone.Body)
+        {
+            Marks =
+            [
+                new LoadoutMark(jump.Middle / span, $"{LightYears(jump.Middle)} full tank"),
+                new LoadoutMark(1, $"{LightYears(jump.Best)} one jump's fuel"),
+            ],
+
+            // Counted rather than swallowed: a plan naming a kind of module and not a size has no
+            // mass to add, so those slots weigh what is fitted and the gauge says how many did.
+            Note = unmodelled > 0
+                ? $"{unmodelled.ToString(CultureInfo.InvariantCulture)} planned "
+                  + $"{(unmodelled == 1 ? "slot names a module" : "slots name modules")} without a "
+                  + "size, so this weighs what is fitted there."
+                : null,
+            Modelled = jump.Kind == FigureKind.Modelled,
+        };
+    }
+
+    private static string Megawatts(double value) =>
+        $"{value.ToString("0.00", CultureInfo.InvariantCulture)} MW";
+
+    private static string LightYears(double value) =>
+        value.ToString("0.0", CultureInfo.InvariantCulture);
+
+    private static string Percent(double? share) =>
+        share is { } fraction
+            ? $"{(fraction * 100).ToString("0", CultureInfo.InvariantCulture)}%"
+            : "—";
+
+    /// <summary>
     /// The hull's slots, grouped, whole, and with the cosmetics off them
     /// (remediation.md 12, items 1, 2, 3 and 6).
     /// <para>
@@ -450,6 +638,10 @@ public sealed class ShipsMode(
             // What is on the hull now, where the plan names something else. Both facts on the row,
             // because they are different facts and neither is the other's substitute.
             Now = Standing(plan, module),
+
+            // Whether the module this row names — the planned one where there is a plan — is one a
+            // pledge is needed to buy (list.md Phase 38).
+            Gated = EliteSpecifications.Module(plan?.Variant ?? module?.Item)?.NeedsPledge ?? false,
         };
 
     /// <summary>
@@ -1133,10 +1325,19 @@ public sealed class ShipsMode(
                     // module that is not there. Named where there is one, because "if so, fine,
                     // but say so": keeping what is fitted is a real want and was left unsaid.
                     .. Keeping(build, slot, plan),
+                    // Badged where every variant of the name is gated, which is how the nineteen
+                    // fall: a Prismatic Shield Generator is its own name in all eight sizes, and
+                    // an ordinary Shield Generator is a different name entirely.
                     .. offered.Select(group => new ChoiceOption(
                         Spelling(group),
-                        Spelling(group),
-                        Detail(Sizes(group), About(group)))),
+                        group.All(module => module.NeedsPledge)
+                            ? $"{Coin} {Spelling(group)}"
+                            : Spelling(group),
+                        Detail(
+                            Detail(Sizes(group), About(group)),
+                            (group.All(module => module.NeedsPledge)
+                             ? Gate(group.First())
+                             : null) ?? string.Empty))),
                 ],
                 plan?.Module,
                 ChoiceSurface.Page)
@@ -1249,10 +1450,11 @@ public sealed class ShipsMode(
                 Figures(kept)));
         }
 
+        // The coin again, per variant this time — the level a Commander is actually choosing at.
         rows.AddRange(rest.Select(variant => new ChoiceOption(
             variant.Symbol,
-            Wording(variant),
-            Figures(variant))));
+            Badged(Wording(variant), variant),
+            Detail(Figures(variant), Gate(variant) ?? string.Empty))));
 
         prompts.Choose(
             new ChoiceRequest(
@@ -1548,6 +1750,42 @@ public sealed class ShipsMode(
             ? $"Size {cls.ToString(CultureInfo.InvariantCulture)}, rating {rating}"
             : variant.Name;
     }
+
+    /// <summary>
+    /// The coin that marks a module a Powerplay pledge is needed to buy (list.md Phase 38).
+    /// <para>
+    /// <b>U+00A4, the currency sign</b>, and the character is a decision rather than a taste: it
+    /// is in every Latin font there is, so it cannot come out as tofu — which is the one failure
+    /// only an eye catches, and which Phase 37 already recorded costing time. A glyph nobody can
+    /// see is worse than no badge, because the row then reads as unrestricted.
+    /// </para>
+    /// </summary>
+    internal const string Coin = "¤";
+
+    /// <summary>
+    /// The label for a module the Commander may not be able to buy, and the sentence under it.
+    /// <para>
+    /// <b>Two sentences, and which one depends on the pledge d47 already tracks.</b> An unpledged
+    /// Commander cannot buy any of the nineteen and is told so flatly. A pledged one is told a
+    /// pledge is needed and that d47 cannot say whose — see
+    /// <see cref="ModuleSpecification.NeedsPledge"/> for why no source can.
+    /// </para>
+    /// </summary>
+    private string? Gate(ModuleSpecification? module)
+    {
+        if (module?.NeedsPledge is not true)
+        {
+            return null;
+        }
+
+        return state()?.Pledge.IsPledged == true
+            ? "Needs a Powerplay pledge — one Power's, and I cannot tell you which."
+            : "Needs a Powerplay pledge, and you have none.";
+    }
+
+    /// <summary>The coin in front of a chooser row's label, for a module behind a pledge.</summary>
+    private static string Badged(string label, ModuleSpecification? module) =>
+        module?.NeedsPledge is true ? $"{Coin} {label}" : label;
 
     /// <summary>The code underneath the words, and what it costs the ship to carry.</summary>
     private static string Figures(ModuleSpecification variant)

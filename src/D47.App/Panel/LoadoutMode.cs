@@ -95,6 +95,73 @@ public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<i
 public sealed record LoadoutCopy(string Value, string Tip);
 
 /// <summary>
+/// A second figure on a gauge's bar, drawn as a mark rather than as fill
+/// (list.md Phase 38).
+/// </summary>
+/// <param name="At">Where it sits, 0 to 1 of the bar's width.</param>
+/// <param name="Label">What it is, for the reading under the bar.</param>
+public readonly record struct LoadoutMark(double At, string Label);
+
+/// <summary>
+/// One gauge at the head of a ship's slot list — power, or jump range
+/// (list.md Phase 38, "A build you can watch").
+/// <para>
+/// <b>A horizontal bar rather than a dial</b> (the Commander's call, 2026-08-20). It reads at
+/// overlay resolution, it survives a narrow panel, and it needs no drawing code of its own: a
+/// filled rectangle inside another one, with the other figures as marks along it.
+/// </para>
+/// <para>
+/// <b>Content rather than a control</b>, like every other shape in this file, so what a gauge says
+/// can be asserted without a visual tree.
+/// </para>
+/// </summary>
+/// <param name="Name">"Power", "Jump range". The row's own label.</param>
+/// <param name="Reading">The figures, in the shortest form that stays true.</param>
+/// <param name="Fill">How much of the bar is filled, 0 to 1. Clamped by the drawing.</param>
+/// <param name="Tone">
+/// <see cref="LoadoutTone.Danger"/> for a build that does not fit, and
+/// <see cref="LoadoutTone.Body"/> for one that does.
+/// </param>
+public sealed record LoadoutGauge(string Name, string Reading, double Fill, LoadoutTone Tone)
+{
+    /// <summary>The other figures on the same bar. Empty for a gauge with one number.</summary>
+    public IReadOnlyList<LoadoutMark> Marks { get; init; } = [];
+
+    /// <summary>What the figures mean, or what is wrong with them. Null where the reading says it.</summary>
+    public string? Note { get; init; }
+
+    /// <summary>
+    /// Whether this figure was worked out rather than read off the game (list.md Phase 38).
+    /// <para>
+    /// <b>Drawn differently, and that is the condition on which the gauges exist at all.</b>
+    /// <c>ShipsMode.Parted</c> holds that a modelled figure must never sit beside a measured one
+    /// looking the same; the amendment narrows that rule to these two gauges and pays for it by
+    /// marking every modelled reading.
+    /// </para>
+    /// </summary>
+    public bool Modelled { get; init; }
+}
+
+/// <summary>
+/// A question waiting on the Commander, drawn at the head of the tab
+/// (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+/// <para>
+/// <b>The banner is the half that cannot be missed.</b> The question is asked out loud at the
+/// moment it becomes true — boarding the ship — because that is when the Commander is in the
+/// cockpit and not looking at a window. This is what is left behind if they did not answer, so a
+/// question asked while they were busy is still answerable an hour later.
+/// </para>
+/// <para>
+/// <b>Two buttons and no third state.</b> Yes revises, no drops it, and there is no dismiss —
+/// dismissing a question is answering no while pretending not to have.
+/// </para>
+/// </summary>
+/// <param name="Text">The question, in the sentence the Commander is agreeing to.</param>
+/// <param name="Yes">Accepts it, and answers with what happened.</param>
+/// <param name="No">Declines it, and answers with what happened.</param>
+public sealed record LoadoutNotice(string Text, Func<string> Yes, Func<string> No);
+
+/// <summary>
 /// One pressable line of a loadout index.
 /// <para>
 /// <b>An index rather than a table</b>: one line each, a mark where a plan exists, and everything
@@ -195,6 +262,18 @@ public sealed record LoadoutParts(
     /// </para>
     /// </summary>
     public string? Now { get; init; }
+
+    /// <summary>
+    /// Whether the module this row names is one a Powerplay pledge is needed to buy
+    /// (list.md Phase 38).
+    /// <para>
+    /// <b>Nineteen modules</b>, named by <c>outfitting.csv</c>'s own <c>entitlement</c> column
+    /// rather than by a list anybody maintains — the Prismatic Shield Generator in all eight
+    /// sizes, and eleven weapons. Drawn as a coin beside the name, in the danger hue, because it
+    /// is a gate rather than a property.
+    /// </para>
+    /// </summary>
+    public bool Gated { get; init; }
 }
 
 /// <summary>
@@ -260,6 +339,26 @@ public interface ILoadoutMode
     /// </para>
     /// </summary>
     IReadOnlyList<LoadoutLine> Details(string item);
+
+    /// <summary>
+    /// The gauges at the head of this item's slot list, or empty for a mode with none
+    /// (list.md Phase 38).
+    /// <para>
+    /// <b>Defaulted rather than added to every mode.</b> Power and jump range are facts about a
+    /// hull; a suit has neither, and a mode that has nothing to gauge should not have to say so in
+    /// code. So Ships overrides this and On foot inherits the empty answer.
+    /// </para>
+    /// </summary>
+    IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
+
+    /// <summary>
+    /// A question waiting on the Commander, or null when nothing is (list.md Phase 38).
+    /// <para>
+    /// Defaulted for the same reason the gauges are: a mode with nothing to ask should not have to
+    /// say so in code.
+    /// </para>
+    /// </summary>
+    LoadoutNotice? Notice() => null;
 
     /// <summary>That item's slots, as an index.</summary>
     IReadOnlyList<LoadoutRow> Slots(string item);

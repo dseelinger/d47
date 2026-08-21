@@ -603,6 +603,13 @@ public sealed class AppHost : IDisposable
         var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
+        // A third of the same kind (list.md Phase 38): what Elite says each module in the ship the
+        // Commander is flying actually draws, engineering included. The measured half of the power
+        // gauge, and the only place those figures exist — the journal's ModuleInfo event is a
+        // marker carrying none of them.
+        var modulePower = new ModulePowerReader(
+            journalDirectory, loggerFactory.CreateLogger<ModulePowerReader>());
+
         // A third file of the same kind, and the markets read out of it (list.md Phase 36). The
         // book is loaded here so a plan made in the first minute already knows the stations this
         // Commander has stood in; the reader files a new one whenever the game rewrites the file.
@@ -803,6 +810,10 @@ public sealed class AppHost : IDisposable
             status.Poll();
             route.Poll();
 
+            // Elite rewrites this one on outfitting and on a module being switched off, so it is
+            // read on the same terms as the other two: only when its write time moves.
+            modulePower.Poll();
+
             // The commodity board the Commander is standing in front of, if they have opened one
             // (list.md Phase 36). Given the position from the journal, because Market.json does
             // not carry one and a market that cannot be placed cannot be routed to.
@@ -892,6 +903,10 @@ public sealed class AppHost : IDisposable
         // The fleet joined to the builds. It reads the checklist service to propose promotions
         // and never writes to it directly: the plan owns what, the checklist owns when.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
+
+        // And the one thing that watches the two for drifting apart (list.md Phase 38). It asks
+        // through the same proposal boundary the promote button uses and writes nothing itself.
+        var drift = new ShipDriftWatch(shipPlans, checklists);
 
         // Which core flies which ship (list.md Phase 35). Its own file rather than a column on the
         // one above: a build is a plan, so hanging a preference off one would create a plan as a
@@ -1545,6 +1560,7 @@ public sealed class AppHost : IDisposable
         // rather than owning it — proper-noun biasing wants the systems the Commander is about
         // to arrive in, and those are only in the route file.
         host._route = () => route.Current;
+        host._modulePower = () => modulePower.Current;
         host._heardAt = heardAt;
 
         // Push-to-talk, sampled here rather than hooked. This is the whole reason the tick runs
@@ -1660,6 +1676,16 @@ public sealed class AppHost : IDisposable
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
+            }
+
+            // Boarding a ship whose build carries engineering the checklist has not got is the
+            // moment to say so, once (list.md Phase 38). Spoken, because the Commander is in the
+            // cockpit at that moment and not looking at a window; the Ships tab carries the same
+            // question as a banner for as long as it goes unanswered.
+            if (drift.Observe(arrived) is { Length: > 0 } asked)
+            {
+                host.Panel.Append($"{asked}{Environment.NewLine}");
+                _ = host.Voice.AnnounceAsync(asked);
             }
         });
 
@@ -3146,6 +3172,19 @@ public sealed class AppHost : IDisposable
     /// </para>
     /// </summary>
     public NavRoute Route => _route?.Invoke() ?? NavRoute.None;
+
+    /// <summary>Set during composition, like <see cref="_route"/> and for the same reason.</summary>
+    private Func<ModulePower>? _modulePower;
+
+    /// <summary>
+    /// What Elite says each module in the ship being flown draws (list.md Phase 38).
+    /// <para>
+    /// <see cref="ModulePower.None"/> before composition has run and until the file is first read,
+    /// so a surface built early weighs the specification table rather than throwing — which is the
+    /// same answer it gives for every ship the Commander is not sitting in.
+    /// </para>
+    /// </summary>
+    public ModulePower ModulePower => _modulePower?.Invoke() ?? ModulePower.None;
 
     /// <summary>
     /// The model currently being fetched, or null. One at a time: applying listening settings

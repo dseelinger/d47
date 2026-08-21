@@ -127,6 +127,27 @@ COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effec
 MTYPE_COLUMNS = ["mtype", "blueprints"]
 
 
+# A module type EDSY splits and EDEngineer does not, mapped to the type whose recipes are its own.
+#
+# **One entry, and it is measured rather than reasoned.** EDSY files the Supercharged (SCO) drive
+# under `cfsdo` and the ordinary one under `cfsd`; EDEngineer has a single module kind called
+# "Frame Shift Drive", so every drive recipe landed on `cfsd` and an SCO drive — which is the drive
+# essentially every Commander now flies — was offered eight blueprints d47 held no recipe for. The
+# Loadout tab said so honestly and could do nothing about it.
+#
+# What settles it is the corpus and not the naming: across the 919-journal corpus, SCO drives
+# carrying `FSD_LongRange` report `Modifiers` that the `cfsd` grade rows reproduce to 0.000%. The
+# recipe is not merely *similar*, it is the same recipe filed under one name by a source that does
+# not make the distinction. See docs/spikes/build-gauges.md.
+#
+# **Only where EDSY offers the variant that blueprint anyway**, applied below — so this widens what
+# a type can be costed with and never what it is offered. The obvious generalisation was tried and
+# rejected: filing any unanimous sibling recipe under an uncosted type puts *Sturdy Mount* on a
+# cargo rack, because EDEngineer's weapon rows carry `CargoRack_IncreasedCapacity` as a second
+# symbol. A rule that cannot tell those apart is a rule that invents game data.
+MTYPE_ALIASES = {"cfsdo": "cfsd"}
+
+
 # Where coriolis and EDSY spell the same roll differently, and EDSY's is the spelling a module
 # type actually offers.
 #
@@ -933,6 +954,46 @@ def main() -> None:
     unnamed = [line for line in unnamed
                if line not in {f"{row[1]} / {row[2]}" for row in recipes if row[8]}]
 
+    # A variant type inherits the recipes of the type it is a variant of, but only for the
+    # blueprints EDSY says it takes. See MTYPE_ALIASES for why there is exactly one of these and
+    # why the general rule was rejected.
+    offered_to = {row[0]: {name for name in row[1].split(",") if name} for row in offers}
+    inherited = 0
+
+    for row in recipes:
+        if not row[9] or not row[8]:
+            continue
+
+        names = {name for name in row[8].split(",") if name}
+
+        also = [
+            variant for variant, base in MTYPE_ALIASES.items()
+            if base == row[9] and names & offered_to.get(variant, set())
+        ]
+
+        if also:
+            row[9] = ",".join([row[9], *sorted(also)])
+            inherited += 1
+
+    # Every offer still without a recipe, named rather than counted, because this is the gap
+    # list.md Phase 38 item 10 is about and a list can be checked against the outfitting screen.
+    # The remainder is genuine absence: EDEngineer carries no Guardian weapon recipes at all, so
+    # Anti-Guardian Zone Resistance has no ingredients here — and EDSY's symbol for it, and for all
+    # three of its materials, is one EDSY itself marks `// TODO`. A guess is not a recipe.
+    costed: dict[str, set] = {}
+
+    for row in recipes:
+        for code in row[9].split(","):
+            if code:
+                costed.setdefault(code, set()).update(
+                    name for name in row[8].split(",") if name)
+
+    uncosted = sorted(
+        (code, name)
+        for code, names in offered_to.items()
+        for name in names
+        if name not in costed.get(code, set()))
+
     unplaced = sorted({row[1] for row in recipes if not row[9]})
     stranded = sorted(set(stranded))
 
@@ -1018,6 +1079,18 @@ def main() -> None:
               f"type can reach them:")
         for line in sorted(set(unnamed))[:20]:
             print(f"  {line}")
+    if inherited:
+        print(f"{inherited} recipes were also filed under a variant module type EDSY splits and "
+              f"EDEngineer does not: {', '.join(sorted(MTYPE_ALIASES))}")
+
+    # The state list.md Phase 38 item 10 describes, reported every run rather than pinned to a
+    # known list: a run that stops naming one of these is the signal that a source has filled it in.
+    if uncosted:
+        print(f"{len(uncosted)} offers have no recipe anywhere, so the surface says so rather than "
+              f"drawing one:")
+        for code, name in uncosted:
+            print(f"    {code} is offered {name}")
+
     print("Per kind: " + ", ".join(f"{kind}={count}" for kind, count in sorted(counts.items())))
     print(f"Ingredient references resolved: "
           f"{sum(len(row[5].split(',')) for row in built if row[5])}, unresolved 0")

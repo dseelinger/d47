@@ -168,6 +168,22 @@ public sealed record ShipBuild(
 {
     public IReadOnlyList<SlotPlan> Slots { get; init; } = Slots ?? [];
 
+    /// <summary>
+    /// The disagreement between this build and the checklist that the Commander has already said
+    /// no to (list.md Phase 38). Null for a build nobody has been asked about.
+    /// <para>
+    /// <b>On the build rather than in memory</b>, because "does not ask again for that same
+    /// difference" has to survive d47 being restarted — a question re-asked every morning is a
+    /// question that gets answered by switching the feature off. It holds a fingerprint of the two
+    /// item sets rather than a flag, so a difference that <em>changes</em> is a new question and is
+    /// asked, which is the behaviour actually wanted.
+    /// </para>
+    /// <para>
+    /// See <see cref="ShipDriftWatch"/>, which is the only thing that writes it.
+    /// </para>
+    /// </summary>
+    public string? Settled { get; init; }
+
     /// <summary>Whether the Commander owns this hull, or merely intends to.</summary>
     public bool IsOwned => ShipId is not null;
 
