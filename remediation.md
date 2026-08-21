@@ -44,6 +44,7 @@ disagree, the ask wins.**
 | 8 | "Gear Glyph" should appear to the right of the Module Name, not leftmost. | 10 |
 | 9 | It is not clear that the step controls for the engineering grade are associated with it. Put Grade last (rightmost) on the line, followed by the stepper. | 11 |
 | 10 | *"You have dropped short of where you were going and had to come back — 14 of 490 approaches, 2 of them in the last month."* This was announced on a perfect approach to landing on a planet. | 12 |
+| 11 | Of three finished checklist lines reading *Grade 5 Reinforced Shields on Slot01_Size7 / ship 51*: *"These should mention the ship and module they happened on — not like this. For example, line one could say something like: Grade 5 Reinforced Shields on 7A Shield Generator on Flamebrand (Anaconda). If 'Ship' is not an axis for Checklist, it needs to be. May be null for non-ship checklist."* | 15 |
 
 ## What runs through this batch
 
@@ -559,6 +560,41 @@ reparent**, and the panel now reparents on every tab switch.
 
   The test asserts reference identity across a tick that moves the clock eleven minutes, because
   identity is precisely what was wrong.
+
+- [ ] **15. A finished checklist line names neither the ship nor the module.** Reported against
+  0.44.0, of three lines under **Done**: two reading *ship 51* and one *ship 53*, over slots
+  called `Slot01_Size7` and `Radar`.
+
+  **Ship is already the axis, and that is why this is a wording fault rather than a model one.**
+  `ChecklistScope.Ship` has been keyed on the journal's `ShipID` since Phase 17 and is what makes
+  a build follow a hull through a swap; `ChecklistItem.Hull` rides beside it. Both were reaching
+  the page — as the key. `ship 51` is d47's identifier for the ship and `Slot01_Size7` is
+  Frontier's for the compartment, and neither is anything a Commander calls the thing. The ask
+  also names the null case, and it was already true: a custom, system, suit or weapon line is
+  about no ship and now says nothing about one.
+
+  **Computed on the way out, never stored.** `ChecklistItem.Text` is the plan's own wording,
+  minted when the plan is adopted; the same rule that keeps a plan's figures out of the file keeps
+  the ship's name out of it, because a ship gets renamed and a slot refitted long after the line
+  was written. So `ChecklistWording` resolves the slot against the remembered loadout every time
+  the line is drawn — a parked ship's included, which is what Phase 37 remembered modules for —
+  and a slot d47 cannot see keeps the stored wording rather than a guess.
+
+  **Three sources for the ship's name, best first, and a fourth that is not a name.** The
+  remembered loadout, then the fleet snapshot, then the item's stored hull with the id beside it
+  (`Anaconda (ship 51)`), so a Commander with two Anacondas still has two ships. An empty slot
+  falls back to the hull layout's own words — `Compartment 3 (size 6)` — rather than to the symbol.
+
+  **Said as well as drawn.** The spoken *"… is done"* callout is the one checklist sentence with
+  no heading, caption or page around it, so it takes the whole thing: module, ship and all. On the
+  page the ship stays on the caption where the scope has always been, and the search box now
+  matches what is drawn as well as what is stored.
+
+  **And the verdict spells the module the way the line does**, asked for on the same report. It
+  said *"Shield Generator is at grade 5 and finished"* under a line reading *on 7A Shield
+  Generator* — two spellings of one module, a caption apart, leaving the Commander to work out
+  whether they were the same one. `ChecklistEvaluator.Describe` is now the one place either says
+  it. Nothing had pinned the old wording, which is why the alignment cost no test and gained one.
 
 ## Where item 8 stands
 

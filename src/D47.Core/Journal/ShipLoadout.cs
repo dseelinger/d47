@@ -251,8 +251,14 @@ public sealed record ShipLoadout
     /// <see cref="Ships.ShipBuild.HullName"/>, which is where the fleet page gets the spelling this
     /// used to disagree with. Remediation 15 item 14.
     /// </para>
+    /// <para>
+    /// <b>Public because it is the only correct spelling of the hull</b>, and a caller that needs
+    /// one and cannot reach this writes the fallback ladder out again slightly differently — which
+    /// is the disagreement remediation 15 item 14 was reported as.
+    /// <see cref="Checklists.ChecklistWording"/> is the second caller.
+    /// </para>
     /// </summary>
-    private string? TypeSaid =>
+    public string? TypeSaid =>
         Type is not { } symbol ? TypeName
         : TypeName is { } localised && !string.Equals(localised, symbol, StringComparison.Ordinal)
             ? localised

@@ -17,6 +17,37 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.44.1 — 2026-08-21 — A checklist line says which ship and which module
+
+**A finished roll now names the ship it happened on and the module it happened to.** Reported
+against 0.44.0, of three lines under **Done**: two reading *ship 51* and one *ship 53*, over slots
+called `Slot01_Size7` and `Radar`. Both halves of that are d47's own keys — the `ShipID` is what
+makes a build follow a hull through a swap, and the journal's slot name is what makes two
+conversations about one slot the same item — and neither is what a Commander calls the thing. The
+line now reads **Grade 5 Reinforced Shields on 7A Shield Generator**, over **Flamebrand
+(Anaconda)**.
+
+**Ship was already an axis of the checklist**, so nothing about how a list is stored or keyed has
+changed. What is new is that the name is worked out on the way to the screen rather than written
+into the line: a ship gets renamed and a slot refitted long after the plan that named it, so the
+slot is resolved against that ship's remembered loadout every time the line is drawn — a parked
+ship's included. A slot d47 cannot see keeps the wording the plan gave it rather than a guess, and
+an empty one is called what the hull's layout calls it, *Compartment 3 (size 6)*, rather than
+`Slot03_Size6`.
+
+**A ship with no name is still not a number.** Where nothing has ever named it, the hull comes
+first and the id stays beside it — *Anaconda (ship 51)* — so a Commander with two Anacondas still
+has two ships. A list about no ship at all, which is every custom, system, suit and weapon line,
+says nothing about one.
+
+**Said as well as drawn.** The spoken *"… is done"* is the one checklist sentence with no heading,
+caption or page around it, so it now carries the whole thing. The search box matches what is drawn
+as well as what is stored, so the ship on the caption and the module on the line are both
+findable — and the verdict under a line spells the module the way the line does, instead of
+saying *Shield Generator* a caption away from *7A Shield Generator*.
+
+---
+
 ## 0.44.0 — 2026-08-21 — The checklist in the headset
 
 **What you are working on is readable in a headset again.** The Checklist tab is back on the big

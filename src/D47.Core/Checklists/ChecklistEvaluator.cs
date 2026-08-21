@@ -547,8 +547,13 @@ public static class ChecklistEvaluator
     /// <summary>
     /// The module an intent's subject names — the slot first, then the fitted item, because a
     /// Commander says "thrusters" and a plan built from the ship says "MainEngines".
+    /// <para>
+    /// Internal rather than private so <see cref="ChecklistWording"/> names the same module on the
+    /// line that this names in the verdict under it. Two matching rules for one question is two
+    /// things to keep in step.
+    /// </para>
     /// </summary>
-    private static ShipModule? Fitted(ShipLoadout loadout, string subject)
+    internal static ShipModule? Fitted(ShipLoadout loadout, string subject)
     {
         var wanted = ChecklistKeys.Compact(subject);
 
@@ -574,8 +579,35 @@ public static class ChecklistEvaluator
         return byItem.Count == 1 ? byItem[0] : null;
     }
 
-    private static string Describe(ShipModule module) =>
-        EliteSpecifications.Module(module.Item)?.Name ?? ModuleNames.Readable(module.Item);
+    /// <summary>
+    /// The module as a Commander says it: the size and rating in front of the name, which is the
+    /// order outfitting lists it in.
+    /// <para>
+    /// <b>The size is part of the name here</b> (reported 2026-08-21). A ship carries several
+    /// shield generators over its life and a plan is about one of them, so "Shield Generator" in
+    /// the verdict under a line reading "on 7A Shield Generator" leaves the Commander to work out
+    /// whether the two are the same module.
+    /// </para>
+    /// <para>
+    /// A bulkhead has neither class nor rating, and <see cref="ModuleSpecification.Size"/> falls
+    /// back to the name for exactly that case — so it is asked separately rather than said twice.
+    /// </para>
+    /// <para>
+    /// Internal so <see cref="ChecklistWording"/> spells the module the same way on the line as
+    /// this does in the verdict under it, which is the whole of what was reported.
+    /// </para>
+    /// </summary>
+    internal static string Describe(ShipModule module)
+    {
+        if (EliteSpecifications.Module(module.Item) is not { } specification)
+        {
+            return ModuleNames.Readable(module.Item);
+        }
+
+        return specification.IsBulkhead
+            ? specification.Name
+            : $"{specification.Size} {specification.Name}";
+    }
 
     /// <summary>
     /// The Commander's rank with whoever would roll this: the engineer the plan names, or the one
