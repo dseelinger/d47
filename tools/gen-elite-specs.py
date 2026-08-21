@@ -117,6 +117,22 @@ MODULE_COLUMNS = [
     # itself. Empty means no limit at all, which is most of them. Appended rather than filed
     # beside `mtype` so no existing column index moves; the reader indexes by position.
     "limit",
+
+    # The three list.md Phase 38 asks the generator to stop dropping, appended for the same
+    # reason `limit` was — the reader indexes by position, so a new column goes on the end.
+    #
+    # `entitlement` is `outfitting.csv`'s own column and is the purchase gate: 19 modules carry
+    # `ELITE_SPECIFIC_V_POWER_<id>`, and the id says *which* Power. Not a hand-maintained list.
+    #
+    # `power_capacity` is coriolis's `pgen`, and it is the denominator a power budget has had no
+    # numerator for: a plant's `power` column is empty because for a plant the meaningful figure
+    # is output and this script maps draw. **The plan of record called this column
+    # `powercapacity`; coriolis spells it `pgen`.**
+    #
+    # `jump_boost` is the five Guardian FSD Boosters' bonus in light years, added after the jump
+    # arithmetic reproduced Frontier's own `MaxJumpRange` to 0.000% with it and missed by the
+    # bonus without it.
+    "entitlement", "power_capacity", "jump_boost",
 ]
 
 # The per-kind figures, keyed by coriolis's own field name and said the way a Commander reads
@@ -166,6 +182,14 @@ FIGURES = {
     "maxangle": "scan angle",
     "rate": "rate",
     "capacity": "capacity",
+
+    # What a cargo rack holds and what a fuel tank holds, both of which coriolis spells its own
+    # way and neither of which was mapped — so a 5E Cargo Rack and a 6E were told apart by price
+    # alone, which is the exact complaint this bag was built to answer. They are also what the
+    # laden and full-tank jump needles are computed from on a build d47 has to model rather than
+    # read, so this is one mapping serving a figure a Commander reads and a figure d47 does.
+    "cargo": "capacity",
+    "fuel": "capacity",
     "refuel": "refuel rate",
     "repair": "repair rate",
     "brokenregen": "regeneration when broken",
@@ -505,6 +529,16 @@ def build_modules(
 
                     # Also filled from EDSY in main(). Last, so no index above it moves.
                     "",
+
+                    # The purchase gate, from the naming authority rather than from coriolis —
+                    # which is why it is filled below from `identity` rather than from `module`.
+                    (identity or {}).get("entitlement", ""),
+
+                    # What a power plant makes, and what a Guardian booster adds to a jump. Both
+                    # are coriolis's, both are empty on every other module, and both are the
+                    # denominator or the addend of an arithmetic that had neither.
+                    number(module.get("pgen")),
+                    number(module.get("jumpboost")),
                 ]
 
                 # coriolis-data lists 35 symbols twice, and one of the two is a husk: a
@@ -562,6 +596,11 @@ def build_modules(
             "", "", "",
             "", "",
             "",
+
+            # Named but unmeasured: the gate is still known, because it is the naming
+            # authority's own column and does not depend on coriolis having figures.
+            identity.get("entitlement", ""),
+            "", "",
         ])
 
     built = [row for _, row in seen.values()]
@@ -691,6 +730,12 @@ def build_bulkheads(
 
             # Also filled from EDSY in main(). Last, so no index above it moves.
             "",
+
+            # A bulkhead is bought with the hull and gates nothing, generates nothing and
+            # boosts no jump — but the gate is read from the id list all the same, because a
+            # blank here should mean "no gate" and not "nobody looked".
+            identity.get("entitlement", ""),
+            "", "",
         ])
 
     # Whatever is left in `figures` had figures and no name. Nothing can be keyed to it, so

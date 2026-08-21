@@ -17,6 +17,62 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.43.0 — 2026-08-20 — A build you can watch
+
+**Two gauges at the head of a ship's slot list: power and jump range, live while the build is
+edited.** They are the two numbers a build is designed against, and until now neither was visible
+until after the credits were spent — a Commander answered both by alt-tabbing to Coriolis. Both
+are panel-side and neither spends a byte of the tool surface; a gauge is not a tool.
+
+**Jump range is exact, and it settles what Frontier's own figure means.** Replayed across 2,876
+`Loadout` events in the corpus, the arithmetic reproduces `MaxJumpRange` with a **median error of
+0.000%** and 99.3% inside half a percent — and it does so at unladen mass plus *one jump's fuel*,
+not at a full tank. So the bar reads as a range: worst laden, full tank, and best, with the best
+needle equal to the number the outfitting screen shows. The 19 events that miss all have a
+Guardian booster and an SCO drive, and in every one it is Frontier's figure that omits the
+booster's bonus; that shape is asserted, so a new kind of miss fails the check rather than hiding.
+
+**Power is split retracted and deployed.** A build that fits until the guns come out does not fit,
+and the distinction is the one hardest to keep in your head by hand — a shield booster sits in a
+`TinyHardpoint` slot and draws all the time. The bar reads a percentage and, when a build is over,
+the megawatts over: the first says there is a problem and the second says how big a plant fixes
+it. Where `ModulesInfo.json` is present for the ship being flown, Elite's own per-module figures
+win over the table.
+
+**A planned roll is modelled rather than guessed, and never dressed as a measurement.** The
+per-grade percentages have shipped in `Blueprints.tsv` since remediation 15; this applies them.
+Checked against every distinct engineered module in the corpus — 374 comparisons, 97.6% exact —
+and it settles what the table does not state: a blueprint and an experimental **compound**. A
+modelled reading is drawn in a different colour with a `~` in front of it, which is the condition
+on which these gauges may show planned figures at all.
+
+**The SCO drive can be engineered on the panel again.** EDSY files the Supercharged drive as its
+own module type and EDEngineer has one "Frame Shift Drive", so all eight of its blueprints were
+offered with no recipe behind any of them — on the drive nearly every Commander flies. That was a
+join rather than missing data, and the corpus settles it: SCO drives rolling Increased FSD Range
+report figures the ordinary drive's grade rows reproduce exactly. Anti-Guardian Zone Resistance is
+a different problem and still says so honestly: nothing d47 reads names its materials.
+
+**A coin on the nineteen modules a Powerplay pledge is needed to buy.** Read from
+`outfitting.csv`'s own `entitlement` column rather than from a list anybody maintains. It says a
+pledge is needed and does not say *whose* — the gate carries a numeric id and no source d47 reads
+maps that id to a Power's name, so an unpledged Commander is told plainly that they cannot buy it
+and a pledged one is told d47 cannot tell them which.
+
+**And d47 asks, once, when a ship's build and your checklist have drifted apart.** Spoken as you
+board, with the question left on the Ships tab as a banner if you were busy flying. Yes revises
+the list in place, so the ordering you spent an evening on survives; no leaves both alone and is
+remembered on the build, so a restart does not ask again. It asks through the same
+accept-or-decline boundary the model writes across and can rewrite nothing itself.
+
+Five columns the table generator had been dropping now ship — the purchase gate, a power plant's
+output, a Guardian booster's bonus, and what a cargo rack and a fuel tank hold. The last two also
+tell a 5E Cargo Rack from a 6E, which was price alone until now. What the corpus said about all of
+it, including three places the plan of record was wrong, is in
+[docs/spikes/build-gauges.md](docs/spikes/build-gauges.md).
+
+---
+
 ## 0.42.0 — 2026-08-20 — Reality and the goal, side by side
 
 **A slot row now holds both the module on the hull and the module planned for it.** The

@@ -146,6 +146,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 Hull = build.Hull,
                 ShipId = build.ShipId,
                 Name = build.Name,
+                Settled = build.Settled,
                 Slots = [.. build.Slots.Take(MaxSlots).Select(plan => new SlotLine
                 {
                     Slot = plan.Slot,
@@ -288,7 +289,10 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 });
             }
 
-            builds.Add(new ShipBuild(id, hull, line.ShipId, Blank(line.Name), slots));
+            builds.Add(new ShipBuild(id, hull, line.ShipId, Blank(line.Name), slots)
+            {
+                Settled = Blank(line.Settled),
+            });
         }
 
         lock (_gate)
@@ -319,6 +323,13 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
         public int? ShipId { get; init; }
 
         public string? Name { get; init; }
+
+        /// <summary>
+        /// The disagreement with the checklist the Commander has already said no to
+        /// (list.md Phase 38). See <see cref="ShipBuild.Settled"/>. Never removed or renamed — a
+        /// property dropped from this file is a Commander being asked a settled question again.
+        /// </summary>
+        public string? Settled { get; init; }
 
         public IReadOnlyList<SlotLine> Slots { get; init; } = [];
     }

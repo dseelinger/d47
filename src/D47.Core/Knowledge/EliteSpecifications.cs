@@ -162,7 +162,77 @@ public sealed record ModuleSpecification
     /// </summary>
     public string? About { get; init; }
 
-    public bool IsDrive => OptimalMass is not null;
+    /// <summary>
+    /// The pledge, permit or unlock a Commander needs before they can buy it, exactly as
+    /// <c>outfitting.csv</c> names the gate — or null for a module anyone may fit
+    /// (list.md Phase 38).
+    /// <para>
+    /// <b>Nineteen modules carry <c>ELITE_SPECIFIC_V_POWER_&lt;id&gt;</c></b>, and the id says
+    /// <em>which</em> Power: 200020 is Aisling Duval's Prismatic Shield Generator. So the badge is
+    /// one column of the naming authority's rather than a list somebody wrote down and has to keep
+    /// — and because d47 already tracks the Commander's pledge, what they can buy today reads
+    /// differently from what they cannot.
+    /// </para>
+    /// <para>
+    /// The other two families are carried through untouched and nothing renders them yet:
+    /// <c>ELITE_HORIZONS_V_*</c> on 168, which is Horizons and the Guardian tech-broker unlocks,
+    /// and <c>ELITE_V_&lt;ship&gt;</c> on 51.
+    /// </para>
+    /// </summary>
+    public string? Entitlement { get; init; }
+
+    /// <summary>
+    /// Whether buying this needs a Powerplay pledge (list.md Phase 38).
+    /// <para>
+    /// <b>It does not say which Power, because nothing d47 reads does.</b> The gate carries
+    /// Frontier's numeric id — <c>ELITE_SPECIFIC_V_POWER_200020</c> for the Prismatic Shield
+    /// Generator — and no source in the three this table is derived from maps that id to a name.
+    /// FDevIDs has no powers file, coriolis carries none, EDSY names no Power at all, and
+    /// Frontier's own module description does not mention one. A hand-written table of twelve
+    /// id-to-Power pairs is exactly the confidently-invented game data the guardrails exist to
+    /// prevent, and getting one wrong would send a Commander to defect to the wrong side.
+    /// </para>
+    /// <para>
+    /// So the badge says what is certain: a pledge is needed, and an <em>unpledged</em> Commander
+    /// cannot buy it at all — which needs no id and is the half that is actionable.
+    /// </para>
+    /// </summary>
+    public bool NeedsPledge =>
+        Entitlement is { Length: > 0 } gate
+        && gate.StartsWith("ELITE_SPECIFIC_V_POWER", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// What a power plant makes, in megawatts. Null on everything that is not one.
+    /// <para>
+    /// <b>The denominator a power budget had no numerator for.</b> A plant's
+    /// <see cref="Power"/> is empty, because for a plant the meaningful figure is output and the
+    /// generator maps draw — so until Phase 38 d47 could total what a build consumes and had
+    /// nothing to compare it against.
+    /// </para>
+    /// </summary>
+    public double? PowerCapacity { get; init; }
+
+    /// <summary>
+    /// The light years a Guardian FSD Booster adds to a jump, flat. Null on everything else.
+    /// <para>
+    /// <b>Added rather than multiplied</b>, which is what the corpus shows: over 2,876
+    /// <c>Loadout</c> events the drive arithmetic reproduces Frontier's own <c>MaxJumpRange</c>
+    /// exactly with this added on the end, and misses by precisely this much without it.
+    /// </para>
+    /// </summary>
+    public double? JumpBoost { get; init; }
+
+    /// <summary>
+    /// Whether this is a frame shift drive — the module a jump range is computed from.
+    /// <para>
+    /// <b>Read off the fuel figure and not off <see cref="OptimalMass"/> alone.</b> Thrusters and
+    /// shield generators carry an optimal mass too — 39 and 55 of them — so the older test was
+    /// true of 94 modules that are not drives, and the specification report offered every one of
+    /// them a "max fuel per jump" with nothing after it. Only a drive has
+    /// <see cref="MaxFuelPerJump"/>, which is the figure the test is actually about.
+    /// </para>
+    /// </summary>
+    public bool IsDrive => OptimalMass is not null && MaxFuelPerJump is not null;
 
     /// <summary>
     /// Per-hull armour. The one module kind with no class and no rating: the id list files every
@@ -183,6 +253,28 @@ public sealed record ModuleSpecification
     /// Lightweight Alloy.
     /// </summary>
     public string Size => Class is { } size && Rating is { } rating ? $"{size}{rating}" : Name;
+
+    /// <summary>
+    /// One named figure off this module's own row, where it carries one and it is a number.
+    /// <para>
+    /// The bag rather than a column, which is what <see cref="Figures"/> is for: a cargo rack's
+    /// <c>capacity</c> and a thruster's <c>maximum mass</c> are the same shape of fact and neither
+    /// is worth a column most rows would leave blank.
+    /// </para>
+    /// </summary>
+    public double? Figure(string name)
+    {
+        foreach (var (label, value) in Figures)
+        {
+            if (string.Equals(label, name, StringComparison.OrdinalIgnoreCase)
+                && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        return null;
+    }
 }
 
 /// <summary>
@@ -599,18 +691,8 @@ public static class EliteSpecifications
         return Ship(slot.Hull)?.HullMass is not { } mass || mass <= most;
     }
 
-    /// <summary>One named figure off a module's own row, where it carries one and it is a number.</summary>
-    private static double? Figure(ModuleSpecification module, string name) =>
-        module.Figures
-            .Where(figure => string.Equals(figure.Name, name, StringComparison.OrdinalIgnoreCase))
-            .Select(figure => double.TryParse(
-                figure.Value,
-                System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture,
-                out var parsed)
-                ? parsed
-                : (double?)null)
-            .FirstOrDefault();
+    /// <summary>One named figure off a module's own row. See <see cref="ModuleSpecification.Figure"/>.</summary>
+    private static double? Figure(ModuleSpecification module, string name) => module.Figure(name);
 
     /// <summary>Module names close enough to offer back when nothing matched.</summary>
     public static IReadOnlyList<string> NearModules(string spoken) =>
@@ -778,6 +860,12 @@ public static class EliteSpecifications
         Type = Text(cells, 18),
         Hulls = Words(cells, 19),
         MustFillSlot = Text(cells, 20) is not null,
+
+        // Appended by list.md Phase 38, after `limit`, for the reason `limit` itself was: this
+        // reader indexes by position, so a new column goes on the end and nothing above it moves.
+        Entitlement = Text(cells, 24),
+        PowerCapacity = Real(cells, 25),
+        JumpBoost = Real(cells, 26),
     };
 
     private static ShipSlot ReadSlot(string[] cells) => new(
