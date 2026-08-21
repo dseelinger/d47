@@ -1817,6 +1817,11 @@ public sealed class AppHost : IDisposable
             // than written, and answering null for anything it does not recognise.
             .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf })
 
+            // Phase 40, and the same capacity for the opposite purpose: the milestone callout
+            // needs it to work out how far along a stock is, and this one needs it to say nothing
+            // about a stock that is finished.
+            .Add(new EmissionCallout { Capacity = MaterialGrades.CapacityOf })
+
             // Phase 11. The carrier speaks for itself; incoming chat speaks for whoever sent
             // it. Both are announcements in somebody else's voice rather than d47's, which is
             // what Announcement.Voice exists to carry.
@@ -1880,6 +1885,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("long-jump", callouts.LongJump);
         engine.SetEnabled("arrival", callouts.Arrival);
         engine.SetEnabled("materials", callouts.Materials);
+        engine.SetEnabled("emissions", callouts.Emissions);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory);
         engine.SetEnabled("sampling", callouts.Sampling);

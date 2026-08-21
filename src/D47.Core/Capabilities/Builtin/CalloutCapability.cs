@@ -33,6 +33,7 @@ public static class CalloutCapability
     public const string LongJumpKey = "callouts.longJumpRemark";
     public const string ArrivalKey = "callouts.arrival";
     public const string MaterialsKey = "callouts.materials";
+    public const string EmissionsKey = "callouts.emissions";
 
     public const string ProspectorKey = "callouts.prospector";
 
@@ -183,6 +184,16 @@ public static class CalloutCapability
                 "materials",
                 s => s.Callouts.Materials,
                 (s, v) => s with { Callouts = s.Callouts with { Materials = v } }),
+
+            Toggle(
+                EmissionsKey,
+                "High grade emissions",
+                "On arriving somewhere that could be running them: which grade 5 materials, from which "
+                + "faction's state. Silent about anything you are already full of.",
+                "emissions",
+                "high grade emissions",
+                s => s.Callouts.Emissions,
+                (s, v) => s with { Callouts = s.Callouts with { Emissions = v } }),
 
             Toggle(
                 ProspectorKey,

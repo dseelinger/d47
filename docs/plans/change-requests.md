@@ -24,59 +24,85 @@ at 20.
 
 ## Open
 
-### 22. Say when a system might be holding High Grade Emissions
-
-Asked for 2026-08-21: *"Notifies me when I am in a system that has a chance of having High Grade
-Emissions available, and what the material(s) is/are. Skips if I'm already full of that material.
-Should support all Manufactured Materials that can [be] harvested from HGE. Should support multiple
-material types when a system matches multiple conditions … and not just Core Dynamics Composites
-plus the related one that can be found in the same HGE, but when completely different ones are
-there, such as Pharmaceutical [Isolators] and something else, if conditions are right."* With an
-on/off row in settings, like every other callout.
-
-**Everything except the table is already in hand, and that is worth stating precisely.**
-
-- *The conditions are in the journal.* One `FSDJump` carries `SystemAllegiance`, `SystemEconomy`
-  **and** `SystemSecondEconomy`, `SystemGovernment`, `SystemSecurity`, `Population`, and every
-  faction with its `FactionState` — which is the whole of what a Commander reads off the system
-  map when deciding whether an HGE here is worth waiting for. The second economy and the faction
-  list are what make "multiple materials at once" expressible rather than a special case.
-- *"Skip if I'm already full" is exact.* `MaterialGrades.CapacityOfGrade` holds the per-grade cap
-  and the Commander's holdings are live in game state, so this is a comparison and not an
-  estimate.
-- *The callout shape exists.* A journal-triggered callout with a settings row is the most
-  well-trodden path in the app.
-
-**What is missing is the mapping, and it must not be invented.** Which allegiance, economy and
-state combination yields which grade 5 manufactured material is community reverse-engineering.
-Frontier publishes none of it, no shipped table carries it, and `CLAUDE.md` is explicit that game
-data is derived by a generator with its provenance recorded and never hand-written — a rule that
-exists because it has already been got wrong in both directions.
-
-**The corpus cannot settle it either, and that was checked rather than assumed.** Across the
-920 journals there are **19** `$USS_HighGradeEmissions;` signals and no `USSType` for one at all,
-so there is nothing to join a signal to the materials that came out of it. The 14,000-odd grade 5
-manufactured `MaterialCollected` events are overwhelmingly from trade and mission rewards and
-cannot be attributed to a source.
-
-**Open question, and it changes the work rather than a flag.** Three answers, and each is a
-different piece of work:
-
-1. **The Commander writes the table.** Their own game knowledge is not a licensing question, and a
-   table stated by the person asking for the feature has a provenance — them — that can be
-   recorded honestly beside it. Fastest, and the most likely to be right.
-2. **A source is named that carries it.** Then it is a generator like every other table, and the
-   licence gate and the attribution rules apply as usual.
-3. **Derive it from play.** d47 records the system's conditions when an HGE is scooped and builds
-   the mapping from what the Commander actually finds. Honest, needs no source at all, and is
-   worth nothing for weeks.
-
-**Not started.** A callout that names the wrong material is worse than no callout, so this waits
-on the answer rather than shipping a guess.
+Nothing open.
 
 ---
 
 ## Shipped
+
+### 22. Say when a system might be holding High Grade Emissions — shipped 0.46.0
+
+Asked for 2026-08-21: *"Notifies me when I am in a system that has a chance of having High Grade
+Emissions available, and what the material(s) is/are. Skips if I'm already full of that material …
+Should support multiple material types when a system matches multiple conditions … not just Core
+Dynamics Composites plus the related one that can be found in the same HGE, but when completely
+different ones are there."* With an on/off row in settings.
+
+**Built as list.md Phase 40.** Everything except the table was in hand from the start — the
+conditions are all in one `FSDJump`, and "skip what I am full of" is exact rather than estimated —
+so this waited on a source rather than on code, because hand-writing game data is the one thing
+`CLAUDE.md` forbids outright.
+
+#### Where the table came from
+
+- **[Elite Dangerous Wiki — High Grade Emissions](https://elite-dangerous.fandom.com/wiki/High_Grade_Emissions)**
+  is the best of them, and not only because it has the table. It is the only source found that
+  states the **mechanic**: a signal is assigned to *one faction*, its contents come from that
+  faction, and where a faction meets several conditions a hidden rank order picks between them.
+  That is what makes the rest predictable instead of a list of folklore.
+- **[Frontier Forums — Unidentified Signal Sources: A Complete Guide](https://forums.frontier.co.uk/threads/unidentified-signal-sources-a-complete-guide.377716/)**
+  (2017, edited 2018), on Frontier's own site, is the primary community research the rest descends
+  from. Found through [EDEngineer issue #196](https://github.com/msarilar/EDEngineer/issues/196),
+  which cites it as *the* reference. It corroborates every group.
+- **[edgalaxy.net/hge](https://edgalaxy.net/hge)** is not a table but a live one — HGE detections
+  reported over EDDN since the last tick. Its six filter groups match the six below exactly, which
+  is behavioural corroboration rather than a second copy of the same prose.
+- **And a fourth, already in the repo.** `Materials.tsv` carries these conditions in its own origins
+  column — "Signal source (High grade emissions, Boom)" and the rest — for all ten materials,
+  generated by `tools/gen-materials.py`. So `EmissionRules` is asserted against a shipped, generated
+  table both ways: no rule without a row, no row without a rule. A regenerated table that disagrees
+  fails a test rather than drifting away from a callout nobody would think to re-read.
+
+#### The groups, in the wiki's stated rank order
+
+| Condition | Materials |
+|---|---|
+| Federal faction | Core Dynamics Composites, Proprietary Composites |
+| Imperial faction | Imperial Shielding |
+| Civil Unrest | Improvised Components |
+| War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| Boom | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| Outbreak | Pharmaceutical Isolators |
+
+#### Four places the two prose sources disagree, and how each was settled
+
+Recorded because a table that hides its choices is one nobody can check later. All four ruled on by
+the Commander, 2026-08-21.
+
+1. **Proprietary Composites** — wiki lists it beside Core Dynamics for Federal space, the 2017 guide
+   does not. **Ruled: include it** (the wiki).
+2. **Expansion** — wiki says *Boom or Expansion* for the Proto materials, the guide says Boom only,
+   and a third account adds *Investment*. **Ruled: Boom only.** This one is not cosmetic: `Expansion`
+   is the second commonest state in the corpus after `None`, so the other reading would have made
+   this the chattiest callout d47 has.
+3. **Population** — wiki gates Outbreak on a million, the guide gates nothing. **Ruled: the floor
+   applies to every group.**
+4. **Whether superpower overrides state — the load-bearing one.** The wiki says a Federation or
+   Imperial faction *never* yields anything but composites or shielding. The 2017 guide says the
+   opposite in as many words: *"If you need Imperial Shielding and Pharmaceutical Isolators, look
+   for an Imperial system in Outbreak."* **Ruled: superpower wins** — the wiki is newer, and its
+   reading is the one consistent with the rank-order mechanic the same page states. Pinned by three
+   tests, and the fault was reintroduced to watch them go red.
+
+#### What the journal turned out to give
+
+`FSDJump` carries a `Factions` array, each entry with `Allegiance`, `FactionState`, `Government`,
+`Influence` and — the useful one — **`ActiveStates`, a list**. So the evaluation is **per faction**,
+which is what the wiki's mechanic asks for and what makes the Commander's *"completely different
+ones"* case fall out rather than needing a rule of its own. **84 of 400** recent corpus jumps are
+into a system holding a Federal faction *and* an Independent or Alliance one, so a system offering
+two unrelated groups at once is ordinary. The state spellings are the journal's own tokens, so no
+name-matching guesswork was needed anywhere.
 
 ### 20. Ordering the checklist, by voice and with both ends — shipped 0.45.0
 
