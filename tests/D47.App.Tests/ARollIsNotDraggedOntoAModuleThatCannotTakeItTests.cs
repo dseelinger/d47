@@ -84,22 +84,66 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
 
     private static string Item(ShipPlanService ships) => ships.Store.Builds[0].Id;
 
+    /// <summary>
+    /// A drag carries the module the row was showing (reported 2026-08-20: dragging a hull
+    /// reinforcement onto two empty compartments left them reading <i>"empty · Heavy Duty Hull
+    /// Reinforcement (G5), Deep Plating"</i> — a roll on nothing).
+    /// <para>
+    /// The source plan names no module, which is not a defect: *keep what is fitted, I only want
+    /// the engineering* stores the roll alone and the row draws the fitted module beside it. So
+    /// the Commander drags a line reading "5D Hull Reinforcement Package" while the plan beneath
+    /// it says only "this roll".
+    /// </para>
+    /// </summary>
     [Fact]
-    public void TheDragIsRefusedAndSaysWhy()
+    public void TheDragCarriesTheModuleTheRowWasShowing()
     {
         var (mode, ships) = InTheAnaconda();
         var item = Item(ships);
 
-        Assert.False(mode.CanCopy(item, "Slot05_Size5", "Slot07_Size5"));
+        Assert.True(mode.CanCopy(item, "Slot05_Size5", "Slot07_Size5"));
 
-        var said = mode.Copy(item, "Slot05_Size5", "Slot07_Size5");
+        _ = mode.Copy(item, "Slot05_Size5", "Slot07_Size5");
 
-        // Names the module rather than the slot, because that is the fact the Commander cannot see
-        // by looking at a row that shows the roll they dragged.
+        var landed = ships.Store.Builds[0].For("Slot07_Size5");
+
+        Assert.NotNull(landed);
+        Assert.Equal("Heavy Duty Hull Reinforcement", landed.Blueprint);
+
+        // The module the row was showing, not the module reinforcement sitting in the target.
+        Assert.Contains("Hull Reinforcement", landed.Module!, StringComparison.Ordinal);
+        Assert.DoesNotContain("Module Reinforcement", landed.Module!, StringComparison.Ordinal);
+        Assert.NotNull(landed.Variant);
+    }
+
+    /// <summary>
+    /// And where no module can be carried, the roll is still refused rather than attributed to
+    /// whatever happens to be in the target.
+    /// <para>
+    /// <b>"Module Reinforcement packages can't be engineered"</b>, and d47's own tables agree:
+    /// `Blueprints.tsv` names 38 engineerable module groups and it is not one of them. Slot06 has
+    /// nothing fitted, so a plan there naming no module has nothing to carry — and dropping it on
+    /// the Module Reinforcement Package in Slot07 would produce a roll that module cannot have.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void WhereNoModuleCanBeCarriedTheRollIsStillRefused()
+    {
+        var (mode, ships) = InTheAnaconda();
+        var item = Item(ships);
+
+        ships.Plan(ships.Store.Builds[0].Id, new SlotPlan("Slot06_Size5")
+        {
+            Blueprint = "Heavy Duty Hull Reinforcement",
+            Grade = 5,
+        });
+
+        Assert.False(mode.CanCopy(item, "Slot06_Size5", "Slot07_Size5"));
+
+        var said = mode.Copy(item, "Slot06_Size5", "Slot07_Size5");
+
         Assert.Contains("Module Reinforcement", said, StringComparison.Ordinal);
         Assert.Contains("no engineering", said, StringComparison.Ordinal);
-
-        // And nothing was written. A refusal that half-applies is worse than either answer.
         Assert.Null(ships.Store.Builds[0].For("Slot07_Size5"));
     }
 
@@ -177,22 +221,22 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
     }
 
     /// <summary>
-    /// A plan that names a module outranks what is fitted, on the row (reported 2026-08-20:
-    /// <i>"I just changed this to 6A, but it still says 6D"</i>).
+    /// A row holds both the module on the hull and the module planned for the slot (the
+    /// Commander's ruling, 2026-08-20: <i>"can you hold both? one is reality, the other is the
+    /// goal"</i>).
     /// <para>
-    /// The row already carries the plan's roll and the dot that says a plan exists, so naming the
-    /// fitted module beside them described a thing that does not exist. The fitted module is not
-    /// lost — the slot drill names it under its own <c>Fitted</c> heading, beside <c>Planned</c>,
-    /// which is the page where the two are meant to be told apart.
+    /// This row was wrong in both directions inside two days — naming the fitted module beside the
+    /// plan's roll described something that exists nowhere (*"I just changed this to 6A, but it
+    /// still says 6D"*), and naming only the plan's module dropped what is actually fitted. A row
+    /// carrying one of them has to choose which truth to tell, and there was no good answer.
     /// </para>
     /// </summary>
     [Fact]
-    public void APlannedModuleOutranksTheFittedOneOnTheRow()
+    public void ARowHoldsBothTheFittedModuleAndThePlannedOne()
     {
         var (mode, ships) = InTheAnaconda();
 
-        // Slot07 holds a 5D Module Reinforcement. The Commander plans a hull reinforcement there
-        // instead, and names which one.
+        // Slot07 holds a 5D Module Reinforcement. The Commander plans a hull reinforcement there.
         ships.Plan(ships.Store.Builds[0].Id, new SlotPlan("Slot07_Size5")
         {
             Blueprint = "Heavy Duty Hull Reinforcement",
@@ -204,11 +248,34 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot07_Size5", StringComparison.Ordinal));
 
-        Assert.NotNull(row.Parts?.Module);
-        Assert.Contains("Hull Reinforcement", row.Parts.Module, StringComparison.Ordinal);
-        Assert.DoesNotContain("Module Reinforcement", row.Parts.Module, StringComparison.Ordinal);
+        // The goal, which is the subject of the row.
+        Assert.StartsWith("5E ", row.Parts?.Module, StringComparison.Ordinal);
+        Assert.Contains("Hull Reinforcement", row.Parts!.Module!, StringComparison.Ordinal);
 
-        // The class the Commander chose, not the class of the thing being replaced.
-        Assert.StartsWith("5E ", row.Parts.Module, StringComparison.Ordinal);
+        // And reality beside it, which the row used to drop.
+        Assert.NotNull(row.Parts.Now);
+        Assert.Contains("Module Reinforcement", row.Parts.Now, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARowSaysOneModuleWhereThePlanAndTheHullAgree()
+    {
+        // No second name where there is no second thing to say. Slot05 holds a hull reinforcement
+        // and the plan names the same one.
+        var (mode, ships) = InTheAnaconda();
+
+        ships.Plan(ships.Store.Builds[0].Id, new SlotPlan("Slot05_Size5")
+        {
+            Blueprint = "Heavy Duty Hull Reinforcement",
+            Grade = 5,
+            Module = "Hull Reinforcement Package",
+            Variant = "int_hullreinforcement_size5_class2",
+        });
+
+        var row = mode.Slots(Item(ships))
+            .Single(candidate => candidate.Key.EndsWith("Slot05_Size5", StringComparison.Ordinal));
+
+        Assert.Equal("5D Hull Reinforcement Package", row.Parts?.Module);
+        Assert.Null(row.Parts!.Now);
     }
 }

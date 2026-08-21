@@ -131,8 +131,18 @@ public class SpecificationJoinTests
         //
         // So a lower-case parenthetical that echoes the symbol means the naming authority was not
         // consulted, or has no name to give. Either is worth looking at rather than shipping.
+        // **Amended 2026-08-20.** Two token families are now expected and are not fragments of a
+        // missing name: `free`, which separates the starter-ship variants from the modules they
+        // share a name with, and `sizeN`, which separates the Mk II cabins that `outfitting.csv`
+        // files under one name and one class. Both are single Frontier tokens carrying a real
+        // distinction; what this gate is looking for is a *phrase* of symbol debris standing in
+        // for a name nobody supplied, which is what all four of the reported ones were.
+        var expected = new[] { "free", "size5", "size6" };
+
         var fragments = EliteSpecifications.Modules
             .Where(module => Regex.IsMatch(module.Name, @"\(([a-z0-9]+ )*[a-z0-9]+\)$"))
+            .Where(module => !expected.Any(token =>
+                module.Name.EndsWith($"({token})", StringComparison.Ordinal)))
             .Select(module => $"{module.Symbol} -> {module.Name}")
             .ToList();
 

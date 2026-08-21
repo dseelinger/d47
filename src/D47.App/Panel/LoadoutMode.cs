@@ -176,7 +176,26 @@ public sealed record LoadoutParts(
     string? Blueprint,
     int? Grade,
     string? Experimental,
-    IReadOnlyList<string> Effects);
+    IReadOnlyList<string> Effects)
+{
+    /// <summary>
+    /// What is fitted in the slot right now, where that is known and is <b>not</b> what
+    /// <see cref="Module"/> already names.
+    /// <para>
+    /// <b>Both facts, because they are different facts</b> (the Commander's ruling, 2026-08-20:
+    /// *"one is reality, the other is the goal"*). This row has now been wrong in both directions
+    /// in two days — naming the fitted module beside the plan's roll described a thing that does
+    /// not exist, and naming the plan's module alone dropped what is actually on the hull. A row
+    /// that carries one of them has to choose which truth to tell, and there was never a good
+    /// answer.
+    /// </para>
+    /// <para>
+    /// Null where they agree, where nothing is fitted, and where d47 cannot see the ship — so a
+    /// row only ever grows a second module when there is genuinely a second thing to say.
+    /// </para>
+    /// </summary>
+    public string? Now { get; init; }
+}
 
 /// <summary>
 /// One mode of the Loadout tab — Ships, or Suits and weapons (list.md Phase 27, "The same page, on

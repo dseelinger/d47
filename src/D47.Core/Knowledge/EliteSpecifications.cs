@@ -215,7 +215,8 @@ public static class EliteSpecifications
         IReadOnlyList<string> KnownButUnmeasured,
         IReadOnlyDictionary<string, IReadOnlyList<ShipSlot>> Slots,
         IReadOnlyDictionary<string, IReadOnlyList<string>> SlotKinds,
-        IReadOnlyDictionary<string, int> Limits);
+        IReadOnlyDictionary<string, int> Limits,
+        IReadOnlyDictionary<string, string> Unnamed);
 
     public static IReadOnlyCollection<ShipSpecification> Ships => [.. Loaded.Value.Ships.Values];
 
@@ -401,7 +402,7 @@ public static class EliteSpecifications
     {
         if (Module(symbol) is not { } module)
         {
-            return Journal.ModuleNames.ReadableOrNull(symbol);
+            return Newer(symbol) ?? Journal.ModuleNames.ReadableOrNull(symbol);
         }
 
         var said = module.IsBulkhead ? module.Name : $"{module.Size} {module.Name}";
@@ -428,6 +429,42 @@ public static class EliteSpecifications
         group is { Length: > 0 } named && Loaded.Value.Limits.TryGetValue(named, out var most)
             ? most
             : null;
+
+    /// <summary>
+    /// A module Frontier has shipped and no naming source covers, said by its <em>group</em>
+    /// (reported 2026-08-20: <i>"not the right name for this optional internal module"</i>, against
+    /// a Mk II Fighter Hangar that reached the Commander as
+    /// <c>int fighterbaymk2 size5 class1 free</c>).
+    /// <para>
+    /// <b>Derived, not invented.</b> EDSY knows the symbol exists and knows its type is
+    /// <c>ifh</c> — the type the three original Fighter Hangars carry — so the name comes out of
+    /// d47's own table rather than out of somebody's memory of the game. The qualifier is the
+    /// point: it says d47 knows the family and not this member of it, which is exactly true.
+    /// </para>
+    /// <para>
+    /// <b>Only where the group has one name.</b> Five of the eighteen unnamed modules are
+    /// passenger cabins, whose group holds Economy, Business, First and Luxury — and picking one
+    /// would be inventing the very thing this avoids. Those keep the old fallback, which is ugly
+    /// and true.
+    /// </para>
+    /// </summary>
+    private static string? Newer(string? symbol)
+    {
+        if (symbol is not { Length: > 0 } wanted
+            || !Loaded.Value.Unnamed.TryGetValue(wanted, out var type))
+        {
+            return null;
+        }
+
+        var family = Loaded.Value.Modules.Values
+            .Where(module => string.Equals(module.Type, type, StringComparison.OrdinalIgnoreCase))
+            .Select(module => module.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(2)
+            .ToList();
+
+        return family is [var only] ? $"{only} (newer than my table)" : null;
+    }
 
     /// <summary>One slot of one hull, by the name the journal writes, or null for neither.</summary>
     public static ShipSlot? Slot(string? hull, string? slot) =>
@@ -597,7 +634,8 @@ public static class EliteSpecifications
                 [],
                 new Dictionary<string, IReadOnlyList<ShipSlot>>(StringComparer.Ordinal),
                 new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
-                new Dictionary<string, int>(StringComparer.Ordinal));
+                new Dictionary<string, int>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
         }
 
         using var reader = new StreamReader(stream);
@@ -608,6 +646,7 @@ public static class EliteSpecifications
         var slots = new Dictionary<string, List<ShipSlot>>(StringComparer.Ordinal);
         var kinds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var limits = new Dictionary<string, int>(StringComparer.Ordinal);
+        var unnamed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         var section = string.Empty;
 
@@ -634,6 +673,16 @@ public static class EliteSpecifications
                 case "[modules]" when !line.StartsWith("symbol\t", StringComparison.Ordinal):
                     var module = ReadModule(line.Split('\t'));
                     modules[module.Symbol] = module;
+                    break;
+
+                case "[known-but-unnamed]" when !line.StartsWith("symbol	", StringComparison.Ordinal):
+                    var nameless = line.Split('	');
+
+                    if (nameless.Length > 1)
+                    {
+                        unnamed[nameless[0]] = nameless[1];
+                    }
+
                     break;
 
                 case "[module-limits]" when !line.StartsWith("group	", StringComparison.Ordinal):
@@ -677,7 +726,8 @@ public static class EliteSpecifications
                 entry => (IReadOnlyList<ShipSlot>)entry.Value,
                 StringComparer.Ordinal),
             kinds,
-            limits);
+            limits,
+            unnamed);
     }
 
     private static ShipSpecification ReadShip(string[] cells) => new()

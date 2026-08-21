@@ -445,7 +445,29 @@ public sealed class ShipsMode(
             plan?.Blueprint ?? module?.Blueprint,
             plan?.Grade ?? module?.BlueprintLevel,
             plan?.Experimental ?? module?.Experimental,
-            Effects(module));
+            Effects(module))
+        {
+            // What is on the hull now, where the plan names something else. Both facts on the row,
+            // because they are different facts and neither is the other's substitute.
+            Now = Standing(plan, module),
+        };
+
+    /// <summary>
+    /// The fitted module's name, where a plan names a <em>different</em> one and both are worth
+    /// saying. Null wherever a second name would be noise: no plan, no module fitted, or the two
+    /// naming the same thing.
+    /// </summary>
+    private static string? Standing(SlotPlan? plan, ShipModule? module)
+    {
+        if (module is null || Planned(plan) is not { Length: > 0 } wanted)
+        {
+            return null;
+        }
+
+        var here = EliteSpecifications.ModuleName(module.Item) ?? module.Item;
+
+        return string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase) ? null : here;
+    }
 
     /// <summary>
     /// What the roll actually did, biggest change first, in the shortest form that stays true.
@@ -652,6 +674,29 @@ public sealed class ShipsMode(
         if (source is null || target is null || SlotCopy.Resolve(plan, source, target) is not { } moved)
         {
             return null;
+        }
+
+        // **A drag carries what the row was showing** (reported 2026-08-20: dragging a hull
+        // reinforcement onto two empty compartments left them reading *"empty · Heavy Duty Hull
+        // Reinforcement (G5), Deep Plating"* — a roll on nothing).
+        //
+        // The source plan names no module, and that is not a defect: *keep what is fitted, I only
+        // want the engineering* deliberately stores the roll and no module, and the row then draws
+        // the fitted module beside it. So the Commander drags a line reading "2D Hull
+        // Reinforcement Package" and the plan underneath it says only "this roll" — which lands on
+        // an empty slot as a roll with nothing to roll on.
+        //
+        // Resolved through `SlotCopy.Resize` rather than copied flat, so the module arrives at the
+        // size the target actually takes; a module that does not come small enough refuses the
+        // whole drag, which is the rule that was already there.
+        if (moved.Variant is not { Length: > 0 } && FittedIn(build, source) is { } shown)
+        {
+            if (SlotCopy.Resize(shown.Item, target) is not { } resized)
+            {
+                return null;
+            }
+
+            moved = moved with { Variant = resized.Symbol, Module = resized.Name };
         }
 
         return Rollable(build, target, moved) ? moved : null;
@@ -1164,25 +1209,58 @@ public sealed class ShipsMode(
             return;
         }
 
+        // **The one already in the slot, named and first** (reported 2026-08-20: *"no option to
+        // keep the Life Support I already have"*). The module page carries a *keep what is fitted*
+        // row — and for a socket that offers one module name, remediation 15 item 7 skips that
+        // page entirely and lands here, so the row was unreachable exactly where it was most
+        // wanted. A core internal is the common case: nobody replaces their life support, they
+        // engineer it.
+        //
+        // Lifted out of the list rather than added beside it, so the same module is not offered
+        // twice under two names — and it keeps its own figures, because "keep this one" and "what
+        // does it weigh" are the same question at this point.
+        var here = FittedIn(build, slot)?.Item;
+
+        var kept = here is { Length: > 0 }
+            ? offered.FirstOrDefault(variant =>
+                string.Equals(variant.Symbol, here, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+        var rest = kept is null
+            ? offered
+            : [.. offered.Where(variant => !string.Equals(variant.Symbol, kept.Symbol, StringComparison.OrdinalIgnoreCase))];
+
+        List<ChoiceOption> rows =
+        [
+            // **What the Commander means, not a claim about the game.** This row read
+            // "size and mount do not matter", and that is false about every module in
+            // Elite: an FSD's size is most of a jump range, and a weapon's mount is the
+            // whole of how it tracks. The row is the *decline* — it says the plan is not
+            // specifying which one — so it says that, in the words this method's own
+            // documentation already uses for it.
+            new ChoiceOption(string.Empty, $"Any {module} — I do not mind which"),
+        ];
+
+        if (kept is not null)
+        {
+            rows.Add(new ChoiceOption(
+                kept.Symbol,
+                $"Keep the {EliteSpecifications.ModuleName(kept.Symbol) ?? Wording(kept)} — the one fitted now",
+                Figures(kept)));
+        }
+
+        rows.AddRange(rest.Select(variant => new ChoiceOption(
+            variant.Symbol,
+            Wording(variant),
+            Figures(variant))));
+
         prompts.Choose(
             new ChoiceRequest(
                 "loadout.variant",
                 "Which one",
                 $"Which {module}?",
                 Context(build, slot),
-                [
-                    // **What the Commander means, not a claim about the game.** This row read
-                    // "size and mount do not matter", and that is false about every module in
-                    // Elite: an FSD's size is most of a jump range, and a weapon's mount is the
-                    // whole of how it tracks. The row is the *decline* — it says the plan is not
-                    // specifying which one — so it says that, in the words this method's own
-                    // documentation already uses for it.
-                    new ChoiceOption(string.Empty, $"Any {module} — I do not mind which"),
-                    .. offered.Select(variant => new ChoiceOption(
-                        variant.Symbol,
-                        Wording(variant),
-                        Figures(variant))),
-                ],
+                rows,
                 plan?.Variant,
                 ChoiceSurface.Page)
             {
