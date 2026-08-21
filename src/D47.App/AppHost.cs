@@ -1077,6 +1077,10 @@ public sealed class AppHost : IDisposable
         var macros = new MacroStore(
             Path.Combine(paths.Data, "macros.json"), loggerFactory.CreateLogger<MacroStore>());
 
+        // What d47 last offered to put on the clipboard. In memory and nowhere else: an offer is a
+        // moment in a conversation, so there is no file and nothing to restore.
+        var clipboardOffer = new D47.Core.Conversation.ClipboardOffer();
+
         // The Commander's HOTAS switches, in the same shape and beside the same executable
         // (list.md Phase 21). The reader is the one hardware component here that stays
         // subscribed as well as being polled — hot-plug and slow enumeration are the same code
@@ -1342,7 +1346,11 @@ public sealed class AppHost : IDisposable
 
                 // And where a plan goes once it is made (list.md Phase 37), so the spoken route
                 // and the drawn one are one answer rather than two.
-                planBook));
+                planBook,
+
+                // What d47 last offered to copy (asked for 2026-08-21). Composed here rather than
+                // inside a capability because two of them write it and the router reads it.
+                clipboardOffer));
 
         built = capabilities;
 
@@ -1365,7 +1373,12 @@ public sealed class AppHost : IDisposable
             installer.CleanUpRetired(runningExecutable);
         }
 
-        var router = new KeywordRouter(capabilities, () => MacroCapability.Phrases(macros));
+        // The router's dynamic vocabulary: the Commander's own macro names, and — while one is
+        // standing — the phrases that take up a clipboard offer. Both are dynamic for the same
+        // reason: the argument is not knowable when the descriptor is registered.
+        var router = new KeywordRouter(
+            capabilities,
+            () => MacroCapability.Phrases(macros).Concat(clipboardOffer.Phrases()));
 
         var turns = new TurnLoop(
             capabilities,

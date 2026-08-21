@@ -176,7 +176,18 @@ public static class BuiltinCapabilities
         // Where a plan is kept once it is made (list.md Phase 37). Null where nothing draws them,
         // which is every test that is not about the Routing tab: a plot still answers, it just
         // leaves nothing behind for a surface to show.
-        Knowledge.RoutePlanBook? plans = null) =>
+        Knowledge.RoutePlanBook? plans = null,
+
+        // What d47 last offered to put on the clipboard (asked for 2026-08-21).
+        //
+        // **Last, and optional, for a reason worth writing down.** It went in beside `checklists`
+        // first, as a required parameter, and that silently re-bound every positional argument
+        // after it — `AppHost` compiled a `Func<bool>` into a `Func<IReadOnlyList<string>>` slot
+        // and the error named neither the cause nor the caller. This list is long and mostly
+        // optional, so **a new parameter goes at the end**: anywhere else changes what every
+        // existing call means. Null under the designer and in tests that are not about it, and the
+        // searches then make no offer.
+        Conversation.ClipboardOffer? clipboard = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -192,7 +203,7 @@ public static class BuiltinCapabilities
             now),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
-        EngineeringCapability.Create(() => gameState.Active, galaxy),
+        EngineeringCapability.Create(() => gameState.Active, galaxy, clipboard),
         OnFootCapability.Create(() => gameState.Active, onFoot),
         ChecklistCapability.Create(checklists, ships, onFoot),
         ShipsCapability.Create(ships),
