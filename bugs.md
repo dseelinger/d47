@@ -65,7 +65,7 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
 
-## Open: a headless-session cleanup failure that six different tests have now carried
+## Open: a headless-session cleanup failure that seven different tests have now carried
 
 `D47.App.Tests.AuditionDoesNotCommitTests.PlayingASecondVoiceCancelsTheFirst` timed out on the CI
 runner during the 0.38.0 release, at the `cancelled.Task.WaitAsync` on line 210 — the second press
@@ -240,6 +240,25 @@ longer needs a runner to catch it — a local loop of the Release App suite will
 enough repetitions, and can be watched under a debugger.
 
 A sixth carrier test, still unrelated to the other five, still not the subject.
+
+### Seventh, 2026-08-21, and it adds nothing but a count
+
+The release run for v0.44.1 failed on
+`TheReworkedChromeRendersToACaptureTests.APlanThatWasMade` — same exception, same *cleanup*
+framing, same `EnsureIsolatedApplication` → `AvaloniaHeadlessPlatform.Initialize` →
+`DefaultRenderLoop.Add` stack, and cleared on a re-run of the identical tag. A seventh carrier,
+unrelated to the six before it, and again not the subject.
+
+**Recorded because the count is the only thing it changes.** The instrumentation the third entry
+asks for still has not been written, and this occurrence would have been diagnosed by it and was
+not.
+
+**What it costs, counted rather than guessed.** Of the last twenty release-workflow runs, three
+needed a second attempt — v0.38.0, v0.39.0 and this one — and all three are entries above. That is
+the whole measurable cost: a re-run builds the same commit and publishes the same binary, so none
+of the seven occurrences has cost a version number, and none has put a wrong `d47.exe` behind a
+tag. The other four were caught before the tag, by `dotnet test -c Release` locally or on `ci`,
+which is where those two waits in `tools/release.ps1` are meant to catch things.
 
 
 ## Open: an engineer was offered as a material trader, with rates attached
