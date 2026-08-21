@@ -98,42 +98,62 @@ public class ChecklistTabTests
     }
 
     /// <summary>
-    /// And the headset's own instantiation does <em>not</em> have it, nor Loadout — withdrawn from
-    /// the big panel on the Commander's instruction, 2026-08-19.
+    /// And the headset's own instantiation has it again, and still has no Loadout
+    /// (list.md Phase 39, "The Checklist tab is furnished on the VR panel again").
     /// <para>
-    /// <b>This assertion is the reverse of the one it replaces, and that is worth saying out
-    /// loud.</b> Phase 25 put the checklist in the headset because a <c>Window</c> cannot appear
-    /// there at all, and Phase 26 put the fleet beside it; both were the point of those items
-    /// rather than a side effect. So this is not the design being restored, it is the design being
-    /// overruled, and it is a test rather than a comment because the two calls that would undo it
-    /// are one line each and would otherwise come back the next time somebody read
-    /// <c>VrPanelSurface</c> and thought a tab had been forgotten.
+    /// <b>This assertion has now been written three ways, and the middle one was not a mistake.</b>
+    /// Phase 25 put the checklist in the headset because a <c>Window</c> cannot appear there at
+    /// all, and Phase 26 put the fleet beside it; both were withdrawn on the Commander's
+    /// instruction on 2026-08-19, which was them overruling two built phases rather than a
+    /// discovery that either tab had never worked. Phase 39 asks for one of them back.
     /// </para>
     /// <para>
-    /// Handed the services it would need, so the assertion is about the surface declining them
-    /// rather than about a test that never supplied them.
+    /// So what is pinned here is the <em>asymmetry</em> rather than either half of it: the two
+    /// calls are one line each, and a checklist that came back without anybody deciding Loadout
+    /// should is exactly the drift this test exists to catch — in the direction it is now facing
+    /// as much as in the one it used to.
+    /// </para>
+    /// <para>
+    /// Handed the services both tabs would need, so the assertion is about the surface furnishing
+    /// one and declining the other rather than about a test that never supplied them.
     /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheHeadsetCopyHasNeitherChecklistNorLoadout()
+    public void TheHeadsetCopyHasTheChecklistAndStillNotTheFleet()
     {
         var (settings, _, _) = TestSurface.Create();
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var root = TempFolders.Create("d47-checklist-tests");
+        var checklists = Checklists(root);
+
+        // The fleet service too, so the second assertion is the surface declining to furnish a
+        // tab it could have rather than a test that never handed it the parts.
+        var ships = new D47.Core.Ships.ShipPlanService(
+            new D47.Core.Ships.ShipBuildStore(
+                Path.Combine(root, "ships.json"),
+                NullLogger<D47.Core.Ships.ShipBuildStore>.Instance),
+            checklists,
+            () => null);
 
         using var surface = new Headset.VrPanelSurface(
-            new PanelViewModel(), settings, _ => null, checklists: checklists);
+            new PanelViewModel(),
+            settings,
+            _ => null,
+            checklists: checklists,
+            ships: ships,
+            gameState: () => null);
 
         var view = (PanelView)surface.GetType()
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(surface)!;
 
-        Assert.False(view.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.True(view.FindControl<Control>("ChecklistTab")!.IsVisible);
         Assert.False(view.FindControl<Control>("LoadoutTab")!.IsVisible);
     }
 
     /// <summary>
-    /// The withdrawal is the headset's alone. The desktop window keeps both tabs, which is the
-    /// half of "one widget tree renders to both surfaces" that still holds.
+    /// The window keeps both, which is the half of "one widget tree renders to both surfaces"
+    /// that never moved: the difference between the surfaces is which host calls which
+    /// <c>Enable</c>, and nothing in the view knows a headset from a window.
     /// </summary>
     [AvaloniaFact]
     public void TheWindowKeepsBoth()

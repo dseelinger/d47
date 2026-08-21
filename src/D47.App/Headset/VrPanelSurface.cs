@@ -114,23 +114,35 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableSettings(settingsPage);
         }
 
-        // Checklist and Loadout are deliberately not furnished here, so the big panel carries
-        // Transcript, Engineers, Utilities and Settings and no more.
-        //
-        // <b>A withdrawal rather than a redesign, and possibly a temporary one.</b> Both tabs
-        // were built for this surface on purpose - Phase 25 made the checklist reachable in a
-        // headset at all, which a `Window` cannot be, and Phase 26 put the fleet beside it - so
-        // this is the Commander overruling that, not a discovery that they never worked.
-        //
-        // Done by not calling `EnableChecklist` and `EnableLoadout` rather than by hiding the
-        // tabs, because absent is the default: a tab nobody furnishes has no builder, registers
-        // no root, and `PanelView.Tab` already refuses to select one - so the spoken route and
-        // the drawn one agree without either being taught a special case. That is the rule
-        // Settings has followed since Phase 12, and it is why reversing this is these two calls
-        // coming back and nothing else. The constructor still takes `checklists`, `goals` and
-        // `backfillGoals` for exactly that reason; they are wired from `AppHost` and unused
-        // here, which is a smaller thing to carry than a re-plumbing when the decision flips.
-        //
+        if (checklists is not null)
+        {
+            // What the Commander is working on, back in the headset (list.md Phase 39). Phase 25
+            // made the checklist reachable there at all, which a `Window` cannot be, and both it
+            // and Loadout were then <b>withdrawn on the Commander's instruction</b> during the
+            // panel redesign - the Commander overruling two built phases, not a discovery that
+            // either tab had never worked. That call was real, which is why this comment is
+            // rewritten rather than deleted along with the withdrawal it used to record.
+            //
+            // <b>This reverses half of it.</b> Loadout is still not furnished, and the asymmetry
+            // is a decision rather than an oversight: the fleet is a three-level drill ending in
+            // a search field, which is a bigger surface and its own day's work. Bringing one tab
+            // back is not a step toward parity, which stays a someday-maybe (CLAUDE.md, "Feature
+            // parity between the two surfaces is a nice-to-have, not a constraint").
+            //
+            // The withdrawal was done by <b>not calling</b> this rather than by hiding anything,
+            // because absent is the default: a tab nobody furnishes has no builder, registers no
+            // root, and `PanelView.Tab` already refuses to select one - so the spoken route and
+            // the drawn one agree without either being taught a special case. That is the rule
+            // Settings has followed since Phase 12, and it is why reversing it is this one call
+            // and nothing else: the constructor has gone on taking `checklists`, `goals` and
+            // `backfillGoals` from `AppHost` against exactly this day.
+            //
+            // `goals` and `backfillGoals` ride the tab rather than sitting beside it (list.md
+            // Phase 34), so the arcs and the button that ages them reach the headset on exactly
+            // the same terms the list does.
+            _view.EnableChecklist(checklists, goals, backfillGoals);
+        }
+
         // `ships`, `gameState` and `onFoot` are still read below - Engineers needs all three.
 
         if (unlocks is not null && ships is not null && gameState is not null)

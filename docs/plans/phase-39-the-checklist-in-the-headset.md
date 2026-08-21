@@ -1,10 +1,12 @@
 # Phase 39 — The checklist in the headset
 
-The plan of record for a phase that is **not built**. Written 2026-08-20 on the Commander's
+The plan of record for a phase **built on 2026-08-21**. Written 2026-08-20 on the Commander's
 instruction: *"Add the Checklist tab back into VR."*
 
-`list.md` carries the Phase 39 entry as of 2026-08-20, unticked. This document is the reasoning
-behind those lines and the measurements they rest on; the list is the product description.
+`list.md` carries the Phase 39 entry, ticked as of 2026-08-21. This document is the reasoning
+behind those lines and the measurements they rest on; the list is the product description, and
+where the two differ the list is what was actually built — it records two defects this plan did
+not predict, both in the half of the phase that was never about the one call.
 
 ---
 
