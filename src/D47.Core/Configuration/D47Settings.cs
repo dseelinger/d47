@@ -542,6 +542,17 @@ public sealed record CalloutSettings
     public bool Materials { get; init; } = true;
 
     /// <summary>
+    /// Systems that might be running High Grade Emissions, and what would be in them
+    /// (list.md Phase 40).
+    /// <para>
+    /// <b>On.</b> It speaks once per system, only above a million population, only about materials
+    /// there is still room for — so a Commander who has finished gathering stops hearing it without
+    /// touching this, which is the behaviour that earns a default of on.
+    /// </para>
+    /// </summary>
+    public bool Emissions { get; init; } = true;
+
+    /// <summary>
     /// An attack an NPC has announced but not yet made (list.md Phase 15). On, because it is the
     /// only warning here that arrives while there is still something to do about it.
     /// </summary>

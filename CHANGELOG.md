@@ -17,6 +17,48 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.46.0 — 2026-08-21 — Emissions worth dropping for
+
+**D47 tells you when a system might be running High Grade Emissions, and what would be in them.**
+
+```
+Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composites,
+Proprietary Composites and Pharmaceutical Isolators.
+```
+
+Said on arrival, because that is the only moment you can act on it. Once per system, and never for
+the backlog D47 reads at startup — the only jump in that backlog you could still do something about
+is the last one.
+
+**A signal belongs to a faction, not to a system**, which is the part that makes one system able to
+offer two unrelated things at once. Each faction is looked at on its own: Federal gives composites,
+Imperial gives shielding, and Civil Unrest, War, Boom and Outbreak each give their own — so a system
+with a Federal faction beside an Independent one in Outbreak names both. That is not a rare case:
+across 400 recent jumps in the journal corpus, **84** were into a system shaped exactly like that.
+
+A Federal or Imperial faction yields its composites or shielding **and nothing else**, whatever
+state it is in, so the state-driven materials live in Independent and Alliance space. Systems under
+a million population are not mentioned at all.
+
+**It says nothing about a material you are already full of**, and a system whose materials are all
+full says nothing. So when you have finished gathering, it goes quiet on its own — which is why it
+ships on. Where D47 does not know a material's cap it tells you anyway rather than assuming you are
+full. Its own row in settings, switchable by voice like every other callout.
+
+**The table is sourced rather than written, and its disagreements are written down.** Four sources:
+the Elite Dangerous Wiki, which alone states the underlying mechanic; the 2017 Frontier Forums USS
+guide, which is the research the rest descends from; edgalaxy.net's live EDDN detections, whose six
+groups match; and — already in this repo — the generated materials table, which has carried these
+conditions in its own sourcing column all along. The rules are asserted against that table both
+ways, so a regenerated table that disagrees fails a test instead of quietly drifting.
+
+The two prose sources contradict each other in four places, and every one of them is recorded in
+`docs/plans/change-requests.md` with the ruling that settled it. The one that mattered most: they
+flatly disagree about whether an Imperial system in Outbreak gives you shielding *and* isolators.
+It does not — superpower wins — and three tests hold that reading in place.
+
+---
+
 ## 0.45.0 — 2026-08-21 — Ordering the list, and a carrier that knows where it is
 
 **Your checklist reorders by voice, and it has both ends now.** *"Move it up"*, *"move it down"*,

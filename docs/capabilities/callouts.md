@@ -189,6 +189,40 @@ Switching this off silences both. It does not freeze the list — the verdicts s
 panel keeps showing them; a setting that did two things, one of them invisible, would be the wrong
 setting.
 
+### High grade emissions {#emissions}
+
+When you arrive somewhere that could be running High Grade Emissions, which grade 5 materials would
+be in them:
+
+```
+Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composites,
+Proprietary Composites and Pharmaceutical Isolators.
+```
+
+**A signal belongs to a faction, not to a system**, which is why one system can offer two unrelated
+things at once. Each faction in the system is looked at on its own:
+
+| That faction | Emissions hold |
+|---|---|
+| Federal | Core Dynamics Composites, Proprietary Composites |
+| Imperial | Imperial Shielding |
+| Civil Unrest | Improvised Components |
+| War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| Boom | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| Outbreak | Pharmaceutical Isolators |
+
+A Federal or Imperial faction yields its composites or shielding **and nothing else**, whatever
+state it is in — so the state-driven materials are found in Independent and Alliance space. Systems
+under a million population are not mentioned at all.
+
+**Nothing is said about a material you are already full of**, and a system whose materials are all
+full says nothing. So once you have finished gathering, this goes quiet on its own without your
+switching it off. Where D47 does not know a material's cap it says it anyway rather than guessing
+you are full.
+
+Said once per system, and never for the backlog D47 reads at startup — the only jump in that
+backlog you could still act on is the last one.
+
 ### Prospector results {#prospector}
 
 What a prospector limpet found, spoken in the ring so you can keep your eyes on the rock instead of
