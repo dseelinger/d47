@@ -257,6 +257,25 @@ Matches against both the module's name and its slot, because "frame shift drive"
 ```
 
 
+### Both searches offer the clipboard
+
+Either answer ends with an offer naming the best system it found — nearest for a material, or the
+trader's own:
+
+```
+Say "copy that" and I will put Cubeo on your clipboard.
+```
+
+Say **"copy that"**, **"copy it"** or **"put it on my clipboard"** and the system goes on the
+clipboard, ready to paste into the galaxy map. That route needs no model: the phrase carries the
+system name with it.
+
+For a raw material the offer is the **system**, not the body — a body name is not something the
+galaxy map takes, and pasting a destination into it is the errand this ends.
+
+An offer stands until the next answer replaces it, so saying it twice copies it twice. A search
+that found nothing clears the offer rather than leaving the previous system answering to "that".
+
 ## Notes for anyone reading the code
 
 **Only a modification may be multiplied by a roll count.** The blueprint table keeps six different

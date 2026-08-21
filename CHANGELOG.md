@@ -17,6 +17,35 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.46.1 — 2026-08-21 — "Copy that"
+
+**Ask where to find a material, or the nearest trader, and D47 now offers to put the system on your
+clipboard.**
+
+```
+Nearest systems reported in Outbreak, Empire-aligned:
+  Cubeo — 12.4 ly, population 20,000,000
+  ...
+
+Say "copy that" and I will put Cubeo on your clipboard.
+```
+
+Say **"copy that"**, **"copy it"** or **"put it on my clipboard"**, and it is there to paste into
+the galaxy map. Both halves of this have been in D47 for phases — a search that finds the system,
+and a tool that copies a name — and nothing joined them, so you read a name off a list and typed it
+in by hand.
+
+**The phrase needs no model.** It carries the system name with it, through the same model-free
+router that runs your macros, so it works with the AI switched off and does not depend on the model
+choosing to call anything.
+
+For a raw material it offers the **system** rather than the body — the galaxy map does not take a
+body name, and pasting a destination into it is the point. An offer stands until the next answer
+replaces it, so saying it twice copies it twice; a search that finds nothing clears the offer rather
+than leaving the previous system answering to "that".
+
+---
+
 ## 0.46.0 — 2026-08-21 — Emissions worth dropping for
 
 **D47 tells you when a system might be running High Grade Emissions, and what would be in them.**

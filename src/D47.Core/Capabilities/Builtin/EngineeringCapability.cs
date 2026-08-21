@@ -29,9 +29,15 @@ public static class EngineeringCapability
     /// The search service, or null where none is composed. Sourcing is the only half that needs
     /// it; a blueprint's recipe is a shipped table and answers with the network switched off.
     /// </param>
+    /// <param name="clipboard">
+    /// What d47 last offered to copy (asked for 2026-08-21). Null under the designer and in tests
+    /// that are not about it, and the answers then simply make no offer — a search that found a
+    /// system is still worth reading out.
+    /// </param>
     public static CapabilityDescriptor Create(
         Func<CommanderGameState?> commander,
-        IGalaxyService? galaxy = null) => new()
+        IGalaxyService? galaxy = null,
+        Conversation.ClipboardOffer? clipboard = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -128,7 +134,7 @@ public static class EngineeringCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    FindMaterialAsync(galaxy, commander, arguments, cancellationToken),
+                    FindMaterialAsync(galaxy, commander, clipboard, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -151,7 +157,7 @@ public static class EngineeringCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    FindTraderAsync(galaxy, commander, arguments, cancellationToken),
+                    FindTraderAsync(galaxy, commander, clipboard, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 51 },
@@ -429,6 +435,7 @@ public static class EngineeringCapability
     private static async Task<ToolResult> FindMaterialAsync(
         IGalaxyService? galaxy,
         Func<CommanderGameState?> commander,
+        Conversation.ClipboardOffer? clipboard,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -460,8 +467,19 @@ public static class EngineeringCapability
         arguments.TryGetString("near", out var near);
         near ??= active?.Location.StarSystem;
 
-        report.Append(await SourceAsync(galaxy, material, near, cancellationToken).ConfigureAwait(false));
+        var found = new Sourced();
+
+        report.Append(await SourceAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
         report.Append(Netting(material, active));
+
+        // The offer last, under the answer, because it is about what to do next rather than part
+        // of what was found. Nothing found clears any standing offer rather than leaving the
+        // previous system answering to "that".
+        if (clipboard?.Offer(found.System, "the system") is { } offer)
+        {
+            report.AppendLine();
+            report.Append(offer);
+        }
 
         return ToolResult.Ok(report.ToString().TrimEnd());
     }
@@ -502,10 +520,22 @@ public static class EngineeringCapability
     /// Where to go for it. Raw is a body search; everything else is the shipped origin list, with
     /// a state-gated origin turned into a system search.
     /// </summary>
+    /// <summary>
+    /// The best system a search turned up, carried back out so the answer can offer to copy it.
+    /// <b>The first one printed</b>, which both searches already order by what the Commander asked
+    /// for — nearest for a system, richest for a body — so it is the one they would have read off
+    /// the top of the list themselves.
+    /// </summary>
+    private sealed class Sourced
+    {
+        public string? System { get; set; }
+    }
+
     private static async Task<string> SourceAsync(
         IGalaxyService? galaxy,
         MaterialEntry material,
         string? near,
+        Sourced found,
         CancellationToken cancellationToken)
     {
         var report = new StringBuilder();
@@ -526,11 +556,11 @@ public static class EngineeringCapability
         {
             if (isRaw)
             {
-                report.Append(await BodiesAsync(galaxy, material, near, cancellationToken).ConfigureAwait(false));
+                report.Append(await BodiesAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
             }
             else if (StateOf(material) is { } gate)
             {
-                report.Append(await SystemsAsync(galaxy, gate, near, cancellationToken).ConfigureAwait(false));
+                report.Append(await SystemsAsync(galaxy, gate, near, found, cancellationToken).ConfigureAwait(false));
             }
         }
         catch (GalaxyUnavailableException failure)
@@ -545,6 +575,7 @@ public static class EngineeringCapability
         IGalaxyService galaxy,
         MaterialEntry material,
         string? near,
+        Sourced found,
         CancellationToken cancellationToken)
     {
         // Three of the twenty-eight raw materials are not in the index at all, so a search for one
@@ -583,6 +614,10 @@ public static class EngineeringCapability
         report.AppendLine(
             $"Richest of the {result.Bodies.Count} nearest landable bodies carrying it"
             + (result.Reference is { } reference ? $", from {reference}:" : ":"));
+
+        // The system rather than the body: a body name is not something the galaxy map takes, and
+        // pasting a destination into it is the errand this ends.
+        found.System = ranked[0].Body.SystemName;
 
         foreach (var (body, share) in ranked)
         {
@@ -627,6 +662,7 @@ public static class EngineeringCapability
         IGalaxyService galaxy,
         (IReadOnlyList<string> States, string? Allegiance) gate,
         string? near,
+        Sourced found,
         CancellationToken cancellationToken)
     {
         var requested = new Dictionary<string, string>(StringComparer.Ordinal) { ["distance"] = "50" };
@@ -665,6 +701,8 @@ public static class EngineeringCapability
         report.AppendLine(
             $"Nearest systems {described}"
             + (gate.Allegiance is { } superpower ? $", {superpower}-aligned:" : ":"));
+
+        found.System = result.Systems[0].Name;
 
         foreach (var system in result.Systems)
         {
@@ -762,6 +800,7 @@ public static class EngineeringCapability
     private static async Task<ToolResult> FindTraderAsync(
         IGalaxyService? galaxy,
         Func<CommanderGameState?> commander,
+        Conversation.ClipboardOffer? clipboard,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -812,6 +851,12 @@ public static class EngineeringCapability
                 }
 
                 report.AppendLine();
+            }
+
+            if (clipboard?.Offer(result.Stations[0].SystemName, "the trader's system") is { } offer)
+            {
+                report.AppendLine();
+                report.Append(offer);
             }
 
             return ToolResult.Ok(report.ToString().TrimEnd());
