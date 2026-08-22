@@ -1022,6 +1022,22 @@ public partial class PanelView : UserControl
     private void OnTurnDetailsClick(object? sender, RoutedEventArgs e) => _showTurnDetails?.Invoke();
 
     /// <summary>
+    /// How the host opens the documentation site, when it gave a way. Null on every surface that
+    /// was not handed one, which is the headset's copy: the button used to raise an event on the
+    /// shared model, and the only handler opened a browser on the desktop, where a Commander in
+    /// the headset could not see it (change-requests.md 24). Same seam as
+    /// <see cref="EnableTurnDetails"/>, for the same reason.
+    /// </summary>
+    private Action? _openHelp;
+
+    /// <summary>Gives this surface a help button, and what it opens. The desktop window calls it; the headset never does.</summary>
+    public void EnableHelp(Action open)
+    {
+        _openHelp = open;
+        HelpButton.IsVisible = true;
+    }
+
+    /// <summary>
     /// Empties what this page is showing, leaving the record alone (remediation.md 11, item 14).
     /// <para>
     /// Refused on the log page, where there is nothing of d47's to clear: that page is a file on
@@ -2175,7 +2191,7 @@ public partial class PanelView : UserControl
             Transcript.SelectedText is { Length: > 0 }
             && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
-    private void OnHelpClick(object? sender, RoutedEventArgs e) => Model?.OpenHelp();
+    private void OnHelpClick(object? sender, RoutedEventArgs e) => _openHelp?.Invoke();
 
     private void OnHelpPointerEntered(object? sender, PointerEventArgs e) =>
         HelpGlyph.Stroke = this.FindResource("D47.Accent") as IBrush;

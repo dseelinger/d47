@@ -24,7 +24,17 @@ at 20.
 
 ## Open
 
-Nothing open.
+### 24. No Help glyph on a VR surface
+
+Asked for 2026-08-22; built the same day on `fixes-3`, in the next release. The panel's help mark
+opened the documentation site in a browser — on the desktop, which a Commander in the headset
+cannot see. The model's `HelpRequested` event was the wrong seam: the headset copy shares the model,
+so its press reached the desktop window's handler. Help is now an affordance of the **surface**,
+handed over by the host like search and the turn-figures dialog already were — `PanelView.EnableHelp`
+— and `VrPanelSurface` never calls it, so the headset copy has no button rather than a hidden one.
+The `OpenHelp`/`HelpRequested` pair on the model went with it; its comment said the view "asks
+rather than acts" so as not to know what a desktop is, and that reasoning is kept, moved one seam
+over to where the two surfaces actually diverge.
 
 ---
 

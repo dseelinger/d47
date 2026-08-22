@@ -69,8 +69,14 @@
         is the button's own background, so a glyph centred in the button is centred in the
         highlight — which is what was being asked for.
       -->
+      <!--
+        Hidden until the host hands this surface a way to open the site (EnableHelp). The headset
+        copy is never handed one: the button opened a browser on the desktop, which a Commander in
+        the headset cannot see (change-requests.md 24).
+      -->
       <Button x:Name="HelpButton"
               DockPanel.Dock="Right"
+              IsVisible="False"
               Width="35"
               Height="35"
               Padding="0"

@@ -34,29 +34,49 @@ public class HelpButtonTests
     }
 
     /// <summary>
-    /// Pressing it raises a request rather than opening anything. A panel that launched a
+    /// Pressing it does what the host handed in and nothing of its own. A panel that launched a
     /// browser would be a panel that knows what a desktop is, and one of the two surfaces it
     /// renders to has no desktop at all.
     /// </summary>
     [AvaloniaFact]
-    public void PressingItAsksTheSurfaceRatherThanOpeningABrowser()
+    public void PressingItDoesWhatTheHostHandedIn()
     {
-        var model = new PanelViewModel();
+        var opened = 0;
 
-        var asked = 0;
-        model.HelpRequested += () => asked++;
+        var view = new PanelView { DataContext = new PanelViewModel() };
+        view.EnableHelp(() => opened++);
 
-        var view = new PanelView { DataContext = model };
         var window = new Window { Content = view };
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var help = view.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HelpButton");
+        Assert.True(help.IsVisible);
 
         help.Command?.Execute(null);
         help.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        Assert.Equal(1, asked);
+        Assert.Equal(1, opened);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// A surface the host handed nothing — which is how the headset builds its copy — has no
+    /// help button. It used to: the press raised an event on the shared model, and the one
+    /// handler opened a browser on the desktop, invisible from inside the headset
+    /// (change-requests.md 24).
+    /// </summary>
+    [AvaloniaFact]
+    public void ASurfaceHandedNoWayToOpenTheSiteShowsNoButton()
+    {
+        var view = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = view };
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var help = view.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HelpButton");
+        Assert.False(help.IsVisible);
 
         window.Close();
     }

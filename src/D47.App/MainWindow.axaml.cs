@@ -118,8 +118,11 @@ public partial class MainWindow : Window
         // is installed.
         Panel.Avatar.Library = host?.Avatars;
         _model.AskRequested += () => _ = AskAsync();
-        _model.HelpRequested += () => Process.Start(
-            new ProcessStartInfo(DocsSite.Root) { UseShellExecute = true });
+
+        // The desktop window is the one surface with a browser to open the site in; the headset
+        // copy is not handed this and so shows no help button (change-requests.md 24).
+        Panel.EnableHelp(() => Process.Start(
+            new ProcessStartInfo(DocsSite.Root) { UseShellExecute = true }));
         _model.UpdateAccepted += OnUpdateAccepted;
         _model.UpdateDismissed += () => _model.UpdateText = null;
 
