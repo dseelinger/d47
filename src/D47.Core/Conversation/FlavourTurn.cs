@@ -48,6 +48,11 @@ public static class FlavourTurn
     /// breakpoint, never as the instruction itself (architecture.md §7).
     /// </param>
     /// <param name="gameState">Live state for the line to be about. Untrusted, and positioned as such.</param>
+    /// <param name="maxOutputTokens">
+    /// The budget. 400 for every line that came before Phase 47 — a sentence or two over a cockpit
+    /// — and raised only by the adventure generator, whose answer is a whole story in JSON.
+    /// </param>
+    /// <param name="effort">Low for a remark; the generator asks for more, because a story is a reasoning problem.</param>
     /// <param name="webSearch">
     /// Whether the provider may search the web while writing this line (list.md Phase 23, "Look
     /// it up, and say where the answer came from").
@@ -75,7 +80,9 @@ public static class FlavourTurn
         PriceTable? prices,
         ILogger? logger,
         CancellationToken cancellationToken = default,
-        bool webSearch = false)
+        bool webSearch = false,
+        int maxOutputTokens = 400,
+        ThinkingEffort effort = ThinkingEffort.Low)
     {
         if (provider is null)
         {
@@ -87,14 +94,14 @@ public static class FlavourTurn
         var request = new LlmRequest
         {
             Model = chosenModel,
-            // Always Low. A one-line remark in character is not a reasoning problem, and
-            // spending Max effort on ambient chatter would cost more than the turns the
-            // Commander actually asked for.
-            Effort = ThinkingEffort.Low,
+            // Low unless the caller says otherwise. A one-line remark in character is not a
+            // reasoning problem, and spending Max effort on ambient chatter would cost more than
+            // the turns the Commander actually asked for; a whole story is the one exception.
+            Effort = effort,
 
-            // Short on purpose. This is a sentence or two spoken over a cockpit, and a budget
-            // is a cheaper guarantee of that than an instruction the model may talk past.
-            MaxOutputTokens = 400,
+            // Short on purpose, by default. This is a sentence or two spoken over a cockpit, and
+            // a budget is a cheaper guarantee of that than an instruction the model may talk past.
+            MaxOutputTokens = maxOutputTokens,
 
             // Off for every line that came before Phase 23. A remark about being in supercruise
             // has nothing to look up, and a search declared on a prompt that never needs one is

@@ -386,6 +386,18 @@ public sealed class AppHost : IDisposable
     public (D47.Core.Goals.GoalBook Book, Action? Backfill)? Goals { get; private set; }
 
     /// <summary>
+    /// The stories the Commander flies, and the thing that writes one (list.md Phase 47). Null
+    /// under the designer, where the tab is simply not furnished.
+    /// </summary>
+    public (D47.Core.Adventures.AdventureBook Book, D47.Core.Adventures.AdventureGenerator Generator)? Adventures { get; private set; }
+
+    /// <summary>The galaxy service, for the adventure editor to check a typed place against (list.md Phase 47).</summary>
+    public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
+
+    /// <summary>Where Elite writes its journals, for the adventure catch-up that walks them.</summary>
+    public string? JournalDirectory { get; private set; }
+
+    /// <summary>
     /// The last plan each planner produced (list.md Phase 37). Set during composition, like the
     /// three books above, because the file it reads lives beside the executable rather than
     /// anywhere Core can find on its own.
@@ -755,6 +767,23 @@ public sealed class AppHost : IDisposable
 
         goals.Poll();
 
+        // The stories the Commander flies (list.md Phase 47). The same store shape again, keyed
+        // per Commander; the book folds the journal after each story's acceptance and is the one
+        // thing the tick, the prompt and the tab all read. Built before the callouts because it
+        // has one, and before the turn loop because the prompt carries the story.
+        var adventureStore = new D47.Core.Adventures.AdventureStore(
+            Path.Combine(paths.Data, "adventures.json"),
+            loggerFactory.CreateLogger<D47.Core.Adventures.AdventureStore>());
+
+        adventureStore.Poll();
+
+        var adventureBook = new D47.Core.Adventures.AdventureBook(
+            adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
+
+        // A hand edit, a Begin or an Abandon all arrive here; the book keeps what it can and asks
+        // for a walk over the files when a stamp moved, which the tick below grants.
+        adventureStore.Changed += adventureBook.Reconcile;
+
         var goalMiner = new D47.Core.Goals.GoalMiner(
             loggerFactory.CreateLogger<D47.Core.Goals.GoalMiner>());
 
@@ -802,7 +831,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook);
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, adventureBook);
 
         // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -876,6 +905,12 @@ public sealed class AppHost : IDisposable
                 loreVisits.Save();
             }
         });
+
+        // A story under way is caught up before the priming tick replays the current session
+        // (list.md Phase 47): the walk is bounded to the files since the earliest acceptance, so
+        // with nothing under way it reads nothing, and a beat that fired while d47 was closed is
+        // in the standing before the first live event arrives.
+        adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
 
         // Primed synchronously before anything reads game state, so a journal already on disk
         // when d47 starts is answered correctly, backlog and all — and so the panel's first
@@ -1444,6 +1479,16 @@ public sealed class AppHost : IDisposable
                             ChecklistCapability.Live(checklists),
 
                             Join(
+                                // The story under way, told from inside (list.md Phase 47).
+                                // Below the breakpoint beside the game state, so a beat firing
+                                // costs the cached prefix nothing; and the turn and the ending
+                                // are withheld until their beats, which is the block's own rule.
+                                D47.Core.Adventures.AdventureContext.Describe(
+                                    adventureBook.Standings(gameState.Active?.Identity.FrontierId),
+                                    id => PersonaCatalog.Knows(id) ? PersonaCatalog.Resolve(id).Name : null,
+                                    SystemWallClock.Instance.UtcNow),
+
+                            Join(
                                 // Both dates, already worked out, below the cache breakpoint
                                 // where a per-turn value costs nothing (list.md Phase 24). The
                                 // model is never asked to add 1286 to anything.
@@ -1456,8 +1501,28 @@ public sealed class AppHost : IDisposable
                                 // belongs to the turn loop this initialiser is still building.
                                 ConversationCapability.LiveSearch(
                                     settings.Current.Llm.WebSearch,
-                                    self?.SearchReachesTheWeb ?? true)))))),
+                                    self?.SearchReachesTheWeb ?? true))))))),
         };
+
+        // The catalogue a generated story may draw its stops from (list.md Phase 47). A different
+        // host from the galaxy search, behind its own row and its own disclosure.
+        var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
+            loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
+
+        // What writes an adventure, once, for the Commander to agree to. Not a tool: it runs from
+        // the panel with the flavour turn's bookkeeping, and the model it asks never sees an id.
+        var adventureGenerator = new D47.Core.Adventures.AdventureGenerator(
+            () => turns.Provider,
+            () => turns.Model,
+            () => personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+            () => settings.Current.Llm.PersonalityEnabled ? personas.Current.Id : null,
+            () => CommanderStory.Compose(settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: true),
+            () => gameState.Active,
+            () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
+            () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
+            spend,
+            PriceTable.Default,
+            loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>());
 
         var host = self = new AppHost(
             paths,
@@ -1594,6 +1659,9 @@ public sealed class AppHost : IDisposable
         host.Habits = (habitBook, MineHabits);
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
+        host.Adventures = (adventureBook, adventureGenerator);
+        host.Galaxy = galaxy;
+        host.JournalDirectory = journalDirectory;
         host.Plans = planBook;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
@@ -1808,6 +1876,20 @@ public sealed class AppHost : IDisposable
         // into it is live without a restart. Nothing is walked here — that is a button.
         tick.Add("goals", _ => goals.Poll());
 
+        // The adventures file is hand-editable and polled like the others; and when a stamp has
+        // moved - Begin, Begin again, a hand edit - the walk the book asked for happens here, on
+        // the tick, so the live fold cannot interleave with it. Bounded by date, so it is the
+        // current file and the one before it in the ordinary case.
+        tick.Add("adventures", _ =>
+        {
+            adventureStore.Poll();
+
+            if (adventureBook.NeedsCatchUp)
+            {
+                adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
+            }
+        });
+
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // Ambience follows the situation Status.json states, sampled on the tick rather than
@@ -1854,7 +1936,8 @@ public sealed class AppHost : IDisposable
         LoreBook lore,
         LoreVisits loreVisits,
         MemoryBook memories,
-        D47.Core.Habits.HabitBook habits)
+        D47.Core.Habits.HabitBook habits,
+        D47.Core.Adventures.AdventureBook adventures)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -1917,6 +2000,9 @@ public sealed class AppHost : IDisposable
             // nothing d47 worked out about somebody outranks something the game just said. Off
             // until the Commander switches it on — the only callout here that ships that way.
             .Add(new HabitCallout(habits))
+            // A beat of the Commander's story, when they reach it (list.md Phase 47). Also the one
+            // path the live journal reaches the adventure book by.
+            .Add(new D47.Core.Adventures.AdventureCallout(adventures))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -1958,6 +2044,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("ambient", callouts.Ambient);
         engine.SetEnabled("continuity", callouts.Continuity);
         engine.SetEnabled("habits", callouts.Habits);
+        engine.SetEnabled("adventure", callouts.Adventure);
 
         foreach (var callout in engine.Callouts)
         {
@@ -4353,6 +4440,23 @@ public sealed class AppHost : IDisposable
             // item 4). "Why did you just say that?" has to be answerable about this too.
             Turns.Said(said);
         }
+    }
+
+    /// <summary>
+    /// A line d47 says because the panel asked it to - a generator's reply, a refusal - spoken,
+    /// shown, and recorded exactly as a timer going off is (list.md Phase 47). "Why did you just
+    /// say that?" has to be answerable about this too.
+    /// </summary>
+    public void SayAside(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        _ = Voice.AnnounceAsync(line);
+        Said?.Invoke(line);
+        Turns.Said(line);
     }
 
     private void SpeakPendingCallouts()

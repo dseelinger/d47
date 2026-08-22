@@ -31,6 +31,27 @@ list rather than repeating it by hand, so it cannot go stale.
 
 Turning it on takes effect immediately. There is no restart.
 
+## Notable places for adventures {#notable-places-for-adventures}
+
+A second setting, added with list.md Phase 47 and off by default, and a second host. When the
+ship's AI writes you an adventure it may pick the story's stops from the
+[Galactic Exploration Catalog](https://edastro.com/gec/) on edastro.com — the community
+catalogue of nebulae, notable bodies, wrecks, memorials and tourist sites that the Galactic
+Mapping Project was migrated into. One request fetches the whole catalogue, about two megabytes,
+and **the choosing by distance happens on this machine**: where you are never leaves it, and
+nothing about you goes with the request. The catalogue is kept in memory for a few hours so a
+draft and its revisions do not fetch it three times, and it is never written to disk.
+
+A lookup and never a copy. Nothing from the catalogue is written into d47's own tables; the
+catalogue's one-line descriptions reach the model labelled as third-party information, and every
+place it suggests is still checked against spansh's id for the system before a story can be
+offered — two sources, and a disagreement refuses the place. Its content is CC BY-NC-SA 3.0,
+acknowledged in `NOTICE`; d47 is non-commercial.
+
+With this off, a generated adventure still works, choosing its stops from the galaxy search and
+the model's own knowledge. With galaxy search off, no adventure can be generated at all, because
+the places in a story have to be real and this is the thing that checks.
+
 ## Why the filters are checked here rather than there
 
 The search service **ignores filter keys it does not recognise**. It does not reject them or

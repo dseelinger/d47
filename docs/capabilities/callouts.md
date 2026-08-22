@@ -340,6 +340,32 @@ The first sentence is written by Directive 47. Where a persona is on, the core f
 — *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
 its own and changes nothing else; with personality off it is *"Ready to go."*
 
+### Adventure beats {#adventure}
+
+A beat of the story you are following, said when you reach the place it waits for
+(list.md Phase 47). An adventure is a story the ship's AI tells you across a flight — a spine,
+a handful of beats, each anchored to a real place by the one thing the journal can prove: you
+arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
+Adventures tab is where you write one or ask for one; this is the voice it reaches you by.
+
+It waits twenty seconds after the beat fires, so the line is not read over the jump it arrived
+on and three beats in a minute are not three model calls. A beat that comes due while you are
+being interdicted or the game says you are in danger is **dropped rather than said late** — the
+story is still in the conversation, so ask and the core picks it up. The opening, said when you
+accept a story, does not wait: you just pressed Begin.
+
+With a language model configured the core aboard says the beat in its own voice, keeping every
+fact in it and adding none; without one, or with personality off, the authored line is read as
+written. The core knows what you know: the story's premise and stake ride with every turn, the
+turn and the ending arrive only when their beats fire, and the beats ahead never do — so it can
+foreshadow, because the lines it was given do, and it cannot spoil what it has not been told.
+
+```text
+Ossen's Lantern. The nebula is what is left of the star this white dwarf used to be. Scoop here.
+```
+
+Off leaves the story in the conversation and stops it being read out.
+
 ## Settings
 
 ### Speak without being asked {#enabled}

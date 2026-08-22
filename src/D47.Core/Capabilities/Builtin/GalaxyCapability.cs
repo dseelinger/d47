@@ -324,11 +324,34 @@ public static class GalaxyCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = NotablePlacesKey,
+                Label = "Notable places for adventures",
+                Help =
+                    "Lets a generated adventure pick its stops from the Galactic Exploration Catalog at "
+                    + "edastro.com. One request fetches the whole catalogue and the choosing happens here, so "
+                    + "where you are never leaves this machine. Off by default; see Privacy.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "notable-places-for-adventures",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.NotablePlaces ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { NotablePlaces = v == "true" },
+                    },
+                },
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
 
     public const string EnabledKey = "knowledge.galaxy";
+
+    /// <summary>The catalogue of notable places a generated adventure may draw on (list.md Phase 47).</summary>
+    public const string NotablePlacesKey = "knowledge.notablePlaces";
 
     private static IReadOnlyList<string> Choices(string filter) =>
         GalaxyFilters.Find(filter)?.Choices ?? [];

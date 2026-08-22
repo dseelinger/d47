@@ -34,6 +34,13 @@ public enum PanelTab
     /// <summary>What the Commander is working on, in their own order (list.md Phase 17).</summary>
     Checklist,
 
+    /// <summary>
+    /// Stories the Commander flies, told by the ship's AI (list.md Phase 47). Beside the checklist,
+    /// because it is the other thing that outlives a session — and deliberately not a mode of it,
+    /// because a story is not a list and the phase exists to keep it from reading as one.
+    /// </summary>
+    Adventures,
+
     /// <summary>Ships, suits and weapons, and the arithmetic between them (list.md Phases 26-27).</summary>
     Loadout,
 

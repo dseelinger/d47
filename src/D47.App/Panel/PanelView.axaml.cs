@@ -264,6 +264,7 @@ public partial class PanelView : UserControl
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Routing] = RoutingTab;
         _tabs[PanelTab.Checklist] = ChecklistTab;
+        _tabs[PanelTab.Adventures] = AdventuresTab;
         _tabs[PanelTab.Loadout] = LoadoutTab;
         _tabs[PanelTab.Engineers] = EngineersTab;
         _tabs[PanelTab.Utilities] = UtilitiesTab;
@@ -647,6 +648,23 @@ public partial class PanelView : UserControl
             PanelTab.Loadout,
             crumb => LoadoutPages.Build(crumb, modes, gap, Nav, Prompts),
             [.. roots]);
+    }
+
+    /// <summary>
+    /// Gives this surface the Commander's adventures (list.md Phase 47). The desktop window only,
+    /// for now: the editor is typing, and the reading level is one call away when the headset
+    /// wants it — which is the parity rule working as written rather than an exception to it.
+    /// </summary>
+    public void EnableAdventures(AdventureSurface surface)
+    {
+        AdventuresPage? page = null;
+
+        Furnish(
+            PanelTab.Adventures,
+            crumb => crumb.Key == AdventuresPage.RootKey
+                ? page = new AdventuresPage(surface, Nav, Prompts)
+                : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
+            new NavCrumb(AdventuresPage.RootKey, "Adventures"));
     }
 
     /// <summary>

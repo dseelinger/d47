@@ -51,6 +51,19 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     public long? SystemAddress { get; init; }
 
     /// <summary>
+    /// The <c>MarketID</c> of the station the Commander is docked at, and null when they are not
+    /// (list.md Phase 47). The number a dock beat matches on, so the editor's <em>Here</em> can
+    /// read it off the game rather than asking for it.
+    /// </summary>
+    public long? MarketId { get; init; }
+
+    /// <summary>
+    /// The <c>BodyID</c> of the body being approached, orbited, landed on or left, null between
+    /// bodies. Kept in step with <see cref="Body"/>, for the same reason as the market id.
+    /// </summary>
+    public int? BodyId { get; init; }
+
+    /// <summary>
     /// Where the system is, in light years on Frontier's axes (list.md Phase 28, "Where every
     /// engineer is").
     /// <para>
@@ -172,6 +185,8 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = journalEvent.Bool("Docked"),
             StationName = journalEvent.String("StationName") ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
+            MarketId = journalEvent.Bool("Docked") ? journalEvent.Long("MarketID") : null,
+            BodyId = journalEvent.Int("BodyID"),
 
             // Assigned rather than coalesced, unlike everything above it. Absent means nobody
             // controls this system, so keeping the last system's Power would be the one mistake
@@ -199,6 +214,8 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = false,
             StationName = null,
             StationType = null,
+            MarketId = null,
+            BodyId = journalEvent.Int("BodyID"),
             Mode = FlightMode.Supercruise,
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
             ControllingPower = journalEvent.String("ControllingPower"),
@@ -222,6 +239,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StationType = journalEvent.String("StationType") ?? StationType,
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SystemAddress = Addressed(journalEvent, SystemAddress),
+            MarketId = journalEvent.Long("MarketID") ?? MarketId,
             Mode = FlightMode.Docked,
         },
 
@@ -230,6 +248,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = false,
             StationName = null,
             StationType = null,
+            MarketId = null,
             Mode = FlightMode.Normal,
         },
 
@@ -241,6 +260,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             // Supercruise is system-scale travel; whichever body was being approached is behind us.
             Body = null,
             BodyType = null,
+            BodyId = null,
         },
 
         "SupercruiseExit" => this with
@@ -248,6 +268,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
+            BodyId = journalEvent.Int("BodyID") ?? BodyId,
             Mode = FlightMode.Normal,
         },
 
@@ -255,15 +276,18 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         {
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             Body = journalEvent.String("Body") ?? Body,
+            BodyId = journalEvent.Int("BodyID") ?? BodyId,
         },
 
         // Leaving orbit says which body was left, not which one is next. Clearing the body is
         // the honest answer; naming the one behind us would be worse than saying nothing.
-        "LeaveBody" => this with { Body = null, BodyType = null },
+        "LeaveBody" => this with { Body = null, BodyType = null, BodyId = null },
 
         "Touchdown" => this with
         {
             Body = journalEvent.String("Body") ?? Body,
+            BodyId = journalEvent.Int("BodyID") ?? BodyId,
+            SystemAddress = Addressed(journalEvent, SystemAddress),
             Mode = FlightMode.Landed,
         },
 
