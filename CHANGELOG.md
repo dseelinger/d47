@@ -17,6 +17,19 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.3 — 2026-08-21 — Act first, talk least
+
+**Actions are narrated in two short lines, not a ledger.** "Set course for the closest Imperial
+Shielding" came back, after the plot, as the whole `find_material` answer read aloud — the
+ledger, the trader arithmetic, the star class at the far end — with "course plotted" buried at
+the front. A standing rule now sits in the guardrails, above the persona so Quartermaster's
+"numbers wherever possible" cannot override it: when the Commander asks for an action that needs
+a lookup first, say what was found in one sentence and that you are acting on it, *before*
+acting — "Closest Imperial Shielding is likely Scorpii Sector BB-O a6-2. Plotting." — and when
+the tool returns, report only whether it worked: "Course plotted." Streamed text already reaches
+the speech pipeline as it arrives, so the first line is spoken while the galaxy map is being
+driven rather than before. The figures wait until they are asked for.
+
 ## 0.48.2 — 2026-08-21 — Return, not down
 
 **The galaxy-map macro commits the search with return.** 0.48.1's sequence stepped into the

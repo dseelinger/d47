@@ -12,6 +12,21 @@ Puts a system name where you can use it, and tries to plot a course to it.
 > "copy that system name"
 > "put the route on my clipboard"
 
+## What you hear
+
+Asking for a course is an action, and the standing rule for actions is *act first, talk least*.
+When the destination has to be found first — "set course for the closest Imperial Shielding" —
+you hear one sentence as soon as it is found and the map starts moving, and a short answer when
+it is done:
+
+```text
+Closest Imperial Shielding is likely Scorpii Sector BB-O a6-2. Plotting.
+Course plotted.
+```
+
+The first line is spoken *while* the map is being driven, not before. The figures, the material
+ledger and the trader arithmetic wait until you ask for them.
+
 ## The clipboard is the part that always works
 
 Asking for a course always puts the name on your clipboard first, before anything else is
