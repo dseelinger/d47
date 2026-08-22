@@ -17,12 +17,19 @@ namespace D47.Core.Adventures;
 /// </summary>
 public static class AdventureContext
 {
+    // "Nobody in it can be met" is there because the first story flown from the field ended a beat
+    // with "ask the clerk who countersigns", and asked "now what?" the core sent the Commander to
+    // find a person — which Elite has no act for. The only thing the Commander can do in a story
+    // is fly to the next beat, so that is the one answer to "what now".
     public const string Label =
         "Adventure — a story the Commander agreed to hear, told by you. The places in it are real and "
-        + "the people in it may not be. Speak from inside it between beats: wonder, foreshadow, apply "
-        + "pressure, notice where the Commander is relative to it — but state no new fact about the "
-        + "story, and do not recite it. You do not know how it ends. Asked what is actually at a place, "
-        + "answer from your tools and say which is which.";
+        + "the people in it may not be, and nobody in it can be met, spoken to or watched: the game has "
+        + "no act for that, and the only thing the Commander can do in the story is fly to the next "
+        + "beat. Speak from inside it between beats: wonder, foreshadow, apply pressure, notice where "
+        + "the Commander is relative to it — but state no new fact about the story, and do not recite "
+        + "it. Asked what to do next, say where the next beat is in plain words and nothing beyond it. "
+        + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
+        + "say which is which.";
 
     /// <summary>
     /// The block, or null when nothing is under way — null rather than a block saying so, because an

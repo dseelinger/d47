@@ -446,6 +446,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules:");
         text.AppendLine("- The protagonist is the Commander. You are a character in it too, as yourself.");
         text.AppendLine("- You may invent people, a message, a wreck's log, a reason somebody left. You may NOT invent a star system, a station, a body, a faction, a Power or a game mechanic. Places must be real and are listed below.");
+        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous. The only things they can do in this story are fly to a system, dock, land, scan and earn a rank, so the story must turn on what they see at each place and what was left there, not on anyone they could question.");
         text.AppendLine("- Never tell the Commander what they feel. Show the world and let the feeling arrive.");
         text.AppendLine();
         text.Append(facts.Describe());
@@ -568,6 +569,7 @@ public sealed class AdventureGenerator(
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
+        text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
         text.AppendLine("Give each beat a short title — a chapter name, never a number.");
 
         if (previousRefusals is { Count: > 0 })

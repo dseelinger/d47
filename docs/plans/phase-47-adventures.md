@@ -698,6 +698,13 @@ twice, and `DrillView` hosted the root page in two panes. Two panes hid it, whic
 tests passed at 900 pixels. The callers are fixed, `GoTo` drops a supplied root, and the tab test
 now presses Go on a 1,400-pixel window with a scripted model and galaxy — the path that crashed.
 
+Flown, that story's first beat ended *"ask the clerk who countersigns"*, and asked "now what?" the
+core sent the Commander to find the clerk and watch their face. "People may be invented, places
+never" was the rule, and it was short one clause: invented people are told about and never met,
+because the game has no act for meeting anyone and the only thing a Commander can do in a story is
+fly to the next beat. The spine turn, the beats turn and `AdventureContext.Label` now say so; the
+test holds the wording's presence, and whether a model obeys it is read by hand.
+
 ### Left for the next pass
 
 *Somewhere I've been* is not in the editor: d47 keeps no visited-places list and the two ways in

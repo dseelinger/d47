@@ -42,6 +42,14 @@ call sites supplied the root; none do now, and the navigator drops a supplied ro
 holding a trail nothing can draw. The draft was written to file before the crash, so it is on the
 Adventures tab waiting for your yes.
 
+**And nobody in a story asks you to go and find someone.** The same story's first beat ended with
+*"ask the clerk who countersigns"*, and asked what to do next the core sent you inside to watch a
+face — which Elite has no act for. The rule was that people may be invented and places may not;
+what it never said is that invented people are told about and never met. Both turns that write a
+story now say so, a line may never set you a task beyond flying to the next beat, and the standing
+context the core speaks from says that asked *what now*, the answer is where the next beat is and
+nothing beyond it. A story already under way keeps its lines; the context change reaches it at once.
+
 ## 0.52.0 — 2026-08-22 — Adventures
 
 **A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one

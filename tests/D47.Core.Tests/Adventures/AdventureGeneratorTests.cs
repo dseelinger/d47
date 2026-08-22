@@ -74,6 +74,33 @@ public sealed class AdventureGeneratorTests
         Assert.True(bodies.Landable);
     }
 
+    /// <summary>
+    /// Both turns are told that invented people are told about and never met, and that a line
+    /// never sets the Commander a task. The first story flown from the field ended its first beat
+    /// with "ask the clerk who countersigns" (2026-08-22), which Elite has no act for. Wording can
+    /// only be held by its presence; whether the model obeys it is read by hand.
+    /// </summary>
+    [Fact]
+    public async Task PeopleAreToldAboutAndNeverMet()
+    {
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(GoodBeats));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var spine = provider.Requests[0].Prompt.History[0].Text;
+        Assert.Contains("Invented people are told about, never met", spine);
+        Assert.Contains("cannot find, speak to or watch anyone", spine);
+
+        var beats = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("A line never gives the Commander a task.", beats);
+        Assert.Contains("never \"ask the clerk\"", beats);
+
+        Assert.Contains("nobody in it can be met, spoken to or watched", AdventureContext.Label);
+        Assert.Contains("Asked what to do next, say where the next beat is", AdventureContext.Label);
+    }
+
     [Fact]
     public async Task TheRefusalPassIsShownTheDraftItIsFixing()
     {
