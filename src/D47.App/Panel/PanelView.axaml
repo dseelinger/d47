@@ -433,12 +433,6 @@
                      Content="Checklist"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
-        <RadioButton x:Name="AdventuresTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="Adventures"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="LoadoutTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
@@ -449,6 +443,17 @@
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
                      Content="Engineers"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Stories the Commander flies (list.md Phase 47). After Engineers on the Commander's
+          instruction, 2026-08-22: a story turns out to be read between trips rather than during
+          one, which is where the ledgers are.
+        -->
+        <RadioButton x:Name="AdventuresTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Adventures"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="UtilitiesTab"
@@ -796,6 +801,17 @@
         join. A page that wants the transcript's fill draws its own.
       -->
       <Border x:Name="PagePane"
+              IsVisible="False"
+              ClipToBounds="True" />
+
+      <!--
+        The mini panel's reading of the tab that is showing (asked for 2026-08-22). Mini has no tab
+        strip and cannot afford one at 512x280, so which tab it is reading is chosen on the big
+        panel and this draws the short version of it. The transcript's tail is still the default and
+        is still drawn by TranscriptPane; this pane is what Adventures looks like at that size, and
+        the other tabs are unchanged until somebody asks for them.
+      -->
+      <Border x:Name="MiniPane"
               IsVisible="False"
               ClipToBounds="True" />
 

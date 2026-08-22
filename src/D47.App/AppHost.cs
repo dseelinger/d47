@@ -4496,6 +4496,13 @@ public sealed class AppHost : IDisposable
                 {
                     await SayAsync(announcement).ConfigureAwait(false);
 
+                    // What the Commander actually heard about a story, kept (asked for
+                    // 2026-08-22). Here rather than where the announcement was made, because the
+                    // wording is only final at this point: VaryAsync above has already replaced
+                    // the authored line with the model's, and the authored one is what the
+                    // adventure file already held.
+                    RecordAdventure(announcement);
+
                     // After the fact has been spoken, and not awaited: the search is a round trip
                     // through somebody else's index, and the rest of this batch is where a danger
                     // callout would be waiting. It takes the speaking lock again when it lands.
@@ -4514,6 +4521,87 @@ public sealed class AppHost : IDisposable
                 _speaking.Release();
             }
         });
+    }
+
+    /// <summary>
+    /// A beat, as it was said, onto the story's own feed (asked for 2026-08-22).
+    /// <para>
+    /// The Adventures tab reads this rather than the authored lines: what was heard is the model's
+    /// wording in the core's voice, and the definition holds the other one. It is also what stops
+    /// the tab's <em>composing</em> animation — the wait ends when the words arrive, which is here
+    /// and not where the beat fired.
+    /// </para>
+    /// <para>
+    /// Silent about anything that is not one of these, which is nearly every announcement. The
+    /// acknowledgement is deliberately not recorded: <c>AdventureAcks</c> is feedback rather than
+    /// story, and a feed reading "That's it." between every beat would be a feed nobody reads.
+    /// </para>
+    /// </summary>
+    private void RecordAdventure(Announcement announcement)
+    {
+        if (Adventures is not { } adventures
+            || D47.Core.Adventures.AdventureCallout.Reached(announcement.Key) is not var (key, beat))
+        {
+            return;
+        }
+
+        var commander = GameState.Active?.Identity.FrontierId;
+        var story = adventures.Book.Store.Find(commander, key);
+        var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
+
+        adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
+        {
+            Kind = D47.Core.Adventures.AdventureToldKind.Beat,
+            Text = announcement.Text,
+            At = DateTimeOffset.Now,
+            Beat = beat,
+            Title = reached?.Title ?? (beat < 0 ? "Opening" : null),
+
+            // Stored rather than derived later: a story edited after a beat has fired would
+            // otherwise re-describe what the Commander did with the trigger it has now.
+            Trigger = reached?.Trigger.Describe(),
+        });
+    }
+
+    /// <summary>
+    /// One exchange, filed against any story it was about (asked for 2026-08-22).
+    /// <para>
+    /// The Commander chose the heuristic: a turn joins a story's feed when their words or the reply
+    /// name the story, one of its beats, or a place a beat waits at — see
+    /// <see cref="D47.Core.Adventures.AdventureMention"/>, which is where the whole-word rule and
+    /// its reasons live. No classification turn: a round trip in front of every answer is the cost
+    /// this change exists to remove elsewhere.
+    /// </para>
+    /// <para>
+    /// Only stories under way. A draft is not something the Commander is flying, and a finished one
+    /// is finished.
+    /// </para>
+    /// </summary>
+    public void NoteTurn(string? asked, string? answered)
+    {
+        if (Adventures is not { } adventures
+            || string.IsNullOrWhiteSpace(answered))
+        {
+            return;
+        }
+
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        foreach (var standing in adventures.Book.Active(commander))
+        {
+            if (!D47.Core.Adventures.AdventureMention.InExchange(standing.Adventure, asked, answered))
+            {
+                continue;
+            }
+
+            adventures.Book.Told(commander, standing.Adventure.Key, new D47.Core.Adventures.AdventureTold
+            {
+                Kind = D47.Core.Adventures.AdventureToldKind.Aside,
+                Text = answered.Trim(),
+                Asked = asked?.Trim(),
+                At = DateTimeOffset.Now,
+            });
+        }
     }
 
     private string? _openDevice;

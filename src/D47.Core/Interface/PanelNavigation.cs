@@ -34,18 +34,24 @@ public enum PanelTab
     /// <summary>What the Commander is working on, in their own order (list.md Phase 17).</summary>
     Checklist,
 
-    /// <summary>
-    /// Stories the Commander flies, told by the ship's AI (list.md Phase 47). Beside the checklist,
-    /// because it is the other thing that outlives a session — and deliberately not a mode of it,
-    /// because a story is not a list and the phase exists to keep it from reading as one.
-    /// </summary>
-    Adventures,
-
     /// <summary>Ships, suits and weapons, and the arithmetic between them (list.md Phases 26-27).</summary>
     Loadout,
 
     /// <summary>Who unlocks what, and how far away they are (list.md Phase 28).</summary>
     Engineers,
+
+    /// <summary>
+    /// Stories the Commander flies, told by the ship's AI (list.md Phase 47). Deliberately not a
+    /// mode of the checklist, because a story is not a list and the phase exists to keep it from
+    /// reading as one.
+    /// <para>
+    /// <b>Moved here from beside the checklist on 2026-08-22, on the Commander's instruction.</b>
+    /// The first reading put it second in the run of ledgers on the grounds that a story outlives a
+    /// session the way a checklist does. Flown, it turned out to be read after a trip rather than
+    /// during one, which is where the ledgers are — so it sits at the end of them.
+    /// </para>
+    /// </summary>
+    Adventures,
 
     /// <summary>Clocks, timers and alarms (list.md Phase 24).</summary>
     Utilities,

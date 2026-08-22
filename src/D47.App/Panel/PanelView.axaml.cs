@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -665,6 +666,12 @@ public partial class PanelView : UserControl
                 ? page = new AdventuresPage(surface, Nav, Prompts)
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
             new NavCrumb(AdventuresPage.RootKey, "Adventures"));
+
+        // And the same story at mini's size (asked for 2026-08-22). Built here rather than lazily,
+        // because it is small and because mini has no navigation to build it on the way into — the
+        // Commander switches the headset to mini and it is either there or it is not.
+        MiniPane.Child = new AdventureMini(surface);
+        ApplyChrome();
     }
 
     /// <summary>
@@ -805,6 +812,42 @@ public partial class PanelView : UserControl
     /// opened once, so a Commander who never looks at it pays no ticks for it.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// One frame of the <em>d47 is composing</em> animation, and whether anything moved
+    /// (asked for 2026-08-22).
+    /// <para>
+    /// Driven from the same 10 Hz tick the clocks are, and for the mirror-image reason: a clock
+    /// changes with nothing having happened, and this changes because something <em>is</em>
+    /// happening and has not finished. The return value is what the headset's surface sets its
+    /// dirty flag from — an animation nobody is looking at must not re-rasterise the panel.
+    /// </para>
+    /// <para>
+    /// Found by walking the tree rather than by keeping a list: the indicator appears on a card, on
+    /// the reading level and on the mini panel, each rebuilt whenever the book changes, and a list
+    /// of live ones is a list that goes stale in three places instead of none. Guarded on the tab
+    /// first, so the walk does not happen at all on the surfaces and moments it cannot matter to.
+    /// </para>
+    /// </summary>
+    public bool TickAdventures()
+    {
+        if (Tab != PanelTab.Adventures)
+        {
+            return false;
+        }
+
+        var moved = false;
+
+        foreach (var pulse in this.GetVisualDescendants().OfType<AdventureThinking>())
+        {
+            if (pulse.IsEffectivelyVisible)
+            {
+                moved |= pulse.Beat();
+            }
+        }
+
+        return moved;
+    }
+
     public void TickClocks()
     {
         if (Tab == PanelTab.Utilities)
@@ -1319,11 +1362,18 @@ public partial class PanelView : UserControl
 
         var modal = ModalPane.Child is not null;
 
+        // Mini reading the Adventures tab (asked for 2026-08-22). Only this one tab, and only in
+        // mini: every other tab behaves exactly as it did, which is what "keep it to transcript and
+        // Adventures for now" asks for. A surface that was never furnished with adventures has no
+        // child here and falls through to the transcript's tail, as it always did.
+        var miniStory = !full && Tab == PanelTab.Adventures && MiniPane.Child is not null;
+
         // The chooser takes the region rather than sitting over it. Both panes give way, because
         // a page visible behind a modal is a page a ray can still reach and a modal is a modal.
         ModalPane.IsVisible = modal;
-        TranscriptPane.IsVisible = transcript && !modal;
-        PagePane.IsVisible = !transcript && !modal;
+        MiniPane.IsVisible = miniStory && !modal;
+        TranscriptPane.IsVisible = transcript && !modal && !miniStory;
+        PagePane.IsVisible = !transcript && !modal && !miniStory;
 
         // One border for the whole content region, so the fill is a property rather than a second
         // control (remediation.md 10, item 1). The rule it carries is the one the two borders

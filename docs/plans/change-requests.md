@@ -24,6 +24,74 @@ at 20.
 
 ## Open
 
+### 25. The Adventures tab: where it sits, what it shows, and that it is thinking
+
+Asked for 2026-08-22, in five parts; built the same day, in the next release.
+
+> * Place the Adventures tab after Engineers.
+> * Current Adventure on the adventures tab should show "Adventure Only" Triggered Voice text and
+>   any "Flavour" text where it responds to questions or comments about the adventure from the
+>   commander. Trigger text should be in a highlight color.
+> * Next Trigger should show what it expects the commander to do next to advance the story.
+> * I've noticed that it can take a while after "triggering" a trigger for me to hear anything.
+>   I'm assuming that it's "cogitating". If so, can I get an indication on the Adventure tab that
+>   it's thinking? Something animated so I don't think that I haven't done what I'm supposed to do?
+>   If it can be accompanied by a set of canned, "That's it!" "You've done it." "Well done." etc.
+>   Maybe 10 of them. Short so that you don't have to wait long for the TTS.
+> * And the Adventure tab (and the mini-version too) should appear in VR.
+
+**The wait is real and it is deliberate**, which is why the fourth ask has two halves.
+`AdventureCallout.Settle` holds a reached beat for twenty seconds so the line is not read out over
+the jump that reached it, and `VaryAsync` then spends up to three more having the model say it in
+the core's voice. Neither is wrong; what was missing is that the Commander could not tell the wait
+from having failed to do the thing. So the confirmation is split off from the telling:
+`AdventureAcks` is ten stock lines of four words or fewer, said on the tick the beat fires with no
+settle and **no model behind it** — which is why its announcements carry
+`AdventureCallout.AckPrefix` rather than `KeyPrefix`, since `FlavourBriefs` routes on the prefix and
+would otherwise send the acknowledgement through the very round trip it exists to arrive ahead of.
+`AdventureThinking` is the other half, driven off the same 10 Hz tick the clocks are and honest
+about whether the frame moved, because the headset only re-rasterises a surface something marked
+dirty.
+
+**"Adventure only" needed somewhere to keep what was said.** The reading level was drawing the
+*authored* lines, and what a Commander hears is the model's wording — so a story flown over four
+evenings had no record of itself anywhere but a session-long transcript carrying everything else
+d47 says. `Adventure.Told` is that record, persisted with the story and capped at
+`AdventureLimits.MaxTold`. Two decisions the Commander made:
+
+- **The flavour heuristic** is name-, beat- or place-mention over the exchange
+  (`AdventureMention`), whole words only and nothing shorter than four letters. Chosen over
+  "everything while a story is live" (which stops the page being adventure-only) and over asking
+  the model to tag each turn (a round trip in front of every answer, which is the cost the rest of
+  this item removes).
+- **The feed persists** rather than living for a session.
+
+**"Step X of Y" reverses a rule Phase 47 wrote into the code.** `AdventureStanding` said outright
+that *beat 3 of 7 is checklist language and belongs to the Technical transcript*, on the
+story-not-a-checklist framing that governs the whole phase. The Commander asked for the count on
+both surfaces and it is built; that comment is rewritten rather than deleted, on the same terms the
+checklist's withdrawal and return were. What did not change: the beats are still titled dramatic
+functions rather than numbered stops, and nothing generated says a number — `Step()` is the one
+place a count is spelled.
+
+**Mini follows the tab now.** It was "the transcript's tail and the provenance line" whatever the
+panel was on. The instruction is that it show a succinct version of whichever VR tab is selected,
+*"but we can keep it to transcript and Adventure for now"* — so `AdventureMini` draws the five
+things asked for (the short description, the trigger just fulfilled, the trigger expected, the last
+thing the AI said, and the step) and every other tab behaves exactly as it did. Mini still has no
+tab strip; which tab it is reading is chosen on the big panel, which is what makes one surface in
+two sizes rather than two surfaces with their own state.
+
+**The tab itself reaches the headset by one call**, exactly as Phase 47's own comment predicted it
+would — `VrPanelSurface` now passes the window's `AdventureSurface` to `PanelView.EnableAdventures`.
+The desktop-only reasoning was that the editor and the ask form want a keyboard; that weighed the
+wrong half, since a Commander in a headset is precisely the one who has just arrived somewhere, and
+the prompts have taken a spoken value since Phase 25.
+
+A headless capture caught the one defect in this that no test had: the drilled-in reading level
+subscribed to the store's change event only, and a beat firing writes nothing to disk — so the card
+behind it redrew and the level the Commander was looking at did not.
+
 ### 24. No Help glyph on a VR surface
 
 Asked for 2026-08-22; built the same day on `fixes-3`, in the next release. The panel's help mark

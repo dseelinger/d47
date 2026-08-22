@@ -142,12 +142,17 @@ public partial class MainWindow : Window
             // Phase 25).
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
-            // The stories the Commander flies (list.md Phase 47). This window only: the editor
-            // and the ask form want a keyboard, and the reading level reaches the headset by
-            // one call from VrPanelSurface when somebody wants it there.
+            // The stories the Commander flies (list.md Phase 47). **Both surfaces from
+            // 2026-08-22**, on the Commander's instruction: the tab was desktop-only on the
+            // reasoning that the editor and the ask form want a keyboard, and that was the wrong
+            // half to weigh — a Commander wearing a headset is exactly the one who has just
+            // arrived somewhere and wants to know what the story made of it, and the prompts have
+            // taken a spoken value since Phase 25. Kept rather than rebuilt for the headset: the
+            // record holds delegates and no visual, so one instance serves both trees, and two of
+            // them would be two lists of what an adventure surface needs wired to it.
             if (host.Adventures is { } adventures)
             {
-                Panel.EnableAdventures(new AdventureSurface(
+                Adventures = new AdventureSurface(
                     adventures.Book,
                     adventures.Generator,
                     () => host.GameState.Active,
@@ -159,7 +164,9 @@ public partial class MainWindow : Window
                     () => host.Galaxy is { } galaxy && host.Settings.Current.Knowledge.GalaxySearch
                         ? new D47.Core.Adventures.AdventureResolver(galaxy)
                         : null,
-                    OpenSettings));
+                    OpenSettings);
+
+                Panel.EnableAdventures(Adventures);
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
@@ -245,6 +252,12 @@ public partial class MainWindow : Window
             // (list.md Phase 28).
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickEngineers));
+
+            // And the "d47 is composing" animation on the Adventures tab, by the same route again
+            // (asked for 2026-08-22). It is a third reason a page moves with nothing having
+            // happened: a beat has fired and the line for it is still being written.
+            host.Tick.Add("adventures", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickAdventures()));
 
             // And the ship pages, for the same reason and by the same route (remediation.md 17,
             // item 7). Half of what a ship page shows is the journal's — what is fitted, which
@@ -624,6 +637,14 @@ public partial class MainWindow : Window
     /// to exactly one visual tree, so the window and the quad cannot share one.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// What the Adventures tab reads, built once for both surfaces (list.md Phase 47, amended
+    /// 2026-08-22). Null where the host has no adventures — the designer, and a test that is not
+    /// about them. The headset is handed this same instance; it carries delegates and no visual,
+    /// which is exactly what makes that safe.
+    /// </summary>
+    internal AdventureSurface? Adventures { get; }
+
     public Control BuildSettingsPage()
     {
         var view = new SettingsView();
@@ -772,6 +793,10 @@ public partial class MainWindow : Window
         _model.AskText = string.Empty;
         _model.Append($"\n\n> {input}\n");
 
+        // Kept before the crew scope rewrites `input` below: the adventure feed files an exchange
+        // under the Commander's own words, not under the question as it reached a crew member.
+        var asked = input;
+
         // Addressed to somebody in the fighter bay rather than to the ship's AI? The scope swaps
         // the prompt block and the voice and puts them back in its Dispose, so a crew turn
         // cannot leak the wrong persona into the next one (list.md Phase 11, "Ship Crew").
@@ -817,6 +842,11 @@ public partial class MainWindow : Window
 
                         case TurnEvent.Completed completed:
                             _model.TurnLine = DescribeTurn(completed.Result, _host);
+
+                            // And onto the story's own feed, if it was about one (asked for
+                            // 2026-08-22). `asked` rather than `input`: a crew turn rewrites the
+                            // latter, and what the Commander said is what the heuristic reads.
+                            _host.NoteTurn(asked, completed.Result.Text);
                             break;
                     }
                 });

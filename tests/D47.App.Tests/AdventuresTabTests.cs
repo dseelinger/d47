@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -112,6 +113,11 @@ public class AdventuresTabTests
             () => null,
             () => { });
 
+        // The palette, so a themed brush is a colour rather than unset — the trigger's highlight is
+        // one of the things asserted here.
+        new D47.App.Theming.ThemeManager(Application.Current!, NullLogger<D47.App.Theming.ThemeManager>.Instance)
+            .Apply(TestSurface.Settings().Current.Ui.Theme);
+
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableAdventures(surface);
 
@@ -127,8 +133,49 @@ public class AdventuresTabTests
     private static IReadOnlyList<string> Drawn(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
 
+    /// <summary>What is actually on screen — mini hides the big page rather than unbuilding it.</summary>
+    private static IReadOnlyList<string> Visible(PanelView panel) =>
+    [
+        .. panel.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => block.IsEffectivelyVisible)
+            .Select(block => block.Text ?? string.Empty),
+    ];
+
+    private static IReadOnlyList<AdventureThinking> Pulses(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<AdventureThinking>().Where(pulse => pulse.IsEffectivelyVisible)];
+
+    /// <summary>The Commander arriving at the first beat's system.</summary>
+    private static void Arrive(AdventureBook book)
+    {
+        Assert.True(JournalEvent.TryParse(
+            """{ "timestamp":"2026-08-22T19:30:00Z", "event":"FSDJump", "StarSystem":"Ossen's Lantern", "SystemAddress":1 }""",
+            NullLogger.Instance,
+            out var jump));
+
+        book.Observe(jump!, "F1");
+    }
+
+    private static AdventureTold Beat(string text) => new()
+    {
+        Kind = AdventureToldKind.Beat,
+        Text = text,
+        At = Now,
+        Beat = 0,
+        Title = "The Lantern",
+        Trigger = "arrive at Ossen's Lantern",
+    };
+
+    /// <summary>
+    /// The root card says where the story is, how far through it is, and what to do next.
+    /// <para>
+    /// <b>The step is here on the Commander's instruction, 2026-08-22</b>, and this test asserted
+    /// the opposite until that day — Phase 47's rule was that no count reaches the Commander. See
+    /// <see cref="AdventureStanding"/> for why it changed and what did not: the beats are still
+    /// titles rather than numbered stops, and <c>Step</c> is the only place a count is spelled.
+    /// </para>
+    /// </summary>
     [AvaloniaFact]
-    public void TheRootDrawsCardsWithoutCounts()
+    public void TheRootDrawsCardsWithTheStepAndTheNextTrigger()
     {
         var (panel, _, _) = Open(Story(Now.AddHours(-1)), Story(null, AdventureSource.Generated) with { Key = "draft", Name = "The Draft" });
 
@@ -137,7 +184,12 @@ public class AdventuresTabTests
         Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
         Assert.Contains(drawn, text => text.Contains("yours") && text.Contains("The Lantern"));
         Assert.Contains(drawn, text => text.Contains("written by Archivist") && text.Contains("waiting for your yes"));
-        Assert.DoesNotContain(drawn, text => text.Contains(" of 2"));
+        Assert.Contains(drawn, text => text.Contains("Step 1 of 2"));
+        Assert.Contains(drawn, text => text.Contains("Next: arrive at Ossen's Lantern"));
+
+        // A draft has no step: it is not being flown, and "Step 1 of 2" on a story nobody has
+        // agreed to reads as one already under way.
+        Assert.DoesNotContain(drawn, text => text.Contains("The Draft") && text.Contains("Step"));
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Change something"));
     }
 
@@ -159,7 +211,14 @@ public class AdventuresTabTests
         var drawn = Drawn(panel);
 
         Assert.Contains(drawn, text => text.Contains("Scoop here."));
-        Assert.Contains(drawn, text => text.Contains("Waiting to dock at Maren Anchorage"));
+        Assert.Contains(drawn, text => text.Contains("Step 2 of 2"));
+
+        // What to do next, headed "Next" and phrased as an instruction (asked for 2026-08-22).
+        // The beat's title still appears — Place() has always named it — but it is no longer the
+        // heading over the instruction, where it read as another chapter of the story.
+        Assert.Contains(drawn, text => text.Contains("Next"));
+        Assert.Contains(drawn, text => text.Contains("Dock at Maren Anchorage in Dyson's Hollow."));
+
         Assert.DoesNotContain(drawn, text => text.Contains("To one name."));
         Assert.DoesNotContain(drawn, text => text.Contains("Forty kilometres"));
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Abandon"));
@@ -354,5 +413,126 @@ public class AdventuresTabTests
 
         public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// The reading level shows what was actually said, not the authored line — and the trigger
+    /// beside it is in the highlight colour (asked for 2026-08-22).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheReadingLevelShowsWhatWasSaidWithTheTriggerHighlighted()
+    {
+        var (panel, book, _) = Open(Story(Now.AddHours(-1)));
+
+        Arrive(book);
+        book.Told("F1", "the-lantern-route", Beat("The lantern is still turning, and somebody is paying for it."));
+        book.Told("F1", "the-lantern-route", new AdventureTold
+        {
+            Kind = AdventureToldKind.Aside,
+            Asked = "Who keeps the lantern lit?",
+            Text = "Nobody I can name yet. The bills are being paid from somewhere.",
+            At = Now,
+        });
+
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(panel);
+
+        // What was heard, in the core's voice — and the authored line it replaced is not drawn.
+        Assert.Contains(drawn, text => text.Contains("The lantern is still turning"));
+        Assert.DoesNotContain(drawn, text => text == "Scoop here.");
+
+        // The aside, as an exchange rather than as a paragraph from nowhere.
+        Assert.Contains(drawn, text => text.Contains("Who keeps the lantern lit?"));
+        Assert.Contains(drawn, text => text.Contains("The bills are being paid"));
+
+        var accent = panel.FindResource(D47.App.Theming.ThemeManager.AccentKey);
+        var body = panel.FindResource(D47.App.Theming.ThemeManager.TextKey);
+
+        var trigger = panel.GetVisualDescendants().OfType<TextBlock>()
+            .Single(block => block.Text == "Arrive at Ossen's Lantern.");
+
+        Assert.NotEqual(accent, body);
+        Assert.Equal(accent, trigger.Foreground);
+    }
+
+    /// <summary>
+    /// The wait, drawn (asked for 2026-08-22). A beat fires and the line is up to twenty-three
+    /// seconds behind it, which is where "I am not sure I did the thing" comes from.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheTabShowsThatD47IsComposingUntilTheLineArrives()
+    {
+        var (panel, book, _) = Open(Story(Now.AddHours(-1)));
+
+        Assert.Empty(Pulses(panel));
+
+        Arrive(book);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEmpty(Pulses(panel));
+
+        // Driven by the tick rather than by a timer of its own, and honest about whether the frame
+        // moved — the headset sets its dirty flag from this, and a flag held true every frame is
+        // what made the panel flicker the last time something set one unconditionally.
+        Assert.False(panel.TickAdventures());
+        Assert.False(panel.TickAdventures());
+        Assert.True(panel.TickAdventures());
+
+        book.Told("F1", "the-lantern-route", Beat("The lantern is still turning."));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(Pulses(panel));
+        Assert.False(panel.TickAdventures());
+    }
+
+    /// <summary>
+    /// Mini reads the tab the panel is on (asked for 2026-08-22): the story, how far through, what
+    /// was just done, what to do next, and the last thing the ship's AI said about it. Nothing
+    /// pressable — mini is read at a glance with hands on a stick.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMiniPanelShowsTheStoryAtAGlance()
+    {
+        var (panel, book, _) = Open(Story(Now.AddHours(-1)));
+
+        Arrive(book);
+        book.Told("F1", "the-lantern-route", Beat("The lantern is still turning."));
+
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Visible(panel);
+
+        Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
+        Assert.Contains(drawn, text => text.Contains("Step 2 of 2"));
+        Assert.Contains(drawn, text => text.Contains("An outpost abandoned in 3302"));
+        Assert.Contains(drawn, text => text.Contains("Done: Arrive at Ossen's Lantern."));
+        Assert.Contains(drawn, text => text.Contains("Next: Dock at Maren Anchorage in Dyson's Hollow."));
+        Assert.Contains(drawn, text => text.Contains("The lantern is still turning."));
+
+        // The spine's turn and its ending are withheld on every surface, this one included.
+        Assert.DoesNotContain(drawn, text => text.Contains("Forty kilometres"));
+        Assert.DoesNotContain(drawn, text => text.Contains("To one name."));
+
+        // And the tab strip is still not there. Mini cannot afford one, which is why it follows the
+        // big panel's tab rather than carrying its own.
+        Assert.DoesNotContain(drawn, text => text == "Adventures");
+    }
+
+    /// <summary>
+    /// Mini with no story under way says so, rather than drawing an empty pane that reads as a
+    /// panel that failed to load.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMiniPanelSaysWhenThereIsNoStory()
+    {
+        var (panel, _, _) = Open(Story(null, AdventureSource.Generated) with { Key = "draft", Name = "The Draft" });
+
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Visible(panel), text => text.Contains("No adventure under way."));
     }
 }

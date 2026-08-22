@@ -203,6 +203,14 @@ public sealed record Adventure
     /// </summary>
     public Adventure? Previous { get; init; }
 
+    /// <summary>
+    /// What was actually said about this story, oldest first (asked for 2026-08-22) — the beats as
+    /// the Commander heard them and the asides between them. See <see cref="AdventureTold"/> for
+    /// why the authored line above is not a substitute. Cleared by Begin, because a story started
+    /// again is being told again.
+    /// </summary>
+    public IReadOnlyList<AdventureTold> Told { get; init; } = [];
+
     public bool IsBegun => AcceptedAt is not null;
 
     public bool IsAbandoned => AbandonedAt is not null;
@@ -232,4 +240,11 @@ public static class AdventureLimits
     public const int MaxLineLength = 900;
 
     public const int MaxSpineLength = 700;
+
+    /// <summary>
+    /// How much of what was said is kept per story. Twelve beats at most, so the rest is the
+    /// asides between them — enough that an evening's conversation about a story survives, and
+    /// bounded so a file the Commander can open by hand stays one they can read.
+    /// </summary>
+    public const int MaxTold = 60;
 }

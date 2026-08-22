@@ -62,9 +62,113 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     private readonly Dictionary<string, AdventureStanding> _standings = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _highWater = new(StringComparer.Ordinal);
     private readonly Queue<AdventureMoment> _moments = new();
+
+    /// <summary>
+    /// Which stories are owed a spoken line right now — a beat has fired and the Commander has not
+    /// heard about it yet (asked for 2026-08-22). Standing keys, so two Commanders' stories cannot
+    /// be confused for one.
+    /// </summary>
+    private readonly HashSet<string> _stirring = new(StringComparer.Ordinal);
+
     private bool _needsCatchUp = true;
 
     public AdventureStore Store => store;
+
+    /// <summary>
+    /// Raised when a story starts or stops being owed a line. Separate from
+    /// <see cref="AdventureStore.Changed"/> because nothing on disk moved: this is the difference
+    /// between <em>d47 is composing</em> and <em>d47 has spoken</em>, and the tab draws an animation
+    /// off it so the Commander is not left wondering whether they did the thing at all.
+    /// </summary>
+    public event Action? StirringChanged;
+
+    /// <summary>
+    /// Whether this story is between a beat firing and the line being said — which is up to the
+    /// callout's twenty-second settle plus whatever the model spends rewriting it.
+    /// </summary>
+    public bool IsStirring(string? frontierId, string key)
+    {
+        var standing = StandingKey(frontierId ?? AdventureStore.NoCommander, key);
+
+        lock (_gate)
+        {
+            return _stirring.Contains(standing);
+        }
+    }
+
+    /// <summary>Whether anything of this Commander's is owed a line, for the mini panel's one glance.</summary>
+    public bool IsStirringAnywhere(string? frontierId)
+    {
+        var prefix = StandingKey(frontierId ?? AdventureStore.NoCommander, string.Empty);
+
+        lock (_gate)
+        {
+            return _stirring.Any(key => key.StartsWith(prefix, StringComparison.Ordinal));
+        }
+    }
+
+    /// <summary>
+    /// Records what was actually said about a story and stops the waiting (asked for 2026-08-22).
+    /// <para>
+    /// The one way anything reaches <see cref="Adventure.Told"/>. Called by the app after a beat
+    /// has been spoken — with the model's wording, not the authored line — and after a reply that
+    /// <see cref="AdventureMention"/> judged to be about the story. Silent about a story that is
+    /// not on file: an adventure removed while its beat was settling is not an error.
+    /// </para>
+    /// </summary>
+    public void Told(string? frontierId, string key, AdventureTold entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        Quiet(commander, key);
+
+        if (store.Find(commander, key) is not { } adventure)
+        {
+            return;
+        }
+
+        var kept = adventure.Told.Count + 1 > AdventureLimits.MaxTold
+            ? adventure.Told.Skip(adventure.Told.Count + 1 - AdventureLimits.MaxTold).Append(entry).ToList()
+            : adventure.Told.Append(entry).ToList();
+
+        // Straight to the store, which is what the panel and the file both read. A refusal here
+        // would be a refusal of an adventure that is already on file, so there is nothing to do
+        // with one but log it — the line was still said.
+        if (store.Save(commander, adventure with { Told = kept }) is { } refusal)
+        {
+            logger.LogWarning("Could not record what was said about {Name}: {Refusal}", adventure.Name, refusal);
+        }
+    }
+
+    /// <summary>
+    /// Stops the waiting without recording anything — the beat was dropped rather than spoken,
+    /// which is what the callout does when it comes due mid-interdiction. The animation has to
+    /// stop either way, or it runs until the next thing happens to clear it.
+    /// </summary>
+    public void Quiet(string? frontierId, string key)
+    {
+        var standing = StandingKey(frontierId ?? AdventureStore.NoCommander, key);
+        bool moved;
+
+        lock (_gate)
+        {
+            moved = _stirring.Remove(standing);
+        }
+
+        if (moved)
+        {
+            StirringChanged?.Invoke();
+        }
+    }
+
+    /// <summary>Marks a story as owed a line. Called where a moment is queued, and nowhere else.</summary>
+    private void Stir(string commander, string key)
+    {
+        // Inside the caller's lock, and so the event is raised by them after it is released.
+        _stirring.Add(StandingKey(commander, key));
+    }
 
     /// <summary>
     /// Whether a walk over the journal files is owed — at startup, and after a stamp moved. The
@@ -171,6 +275,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         var commander = frontierId ?? AdventureStore.NoCommander;
+        bool stirred;
 
         lock (_gate)
         {
@@ -179,7 +284,16 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 return;
             }
 
+            var before = _stirring.Count;
             Fold(commander, journalEvent, announce: true);
+            stirred = _stirring.Count != before;
+        }
+
+        // Outside the lock: a handler that redraws a panel has no business running under the gate
+        // every other read of this book takes.
+        if (stirred)
+        {
+            StirringChanged?.Invoke();
         }
     }
 
@@ -228,7 +342,9 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             return string.Join(" ", reasons);
         }
 
-        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Previous = null };
+        // Told is cleared with the stamp: a story begun again is being told again, and the feed
+        // the Commander reads is what happened this time round rather than a splice of two runs.
+        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Previous = null, Told = [] };
 
         if (store.Save(commander, begun) is { } refusal)
         {
@@ -239,8 +355,10 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         {
             _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun);
             _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
+            Stir(commander, begun.Key);
         }
 
+        StirringChanged?.Invoke();
         return null;
     }
 
@@ -281,8 +399,12 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             {
                 _moments.Enqueue(moment);
             }
+
+            // And so does the animation that was waiting with it.
+            _stirring.Remove(StandingKey(commander, key));
         }
 
+        StirringChanged?.Invoke();
         return null;
     }
 
@@ -295,8 +417,10 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         lock (_gate)
         {
             _standings.Remove(StandingKey(commander, key));
+            _stirring.Remove(StandingKey(commander, key));
         }
 
+        StirringChanged?.Invoke();
         return removed;
     }
 
@@ -367,6 +491,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             if (announce)
             {
                 _moments.Enqueue(new AdventureMoment(commander, adventure, after.Fired.Count - 1, journalEvent.Timestamp));
+
+                // From here until the line is said or dropped, the tab has something to animate.
+                // Marked at the fold rather than at the callout because this is the moment the
+                // Commander's own act landed, and the wait they are being told about starts here.
+                Stir(commander, adventure.Key);
             }
 
             logger.LogInformation(

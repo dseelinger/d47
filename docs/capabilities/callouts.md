@@ -348,7 +348,12 @@ a handful of beats, each anchored to a real place by the one thing the journal c
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
 Adventures tab is where you write one or ask for one; this is the voice it reaches you by.
 
-It waits twenty seconds after the beat fires, so the line is not read over the jump it arrived
+**A short acknowledgement lands the moment the beat fires** — *"That's it."*, *"There it is."*,
+one of ten — so you know at once that you did the thing, rather than sitting through the wait
+below wondering. It is a stock line, never written by a model and never rewritten by one: a
+round trip is the delay it exists to arrive ahead of. The beat itself follows when it is ready.
+
+The beat waits twenty seconds after it fires, so the line is not read over the jump it arrived
 on and three beats in a minute are not three model calls. A beat that comes due while you are
 being interdicted or the game says you are in danger is **dropped rather than said late** — the
 story is still in the conversation, so ask and the core picks it up. The opening, said when you
@@ -364,7 +369,11 @@ foreshadow, because the lines it was given do, and it cannot spoil what it has n
 Ossen's Lantern. The nebula is what is left of the star this white dwarf used to be. Scoop here.
 ```
 
-Off leaves the story in the conversation and stops it being read out.
+Off leaves the story in the conversation and stops it being read out — the acknowledgement with
+it, since both belong to this callout.
+
+While a beat is between firing and being said, the Adventures tab shows that the core is
+composing, on the desktop window and in the headset alike.
 
 ## Settings
 

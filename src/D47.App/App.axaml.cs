@@ -76,7 +76,13 @@ public partial class App(AppHost? host) : Application
                 // And the long arcs, which ride the checklist tab and therefore reach the headset
                 // on exactly the same terms it does (list.md Phase 34).
                 host.Goals?.Book,
-                host.Goals?.Backfill);
+                host.Goals?.Backfill,
+
+                // And the stories (list.md Phase 47), from 2026-08-22. The window's own instance
+                // rather than a second one: the record is delegates and no visual, and two of them
+                // would be two lists of what an adventure surface needs wired to it — which is the
+                // same argument the settings page builder above is passed for.
+                window?.Adventures);
 
             // And the headset's copy of the panel can be the one asking for a spoken value
             // (list.md Phase 25). Registered beside the window's rather than instead of it: two

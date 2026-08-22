@@ -46,7 +46,12 @@ public class AdventureCalloutTests : IDisposable
         var (_, callout) = Wired();
         var reached = Accepted.AddMinutes(1);
 
-        Assert.Empty(callout.Examine(At(reached, [Jump(Lantern, reached)])));
+        // The acknowledgement lands on the tick the beat fired, with no settle behind it — that is
+        // the whole of what it is for (asked for 2026-08-22).
+        var ack = Assert.Single(callout.Examine(At(reached, [Jump(Lantern, reached)])));
+        Assert.Equal("adventure-ack.the-lantern-route.0", ack.Key);
+        Assert.Contains(ack.Text, Enumerable.Range(0, AdventureAcks.Count).Select(AdventureAcks.Pick));
+
         Assert.Empty(callout.Examine(At(reached.AddSeconds(10), [])));
 
         var said = Assert.Single(callout.Examine(At(reached.AddSeconds(20), [])));

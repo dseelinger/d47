@@ -110,6 +110,10 @@ public sealed class AdventuresPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _surface.Book.Store.Changed += OnChanged;
+
+        // A beat firing does not write the file — nothing on disk moves until the line has been
+        // said — so the waiting indicator needs the book's own event as well as the store's.
+        _surface.Book.StirringChanged += OnChanged;
         Rebuild();
     }
 
@@ -117,6 +121,7 @@ public sealed class AdventuresPage : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _surface.Book.Store.Changed -= OnChanged;
+        _surface.Book.StirringChanged -= OnChanged;
     }
 
     /// <summary>The levels below the root, by crumb. The view asks for these; the root is the page itself.</summary>
@@ -229,11 +234,23 @@ public sealed class AdventuresPage : UserControl
         var body = (StackPanel)card.Child!;
 
         body.Children.Add(Title(adventure.Name));
-        body.Children.Add(Muted($"{By(adventure)} — {standing.Place()}"));
 
-        if (standing.CurrentBeat is { } current && adventure.IsActive)
+        // The step joins the place on the same line rather than taking one of its own: it is the
+        // second half of "where am I", and a card is read at a glance (asked for 2026-08-22).
+        var where = standing.Step() is { } step
+            ? $"{By(adventure)} — {standing.Place()} · {step}"
+            : $"{By(adventure)} — {standing.Place()}";
+
+        body.Children.Add(Muted(where));
+
+        if (standing.NextTrigger() is { } next)
         {
-            body.Children.Add(Text($"Waiting to {current.Trigger.Describe()}.", TypeScale.Secondary));
+            body.Children.Add(Trigger($"Next: {next}."));
+        }
+
+        if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
+        {
+            body.Children.Add(new AdventureThinking());
         }
 
         card.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name));
@@ -313,33 +330,35 @@ public sealed class AdventuresPage : UserControl
             var adventure = standing.Adventure;
 
             page.Children.Add(Title(adventure.Name, TypeScale.Heading));
-            page.Children.Add(Muted($"{By(adventure)} — {standing.Place()}"));
+
+            var where = standing.Step() is { } step
+                ? $"{By(adventure)} — {standing.Place()} · {step}"
+                : $"{By(adventure)} — {standing.Place()}";
+
+            page.Children.Add(Muted(where));
 
             if (adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
             {
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
 
-            if (!string.IsNullOrWhiteSpace(adventure.Opening))
+            Told(page, standing);
+
+            // The wait, drawn (asked for 2026-08-22). Between the story so far and what is next,
+            // because that is where the missing line will appear: the Commander is watching the
+            // place the words are about to arrive rather than a banner somewhere else.
+            if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
             {
-                page.Children.Add(Labelled("Opening", adventure.Opening));
+                page.Children.Add(new AdventureThinking());
             }
 
-            // The story so far, and nothing ahead — for a generated one that is the point, and the
-            // editor shows the whole of an authored one.
-            var shown = adventure.IsBegun ? standing.Fired.Count : 0;
-
-            for (var index = 0; index < shown && index < adventure.Beats.Count; index++)
+            // What to do next, spelled out (asked for 2026-08-22). It used to be drawn as the
+            // current beat's title over "Waiting to …", which put a chapter heading above the one
+            // line on this page that is an instruction rather than prose. The title is still on the
+            // page — Place() names it — but under the story rather than over the instruction.
+            if (standing.NextTrigger() is { } next)
             {
-                var beat = adventure.Beats[index];
-                page.Children.Add(Labelled(
-                    $"{beat.Title} — {standing.Fired[index].ToLocalTime():d MMM HH:mm}",
-                    beat.Line));
-            }
-
-            if (adventure.IsActive && standing.CurrentBeat is { } current)
-            {
-                page.Children.Add(Labelled(current.Title, $"Waiting to {current.Trigger.Describe()}."));
+                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next))));
             }
 
             if (standing.IsDone && adventure.Beats.Count > 0)
@@ -364,10 +383,19 @@ public sealed class AdventuresPage : UserControl
         scroller.AttachedToVisualTree += (_, _) =>
         {
             _surface.Book.Store.Changed += Follow;
+
+            // And the book's own event, for the same reason the root takes it: a beat firing
+            // advances the step and starts the wait, and neither of those writes the file. Caught
+            // by a headless capture — the card behind this level was redrawing and this was not.
+            _surface.Book.StirringChanged += Follow;
             Fill();
         };
 
-        scroller.DetachedFromVisualTree += (_, _) => _surface.Book.Store.Changed -= Follow;
+        scroller.DetachedFromVisualTree += (_, _) =>
+        {
+            _surface.Book.Store.Changed -= Follow;
+            _surface.Book.StirringChanged -= Follow;
+        };
 
         return scroller;
     }
@@ -759,12 +787,117 @@ public sealed class AdventuresPage : UserControl
         return border;
     }
 
-    private static Control Labelled(string label, string text)
+    private static Control Labelled(string label, string? text, Control? content = null)
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 4, 0, 0) };
         stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.TextMutedKey));
-        stack.Children.Add(Text(text, TypeScale.Body));
+
+        if (text is { Length: > 0 })
+        {
+            stack.Children.Add(Text(text, TypeScale.Body));
+        }
+
+        if (content is not null)
+        {
+            stack.Children.Add(content);
+        }
+
         return stack;
+    }
+
+    /// <summary>
+    /// A trigger, in the highlight colour (asked for 2026-08-22). The one thing on this page that
+    /// is an <em>instruction</em> rather than prose — what the Commander did, or is being asked to
+    /// do — and the accent is what lets it be picked out of a page of story at a glance and at a
+    /// metre.
+    /// </summary>
+    internal static TextBlock Trigger(string text) => Text(text, TypeScale.Secondary, ThemeManager.AccentKey);
+
+    /// <summary>A trigger phrase as a sentence: "arrive at X" reads badly without a capital and a stop.</summary>
+    internal static string Sentence(string phrase) =>
+        phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..] + ".";
+
+    /// <summary>
+    /// What has actually been said about this story (asked for 2026-08-22).
+    /// <para>
+    /// <b>The spoken text, not the authored one.</b> <see cref="Adventure.Told"/> is what the
+    /// Commander was read — the model's wording, in the core's voice — and it carries the asides
+    /// between the beats as well, which is the half of the story the reading level used to have no
+    /// record of at all. Falls back to the authored lines for a story begun before any of this
+    /// existed, so an evening already under way does not read as an empty page.
+    /// </para>
+    /// <para>
+    /// Still <b>nothing ahead</b>. This draws what was said and stops; the spoiler rule that
+    /// governs the prompt governs the page for the same reason.
+    /// </para>
+    /// </summary>
+    private static void Told(StackPanel page, AdventureStanding standing)
+    {
+        var adventure = standing.Adventure;
+
+        if (adventure.Told.Count == 0)
+        {
+            Authored(page, standing);
+            return;
+        }
+
+        foreach (var told in adventure.Told)
+        {
+            var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0) };
+
+            if (told.Kind == AdventureToldKind.Beat)
+            {
+                var heading = told.Title is { Length: > 0 } title ? title : adventure.Name;
+
+                stack.Children.Add(Text(
+                    $"{heading} — {told.At.ToLocalTime():d MMM HH:mm}",
+                    TypeScale.Small,
+                    ThemeManager.TextMutedKey));
+
+                if (told.Trigger is { Length: > 0 } trigger)
+                {
+                    stack.Children.Add(Trigger(Sentence(trigger)));
+                }
+            }
+            else
+            {
+                // The Commander's own words above the answer, so an aside reads as an exchange
+                // rather than as a paragraph of story that arrived from nowhere.
+                stack.Children.Add(Text(
+                    told.Asked is { Length: > 0 } asked
+                        ? $"You asked, {told.At.ToLocalTime():d MMM HH:mm} — “{asked}”"
+                        : $"Aside — {told.At.ToLocalTime():d MMM HH:mm}",
+                    TypeScale.Small,
+                    ThemeManager.TextMutedKey));
+            }
+
+            stack.Children.Add(Text(told.Text, TypeScale.Body));
+            page.Children.Add(stack);
+        }
+    }
+
+    /// <summary>
+    /// The story so far from the definition, for a story that was flying before anything was being
+    /// recorded. What Phase 47 drew, kept as the floor.
+    /// </summary>
+    private static void Authored(StackPanel page, AdventureStanding standing)
+    {
+        var adventure = standing.Adventure;
+
+        if (!string.IsNullOrWhiteSpace(adventure.Opening))
+        {
+            page.Children.Add(Labelled("Opening", adventure.Opening));
+        }
+
+        var shown = adventure.IsBegun ? standing.Fired.Count : 0;
+
+        for (var index = 0; index < shown && index < adventure.Beats.Count; index++)
+        {
+            var beat = adventure.Beats[index];
+            page.Children.Add(Labelled(
+                $"{beat.Title} — {standing.Fired[index].ToLocalTime():d MMM HH:mm}",
+                beat.Line));
+        }
     }
 
     private static Button Action(string label, System.Action act)

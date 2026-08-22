@@ -129,14 +129,15 @@ public sealed class VrHost : IDisposable
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
         D47.Core.Engineers.EngineerPlanService? unlocks = null,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfillGoals = null)
+        Action? backfillGoals = null,
+        Panel.AdventureSurface? adventures = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals);
+            backfillGoals, adventures);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -264,6 +265,12 @@ public sealed class VrHost : IDisposable
             // (list.md Phase 24).
             _panel.TickClocks();
             _panel.TickEngineers();
+
+            // And one frame of the "d47 is composing" animation, which is the third reason a
+            // headset panel changes with the Commander having done nothing (asked for
+            // 2026-08-22). Same route, same 10 Hz, same rule about only marking dirty when
+            // something moved.
+            _panel.TickAdventures();
 
             Serve(context.Now);
         });

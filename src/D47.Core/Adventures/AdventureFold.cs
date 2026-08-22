@@ -8,9 +8,19 @@ namespace D47.Core.Adventures;
 /// and an adventure counts forward only").
 /// <para>
 /// <see cref="Fired"/> is one stamp per beat reached, in order, and everything else is arithmetic
-/// over it. <b>No count reaches the Commander</b>: the card says the current beat's title, or that
-/// the story has not begun, finished, or was abandoned — <em>beat 3 of 7</em> is checklist language
-/// and belongs to the Technical transcript.
+/// over it. <see cref="Place"/> says the current beat's title, or that the story has not begun,
+/// finished, or was abandoned.
+/// </para>
+/// <para>
+/// <b>The count reaches the Commander after all, from 2026-08-22, on their instruction.</b> Phase
+/// 47 wrote the opposite rule here — <em>beat 3 of 7 is checklist language and belongs to the
+/// Technical transcript</em> — on the story-not-a-checklist framing that governs the whole phase.
+/// Flown, the Commander asked for <em>Step X of Y</em> on both surfaces. The framing was about the
+/// <em>prose</em>: the beats are still dramatic functions with titles rather than numbered stops,
+/// and nothing generated says a number. What changed is that the panel is also the place a person
+/// checks how far through an evening they are, and refusing to answer that made the tab worse at a
+/// job it was already doing badly by implying it. <see cref="Step"/> is that answer, and it is the
+/// only place a count is spelled; <see cref="Place"/> is unchanged and still names the beat.
 /// </para>
 /// </summary>
 public sealed record AdventureStanding
@@ -40,7 +50,46 @@ public sealed record AdventureStanding
 
     public bool EndingReached => IsDone;
 
-    /// <summary>Where the story is, in words a card can show. Never a fraction.</summary>
+    /// <summary>
+    /// How far through, as a count (asked for 2026-08-22). Null where a count means nothing — a
+    /// draft, a story not begun, one with no beats — so a caller draws the row or does not, rather
+    /// than drawing "Step 0 of 0".
+    /// <para>
+    /// The step is the one being <em>worked on</em>, not the number finished: a Commander who has
+    /// reached nothing is on step 1, and a finished story reads as its own last step rather than
+    /// as one past the end.
+    /// </para>
+    /// </summary>
+    public string? Step()
+    {
+        if (!Adventure.IsBegun || Adventure.Beats.Count == 0)
+        {
+            return null;
+        }
+
+        var of = Adventure.Beats.Count;
+        var at = Math.Min(Fired.Count + (IsDone ? 0 : 1), of);
+
+        return $"Step {at.ToString(CultureInfo.InvariantCulture)} of {of.ToString(CultureInfo.InvariantCulture)}";
+    }
+
+    /// <summary>
+    /// What the Commander did to reach where they are — the last beat's trigger, in words. Null
+    /// before anything has fired.
+    /// </summary>
+    public string? LastTrigger() => LastBeat?.Trigger.Describe();
+
+    /// <summary>
+    /// What the story is waiting for the Commander to do next, in words. Null when it is not
+    /// waiting for anything: finished, abandoned, or never begun.
+    /// </summary>
+    public string? NextTrigger() =>
+        Adventure.IsActive && CurrentBeat is { } current ? current.Trigger.Describe() : null;
+
+    /// <summary>The last thing the ship's AI actually said about this story, beat or aside.</summary>
+    public AdventureTold? LastSaid() => Adventure.Told.Count > 0 ? Adventure.Told[^1] : null;
+
+    /// <summary>Where the story is, in words a card can show.</summary>
     public string Place()
     {
         if (Adventure.IsAbandoned)

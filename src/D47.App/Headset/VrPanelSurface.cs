@@ -94,7 +94,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The Commander's long arcs, and the button that ages them (list.md Phase 34). They ride
         // the checklist tab, so they reach the headset exactly when the checklist does.
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfillGoals = null)
+        Action? backfillGoals = null,
+
+        // The stories the Commander flies (list.md Phase 47), in the headset from 2026-08-22.
+        Panel.AdventureSurface? adventures = null)
     {
         _dumpTo = dumpTo;
 
@@ -141,6 +144,21 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // Phase 34), so the arcs and the button that ages them reach the headset on exactly
             // the same terms the list does.
             _view.EnableChecklist(checklists, goals, backfillGoals);
+        }
+
+        if (adventures is not null)
+        {
+            // The stories, in the headset (asked for 2026-08-22). Phase 47 made this tab
+            // desktop-only, on the reasoning that its editor and its ask form want a keyboard.
+            // That weighed the wrong half: the reading level is where a Commander who has just
+            // arrived somewhere finds out what the story made of it, and arriving somewhere is
+            // what a Commander in a headset has just done. The forms come along because they are
+            // the same tab and the prompts have taken a spoken value since Phase 25 — a surface
+            // that shows a story but cannot be asked for one is a surface with a hole in it.
+            //
+            // The mini panel gets its own short reading of the same story, which is the other
+            // half of the instruction and is furnished by this same call — see AdventureMini.
+            _view.EnableAdventures(adventures);
         }
 
         // `ships`, `gameState` and `onFoot` are still read below - Engineers needs all three.
@@ -226,6 +244,15 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _view.TickEngineers();
         _dirty = true;
     }
+
+    /// <summary>
+    /// One frame of the <em>d47 is composing</em> animation (asked for 2026-08-22). Marks the
+    /// surface dirty only when the drawing actually moved, which is the same bargain
+    /// <see cref="Aim"/> struck for the same reason: a flag held true every frame re-rasterises the
+    /// whole widget tree and hands SteamVR an identical image, and that is what made the panel
+    /// flicker the last time something set it unconditionally.
+    /// </summary>
+    public void TickAdventures() => _dirty |= _view.TickAdventures();
 
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;
