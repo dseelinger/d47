@@ -22,13 +22,18 @@ it ships, and the line it gets here is its permanent record.
 **The galaxy-map macro brushes the camera before it holds select.** With the route-file check
 made honest in 0.48.4, the Commander could see what the macro actually did: the search reached
 the right system, the camera arrived, and the 1.2-second held select plotted nothing. Worked out
-by hand — after a search the selector over the star is a plain circle and select is inert; the
-smallest camera movement draws the arrows around it, and with the arrows showing and the selector
-still on the star, the held select plots. So the sequence is now map, up, select, paste, return,
-three seconds, **one tap of sideways camera translate**, select held 1.2 seconds, map key to
-close. The brush is the shortest press the game reliably sees (60 ms) on the Commander's
-instruction that a tenth of a second is already too long, and it needs a fourth binding:
-`CamTranslateRight`, or `CamTranslateLeft` if that is the one bound.
+by hand — after a search the search box still has the keyboard and the selector over the star is
+a plain circle, so select is inert; the smallest camera movement takes focus out of the box and
+draws the arrows around the selector, and with the arrows showing and the selector still on the
+star, the held select plots. The Commander does that with a brush of the stick's X axis, which
+d47 cannot press. So the sequence is now map, up, select, paste, return, three seconds,
+**sideways camera right then left for 30 ms each**, select held 1.2 seconds, map key to close.
+Right-then-left rather than one tap because what arms the selector is movement and what knocks
+it off the star is net displacement: a key is full deflection for as long as it is down, so one
+tap is twitchy, while two equal taps in opposite directions are the stick's excursion and return
+done with keys. The injector now waits delays under 50 ms out on a stopwatch rather than the
+timer, whose 15 ms grain would make "30 ms" anything up to 45. Two more bindings are needed:
+`CamTranslateRight` and `CamTranslateLeft`, both on the keyboard.
 
 ## 0.48.4 — 2026-08-21 — A route that was already there does not count
 

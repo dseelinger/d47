@@ -122,7 +122,7 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
 
                 if (step.Kind == InputStepKind.Delay)
                 {
-                    await Task.Delay(step.Delay, cancellationToken).ConfigureAwait(false);
+                    await WaitAsync(step.Delay, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
@@ -181,6 +181,33 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
         }
 
         logger.LogDebug("Released {Count} held inputs", releasing.Length);
+    }
+
+    /// <summary>
+    /// Delays at or below this are waited out on a stopwatch rather than the timer. Windows'
+    /// timer runs on a grain of about fifteen milliseconds, so a thirty-millisecond hold asked of
+    /// <see cref="Task.Delay(TimeSpan, CancellationToken)"/> lands anywhere up to forty-five — and
+    /// the galaxy-map camera brush is a hold where the difference is the selector staying on the
+    /// star or not. Spinning a thread for under fifty milliseconds costs nothing worth noticing;
+    /// spinning it for a 1.2-second hold would, so longer waits still go to the timer.
+    /// </summary>
+    private static readonly TimeSpan PreciseBelow = TimeSpan.FromMilliseconds(50);
+
+    private static async Task WaitAsync(TimeSpan delay, CancellationToken cancellationToken)
+    {
+        if (delay > PreciseBelow)
+        {
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        while (System.Diagnostics.Stopwatch.GetElapsedTime(started) < delay)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Thread.SpinWait(200);
+        }
     }
 
     private bool Send(InputStep step)

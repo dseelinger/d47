@@ -128,7 +128,7 @@ public sealed class RecordingClipboard : IClipboard
 /// attempt — open, paste, return — turned out to plot nothing: it assumed the search box had
 /// focus when the map opened, and it does not. The sequence below walks to the box explicitly
 /// (up, select), pastes, commits the search with return, gives the camera time to arrive,
-/// brushes the camera once to arm the selector, holds select long enough to plot, and toggles
+/// brushes the camera right and back left to arm the selector, holds select long enough to plot, and toggles
 /// the map shut. Every wait in it is the Commander's figure, and the two things d47 <em>can</em>
 /// see — Status.json saying the map is showing, NavRoute.json saying a route exists — are
 /// checked where they fall rather than assumed.
@@ -177,38 +177,44 @@ public static class NavigationCapability
     /// selector over the star is a plain circle and pressing select does nothing — the Commander
     /// found this by hand on 2026-08-21 after a cut of this macro without the brush plotted
     /// nothing. The smallest camera movement draws the arrows around the selector, and with the
-    /// arrows showing and the selector still over the star, the held select plots. As brief as a
-    /// press can be: the Commander's instruction was "less than a tenth of a second", and the
-    /// floor is <see cref="InputSequence.TapHold"/> — under one frame Elite does not see the key
-    /// at all, and anything longer moves the selector off the star.
+    /// arrows showing and the selector still over the star, the held select plots. The same
+    /// movement is what takes keyboard focus out of the search box after the return — the
+    /// Commander does it with a brush of the stick's X axis, and the stick comes back to centre.
+    /// </para>
+    /// <para>
+    /// <b>Right, then left, for the same time.</b> What arms the selector is camera
+    /// <em>movement</em>; what knocks it off the star is net <em>displacement</em>. A single key
+    /// tap is twitchy — the Commander's words — because a key is full deflection for however
+    /// long it is down. Two equal taps in opposite directions are a stick excursion and return
+    /// done with keys: the arrows appear, the selector ends up where it started, and the press
+    /// length stops mattering much. Thirty milliseconds is about two frames, which is long
+    /// enough to be seen reliably; the injector waits these short delays out precisely rather
+    /// than through the timer's fifteen-millisecond grain.
     /// </para>
     /// </summary>
-    private static readonly TimeSpan Nudge = InputSequence.TapHold;
+    private static readonly TimeSpan Nudge = TimeSpan.FromMilliseconds(30);
 
     /// <summary>
-    /// The camera key, resolved here and advertised nowhere. It is not in <see cref="GameActions.All"/>
-    /// because that list is the <c>control_interface</c> tool's closed vocabulary and its
-    /// documentation page, and a sideways camera brush is not something a Commander asks for by
-    /// voice — it exists for this macro alone. Right first, left as the fallback, since either
-    /// arms the selector and a Commander may have bound only one.
+    /// The two camera keys, resolved here and advertised nowhere. They are not in
+    /// <see cref="GameActions.All"/> because that list is the <c>control_interface</c> tool's
+    /// closed vocabulary and its documentation page, and a sideways camera brush is not something
+    /// a Commander asks for by voice — it exists for this macro alone.
     /// </summary>
-    private static readonly IReadOnlyList<GameAction> NudgeKeys =
-    [
-        new()
-        {
-            Id = "galaxy_map_nudge",
-            Label = "the galaxy map camera",
-            Group = GameActions.Interface,
-            Variants = [new ActionVariant("CamTranslateRight", ControlContext.AnyShip | ControlContext.Srv)],
-        },
-        new()
-        {
-            Id = "galaxy_map_nudge",
-            Label = "the galaxy map camera",
-            Group = GameActions.Interface,
-            Variants = [new ActionVariant("CamTranslateLeft", ControlContext.AnyShip | ControlContext.Srv)],
-        },
-    ];
+    private static readonly GameAction NudgeRight = new()
+    {
+        Id = "galaxy_map_nudge_right",
+        Label = "the galaxy map camera, right",
+        Group = GameActions.Interface,
+        Variants = [new ActionVariant("CamTranslateRight", ControlContext.AnyShip | ControlContext.Srv)],
+    };
+
+    private static readonly GameAction NudgeLeft = new()
+    {
+        Id = "galaxy_map_nudge_left",
+        Label = "the galaxy map camera, left",
+        Group = GameActions.Interface,
+        Variants = [new ActionVariant("CamTranslateLeft", ControlContext.AnyShip | ControlContext.Srv)],
+    };
 
     public static CapabilityDescriptor Create(NavigationSurface surface) => new()
     {
@@ -369,10 +375,10 @@ public static class NavigationCapability
     }
 
     /// <summary>
-    /// The four bindings the macro presses, resolved against the Commander's own file and the
+    /// The five bindings the macro presses, resolved against the Commander's own file and the
     /// mode they are in, and the three keystroke runs built from them.
     /// <para>
-    /// All four or none: a macro that opens the map and then has no key for "select" leaves the
+    /// All five or none: a macro that opens the map and then has no key for "select" leaves the
     /// map open over the cockpit, which is worse than the clipboard alone. So the first binding
     /// that cannot be pressed stops the whole attempt before a key is sent, and its reason is the
     /// one the Commander hears.
@@ -383,7 +389,12 @@ public static class NavigationCapability
     /// text field.
     /// </para>
     /// </summary>
-    private sealed record MapKeys(EliteBinding Map, EliteBinding Up, EliteBinding Select, EliteBinding Nudge)
+    private sealed record MapKeys(
+        EliteBinding Map,
+        EliteBinding Up,
+        EliteBinding Select,
+        EliteBinding NudgeRight,
+        EliteBinding NudgeLeft)
     {
         private const uint Control = 0xA2;
         private const uint V = 0x56;
@@ -412,16 +423,21 @@ public static class NavigationCapability
                 pressed.Add(reach.Binding!);
             }
 
-            // Either side will do, and the reason reported is the right-hand one's, which names
-            // the key a Commander who has bound neither would most naturally add.
-            var nudges = NudgeKeys.Select(key => ActionReachability.Resolve(key, binds, context)).ToArray();
+            var right = ActionReachability.Resolve(NavigationCapability.NudgeRight, binds, context);
 
-            if (nudges.FirstOrDefault(reach => reach.IsOffered) is not { } nudge)
+            if (!right.IsOffered)
             {
-                return (null, nudges[0].Reason);
+                return (null, right.Reason);
             }
 
-            return (new MapKeys(pressed[0], pressed[1], pressed[2], nudge.Binding!), string.Empty);
+            var left = ActionReachability.Resolve(NavigationCapability.NudgeLeft, binds, context);
+
+            if (!left.IsOffered)
+            {
+                return (null, left.Reason);
+            }
+
+            return (new MapKeys(pressed[0], pressed[1], pressed[2], right.Binding!, left.Binding!), string.Empty);
         }
 
         /// <summary>Step 1: open the map. Sent on its own so Status.json can confirm it showed.</summary>
@@ -450,7 +466,8 @@ public static class NavigationCapability
             new InputStep(InputStepKind.KeyUp, Return),
 
             InputStep.Wait(CameraSettle),
-            .. InputSequence.Hold(Nudge, NavigationCapability.Nudge),
+            .. InputSequence.Hold(NudgeRight, Nudge),
+            .. InputSequence.Hold(NudgeLeft, Nudge),
             InputStep.Wait(BetweenKeys),
             .. InputSequence.Hold(Select, PlotHold),
         ];

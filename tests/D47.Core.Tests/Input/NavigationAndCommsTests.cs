@@ -41,7 +41,7 @@ public class NavigationAndCommsTests
 
     /// <summary>
     /// Every binding the galaxy-map macro presses, on the keyboard. The Commander's own file binds
-    /// exactly these four, and on these symbols.
+    /// exactly these five, and on these symbols.
     /// </summary>
     private static EliteBinds MapBinds(params string[] without) => Binds(
         [.. new[]
@@ -50,6 +50,7 @@ public class NavigationAndCommsTests
             ("UI_Up", "Keyboard", "Key_W"),
             ("UI_Select", "Keyboard", "Key_Space"),
             ("CamTranslateRight", "Keyboard", "Key_R"),
+            ("CamTranslateLeft", "Keyboard", "Key_L"),
         }.Where(entry => !without.Contains(entry.Item1))]);
 
     private static uint Code(string symbol) => EliteKeys.Resolve(symbol).Code;
@@ -224,11 +225,12 @@ public class NavigationAndCommsTests
 
     /// <summary>
     /// The Commander's own sequence (2026-08-21, third cut): map, up, select, paste, return,
-    /// three seconds for the camera, the briefest brush of sideways camera, select held for 1.2
-    /// seconds, map again to close. The figures are theirs and are asserted as such. Return
-    /// rather than "down" because the first cut's down key typed an S into the search box — the
-    /// text field keeps focus after the paste. The brush is what arms the selector: without it
-    /// the second cut's held select did nothing.
+    /// three seconds for the camera, a brush of sideways camera right and then left for the same
+    /// time, select held for 1.2 seconds, map again to close. The figures are theirs and are
+    /// asserted as such. Return rather than "down" because the first cut's down key typed an S
+    /// into the search box — the text field keeps focus after the paste. The brush is what takes
+    /// focus out of the box and arms the selector: without it the second cut's held select did
+    /// nothing. Right then left so the selector ends up back on the star.
     /// </summary>
     [Fact]
     public async Task TheMacroIsTheCommandersOwnSequence()
@@ -243,13 +245,14 @@ public class NavigationAndCommsTests
         var steps = input.Steps;
 
         Assert.Equal(
-            [Code("Key_M"), Code("Key_W"), Code("Key_Space"), 0xA2, 0x56, 0x0D, Code("Key_R"), Code("Key_Space"), Code("Key_M")],
+            [Code("Key_M"), Code("Key_W"), Code("Key_Space"), 0xA2, 0x56, 0x0D, Code("Key_R"), Code("Key_L"), Code("Key_Space"), Code("Key_M")],
             KeysPressed(steps));
 
-        // The camera gets its three seconds, then the brush — a tap, no longer — then the hold
-        // that plots.
+        // The camera gets its three seconds, then the brush — right and left for exactly the
+        // same time, so it nets to nothing — then the hold that plots.
         Assert.Contains(steps, step => step.Kind == InputStepKind.Delay && step.Delay == TimeSpan.FromSeconds(3));
-        Assert.Equal([InputSequence.TapHold], Holds(steps, Code("Key_R")));
+        Assert.Equal([TimeSpan.FromMilliseconds(30)], Holds(steps, Code("Key_R")));
+        Assert.Equal(Holds(steps, Code("Key_R")), Holds(steps, Code("Key_L")));
         Assert.Equal(TimeSpan.FromMilliseconds(1200), Holds(steps, Code("Key_Space"))[^1]);
     }
 
