@@ -203,6 +203,11 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
 
         var started = System.Diagnostics.Stopwatch.GetTimestamp();
 
+        // Still an asynchronous hop, like the timer path: the foreground check between steps
+        // is what a Commander alt-tabbing mid-hold relies on, and a wait that never yields
+        // would let the sequence run on ahead of anything that wanted to stop it.
+        await Task.Yield();
+
         while (System.Diagnostics.Stopwatch.GetElapsedTime(started) < delay)
         {
             cancellationToken.ThrowIfCancellationRequested();
