@@ -215,4 +215,74 @@ public class HelpLibraryTests
         <section><h2><span class="num">1</span> A step.</h2>{figure}</section>
         </div></div>
         """;
+
+    /// <summary>
+    /// The cards at the foot of a band, and the distinction that matters on a surface with no
+    /// browser: a page beside this one is something the panel already carries, and everything
+    /// else is an address.
+    /// </summary>
+    [Fact]
+    public void ABandsCardsSplitIntoSiblingPagesAndAddresses()
+    {
+        var article = HelpLibrary.Parse(Cards(
+            """
+            <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The fleet.</span></a>
+            <a class="card" href="../conversation.html"><span class="ct">Talking →</span><span class="cd">General.</span></a>
+            <a class="card" href="https://example.invalid/x"><span class="ct">Away →</span><span class="cd">Off site.</span></a>
+            """), "test");
+
+        Assert.NotNull(article);
+        Assert.Equal(3, article.Links.Count);
+
+        // The arrow is a web affordance; a button in the panel is already a button.
+        Assert.Equal(["Ships", "Talking", "Away"], article.Links.Select(link => link.Title));
+        Assert.Equal("The fleet.", article.Links[0].Blurb);
+
+        Assert.Equal("ships", article.Links[0].Article);
+        Assert.Null(article.Links[0].Href);
+
+        // A path up out of the folder is not a sibling, whatever it looks like.
+        Assert.Null(article.Links[1].Article);
+        Assert.Equal("../conversation.html", article.Links[1].Href);
+
+        Assert.Null(article.Links[2].Article);
+        Assert.Equal("https://example.invalid/x", article.Links[2].Href);
+    }
+
+    /// <summary>The Engineers band names three siblings and nothing off the site.</summary>
+    [Fact]
+    public void TheEngineersBandPointsAtThreeSiblingPages()
+    {
+        var links = HelpLibrary.For("engineers")!.Links;
+
+        Assert.Equal(
+            ["engineering", "ships", "checklists"],
+            links.Select(link => link.Article));
+
+        Assert.All(links, link => Assert.Null(link.Href));
+        Assert.All(links, link => Assert.False(string.IsNullOrWhiteSpace(link.Blurb)));
+    }
+
+    /// <summary>A band with no cards claims no links rather than a null nobody checked.</summary>
+    [Fact]
+    public void ABandWithNoCardsHasNoLinks()
+    {
+        var article = HelpLibrary.Parse(Band("""<svg viewBox="0 0 10 10"/>"""), "bare");
+
+        Assert.NotNull(article);
+        Assert.Empty(article.Links);
+    }
+
+    private static string Cards(string cards) =>
+        $"""
+        ---
+        title: Test
+        ---
+
+        <div class="d47-eli5"><div class="d47-frame">
+        <p class="lede">A lede.</p>
+        <section><h2><span class="num">1</span> A step.</h2></section>
+        <div class="next"><div class="next-title">Where to go next</div><div class="cards">{cards}</div></div>
+        </div></div>
+        """;
 }

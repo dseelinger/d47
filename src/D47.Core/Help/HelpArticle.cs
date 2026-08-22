@@ -29,6 +29,41 @@ public sealed record HelpArticle
     public required string Lede { get; init; }
 
     public required IReadOnlyList<HelpSection> Sections { get; init; }
+
+    /// <summary>
+    /// Where to go next, as the band's foot declares it. Empty for a band that names nowhere.
+    /// </summary>
+    public IReadOnlyList<HelpLink> Links { get; init; } = [];
+}
+
+/// <summary>
+/// One "where to go next" entry (asked for 2026-08-22).
+/// <para>
+/// Two kinds, and the difference is whether the destination is on this machine. A sibling
+/// capability page is an <see cref="Article"/> and becomes another level of help drawn in the
+/// panel; anything else keeps its <see cref="Href"/> and is a place only a browser can reach.
+/// </para>
+/// <para>
+/// The distinction is drawn here rather than at the moment of pressing, because the two need
+/// different affordances on a surface with no browser — and a control that does nothing is worse
+/// than an absent one.
+/// </para>
+/// </summary>
+public sealed record HelpLink
+{
+    public required string Title { get; init; }
+
+    /// <summary>The line under the title, or null.</summary>
+    public string? Blurb { get; init; }
+
+    /// <summary>A sibling capability page, by id, or null when this points off the site.</summary>
+    public string? Article { get; init; }
+
+    /// <summary>
+    /// The address as written, for everything that is not a sibling page — an absolute URL, or a
+    /// path up out of the capability folder. Resolved by whoever can open one.
+    /// </summary>
+    public string? Href { get; init; }
 }
 
 /// <summary>One numbered step of a band: a heading, usually a picture, sometimes a paragraph.</summary>

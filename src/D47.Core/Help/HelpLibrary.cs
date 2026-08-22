@@ -81,8 +81,61 @@ public static class HelpLibrary
             Title = TitleOf(markdown) ?? capabilityId,
             Lede = lede?.Value.Trim() ?? string.Empty,
             Sections = frame.Elements("section").Select(Section).ToArray(),
+            Links = Links(frame),
         };
     }
+
+    /// <summary>
+    /// The "where to go next" cards at the foot of a band, if it has any.
+    /// <para>
+    /// A sibling capability page — <c>ships.html</c> — is another band this machine already
+    /// carries, so it is kept as an id. Everything else keeps its address: a path up out of the
+    /// folder reaches a page with no band, and an absolute URL reaches somewhere no panel can go.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<HelpLink> Links(XElement frame) =>
+        frame.Descendants("a")
+            .Where(anchor => (string?)anchor.Attribute("class") == "card")
+            .Select(anchor =>
+            {
+                var href = ((string?)anchor.Attribute("href") ?? string.Empty).Trim();
+                var sibling = Sibling(href);
+
+                return new HelpLink
+                {
+                    // The arrow is a web affordance. A button in the panel is already a button.
+                    Title = Span(anchor, "ct").TrimEnd(' ', '→').Trim(),
+                    Blurb = Span(anchor, "cd") is { Length: > 0 } blurb ? blurb : null,
+                    Article = sibling,
+                    Href = sibling is null ? href : null,
+                };
+            })
+            .ToArray();
+
+    /// <summary>
+    /// The capability id in <c>ships.html</c>, or null for anything with a slash, a scheme or a
+    /// fragment in it. Deliberately strict: a page beside this one is the only case the panel can
+    /// answer itself.
+    /// </summary>
+    private static string? Sibling(string href)
+    {
+        if (!href.EndsWith(".html", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var id = href[..^".html".Length];
+
+        return id.Length > 0 && id.All(letter => char.IsAsciiLetterLower(letter) || letter is '-')
+            ? id
+            : null;
+    }
+
+    private static string Span(XElement anchor, string kind) =>
+        anchor.Elements("span")
+            .FirstOrDefault(span => (string?)span.Attribute("class") == kind)
+            ?.Value.Trim()
+        ?? string.Empty;
 
     /// <summary>
     /// The band's span, by counting <c>div</c>s rather than by matching a closing tag. The band

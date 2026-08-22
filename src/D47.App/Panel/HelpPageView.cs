@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Theming;
 using D47.Core.Help;
+using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
@@ -255,23 +256,29 @@ public static class HelpPageView
     public const string CrumbPrefix = "help:";
 
     /// <summary>The crumb that takes the panel for one capability's help.</summary>
-    public static D47.Core.Interface.NavCrumb Crumb(string capabilityId) =>
+    public static NavCrumb Crumb(string capabilityId) =>
         new(CrumbPrefix + capabilityId, "Help");
 
     /// <summary>Whether there is anything to show for this capability.</summary>
-    public static bool Exists(string capabilityId) => HelpLibrary.For(capabilityId) is not null;
+    public static bool Exists(string? capabilityId) =>
+        capabilityId is { Length: > 0 } id && HelpLibrary.For(id) is not null;
 
     /// <summary>Draws the band a help crumb names, or says plainly that there is not one yet.</summary>
-    public static Control Build(D47.Core.Interface.NavCrumb crumb)
+    /// <param name="openUrl">
+    /// How this surface reaches the web, or null where it cannot. The headset is the null: a link
+    /// it can do nothing with is drawn as its address rather than as a control that does nothing,
+    /// which is the rule <see cref="IFilterablePage"/> already records about the search box.
+    /// </param>
+    public static Control Build(NavCrumb crumb, PanelNavigator nav, Action<string>? openUrl)
     {
         var id = crumb.Key.StartsWith(CrumbPrefix, StringComparison.Ordinal)
             ? crumb.Key[CrumbPrefix.Length..]
             : crumb.Key;
 
-        return HelpLibrary.For(id) is { } article ? Build(article) : Missing(id);
+        return HelpLibrary.For(id) is { } article ? Build(article, nav, openUrl) : Missing(id);
     }
 
-    public static Control Build(HelpArticle article)
+    public static Control Build(HelpArticle article, PanelNavigator nav, Action<string>? openUrl)
     {
         var stack = new StackPanel { Spacing = 26, Margin = new Thickness(0, 4, 0, 24) };
 
@@ -293,6 +300,8 @@ public static class HelpPageView
         {
             stack.Children.Add(Step(section));
         }
+
+        stack.Children.Add(Next(article, nav, openUrl));
 
         return new ScrollViewer
         {
@@ -381,6 +390,171 @@ public static class HelpPageView
         row.Children.Add(heading);
 
         return row;
+    }
+
+    /// <summary>
+    /// Where to go next: what the band names, and then the page it is the short form of.
+    /// <para>
+    /// <b>The last one is not decoration.</b> The panel draws the band and nothing under it, so
+    /// every word of the reference half — the tables, the tool schemas, the working — exists only
+    /// on the site. A band with no way through to it would be a help page that quietly hides the
+    /// documentation.
+    /// </para>
+    /// </summary>
+    private static Control Next(HelpArticle article, PanelNavigator nav, Action<string>? openUrl)
+    {
+        var block = new StackPanel { Spacing = 8, Margin = new Thickness(0, 18, 0, 0) };
+
+        var caption = new TextBlock
+        {
+            Text = "WHERE TO GO NEXT",
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(0, 0, 0, 4),
+        };
+
+        LoadoutPages.Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        block.Children.Add(caption);
+
+        foreach (var link in article.Links)
+        {
+            block.Children.Add(Card(link, nav, openUrl));
+        }
+
+        block.Children.Add(Card(
+            new HelpLink
+            {
+                Title = "Read the full page",
+                Blurb = "Everything this leaves out: the detail, the tables and the working.",
+                Href = DocsSite.Capability(article.CapabilityId),
+            },
+            nav,
+            openUrl));
+
+        return block;
+    }
+
+    /// <summary>
+    /// One entry, drawn as whatever this surface can actually do with it.
+    /// <para>
+    /// A sibling page that is <em>already on this machine</em> becomes another level of help — so
+    /// following a link in the headset is a drill, and going back from it is the same word as
+    /// going back from anything else. Everything else is an address: a button where there is a
+    /// browser, and the address itself where there is not.
+    /// </para>
+    /// </summary>
+    private static Control Card(HelpLink link, PanelNavigator nav, Action<string>? openUrl)
+    {
+        if (link.Article is { } id && Exists(id))
+        {
+            return Pressable(link.Title, link.Blurb, () => nav.Take(Crumb(id)));
+        }
+
+        var address = Address(link);
+
+        return openUrl is null
+            ? Written(link.Title, link.Blurb, address)
+            : Pressable(link.Title, link.Blurb, () => openUrl(address));
+    }
+
+    /// <summary>
+    /// Where a link points, as something a browser can open. A sibling with no band yet still has
+    /// a page on the site, which is the honest fallback — and the day somebody writes that band
+    /// the same link becomes a drill with no edit here.
+    /// </summary>
+    private static string Address(HelpLink link)
+    {
+        if (link.Article is { } id)
+        {
+            return DocsSite.Capability(id);
+        }
+
+        var href = link.Href ?? string.Empty;
+
+        if (href.StartsWith("http", StringComparison.Ordinal))
+        {
+            return href;
+        }
+
+        // A path up out of the capability folder reaches the general help pages.
+        return href.StartsWith("../", StringComparison.Ordinal)
+            ? DocsSite.Root + href[3..]
+            : DocsSite.Root + "capabilities/" + href;
+    }
+
+    private static Control Pressable(string title, string? blurb, Action pressed)
+    {
+        var button = new Button
+        {
+            Content = Stacked(title, blurb, ThemeManager.AccentKey),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0, 0, 0, 0),
+            Padding = new Thickness(12, 8),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+
+            // The ray floor, as everything pressable on this surface has.
+            MinHeight = 30,
+        };
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
+    /// <summary>
+    /// A link on a surface that cannot follow it. The address is shown rather than hidden behind
+    /// a control, because a Commander with a headset on can read it and type it later — and a
+    /// button that does nothing costs them the time to find that out.
+    /// </summary>
+    private static Control Written(string title, string? blurb, string address)
+    {
+        var stack = (StackPanel)Stacked(title, blurb, ThemeManager.TextKey);
+
+        var written = new TextBlock
+        {
+            Text = address,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        LoadoutPages.Themed(written, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        stack.Children.Add(written);
+
+        stack.Margin = new Thickness(12, 8);
+
+        return stack;
+    }
+
+    private static Control Stacked(string title, string? blurb, string titleRole)
+    {
+        var stack = new StackPanel { Spacing = 3 };
+
+        var heading = new TextBlock
+        {
+            Text = title,
+            FontSize = TypeScale.Body,
+            FontWeight = FontWeight.Bold,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, titleRole);
+        stack.Children.Add(heading);
+
+        if (blurb is { Length: > 0 })
+        {
+            var line = new TextBlock
+            {
+                Text = blurb,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            stack.Children.Add(line);
+        }
+
+        return stack;
     }
 
     /// <summary>

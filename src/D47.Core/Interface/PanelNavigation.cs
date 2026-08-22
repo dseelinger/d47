@@ -105,6 +105,23 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// </para>
     /// </summary>
     public string? Level { get; init; }
+
+    /// <summary>
+    /// Which capability's help explains this level, or null to inherit whatever the level above
+    /// declared (asked for 2026-08-22).
+    /// <para>
+    /// <b>Declared here rather than held per tab</b>, for the reason <see cref="Level"/> gives
+    /// about itself: a level knows what it is, and the tab holding it frequently does not. The
+    /// Routing tab is three readings of going somewhere and the Transcript is three readings of
+    /// one exchange, so "the help for this tab" is a question with more than one answer in both.
+    /// </para>
+    /// <para>
+    /// Inherited rather than required, because most levels are the same subject as the one above
+    /// them: an engineer's page is still Engineers. Declaring it on the root is what covers a
+    /// whole tab, and a deeper level says so only where the answer changes.
+    /// </para>
+    /// </summary>
+    public string? Help { get; init; }
 }
 
 /// <summary>
@@ -236,6 +253,37 @@ public sealed class PanelNavigator
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Which capability's help explains where the Commander is standing, or null where nothing on
+    /// the trail claims one (asked for 2026-08-22).
+    /// <para>
+    /// The deepest declaration wins and the rest inherit, so a tab is covered by saying it once on
+    /// the root and a level overrides only where the subject really changes. Read from the leaf
+    /// upwards for exactly that reason.
+    /// </para>
+    /// <para>
+    /// A help level of its own declares nothing, so asking this while help is already open still
+    /// answers with the page underneath it rather than with help about help.
+    /// </para>
+    /// </summary>
+    public string? Help
+    {
+        get
+        {
+            var trail = Trail;
+
+            for (var level = trail.Count - 1; level >= 0; level--)
+            {
+                if (trail[level].Help is { Length: > 0 } capability)
+                {
+                    return capability;
+                }
+            }
+
+            return null;
+        }
     }
 
     /// <summary>

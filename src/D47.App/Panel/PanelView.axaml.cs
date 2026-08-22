@@ -707,16 +707,16 @@ public partial class PanelView : UserControl
         _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
         _engineerState = state;
 
+        // The first tab whose help is drawn in the panel rather than opened in a browser. Declared
+        // on the roots, so the engineer levels drilled from them inherit it — and both surfaces
+        // reach this call, which is the point: a Commander in a headset cannot see a browser.
+        var help = D47.Core.Capabilities.Builtin.EngineerCapability.Id;
+
         Furnish(
             PanelTab.Engineers,
             crumb => EngineersPages.Build(crumb, source, Nav),
-            new NavCrumb(EngineersPages.DirectoryRoot, "Directory"),
-            new NavCrumb(EngineersPages.RouteRoot, "Route"));
-
-        // The first tab whose help is drawn in the panel rather than opened in a browser. Both
-        // surfaces reach this call, so the headset gets it on exactly the same terms the window
-        // does — which is the point: a Commander wearing one cannot see a browser at all.
-        EnableHelpFor(PanelTab.Engineers, D47.Core.Capabilities.Builtin.EngineerCapability.Id);
+            new NavCrumb(EngineersPages.DirectoryRoot, "Directory") { Help = help },
+            new NavCrumb(EngineersPages.RouteRoot, "Route") { Help = help });
     }
 
     /// <summary>
@@ -1076,55 +1076,26 @@ public partial class PanelView : UserControl
     /// the headset could not see it (change-requests.md 24). Same seam as
     /// <see cref="EnableTurnDetails"/>, for the same reason.
     /// </summary>
-    private Action? _openHelp;
+    private Action<string>? _openHelp;
 
-    /// <summary>Gives this surface a way out to the site. The desktop window calls it; the headset never does.</summary>
-    public void EnableHelp(Action open)
+    /// <summary>
+    /// Gives this surface a way out to the web. The desktop window calls it; the headset never
+    /// does, and every link on a help page is drawn differently as a result.
+    /// </summary>
+    public void EnableHelp(Action<string> open)
     {
         _openHelp = open;
         ShowHelpAffordance();
     }
 
     /// <summary>
-    /// Which capability's help this tab shows, so the mark in the corner can be about the page
-    /// underneath it rather than about the product (asked for 2026-08-22).
-    /// <para>
-    /// Per tab for now, and per crumb is where this wants to go — a level knows what it is far
-    /// better than the tab holding it, and <c>NavCrumb</c> already argues that a level should
-    /// state such things itself rather than have them worked out from its key. Nothing here
-    /// prevents that: the crumb a help level is pushed from is available at the moment it is
-    /// pushed, so the lookup can move down without the drawing or the parser noticing.
-    /// </para>
-    /// </summary>
-    private readonly Dictionary<PanelTab, string> _help = [];
-
-    /// <summary>
-    /// Says that this tab has help, and whose. Separate from <see cref="Furnish"/> so that a tab
-    /// gains help by one line at its call site rather than by every furnishing signature growing
-    /// a parameter most of them would pass null to.
-    /// </summary>
-    public void EnableHelpFor(PanelTab tab, string capabilityId)
-    {
-        if (!HelpPageView.Exists(capabilityId))
-        {
-            // A page with no band yet. Saying nothing is right: the mark would open a panel
-            // that says there is nothing to read, which is worse than no mark at all — the
-            // same rule IFilterablePage records about a search box that filters nothing.
-            return;
-        }
-
-        _help[tab] = capabilityId;
-        ShowHelpAffordance();
-    }
-
-    /// <summary>
     /// The mark shows when this surface can do something with it: open the site, which only the
-    /// desktop can, or draw the help for the tab being looked at, which either surface can. The
-    /// headset gets one for the second reason — which is the whole point, since the reason it
-    /// lost the button was that the only thing behind it was a browser it could not see.
+    /// desktop can, or draw the help for where the Commander is standing, which either surface
+    /// can. The headset gets one for the second reason — which is the whole point, since the
+    /// reason it lost the button was that the only thing behind it was a browser it could not see.
     /// </summary>
     private void ShowHelpAffordance() =>
-        HelpButton.IsVisible = _openHelp is not null || _help.ContainsKey(Tab);
+        HelpButton.IsVisible = _openHelp is not null || HelpPageView.Exists(Nav.Help);
 
     /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
@@ -1144,9 +1115,10 @@ public partial class PanelView : UserControl
             return false;
         }
 
-        if (_help.TryGetValue(Tab, out var capability))
+        // Whatever the level being looked at claims, or the level above it, up to the root.
+        if (HelpPageView.Exists(Nav.Help))
         {
-            return Nav.Take(HelpPageView.Crumb(capability));
+            return Nav.Take(HelpPageView.Crumb(Nav.Help!));
         }
 
         if (_openHelp is null)
@@ -1154,7 +1126,9 @@ public partial class PanelView : UserControl
             return false;
         }
 
-        _openHelp();
+        // Nothing drawn for here yet, and a desktop to fall out to. The site is still the long
+        // form, and this is the behaviour the window has always had.
+        _openHelp(DocsSite.Root);
         return true;
     }
 
@@ -1183,7 +1157,7 @@ public partial class PanelView : UserControl
 
         if (_helpPane?.Key != crumb.Key)
         {
-            _helpPane = (crumb.Key, HelpPageView.Build(crumb));
+            _helpPane = (crumb.Key, HelpPageView.Build(crumb, Nav, _openHelp));
         }
 
         return _helpPane.Value.Page;

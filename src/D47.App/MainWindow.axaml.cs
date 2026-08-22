@@ -121,8 +121,10 @@ public partial class MainWindow : Window
 
         // The desktop window is the one surface with a browser to open the site in; the headset
         // copy is not handed this and so shows no help button (change-requests.md 24).
-        Panel.EnableHelp(() => Process.Start(
-            new ProcessStartInfo(DocsSite.Root) { UseShellExecute = true }));
+        // Any address a help page names, not just the site root: a band's "where to go next" is
+        // drawn as a button here and as plain text in the headset, which has no browser to hand.
+        Panel.EnableHelp(url => Process.Start(
+            new ProcessStartInfo(url) { UseShellExecute = true }));
         _model.UpdateAccepted += OnUpdateAccepted;
         _model.UpdateDismissed += () => _model.UpdateText = null;
 

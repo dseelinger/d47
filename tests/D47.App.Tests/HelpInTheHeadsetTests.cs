@@ -364,4 +364,64 @@ public class HelpInTheHeadsetTests
 
         panel.Dispose();
     }
+
+    /// <summary>
+    /// <b>Help follows the level, and a level inherits.</b> Drilling into one engineer is still
+    /// the Engineers subject, so the mark stays and opens the same band — which is what declaring
+    /// help on the root buys, and what a per-tab table could not have expressed for a tab whose
+    /// levels are about different things.
+    /// </summary>
+    [AvaloniaFact]
+    public void DrillingIntoOneEngineerInheritsTheTabsHelp()
+    {
+        var (panel, view, _) = Headset();
+
+        Assert.Equal("engineers", view.Nav.Help);
+
+        // The crumb the directory pushes when a name is pressed.
+        Assert.True(view.Nav.Drill(
+            new NavCrumb(EngineersPages.WhoPrefix + "300080", "Liz Ryder")
+            {
+                Level = EngineersPages.WhoPrefix,
+            }));
+
+        Serve(panel);
+
+        Assert.Equal("engineers", view.Nav.Help);
+        Assert.True(Mark(view).IsVisible, "the mark survives the drill");
+
+        var (u, v) = At(Mark(view), view, panel);
+        Assert.True(panel.Press(u, v), "and still opens the band");
+
+        Serve(panel);
+
+        Assert.Equal("help:engineers", view.Nav.Trail[^1].Key);
+
+        panel.Dispose();
+    }
+
+    /// <summary>
+    /// The band's links, on the surface that cannot follow them. None of the three siblings has a
+    /// band yet, so all three are addresses — and with no browser behind the quad they are written
+    /// out rather than drawn as controls that would do nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheBandsLinksAreWrittenOutRatherThanDrawnAsDeadControls()
+    {
+        var (panel, view, _) = Headset(showingHelp: true);
+
+        var shown = view.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("Where to go next".ToUpperInvariant(), shown);
+        Assert.Contains(D47.App.DocsSite.Capability("engineering"), shown);
+        Assert.Contains(D47.App.DocsSite.Capability("ships"), shown);
+        Assert.Contains(D47.App.DocsSite.Capability("checklists"), shown);
+
+        // The long form of this very page, which the panel does not draw.
+        Assert.Contains(D47.App.DocsSite.Capability("engineers"), shown);
+
+        panel.Dispose();
+    }
 }

@@ -96,6 +96,14 @@ nav_order: 107
 </svg>
 <p class="body">Every step of the working is on the page on purpose. A ranking you cannot inspect is an oracle — and when it is wrong, or when you would simply rather go somewhere else, you could not tell a bad answer from a bug.</p>
 </section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="engineering.html"><span class="ct">Engineering →</span><span class="cd">The blueprints themselves, and what each grade costs.</span></a>
+<a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">Where a plan is made, which is what the Route is solving for.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a route lands when you accept it, one line per stop.</span></a>
+</div>
+</div>
 </div></div>
 
 ## The details
