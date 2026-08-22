@@ -1250,8 +1250,8 @@ public sealed class AppHost : IDisposable
                     Clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>()),
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
-                    ConfirmPlot = (system, token) => ConfirmPlot(route, system, token),
-                    AwaitGalaxyMap = (open, token) => AwaitGalaxyMap(status, open, token),
+                    WatchRoute = () => new Input.RoutePlotWatch(route, loggerFactory.CreateLogger<Input.RoutePlotWatch>()),
+                    AwaitGalaxyMap = (open, token) => AwaitGalaxyMap(status, open, logger, token),
                 },
                 macros,
                 personas,
@@ -4502,60 +4502,14 @@ public sealed class AppHost : IDisposable
         };
 
     /// <summary>
-    /// Whether a route to the named system appeared after a plotting attempt.
-    /// <para>
-    /// In the app rather than in Core because it waits, and no Core component reads the clock.
-    /// It polls the reader directly rather than joining the tick loop: this is a question with
-    /// a beginning and an end, asked by one caller, and a tick subscriber for it would outlive
-    /// the question by the rest of the session.
-    /// </para>
-    /// <para>
-    /// Null rather than false when the file never becomes readable at all — "I cannot tell" and
-    /// "it did not work" send the Commander to different places.
-    /// </para>
-    /// </summary>
-    private static async Task<bool?> ConfirmPlot(
-        NavRouteReader route,
-        string system,
-        CancellationToken cancellationToken)
-    {
-        // Elite writes NavRoute.json as the route is accepted, which is quick, but the map
-        // animates first. Six seconds is long enough to cover that and short enough that a
-        // Commander waiting on the answer has not already looked.
-        var deadline = DateTimeOffset.Now + TimeSpan.FromSeconds(6);
-        var sawTheFile = false;
-
-        while (DateTimeOffset.Now < deadline)
-        {
-            route.Poll();
-
-            if (route.Current.ReadAt is not null)
-            {
-                sawTheFile = true;
-
-                if (route.Current.Hops.Count > 0 &&
-                    string.Equals(route.Current.Hops[^1].StarSystem, system, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                return null;
-            }
-        }
-
-        return sawTheFile ? false : null;
-    }
-
-    /// <summary>
     /// Waits for Status.json to report the galaxy map showing, or no longer showing. True when it
-    /// did in time, false when it did not, null when the file was never readable at all.
+    /// did in time, false when it did not, null when the file was never readable at all. The
+    /// route half of the same question is <see cref="Input.RoutePlotWatch"/>.
+    /// <para>
+    /// Logged either way, with the focus it saw, because this is the one step of the macro that
+    /// can be read back at all — a report of "nothing happened" has to start from whether the
+    /// map was even showing.
+    /// </para>
     /// <para>
     /// Reads <see cref="GameStatusReader.Current"/> rather than polling the reader itself: the
     /// tick loop already re-reads Status.json ten times a second, and a second poller on another
@@ -4567,9 +4521,11 @@ public sealed class AppHost : IDisposable
     private static async Task<bool?> AwaitGalaxyMap(
         GameStatusReader status,
         bool open,
+        Microsoft.Extensions.Logging.ILogger logger,
         CancellationToken cancellationToken)
     {
-        var deadline = DateTimeOffset.Now + TimeSpan.FromSeconds(3);
+        var started = DateTimeOffset.Now;
+        var deadline = started + TimeSpan.FromSeconds(3);
         var sawTheFile = false;
 
         while (DateTimeOffset.Now < deadline)
@@ -4582,6 +4538,11 @@ public sealed class AppHost : IDisposable
 
                 if ((current.GuiFocus == Core.Journal.GuiFocus.GalaxyMap) == open)
                 {
+                    logger.LogInformation(
+                        "Galaxy map {State} after {Elapsed:0.0}s (GuiFocus {Focus})",
+                        open ? "open" : "closed",
+                        (DateTimeOffset.Now - started).TotalSeconds,
+                        current.GuiFocus);
                     return true;
                 }
             }
@@ -4595,6 +4556,12 @@ public sealed class AppHost : IDisposable
                 return null;
             }
         }
+
+        logger.LogInformation(
+            "Galaxy map not {State} within 3s; Status.json {Readable}, GuiFocus {Focus}",
+            open ? "open" : "closed",
+            sawTheFile ? "readable" : "never readable",
+            status.Current.GuiFocus);
 
         return sawTheFile ? false : null;
     }

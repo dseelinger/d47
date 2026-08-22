@@ -128,11 +128,16 @@ clipboard always works.
 ```
 
 The confirmation lives in the app rather than in Core, because it waits and no Core component
-reads the clock. It polls `NavRoute.json` for up to six seconds and distinguishes "no route
-appeared" from "the file was never readable" — the two answers send the Commander to different
-places. The same split holds for the map itself: the app waits up to three seconds on
+reads the clock. `RoutePlotWatch` is opened **before the first key is sent** and remembers when
+`NavRoute.json` was last written; afterwards it polls for up to six seconds and says yes only to
+a route that ends at the system *and* was written later than that. A route that was already in
+the file is not evidence the keys did anything — that is how "course plotted" was once said for a
+route the Commander had plotted by hand a minute earlier. It still distinguishes "no route
+appeared" from "the file was never readable", since the two answers send the Commander to
+different places. The same split holds for the map itself: the app waits up to three seconds on
 `Status.json`'s `GuiFocus` for the map to open before the interface keys go, and again for it to
-close after the two backs.
+close afterwards. Both checks log what they saw — the focus value, the file's before-and-after
+write times and where the route ends — so a report of "nothing happened" starts from evidence.
 
 Return and Ctrl+V are sent as plain virtual keys rather than resolved from the bindings file,
 because Elite binds neither. Every wait in the sequence is the Commander's own figure

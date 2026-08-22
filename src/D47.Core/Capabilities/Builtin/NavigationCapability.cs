@@ -21,15 +21,23 @@ public sealed record NavigationSurface
     public required Func<bool> AutoPlotEnabled { get; init; }
 
     /// <summary>
-    /// Watches NavRoute.json for a route ending at the named system, and answers whether one
-    /// appeared. Null means d47 could not tell either way.
+    /// Opens a watch on NavRoute.json <em>before</em> the first key is sent, so that the check
+    /// afterwards can insist on a route written after the attempt began.
     /// <para>
     /// In the app because it waits, and Core reads no clock. That it is answerable at all is
     /// the thing that makes auto-plot honest: Elite writes the whole route to a file the moment
     /// one is plotted, so "did that work" has a real answer rather than an assumption.
     /// </para>
+    /// <para>
+    /// <b>Why a watch rather than a check.</b> The first check read the file after the keys and
+    /// asked whether its route ended at the system — and on 2026-08-21 the Commander plotted a
+    /// route by hand, then asked for the same one by voice, and heard "course plotted" for a
+    /// macro that had plotted nothing. A route that was already there is not evidence that the
+    /// keys did anything. The watch remembers when the file was last written and only a newer
+    /// write counts.
+    /// </para>
     /// </summary>
-    public required Func<string, CancellationToken, Task<bool?>> ConfirmPlot { get; init; }
+    public required Func<IPlotWatch> WatchRoute { get; init; }
 
     /// <summary>
     /// Waits for the galaxy map to be open (<c>true</c>) or closed again (<c>false</c>), as
@@ -50,9 +58,29 @@ public sealed record NavigationSurface
         Clipboard = new RecordingClipboard { Works = false },
         Actions = ActionSurface.Inert,
         AutoPlotEnabled = () => false,
-        ConfirmPlot = (_, _) => Task.FromResult<bool?>(null),
+        WatchRoute = () => new FixedPlotWatch(null),
         AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(null),
     };
+}
+
+/// <summary>
+/// One plotting attempt's view of the route file, opened before the first key goes. See
+/// <see cref="NavigationSurface.WatchRoute"/>.
+/// </summary>
+public interface IPlotWatch
+{
+    /// <summary>
+    /// Whether a route ending at the named system was written <em>after</em> this watch was
+    /// opened. False when the file was readable and no such route appeared in time; null when
+    /// it never became readable at all.
+    /// </summary>
+    Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken);
+}
+
+/// <summary>A watch that answers what it was told to. In Core for the replay harness, like <see cref="RecordingClipboard"/>.</summary>
+public sealed class FixedPlotWatch(bool? answer) : IPlotWatch
+{
+    public Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken) => Task.FromResult(answer);
 }
 
 /// <summary>
@@ -245,6 +273,10 @@ public static class NavigationCapability
                 + $"{reason} Paste it into the map's search box to plot it.");
         }
 
+        // Opened before the first key, so a route that was already in the file cannot pass as
+        // the result of this attempt.
+        var watch = surface.WatchRoute();
+
         // The map is opened on its own and the rest waits for Status.json to say it is showing,
         // because the remaining keys are interface keys: typed into the cockpit instead of the
         // map they are a W and a space bar sent to a flying ship. A map that is already open is
@@ -276,7 +308,7 @@ public static class NavigationCapability
         // Plotted or not, the map is toggled shut: the Commander asked for a course, not for a
         // map left open over the cockpit. The check comes first so the closing cannot land on a
         // route still being calculated.
-        var confirmed = await surface.ConfirmPlot(system, cancellationToken).ConfigureAwait(false);
+        var confirmed = await watch.ConfirmAsync(system, cancellationToken).ConfigureAwait(false);
         var closing = await surface.Actions.Input.SendAsync(keys.Close(), cancellationToken).ConfigureAwait(false);
         var closed = closing.Sent && await surface.AwaitGalaxyMap(false, cancellationToken).ConfigureAwait(false) is not false;
         var stillOpen = closed ? string.Empty : " The galaxy map is still open.";

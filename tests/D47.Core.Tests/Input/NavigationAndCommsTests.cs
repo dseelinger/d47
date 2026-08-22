@@ -112,7 +112,7 @@ public class NavigationAndCommsTests
         Clipboard = clipboard,
         Actions = actions,
         AutoPlotEnabled = () => autoPlot,
-        ConfirmPlot = (_, _) => Task.FromResult(confirm),
+        WatchRoute = () => new FixedPlotWatch(confirm),
         AwaitGalaxyMap = (open, _) => Task.FromResult(open ? mapOpens : mapCloses),
     };
 

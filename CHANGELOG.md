@@ -17,6 +17,20 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.4 — 2026-08-21 — A route that was already there does not count
+
+**"Course plotted" now means this attempt plotted it.** The check after the galaxy-map macro read
+`NavRoute.json` and asked whether its route ended at the system — so when the Commander plotted a
+route by hand and then asked for the same one by voice, the macro plotted nothing and d47 said
+"course plotted" anyway, eight seconds after it started. `RoutePlotWatch` is now opened before
+the first key is sent, remembers when the file was last written, and accepts only a route written
+later than that. A route to somewhere else, or the old route untouched, is "no route appeared";
+no file at all is still "cannot tell".
+
+**The macro logs what it can see.** Whether the map opened and closed (with the `GuiFocus` value
+and how long it took), and the route file's write time before and after with where the route
+ends. A report of "nothing happened" now starts from the log rather than from a guess.
+
 ## 0.48.3 — 2026-08-21 — Act first, talk least
 
 **Actions are narrated in two short lines, not a ledger.** "Set course for the closest Imperial
