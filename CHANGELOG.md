@@ -17,6 +17,58 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.53.0 — 2026-08-22 — Help leads with a picture, and the headset can read it
+
+**Help used to be a browser hop, and one of the two surfaces has no browser.** The mark in the
+corner opened the documentation site on the desktop; 0.52.2 stopped the headset showing a button
+that could only do something a Commander wearing one cannot see, which fixed the lie and left the
+gap. This closes it: help is drawn *in the panel* now, over whichever page asked for it, and the
+Engineers tab is the first to have any.
+
+**It is the same bytes as the website.** Each page's short form is authored once, at the top of
+its markdown, and read a second time by the app — so a page cannot say one thing in a browser and
+another in a headset. Four pages have one so far: Overview, Installing, Talking to Directive 47
+and Engineers. The other forty-three are unchanged and simply offer no mark yet, so writing one is
+an edit to the markdown and nothing else.
+
+**Nothing was cut to make room.** Every page keeps its reference half under *The details* —
+Engineers keeps all 327 of its original lines — and every help page in the panel ends with a way
+through to it. That is not a courtesy: the panel draws the short form and nothing beneath it, so
+the tables, the tool schemas and the working live only on the site, and a page with no way out
+would quietly hide the documentation.
+
+**Diagrams follow your theme, because they name no colours.** A picture is drawn from the nine
+palette roles rather than from ink, so the same drawing comes out amber under Elite, teal under
+Guardian, and recoloured again by your own HUD matrix — without the drawing knowing a theme
+exists. A colour written as a literal, or a role that is not one of the nine, now fails a test
+rather than rendering as an invisible box on a published page.
+
+**Nothing in a diagram is drawn too small to read in a headset.** The big panel is nineteen pixels
+per degree, so the floor is arithmetic rather than taste, and one test measures the size a picture
+is *actually drawn at* rather than the number in the markup. A change to the panel's chrome cannot
+quietly shrink every diagram below legibility any more.
+
+**Help is a level, not a tab.** It takes the panel over the page it is about, and dismissing it is
+the same gesture as leaving any other level — the breadcrumb, the controller button, or saying so.
+Which page it explains is declared by the level itself and inherited downwards, so one engineer's
+page is still Engineers, and a tab whose levels are about genuinely different things can say so.
+
+**A link goes wherever the surface can follow it.** A page this build already carries opens as
+another level of help, so following a link in a headset is a drill rather than a dead end.
+Anything else is an address: a button where there is a browser, and the address written out where
+there is not, because a control that does nothing costs you the time to find that out.
+
+Two things were found by writing the help rather than by using the app. **Talking to Directive 47
+had gone stale** — it still said the settings surface for an API key "arrives in a later phase",
+which stopped being true when bring-your-own-model shipped; it now points at the row that exists,
+and demotes the environment variable to the Anthropic-only fallback it actually is. And the
+Engineers directory's third heading, **"Requires Engineer Intro First"**, is now **"Needs a
+Referral"**: *Intro* abbreviated a word the game does not use and *First* repeated *Requires*, so
+it read as a system message between "Ready for Unlock" and "Unlocked". Explaining a heading in a
+picture turns out to be a good test of whether it explains itself.
+
+---
+
 ## 0.52.4 — 2026-08-22 — d47 starts for a Commander with two preset files, and says why when it cannot
 
 **A second `StartPreset` file killed startup before the window existed.** `BindsResolver`
