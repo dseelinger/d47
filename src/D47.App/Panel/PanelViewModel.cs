@@ -41,9 +41,15 @@ public enum PanelMode
 /// carries the busy glyph and why the collapse is three modes rather than a single toggle.
 /// </para>
 /// <para>
-/// A property of the surface, exactly like <see cref="PanelMode"/> and for the same reason: the
-/// two surfaces bind one model, so a page held there would send the headset to the log file the
-/// moment the window went to it. The model owns the content; each surface picks its page.
+/// <b>One choice across every surface, since list.md Phase 45 — a reversal, recorded rather
+/// than smoothed over.</b> This used to be a property of the surface, exactly like
+/// <see cref="PanelMode"/> and for the same reason: a page held in common would send the
+/// headset to the log file the moment the window went to it. The Commander's ruling is that
+/// this is the point — <em>"I want the Windows UI transcript selection to be echoed in VR and
+/// vice-versa."</em> The principle that keeps the reversal from being arbitrary: <b>what you
+/// are reading is shared; how it is drawn is not.</b> So <see cref="PanelMode"/> and zoom stay
+/// per surface, the page is still read from each surface's navigator, and the host's
+/// <c>TranscriptMirror</c> keeps those navigators agreeing about it.
 /// </para>
 /// </summary>
 public enum TranscriptPage

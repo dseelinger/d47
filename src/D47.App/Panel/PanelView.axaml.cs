@@ -61,6 +61,12 @@ public partial class PanelView : UserControl
     /// while the headset reads the conversation, and one navigator on the shared model would
     /// drag each surface wherever the other went.
     /// </para>
+    /// <para>
+    /// One exception, and it is the host's rather than this view's: the Transcript tab's root is
+    /// shared across every surface (list.md Phase 45), so a press on this mode control that picks
+    /// Technical is heard by the headset and drawn there too. The navigator still holds the value;
+    /// the host's <c>TranscriptMirror</c> keeps the navigators agreeing about it.
+    /// </para>
     /// </summary>
     public PanelNavigator Nav { get; } = new();
 
@@ -331,8 +337,10 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Which reading of the transcript this instantiation is showing. Settable without switching
-    /// to the Transcript tab, because it says which mode that tab is on rather than which tab is.
+    /// Which reading of the transcript this instantiation is showing — and, since list.md Phase
+    /// 45, every other one: the host mirrors the root between surfaces, so setting it here sets
+    /// it everywhere. Settable without switching to the Transcript tab, because it says which
+    /// mode that tab is on rather than which tab is.
     /// </summary>
     public TranscriptPage Page
     {
