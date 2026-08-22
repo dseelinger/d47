@@ -52,6 +52,13 @@ themselves, and cannot be moved or dragged somewhere you would not see them.
 Point a controller at the panel, pull the **trigger**, and it comes with you — position and angle
 together, so it feels attached rather than dragged. Let go and it stays.
 
+While a ray is on the panel, Directive 47 has the trigger and grip of that controller and the
+game does not — that is how the panel can be grabbed at all. The moment the ray leaves, they are
+given back. If a controller ever seems to stop answering the game after you have been pointing
+at the panel, that is the hand-back having failed: **"headset overlay off"** then **"headset
+overlay on"** frees it without restarting the headset, and a build from 0.48.6 on gives it back
+on every path.
+
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
 

@@ -54,9 +54,8 @@ public class VrPointerTests
     }
 
     /// <summary>
-    /// And something reads it. An action set is active only for the frame it is passed in, so a
-    /// registration nobody follows up on is a set that is never activated — the panel would be
-    /// pointable and never grabbable.
+    /// And something reads it. A registration nobody follows up on is a set that is never
+    /// activated — the panel would be pointable and never grabbable.
     /// </summary>
     [Fact]
     public void SomethingInTheAppActuallyReadsTheTrigger()
@@ -64,6 +63,25 @@ public class VrPointerTests
         Assert.True(
             IsCalledInside(typeof(VrHost).Assembly, nameof(VrActionInput.TriggerHeld)),
             $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.TriggerHeld)}");
+    }
+
+    /// <summary>
+    /// And something gives them back. A claim at overlay priority stands until the next
+    /// <c>UpdateActionState</c> from this process, so a host that reads the trigger and never
+    /// calls <see cref="VrActionInput.Release"/> is a host that takes the Commander's controllers
+    /// from the game the first time a ray crosses the panel and keeps them — which is what
+    /// "Motion Controller appears hung" was (2026-08-21).
+    /// </summary>
+    [Fact]
+    public void SomethingInTheAppGivesTheControllersBack()
+    {
+        Assert.True(
+            IsCalledInside(typeof(VrHost).Assembly, nameof(VrActionInput.Release)),
+            $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.Release)}");
+
+        Assert.True(
+            IsCalledInside(typeof(VrActionInput).Assembly, nameof(VrActionInput.Release)),
+            $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Release)}");
     }
 
     /// <summary>What a surface source says about the pointer, read off the type's own default.</summary>

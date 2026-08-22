@@ -256,6 +256,9 @@ public sealed class SteamVrRuntime(
 
         if (_system is not null)
         {
+            // Before the session goes, so a claim standing at the moment the overlay was
+            // switched off is given back rather than left for SteamVR to notice.
+            Actions.Release();
             OpenVR.Shutdown();
             _system = null;
         }

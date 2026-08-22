@@ -138,15 +138,17 @@ public sealed class VrActionInput(ILogger logger)
     /// stops while they are held.
     /// </para>
     /// <para>
-    /// An action set is active only for the frame it is passed in, so <em>not</em> calling this is
-    /// the release. There is no matching deactivate to forget.
+    /// The claim outlives the frame: SteamVR holds an application's last active action-set list
+    /// until the next <c>UpdateActionState</c> from that application, so every path that stops
+    /// wanting the controllers has to say so through <see cref="Release"/>. This used to claim
+    /// the opposite, and the Commander's controllers hung for it.
     /// </para>
     /// </summary>
     public bool TriggerHeld(bool wanted)
     {
         if (!_ready || !wanted)
         {
-            HoldingPriority = false;
+            Release();
             return false;
         }
 
@@ -182,6 +184,39 @@ public sealed class VrActionInput(ILogger logger)
         // bActive as well as bState: an action bound to nothing, or on a controller that has gone
         // to sleep, reports a perfectly confident false rather than an error.
         return read == EVRInputError.None && data is { bActive: true, bState: true };
+    }
+
+    /// <summary>
+    /// Gives the controllers back. Idempotent, and cheap when there is nothing to give back.
+    /// <para>
+    /// <b>Not calling <see cref="TriggerHeld"/> is not the release, and this class used to say
+    /// it was.</b> SteamVR keeps an application's last active action-set list in force until
+    /// that application calls <c>UpdateActionState</c> again, so a frame that claimed the
+    /// controllers at overlay priority and was followed by frames that simply did not call — the
+    /// ray left the panel, the panel stopped taking the pointer, the session ended — left the
+    /// claim standing. The Commander's report (2026-08-21): "Motion Controller appears hung",
+    /// and only restarting the headset freed it. So the release is an explicit call with no
+    /// action sets, made on every path out of a claim.
+    /// </para>
+    /// </summary>
+    public void Release()
+    {
+        if (!_ready || !HoldingPriority)
+        {
+            HoldingPriority = false;
+            return;
+        }
+
+        HoldingPriority = false;
+        _backWasDown = false;
+
+        // An empty set list is how SteamVR is told "nothing, from me, from now".
+        var released = OpenVR.Input.UpdateActionState([], (uint)Marshal.SizeOf<VRActiveActionSet_t>());
+
+        if (released != EVRInputError.None)
+        {
+            logger.LogWarning("Could not release the controllers: {Error}", released);
+        }
     }
 
     /// <summary>

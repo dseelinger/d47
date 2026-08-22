@@ -17,6 +17,20 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.6 — 2026-08-21 — The controllers are given back
+
+**A motion controller no longer hangs after the panel has been pointed at.** To carry the panel,
+d47 activates its action set at SteamVR's overlay priority while a controller's ray is on the
+panel, which takes the trigger and grip from whatever else wants them; the code said that simply
+not activating it on the next frame was the release. It is not: SteamVR keeps an application's
+last active action-set list in force until that application calls `UpdateActionState` again, so
+once the ray left the panel — or the panel stopped taking the pointer, or the overlay was switched
+off — the claim stood, and the controller appeared hung until the headset was restarted. The
+release is now an explicit call with no action sets, made on every path out of a claim: the ray
+leaving, the panel declining the pointer, and the session stopping. Reported by the Commander
+on 2026-08-21 as "Motion Controller appears hung"; until updated, **"headset overlay off"** then
+**"headset overlay on"** frees it without a restart.
+
 ## 0.48.5 — 2026-08-21 — Arm the selector
 
 **The galaxy-map macro brushes the camera before it holds select.** With the route-file check

@@ -402,6 +402,9 @@ public sealed class VrHost : IDisposable
         // and a quad that answers a ray in front of the cockpit is a beam that stops on a label.
         if (!_panel.TakesPointer || _runtime.Head is not { } head)
         {
+            // A claim made on the last frame that got past this line would otherwise stand for
+            // as long as this line keeps returning — see VrActionInput.Release.
+            _runtime.Actions.Release();
             return;
         }
 
