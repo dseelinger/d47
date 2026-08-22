@@ -118,3 +118,152 @@
     columns: 2;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The ELI5 band.
+
+   The top half of a help page: big pictures, few words. It is a dark card
+   inside an otherwise light page on purpose — it reads as the cockpit rather
+   than as the manual, and the manual is directly underneath it.
+
+   Every colour below is one of the nine roles in Palette.cs, and this block is
+   the only place their values appear. The same markup renders in the app's
+   panel, where the SVG reader substitutes the live Palette instead — so a
+   diagram follows the Commander's chosen theme and their HUD recolouring
+   without knowing either exists. Nothing inside .d47-eli5 may name a colour
+   any other way.
+   --------------------------------------------------------------------------- */
+.d47-eli5 {
+  --background:   #0B0B0D;
+  --surface:      #15151A;
+  --surface-alt:  #1E1E24;
+  --border:       #2E2E36;
+  --text:         #E8E2D8;
+  --text-muted:   #9A9288;
+  --accent:       #FF7100;
+  --accent-muted: #A64A00;
+  --danger:       #FF5555;
+  --info:         #2288FF;
+
+  /* Sized against the band rather than the viewport, so the same page reads at
+     a phone width, at a desktop width, and on a 1024-pixel quad a metre away. */
+  container-type: inline-size;
+  margin: 0 0 2.5rem;
+}
+
+.d47-eli5 .d47-frame {
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 34px clamp(18px, 4cqw, 44px) 30px;
+}
+
+.d47-eli5 .lede {
+  margin: 0 0 2rem;
+  font-size: clamp(16px, 2.2cqw, 20px);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.d47-eli5 section {
+  margin-top: 40px;
+}
+
+.d47-eli5 h2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 18px;
+  font-size: clamp(19px, 2.7cqw, 25px);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+  border: 0;
+}
+
+/* The step number. A circle rather than "1." so the eye finds the sequence
+   before it reads a word of it. */
+.d47-eli5 .num {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--background);
+  font-size: 17px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pictures scale with the band. Never a fixed pixel size: the whole point of
+   the viewBox is that one drawing serves a phone and a headset. */
+.d47-eli5 svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.d47-eli5 .body {
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.d47-eli5 .body em {
+  color: var(--text);
+  font-style: italic;
+}
+
+.d47-eli5 .next {
+  margin-top: 46px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+.d47-eli5 .next-title {
+  margin-bottom: 16px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.d47-eli5 .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.d47-eli5 .card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.d47-eli5 .card:hover {
+  background: var(--surface-alt);
+  border-color: var(--accent);
+}
+
+.d47-eli5 .ct {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.d47-eli5 .cd {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
