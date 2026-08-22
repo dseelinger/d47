@@ -18,12 +18,32 @@ public static class Careers
             return null;
         }
 
-        var wanted = text.Trim();
+        var wanted = text.Trim().TrimEnd('.');
 
         return Keys.FirstOrDefault(key =>
-            string.Equals(key, wanted, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(Word(key), wanted, StringComparison.OrdinalIgnoreCase));
+                   string.Equals(key, wanted, StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(Word(key), wanted, StringComparison.OrdinalIgnoreCase))
+               ?? (Aliases.TryGetValue(wanted, out var alias) ? alias : null);
     }
+
+    /// <summary>
+    /// The other words a person or a model uses for a ladder — "Trader" for the Trade career,
+    /// "Explorer" for Exploration. A model asked for a career wrote the person rather than the
+    /// ladder, and refusing that taught it nothing.
+    /// </summary>
+    private static readonly Dictionary<string, string> Aliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Trader"] = "Trade",
+        ["Trading"] = "Trade",
+        ["Merchant"] = "Trade",
+        ["Explorer"] = "Explore",
+        ["Exploring"] = "Explore",
+        ["Fighter"] = "Combat",
+        ["Merc"] = "Soldier",
+        ["Mercenaries"] = "Soldier",
+        ["Xenobiology"] = "Exobiologist",
+        ["Xenobiologist"] = "Exobiologist",
+    };
 
     /// <summary>
     /// How a Commander says the career. Naming the <em>career</em> is not naming the rank — the

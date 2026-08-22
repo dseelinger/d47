@@ -678,6 +678,19 @@ anyway, because the label is not part of the persona block.
 `LeaveBody`, `SupercruiseEntry` and `FSDJump` — so *Here* writes a beat with the numbers the
 journal will match and nothing typed.
 
+### The model had nothing real to anchor on (0.52.1)
+
+The catalogue lookup above said that without it "generation still works from the galaxy service
+and the model's own knowledge". The first ask from the field showed what that clause was worth:
+near Oppi the catalogue holds nothing within 110 light years, the prompt named Oppi and a radius and
+nothing else real, and the model wrote two beats at Colonia distance — then, told only the refusals
+and not shown its draft, wrote a fresh story with the same fault. The galaxy service was checking
+every stop and proposing none. It now proposes them: the twenty stations and twenty landable bodies
+nearest here within the reach, grouped by system nearest first, in both turns. The refusal pass is
+shown the draft it is fixing. And a rank beat is read in every shape the model has used — the
+career as the person rather than the ladder, nested under its own key, the rank as text — because
+refusing it with the career printed as `""` was the one refusal the model could not act on.
+
 ### Left for the next pass
 
 *Somewhere I've been* is not in the editor: d47 keeps no visited-places list and the two ways in

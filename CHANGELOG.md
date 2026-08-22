@@ -17,6 +17,22 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.1 — 2026-08-22 — A story that could not stand
+
+**The ship's AI is now handed real places to build a story from.** Asked for an adventure *near
+here* from Oppi, the first draft put two of its five beats 21,886 light years away — Colonia
+distance — and the rewrite pass did it again. The generator gave the model the system's name, a
+radius, and the catalogue's notable places within reach, and there were none within 110 light years
+of Oppi: so the model was writing from a name it had never heard of and its own memory of the
+galaxy, which is exactly what the plan warned a model left to itself does. The galaxy search that
+already checks every stop now also proposes them — the stations and landable bodies nearest here,
+within the reach, spelt as they must be named — to both the spine turn and the beats turn. The
+rewrite pass is also shown the draft it is fixing, so it keeps the beats that stood rather than
+writing a fresh story wrong in the same way. And a rank beat is read however the model wrote it —
+*Trader* for the Trade ladder, the career nested under its own key, the rank as text — where before
+the beat was refused with the career printed as `""`, which told the model nothing. A Commander
+already Elite in a career is told that is why, rather than asked for rank 9.
+
 ## 0.52.0 — 2026-08-22 — Adventures
 
 **A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one

@@ -260,6 +260,20 @@ public sealed record BodyQuery
     /// <summary>Every body in one named system, for resolving a body a story names to its id (list.md Phase 47).</summary>
     public static BodyQuery Within(string system) => ForSystems(system, [system.Trim()], 1);
 
+    /// <summary>
+    /// The landable bodies nearest a system, for proposing real places a story may land on or
+    /// scan (list.md Phase 47). Landable because a land beat needs it and a scan beat is not
+    /// harmed by it.
+    /// </summary>
+    public static BodyQuery LandableNear(string referenceSystem, double maxDistance, int size) =>
+        new()
+        {
+            ReferenceSystem = referenceSystem.Trim(),
+            Landable = true,
+            MaxDistance = Math.Clamp(maxDistance, 1, 1000),
+            Size = Math.Clamp(size, 1, 20),
+        };
+
     public static BodyQuery ForSystems(string referenceSystem, IReadOnlyList<string> names, double maxDistance) =>
         new()
         {
