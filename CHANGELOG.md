@@ -17,6 +17,19 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.5 — 2026-08-21 — Arm the selector
+
+**The galaxy-map macro brushes the camera before it holds select.** With the route-file check
+made honest in 0.48.4, the Commander could see what the macro actually did: the search reached
+the right system, the camera arrived, and the 1.2-second held select plotted nothing. Worked out
+by hand — after a search the selector over the star is a plain circle and select is inert; the
+smallest camera movement draws the arrows around it, and with the arrows showing and the selector
+still on the star, the held select plots. So the sequence is now map, up, select, paste, return,
+three seconds, **one tap of sideways camera translate**, select held 1.2 seconds, map key to
+close. The brush is the shortest press the game reliably sees (60 ms) on the Commander's
+instruction that a tenth of a second is already too long, and it needs a fourth binding:
+`CamTranslateRight`, or `CamTranslateLeft` if that is the one bound.
+
 ## 0.48.4 — 2026-08-21 — A route that was already there does not count
 
 **"Course plotted" now means this attempt plotted it.** The check after the galaxy-map macro read

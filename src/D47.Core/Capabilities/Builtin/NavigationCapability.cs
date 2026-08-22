@@ -127,10 +127,11 @@ public sealed class RecordingClipboard : IClipboard
 /// <b>The drive is the Commander's own macro</b>, given 2026-08-21 after the original three-key
 /// attempt — open, paste, return — turned out to plot nothing: it assumed the search box had
 /// focus when the map opened, and it does not. The sequence below walks to the box explicitly
-/// (up, select), pastes, commits the search with return, gives the camera time to arrive, holds
-/// select long enough to plot, and toggles the map shut. Every wait in it is the Commander's
-/// figure, and the two things d47 <em>can</em> see — Status.json saying the map is showing,
-/// NavRoute.json saying a route exists — are checked where they fall rather than assumed.
+/// (up, select), pastes, commits the search with return, gives the camera time to arrive,
+/// brushes the camera once to arm the selector, holds select long enough to plot, and toggles
+/// the map shut. Every wait in it is the Commander's figure, and the two things d47 <em>can</em>
+/// see — Status.json saying the map is showing, NavRoute.json saying a route exists — are
+/// checked where they fall rather than assumed.
 /// </para>
 /// <para>
 /// <b>Return, not "down".</b> The first cut of the macro stepped into the result list with the
@@ -168,6 +169,46 @@ public static class NavigationCapability
 
     /// <summary>How long select is held on the star. A tap opens the system; a hold plots to it.</summary>
     private static readonly TimeSpan PlotHold = TimeSpan.FromMilliseconds(1200);
+
+    /// <summary>
+    /// A brush of the camera sideways, between the camera arriving and the held select.
+    /// <para>
+    /// <b>This is what arms the selector.</b> After the search flies the camera to the system, the
+    /// selector over the star is a plain circle and pressing select does nothing — the Commander
+    /// found this by hand on 2026-08-21 after a cut of this macro without the brush plotted
+    /// nothing. The smallest camera movement draws the arrows around the selector, and with the
+    /// arrows showing and the selector still over the star, the held select plots. As brief as a
+    /// press can be: the Commander's instruction was "less than a tenth of a second", and the
+    /// floor is <see cref="InputSequence.TapHold"/> — under one frame Elite does not see the key
+    /// at all, and anything longer moves the selector off the star.
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan Nudge = InputSequence.TapHold;
+
+    /// <summary>
+    /// The camera key, resolved here and advertised nowhere. It is not in <see cref="GameActions.All"/>
+    /// because that list is the <c>control_interface</c> tool's closed vocabulary and its
+    /// documentation page, and a sideways camera brush is not something a Commander asks for by
+    /// voice — it exists for this macro alone. Right first, left as the fallback, since either
+    /// arms the selector and a Commander may have bound only one.
+    /// </summary>
+    private static readonly IReadOnlyList<GameAction> NudgeKeys =
+    [
+        new()
+        {
+            Id = "galaxy_map_nudge",
+            Label = "the galaxy map camera",
+            Group = GameActions.Interface,
+            Variants = [new ActionVariant("CamTranslateRight", ControlContext.AnyShip | ControlContext.Srv)],
+        },
+        new()
+        {
+            Id = "galaxy_map_nudge",
+            Label = "the galaxy map camera",
+            Group = GameActions.Interface,
+            Variants = [new ActionVariant("CamTranslateLeft", ControlContext.AnyShip | ControlContext.Srv)],
+        },
+    ];
 
     public static CapabilityDescriptor Create(NavigationSurface surface) => new()
     {
@@ -328,10 +369,10 @@ public static class NavigationCapability
     }
 
     /// <summary>
-    /// The three bindings the macro presses, resolved against the Commander's own file and the
+    /// The four bindings the macro presses, resolved against the Commander's own file and the
     /// mode they are in, and the three keystroke runs built from them.
     /// <para>
-    /// All three or none: a macro that opens the map and then has no key for "select" leaves the
+    /// All four or none: a macro that opens the map and then has no key for "select" leaves the
     /// map open over the cockpit, which is worse than the clipboard alone. So the first binding
     /// that cannot be pressed stops the whole attempt before a key is sent, and its reason is the
     /// one the Commander hears.
@@ -342,7 +383,7 @@ public static class NavigationCapability
     /// text field.
     /// </para>
     /// </summary>
-    private sealed record MapKeys(EliteBinding Map, EliteBinding Up, EliteBinding Select)
+    private sealed record MapKeys(EliteBinding Map, EliteBinding Up, EliteBinding Select, EliteBinding Nudge)
     {
         private const uint Control = 0xA2;
         private const uint V = 0x56;
@@ -371,15 +412,24 @@ public static class NavigationCapability
                 pressed.Add(reach.Binding!);
             }
 
-            return (new MapKeys(pressed[0], pressed[1], pressed[2]), string.Empty);
+            // Either side will do, and the reason reported is the right-hand one's, which names
+            // the key a Commander who has bound neither would most naturally add.
+            var nudges = NudgeKeys.Select(key => ActionReachability.Resolve(key, binds, context)).ToArray();
+
+            if (nudges.FirstOrDefault(reach => reach.IsOffered) is not { } nudge)
+            {
+                return (null, nudges[0].Reason);
+            }
+
+            return (new MapKeys(pressed[0], pressed[1], pressed[2], nudge.Binding!), string.Empty);
         }
 
         /// <summary>Step 1: open the map. Sent on its own so Status.json can confirm it showed.</summary>
         public IReadOnlyList<InputStep> Open() => InputSequence.Tap(Map);
 
         /// <summary>
-        /// Steps 2 to 7: walk to the search box, paste, return to search, let the camera arrive,
-        /// and hold select to plot.
+        /// Steps 2 to 8: walk to the search box, paste, return to search, let the camera arrive,
+        /// brush the camera to arm the selector, and hold select to plot.
         /// </summary>
         public IReadOnlyList<InputStep> Search() =>
         [
@@ -400,10 +450,12 @@ public static class NavigationCapability
             new InputStep(InputStepKind.KeyUp, Return),
 
             InputStep.Wait(CameraSettle),
+            .. InputSequence.Hold(Nudge, NavigationCapability.Nudge),
+            InputStep.Wait(BetweenKeys),
             .. InputSequence.Hold(Select, PlotHold),
         ];
 
-        /// <summary>Step 8: the map key again, which toggles it shut.</summary>
+        /// <summary>Step 9: the map key again, which toggles it shut.</summary>
         public IReadOnlyList<InputStep> Close() => InputSequence.Tap(Map);
     }
 
@@ -416,7 +468,8 @@ public static class NavigationCapability
         Key = AutoPlotKey,
         Label = "Try to plot courses in the galaxy map",
         Help = "After copying a system name, opens the galaxy map, searches for it, plots to it and "
-               + "closes the map again, using your own galaxy map, UI up and UI select keys. "
+               + "closes the map again, using your own galaxy map, UI up, UI select and sideways "
+               + "camera keys. "
                + "Best-effort: D47 checks afterwards whether a route actually appeared and tells you "
                + "if it did not. Needs key presses to be allowed too.",
         Kind = SettingKind.Toggle,

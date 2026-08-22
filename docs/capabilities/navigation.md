@@ -55,11 +55,17 @@ you, with your own keys, in this order:
 2. **Up**, then **select** — that is the search box.
 3. Paste the name, then **return** — the map flies to the first match.
 4. Three seconds for the camera to get there.
-5. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
-6. The galaxy map key again, which closes it.
+5. The briefest possible brush of **sideways camera** — a single tap.
+6. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
+7. The galaxy map key again, which closes it.
 
-Return rather than the UI down key, because the search box keeps focus after the paste and an
-interface key sent to it is a character — the first cut of this macro typed an S into the box.
+Two of those steps exist because of what went wrong without them. Return rather than the UI down
+key, because the search box keeps focus after the paste and an interface key sent to it is a
+character — the first cut of this macro typed an S into the box. And the camera brush, because
+after the search the selector over the star is a plain circle and select does nothing; the
+smallest camera movement draws the arrows around it, and with the arrows showing and the
+selector still on the star, the held select plots. The brush is as short as a key press can be —
+longer moves the selector off the star.
 
 This is still best-effort. Directive 47 cannot see the map, so it cannot check that the search
 matched the system you meant rather than another that starts the same way, and it cannot see
@@ -86,11 +92,11 @@ open, nothing else is sent — the remaining keys are a W and a space bar, and t
 cockpit instead of the map they would fly the ship. And if the closing press leaves the map
 showing, it says so: *the galaxy map is still open*.
 
-**It needs three keys**: the galaxy map, UI up and UI select. All on the keyboard or mouse — a
-key on a stick is one Directive 47 cannot press. It takes all three or none: a macro that opens
-the map and then has no "select" leaves it open over the cockpit, which is worse than the
-clipboard alone. So the first key it cannot press stops the whole attempt before anything is
-sent, and you hear which one:
+**It needs four keys**: the galaxy map, UI up, UI select, and either sideways camera translate
+(right is tried first, then left). All on the keyboard or mouse — a key on a stick is one
+Directive 47 cannot press. It takes all four or none: a macro that opens the map and then has no
+"select" leaves it open over the cockpit, which is worse than the clipboard alone. So the first
+key it cannot press stops the whole attempt before anything is sent, and you hear which one:
 
 ```text
 Colonia is on your clipboard. I could not drive the galaxy map myself — You have no binding for
