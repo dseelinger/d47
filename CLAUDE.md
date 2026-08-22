@@ -92,7 +92,7 @@ Each of these is cheap to break by accident and expensive to fix later.
   cite `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
   phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
   Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
-  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, and Phase 39 on 2026-08-21 —
+  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, and Phases 39 to 43 on 2026-08-21 —
   and the set only ever grows. **22 is a retired number, not a hole.** Phase 22 was cut on 2026-08-18 with nothing built,
   and it is **not reused**: a later phase renumbered into 22 would silently repoint every citation
   that ever said "Phase 22" at a subject it was never about, which is the failure the rule above

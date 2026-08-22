@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -191,4 +192,85 @@ public class OnlySomeLinesAreSaidInCharacterTests
         Assert.Null(FlavourBriefs.Introducing(intro, personalityEnabled: true));
     }
 
+    /// <summary>
+    /// Every line the ship's AI says to the Commander knows who the Commander is (list.md Phase
+    /// 43): the ambient remarks, the opening line and a core's first words all carry the sheet.
+    /// </summary>
+    [Fact]
+    public void TheShipsAiKnowsWhoItIsFlyingWith()
+    {
+        var ambient = FlavourBriefs.For(
+            new Announcement($"{AmbientCallout.KeyPrefix}Docked", "Quiet out here.") { Variant = 1 },
+            personalityEnabled: true);
+        var greeting = FlavourBriefs.For(
+            new Announcement(ContinuityCallout.Key, "Good evening, Commander. Ready to go."),
+            personalityEnabled: true);
+        var intro = FlavourBriefs.Introducing("Systems answering, Commander.", personalityEnabled: true);
+
+        Assert.True(ambient!.NeedsAboutMe);
+        Assert.True(greeting!.NeedsAboutMe);
+        Assert.True(intro!.NeedsAboutMe);
+    }
+
+    /// <summary>
+    /// The carrier's tower does not, for the reason it gets no persona: a stranger on a comms
+    /// channel does not know the Commander's history.
+    /// </summary>
+    [Theory]
+    [InlineData(VoiceRole.CarrierCaptain)]
+    [InlineData(VoiceRole.TowerControl)]
+    public void AStrangerDoesNotKnowTheCommandersHistory(VoiceRole role)
+    {
+        var brief = FlavourBriefs.For(
+            new Announcement("carrier.jump", "Jump complete.") { Voice = role }, personalityEnabled: true);
+
+        Assert.False(brief!.NeedsAboutMe);
+        Assert.False(brief.NeedsStory);
+    }
+
+    /// <summary>
+    /// The two flags correlate and are not the same flag. They answer different questions —
+    /// whose voice this is, and who it is speaking to — and a brief could one day want one
+    /// without the other, which a merged flag could not express.
+    /// </summary>
+    [Fact]
+    public void WhoseVoiceAndWhoItKnowsAreSeparateFlags()
+    {
+        var persona = typeof(FlavourBrief).GetProperty(nameof(FlavourBrief.NeedsPersona));
+        var aboutMe = typeof(FlavourBrief).GetProperty(nameof(FlavourBrief.NeedsAboutMe));
+
+        Assert.NotNull(persona);
+        Assert.NotNull(aboutMe);
+        Assert.NotEqual(persona, aboutMe);
+    }
+
+    /// <summary>
+    /// The sheet always, the story sometimes — and which remark carries the story is read off the
+    /// announcement's index, so it is decided by the same count that picked the stock line and
+    /// never by a clock.
+    /// </summary>
+    [Fact]
+    public void TheStoryRidesOnOneAmbientRemarkInEvery()
+    {
+        var carried = Enumerable.Range(0, CommanderStory.StoryEvery)
+            .Select(variant => FlavourBriefs.For(
+                new Announcement($"{AmbientCallout.KeyPrefix}Docked", "Quiet out here.") { Variant = variant },
+                personalityEnabled: true)!)
+            .Count(brief => brief.NeedsStory);
+
+        Assert.Equal(1, carried);
+    }
+
+    /// <summary>Only the ambient remarks are written often enough for "sometimes" to mean anything.</summary>
+    [Fact]
+    public void TheGreetingAndTheIntroductionCarryTheSheetAndNotTheStory()
+    {
+        var greeting = FlavourBriefs.For(
+            new Announcement(ContinuityCallout.Key, "Good evening, Commander. Ready to go."),
+            personalityEnabled: true);
+        var intro = FlavourBriefs.Introducing("Systems answering, Commander.", personalityEnabled: true);
+
+        Assert.False(greeting!.NeedsStory);
+        Assert.False(intro!.NeedsStory);
+    }
 }

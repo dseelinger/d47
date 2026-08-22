@@ -38,8 +38,10 @@ can — which is why the answer is worth more than the page.
 
 **Language model** — the only one that receives anything from your gameplay. What goes: your
 question, the conversation so far, the guardrails, the persona, your About Me text, and the game
-state assembled from your journal. What does not: journal files, your key, or anything about your
-machine. Inactive when the provider is `none`, and also when a provider that *needs* a key is
+state assembled from your journal. The lines D47 says in character without being asked — ambient
+remarks, the greeting, a core's first words — carry your character sheet too, and about one ambient
+remark in four carries your About Me story; the carrier's captain and tower get neither. What does
+not: journal files, your key, or anything about your machine. Inactive when the provider is `none`, and also when a provider that *needs* a key is
 chosen and has none stored — selected-but-inert sends nothing.
 
 **And inactive when the endpoint is on this machine.** If you have pointed the OpenAI-compatible

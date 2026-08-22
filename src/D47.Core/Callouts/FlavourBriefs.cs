@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Conversation;
 
 namespace D47.Core.Callouts;
 
@@ -27,6 +28,26 @@ public sealed record FlavourBrief
     /// actually is; the carrier's lines are about nothing that has happened.
     /// </summary>
     public required bool NeedsGameState { get; init; }
+
+    /// <summary>
+    /// Whether the Commander's own account of themselves goes with it (list.md Phase 43).
+    /// <para>
+    /// False for the carrier's two roles, for the reason they get <see cref="NeedsPersona"/>
+    /// false — a stranger on a comms channel does not know the Commander's history, and putting
+    /// one of them in two places at once is the thing the isolation model cannot survive. The two
+    /// flags correlate and are deliberately not merged: they answer different questions, <em>whose
+    /// voice is this</em> and <em>who is it speaking to</em>.
+    /// </para>
+    /// </summary>
+    public required bool NeedsAboutMe { get; init; }
+
+    /// <summary>
+    /// Whether the story goes as well as the character sheet. Only meaningful with
+    /// <see cref="NeedsAboutMe"/>; the sheet is some forty tokens and always goes, the story is
+    /// thirteen hundred and goes one call in <see cref="Conversation.CommanderStory.StoryEvery"/>
+    /// — chosen by the index on the announcement and never by a clock.
+    /// </summary>
+    public bool NeedsStory { get; init; }
 
     /// <summary>
     /// The character brief for a speaker who is not the ship's AI, or null when
@@ -99,6 +120,11 @@ public static class FlavourBriefs
             // No game state. A core's first line is about itself, and where the Commander happens
             // to be is how a model comes to open with the wrong subject.
             NeedsGameState = false,
+
+            // The sheet, so the first words are addressed to somebody — a name, not "Commander"
+            // every time. Not the story: the instruction says to add nothing, and it is a
+            // rewording.
+            NeedsAboutMe = true,
         };
     }
 
@@ -129,6 +155,14 @@ public static class FlavourBriefs
                     + "do not offer help, and do not comment on the Commander's decisions.",
                 NeedsPersona = true,
                 NeedsGameState = true,
+
+                // The only brief that ever carries the story, because it is the only one written
+                // often enough for "occasionally" to mean anything — and the one where it pays:
+                // a remark about a docking bay that means something to this Commander is the
+                // difference between company and ten ways to say nothing. The index is the
+                // callout's own, the one it picked the stock line with.
+                NeedsAboutMe = true,
+                NeedsStory = CommanderStory.TellsStory(announcement.Variant),
             };
         }
 
@@ -156,6 +190,10 @@ public static class FlavourBriefs
                 // No game state. The line is about what was true before this session, and handing
                 // over where they are now is how a model comes to write about the wrong one.
                 NeedsGameState = false,
+
+                // The sheet: a greeting is the one line where knowing whose ship this is matters
+                // most. Not the story — "no facts" is in the instruction.
+                NeedsAboutMe = true,
             };
         }
 
@@ -172,6 +210,10 @@ public static class FlavourBriefs
                 Instruction = $"Say this in your own words, once: \"{announcement.Text}\"",
                 NeedsPersona = false,
                 NeedsGameState = false,
+
+                // A stranger on a comms channel. They do not know the Commander's history, and a
+                // tower that did would be the ship's AI wearing a different hat.
+                NeedsAboutMe = false,
             };
         }
 

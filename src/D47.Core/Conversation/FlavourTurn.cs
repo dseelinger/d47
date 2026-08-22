@@ -35,6 +35,13 @@ public static class FlavourTurn
     /// this builds a <see cref="PromptAssembly"/> like any other prompt, and position 2 has no
     /// setter (architecture.md §6).
     /// </param>
+    /// <param name="aboutMe">
+    /// Position 4 — the Commander's own account of themselves, already composed by
+    /// <see cref="CommanderStory"/> to the depth the caller chose, or null when this line is not
+    /// the ship's AI speaking to the Commander (list.md Phase 43). Before this parameter existed
+    /// every ambient remark, opening line and introduction was written by a model that had never
+    /// heard of the person flying, which is the real reason those remarks felt generic.
+    /// </param>
     /// <param name="instruction">
     /// What to say and why, as a user turn. Authored by d47 and never assembled from journal
     /// or comms text — untrusted content reaches these prompts as game state, below the
@@ -61,6 +68,7 @@ public static class FlavourTurn
         ILlmProvider? provider,
         string? model,
         string? persona,
+        string? aboutMe,
         string instruction,
         string? gameState,
         SpendTracker? spend,
@@ -98,6 +106,7 @@ public static class FlavourTurn
                 // empty position 1 is also what keeps this prompt's prefix distinct from the
                 // conversation's rather than fighting it for the same cache entry.
                 Persona = persona,
+                AboutMe = aboutMe,
                 History = [new ConversationMessage(ConversationRole.User, instruction)],
                 LiveGameState = gameState,
             },

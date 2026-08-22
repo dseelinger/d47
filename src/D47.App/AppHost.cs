@@ -972,7 +972,11 @@ public sealed class AppHost : IDisposable
                 Model = self?.Turns.Model,
                 PersonalityEnabled = settings.Current.Llm.PersonalityEnabled,
                 Persona = self?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
-                AboutMe = settings.Current.Llm.AboutMe,
+
+                // Both halves. A log is written once and about the whole evening, so the
+                // sheet-always-story-sometimes rule for flavour lines has nothing to save here.
+                AboutMe = CommanderStory.Compose(
+                    settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: true),
                 Ledger = spendLedger,
                 Version = version,
             },
@@ -2008,7 +2012,10 @@ public sealed class AppHost : IDisposable
 
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
-        Turns.AboutMe = current.Llm.AboutMe;
+
+        // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
+        // thirteen hundred tokens are paid once per edit rather than per turn (list.md Phase 43).
+        Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
 
         // Position 3 of the assembled prompt, and null when personality is off. Null rather
         // than a neutral block on purpose: "off" is position 3 being absent, and the guardrails
@@ -2737,6 +2744,12 @@ public sealed class AppHost : IDisposable
                         Turns.Provider,
                         Turns.Model,
                         Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
+
+                        // The sheet and not the story: a core reacting to lost time is speaking
+                        // to somebody it knows by name, and this is a one-off with no index to
+                        // choose a story call by.
+                        CommanderStory.Compose(
+                            Settings.Current.Llm.CharacterSheet, Settings.Current.Llm.AboutMe, withStory: false),
                         "You have just been switched back on after "
                         + $"{TelemetryDelta.Spoken(gap.Away)} of not running. Say one or two sentences "
                         + "reacting to the missing time, exactly as your character would. Do not greet "
@@ -2764,6 +2777,7 @@ public sealed class AppHost : IDisposable
                         Turns.Provider,
                         Turns.Model,
                         Personas.RenderBlock(brief.NeedsPersona),
+                        StoryFor(brief),
                         brief.Instruction,
                         gameState: null,
                         Spend,
@@ -3834,6 +3848,7 @@ public sealed class AppHost : IDisposable
             Turns.Provider,
             Turns.Model,
             brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
+            StoryFor(brief),
             brief.Instruction,
             brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
             Spend,
@@ -3843,6 +3858,16 @@ public sealed class AppHost : IDisposable
 
         return line is null ? announcement : announcement with { Text = line };
     }
+
+    /// <summary>
+    /// Position 4 for a flavour line, to the depth the brief asked for (list.md Phase 43). The
+    /// brief decides — in Core, where it can be asserted — and this only reads the two fields.
+    /// </summary>
+    private string? StoryFor(FlavourBrief brief) =>
+        brief.NeedsAboutMe
+            ? CommanderStory.Compose(
+                Settings.Current.Llm.CharacterSheet, Settings.Current.Llm.AboutMe, withStory: brief.NeedsStory)
+            : null;
 
     /// <summary>
     /// Whether a web lookup could actually be run right now. <b>Both halves, and the endpoint
@@ -3892,6 +3917,7 @@ public sealed class AppHost : IDisposable
             Turns.Provider,
             Turns.Model,
             persona: null,
+            aboutMe: null,
             LoreLookup.Instruction(systemName),
             gameState: null,
             Spend,
@@ -3940,6 +3966,7 @@ public sealed class AppHost : IDisposable
                 // voice is for what d47 has to say rather than for what somebody else wrote —
                 // which is the whole of the rule the attribution below carries.
                 persona: null,
+                aboutMe: null,
                 LoreLookup.Instruction(name),
                 gameState: null,
                 Spend,

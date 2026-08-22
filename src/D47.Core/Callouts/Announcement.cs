@@ -59,6 +59,20 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     public AlertCue? Cue { get; init; }
 
     /// <summary>
+    /// Which of a callout's stock lines this is, when it has a numbered set to pick from — the
+    /// index <see cref="AmbientLines.Pick"/> was given. Null for every callout with one line to
+    /// say (list.md Phase 43).
+    /// <para>
+    /// Carried here for the reason the situation travels on the key: the app asks the model for
+    /// the line in character after the callout has moved on, and what it asks for depends on
+    /// which one this was. It is the only deterministic index a flavour call has, which is what
+    /// makes it the thing that decides whether the Commander's story rides along — no Core
+    /// component reads a clock or a seed, and a recorded session has to replay to the same call.
+    /// </para>
+    /// </summary>
+    public int? Variant { get; init; }
+
+    /// <summary>
     /// Who says it. Defaults to the ship's AI, which is what every Phase 8 callout is —
     /// d47 speaking. Phase 11 adds announcements that are somebody else talking: a re-voiced
     /// in-game message, a carrier's tower. Carried here rather than resolved by the caller

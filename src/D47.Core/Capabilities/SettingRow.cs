@@ -318,8 +318,8 @@ public sealed record SettingRow
     public bool ValueAsHint { get; init; }
 
     /// <summary>
-    /// Whether the value is a paragraph rather than a line. Only About Me so far, and only
-    /// the control's height depends on it.
+    /// Whether the value is a paragraph rather than a line. Only the character sheet and About
+    /// Me so far, and only the control's height depends on it.
     /// </summary>
     public bool Multiline { get; init; }
 

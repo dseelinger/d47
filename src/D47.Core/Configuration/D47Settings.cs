@@ -721,8 +721,20 @@ public sealed record LlmSettings
     /// </summary>
     public bool PersonalityEnabled { get; init; } = true;
 
-    /// <summary>The Commander's standing prompt about themselves, kept between sessions.</summary>
+    /// <summary>
+    /// The Commander's story, in their own words, kept between sessions. Treated as true of the
+    /// world the Commander and the ship's AI share (list.md Phase 43).
+    /// </summary>
     public string? AboutMe { get; init; }
+
+    /// <summary>
+    /// The Commander's character sheet — name, origin, age, accent: the few lines that are true
+    /// of them in any sentence (list.md Phase 43). A second field rather than the first paragraph
+    /// of <see cref="AboutMe"/>, because the two want opposite handling off the turn path: the
+    /// sheet goes with every line said in character and the story only sometimes, and a split
+    /// inferred from paragraph breaks is one nobody can see in the settings page.
+    /// </summary>
+    public string? CharacterSheet { get; init; }
 
     /// <summary>
     /// Whether the model may search the web when it decides a question needs current
