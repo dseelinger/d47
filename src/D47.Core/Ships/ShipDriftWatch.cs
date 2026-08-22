@@ -41,6 +41,19 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     private (int Ship, string Fingerprint)? _asked;
 
     /// <summary>
+    /// Forgets the last ship seen, so the new Commander's first <c>Loadout</c> is a swap and is
+    /// compared (list.md Phase 44). Ship ids are per Commander, so without this two Commanders
+    /// both in ship 7 read as the same ship and the new one's build is never checked. A question
+    /// outstanding for the old Commander is dropped with it: the answer would be theirs, not the
+    /// new one's.
+    /// </summary>
+    public void Reset()
+    {
+        _aboard = null;
+        _asked = null;
+    }
+
+    /// <summary>
     /// Folds this tick's events and answers with the question to ask out loud, or null.
     /// <para>
     /// <b>On a ship swap only.</b> A <c>Loadout</c> arrives on every re-outfit and every dock, and

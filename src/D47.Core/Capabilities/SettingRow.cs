@@ -19,6 +19,26 @@ public enum SettingKind
 }
 
 /// <summary>
+/// Whose value a row holds (list.md Phase 44, "Several Commanders, one installation").
+/// </summary>
+public enum SettingScope
+{
+    /// <summary>
+    /// The installation's. Keys, devices, theme, zoom, hotkeys: the machine's and the person's,
+    /// whichever character they are playing. The default, so a row says nothing unless it is
+    /// the other kind.
+    /// </summary>
+    Install,
+
+    /// <summary>
+    /// The Commander's who is flying. Layered over the installation's value per Frontier id,
+    /// with the id inside the settings document and never in a path — it comes out of the
+    /// journal, which is untrusted input.
+    /// </summary>
+    Commander,
+}
+
+/// <summary>
 /// Hearing a value before choosing it (list.md Phase 19).
 /// <para>
 /// Declared on the row rather than special-cased in the settings surface, for the reason every
@@ -340,6 +360,23 @@ public sealed record SettingRow
     /// <see cref="Configuration.SettingsService.Apply"/>.
     /// </summary>
     public bool Protected { get; init; }
+
+    /// <summary>
+    /// Whose setting this is: the installation's, or the Commander's who is flying (list.md
+    /// Phase 44). Declared on the row the way <see cref="Protected"/> is, and for the same
+    /// reason: the split is per row and never inferred, because the obvious sweep gets it wrong
+    /// in both directions — About Me is the Commander describing themselves and sat in a
+    /// per-installation file, and the spend ledger is the person's running cost across every
+    /// character and must never be split by one.
+    /// <para>
+    /// A <see cref="SettingScope.Commander"/> row reads and writes through
+    /// <see cref="Configuration.CommanderScope"/>: the value the row sees is the active
+    /// Commander's overlay where they have set one, and the installation's value where they
+    /// have not. <c>CommanderScopeTests</c> asserts that the rows declaring this are exactly the
+    /// rows the overlay reaches, so neither list can drift from the other.
+    /// </para>
+    /// </summary>
+    public SettingScope Scope { get; init; }
 
     public IReadOnlyList<string> ChoicesFor(D47Settings settings) =>
         ChoiceSource?.Invoke(settings) ?? Choices;

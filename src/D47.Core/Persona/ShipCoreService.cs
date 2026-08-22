@@ -199,6 +199,30 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
         }
     }
 
+    /// <summary>
+    /// Forgets which ship has been acted on, so the next <see cref="Observe"/> adopts whatever the
+    /// Commander is in as the ship d47 found them in — silently, as at startup (list.md Phase 44,
+    /// "What a new Commander logging in actually changes").
+    /// <para>
+    /// Called on a Commander switch and nothing else. <see cref="_aboard"/> is a bare ship id and
+    /// Elite's ids are per Commander, so two Commanders both flying ship 7 read as <em>no
+    /// change</em> without this, and the wrong core stays aboard even with the store keyed
+    /// correctly. And <see cref="_started"/> left set would make the new Commander's first ship
+    /// read as a swap — a gap reaction and a model round trip spent on a boarding that never
+    /// happened.
+    /// </para>
+    /// </summary>
+    public void Reset()
+    {
+        lock (_gate)
+        {
+            _started = false;
+            _aboard = null;
+            _waiting = null;
+            _waited = TimeSpan.Zero;
+        }
+    }
+
     private ShipCoreSwitch? Observed(int? shipId, TimeSpan since)
     {
         if (shipId is not { } ship)

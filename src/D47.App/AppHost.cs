@@ -221,6 +221,19 @@ public sealed class AppHost : IDisposable
     public ShipCoreService ShipCores { get; }
 
     /// <summary>
+    /// The watch that compares a boarded ship against its plan (list.md Phase 38). Held here for
+    /// one reason: it keeps the last ship seen as a bare id, and a Commander switch has to reset
+    /// it (list.md Phase 44). Set after construction like the other services the tick registers.
+    /// </summary>
+    public ShipDriftWatch? Drift { get; set; }
+
+    /// <summary>
+    /// The session's opening line (list.md Phase 31), held here so a Commander switch can make
+    /// it due again (list.md Phase 44, "Welcome back, Commander").
+    /// </summary>
+    public ContinuityCallout? Continuity { get; set; }
+
+    /// <summary>
     /// The Commander's own per-state avatar frames, if they have supplied any. Null until
     /// startup has scanned for them, and empty for almost everyone — the panel draws its own.
     /// </summary>
@@ -597,6 +610,14 @@ public sealed class AppHost : IDisposable
             RestoreLoadouts = fid => recoveredLoadouts.Value.TryGetValue(fid, out var seen) ? seen : null,
         };
 
+        // The settings follow whoever the journal says is flying (list.md Phase 44). Subscribed
+        // before the priming tick, because the adoption happens inside it and the host that does
+        // everything else on this signal does not exist yet — and this one does not wait for it:
+        // a projection is a pure reading of the id and discards nothing, so it follows every
+        // reassignment, replayed or live, and the priming flag is for the subscribers that do.
+        gameState.CommanderChanged += change =>
+            settings.UseCommander(change.Current.FrontierId, change.Current.Name);
+
         // The two state files Elite rewrites in place. Same folder as the journal, different
         // shape: a log is appended to and these are replaced, which is entirely inside the
         // readers.
@@ -804,7 +825,9 @@ public sealed class AppHost : IDisposable
 
         tick.Add("journal", context =>
         {
-            var events = journal.Poll();
+            // The first tick is the replay of the backlog, and the switch signal has to know that
+            // (list.md Phase 44): a Commander change met during the replay is history, not a login.
+            var events = journal.Poll(priming: context.IsFirst);
 
             arrived = events;
             status.Poll();
@@ -1539,6 +1562,14 @@ public sealed class AppHost : IDisposable
         host.Unlocks = unlocks;
         host.OnFootBuilds = onFootBuilds;
         host.Alarms = alarms;
+
+        // The Commander switch (list.md Phase 44). Subscribed after the priming tick, which is
+        // fine and also not the point: the signal carries whether it happened during priming, and
+        // the handler honours that rather than this ordering. The settings followed the same
+        // signal earlier, before the host existed.
+        host.Drift = drift;
+        host.Continuity = callouts.Callouts.OfType<ContinuityCallout>().Single();
+        gameState.CommanderChanged += host.OnCommanderChanged;
 
         host.SwitchEditing = new Settings.SwitchEditing(
             switches,
@@ -2605,6 +2636,64 @@ public sealed class AppHost : IDisposable
         {
             _personaCause = PersonaSwitch.Selected;
         }
+    }
+
+    /// <summary>
+    /// What a new Commander logging in actually changes (list.md Phase 44). The Commander's ruling,
+    /// 2026-08-21: <i>"The old transcript goes away, a new one is created. New ship, new AI."</i>
+    /// <para>
+    /// <b>Adoption discards nothing.</b> Nobody to somebody is d47 learning who has been flying
+    /// since before it started, and what was said before that belongs to no Commander rather
+    /// than retroactively to this one — the same rule that keeps <c>MemoryStore.NoCommander</c> a
+    /// real key nothing migrates out of. <b>A replayed switch discards nothing either</b>: the
+    /// signal says whether it happened during priming, and this honours it rather than relying on
+    /// any subscriber's own gate.
+    /// </para>
+    /// <para>
+    /// The settings are not re-read here. They followed the signal before this host existed (see
+    /// the subscription beside the <see cref="GameStateStore"/>), and they announce each Commander
+    /// row that moved under its own key, so About Me reaches the prompt through the same fan-out
+    /// an edit would use. That rebuild is the prompt cache dying, and it is meant to: About Me
+    /// sits above the breakpoint, so a change of Commander invalidates the cached prefix by
+    /// construction. Once per switch, and a switch is rare — recorded as a known cost and not
+    /// optimised around.
+    /// </para>
+    /// </summary>
+    public void OnCommanderChanged(CommanderSwitch change)
+    {
+        if (change.Priming || change.IsAdoption)
+        {
+            _logger.LogInformation(
+                "Commander {Name} ({Fid}) is flying — {How}, nothing discarded",
+                change.Current.Name,
+                change.Current.FrontierId,
+                change.Priming ? "met in the backlog" : "adopted");
+
+            return;
+        }
+
+        _logger.LogInformation(
+            "Commander {Previous} logged out and {Current} logged in: new transcript, core re-resolved, greeting due",
+            change.Previous!.Name,
+            change.Current.Name);
+
+        // Every core's transcript, and the loop pointed at the fresh one — the handover is by
+        // reference, so a discard the loop was not told about would leave it appending to the
+        // old Commander's conversation.
+        Personas.ForgetTranscripts();
+        Turns.UseTranscript(Personas.Transcript);
+
+        // The ship they are in is adopted afresh on the next tick, silently, as the ship d47 found
+        // them in — which re-resolves the core through the store now keyed per Commander. Without
+        // this, two Commanders both in ship 7 read as no change.
+        ShipCores.Reset();
+        Drift?.Reset();
+
+        // Once per session rather than once per run: the greeting is the new ship AI's first words.
+        Continuity?.Rearm();
+
+        // On the panel, so the transcript says why the next line starts from nothing.
+        Noted?.Invoke($"Commander {change.Current.Name} logged in");
     }
 
     /// <summary>
@@ -4739,6 +4828,7 @@ public sealed class AppHost : IDisposable
 
         Settings.Changed -= OnSettingsChanged;
         Personas.Changed -= OnPersonaChanged;
+        GameState.CommanderChanged -= OnCommanderChanged;
 
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.

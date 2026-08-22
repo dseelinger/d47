@@ -297,6 +297,10 @@ public static class PersonaCapability
             // the model outright — d47 reads the Commander's journal and their in-game messages,
             // and other people write those.
             Protected = true,
+
+            // A ship id, which only means something for the Commander whose fleet it counts
+            // (list.md Phase 44): one Commander's ship 7 and another's are two ships.
+            Scope = SettingScope.Commander,
             ChoiceSource = _ => [.. ships.Fleet().Select(entry => Keyed(entry.ShipId))],
             ChoiceLabel = key => ships.Fleet()
                 .FirstOrDefault(entry => Keyed(entry.ShipId) == key)
@@ -326,6 +330,12 @@ public static class PersonaCapability
             Kind = SettingKind.Choice,
             DocsAnchor = "core-for-this-ship",
             Protected = true,
+
+            // Per Commander through the store rather than the settings file: what it reads is the
+            // binding for the ship the row above points at, and ship-cores.json carries the
+            // Commander beside each one (list.md Phase 44). Declared here so the row says what
+            // the file already does.
+            Scope = SettingScope.Commander,
 
             // The same group as the row above, so the pair sits under one heading and the rule is
             // drawn once rather than between two rows that are one thought.

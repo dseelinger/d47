@@ -341,6 +341,9 @@ tokens, and those forty go out on every remark.
 The carrier's captain and tower do not get it. They are strangers on a comms channel and do not know
 your history — the same reason they do not get the core's persona.
 
+**Per Commander.** Another Commander logging in on this machine sees their own sheet, not yours —
+see [Some rows are the Commander's](settings.md#some-rows-are-the-commanders-not-the-installations).
+
 ### About Me {#about-me}
 
 Your Commander's story, in your own words, as long as you like — how you fly, what you are working
@@ -357,6 +360,13 @@ It also goes with **about one ambient remark in four** — the story is the expe
 about a docking bay does not need thirteen hundred tokens of history every time, only now and then
 when it might land. Which remark is chosen by the same count that picks the stock line, never by a
 clock, so a recorded session replays to the same calls.
+
+**Per Commander, and empty is meaningful.** Each Commander on this machine has their own story;
+one who has never written one reads the installation's, and one who clears the box reads nothing —
+not the installation's, and not another Commander's. When a different Commander logs in, the
+prompt is rebuilt around their story, and because the story sits inside the cached prefix that
+rebuild throws the cache away. That is one slower first turn per login, accepted on purpose: a
+login is rare, and a Commander must never be answered from somebody else's cached history.
 
 Both go to the provider along with everything else. See [Privacy](privacy.md).
 

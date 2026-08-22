@@ -17,6 +17,33 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.50.0 — 2026-08-21 — Several Commanders, one installation
+
+**Two Commanders on one machine each get their own d47.** The stores already told them apart —
+memory, goals, habits, checklists, lore, and since 0.47.1 the ship cores and builds — but the
+settings file did not: About Me, the Character sheet and the ship the core-binding rows point at
+are the most per-Commander things d47 holds and sat in the one per-installation file, and the
+live watches that decide *which ship are you in* kept a bare ship number, which Elite starts over
+for every Commander. Now a row **declares** whose it is, the way it already declares *protected*,
+and the Commander's rows are layered per Frontier id inside `settings.json` — keyed in the
+document, never in a filename, because the id comes out of the journal. A Commander who has set
+nothing reads the installation's value; one who **clears** About Me reads nothing, not somebody
+else's story — empty is a choice and the file keeps it apart from never-set. The spend ledger
+stays one ledger on purpose: the bill is the person's across every character they play.
+
+**Logging in as somebody else is one signal, and it knows about the replay.** `GameStateStore`
+already reassigned the active Commander on every `Commander`/`LoadGame`; it now says so, and the
+signal carries whether it happened during the startup backlog — the trap being that the backlog is
+folded through the same path, so a naive event would discard transcripts at launch for logins
+that happened last month. On a real switch: every core's transcript is discarded (*"the old
+transcript goes away, a new one is created"*), the ship they are in is adopted afresh so its own
+binding applies (two Commanders both in ship 7 used to read as *no change*), the build-drift
+question is re-armed, and the greeting is said again — once per session rather than once per run,
+and naming them: *"Good evening, Commander Jameson. Ready to go."* Nobody-to-somebody is an
+adoption and discards nothing. The prompt cache dies on a switch by construction, since About Me
+sits above the breakpoint; recorded as a known cost and not optimised around. The settings panel
+marks the rows **per Commander** beside *protected*. (list.md Phase 44)
+
 ## 0.49.0 — 2026-08-21 — A Commander with a past
 
 **The ship's AI knows who it is flying with.** About Me reached every turn and the log, and not

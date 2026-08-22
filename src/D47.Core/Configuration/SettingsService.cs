@@ -91,6 +91,18 @@ public sealed class SettingsService
     private IReadOnlyList<SettingsSection>? _sections;
     private Dictionary<string, SettingRow>? _byKey;
 
+    /// <summary>
+    /// The document as it is on disk — both layers (list.md Phase 44). <see cref="Current"/> is
+    /// this seen through the active Commander's overlay, and every write comes back through
+    /// <see cref="CommanderScope.Persist"/> to land in the right layer.
+    /// </summary>
+    private D47Settings _stored;
+
+    /// <summary>Who is flying, as the journal last said, or null before anyone has been identified.</summary>
+    private string? _commanderFid;
+
+    private string? _commanderName;
+
     public SettingsService(
         SettingsStore store,
         SecretStore secrets,
@@ -100,11 +112,92 @@ public sealed class SettingsService
         _store = store;
         _secrets = secrets;
         _logger = logger;
+        _stored = current;
         Current = current;
     }
 
-    /// <summary>The settings as they are right now. Replaced wholesale, never mutated.</summary>
+    /// <summary>
+    /// The settings as they are right now, for whoever is flying. Replaced wholesale, never
+    /// mutated.
+    /// <para>
+    /// A projection, not the file: the installation's record with the active Commander's own
+    /// values over the rows that are theirs (<see cref="CommanderScope.Project"/>). Every reader
+    /// — the panel, the prompt, the tool surface — reads this and never the document, which is
+    /// what lets a Commander row be declared rather than special-cased at each place it is read.
+    /// </para>
+    /// </summary>
     public D47Settings Current { get; private set; }
+
+    /// <summary>
+    /// Re-reads the settings for the Commander the journal now says is flying (list.md Phase 44).
+    /// <para>
+    /// Called for an adoption and for a switch alike, and during the backlog replay as well as
+    /// live: this is a pure reading of who is active — the projection is a function of the id, and
+    /// nothing here is discarded — so it follows every reassignment the way a reader that asks for
+    /// the id per call does, and the priming flag on the signal is for the subscribers that
+    /// <em>do</em> discard something.
+    /// </para>
+    /// <para>
+    /// Announces each <see cref="SettingScope.Commander"/> row whose effective value moved, under
+    /// that row's own key, so the subscribers that re-read About Me or the core-binding selector
+    /// do so exactly as they would after an edit. Nothing is persisted, because nothing changed on
+    /// disk; the announcement means "what you would read has changed", which is what it meant.
+    /// </para>
+    /// </summary>
+    public void UseCommander(string? fid, string? name = null)
+    {
+        if (string.Equals(fid, _commanderFid, StringComparison.Ordinal))
+        {
+            _commanderName = name ?? _commanderName;
+            return;
+        }
+
+        var before = Current;
+
+        _commanderFid = fid;
+        _commanderName = name;
+        Current = CommanderScope.Project(_stored, fid);
+
+        _logger.LogInformation(
+            "Settings now read for Commander {Name} ({Fid})",
+            name ?? "(unknown)",
+            fid ?? "(nobody yet)");
+
+        foreach (var row in CommanderRows())
+        {
+            if (!string.Equals(row.Binding?.Read(before), row.Binding?.Read(Current), StringComparison.Ordinal))
+            {
+                Changed?.Invoke(new SettingsChanged(row.Key, Current));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The rows declared per Commander, or none before <see cref="Bind"/> — a service with no row
+    /// table has nobody to announce to.
+    /// </summary>
+    private IEnumerable<SettingRow> CommanderRows() =>
+        _byKey?.Values.Where(row => row.Scope == SettingScope.Commander) ?? [];
+
+    /// <summary>
+    /// Writes a change made against <see cref="Current"/> to disk, in the layer it belongs to, and
+    /// re-projects. True when something was written.
+    /// </summary>
+    private bool Persist(D47Settings next)
+    {
+        var stored = CommanderScope.Persist(_stored, Current, next, _commanderFid, _commanderName);
+
+        if (ReferenceEquals(stored, _stored))
+        {
+            return false;
+        }
+
+        _store.Save(stored);
+        _stored = stored;
+        Current = CommanderScope.Project(stored, _commanderFid);
+
+        return true;
+    }
 
     /// <summary>
     /// Raised after a change is persisted. Subscribers re-read what they care about — the
@@ -235,7 +328,10 @@ public sealed class SettingsService
 
         try
         {
-            _store.Save(next);
+            if (!Persist(next))
+            {
+                return;
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -244,9 +340,8 @@ public sealed class SettingsService
             return;
         }
 
-        Current = next;
         _logger.LogInformation("Stored {Reason}", reason);
-        Changed?.Invoke(new SettingsChanged(reason, next));
+        Changed?.Invoke(new SettingsChanged(reason, Current));
     }
 
     public SettingApplyResult Apply(string key, string? value, SettingsCaller caller)
@@ -339,7 +434,12 @@ public sealed class SettingsService
 
         try
         {
-            _store.Save(next);
+            // A Commander row lands in the Commander's overlay and an installation row in the
+            // file's body; the row does not know which it is and does not need to (list.md
+            // Phase 44). A row whose write changes nothing on disk — the core-for-that-ship row
+            // writes to its own store and hands the settings back untouched — still announces,
+            // because what it changed is what a subscriber reads through the settings.
+            Persist(next);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -348,11 +448,10 @@ public sealed class SettingsService
                 SettingApplyStatus.Failed, $"{row.Label} could not be saved: {ex.Message}");
         }
 
-        Current = next;
         _logger.LogInformation("{Caller} set {Key} to {Value}", caller, key, Describe(normalised));
         // row.Key, not key, for the same reason Applied uses it — and matching what the two
         // other raise sites already do.
-        Changed?.Invoke(new SettingsChanged(row.Key, next));
+        Changed?.Invoke(new SettingsChanged(row.Key, Current));
 
         return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Describe(normalised)}.");
     }

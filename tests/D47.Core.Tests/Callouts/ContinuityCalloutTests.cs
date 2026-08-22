@@ -85,6 +85,74 @@ public class ContinuityCalloutTests
         Assert.Empty(callout.Examine(At(Evening.Add(callout.Settle).AddHours(3))));
     }
 
+    /// <summary>
+    /// Once per session rather than once per run, where a login by somebody else starts a
+    /// session (list.md Phase 44, "Welcome back, Commander"). The settle window runs again, and
+    /// the line after a switch names the Commander — it is answering <i>who is speaking now</i>.
+    /// </summary>
+    [Fact]
+    public void ALoginBySomebodyElseMakesTheLineDueAgainAndNamesThem()
+    {
+        var callout = new ContinuityCallout();
+        Assert.Empty(callout.Examine(At(Evening)));
+
+        var launch = Assert.Single(callout.Examine(At(Evening.Add(callout.Settle))));
+        Assert.Equal("Good evening, Commander. Ready to go.", launch.Text);
+
+        var bob = new GameStateStore();
+        Assert.True(JournalEvent.TryParse(
+            """{"timestamp":"3311-04-08T20:00:00Z","event":"Commander","FID":"F2","Name":"Bob"}""",
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            out var login));
+        bob.Apply(login!);
+
+        var later = Evening.AddHours(1);
+        callout.Rearm();
+
+        // The clock restarts from the next live tick, for the reason it ran the first time.
+        Assert.Empty(callout.Examine(With(bob, later)));
+        Assert.Empty(callout.Examine(With(bob, later.Add(callout.Settle / 2))));
+
+        var again = Assert.Single(callout.Examine(With(bob, later.Add(callout.Settle))));
+        Assert.Equal("Good evening, Commander Bob. Ready to go.", again.Text);
+
+        // And once only, until the next login.
+        Assert.Empty(callout.Examine(With(bob, later.Add(callout.Settle).AddHours(2))));
+    }
+
+    /// <summary>
+    /// The launch greeting is unchanged: it does not name the Commander even when the store
+    /// knows who they are. Naming is the switch's amendment, not the line's.
+    /// </summary>
+    [Fact]
+    public void TheLaunchGreetingDoesNotNameTheCommander()
+    {
+        var alice = new GameStateStore();
+        Assert.True(JournalEvent.TryParse(
+            """{"timestamp":"3311-04-08T18:00:00Z","event":"Commander","FID":"F1","Name":"Alice"}""",
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            out var login));
+        alice.Apply(login!);
+
+        var callout = new ContinuityCallout();
+        Assert.Empty(callout.Examine(With(alice, Evening)));
+
+        var launch = Assert.Single(callout.Examine(With(alice, Evening.Add(callout.Settle))));
+        Assert.Equal("Good evening, Commander. Ready to go.", launch.Text);
+    }
+
+    [Fact]
+    public void ABlankNameIsAsGoodAsNone()
+    {
+        var callout = new ContinuityCallout();
+
+        Assert.Equal("Good evening, Commander. Ready to go.", callout.Compose(Evening, "  "));
+        Assert.Equal("Good evening, Commander Jameson. Ready to go.", callout.Compose(Evening, " Jameson "));
+    }
+
+    private static CalloutContext With(GameStateStore store, DateTimeOffset now) =>
+        new(now, false, store.Active, GameStatus.Unknown, NavRoute.None, []);
+
     [Fact]
     public void TheLineStandsDownForAnythingThatFiresOnAnEvent()
     {

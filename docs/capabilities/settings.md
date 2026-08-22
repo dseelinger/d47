@@ -53,6 +53,33 @@ Ask anyway and you get a straight answer rather than a pretence that the setting
 'Provider' is protected. It can be changed from the settings panel, but not by me.
 ```
 
+## Some rows are the Commander's, not the installation's
+
+Several Commanders can play on one machine, and Elite tells Directive 47 which one is flying.
+Most settings are the installation's — keys, devices, theme, zoom, hotkeys — and stay the same
+whoever logs in. A few are about the *person in the chair*, and those are marked **per
+Commander** on the row: the [Character sheet](conversation.md#character-sheet),
+[About Me](conversation.md#about-me), and which ship the
+[core-binding rows](persona.md#core-for-this-ship) are pointed at. Each Commander sees their own
+value there, and a second Commander on the same machine never sees the first one's story.
+
+How it works, because it affects what you see in the file:
+
+- A per-Commander row reads the installation's value until that Commander sets their own. The
+  installation's value is whatever was there before anyone logged in — including everything in a
+  settings file from before this existed.
+- Once a Commander sets a row, their value lives in their own entry under `commanders` in
+  `settings.json`, keyed by their Frontier id with their name written beside it. The
+  installation's value is untouched.
+- **Clearing a per-Commander row is a choice, not a reset.** A Commander who empties About Me
+  reads nothing — not the installation's story, and not somebody else's. In the file that is an
+  empty string; a value that was never set is `null`, and the two are deliberately different.
+- Anything set before Elite has said who is flying is the installation's. It is not handed to
+  whoever logs in first.
+
+What is *not* per Commander, and on purpose: the running cost of the AI. That is the person's
+bill across every character they play, so the spend ledger is one ledger for the installation.
+
 ## How values are read
 
 Settings are forgiving about how you say them. `TRUE`, `on` and `True` are one answer, not

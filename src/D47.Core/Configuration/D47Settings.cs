@@ -60,6 +60,54 @@ public sealed record D47Settings
     /// How a Commander's log is written when one is asked for (list.md Phase 33).
     /// </summary>
     public LogbookSettings Logbook { get; init; } = new();
+
+    /// <summary>
+    /// What each Commander has set of the rows that are theirs rather than the installation's
+    /// (list.md Phase 44). One entry per Frontier id, <b>keyed inside the document</b>: the id
+    /// comes out of the journal, and turning untrusted input into a filename buys a
+    /// path-traversal surface for an organisational convenience — the rule every per-Commander
+    /// store already follows.
+    /// <para>
+    /// Everything else in this record stays the installation's, and the fields above that a
+    /// Commander may override keep their keys and their place: the file is append-only, and a
+    /// value written before anyone was identified stays where it was written, as the installation's
+    /// default. See <see cref="CommanderScope"/> for how the two layers are read and written.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<CommanderSettings> Commanders { get; init; } = [];
+}
+
+/// <summary>
+/// One Commander's overlay over the installation's settings (list.md Phase 44).
+/// <para>
+/// <b>Null is unset and empty is deliberately blank</b>, and the two are kept apart on purpose.
+/// A Commander who has never touched About Me reads the installation's; one who cleared it reads
+/// nothing, and must not fall back to somebody else's story because the box happened to be
+/// empty. Only the fields here are per Commander — the list is the declaration, and
+/// <c>CommanderScopeTests</c> holds it against the rows that say they are.
+/// </para>
+/// </summary>
+public sealed record CommanderSettings
+{
+    public required string CommanderFid { get; init; }
+
+    /// <summary>
+    /// Who that is, for a person reading a file two Commanders share. Written beside the id and
+    /// never read back — the same standing as the hull beside a ship-core binding.
+    /// </summary>
+    public string? CommanderName { get; init; }
+
+    /// <summary>This Commander's <see cref="LlmSettings.AboutMe"/>. Empty means none, on purpose.</summary>
+    public string? AboutMe { get; init; }
+
+    /// <summary>This Commander's <see cref="LlmSettings.CharacterSheet"/>. Empty means none, on purpose.</summary>
+    public string? CharacterSheet { get; init; }
+
+    /// <summary>
+    /// This Commander's <see cref="PersonaSettings.ShipCoreShip"/> — a ship id, which only means
+    /// something for the Commander whose fleet it counts. Zero means none chosen, as it does there.
+    /// </summary>
+    public int? ShipCoreShip { get; init; }
 }
 
 /// <summary>

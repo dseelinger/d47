@@ -1105,6 +1105,27 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(pill);
         }
 
+        if (row.Scope == SettingScope.Commander)
+        {
+            // The same pill for the other declaration a row can make (list.md Phase 44): this
+            // value is the Commander's who is flying, and a second Commander on this machine
+            // will see their own here rather than this one.
+            var tag = new TextBlock { Text = "per Commander", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
+            Themed(tag, TextBlock.ForegroundProperty, ThemeManager.AccentMutedKey);
+
+            var pill = new Border
+            {
+                Padding = new Thickness(6, 1),
+                CornerRadius = new CornerRadius(8),
+                BorderThickness = new Thickness(1),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = tag,
+            };
+            Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentMutedKey);
+
+            header.Children.Add(pill);
+        }
+
 
         var help = new TextBlock
         {

@@ -39,7 +39,38 @@ public sealed class ContinuityCallout : ICallout
     private DateTimeOffset _firstLiveTick;
     private bool _said;
 
+    /// <summary>
+    /// Whether the line to come is answering a login rather than a launch, and so names the
+    /// Commander. See <see cref="Rearm"/>.
+    /// </summary>
+    private bool _switched;
+
     public string Id => "continuity";
+
+    /// <summary>
+    /// Makes the line due again, for a Commander who has just logged in where another was
+    /// (list.md Phase 44, "Welcome back, Commander"). The gate moves from once per run of d47 to
+    /// once per session, where a login starts a session; the settle window runs again from the
+    /// next live tick, for the reason it ran the first time.
+    /// <para>
+    /// <b>One amendment to the greeting, stated rather than slipped in:</b> a switch is answering
+    /// <i>who is speaking now</i> rather than <i>what were we doing</i>, so the line after one
+    /// names the Commander even though there is nothing else to say. The launch greeting does
+    /// not, and is unchanged.
+    /// </para>
+    /// <para>
+    /// Called by the host on the switch signal, which carries whether it happened during priming.
+    /// This class's own <see cref="CalloutContext.IsPriming"/> gate would make a replayed switch
+    /// harmless here anyway, but that is this callout's gate and not the signal's, and the host
+    /// honours the signal's.
+    /// </para>
+    /// </summary>
+    public void Rearm()
+    {
+        _said = false;
+        _switched = true;
+        _firstLiveTick = default;
+    }
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -61,10 +92,11 @@ public sealed class ContinuityCallout : ICallout
             yield break;
         }
 
-        // Said once per run of d47, whatever happens next.
+        // Said once per session, whatever happens next — and a session starts at launch and at a
+        // login by somebody else, which is what Rearm is.
         _said = true;
 
-        yield return new Announcement(Key, Compose(context.Now))
+        yield return new Announcement(Key, Compose(context.Now, _switched ? context.State?.Identity.Name : null))
         {
             // Routine. It is the least urgent thing d47 ever says — the Commander has just sat
             // down — and it stands down for anything that fires on an event.
@@ -80,7 +112,17 @@ public sealed class ContinuityCallout : ICallout
     /// The line. Separated from <see cref="Examine"/> so a test can ask for the sentence without
     /// driving eight seconds of ticks past it.
     /// </summary>
-    public string Compose(DateTimeOffset now) => $"Good {TimeOfDay(now)}, Commander. Ready to go.";
+    public string Compose(DateTimeOffset now) => Compose(now, null);
+
+    /// <summary>
+    /// The line, naming the Commander where there is one to name — after a login, not at launch
+    /// (see <see cref="Rearm"/>). Blank names as good as none: the journal writes one, and a line
+    /// that said "Commander ." would be worse than one that said nothing.
+    /// </summary>
+    public string Compose(DateTimeOffset now, string? name) =>
+        string.IsNullOrWhiteSpace(name)
+            ? $"Good {TimeOfDay(now)}, Commander. Ready to go."
+            : $"Good {TimeOfDay(now)}, Commander {name.Trim()}. Ready to go.";
 
     /// <summary>
     /// Morning until noon, afternoon until six, evening after — the three a person uses, on the
