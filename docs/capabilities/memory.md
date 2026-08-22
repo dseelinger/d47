@@ -146,14 +146,8 @@ up in text D47 has read, so removing one stays your act — through the panel, o
 
 ## Picking up where you left off
 
-One line at the start of a session, assembled from the file, your checklist and your plans:
-
-```text
-It has been 3 days. You were last aboard in Deciat, docked at Farseer Inc. You were 3 Selenium
-short. Hera Tani is still two steps out.
-```
-
-It is written by D47 rather than by the model — the model is only ever asked to say it back in its
-own voice, with every number and name unchanged — and it is **silent when there is nothing worth
-saying**. A first run says nothing at all. Turn it off on the [callouts](callouts.md) row if you
-would rather just get on with it.
+One line at the start of a session. Since 2026-08-21 it is a greeting and a readiness —
+*"Good evening, Commander. Ready to go."* — and **nothing from this file**: where you were and how
+long it has been are still remembered here, and answered when you ask, but they are no longer read
+out before the headset is on. See [callouts](callouts.md#continuity) for the line and its
+history, and turn it off on the callouts row if you would rather just get on with it.

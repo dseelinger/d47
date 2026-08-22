@@ -17,6 +17,19 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.48.7 — 2026-08-21 — Good evening, Commander
+
+**The opening line is a greeting.** It had grown into the gap since you were last seen, the
+engineer under your feet, and the top three checklist items read out whole — *"Top of your list:
+Grade 5 Efficient Weapon on 2F Pulse Laser on Hammer (Type-11 Prospector); then Multi-Servos on 2F
+Pulse Laser on Hammer (Type-11 Prospector); then…"* — said before the headset is on. The
+Commander's ruling: long and irritating, and if they want to know about the list they will ask.
+It is now *"Good [morning / afternoon / evening], Commander. Ready to go."* on the Commander's own
+clock, and with a persona on the core finishes *"Ready to …"* in a few words of its own and changes
+nothing else. The gap, the engineer and the list are all still answerable; they are no longer
+announced. (list.md Phase 31's opening line and Phase 42's "top of the list, said out loud" are
+amended in place to record this.)
+
 ## 0.48.6 — 2026-08-21 — The controllers are given back
 
 **A motion controller no longer hangs after the panel has been pointed at.** To carry the panel,

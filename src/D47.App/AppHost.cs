@@ -1867,7 +1867,7 @@ public sealed class AppHost : IDisposable
             // the start of a session, and it is about what was true before the Commander sat down.
             // Everything above it is about now. Since Phase 42 what it mostly says is the top of
             // the checklist, in the Commander's own order.
-            .Add(new ContinuityCallout(memories, checklists))
+            .Add(new ContinuityCallout())
 
             // Phase 32, and below the continuity line for the same reason it is below everything
             // else: it is an observation about the Commander rather than about the world, and

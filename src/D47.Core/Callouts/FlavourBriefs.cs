@@ -146,10 +146,11 @@ public static class FlavourBriefs
             return new FlavourBrief
             {
                 Instruction =
-                    "The Commander has just sat down. Say this back to them once, in your own voice, as a "
-                    + $"greeting: \"{announcement.Text}\" Keep every number and every name exactly as "
-                    + "written, add no facts of your own, and do not speculate about what they were doing "
-                    + "or why. Two sentences at most.",
+                    "The Commander has just sat down. Greet them once, in your own voice, from this: "
+                    + $"\"{announcement.Text}\" Keep the first sentence's time of day. Finish the second "
+                    + "sentence — \"Ready to …\" — in character, in a few words of your own. Two short "
+                    + "sentences, nothing else: no facts, no questions, no remarks about the ship or "
+                    + "the list.",
                 NeedsPersona = true,
 
                 // No game state. The line is about what was true before this session, and handing

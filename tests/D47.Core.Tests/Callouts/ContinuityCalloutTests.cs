@@ -1,188 +1,97 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
-using D47.Core.Memory;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// The opening line of a session (list.md Phase 31, "Picking up where you left off").
-/// <para>
-/// The item the other three exist for, and the assertions divide the same way the item does: it says
-/// something useful when there is something to say, and it says <b>nothing at all</b> otherwise. The
-/// second half is the one worth guarding — a "welcome back" line with no memory behind it is exactly
-/// the manufactured continuity the checklist rules out.
-/// </para>
+/// The opening line of a session (list.md Phase 31, "Picking up where you left off"), as amended
+/// on 2026-08-21: a greeting on the Commander's own clock and a readiness, and nothing about the
+/// list, the gap or the engineer under their feet — those are answered when asked for.
 /// </summary>
-public class ContinuityCalloutTests : IDisposable
+public class ContinuityCalloutTests
 {
-    private static readonly DateTimeOffset Now = new(3311, 4, 8, 19, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset Evening = new(3311, 4, 8, 19, 0, 0, TimeSpan.Zero);
 
-    private const string Cmdr = "F1";
+    private static CalloutContext At(DateTimeOffset now, bool priming = false) =>
+        new(now, priming, null, GameStatus.Unknown, NavRoute.None, []);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-continuity-tests", Guid.NewGuid().ToString("N"));
-
-    public void Dispose()
+    [Theory]
+    [InlineData(5, "morning")]
+    [InlineData(9, "morning")]
+    [InlineData(11, "morning")]
+    [InlineData(12, "afternoon")]
+    [InlineData(17, "afternoon")]
+    [InlineData(18, "evening")]
+    [InlineData(23, "evening")]
+    [InlineData(2, "evening")]
+    public void TheGreetingFollowsTheCommandersClock(int hour, string expected)
     {
-        GC.SuppressFinalize(this);
+        var now = new DateTimeOffset(3311, 4, 8, hour, 30, 0, TimeSpan.FromHours(-5));
 
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
-
-    private MemoryBook Book()
-    {
-        var store = new MemoryStore(
-            Path.Combine(_folder, "memories.json"), NullLogger<MemoryStore>.Instance);
-
-        return new MemoryBook(store, () => Cmdr, () => MemorySituation.Unknown);
-    }
-
-    private static CommanderGameState State(params string[] lines)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"3311-04-08T18:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                 }.Concat(lines))
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store.Active!;
+        Assert.Equal($"Good {expected}, Commander. Ready to go.", new ContinuityCallout().Compose(now));
     }
 
     /// <summary>
-    /// Farseer unlocked at rank 1, which is what turns a plan into a <em>shortfall</em> rather than a
-    /// gate: a grade the Commander's rank cannot reach is not a thing gathering fixes, so without
-    /// this the plan reports nothing to be short of.
+    /// The hour is the offset's hour, not UTC's: a Commander at 7 pm local is wished good evening
+    /// whatever the date line says.
     /// </summary>
-    private const string FarseerAtRankOne =
-        """
-        {"timestamp":"3311-04-08T18:01:00Z","event":"EngineerProgress",
-         "Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":1}]}
-        """;
-
-    private ContinuityCallout Callout(MemoryBook book) =>
-        new(book, TestSurface.EmptyChecklists(_folder));
-
-    /// <summary>
-    /// The same callout over a checklist that actually holds a plan, so the top of the list has
-    /// something on it. Accepted rather than proposed: a proposal is not the Commander's list
-    /// yet, and the line is about what they were doing.
-    /// </summary>
-    private ContinuityCallout WithAPlan(MemoryBook book, CommanderGameState state)
-    {
-        var checklists = TestSurface.EmptyChecklists(_folder, () => state);
-
-        var scope = D47.Core.Checklists.ChecklistScope.Ship(12);
-
-        var items = D47.Core.Checklists.EngineeringPlan.Items(scope, "krait_mkii",
-            [new D47.Core.Checklists.BuildRequest("MainEngines", "Dirty Drive Tuning", 1, "Felicity Farseer")]);
-
-        checklists.ProposePlan(scope, D47.Core.Checklists.ChecklistSource.EngineeringPlan, items, []);
-        checklists.Accept();
-
-        return new ContinuityCallout(book, checklists);
-    }
-
-    /// <summary>Where the Commander was, as the observer would have written it.</summary>
-    private static void Seen(MemoryBook book, DateTimeOffset at) =>
-        book.Observe(MemoryObserver.WhereKey, "you were last aboard in Deciat, docked at Farseer Inc.", at);
-
-    private static CalloutContext At(DateTimeOffset now, CommanderGameState? state = null, bool priming = false) =>
-        new(now, priming, state, GameStatus.Unknown, NavRoute.None, []);
-
     [Fact]
-    public void AFirstRunSaysNothingAtAll()
+    public void TheHourIsLocalRatherThanUniversal()
     {
-        var callout = Callout(Book());
+        // Nine in the morning five hours west of Greenwich is two in the afternoon there. The
+        // Commander is wished good morning.
+        var nineInTheMorningLocal = new DateTimeOffset(3311, 4, 8, 9, 0, 0, TimeSpan.FromHours(-5));
 
-        Assert.Null(callout.Compose(Now, State()));
-    }
-
-    [Fact]
-    public void ComingBackAfterAWeekSaysHowLongAndWhereYouWere()
-    {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
-
-        var line = Callout(book).Compose(Now, State())!;
-
-        Assert.StartsWith("It has been 7 days.", line, StringComparison.Ordinal);
-        Assert.Contains("You were last aboard in Deciat, docked at Farseer Inc.", line, StringComparison.Ordinal);
+        Assert.Equal("morning", ContinuityCallout.TimeOfDay(nineInTheMorningLocal));
+        Assert.Equal("afternoon", ContinuityCallout.TimeOfDay(nineInTheMorningLocal.ToUniversalTime()));
     }
 
     /// <summary>
-    /// Reconnecting after a crash is not a Commander coming back, and telling them it has been four
-    /// minutes is a clock rather than continuity.
+    /// What the line no longer carries (2026-08-21): "Top of your list: Grade 5 Efficient Weapon
+    /// on 2F Pulse Laser on Hammer (Type-11 Prospector); then…" was the complaint, word for word.
     /// </summary>
     [Fact]
-    public void ComingBackAfterFourMinutesSaysNothing()
+    public void TheLineCarriesNoListAndNoGap()
     {
-        var book = Book();
-        Seen(book, Now.AddMinutes(-4));
+        var line = new ContinuityCallout().Compose(Evening);
 
-        Assert.Null(Callout(book).Compose(Now, State()));
-    }
-
-    [Fact]
-    public void AMonthsGapIsSaidInWordsRatherThanInDays()
-    {
-        var book = Book();
-        Seen(book, Now.AddDays(-32));
-
-        Assert.Contains("It has been a month.", Callout(book).Compose(Now, State())!, StringComparison.Ordinal);
+        Assert.DoesNotContain("Top of your list", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("It has been", line, StringComparison.Ordinal);
+        Assert.Equal(2, line.Split('.', StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
     [Fact]
     public void NothingIsSaidWhileTheJournalBacklogIsStillBeingFolded()
     {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
-
-        var callout = Callout(book);
-
-        // Priming is the replay of everything before this session. A line about picking up where
-        // you left off, produced from the middle of that replay, would be about the wrong moment.
-        Assert.Empty(callout.Examine(At(Now, State(), priming: true)));
+        // Priming is the replay of everything before this session, and a greeting produced from
+        // the middle of that replay would be about the wrong moment.
+        Assert.Empty(new ContinuityCallout().Examine(At(Evening, priming: true)));
     }
 
     [Fact]
     public void TheLineWaitsForTheSettleWindowAndThenIsSaidExactlyOnce()
     {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
-
-        var callout = Callout(book);
+        var callout = new ContinuityCallout();
 
         // The first live tick only starts the clock: the backlog has just been folded and
         // Status.json may not have been read yet.
-        Assert.Empty(callout.Examine(At(Now, State())));
-        Assert.Empty(callout.Examine(At(Now.Add(callout.Settle / 2), State())));
+        Assert.Empty(callout.Examine(At(Evening)));
+        Assert.Empty(callout.Examine(At(Evening.Add(callout.Settle / 2))));
 
-        Assert.Single(callout.Examine(At(Now.Add(callout.Settle), State())));
+        Assert.Single(callout.Examine(At(Evening.Add(callout.Settle))));
 
         // And never again for the life of the process, whatever else happens.
-        Assert.Empty(callout.Examine(At(Now.Add(callout.Settle).AddHours(3), State())));
+        Assert.Empty(callout.Examine(At(Evening.Add(callout.Settle).AddHours(3))));
     }
 
     [Fact]
     public void TheLineStandsDownForAnythingThatFiresOnAnEvent()
     {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
+        var callout = new ContinuityCallout();
+        Assert.Empty(callout.Examine(At(Evening)));
 
-        var callout = Callout(book);
-        Assert.Empty(callout.Examine(At(Now, State())));
-
-        var announcement = Assert.Single(callout.Examine(At(Now.Add(callout.Settle), State())));
+        var announcement = Assert.Single(callout.Examine(At(Evening.Add(callout.Settle))));
 
         Assert.Equal(CalloutUrgency.Routine, announcement.Urgency);
         Assert.Equal(ContinuityCallout.Key, announcement.Key);
@@ -196,97 +105,40 @@ public class ContinuityCalloutTests : IDisposable
     [Fact]
     public void TheLineReachesTheConversationPage()
     {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
+        var callout = new ContinuityCallout();
+        Assert.Empty(callout.Examine(At(Evening)));
 
-        var callout = Callout(book);
-        Assert.Empty(callout.Examine(At(Now, State())));
-
-        var announcement = Assert.Single(callout.Examine(At(Now.Add(callout.Settle), State())));
+        var announcement = Assert.Single(callout.Examine(At(Evening.Add(callout.Settle))));
 
         Assert.Equal(announcement.Text, announcement.ConversationLine);
     }
 
+    /// <summary>
+    /// With a persona on, the core finishes "Ready to …" in its own words and changes nothing else.
+    /// The time of day is the one fact in the line and the brief says to keep it.
+    /// </summary>
     [Fact]
-    public void ItIsSaidInCharacterWithTheFactsHandedOverAlreadyWritten()
+    public void ACoreFinishesTheReadinessInCharacterAndKeepsTheTimeOfDay()
     {
-        var announcement = new Announcement(ContinuityCallout.Key, "It has been 7 days. Top of your list: buy limpets.");
+        var announcement = new Announcement(ContinuityCallout.Key, "Good evening, Commander. Ready to go.");
 
         var brief = FlavourBriefs.For(announcement, personalityEnabled: true);
 
         Assert.NotNull(brief);
         Assert.True(brief.NeedsPersona);
-
-        // No game state. The line is about what was true before this session, and handing over
-        // where they are now is how a model comes to write about the wrong one.
         Assert.False(brief.NeedsGameState);
 
         Assert.Contains(announcement.Text, brief.Instruction, StringComparison.Ordinal);
-        Assert.Contains("add no facts of your own", brief.Instruction, StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// The checklist's half of the line since Phase 42: the top of the list, in the order the
-    /// Commander cares about. A few items rather than the list — the page holds the rest, and
-    /// this is a sentence somebody hears while they are still putting a headset on.
-    /// </summary>
-    [Fact]
-    public void APlanPutsTheTopOfTheListInTheLine()
-    {
-        var state = State(FarseerAtRankOne);
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
-
-        var line = WithAPlan(book, state).Compose(Now, state)!;
-
-        Assert.Contains("Top of your list:", line, StringComparison.Ordinal);
-        Assert.Contains("Dirty Drive Tuning", line, StringComparison.Ordinal);
-
-        // Said whole, ship and all — there is no heading around a spoken sentence, and the hull
-        // is what the plan stored for exactly this.
-        Assert.Contains("Krait", line, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void APlanOnItsOwnIsWorthSayingEvenWithNothingRemembered()
-    {
-        // The clauses are independent. A Commander with a plan and an empty store still gets the
-        // useful half rather than silence.
-        var state = State(FarseerAtRankOne);
-
-        Assert.Contains(
-            "Top of your list:", WithAPlan(Book(), state).Compose(Now, state)!, StringComparison.Ordinal);
+        Assert.Contains("time of day", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("Ready to", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("no facts", brief.Instruction, StringComparison.Ordinal);
     }
 
     [Fact]
     public void PersonalityOffSaysItPlainly()
     {
-        var announcement = new Announcement(ContinuityCallout.Key, "It has been 7 days.");
+        var announcement = new Announcement(ContinuityCallout.Key, "Good evening, Commander. Ready to go.");
 
         Assert.Null(FlavourBriefs.For(announcement, personalityEnabled: false));
     }
-    /// <summary>
-    /// The line no longer holds an unlock opinion of its own (list.md Phase 42). Its
-    /// Gap → Short → Here-or-Unlock precedence existed because the checklist had no order to
-    /// read from; now it has one, an unlock is said only when an unlock item is genuinely near
-    /// the top of the Commander's own list — through the list read, not through a clause.
-    /// </summary>
-    [Fact]
-    public void TheLineReadsTheListRatherThanCountingUnlockSteps()
-    {
-        var book = Book();
-        Seen(book, Now.AddDays(-7));
-
-        var state = State(FarseerAtRankOne);
-
-        var line = WithAPlan(book, state).Compose(Now, state)!;
-
-        Assert.Contains("Top of your list:", line, StringComparison.Ordinal);
-
-        // Whatever is on the list, the sentence never counts unlock steps at a Commander — that
-        // was the "fact about engineers" the 2026-08-21 report asked to be rid of.
-        Assert.DoesNotContain("unlock step away", line, StringComparison.Ordinal);
-        Assert.DoesNotContain(" steps out", line, StringComparison.Ordinal);
-    }
-
 }

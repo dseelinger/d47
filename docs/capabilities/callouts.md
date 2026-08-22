@@ -321,22 +321,24 @@ in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
 
 ### Picking up where you left off {#continuity}
 
-One line at the start of a session, assembled from what Directive 47
-[remembers](memory.md) about you, your [checklist](checklists.md) and your plans:
+One line at the start of a session — a greeting on your own clock, and a readiness:
 
 ```text
-It has been 3 days. You were last aboard in Deciat, docked at Farseer Inc. You were 3 Selenium
-short. Hera Tani is still two steps out.
+Good evening, Commander. Ready to go.
 ```
 
-**Silent when there is nothing to say.** A first run says nothing at all, and coming back after a
-crash twenty minutes later says nothing either — being told it has been twenty minutes is a clock,
-not continuity. It waits a few seconds after launch so the journal backlog has been folded, says its
-line once, and does not speak again for the life of the process.
+That is the whole of it, since 2026-08-21. It used to carry how long you had been away, the
+engineer in the system you were sitting in, and the top three items of your checklist read out in
+full — *"Top of your list: Grade 5 Efficient Weapon on 2F Pulse Laser on Hammer (Type-11
+Prospector); then…"* — which is long, and arrives while you are still putting the headset on. If
+you want to know about your [checklist](checklists.md), ask; it is all still there.
 
-It is written by Directive 47 rather than by the model. Where a persona is on, the model is asked to
-say it back in its own voice with every number and name unchanged; with personality off it is said
-plainly.
+It waits a few seconds after launch so the journal backlog has been folded, says its line once, and
+does not speak again for the life of the process.
+
+The first sentence is written by Directive 47. Where a persona is on, the core finishes the second
+— *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
+its own and changes nothing else; with personality off it is *"Ready to go."*
 
 ## Settings
 
