@@ -3262,8 +3262,21 @@ public sealed class AppHost : IDisposable
     /// about where they are for as long as neither is driven separately, which is the only reading
     /// of the phrase that is never surprising.
     /// </para>
+    /// <para>
+    /// For the transcript the agreement is unconditional (list.md Phase 45): which of Conversation,
+    /// Technical and the log file is being read is one choice across every surface, held by
+    /// <see cref="_transcript"/>. Tabs and trails stay per surface, so this list is still walked.
+    /// </para>
     /// </summary>
     private readonly List<Core.Interface.PanelNavigator> _navigators = [];
+
+    /// <summary>
+    /// The one mechanism that carries a transcript root from the surface that moved it to the rest
+    /// (list.md Phase 45). <see cref="Navigate"/> and <see cref="Show"/> initiate moves on every
+    /// surface and never propagate them: the first navigator they reach raises <c>Changed</c>, the
+    /// mirror moves the others, and the loop is declined by each of those as already there.
+    /// </summary>
+    private readonly Core.Interface.TranscriptMirror _transcript = new();
 
     /// <summary>
     /// How to reach each navigator from a thread that does not own it, in the order they were
@@ -3290,6 +3303,13 @@ public sealed class AppHost : IDisposable
     {
         _navigators.Add(nav);
         _surfaces.Add((nav, post));
+
+        // Into the mirror before the snapshot is hooked, so a surface that arrives behind the
+        // other is brought level and the first snapshot already reads two surfaces agreeing. The
+        // mirror moves navigators in the handler rather than through `post`: every surface is on
+        // the window's thread (architecture.md D1), and a posted move could cross another in
+        // flight (list.md Phase 45).
+        _transcript.Add(nav);
 
         // Taken here and retaken every time a surface moves, on the thread that moved it. Every
         // tab is furnished before a surface routes here, so the roots are complete at the first
@@ -3322,6 +3342,11 @@ public sealed class AppHost : IDisposable
     /// <see cref="Navigate"/>, for the same reason: a switch has no surface attached to it
     /// either. A surface that does not offer the page declines it, which is
     /// <c>PanelView.Tab</c> declining a tab nobody furnished, inherited rather than re-stated.
+    /// <para>
+    /// For a transcript root the second surface is moved by <see cref="_transcript"/> before this
+    /// loop reaches it, and declines the loop as already there; the loop still has to reach it,
+    /// because arriving on the Transcript <em>tab</em> is per surface (list.md Phase 45).
+    /// </para>
     /// </summary>
     private void Show(string rootKey)
     {
@@ -3345,6 +3370,11 @@ public sealed class AppHost : IDisposable
             // are in different places answer differently — the window at a root and the headset
             // three levels down — and what the Commander hears should describe the move rather
             // than one surface's share of it.
+            //
+            // A transcript mode — "technical" — is taken by the first surface at a root, and the
+            // mirror has moved the rest before this loop reaches them (list.md Phase 45). So a
+            // headset three levels into a checklist, which answers nothing here, is reading
+            // Technical when it comes back to the transcript.
             var moved = Core.Interface.PanelPhrases.Apply(spoken, nav);
 
             said ??= moved;

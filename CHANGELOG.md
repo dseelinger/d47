@@ -17,6 +17,23 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.51.0 — 2026-08-22 — One transcript, both surfaces
+
+**Switch the window to the log file and the headset goes there too — and the reverse.** The
+Transcript tab's three readings — Conversation, Technical and today's log file — were a choice
+each surface made for itself, on a stated reason: a shared page would send the headset to the log
+file the moment the window went there. The Commander's ruling is that this is the point — *"I want
+the Windows UI transcript selection to be echoed in VR and vice-versa"* — so the selection is now
+one choice across every surface, either direction, with no preferred surface. The principle that
+keeps the reversal from being arbitrary: **what you are reading is shared; how it is drawn is
+not.** Mini/full and zoom stay per surface, and so do which tab each surface is on and how far
+into it: Settings is desktop-only and Loadout is withdrawn from VR, so mirroring those would hold
+*except sometimes*, which is the kind of rule people misremember. The transcript has no except —
+both surfaces offer all three. The spoken route and the switch already reached every surface;
+they now initiate a move and one mirror carries it, the echo between the two surfaces is stopped
+on purpose rather than by luck, and a surface whose chooser refused the move catches up when the
+chooser closes rather than dragging the other back. (list.md Phase 45)
+
 ## 0.50.0 — 2026-08-22 — Several Commanders, one installation; switches that reach d47 itself
 
 **Two Commanders on one machine each get their own d47.** The stores already told them apart —
