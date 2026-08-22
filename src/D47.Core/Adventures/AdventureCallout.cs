@@ -78,7 +78,10 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 continue;
             }
 
-            yield return new Announcement(moment.Key, moment.Line)
+            // The line and where to go next, as one text: the hand-off is part of what the model
+            // is told to keep when it says this in the core's voice, and what plays when there is
+            // no model. See AdventureMoment.HandOff.
+            yield return new Announcement(moment.Key, moment.Spoken)
             {
                 Urgency = CalloutUrgency.Routine,
 

@@ -52,9 +52,41 @@ public class AdventureCalloutTests : IDisposable
         var said = Assert.Single(callout.Examine(At(reached.AddSeconds(20), [])));
 
         Assert.Equal("adventure.the-lantern-route.0", said.Key);
-        Assert.Equal("Scoop here.", said.Text);
+
+        // The line, then where to go next — and for a scan, how, because "scan X" sends a
+        // Commander looking for a surface scanner they do not need.
+        Assert.Equal(
+            "Scoop here. Next: scan The Quiet Field A 2 in The Quiet Field — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed.",
+            said.Text);
         Assert.Equal(0, said.Variant);
         Assert.Equal(CalloutUrgency.Routine, said.Urgency);
+    }
+
+    /// <summary>
+    /// Every beat hands over to the next, the opening to the first, and the last to nothing: the
+    /// ending is the ending. The first story flown left the Commander asking "now what?" after every
+    /// beat (2026-08-22), and the next place is already in the context and on the reading level, so
+    /// saying it spoils nothing.
+    /// </summary>
+    [Fact]
+    public void EachBeatHandsOverToTheNextAndTheLastToNothing()
+    {
+        var (book, callout) = Wired();
+        book.Abandon("F1", "the-lantern-route", Accepted);
+        book.Begin("F1", "the-lantern-route", Accepted.AddMinutes(1));
+
+        var opening = Assert.Single(callout.Examine(At(Accepted.AddMinutes(1), [])));
+        Assert.Equal("Beacons cost money. Somebody is paying. Next: arrive at Ossen's Lantern.", opening.Text);
+
+        var from = Accepted.AddMinutes(2);
+        callout.Examine(At(from, WholeRoute(from))).ToList();
+        var said = callout.Examine(At(from.AddSeconds(20), [])).ToList();
+
+        Assert.Equal(5, said.Count);
+        Assert.EndsWith("Next: dock at Maren Anchorage in Dyson's Hollow.", said[1].Text);
+        Assert.EndsWith("Next: land on Veyl 3 c in Cairn of Veyl.", said[2].Text);
+        Assert.EndsWith("Next: arrive at Tavell's Reach.", said[3].Text);
+        Assert.Equal("Eleven months left.", said[4].Text);
     }
 
     [Fact]

@@ -564,7 +564,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
-        text.AppendLine("- \"scan\": the Commander scans a named body in a named system.");
+        text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
@@ -790,6 +790,9 @@ public sealed class AdventureGenerator(
         var refusals = new List<string>();
         var previousSystem = facts.System;
 
+        // Every place that stood, by its beat number, for the scan-order rule below.
+        var placed = new List<(string Where, AdventureTrigger Trigger)>();
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             var where = $"Beat {index + 1} ({beat.Title})";
@@ -863,10 +866,19 @@ public sealed class AdventureGenerator(
                     {
                         refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
+                    else if (place.Kind == TriggerKind.Scan
+                             && placed.FirstOrDefault(p => p.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan && AdventureValidation.SameBody(p.Trigger, place))
+                                 is { Trigger: { } earlier } before)
+                    {
+                        // The same rule AdventureValidation applies to a written story, raised here
+                        // so a generated one goes back through the turn with it.
+                        refusals.Add(AdventureValidation.ScanOutOfOrder(where, place, before.Where, earlier.Kind));
+                    }
                     else
                     {
                         previousSystem = place.System;
                         trigger = place;
+                        placed.Add((where, place));
                     }
                 }
             }

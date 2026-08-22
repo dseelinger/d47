@@ -128,6 +128,36 @@ public sealed class AdventureGeneratorTests
         Assert.Equal(["The Lantern", "The Anchorage", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
+    /// <summary>
+    /// A scan of a body the story has already landed on is refused in the dry run, so it goes back
+    /// through the turn with the reason rather than reaching the Commander as a story that cannot
+    /// finish — the shape the first story flown had (2026-08-22).
+    /// </summary>
+    [Fact]
+    public async Task AScanAfterALandingOnTheSameBodyGoesBackThroughTheTurn()
+    {
+        const string landThenScan = """
+            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Consignee", "function": "turn", "kind": "land", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
+              {"title": "Disposition", "function": "resolution", "kind": "scan", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Four hundred tonnes."}
+            ]}
+            """;
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(landThenScan),
+            RoundScriptedLlmProvider.Saying(GoodBeats));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(3, provider.CallCount);
+        Assert.Contains(
+            "Beat 3 (Disposition) scans Ossen's Lantern 2 a after Beat 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
+            provider.Requests[2].Prompt.History[0].Text);
+    }
+
     [Fact]
     public async Task ACareerIsReadAsTheLadderHoweverTheModelSaidIt()
     {

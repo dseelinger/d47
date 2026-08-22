@@ -705,6 +705,23 @@ because the game has no act for meeting anyone and the only thing a Commander ca
 fly to the next beat. The spine turn, the beats turn and `AdventureContext.Label` now say so; the
 test holds the wording's presence, and whether a model obeys it is read by hand.
 
+The same story could not finish. Its finale scanned the body its fourth beat had landed on, and
+Elite writes a body's `Scan` on the approach — before `Touchdown` — so the scan was spent while the
+landing was current. The corpus is unambiguous: fourteen sessions with a landing, none with a scan of
+that body afterwards. `AdventureValidation.ScansOutOfOrder` refuses a scan after a landing on, or an
+earlier scan of, the same body — by id when resolved, by name when not — and the dry run raises the
+same sentence so a generated story goes back through the turn. The beats turn is told the order and
+that a scan needs no equipment.
+
+And the Commander should not have to ask "now what?" after every beat. `AdventureMoment.HandOff` is
+the next beat's trigger as a sentence — *Next: dock at Maren Anchorage in Dyson's Hollow.* — said with
+the line; the opening hands over to the first beat and the last beat to nothing. The next place is
+already in `AdventureContext` and on the reading level, so the spoiler rule is untouched: the place
+and the act are said, never the title or the line. The brief tells the model to end on the same place
+in its own words and to say nothing else about what is ahead. A scan's hand-off says how — the ship's
+own scanner from supercruise, or a close pass, no surface scanner — because a Commander told "scan X"
+went looking for a DSS, whose `SAAScanComplete` the fold does not match.
+
 ### Left for the next pass
 
 *Somewhere I've been* is not in the editor: d47 keeps no visited-places list and the two ways in

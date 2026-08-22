@@ -50,6 +50,23 @@ story now say so, a line may never set you a task beyond flying to the next beat
 context the core speaks from says that asked *what now*, the answer is where the next beat is and
 nothing beyond it. A story already under way keeps its lines; the context change reaches it at once.
 
+**A story cannot end on a scan of the body it just landed on.** The same story's finale was
+*scan Fintamkina 4*, one beat after *land on Fintamkina 4* — and Elite scans a body on the way in,
+before any landing, so the scan was spent while the landing was still the current beat and the story
+could never finish. Fourteen corpus sessions with a landing, none with a scan of that body after it.
+A scan beat after a landing on, or an earlier scan of, the same body is refused — for a written story
+by the same validation that refuses an unknown career, for a generated one in the dry run so the
+model rewrites it — and the beats turn is told the order.
+
+**And every beat now ends by saying where to go next.** Reach a beat and the core says its line and
+then the next beat's place — *Next: dock at Silva Munitions Hold in Gladyangar* — in its own voice
+when there is a model and in plain words when there is not, before you have to ask. The opening hands
+over to the first beat; the last beat hands over to nothing, because the ending is the ending. The next
+place is already in the core's standing context and on the reading level, so nothing is spoiled. A scan
+says how as well as where — the ship's own scanner from supercruise, or a close pass — because told
+only "scan X", a Commander reasonably goes looking for a surface scanner, which writes a different
+journal event and would never fire the beat.
+
 ## 0.52.0 — 2026-08-22 — Adventures
 
 **A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one

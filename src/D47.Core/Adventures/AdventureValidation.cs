@@ -140,6 +140,8 @@ public static class AdventureValidation
             problems.Add($"{adventure.Beats.Count} beats; at most {AdventureLimits.MaxBeats}.");
         }
 
+        problems.AddRange(ScansOutOfOrder(adventure.Beats));
+
         for (var index = 0; index < adventure.Beats.Count; index++)
         {
             var beat = adventure.Beats[index];
@@ -239,6 +241,61 @@ public static class AdventureValidation
 
         return reasons;
     }
+
+    /// <summary>
+    /// A scan beat placed after a landing on, or an earlier scan of, the same body.
+    /// <para>
+    /// Elite scans a body on the way in — the approach writes the <c>Scan</c> before any
+    /// <c>Touchdown</c> — so a scan beat that follows a landing on that body is spent while the
+    /// landing is still the current beat, and the story can never finish. The first story flown
+    /// ended exactly so (2026-08-22); across fourteen corpus sessions with a landing, not one has
+    /// a scan of that body afterwards. Refused here for a written story and in the generator's dry
+    /// run for a generated one, by the same rule.
+    /// </para>
+    /// </summary>
+    internal static IEnumerable<string> ScansOutOfOrder(IReadOnlyList<AdventureBeat> beats)
+    {
+        for (var index = 0; index < beats.Count; index++)
+        {
+            var beat = beats[index];
+
+            if (beat.Trigger.Kind != TriggerKind.Scan)
+            {
+                continue;
+            }
+
+            for (var earlier = 0; earlier < index; earlier++)
+            {
+                var before = beats[earlier];
+
+                if (before.Trigger.Kind is not (TriggerKind.Land or TriggerKind.Scan) || !SameBody(before.Trigger, beat.Trigger))
+                {
+                    continue;
+                }
+
+                yield return ScanOutOfOrder(Where(index, beat), beat.Trigger, Where(earlier, before), before.Trigger.Kind);
+                break;
+            }
+        }
+    }
+
+    /// <summary>The one sentence for the case, worded for a person and for the model alike.</summary>
+    internal static string ScanOutOfOrder(string where, AdventureTrigger scan, string earlier, TriggerKind earlierKind)
+    {
+        var body = scan.Body ?? "that body";
+
+        return earlierKind == TriggerKind.Land
+            ? $"{where} scans {body} after {earlier} lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body."
+            : $"{where} scans {body} again after {earlier}; a body is scanned once on the way in, so a second scan would never fire.";
+    }
+
+    internal static bool SameBody(AdventureTrigger first, AdventureTrigger second) =>
+        first.SystemAddress is { } firstSystem && second.SystemAddress is { } secondSystem
+        && first.BodyId is { } firstBody && second.BodyId is { } secondBody
+            ? firstSystem == secondSystem && firstBody == secondBody
+            : !string.IsNullOrWhiteSpace(first.Body)
+              && string.Equals(first.System, second.System, StringComparison.OrdinalIgnoreCase)
+              && string.Equals(first.Body, second.Body, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>A stable key from a name: lower case, dashes, nothing else. The arc's own rule.</summary>
     public static string Key(string name)

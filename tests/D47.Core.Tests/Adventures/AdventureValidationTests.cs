@@ -17,6 +17,54 @@ public class AdventureValidationTests
         Assert.Empty(AdventureValidation.NotReady(LanternRoute()));
     }
 
+    /// <summary>
+    /// Elite scans a body on the approach, before any landing, so a scan beat after a landing on
+    /// that body is spent before it is current and the story can never finish — which is how the
+    /// first story flown ended (2026-08-22). The Lantern Route scans one body and lands on another,
+    /// which is the shape that works.
+    /// </summary>
+    [Fact]
+    public void AScanAfterALandingOnTheSameBodyIsRefused()
+    {
+        var route = LanternRoute();
+        var afterLanding = route with
+        {
+            Beats = [.. route.Beats, Beat("Disposition", "finale", new AdventureTrigger { Kind = TriggerKind.Scan, SystemAddress = Veyl, BodyId = 9, System = "Cairn of Veyl", Body = "Veyl 3 c" }, "Four hundred tonnes.")],
+        };
+
+        var problem = Assert.Single(AdventureValidation.Problems(afterLanding));
+        Assert.Equal("Beat 6 (Disposition) scans Veyl 3 c after Beat 4 (Veyl 3 c) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.", problem);
+
+        // By name as well as by id, for a story written by hand with nothing resolved yet.
+        var byName = route with
+        {
+            Beats =
+            [
+                Beat("Down", "setup", new AdventureTrigger { Kind = TriggerKind.Land, System = "Cairn of Veyl", Body = "Veyl 3 c" }, "Down."),
+                Beat("Look", "finale", new AdventureTrigger { Kind = TriggerKind.Scan, System = "cairn of veyl", Body = "veyl 3 c" }, "Look."),
+            ],
+        };
+        Assert.Contains(AdventureValidation.Problems(byName), problem => problem.StartsWith("Beat 2 (Look) scans veyl 3 c after Beat 1 (Down) lands on it", StringComparison.Ordinal));
+
+        // A second scan of a body already scanned is the same dead end.
+        var twice = route with
+        {
+            Beats = [.. route.Beats, Beat("Again", "finale", new AdventureTrigger { Kind = TriggerKind.Scan, SystemAddress = QuietField, BodyId = 6, System = "The Quiet Field", Body = "The Quiet Field A 2" }, "Again.")],
+        };
+        Assert.Equal("Beat 6 (Again) scans The Quiet Field A 2 again after Beat 2 (The Survey); a body is scanned once on the way in, so a second scan would never fire.", Assert.Single(AdventureValidation.Problems(twice)));
+
+        // And the scan before the landing is the shape that works.
+        var scanFirst = route with
+        {
+            Beats =
+            [
+                Beat("Look", "setup", new AdventureTrigger { Kind = TriggerKind.Scan, SystemAddress = Veyl, BodyId = 9, System = "Cairn of Veyl", Body = "Veyl 3 c" }, "Look."),
+                Beat("Down", "finale", new AdventureTrigger { Kind = TriggerKind.Land, SystemAddress = Veyl, BodyId = 9, System = "Cairn of Veyl", Body = "Veyl 3 c" }, "Down."),
+            ],
+        };
+        Assert.Empty(AdventureValidation.Problems(scanFirst));
+    }
+
     [Fact]
     public void ARankBeatNamingNoCareerIsRefusedWithTheCareers()
     {
