@@ -398,11 +398,37 @@ public static class ConversationCapability
             },
         });
 
+        // The two halves of a biography, in the order they are read (list.md Phase 43). The sheet
+        // goes with every turn and every line D47 says in character; the story goes with every
+        // turn and, now and then, with an ambient remark. The help says which, because a row that
+        // costs money on every remark should say so where it is typed.
+        rows.Add(new SettingRow
+        {
+            Key = "llm.characterSheet",
+            Label = "Character sheet",
+            Help =
+                "Who your Commander is, in a few lines — name, where they are from, age, how they "
+                + "speak. D47 carries this with every turn and with everything it says in character, "
+                + "so it knows whose ship this is. Keep it short; the story goes below.",
+            Kind = SettingKind.Text,
+            Multiline = true,
+            DefaultDisplay = "(nothing yet)",
+            DocsAnchor = "character-sheet",
+            Binding = new SettingBinding
+            {
+                Read = s => s.Llm.CharacterSheet,
+                Write = (s, v) => s with { Llm = s.Llm with { CharacterSheet = v } },
+            },
+        });
+
         rows.Add(new SettingRow
         {
             Key = "llm.aboutMe",
             Label = "About Me",
-            Help = "Standing context about you, sent with every turn. Kept between sessions.",
+            Help =
+                "Your Commander's story, in your own words — as long as you like. D47 treats it as true "
+                + "of the world you share. Sent with every turn, and with about one unprompted remark in "
+                + "four, so the ship's AI knows who it is flying with. Kept between sessions.",
             Kind = SettingKind.Text,
             Multiline = true,
             DefaultDisplay = "(nothing yet)",

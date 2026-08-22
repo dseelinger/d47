@@ -554,6 +554,7 @@ public static class VoicePairing
             // a core speaking, and handing one of them the job of casting the others would be
             // the one thing the isolation model forbids.
             persona: null,
+            aboutMe: null,
             request.ToString(),
             gameState: null,
             spend,

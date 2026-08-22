@@ -388,10 +388,12 @@ Seven situations are covered: docked, landed, supercruise, normal space, fuel sc
 SRV, and on foot.
 
 With a language model configured, the core aboard writes its own line and it is genuinely theirs
-— Chart will tell you about the sky, the Quartermaster about what the run cost. Without one,
-there are ten written lines per situation, shared across all eleven cores rather than one set
-each. That is consistent rather than a compromise: with no model there is no persona flavour
-anywhere else either.
+— Chart will tell you about the sky, the Quartermaster about what the run cost. It also knows who
+it is flying with: your [character sheet](conversation.md#character-sheet) goes with every remark,
+and your [About Me](conversation.md#about-me) story with about one in four, so the remarks differ by
+who is flying and not just by wording. Without a model, there are ten written lines per situation,
+shared across all eleven cores rather than one set each. That is consistent rather than a
+compromise: with no model there is no persona flavour anywhere else either.
 
 ```text
 The drive note has not changed in some minutes. That is what it sounds like when it is right.

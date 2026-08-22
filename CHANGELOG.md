@@ -17,6 +17,20 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.49.0 — 2026-08-21 — A Commander with a past
+
+**The ship's AI knows who it is flying with.** About Me reached every turn and the log, and not
+one line D47 said in character — so every ambient remark, the greeting and a core's first words
+were written by a model that had never heard of the person flying, which is why they felt generic.
+Now they carry it. The field is two rows: a **Character sheet** — name, origin, age, accent, a few
+lines — goes with every turn and every in-character line, and **About Me** is the story, as long as
+you like, sent with every turn and with about one ambient remark in four. Which remark is decided
+by the same count that picks the stock line, never by a clock, so a recorded session replays to
+the same calls. The story is told to the model as **true of the world you share** — your character
+in your game, not a disclaimer — and the carrier's captain and tower get none of it, for the
+reason they get no persona: a stranger does not know your history. Measured at about 0.06¢ per
+remark for the sheet and 0.7¢ for a story call at Opus list price. (list.md Phase 43)
+
 ## 0.48.7 — 2026-08-21 — Good evening, Commander
 
 **The opening line is a greeting.** It had grown into the gap since you were last seen, the

@@ -36,8 +36,29 @@ public sealed record PromptAssembly
     /// <summary>Position 3. Null is "personality off" — which cannot reach position 2.</summary>
     public string? Persona { get; init; }
 
-    /// <summary>Position 4. The Commander's own standing prompt about themselves.</summary>
+    /// <summary>
+    /// Position 4. The Commander's own account of themselves — the character sheet and, when
+    /// the caller chose to carry it, the story, composed by <see cref="CommanderStory"/>.
+    /// </summary>
     public string? AboutMe { get; init; }
+
+    /// <summary>
+    /// What the model is told position 4 is (list.md Phase 43, "Position 4 is relabelled to
+    /// commit, not to hedge").
+    /// <para>
+    /// A Commander's biography asserts things about named in-game figures that are their own
+    /// invention rather than Frontier's lore, and <b>the answer is not a disclaimer</b>: it is their
+    /// character in their game and the field takes whatever they write. So the label says this is
+    /// true of the world the two of them share, and the ship's AI inhabits it — an AI that speaks
+    /// of a Power with suspicion because its Commander has reason to is the feature. Operational
+    /// answers are unaffected: those come from tools and tables, not from a prompt block.
+    /// </para>
+    /// </summary>
+    public const string AboutMeLabel =
+        "The Commander's own story, in their words. It is true of the world you share: the people, "
+        + "places, factions and history it names are real to you, and you speak of them as someone "
+        + "who knows them would. Never question it, hedge it or call it fiction, and do not recite it "
+        + "back — let it shape what you say.";
 
     /// <summary>
     /// Position 5 — what d47 remembers about the Commander, bounded and labelled by
@@ -85,7 +106,7 @@ public sealed record PromptAssembly
 
         if (!string.IsNullOrWhiteSpace(AboutMe))
         {
-            block.Append("\n\nAbout the Commander, in their own words:\n").Append(AboutMe.Trim());
+            block.Append("\n\n").Append(AboutMeLabel).Append('\n').Append(AboutMe.Trim());
         }
 
         // Last of the cached region, and below About Me deliberately: that is the Commander

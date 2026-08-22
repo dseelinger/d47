@@ -68,6 +68,29 @@ public class PromptAssemblyTests
             "About Me is more volatile than the persona, so it must render after it.");
     }
 
+    /// <summary>
+    /// Position 4 is labelled to commit, not to hedge (list.md Phase 43). A biography names
+    /// things that are the Commander's own invention, and the model is told it is true of the
+    /// world they share — not handed a disclaimer about whose words these are.
+    /// </summary>
+    [Fact]
+    public void AboutMeIsPresentedAsTrueOfTheWorldTheyShare()
+    {
+        var block = new PromptAssembly
+        {
+            Persona = "You are Warden.",
+            AboutMe = "I served under Admiral Tanner, who the Federation would rather forget.",
+        }.RenderCachedSystemBlock();
+
+        Assert.Contains(PromptAssembly.AboutMeLabel, block, StringComparison.Ordinal);
+        Assert.Contains("true of the world you share", PromptAssembly.AboutMeLabel, StringComparison.Ordinal);
+        Assert.Contains("Never question it", PromptAssembly.AboutMeLabel, StringComparison.Ordinal);
+
+        // The old label, which said only whose words they were and nothing about what to do
+        // with them.
+        Assert.DoesNotContain("in their own words:", block, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void LiveGameStateIsNotInTheCachedBlock()
     {

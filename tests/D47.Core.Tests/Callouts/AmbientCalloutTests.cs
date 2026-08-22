@@ -86,6 +86,30 @@ public class AmbientCalloutTests
         Assert.Contains(remark.Text, AmbientLines.For(AmbientSituation.Docked));
     }
 
+    /// <summary>
+    /// The index the stock line was picked with travels on the announcement, so the model-written
+    /// replacement can be chosen by the same count (list.md Phase 43). It is the only
+    /// deterministic index a flavour call has.
+    /// </summary>
+    [Fact]
+    public void EachRemarkCarriesWhichOneItIs()
+    {
+        var callout = Callout();
+        var docked = In(StatusFlags.Docked | StatusFlags.InMainShip);
+        var cruising = In(StatusFlags.Supercruise | StatusFlags.InMainShip);
+
+        callout.Examine(At(Start, docked)).ToArray();
+
+        var first = Assert.Single(callout.Examine(At(Start.AddMinutes(16), docked)));
+
+        callout.Examine(At(Start.AddMinutes(20), cruising)).ToArray();
+        var second = Assert.Single(callout.Examine(At(Start.AddMinutes(40), cruising)));
+
+        Assert.Equal(0, first.Variant);
+        Assert.Equal(1, second.Variant);
+        Assert.Equal(AmbientLines.Pick(AmbientSituation.Supercruise, 1), second.Text);
+    }
+
     [Fact]
     public void ASituationThatHasNotSettledIsNotRemarkedOn()
     {

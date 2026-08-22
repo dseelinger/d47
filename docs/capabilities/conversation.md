@@ -327,12 +327,38 @@ a reason to distrust.
 
 Nothing is said at all when search works, so having it on costs you no words about it.
 
+### Character sheet {#character-sheet}
+
+Who your Commander is, in a few lines — name, where they are from, age, how they speak. Kept
+between sessions.
+
+D47 carries it with every turn **and with everything it says in character**: the ambient remarks,
+the greeting when you sit down, a core's first words. Before this row existed those lines were
+written by a model that had never heard of the person flying, which is why they felt generic — ten
+ways to say *docked at a station* are still ten ways to say nothing. Keep it short: it is some forty
+tokens, and those forty go out on every remark.
+
+The carrier's captain and tower do not get it. They are strangers on a comms channel and do not know
+your history — the same reason they do not get the core's persona.
+
 ### About Me {#about-me}
 
-Standing context about you — how you fly, what you are working towards, what to call you — sent
-with every turn and kept between sessions.
+Your Commander's story, in your own words, as long as you like — how you fly, what you are working
+towards, where you have been. Kept between sessions.
 
-It goes to the provider along with everything else on a turn. See [Privacy](privacy.md).
+**It is treated as true.** A biography names people, places and factions that are your own invention
+rather than Frontier's lore, and the answer is not a disclaimer: it is your character in your game,
+and the ship's AI is told the story is true of the world you share and to inhabit it. A core that
+speaks of a Power with suspicion because you have reason to is the feature. Operational answers are
+unaffected — those come from tools and tables, not from this box.
+
+It is sent with every turn, where it sits inside the cached prefix and costs nothing after the first.
+It also goes with **about one ambient remark in four** — the story is the expensive half, and a remark
+about a docking bay does not need thirteen hundred tokens of history every time, only now and then
+when it might land. Which remark is chosen by the same count that picks the stock line, never by a
+clock, so a recorded session replays to the same calls.
+
+Both go to the provider along with everything else. See [Privacy](privacy.md).
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
@@ -362,8 +388,15 @@ spend. Takes no arguments.
 The endpoint is reported only when the Commander has chosen one; a line stating where Anthropic
 lives tells them something they knew.
 
-About Me sits inside the cached prompt prefix, so editing it costs one cold prefix on the next
-turn and nothing after that. Secrets are refused for the model caller unconditionally, whether or
+About Me and the character sheet sit inside the cached prompt prefix, so editing either costs one
+cold prefix on the next turn and nothing after that. Off the turn path there is no such shelter:
+`FlavourBrief.NeedsAboutMe` says whether a line carries position 4 at all and `NeedsStory` whether
+the story goes with the sheet, decided in Core from the announcement's `Variant` —
+`CommanderStory.StoryEvery` is the cadence. Measured on 2026-08-21 against a forty-token sheet and a
+thirteen-hundred-token story at claude-opus-5 list price: the sheet and its label add about **0.06¢**
+to a remark, the story about **0.7¢** to the one in four that carries it — 0.22¢ per remark averaged
+over the cadence (see `list.md` Phase 43 for the figures and how they were taken).
+Secrets are refused for the model caller unconditionally, whether or
 not the row is also marked protected. Only the *source* of a key is ever logged:
 
 ```text

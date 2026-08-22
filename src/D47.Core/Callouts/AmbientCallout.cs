@@ -92,7 +92,7 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
-        _picks++;
+        var variant = _picks++;
         _lastSpoken = situation;
         _lastSpokenAt = context.Now;
 
@@ -102,6 +102,11 @@ public sealed class AmbientCallout : ICallout
             // fuel warning would be the worst possible trade.
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
+
+            // The index the stock line was picked with, so the model-written replacement can be
+            // chosen by the same count — which ambient remark this is decides whether the
+            // Commander's story goes with it (list.md Phase 43).
+            Variant = variant,
         };
     }
 
