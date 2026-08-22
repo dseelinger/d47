@@ -24,7 +24,13 @@ at 20.
 
 ## Open
 
-### 25. The Adventures tab: where it sits, what it shows, and that it is thinking
+Nothing open.
+
+---
+
+## Shipped
+
+### 25. The Adventures tab: where it sits, what it shows, and that it is thinking — shipped 0.52.3
 
 Asked for 2026-08-22, in five parts; built the same day, in the next release.
 
@@ -92,7 +98,7 @@ A headless capture caught the one defect in this that no test had: the drilled-i
 subscribed to the store's change event only, and a beat firing writes nothing to disk — so the card
 behind it redrew and the level the Commander was looking at did not.
 
-### 24. No Help glyph on a VR surface
+### 24. No Help glyph on a VR surface — shipped 0.52.2
 
 Asked for 2026-08-22; built the same day on `fixes-3`, in the next release. The panel's help mark
 opened the documentation site in a browser — on the desktop, which a Commander in the headset
@@ -103,10 +109,6 @@ handed over by the host like search and the turn-figures dialog already were —
 The `OpenHelp`/`HelpRequested` pair on the model went with it; its comment said the view "asks
 rather than acts" so as not to know what a desktop is, and that reasoning is kept, moved one seam
 over to where the two surfaces actually diverge.
-
----
-
-## Shipped
 
 ### 23. Remind me to buy limpets — shipped 0.47.0
 

@@ -94,6 +94,16 @@ stopped answering some way into a session in the game, in SteamVR and in Virtual
 to be diagnosed out of `vrserver.txt` alone, which knows nothing of what d47 was doing at the time.
 That report stays open in bugs.md: this release is the instrument for it, not the fix.
 
+**And the headset copy of the panel no longer has a Help button it could never use.** The help mark
+opened the documentation site in a browser — on the desktop, which a Commander wearing the headset
+cannot see. The model's `HelpRequested` event was the wrong seam: the headset copy shares the model,
+so its press arrived at the desktop window's handler. Help is now an affordance of the **surface**,
+handed over by the host exactly as search and the turn-figures dialog already were —
+`PanelView.EnableHelp` — and `VrPanelSurface` never calls it, so the headset copy has no button
+rather than a dead one. The `OpenHelp`/`HelpRequested` pair went with it; its comment said the view
+"asks rather than acts" so as not to know what a desktop is, and that reasoning is kept, moved one
+seam over to where the two surfaces actually diverge.
+
 ## 0.52.1 — 2026-08-22 — A story that could not stand
 
 **The ship's AI is now handed real places to build a story from.** Asked for an adventure *near
