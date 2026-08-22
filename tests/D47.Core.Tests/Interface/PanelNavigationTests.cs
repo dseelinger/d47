@@ -148,6 +148,30 @@ public class PanelNavigationTests
     }
 
     /// <summary>Pressing a crumb goes back to it, and pressing the one you are on does nothing.</summary>
+    /// <summary>
+    /// The root is never supplied to <see cref="PanelNavigator.GoTo(NavCrumb[])"/> — and a caller
+    /// that supplies it anyway does not get a trail with the root in it twice, which is a trail no
+    /// strip can draw: at three panes the same page would be hosted in two of them. Found by a
+    /// generated adventure being offered on a wide window, 2026-08-22.
+    /// </summary>
+    [Fact]
+    public void ASuppliedRootIsNotDoubled()
+    {
+        var nav = Furnished();
+
+        nav.Select(PanelTab.Loadout);
+
+        Assert.True(nav.GoTo(new NavCrumb("fleet", "Ships"), new NavCrumb("ship:12", "Corsair")));
+        Assert.Equal(["fleet", "ship:12"], nav.Trail.Select(crumb => crumb.Key));
+
+        Assert.True(nav.GoTo(new NavCrumb("fleet", "Ships")));
+        Assert.Equal(["fleet"], nav.Trail.Select(crumb => crumb.Key));
+
+        // Only the root is dropped; a level that happens to repeat lower down is the caller's.
+        Assert.True(nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("ship:12", "Corsair")));
+        Assert.Equal(["fleet", "ship:12", "ship:12"], nav.Trail.Select(crumb => crumb.Key));
+    }
+
     [Fact]
     public void ACrumbGoesBackToItself()
     {

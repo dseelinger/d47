@@ -691,6 +691,13 @@ shown the draft it is fixing. And a rank beat is read in every shape the model h
 career as the person rather than the ladder, nested under its own key, the rank as text — because
 refusing it with the career printed as `""` was the one refusal the model could not act on.
 
+The first story written with those places in hand then crashed the app on arrival, on a window
+wide enough for three panes. `Offer` — and three other Phase 47 sites — called `GoTo` with the root
+crumb supplied, against a contract that says the root is never supplied; the trail held *Adventures*
+twice, and `DrillView` hosted the root page in two panes. Two panes hid it, which is why the tab
+tests passed at 900 pixels. The callers are fixed, `GoTo` drops a supplied root, and the tab test
+now presses Go on a 1,400-pixel window with a scripted model and galaxy — the path that crashed.
+
 ### Left for the next pass
 
 *Somewhere I've been* is not in the editor: d47 keeps no visited-places list and the two ways in

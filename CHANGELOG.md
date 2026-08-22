@@ -33,6 +33,15 @@ writing a fresh story wrong in the same way. And a rank beat is read however the
 the beat was refused with the career printed as `""`, which told the model nothing. A Commander
 already Elite in a career is told that is why, rather than asked for rank 9.
 
+**And the story no longer takes the process down when it arrives.** The first one written with
+those places in hand was offered on a window wide enough for three panes, and d47 exited without a
+word. The offer navigated to the reading level with the root crumb supplied as well as kept, so the
+trail held *Adventures* twice; at two panes the strip shows the last two and nothing is wrong, at
+three it hosts the same root page in two panes, and a control has exactly one parent. Four Phase 47
+call sites supplied the root; none do now, and the navigator drops a supplied root rather than
+holding a trail nothing can draw. The draft was written to file before the crash, so it is on the
+Adventures tab waiting for your yes.
+
 ## 0.52.0 — 2026-08-22 — Adventures
 
 **A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one

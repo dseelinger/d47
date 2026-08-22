@@ -490,7 +490,8 @@ public sealed class AdventureEditor : UserControl
             }
         }
 
-        _nav.GoTo([new NavCrumb(AdventuresPage.RootKey, "Adventures"), new NavCrumb(AdventuresPage.ReadPrefix + _draft.Key, _draft.Name)]);
+        // Below the root only — see AdventuresPage.Offer.
+        _nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + _draft.Key, _draft.Name));
     }
 
     // ---- prompts and drawing -----------------------------------------------------------------

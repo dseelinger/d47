@@ -592,7 +592,11 @@ public sealed class AdventuresPage : UserControl
         status.Text = string.Join(" ", outcome.Notes);
 
         _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
-        _nav.GoTo([new NavCrumb(RootKey, "Adventures"), new NavCrumb(ReadPrefix + key, stored.Name)]);
+
+        // Below the root only: the root is the tab's own and GoTo keeps it. Supplied as well, the
+        // trail held the root twice, and a strip wide enough for three panes hosted the same page
+        // in two of them — which is the one thing a control cannot do, and it took the process down.
+        _nav.GoTo(new NavCrumb(ReadPrefix + key, stored.Name));
     }
 
     private string UniqueKey(string wanted, string? keep)
@@ -655,7 +659,7 @@ public sealed class AdventuresPage : UserControl
         if (!confirm)
         {
             _surface.Book.Remove(_surface.Commander(), adventure.Key);
-            _nav.GoTo([new NavCrumb(RootKey, "Adventures")]);
+            _nav.ToRoot();
             return;
         }
 
@@ -676,7 +680,7 @@ public sealed class AdventuresPage : UserControl
                 }
 
                 _surface.Book.Remove(_surface.Commander(), adventure.Key);
-                _nav.GoTo([new NavCrumb(RootKey, "Adventures")]);
+                _nav.ToRoot();
             });
     }
 
