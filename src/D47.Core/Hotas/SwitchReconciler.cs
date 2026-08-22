@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using D47.Core.Input;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
 
@@ -67,13 +68,19 @@ public sealed record SwitchState
 
 /// <summary>One reconcile waiting to be carried out. Nothing in Core presses anything.</summary>
 /// <param name="Switch">The switch that asked, for the log and for the refusal.</param>
-/// <param name="Label">How the action is named mid-sentence.</param>
-/// <param name="Steps">Empty when this is only something to say.</param>
+/// <param name="Label">How the action — or the page — is named mid-sentence.</param>
+/// <param name="Steps">Empty when this is only something to say, or only somewhere to go.</param>
+/// <param name="Destination">
+/// The root key the host is to put the panel on, for a position that names a page rather than an
+/// action (list.md Phase 46). <paramref name="Steps"/> is empty whenever this is set: a page move
+/// presses nothing, reads no binds and checks no foreground.
+/// </param>
 public readonly record struct PendingReconcile(
     string Switch,
     string Label,
     IReadOnlyList<InputStep> Steps,
-    string? Say = null);
+    string? Say = null,
+    string? Destination = null);
 
 /// <summary>Everything the reconciler needs from outside, per poll.</summary>
 public readonly record struct SwitchTick
@@ -86,8 +93,35 @@ public readonly record struct SwitchTick
 
     public required EliteBinds Binds { get; init; }
 
-    /// <summary>Whether the Commander has switched switch reconciling on, and key injection with it.</summary>
+    /// <summary>
+    /// Whether the Commander has switched switch reconciling on, and key injection with it.
+    /// Gates the positions that reach the game and none of the others — see
+    /// <see cref="SwitchPosition.Destination"/>.
+    /// </summary>
     public required bool Enabled { get; init; }
+
+    /// <summary>
+    /// Every page a surface has registered, in bar order — the vocabulary a
+    /// <see cref="SwitchPosition.Destination"/> is checked against (list.md Phase 46). Empty
+    /// until a surface is up, which is not a fault and is reported as such.
+    /// </summary>
+    public IReadOnlyList<PanelDestination> Destinations
+    {
+        get => _destinations ?? [];
+        init => _destinations = value;
+    }
+
+    // A backing field rather than an initialiser, because a record struct may not carry one
+    // without declaring a constructor, and a constructor here would un-require every field.
+    private readonly IReadOnlyList<PanelDestination>? _destinations;
+
+    /// <summary>
+    /// The root key the panel is showing, or null when d47 cannot say — no surface is up, or two
+    /// surfaces are showing different things. The <em>are you already there</em> answer for a
+    /// page, exact where the game's is inferred: null never means <em>unchanged</em>, it means a
+    /// flip is asked of every surface and each declines for itself if it is already there.
+    /// </summary>
+    public string? Showing { get; init; }
 
     public ControlContext Context => ControlContexts.Of(Status);
 }
@@ -328,6 +362,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     {
         var ready = new SwitchState { Name = mapping.Name, Health = SwitchHealth.Ready, Position = position };
 
+        if (position.Destination is { Length: > 0 } destination)
+        {
+            return ReconcilePanel(tick, mapping, position, destination, flipped, ready);
+        }
+
         if (!tick.Enabled)
         {
             return ready with
@@ -387,6 +426,68 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     }
 
     /// <summary>
+    /// A position that names a page of d47's own panel (list.md Phase 46). The same rule as the
+    /// game path — the flip is the question, <em>are you already there</em> is asked first, and
+    /// between flips nothing is touched — with the two differences the target makes.
+    /// <para>
+    /// <b>Not behind <see cref="SwitchTick.Enabled"/>.</b> That gate exists because a switch
+    /// that reconciles the ship reaches the keyboard. This one presses nothing, reads no binds
+    /// and checks no foreground, so it does not belong behind that row and must not silently
+    /// acquire it. And <b>no contest watch</b>: nothing else drives the panel behind d47's back,
+    /// so there is nothing to desync with and nothing to pause for.
+    /// </para>
+    /// </summary>
+    private SwitchState ReconcilePanel(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        string destination,
+        bool flipped,
+        SwitchState ready)
+    {
+        if (tick.Destinations.Count == 0)
+        {
+            return ready with { Note = "D47's panel is not up yet." };
+        }
+
+        if (Page(tick, destination) is not { } page)
+        {
+            // The vocabulary is whatever the surfaces registered, so this is where a hand-edited
+            // key is checked — by name, the way every other refusal in this file is.
+            return ready with { Note = $"Nothing on D47's panel is called '{destination}'." };
+        }
+
+        if (!flipped)
+        {
+            return ready;
+        }
+
+        if (string.Equals(tick.Showing, destination, StringComparison.Ordinal))
+        {
+            logger.LogInformation(
+                "Switch {Name} moved to {Position}; the panel is already on {Page}, so nothing moved",
+                mapping.Name,
+                position.Describe(),
+                page.Root.Word);
+
+            return ready;
+        }
+
+        logger.LogInformation(
+            "Switch {Name} moved to {Position}; showing {Page}",
+            mapping.Name,
+            position.Describe(),
+            page.Root.Word);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, page.Root.Word, [], Destination: destination));
+
+        return ready;
+    }
+
+    private static PanelDestination? Page(SwitchTick tick, string key) =>
+        tick.Destinations.FirstOrDefault(page => string.Equals(page.Root.Key, key, StringComparison.Ordinal));
+
+    /// <summary>
     /// Item 5. Detecting the cause statically is not possible — with SimApp Pro or Joystick
     /// Gremlin in play, Elite's binds name a vJoy device that cannot be traced back to the
     /// physical switch — so this watches for the symptom instead, which also catches the leftover
@@ -439,6 +540,20 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     /// </summary>
     private static string? Disagreement(SwitchTick tick, SwitchPosition position)
     {
+        if (position.Destination is { Length: > 0 } destination)
+        {
+            // Only when d47 can say what the panel is showing, and only against a page that
+            // exists — a key nothing answers to is reported on the row, not annunciated.
+            if (tick.Showing is not { } showing
+                || string.Equals(showing, destination, StringComparison.Ordinal)
+                || Page(tick, destination) is null)
+            {
+                return null;
+            }
+
+            return $"the panel is on {Page(tick, showing)?.Root.Word ?? showing}";
+        }
+
         if (position.Action is not { Length: > 0 } id || GameActions.Find(id) is not { } action)
         {
             return null;

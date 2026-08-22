@@ -1576,7 +1576,8 @@ public sealed class AppHost : IDisposable
             controllers,
             reconciler,
             () => DateTimeOffset.Now,
-            Path.Combine(paths.Data, "switch-capture.txt"));
+            Path.Combine(paths.Data, "switch-capture.txt"),
+            () => host.PanelDestinations);
         // Whether a lookup is possible is asked at the moment the window opens rather than
         // captured now: the Commander can change the setting or the provider between launching
         // d47 and writing a note, and the window's own first sentence depends on the answer.
@@ -1677,6 +1678,9 @@ public sealed class AppHost : IDisposable
         {
             switches.Poll();
 
+            // One snapshot for both fields, so the pages and the one showing were true together.
+            var panel = host._panel;
+
             reconciler.Poll(
                 new SwitchTick
                 {
@@ -1687,7 +1691,11 @@ public sealed class AppHost : IDisposable
 
                     // Gated by key injection as well as by its own row. A Commander who has not
                     // allowed d47 to press keys at all has not allowed it for switches either.
+                    // A position that names a page of the panel is not behind either row —
+                    // it presses nothing (list.md Phase 46).
                     Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
+                    Destinations = panel.Destinations,
+                    Showing = panel.Showing,
                 },
                 switches.Switches);
 
@@ -3257,8 +3265,71 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private readonly List<Core.Interface.PanelNavigator> _navigators = [];
 
-    /// <summary>Adds a surface's navigator to the ones a spoken phrase moves.</summary>
-    public void RouteNavigation(Core.Interface.PanelNavigator nav) => _navigators.Add(nav);
+    /// <summary>
+    /// How to reach each navigator from a thread that does not own it, in the order they were
+    /// routed. A switch flip arrives on the tick thread and a navigator belongs to the thread
+    /// that draws it (list.md Phase 46).
+    /// </summary>
+    private readonly List<(Core.Interface.PanelNavigator Nav, Action<Action> Post)> _surfaces = [];
+
+    /// <summary>
+    /// The panel as the switch path sees it: every page any surface registered, and the one
+    /// showing. Replaced whole on the thread that owns the navigators and read from the tick,
+    /// never mutated — a navigator's dictionaries are not for reading off their thread.
+    /// </summary>
+    private volatile PanelSnapshot _panel = new([], null);
+
+    private sealed record PanelSnapshot(IReadOnlyList<Core.Interface.PanelDestination> Destinations, string? Showing);
+
+    /// <summary>
+    /// Adds a surface's navigator to the ones a spoken phrase moves, with how to reach it from
+    /// another thread. <paramref name="post"/> is called from the tick; it should carry a
+    /// dispatcher the surface captured on its own thread rather than read one at call time.
+    /// </summary>
+    public void RouteNavigation(Core.Interface.PanelNavigator nav, Action<Action> post)
+    {
+        _navigators.Add(nav);
+        _surfaces.Add((nav, post));
+
+        // Taken here and retaken every time a surface moves, on the thread that moved it. Every
+        // tab is furnished before a surface routes here, so the roots are complete at the first
+        // snapshot and never change after it.
+        nav.Changed += (_, _) => SnapshotPanel();
+        SnapshotPanel();
+    }
+
+    private void SnapshotPanel()
+    {
+        var destinations = _navigators
+            .SelectMany(nav => nav.Destinations)
+            .DistinctBy(page => page.Root.Key)
+            .ToList();
+
+        // What the panel is showing is what every surface agrees it is showing. Two surfaces in
+        // different places is "cannot say" rather than either one's answer: a flip then asks
+        // each of them, and each declines for itself if it is already there.
+        var showing = _navigators.Select(nav => nav.Root.Key).Distinct().ToList();
+
+        _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null);
+    }
+
+    /// <summary>Every page any surface offers, for the switch editor's list (list.md Phase 46).</summary>
+    public IReadOnlyList<Core.Interface.PanelDestination> PanelDestinations => _panel.Destinations;
+
+    /// <summary>
+    /// Puts every surface on this page, each on its own thread — what a switch position that
+    /// names a destination does (list.md Phase 46). The same every-surface rule as
+    /// <see cref="Navigate"/>, for the same reason: a switch has no surface attached to it
+    /// either. A surface that does not offer the page declines it, which is
+    /// <c>PanelView.Tab</c> declining a tab nobody furnished, inherited rather than re-stated.
+    /// </summary>
+    private void Show(string rootKey)
+    {
+        foreach (var (nav, post) in _surfaces)
+        {
+            post(() => nav.Show(rootKey));
+        }
+    }
 
     /// <summary>
     /// Moves every surface the phrase named somewhere, and says what happened — or null when it
@@ -3530,6 +3601,21 @@ public sealed class AppHost : IDisposable
     private void CarryOutReconciles(SwitchReconciler reconciler, IGameInput input)
     {
         var pending = reconciler.Drain();
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        // The ones that move the panel rather than the ship go elsewhere: to each surface on its
+        // own thread, and outside _acting, because a page move holds no keys for a honk to
+        // collide with (list.md Phase 46).
+        foreach (var page in pending.Where(reconcile => reconcile.Destination is not null))
+        {
+            Show(page.Destination!);
+        }
+
+        pending = [.. pending.Where(reconcile => reconcile.Destination is null)];
 
         if (pending.Count == 0)
         {

@@ -91,7 +91,8 @@ public static class SwitchCapability
 
         return against.Length == 0
             ? null
-            : "Switches currently sitting against the game's state: " + string.Join("; ", against) + ".";
+            : "Switches currently sitting against the state of the game or the panel: "
+              + string.Join("; ", against) + ".";
     }
 
     /// <summary>
@@ -177,7 +178,8 @@ public static class SwitchCapability
         Help = "When you flip a mapped switch, D47 asks whether Elite is already in the state that "
                + "position means and presses your own binding only if it is not. Between flips it "
                + "touches nothing. Off until you turn it on, and it does nothing while key injection "
-               + "is off.",
+               + "is off. A position that names a page of D47's own panel is not behind this row: "
+               + "it presses nothing, so it works whether this is on or off.",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "off",
         DocsAnchor = "turning-it-on",

@@ -95,6 +95,28 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
 }
 
 /// <summary>
+/// One place a surface can be sent to: a root, and the tab it is a root of (list.md Phase 46).
+/// <para>
+/// The destination vocabulary a switch position may name is this list, derived from what each
+/// surface registered, so there is no second list to keep in step with the spoken route — the
+/// invariant this file opens with. A switch that names a root nobody furnished inherits
+/// <see cref="PanelNavigator.Select"/> declining to select a tab nobody furnished.
+/// </para>
+/// </summary>
+public sealed record PanelDestination(PanelTab Tab, NavCrumb Root)
+{
+    /// <summary>
+    /// How it reads in a list of every destination: the root's word, and the tab when the word
+    /// alone would not say which tab — "Technical (Transcript)", but "Checklist" rather than
+    /// "Checklist (Checklist)".
+    /// </summary>
+    public string Describe() =>
+        string.Equals(Root.Word, Tab.ToString(), StringComparison.OrdinalIgnoreCase)
+            ? Root.Word
+            : $"{Root.Word} ({Tab})";
+}
+
+/// <summary>
 /// Where the Commander is, per tab and per root, and every way of changing it (list.md Phase
 /// 25, "Drill in, and find your way back").
 /// <para>
@@ -171,6 +193,37 @@ public sealed class PanelNavigator
 
     /// <summary>Whether a tab has anything behind it. A bar only shows the ones that do.</summary>
     public bool Has(PanelTab tab) => Roots(tab).Count > 0;
+
+    /// <summary>
+    /// Every root of every tab this surface furnished, in bar order (list.md Phase 46). The
+    /// whole of what a switch position may name, and nothing that is not also sayable.
+    /// </summary>
+    public IReadOnlyList<PanelDestination> Destinations =>
+        [.. Enum.GetValues<PanelTab>().SelectMany(tab => Roots(tab).Select(root => new PanelDestination(tab, root)))];
+
+    /// <summary>
+    /// Puts this surface on the root with this key, whichever tab it belongs to — the tab's
+    /// mode first and then the tab, so a destination on another tab arrives without a visible
+    /// flick through that tab's previous mode. False when no tab here has it, when a chooser
+    /// holds the panel, or when it is already showing — which is the <em>are you already
+    /// there</em> answer a switch needs, given exactly rather than inferred (list.md Phase 46).
+    /// </summary>
+    public bool Show(string rootKey)
+    {
+        foreach (var tab in _roots.Keys)
+        {
+            if (!Roots(tab).Any(root => root.Key == rootKey))
+            {
+                continue;
+            }
+
+            var moved = SelectRoot(tab, rootKey);
+
+            return Select(tab) || moved;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// The root the current tab is on. The first crumb of the breadcrumb, and the thing pressing

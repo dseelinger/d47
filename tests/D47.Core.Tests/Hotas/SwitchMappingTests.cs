@@ -139,6 +139,39 @@ public class SwitchMappingTests
         Assert.True((mapping.Contexts & ControlContext.Srv) != 0);
         Assert.Equal(ControlContext.None, mapping.Contexts & ControlContext.OnFoot);
     }
+
+    /// <summary>
+    /// A position may name a page of d47's own panel instead of an action (list.md Phase 46).
+    /// Not one of the ten actions Elite reports — not an action at all — and accepted, because
+    /// <em>are you already there</em> is answered exactly for d47's own panel.
+    /// </summary>
+    [Fact]
+    public void APositionMayNameAPageOfThePanelInstead()
+    {
+        var mapping = Mapping(
+            new SwitchPosition(4, Destination: "transcript.conversation"),
+            new SwitchPosition(5),
+            new SwitchPosition(6, Destination: "transcript.log"));
+
+        Assert.Null(SwitchValidation.Problem(mapping));
+        Assert.True(mapping.IsAssigned);
+        Assert.True(mapping.Positions[0].ReachesThePanel);
+        Assert.False(mapping.Positions[0].ReachesTheGame);
+        Assert.False(mapping.Positions[1].IsAssigned);
+    }
+
+    [Fact]
+    public void APositionThatNamesBothAnActionAndAPageIsRefused()
+    {
+        // One meaning per position. Which to do when the two disagree would be a rule nobody wrote.
+        var problem = SwitchValidation.Problem(
+            Mapping(
+                new SwitchPosition(8, "landing_gear", Destination: "transcript.log"),
+                new SwitchPosition(9)));
+
+        Assert.NotNull(problem);
+        Assert.Contains("not both", problem, StringComparison.Ordinal);
+    }
 }
 
 /// <summary>The file, and the rule that a bad entry is reported rather than dropped.</summary>
@@ -332,5 +365,30 @@ public class SwitchStoreTests : IDisposable
 
         Assert.Equal("a", Assert.Single(store.Switches).DeviceId);
         Assert.Single(store.Problems);
+    }
+
+    [Fact]
+    public void ADestinationIsItsOwnFieldInTheFileAndReadsBackAsOne()
+    {
+        // Declared, never a prefix on the action string — the NavCrumb.Level reasoning.
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(Path_, """
+            {
+              "switches": [
+                { "name": "transcript", "deviceId": "a", "positions": [
+                    { "button": 4, "destination": "transcript.conversation" },
+                    { "button": 5, "destination": "transcript.technical" },
+                    { "button": 6, "destination": "transcript.log" } ] }
+              ]
+            }
+            """);
+
+        var store = Store();
+        store.Poll();
+
+        var mapping = Assert.Single(store.Switches);
+        Assert.Empty(store.Problems);
+        Assert.Equal("transcript.technical", mapping.Positions[1].Destination);
+        Assert.Null(mapping.Positions[1].Action);
     }
 }

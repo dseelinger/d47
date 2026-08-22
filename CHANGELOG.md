@@ -17,6 +17,28 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.51.0 — 2026-08-22 — Switches that reach d47 itself
+
+**A switch position may name a page of d47's own panel.** A spare three-position toggle with
+nothing bound to it now flips the Transcript between Conversation, Technical and the log file —
+three detents, three pages — and every other page any surface shows is on the same list, the one
+the spoken route already reads. The rule is Phase 21's unchanged and it fits better here than
+where it was invented: the flip is the question, *are you already there* is asked first and
+answered exactly rather than read out of `Status.json`, and between flips nothing is touched.
+Nothing else drives the panel behind d47's back, so there is nothing to desync with and nothing
+to pause for.
+
+**Declared, not prefixed, and not behind the keyboard.** The page is its own `destination` field
+in `switches.json`, never a prefix on the action string, and a position that names both is
+refused. It is not behind *Let a HOTAS switch operate the ship* nor behind key injection — those
+rows exist because a switch that reconciles the ship reaches the keyboard, and one that changes
+which page is drawn presses nothing, reads no binds and checks no foreground. A page the panel
+does not have is reported on the row by name and never moved to; a switch sitting on a page the
+panel is not showing is annunciated like any other stale switch. Assignment is still the panel's
+and nothing else's. Spring-return controls and hats stay declined, for a page as much as for an
+action: the walk cannot know what a switch will be assigned to, and a momentary control can only
+ever mean a press.
+
 ## 0.50.0 — 2026-08-21 — Several Commanders, one installation
 
 **Two Commanders on one machine each get their own d47.** The stores already told them apart —

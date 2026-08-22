@@ -264,4 +264,64 @@ public class PanelNavigationTests
         Assert.False(nav.Drill(new NavCrumb("ship:12", "Corsair")));
         Assert.Equal(2, nav.Trail.Count);
     }
+
+    /// <summary>
+    /// The destination vocabulary is the roots, in bar order, and nothing else (list.md Phase
+    /// 46) — derived from what was registered rather than kept as a second list.
+    /// </summary>
+    [Fact]
+    public void EveryRootOfEveryTabIsADestinationInBarOrder()
+    {
+        var nav = Furnished();
+
+        Assert.Equal(
+            new[] { "conversation", "technical", "checklist", "fleet", "locker" },
+            nav.Destinations.Select(page => page.Root.Key));
+
+        Assert.Equal(PanelTab.Loadout, nav.Destinations[^1].Tab);
+        Assert.Equal("Suits and weapons (Loadout)", nav.Destinations[^1].Describe());
+        Assert.Equal("Checklist", nav.Destinations[2].Describe());
+    }
+
+    /// <summary>
+    /// Showing a root arrives on its tab and its mode, and showing the one already showing is
+    /// refused — which is the <em>are you already there</em> a switch asks, answered exactly.
+    /// </summary>
+    [Fact]
+    public void ShowingARootArrivesOnItsTabAndItsMode()
+    {
+        var nav = Furnished();
+
+        Assert.True(nav.Show("locker"));
+        Assert.Equal(PanelTab.Loadout, nav.Tab);
+        Assert.Equal("locker", nav.Root.Key);
+
+        Assert.False(nav.Show("locker"));
+
+        // On the tab showing already, only the mode moves.
+        Assert.True(nav.Show("fleet"));
+        Assert.Equal(PanelTab.Loadout, nav.Tab);
+        Assert.Equal("fleet", nav.Root.Key);
+    }
+
+    /// <summary>A root nobody furnished is declined, the way a tab nobody furnished is.</summary>
+    [Fact]
+    public void ShowingARootNobodyFurnishedIsDeclined()
+    {
+        var nav = Furnished();
+
+        Assert.False(nav.Show("settings"));
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+    }
+
+    [Fact]
+    public void AChooserHoldsThePanelAgainstAShowToo()
+    {
+        var nav = Furnished();
+
+        nav.Take(new NavCrumb("pick", "Pick one"));
+
+        Assert.False(nav.Show("checklist"));
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+    }
 }

@@ -22,14 +22,43 @@ namespace D47.Core.Hotas;
 /// </param>
 /// <param name="State">
 /// What the position means. Never <see cref="DesiredState.Toggle"/>: a position is a state, and a
-/// position that toggled would be the edge-triggered remapper this phase replaces.
+/// position that toggled would be the edge-triggered remapper this phase replaces. Meaningless
+/// for a position that names a <paramref name="Destination"/>, and ignored there.
 /// </param>
-public sealed record SwitchPosition(int? Button, string? Action = null, DesiredState State = DesiredState.On)
+/// <param name="Destination">
+/// The page of d47's own panel this position asks for, as the key of a root some surface
+/// registered — <c>transcript.technical</c> — or null (list.md Phase 46).
+/// <para>
+/// <b>Its own field, never a prefix on <paramref name="Action"/>.</b> The same reasoning as
+/// <see cref="Interface.NavCrumb.Level"/>: a statement by the Commander about what the position
+/// means, rather than a rule about string prefixes that a rename would silently break. A position
+/// names an action in Elite or a page of the panel, and <see cref="SwitchValidation"/> refuses
+/// one that names both.
+/// </para>
+/// <para>
+/// The two reasons Phase 21 closed the action vocabulary are both artefacts of the target being
+/// Elite, and neither applies here. <em>Are you already there</em> is answered exactly — d47
+/// knows which page it is on rather than inferring it from <c>Status.json</c> — and nothing can
+/// desync, because nothing else drives the panel behind d47's back. So the vocabulary is every
+/// root every surface registered, derived rather than listed.
+/// </para>
+/// </param>
+public sealed record SwitchPosition(
+    int? Button,
+    string? Action = null,
+    DesiredState State = DesiredState.On,
+    string? Destination = null)
 {
     /// <summary>How the position reads in a report or on the panel.</summary>
     public string Describe() => Button is { } button ? $"button {button}" : "nothing held";
 
-    public bool IsAssigned => Action is { Length: > 0 };
+    public bool IsAssigned => ReachesTheGame || ReachesThePanel;
+
+    /// <summary>Whether this position can end in a key press. The one that needs the gate.</summary>
+    public bool ReachesTheGame => Action is { Length: > 0 };
+
+    /// <summary>Whether this position moves d47's own panel. Presses nothing, so it is not gated.</summary>
+    public bool ReachesThePanel => Destination is { Length: > 0 };
 }
 
 /// <summary>
@@ -127,8 +156,17 @@ public static class SwitchValidation
     public const int MaxPositions = 12;
 
     /// <summary>
+    /// The longest root key a destination may carry. A bound on a hand-edited file rather than
+    /// on anything real: the longest key any surface registers is a third of this.
+    /// </summary>
+    public const int MaxDestinationLength = 80;
+
+    /// <summary>
     /// Every action a switch position may name: the ones Elite reports the state of, and no
-    /// others.
+    /// others. Not the whole vocabulary since list.md Phase 46 — a position may instead name a
+    /// page of d47's own panel (<see cref="SwitchPosition.Destination"/>), whose vocabulary is
+    /// the roots each surface registered and is checked where they are known, at reconcile time,
+    /// rather than here.
     /// <para>
     /// This is the rule that keeps item 3 honest. An action with no reported flag cannot be
     /// asked <em>are you already there</em>, so a switch bound to it could only press — and a
@@ -186,6 +224,26 @@ public static class SwitchValidation
             if (position.Button is < 0)
             {
                 return "A position cannot name a negative button.";
+            }
+
+            if (position.ReachesThePanel)
+            {
+                // One meaning per position. A position that named both would have to decide
+                // which to do when the two disagree, and the answer would be a rule nobody wrote.
+                if (position.ReachesTheGame)
+                {
+                    return "A position means one thing: an action in Elite or a page of D47's panel, not both.";
+                }
+
+                if (position.Destination!.Length > MaxDestinationLength)
+                {
+                    return $"That destination is longer than {MaxDestinationLength} characters.";
+                }
+
+                // Which pages exist is known only to the surfaces that registered them, so a
+                // destination is checked against them at reconcile time and the row says so —
+                // the same shape as an action bound to no key.
+                continue;
             }
 
             if (position.Action is not { Length: > 0 } action)

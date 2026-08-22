@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Hotas;
 using D47.Core.Input;
+using D47.Core.Interface;
 
 namespace D47.App.Controls;
 
@@ -47,6 +48,14 @@ public sealed class SwitchWindow : Window
     private static readonly string[] Assignable =
         ["(nothing)", .. SwitchValidation.Assignable.Select(action => action.Id)];
 
+    /// <summary>
+    /// The pages a position may name instead (list.md Phase 46): every root any surface
+    /// registered, as the host collected them, so the list here and the spoken route read one
+    /// vocabulary. Keys, and the words shown for them, in parallel.
+    /// </summary>
+    private readonly List<string> _pageKeys = [string.Empty];
+    private readonly List<string> _pageWords = ["(nothing)"];
+
     private readonly SwitchStore _store;
     private readonly IHotasReader _reader;
     private readonly SwitchReconciler _reconciler;
@@ -76,7 +85,8 @@ public sealed class SwitchWindow : Window
         IHotasReader reader,
         SwitchReconciler reconciler,
         Func<DateTimeOffset> now,
-        string exportPath)
+        string exportPath,
+        IReadOnlyList<PanelDestination> destinations)
     {
         _store = store;
         _reader = reader;
@@ -84,6 +94,24 @@ public sealed class SwitchWindow : Window
         _now = now;
         _exportPath = exportPath;
         _switches = [.. store.Switches.Select(MutableSwitch.From)];
+
+        foreach (var page in destinations)
+        {
+            _pageKeys.Add(page.Root.Key);
+            _pageWords.Add(page.Describe());
+        }
+
+        // A saved destination no surface offers right now is shown as its key rather than
+        // silently reset to nothing: the row says it is not answered to, and the Commander
+        // decides, which is the same treatment a switch whose device has gone gets.
+        foreach (var key in _switches.SelectMany(mapping => mapping.Positions).Select(position => position.Destination))
+        {
+            if (key.Length > 0 && !_pageKeys.Contains(key))
+            {
+                _pageKeys.Add(key);
+                _pageWords.Add(key);
+            }
+        }
 
         Title = "HOTAS switches";
         Width = 720;
@@ -459,8 +487,15 @@ public sealed class SwitchWindow : Window
 
         var state = new ComboBox { ItemsSource = States, SelectedItem = position.State, Width = 90 };
 
+        // Or a page of D47's own panel (list.md Phase 46). A second control rather than entries
+        // in the first, because what is stored is a declared field and not a prefixed string —
+        // and choosing one clears the other, so a position never means two things.
+        var pageIndex = Math.Max(0, _pageKeys.IndexOf(position.Destination));
+        var page = new ComboBox { ItemsSource = _pageWords, SelectedIndex = pageIndex, Width = 200 };
+
         // A position that means nothing has no state to mean, and offering one would suggest it
-        // does. The centre of a three-position switch is the ordinary case for this.
+        // does. The centre of a three-position switch is the ordinary case for this — and so is
+        // a position that names a page, which has no on or off.
         state.IsEnabled = position.Action.Length > 0;
 
         action.SelectionChanged += (_, _) =>
@@ -468,6 +503,24 @@ public sealed class SwitchWindow : Window
             var chosen = action.SelectedItem as string ?? Assignable[0];
             position.Action = chosen == Assignable[0] ? string.Empty : chosen;
             state.IsEnabled = position.Action.Length > 0;
+
+            if (position.Action.Length > 0)
+            {
+                position.Destination = string.Empty;
+                page.SelectedIndex = 0;
+            }
+        };
+
+        page.SelectionChanged += (_, _) =>
+        {
+            position.Destination = page.SelectedIndex > 0 ? _pageKeys[page.SelectedIndex] : string.Empty;
+
+            if (position.Destination.Length > 0)
+            {
+                position.Action = string.Empty;
+                action.SelectedItem = Assignable[0];
+                state.IsEnabled = false;
+            }
         };
 
         state.SelectionChanged += (_, _) => position.State = state.SelectedItem as string ?? position.State;
@@ -476,7 +529,7 @@ public sealed class SwitchWindow : Window
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { label, action, state },
+            Children = { label, action, state, page },
         };
     }
 
@@ -530,6 +583,7 @@ public sealed class SwitchWindow : Window
                     Button = position.Button,
                     Action = position.Action ?? string.Empty,
                     State = position.State == DesiredState.Off ? "off" : "on",
+                    Destination = position.Destination ?? string.Empty,
                 }),
             ],
         };
@@ -544,7 +598,8 @@ public sealed class SwitchWindow : Window
                 .. Positions.Select(position => new SwitchPosition(
                     position.Button,
                     position.Action.Length == 0 ? null : position.Action,
-                    position.State == "off" ? DesiredState.Off : DesiredState.On)),
+                    position.State == "off" ? DesiredState.Off : DesiredState.On,
+                    position.Destination.Length == 0 ? null : position.Destination)),
             ],
         };
     }
@@ -556,5 +611,8 @@ public sealed class SwitchWindow : Window
         public string Action { get; set; } = string.Empty;
 
         public string State { get; set; } = "on";
+
+        /// <summary>The root key of a page, or empty. Never set alongside <see cref="Action"/>.</summary>
+        public string Destination { get; set; } = string.Empty;
     }
 }

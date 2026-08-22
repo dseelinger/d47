@@ -1799,7 +1799,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
 
             await new Controls.SwitchWindow(
-                editing.Store, editing.Reader, editing.Reconciler, editing.Now, editing.ExportPath)
+                editing.Store,
+                editing.Reader,
+                editing.Reconciler,
+                editing.Now,
+                editing.ExportPath,
+                editing.Destinations())
                 .Over(owner);
 
             // The editor writes the file; this is what puts the new summary on the row without
