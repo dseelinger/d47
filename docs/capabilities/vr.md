@@ -52,12 +52,16 @@ themselves, and cannot be moved or dragged somewhere you would not see them.
 Point a controller at the panel, pull the **trigger**, and it comes with you — position and angle
 together, so it feels attached rather than dragged. Let go and it stays.
 
-While a ray is on the panel, Directive 47 has the trigger and grip of that controller and the
-game does not — that is how the panel can be grabbed at all. The moment the ray leaves, they are
-given back. If a controller ever seems to stop answering the game after you have been pointing
-at the panel, that is the hand-back having failed: **"headset overlay off"** then **"headset
-overlay on"** frees it without restarting the headset, and a build from 0.48.6 on gives it back
-on every path.
+While a ray is on the panel, Directive 47 asks SteamVR for the trigger and grip of that controller
+at overlay priority, and gives them back the moment the ray leaves. On a default SteamVR install
+that changes nothing you would notice: taking inputs away from other applications needs SteamVR's
+**Enable global input from overlays** developer setting, which is off unless you turned it on, and
+without it the game, Virtual Desktop and the dashboard keep the trigger while Directive 47 reads it
+too. With it on, the hand-back is what returns the trigger — 0.48.6 meant to do that on every path
+and did not, because SteamVR refused the call it made and said so only in d47's log; 0.52.2 does,
+and its log says when the controllers are claimed and given back, and **"headset overlay off"**
+then **"headset overlay on"** still frees a controller on an older build. A controller that stops
+answering everything some way into a session is a different fault, open in bugs.md.
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.

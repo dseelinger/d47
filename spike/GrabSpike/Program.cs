@@ -4,6 +4,7 @@ using D47.Core;
 using D47.Core.Vr;
 using D47.Vr;
 using Microsoft.Extensions.Logging;
+using Valve.VR;
 
 namespace GrabSpike;
 
@@ -79,6 +80,18 @@ internal static class Program
             return 1;
         }
 
+        if (args.Contains("--release-probe", StringComparer.Ordinal))
+        {
+            try
+            {
+                return ReleaseProbe(runtime);
+            }
+            finally
+            {
+                runtime.Stop();
+            }
+        }
+
         try
         {
             Run(
@@ -92,6 +105,38 @@ internal static class Program
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Asks SteamVR the two things the hand-back depends on, once each, and prints the answers
+    /// (the controller report of 2026-08-22). Needs SteamVR up and a headset present; needs
+    /// nobody wearing it, because nothing here reads a pose.
+    /// <list type="number">
+    /// <item><description><b>Does an empty set list release?</b> The 0.48.6 hand-back passed
+    /// one, and the installed log answered <c>NoActiveActionSet</c> six times in thirty
+    /// seconds.</description></item>
+    /// <item><description><b>Does the set at priority zero release?</b> That is what ships now,
+    /// and a refusal here is a refusal in the app.</description></item>
+    /// </list>
+    /// The claim that precedes both is real and lasts until the second answer, so Virtual Desktop
+    /// and the dashboard lose the trigger for about as long as this takes to print.
+    /// </summary>
+    private static int ReleaseProbe(SteamVrRuntime runtime)
+    {
+        var size = (uint)Marshal.SizeOf<VRActiveActionSet_t>();
+
+        Console.WriteLine($"registered:     {(runtime.Actions.Ready ? "yes" : "NO - nothing below means anything")}");
+
+        var held = runtime.Actions.TriggerHeld(true);
+        Console.WriteLine($"claim:          trigger={(held ? "down" : "up")} holding={runtime.Actions.HoldingPriority}");
+
+        var empty = OpenVR.Input.UpdateActionState([], size);
+        Console.WriteLine($"empty list:     {empty} {(empty == EVRInputError.None ? "(a release)" : "(refused - not a release)")}");
+
+        runtime.Actions.Release();
+        Console.WriteLine($"priority zero:  holding={runtime.Actions.HoldingPriority} {(runtime.Actions.HoldingPriority ? "(refused - see the warning above)" : "(released)")}");
+
+        return runtime.Actions.HoldingPriority ? 1 : 0;
     }
 
     /// <param name="posesOnly">

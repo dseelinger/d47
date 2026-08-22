@@ -37,6 +37,12 @@ public sealed class VrActionInput(ILogger logger)
 
     private VRActiveActionSet_t[]? _active;
 
+    /// <summary>The same set at priority zero: what <see cref="Release"/> hands over.</summary>
+    private VRActiveActionSet_t[]? _released;
+
+    /// <summary>The refusal a failing release was last logged with, so ten a second is said once.</summary>
+    private EVRInputError? _releaseRefused;
+
     /// <summary>Whether the trigger can be read at all. False leaves the panel display-only.</summary>
     public bool Ready => _ready;
 
@@ -125,17 +131,22 @@ public sealed class VrActionInput(ILogger logger)
     /// this frame.
     /// <para>
     /// <paramref name="wanted"/> is the priority gate, and it is why this takes an argument at all.
-    /// An action set activated at <c>k_nActionSetOverlayGlobalPriorityMin</c> takes the controllers
-    /// from whatever else wants them; at priority zero it loses to the running scene application
-    /// and receives nothing at all. So the set is activated at overlay priority <em>only</em> while
-    /// a ray is on the panel or a carry is already running.
+    /// An action set activated at <c>k_nActionSetOverlayGlobalPriorityMin</c> takes the bound
+    /// inputs from every other application — <em>if</em> SteamVR's "Enable global input from
+    /// overlays" developer setting is on. It is off by default (<c>globalActionSetPriority</c> in
+    /// SteamVR's <c>default.vrsettings</c>), and with it off the overlay range changes nothing:
+    /// d47 receives its trigger at priority zero as well, alongside whatever else is bound to it,
+    /// which is what Valve's description of the field and two shipping overlays both say. This
+    /// class used to say the opposite — that at priority zero it received nothing — and that was
+    /// reasoning, never a measurement. So the set is activated at overlay priority <em>only</em>
+    /// while a ray is on the panel or a carry is already running, for the Commander who has the
+    /// setting on.
     /// </para>
     /// <para>
     /// Elite does not bind motion controllers, so this is not about not disturbing the game. It is
     /// that Virtual Desktop and the SteamVR dashboard do want them, and holding global priority for
-    /// a whole session would take them hostage every moment the Commander is not pointing at the
-    /// panel — which is nearly all of them. The tell is physical: the trigger's own haptic tick
-    /// stops while they are held.
+    /// a whole session would — with that setting on — take them hostage every moment the Commander
+    /// is not pointing at the panel, which is nearly all of them.
     /// </para>
     /// <para>
     /// The claim outlives the frame: SteamVR holds an application's last active action-set list
@@ -152,15 +163,15 @@ public sealed class VrActionInput(ILogger logger)
             return false;
         }
 
-        _active ??=
-        [
-            new VRActiveActionSet_t
-            {
-                ulActionSet = _set,
-                ulRestrictedToDevice = OpenVR.k_ulInvalidInputValueHandle,
-                nPriority = OpenVR.k_nActionSetOverlayGlobalPriorityMin,
-            },
-        ];
+        _active ??= [ClaimSet(_set)];
+
+        if (!HoldingPriority)
+        {
+            // Once per claim rather than per frame, and at a level the installed log keeps: the
+            // 2026-08-22 controller report was diagnosed with no line on this side saying when
+            // the controllers had been taken, and vrserver.txt does not say either.
+            logger.LogInformation("Claimed the controllers at overlay priority");
+        }
 
         HoldingPriority = true;
 
@@ -195,8 +206,21 @@ public sealed class VrActionInput(ILogger logger)
     /// controllers at overlay priority and was followed by frames that simply did not call — the
     /// ray left the panel, the panel stopped taking the pointer, the session ended — left the
     /// claim standing. The Commander's report (2026-08-21): "Motion Controller appears hung",
-    /// and only restarting the headset freed it. So the release is an explicit call with no
-    /// action sets, made on every path out of a claim.
+    /// and only restarting the headset freed it — which, it turned out on 2026-08-22, a standing
+    /// claim could not have caused on his install, where the setting that gives the overlay range
+    /// its teeth is off; that report is an open defect in bugs.md. The release is still an
+    /// explicit call, made on every path out of a claim, because a Commander who turns the
+    /// setting on is owed one.
+    /// </para>
+    /// <para>
+    /// <b>And an empty set list is not the release either, which is how 0.48.6 shipped one that
+    /// never released anything.</b> SteamVR refuses <c>UpdateActionState</c> with no sets in it
+    /// — <c>NoActiveActionSet</c>, six times in thirty seconds in the installed log of
+    /// 2026-08-22 — and leaves the last list it was given standing. What it takes is the same
+    /// set at priority zero: below the overlay range, where a set takes inputs from no other
+    /// application. And a refusal leaves the claim recorded as standing, so the next frame tries
+    /// again — the old code forgot the claim on this side alone, which is a release that happens
+    /// in the log and nowhere else.
     /// </para>
     /// </summary>
     public void Release()
@@ -207,17 +231,51 @@ public sealed class VrActionInput(ILogger logger)
             return;
         }
 
-        HoldingPriority = false;
         _backWasDown = false;
+        _released ??= [ReleaseSet(_set)];
 
-        // An empty set list is how SteamVR is told "nothing, from me, from now".
-        var released = OpenVR.Input.UpdateActionState([], (uint)Marshal.SizeOf<VRActiveActionSet_t>());
+        var released = OpenVR.Input.UpdateActionState(_released, (uint)Marshal.SizeOf<VRActiveActionSet_t>());
 
         if (released != EVRInputError.None)
         {
-            logger.LogWarning("Could not release the controllers: {Error}", released);
+            if (_releaseRefused != released)
+            {
+                _releaseRefused = released;
+                logger.LogWarning("Could not release the controllers: {Error}; the claim stands and the release is retried", released);
+            }
+
+            return;
         }
+
+        _releaseRefused = null;
+        HoldingPriority = false;
+
+        logger.LogInformation("Gave the controllers back");
     }
+
+    /// <summary>
+    /// The set as a claim: overlay global priority, so the trigger and grip come here rather
+    /// than to whatever else wants them. <see cref="TriggerHeld"/> is why that is only ever
+    /// asked for while a ray is on the panel.
+    /// </summary>
+    public static VRActiveActionSet_t ClaimSet(ulong set) => new()
+    {
+        ulActionSet = set,
+        ulRestrictedToDevice = OpenVR.k_ulInvalidInputValueHandle,
+        nPriority = OpenVR.k_nActionSetOverlayGlobalPriorityMin,
+    };
+
+    /// <summary>
+    /// The set as a release: the same set at priority zero. A set rather than none, because
+    /// SteamVR refuses an empty list and keeps the claim; priority zero, because only the overlay
+    /// range takes inputs from other applications. See <see cref="Release"/>.
+    /// </summary>
+    public static VRActiveActionSet_t ReleaseSet(ulong set) => new()
+    {
+        ulActionSet = set,
+        ulRestrictedToDevice = OpenVR.k_ulInvalidInputValueHandle,
+        nPriority = 0,
+    };
 
     /// <summary>
     /// Whether the back button was <em>pressed</em> this frame (list.md Phase 25, "Drill in, and

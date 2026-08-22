@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Three open, and one partly confirmed.
+## Four open, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
@@ -29,6 +29,81 @@ over SteamVR's dashboard, so the events they unlock never arrive while Elite hol
 **Partly confirmed.** The trigger does arrive and the panel can be carried — reported from the
 headset against 0.22.1. Two faults it then showed, flicker under a live carry and a lock that did
 not follow the grab, shipped in 0.22.2.
+
+## Open: the motion controller stops answering some way into a headset session
+
+Reported 2026-08-22 against 0.52.0 and 0.52.1, and on 2026-08-21 against 0.48.x as "Motion
+Controller appears hung": after d47 has been running for fifteen minutes or more, the Touch
+controller answers nothing — not d47's ray, not SteamVR's dashboard, not Virtual Desktop's own menu
+— and the remedies are restarting the headset, or holding the Quest's power button until the power
+dialog appears and cancelling, after which hand tracking re-engages in Horizon OS, then the
+controller, and everything works again for a while. The Commander is 99.9% sure it never happens
+without d47, and nothing in two days of logs contradicts him.
+
+**What is verified**, from `vrserver.txt` and d47's own logs for 2026-08-21 and 22.
+
+1. **The 0.48.6 hand-back never handed anything back, and could not have mattered if it had.**
+   `UpdateActionState` with an empty set list is refused — `NoActiveActionSet`, six times in thirty
+   seconds in the installed log at 09:37 on the 22nd — and leaves the last list standing; the code
+   then marked the claim released and never retried. 0.52.2 fixes the call (the set at priority
+   zero, retried on refusal; `spike/GrabSpike --release-probe` proves both shapes against the live
+   runtime). But the overlay priority range only takes inputs from other applications when SteamVR's
+   *Enable global input from overlays* developer setting (`globalActionSetPriority`) is on, and it is
+   off by default and absent from the Commander's `steamvr.vrsettings` — so the claim never took
+   anything, and the 2026-08-21 diagnosis was wrong. Independently of that: the 64-minute session
+   from 09:40 to 10:44 on the 22nd made no claim at all (no ray ever crossed the panel; there is no
+   release line in it) and is long enough to contain the failure.
+
+2. **What SteamVR sees is one controller that goes to standby and never comes back.** Only the right
+   Touch controller exists to SteamVR (`1PASH5D1P17365_Controller_Right`, tracked device 1).
+   driver_oculus logs `controller state connected` when it is picked up and `disconnected` five to
+   twenty seconds after it is put down — the Quest's hand-tracking auto-switch, relayed by Virtual
+   Desktop's LibOVR shim — and vrserver logs `1 - entering standby` 5 min 10 s after a disconnect,
+   which is its own `turnOffControllersTimeout` of 300 s on top of the 10 s idle threshold. A device
+   leaves standby only when its driver submits changing poses or a boolean input changes. In the
+   failing case the controller **never reports connected again** — two hours on the 22nd, the whole
+   evening on the 21st — until a headset-level wake (`0 - leaving standby`, from the power dialog or
+   a restart), after which `connected` follows within seconds and `1 - leaving standby` 30 ms later.
+
+3. **The pattern that separates the cases.** Every put-down while d47 was *not* connected to SteamVR
+   came back from standby by itself on the next pick-up: 16:05 → 16:34 on the 21st (d47 connected
+   in between, and it still came back), 11:40 → 11:47 on the 22nd and the seven pick-ups after it.
+   Every put-down while d47 *was* connected, that then reached standby, never came back on its own:
+   16:35, 17:51 and 20:28 on the 21st, 09:38 on the 22nd. Quick re-pick-ups before the five-minute
+   standby work either way (09:37:06 → 09:37:38, 11:39:12 → 11:39:23). So whatever goes wrong goes
+   wrong at or after the put-down, not at d47's start, and "fifteen minutes or more" is the put-down
+   plus the standby plus however long until the Commander reaches for the controller.
+
+**What is only a hypothesis.** Nothing d47 does reaches the Quest directly. Its channels are
+SteamVR — poses and events read at 10 Hz, four overlays, an action set that takes nothing — and
+Virtual Desktop's virtual speaker and microphone, the microphone held open for the whole session,
+which the game alone does not do. The symptom sits below SteamVR, and it has a documented shape:
+Horizon OS has exactly one state in which a running immersive app keeps rendering but gets neither
+controllers nor hands — **input focus lost** (OpenXR `VISIBLE` rather than `FOCUSED`), entered when
+system UI overlays the app and left when it is dismissed. Holding the power button and cancelling
+the dialog is the textbook way to force that cycle by hand, and Meta's own forum records a Quest
+app stuck in `VISIBLE` after a system menu closed, with hand tracking dead until the next cycle.
+Which of d47's channels, or what timing, leaves the Virtual Desktop client in that state is not
+known; the one PC-side hook that fires at exactly the moment the fault is armed is SteamVR calling
+the oculus driver's `EnterStandby()` for the controller, and what that does inside a closed driver
+over VD's LibOVR emulation is undocumented. SteamVR's own activity rules do not help: an
+application polling poses is not activity, and nothing an application can call touches a device's
+standby. Two days of web search (Steam, Meta, VD, flight-sim and VRChat trackers) found no public
+report with this exact signature.
+
+**A lead is not a diagnosis.** The experiment, SteamVR + Virtual Desktop + d47 0.52.2 and no game,
+each run six minutes past `1 - entering standby` in `vrserver.txt` before the pick-up, with d47's
+log beside it — from 0.52.2 it records every controller connected/tracking/activity transition on
+d47's clock: (a) d47 running, the panel never pointed at; (b) d47 running with the microphone never
+opened — mode *hold* with the push-to-talk key cleared, which is the one arrangement under which
+`ListeningWiring.NeedsMicrophone` says no, and the log's "Listening on Microphone" line must be
+absent; (c) d47 running with the ray crossed once before the put-down; (d) d47 connected only
+*after* the put-down; (e) Steam Link in place of Virtual Desktop, d47 running. (a) confirms the
+fault without a claim, (b) and (c) each retire one channel, (d) reproduces the one self-recovery
+seen with d47 connected, and (e) separates a Horizon OS state from Virtual Desktop's client. A
+second lever, if the fault tracks the standby moment: `power.turnOffControllersTimeout` in
+`steamvr.vrsettings` (default 300 s) raised to hours, so the controller never reaches SteamVR
+standby at all.
 
 ## Open: the aim ray does not follow the hand
 

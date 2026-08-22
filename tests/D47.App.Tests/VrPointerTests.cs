@@ -84,6 +84,30 @@ public class VrPointerTests
             $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Release)}");
     }
 
+    /// <summary>
+    /// And what is given back is the set at priority zero, not nothing. SteamVR refuses an empty
+    /// list outright — <c>NoActiveActionSet</c> — and leaves the last list standing, which is
+    /// how 0.48.6 shipped a hand-back that never handed anything back: the installed log of
+    /// 2026-08-22 says so six times in thirty seconds. Priority zero is below the overlay range,
+    /// where a set takes inputs from no other application.
+    /// </summary>
+    [Fact]
+    public void TheReleaseIsTheSetAtPriorityZeroNotAnEmptyList()
+    {
+        var claim = VrActionInput.ClaimSet(42);
+        var release = VrActionInput.ReleaseSet(42);
+
+        Assert.Equal(42ul, claim.ulActionSet);
+        Assert.Equal(42ul, release.ulActionSet);
+        Assert.True(claim.nPriority >= Valve.VR.OpenVR.k_nActionSetOverlayGlobalPriorityMin);
+        Assert.Equal(0, release.nPriority);
+
+        // And it is what Release hands over. A shape nobody passes is the empty list again.
+        Assert.True(
+            CallsFrom(typeof(VrActionInput).Assembly, nameof(VrActionInput), nameof(VrActionInput.Release), nameof(VrActionInput.ReleaseSet)),
+            $"{nameof(VrActionInput)}.{nameof(VrActionInput.Release)} does not call {nameof(VrActionInput.ReleaseSet)}");
+    }
+
     /// <summary>What a surface source says about the pointer, read off the type's own default.</summary>
     private static bool Declared<T>() =>
         (bool)typeof(T).GetProperty(nameof(IVrSurfaceSource.TakesPointer))!
@@ -122,33 +146,85 @@ public class VrPointerTests
 
         var token = MetadataTokens.GetToken(declared.IsNil ? reference : declared);
 
-        var wanted = new byte[5];
-        BitConverter.TryWriteBytes(wanted.AsSpan(1), token);
+        foreach (var handle in metadata.MethodDefinitions)
+        {
+            if (BodyCalls(pe, metadata.GetMethodDefinition(handle), token))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Whether one named method's body issues a call to another method defined in the same
+    /// assembly. The narrower question than <see cref="IsCalledInside"/>: not "does anything
+    /// call it" but "does <em>this</em> method", which is what ties a release to its shape.
+    /// </summary>
+    private static bool CallsFrom(Assembly assembly, string type, string caller, string callee)
+    {
+        using var stream = File.OpenRead(assembly.Location);
+        using var pe = new PEReader(stream);
+
+        var metadata = pe.GetMetadataReader();
+
+        var target = metadata.MethodDefinitions.FirstOrDefault(
+            handle => metadata.GetString(metadata.GetMethodDefinition(handle).Name) == callee);
+
+        Assert.False(target.IsNil, $"{callee} is not defined in {assembly.GetName().Name}");
+
+        var token = MetadataTokens.GetToken(target);
 
         foreach (var handle in metadata.MethodDefinitions)
         {
             var definition = metadata.GetMethodDefinition(handle);
 
-            if (definition.RelativeVirtualAddress == 0)
+            if (metadata.GetString(definition.Name) != caller
+                || metadata.GetString(metadata.GetTypeDefinition(definition.GetDeclaringType()).Name) != type)
             {
                 continue;
             }
 
-            var il = pe.GetMethodBody(definition.RelativeVirtualAddress).GetILBytes();
-
-            if (il is null)
+            if (BodyCalls(pe, definition, token))
             {
-                continue;
+                return true;
             }
+        }
 
-            foreach (var opcode in new byte[] { 0x28, 0x6F })
+        return false;
+    }
+
+    /// <summary>
+    /// Whether a method body carries the five bytes of a <c>call</c> or <c>callvirt</c> with
+    /// the token. Not decoded instruction by instruction: the question is only ever asked one
+    /// way round, and an operand that happens to read as this call is a false positive nothing
+    /// here can produce, while a real call cannot hide from it.
+    /// </summary>
+    private static bool BodyCalls(PEReader pe, MethodDefinition definition, int token)
+    {
+        if (definition.RelativeVirtualAddress == 0)
+        {
+            return false;
+        }
+
+        var il = pe.GetMethodBody(definition.RelativeVirtualAddress).GetILBytes();
+
+        if (il is null)
+        {
+            return false;
+        }
+
+        var wanted = new byte[5];
+        BitConverter.TryWriteBytes(wanted.AsSpan(1), token);
+
+        foreach (var opcode in new byte[] { 0x28, 0x6F })
+        {
+            wanted[0] = opcode;
+
+            if (il.AsSpan().IndexOf(wanted) >= 0)
             {
-                wanted[0] = opcode;
-
-                if (il.AsSpan().IndexOf(wanted) >= 0)
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
