@@ -40,8 +40,24 @@
     heading for the version being cut, which is where that sentence already lives.
 
 .PARAMETER Yes
-    Skips the confirmation before the tag is pushed. For unattended runs; the confirmation is
-    there because the tag is the one step with no way back.
+    Runs without asking anything. It skips the confirmation before the tag is pushed — which is
+    there because the tag is the one step with no way back — and it also turns every other
+    question into an error naming the switch that would have answered it. For unattended runs,
+    where a question is not a question: with no console attached, Read-Host either hangs or
+    returns nothing and fails several minutes later, having already committed and merged.
+
+.PARAMETER ShowVersion
+    Prints the version this run would cut, says whether CHANGELOG.md already has its section,
+    and stops. Changes nothing. The annotation is taken from that section, so it has to be
+    written before the run that uses it — and until this switch existed the only way to learn
+    the number was to work it out by hand, which is the script's own job done twice.
+
+.PARAMETER SkipTests
+    Pushes without running `dotnet test -c Release` first. The suite is not skipped, only moved:
+    ci.yml runs it on the pushed commit and the wait below will not tag a red one, so this trades
+    a local run for the one that was going to happen anyway. Worth it on a resume, where the tree
+    has not changed since the suite last passed. Refused together with -SkipCi, which would leave
+    nothing between an untested commit and a tag.
 
 .PARAMETER SkipCi
     Pushes the tag without waiting for CI. Only for a run where the CI result is already known,
@@ -52,6 +68,9 @@
 
 .EXAMPLE
     ./tools/release.ps1 minor -Notes "Phase 35: the thing the phase does"
+
+.EXAMPLE
+    ./tools/release.ps1 patch -ShowVersion
 #>
 
 [CmdletBinding()]
@@ -65,6 +84,10 @@ param(
     [string] $Notes,
 
     [switch] $Yes,
+
+    [switch] $ShowVersion,
+
+    [switch] $SkipTests,
 
     [switch] $SkipCi
 )
@@ -114,6 +137,37 @@ function Test-Clean {
     return [string]::IsNullOrWhiteSpace((Invoke-Git status --porcelain) -join "`n")
 }
 
+# Every question the script asks goes through here, so -Yes governs all of them rather than only
+# the last one. An unattended run has no console: Read-Host there does not ask, it hangs — and
+# both of the questions this replaces came *after* the commit and the merge, so the run that
+# eventually gave up had already changed the repository. Naming the switch that would have
+# answered it turns a hang into a line of output.
+function Request-Value {
+    param([string] $Prompt, [string] $Switch)
+
+    if ($Yes) {
+        throw "$Prompt is required, and -Yes means nothing can be asked. Pass $Switch."
+    }
+
+    return Read-Host $Prompt
+}
+
+# The heading for a version, or $null. Shared because -ShowVersion reports whether it is there
+# and the annotation below is read out of it: one pattern, so the switch cannot say a section
+# exists that the annotation step then fails to find.
+function Find-ChangelogHeading {
+    param([string] $Version)
+
+    $changelog = Join-Path $root 'CHANGELOG.md'
+
+    if (-not (Test-Path $changelog)) {
+        return $null
+    }
+
+    return Select-String -Path $changelog -Pattern "^##\s+$([regex]::Escape($Version))\s" |
+        Select-Object -First 1
+}
+
 # ------------------------------------------------------------------ where we are
 
 $root = (Invoke-Git rev-parse --show-toplevel) | Select-Object -First 1
@@ -133,48 +187,18 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw 'The GitHub CLI (gh) is not on PATH. It is needed to wait for CI before tagging.'
 }
 
-# ------------------------------------------------------------------ commit
-
-if (Test-Clean) {
-    Write-Step 'Nothing to commit'
-}
-else {
-    Write-Step 'Committing the working tree'
-
-    Invoke-Git status --short | ForEach-Object { Write-Note $_ }
-
-    if ([string]::IsNullOrWhiteSpace($Message)) {
-        $Message = Read-Host 'Commit message'
-
-        if ([string]::IsNullOrWhiteSpace($Message)) {
-            throw 'A commit message is required for the changes in the working tree.'
-        }
-    }
-
-    Invoke-Git add -A
-    Invoke-Git commit -m $Message | Out-Null
-
-    Write-Note (Invoke-Git log --oneline -1)
-}
-
-# ------------------------------------------------------------------ merge
-
-if ($branch -eq $Main) {
-    Write-Step "Already on $Main, nothing to merge"
-}
-else {
-    Write-Step "Merging $branch into $Main"
-
-    Invoke-Git checkout $Main | Out-Null
-
-    # --no-ff, because a batch that arrived as several commits should read as one thing on main.
-    # The merge commit is where the whole of it is named.
-    Invoke-Git merge --no-ff $branch -m "Merge $branch" | Out-Null
-
-    Write-Note (Invoke-Git log --oneline -1)
+# -SkipTests leans on the CI wait, and -SkipCi removes it. Each is defensible on its own and
+# together they are a tag on a commit that nothing has run.
+if ($SkipTests -and $SkipCi) {
+    throw '-SkipTests and -SkipCi together would tag a commit nothing has tested. Pick one.'
 }
 
 # ------------------------------------------------------------------ the version
+#
+# Worked out before anything is committed or merged, because both of the things that can stop a
+# run — the tag already existing, and no annotation to be had — are known from the tag list and
+# CHANGELOG.md alone. Finding out after the merge left a merge commit on local main behind a
+# failure that was knowable at the start.
 
 Write-Step 'Working out the next version'
 
@@ -208,19 +232,31 @@ if ($tags -contains $next) {
     throw "$next already exists. A published tag never moves — cut the next number instead."
 }
 
+# ------------------------------------------------------------------ the number, and nothing else
+
+if ($ShowVersion) {
+    $version = $next.TrimStart('v')
+
+    Write-Host ''
+    Write-Host $next -ForegroundColor Cyan
+
+    if (Find-ChangelogHeading $version) {
+        Write-Note "CHANGELOG.md has its '## $version' section, so -Notes will come from there."
+    }
+    else {
+        Write-Note "CHANGELOG.md has no '## $version' section yet. Write it before the real run:"
+        Write-Note 'the tag annotation and the GitHub Release body are both read out of it.'
+    }
+
+    Write-Step 'Nothing was changed.'
+    return
+}
+
 # ------------------------------------------------------------------ the annotation
 
 if ([string]::IsNullOrWhiteSpace($Notes)) {
     $version = $next.TrimStart('v')
-    $changelog = Join-Path $root 'CHANGELOG.md'
-
-    if (Test-Path $changelog) {
-        $heading = Select-String -Path $changelog -Pattern "^##\s+$([regex]::Escape($version))\s" |
-            Select-Object -First 1
-    }
-    else {
-        $heading = $null
-    }
+    $heading = Find-ChangelogHeading $version
 
     if ($heading) {
         # The changelog line is the release's permanent record, so it is also the best thing to
@@ -230,7 +266,7 @@ if ([string]::IsNullOrWhiteSpace($Notes)) {
     }
     else {
         Write-Warning "CHANGELOG.md has no '## $version' entry. The changelog line is a release's permanent record."
-        $Notes = Read-Host "Tag annotation for $next"
+        $Notes = Request-Value "Tag annotation for $next" '-Notes'
 
         if ([string]::IsNullOrWhiteSpace($Notes)) {
             throw 'A tag annotation is required.'
@@ -238,15 +274,63 @@ if ([string]::IsNullOrWhiteSpace($Notes)) {
     }
 }
 
+# ------------------------------------------------------------------ commit
+
+if (Test-Clean) {
+    Write-Step 'Nothing to commit'
+}
+else {
+    Write-Step 'Committing the working tree'
+
+    Invoke-Git status --short | ForEach-Object { Write-Note $_ }
+
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        $Message = Request-Value 'Commit message' '-Message'
+
+        if ([string]::IsNullOrWhiteSpace($Message)) {
+            throw 'A commit message is required for the changes in the working tree.'
+        }
+    }
+
+    Invoke-Git add -A
+    Invoke-Git commit -m $Message | Out-Null
+
+    Write-Note (Invoke-Git log --oneline -1)
+}
+
+# ------------------------------------------------------------------ merge
+
+if ($branch -eq $Main) {
+    Write-Step "Already on $Main, nothing to merge"
+}
+else {
+    Write-Step "Merging $branch into $Main"
+
+    Invoke-Git checkout $Main | Out-Null
+
+    # --no-ff, because a batch that arrived as several commits should read as one thing on main.
+    # The merge commit is where the whole of it is named.
+    Invoke-Git merge --no-ff $branch -m "Merge $branch" | Out-Null
+
+    Write-Note (Invoke-Git log --oneline -1)
+}
+
 # ------------------------------------------------------------------ the gate
 
-Write-Step 'dotnet test -c Release'
-Write-Note 'The release workflow runs this too, and a failure there lands after the tag is published.'
+if ($SkipTests) {
+    Write-Step 'Skipping dotnet test -c Release (-SkipTests)'
+    Write-Note 'ci.yml runs the same suite on the pushed commit, and the wait below will not tag a red one.'
+    Write-Note 'Nothing is unchecked; a failure is just found later, and on main rather than before the push.'
+}
+else {
+    Write-Step 'dotnet test -c Release'
+    Write-Note 'The release workflow runs this too, and a failure there lands after the tag is published.'
 
-Invoke-Native { & dotnet test -c Release --nologo }
+    Invoke-Native { & dotnet test -c Release --nologo }
 
-if ($LASTEXITCODE -ne 0) {
-    throw 'Tests failed. Nothing has been pushed.'
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Tests failed. Nothing has been pushed.'
+    }
 }
 
 # ------------------------------------------------------------------ push

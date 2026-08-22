@@ -17,6 +17,57 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.3 — 2026-08-22 — The Adventures tab says it heard you
+
+**Three words, on the tick you do the thing.** A beat is said twenty seconds after you reach it —
+`AdventureCallout.Settle`, so the line is not read out over the jump that reached it — and the model
+then spends longer still saying it in the core's voice. Neither wait is wrong, and together they
+left the Commander unable to tell *it is thinking* from *I have not done the thing*. So the
+confirmation is now split off from the telling. `AdventureAcks` is ten stock lines — *That's it.*,
+*You've done it.*, *Well done.* — said on the tick the beat fires with no settle and **no model
+behind it**, which is why they carry `AdventureCallout.AckPrefix` rather than `KeyPrefix`:
+`FlavourBriefs` routes on the prefix and would otherwise send the acknowledgement through the very
+round trip it exists to arrive ahead of. It is not gated on danger, where the beat is — it lands
+almost never in the window a beat gets dropped in, and where it does, three words are the only thing
+left telling the Commander their act counted. `AdventureThinking` is the other half, animated off
+the same tick the clocks run on and honest about whether the frame actually moved, because the
+headset only re-rasterises a surface something marked dirty.
+
+**And the tab now keeps what was actually said.** The reading level was drawing the *authored*
+lines, and what a Commander hears is the model's wording — so a story flown over four evenings had
+no record of itself anywhere but a session-long transcript carrying everything else d47 says.
+`Adventure.Told` is that record, persisted with the story and capped at `AdventureLimits.MaxTold`.
+Triggered lines are highlighted, and the beat you are on now says what it is waiting for you to do.
+Flavour — the core answering a question *about* the story — is admitted by `AdventureMention`: the
+adventure's name, a beat or a place mentioned across the exchange, whole words only and nothing
+shorter than four letters. Chosen over admitting everything said while a story is live, which stops
+the page being adventure-only, and over asking the model to tag each turn, which is a round trip in
+front of every answer — the exact cost the rest of this release removes.
+
+**Step X of Y, which reverses a rule Phase 47 wrote into the code.** `AdventureStanding` said
+outright that *beat 3 of 7 is checklist language and belongs to the Technical transcript*, on the
+story-not-a-checklist framing that governed the whole phase. The Commander asked for the count on
+both surfaces, so it is built and that comment is rewritten rather than deleted — the same terms the
+checklist's withdrawal and return were settled on. What did not change: beats are still titled
+dramatic functions rather than numbered stops, and nothing generated ever says a number.
+`AdventureFold.Step()` is the one place a count is spelled at all.
+
+**It reaches the headset by one call, and the mini follows the tab.** `VrPanelSurface` hands the
+window's adventure surface to `PanelView.EnableAdventures`, exactly as Phase 47's own comment
+predicted the tab would arrive. The desktop-only reasoning had been that the editor and the ask form
+want a keyboard; that weighed the wrong half, since a Commander in a headset is precisely the one
+who has just arrived somewhere, and the prompts have taken a spoken value since Phase 25. The mini
+panel was the transcript's tail and the provenance line whatever the big panel was on; it now shows
+a succinct version of whichever tab is selected — transcript and Adventure for now — and
+`AdventureMini` draws the short description, the trigger just fulfilled, the trigger expected, the
+last thing the AI said, and the step. Every other tab behaves as it did. Mini still has no tab strip:
+which tab it reads is chosen on the big panel, which is what makes this one surface in two sizes
+rather than two surfaces with their own state. The tab itself now sits after Engineers.
+
+**A headless capture caught the one defect no test had.** The drilled-in reading level subscribed to
+the store's change event alone — and a beat firing writes nothing to disk, so the card behind it
+redrew while the level the Commander was actually looking at did not.
+
 ## 0.52.2 — 2026-08-22 — The controllers are given back, this time
 
 **The hand-back that 0.48.6 shipped never handed anything back.** To carry the panel, d47 takes

@@ -132,12 +132,21 @@ Release is a tag: `git tag -s v0.1.0 -m "what changed"` then `git push origin v0
 publishes, checksums and creates the GitHub Release. Publish settings live in
 `D47.App.csproj` so local and CI cannot diverge.
 
-**`tools/release.ps1 <patch|minor>` is that whole process, once.** It commits what is in the
-working tree, merges the branch to `main`, runs `dotnet test -c Release`, pushes, **waits for CI
-to go green**, works the next version out from the newest tag, and only then signs and pushes the
-tag. The three waits are not politeness — each is a rule below that has already cost a version
-number that could not be reused. Run it from any branch; `-Yes` skips the confirmation for an
-unattended run.
+**`tools/release.ps1 <patch|minor>` is that whole process, once.** It works the next version out
+from the newest tag, commits what is in the working tree, merges the branch to `main`, runs
+`dotnet test -c Release`, pushes, **waits for CI to go green**, and only then signs and pushes the
+tag. The version comes first so that the two things which can stop a run — the tag already
+existing, and no annotation to be had — are found before anything is committed or merged. The
+three waits are not politeness — each is a rule below that has already cost a version number that
+could not be reused.
+
+Run it from any branch. `-Yes` is the unattended run: it skips the confirmation before the tag,
+and turns every other question into an error naming the switch that would have answered it, because
+`Read-Host` with no console attached does not ask — it hangs. `-ShowVersion` prints the number the
+run would cut, says whether `CHANGELOG.md` has its section yet, and changes nothing; it is how that
+section gets written before the run that reads it. `-SkipTests` leaves the suite to CI, which runs
+the same one on the pushed commit — worth it on a resume, where the tree has not changed since it
+last passed, and refused alongside `-SkipCi`.
 
 **A completed phase is always a minor release.** Finishing a phase in `list.md` means the
 next tag is `0.<minor+1>.0`, not another patch — the version is how a Commander tells "some
