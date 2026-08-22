@@ -17,6 +17,32 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.2 — 2026-08-22 — The controllers are given back, this time
+
+**The hand-back that 0.48.6 shipped never handed anything back.** To carry the panel, d47 takes
+the trigger and grip at SteamVR's overlay priority while a ray is on the panel, and 0.48.6 made the
+release an explicit `UpdateActionState` with no action sets in it. SteamVR refuses that call —
+`NoActiveActionSet`, which the installed log of 2026-08-22 says six times in thirty seconds — and
+keeps the last list it was given, so the claim stood exactly as before; and the code then recorded
+the claim as released and never tried again. The release is now the same set at priority zero,
+below the overlay range where a set takes inputs from no other application, and a refusal leaves
+the claim recorded as standing so the next frame retries. Proven against SteamVR 2.16.7 by
+`spike/GrabSpike --release-probe`, which asks both shapes in turn and prints the answers, and by a
+test that ties `Release` to the shape it hands over. What this does **not** do is cure the
+2026-08-22 controller report, and the reason is the other half of what the investigation found:
+an overlay's action set only takes inputs from other applications when SteamVR's *Enable global
+input from overlays* developer setting is on, and it is off by default and off on the Commander's
+machine. So the claim never took anything, the 0.48.6 diagnosis was wrong as well as unexecuted,
+and the controller that stops answering everything some way into a session is an open defect in
+bugs.md, with the evidence so far.
+
+**And d47's log now says when a controller comes and goes.** Connected, tracking and SteamVR's own
+activity level for each controller, once per change, on d47's clock — plus a line when the
+controllers are claimed and one when they are given back. The 2026-08-22 report, a controller that
+stopped answering some way into a session in the game, in SteamVR and in Virtual Desktop alike, had
+to be diagnosed out of `vrserver.txt` alone, which knows nothing of what d47 was doing at the time.
+That report stays open in bugs.md: this release is the instrument for it, not the fix.
+
 ## 0.52.1 — 2026-08-22 — A story that could not stand
 
 **The ship's AI is now handed real places to build a story from.** Asked for an adventure *near

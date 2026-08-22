@@ -126,6 +126,17 @@ public sealed class SteamVrRuntime(
     private readonly Dictionary<uint, Matrix4x4> _gripToTip = [];
 
     /// <summary>
+    /// The last thing each controller reported about itself — connected, tracking, and SteamVR's
+    /// own activity level — so a change is logged once and a steady state not at all. The
+    /// 2026-08-22 report, a controller that stopped answering some way into a session, was
+    /// diagnosed out of <c>vrserver.txt</c> alone because nothing on this side said when a
+    /// controller came or went; this puts the same transitions in d47's log, with d47's clock.
+    /// </summary>
+    private readonly Dictionary<uint, ControllerSeen> _controllersSeen = [];
+
+    private readonly record struct ControllerSeen(bool Connected, bool Tracking, EDeviceActivityLevel Activity);
+
+    /// <summary>
     /// The trigger. Its own object because registering for it is a several-step transaction with
     /// SteamVR that has to happen once and can fail without being a reason not to start.
     /// <para>
@@ -253,6 +264,7 @@ public sealed class SteamVrRuntime(
         _complaints.Clear();
         _served.Clear();
         _described.Clear();
+        _controllersSeen.Clear();
 
         if (_system is not null)
         {
@@ -360,6 +372,8 @@ public sealed class SteamVrRuntime(
                 continue;
             }
 
+            Note(device, poses[device]);
+
             if (VrMatrix.Real(poses[device]) is { } grip)
             {
                 var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
@@ -432,14 +446,46 @@ public sealed class SteamVrRuntime(
         return correction;
     }
 
-    private string? ModelName(uint device)
+    /// <summary>
+    /// Says, once per change, what a controller is reporting — see <see cref="_controllersSeen"/>.
+    /// The activity level is SteamVR's own word for it, and <c>Standby</c> is the one that
+    /// mattered: in <c>vrserver.txt</c> it is "1 - entering standby", five minutes after the
+    /// controller was put down, and the fault was a controller that never left it.
+    /// </summary>
+    private void Note(uint device, TrackedDevicePose_t pose)
+    {
+        var seen = new ControllerSeen(
+            pose.bDeviceIsConnected,
+            pose.bPoseIsValid,
+            _system!.GetTrackedDeviceActivityLevel(device));
+
+        if (_controllersSeen.TryGetValue(device, out var was) && was == seen)
+        {
+            return;
+        }
+
+        _controllersSeen[device] = seen;
+
+        logger.LogInformation(
+            "Controller {Device} ({Serial}) is {Connected}, {Tracking}, activity {Activity}",
+            device,
+            Property(device, ETrackedDeviceProperty.Prop_SerialNumber_String) ?? "no serial",
+            seen.Connected ? "connected" : "disconnected",
+            seen.Tracking ? "tracking" : "not tracking",
+            seen.Activity);
+    }
+
+    private string? ModelName(uint device) =>
+        Property(device, ETrackedDeviceProperty.Prop_RenderModelName_String);
+
+    private string? Property(uint device, ETrackedDeviceProperty property)
     {
         var error = ETrackedPropertyError.TrackedProp_Success;
         var text = new System.Text.StringBuilder((int)OpenVR.k_unMaxPropertyStringSize);
 
         _system!.GetStringTrackedDeviceProperty(
             device,
-            ETrackedDeviceProperty.Prop_RenderModelName_String,
+            property,
             text,
             OpenVR.k_unMaxPropertyStringSize,
             ref error);
