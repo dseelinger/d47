@@ -432,7 +432,12 @@ public sealed class PanelNavigator
 
         trail.Clear();
         trail.Add(root);
-        trail.AddRange(crumbs);
+
+        // A caller that supplies the root anyway is not given it twice. Four Phase 47 call sites
+        // did, and a trail of [root, root, level] is one a three-pane strip cannot draw: the same
+        // page would be hosted in two panes, and a control has exactly one parent. The contract
+        // above stands; this is the trail refusing to hold a shape nothing can render.
+        trail.AddRange(crumbs.Count > 0 && crumbs[0].Key == root.Key ? crumbs.Skip(1) : crumbs);
 
         Raise();
         return true;

@@ -8,6 +8,7 @@ using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -71,7 +72,15 @@ public class AdventuresTabTests
         AcceptedAt = acceptedAt,
     };
 
-    private static (PanelView Panel, AdventureBook Book, List<string> Said) Open(params Adventure[] adventures)
+    private static (PanelView Panel, AdventureBook Book, List<string> Said) Open(params Adventure[] adventures) =>
+        Open(900, null, null, adventures);
+
+    /// <param name="width">The window's, which decides how many panes the strip shows: 900 is two, 1400 is three.</param>
+    private static (PanelView Panel, AdventureBook Book, List<string> Said) Open(
+        double width,
+        ILlmProvider? provider,
+        IGalaxyService? galaxy,
+        params Adventure[] adventures)
     {
         var paths = new AppPaths(TempFolders.Create("d47-adventures-tab-tests"));
         paths.EnsureCreated();
@@ -88,8 +97,8 @@ public class AdventuresTabTests
         var said = new List<string>();
 
         var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => state,
-            () => null, () => null, null, null, NullLogger.Instance);
+            () => provider, () => null, () => null, () => null, () => null, () => state,
+            () => galaxy, () => null, null, null, NullLogger.Instance);
 
         var surface = new AdventureSurface(
             book,
@@ -98,15 +107,15 @@ public class AdventuresTabTests
             () => "F1",
             () => Now,
             said.Add,
-            () => false,
-            () => false,
+            () => provider is not null,
+            () => galaxy is not null,
             () => null,
             () => { });
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableAdventures(surface);
 
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        var window = new Window { Content = panel, Width = width, Height = 700 };
         window.Show();
 
         panel.Tab = PanelTab.Adventures;
@@ -144,7 +153,7 @@ public class AdventuresTabTests
 
         book.Observe(jump!, "F1");
 
-        panel.Nav.GoTo([new NavCrumb(AdventuresPage.RootKey, "Adventures"), new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route")]);
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);
@@ -161,7 +170,7 @@ public class AdventuresTabTests
     {
         var (panel, _, _) = Open();
 
-        panel.Nav.GoTo([new NavCrumb(AdventuresPage.RootKey, "Adventures"), new NavCrumb(AdventuresPage.EditPrefix + AdventuresPage.NewKey, "Write")]);
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.EditPrefix + AdventuresPage.NewKey, "Write"));
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);
@@ -179,7 +188,7 @@ public class AdventuresTabTests
     {
         var (panel, _, _) = Open();
 
-        panel.Nav.GoTo([new NavCrumb(AdventuresPage.RootKey, "Adventures"), new NavCrumb(AdventuresPage.AskKey, "Ask")]);
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Ask"));
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);
@@ -196,7 +205,7 @@ public class AdventuresTabTests
     {
         var (panel, book, said) = Open(Story(null));
 
-        panel.Nav.GoTo([new NavCrumb(AdventuresPage.RootKey, "Adventures"), new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route")]);
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
         Dispatcher.UIThread.RunJobs();
 
         var begin = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Begin"));
@@ -209,5 +218,141 @@ public class AdventuresTabTests
 
         // The opening is the callout's to say, on the next tick, in the core's voice.
         Assert.True(Assert.Single(book.Drain()).IsOpening);
+    }
+
+    /// <summary>
+    /// Pressing Go on a strip wide enough for three panes, which is where the first generated
+    /// story offered from the field took the process down (2026-08-22): the offer navigated with
+    /// the root supplied as well as kept, the trail held the root twice, and the strip tried to
+    /// host the root page in two panes. The model and the galaxy are scripted; the press, the
+    /// background turn, the store write, the spoken reply and the navigation are the real ones.
+    /// </summary>
+    [AvaloniaFact]
+    public void AnOfferedStoryOpensItsReadingLevelOnAWideStrip()
+    {
+        var (panel, book, said) = Open(1400, new ScriptedModel(Spine, Beats), new Galaxy());
+
+        Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
+
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Ask"));
+        Dispatcher.UIThread.RunJobs();
+
+        var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
+        Assert.True(go.IsEnabled);
+        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        // The turn runs off the UI thread and posts the offer back; pump until it lands.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+
+        while (panel.Nav.Trail[^1].Key == AdventuresPage.AskKey && DateTime.UtcNow < deadline)
+        {
+            Thread.Sleep(20);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        // A refusal leaves the form up with the reason under Go, which is what the message shows.
+        Assert.True(
+            panel.Nav.Trail[^1].Key == AdventuresPage.ReadPrefix + "the-unrecoverable-column",
+            string.Join(" | ", panel.Nav.Trail.Select(crumb => crumb.Key)) + " — " + string.Join(" | ", Drawn(panel)));
+        Assert.Equal(["adventures", AdventuresPage.ReadPrefix + "the-unrecoverable-column"], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.NotNull(book.Store.Find("F1", "the-unrecoverable-column"));
+        Assert.Contains("Here it is.", said);
+
+        var drawn = Drawn(panel);
+        Assert.Contains(drawn, text => text.Contains("The Unrecoverable Column"));
+        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Accept"));
+    }
+
+    private const string Spine = """
+        {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the freight.",
+         "stake": "Whether a debt can be owed to nobody.", "turn": "It was never loaded.", "ending": "The column balances."}
+        """;
+
+    private const string Beats = """
+        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Column", "function": "resolution", "kind": "rank", "career": "Trade", "rank": 1, "line": "It balances."}
+        ]}
+        """;
+
+    /// <summary>One reply per request, in order; a third request is the test's failure, not a repeat.</summary>
+    private sealed class ScriptedModel(params string[] replies) : ILlmProvider
+    {
+        private int _calls;
+
+        public string Id => "anthropic";
+
+        public string DisplayName => "Scripted";
+
+        public string DefaultModel => "claude-opus-5";
+
+        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+        {
+            SupportsPromptCaching = true,
+            SupportsThinkingEffort = true,
+            SupportsOperatorSystemMessages = true,
+            MinimumCacheablePrefixTokens = 512,
+        };
+
+        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+            LlmRequest request,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var round = _calls++;
+
+            if (round >= replies.Length)
+            {
+                throw new InvalidOperationException($"Round {round + 1} was asked for and {replies.Length} were scripted.");
+            }
+
+            yield return new LlmStreamEvent.TextDelta(replies[round]);
+            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
+            await Task.CompletedTask;
+        }
+    }
+
+    /// <summary>Three systems, one station, every distance twelve light years.</summary>
+    private sealed class Galaxy : IGalaxyService
+    {
+        private static readonly Dictionary<string, long> Systems = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Shinrarta Dezhra"] = 3932277478106,
+            ["Ossen's Lantern"] = 1,
+            ["Dyson's Hollow"] = 3,
+        };
+
+        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        {
+            var canonical = Systems.Keys.FirstOrDefault(name => string.Equals(name, query.ReferenceSystem, StringComparison.OrdinalIgnoreCase));
+
+            return Task.FromResult(canonical is null
+                ? new GalaxySearchResult(query.ReferenceSystem, 0, [])
+                : new GalaxySearchResult(canonical, 1, [new SystemSummary { Name = canonical, SystemAddress = Systems[canonical], Distance = 0 }]));
+        }
+
+        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
+
+        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> all =
+            [
+                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = 3, MarketId = 2, Distance = 12, HasLargePad = true },
+            ];
+
+            var stations = query.MaxDistance <= 1
+                ? all.Where(station => string.Equals(station.SystemName, query.ReferenceSystem, StringComparison.OrdinalIgnoreCase)).ToList()
+                : all;
+
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, stations.Count, stations));
+        }
+
+        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
+
+        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 }

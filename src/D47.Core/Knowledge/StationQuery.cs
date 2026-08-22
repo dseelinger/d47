@@ -192,6 +192,17 @@ public sealed record StationQuery
         Size = 20,
     };
 
+    /// <summary>
+    /// The stations nearest a system, for proposing real places a story may dock at (list.md
+    /// Phase 47). Nothing sold, no pad — what is within reach, nearest first.
+    /// </summary>
+    public static StationQuery Near(string referenceSystem, double maxDistance, int size) => new()
+    {
+        ReferenceSystem = referenceSystem.Trim(),
+        MaxDistance = Math.Clamp(maxDistance, 1, 500),
+        Size = Math.Clamp(size, 1, 20),
+    };
+
     /// <summary>The three kinds of material trader, in the index's own spelling.</summary>
     public static IReadOnlyList<string> TraderTypes { get; } = ["Raw", "Manufactured", "Encoded"];
 

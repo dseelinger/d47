@@ -90,6 +90,17 @@ public sealed record AdventureTrigger
         _ => Kind.ToString(),
     };
 
+    /// <summary>
+    /// The trigger as a hand-off — "Next: dock at Maren Anchorage in Dyson's Hollow." — said with
+    /// the beat before it. A scan says how as well as where: told only "scan X", the first Commander
+    /// to fly a story went looking for a surface scanner, and the journal's <c>Scan</c> is written by
+    /// the ship's own scanner in supercruise, by a close approach, or by a nav beacon — never by a
+    /// surface scanner, which writes a different event.
+    /// </summary>
+    public string HandOff() => Kind == TriggerKind.Scan
+        ? $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed."
+        : $"Next: {Describe()}.";
+
     private string In() => System is { Length: > 0 } system && !string.Equals(system, Body, StringComparison.Ordinal)
         ? $" in {system}"
         : string.Empty;

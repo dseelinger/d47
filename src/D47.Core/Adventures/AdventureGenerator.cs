@@ -117,8 +117,9 @@ public sealed class AdventureGenerator(
         var facts = Facts.Of(state(), ask);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
-        var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable), 1500, cancellationToken).ConfigureAwait(false);
+        var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable, candidates), 1500, cancellationToken).ConfigureAwait(false);
 
         if (spineJson is null)
         {
@@ -133,11 +134,11 @@ public sealed class AdventureGenerator(
         }
 
         var beatsJson = await AskJsonAsync(
-            BeatsInstruction(ask, facts, notable, name, spine, previousRefusals: null, draft: null, exchange: null, remark: null),
+            BeatsInstruction(ask, facts, notable, candidates, name, spine, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
             4000,
             cancellationToken).ConfigureAwait(false);
 
-        return await FinishAsync(ask, facts, notable, name, spine, beatsJson, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
+        return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsJson, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -166,9 +167,10 @@ public sealed class AdventureGenerator(
         var facts = Facts.Of(state(), ask);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
         var json = await AskJsonAsync(
-            BeatsInstruction(ask, facts, notable, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, draft, exchange, remark),
+            BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
             4500,
             cancellationToken).ConfigureAwait(false);
 
@@ -177,13 +179,14 @@ public sealed class AdventureGenerator(
         var spine = revisedSpine is { IsEmpty: false } ? revisedSpine : draft.Spine ?? new AdventureSpine();
         var name = json is not null && ReadSpine(json, out var renamed) is not null && renamed is { Length: > 0 } ? renamed : draft.Name;
 
-        return await FinishAsync(ask, facts, notable, name, spine, json, previous: draft, now, notes, cancellationToken).ConfigureAwait(false);
+        return await FinishAsync(ask, facts, notable, candidates, name, spine, json, previous: draft, now, notes, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<AdventureOutcome> FinishAsync(
         AdventureAsk ask,
         Facts facts,
         IReadOnlyList<NotablePlace> notable,
+        Candidates candidates,
         string name,
         AdventureSpine spine,
         string? beatsJson,
@@ -207,13 +210,15 @@ public sealed class AdventureGenerator(
         var resolved = await DryRunAsync(read.Beats, facts, notable, ask, cancellationToken).ConfigureAwait(false);
 
         // One pass back through the turn with the refusals as a remark, before the Commander sees
-        // anything — so the common case is that they never see a refusal at all.
+        // anything — so the common case is that they never see a refusal at all. The draft goes
+        // back with the refusals: told only what was wrong, the model wrote a fresh story that was
+        // wrong in the same way, since what it could not see was the beats it had got right.
         if (resolved.Refusals.Count > 0)
         {
             notes.Add($"Rewrote {resolved.Refusals.Count} beat(s) the first draft could not stand on.");
 
             var again = await AskJsonAsync(
-                BeatsInstruction(ask, facts, notable, name, spine, resolved.Refusals, draft: null, exchange: null, remark: null),
+                BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, exchange: null, remark: null),
                 4000,
                 cancellationToken).ConfigureAwait(false);
 
@@ -289,6 +294,113 @@ public sealed class AdventureGenerator(
         }
     }
 
+    /// <summary>
+    /// The real places within reach, from the galaxy search: the stations nearest here and the
+    /// landable bodies nearest here, which between them are every place a dock, land or scan beat
+    /// can honestly name.
+    /// <para>
+    /// Listed because a model given a system name and a radius has nothing to anchor on. The plan
+    /// said generation would work from "the galaxy service and the model's own knowledge" when the
+    /// catalogue had nothing within reach — and on 2026-08-22, with no catalogued place within 110
+    /// light years of Oppi, the model's own knowledge put two beats of a "near here" story 21,886
+    /// light years away, and the refusal pass could not help because it had nothing real to offer
+    /// instead. So the search that already checks every stop now also proposes them.
+    /// </para>
+    /// </summary>
+    private sealed record Candidates(IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)
+    {
+        public static readonly Candidates None = new([], []);
+
+        public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
+    }
+
+    private async Task<Candidates> CandidatesAsync(Facts facts, CancellationToken cancellationToken, List<string> notes)
+    {
+        if (galaxy() is not { } search || facts.System is not { } here)
+        {
+            return Candidates.None;
+        }
+
+        try
+        {
+            var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
+            var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
+
+            return new Candidates(stations.Stations, bodies.Bodies);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list the places within reach ({ex.Message}), so the stops came from the model's own knowledge.");
+            return Candidates.None;
+        }
+    }
+
+    /// <summary>
+    /// The candidates, one line per system nearest first, so the model reads a system's stations
+    /// and its landable bodies together and can put two beats in one place.
+    /// </summary>
+    private static void AppendCandidates(StringBuilder text, Candidates candidates)
+    {
+        if (candidates.IsEmpty)
+        {
+            return;
+        }
+
+        var systems = new Dictionary<string, (double? Distance, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var station in candidates.Stations)
+        {
+            var entry = Entry(station.SystemName, station.Distance);
+            entry.Stations.Add($"{station.Name} ({(station.HasLargePad ? "large pad" : "no large pad")})");
+        }
+
+        foreach (var body in candidates.Bodies)
+        {
+            var entry = Entry(body.SystemName, body.Distance);
+            entry.Bodies.Add(body.Name);
+        }
+
+        text.AppendLine();
+        text.AppendLine("Real places within reach, from the galaxy search, nearest first. These are the systems, stations and landable bodies the story may use, spelt exactly as they must be named:");
+
+        foreach (var (system, entry) in systems.OrderBy(pair => pair.Value.Distance ?? double.MaxValue).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            text.Append("- ").Append(system);
+
+            if (entry.Distance is { } distance)
+            {
+                text.Append(" (").Append(distance.ToString("0", CultureInfo.InvariantCulture)).Append(" ly)");
+            }
+
+            if (entry.Stations.Count > 0)
+            {
+                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
+            }
+
+            if (entry.Bodies.Count > 0)
+            {
+                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
+            }
+
+            text.AppendLine();
+        }
+
+        (double? Distance, List<string> Stations, List<string> Bodies) Entry(string system, double? distance)
+        {
+            if (!systems.TryGetValue(system, out var entry))
+            {
+                entry = (distance, [], []);
+                systems[system] = entry;
+            }
+            else if (entry.Distance is null && distance is not null)
+            {
+                systems[system] = entry = (distance, entry.Stations, entry.Bodies);
+            }
+
+            return entry;
+        }
+    }
+
     private async Task<string?> AskJsonAsync(string instruction, int budget, CancellationToken cancellationToken)
     {
         var reply = await FlavourTurn.AskAsync(
@@ -319,7 +431,7 @@ public sealed class AdventureGenerator(
 
     // ---- the instructions ------------------------------------------------------------------
 
-    private static string SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable)
+    private static string SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates)
     {
         var text = new StringBuilder();
 
@@ -334,6 +446,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules:");
         text.AppendLine("- The protagonist is the Commander. You are a character in it too, as yourself.");
         text.AppendLine("- You may invent people, a message, a wreck's log, a reason somebody left. You may NOT invent a star system, a station, a body, a faction, a Power or a game mechanic. Places must be real and are listed below.");
+        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous. The only things they can do in this story are fly to a system, dock, land, scan and earn a rank, so the story must turn on what they see at each place and what was left there, not on anyone they could question.");
         text.AppendLine("- Never tell the Commander what they feel. Show the world and let the feeling arrive.");
         text.AppendLine();
         text.Append(facts.Describe());
@@ -361,6 +474,8 @@ public sealed class AdventureGenerator(
             }
         }
 
+        AppendCandidates(text, candidates);
+
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(ask.Brief))
@@ -386,9 +501,11 @@ public sealed class AdventureGenerator(
         AdventureAsk ask,
         Facts facts,
         IReadOnlyList<NotablePlace> notable,
+        Candidates candidates,
         string name,
         AdventureSpine spine,
         IReadOnlyList<string>? previousRefusals,
+        IReadOnlyList<ReadBeat>? previousBeats,
         Adventure? draft,
         IReadOnlyList<AdventureRemark>? exchange,
         string? remark)
@@ -439,23 +556,37 @@ public sealed class AdventureGenerator(
             }
         }
 
+        AppendCandidates(text, candidates);
+
         text.AppendLine();
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
         text.AppendLine("Each beat waits for exactly one of five things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
-        text.AppendLine("- \"scan\": the Commander scans a named body in a named system.");
+        text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine();
-        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed and places in the game state. Do not invent names. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
+        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
+        text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
         text.AppendLine("Give each beat a short title — a chapter name, never a number.");
 
         if (previousRefusals is { Count: > 0 })
         {
+            if (previousBeats is { Count: > 0 })
+            {
+                text.AppendLine();
+                text.AppendLine("Your previous draft of the beats:");
+
+                foreach (var (beat, index) in previousBeats.Select((beat, index) => (beat, index)))
+                {
+                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()} — \"{beat.Line}\"");
+                }
+            }
+
             text.AppendLine();
-            text.AppendLine("Your previous draft had beats that cannot stand, for these reasons. Rewrite so that none of them remain:");
+            text.AppendLine("Some of those beats cannot stand, for these reasons. Keep the beats that were not refused and rewrite the refused ones so that none of these remain:");
 
             foreach (var refusal in previousRefusals)
             {
@@ -553,7 +684,18 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private sealed record ReadBeat(string Title, string? Function, TriggerKind Kind, string? System, string? Station, string? Body, string? Career, int? Rank, string Line);
+    private sealed record ReadBeat(string Title, string? Function, TriggerKind Kind, string? System, string? Station, string? Body, string? Career, int? Rank, string Line)
+    {
+        /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
+        public string Describe() => Kind switch
+        {
+            TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
+            TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
+            TriggerKind.Land => $"land: {Body ?? "?"} in {System ?? "?"}",
+            TriggerKind.Scan => $"scan: {Body ?? "?"} in {System ?? "?"}",
+            _ => $"arrive: {System ?? "?"}",
+        };
+    }
 
     private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats);
 
@@ -574,6 +716,12 @@ public sealed class AdventureGenerator(
                         continue;
                     }
 
+                    // A rank beat's career and rank are read from wherever the model put them: the
+                    // flat shape it was asked for, or nested under "rank" or "trigger", or the rank
+                    // as a numeric string. The alternative was refusing the beat with the career
+                    // printed as "", which told the model nothing it could act on.
+                    var nested = Nested(element, "trigger") ?? Nested(element, "rank") ?? Nested(element, "promotion");
+
                     beats.Add(new ReadBeat(
                         Text(element, "title") ?? "Untitled",
                         Text(element, "function"),
@@ -581,8 +729,8 @@ public sealed class AdventureGenerator(
                         Text(element, "system"),
                         Text(element, "station"),
                         Text(element, "body"),
-                        Text(element, "career"),
-                        element.TryGetProperty("rank", out var rank) && rank.ValueKind == JsonValueKind.Number && rank.TryGetInt32(out var value) ? value : null,
+                        Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
+                        Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
                         Text(element, "line") ?? string.Empty));
                 }
             }
@@ -604,6 +752,28 @@ public sealed class AdventureGenerator(
             ? text.Trim()
             : null;
 
+    private static JsonElement? Nested(JsonElement element, string property) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(property, out var value)
+        && value.ValueKind == JsonValueKind.Object
+            ? value
+            : null;
+
+    private static int? Integer(JsonElement element, string property)
+    {
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(property, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var number) => number,
+            JsonValueKind.String when int.TryParse(value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => null,
+        };
+    }
+
     // ---- the dry run -----------------------------------------------------------------------
 
     private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals);
@@ -620,6 +790,9 @@ public sealed class AdventureGenerator(
         var refusals = new List<string>();
         var previousSystem = facts.System;
 
+        // Every place that stood, by its beat number, for the scan-order rule below.
+        var placed = new List<(string Where, AdventureTrigger Trigger)>();
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             var where = $"Beat {index + 1} ({beat.Title})";
@@ -628,20 +801,27 @@ public sealed class AdventureGenerator(
             if (beat.Kind == TriggerKind.Rank)
             {
                 var career = Careers.Match(beat.Career);
+                var careers = string.Join(", ", Careers.Keys.Select(Careers.Word));
 
                 if (career is null)
                 {
-                    refusals.Add($"{where} names a career \"{beat.Career}\" that is not one.");
+                    refusals.Add(beat.Career is null
+                        ? $"{where} is a rank beat but names no career; \"career\" must be one of {careers}."
+                        : $"{where} names a career \"{beat.Career}\" that is not one of {careers}.");
                 }
                 else
                 {
                     var held = facts.Ranks.For(career)?.Rank ?? 0;
 
-                    if (beat.Rank is not { } rank || rank <= held || rank > RankStanding.Elite)
+                    if (held >= RankStanding.Elite)
+                    {
+                        refusals.Add($"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of beat.");
+                    }
+                    else if (beat.Rank is not { } rank || rank <= held || rank > RankStanding.Elite)
                     {
                         refusals.Add(
-                            $"{where} asks for {Careers.Word(career)} rank {beat.Rank}; the Commander holds {held}, "
-                            + $"so the beat must name {held + 1} or {Math.Min(held + 2, RankStanding.Elite)}.");
+                            $"{where} asks for {Careers.Word(career)} rank {beat.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the Commander holds {held}, "
+                            + $"so the beat must name {held + 1}{(held + 1 < RankStanding.Elite ? $" or {held + 2}" : string.Empty)}.");
                     }
                     else
                     {
@@ -686,10 +866,19 @@ public sealed class AdventureGenerator(
                     {
                         refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
+                    else if (place.Kind == TriggerKind.Scan
+                             && placed.FirstOrDefault(p => p.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan && AdventureValidation.SameBody(p.Trigger, place))
+                                 is { Trigger: { } earlier } before)
+                    {
+                        // The same rule AdventureValidation applies to a written story, raised here
+                        // so a generated one goes back through the turn with it.
+                        refusals.Add(AdventureValidation.ScanOutOfOrder(where, place, before.Where, earlier.Kind));
+                    }
                     else
                     {
                         previousSystem = place.System;
                         trigger = place;
+                        placed.Add((where, place));
                     }
                 }
             }

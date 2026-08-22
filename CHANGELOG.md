@@ -17,6 +17,56 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.1 — 2026-08-22 — A story that could not stand
+
+**The ship's AI is now handed real places to build a story from.** Asked for an adventure *near
+here* from Oppi, the first draft put two of its five beats 21,886 light years away — Colonia
+distance — and the rewrite pass did it again. The generator gave the model the system's name, a
+radius, and the catalogue's notable places within reach, and there were none within 110 light years
+of Oppi: so the model was writing from a name it had never heard of and its own memory of the
+galaxy, which is exactly what the plan warned a model left to itself does. The galaxy search that
+already checks every stop now also proposes them — the stations and landable bodies nearest here,
+within the reach, spelt as they must be named — to both the spine turn and the beats turn. The
+rewrite pass is also shown the draft it is fixing, so it keeps the beats that stood rather than
+writing a fresh story wrong in the same way. And a rank beat is read however the model wrote it —
+*Trader* for the Trade ladder, the career nested under its own key, the rank as text — where before
+the beat was refused with the career printed as `""`, which told the model nothing. A Commander
+already Elite in a career is told that is why, rather than asked for rank 9.
+
+**And the story no longer takes the process down when it arrives.** The first one written with
+those places in hand was offered on a window wide enough for three panes, and d47 exited without a
+word. The offer navigated to the reading level with the root crumb supplied as well as kept, so the
+trail held *Adventures* twice; at two panes the strip shows the last two and nothing is wrong, at
+three it hosts the same root page in two panes, and a control has exactly one parent. Four Phase 47
+call sites supplied the root; none do now, and the navigator drops a supplied root rather than
+holding a trail nothing can draw. The draft was written to file before the crash, so it is on the
+Adventures tab waiting for your yes.
+
+**And nobody in a story asks you to go and find someone.** The same story's first beat ended with
+*"ask the clerk who countersigns"*, and asked what to do next the core sent you inside to watch a
+face — which Elite has no act for. The rule was that people may be invented and places may not;
+what it never said is that invented people are told about and never met. Both turns that write a
+story now say so, a line may never set you a task beyond flying to the next beat, and the standing
+context the core speaks from says that asked *what now*, the answer is where the next beat is and
+nothing beyond it. A story already under way keeps its lines; the context change reaches it at once.
+
+**A story cannot end on a scan of the body it just landed on.** The same story's finale was
+*scan Fintamkina 4*, one beat after *land on Fintamkina 4* — and Elite scans a body on the way in,
+before any landing, so the scan was spent while the landing was still the current beat and the story
+could never finish. Fourteen corpus sessions with a landing, none with a scan of that body after it.
+A scan beat after a landing on, or an earlier scan of, the same body is refused — for a written story
+by the same validation that refuses an unknown career, for a generated one in the dry run so the
+model rewrites it — and the beats turn is told the order.
+
+**And every beat now ends by saying where to go next.** Reach a beat and the core says its line and
+then the next beat's place — *Next: dock at Silva Munitions Hold in Gladyangar* — in its own voice
+when there is a model and in plain words when there is not, before you have to ask. The opening hands
+over to the first beat; the last beat hands over to nothing, because the ending is the ending. The next
+place is already in the core's standing context and on the reading level, so nothing is spoiled. A scan
+says how as well as where — the ship's own scanner from supercruise, or a close pass — because told
+only "scan X", a Commander reasonably goes looking for a surface scanner, which writes a different
+journal event and would never fire the beat.
+
 ## 0.52.0 — 2026-08-22 — Adventures
 
 **A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one

@@ -184,8 +184,10 @@ public static class FlavourBriefs
                         : "The Commander has just reached a beat of the story you are telling them. ")
                     + "Say this in your own voice, keeping every fact, name and number in it and adding none: "
                     + $"\"{announcement.Text}\" Show the place and what is in it; never tell the Commander "
-                    + "what they feel. Two to four sentences, spoken in a cockpit. Do not reveal or guess at "
-                    + "what comes next.",
+                    + "what they feel. Two to four sentences, spoken in a cockpit. If the text ends by saying "
+                    + "where the Commander goes next, end by saying the same place and the same act in your own "
+                    + "words — that is the only thing you say about what is ahead; do not guess at what is "
+                    + "there or why, and never send the Commander to find or speak to anyone.",
                 NeedsPersona = true,
                 NeedsGameState = true,
                 NeedsAboutMe = true,

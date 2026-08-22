@@ -678,6 +678,50 @@ anyway, because the label is not part of the persona block.
 `LeaveBody`, `SupercruiseEntry` and `FSDJump` — so *Here* writes a beat with the numbers the
 journal will match and nothing typed.
 
+### The model had nothing real to anchor on (0.52.1)
+
+The catalogue lookup above said that without it "generation still works from the galaxy service
+and the model's own knowledge". The first ask from the field showed what that clause was worth:
+near Oppi the catalogue holds nothing within 110 light years, the prompt named Oppi and a radius and
+nothing else real, and the model wrote two beats at Colonia distance — then, told only the refusals
+and not shown its draft, wrote a fresh story with the same fault. The galaxy service was checking
+every stop and proposing none. It now proposes them: the twenty stations and twenty landable bodies
+nearest here within the reach, grouped by system nearest first, in both turns. The refusal pass is
+shown the draft it is fixing. And a rank beat is read in every shape the model has used — the
+career as the person rather than the ladder, nested under its own key, the rank as text — because
+refusing it with the career printed as `""` was the one refusal the model could not act on.
+
+The first story written with those places in hand then crashed the app on arrival, on a window
+wide enough for three panes. `Offer` — and three other Phase 47 sites — called `GoTo` with the root
+crumb supplied, against a contract that says the root is never supplied; the trail held *Adventures*
+twice, and `DrillView` hosted the root page in two panes. Two panes hid it, which is why the tab
+tests passed at 900 pixels. The callers are fixed, `GoTo` drops a supplied root, and the tab test
+now presses Go on a 1,400-pixel window with a scripted model and galaxy — the path that crashed.
+
+Flown, that story's first beat ended *"ask the clerk who countersigns"*, and asked "now what?" the
+core sent the Commander to find the clerk and watch their face. "People may be invented, places
+never" was the rule, and it was short one clause: invented people are told about and never met,
+because the game has no act for meeting anyone and the only thing a Commander can do in a story is
+fly to the next beat. The spine turn, the beats turn and `AdventureContext.Label` now say so; the
+test holds the wording's presence, and whether a model obeys it is read by hand.
+
+The same story could not finish. Its finale scanned the body its fourth beat had landed on, and
+Elite writes a body's `Scan` on the approach — before `Touchdown` — so the scan was spent while the
+landing was current. The corpus is unambiguous: fourteen sessions with a landing, none with a scan of
+that body afterwards. `AdventureValidation.ScansOutOfOrder` refuses a scan after a landing on, or an
+earlier scan of, the same body — by id when resolved, by name when not — and the dry run raises the
+same sentence so a generated story goes back through the turn. The beats turn is told the order and
+that a scan needs no equipment.
+
+And the Commander should not have to ask "now what?" after every beat. `AdventureMoment.HandOff` is
+the next beat's trigger as a sentence — *Next: dock at Maren Anchorage in Dyson's Hollow.* — said with
+the line; the opening hands over to the first beat and the last beat to nothing. The next place is
+already in `AdventureContext` and on the reading level, so the spoiler rule is untouched: the place
+and the act are said, never the title or the line. The brief tells the model to end on the same place
+in its own words and to say nothing else about what is ahead. A scan's hand-off says how — the ship's
+own scanner from supercruise, or a close pass, no surface scanner — because a Commander told "scan X"
+went looking for a DSS, whose `SAAScanComplete` the fold does not match.
+
 ### Left for the next pass
 
 *Somewhere I've been* is not in the editor: d47 keeps no visited-places list and the two ways in

@@ -18,6 +18,21 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 
     public string Title => IsOpening ? Adventure.Name : Adventure.Beats[Beat].Title;
 
+    /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
+    public AdventureBeat? Next => Adventure.Beats.ElementAtOrDefault(Beat + 1);
+
+    /// <summary>
+    /// Where the Commander goes next, said with the line rather than waited for. The first story
+    /// flown left the Commander asking "now what?" after every beat, and the persona, asked, sent
+    /// them to find people; the next beat's place is already in the standing context and on the
+    /// reading level, so saying it out loud spoils nothing and answers the question before it is
+    /// asked. Null after the last beat: the ending is the ending.
+    /// </summary>
+    public string? HandOff => Next?.Trigger.HandOff();
+
+    /// <summary>The line and the hand-off together, which is what is said.</summary>
+    public string Spoken => HandOff is { } next ? $"{Line} {next}" : Line;
+
     /// <summary>Stable per adventure and beat, so the engine's cooldown keys on the beat and not the text.</summary>
     public string Key => $"{AdventureCallout.KeyPrefix}{Adventure.Key}.{(IsOpening ? "opening" : Beat.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
 }
