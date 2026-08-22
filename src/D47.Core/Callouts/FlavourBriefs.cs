@@ -166,6 +166,32 @@ public static class FlavourBriefs
             };
         }
 
+        // A beat of the Commander's adventure, or its opening (list.md Phase 47, "The ship's AI tells
+        // it, and the authored beat is the floor"). A rewording brief: the authored line carries
+        // what the beat has to say and the model says it in the core's voice. The story itself —
+        // premise, stake, what has fired — rides in the game state below the breakpoint, which is
+        // why this one needs it where the continuity line does not.
+        if (announcement.Key.StartsWith(Adventures.AdventureCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            var opening = announcement.Variant < 0;
+
+            return new FlavourBrief
+            {
+                Instruction =
+                    (opening
+                        ? "The Commander has just agreed to hear a story you are telling, and this is how it "
+                          + "opens. "
+                        : "The Commander has just reached a beat of the story you are telling them. ")
+                    + "Say this in your own voice, keeping every fact, name and number in it and adding none: "
+                    + $"\"{announcement.Text}\" Show the place and what is in it; never tell the Commander "
+                    + "what they feel. Two to four sentences, spoken in a cockpit. Do not reveal or guess at "
+                    + "what comes next.",
+                NeedsPersona = true,
+                NeedsGameState = true,
+                NeedsAboutMe = true,
+            };
+        }
+
         // Phase 31's opening line. Eligible for the same reason the ambient remarks are: it is d47
         // filling a moment rather than reporting an event, and it is the first thing a Commander
         // hears in a session — which is precisely where a core sounding like itself is worth

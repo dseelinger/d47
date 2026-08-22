@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Checklists;
 using D47.Core.Journal;
@@ -66,6 +67,12 @@ internal static class Program
                 new LoreVisits(
                     Path.Combine(scratch, "lore-visits.json"), capture.CreateLogger<LoreVisits>())))
             .Add(new AmbientCallout())
+
+            // Phase 47. A scratch store with nothing in it: every event still goes through the
+            // book's Observe, which is the path a real story's fold takes.
+            .Add(new AdventureCallout(new AdventureBook(
+                new AdventureStore(Path.Combine(scratch, "adventures.json"), capture.CreateLogger<AdventureStore>()),
+                capture.CreateLogger<AdventureBook>())))
             .Add(new IncomingMessages { Enabled = () => true, IncludeNpcs = () => true });
 
         var kinds = new Dictionary<string, int>(StringComparer.Ordinal);

@@ -197,6 +197,12 @@ public sealed record KnowledgeSettings
     /// carries on (list.md Phase 3).
     /// </summary>
     public bool GalaxySearch { get; init; }
+
+    /// <summary>
+    /// Whether a generated adventure may fetch the catalogue of notable places from edastro.com
+    /// (list.md Phase 47). Off by default, like every third-party destination.
+    /// </summary>
+    public bool NotablePlaces { get; init; }
 }
 
 /// <summary>
@@ -741,6 +747,9 @@ public sealed record CalloutSettings
     /// </para>
     /// </summary>
     public bool Habits { get; init; }
+
+    /// <summary>A beat of the Commander's adventure, said when it is reached (list.md Phase 47).</summary>
+    public bool Adventure { get; init; } = true;
 }
 
 public sealed record LlmSettings

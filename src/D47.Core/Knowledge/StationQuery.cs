@@ -9,6 +9,12 @@ public sealed record StationSummary
 
     public required string SystemName { get; init; }
 
+    /// <summary>What the journal writes as <c>MarketID</c> on docking. Null where the service did not say (list.md Phase 47).</summary>
+    public long? MarketId { get; init; }
+
+    /// <summary>The system's id64, for the same reason.</summary>
+    public long? SystemAddress { get; init; }
+
     /// <summary>Light years from the reference system.</summary>
     public double? Distance { get; init; }
 
@@ -172,6 +178,19 @@ public sealed record StationQuery
 
         return true;
     }
+
+    /// <summary>
+    /// Every station in one named system, for resolving a station a story names to its market id
+    /// (list.md Phase 47). Not through <see cref="TryParse"/>, which insists on something being
+    /// sold: the question here is what is there, not who sells what. A light year is the narrowest
+    /// radius the index honours, so a neighbour inside it can appear and the caller matches on name.
+    /// </summary>
+    public static StationQuery Within(string system) => new()
+    {
+        ReferenceSystem = system.Trim(),
+        MaxDistance = 1,
+        Size = 20,
+    };
 
     /// <summary>The three kinds of material trader, in the index's own spelling.</summary>
     public static IReadOnlyList<string> TraderTypes { get; } = ["Raw", "Manufactured", "Encoded"];

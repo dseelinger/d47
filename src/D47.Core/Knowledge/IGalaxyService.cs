@@ -15,6 +15,13 @@ public sealed record SystemSummary
 {
     public required string Name { get; init; }
 
+    /// <summary>
+    /// The system's id64 — what the journal writes as <c>SystemAddress</c>. Carried so a place a
+    /// story names can be matched against the journal by number rather than by name (list.md
+    /// Phase 47). Null where the service did not say.
+    /// </summary>
+    public long? SystemAddress { get; init; }
+
     /// <summary>Light years from the query's reference system, when there was one.</summary>
     public double? Distance { get; init; }
 

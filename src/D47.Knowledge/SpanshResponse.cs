@@ -423,6 +423,8 @@ internal static class SpanshResponse
     {
         Name = String(element, "name") ?? "an unnamed body",
         SystemName = String(element, "system_name") ?? "an unnamed system",
+        BodyId = Int(element, "body_id"),
+        SystemAddress = Integer(element, "system_id64"),
         Distance = Number(element, "distance"),
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Subtype = String(element, "subtype"),
@@ -509,6 +511,8 @@ internal static class SpanshResponse
     {
         Name = String(element, "name") ?? "an unnamed station",
         SystemName = String(element, "system_name") ?? "an unnamed system",
+        MarketId = Integer(element, "market_id"),
+        SystemAddress = Integer(element, "system_id64"),
         Distance = Number(element, "distance"),
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Type = String(element, "type"),
@@ -537,6 +541,7 @@ internal static class SpanshResponse
     private static SystemSummary ReadSystem(JsonElement element) => new()
     {
         Name = String(element, "name") ?? "an unnamed system",
+        SystemAddress = Integer(element, "id64"),
         Distance = Number(element, "distance"),
         Allegiance = String(element, "allegiance"),
         Government = String(element, "government"),

@@ -76,6 +76,13 @@ public static class EgressDisclosure
     public const string WebSearch = "websearch";
 
     /// <summary>
+    /// Fetching the catalogue of notable places a generated adventure may draw on (list.md Phase
+    /// 47). A different host from the galaxy search, so its own entry — the disclosure lists
+    /// destinations by where the bytes go.
+    /// </summary>
+    public const string NotablePlaces = "notableplaces";
+
+    /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
     /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
     /// storage, so the bytes land from objects.githubusercontent.com. Named in full rather than
@@ -91,6 +98,7 @@ public static class EgressDisclosure
         WebSearch,
         TextToSpeech,
         GalaxySearch,
+        NotablePlaces,
         CommunityGoals,
         UpdateCheck,
         SpeechModels,
@@ -109,6 +117,7 @@ public static class EgressDisclosure
         UpdateCheck => "Update check",
         TextToSpeech => "Spoken replies",
         GalaxySearch => "Galaxy search",
+        NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
         WebSearch => "Web search",
         SpeechModels => "Speech model download",
@@ -160,6 +169,24 @@ public static class EgressDisclosure
                 GalaxySearch,
                 NameOf(GalaxySearch),
                 "Galaxy search is off, so no system name and no search leaves this machine."),
+        NotablePlaces => settings.Knowledge.NotablePlaces
+            ? new EgressEntry(
+                NotablePlaces,
+                NameOf(NotablePlaces),
+                "edastro.com",
+                "One request for the whole Galactic Exploration Catalog — about two megabytes, every point "
+                + "of interest it lists — made when you ask for an adventure to be written. Nothing about you "
+                + "goes with it: no position, no key, no identifier and nothing from your journal. The "
+                + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
+                + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
+                + "acknowledged in NOTICE.",
+                Active: true)
+            : EgressEntry.Silent(
+                NotablePlaces,
+                NameOf(NotablePlaces),
+                "Notable places are off, so no catalogue is fetched and a generated adventure chooses its "
+                + "stops from the galaxy search alone."),
+
         // The key is the switch, and deliberately the only one. Every other third-party
         // destination needs a toggle because it could otherwise be reached by a fresh install
         // that never asked for it; this one cannot be reached at all until somebody pastes in a

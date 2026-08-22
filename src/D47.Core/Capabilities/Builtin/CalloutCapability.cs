@@ -61,6 +61,9 @@ public static class CalloutCapability
     /// </summary>
     public const string HabitsKey = "callouts.habits";
 
+    /// <summary>A beat of the Commander's adventure, said when it is reached (list.md Phase 47).</summary>
+    public const string AdventureKey = "callouts.adventure";
+
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
 
@@ -290,6 +293,16 @@ public static class CalloutCapability
                 // claim about the Commander rather than because the game said something, and the
                 // item is explicit that this changes the deal.
                 defaultOn: false),
+
+            Toggle(
+                AdventureKey,
+                "Adventure beats",
+                "A beat of the story you are following, said when you reach the place it waits for. Off "
+                + "leaves the story in the conversation and stops it being read out.",
+                "adventure",
+                "the adventure",
+                s => s.Callouts.Adventure,
+                (s, v) => s with { Callouts = s.Callouts with { Adventure = v } }),
 
             Toggle(
                 AmbientKey,

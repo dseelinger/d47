@@ -427,6 +427,12 @@
                      Content="Checklist"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="AdventuresTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Adventures"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="LoadoutTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"

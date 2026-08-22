@@ -28,6 +28,12 @@ public sealed record BodySummary
 
     public required string SystemName { get; init; }
 
+    /// <summary>What the journal writes as <c>BodyID</c> on a scan or a touchdown. Null where the service did not say (list.md Phase 47).</summary>
+    public int? BodyId { get; init; }
+
+    /// <summary>The system's id64, for the same reason.</summary>
+    public long? SystemAddress { get; init; }
+
     /// <summary>Light years from the query's reference system.</summary>
     public double? Distance { get; init; }
 
@@ -251,6 +257,9 @@ public sealed record BodyQuery
     /// overrun any smaller number without saying so.
     /// </para>
     /// </summary>
+    /// <summary>Every body in one named system, for resolving a body a story names to its id (list.md Phase 47).</summary>
+    public static BodyQuery Within(string system) => ForSystems(system, [system.Trim()], 1);
+
     public static BodyQuery ForSystems(string referenceSystem, IReadOnlyList<string> names, double maxDistance) =>
         new()
         {

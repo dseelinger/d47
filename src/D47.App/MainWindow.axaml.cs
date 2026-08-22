@@ -139,6 +139,26 @@ public partial class MainWindow : Window
             // Phase 25).
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
+            // The stories the Commander flies (list.md Phase 47). This window only: the editor
+            // and the ask form want a keyboard, and the reading level reaches the headset by
+            // one call from VrPanelSurface when somebody wants it there.
+            if (host.Adventures is { } adventures)
+            {
+                Panel.EnableAdventures(new AdventureSurface(
+                    adventures.Book,
+                    adventures.Generator,
+                    () => host.GameState.Active,
+                    () => host.GameState.Active?.Identity.FrontierId,
+                    () => DateTimeOffset.Now,
+                    host.SayAside,
+                    () => host.Turns.Provider is not null,
+                    () => host.Settings.Current.Knowledge.GalaxySearch,
+                    () => host.Galaxy is { } galaxy && host.Settings.Current.Knowledge.GalaxySearch
+                        ? new D47.Core.Adventures.AdventureResolver(galaxy)
+                        : null,
+                    OpenSettings));
+            }
+
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
             // between them (list.md Phases 26 and 27). This window only: withdrawn from the
             // headset during the panel redesign and left there when the checklist went back

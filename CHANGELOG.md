@@ -17,6 +17,50 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.0 — 2026-08-22 — Adventures
+
+**A story you fly, told by the ship's AI.** The furthest-reaching item on the list, and the one
+built last (list.md Phase 47). An adventure is a story in the craft's sense — someone wants
+something, holds a belief the story tests, and every scene says what happens, why it matters and
+what they now understand — anchored to the galaxy by beats the journal can prove: you arrived in a
+system, docked at a station, landed on or scanned a body, or were promoted. Five triggers, every one
+an integer comparison on a structured field, and nothing a hostile message could write. The
+Commander's framing governed the build: *story, not a checklist*. Every adventure carries a spine;
+a beat is a chapter with a title, never a number; and no count reaches you anywhere you read.
+
+**Write one, or ask for one.** The new Adventures tab, desktop-first. Writing is a form whose every
+field is a closed vocabulary except the prose — the kind of a beat is a chooser of five, a place is
+*Here* with its ids off the game or a typed name checked against the galaxy search, a rank is a
+career and a number — and Begin is shut with the reason printed under it, never silently grey.
+Asking is three choosers with defaults (reach, length as structure, *this ship only* or *anything I
+own*) and an optional spoken brief; the fleet, the carrier, your ranks and where you are are read,
+never asked. The ship's AI writes the spine in one turn and the beats in a second, every place is
+resolved to its id and held to what your ships can do, and the draft waits for your yes. *Change
+something* lets you reason with it before you accept — *"not Colonia, something closer"* — with
+*Put it back* one press away.
+
+**Told from inside.** A beat is said twenty seconds after you reach it, in the core's own voice with
+the authored line as the floor, and dropped rather than said late if you are being interdicted. The
+story rides with every conversation turn below the cache breakpoint, so the core can foreshadow,
+needle you for taking the long way and play its own part between beats — and it knows what you
+know, plus the stake: the turn and the ending reach it only when their beats fire, so it cannot
+spoil what it has not been told. Progress is derived from your journal after the moment you accept,
+never stored, so a beat that fired while d47 was closed is found at the next launch; proved on the
+corpus, where five real places one Commander flew in June 2026 fire in order and the same five flown
+before the stamp fire nothing. Abandon, Begin again and Remove are the Commander's, from the panel
+and nowhere else.
+
+**Two new rows, one new destination.** *Adventure beats* under Callouts, on by default; *Notable
+places for adventures* under Galaxy search, off by default, which lets a generated story pick its
+stops from EDAstro's Galactic Exploration Catalog — fetched whole, so nothing about you goes with
+the request, read as information and never stored, CC BY-NC-SA 3.0 and acknowledged in NOTICE. It
+has its own line in Privacy. EDSM's own endpoint answers any non-browser client with a bot challenge,
+which is why the source is this one. Spansh's summaries now carry the ids the journal matches on.
+Imported and downloaded adventures are deferred; the file is the format, so importing when it comes
+is a copy and a validate.
+
+---
+
 ## 0.51.0 — 2026-08-22 — One transcript, both surfaces
 
 **Switch the window to the log file and the headset goes there too — and the reverse.** The
