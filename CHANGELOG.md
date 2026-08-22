@@ -17,6 +17,29 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.52.4 — 2026-08-22 — d47 starts for a Commander with two preset files, and says why when it cannot
+
+**A second `StartPreset` file killed startup before the window existed.** `BindsResolver`
+orders its candidates by a version that is an `int[]`, and `ActivePresetName` was sorting
+them with the default comparer, which cannot order one — `At least one object must implement
+IComparable`. Forty lines below it, `HighestVersioned` sorts the same type correctly through
+`VersionOrder.Instance`; the comparer was already there and one of the two call sites simply
+did not pass it. Now both do.
+
+It had never fired here because **a sort of one element never asks its comparer anything**.
+Elite left `StartPreset.start` behind when it began writing `StartPreset.4.start`, so an
+install that predates that change carries the pair — and from the second file on, d47 threw
+in `AppHost.Start`, before the window, on every launch, for good. Every one of the eleven
+tests around this wrote exactly one preset file, which is the same blind spot in a different
+place; the twelfth writes two.
+
+**And a crash is no longer indistinguishable from a clean exit.** There was no
+`AppDomain.UnhandledException` handler at all, so the process died, the `ProcessExit` handler
+still wrote `stopped cleanly`, and the log read as though the Commander had closed the window —
+the actual stack trace being in the Windows Application event log, which is where this one had
+to be recovered from. `Program.Main` now logs the exception at Fatal and flushes, which both
+saves the record and silences the parting line that would otherwise contradict it.
+
 ## 0.52.3 — 2026-08-22 — The Adventures tab says it heard you
 
 **Three words, on the tick you do the thing.** A beat is said twenty seconds after you reach it —

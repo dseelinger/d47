@@ -91,6 +91,27 @@ public class BindsTests : IDisposable
         Assert.Empty(binds.Bindings);
     }
 
+    [Fact]
+    public void TwoStartPresetFilesAreOrderedRatherThanCrashingStartup()
+    {
+        // Both, which is a real machine: Elite left StartPreset.start behind when it began
+        // writing StartPreset.4.start, so an install that predates that change has the pair.
+        // The versions are int[], and sorting them with the default comparer throws
+        // "At least one object must implement IComparable" - but only from the second file on,
+        // because a one-element sort never compares anything. It killed startup before the
+        // window existed, and every other test here writes exactly one file.
+        StartPreset("StartPreset.start", "KeyboardMouseOnly");
+        StartPreset("StartPreset.4.start", "Custom");
+
+        Binds(Path.Combine(Bindings, "Custom.4.2.binds"), ("YawLeftButton", "Key_Q", []));
+
+        var binds = Resolve();
+
+        // And the higher version is the one that answers, not whichever the file system listed
+        // first.
+        Assert.Equal("Custom", binds.PresetName);
+    }
+
     // ---- Trap 2: built-in presets are not in the user profile ---------------------------
 
     [Fact]

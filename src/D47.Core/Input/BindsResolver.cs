@@ -104,7 +104,12 @@ public static partial class BindsResolver
         var startFiles = Directory
             .EnumerateFiles(bindingsDirectory, "StartPreset*.start")
             .Select(path => (Path: path, Version: VersionOf(Path.GetFileName(path))))
-            .OrderByDescending(entry => entry.Version)
+            // With VersionOrder, exactly as HighestVersioned does below. The default comparer
+            // cannot order an int[] - it has no IComparable - and a sort of one element never
+            // asks it to, so a Commander with a single StartPreset file never sees it. A second
+            // one, which Elite leaves beside StartPreset.4.start, threw before the window
+            // existed and took startup with it.
+            .OrderByDescending(entry => entry.Version, VersionOrder.Instance)
             .ToArray();
 
         foreach (var (path, _) in startFiles)
