@@ -91,19 +91,38 @@ application polling poses is not activity, and nothing an application can call t
 standby. Two days of web search (Steam, Meta, VD, flight-sim and VRChat trackers) found no public
 report with this exact signature.
 
+**Two ten-second checks come before any experiment.** The Horizon OS build (Settings → System →
+Software Update): Meta's v2.4 is tracked as losing controller *and* hand tracking inside apps, with
+a Home-button bounce through system UI as the workaround — the power-dialog trick by another name —
+fixed in v2.5, and v2.5 as leaving the headset "stuck reporting a controller as paired when it is
+not actually connected", fixed in v2.7 on 2026-08-20; a headset on v2.4–v2.6 outranks every d47
+hypothesis, and a controller firmware update is the cheapest blind test. (Virtual Desktop Streamer
+is already 1.34.21, past the 1.34.16 "interference with other drivers in SteamVR" fix.) And during
+the next wedge, *is the streamed image still live?* Live video with dead input is the signature of
+a client stuck `VISIBLE`, which turns this into a Virtual Desktop or Horizon OS fault with a known
+shape.
+
 **A lead is not a diagnosis.** The experiment, SteamVR + Virtual Desktop + d47 0.52.2 and no game,
-each run six minutes past `1 - entering standby` in `vrserver.txt` before the pick-up, with d47's
-log beside it — from 0.52.2 it records every controller connected/tracking/activity transition on
-d47's clock: (a) d47 running, the panel never pointed at; (b) d47 running with the microphone never
-opened — mode *hold* with the push-to-talk key cleared, which is the one arrangement under which
-`ListeningWiring.NeedsMicrophone` says no, and the log's "Listening on Microphone" line must be
-absent; (c) d47 running with the ray crossed once before the put-down; (d) d47 connected only
-*after* the put-down; (e) Steam Link in place of Virtual Desktop, d47 running. (a) confirms the
-fault without a claim, (b) and (c) each retire one channel, (d) reproduces the one self-recovery
-seen with d47 connected, and (e) separates a Horizon OS state from Virtual Desktop's client. A
-second lever, if the fault tracks the standby moment: `power.turnOffControllersTimeout` in
-`steamvr.vrsettings` (default 300 s) raised to hours, so the controller never reaches SteamVR
-standby at all.
+with `vrserver.txt` tailed and d47's log beside it — from 0.52.2 it records every controller
+connected/tracking/activity transition on d47's clock. First compress the timer so several cycles
+fit in twenty minutes: with SteamVR closed, back up `steamvr.vrsettings` and add a top-level
+`"power": { "turnOffControllersTimeout": 30.0 }`; restore it afterwards. A cycle is: controller
+down on the desk, hands out of the cameras' view, wait for `disconnected` then `1 - entering
+standby`, wait a minute more, pick it up and press **A**; record whether hands engaged before the
+pick-up, whether the VD menu opens on a long menu-press, whether vrserver logs `connected`, and
+whether the picture is still live. Runs: (a) no d47, twice — the control; (b) d47 running, the ray
+put on the panel and the trigger pulled once, then left alone; (c) if (b) wedges, **before the
+power button**, confirm the Streamer still says connected, `taskkill /IM d47.exe /F`, and wait
+thirty seconds — input returning means d47's presence *holds* the wedge (a mechanism lead and an
+immediate kill-switch), nothing returning means the wedge is latched headset-side and d47 at most
+triggered it; (d) if (b) does not wedge at thirty seconds, one cycle at the default 300 s — a wedge
+only then means the trigger is dwell, not the standby transition; (e) d47 running with the
+microphone never opened — mode *hold* with the push-to-talk key cleared, the one arrangement under
+which `ListeningWiring.NeedsMicrophone` says no, and the log's "Listening on Microphone" line must
+be absent; (f) Steam Link in place of Virtual Desktop, if installed. A wedge that follows the
+shortened timer makes standby entry the trigger and the oculus driver's `EnterStandby()` over
+Virtual Desktop the mechanism, and a huge `turnOffControllersTimeout` a legitimate workaround; one
+that ignores the timer makes standby a bystander and the target the client's focus state.
 
 ## Open: the aim ray does not follow the hand
 
