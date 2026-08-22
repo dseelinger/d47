@@ -86,6 +86,38 @@ SRV turret view, SRV handbrake, SRV drive assist.
 
 A position may also mean nothing, which is what the centre of a three-position switch usually is.
 
+### A position may name a page of Directive 47's own panel instead
+
+A spare three-position toggle with nothing bound to it can flip the Transcript between
+Conversation, Technical and the log file — three detents, three pages. Each position gets a
+**page** rather than an action, chosen from the same list the spoken route reads: every page any
+surface shows, so there is nothing here that cannot also be said.
+
+The same rule applies, and it fits better here than where it was invented. The flip is the
+question, *are you already there* is asked first — and for Directive 47's own panel the answer is
+exact rather than read out of `Status.json` — and between flips nothing is touched. Flip to
+Technical while the panel is already on Technical and nothing happens at all. Flip to it while
+the panel is on the checklist and the panel goes to Technical, on both surfaces.
+
+Two things are different, because the target is:
+
+- **It is not behind *Let a HOTAS switch operate the ship*, nor behind key injection.** Those
+  rows exist because a switch that reconciles the ship reaches the keyboard. A switch that
+  changes which page is drawn presses nothing, reads no binds and checks no foreground, so it
+  works whether those rows are on or off.
+- **It is never paused.** Nothing else drives the panel behind Directive 47's back, so there is
+  nothing to desync with and nothing to stop reconciling for.
+
+A position names an action *or* a page, never both. A page the panel does not have — a key
+mistyped in the file, say — is reported on the row by name and never moved to. And a switch
+sitting on a page the panel is not showing is annunciated like any other stale switch:
+
+> transcript switch: the panel is on Conversation
+
+**Spring-return controls and hats are still declined**, even for a page. The walk cannot know
+what a switch will be assigned to, a momentary control can only ever mean a press, and saying a
+page out loud already covers the press.
+
 ## When a mapping stops fitting
 
 A mapping is stored against the device's `NonRoamableId` — never against its vendor and product
@@ -156,10 +188,25 @@ reason**, and the rest of the file still loads.
         { "button": 8, "action": "landing_gear", "state": "on" },
         { "button": 9, "action": "landing_gear", "state": "off" }
       ]
+    },
+    {
+      "name": "transcript switch",
+      "deviceId": "{wgi/nrid/X8QoL-2>1[]-...-mA7IX7-Ac}",
+      "device": "VID 0x4098 PID 0xBD65, 32 buttons, 0 hats, 7 axes",
+      "positions": [
+        { "button": 4, "destination": "transcript.conversation" },
+        { "button": 5, "destination": "transcript.technical" },
+        { "button": 6, "destination": "transcript.log" }
+      ]
     }
   ]
 }
 ```
+
+A page is its own `destination` field, never a prefix on `action` — a statement about what the
+position means rather than a naming rule a rename would silently break. The keys are the ones the
+panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, and the
+roots of every other tab.
 
 ## What it does not do
 

@@ -159,6 +159,40 @@ public class PersonaHostTests
         Assert.Equal("what did I just say to Warden", host.Transcript[0].Text);
     }
 
+    /// <summary>
+    /// A new Commander logging in starts every core from nothing (list.md Phase 44: "The old
+    /// transcript goes away, a new one is created"). Every core's, because each conversation was
+    /// with the Commander who just left — and as a new list, because the old one is handed out by
+    /// reference and whoever holds it has to ask again.
+    /// </summary>
+    [Fact]
+    public void ANewCommanderStartsEveryCoreFromNothing()
+    {
+        var host = new PersonaHost();
+
+        var wardens = host.Transcript;
+        wardens.Add(new ConversationMessage(ConversationRole.User, "said to Warden by the Commander who left"));
+
+        host.Apply(Choose("cora"));
+        host.Transcript.Add(new ConversationMessage(ConversationRole.User, "said to Cora by the same Commander"));
+
+        host.ForgetTranscripts();
+
+        Assert.Empty(host.Transcript);
+        Assert.NotSame(wardens, host.Transcript);
+
+        host.Apply(Choose("warden"));
+        Assert.Empty(host.Transcript);
+        Assert.NotSame(wardens, host.Transcript);
+
+        // The old list is untouched — it is the reference a stale holder would still have, and
+        // the point is that it is no longer the one anybody is handed.
+        Assert.Single(wardens);
+
+        // Introductions are not conversation: a core that has said its opening line has said it.
+        Assert.Equal(2, host.Introduced.Count);
+    }
+
     [Fact]
     public void SelectingTheSameCoreAgainChangesNothingAndAnnouncesNothing()
     {

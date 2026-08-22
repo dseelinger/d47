@@ -85,6 +85,15 @@ A ship you have not bound changes nothing: whoever is aboard stays aboard. And p
 different core while flying a bound ship stands — a binding acts when you board, not
 continuously — until the next time you board it.
 
+**A different Commander logging in is a new session.** Elite's ship numbers start over for each
+Commander, so one Commander's ship 7 and another's are two ships, and bindings are kept per
+Commander. When somebody else logs in on this machine, the transcript of every core is discarded
+— their conversation was with the Commander who left — the ship they are sitting in has *its*
+binding applied quietly, as at startup, and the greeting is said again, naming them: *"Good
+evening, Commander Jameson. Ready to go."* Directive 47 learning who has been flying since before
+it started is not a login and discards nothing. The **Ship** row below is per Commander for the
+same reason the bindings are.
+
 ### Where it is kept
 
 `data/ship-cores.json`, beside the executable, one line per ship. It is meant to be read and

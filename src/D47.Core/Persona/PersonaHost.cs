@@ -226,6 +226,24 @@ public sealed class PersonaHost
     public List<ConversationMessage> Transcript => TranscriptFor(Current.Id);
 
     /// <summary>
+    /// Drops every core's transcript, so the next turn with any of them starts from nothing
+    /// (list.md Phase 44: <i>"The old transcript goes away, a new one is created."</i>).
+    /// <para>
+    /// Every core's rather than the one aboard, because the conversation each of them holds was
+    /// with the Commander who just logged out — a second core brought aboard by the new Commander
+    /// would otherwise pick up a conversation they were never part of, which is the isolation
+    /// model failing in a direction it was never built to watch.
+    /// </para>
+    /// <para>
+    /// New lists rather than cleared ones, on purpose: <see cref="Transcript"/> is handed over by
+    /// reference, and a caller that still holds the old list is holding the old Commander's
+    /// conversation — it has to ask for the new one, and <c>TurnLoop.UseTranscript</c> is that ask.
+    /// The introductions are untouched: a core that has said its opening line has said it.
+    /// </para>
+    /// </summary>
+    public void ForgetTranscripts() => _transcripts.Clear();
+
+    /// <summary>
     /// The persona block for the assembled prompt, or null when personality is off.
     /// <para>
     /// Null rather than a neutral block, because position 3 being absent is what "personality

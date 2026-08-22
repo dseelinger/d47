@@ -95,8 +95,10 @@ public partial class App(AppHost? host) : Application
             });
 
             // And a spoken phrase moves the headset panel too. Both surfaces, because a phrase
-            // has no surface attached to it - see AppHost.Navigate.
-            host.RouteNavigation(host.Vr.Nav);
+            // has no surface attached to it - see AppHost.Navigate. The headset's copy is built
+            // on this thread (architecture.md D1), so its navigator is reached the same way.
+            var ui = Avalonia.Threading.Dispatcher.UIThread;
+            host.RouteNavigation(host.Vr.Nav, move => ui.Post(move));
 
             // Last, because it reports the headset and the headset is brought up above. One line
             // saying what this build is and what it is pointed at, so a log can answer "what was

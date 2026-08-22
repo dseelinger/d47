@@ -1,4 +1,5 @@
 using D47.Core.Hotas;
+using D47.Core.Interface;
 
 namespace D47.App.Settings;
 
@@ -17,9 +18,14 @@ namespace D47.App.Settings;
 /// <param name="Reconciler">Where each mapped switch stands, and the only thing that can resume a paused one.</param>
 /// <param name="Now">The clock. Injected here because the capture never reads one itself.</param>
 /// <param name="ExportPath">Where a declined capture's report is written.</param>
+/// <param name="Destinations">
+/// Every page a surface has registered, for the position editor's list (list.md Phase 46). Asked
+/// for when the window opens rather than captured, and on the thread that owns the navigators.
+/// </param>
 public sealed record SwitchEditing(
     SwitchStore Store,
     IHotasReader Reader,
     SwitchReconciler Reconciler,
     Func<DateTimeOffset> Now,
-    string ExportPath);
+    string ExportPath,
+    Func<IReadOnlyList<PanelDestination>> Destinations);

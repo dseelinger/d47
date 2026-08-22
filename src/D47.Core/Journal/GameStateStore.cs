@@ -1,6 +1,24 @@
 namespace D47.Core.Journal;
 
 /// <summary>
+/// The Commander being tailed changed (list.md Phase 44).
+/// </summary>
+/// <param name="Previous">Who it was, or null when nobody had been identified yet — which makes this an adoption.</param>
+/// <param name="Current">Who it is now.</param>
+/// <param name="Priming">
+/// Whether this came out of the startup replay rather than a login that just happened. A
+/// subscriber that discards anything must do nothing when this is set.
+/// </param>
+public sealed record CommanderSwitch(CommanderIdentity? Previous, CommanderIdentity Current, bool Priming)
+{
+    /// <summary>
+    /// Nobody to somebody. Discards nothing: d47 runs before Elite has said who is flying, and
+    /// what happened before that belongs to no Commander rather than retroactively to this one.
+    /// </summary>
+    public bool IsAdoption => Previous is null;
+}
+
+/// <summary>
 /// State keyed per Commander so a second Commander's journal can never blend into the
 /// first one's (list.md Phase 2). Each journal file establishes its own identity near the
 /// top, and every event after that is folded into that Commander's own bucket only — there is
@@ -51,17 +69,46 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
 
+    /// <summary>
+    /// Raised when the Commander whose journal is being tailed changes (list.md Phase 44, "One
+    /// switch signal"). From nobody to somebody is an adoption; from one to another is a switch.
+    /// <para>
+    /// <b>The signal carries whether it happened during priming, and every subscriber honours
+    /// it.</b> The backlog is folded through the same <see cref="Apply"/> as live events, so a
+    /// replay that crosses into a journal belonging to somebody else raises this exactly as a
+    /// login would — and a subscriber that discards a transcript on it would be discarding one
+    /// for a login that happened last month. Reading the id per call, the way a pure reader does,
+    /// is the other correct shape and does not generalise: a transcript cannot be discarded by a
+    /// function that reads an id.
+    /// </para>
+    /// <para>
+    /// Raised synchronously from inside the fold, before the identity event itself is applied to
+    /// the new bucket, so a subscriber that resets a watch sees the new Commander's events arrive
+    /// after the reset rather than before it.
+    /// </para>
+    /// </summary>
+    public event Action<CommanderSwitch>? CommanderChanged;
+
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
+
+    public void Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
 
     /// <param name="at">
     /// Where the Commander was standing when this event landed, from <c>Status.json</c>. Null
     /// everywhere except a surface, and null for a backlogged event — see <see cref="JournalSpine"/>
     /// for why a position read now must not be stamped onto an event from two hours ago.
     /// </param>
-    public void Apply(JournalEvent journalEvent, SurfaceFix? at)
+    /// <param name="priming">
+    /// Whether this event is part of the startup replay rather than something that just
+    /// happened. Carried on <see cref="CommanderChanged"/> and nowhere else: the buckets fold a
+    /// backlog and a live event identically.
+    /// </param>
+    public void Apply(JournalEvent journalEvent, SurfaceFix? at, bool priming)
     {
         if (CommanderIdentity.From(journalEvent) is { } identity)
         {
+            var previous = Active?.Identity;
+
             if (!_byFrontierId.TryGetValue(identity.FrontierId, out var state))
             {
                 state = new CommanderGameState(identity);
@@ -88,7 +135,15 @@ public sealed class GameStateStore
                 _byFrontierId[identity.FrontierId] = state;
             }
 
+            var switched = !string.Equals(previous?.FrontierId, identity.FrontierId, StringComparison.Ordinal);
+
             _activeFrontierId = identity.FrontierId;
+
+            if (switched)
+            {
+                CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
+            }
+
             state.Apply(journalEvent, at);
             return;
         }

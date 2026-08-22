@@ -40,7 +40,12 @@ public sealed class JournalSpine(
     /// <summary>The currently-tailed file, or null if none has been found yet.</summary>
     public string? CurrentFile => _reader?.Path;
 
-    public IReadOnlyList<JournalEvent> Poll()
+    /// <param name="priming">
+    /// Whether this poll is the startup replay. Carried through to
+    /// <see cref="GameStateStore.CommanderChanged"/> and nowhere else; the tick loop passes its
+    /// first-tick flag, and a harness passes whatever it means.
+    /// </param>
+    public IReadOnlyList<JournalEvent> Poll(bool priming = false)
     {
         var latest = JournalFolder.LatestFile(Directory);
 
@@ -62,7 +67,7 @@ public sealed class JournalSpine(
 
         foreach (var journalEvent in events)
         {
-            gameState.Apply(journalEvent, FixFor(journalEvent));
+            gameState.Apply(journalEvent, FixFor(journalEvent), priming);
         }
 
         // After the events, so the Commander whose locker this is has been established by them

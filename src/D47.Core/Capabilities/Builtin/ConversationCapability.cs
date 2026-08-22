@@ -414,6 +414,10 @@ public static class ConversationCapability
             Multiline = true,
             DefaultDisplay = "(nothing yet)",
             DocsAnchor = "character-sheet",
+
+            // The Commander's, in exactly the way About Me is (list.md Phase 44): whose ship this is
+            // changes when who is flying changes.
+            Scope = SettingScope.Commander,
             Binding = new SettingBinding
             {
                 Read = s => s.Llm.CharacterSheet,
@@ -433,6 +437,11 @@ public static class ConversationCapability
             Multiline = true,
             DefaultDisplay = "(nothing yet)",
             DocsAnchor = "about-me",
+
+            // The most per-Commander thing in the file, and until Phase 44 in the least
+            // per-Commander place. A Commander who clears it reads nothing rather than the
+            // installation's story — empty is meaningful here (CommanderScope).
+            Scope = SettingScope.Commander,
             Binding = new SettingBinding
             {
                 Read = s => s.Llm.AboutMe,

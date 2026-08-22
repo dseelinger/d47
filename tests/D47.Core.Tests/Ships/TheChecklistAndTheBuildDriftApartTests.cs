@@ -83,6 +83,67 @@ public class TheChecklistAndTheBuildDriftApartTests
         Assert.Empty(bench.Checklists.Document.Items);
     }
 
+    /// <summary>
+    /// The live half of the list.md Phase 44 defect, on this watch. Ship ids are per Commander,
+    /// and the last ship seen is a bare id — so a second Commander logging in aboard their own
+    /// ship 12 reads as the ship already seen, and their build is never compared. A reset on the
+    /// switch makes their first Loadout a swap.
+    /// </summary>
+    [Fact]
+    public void ANewCommanderInTheSameShipIdIsAskedAboutTheirOwnBuild()
+    {
+        using var install = new TempInstall();
+        var state = new GameStateStore();
+        state.Apply(Identity("F1", "Alice"));
+
+        var store = new ShipBuildStore(
+            Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(
+                Path.Combine(install.Root, "checklist.json"),
+                NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(install.Root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state.Active);
+
+        var ships = new ShipPlanService(store, checklists, () => state.Active);
+        var drift = new ShipDriftWatch(ships, checklists);
+
+        var alice = ships.BuildFor(12, "python", "Bad Idea");
+        ships.Plan(alice.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+
+        Assert.NotNull(drift.Observe([Boarding(12)]));
+
+        // Bob logs in, also in a ship 12, with a plan of his own for it. A different plan, so
+        // that Alice's still-outstanding question cannot be mistaken for a "no" to Bob's: the
+        // outstanding question is keyed by the same bare ship id, which is the other thing the
+        // reset drops.
+        state.Apply(Identity("F2", "Bob"));
+        var bob = ships.BuildFor(12, "python", "Other Idea");
+        ships.Plan(bob.Id, new SlotPlan("MainEngines", "Drive Strengthening", 3, "Felicity Farseer"));
+
+        // Same id, so without the reset this is the ship already seen — the defect.
+        Assert.Null(drift.Observe([Boarding(12)]));
+
+        drift.Reset();
+
+        var asked = drift.Observe([Boarding(12)]);
+        Assert.NotNull(asked);
+        Assert.Contains("Other Idea", asked, StringComparison.Ordinal);
+    }
+
+    private static JournalEvent Identity(string fid, string name)
+    {
+        Assert.True(JournalEvent.TryParse(
+            $$"""{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"{{fid}}","Name":"{{name}}"}""",
+            NullLogger.Instance,
+            out var journalEvent));
+
+        return journalEvent!;
+    }
+
     [Fact]
     public void AShipWhoseChecklistAlreadyAgreesIsNotAskedAbout()
     {

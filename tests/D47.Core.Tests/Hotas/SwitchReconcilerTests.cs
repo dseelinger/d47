@@ -1,5 +1,6 @@
 using D47.Core.Hotas;
 using D47.Core.Input;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -440,5 +441,150 @@ public class SwitchReconcilerTests
 
         Assert.Single(pending);
         Assert.NotEmpty(pending[0].Steps);
+    }
+
+    // ----- Switches that reach d47 itself (list.md Phase 46) -----
+
+    /// <summary>The three roots both surfaces register for the transcript.</summary>
+    private static readonly IReadOnlyList<PanelDestination> Pages =
+    [
+        new(PanelTab.Transcript, new NavCrumb("transcript.conversation", "Conversation")),
+        new(PanelTab.Transcript, new NavCrumb("transcript.technical", "Technical")),
+        new(PanelTab.Transcript, new NavCrumb("transcript.log", "Log file")),
+    ];
+
+    /// <summary>The spare three-position toggle on the throttle base: three detents, three roots.</summary>
+    private static SwitchMapping TranscriptSwitch() => new()
+    {
+        Name = "transcript switch",
+        DeviceId = Stick,
+        Positions =
+        [
+            new SwitchPosition(4, Destination: "transcript.conversation"),
+            new SwitchPosition(5, Destination: "transcript.technical"),
+            new SwitchPosition(6, Destination: "transcript.log"),
+        ],
+    };
+
+    /// <summary>
+    /// A tick with the panel in it. Switches and key injection are <em>off</em> by default here,
+    /// on purpose: a page move is not behind that gate.
+    /// </summary>
+    private static SwitchTick PanelTick(HotasReading reading, string? showing, bool enabled = false) =>
+        Tick(reading, StatusFlags.None, enabled: enabled) with { Destinations = Pages, Showing = showing };
+
+    [Fact]
+    public void AFlipToAPageQueuesAMoveAndNoKeysWithSwitchesOff()
+    {
+        var reconciler = New();
+        var switches = new[] { TranscriptSwitch() };
+
+        reconciler.Poll(PanelTick(Held(4), "transcript.conversation"), switches);
+        reconciler.Poll(PanelTick(Held(5), "transcript.conversation"), switches);
+
+        var pending = Assert.Single(reconciler.Drain());
+
+        Assert.Equal("transcript.technical", pending.Destination);
+        Assert.Empty(pending.Steps);
+        Assert.Null(pending.Say);
+        Assert.Equal("Technical", pending.Label);
+
+        // Not "Off": the gate exists because a switch can reach the keyboard, and this one cannot.
+        Assert.Equal(SwitchHealth.Ready, reconciler.States[0].Health);
+    }
+
+    [Fact]
+    public void AFlipToThePageAlreadyShowingMovesNothing()
+    {
+        // The are-you-already-there question, answered exactly rather than inferred.
+        var reconciler = New();
+        var switches = new[] { TranscriptSwitch() };
+
+        reconciler.Poll(PanelTick(Held(4), "transcript.technical"), switches);
+        reconciler.Poll(PanelTick(Held(5), "transcript.technical"), switches);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void FindingASwitchAtAPageOnFirstSightMovesNothing()
+    {
+        // Startup learns where the switch is sitting; the next flip is the next question.
+        var reconciler = New();
+
+        reconciler.Poll(PanelTick(Held(5), "transcript.conversation"), [TranscriptSwitch()]);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void ASwitchSittingAgainstThePanelIsAnnunciated()
+    {
+        var reconciler = New();
+        var switches = new[] { TranscriptSwitch() };
+
+        reconciler.Poll(PanelTick(Held(5), "transcript.conversation"), switches);
+        Assert.Equal("the panel is on Conversation", reconciler.States[0].Disagrees);
+
+        reconciler.Poll(PanelTick(Held(5), "transcript.technical"), switches);
+        Assert.Null(reconciler.States[0].Disagrees);
+
+        // Two surfaces in different places is "cannot say", and cannot say is not a disagreement.
+        reconciler.Poll(PanelTick(Held(5), null), switches);
+        Assert.Null(reconciler.States[0].Disagrees);
+    }
+
+    [Fact]
+    public void WhenTheSurfacesDisagreeAFlipStillAsks()
+    {
+        // Null is unknown, never unchanged: the flip goes out and each surface declines for
+        // itself if it is already there.
+        var reconciler = New();
+        var switches = new[] { TranscriptSwitch() };
+
+        reconciler.Poll(PanelTick(Held(4), null), switches);
+        reconciler.Poll(PanelTick(Held(6), null), switches);
+
+        Assert.Equal("transcript.log", Assert.Single(reconciler.Drain()).Destination);
+    }
+
+    [Fact]
+    public void APageNoSurfaceOffersIsReportedByNameAndNeverQueued()
+    {
+        // The vocabulary is whatever the surfaces registered, so a hand-edited key is checked
+        // here, where they are known, and refused the way every other refusal is: by name.
+        var reconciler = New();
+
+        var switches = new[]
+        {
+            TranscriptSwitch() with
+            {
+                Positions =
+                [
+                    new SwitchPosition(4, Destination: "transcript.conversation"),
+                    new SwitchPosition(5, Destination: "loadout.nonsense"),
+                ],
+            },
+        };
+
+        reconciler.Poll(PanelTick(Held(4), "transcript.conversation"), switches);
+        reconciler.Poll(PanelTick(Held(5), "transcript.conversation"), switches);
+
+        Assert.Empty(reconciler.Drain());
+        Assert.Contains("loadout.nonsense", reconciler.States[0].Note, StringComparison.Ordinal);
+        Assert.Null(reconciler.States[0].Disagrees);
+    }
+
+    [Fact]
+    public void BeforeAnySurfaceIsUpAPageSwitchSaysSoAndWaits()
+    {
+        var reconciler = New();
+        var switches = new[] { TranscriptSwitch() };
+
+        reconciler.Poll(Tick(Held(4), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(5), StatusFlags.None), switches);
+
+        Assert.Empty(reconciler.Drain());
+        Assert.Contains("not up yet", reconciler.States[0].Note, StringComparison.Ordinal);
     }
 }

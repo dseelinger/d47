@@ -17,9 +17,9 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
 and added on 2026-08-21 — and the two-Commanders ship-id keying in 0.47.1, whose live half
-(`ShipCoreService._aboard` and `ShipDriftWatch._aboard` as bare ints) is recorded on list.md
-Phase 44 rather than here, because it needs the switch signal that phase builds. Each entry's
-record is its section of the changelog.
+(`ShipCoreService._aboard` and `ShipDriftWatch._aboard` as bare ints) shipped with list.md
+Phase 44 in 0.50.0, on the Commander-switch signal that phase built. Each entry's record is its
+section of the changelog.
 
 The VR grab that 0.16.2 recorded as "fixed but not confirmed" was not fixed. The two flags it
 called are the wrong road entirely — they opt the quad in to SteamVR's own laser, which only runs

@@ -407,6 +407,44 @@ public class ShipCoreWatchTests
         return due;
     }
 
+    /// <summary>
+    /// The live half of the list.md Phase 44 defect. The store is keyed per Commander, but the
+    /// watch remembers the ship it acted on as a bare id — so a second Commander logging in
+    /// aboard their own ship 7 reads as no change, and the first one's core stays aboard. A reset
+    /// on the switch makes the next observation the ship d47 found them in, adopted silently.
+    /// </summary>
+    [Fact]
+    public void AResetAdoptsTheNewCommandersShipAndItsOwnCoreSilently()
+    {
+        var state = State(7);
+        var service = Service(state, ("F1", 7, "sentinel"), ("F2", 7, "quartermaster"));
+
+        var first = service.Observe(TimeSpan.FromSeconds(1));
+        Assert.NotNull(first);
+        Assert.Equal("sentinel", first.Core);
+        Assert.False(first.Announce);
+
+        // Bob logs in, also in ship 7.
+        state.Apply(Event("""{"timestamp":"2026-08-19T10:00:00Z","event":"Commander","FID":"F2","Name":"Bob"}"""));
+        Board(state, 7);
+
+        // Same id, so without the reset this is "no change" — the defect.
+        Assert.Null(service.Observe(TimeSpan.FromSeconds(1)));
+
+        service.Reset();
+
+        var adopted = service.Observe(TimeSpan.FromSeconds(1));
+        Assert.NotNull(adopted);
+        Assert.Equal("quartermaster", adopted.Core);
+
+        // Silent, as the ship d47 found them in: a login is not a ship change they just made, and
+        // the greeting is the new core's first words.
+        Assert.False(adopted.Announce);
+
+        // And it stays put: the ship they are in is the one acted on, so nothing is due next tick.
+        Assert.Null(service.Observe(TimeSpan.FromSeconds(1)));
+    }
+
     private static ShipCoreService Service(
         GameStateStore state,
         params (string Fid, int Ship, string Core)[] bound)
