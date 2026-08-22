@@ -143,12 +143,12 @@ public class EngineersTabTests
 
         Assert.Contains("Ready for Unlock", shown);
         Assert.Contains("Unlocked", shown);
-        Assert.Contains("Requires Engineer Intro First", shown);
+        Assert.Contains("Needs a Referral", shown);
 
         // The heading that can be acted on comes before the one that cannot.
         Assert.True(
             shown.ToList().IndexOf("Ready for Unlock")
-            < shown.ToList().IndexOf("Requires Engineer Intro First"));
+            < shown.ToList().IndexOf("Needs a Referral"));
 
         // And the say-line, on this level as on every other.
         Assert.Contains(shown, line => line.StartsWith("Say:", StringComparison.Ordinal));

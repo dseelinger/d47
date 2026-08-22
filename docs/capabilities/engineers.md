@@ -38,14 +38,14 @@ nav_order: 107
 <h2><span class="num">2</span> The Directory is sorted by what you can do today.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="Three bands: reachable now, already yours, behind somebody else">
  <rect x="40" y="24" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="72" y="66" font-size="21" font-weight="800" fill="var(--accent)">GO AND GET THEM NOW</text>
- <text x="808" y="66" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing in your way</text>
+ <text x="72" y="66" font-size="21" font-weight="800" fill="var(--accent)">READY FOR UNLOCK</text>
+ <text x="808" y="66" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing standing in your way</text>
  <rect x="40" y="110" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="72" y="152" font-size="21" font-weight="800" fill="var(--text)">ALREADY YOURS</text>
+ <text x="72" y="152" font-size="21" font-weight="800" fill="var(--text)">UNLOCKED</text>
  <text x="808" y="152" text-anchor="end" font-size="16" fill="var(--text-muted)">and how far to the next grade</text>
  <rect x="40" y="196" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="72" y="238" font-size="21" font-weight="800" fill="var(--text-muted)">BEHIND SOMEBODY ELSE</text>
- <text x="808" y="238" text-anchor="end" font-size="16" fill="var(--text-muted)">and who introduces them</text>
+ <text x="72" y="238" font-size="21" font-weight="800" fill="var(--text-muted)">NEEDS A REFERRAL</text>
+ <text x="808" y="238" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else has to introduce them</text>
  <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Alphabetical order would answer that question for nobody.</text>
 </svg>
 </section>

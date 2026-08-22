@@ -312,12 +312,21 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     /// and <em>invitation</em> from the game, so a sentence that avoids both words is a
     /// translation away from the vocabulary they came in with.
     /// </para>
+    /// <para>
+    /// The third one was <b>"Requires Engineer Intro First"</b> until 2026-08-22, and it is the
+    /// rule above applied badly rather than a different rule: <em>Intro</em> is an abbreviation
+    /// of a word the game does not use, and <em>First</em> says again what <em>Requires</em>
+    /// already said. <b>Referral</b> is the word for this — it is what every chain on the
+    /// documentation page is already called — so the label now uses it and stays the length of
+    /// the two beside it. Found by writing the tab's in-app help: it was the one heading that had
+    /// to be explained rather than read.
+    /// </para>
     /// </summary>
     private static string Caption(EngineerReach reach) => reach switch
     {
         EngineerReach.WithinReach => "Ready for Unlock",
         EngineerReach.Unlocked => "Unlocked",
-        _ => "Requires Engineer Intro First",
+        _ => "Needs a Referral",
     };
 }
 
