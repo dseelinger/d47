@@ -1837,11 +1837,15 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var segments = _bound.Segments(Page);
+        var segments = Drawn(_bound.Segments(Page), Page);
 
         // Matched against the page's text rather than against the controls, so the hits are the
         // same set whether the page has been drawn yet or not — and so the current one can be
         // re-resolved from its offset every time the log grows underneath it.
+        //
+        // The drawn text and not the written one, which is what keeps searching honest now that
+        // the two differ: a reader looking at "A-rate thrusters" and typing it would otherwise
+        // match nothing, because what is in the buffer is "**A-rate thrusters**".
         _matches = D47.Core.Interface.TextSearch.Find(
             string.Concat(segments.Select(segment => segment.Text)),
             _query);
@@ -1860,6 +1864,27 @@ public partial class PanelView : UserControl
             foreach (var (text, match) in Split(segment.Text, at))
             {
                 var run = new Run(text);
+
+                if (segment.Style.HasFlag(MarkupStyle.Strong))
+                {
+                    run.FontWeight = FontWeight.Bold;
+                }
+
+                if (segment.Style.HasFlag(MarkupStyle.Emphasis))
+                {
+                    run.FontStyle = FontStyle.Italic;
+                }
+
+                if (segment.Style.HasFlag(MarkupStyle.Code))
+                {
+                    // The whole transcript is already monospaced, so a code span has to be told
+                    // apart some other way: a chip of the alternate surface behind it. Bound
+                    // before the search does the same property, so a hit inside a fenced block
+                    // is still drawn as a hit.
+                    run.Bind(
+                        Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                        this.GetResourceObservable(Theming.ThemeManager.SurfaceAltKey));
+                }
 
                 if (segment.Marker)
                 {
@@ -1906,6 +1931,29 @@ public partial class PanelView : UserControl
     /// page can say that. Each half is drawn highlighted in its own segment's style.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// A page's segments with the model's markdown read: the markers gone and what they meant
+    /// carried as a style (list.md Phase 19, and the transcript drawing <c>**A-rate FSD**</c>
+    /// literally for as long as it has existed).
+    /// <para>
+    /// The log file is exempt and drawn exactly as it is on disk. It is a file rather than
+    /// prose — a line of it that happens to hold an asterisk means an asterisk, and a page
+    /// opened to read what was written is the last place to reformat anything.
+    /// </para>
+    /// <para>
+    /// A marked line keeps its <see cref="TranscriptSegment.Marker"/> through the split, so the
+    /// panel's own bracketed note is still accented whatever is inside it.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<DrawnSegment> Drawn(
+        IReadOnlyList<TranscriptSegment> segments,
+        TranscriptPage page) =>
+        page == TranscriptPage.Log
+            ? [.. segments.Select(segment => new DrawnSegment(segment.Text, segment.Marker, MarkupStyle.None))]
+            : [.. segments.SelectMany(segment => TranscriptMarkup
+                .Parse(segment.Text)
+                .Select(span => new DrawnSegment(span.Text, segment.Marker, span.Style)))];
+
     private IEnumerable<(string Text, int Match)> Split(string text, int at)
     {
         var cursor = 0;
@@ -2189,7 +2237,10 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var text = string.Concat(_bound.Segments(Page).Select(segment => segment.Text));
+        // Drawn rather than written, for the reason above: the same text the Commander is
+        // looking at. It is also what dragging a selection and pressing Ctrl+C gives, and two
+        // copy gestures on one pane handing back two different strings is the surprise.
+        var text = string.Concat(Drawn(_bound.Segments(Page), Page).Select(segment => segment.Text));
 
         // Said on the button rather than in a banner. It is a one-word confirmation of a
         // one-click action, and a fault here — no clipboard, another application holding it —
@@ -2354,3 +2405,11 @@ public partial class PanelView : UserControl
 
     private void OnDismissErrorClick(object? sender, RoutedEventArgs e) => Model?.DismissError();
 }
+
+/// <summary>
+/// One stretch of the transcript as it will be drawn: the characters a reader sees, whether
+/// the panel is speaking about the conversation rather than in it, and what the model's
+/// markup asked for. A <see cref="TranscriptSegment"/> after <see cref="TranscriptMarkup"/>
+/// has been through it.
+/// </summary>
+internal readonly record struct DrawnSegment(string Text, bool Marker, MarkupStyle Style);
