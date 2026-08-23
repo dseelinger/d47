@@ -4,6 +4,93 @@ group: Knowledge
 nav_order: 105
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">A neutron route, a Road to Riches loop, or a trade run that does not have to empty the hold.</p>
+<section>
+<h2><span class="num">1</span> Plotting is not searching. It is a job.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A search is a request and a reply; a plot is submitted and waited on; a trade route is computed locally">
+ <rect x="20" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">A SEARCH</text>
+ <text x="145" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a request and a reply</text>
+ <text x="145" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">waits 15 seconds</text>
+ <rect x="315" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PLOT</text>
+ <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">submitted, queued, waited on</text>
+ <text x="440" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">waits 90 seconds</text>
+ <rect x="610" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="735" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A TRADE ROUTE</text>
+ <text x="735" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">not a plot at all —</text>
+ <text x="735" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">the arithmetic happens here</text>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A Commander who asks for a route across the galaxy has knowingly asked for arithmetic.</text>
+ <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">Past ninety seconds it says so, and says what to change: a shorter route, fewer hops, a smaller radius.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Your ship fills in its own numbers. You are not your ship.</h2>
+<svg viewBox="0 0 880 236" role="img" aria-label="Jump range, origin and cargo capacity come from the journal, but the credit balance is always asked for">
+ <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">READ FROM THE JOURNAL</text>
+ <text x="220" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">jump range · origin · cargo capacity</text>
+ <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">all properties of the hull</text>
+ <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ASKED FOR, EVERY TIME</text>
+ <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">your credit balance</text>
+ <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">even though it is in the journal</text>
+ <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The route means nothing without the hold. What you are worth is nobody’s business.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">It is the one figure here that is about you rather than about your ship.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> The hold does not have to be emptied.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="A trade plan reads as stops rather than legs, and a keep line says what declining to sell is worth">
+ <rect x="20" y="30" width="840" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--text)">Abraham Lincoln in Sol</text>
+ <text x="76" y="96" text-anchor="start" font-size="15" fill="var(--text-muted)">buy 384 × Gold at 9,400</text>
+ <text x="46" y="128" text-anchor="start" font-size="16" fill="var(--text)">Diaz Chemical Holdings in RR Caeli — 20.9 ly</text>
+ <text x="76" y="156" text-anchor="start" font-size="15" fill="var(--accent)">keep 384 × Gold — this station only pays 11,200</text>
+ <text x="440" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A keep line always says what declining to sell here is worth.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">A Commander not told why they are flying past a buyer will sell there — and then the plan stops being the plan.</text>
+</svg>
+<p class="body">This is the thing no other planner does. Every planner assumes a leg sells everything, and that is not always the best move: holding a commodity past a station that pays poorly, to a later one that pays well, can beat taking the money now.</p>
+</section>
+<section>
+<h2><span class="num">4</span> Efficiency is backwards from how it sounds.</h2>
+<svg viewBox="0 0 880 244" role="img" aria-label="Lower efficiency values produce fewer jumps, and 100 finds no route at all">
+ <rect x="30" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="125" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">10</text>
+ <text x="125" y="108" text-anchor="middle" font-size="15" fill="var(--text)">156 jumps</text>
+ <rect x="240" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="335" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">25</text>
+ <text x="335" y="108" text-anchor="middle" font-size="15" fill="var(--text)">157 jumps</text>
+ <rect x="450" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="545" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">60</text>
+ <text x="545" y="106" text-anchor="middle" font-size="15" fill="var(--text)">168 jumps</text>
+ <text x="545" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">the default</text>
+ <rect x="660" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="755" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--danger)">100</text>
+ <text x="755" y="108" text-anchor="middle" font-size="15" fill="var(--text)">no route at all</text>
+ <text x="440" y="180" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Lower lets it wander further, find more neutron stars, and finish in fewer jumps.</text>
+ <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text)">So Directive 47 clamps the parameter to 99.</text>
+ <text x="440" y="238" text-anchor="middle" font-size="15" fill="var(--text-muted)">At 100 the service accepts the job and then fails to route, which reads as “there is no way to get there”.</text>
+</svg>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="navigation.html"><span class="ct">Navigation →</span><span class="cd">Getting the first waypoint out of the plan and into the galaxy map.</span></a>
+<a class="card" href="galaxy.html"><span class="ct">Galaxy search →</span><span class="cd">The same service and the same switch, asked a different kind of question.</span></a>
+<a class="card" href="exobiology.html"><span class="ct">Exobiology →</span><span class="cd">The fourth plot, and the one that says what it structurally cannot contain.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Plot a neutron route, a Road to Riches loop, or a trade run.
 
 > "plot me a route to Colonia"
@@ -15,7 +102,7 @@ This asks [spansh.co.uk](https://spansh.co.uk), the same service the
 galaxy** and plotting works; leave it off and you get "route planning is switched off", which is a
 capability that is off rather than an error.
 
-## Plotting is not searching
+### Plotting is not searching
 
 A search is a request and a reply. A plot is a **job**: it is submitted, queued, and waited on.
 Measured on 2026-08-14, a Sol-to-Colonia neutron route came back in about three seconds and a Road
@@ -29,7 +116,7 @@ so and says what to change: a shorter route, fewer hops, a smaller radius.
 does the arithmetic here, which is what lets it hold cargo past a station and come home again — see
 [`plot_trade_route`](#plot_trade_route) below.
 
-## Your ship fills in its own numbers
+### Your ship fills in its own numbers
 
 Nobody says "plot me a route to Colonia from Sol at 52.31 light years a jump". Jump range, origin
 and cargo capacity come from the journal.
@@ -39,7 +126,7 @@ about you rather than about your ship — so a trade route asks for the number i
 it. Cargo capacity is a property of the hull and the route means nothing without it; what you are
 worth is nobody's business but yours.
 
-## What comes back
+### What comes back
 
 A Sol-to-Colonia plot is 131 waypoints and 168 jumps. Reading that out is not an answer, so the
 totals come first and the next handful of waypoints follow — which is how the route is flown
@@ -67,7 +154,7 @@ rather than in a preamble.
 Trade stops carry **when the market was last reported**, for the same reason outfitting stock does.
 A route can be arithmetically perfect against a four-year-old price and worth nothing at all.
 
-## Mining routes
+### Mining routes
 
 There are none, and that is a measurement rather than an omission: `api/mining/route` is a **404**.
 The service has no mining route planner.
@@ -77,9 +164,9 @@ a hotspot material, how many overlap, the ring's composition and how rich its re
 a mining-route tool here that quietly ran a body search would be a worse answer than not having
 one.
 
-## Tools
+### Tools
 
-### `plot_route`
+#### `plot_route`
 
 A jump route between two systems, using neutron boosts where they help.
 
@@ -105,7 +192,7 @@ A jump range of 10 light years or less is refused here rather than there. The se
 `range must be greater than 10 LY`, which is a sentence about a parameter; d47 says the ship is too
 short-ranged for the plotter, which is a sentence about the ship.
 
-### `plot_exploration_route`
+#### `plot_exploration_route`
 
 A Road to Riches loop — nearby systems holding bodies worth scanning and mapping, ordered so the
 trip is short and the payout is high.
@@ -119,7 +206,7 @@ loop includes the return leg; both come back with an empty body list and would r
 and scan nothing". Bodies within a stop are read out worth-most first, because that is the number
 that decides whether the stop is worth making at all.
 
-### `plot_trade_route`
+#### `plot_trade_route`
 
 A chain of buy-and-sell runs starting from the station you are docked at — **worked out here**,
 over markets d47 fetched, rather than handed to somebody else's planner.
@@ -132,7 +219,7 @@ It cannot be planned from supercruise. The whole plan is anchored on the market 
 in, so there is no version of this question that can be asked in flight — and d47 says that rather
 than making a request it knows is pointless.
 
-#### The hold does not have to be emptied
+##### The hold does not have to be emptied
 
 The thing no other planner does. A leg that sells everything is what every planner assumes, and it
 is not always the best move: holding a commodity past a station that pays poorly for it, to a later
@@ -157,13 +244,13 @@ A `keep` line always says what declining to sell here is worth. A Commander who 
 they are flying past a buyer will sell there, and then the plan they were given stops being the
 plan.
 
-#### Round trips
+##### Round trips
 
 `loop` ends the route back at the station it started from, so an evening's trading finishes at your
 own base rather than four systems away. A shorter loop that pays better than the long one you asked
 for is a better answer, not a shortfall, so it is taken.
 
-#### What it will not promise
+##### What it will not promise
 
 **It does not model market saturation.** Selling far more of a commodity than a station has demand
 for drops what the rest of it fetches, and by how much is *not known*. A constant guessed here
@@ -182,7 +269,7 @@ get there.
 itself, and worth less the closer they are sold to home — none of which is modelled, so they are
 not planned with rather than mispriced.
 
-#### Where the prices come from
+##### Where the prices come from
 
 Two places, and each stop says which.
 
@@ -201,7 +288,7 @@ from this morning beats what you saw a month ago. The last 25 markets you have s
 Every stop carries when its prices were reported, for the same reason outfitting stock does. A
 route can be arithmetically perfect against a four-year-old market and worth nothing at all.
 
-#### How long it takes
+##### How long it takes
 
 Ten hops, and in seconds rather than minutes.
 
@@ -219,7 +306,7 @@ minute apart.
 
 For scale: the planner this replaced took **forty-eight seconds** to answer four hops.
 
-## Notes for anyone reading the code
+### Notes for anyone reading the code
 
 The route endpoints have a property the search endpoints do not: **they echo back the parameters
 they understood, and only those.** That is a local oracle for which keys are real, and it is how
