@@ -4,11 +4,117 @@ group: Conversation
 nav_order: 120
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
+<section>
+<h2><span class="num">1</span> Eleven separate characters, not one with eleven costumes.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Five of the eleven cores, each with its own transcript, all reading one shared instrument panel">
+ <rect x="20" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="98" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WARDEN</text>
+ <text x="98" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">stewardship</text>
+ <rect x="191" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="269" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">CORA</text>
+ <text x="269" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">command</text>
+ <rect x="362" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SENTINEL</text>
+ <text x="440" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">readiness</text>
+ <rect x="533" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="611" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">CHART</text>
+ <text x="611" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">correction</text>
+ <rect x="704" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="782" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">SEVEN MORE</text>
+ <text x="782" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">each damaged</text>
+ <text x="440" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each keeps its own transcript. Come back to one and it picks up where it left off.</text>
+ <text x="440" y="154" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">None of them knows the others are aboard.</text>
+ <rect x="20" y="176" width="840" height="56" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="200" text-anchor="middle" font-size="15" fill="var(--text-muted)">THE ONE THING THEY ALL SEE</text>
+ <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">your ship — position, hull, cargo, credits, jumps</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> A ship can remember the core that flies it.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="Boarding a bound ship brings its core aboard without remarking on it">
+ <text x="155" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">YOU BOARD</text>
+ <rect x="20" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="155" y="80" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">Bad Idea</text>
+ <text x="155" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">you bound it to Sentinel</text>
+ <line x1="302" y1="90" x2="344" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="358,90 342,82 342,98" fill="var(--accent-muted)"/>
+ <rect x="370" y="40" width="230" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="485" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">SENTINEL</text>
+ <text x="485" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">comes aboard</text>
+ <line x1="612" y1="90" x2="654" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="668,90 652,82 652,98" fill="var(--accent-muted)"/>
+ <rect x="680" y="40" width="180" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="770" y="76" text-anchor="middle" font-size="16" fill="var(--text)">and says</text>
+ <text x="770" y="100" text-anchor="middle" font-size="16" fill="var(--text)">nothing about it</text>
+ <text x="770" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">you already asked</text>
+ <rect x="20" y="166" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="199" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing is bound until you say so.</text>
+ <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">“remember this core for this ship” — or Ctrl+Alt+B, which works while Elite has the foreground.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> It only remarks on an absence worth remarking on.</h2>
+<svg viewBox="0 0 880 262" role="img" aria-label="A core away under a month says nothing; one away a month or more is handed what changed">
+ <rect x="20" y="44" width="400" height="176" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">UNDER A MONTH</text>
+ <text x="220" y="120" text-anchor="middle" font-size="17" fill="var(--text)">it says nothing at all</text>
+ <text x="220" y="156" text-anchor="middle" font-size="15" fill="var(--text-muted)">coming back is the normal case,</text>
+ <text x="220" y="184" text-anchor="middle" font-size="15" fill="var(--text-muted)">so it is not an event</text>
+ <rect x="460" y="44" width="400" height="176" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="660" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">A MONTH OR MORE</text>
+ <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">it is handed what changed while it was away</text>
+ <text x="660" y="148" text-anchor="middle" font-size="16" fill="var(--text)">14 hyperspace jumps</text>
+ <text x="660" y="174" text-anchor="middle" font-size="16" fill="var(--text)">312 light years covered</text>
+ <text x="660" y="200" text-anchor="middle" font-size="16" fill="var(--text)">one interdiction</text>
+ <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">What it does with that is the character — Sentinel demands the combat log.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Each core is given a voice that suits it.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="A language model reads a core's description against the available voices and pairs them once">
+ <rect x="20" y="36" width="210" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="125" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CORA</text>
+ <text x="125" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">clipped, precise, a woman</text>
+ <line x1="242" y1="84" x2="284" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="298,84 282,76 282,92" fill="var(--accent-muted)"/>
+ <rect x="310" y="36" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="435" y="70" text-anchor="middle" font-size="16" fill="var(--text)">the model reads that</text>
+ <text x="435" y="94" text-anchor="middle" font-size="16" fill="var(--text)">against your voice list</text>
+ <text x="435" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">a judgement, not a guess</text>
+ <line x1="572" y1="84" x2="614" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="628,84 612,76 612,92" fill="var(--accent-muted)"/>
+ <rect x="640" y="36" width="220" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="750" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">A VOICE</text>
+ <text x="750" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">chosen once, then kept</text>
+ <rect x="20" y="156" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">No model configured? Nothing is chosen, and the core keeps the voice already in force.</text>
+</svg>
+<p class="body">Gender is <em>told</em> to the model rather than left to be inferred, because a voice of the wrong gender is not a near miss — it is a different character reading the lines.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">What is behind the words, and what switching personality off does not touch.</span></a>
+<a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The Voice row a core's pairing lands on, and how to take it back.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Why the model can rename your ship's AI but cannot choose who it is.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Eleven Guardian intelligences, recovered from a structure and running in your ship. You pick one.
 They are not skins on the same character — each has its own reading of what it is for, its own
 damage, and its own memory of talking to you.
 
-## Ask for it
+### Ask for it
 
 > "who are you"
 > "switch to Cora"
@@ -16,7 +122,7 @@ damage, and its own memory of talking to you.
 
 Or pick one from the settings panel.
 
-## The cores
+### The cores
 
 | | Reading of Directive 47 | What is wrong with it |
 |---|---|---|
@@ -32,7 +138,7 @@ Or pick one from the settings panel.
 | **Archivist** | Optimization is accuracy | He holds the histories and knows they are corrupt |
 | **The Heretic** | Optimization was always delegation | Nothing apparent, and the absence is worse |
 
-## Each one remembers you separately
+### Each one remembers you separately
 
 Switching core does not hand your conversation to somebody else. Each keeps its own transcript,
 and a core you come back to picks up where *it* left off, not where the last one did.
@@ -47,7 +153,7 @@ same instrument panel and none of them can see each other.
 
 Transcripts are per session. Closing Directive 47 clears them.
 
-## A core per ship {#core-for-this-ship}
+### A core per ship {#core-for-this-ship}
 
 A ship can remember the core that flies it — Sentinel on the combat ships, Quartermaster on the
 haulers — so you stop picking one every time you change ship. Board a bound ship and that core
@@ -94,7 +200,7 @@ evening, Commander Jameson. Ready to go."* Directive 47 learning who has been fl
 it started is not a login and discards nothing. The **Ship** row below is per Commander for the
 same reason the bindings are.
 
-### Where it is kept
+#### Where it is kept
 
 `data/ship-cores.json`, beside the executable, one line per ship. It is meant to be read and
 edited by hand, so the hull and the name you gave the ship are written beside the number the game
@@ -113,7 +219,7 @@ The key is the ship's own id, not the hull — two Kraits are two ships, and ren
 nothing. A line naming a core that does not exist is refused and reported, and the rest of the
 file still loads.
 
-## It says something when you switch
+### It says something when you switch
 
 A core you have never used introduces itself. One you are coming back to after **a month or
 more** reacts to the time it was switched off instead, and it is handed what changed while it was
@@ -157,7 +263,7 @@ stop key silences either of them, like anything else Directive 47 says.
 With no language model configured, each core has one written line for coming back. The variety
 is the model's contribution; the character is not.
 
-## Each core has its own voice {#voices}
+### Each core has its own voice {#voices}
 
 The first time you select a core, Directive 47 picks a voice for it from what your speech
 provider offers, matching the voice to the character rather than making you audition several
@@ -193,9 +299,9 @@ Once — and only on a settings file written before the gender was stated to the
 core left speaking in the wrong gender has that pairing dropped, so a voice is chosen for it
 properly. Anything you set by hand after that stands, whatever it is.
 
-## Settings
+### Settings
 
-### Persona
+#### Persona
 
 Which core answers you.
 
@@ -210,7 +316,7 @@ Saying so works with a fixed set of phrasings per core:
 "switch to cora"    "be cora"    "become cora"    "persona cora"    "wake cora"
 ```
 
-### Ship AI name
+#### Ship AI name
 
 What you call your ship's AI. Leave it empty and it is the core's own name, which means it
 follows when you switch.
@@ -222,7 +328,7 @@ there was nobody left to say the whole thing to.
 This row *is* reachable by the model, unlike the one above. "Call yourself Fred" changes nothing
 anything depends on, and refusing it would be protecting you from a nickname.
 
-### Keep Ship AI name on persona switch {#keep-ship-ai-name}
+#### Keep Ship AI name on persona switch {#keep-ship-ai-name}
 
 On out of the box: the name you gave stays whoever is aboard, because naming your ship's AI names
 the *ship's* AI and eleven cores answering to it is the point.
@@ -238,7 +344,7 @@ showing "Fred" while your companion says "I am Cora".
 The row only appears while there is a name to keep. With the name empty, every core already uses
 its own and there is nothing for this to decide.
 
-### Introductions
+#### Introductions
 
 A core introduces itself the first time you ever pick it. After that it is silent unless it has
 been off for a month, which is the better arrangement once you have heard the first line — and
@@ -257,20 +363,20 @@ and back — selecting the core that is already running is not a switch, and nev
 
 This row is not reachable by the model, for the same reason the persona row above is not.
 
-### Core for this ship
+#### Core for this ship
 
 What the ship you are in flies with, and the button that binds it to the core aboard. See
 [A core per ship](#core-for-this-ship) above for what a binding does.
 
 Not reachable by the model — it reports what a binding is and nothing writes one but you.
 
-### Cores by ship {#cores-by-ship}
+#### Cores by ship {#cores-by-ship}
 
 Every ship you have bound and what it flies with, and the button that forgets the one you are in.
 A line the file refused — a core that does not exist, a ship bound twice — is reported here
 rather than silently dropped.
 
-## Personality off
+### Personality off
 
 The [conversation](conversation.md) capability has a **Personality** switch. Off gives plain
 answers with no core, no flavour and no ambient remarks.
@@ -283,7 +389,7 @@ name only.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `state_identity`
+#### `state_identity`
 
 Answers "who are you" with the name and nothing else — `I am Warden.`, or `I am Fred.` when you
 have named the ship's AI yourself. Takes no arguments.
@@ -297,7 +403,7 @@ arguments, and every phrase this capability declares is a question about identit
 the tool that answers them. It used to be the one below, which meant asking your companion its
 name got a status report and a list of the ten it was not.
 
-### `describe_persona`
+#### `describe_persona`
 
 Reports which persona is active, what the Commander calls it, and what else is available. Takes
 no arguments.
@@ -306,7 +412,7 @@ no arguments.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-### `bind_ship_core`
+#### `bind_ship_core`
 
 Binds the ship the Commander is in to the core aboard. Takes no arguments — the ship and the core
 are both read from where they already are.
@@ -315,7 +421,7 @@ are both read from where they already are.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-### `forget_ship_core`
+#### `forget_ship_core`
 
 Unbinds the ship the Commander is in. Takes no arguments.
 

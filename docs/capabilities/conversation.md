@@ -4,17 +4,119 @@ group: Conversation
 nav_order: 119
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Which model answers you, whether anything leaves this machine at all, and what it has cost.</p>
+<section>
+<h2><span class="num">1</span> You choose where your turns go — including nowhere.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Four providers: none, Anthropic, OpenAI, or a model you run yourself">
+ <rect x="20" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="117" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">NONE</text>
+ <text x="117" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing leaves</text>
+ <text x="117" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">this machine</text>
+ <rect x="235" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="332" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ANTHROPIC</text>
+ <text x="332" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">your turns go</text>
+ <text x="332" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">to Claude</text>
+ <rect x="450" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="547" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">OPENAI</text>
+ <text x="547" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">or xAI, or</text>
+ <text x="547" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">OpenRouter</text>
+ <rect x="665" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="762" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">YOUR OWN</text>
+ <text x="762" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">a model you run,</text>
+ <text x="762" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">here, priced at zero</text>
+ <rect x="20" y="180" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text)">Picking a provider picks where your turns go — so the panel changes it, and the model never can.</text>
+</svg>
+<p class="body">With <strong>None</strong> you still have a companion: it reads your journal, answers what it recognises on its own, and says so when it cannot. A capability without its key is off, not broken.</p>
+</section>
+<section>
+<h2><span class="num">2</span> “Stop” and “cancel” are different, and the difference is on your bill.</h2>
+<svg viewBox="0 0 880 266" role="img" aria-label="Stop ends only the speaking while the model keeps costing; cancel ends the model and the spend too">
+ <rect x="20" y="40" width="400" height="170" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="84" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">“stop”</text>
+ <text x="220" y="122" text-anchor="middle" font-size="16" fill="var(--text)">the speaking stops</text>
+ <text x="220" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">the model keeps working</text>
+ <text x="220" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--danger)">and keeps costing</text>
+ <rect x="460" y="40" width="400" height="170" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="660" y="84" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">“cancel”</text>
+ <text x="660" y="122" text-anchor="middle" font-size="16" fill="var(--text)">the speaking stops</text>
+ <text x="660" y="152" text-anchor="middle" font-size="16" fill="var(--text)">the model stops</text>
+ <text x="660" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">and so does the spend</text>
+ <text x="440" y="246" text-anchor="middle" font-size="16" fill="var(--text-muted)">Both act on a turn in flight — the only thing either of them has to act on.</text>
+</svg>
+<p class="body">One honest limit: whatever the model had already produced before you cancelled was already billed by the provider. Cancelling saves the work that had not happened yet, not the work that had.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Two bills, one answer.</h2>
+<svg viewBox="0 0 880 256" role="img" aria-label="The model billed per token and the voices billed per character add up to one running total">
+ <rect x="20" y="30" width="300" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="170" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE MODEL</text>
+ <text x="170" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">per token — $0.0412</text>
+ <rect x="20" y="136" width="300" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="170" y="172" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE VOICES</text>
+ <text x="170" y="202" text-anchor="middle" font-size="15" fill="var(--text-muted)">per character — 1,204</text>
+ <line x1="332" y1="75" x2="400" y2="75" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="181" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="400" y1="75" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="400" y1="128" x2="452" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="466,128 450,120 450,136" fill="var(--accent-muted)"/>
+ <rect x="478" y="66" width="382" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="669" y="106" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONE ANSWER</text>
+ <text x="669" y="136" text-anchor="middle" font-size="16" fill="var(--text)">to “what has this cost”</text>
+ <text x="669" y="166" text-anchor="middle" font-size="15" fill="var(--text-muted)">7 days · 30 days · this week · this month</text>
+ <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">A charge it cannot price is kept without a figure, and the total says at least.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> An endpoint that cannot do something loses that, not your turn.</h2>
+<svg viewBox="0 0 880 244" role="img" aria-label="Every request offers everything; a refusal that names its field drops that one capability and the turn is sent again">
+ <rect x="20" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="135" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EVERY REQUEST</text>
+ <text x="135" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">offers everything</text>
+ <line x1="262" y1="88" x2="298" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="312,88 296,80 296,96" fill="var(--accent-muted)"/>
+ <rect x="325" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT REFUSES ONE</text>
+ <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">and names the field</text>
+ <line x1="567" y1="88" x2="603" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="617,88 601,80 601,96" fill="var(--accent-muted)"/>
+ <rect x="630" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="745" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SENT AGAIN</text>
+ <text x="745" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">without that one thing</text>
+ <rect x="20" y="160" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">You see an answer, not an error and not a retry.</text>
+ <text x="440" y="236" text-anchor="middle" font-size="15" fill="var(--text-muted)">Once per address, and never written to disk — a saved demotion outlives the upgrade that fixed it.</text>
+</svg>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">Who is answering, and why the model cannot change that.</span></a>
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">Every destination that is open right now, computed rather than written down.</span></a>
+<a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The other half of the bill, and where its rate comes from.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Which model answers you, whether it can be reached right now, and what the session has cost so
 far. This is also where you decide whether Directive 47 talks to anything outside this machine
 at all.
 
-## Ask for it
+### Ask for it
 
 > "which model are you using"
 > "what has this session cost"
 > "personality off"
 
-## What it tells you
+### What it tells you
 
 ```text
 Provider: Anthropic
@@ -32,7 +134,7 @@ report of its own so that "what has this cost" has one answer — see
 assumption you can correct. A provider that charges nothing says **free** rather than `$0.00`,
 and the line is absent entirely until something has been spoken.
 
-### What it has cost over time {#running-totals}
+#### What it has cost over time {#running-totals}
 
 The line under the panel says what the last turn cost, and **Details** beside it opens the rest:
 the token counts, what the session has come to, and four running totals — **the last 7 days**,
@@ -65,7 +167,7 @@ Personality: on
 Session so far: 0 turn(s), $0.0000
 ```
 
-## Stopping a turn
+### Stopping a turn
 
 "Stop" and "cancel" are different things, and the difference is on your bill.
 
@@ -82,12 +184,12 @@ billed by the provider, and Directive 47 cannot get the figures for a turn it to
 cancelled turn adds nothing to the running total, which slightly under-reports the session.
 Cancelling saves the work that had not happened yet, not the work that had.
 
-## Settings
+### Settings
 
 The rows here follow the provider you pick. Choose **None** and the rest disappear rather than
 sitting there greyed out.
 
-### Provider {#provider}
+#### Provider {#provider}
 
 | Choice | What it is |
 |---|---|
@@ -112,7 +214,7 @@ The protocol split is the same line. Server-side web search now lives in the too
 Responses API everywhere it exists, and Chat Completions is where every local server lives. No
 local server has a web search anyway, so the two halves land exactly where they belong.
 
-### Endpoint {#endpoint}
+#### Endpoint {#endpoint}
 
 Only appears for providers where pointing somewhere else means something — a gateway, a proxy, a
 local server speaking the same protocol. Anthropic has one address and no reason to accept
@@ -140,7 +242,7 @@ What changed is that there is now somebody to ask.
 If the endpoint does not answer, or answers with an empty catalogue, the list stays empty and you
 type the name yourself. That has always been supported.
 
-### Model {#model}
+#### Model {#model}
 
 Which model answers. Leave it empty for the provider's default, shown greyed out so "I have not
 chosen" stays distinguishable from "I chose that one".
@@ -164,7 +266,7 @@ address, the turn is free — that is a fact about the address rather than a gue
 and reporting "unknown" forever about something that genuinely costs nothing is noise pretending
 to be rigour.
 
-### API key {#api-key}
+#### API key {#api-key}
 
 Encrypted for your Windows account and kept in `data/secrets.json` beside the executable.
 
@@ -214,7 +316,7 @@ wrong address.
 If you already keep `ANTHROPIC_API_KEY` in your environment, that still works and is used when
 nothing is stored here.
 
-### When your endpoint cannot do something {#demotion}
+#### When your endpoint cannot do something {#demotion}
 
 An OpenAI-compatible server is a moving target: the protocol has a dozen implementations and they
 do not agree about the optional parts. Whether tool calls work, whether reasoning effort is a
@@ -242,7 +344,7 @@ no way of knowing why the tools quietly stopped being offered.
 
 Nothing is demoted on a guess. A refusal that names no field turns nothing off.
 
-### The first run {#first-run}
+#### The first run {#first-run}
 
 On a fresh install there is no key, so the first thing you would otherwise do is hunt for this row
 in a surface with fourteen sections. Directive 47 offers the two that matter instead — this one,
@@ -266,7 +368,7 @@ on the new one.
 Reopen it any time from **About → Set up keys**. Keys get rotated and revoked, so the state that
 triggers this is one a working install can come back to.
 
-### Personality {#personality}
+#### Personality {#personality}
 
 Off gives you plain answers. It does not loosen anything: the rules that stop Directive 47
 inventing capabilities it does not have are separate, and nothing on this panel can reach them.
@@ -279,7 +381,7 @@ Spoken shortcuts, recognised without the model:
 The whole sentence has to be the phrase rather than merely contain it, so asking "what does
 personality off actually change" gets you an answer instead of switching it off.
 
-### Let the model search the web {#let-the-model-search-the-web}
+#### Let the model search the web {#let-the-model-search-the-web}
 
 Off by default. On, Directive 47 can look something up online when a question turns on current
 information — what a patch changed, what other Commanders are reporting, a community guide that
@@ -327,7 +429,7 @@ a reason to distrust.
 
 Nothing is said at all when search works, so having it on costs you no words about it.
 
-### Character sheet {#character-sheet}
+#### Character sheet {#character-sheet}
 
 Who your Commander is, in a few lines — name, where they are from, age, how they speak. Kept
 between sessions.
@@ -344,7 +446,7 @@ your history — the same reason they do not get the core's persona.
 **Per Commander.** Another Commander logging in on this machine sees their own sheet, not yours —
 see [Some rows are the Commander's](settings.md#some-rows-are-the-commanders-not-the-installations).
 
-### About Me {#about-me}
+#### About Me {#about-me}
 
 Your Commander's story, in your own words, as long as you like — how you fly, what you are working
 towards, where you have been. Kept between sessions.
@@ -373,7 +475,7 @@ Both go to the provider along with everything else. See [Privacy](privacy.md).
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `cancel_turn`
+#### `cancel_turn`
 
 Abandons the turn currently running: stops speaking, tears down the provider stream, and stops
 spending. Takes no arguments.
@@ -386,7 +488,7 @@ Marked **interrupting**, so it is answered while a turn is in flight rather than
 it. Bare "cancel" is kept out of the general command vocabulary and only consulted when there is
 something to cancel — too common a verb to claim outright.
 
-### `get_model_status`
+#### `get_model_status`
 
 Reports the selected provider and model, whether it is reachable, and the session's running
 spend. Takes no arguments.
