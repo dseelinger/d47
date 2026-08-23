@@ -201,6 +201,27 @@ public partial class PanelView : UserControl
     /// </summary>
     private bool _scrollingItself;
 
+    /// <summary>
+    /// The bubbles on the conversation page, in order, each with the offset into the page where
+    /// its text begins. The offset is what lets a hit found over the whole page be scrolled to
+    /// in the bubble it landed in — a block's own text layout can only answer about its own
+    /// characters.
+    /// </summary>
+    private readonly List<(SelectableTextBlock Block, int Start)> _bubbles = [];
+
+    /// <summary>
+    /// What those bubbles were drawn from, as three comparable things each. Compared on the next
+    /// redraw to decide whether a line arriving changed anything but the last turn.
+    /// </summary>
+    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text)> _shape = [];
+
+    /// <summary>
+    /// The block a selection was last made in. On a flat page it is always the transcript; on
+    /// the conversation page it is whichever bubble the Commander dragged across, and Copy has
+    /// to act on that one rather than on a control that holds no selection.
+    /// </summary>
+    private SelectableTextBlock? _selection;
+
     public PanelView()
     {
         InitializeComponent();
@@ -209,18 +230,17 @@ public partial class PanelView : UserControl
         // binding for each would be three expressions no test can reach. The content inside
         // them still binds - a banner is hidden in mini and also hidden when there is nothing
         // wrong, and those are different reasons.
-        ModeProperty.Changed.AddClassHandler<PanelView>((view, _) => view.ApplyChrome());
-
-        // Copy follows the selection (remediation.md 14, item 9). Both ends, because a selection
-        // dragged backwards moves the start and a selection cleared by a click collapses them.
-        Transcript.PropertyChanged += (_, changed) =>
+        ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
-            if (changed.Property == SelectableTextBlock.SelectionStartProperty
-                || changed.Property == SelectableTextBlock.SelectionEndProperty)
-            {
-                ShowCopySelection();
-            }
-        };
+            view.ApplyChrome();
+
+            // And redrawn, because mini is not only less chrome around the conversation: the
+            // bubbles themselves give back their gutter and their padding on a surface that has
+            // 512 pixels to spend (asked for 2026-08-22).
+            view.DrawTranscript();
+        });
+
+        Watch(Transcript);
 
         // The three readings of one exchange, registered as the Transcript tab's roots. They are
         // roots rather than levels for the reason Fleet, Locker and Directory are: the tab is the
@@ -287,7 +307,7 @@ public partial class PanelView : UserControl
         {
             if (_bound is not null)
             {
-                _bound.TranscriptAppended -= DrawTranscript;
+                _bound.TranscriptAppended -= OnTranscriptAppended;
                 _bound.TranscriptAppended -= ScrollToEnd;
                 _bound.PropertyChanged -= OnModelChanged;
             }
@@ -298,7 +318,7 @@ public partial class PanelView : UserControl
             {
                 // Drawn before the scroll, because scrolling to the end of text that has not
                 // been written yet lands one append behind.
-                _bound.TranscriptAppended += DrawTranscript;
+                _bound.TranscriptAppended += OnTranscriptAppended;
                 _bound.TranscriptAppended += ScrollToEnd;
 
                 // The avatar follows the loop state. Subscribed per instance rather than bound
@@ -1214,7 +1234,12 @@ public partial class PanelView : UserControl
 
         SearchInput.Text = string.Empty;
 
-        (Tab == PanelTab.Transcript ? Transcript : PagePane.Child)?.Focus();
+        // Whichever block the page is drawn in, because on the conversation the flat one is
+        // hidden — and a hidden control declines focus, which left it in the search box the
+        // Escape was pressed to leave.
+        (Tab == PanelTab.Transcript
+            ? TranscriptBlocks.FirstOrDefault() ?? Transcript
+            : PagePane.Child)?.Focus();
 
         return true;
     }
@@ -1393,12 +1418,31 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ScrollToHit()
     {
-        if (_hit < 0 || Transcript.TextLayout is not { } layout)
+        if (_hit < 0)
         {
             return;
         }
 
-        var where = layout.HitTestTextPosition(_matches[_hit].Start);
+        // Which block holds the hit, and where that block sits in the page. On a flat page both
+        // answers are the transcript block and zero; on the conversation page the hit is an
+        // offset into the whole page and a bubble's layout can only answer about its own
+        // characters, so the offset is taken back off before asking and the block's own position
+        // added back afterwards.
+        var (block, start) = Bubbles.IsVisible
+            ? _bubbles.LastOrDefault(bubble => bubble.Start <= _matches[_hit].Start)
+            : (Transcript, 0);
+
+        if (block?.TextLayout is not { } layout)
+        {
+            return;
+        }
+
+        var where = layout.HitTestTextPosition(_matches[_hit].Start - start);
+
+        if (Bubbles.IsVisible && block.TranslatePoint(new Point(0, where.Y), Bubbles) is { } placed)
+        {
+            where = where.WithY(placed.Y);
+        }
 
         // Deliberately not guarded by _scrollingItself. Stepping to a match is moving away from
         // the end on purpose, and following has to stop — otherwise the next line to arrive
@@ -1818,32 +1862,85 @@ public partial class PanelView : UserControl
     /// the accent after the Commander switches to another.
     /// </para>
     /// </summary>
-    private void DrawTranscript()
+    private void DrawTranscript() => DrawTranscript(appended: false);
+
+    /// <summary>A line arriving, which is the one redraw that can take the short path.</summary>
+    private void OnTranscriptAppended() => DrawTranscript(appended: true);
+
+    /// <summary>
+    /// Copy follows the selection (remediation.md 14, item 9). Both ends, because a selection
+    /// dragged backwards moves the start and a selection cleared by a click collapses them.
+    /// <para>
+    /// Per block rather than once, because the conversation page is many blocks. The last one to
+    /// report a selection is the one Copy acts on, which is the one the Commander is dragging
+    /// across — a new drag in another bubble clears the first, so there is never a moment when
+    /// two of them hold one.
+    /// </para>
+    /// </summary>
+    private void Watch(SelectableTextBlock block) =>
+        block.PropertyChanged += (sender, changed) =>
+        {
+            if (changed.Property != SelectableTextBlock.SelectionStartProperty
+                && changed.Property != SelectableTextBlock.SelectionEndProperty)
+            {
+                return;
+            }
+
+            if (sender is SelectableTextBlock { SelectedText.Length: > 0 } selected)
+            {
+                _selection = selected;
+            }
+
+            ShowCopySelection();
+        };
+
+    /// <param name="appended">
+    /// Whether this redraw is a line arriving rather than the page, the query or the theme
+    /// changing. It is the licence for the short path in <see cref="DrawBubbles"/> and nothing
+    /// else: a reply streams a delta at a time, and rebuilding every turn in the conversation
+    /// per token is work that grows with how long the Commander has been flying.
+    /// </param>
+    private void DrawTranscript(bool appended)
     {
         if (!Dispatcher.UIThread.CheckAccess())
         {
-            Dispatcher.UIThread.Post(DrawTranscript);
+            Dispatcher.UIThread.Post(() => DrawTranscript(appended));
             return;
         }
 
-        var inlines = Transcript.Inlines ??= [];
-        inlines.Clear();
+        // Which of the two presentations this page gets. The conversation is drawn as one,
+        // turn by turn; the diagnostics and the log file stay the flat block they were.
+        var bubbled = Page == TranscriptPage.Conversation;
+
+        Transcript.IsVisible = !bubbled;
+        Bubbles.IsVisible = bubbled;
 
         if (_bound is null)
         {
+            Transcript.Inlines?.Clear();
+            ClearBubbles();
             _matches = [];
             _hit = -1;
             ShowSearchProgress(_query.Length > 0);
             return;
         }
 
-        var segments = _bound.Segments(Page);
+        // Unframed for the conversation, because the blank line and the "> " a flat page puts
+        // in front of the Commander's turn are that page's way of saying who spoke, and this
+        // one says it with a side and a colour instead.
+        var messages = bubbled
+            ? Turns(Drawn(_bound.Segments(Page, framed: false), Page))
+            : [new DrawnTurn(TranscriptVoice.Ship, Marker: false, Drawn(_bound.Segments(Page), Page))];
 
         // Matched against the page's text rather than against the controls, so the hits are the
         // same set whether the page has been drawn yet or not — and so the current one can be
         // re-resolved from its offset every time the log grows underneath it.
+        //
+        // The drawn text and not the written one, which is what keeps searching honest now that
+        // the two differ: a reader looking at "A-rate thrusters" and typing it would otherwise
+        // match nothing, because what is in the buffer is "**A-rate thrusters**".
         _matches = D47.Core.Interface.TextSearch.Find(
-            string.Concat(segments.Select(segment => segment.Text)),
+            string.Concat(messages.SelectMany(turn => turn.Segments).Select(segment => segment.Text)),
             _query);
 
         _hit = D47.Core.Interface.TextSearch.Track(_matches, _hitOffset);
@@ -1853,13 +1950,197 @@ public partial class PanelView : UserControl
             _hitOffset = _matches[_hit].Start;
         }
 
+        if (bubbled)
+        {
+            DrawBubbles(messages, appended);
+        }
+        else
+        {
+            ClearBubbles();
+            Fill(Transcript, messages[0], at: 0);
+        }
+
+        ShowSearchProgress(_query.Length > 0);
+    }
+
+    /// <summary>
+    /// The conversation, turn by turn: the Commander's on the right, the ship's on the left,
+    /// and the panel's own notes across the middle (asked for 2026-08-22).
+    /// <para>
+    /// <b>The short path.</b> A reply arrives a delta at a time and every one of them redraws
+    /// this. Rebuilding one bubble is work proportional to the sentence being spoken; rebuilding
+    /// all of them is work proportional to how long the session has run, per token. So a redraw
+    /// caused by an append, where nothing but the last turn can have changed, refills the last
+    /// bubble and leaves the rest standing. It is declined while a query is live, because a hit
+    /// that lands in the growing turn changes the count for the whole page — and that is a
+    /// cheap thing to give up, since nobody streams a reply and searches it at the same time.
+    /// </para>
+    /// </summary>
+    private void DrawBubbles(IReadOnlyList<DrawnTurn> turns, bool appended)
+    {
+        // The turns as three comparable things each, because a record holding a list compares
+        // the list by reference and would call every redraw a change.
+        var shape = turns
+            .Select(turn => (
+                turn.Voice,
+                turn.Marker,
+                Text: string.Concat(turn.Segments.Select(segment => segment.Text))))
+            .ToArray();
+
+        if (appended
+            && _query.Length == 0
+            && shape.Length > 0
+            && shape.Length == _bubbles.Count
+            && shape.Length == _shape.Count
+            && shape.Take(shape.Length - 1).SequenceEqual(_shape.Take(_shape.Count - 1)))
+        {
+            Fill(_bubbles[^1].Block, turns[^1], _bubbles[^1].Start);
+            _shape = shape;
+            return;
+        }
+
+        ClearBubbles();
+
+        var mini = Mode == PanelMode.Mini;
         var at = 0;
 
-        foreach (var segment in segments)
+        foreach (var turn in turns)
+        {
+            var block = new SelectableTextBlock
+            {
+                FontFamily = Transcript.FontFamily,
+                FontSize = Transcript.FontSize,
+                TextWrapping = TextWrapping.Wrap,
+
+                // The menu the block beside this one declares, not a second copy of it. Copy
+                // acts on whichever bubble the selection is in — see ShowCopySelection — and
+                // Clear is about the page rather than about any one turn.
+                ContextMenu = Transcript.ContextMenu,
+            };
+
+            Watch(block);
+            Fill(block, turn, at);
+
+            Bubbles.Children.Add(Bubble(block, turn, mini));
+            _bubbles.Add((block, at));
+
+            at += turn.Segments.Sum(segment => segment.Text.Length);
+        }
+
+        _shape = shape;
+    }
+
+    /// <summary>
+    /// One turn, dressed. The panel's own notes get no bubble at all — they are not a side of
+    /// the conversation, and an SMS thread says the same thing the same way, across the middle
+    /// and out of the run of it.
+    /// <para>
+    /// The width cap is a star column rather than a <c>MaxWidth</c>, so it is layout rather than
+    /// arithmetic over a viewport that is not measured yet. Mini gives the gutter back: a
+    /// headset panel with 512 pixels across it cannot spend a fifth of them saying which side a
+    /// turn is on when the colour already does.
+    /// </para>
+    /// </summary>
+    private Control Bubble(SelectableTextBlock block, DrawnTurn turn, bool mini)
+    {
+        if (turn.Marker)
+        {
+            block.TextAlignment = TextAlignment.Center;
+            block.Margin = new Thickness(0, mini ? 3 : 6, 0, mini ? 3 : 6);
+
+            return block;
+        }
+
+        var commander = turn.Voice == TranscriptVoice.Commander;
+
+        var bubble = new Border
+        {
+            Child = block,
+            CornerRadius = new CornerRadius(mini ? 6 : 10),
+            Padding = mini ? new Thickness(7, 4) : new Thickness(11, 8),
+            Margin = new Thickness(0, mini ? 2 : 4),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = commander
+                ? Avalonia.Layout.HorizontalAlignment.Right
+                : Avalonia.Layout.HorizontalAlignment.Left,
+        };
+
+        // The two sides, by colour as well as by side, which is the convention every messaging
+        // app on the Commander's phone already taught them. The accent is theirs because it is
+        // the theme's own colour and they are the one person in the conversation.
+        bubble.Bind(
+            Border.BackgroundProperty,
+            this.GetResourceObservable(commander
+                ? Theming.ThemeManager.AccentMutedKey
+                : Theming.ThemeManager.SurfaceAltKey));
+
+        bubble.Bind(
+            Border.BorderBrushProperty,
+            this.GetResourceObservable(commander
+                ? Theming.ThemeManager.AccentKey
+                : Theming.ThemeManager.BorderKey));
+
+        var gutter = mini ? "12*,*" : "3*,*";
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions(commander ? Reversed(gutter) : gutter),
+        };
+
+        Grid.SetColumn(bubble, commander ? 1 : 0);
+        row.Children.Add(bubble);
+
+        return row;
+    }
+
+    private static string Reversed(string columns) =>
+        string.Join(',', columns.Split(',').Reverse());
+
+    /// <summary>
+    /// One turn's text into one block, as runs. <paramref name="at"/> is where this turn starts
+    /// in the page, which is what lets a hit found over the whole page be drawn in the bubble it
+    /// landed in.
+    /// </summary>
+    private void Fill(SelectableTextBlock block, DrawnTurn turn, int at)
+    {
+        var inlines = block.Inlines ??= [];
+        inlines.Clear();
+
+        // A hit that is not the current one is drawn in the accent with the volume down — which
+        // is the Commander's own bubble fill, and would be invisible inside it. On that side the
+        // quiet highlight is the surface instead. The current hit is the full accent either way
+        // and stands out against both.
+        var quiet = turn.Voice == TranscriptVoice.Commander && !turn.Marker && Page == TranscriptPage.Conversation
+            ? Theming.ThemeManager.SurfaceKey
+            : Theming.ThemeManager.AccentMutedKey;
+
+        foreach (var segment in turn.Segments)
         {
             foreach (var (text, match) in Split(segment.Text, at))
             {
                 var run = new Run(text);
+
+                if (segment.Style.HasFlag(MarkupStyle.Strong))
+                {
+                    run.FontWeight = FontWeight.Bold;
+                }
+
+                if (segment.Style.HasFlag(MarkupStyle.Emphasis))
+                {
+                    run.FontStyle = FontStyle.Italic;
+                }
+
+                if (segment.Style.HasFlag(MarkupStyle.Code))
+                {
+                    // The whole transcript is already monospaced, so a code span has to be told
+                    // apart some other way: a chip behind it. The hairline colour rather than the
+                    // alternate surface, because that is a bubble fill now and a chip the colour
+                    // of the bubble it sits in is not a chip. Bound before the search does the
+                    // same property, so a hit inside a fenced block is still drawn as a hit.
+                    run.Bind(
+                        Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                        this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+                }
 
                 if (segment.Marker)
                 {
@@ -1878,7 +2159,7 @@ public partial class PanelView : UserControl
                         Avalonia.Controls.Documents.TextElement.BackgroundProperty,
                         this.GetResourceObservable(match == _hit
                             ? Theming.ThemeManager.AccentKey
-                            : Theming.ThemeManager.AccentMutedKey));
+                            : quiet));
 
                     if (match == _hit)
                     {
@@ -1893,8 +2174,133 @@ public partial class PanelView : UserControl
 
             at += segment.Text.Length;
         }
+    }
 
-        ShowSearchProgress(_query.Length > 0);
+    /// <summary>
+    /// Every run this surface is currently drawing the transcript with, in page order — the one
+    /// block's worth on a flat page, one bubble's worth at a time on the conversation.
+    /// <para>
+    /// For the tests, which ask what a surface is showing and should not have to know which of
+    /// the two presentations answered. It is the same question either way.
+    /// </para>
+    /// </summary>
+    internal IEnumerable<Run> TranscriptRuns =>
+        Bubbles.IsVisible
+            ? _bubbles.SelectMany(bubble => bubble.Block.Inlines?.OfType<Run>() ?? [])
+            : Transcript.Inlines?.OfType<Run>() ?? [];
+
+    /// <summary>What this surface is showing, as text.</summary>
+    internal string TranscriptShown => string.Concat(TranscriptRuns.Select(run => run.Text));
+
+    /// <summary>
+    /// The blocks the transcript is drawn in — one on a flat page, one per turn on the
+    /// conversation. The selectable surface, which is what a test dragging across it needs.
+    /// </summary>
+    internal IReadOnlyList<SelectableTextBlock> TranscriptBlocks =>
+        Bubbles.IsVisible ? [.. _bubbles.Select(bubble => bubble.Block)] : [Transcript];
+
+    private void ClearBubbles()
+    {
+        Bubbles.Children.Clear();
+        _bubbles.Clear();
+        _shape = [];
+    }
+
+    /// <summary>
+    /// A page's segments with the model's markdown read: the markers gone and what they meant
+    /// carried as a style (list.md Phase 19, and the transcript drawing <c>**A-rate FSD**</c>
+    /// literally for as long as it has existed).
+    /// <para>
+    /// The log file is exempt and drawn exactly as it is on disk. It is a file rather than
+    /// prose — a line of it that happens to hold an asterisk means an asterisk, and a page
+    /// opened to read what was written is the last place to reformat anything.
+    /// </para>
+    /// <para>
+    /// A marked line keeps its <see cref="TranscriptSegment.Marker"/> through the split, so the
+    /// panel's own bracketed note is still accented whatever is inside it.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<DrawnSegment> Drawn(
+        IReadOnlyList<TranscriptSegment> segments,
+        TranscriptPage page) =>
+        page == TranscriptPage.Log
+            ? [.. segments.Select(segment =>
+                new DrawnSegment(segment.Text, segment.Marker, segment.Voice, MarkupStyle.None))]
+            : [.. segments.SelectMany(segment => TranscriptMarkup
+                .Parse(segment.Text)
+                .Select(span => new DrawnSegment(span.Text, segment.Marker, segment.Voice, span.Style)))];
+
+    /// <summary>
+    /// The page's segments gathered into turns: consecutive stretches from one side, with the
+    /// blank lines between them taken off.
+    /// <para>
+    /// The trimming happens here, before the search runs over the result, which is the whole
+    /// reason it is not done while building the bubbles: a hit is an offset into the page as
+    /// drawn, and text removed after the offsets are worked out is text the highlight lands
+    /// beside rather than on.
+    /// </para>
+    /// <para>
+    /// A turn that is nothing but whitespace is dropped rather than drawn as an empty bubble.
+    /// The transcript is full of them — the separators a flat page needs and this one does not.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<DrawnTurn> Turns(IReadOnlyList<DrawnSegment> segments)
+    {
+        var gathered = new List<(TranscriptVoice Voice, bool Marker, List<DrawnSegment> Segments)>();
+
+        foreach (var segment in segments)
+        {
+            if (gathered is [.., var last] && last.Voice == segment.Voice && last.Marker == segment.Marker)
+            {
+                last.Segments.Add(segment);
+                continue;
+            }
+
+            gathered.Add((segment.Voice, segment.Marker, [segment]));
+        }
+
+        return
+        [
+            .. gathered
+                .Select(turn => new DrawnTurn(turn.Voice, turn.Marker, Trimmed(turn.Segments)))
+                .Where(turn => turn.Segments.Count > 0)
+        ];
+    }
+
+    /// <summary>The turn's own words, without the whitespace that separated it from its neighbours.</summary>
+    private static IReadOnlyList<DrawnSegment> Trimmed(IReadOnlyList<DrawnSegment> segments)
+    {
+        var trimmed = new List<DrawnSegment>(segments);
+
+        while (trimmed.Count > 0)
+        {
+            var start = trimmed[0].Text.TrimStart();
+
+            if (start.Length == 0)
+            {
+                trimmed.RemoveAt(0);
+                continue;
+            }
+
+            trimmed[0] = trimmed[0] with { Text = start };
+            break;
+        }
+
+        while (trimmed.Count > 0)
+        {
+            var end = trimmed[^1].Text.TrimEnd();
+
+            if (end.Length == 0)
+            {
+                trimmed.RemoveAt(trimmed.Count - 1);
+                continue;
+            }
+
+            trimmed[^1] = trimmed[^1] with { Text = end };
+            break;
+        }
+
+        return trimmed;
     }
 
     /// <summary>
@@ -2189,7 +2595,10 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var text = string.Concat(_bound.Segments(Page).Select(segment => segment.Text));
+        // Drawn rather than written, for the reason above: the same text the Commander is
+        // looking at. It is also what dragging a selection and pressing Ctrl+C gives, and two
+        // copy gestures on one pane handing back two different strings is the surprise.
+        var text = string.Concat(Drawn(_bound.Segments(Page), Page).Select(segment => segment.Text));
 
         // Said on the button rather than in a banner. It is a one-word confirmation of a
         // one-click action, and a fault here — no clipboard, another application holding it —
@@ -2306,7 +2715,11 @@ public partial class PanelView : UserControl
     /// away and given to Clear.
     /// </para>
     /// </summary>
-    private void OnCopySelectionClick(object? sender, RoutedEventArgs e) => Transcript.Copy();
+    private void OnCopySelectionClick(object? sender, RoutedEventArgs e) => Selected()?.Copy();
+
+    /// <summary>Whichever block holds a selection right now, or none at all.</summary>
+    private SelectableTextBlock? Selected() =>
+        _selection is { SelectedText.Length: > 0 } held ? held : null;
 
     /// <summary>
     /// Greys Copy when there is nothing to copy or nowhere to put it.
@@ -2326,7 +2739,7 @@ public partial class PanelView : UserControl
     /// </summary>
     internal void ShowCopySelection() =>
         CopySelectionItem.IsEnabled =
-            Transcript.SelectedText is { Length: > 0 }
+            Selected() is not null
             && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => OpenHelp();
@@ -2354,3 +2767,24 @@ public partial class PanelView : UserControl
 
     private void OnDismissErrorClick(object? sender, RoutedEventArgs e) => Model?.DismissError();
 }
+
+/// <summary>
+/// One stretch of the transcript as it will be drawn: the characters a reader sees, who said
+/// them, whether the panel is speaking about the conversation rather than in it, and what the
+/// model's markup asked for. A <see cref="TranscriptSegment"/> after
+/// <see cref="TranscriptMarkup"/> has been through it.
+/// </summary>
+internal readonly record struct DrawnSegment(
+    string Text,
+    bool Marker,
+    TranscriptVoice Voice,
+    MarkupStyle Style);
+
+/// <summary>
+/// One side's uninterrupted stretch of the conversation — a bubble's worth. The flat pages use
+/// one of these holding the whole page, so both presentations are drawn by the same code.
+/// </summary>
+internal sealed record DrawnTurn(
+    TranscriptVoice Voice,
+    bool Marker,
+    IReadOnlyList<DrawnSegment> Segments);

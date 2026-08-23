@@ -781,7 +781,11 @@ public partial class MainWindow : Window
         {
             _model.AskText = string.Empty;
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
-            _model.Append($"\n\n> {input}\n{stopped.Content}");
+
+            // Two writes rather than one interpolation, because they are two voices. The flat
+            // pages put them back together exactly as they were.
+            _model.Append(input, voice: TranscriptVoice.Commander);
+            _model.Append(stopped.Content);
             return;
         }
 
@@ -793,7 +797,7 @@ public partial class MainWindow : Window
         _turnInFlight = true;
         _model.CanAsk = false;
         _model.AskText = string.Empty;
-        _model.Append($"\n\n> {input}\n");
+        _model.Append(input, voice: TranscriptVoice.Commander);
 
         // Kept before the crew scope rewrites `input` below: the adventure feed files an exchange
         // under the Commander's own words, not under the question as it reached a crew member.

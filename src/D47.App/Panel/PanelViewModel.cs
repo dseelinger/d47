@@ -83,10 +83,29 @@ public enum TranscriptKind
 }
 
 /// <summary>
+/// Who said it. The conversation is a conversation, and a page that draws it as one has to know
+/// which side each stretch came from (asked for 2026-08-22).
+/// <para>
+/// Decided by the caller for the same reason <see cref="TranscriptKind"/> is: it is not
+/// recoverable afterwards. The Commander's words were only ever told apart by the <c>&gt; </c>
+/// the panel wrote in front of them, and a reply that quotes a line back would wear the same
+/// mark — which is a guess about somebody's prose standing in for a fact the writer had.
+/// </para>
+/// </summary>
+public enum TranscriptVoice
+{
+    /// <summary>The ship's AI, and the panel speaking in its register. The default.</summary>
+    Ship,
+
+    /// <summary>The Commander, however they said it — typed, spoken, or through a switch.</summary>
+    Commander,
+}
+
+/// <summary>
 /// A stretch of transcript drawn one way. <paramref name="Marker"/> is the panel noting
 /// something about the conversation — the core changing — rather than a line of it.
 /// </summary>
-public sealed record TranscriptSegment(string Text, bool Marker);
+public sealed record TranscriptSegment(string Text, bool Marker, TranscriptVoice Voice);
 
 /// <summary>
 /// What the panel shows, independent of where it is being shown.
@@ -114,7 +133,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// one call per delta - from becoming one run per token.
     /// </para>
     /// </summary>
-    private readonly List<(TranscriptKind Kind, bool Marker, StringBuilder Text)> _runs = [];
+    private readonly List<(TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text)> _runs = [];
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it. See Append.</summary>
     private readonly Lock _appendLock = new();
@@ -428,8 +447,20 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// streaming reply path - one call per delta - reads exactly as it did, and only the
     /// callers writing diagnostics have to say so.
     /// </para>
+    /// <para>
+    /// <paramref name="voice"/> defaults to the ship for the same reason, and the three sites
+    /// that write what the Commander said pass it. They pass <em>only what was said</em>: the
+    /// blank line before it and the <c>&gt; </c> in front of it are how a flat page draws that
+    /// voice, and <see cref="Flatten"/> puts them there. A page that draws the two sides
+    /// differently does not want them, and a mark in the buffer is a mark that would have to be
+    /// taken back out.
+    /// </para>
     /// </summary>
-    public void Append(string text, TranscriptKind kind = TranscriptKind.Conversation, bool marker = false)
+    public void Append(
+        string text,
+        TranscriptKind kind = TranscriptKind.Conversation,
+        bool marker = false,
+        TranscriptVoice voice = TranscriptVoice.Ship)
     {
         string transcript;
         string conversation;
@@ -441,16 +472,19 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         // ToString(), which is a crash in a diagnostics feature.
         lock (_appendLock)
         {
-            if (_runs.Count == 0 || _runs[^1].Kind != kind || _runs[^1].Marker != marker)
+            if (_runs.Count == 0
+                || _runs[^1].Kind != kind
+                || _runs[^1].Marker != marker
+                || _runs[^1].Voice != voice)
             {
-                _runs.Add((kind, marker, new StringBuilder()));
+                _runs.Add((kind, marker, voice, new StringBuilder()));
             }
 
             _runs[^1].Text.Append(text);
 
-            transcript = string.Concat(_runs.Select(run => run.Text.ToString()));
+            transcript = string.Concat(_runs.Select(Flatten));
             conversation = string.Concat(
-                _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(run => run.Text.ToString()));
+                _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(Flatten));
         }
 
         // Outside the lock. These raise PropertyChanged, which reaches bindings and handlers that
@@ -514,18 +548,36 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// read them — and these are the same characters, cut where the drawing changes.
     /// </para>
     /// </summary>
-    public IReadOnlyList<TranscriptSegment> Segments(TranscriptPage page) => page switch
+    public IReadOnlyList<TranscriptSegment> Segments(TranscriptPage page, bool framed = true)
     {
-        TranscriptPage.Log => [new TranscriptSegment(LogText, Marker: false)],
-        TranscriptPage.Technical =>
-            [.. _runs.Select(run => new TranscriptSegment(run.Text.ToString(), run.Marker))],
-        _ =>
-        [
-            .. _runs
-                .Where(run => run.Kind == TranscriptKind.Conversation)
-                .Select(run => new TranscriptSegment(run.Text.ToString(), run.Marker))
-        ],
-    };
+        string Text((TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
+            framed ? Flatten(run) : run.Text.ToString();
+
+        return page switch
+        {
+            TranscriptPage.Log => [new TranscriptSegment(LogText, Marker: false, TranscriptVoice.Ship)],
+            TranscriptPage.Technical =>
+                [.. _runs.Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))],
+            _ =>
+            [
+                .. _runs
+                    .Where(run => run.Kind == TranscriptKind.Conversation)
+                    .Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))
+            ],
+        };
+    }
+
+    /// <summary>
+    /// One run as a flat page draws it. The Commander's turn arrives as what they said and
+    /// nothing else; the blank line in front of it and the <c>&gt; </c> that names the speaker
+    /// are added here, which is why every string this class hands out is byte-for-byte what it
+    /// always was while the buffer underneath holds only the words.
+    /// </summary>
+    private static string Flatten(
+        (TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
+        run.Voice == TranscriptVoice.Commander
+            ? $"\n\n> {run.Text}\n"
+            : run.Text.ToString();
 
     /// <summary>The last <paramref name="lines"/> lines, for a surface with less room than a window.</summary>
     public string Tail(int lines)

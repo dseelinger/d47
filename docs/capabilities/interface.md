@@ -223,6 +223,19 @@ modes and not three tabs of their own.
 
 **Conversation** is you and the ship's AI, and nothing else. It is what opens.
 
+It is drawn as a conversation, the way the messaging app on your phone draws one: a turn to a
+bubble, **yours on the right in the theme's own colour** and **the ship's on the left**. When D47
+notes something *about* the conversation rather than saying something in it — the core changing
+under you — that sits across the middle in the accent, with no bubble, because it is not a side.
+
+The headset's big panel does the same. The mini panel does too and spends less on it: the same
+sides and the same colours, with the gutter and most of the padding given back, because a surface
+512 pixels across cannot afford to say twice over which side a turn is on.
+
+Only this page. **Technical** and **Log file** are one flat block of text as they have always
+been — a diagnostic feed and a file are not conversations between anybody, and the `> ` in front
+of your own words there is how a flat page says who spoke.
+
 **Technical** is the same with the diagnostics left in — the version banner, where things are
 installed, whether the language model came up. This is what the panel used to show all the time.
 
@@ -281,6 +294,10 @@ than carrying "I have scrolled up" across with you.
 
 The transcript is selectable text. Drag across it and press <kbd>Ctrl</kbd>+<kbd>C</kbd>, exactly
 as anywhere else — including across lines that arrive while you are selecting.
+
+On **Conversation** a selection is made within one turn, which is what a page drawn as bubbles
+can do and what every messaging application does with the same shape. On **Technical** and
+**Log file** it runs across the whole page, as before. Either way, **Copy** takes the lot.
 
 **Copy**, beside the search box, takes the whole page as it is currently shown: the conversation
 without the diagnostics, or with them, or the log file. A search query highlights on these pages
@@ -347,12 +364,12 @@ view hardcodes a literal and a sixth theme is a file rather than a sweep through
 ```text
 D47.Background      the window behind everything
 D47.Surface         cards, the transcript, raised areas
-D47.SurfaceAlt      row striping and inset areas
-D47.Border          hairlines between things
+D47.SurfaceAlt      row striping, inset areas, the ship's side of the conversation
+D47.Border          hairlines between things, and the chip behind a code span
 D47.Text            body text
 D47.TextMuted       help text, placeholders, provenance lines
 D47.Accent          the theme's own colour: focus, headings, the ask button
-D47.AccentMuted     the same colour with the volume down
+D47.AccentMuted     the same colour with the volume down: your side of the conversation
 D47.Danger          the error banner
 D47.Info            the update banner
 ```
