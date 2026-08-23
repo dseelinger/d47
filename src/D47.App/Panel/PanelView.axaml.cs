@@ -693,8 +693,15 @@ public partial class PanelView : UserControl
 
         if (onFoot is not null)
         {
-            roots.Add(new NavCrumb(OnFootMode.Root, "Suits"));
-            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Gap"));
+            roots.Add(new NavCrumb(OnFootMode.Root, "Suits")
+            {
+                Help = D47.Core.Capabilities.Builtin.OnFootCapability.Id,
+            });
+
+            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Gap")
+            {
+                Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
+            });
         }
 
         Furnish(
