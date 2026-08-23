@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -268,14 +268,24 @@ public static class HelpPageView
     /// it can do nothing with is drawn as its address rather than as a control that does nothing,
     /// which is the rule <see cref="IFilterablePage"/> already records about the search box.
     /// </param>
-    public static Control Build(NavCrumb crumb, PanelNavigator nav, Action<string>? openUrl)
+    /// <param name="openSettings">
+    /// How this surface reaches a settings section, or null where it has no Settings tab — which
+    /// the headset does not, and which is why this is a handed-in action rather than a call. Same
+    /// seam and same reason as <paramref name="openUrl"/>: the surface that can do the thing says
+    /// so, and nothing here asks which surface it is on.
+    /// </param>
+    public static Control Build(
+        NavCrumb crumb, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings = null)
     {
         var id = HelpLevel.CapabilityOf(crumb);
 
-        return HelpLibrary.For(id) is { } article ? Build(article, nav, openUrl) : Missing(id);
+        return HelpLibrary.For(id) is { } article
+            ? Build(article, nav, openUrl, openSettings)
+            : Missing(id);
     }
 
-    public static Control Build(HelpArticle article, PanelNavigator nav, Action<string>? openUrl)
+    public static Control Build(
+        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings = null)
     {
         var stack = new StackPanel { Spacing = 26, Margin = new Thickness(0, 4, 0, 24) };
 
@@ -303,7 +313,7 @@ public static class HelpPageView
             stack.Children.Add(index);
         }
 
-        stack.Children.Add(Next(article, nav, openUrl));
+        stack.Children.Add(Next(article, nav, openUrl, openSettings));
 
         return new ScrollViewer
         {
@@ -473,7 +483,8 @@ public static class HelpPageView
     /// documentation.
     /// </para>
     /// </summary>
-    private static Control Next(HelpArticle article, PanelNavigator nav, Action<string>? openUrl)
+    private static Control Next(
+        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings)
     {
         var block = new StackPanel { Spacing = 8, Margin = new Thickness(0, 18, 0, 0) };
 
@@ -490,7 +501,7 @@ public static class HelpPageView
 
         foreach (var link in article.Links)
         {
-            block.Children.Add(Card(link, nav, openUrl));
+            block.Children.Add(Card(link, nav, openUrl, openSettings));
         }
 
         block.Children.Add(Card(
@@ -498,10 +509,11 @@ public static class HelpPageView
             {
                 Title = "Read the full page",
                 Blurb = "Everything this leaves out: the detail, the tables and the working.",
-                Href = DocsSite.Capability(article.CapabilityId),
+                Href = DocsSite.Page(article.CapabilityId),
             },
             nav,
-            openUrl));
+            openUrl,
+            openSettings));
 
         return block;
     }
@@ -514,9 +526,21 @@ public static class HelpPageView
     /// going back from anything else. Everything else is an address: a button where there is a
     /// browser, and the address itself where there is not.
     /// </para>
+    /// <para>
+    /// A card naming a settings section outranks both, where the surface has one to reach. The
+    /// Commander asked what a control does and is being told which rows decide it — the rows are
+    /// the answer, and a second explanation is the long way to them. Where there is no Settings
+    /// tab this falls through untouched, which is the headset and costs no branch of its own.
+    /// </para>
     /// </summary>
-    private static Control Card(HelpLink link, PanelNavigator nav, Action<string>? openUrl)
+    private static Control Card(
+        HelpLink link, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings)
     {
+        if (openSettings is not null && link.Settings is { Length: > 0 } section)
+        {
+            return Pressable(link.Title, link.Blurb, () => openSettings(section));
+        }
+
         if (link.Article is { } id && Exists(id))
         {
             return Pressable(link.Title, link.Blurb, () => nav.Take(Crumb(id)));
@@ -538,11 +562,9 @@ public static class HelpPageView
     {
         if (link.Article is { } id)
         {
-            // The three general pages live a folder up from the capabilities, which is where
-            // their ids came from and where their addresses have to point back to.
-            return id.StartsWith(HelpLibrary.GeneralPrefix, StringComparison.Ordinal)
-                ? DocsSite.Root + id[HelpLibrary.GeneralPrefix.Length..] + ".html"
-                : DocsSite.Capability(id);
+            // The general pages live a folder up from the capabilities, which is where their ids
+            // came from and where their addresses have to point back to.
+            return DocsSite.Page(id);
         }
 
         var href = link.Href ?? string.Empty;

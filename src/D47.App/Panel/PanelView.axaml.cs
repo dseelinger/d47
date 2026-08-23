@@ -52,6 +52,13 @@ public partial class PanelView : UserControl
     /// <inheritdoc cref="ConversationRoot"/>
     public const string LogRoot = "transcript.log";
 
+    /// <summary>
+    /// The help the Transcript tab's default reading offers: a page about the page, rather than
+    /// about any one capability (asked for 2026-08-23). Named here so the test that checks where
+    /// the mark goes and the registration that sends it there cannot spell it differently.
+    /// </summary>
+    public const string TranscriptHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "transcript";
+
     private PanelViewModel? _bound;
 
     /// <summary>
@@ -250,9 +257,17 @@ public partial class PanelView : UserControl
         // Help per root, because these three are three subjects: the conversation, and two
         // diagnostic readings of it. A root whose page has no band yet simply shows no mark, so
         // declaring it now is what makes the mark appear the day somebody writes one.
+        //
+        // The default root's help is about **the page**, not about the language model (asked for
+        // 2026-08-23). It pointed at ConversationCapability, whose page is titled "Language model"
+        // and is one of the three this one links to — so a Commander asking what the controls in
+        // front of them do was answered with providers, cancellation and billing. A general page
+        // rather than a capability's, because no capability owns a tab strip and a Copy All
+        // button; the id is a HelpLibrary key rather than a registry id, which is what lets the
+        // three general pages be reached the same way as the forty-five.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(ConversationRoot, "Conversation") { Help = D47.Core.Capabilities.Builtin.ConversationCapability.Id });
+            new NavCrumb(ConversationRoot, "Conversation") { Help = TranscriptHelp });
 
         Nav.Register(
             PanelTab.Transcript,
@@ -560,7 +575,16 @@ public partial class PanelView : UserControl
     /// startup.
     /// </para>
     /// </summary>
-    public void EnableSettings(Func<Control> build) =>
+    /// <param name="reveal">
+    /// How to show one section of the page, by the capability id that owns it, or null for a host
+    /// that would rather not offer the jump (asked for 2026-08-23). Wired here rather than through
+    /// a call of its own because the two facts are one fact: a surface that has no settings page
+    /// has no section to reveal either, so a single argument cannot get them out of step.
+    /// </param>
+    public void EnableSettings(Func<Control> build, Action<string>? reveal = null)
+    {
+        _revealSetting = reveal;
+
         Furnish(
             PanelTab.Settings,
             _ => build(),
@@ -568,6 +592,34 @@ public partial class PanelView : UserControl
             {
                 Help = D47.Core.Capabilities.Builtin.SettingsCapability.Id,
             });
+    }
+
+    /// <summary>How this surface shows one settings section, or null where it has no settings.</summary>
+    private Action<string>? _revealSetting;
+
+    /// <summary>
+    /// What a help card naming a settings section does when pressed, or null when this surface
+    /// cannot do it — which is the headset, and is why the card there stays an ordinary drill into
+    /// the page about the same subject.
+    /// <para>
+    /// <b>Help is dismissed first, and all of it.</b> Every route that navigates away is refused
+    /// while a modal crumb is up, so selecting the tab before popping would silently do nothing —
+    /// and a card followed from a card is two modal levels rather than one, which is why this
+    /// unwinds until there is no modal left instead of going back once.
+    /// </para>
+    /// </summary>
+    private Action<string>? SettingsJump() =>
+        _revealSetting is null || !Nav.Has(PanelTab.Settings)
+            ? null
+            : capabilityId =>
+            {
+                while (Nav.Modal && GoBack())
+                {
+                }
+
+                Tab = PanelTab.Settings;
+                _revealSetting(capabilityId);
+            };
 
     /// <summary>
     /// Gives this surface the checklist (list.md Phase 25, "The checklist leaves its window").
@@ -1235,7 +1287,7 @@ public partial class PanelView : UserControl
 
         if (_helpPane?.Key != crumb.Key)
         {
-            _helpPane = (crumb.Key, HelpPageView.Build(crumb, Nav, _openHelp));
+            _helpPane = (crumb.Key, HelpPageView.Build(crumb, Nav, _openHelp, SettingsJump()));
         }
 
         return _helpPane.Value.Page;

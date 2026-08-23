@@ -127,6 +127,25 @@ public sealed record HelpLink
     /// path up out of the capability folder. Resolved by whoever can open one.
     /// </summary>
     public string? Href { get; init; }
+
+    /// <summary>
+    /// The settings section this card would rather take the Commander to, by capability id, or
+    /// null for an ordinary card (asked for 2026-08-23).
+    /// <para>
+    /// <b>A third destination, not a third kind of link.</b> The card still carries a real
+    /// <see cref="Article"/> — the page about the same subject — because the band is one source
+    /// for two surfaces and the href has to remain something a browser can follow. This says only
+    /// that a surface which can reach Settings should offer the setting rather than the reading:
+    /// a Commander sent to help from the page that mentions Whisper wants the Whisper rows, and
+    /// arriving at a second explanation instead is the long way round.
+    /// </para>
+    /// <para>
+    /// Which is why it degrades rather than branching. The headset has no Settings tab at all, so
+    /// there the card falls back to <see cref="Article"/> and behaves exactly as every other card
+    /// does, with nothing anywhere testing which surface it is on.
+    /// </para>
+    /// </summary>
+    public string? Settings { get; init; }
 }
 
 /// <summary>One numbered step of a band: a heading, usually a picture, sometimes a paragraph.</summary>

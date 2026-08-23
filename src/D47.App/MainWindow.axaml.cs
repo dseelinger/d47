@@ -135,8 +135,10 @@ public partial class MainWindow : Window
             _model.LogSource = () => Logging.LogTail.Read(host.Paths.Logs);
 
             // The window that can show settings says so; the headset's copy of this same view
-            // is handed nothing and therefore has no Settings tab (list.md Phase 12).
-            Panel.EnableSettings(BuildSettingsPage);
+            // is handed nothing and therefore has no Settings tab (list.md Phase 12). The second
+            // argument is what a help card naming a settings section does when pressed, and it
+            // is null on the headset for exactly the same reason the first one is absent there.
+            Panel.EnableSettings(BuildSettingsPage, RevealSetting);
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole
             // headline of the item that moved it out of a Window. A Window cannot appear in the
@@ -703,8 +705,29 @@ public partial class MainWindow : Window
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
         }
 
+        _settingsPage = view;
         return view;
     }
+
+    /// <summary>
+    /// The settings page once something has asked for it, so a help card can reach the instance
+    /// that is actually on screen rather than build a second one.
+    /// </summary>
+    private SettingsView? _settingsPage;
+
+    /// <summary>
+    /// Shows one settings section, for a help card that names it (asked for 2026-08-23).
+    /// <para>
+    /// <b>Posted, because the page may not exist yet when this is called.</b> A furnished tab's
+    /// page is built on first sight, so a Commander who has never opened Settings has no
+    /// <see cref="SettingsView"/> at the moment the card is pressed — the panel switches tabs and
+    /// builds one during that pass. Waiting for Loaded is what puts this after it.
+    /// </para>
+    /// </summary>
+    private void RevealSetting(string capabilityId) =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _settingsPage?.Reveal(capabilityId),
+            Avalonia.Threading.DispatcherPriority.Loaded);
 
     /// <summary>
     /// Remembers that this Commander has asked something, once and for good.

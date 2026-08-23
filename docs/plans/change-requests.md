@@ -30,6 +30,45 @@ Nothing open.
 
 ## Shipped
 
+### 26. Help that addresses how to use the UI — shipped 0.57.0
+
+Asked for 2026-08-23, the day after the bands finished, and built the same day.
+
+> What shows up often does not address how to use the UI properly.
+>
+> On the Transcript Page, Conversation sub-tab: since it is the first/default sub-tab, it should
+> talk about the elements that are available on all the Transcript sub-tabs — sub-tab switcher,
+> Copy All, Search, PTT Ready, Details, Ask/send controls. Help should address the elements of the
+> sub-tab, which is pretty much the conversation panel, with links to the specific setting groups
+> on the setup tab: LLM, TTS, Whisper. And those sections under Settings should have help of their
+> own, which I think they probably do.
+
+**Two of the three did; the third did not, and that decided the shape of the work.**
+`conversation.md` and `speech.md` carry bands. `listening.md` did not, so the Whisper card had
+nowhere to land in the headset — which is where a marked card falls back to the sibling band. It
+was written as part of this rather than after it.
+
+**The last clause was the one to correct.** Settings sections have no help of their own: the whole
+tab carries one crumb (`SettingsCapability`), because sections are scroll-spy targets rather than
+nav levels. What each row has is `SettingRow.Help`, whose own comment calls it the short form
+against the capability page as the long form. So "link to the setting group" could not mean
+"open its help" as asked — and on the ruling taken, it means **go to those rows**, which is new
+machinery rather than a card.
+
+**Three rulings, taken 2026-08-23 before anything was built.**
+
+- **All the chrome on the Conversation band**, rather than splitting the panel-wide parts onto
+  Overview. A Commander landing on the default sub-tab needs nothing else.
+- **The links jump to the section**, rather than opening a second explanation of it.
+- **Technical and Log file in scope** — `diagnostics.md` got a band in the same pass, so all three
+  readings of the tab answer for themselves rather than falling back to the index.
+
+**And one implementation call made rather than asked**: a new general page, `docs/transcript.md`,
+instead of rewriting `conversation.md`. That page is one of the three link targets and cannot also
+be the page about the tab. `NavCrumb.Help` is a `HelpLibrary` key rather than a registry id, which
+is what let a general page be reached the same way the forty-five capability pages are, with no new
+machinery — see the changelog entry for the three link faults the work uncovered on the way.
+
 ### 25. The Adventures tab: where it sits, what it shows, and that it is thinking — shipped 0.52.3
 
 Asked for 2026-08-22, in five parts; built the same day, in the next release.
