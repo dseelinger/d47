@@ -1,7 +1,7 @@
 ---
 title: Lore
 group: Knowledge
-nav_order: 115
+nav_order: 116
 ---
 
 Some systems mean more than their astrography. Directive 47 ships knowing about twenty of them, says

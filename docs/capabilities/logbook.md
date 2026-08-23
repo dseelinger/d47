@@ -1,7 +1,7 @@
 ---
 title: Commander's log
 group: Conversation
-nav_order: 140
+nav_order: 141
 ---
 
 Directive 47 can turn a session — or a week — into a readable log, written to plain markdown beside

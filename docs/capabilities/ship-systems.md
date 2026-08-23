@@ -1,7 +1,7 @@
 ---
 title: Ship systems
 group: Acting on the game
-nav_order: 129
+nav_order: 130
 ---
 
 Moves power around and reaches the two panic buttons: silent running and heat sinks.

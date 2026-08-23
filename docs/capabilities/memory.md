@@ -1,7 +1,7 @@
 ---
 title: Memory
 group: Conversation
-nav_order: 138
+nav_order: 139
 ---
 
 Directive 47 keeps a small file of facts about you, and says where every one of them came from.

@@ -1,7 +1,7 @@
 ---
 title: Navigation
 group: Acting on the game
-nav_order: 133
+nav_order: 134
 ---
 
 Puts a system name where you can use it, and tries to plot a course to it.

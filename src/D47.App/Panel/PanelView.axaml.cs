@@ -716,7 +716,10 @@ public partial class PanelView : UserControl
             crumb => crumb.Key == AdventuresPage.RootKey
                 ? page = new AdventuresPage(surface, Nav, Prompts)
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
-            new NavCrumb(AdventuresPage.RootKey, "Adventures"));
+            new NavCrumb(AdventuresPage.RootKey, "Adventures")
+            {
+                Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
+            });
 
         // And the same story at mini's size (asked for 2026-08-22). Built here rather than lazily,
         // because it is small and because mini has no navigation to build it on the way into — the

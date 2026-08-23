@@ -209,6 +209,12 @@ public static class BuiltinCapabilities
         ShipsCapability.Create(ships),
         GapCapability.Create(ships, onFoot, () => gameState.Active),
         ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
+
+        // At the end of the run of ledgers, which is where the Commander put the tab
+        // itself (list.md Phase 47). Registry order is nav order on the site, so this
+        // position is what a reader sees rather than an implementation detail.
+        AdventureCapability.Create(),
+
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(
             lore,
