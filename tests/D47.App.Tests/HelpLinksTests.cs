@@ -179,4 +179,32 @@ public class HelpLinksTests
 
         window.Close();
     }
+
+    /// <summary>
+    /// <b>The real one, now that two bands exist.</b> Engineers ends with a link to Checklists
+    /// because that is where "put this route on my checklist" lands, and Checklists has a band of
+    /// its own — so following it in the headset is a drill rather than an address a Commander
+    /// cannot open. Until the second band was written this path had only a synthetic article to
+    /// prove it.
+    /// </summary>
+    [AvaloniaFact]
+    public void FollowingEngineersToChecklistsIsADrillBetweenTwoRealBands()
+    {
+        var engineers = HelpLibrary.For("engineers");
+        Assert.NotNull(engineers);
+
+        var toChecklists = Assert.Single(engineers.Links, link => link.Article == "checklists");
+        Assert.Equal("Checklists", toChecklists.Title);
+
+        var nav = Standing();
+        var (window, page) = Open(engineers, nav, openUrl: null);
+
+        // Drawn as a control rather than as an address, because this surface can reach it.
+        Press(page, "Checklists").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal("help:checklists", nav.Trail[^1].Key);
+        Assert.True(nav.Modal);
+
+        window.Close();
+    }
 }

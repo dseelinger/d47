@@ -401,9 +401,18 @@ public class HelpInTheHeadsetTests
     }
 
     /// <summary>
-    /// The band's links, on the surface that cannot follow them. None of the three siblings has a
-    /// band yet, so all three are addresses — and with no browser behind the quad they are written
-    /// out rather than drawn as controls that would do nothing.
+    /// The band's links, on the surface with no browser behind it — and the split that matters.
+    /// <para>
+    /// Checklists has a band of its own, so it is something this machine is already carrying and
+    /// is drawn as a control: pressing it drills. Engineering and Ships have none yet, so they are
+    /// addresses, and an address is written out rather than drawn as a control that would do
+    /// nothing here.
+    /// </para>
+    /// <para>
+    /// This test asserted all three were addresses until the Checklists band was written, and
+    /// went red the moment it was. That is the intended behaviour arriving, not a regression: the
+    /// day somebody writes the Engineering band, the line below it goes the same way.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void TheBandsLinksAreWrittenOutRatherThanDrawnAsDeadControls()
@@ -415,12 +424,21 @@ public class HelpInTheHeadsetTests
             .ToList();
 
         Assert.Contains("Where to go next".ToUpperInvariant(), shown);
+
+        // No band yet, so an address a Commander can read and type later.
         Assert.Contains(D47.App.DocsSite.Capability("engineering"), shown);
         Assert.Contains(D47.App.DocsSite.Capability("ships"), shown);
-        Assert.Contains(D47.App.DocsSite.Capability("checklists"), shown);
 
         // The long form of this very page, which the panel does not draw.
         Assert.Contains(D47.App.DocsSite.Capability("engineers"), shown);
+
+        // Checklists is here, so it is a control rather than an address.
+        Assert.DoesNotContain(D47.App.DocsSite.Capability("checklists"), shown);
+
+        Assert.Contains(
+            view.GetVisualDescendants().OfType<Button>(),
+            button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text == "Checklists"));
 
         panel.Dispose();
     }
