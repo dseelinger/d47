@@ -789,6 +789,65 @@ public sealed class ChecklistService(
     public ChecklistChange Uncomplete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Uncomplete(id));
 
+    /// <summary>
+    /// Clears the list a ship left behind when the Commander sold it
+    /// (docs/plans/change-requests.md item 27). Says what it cleared, or null when there was
+    /// nothing on that ship.
+    /// <para>
+    /// <b>Deleted rather than reset, and that is settled by the journal rather than by taste.</b>
+    /// The request offered a second option — put the items back to Open and add "Purchase X" — and
+    /// it is not buildable on this scope. Frontier reissues <c>ShipID</c>: measured across the
+    /// 925-journal corpus on 2026-08-23, 17 of 55 sold ships had their id come back alive
+    /// afterwards, one of them as a <c>ShipyardNew</c> three days later. A list left keyed to that
+    /// id would silently attach itself to a different ship.
+    /// </para>
+    /// <para>
+    /// <b>Driven by the sale rather than by the fleet.</b> Asking "is this ship still in the
+    /// fleet" would also catch a sale d47 was not running for, and it would empty a Commander's
+    /// checklist on any tick where the fleet had not finished loading. The event says exactly one
+    /// thing and says it once; the inference is right until the moment it is catastrophically
+    /// wrong.
+    /// </para>
+    /// </summary>
+    public ChecklistNews? ShipSold(int shipId)
+    {
+        var scope = ChecklistScope.Ship(shipId);
+
+        var doomed = list.For(Fid, Name).Items
+            .Where(item => item.Scope == scope)
+            .ToArray();
+
+        if (doomed.Length == 0)
+        {
+            return null;
+        }
+
+        // The hull, from the items themselves. The fleet has already forgotten this ship by the
+        // time the sale is read, so the only place left that knows what it was is the lines that
+        // were about it (remediation.md 17, item 15 put it there).
+        var hull = doomed.Select(item => item.Hull).FirstOrDefault(name => name is { Length: > 0 });
+
+        foreach (var item in doomed)
+        {
+            Delete(item.Id);
+        }
+
+        var what = doomed.Length == 1 ? "one item" : $"{doomed.Length} items";
+
+        var news = new ChecklistNews(
+            $"checklist.sold.{shipId}",
+            hull is { Length: > 0 }
+                ? $"You sold the {hull}. I cleared {what} from your list that were about it."
+                : $"That ship is sold. I cleared {what} from your list that were about it.");
+
+        // Onto the same queue everything else the list says goes through, so it is the callout
+        // that decides whether it is spoken and the Commander who can switch that off. Returned
+        // as well, for a caller that wants to know without draining the queue.
+        _news.Enqueue(news);
+
+        return news;
+    }
+
     public ChecklistChange Delete(ChecklistItemId id)
     {
         var change = list.Apply(Fid, Name, document => document.Delete(id));

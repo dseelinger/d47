@@ -370,6 +370,12 @@ public partial class MainWindow : Window
             _ = AskAsync();
         });
 
+        // What was heard, on the page that shows the working. Only where no turn is going to
+        // carry it — an utterance a chooser took, or one the wake policy reworded on the way in
+        // (change-requests.md 31).
+        _host.HeardText += text => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append("\n" + text + "\n", TranscriptKind.Technical));
+
         // Anything d47 says without a turn behind it still belongs in the transcript, so what
         // was heard and what can be read back are the same set.
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(

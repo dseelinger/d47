@@ -17,6 +17,76 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.59.0 — 2026-08-23 — Four change requests, and two of them the corpus decided
+
+### It says "it" when it has just said the name
+
+Reported as hearing *Scorpii Sector BB-O a6-2* four times running. **It's why we have pronouns.**
+
+The condition is both halves of the request or nothing — *recently* **and** *it was the last one
+read*. A pronoun that reaches back past a second system is worse than the repetition it replaces,
+because a voice line gives no way to ask which one was meant. So a line naming two systems clears
+the referent instead of choosing, and the first mention in a fresh line always survives, so nothing
+ever opens with a dangling *it*.
+
+**The voice takes the pronoun and the page keeps the name**, which is not a compromise: scroll back
+and you can always see which system *it* was. `AppHost.SayAsync` already separated what is heard
+from what is written, so this is one function at one call site rather than an edit to the seven
+callouts that speak a system name.
+
+### A sold ship takes its list with it
+
+Selling a ship left every checklist line about it sitting among the ships you still own —
+`ShipyardSell` was read in two places and neither was the checklist.
+
+**Deleted rather than reset, and the journal settled that rather than taste.** The request offered
+a second option: put the items back to Open and add a *"Purchase X ship"* line. It is not buildable
+on this scope, because **Frontier reissues `ShipID`** — measured across the 925-journal corpus, 17
+of 55 sold ships had their id come back alive afterwards, one as a `ShipyardNew` three days later.
+A list left keyed to that id attaches itself to a different ship. That also fixes the timing: the
+lines go **at the sale**, because waiting is what lets a reissued id capture them.
+
+It says how many it cleared, and which hull they were for — read off the lines themselves, since
+the fleet has already forgotten the ship by then.
+
+### A word when a game starts, and when it ends
+
+New, and distinct from the line that greets when *d47* starts: this is about the **game**, which
+d47 can be running either side of.
+
+**The corpus chose the numbers.** `Shutdown` is absent from 84 of 925 journals, so roughly one
+session in eleven ends with a crash or a kill — the departure line is therefore allowed simply not
+to happen, and nothing reconstructs a departure from silence, because a timeout that guessed would
+eventually say goodbye to somebody still flying. And of 433 consecutive `LoadGame` pairs, **57% are
+less than thirty minutes apart** with a median gap of 21.2 minutes, which is what makes the
+requested cooldown the right default rather than a guess.
+
+Per Commander, per direction, and the clock only moves when something is said — otherwise a
+Commander bouncing in and out every ten minutes would never hear it again however long they
+eventually stayed away.
+
+### It stops denying what it can do
+
+> *I have no tool to bring the game window to front, Commander. That's yours to do — Alt-Tab or the
+> taskbar.*
+
+**d47 has that tool.** `FocusCapability` raises Elite and had sixteen spoken phrases; it is also
+`Protected`, which deliberately hides it from the model, because a model that can pull the game
+window over whatever you are doing is a model with a hand on your desktop. So the sentence was true
+about the model and false about d47 — and it sent you to do by hand a thing d47 does.
+
+Two fixes, because the phrase list was only half of it. The *verb, thing, place* family — *set
+elite to front*, *put the game in focus* — is now **generated rather than typed**, since the
+hand-written list kept being one phrase short. And the guardrail that already told the model not to
+claim the software cannot do something now also tells it **not to prescribe a workaround**: a
+suggestion of another key or another program is a guess about software it cannot see.
+
+### And what you said, where nothing else was recording it
+
+An utterance that answers a chooser never reaches the turn that would have written it down, so it
+left no trace at all. It now lands on the Technical page — along with what was *heard* where the
+wake policy reworded it on the way in, and silently when the two agree, which is the ordinary case.
+
 ## 0.58.0 — 2026-08-23 — Every question mark answers for the thing beside it
 
 Five reports in one afternoon, all the same complaint from different directions: the help mark

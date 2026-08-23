@@ -24,136 +24,113 @@ at 20.
 
 ## Open
 
-### 31. What the Commander said, and d47 denying something it can do
-
-Asked for 2026-08-23, in two parts and then a third that turned out to be the interesting one.
-
-> * The commander's "Ask" or STT should appear in the Technical sub-tab
-> * Voice Command "Set Elite to Front" or "Set game to front" or "Put Elite in front/focus" or
->   "put elite/game in front" should be the same as "Set focus to Elite"
-
-> It should definitely not say (from technical tab): *I have no tool to bring the game window to
-> front, Commander. That's yours to do — Alt-Tab or the taskbar.* `[10:52:15] Answered.`
-
-#### The third quote is a different bug from the second, and a worse one
-
-**d47 has that tool.** `FocusCapability` raises Elite to the foreground and has sixteen spoken
-phrases. What it also has is `Protected = true`, which keeps it off the advertised tool surface on
-purpose — a model that can pull the game window over whatever the Commander is doing is a model
-with a hand on the desktop, and the capability's own comment records the reasoning.
-
-So the model's sentence is **true from where the model sits and false about d47**. The phrase missed
-the router, the question fell through to the model, and the model answered honestly about a surface
-that deliberately does not include this. The Commander is told that a feature they are using does
-not exist.
-
-**That will recur, and adding four phrases does not fix it.** `Keywords = Phrases` here, so the
-router's whole vocabulary for this capability is those sixteen strings, and Commanders will keep
-inventing a seventeenth. Two shapes worth weighing, and this is the decision the item turns on:
-
-- **Let the model know a protected capability exists without being able to call it.** It could then
-  answer *"I can — say 'focus the game'"* instead of denying it. That is a change to what the
-  prompt carries, not to what the model may do, and it applies to every protected capability rather
-  than only this one.
-- **Or match this capability more loosely** — it is a closed intent with no arguments, and *bring
-  the game forward* has a small vocabulary. Cheaper, and it fixes only this one.
-
-The four phrases asked for should go in either way, and they are one line each:
-`set elite to front`, `set game to front`, `put elite in front`, `put the game in front`,
-`put elite in focus`. **None of them is in the list today** — checked, not assumed.
-
-#### The ask on the Technical page
-
-**Technical already draws every run unfiltered.** `PanelViewModel` filters to
-`Kind == TranscriptKind.Conversation` for the Conversation page and passes `_runs` straight through
-for Technical, and `Flatten` has a `TranscriptVoice.Commander` case that renders a turn as
-`> what they said`. So the page is not filtering the ask out, and the fix is in whatever should be
-appending it rather than in the page — which is the narrow half of a search that would otherwise
-start at the wrong end.
-
-The quoted line supports that reading: it shows the answer with its timestamp and its *Answered.*
-status and nothing above it saying what was asked.
-
-**Spoken and typed are the same path from `MainWindow` onward** — `_host.Heard` sets `AskText` and
-runs the same `AskAsync` a typed ask runs, with only a `_spoken` flag to tell them apart — so
-whatever is missing is missing for both, and a fix that covers only the microphone would be a fix
-in the wrong place.
-
-Two things to settle: whether the **raw** transcription is worth showing when it differs from what
-was routed (Technical is the page where that belongs, if anywhere), and whether a spoken utterance
-that the **router** answers with no model turn behind it also appears — on the evidence of the
-third quote, that is exactly the case a Commander is looking at Technical to understand.
-
-### 30. Say "it" when it has just said the name
+### 32. Sort the checklist by what the engineer in this system can do
 
 Asked for 2026-08-23.
 
-> When a system name has been read recently (and it was the last one read), it should not be
-> repeated ad nauseum. Refer to it as "it", "that system" or whatever makes sense to you. Hearing
-> "Scorpii Sector BB-O a6-2" repeated 4 times is annoying. It's why we have pronouns.
+> I must be able to sort the Checklist by items that can be fulfilled by the engineer that is in
+> the current system when asked (or indicated in the UI) in addition to the other sort options for
+> the checklist.
 
-**The condition is in the ask and it is the whole design.** *Recently* **and** *the last one read* —
-not merely recently. A pronoun that reaches back past a second system is worse than the repetition
-it replaces, because the Commander cannot tell which one it means and has no way to find out from
-a voice line. So the rule fires only when the name about to be said is the same as the last system
-named, with nothing else named in between.
+**The hard half is already built and is not the sort.** `EngineerAtHand.For(...)` answers exactly
+this question today: given the Commander's system, it returns each engineer there with **`Ready`**
+— the open items they could roll now — and **`OutOfRank`** kept separate, because those are two
+different errands. It is what produces the arrival line *"Lei Cheung is here, at Trader's Rest, and
+can do 52 items on your list."*
 
-**Seven callouts speak a system name**: `ArrivalCallout`, `CarrierCallout`, `EmissionCallout`,
-`FuelCallout`, `LoreCallout`, `RivalTerritoryCallout`, `RouteCallout`. Four of them firing around
-one arrival is exactly the reported four.
+So this item is a **projection of something already computed**, not new analysis. What is missing
+is a way to see it as the list rather than as a sentence.
 
-#### The seam already exists, and it is one place
+**Two shapes, and they are not the same feature.** Worth settling first, because the ask says
+"sort" and the useful thing may be the other one:
 
-`AppHost.SayAsync` is the single point every callout passes through, and it **already separates
-what is heard from what is written** — `Announcement.Text` is spoken, `Transcript` and
-`ConversationLine` are drawn, and the class documents that the two want different things. So:
+- **A sort** leaves every line on the page and moves the reachable ones to the top. Nothing is
+  hidden, which fits a list a Commander has already ordered by hand — and `ChecklistDocument`
+  carries a `ProjectOrder` the Commander owns, so a sort has to say whether it overrules that
+  order or nests inside it.
+- **A filter** shows only what this engineer can do, which is what somebody standing on the pad
+  actually wants and is nearer to what *"items that can be fulfilled"* says. It is also the one
+  that can show nothing at all, and a checklist that looks empty is alarming in a way a re-ordered
+  one is not.
 
-**The voice gets the pronoun and the page keeps the name.** That is not a compromise, it is the
-better answer: a Commander who scrolls back can always see which system "it" was, and nothing is
-lost from the record. It also means the rewrite is one function at one call site rather than an
-edit to seven callouts.
+**Three things to decide beyond that.**
 
-#### What is worth measuring, and is not
+1. **`Ready` only, or `OutOfRank` too?** They are already separate for a reason. Showing both in
+   one group would undo that; showing `Ready` alone hides a real answer to *why can I not do this
+   here*. A two-band ordering — can do now, then could after a rank — is probably right and is
+   more than a sort key.
+2. **What happens with no engineer here**, which is the overwhelmingly common case. The mode has
+   to say *"no engineer in this system"* rather than presenting an empty or unchanged list, or it
+   reads as broken every time it is used away from a workshop.
+3. **More than one engineer in the system.** `For` returns a list, not one, so the ordering is
+   over the union — and a line only one of them can roll should probably say which.
 
-`Scorpii Sector BB-O a6-2` is **24 characters**; *it* is two. Voices are billed per character and
-the arithmetic is real but small — the reason to do this is that it is **irritating**, and the
-saving is a side effect worth mentioning once and not designing around.
+**Where it goes.** The spoken half joins the ordering vocabulary CR 20 shipped in 0.45.0; the drawn
+half is the Checklist tab, which already has the Commander's own order and a search box, so this is
+a third way of arranging the same page rather than a new surface. Both routes must reach it — a
+Commander at a workshop has their hands on the stick.
 
-`SystemName.IsProcedural` already tells a generated name from a handcrafted one, which raises a
-genuine question rather than answering it: *Sol* is three characters and pleasant to hear, and a
-Commander may well want it said every time. **Whether the rule applies to every name or only to
-procedural ones is open**, and it is the difference between a rule that is always right and one
-that is right about the case that prompted this.
+---
 
-#### The model half is a different mechanism
+## Shipped
 
-Most callouts are assembled in Core and said as written, and those can be rewritten deterministically.
-Some route through `FlavourBriefs` and are re-voiced by the model, which will happily expand
-whatever it was handed back to the full name — so a Core rewrite is silently undone on exactly the
-lines with the most personality in them. That half is a **line in the brief**, not a substitution.
+### 27. A sold ship leaves its checklist behind — shipped 0.59.0
 
-And a model *turn* — an answer to a question — is generated text that must not be regexed after
-the fact: replacing a name inside a sentence the model built is how *"it is 40 light years from it"*
-gets said out loud. Prompt instruction there, or nothing.
+Asked for 2026-08-23.
 
-#### Open, and worth settling before code
+> What happens to checklist items when you sell a ship? I should be able to either A) delete all
+> checklist items associated with an existing (or previously existing) ship. This is the usual
+> scenario. Or B) put everything back to "Open" and add a "Purchase X ship", too.
 
-1. **How long is "recently"?** A window in minutes, or "until something else is named", or both.
-   Both is probably right — the referent should expire, or a callout twenty minutes later says "it"
-   about a system the Commander has stopped thinking about.
-2. **Every name, or only procedural ones?** See above.
-3. **Which pronoun?** *It*, *that system*, *there* and *here* are not interchangeable —
-   *"there is 40 light years away"* reads fine and *"it is 40 light years away"* reads better, and
-   arriving somewhere makes *here* correct where it was not a moment before. This probably wants a
-   small closed set chosen by the shape of the line rather than one word substituted everywhere.
-4. **Does the first mention in a line always survive?** Within one line, the second and later
-   occurrences are the ones to replace; across lines, all of them, provided the referent held.
-   Getting this backwards produces a line that opens with a dangling *it*.
-5. **What resets it?** A jump names a new system, so that is one. Whether asking a question about a
-   different system also resets it is a decision — the Commander said the other name, but d47 did
-   not.
+**Today the answer is "nothing happens", and nothing is the wrong answer.** `ShipyardSell` is read
+in two places and neither is the checklist: `FleetRegistry.cs:99` drops the hull from the fleet, and
+`ShipLoadouts.cs:82` forgets its remembered modules. The checklist has no `Sell` anywhere in it, so
+every `ChecklistScope.Ship(<sold id>)` line survives the sale — a build for a ship the Commander no
+longer owns, sitting among the ones they do.
 
-### 29. Say something when a game starts and when it ends
+**What that looks like on the page**, because it decides how visible the problem is. The lines are
+not hidden: `ChecklistEvaluator.IsActive` (`ChecklistEvaluator.cs:544`) only asks whether a
+ship-scoped line is about the ship being *flown*, which sorts the sold ship's lines down rather
+than out. And their wording degrades the moment the sale lands — `ChecklistWording` resolves a slot
+against the remembered loadout, which `ShipLoadouts` has just deleted, so they fall back to the
+stored form (`Anaconda (ship 51)`). Honest, and still a list of work for a ship that is gone.
+
+**A and B are two different features, not two spellings of one.** Worth settling before any code:
+
+- **A — forget it.** Delete every item in that scope. The usual case, in the Commander's words,
+  and the cheaper of the two: it needs the sale event, the scope key, and a decision about whether
+  it is silent or asks first.
+- **B — put it back on the shelf.** Reset the items to *Open* and add a **"Purchase X ship"** item
+  above them, so a build survives selling the hull it was for and comes back when the hull does.
+  That is a real thing a Commander does — sell an Anaconda to fund a Cutter, buy the Anaconda again
+  a month later — but it needs a scope that outlives a `ShipID`, which the current one does not.
+
+**Three things to answer, and the third is the one that could sink B.**
+
+1. **Silently, or asked?** A sale is unambiguous and irreversible from d47's side, but deleting a
+   plan somebody spent an evening on is exactly the shape the Phase 38 banner exists for — *"you
+   sold the Anaconda; the eleven items on its list are yours to keep or clear"*, answered on the
+   Checklist tab. That keeps A and B as one implementation with the Commander picking per sale,
+   which may be the whole answer.
+2. ~~**Is a rebuy the same ship?**~~ **Answered 2026-08-23, and it settles the item: `ShipID` is
+   reused.** Measured across the corpus — of 55 distinct ships sold, **17 had their id come back
+   alive afterwards**, the clearest being `ShipyardNew` on ship 42 three days after ship 42 was
+   sold. So **B is unbuildable as specified**: a reset list keyed on `ShipID` would silently attach
+   itself to whatever ship next holds that id, which is the failure this question existed to catch.
+   That also makes the timing non-negotiable — the items must leave that scope **at the sale**,
+   because waiting is what lets a reissued id capture them.
+3. **What about a ship destroyed rather than sold?** Insurance rebuys the same hull and, as far as
+   the journal is concerned, it is the same `ShipID` — so the checklist should not react at all.
+   Whatever reads the sale has to be sure it is reading a sale.
+
+**Where it would go.** `ChecklistService` already polls the journal and already writes news for the
+callout, so this is a case in that poll rather than a new reader. The banner-with-a-question shape
+is the one Phase 38 built and Phase 42's *"pressing a tab goes to that tab, even with a question
+up"* ruling already covers.
+
+---
+
+### 29. Say something when a game starts and when it ends — shipped 0.59.0
 
 Asked for 2026-08-23.
 
@@ -233,62 +210,167 @@ reasoning `ContinuityCallout` and `LoreCallout` both record.
    the list and the engineer *out* of the resume line on the Commander's instruction. Whatever
    this says should stay on the right side of that ruling.
 
-### 27. A sold ship leaves its checklist behind
+### 30. Say "it" when it has just said the name — shipped 0.59.0
 
 Asked for 2026-08-23.
 
-> What happens to checklist items when you sell a ship? I should be able to either A) delete all
-> checklist items associated with an existing (or previously existing) ship. This is the usual
-> scenario. Or B) put everything back to "Open" and add a "Purchase X ship", too.
+> When a system name has been read recently (and it was the last one read), it should not be
+> repeated ad nauseum. Refer to it as "it", "that system" or whatever makes sense to you. Hearing
+> "Scorpii Sector BB-O a6-2" repeated 4 times is annoying. It's why we have pronouns.
 
-**Today the answer is "nothing happens", and nothing is the wrong answer.** `ShipyardSell` is read
-in two places and neither is the checklist: `FleetRegistry.cs:99` drops the hull from the fleet, and
-`ShipLoadouts.cs:82` forgets its remembered modules. The checklist has no `Sell` anywhere in it, so
-every `ChecklistScope.Ship(<sold id>)` line survives the sale — a build for a ship the Commander no
-longer owns, sitting among the ones they do.
+**The condition is in the ask and it is the whole design.** *Recently* **and** *the last one read* —
+not merely recently. A pronoun that reaches back past a second system is worse than the repetition
+it replaces, because the Commander cannot tell which one it means and has no way to find out from
+a voice line. So the rule fires only when the name about to be said is the same as the last system
+named, with nothing else named in between.
 
-**What that looks like on the page**, because it decides how visible the problem is. The lines are
-not hidden: `ChecklistEvaluator.IsActive` (`ChecklistEvaluator.cs:544`) only asks whether a
-ship-scoped line is about the ship being *flown*, which sorts the sold ship's lines down rather
-than out. And their wording degrades the moment the sale lands — `ChecklistWording` resolves a slot
-against the remembered loadout, which `ShipLoadouts` has just deleted, so they fall back to the
-stored form (`Anaconda (ship 51)`). Honest, and still a list of work for a ship that is gone.
+**Seven callouts speak a system name**: `ArrivalCallout`, `CarrierCallout`, `EmissionCallout`,
+`FuelCallout`, `LoreCallout`, `RivalTerritoryCallout`, `RouteCallout`. Four of them firing around
+one arrival is exactly the reported four.
 
-**A and B are two different features, not two spellings of one.** Worth settling before any code:
+#### The seam already exists, and it is one place
 
-- **A — forget it.** Delete every item in that scope. The usual case, in the Commander's words,
-  and the cheaper of the two: it needs the sale event, the scope key, and a decision about whether
-  it is silent or asks first.
-- **B — put it back on the shelf.** Reset the items to *Open* and add a **"Purchase X ship"** item
-  above them, so a build survives selling the hull it was for and comes back when the hull does.
-  That is a real thing a Commander does — sell an Anaconda to fund a Cutter, buy the Anaconda again
-  a month later — but it needs a scope that outlives a `ShipID`, which the current one does not.
+`AppHost.SayAsync` is the single point every callout passes through, and it **already separates
+what is heard from what is written** — `Announcement.Text` is spoken, `Transcript` and
+`ConversationLine` are drawn, and the class documents that the two want different things. So:
 
-**Three things to answer, and the third is the one that could sink B.**
+**The voice gets the pronoun and the page keeps the name.** That is not a compromise, it is the
+better answer: a Commander who scrolls back can always see which system "it" was, and nothing is
+lost from the record. It also means the rewrite is one function at one call site rather than an
+edit to seven callouts.
 
-1. **Silently, or asked?** A sale is unambiguous and irreversible from d47's side, but deleting a
-   plan somebody spent an evening on is exactly the shape the Phase 38 banner exists for — *"you
-   sold the Anaconda; the eleven items on its list are yours to keep or clear"*, answered on the
-   Checklist tab. That keeps A and B as one implementation with the Commander picking per sale,
-   which may be the whole answer.
-2. **Is a rebuy the same ship?** `ShipID` is Frontier's, per Commander, and d47 has never had a
-   reason to ask whether one is ever reissued. **B is unbuildable if it is** — the reset list would
-   silently attach to whatever ship next holds that id. Answerable from the 920-journal corpus,
-   which is the first thing to do rather than the last.
-3. **What about a ship destroyed rather than sold?** Insurance rebuys the same hull and, as far as
-   the journal is concerned, it is the same `ShipID` — so the checklist should not react at all.
-   Whatever reads the sale has to be sure it is reading a sale.
+#### What is worth measuring, and is not
 
-**Where it would go.** `ChecklistService` already polls the journal and already writes news for the
-callout, so this is a case in that poll rather than a new reader. The banner-with-a-question shape
-is the one Phase 38 built and Phase 42's *"pressing a tab goes to that tab, even with a question
-up"* ruling already covers.
+`Scorpii Sector BB-O a6-2` is **24 characters**; *it* is two. Voices are billed per character and
+the arithmetic is real but small — the reason to do this is that it is **irritating**, and the
+saving is a side effect worth mentioning once and not designing around.
 
----
+`SystemName.IsProcedural` already tells a generated name from a handcrafted one, which raises a
+genuine question rather than answering it: *Sol* is three characters and pleasant to hear, and a
+Commander may well want it said every time. **Whether the rule applies to every name or only to
+procedural ones is open**, and it is the difference between a rule that is always right and one
+that is right about the case that prompted this.
 
----
+#### The model half is a different mechanism
 
-## Shipped
+Most callouts are assembled in Core and said as written, and those can be rewritten deterministically.
+Some route through `FlavourBriefs` and are re-voiced by the model, which will happily expand
+whatever it was handed back to the full name — so a Core rewrite is silently undone on exactly the
+lines with the most personality in them. That half is a **line in the brief**, not a substitution.
+
+And a model *turn* — an answer to a question — is generated text that must not be regexed after
+the fact: replacing a name inside a sentence the model built is how *"it is 40 light years from it"*
+gets said out loud. Prompt instruction there, or nothing.
+
+#### Open, and worth settling before code
+
+1. **How long is "recently"?** A window in minutes, or "until something else is named", or both.
+   Both is probably right — the referent should expire, or a callout twenty minutes later says "it"
+   about a system the Commander has stopped thinking about.
+2. **Every name, or only procedural ones?** See above.
+3. **Which pronoun?** *It*, *that system*, *there* and *here* are not interchangeable —
+   *"there is 40 light years away"* reads fine and *"it is 40 light years away"* reads better, and
+   arriving somewhere makes *here* correct where it was not a moment before. This probably wants a
+   small closed set chosen by the shape of the line rather than one word substituted everywhere.
+4. **Does the first mention in a line always survive?** Within one line, the second and later
+   occurrences are the ones to replace; across lines, all of them, provided the referent held.
+   Getting this backwards produces a line that opens with a dangling *it*.
+5. **What resets it?** A jump names a new system, so that is one. Whether asking a question about a
+   different system also resets it is a decision — the Commander said the other name, but d47 did
+   not.
+
+### 31. What the Commander said, and d47 denying something it can do — shipped 0.59.0
+
+Asked for 2026-08-23, in two parts and then a third that turned out to be the interesting one.
+
+> * The commander's "Ask" or STT should appear in the Technical sub-tab
+> * Voice Command "Set Elite to Front" or "Set game to front" or "Put Elite in front/focus" or
+>   "put elite/game in front" should be the same as "Set focus to Elite"
+
+> It should definitely not say (from technical tab): *I have no tool to bring the game window to
+> front, Commander. That's yours to do — Alt-Tab or the taskbar.* `[10:52:15] Answered.`
+
+#### The third quote is a different bug from the second, and a worse one
+
+**d47 has that tool.** `FocusCapability` raises Elite to the foreground and has sixteen spoken
+phrases. What it also has is `Protected = true`, which keeps it off the advertised tool surface on
+purpose — a model that can pull the game window over whatever the Commander is doing is a model
+with a hand on the desktop, and the capability's own comment records the reasoning.
+
+So the model's sentence is **true from where the model sits and false about d47**. The phrase missed
+the router, the question fell through to the model, and the model answered honestly about a surface
+that deliberately does not include this. The Commander is told that a feature they are using does
+not exist.
+
+**That will recur, and adding four phrases does not fix it.** `Keywords = Phrases` here, so the
+router's whole vocabulary for this capability is those sixteen strings, and Commanders will keep
+inventing a seventeenth. Two shapes worth weighing, and this is the decision the item turns on:
+
+- **Let the model know a protected capability exists without being able to call it.** It could then
+  answer *"I can — say 'focus the game'"* instead of denying it. That is a change to what the
+  prompt carries, not to what the model may do, and it applies to every protected capability rather
+  than only this one.
+- **Or match this capability more loosely** — it is a closed intent with no arguments, and *bring
+  the game forward* has a small vocabulary. Cheaper, and it fixes only this one.
+
+The four phrases asked for should go in either way, and they are one line each:
+`set elite to front`, `set game to front`, `put elite in front`, `put the game in front`,
+`put elite in focus`. **None of them is in the list today** — checked, not assumed.
+
+#### An instruction answered with a report — and it is remediation 16 arriving by the same road
+
+Added 2026-08-23:
+
+> **Me:** Set course for my carrier.
+>
+> **D47:** JOHN DEPARAGON is in Scorpii Sector BB-O a6-2. Currently in normal space.
+
+**Diagnosed, not guessed.** `"my carrier"` is a **keyword** on `JournalCapability`
+(`JournalCapability.cs:59`) as well as a whole phrase (`:182`). Keywords match **anywhere in the
+input**, so *"set course for my carrier"* contains one, the router answered it before the model
+ever saw it, and Journal's first argument-free tool reports where the carrier is.
+
+That is the exact shape remediation 16 fixed for *"where is my fleet carrier"* — and it is back
+because that fix added whole phrases **on top of** the keywords rather than removing any. The
+ruling at the time was deliberate and still right: *"the keywords are untouched — narrowing them
+would trade one wrong answer for a set of silences."* So the answer is not to delete `my carrier`;
+it is that **an instruction has to out-match a topic**.
+
+Two things make this worth more than one phrase:
+
+- **The guardrails already name this case.** *"When the Commander asks you to act — set a course,
+  press something, send something — act first and talk least."* The model never got the chance to
+  obey it, because the router had already answered. A rule the model follows is no help when the
+  model is not consulted.
+- **The right destination may not exist yet.** `plot_route` takes a destination system; the
+  carrier's system is known, so *plot me to my carrier* is a join d47 can make — but there is no
+  tool that does it today, so this is not purely a routing fix.
+
+**Not built with the rest of this item**, and deliberately: the phrase-beats-keyword machinery is
+shared by every capability, and getting it wrong trades one wrong answer for a set of silences
+exactly as the earlier ruling warns. It wants its own change with the corpus behind it.
+
+#### The ask on the Technical page
+
+**Technical already draws every run unfiltered.** `PanelViewModel` filters to
+`Kind == TranscriptKind.Conversation` for the Conversation page and passes `_runs` straight through
+for Technical, and `Flatten` has a `TranscriptVoice.Commander` case that renders a turn as
+`> what they said`. So the page is not filtering the ask out, and the fix is in whatever should be
+appending it rather than in the page — which is the narrow half of a search that would otherwise
+start at the wrong end.
+
+The quoted line supports that reading: it shows the answer with its timestamp and its *Answered.*
+status and nothing above it saying what was asked.
+
+**Spoken and typed are the same path from `MainWindow` onward** — `_host.Heard` sets `AskText` and
+runs the same `AskAsync` a typed ask runs, with only a `_spoken` flag to tell them apart — so
+whatever is missing is missing for both, and a fix that covers only the microphone would be a fix
+in the wrong place.
+
+Two things to settle: whether the **raw** transcription is worth showing when it differs from what
+was routed (Technical is the page where that belongs, if anywhere), and whether a spoken utterance
+that the **router** answers with no model turn behind it also appears — on the evidence of the
+third quote, that is exactly the case a Commander is looking at Technical to understand.
 
 ### 28. Every question mark answers for the thing beside it — shipped 0.58.0
 

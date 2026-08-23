@@ -47,6 +47,30 @@ public static class FocusCapability
     public const string Id = "focus";
 
     /// <summary>
+    /// The <em>verb, thing, place</em> family — <c>set elite to front</c>, <c>put the game in
+    /// focus</c> — generated rather than typed (asked for 2026-08-23).
+    /// <para>
+    /// <b>Written as a cross product because the hand-typed list kept being one phrase short.</b>
+    /// The request that added these named four spellings the hand-typed list did not have, and the
+    /// interesting part was not the four: a Commander said one of them, missed the router, and
+    /// was answered by the <em>model</em> — which cannot see this capability at all, because it is
+    /// <see cref="ToolDefinition.Protected"/>. So the miss did not fail quietly. It produced
+    /// <i>"I have no tool to bring the game window to front… that's yours to do"</i>, which is
+    /// d47 denying something d47 does.
+    /// </para>
+    /// <para>
+    /// A closed intent with no arguments can afford to be generous, and enumerating is safer here
+    /// than matching loosely: every phrase this builds is three words or more and names both the
+    /// thing and the place, so none of them can swallow a sentence the way a bare "elite" would.
+    /// </para>
+    /// </summary>
+    private static readonly string[] Placements =
+        [.. from verb in new[] { "set", "put", "bring", "move" }
+            from thing in new[] { "elite", "the game", "game" }
+            from place in new[] { "to front", "to the front", "in front", "in focus", "into focus" }
+            select $"{verb} {thing} {place}"];
+
+    /// <summary>
     /// The phrases that raise the game.
     /// <para>
     /// <b>Every one of them is more than one word, and that is deliberate.</b> The request asked
@@ -74,6 +98,7 @@ public static class FocusCapability
         "bring up elite",
         "bring up the game",
         "show me the game",
+        .. Placements,
     ];
 
     /// <param name="raise">
