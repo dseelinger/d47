@@ -78,7 +78,7 @@ public class PersonaSwitchMarkTests
         window.Arrange(new Rect(0, 0, 900, 560));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var runs = panel.GetControl<SelectableTextBlock>("Transcript").Inlines!.OfType<Run>().ToArray();
+        var runs = panel.TranscriptRuns.ToArray();
 
         var marked = Assert.Single(runs, run => run.Text!.Contains("[Switched to Cora]", StringComparison.Ordinal));
         var spoken = Assert.Single(runs, run => run.Text!.Contains("Standing by", StringComparison.Ordinal));

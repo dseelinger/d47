@@ -85,9 +85,7 @@ public class SearchStepsToTheMatchTests
         Step(panel);
         Dispatcher.UIThread.RunJobs();
 
-        var backgrounds = panel.GetControl<SelectableTextBlock>("Transcript")
-            .Inlines!
-            .OfType<Run>()
+        var backgrounds = panel.TranscriptRuns
             .Where(run => run.Background is not null)
             .Select(run => (run.Background as ISolidColorBrush)?.Color)
             .Distinct()

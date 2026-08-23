@@ -36,11 +36,7 @@ public class ClearingTheTranscriptKeepsTheRecordTests
         return (panel, model);
     }
 
-    private static string Shown(PanelView panel) =>
-        string.Concat(
-            panel.GetControl<SelectableTextBlock>("Transcript").Inlines?
-                .OfType<Avalonia.Controls.Documents.Run>()
-                .Select(run => run.Text ?? string.Empty) ?? []);
+    private static string Shown(PanelView panel) => panel.TranscriptShown;
 
     [AvaloniaFact]
     public void TheMenuClearsWhatIsShown()
@@ -184,7 +180,9 @@ public class ClearingTheTranscriptKeepsTheRecordTests
     {
         var (panel, _) = Said();
 
-        var transcript = panel.GetControl<SelectableTextBlock>("Transcript");
+        // Whichever block the page is drawn in. On the conversation that is the first bubble,
+        // and a selection is made in one turn rather than across the page.
+        var transcript = panel.TranscriptBlocks[0];
         var copy = Menu(panel).Single(entry => entry.Name == "CopySelectionItem");
 
         Assert.Empty(transcript.SelectedText ?? string.Empty);

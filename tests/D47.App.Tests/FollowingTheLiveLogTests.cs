@@ -235,7 +235,10 @@ public class FollowingTheLiveLogTests
         var model = Talking();
         var (window, view) = Open(model);
 
-        var transcript = Named<SelectableTextBlock>(view, "Transcript");
+        // The turn the Commander is dragging across. A conversation is drawn a turn to a
+        // bubble, so a selection is made in one of them rather than across the page — which is
+        // what every messaging application does and what Copy beside the search box is for.
+        var transcript = view.TranscriptBlocks[0];
 
         transcript.SelectAll();
         Dispatcher.UIThread.RunJobs();

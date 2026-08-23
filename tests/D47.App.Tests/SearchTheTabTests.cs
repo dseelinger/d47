@@ -60,9 +60,7 @@ public class SearchTheTabTests
 
     /// <summary>Every run of the transcript that is drawn with a highlight behind it.</summary>
     private static List<Run> Highlighted(PanelView view) =>
-        [.. ((SelectableTextBlock)Named(view, "Transcript")).Inlines!
-            .OfType<Run>()
-            .Where(run => run.Background is not null)];
+        [.. view.TranscriptRuns.Where(run => run.Background is not null)];
 
     [AvaloniaFact]
     public void AQueryHighlightsEveryHitAndSaysHowManyThereAre()
@@ -140,10 +138,7 @@ public class SearchTheTabTests
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
     /// <summary>Everything on the transcript, hits and the prose around them alike.</summary>
-    private static string Drawn(PanelView view) =>
-        string.Concat(((SelectableTextBlock)Named(view, "Transcript")).Inlines!
-            .OfType<Run>()
-            .Select(run => run.Text ?? string.Empty));
+    private static string Drawn(PanelView view) => view.TranscriptShown;
 
     /// <summary>
     /// Which hit is the current one, told the way a reader tells: it is the one drawn in a

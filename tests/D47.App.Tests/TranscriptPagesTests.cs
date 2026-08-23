@@ -197,8 +197,7 @@ public class TranscriptPagesTests
         Assert.Equal("Conversation", PanelModes.Showing(headset));
     }
 
-    private static string Shown(PanelView panel) =>
-        PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript"));
+    private static string Shown(PanelView panel) => panel.TranscriptShown;
 
     private static PanelView Laid(PanelView panel)
     {

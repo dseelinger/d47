@@ -716,6 +716,18 @@
               Padding="14">
         <Panel>
           <ScrollViewer x:Name="TranscriptScroller" ScrollChanged="OnTranscriptScrolled">
+            <!--
+              Two presentations of one page, and exactly one of them is ever visible. The
+              conversation is a conversation, so it is drawn as one - each turn its own bubble,
+              the Commander's on the right (asked for 2026-08-22). Technical and the log file
+              are not conversations: one is a diagnostic feed and the other is a file, and both
+              stay the flat block they have always been.
+
+              Siblings in a Panel rather than one control reshaped, because they are different
+              shapes with different rules. Sharing a scroll viewer is what keeps following,
+              the ↓ Newest button and the search offsets one mechanism rather than two.
+            -->
+            <Panel>
             <!-- No Text binding: the content is written as runs from code-behind, because a
                  marked line - the panel noting that the core changed - is drawn differently from
                  the conversation around it, and one string cannot carry that.
@@ -761,6 +773,15 @@
                 </ContextMenu>
               </SelectableTextBlock.ContextMenu>
             </SelectableTextBlock>
+
+            <!--
+              The conversation. Built from code-behind like the block beside it and for the same
+              reason - who spoke decides how a turn is drawn, and one string cannot carry that.
+              Empty and hidden until the page asks for it, so a surface reading the log file
+              pays nothing for a conversation it is not showing.
+            -->
+            <StackPanel x:Name="Bubbles" IsVisible="False" />
+            </Panel>
           </ScrollViewer>
 
           <!--

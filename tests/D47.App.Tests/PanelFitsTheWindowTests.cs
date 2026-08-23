@@ -78,8 +78,7 @@ public class PanelFitsTheWindowTests
     }
 
 
-    private static TextBlock Transcript(PanelView panel) =>
-        panel.GetControl<Avalonia.Controls.SelectableTextBlock>("Transcript");
+    private static TextBlock Transcript(PanelView panel) => panel.TranscriptBlocks[0];
 
     private static PanelView LaidOut(string said, int zoom = 100)
     {

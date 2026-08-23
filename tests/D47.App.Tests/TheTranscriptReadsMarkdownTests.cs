@@ -29,9 +29,9 @@ public class TheTranscriptReadsMarkdownTests
     {
         var panel = Laid(Said(Reply));
 
-        var shown = PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript"));
-
-        Assert.Equal("A small-pad combat trainer build.\n• A-rate thrusters where budget allows.", shown);
+        Assert.Equal(
+            "A small-pad combat trainer build.\n• A-rate thrusters where budget allows.",
+            panel.TranscriptShown);
     }
 
     /// <summary>
@@ -43,10 +43,7 @@ public class TheTranscriptReadsMarkdownTests
     {
         var panel = Laid(Said(Reply));
 
-        var bold = panel
-            .GetControl<SelectableTextBlock>("Transcript")
-            .Inlines!
-            .OfType<Run>()
+        var bold = panel.TranscriptRuns
             .Where(run => run.FontWeight == FontWeight.Bold)
             .Select(run => run.Text);
 
@@ -63,9 +60,7 @@ public class TheTranscriptReadsMarkdownTests
         var model = new PanelViewModel { LogSource = () => "12:04 **not markdown** at all" };
         var panel = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Log });
 
-        Assert.Equal(
-            "12:04 **not markdown** at all",
-            PanelParityTests.Shown(panel.GetControl<SelectableTextBlock>("Transcript")));
+        Assert.Equal("12:04 **not markdown** at all", panel.TranscriptShown);
     }
 
     /// <summary>
