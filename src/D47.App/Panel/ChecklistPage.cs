@@ -738,6 +738,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             return true;
         }
 
+        // The one filter that is about where the Commander is rather than about the line
+        // (change-requests.md 32). Asked separately because it is not a property of the item —
+        // the same line is reachable in Laksak and not in Sol.
+        if (_chosen == ChecklistService.HereKey)
+        {
+            return _checklists.CanBeDoneHere(item);
+        }
+
         return _chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
                || _chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
                || _chosen.Equals(ChecklistScope.Word(item.Scope.Group), StringComparison.OrdinalIgnoreCase)

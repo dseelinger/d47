@@ -658,6 +658,25 @@ public sealed class ChecklistService(
     /// panel compares against enum names and must go on doing so.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The filter key for "what can be done in this system". A constant because the panel matches
+    /// filter keys against enum names, and this one is not an enum.
+    /// </summary>
+    public const string HereKey = "here";
+
+    /// <summary>
+    /// Whether this item is one an engineer in this system could roll now.
+    /// <para>
+    /// <c>Ready</c> only, matching what the spoken <c>here</c> parameter has meant since
+    /// 2026-08-20. The out-of-rank band answers a different question — <i>why can I not do this
+    /// here</i> — and folding it in would quietly change an answer that has already shipped.
+    /// </para>
+    /// </summary>
+    public bool CanBeDoneHere(ChecklistItem item) =>
+        EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State)
+            .SelectMany(engineer => engineer.Ready)
+            .Any(ready => ready.Id.Same(item.Id));
+
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
         var live = Document.Items.Where(item => item.IsLive).ToList();
@@ -703,6 +722,24 @@ public sealed class ChecklistService(
                 live.Select(item => item.IsComplete),
                 done => done ? "complete" : "open",
                 done => done ? "Finished" : "Still open"),
+
+            // **What the engineer in this system can do** (change-requests.md 32), and offered
+            // only where there is one. The spoken half of this shipped on 2026-08-20 as the
+            // `here` parameter on `get_checklist`; this is the row that puts it on the page, which
+            // is the half the request was actually missing.
+            //
+            // Absent rather than empty when there is no engineer here — which is the
+            // overwhelmingly common case. A filter that can show nothing is alarming in a way a
+            // re-ordered list is not, so the answer to "no engineer in this system" is that the
+            // choice is not offered, rather than a blank page after taking it.
+            .. EngineersHere.For(live, State) is { Count: > 0 } workshops
+                ? [new ChecklistFilter(
+                    HereKey,
+                    workshops.Count == 1
+                        ? $"What {workshops[0].Engineer.Name} can do here"
+                        : "What the engineers here can do",
+                    "Where you are")]
+                : Array.Empty<ChecklistFilter>(),
         ];
     }
 
@@ -788,6 +825,65 @@ public sealed class ChecklistService(
 
     public ChecklistChange Uncomplete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Uncomplete(id));
+
+    /// <summary>
+    /// Clears the list a ship left behind when the Commander sold it
+    /// (docs/plans/change-requests.md item 27). Says what it cleared, or null when there was
+    /// nothing on that ship.
+    /// <para>
+    /// <b>Deleted rather than reset, and that is settled by the journal rather than by taste.</b>
+    /// The request offered a second option — put the items back to Open and add "Purchase X" — and
+    /// it is not buildable on this scope. Frontier reissues <c>ShipID</c>: measured across the
+    /// 925-journal corpus on 2026-08-23, 17 of 55 sold ships had their id come back alive
+    /// afterwards, one of them as a <c>ShipyardNew</c> three days later. A list left keyed to that
+    /// id would silently attach itself to a different ship.
+    /// </para>
+    /// <para>
+    /// <b>Driven by the sale rather than by the fleet.</b> Asking "is this ship still in the
+    /// fleet" would also catch a sale d47 was not running for, and it would empty a Commander's
+    /// checklist on any tick where the fleet had not finished loading. The event says exactly one
+    /// thing and says it once; the inference is right until the moment it is catastrophically
+    /// wrong.
+    /// </para>
+    /// </summary>
+    public ChecklistNews? ShipSold(int shipId)
+    {
+        var scope = ChecklistScope.Ship(shipId);
+
+        var doomed = list.For(Fid, Name).Items
+            .Where(item => item.Scope == scope)
+            .ToArray();
+
+        if (doomed.Length == 0)
+        {
+            return null;
+        }
+
+        // The hull, from the items themselves. The fleet has already forgotten this ship by the
+        // time the sale is read, so the only place left that knows what it was is the lines that
+        // were about it (remediation.md 17, item 15 put it there).
+        var hull = doomed.Select(item => item.Hull).FirstOrDefault(name => name is { Length: > 0 });
+
+        foreach (var item in doomed)
+        {
+            Delete(item.Id);
+        }
+
+        var what = doomed.Length == 1 ? "one item" : $"{doomed.Length} items";
+
+        var news = new ChecklistNews(
+            $"checklist.sold.{shipId}",
+            hull is { Length: > 0 }
+                ? $"You sold the {hull}. I cleared {what} from your list that were about it."
+                : $"That ship is sold. I cleared {what} from your list that were about it.");
+
+        // Onto the same queue everything else the list says goes through, so it is the callout
+        // that decides whether it is spoken and the Commander who can switch that off. Returned
+        // as well, for a caller that wants to know without draining the queue.
+        _news.Enqueue(news);
+
+        return news;
+    }
 
     public ChecklistChange Delete(ChecklistItemId id)
     {

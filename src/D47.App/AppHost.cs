@@ -447,6 +447,30 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Transcribed;
 
     /// <summary>
+    /// Something the Commander said that no turn is going to write down (change-requests.md 31).
+    /// <para>
+    /// <b>The Technical page, not the conversation.</b> What was heard before routing is the
+    /// working behind an answer rather than part of the exchange, and the conversation is the one
+    /// page that has to stay readable. It is the same reasoning that puts in-game comms there.
+    /// </para>
+    /// <para>
+    /// Raised only where it adds something: an utterance a chooser consumed, which nothing else
+    /// records at all, and one whose words the wake policy changed on the way to the turn. When
+    /// the heard words and the asked words agree — the ordinary case — the turn already carries
+    /// them and this stays quiet rather than printing everything twice.
+    /// </para>
+    /// </summary>
+    public event Action<string>? HeardText;
+
+    private void HeardAside(string text, string why)
+    {
+        if (text is { Length: > 0 })
+        {
+            HeardText?.Invoke($"{why}: {text}");
+        }
+    }
+
+    /// <summary>
     /// Raised true when a core has been chosen and has not yet worked out what to say, and
     /// false when it has (list.md Phase 12, "Anything that might take a moment says it is
     /// working").
@@ -870,6 +894,27 @@ public sealed class AppHost : IDisposable
             // (list.md Phase 36). Given the position from the journal, because Market.json does
             // not carry one and a market that cannot be placed cannot be routed to.
             markets.Poll(gameState.Active?.Location.StarPos);
+
+            // A sold ship's list goes with the ship (change-requests.md 27). Before the poll, so
+            // the lines are gone before anything evaluates them against a ship that is not there.
+            //
+            // Not on the priming tick: that replays every sale the journal has ever recorded, and
+            // the ones from months ago were dealt with when they happened. Silent then rather than
+            // announced-and-silent, because the deletion itself must not be replayed either.
+            if (!context.IsFirst)
+            {
+                foreach (var journalEvent in events)
+                {
+                    if (journalEvent.Kind == "ShipyardSell"
+                        && journalEvent.Int("SellShipID") is { } sold)
+                    {
+                        // What it cleared goes onto the list's own news queue, so the checklist
+                        // callout speaks it and the Commander can switch that off like anything
+                        // else it says.
+                        checklists.ShipSold(sold);
+                    }
+                }
+            }
 
             // Before the callouts and inside this subscriber, so a verdict recomputed from this
             // tick's events is announced on this tick rather than the next. Polled unconditionally
@@ -1441,7 +1486,14 @@ public sealed class AppHost : IDisposable
         // reason: the argument is not knowable when the descriptor is registered.
         var router = new KeywordRouter(
             capabilities,
-            () => MacroCapability.Phrases(macros).Concat(clipboardOffer.Phrases()));
+            () => MacroCapability.Phrases(macros)
+                .Concat(clipboardOffer.Phrases())
+
+                // And "set course for my carrier", which is an instruction rather than a topic
+                // and has to out-match the "my carrier" keyword that was answering it with a
+                // position report (change-requests.md 31). Dynamic for the same reason as the two
+                // above: the destination is not knowable when the descriptor is registered.
+                .Concat(CarrierCourse.Phrases(() => gameState.Active?.Carrier)));
 
         var turns = new TurnLoop(
             capabilities,
@@ -1994,6 +2046,12 @@ public sealed class AppHost : IDisposable
             // Everything above it is about now. Since Phase 42 what it mostly says is the top of
             // the checklist, in the Commander's own order.
             .Add(new ContinuityCallout())
+
+            // Getting into a game and leaving one (change-requests.md 29), which is a different
+            // event from the line above: that one greets when d47 starts, and this one when the
+            // game does. Below it, because on a launch where both fire the Commander has sat down
+            // once and should hear one greeting rather than two.
+            .Add(new SessionCallout())
 
             // Phase 32, and below the continuity line for the same reason it is below everything
             // else: it is an observation about the Commander rather than about the world, and
@@ -3249,6 +3307,12 @@ public sealed class AppHost : IDisposable
                 if (Prompted(new Core.Interface.Heard(
                         transcription.Text, transcription.Confidence, Final: true)))
                 {
+                    // Written down, because nothing after this point will. An utterance that
+                    // answers a chooser never reaches the turn that would have recorded it, so
+                    // before this it was a thing the Commander said that the page had no trace
+                    // of at all (change-requests.md 31).
+                    HeardAside(transcription.Text, "answering the question");
+
                     Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
                     return;
                 }
@@ -3315,6 +3379,17 @@ public sealed class AppHost : IDisposable
                 }
 
                 _logger.LogInformation("Heard: {Text}", transcription.Text);
+
+                // What was heard, where it is not what gets asked. The wake policy strips its
+                // own name off the front, so the turn is recorded under words the Commander did
+                // not quite say — and the page that exists to show the working is the place that
+                // difference belongs. Silent when the two agree, which is the ordinary case and
+                // would otherwise print every utterance twice.
+                if (!string.Equals(decision.Text, transcription.Text, StringComparison.Ordinal))
+                {
+                    HeardAside(transcription.Text, "heard");
+                }
+
                 Heard?.Invoke(decision.Text);
             }
             catch (Exception ex)
@@ -4071,8 +4146,40 @@ public sealed class AppHost : IDisposable
     /// that person sounds like, and neither has to know about the other.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// What "it" currently means, for the lines that would otherwise say a procedural system name
+    /// four times running (change-requests.md 30).
+    /// </summary>
+    private readonly D47.Core.Callouts.SpokenReferent _referent = new();
+
+    /// <summary>
+    /// The systems a line could be about: where the Commander is, and where they are going.
+    /// <para>
+    /// <b>Two candidates rather than one, so an ambiguous line is left alone.</b> A line naming
+    /// both — <i>"Sol is 40 light years from Scorpii Sector BB-O a6-2"</i> — hands two names to
+    /// the referent, which clears itself rather than choosing, because that is exactly the
+    /// sentence where "it" stops being answerable.
+    /// </para>
+    /// <para>
+    /// Filtered to what the line actually says, because a name d47 knows and did not mention is
+    /// not a second subject.
+    /// </para>
+    /// </summary>
+    private string[] SystemsIn(string text) =>
+        [.. new[] { GameState.Active?.Location.StarSystem, Route.Hops.LastOrDefault()?.StarSystem }
+            .Where(name => name is { Length: > 0 }
+                && text.Contains(name, StringComparison.OrdinalIgnoreCase))
+            .Select(name => name!)];
+
     private async Task SayAsync(Announcement announcement)
     {
+        // The voice takes the pronoun; everything written below keeps the name, so a Commander
+        // scrolling back can always see which system "it" was.
+        announcement = announcement with
+        {
+            Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
+        };
+
         var voice = announcement.Speaker is { Length: > 0 } speaker
             ? Cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
             : Cast.For(announcement.Voice);
