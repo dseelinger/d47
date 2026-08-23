@@ -507,7 +507,11 @@ public static class HelpPageView
         block.Children.Add(Card(
             new HelpLink
             {
-                Title = "Read the full page",
+                // Named for where it goes rather than for what it holds (asked for 2026-08-23).
+                // "Read the full page" did not say that pressing it leaves the app — which is the
+                // one thing about this card a Commander needs before they press it, and the whole
+                // story in a headset, where it cannot be pressed and is drawn as a bare address.
+                Title = "More details online",
                 Blurb = "Everything this leaves out: the detail, the tables and the working.",
                 Href = DocsSite.Page(article.CapabilityId),
             },

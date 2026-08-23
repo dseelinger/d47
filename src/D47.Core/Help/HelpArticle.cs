@@ -39,19 +39,29 @@ public static class HelpLevel
     /// something, even when what it opens is one level broader than they asked for.
     /// </para>
     /// </summary>
-    public static bool Open(PanelNavigator nav)
+    /// <param name="preferred">
+    /// A page to open instead of the level's own, for a mark that is about something narrower than
+    /// the tab it sits on — a settings card's, which is about that capability rather than about
+    /// Settings (asked for 2026-08-23). It takes the same ladder down rather than a rule of its
+    /// own, so a card whose page nobody has illustrated still opens something.
+    /// </param>
+    public static bool Open(PanelNavigator nav, string? preferred = null)
     {
         if (nav.Modal)
         {
             return false;
         }
 
-        var here = nav.Help is { Length: > 0 } capability && HelpLibrary.For(capability) is not null
-            ? capability
-            : HelpLibrary.For(Index) is not null ? Index : null;
+        var here = Reachable(preferred)
+            ?? Reachable(nav.Help)
+            ?? Reachable(Index);
 
         return here is not null && nav.Take(For(here));
     }
+
+    /// <summary>That page, if this build carries a band for it. One rung of the ladder above.</summary>
+    private static string? Reachable(string? capabilityId) =>
+        capabilityId is { Length: > 0 } id && HelpLibrary.For(id) is not null ? id : null;
 }
 
 /// <summary>
