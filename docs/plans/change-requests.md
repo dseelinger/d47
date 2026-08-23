@@ -24,7 +24,46 @@ at 20.
 
 ## Open
 
-Nothing open.
+### 33. The engineer filter shows one ship's work, and should show every ship's
+
+Asked for 2026-08-23.
+
+> - All checklist items fulfillable by the Engineer should appear for that filter, not just for
+>   the ship I'm in.
+> - If that's undoable, then at least notice when I switch ships and re-filter for the new ship —
+>   but I'd rather the previous bullet be implemented instead.
+
+**A follow-up to item 32, which shipped in 0.59.0 the same day.** That one put *"what the engineer
+in this system can do"* on the Checklist tab as a filter. This one says the filter is answering a
+narrower question than the Commander asked: an engineer who can roll a blueprint can roll it for
+any hull in the fleet, and a Commander standing at a workshop wants the whole errand, not the part
+of it that happens to be in the ship they flew there.
+
+**The gate was not found on a first read, and that is the first job rather than a hint.** Three
+places that would have been it are not:
+
+- `EngineersHere.For` (`EngineerAtHand.cs:90`) takes every live item and never asks which ship the
+  Commander is sitting in. Its `ModuleOf` (`:191`) deliberately returns null for a ship in another
+  dock and falls through to `BlueprintCatalogue.Named(name, null)`, which searches the whole
+  catalogue — **looser, not narrower**, and the comment at `:176-178` says so on purpose.
+- `IsLive` (`ChecklistItem.cs:419`) is `Tombstone == None`. It has nothing to do with ships.
+- `ChecklistPage.Matches` (`ChecklistPage.cs:720`) applies the search box and one filter key and
+  carries no scope clause at all.
+
+So either something upstream scopes the list the page draws from, or the narrowing is a property of
+how the items resolve rather than a filter anywhere. **Reproduce it against a fleet with open
+engineering lines on two hulls before writing any code** — the answer decides whether this is a
+one-line change or a rework of what the filter means.
+
+**If every ship's work appears, the line has to say whose.** A page that mixes hulls without
+captioning them is worse than the narrow one it replaced. `ChecklistWording.Ship(scope, hull,
+state)` (`ChecklistWording.cs:103`) already exists to name the ship a scoped line belongs to, so the
+wording is not new work — but it becomes load-bearing here, where today it is a nicety.
+
+**The second bullet is the Commander's own fallback and they said they would rather not have it.**
+Recorded so it is not built by accident: re-filtering on a ship switch still shows one hull's work,
+just a different one, so it answers a question nobody asked. It is also **strictly moot if the
+first bullet lands**, and should not be built first as a stepping stone to it.
 
 ---
 
