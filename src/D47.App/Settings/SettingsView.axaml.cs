@@ -2414,8 +2414,38 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return result.Ok;
     }
 
-    private static void OpenDocs(CapabilityDescriptor capability)
+    /// <summary>
+    /// How this surface shows a capability's help, or null where nothing wired one.
+    /// <para>
+    /// Handed in rather than reached for, like every other way out of this page: the settings
+    /// surface is a page of the panel and does not hold the panel, so it says what it wants and
+    /// the host says how.
+    /// </para>
+    /// </summary>
+    private Action<string>? _openHelp;
+
+    /// <summary>
+    /// Gives the card marks somewhere to go that is not a browser (asked for 2026-08-23).
+    /// </summary>
+    public void EnableHelp(Action<string> open) => _openHelp = open;
+
+    /// <summary>
+    /// A card's question mark. <b>In the panel, with a breadcrumb back</b> — it used to launch a
+    /// browser, which took the Commander away from the row they were reading and did nothing at
+    /// all on a surface with no browser to take them to.
+    /// <para>
+    /// The site is still the long form, and the drawn page ends with a card that says so. Falling
+    /// out to it here is for a host that wired nothing, which is no host that ships.
+    /// </para>
+    /// </summary>
+    private void OpenDocs(CapabilityDescriptor capability)
     {
+        if (_openHelp is { } open)
+        {
+            open(capability.Id);
+            return;
+        }
+
         Process.Start(new ProcessStartInfo(DocsSite.Capability(capability.Id))
         {
             UseShellExecute = true,

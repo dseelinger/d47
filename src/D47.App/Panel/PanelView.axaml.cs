@@ -1235,18 +1235,34 @@ public partial class PanelView : UserControl
     /// desktop keeps the behaviour it has always had on the pages nobody has drawn yet.
     /// </para>
     /// </summary>
-    public bool OpenHelp()
+    public bool OpenHelp() => OpenHelpFor(null);
+
+    /// <summary>
+    /// The same, for a mark that is about something narrower than the tab it sits on — a settings
+    /// card's question mark, which is about that capability rather than about Settings (asked for
+    /// 2026-08-23).
+    /// <para>
+    /// <b>It draws rather than launching, and that is the whole request.</b> The card's mark used
+    /// to call <c>Process.Start</c> on the site, so the Commander lost the panel to a browser and
+    /// had no way back to the row they were reading — and in a headset there was no browser to
+    /// lose it to. Drawn as a level instead, going back is the breadcrumb, the controller button
+    /// and the spoken word, already agreeing with no special case.
+    /// </para>
+    /// </summary>
+    public bool OpenHelpFor(string? capabilityId)
     {
-        if (Nav.Modal)
+        if (HelpLevel.Showing(Nav))
         {
-            // Already showing, or a chooser has the panel. Either way this is not the moment.
+            // Already showing. Pressing the mark again is not a request for help about help.
+            // A chooser used to stop this too, which is what made the mark inert on the module
+            // picker — see HelpLevel.Open.
             return false;
         }
 
-        // Whatever the level being looked at claims, or the level above it, up to the root — and
-        // the index when this level has nothing of its own. One call, so the mark and the spoken
-        // phrase cannot disagree about what help means here.
-        if (HelpLevel.Open(Nav))
+        // Whatever was asked for, then whatever the level being looked at claims, then the index.
+        // One call, so the mark, a card's mark and the spoken phrase cannot disagree about what
+        // help means here.
+        if (HelpLevel.Open(Nav, capabilityId))
         {
             return true;
         }
@@ -1258,7 +1274,7 @@ public partial class PanelView : UserControl
 
         // Not even an index drawn yet, and a desktop to fall out to. The site is still the long
         // form, and this is the behaviour the window has always had.
-        _openHelp(DocsSite.Root);
+        _openHelp(capabilityId is { Length: > 0 } id ? DocsSite.Page(id) : DocsSite.Root);
         return true;
     }
 

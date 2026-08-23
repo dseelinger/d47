@@ -263,6 +263,39 @@ public partial class DocumentationGateTests
         return front;
     }
 
+    /// <summary>
+    /// <b>A card marked as a settings jump must land on rows that exist.</b> The Settings tab has
+    /// a section per capability that declares any, so a card naming one that declares none is a
+    /// button that dismisses help, switches tab and then does nothing — which reads as broken
+    /// rather than as empty.
+    /// <para>
+    /// Caught exactly this on <c>writing-an-adventure.md</c> the day the marker was introduced:
+    /// Adventures has a whole tab and not one settings row.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EverySettingsJumpNamesACapabilityThatHasSettings()
+    {
+        var withRows = Registry().All
+            .Where(capability => capability.Descriptor.Settings.Count > 0)
+            .Select(capability => capability.Descriptor.Id)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var dead = D47.Core.Help.HelpLibrary.Pages
+            .Select(id => (Page: id, Article: D47.Core.Help.HelpLibrary.For(id)))
+            .Where(page => page.Article is not null)
+            .SelectMany(page => page.Article!.Links
+                .Where(link => link.Settings is { Length: > 0 })
+                .Select(link => (page.Page, Section: link.Settings!)))
+            .Where(card => !withRows.Contains(card.Section))
+            .Select(card => $"{card.Page} → {card.Section}")
+            .ToArray();
+
+        Assert.True(
+            dead.Length == 0,
+            $"Settings jumps naming a capability with no settings rows: {string.Join(", ", dead)}");
+    }
+
     [Fact]
     public void EveryCapabilityPageBelongsToARegisteredCapability()
     {

@@ -132,11 +132,26 @@ public sealed class RoutePlanPage : UserControl
                     TypeScale.Small,
                     ThemeManager.TextMutedKey,
                     wrap: true),
+
+                // Asked for 2026-08-22, alongside the rename: what the galaxy map does not do is
+                // the reason this card exists, and it was only ever stated in the tool description
+                // — which the model reads and the Commander does not.
+                Text(
+                    "The galaxy map plots this too, but only in short hops and only in a straight "
+                    + "line. This one reaches across the galaxy and detours through neutron stars.",
+                    TypeScale.Small,
+                    ThemeManager.TextMutedKey,
+                    wrap: true),
             },
         };
 
+        // "Neutron Plotter" rather than "Jump route", asked for 2026-08-22: a jump route is what
+        // the in-game galaxy map already plots, and the name said nothing about the one thing this
+        // does that the map cannot. The name a Commander sees only — RoutePlanKind.Jump is
+        // serialised into the plan book and is the nav crumb key, so renaming it would orphan
+        // every stored plan to buy nothing visible.
         return Plottable(
-            "Jump route",
+            "Neutron Plotter",
             form,
             RoutePlanKind.Jump,
             "plot_route",
@@ -145,8 +160,21 @@ public sealed class RoutePlanPage : UserControl
                 ("from", from.Text),
                 ("jump_range", range.Text),
                 ("efficiency", efficiency.Text)),
-            () => string.IsNullOrWhiteSpace(to.Text) ? "Name a destination first." : null);
+            () => string.IsNullOrWhiteSpace(to.Text) ? "Name a destination first." : null,
+            NeutronPlotterHelp);
     }
+
+    /// <summary>
+    /// The page behind each planner's question mark. Named here rather than written at the call
+    /// site so the page a card opens and the test that presses it cannot spell it differently.
+    /// </summary>
+    public const string NeutronPlotterHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "neutron-plotter";
+
+    /// <inheritdoc cref="NeutronPlotterHelp"/>
+    public const string RichesHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "road-to-riches";
+
+    /// <inheritdoc cref="NeutronPlotterHelp"/>
+    public const string TradeHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "trade-run";
 
     private Control RichesCard()
     {
@@ -171,7 +199,8 @@ public sealed class RoutePlanPage : UserControl
                 ("radius", radius.Text),
                 ("minimum_value", minimum.Text),
                 ("loop", loop.IsChecked == true ? "true" : "false")),
-            () => null);
+            () => null,
+            RichesHelp);
     }
 
     private Control TradeCard()
@@ -218,7 +247,8 @@ public sealed class RoutePlanPage : UserControl
                 ("large_pad", largePad.IsChecked == true ? "true" : "false")),
             () => string.IsNullOrWhiteSpace(capital.Text)
                 ? "Say how many credits to trade with. It is never inferred."
-                : null);
+                : null,
+            TradeHelp);
     }
 
     /// <summary>
@@ -231,7 +261,8 @@ public sealed class RoutePlanPage : UserControl
         RoutePlanKind kind,
         string tool,
         Func<ToolArguments> arguments,
-        Func<string?> validate)
+        Func<string?> validate,
+        string help)
     {
         var plot = new Button { Content = "Plot", Padding = new Thickness(14, 4), MinHeight = 30 };
         var cancel = new Button
@@ -320,7 +351,7 @@ public sealed class RoutePlanPage : UserControl
 
         var body = new StackPanel { Spacing = 8, Children = { form, actions, status } };
 
-        return Card(title, body);
+        return Card(title, body, help);
     }
 
     private static ToolArguments Arguments(params (string Name, string? Value)[] values) =>
@@ -393,15 +424,58 @@ public sealed class RoutePlanPage : UserControl
         return block;
     }
 
-    private Control Card(string title, Control body)
+    /// <param name="help">
+    /// The page this card's question mark opens, or null for a card that is not a planner (asked
+    /// for 2026-08-23).
+    /// <para>
+    /// <b>One page per planner, not one page for the tab.</b> The mark used to be absent here and
+    /// the tab's own mark opened <c>routes.md</c>, which describes all three at once — so a
+    /// Commander asking what <em>Efficiency</em> does read three planners' worth of prose and had
+    /// to work out which third was theirs. Reported as more confusing than helpful.
+    /// </para>
+    /// </param>
+    private Control Card(string title, Control body, string? help = null)
     {
         var heading = Text(title, TypeScale.Subheading, ThemeManager.TextKey);
         heading.FontWeight = FontWeight.SemiBold;
 
+        var headingRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { heading },
+        };
+
+        if (help is { Length: > 0 } page)
+        {
+            // The settings cards' mark, in the settings cards' place — same glyph, same size,
+            // same drawn-in-the-panel behaviour, so it needs no learning twice.
+            var mark = new Button
+            {
+                Content = "?",
+                FontSize = TypeScale.Secondary,
+                Padding = new Thickness(5, 0),
+                MinWidth = 0,
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+            };
+
+            mark.Bind(
+                Button.ForegroundProperty,
+                Application.Current!.Resources.GetResourceObservable(ThemeManager.TextMutedKey));
+
+            ToolTip.SetTip(mark, $"What {title} does");
+
+            mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
+
+            headingRow.Children.Add(mark);
+        }
+
         var stack = new StackPanel
         {
             Spacing = 10,
-            Children = { heading, body },
+            Children = { headingRow, body },
         };
 
         var card = new Border

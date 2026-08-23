@@ -705,6 +705,11 @@ public partial class MainWindow : Window
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
         }
 
+        // A card's question mark draws help in the panel rather than launching a browser (asked
+        // for 2026-08-23). The panel owns the level and the breadcrumb; this page only says which
+        // capability the mark was pressed on.
+        view.EnableHelp(capabilityId => Panel.OpenHelpFor(capabilityId));
+
         _settingsPage = view;
         return view;
     }

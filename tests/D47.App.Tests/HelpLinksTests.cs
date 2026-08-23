@@ -126,7 +126,7 @@ public class HelpLinksTests
 
         var (window, page) = Open(Article(), Standing(), openUrl: opened.Add);
 
-        Press(page, "Read the full page")
+        Press(page, "More details online")
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal([DocsSite.Capability("engineers")], opened);

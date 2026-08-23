@@ -75,6 +75,10 @@ internal sealed class SettingsHost
             return view;
         });
 
+        // As the window wires it. Not optional in a test: unwired, a card's question mark falls
+        // back to Process.Start and a test that presses one opens a real browser on the runner.
+        view.EnableHelp(capabilityId => panel.OpenHelpFor(capabilityId));
+
         panel.EnableSearch();
         panel.Tab = PanelTab.Settings;
 

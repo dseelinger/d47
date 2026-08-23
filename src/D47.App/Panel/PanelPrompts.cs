@@ -93,7 +93,7 @@ public sealed class PanelPrompts
             }),
             () => Dismiss(request.Key, request.Surface));
 
-        Open(request.Key, request.Word, request.Surface == ChoiceSurface.Page, Build);
+        Open(request.Key, request.Word, request.Surface == ChoiceSurface.Page, Build, request.Help);
     }
 
     /// <summary>
@@ -162,12 +162,12 @@ public sealed class PanelPrompts
     public Control? Build(NavCrumb crumb) =>
         _pages.TryGetValue(crumb.Key, out var build) ? build() : null;
 
-    private void Open(string key, string word, bool page, Func<Control> build)
+    private void Open(string key, string word, bool page, Func<Control> build, string? help = null)
     {
         if (page)
         {
             _pages[key] = build;
-            _nav.Take(new NavCrumb(key, word));
+            _nav.Take(new NavCrumb(key, word) { Help = help });
             return;
         }
 

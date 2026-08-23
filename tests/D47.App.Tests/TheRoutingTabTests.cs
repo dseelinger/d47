@@ -278,7 +278,7 @@ public class TheRoutingTabTests
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains("Jump route", drawn);
+            Assert.Contains("Neutron Plotter", drawn);
             Assert.Contains("Road to Riches", drawn);
             Assert.Contains("Trade run", drawn);
 
@@ -384,6 +384,98 @@ public class TheRoutingTabTests
             Assert.Contains(
                 TextOf(panel),
                 text => text.Contains("clipboard first", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// The mark inside the card whose heading says this. One per card, so the heading beside it
+    /// is what identifies the one a Commander pressed.
+    /// </summary>
+    private static Button PlannerMark(Control page, string heading)
+    {
+        // Up from the heading rather than down from a card. Every card is inside the same
+        // scroller, so the first Border *containing* this text is that shared ancestor — and the
+        // first "?" under it belongs to whichever card is drawn first, which made all three of
+        // these tests pass for the Neutron Plotter and fail for the other two.
+        var title = page.GetVisualDescendants().OfType<TextBlock>()
+            .First(text => text.Text == heading);
+
+        return ((StackPanel)title.Parent!).Children
+            .OfType<Button>()
+            .First(button => button.Content as string == "?");
+    }
+
+    /// <summary>
+    /// <b>Three planners, three pages.</b> Asserted in library terms as well as by pressing,
+    /// because a card pointing at a page nobody wrote opens the help index instead — which looks
+    /// from the outside exactly like it worked.
+    /// </summary>
+    [Fact]
+    public void EachPlannersPageIsItsOwnSubject()
+    {
+        var pages = new[]
+        {
+            (RoutePlanPage.NeutronPlotterHelp, "Neutron Plotter"),
+            (RoutePlanPage.RichesHelp, "Road to Riches"),
+            (RoutePlanPage.TradeHelp, "Trade run"),
+        };
+
+        foreach (var (id, title) in pages)
+        {
+            var article = D47.Core.Help.HelpLibrary.For(id);
+
+            Assert.True(article is not null, $"{id} has no band");
+            Assert.Equal(title, article!.Title);
+            Assert.NotEmpty(article.Sections);
+        }
+
+        // And they are not three copies of one page, which is what the tab's single mark was.
+        Assert.Equal(
+            3,
+            pages.Select(page => D47.Core.Help.HelpLibrary.For(page.Item1)!.Lede).Distinct().Count());
+    }
+
+    /// <summary>
+    /// Each card's mark opens that card's page — the thing one mark for the whole tab could not
+    /// do — and Back returns to the forms, so it is not a trip out of the tab.
+    /// <para>
+    /// Reported 2026-08-23: the tab's own mark opened <c>routes.md</c>, which describes all three
+    /// planners at once, so a Commander asking what Efficiency does read a Road to Riches radius
+    /// and a trade run's capital on the way to their answer.
+    /// </para>
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("Neutron Plotter", "general-neutron-plotter")]
+    [InlineData("Road to Riches", "general-road-to-riches")]
+    [InlineData("Trade run", "general-trade-run")]
+    public void EachPlannersMarkOpensThatPlannersPage(string heading, string page)
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder));
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            PlannerMark(panel, heading).RaiseEvent(
+                new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.True(panel.Nav.Modal, "help took the panel");
+            Assert.Equal(D47.Core.Help.HelpLevel.Prefix + page, panel.Nav.Trail[^1].Key);
+
+            Assert.True(panel.GoBack());
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.False(panel.Nav.Modal);
+            Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Routing));
         }
         finally
         {

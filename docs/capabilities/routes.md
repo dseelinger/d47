@@ -168,7 +168,8 @@ one.
 
 #### `plot_route`
 
-A jump route between two systems, using neutron boosts where they help.
+A route between two systems that detours through neutron stars where they help — the **Neutron
+Plotter** card on the Routing tab, and [a page of its own](../neutron-plotter.html).
 
 ```json
 {"type":"object","properties":{"efficiency":{"type":"integer","description":"How strictly to hold to the direct line, 1 to 99. Lower finds more neutron stars and so fewer jumps, at the cost of flying further off course. Defaults to 60."},"from":{"type":"string","description":"Where to plot from. Defaults to where the Commander is now."},"jump_range":{"type":"number","description":"The ship\u0027s jump range in light years. Defaults to this ship\u0027s, from the journal. Must be over 10."},"to":{"type":"string","description":"The destination system."}},"required":["to"],"additionalProperties":false}
