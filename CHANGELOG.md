@@ -17,6 +17,35 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.0 — 2026-08-23 — The engineer here can see your whole fleet
+
+### The checklist filter stops at the ship you flew in
+
+*"All checklist items fulfillable by the Engineer should appear for that filter, not just for the
+ship I'm in."* Shipped one release after the filter itself, and the fault was a good deal older
+than the filter.
+
+**Slot names are shared across hulls, and nothing was checking whose ship it was.** Every ship has
+a `TinyHardpoint5`. Asked whether Lei Cheung could roll Heavy Duty on a line about the Krait
+parked two docks away, d47 read the slot name off the Anaconda it was sitting in, found a chaff
+launcher, and asked the catalogue which engineers offer Heavy Duty on a chaff launcher. None do.
+So the line was dropped, the engineer's count went down with it, and if that was the only work
+in the system the engineer was not mentioned at all — the answer was not narrowed, it was
+**silently wrong**, and it looked exactly like having nothing to do.
+
+**The fix is the loadout d47 already remembers.** Phase 37 started keeping each ship's modules for
+precisely this, and `ChecklistWording` has been reading them all along to name the module on the
+line. The engineer join now reads the same place, so a line about the Krait is measured against
+the Krait's shield booster. Only a ship d47 has never been aboard falls back to matching on the
+blueprint name alone, which is what that fallback was always for.
+
+That fallback is the reason the cheap version of this fix is wrong, and it gets its own test:
+giving up on other ships entirely would have made the filter *too* generous instead of too mean,
+happily offering an engineer work on a module they have never touched.
+
+The spoken half moved with it — `get_checklist`'s `here` parameter asks the same join — and the
+page needed nothing, because each line already says which ship it belongs to.
+
 ## 0.59.0 — 2026-08-23 — Four change requests, and two of them the corpus decided
 
 ### It says "it" when it has just said the name

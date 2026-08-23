@@ -174,18 +174,28 @@ public static class EngineersHere
         // name belongs to several module kinds and they do not share an engineer list — Heavy Duty
         // on a Shield Booster is Lei Cheung's and on a Hull Reinforcement Package it is not.
         // Where the module cannot be seen the name alone is used, which is looser and is still
-        // better than saying nothing about a ship the Commander is not sitting in.
+        // better than saying nothing about a ship d47 has never been aboard.
         return BlueprintCatalogue.Named(intent.Detail ?? intent.Subject, ModuleOf(item, state))
             .Where(recipe => recipe.Kind == wanted)
             .Any(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase));
     }
 
     /// <summary>
-    /// What is fitted in the slot this item is about, or null where d47 cannot see it.
+    /// What is fitted in the slot this item is about, or null where d47 has never seen the ship.
     /// <para>
-    /// The intent names the <em>slot</em> — the evaluator's sentence supplies the module from live
-    /// state, and so does this. Elite reports the loadout of the ship the Commander is sitting in
-    /// and no other, so an item about a ship in another dock resolves to null here by design.
+    /// <b>The item's own ship, not the one being flown</b> (change-requests.md 33). The comment
+    /// this replaces said an item about a ship in another dock "resolves to null here by design",
+    /// and it did not: slot names are shared across hulls — every ship has a
+    /// <c>TinyHardpoint5</c> — so the live loadout answered with <em>this</em> ship's module and
+    /// the blueprint match was then narrowed to it. A Heavy Duty roll wanted on the Krait's shield
+    /// booster was measured against the Anaconda's chaff launcher and dropped out of the answer
+    /// altogether, which is the opposite of the loosening the comment claimed.
+    /// </para>
+    /// <para>
+    /// The remembered loadout is the same source <see cref="ChecklistWording"/> reads to name the
+    /// module on the line, and for the same reason — list.md Phase 37 remembered them for exactly
+    /// this. Null survives only for a ship d47 has never been aboard, which is the case the
+    /// name-alone match above was always for.
     /// </para>
     /// </summary>
     private static string? ModuleOf(ChecklistItem item, CommanderGameState state)
@@ -195,9 +205,37 @@ public static class EngineersHere
             return null;
         }
 
-        var fitted = state.Ship.Modules.FirstOrDefault(module =>
+        if (LoadoutFor(item, state) is not { } loadout)
+        {
+            return null;
+        }
+
+        var fitted = loadout.Modules.FirstOrDefault(module =>
             string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
         return fitted is null ? null : EliteSpecifications.Module(fitted.Item)?.Name;
+    }
+
+    /// <summary>
+    /// Which loadout this item's modules are read from: the live one for the ship being flown, and
+    /// for a line that is not about a ship in particular because there is nothing better to offer
+    /// it; the remembered one for any other ship. Null where that ship has never been seen.
+    /// </summary>
+    private static ShipLoadout? LoadoutFor(ChecklistItem item, CommanderGameState state)
+    {
+        if (item.Scope.Group != ChecklistGroup.Ship)
+        {
+            return state.Ship;
+        }
+
+        return ChecklistEvaluator.IsActive(item.Scope, state.Ship)
+            ? state.Ship
+            : int.TryParse(
+                item.Scope.Key,
+                global::System.Globalization.NumberStyles.Integer,
+                global::System.Globalization.CultureInfo.InvariantCulture,
+                out var shipId)
+                ? state.Loadouts.For(shipId)?.Loadout
+                : null;
     }
 }

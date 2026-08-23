@@ -90,10 +90,61 @@ public class WhatTheEngineerHereCanDoTests
         Assert.DoesNotContain("buy limpets", narrowed, StringComparison.Ordinal);
     }
 
-    private static ChecklistItem Booster(string slot, int grade) => new()
+    /// <summary>
+    /// <b>Work on a ship in another dock is still work</b> (change-requests.md 33).
+    /// <para>
+    /// Slot names are shared across hulls — every ship has a <c>TinyHardpoint5</c> — so resolving
+    /// the item's slot against the ship being <i>flown</i> answered with that ship's module and
+    /// then narrowed the blueprint match to it. A Heavy Duty roll wanted on the Krait's shield
+    /// booster was measured against the Anaconda's chaff launcher, which has no Heavy Duty at all,
+    /// and the item left the answer with nothing said. The remembered loadout is the fix and the
+    /// same one <c>ChecklistWording.InSlot</c> already makes.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void WorkOnAShipInAnotherDockIsStillOffered()
+    {
+        var state = FlyingWithAShipLeftBehind().Active!;
+
+        var here = Assert.Single(
+            EngineersHere.For([Booster("TinyHardpoint5", grade: 3, shipId: 52)], state));
+
+        Assert.Single(here.Ready);
+    }
+
+    /// <summary>
+    /// And the ship being flown is still matched on its own modules, which is what stops the fix
+    /// above from being "assume nothing and match on the name alone". Heavy Duty belongs to a
+    /// shield booster and to armour; the Anaconda's <c>TinyHardpoint5</c> holds a chaff launcher,
+    /// which has neither, so there is nothing here for Lei Cheung to roll.
+    /// </summary>
+    [Fact]
+    public void TheShipBeingFlownIsStillMatchedOnItsOwnModules()
+    {
+        var state = FlyingWithAShipLeftBehind().Active!;
+
+        Assert.Empty(EngineersHere.For([Booster("TinyHardpoint5", grade: 3, shipId: 51)], state));
+    }
+
+    /// <summary>
+    /// <b>And the other ship is matched on <i>its</i> modules, not merely left unmatched.</b> This
+    /// is the test that separates the fix from the cheap version of it — giving up and matching on
+    /// the blueprint name alone would pass both tests above and be wrong here, because Heavy Duty
+    /// belongs to a shield booster and to armour and the Krait's <c>TinyHardpoint1</c> holds
+    /// neither. Lei Cheung cannot roll Heavy Duty on a chaff launcher on any ship.
+    /// </summary>
+    [Fact]
+    public void AnotherShipsWorkIsMatchedOnThatShipsOwnModules()
+    {
+        var state = FlyingWithAShipLeftBehind().Active!;
+
+        Assert.Empty(EngineersHere.For([Booster("TinyHardpoint1", grade: 3, shipId: 52)], state));
+    }
+
+    private static ChecklistItem Booster(string slot, int grade, int shipId = 51) => new()
     {
         Key = $"blueprint:{slot}",
-        Scope = ChecklistScope.Ship(51),
+        Scope = ChecklistScope.Ship(shipId),
         Kind = ChecklistItemKind.Derived,
         Source = ChecklistSource.EngineeringPlan,
         Text = $"Grade {grade} Heavy Duty on {slot}",
@@ -119,6 +170,32 @@ public class WhatTheEngineerHereCanDoTests
                      $$"""{"timestamp":"2026-08-20T09:00:01Z","event":"Location","StarSystem":"{{system}}","Docked":true,"StationName":"Trader's Rest"}""",
                      $$"""{"timestamp":"2026-08-20T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":{{rank}}}]}""",
                      """{"timestamp":"2026-08-20T09:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        return store;
+    }
+
+    /// <summary>
+    /// In Laksak in an Anaconda whose utility slot holds a chaff launcher, having previously been
+    /// aboard a Krait with a shield booster in the slot of the same name. <b>The collision is the
+    /// point</b>: two hulls, one slot name, two different modules, and only one of them has a
+    /// Heavy Duty blueprint Lei Cheung offers.
+    /// </summary>
+    private static GameStateStore FlyingWithAShipLeftBehind()
+    {
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-23T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-23T09:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
+                     $$"""{"timestamp":"2026-08-23T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":5}]}""",
+                     """{"timestamp":"2026-08-23T09:00:03Z","event":"Loadout","Ship":"krait_mkii","ShipID":52,"ShipName":"Second Thoughts","ShipIdent":"KR-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint1","Item":"hpt_chafflauncher_tiny","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-23T09:00:04Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_chafflauncher_tiny","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
