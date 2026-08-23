@@ -4,10 +4,83 @@ group: Knowledge
 nav_order: 116
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
+<section>
+<h2><span class="num">1</span> Once per system per day.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a day, so a return visit the same evening is silent">
+ <rect x="20" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FIRST ARRIVAL</text>
+ <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so, unprompted</text>
+ <rect x="310" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">AGAIN, TONIGHT</text>
+ <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">silence</text>
+ <rect x="600" y="44" width="260" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TOMORROW</text>
+ <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so again</text>
+ <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The difference between a companion and a tour guide who forgot meeting you.</text>
+ <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">Measured, not picked: 30.1% of 7,966 real jumps re-enter a system visited within the day.</text>
+</svg>
+<p class="body">Stretching it to a week would suppress only 4.2 points more, because 88% of repeat visits happen inside the first day. The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Three states, not two switches.</h2>
+<svg viewBox="0 0 880 236" role="img" aria-label="Arrival lore can be off, a bare remark, or a remark followed by a web lookup">
+ <rect x="20" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER</text>
+ <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing on arrival</text>
+ <text x="155" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">asking still works</text>
+ <rect x="305" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">REMARK ONLY</text>
+ <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the bare fact,</text>
+ <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing further</text>
+ <rect x="590" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="725" y="78" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">REMARK, AND LOOK IT UP</text>
+ <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the fact, then whatever</text>
+ <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">the search found</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Three, because a lookup with the remark switched off is detail</text>
+ <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text)">about something that was never announced.</text>
+</svg>
+<p class="body">A result that arrives late is dropped. If you have jumped again by the time it lands, you were somewhere else when it became relevant — and a sentence about a system you left is worse than silence.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Four ways of knowing, and none is ever promoted.</h2>
+<svg viewBox="0 0 880 264" role="img" aria-label="Four tiers of lore, each read back in its own sentence naming where it came from">
+ <rect x="20" y="30" width="840" height="160" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--text)">“Earth is here.”</text>
+ <text x="470" y="66" text-anchor="start" font-size="15" fill="var(--accent)">← the shipped table</text>
+ <text x="46" y="100" text-anchor="start" font-size="16" fill="var(--text)">“You added this one, and the search agreed at the time…”</text>
+ <text x="560" y="100" text-anchor="start" font-size="15" fill="var(--text-muted)">← corroborated</text>
+ <text x="46" y="134" text-anchor="start" font-size="16" fill="var(--text)">“You told me…”</text>
+ <text x="470" y="134" text-anchor="start" font-size="15" fill="var(--text-muted)">← your word</text>
+ <text x="46" y="168" text-anchor="start" font-size="16" fill="var(--text)">“I wrote this one down myself, and nothing has checked it…”</text>
+ <text x="580" y="168" text-anchor="start" font-size="15" fill="var(--text-muted)">← its own note</text>
+ <text x="440" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A tier is never promoted.</text>
+ <text x="440" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">Surviving a lookup is a label, not a verdict — promotion is how an invention quietly becomes a fact.</text>
+</svg>
+<p class="body">An obscure but real site finds nothing, and a search can appear to agree with something a model half-invented. So if a later search <em>would</em> have corroborated a note, the note still says <em>you told me</em>.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="system-names.html"><span class="ct">System names →</span><span class="cd">What the name itself says, when there is no lore attached at all.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The web search row a lookup needs, and what it costs.</span></a>
+<a class="card" href="memory.html"><span class="ct">Memory →</span><span class="cd">The same labelling rule, applied to facts about you rather than about a system.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Some systems mean more than their astrography. Directive 47 ships knowing about twenty of them, says
 so when you arrive, and keeps whatever you tell it about the rest.
 
-## Ask for it
+### Ask for it
 
 > "what is notable about this system"
 > "anything notable here"
@@ -19,7 +92,7 @@ The first two need no AI configured at all — they route straight through, with
 Sol. Earth is here. Everywhere else on this list is somewhere humanity got to afterwards.
 ```
 
-## Arriving somewhere
+### Arriving somewhere
 
 Jump into a system with something attached to it and Directive 47 says so, unprompted:
 
@@ -39,7 +112,7 @@ quiet.
 
 A carrier jump counts as arriving. You were asleep in the back, but you are still somewhere new.
 
-## Then looking it up {#remarks}
+### Then looking it up {#remarks}
 
 Set **Remark on arrival** to *Remark, and look it up* and the bare fact is followed by a web search,
 spoken when it comes back:
@@ -71,7 +144,7 @@ Some things worth knowing about the lookup:
 - **What it found is always spoken as a search result**, never in the flat voice the shipped table
   uses. Nothing a search returns is ever written into a table.
 
-## Your own notes {#notes}
+### Your own notes {#notes}
 
 **Settings → Lore → Your own notes** opens what you have told Directive 47, and is where you add
 one. It is a window rather than a text box on a row because writing a note is the one act that makes
@@ -97,9 +170,9 @@ per Commander: what is true about a system is true whichever character you are f
 records which Commander was aboard anyway, and how it arrived. Edit the file by hand if you like —
 changes are noticed by comparing the contents, so an edit is never missed.
 
-## What Directive 47 can do about it
+### What Directive 47 can do about it
 
-### `get_system_lore`
+#### `get_system_lore`
 
 Everything known about the system you are in, each answer stating where it came from.
 
@@ -107,7 +180,7 @@ Everything known about the system you are in, each answer stating where it came 
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-### `remember_about_system`
+#### `remember_about_system`
 
 Notes something about the system you are in. **Stored as unverified and read back that way** — this
 is the model writing, not you.
@@ -127,7 +200,7 @@ Writing is limited to the system you are actually in. That is arithmetic rather 
 is keyed on the system's address, addresses come out of your journal, and Directive 47 reaches no
 network to look one up.
 
-## Where the twenty came from
+### Where the twenty came from
 
 The shipped table is a compilation, and compilations belong to whoever made them — so this one is the
 maintainer's rather than a community list copied across. The facts in it are Frontier's, in the same

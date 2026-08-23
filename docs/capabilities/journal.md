@@ -4,13 +4,72 @@ group: Foundation
 nav_order: 102
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Everything Directive 47 knows about your game, read straight from the files Elite already writes.</p>
+<section>
+<h2><span class="num">1</span> The answer comes off your own disk.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="Game state is read from the journal on your disk rather than from a website or produced by a model">
+ <rect x="20" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="155" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR OWN DISK</text>
+ <text x="155" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">the files Elite already writes</text>
+ <rect x="305" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
+ <text x="440" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT A WEBSITE</text>
+ <text x="440" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing is asked of anybody</text>
+ <rect x="590" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
+ <text x="725" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT A MODEL</text>
+ <text x="725" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">which would produce a plausible one</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">And what you are flying comes from your actual outfitting, not a table of hull figures —</text>
+ <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">which is what makes your Anaconda different from anyone else’s.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> When it does not know, it says what it is waiting for.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Rather than shrugging, it names the journal event that would supply the missing answer">
+ <rect x="20" y="34" width="840" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">“No Loadout event has been seen yet, so I do not know what you are</text>
+ <text x="46" y="98" text-anchor="start" font-size="16" fill="var(--text)">flying. It is written when you enter the game or change your outfitting.”</text>
+ <text x="46" y="138" text-anchor="start" font-size="15" fill="var(--text-muted)">“I have no ship list yet — it is written when you dock at a shipyard.”</text>
+ <text x="440" y="204" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">“Started after Elite” and “this is unknowable” have different fixes.</text>
+ <text x="440" y="236" text-anchor="middle" font-size="15" fill="var(--text-muted)">Carrier events only ever reach the owner’s journal, so having seen none is genuinely ambiguous — and it says so.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> It already knows where you are.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A short summary of your situation rides with every question put to the model">
+ <rect x="20" y="30" width="840" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="64" text-anchor="start" font-size="15" fill="var(--text-muted)">Location: Deciat, docked at Garay Terminal (Orbis)</text>
+ <text x="46" y="92" text-anchor="start" font-size="15" fill="var(--text-muted)">Ship: Bold Endeavour, a Anaconda</text>
+ <text x="46" y="120" text-anchor="start" font-size="15" fill="var(--text-muted)">Ship metrics: max jump 52.31 ly, fuel 28.5/32 t</text>
+ <text x="46" y="148" text-anchor="start" font-size="15" fill="var(--text-muted)">This session: 14 jumps, 2,605,000 cr earned</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">That rides with every question, so “what should I do about this” has something to work with.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">It states only what the journal reported, and leaves a line out entirely rather than saying “unknown”.</text>
+</svg>
+<p class="body">Two Commanders on one machine stay separate: location, ship, carrier, fleet, materials and session totals are kept per Commander and never merged. And an event Directive 47 does not recognise is skipped and noted rather than breaking the read — an invented figure in your game state is worse than a missing one.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="specifications.html"><span class="ct">Specifications →</span><span class="cd">The counterpart: what a hull <em>can</em> do, rather than what yours is doing.</span></a>
+<a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The fleet this reads, and the builds you plan against it.</span></a>
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">Proof that none of this leaves the machine, computed rather than claimed.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Everything Directive 47 knows about your game, read straight from the files Elite Dangerous
 already writes.
 
 Ask where your ships are and the answer comes off your own disk — not from a website, and not
 from a model that will produce a plausible one.
 
-## Ask for it
+### Ask for it
 
 > "where am I"
 > "what am I flying"
@@ -19,7 +78,7 @@ from a model that will produce a plausible one.
 > "what materials am I carrying"
 > "how have I done this session"
 
-## What it can tell you
+### What it can tell you
 
 **Where you are** — system, body, docking state, and what you are doing:
 
@@ -100,7 +159,7 @@ Balance at session start: 1,000,000 cr.
 Every figure is a sum of amounts Elite reported. Nothing comes from a price table or a market
 lookup, so the numbers are the ones you would recognise.
 
-## When it does not know
+### When it does not know
 
 It says which event it is waiting for rather than shrugging — "Directive 47 started after Elite"
 and "this is unknowable" have different fixes:
@@ -131,7 +190,7 @@ And before any journal has been found at all — a fresh install, or Elite has n
 No Elite Dangerous journal has been detected yet.
 ```
 
-## It already knows where you are
+### It already knows where you are
 
 You do not have to say where you are before asking something else. A short summary of your
 situation goes with every question you put to the model, so "what should I do about this" has
@@ -148,12 +207,12 @@ This session: 14 jumps, 2,605,000 cr earned
 It states only what the journal reported, and leaves a line out entirely rather than saying
 "unknown".
 
-## More than one Commander
+### More than one Commander
 
 Two Commanders on one machine stay separate. Location, ship, carrier, fleet, materials and
 session totals are kept per Commander and never merged.
 
-## When Elite changes
+### When Elite changes
 
 Frontier adds and changes journal events several times a year. An event Directive 47 does not
 recognise is skipped and noted rather than breaking the read, and a field that is missing or has
