@@ -4,9 +4,70 @@ group: Interface
 nav_order: 128
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Bringing Elite back to the front, so flight commands work again.</p>
+<section>
+<h2><span class="num">1</span> The one action that could not be left to the rule.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="Keys go out only while Elite is in front, so alt-tabbing away turns every flight command off">
+ <rect x="20" y="44" width="380" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="210" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELITE IN FRONT</text>
+ <text x="210" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">keys go out</text>
+ <rect x="460" y="44" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">ANYTHING ELSE IN FRONT</text>
+ <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">every flight command is off</text>
+ <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">That check is the one thing standing between a voice command and your browser.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So this is the one action that could not be left to the thing already refusing to act.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Windows may refuse, and it says so.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="A background application cannot take the foreground, and Directive 47 reports that rather than going quiet">
+ <rect x="20" y="36" width="840" height="90" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">“Windows would not let me bring Elite forward from the background.</text>
+ <text x="46" y="104" text-anchor="start" font-size="16" fill="var(--text)">Its taskbar button should be flashing; click that, or alt-tab.”</text>
+ <text x="440" y="166" text-anchor="middle" font-size="16" fill="var(--text)">A background application cannot take the foreground. It can only ask.</text>
+ <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So you are told, rather than left with a silence that reads like a dead microphone.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">It works from Directive 47’s own window, and Windows will often refuse it from anywhere else.</text>
+</svg>
+<p class="body">There is no way around this that does not involve faking keyboard input at the operating system — which is exactly the thing Directive 47 promises never to do outside Elite.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Every phrase is more than one word, on purpose.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="A bare Elite would match inside a question about Elite rank, so the phrases are all longer">
+ <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="84" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-muted)">“Elite”</text>
+ <text x="220" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">would have been convenient</text>
+ <text x="220" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">and is not safe</text>
+ <line x1="432" y1="86" x2="448" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="462,86 446,78 446,94" fill="var(--accent-muted)"/>
+ <rect x="474" y="40" width="386" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT WOULD SWALLOW</text>
+ <text x="667" y="110" text-anchor="middle" font-size="15" fill="var(--text)">“what is my Elite rank</text>
+ <text x="667" y="134" text-anchor="middle" font-size="15" fill="var(--text)">in combat”</text>
+ <text x="440" y="194" text-anchor="middle" font-size="16" fill="var(--text)">Elite is the top rank in every career the game has — and the router runs before the model.</text>
+</svg>
+<p class="body">Only the spoken phrases reach this. It is not a tool the model can call: your journal, in-game messages, search results and Inara are all untrusted text, and a message that could yank your focus while you were typing is a nuisance at best.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="flight-controls.html"><span class="ct">Flight and navigation →</span><span class="cd">The rule this exists to work around, and why it is not negotiable.</span></a>
+<a class="card" href="reanchor.html"><span class="ct">Re-anchor →</span><span class="cd">The other thing that has to work while Elite holds the foreground.</span></a>
+<a class="card" href="interface.html"><span class="ct">The window →</span><span class="cd">Where Directive 47 lives when it is not behind Elite.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Brings Elite Dangerous back to the front, so flight commands work again.
 
-## Ask for it
+### Ask for it
 
 > "set focus to game"
 > "focus the game"
@@ -17,7 +78,7 @@ Brings Elite Dangerous back to the front, so flight commands work again.
 Elite is in front.
 ```
 
-## Why this exists
+### Why this exists
 
 Directive 47 will not press a key unless Elite is the window in front. That check is the one
 thing standing between a voice command and typing into your browser, and it is not negotiable.
@@ -26,7 +87,7 @@ The awkward consequence is that alt-tabbing away turns every flight command off,
 way back was the mouse — the one thing you were trying not to reach for. This is the single
 action that could not be delegated to the thing already refusing to act.
 
-## Windows may refuse, and it will say so
+### Windows may refuse, and it will say so
 
 **Windows does not let a background application take the foreground.** A program that does not
 already have it can only ask, and what usually happens is the taskbar button flashes instead.
@@ -48,7 +109,7 @@ It also says when there was nothing to do, for the same reason:
 Elite is already in front.
 ```
 
-## The model cannot do this
+### The model cannot do this
 
 Only the spoken phrases above reach it, through the keyword router. **It is not a tool the model
 can call**, and that is deliberate: your journal, in-game messages, web search results and INARA
@@ -63,7 +124,7 @@ window. Elite is the top rank in every career the game has.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `focus_the_game`
+#### `focus_the_game`
 
 Brings Elite Dangerous to the foreground. Takes no arguments, and is **protected** — reachable
 from the keyword router and never from the model.

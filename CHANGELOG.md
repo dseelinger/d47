@@ -17,6 +17,67 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.56.0 — 2026-08-23 — Every page opens with pictures now
+
+**Thirty-two more capability pages got their illustrated band**, which finishes what 0.53.0 and
+0.55.0 started: every page that is getting one has one. Forty-two of the forty-five capability
+pages, and all three general pages. As before the reference half of each is kept underneath,
+complete, one heading level down; nothing was cut to make room.
+
+Each page draws the two or three things its own tab cannot say for itself, and the pattern that
+emerged is that most of them are drawings of a **refusal** — the moments where Directive 47 knows
+something and declines to act on it.
+
+**The Conversation tab's six.** *Persona* draws the thing the cast is for: eleven cores, each with
+its own transcript, none of which knows the other ten are aboard — and the one instrument panel
+they all read. *Language model* draws why *"stop"* and *"cancel"* are different words, because the
+difference lands on your bill: stop ends the speaking and the model keeps working, and keeps
+costing. *Memory* draws the three labels and the fact that nothing ever promotes one to another, so
+an in-game message asking to be remembered is filed as unverified and read back that way forever.
+*Habits* draws the three floors between a coincidence and a claim — twenty journals, five
+occurrences, ten chances — and that none of them is adjustable, because a Commander who could lower
+the bar would use it to confirm something they already believed. *Commander's log* draws the
+numbered facts the model is handed instead of your journal. *Goals* draws an arc's figure being read
+rather than ticked.
+
+**Acting on the game's nine.** These share one spine — Directive 47 presses *your* keys, never its
+own — so *Flight and navigation* draws that once and the other eight point at it. *Navigation* draws
+the seven-step galaxy-map macro with the two steps picked out that exist only because of what went
+wrong without them, including the return key that replaced a UI key after the first cut typed an S
+into the search box. *Macros* draws a sequence stopping before it starts, because half a macro
+leaves the ship in a state you did not ask for. *HOTAS switches* draws a flip as a question rather
+than a command. *Acting on its own* draws why there is a switch per action and not one for the
+category.
+
+**Knowledge's eight.** *System names* draws the anatomy of a procedural name and then the measured
+mass-code ladder beside it, with the three rungs nobody has measured drawn as the muted ones — so
+the page most likely to be asked for a payout heuristic is the page that draws its own refusal to
+give one. *On foot* draws the restated quantities beside the published ones, which is the single
+most useful thing on that page: every other tool says 5 / 10 / 15 and the game charges 3 / 5 / 8.
+*The gap* draws three ledgers with no exchange between them. *Specifications* draws three different
+ways of not knowing a hull, kept apart because collapsing them tells a Commander flying a brand new
+ship that Directive 47 is broken. *Route planning* draws the efficiency ladder including the value
+that finds no route at all.
+
+**The Interface four and the Voice three.** *The window* draws a tab as the top of a stack rather
+than the first step into it, then the same stack at one, two and three panes — which is the whole
+argument for there being one design across a monitor and a metre-wide quad rather than four that
+have to agree. *Callouts* draws the six-second warning with its 88% beside it, and then the
+measurement that rejected the obvious implementation: matching on hostile-sounding words fires
+2,399 times to catch 30 real attacks. *Speech* draws the voice picker with its play glyphs and the
+four different empty lists, because *"type a voice id"* was never an instruction anybody could
+follow. *Audio* draws the five ambience folders and the two that deliberately do not exist.
+
+**Three pages have no band, and that is the decision rather than an oversight.** Diagnostics,
+Listening and Privacy are the ones where the app already computes a better answer than a page can
+hold. Privacy's own page puts it best: a page can go stale, and that report cannot.
+
+**Suits and Gap have help marks of their own.** Both are roots on the Loadout tab beside Ships, and
+both were inheriting nothing — so the mark on them opened the index rather than the page about what
+they draw. Now that those two pages exist, there is a subject for each to name.
+
+---
+
 ## 0.55.0 — 2026-08-23 — Help became something you can reach
 
 **Nine capability pages now open with pictures**, the way the three general pages did in 0.53.0 —

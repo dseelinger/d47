@@ -4,14 +4,103 @@ group: Interface
 nav_order: 125
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">How Directive 47 is laid out, and why one design fits a monitor and a metre-wide quad alike.</p>
+<section>
+<h2><span class="num">1</span> The tab is the top of the stack, not the first step into it.</h2>
+<svg viewBox="0 0 880 258" role="img" aria-label="A tab sits above a stack of levels, and pressing the tab you are already on returns to its top">
+ <rect x="20" y="30" width="840" height="44" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="59" text-anchor="start" font-size="16" font-weight="800" fill="var(--accent)">Loadout</text>
+ <text x="200" y="59" text-anchor="start" font-size="15" fill="var(--text-muted)">← press it again to come straight back here</text>
+ <rect x="60" y="82" width="800" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="86" y="111" text-anchor="start" font-size="16" fill="var(--text)">Fleet</text>
+ <rect x="100" y="134" width="760" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="126" y="163" text-anchor="start" font-size="16" fill="var(--text)">Corsair</text>
+ <rect x="140" y="186" width="720" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="166" y="215" text-anchor="start" font-size="16" fill="var(--text)">Hardpoint 3</text>
+ <text x="440" y="250" text-anchor="middle" font-size="15" fill="var(--text-muted)">The breadcrumb under the bar is both where you are and the way back.</text>
+</svg>
+<p class="body">Back is three routes that agree: the breadcrumb, the <strong>grip button</strong> on either controller, and saying so. And voice jumps levels — asking for something three levels down takes you there with the whole trail behind it, rather than dropping you somewhere with nothing above.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Drilling in and reflowing are the same mechanism.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="A narrow surface shows one pane and you drill; a wider one shows two, and a wide one three">
+ <text x="110" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">MINI PANEL</text>
+ <rect x="20" y="40" width="180" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="34" y="54" width="152" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="400" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">THE WINDOW</text>
+ <rect x="240" y="40" width="320" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="254" y="54" width="142" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="404" y="54" width="142" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="730" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">WIDE, OR ZOOMED OUT</text>
+ <rect x="600" y="40" width="260" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="610" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="694" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="778" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="440" y="194" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is one question: how many panes fit.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="16" fill="var(--text)">Same stack, same breadcrumb, same phrases — one design, not four that have to agree.</text>
+</svg>
+<p class="body">Zoom is what moves you between them most of the time: it re-measures rather than magnifying, so zooming out gives the layout more logical room and a third pane appears.</p>
+</section>
+<section>
+<h2><span class="num">3</span> A chooser takes the whole panel.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A whole-panel chooser carries the slot it is choosing for in its header, which a drop-down has nowhere to put">
+ <rect x="20" y="34" width="400" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">A CHOOSER, WHOLE-PANEL</text>
+ <text x="220" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">carries the slot, its size,</text>
+ <text x="220" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and what is fitted now</text>
+ <text x="220" y="154" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">about sixteen rows, comfortably</text>
+ <rect x="460" y="34" width="400" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">A DROP-DOWN</text>
+ <text x="660" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">has nowhere to put that</text>
+ <text x="660" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and fits fewer rows</text>
+ <text x="660" y="154" text-anchor="middle" font-size="14" fill="var(--text-muted)">and cannot exist on a quad at all</text>
+ <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text)">So it is a level of the stack rather than a pop-up, and Back is the way out of it.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Text entry is voice first, and never your real keyboard.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Voice is the primary text entry with a drawn keyboard as fallback; there is deliberately no physical keyboard route">
+ <rect x="20" y="36" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="74" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">VOICE FIRST</text>
+ <text x="220" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a system name is far easier said</text>
+ <text x="220" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">and it reaches the box once,</text>
+ <text x="220" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">when it is done</text>
+ <rect x="460" y="36" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A DRAWN KEYBOARD</text>
+ <text x="660" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">for a number — and it comes back</text>
+ <text x="660" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">on its own for the three failures</text>
+ <text x="660" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">Directive 47 can actually detect</text>
+ <text x="440" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">There is no physical keyboard route, and that is deliberate.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">A global hook is forbidden outright, and raw input would deliver every keystroke on the system.</text>
+</svg>
+<p class="body">A system name arriving letter by letter is eleven wrong values on the way to the right one — so what you say lands in one piece. Confident, valid and <em>still</em> not what you meant is the one case no machine can catch, which is what the read-back is for.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="vr.html"><span class="ct">Headset →</span><span class="cd">The second surface this same design is drawn on.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">The rows behind the theme, the zoom and every bound key.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">A stack worth drilling, on the one tab both surfaces carry.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 How Directive 47 looks, and which keys reach it.
 
 There is nothing to ask for here — this one is all settings. The model cannot repaint the app or
 rebind your keys, and was never given a way to.
 
-## Settings
+### Settings
 
-### Theme {#theme}
+#### Theme {#theme}
 
 | Choice | What it looks like |
 |---|---|
@@ -21,7 +110,7 @@ rebind your keys, and was never given a way to.
 | `guardian` | Guardian teal and gold. |
 | `elite-palette` | Elite, recoloured to match your own HUD. |
 
-#### Matching your HUD
+##### Matching your HUD
 
 `elite-palette` reads the colour matrix Elite applies to its own HUD and uses it on Directive
 47's amber palette, so the panel comes out the same colour as your cockpit — teal, white,
@@ -37,7 +126,7 @@ If you have not set a HUD colour, or the file was written by a HUD mod in a shap
 does not recognise, the theme falls back to plain `elite` — which is what it would have looked
 like anyway. Your game configuration is yours; Directive 47 is a guest in it.
 
-### Zoom {#zoom}
+#### Zoom {#zoom}
 
 How large the panel is drawn, from 50% to 300%. The gestures are the ones your browser already
 taught you:
@@ -63,7 +152,7 @@ and the transcript does not.
 
 It applies to the settings window too, and the level survives a restart like the theme does.
 
-### Window size and position
+#### Window size and position
 
 Not something to set. The window opens at a size that fits the screen it opens on, and after
 that it opens where you left it.
@@ -72,7 +161,7 @@ If a remembered position would put the window on a monitor you have since unplug
 ignored and the window comes back on a screen you have — a window you cannot reach with the mouse
 looks exactly like the app failing to start.
 
-### Open settings {#open-settings}
+#### Open settings {#open-settings}
 
 Opens the settings window. `Ctrl+,` out of the box.
 
@@ -82,7 +171,7 @@ action unbound.
 
 This one works while Directive 47 has focus.
 
-### Re-anchor the headset panels {#reanchor}
+#### Re-anchor the headset panels {#reanchor}
 
 Puts your world-locked headset panels back in front of you. `Ctrl+Alt+R` out of the box, and it
 works **anywhere** — including with Elite in the foreground, which is the only time you want it.
@@ -91,11 +180,11 @@ See [Re-anchor](reanchor.md).
 A key that works everywhere needs a modifier with it. On its own it would stop working in every
 other application, so a bare key is refused when you press it, with a note saying so.
 
-### Focus the ask box {#focus-ask}
+#### Focus the ask box {#focus-ask}
 
 Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box.
 
-### Remember this core for this ship {#bind-ship-core}
+#### Remember this core for this ship {#bind-ship-core}
 
 Binds the ship you are sitting in to the core aboard, so boarding it puts that core aboard from
 then on. `Ctrl+Alt+B` out of the box, and it works **anywhere** — the moment you want it is a
@@ -110,7 +199,7 @@ See [A core per ship](persona.md#core-for-this-ship).
 protected setting, so a model that could rebind one could hand itself a way in it is not allowed
 to have. See [Settings](settings.md).
 
-## The panel {#panel}
+### The panel {#panel}
 
 One bar along the top, and each tab is a surface of its own:
 
@@ -131,7 +220,7 @@ surface than a list of short rows, and it is a separate decision.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
-### Drilling in, and finding your way back {#drilling}
+#### Drilling in, and finding your way back {#drilling}
 
 Every surface below the transcript is a stack — Fleet, then a ship, then a slot, then a
 blueprint. **The tab is the top of that stack, not the first step into it**, which is what makes
@@ -160,7 +249,7 @@ trail behind it, rather than dropping you somewhere with nothing above.
 Drill state survives switching tabs, and a tab with more than one mode keeps a separate stack per
 mode — leave Ships halfway into a slot, look at something else, come back where you were.
 
-### One design, one to three panes {#panes}
+#### One design, one to three panes {#panes}
 
 Drilling in and reflowing are the same mechanism: **how many panes fit**. A wide panel shows the
 level you are on beside the one above it, and a third if there is room; a narrow one shows a
@@ -171,7 +260,7 @@ four arrangements that have to agree.
 Zoom is what moves you between them most of the time: it re-measures rather than magnifying, so
 zooming out gives the layout more logical room and a third pane appears.
 
-### Choosing {#choosing}
+#### Choosing {#choosing}
 
 **A chooser takes the whole panel** until you dismiss it, which makes it a level of the stack
 rather than a pop-up over the page. That is not a stylistic call — a pop-up cannot exist on the
@@ -187,7 +276,7 @@ affordance every other level has. Short lists — a five-item setting — stay a
 page instead, and which one a control gets is fixed per control rather than decided by how many
 rows it happens to have today.
 
-### Saying it, or typing it {#entry}
+#### Saying it, or typing it {#entry}
 
 Text entry is **voice first, with a drawn keyboard as the fallback**, and which one opens depends
 on what is being entered: a system name is far easier said than typed, and a number is the
@@ -215,7 +304,7 @@ applications, and the polled route reads exactly one bound key. The only remaini
 taking your keyboard focus away from Elite mid-session, which is a worse trade than a drawn
 keyboard you never have to use.
 
-## The transcript {#transcript}
+### The transcript {#transcript}
 
 The transcript tab has three **modes**, on the segmented control at the right of the tab bar.
 They are three readings of one exchange rather than three destinations, which is why they are
@@ -276,7 +365,7 @@ desktop window can sit on the log while the headset panel shows the conversation
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
 has no bar at all, being the transcript's tail and the provenance line and nothing else.
 
-### Following it, or not {#following}
+#### Following it, or not {#following}
 
 The transcript follows its own newest line, which is what you want almost all of the time and
 exactly what you do not want the moment you scroll up to read something — a busy session appends
@@ -290,7 +379,7 @@ remember: the lock is inferred from where you are looking.
 Following belongs to the page, so arriving at a different tab opens it at its newest line rather
 than carrying "I have scrolled up" across with you.
 
-### Selecting and copying it {#copying}
+#### Selecting and copying it {#copying}
 
 The transcript is selectable text. Drag across it and press <kbd>Ctrl</kbd>+<kbd>C</kbd>, exactly
 as anywhere else — including across lines that arrive while you are selecting.
@@ -304,7 +393,7 @@ without the diagnostics, or with them, or the log file. A search query highlight
 rather than filtering, so it deliberately does not narrow what is copied — you asked for the log.
 The button says **Copied** for a moment, and says so if it could not.
 
-## The ship AI's face {#avatar}
+### The ship AI's face {#avatar}
 
 Top left of the panel, and in the headset too. One look per stage of a turn, so you can tell what
 Directive 47 is doing without reading anything — which in a cockpit is the point.
@@ -326,7 +415,7 @@ signal. Colour comes from your theme, so switching theme repaints the face with 
 Each one breathes: a slow opacity cycle, faster while a turn is running and very slow at rest.
 Nothing here jitters, because a companion's face that jitters is a companion that looks anxious.
 
-### Using your own
+#### Using your own
 
 Drop image files into `data/avatar/<state>/` beside the executable — the same shape the audio
 cues use, so if you have already customised those you know this one.

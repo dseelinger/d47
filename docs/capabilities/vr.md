@@ -4,20 +4,105 @@ group: Interface
 nav_order: 126
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Directive 47 drawn over Elite in your own cockpit — beside the game, never inside it.</p>
+<section>
+<h2><span class="num">1</span> It attaches. It never starts anything.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 waits for SteamVR and a headset to appear, and never launches SteamVR or hooks Elite">
+ <rect x="20" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT ATTACHES</text>
+ <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">looks every few seconds</text>
+ <rect x="310" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER STARTS</text>
+ <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">SteamVR, on your behalf</text>
+ <rect x="600" y="44" width="260" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER HOOKS</text>
+ <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">Elite, or its frame</text>
+ <text x="440" y="188" text-anchor="middle" font-size="16" fill="var(--text)">SteamVR first, Directive 47 first, SteamVR restarted halfway through — none of it matters.</text>
+ <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">And it says which of the two it is waiting for: “SteamVR is not running”, or “no headset is switched on”.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> The panel is the same app, drawn a second time.</h2>
+<svg viewBox="0 0 880 230" role="img" aria-label="The headset panel is a second instantiation of the same view, not a screenshot of the desktop window">
+ <rect x="20" y="44" width="380" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="210" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE SAME APP</text>
+ <text x="210" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">drawn a second time</text>
+ <rect x="460" y="44" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NOT A PICTURE OF IT</text>
+ <text x="660" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">no screenshot of a window</text>
+ <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the windowed version can never do something the headset version cannot.</text>
+</svg>
+<p class="body">Point a controller at it, pull the <strong>trigger</strong>, and it comes with you — position and angle together, so it feels attached rather than dragged. Nothing turns it to face you while you hold it: a panel forced upright and square cannot be tilted to read from below or angled to sit beside you, which is most of what moving one is for.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Three levers that all sound like “how big”.</h2>
+<svg viewBox="0 0 880 258" role="img" aria-label="Resolution decides how much the image holds, size how big it looks, and scale how much layout the pixels carry">
+ <rect x="20" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="155" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">RESOLUTION</text>
+ <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much the image can hold</text>
+ <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">more pixels, more rows</text>
+ <rect x="305" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SIZE</text>
+ <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how big it looks in the room</text>
+ <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">metres across</text>
+ <rect x="590" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="725" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SCALE</text>
+ <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much layout those</text>
+ <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">pixels carry — a density</text>
+ <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text)">At 75% the panel presents 1365×853 worth of layout and a ship’s slots fit.</text>
+ <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">At 200% it presents 512×320 and you can read it from across the cockpit.</text>
+ <text x="440" y="252" text-anchor="middle" font-size="15" fill="var(--text-muted)">More pixels cost more every frame — pick by looking at it, not by picking the biggest number.</text>
+</svg>
+<p class="body">Scale and <em>mini</em> are different things, and the difference is the point: scale changes how big everything on the panel is, mini changes how much of it there is. Zooming a panel you cannot read makes it readable; switching to mini gives you less to read.</p>
+</section>
+<section>
+<h2><span class="num">4</span> The captions follow the broadcast standard, not a preference.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="Caption limits: 42 characters a line, two lines per utterance, 20 characters a second, timed from when the speech ends">
+ <rect x="20" y="34" width="840" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="60" y="68" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">42 characters</text>
+ <text x="270" y="68" text-anchor="start" font-size="15" fill="var(--text-muted)">the most on one line</text>
+ <text x="60" y="96" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">2 lines</text>
+ <text x="270" y="96" text-anchor="start" font-size="15" fill="var(--text-muted)">the most for one thing said</text>
+ <text x="60" y="124" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">20 a second</text>
+ <text x="270" y="124" text-anchor="start" font-size="15" fill="var(--text-muted)">reading speed, which sets how long one stays</text>
+ <text x="60" y="150" text-anchor="start" font-size="16" font-weight="700" fill="var(--accent)">timed from the end</text>
+ <text x="270" y="150" text-anchor="start" font-size="15" fill="var(--text-muted)">not from when the speech starts</text>
+ <text x="440" y="202" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nobody reads along with a voice they can hear.</text>
+ <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">They catch the last line after it has gone — and if you say “stop”, the captions stop with the voice.</text>
+</svg>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="reanchor.html"><span class="ct">Re-anchor →</span><span class="cd">What to do when Elite’s own recenter walks off with your cockpit.</span></a>
+<a class="card" href="interface.html"><span class="ct">The window →</span><span class="cd">The same panel on the surface you can point a mouse at.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Where every row on this page lives, and why Settings is desktop-only.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Directive 47 in your headset, drawn over Elite in your own cockpit.
 
 It sits alongside the game rather than replacing it. It never hooks Elite, never touches its
 process, and never takes over the frame — it is an overlay, the same way SteamVR's own dashboard
 is.
 
-## Ask for it
+### Ask for it
 
 > "is the headset working"
 > "headset overlay off"
 > "mini panel"
 > "full panel"
 
-## The order does not matter
+### The order does not matter
 
 SteamVR first, Directive 47 first, SteamVR restarted halfway through the evening — none of that
 is something you should have to think about. Directive 47 looks for a headset every few seconds
@@ -37,7 +122,7 @@ No headset is switched on. D47 will attach when one appears.
 Nothing here starts SteamVR on your behalf. Launching it uninvited on a machine whose headset is
 off takes over your desktop for no reason.
 
-## What you get
+### What you get
 
 Two things float in front of you.
 
@@ -47,7 +132,7 @@ second time, so the windowed version can never do something the headset version 
 **Captions** — everything Directive 47 says, written underneath. They place themselves, clear
 themselves, and cannot be moved or dragged somewhere you would not see them.
 
-## Moving it about
+### Moving it about
 
 Point a controller at the panel, pull the **trigger**, and it comes with you — position and angle
 together, so it feels attached rather than dragged. Let go and it stays.
@@ -72,16 +157,16 @@ world-locked means. Directive 47 does not then argue with you about the setting.
 If Elite's own recenter moves your cockpit out from under a panel you had placed, that is what
 [re-anchoring](reanchor.md) is for.
 
-## Settings
+### Settings
 
-### Show Directive 47 in the headset {#enabled}
+#### Show Directive 47 in the headset {#enabled}
 
 On by default, which costs nothing if you have no headset — it looks, finds nothing, and says so.
 Turn it off if you use SteamVR for other things and would rather Directive 47 stayed out of it.
 
 > "headset overlay on" / "headset overlay off"
 
-### Panel content {#mode}
+#### Panel content {#mode}
 
 **Full** or **mini**. Mini is the same panel showing less — the gear, the banners and the ask box
 go, the transcript stays. It is also drawn smaller, so it can sit at the edge of vision.
@@ -92,7 +177,7 @@ is a lot to meet before you know it can be moved or shrunk. Switch to full whene
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
-### Placing a surface
+#### Placing a surface
 
 Six settings each, and the mini panel has its own copies of all six. The big panel has a seventh.
 
@@ -106,7 +191,7 @@ Six settings each, and the mini panel has its own copies of all six. The big pan
 | Scale {#panel-scale} | How large the content is drawn, on the same steps the desktop window zooms with |
 | Resolution {#panel-resolution} | How many pixels the big panel is rendered at. Big panel only |
 
-#### Three levers, and they do different things
+##### Three levers, and they do different things
 
 Size, Scale and Resolution all sound like "how big", and keeping them apart is worth a minute.
 
@@ -145,7 +230,7 @@ The mini rows work the same way: [locking](#mini-lock), [distance](#mini-distanc
 The mini panel defaults to 0.34 m across — it is meant to sit at the edge of vision — against
 1.1 m for the full one.
 
-### Captions {#captions}
+#### Captions {#captions}
 
 They follow the broadcast closed-caption standard rather than anyone's preference:
 
@@ -164,12 +249,12 @@ Captions follow what is actually audible rather than what was generated, so if y
 captions stop with the voice. A caption still sitting there after a silence command is Directive
 47 visibly not having stopped.
 
-### Caption size {#size}
+#### Caption size {#size}
 
 `small`, `medium` or `large`. Three sizes rather than a number, because a caption is either
 legible at a glance or it is not, and there is nothing useful between two adjacent values.
 
-### Caption background {#background}
+#### Caption background {#background}
 
 How solid the box behind the text is.
 
@@ -178,13 +263,13 @@ nothing behind it is unreadable against half of those — which is why broadcast
 always sat on a box, and why the box is not fully solid, since one you cannot see through is a
 hole cut in your cockpit. The text stays fully opaque whatever you set; only the box fades.
 
-### Reading speed {#speed}
+#### Reading speed {#speed}
 
 Characters a second. `20` is the standard's adult rate, `17` its children's rate, and `12` is
 there because reading speed is the one thing about a caption that is a property of the reader
 rather than of the caption.
 
-### Headset {#state}
+#### Headset {#state}
 
 Not a setting but a state, shown next to the switch — because *switched off* and *SteamVR is not
 running* look identical from the outside unless something says which.
@@ -192,7 +277,7 @@ running* look identical from the outside unless something says which.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `get_headset_status`
+#### `get_headset_status`
 
 Reports whether D47 is showing in the headset, and if not, why not. Reports only. Takes no
 arguments.
@@ -201,7 +286,7 @@ arguments.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-### `show_in_headset`
+#### `show_in_headset`
 
 Shows D47 in the headset, or stops showing it — the same row as the switch above, reached by
 voice. It answers with the *status* rather than an acknowledgement, because switching it on is

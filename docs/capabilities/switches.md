@@ -4,6 +4,100 @@ group: Acting on the game
 nav_order: 137
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">A maintained toggle on your stick that means a <em>state</em> rather than a press.</p>
+<section>
+<h2><span class="num">1</span> The switch is a question, not a command.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Flipping a switch asks Elite whether it is already in that state, and presses a key only if it is not">
+ <rect x="20" y="44" width="200" height="90" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="120" y="82" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOU FLIP IT</text>
+ <text x="120" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">gear switch, down</text>
+ <line x1="232" y1="88" x2="256" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="270,88 254,80 254,96" fill="var(--accent-muted)"/>
+ <rect x="284" y="44" width="250" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="409" y="82" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">IT ASKS ELITE</text>
+ <text x="409" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">“is the gear already down?”</text>
+ <line x1="546" y1="76" x2="572" y2="58" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="546" y1="102" x2="572" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <rect x="584" y="28" width="276" height="58" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="722" y="63" text-anchor="middle" font-size="15" fill="var(--text)">already down → nothing at all</text>
+ <rect x="584" y="96" width="276" height="58" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="722" y="131" text-anchor="middle" font-size="15" fill="var(--text)">not down → one press, yours</text>
+ <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Between flips it touches nothing.</text>
+ <text x="440" y="230" text-anchor="middle" font-size="15" fill="var(--text-muted)">Every other way is edge-triggered: it sends a toggle on the flip and never learns what the game did.</text>
+</svg>
+<p class="body">Which is why an edge-triggered switch ends up upside down the first time the game changes its own mind — you dock, you relog, you lower the gear by voice — and stays that way until you notice.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Elite cannot be told what a position means.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="A maintained switch is held rather than pressed, so Elite reads it as a button held down forever">
+ <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A MAINTAINED SWITCH</text>
+ <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">is held, not pressed</text>
+ <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">sixteen were held on the bench</text>
+ <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
+ <rect x="474" y="40" width="386" height="112" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">SO ELITE SEES</text>
+ <text x="667" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a button you are leaning on</text>
+ <text x="667" y="134" text-anchor="middle" font-size="15" fill="var(--text)">forever</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">There is no way to say “this position means gear down” in a bindings file.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> It learns your switch by watching you walk it.</h2>
+<svg viewBox="0 0 880 262" role="img" aria-label="Walking the switch through every position discovers four things that cannot be assumed">
+ <text x="440" y="30" text-anchor="middle" font-size="15" fill="var(--text-muted)">“Move the switch to each position in turn, and pause at each one.”</text>
+ <rect x="27" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="125" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">HOW MANY POSITIONS</text>
+ <text x="125" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">two, three and four</text>
+ <text x="125" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">all exist</text>
+ <rect x="237" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="335" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHICH BUTTON EACH</text>
+ <text x="335" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">consecutive is a hint,</text>
+ <text x="335" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">not a rule</text>
+ <rect x="447" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="545" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHETHER EACH HOLDS</text>
+ <text x="545" y="104" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">ONE AT ALL</text>
+ <text x="545" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a dead detent is legal</text>
+ <rect x="657" y="48" width="196" height="100" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="755" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHETHER IT STAYS</text>
+ <text x="755" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">a spring-return switch</text>
+ <text x="755" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">cannot mean a state</text>
+ <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">The pause is what tells a maintained switch from a spring-return one.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Hold duration cannot — flips ran 407–1611 ms and deliberate presses 206–1751 ms, which overlap outright.</text>
+ <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">After a second and a half, one is still held and the other has gone home. That is not a close call.</text>
+</svg>
+<p class="body">There is no list of sticks to pick from, and there never can be: Windows reports every controller as <code>HID-compliant game controller</code>, so a WinWing throttle, a Virpil base and a twenty-year-old Saitek are all the same string.</p>
+</section>
+<section>
+<h2><span class="num">4</span> A switch that disagrees is announced, not corrected.</h2>
+<svg viewBox="0 0 880 230" role="img" aria-label="The panel shows which assigned switches currently disagree with the game's state">
+ <rect x="20" y="36" width="840" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="76" text-anchor="middle" font-size="18" fill="var(--text)">“gear switch: the landing gear is up”</text>
+ <text x="440" y="140" text-anchor="middle" font-size="16" fill="var(--text)">A stale switch costs one extra flip — but only if you can see it coming.</text>
+ <text x="440" y="176" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the panel shows which switches disagree with the game.</text>
+ <text x="440" y="210" text-anchor="middle" font-size="15" fill="var(--text-muted)">The answer real aviation reached with annunciator lights — showing the state is cheap, moving the switch is not.</text>
+</svg>
+<p class="body">A spare three-position toggle can name <em>pages of Directive 47's own panel</em> instead of ship actions — three detents, three pages. That one presses nothing, reads no binds and checks no foreground, so it works whether the key-injection rows are on or off.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="flight-controls.html"><span class="ct">Flight and navigation →</span><span class="cd">The master switch underneath this one, and the actions it can reach.</span></a>
+<a class="card" href="macros.html"><span class="ct">Macros →</span><span class="cd">The other way to author something once and reach it without a sentence.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Where Assign lives, and why the AI cannot reach it.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 A maintained toggle on your stick or throttle that means a **state** rather than a press.
 
 Flip the gear switch down and Directive 47 asks Elite whether the gear is already down. If it is,
@@ -15,14 +109,14 @@ edge-triggered: it sends a toggle on the flip and has no idea what the game was 
 first time the game changes its own mind — you dock, you relog, you lower the gear by voice —
 the switch is upside down and stays that way until you notice.
 
-## Why your switches cannot just be bound in Elite
+### Why your switches cannot just be bound in Elite
 
 Because a maintained switch is *held*, not pressed. On the bench here, **sixteen buttons were
 held down with nothing being touched**. Elite sees a switch left in the "on" position as a button
 you are leaning on forever, and there is no way to express "this position means gear down" in a
 bindings file.
 
-## Turning it on
+### Turning it on
 
 Two rows, and the second only appears once the first is on:
 
@@ -37,7 +131,7 @@ from the settings panel, from the settings hotkey, and by saying one of the fixe
 
 Keys are only ever sent while Elite is the window in front.
 
-## Assigning a switch
+### Assigning a switch
 
 There is no list of sticks to pick from, and there never can be. Windows reports **every**
 controller as `HID-compliant game controller` — a WinWing throttle, a Virpil base and a
@@ -62,7 +156,7 @@ measured ranges overlap outright — switch flips ran 407–1611 ms and delibera
 206–1751 ms. But after a second and a half, a maintained switch is still held and a spring-return
 one has gone home, and that is not a close call.
 
-### When a walk is declined
+#### When a walk is declined
 
 Directive 47 declines rather than guessing, and says which of these it was:
 
@@ -76,7 +170,7 @@ Every walk — including a declined one — can be exported as a capture report.
 this has to work on are ones nobody here will ever hold, so if your switch is declined and you
 think it should not have been, that file is the whole of the evidence.
 
-### Assigning what each position means
+#### Assigning what each position means
 
 Each captured position gets an action and a state. Only the actions Elite **reports the state
 of** can be assigned, because those are the only ones that can be asked *are you already there*:
@@ -86,7 +180,7 @@ SRV turret view, SRV handbrake, SRV drive assist.
 
 A position may also mean nothing, which is what the centre of a three-position switch usually is.
 
-### A position may name a page of Directive 47's own panel instead
+#### A position may name a page of Directive 47's own panel instead
 
 A spare three-position toggle with nothing bound to it can flip the Transcript between
 Conversation, Technical and the log file — three detents, three pages. Each position gets a
@@ -118,7 +212,7 @@ sitting on a page the panel is not showing is annunciated like any other stale s
 what a switch will be assigned to, a momentary control can only ever mean a press, and saying a
 page out loud already covers the press.
 
-## When a mapping stops fitting
+### When a mapping stops fitting
 
 A mapping is stored against the device's `NonRoamableId` — never against its vendor and product
 ids. This matters more than it sounds.
@@ -129,7 +223,7 @@ change and quietly press button 15 of a block that is no longer the same block. 
 id changes, so instead the switch **fails closed**: the row says it needs reassigning, and
 nothing is pressed.
 
-## When something else is driving the same switch
+### When something else is driving the same switch
 
 If Directive 47 sets a state and it immediately goes back the other way, something else is bound
 to that action — a leftover Elite binding, or a vJoy device SimApp Pro or Joystick Gremlin is
@@ -143,7 +237,7 @@ Resume button; a restart clears it too.
 A mode change is not counted as unexplained. Hardpoints retract by themselves when you enter
 supercruise, and that is the game doing its job.
 
-## Switches that disagree with the game
+### Switches that disagree with the game
 
 A stale switch is harmless — it costs one extra flip — but only if you can see it coming. So the
 panel and the VR surface show which assigned switches currently sit against the game's state:
@@ -155,12 +249,12 @@ for the same reason: showing the state is cheap and moving the switch is not.
 
 You can also ask.
 
-## Ask for it
+### Ask for it
 
 > "which switches disagree"
 > "check my switches"
 
-### `report_switches`
+#### `report_switches`
 
 Reports only. It cannot assign, change, pause or clear a switch — assignment is reachable from
 the panel and from nowhere else, because the AI reads untrusted text and a hostile in-game
@@ -170,7 +264,7 @@ message must not be able to remap your throttle.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-## Where it is stored
+### Where it is stored
 
 `data/switches.json`, beside the executable like everything else Directive 47 writes. It is
 hand-editable, and it is re-read while running — a mapping edited in a text editor is live
@@ -208,7 +302,7 @@ position means rather than a naming rule a rename would silently break. The keys
 panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, and the
 roots of every other tab.
 
-## What it does not do
+### What it does not do
 
 - **It does not read axes.** A throttle axis is not a switch and is not in scope.
 - **It does not write your Elite bindings.** Those are read-only, always.

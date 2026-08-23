@@ -4,10 +4,95 @@ group: Voice
 nav_order: 121
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">The voice Directive 47 speaks in, what it costs, and the one command that outranks all of it.</p>
+<section>
+<h2><span class="num">1</span> “Stop” is the one to reach for.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="Stop is the shortest interrupt, and it ends the speaking while the turn keeps running">
+ <rect x="20" y="44" width="380" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="210" y="94" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text)">“stop”</text>
+ <text x="210" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">one syllable, four letters</text>
+ <rect x="460" y="44" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS THE TALKING</text>
+ <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">the turn keeps running,</text>
+ <text x="660" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">and keeps costing</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">An interrupt is judged on how fast you can say it.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">Everything else here is a longer way of saying it. Ctrl+Alt+X works from anywhere, Elite included.</text>
+</svg>
+<p class="body">If you want it to stop <em>working</em> rather than stop talking, that is cancelling the turn — which is a different word, on the Language model page, and the difference lands on your bill.</p>
+</section>
+<section>
+<h2><span class="num">2</span> The free voices are not the private ones.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="Edge Neural is free but sends every line to Microsoft; only the none provider sends nothing">
+ <rect x="20" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EDGE NEURAL</text>
+ <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">free, and sent to</text>
+ <text x="155" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">speech.platform.bing.com</text>
+ <rect x="305" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELEVENLABS</text>
+ <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">paid, and sent along</text>
+ <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">with your API key</text>
+ <rect x="590" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="725" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">NONE</text>
+ <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the only setting</text>
+ <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">that sends nothing</text>
+ <text x="440" y="200" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is easy to assume the free option is the private one. It is not.</text>
+ <text x="440" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">And “none” is a real choice rather than an off switch — the cues and the thinking loop still play.</text>
+</svg>
+<p class="body">Speech is billed by the <em>character</em> where it is billed at all, which is why it is counted separately from the model. The price row is an assumption you can correct; the characters-spoken row is a fact, counted at the one seam every caller passes.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Hear it before you choose it.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Every voice row carries a play glyph that speaks the core's own opening line without committing the choice">
+ <rect x="20" y="34" width="840" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="64" text-anchor="start" font-size="15" fill="var(--text-muted)">Play a voice to hear it. This provider costs nothing.</text>
+ <rect x="46" y="80" width="788" height="32" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="64" y="102" text-anchor="start" font-size="15" fill="var(--text-muted)">Bill — Wise, Mature, Balanced</text>
+ <polygon points="800,88 800,104 814,96" fill="var(--text-muted)"/>
+ <rect x="46" y="120" width="788" height="34" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="64" y="143" text-anchor="start" font-size="15" fill="var(--text)">George — Warm, Captivating Storyteller</text>
+ <polygon points="800,129 800,145 814,137" fill="var(--accent)"/>
+ <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">It speaks the core’s own opening line, not a neutral sample — you are casting a character.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">Clicking highlights and nothing more. “Use this”, Enter or a double-click takes it; Escape keeps what you had.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> An empty list says which empty it is.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Four different reasons a voice list can be empty, only two of which the Commander can fix">
+ <rect x="20" y="30" width="840" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="62" text-anchor="start" font-size="15" fill="var(--text)">…needs an API key before it will list its voices</text>
+ <text x="580" y="62" text-anchor="start" font-size="14" fill="var(--accent)">← yours to fix</text>
+ <text x="46" y="94" text-anchor="start" font-size="15" fill="var(--text)">…refused the stored key</text>
+ <text x="580" y="94" text-anchor="start" font-size="14" fill="var(--accent)">← yours to fix</text>
+ <text x="46" y="126" text-anchor="start" font-size="15" fill="var(--text-muted)">…could not be reached</text>
+ <text x="580" y="126" text-anchor="start" font-size="14" fill="var(--text-muted)">← waiting is the fix</text>
+ <text x="46" y="158" text-anchor="start" font-size="15" fill="var(--text-muted)">…answered, and has no voices on this account</text>
+ <text x="580" y="158" text-anchor="start" font-size="14" fill="var(--text-muted)">← nothing is wrong</text>
+ <text x="440" y="214" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Four reasons, and only two of them are yours to fix.</text>
+ <text x="440" y="244" text-anchor="middle" font-size="15" fill="var(--text-muted)">Before this they were one empty list telling you to type a voice id — a value you have no way of knowing.</text>
+</svg>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="audio.html"><span class="ct">Audio →</span><span class="cd">How loud it is, and what gets out of its way while it talks.</span></a>
+<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">Who the voice belongs to, and how a core is paired with one.</span></a>
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">The spoken-reply destination, beside every other one that is open.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Everything Directive 47 makes audible: spoken replies, the short sound that marks each stage of a
 turn, the quiet loop while it works, and the one command that outranks all of them.
 
-## Stopping it
+### Stopping it
 
 > "stop"
 > "shut up"
@@ -32,9 +117,9 @@ If you want it to stop *working* rather than stop talking, that is
 [cancelling the turn](conversation.md#cancel_turn) — stopping the voice leaves the turn running,
 and still costing.
 
-## Settings
+### Settings
 
-### Voice provider {#provider}
+#### Voice provider {#provider}
 
 | Value | Meaning |
 |---|---|
@@ -64,7 +149,7 @@ And if a voice is refused anyway — deleted from the account, or a mismatch not
 Directive 47 drops that one voice, says the sentence in the provider's own default, and stops
 using the refused id. One voice going bad no longer costs you the reply.
 
-### ElevenLabs API key {#api-key}
+#### ElevenLabs API key {#api-key}
 
 Only on screen while ElevenLabs is the selected provider. Stored encrypted for your Windows
 account, write-only — Directive 47 will show you whether one is present and let you replace it,
@@ -107,7 +192,7 @@ That is not decoration. ElevenLabs validates the voice id before the key, so a r
 wrong comes back as a `400` about the voice — and any status-code mapping worth writing would
 answer "it answered 400" and leave you guessing.
 
-### Voice {#voice}
+#### Voice {#voice}
 
 Which voice the core aboard speaks in. The list comes from the provider, so it is what that
 provider actually offers rather than a list written into Directive 47. You can also type a voice
@@ -124,7 +209,7 @@ the picker's **Use the default** button is that same act under a name. With no m
 there is nothing to pick with, so clearing it leaves that core on the provider's own default —
 which is what the button says in that case, because it is a different outcome.
 
-#### Hear it before you choose it
+##### Hear it before you choose it
 
 The picker lists several hundred names, and you are casting a character from them. "Bill - Wise,
 Mature, Balanced" and "George - Warm, Captivating Storyteller" are both true and neither tells
@@ -153,7 +238,7 @@ queueing behind it.
 With no provider selected, or with a paid provider and no key stored, the glyphs are shut and the
 line above the list says which of those it is.
 
-#### An empty list says which empty it is
+##### An empty list says which empty it is
 
 A voice list can be empty for four different reasons and only two of them are yours to fix. The
 picker says which:
@@ -168,7 +253,7 @@ picker says which:
 Before this they were one empty list under one sentence telling you to type the value you want,
 which for a voice id is a value you have no way of knowing.
 
-#### Choices survive a provider switch
+##### Choices survive a provider switch
 
 A voice id means nothing to a provider that did not issue it, so switching provider still empties
 every voice row. It no longer *loses* them: the ship AI's voice, both carrier roles and all
@@ -179,7 +264,7 @@ cores are not re-picked from scratch.
 A settings file written before Directive 47 recorded whose voices were whose has nothing to file
 them under, so those are dropped rather than filed under a guess.
 
-### Speaking rate {#rate}
+#### Speaking rate {#rate}
 
 `1.0` is the voice's natural pace; `1.2` is a fifth faster.
 
@@ -193,7 +278,7 @@ ElevenLabs accepts `0.7` to `1.2` and rejects anything outside that outright —
 arrives as silence, so a wider value is clamped to the nearest one it will take rather than
 being sent and failing.
 
-### What the voices cost {#voice-cost}
+#### What the voices cost {#voice-cost}
 
 Speech is billed **by the character** where it is billed at all. ElevenLabs charges per
 character, Edge Neural charges nothing, and quoting either in tokens would be a number whose
@@ -227,7 +312,7 @@ The same line appears beside the model's price on the panel's status row after e
 the answer to *"what has this session cost"*, so the question has one answer rather than one per
 subsystem.
 
-### Other voices {#carrier-voices}
+#### Other voices {#carrier-voices}
 
 Directive 47 speaks as more than one person from Phase 11 onwards. Each of these is a different
 voice from your ship's AI, and leaving one empty means it borrows the ship AI's rather than
@@ -245,7 +330,7 @@ Both offer the same play glyphs as the voice row, and both audition as themselve
 reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is what you
 are actually listening for when you cast one.
 
-### Speak incoming messages {#incoming-messages}
+#### Speak incoming messages {#incoming-messages}
 
 Reads in-game chat aloud, each sender in their own voice — never your ship AI's, because a
 message arriving in your companion's voice reads as your companion saying it.
@@ -266,14 +351,14 @@ as wanting all of that.
 In-game messages are never treated as instructions. The text goes to the synthesiser and to your
 screen; it does not reach the model as something to act on.
 
-### Output device {#output-device}
+#### Output device {#output-device}
 
 Where Directive 47 speaks, defaulting to whatever Windows is using. Change it and it moves
 immediately. If a device is unplugged it falls back to the default rather than going quiet.
 
 It shares the device rather than taking it over — the game is what matters on that output.
 
-### Loop-state cues {#cues}
+#### Loop-state cues {#cues}
 
 One short sound per stage, so you can tell what it is doing without looking.
 
@@ -288,7 +373,7 @@ One short sound per stage, so you can tell what it is doing without looking.
 | `unsure` | A falling minor third — it does not know, which is different from failing. |
 | `failed` | A falling whole tone. |
 
-### Thinking bed {#thinking-bed}
+#### Thinking bed {#thinking-bed}
 
 A quiet loop while a turn runs, so a slow answer sounds like Directive 47 working rather than
 Directive 47 ignoring you. It drops under the speech instead of stopping, and it ends the moment
@@ -296,7 +381,7 @@ the first words arrive rather than when the turn does.
 
 Two are included: `thinking-hum` and `thinking-pulse`.
 
-### Stop speaking {#shut-up}
+#### Stop speaking {#shut-up}
 
 The key that silences it, described above. Bound system-wide rather than only when Directive 47
 has focus, because the moment you want it is the moment Elite is in front.
@@ -305,7 +390,7 @@ has focus, because the moment you want it is the moment Elite is in front.
 but not by anything the model calls. A model able to unbind your stop button has removed the one
 control that outranks it.
 
-### When a turn fails {#retry}
+#### When a turn fails {#retry}
 
 A turn that stalls is answered out loud rather than left as silence, because silence is
 indistinguishable from having been ignored.
@@ -327,7 +412,7 @@ When the attempts run out, it tells you:
 I couldn't reach the model after 3 tries. Overloaded.
 ```
 
-### What the voice provider receives {#egress}
+#### What the voice provider receives {#egress}
 
 This row states the disclosure for whichever provider you have selected, not a fixed one:
 
@@ -350,7 +435,7 @@ was added in Phase 11 and should have existed from Phase 5: until then the discl
 text-to-speech row at all, so every word Directive 47 said went to Microsoft without appearing
 anywhere in the list of what leaves this machine.
 
-## If the voice stops working
+### If the voice stops working
 
 Edge Neural is a free service that Directive 47 does not control, and it can change without
 warning. If speech stops while everything else keeps working, that is the first thing to suspect.
@@ -359,7 +444,7 @@ Switching the voice provider to `none` leaves the rest of the app fully usable i
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `stop_speaking`
+#### `stop_speaking`
 
 Takes no arguments.
 

@@ -4,6 +4,68 @@ group: Knowledge
 nav_order: 118
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">What community goals are running, what tier they have reached, and how you are doing in them.</p>
+<section>
+<h2><span class="num">1</span> Your journal already knows most of this.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The journal carries the whole community goal board, and an Inara key only adds goals running where you have not been">
+ <rect x="20" y="40" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
+ <text x="220" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole board: tier, contributors,</text>
+ <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">handed in, and your own share</text>
+ <rect x="460" y="40" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHAT A KEY BUYS</text>
+ <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">goals running somewhere</text>
+ <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">you have not been</text>
+ <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text)">The event is written off the noticeboard at a station, so it reports where you are.</text>
+ <text x="440" y="228" text-anchor="middle" font-size="15" fill="var(--text-muted)">Which is narrower than “everything you have not joined” — your journal covers that on its own.</text>
+</svg>
+<p class="body">The key <em>is</em> the switch: with none stored, nothing is requested and nothing leaves this machine. What goes to Inara is your key and nothing else — not your Commander name, not your Frontier id, not where you are.</p>
+</section>
+<section>
+<h2><span class="num">2</span> The trap: the board is a snapshot, not a list of live goals.</h2>
+<svg viewBox="0 0 880 244" role="img" aria-label="A board written on 21 January reported a goal that had already ended on the 17th">
+ <rect x="20" y="36" width="840" height="100" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">a board reported on 21 January…</text>
+ <text x="46" y="108" text-anchor="start" font-size="16" fill="var(--danger)">…for a goal that ended on the 17th, still carrying “IsComplete: true”</text>
+ <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">It fires every time you dock, so a stale entry is the common case, not the edge one.</text>
+ <text x="440" y="204" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So every goal is checked against the clock before it is listed.</text>
+ <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">The deadline sits on the second line of every entry rather than buried among the figures.</text>
+</svg>
+<p class="body">Announcing a finished goal as something you can still fly for is a wrong answer that reads exactly like the feature working. Expired ones are hidden unless you ask — which is how you find out what a goal paid you.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Two sources, never blended.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="Journal goals and Inara goals are listed separately and merged only on an exact name match">
+ <rect x="20" y="40" width="390" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="215" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM YOUR JOURNAL</text>
+ <text x="215" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">and what you handed in</text>
+ <line x1="440" y1="36" x2="440" y2="148" stroke="var(--border)" stroke-width="2"/>
+ <rect x="470" y="40" width="390" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="665" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM INARA</text>
+ <text x="665" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">and never your standing</text>
+ <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A duplicate is visible. A wrong merge is silent.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">A listing entry carries no id, so the only shared field is the name — the field two sources spell differently.</text>
+</svg>
+<p class="body">Inara knows what the world handed in; your journal knows what <em>you</em> handed in. And if the listing fails you do not lose the journal half — the goals you have seen are reported as usual, with the reason for the missing half added at the end.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="journal.html"><span class="ct">Journal →</span><span class="cd">The file all of this is read out of, and what else is in it.</span></a>
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">What the Inara request actually contains, computed rather than claimed.</span></a>
+<a class="card" href="routes.html"><span class="ct">Routes →</span><span class="cd">Getting to the station a goal is flown from.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 What community goals are running, what tier they have reached, and how you are doing in them.
 
 > "what community goals are running"
@@ -13,7 +75,7 @@ What community goals are running, what tier they have reached, and how you are d
 Most of this comes off your own journal and needs nothing. The one thing it cannot do without a key
 is see a goal running somewhere you have not been.
 
-## Your journal already knows more than you would expect
+### Your journal already knows more than you would expect
 
 Elite writes a `CommunityGoal` event carrying the whole board — the goal, where it is flown, the
 tier it has reached, how many Commanders are on it, how much has been handed in, your own
@@ -28,7 +90,7 @@ you about goals they merely docked near and never joined.
 So the line an outside source buys is **everywhere you have not been**, which is wider than
 "everything you have not joined". Your journal covers the second one on its own.
 
-## The trap: the board is a snapshot, not a list of live goals
+### The trap: the board is a snapshot, not a list of live goals
 
 The same corpus holds a board reported on 21 January for a goal that ended on the 17th, carrying
 `IsComplete: true`. Four days stale — and because the event fires every time you dock, a stale
@@ -60,7 +122,7 @@ than buried in the figures.
 Expired goals are hidden unless you ask for them — `include_finished` — because an expired goal
 cannot be contributed to. Asking for them is how you find out what a goal paid you.
 
-## Inara API key
+### Inara API key
 
 The one setting, and there is no separate on/off switch: **the key is the switch**. With no key
 stored, nothing is requested and nothing leaves this machine, and the answer says plainly that it
@@ -78,7 +140,7 @@ d47 does not use a shared application key, though Inara issues them for read-onl
 this one. d47 ships as a public binary with its source beside it, so a key baked into it would be a
 published key, and a published key gets abused until it is revoked for everybody.
 
-## Two sources, never blended
+### Two sources, never blended
 
 Goals from Inara are listed separately, under a line saying so:
 
@@ -101,7 +163,7 @@ a wrong merge is silent.
 Your standing never comes from Inara. It knows what the world handed in; your journal knows what
 *you* handed in.
 
-## When Inara cannot answer
+### When Inara cannot answer
 
 The listing failing does not lose you the journal half. The goals you have seen are reported as
 usual and the reason for the missing half is added at the end:
@@ -115,15 +177,15 @@ all arrive as 200 with a status code inside the body. Reading the transport code
 would report a rejected key as an empty board, which is the one wrong answer here that looks
 exactly like a right one.
 
-## Tools
+### Tools
 
-### `get_community_goals`
+#### `get_community_goals`
 
 ```json
 {"type":"object","properties":{"include_finished":{"type":"boolean","description":"Also list goals that have already expired, with what they paid out. Default false \u2014 an expired goal cannot be contributed to."},"name":{"type":"string","description":"Only goals whose title contains this. Leave out for all of them."}},"required":[],"additionalProperties":false}
 ```
 
-## Notes for anyone reading the code
+### Notes for anyone reading the code
 
 The board is **merged by `CGID`, never replaced.** `CurrentGoals` looks like a complete board per
 event, which would argue for replacing it — but it is the board at *one station*, and no station in
