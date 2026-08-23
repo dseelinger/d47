@@ -41,6 +41,8 @@ public sealed class ShipsMode(
 
     public string SlotPrefix => LoadoutPages.SlotPrefix;
 
+    public string? SlotHelp => D47.Core.Capabilities.Builtin.EngineeringCapability.Id;
+
     /// <summary>
     /// Two things move a ship page, and only one of them was wired (remediation.md 17, item 7).
     /// <para>

@@ -1,4 +1,40 @@
+using D47.Core.Interface;
+
 namespace D47.Core.Help;
+
+/// <summary>
+/// The level help takes the panel with (asked for 2026-08-22).
+/// <para>
+/// Here rather than beside the drawing, because both routes to help have to build the same
+/// crumb: the mark in the corner, which the view owns, and the spoken phrase, which
+/// <see cref="PanelPhrases"/> owns and which cannot see the view at all. Two spellings of one
+/// key is how the drawn route and the spoken one drift apart.
+/// </para>
+/// </summary>
+public static class HelpLevel
+{
+    /// <summary>How a help level is keyed, so the page rebuilds from the trail alone.</summary>
+    public const string Prefix = "help:";
+
+    /// <summary>The crumb that takes the panel for one capability's help.</summary>
+    public static NavCrumb For(string capabilityId) => new(Prefix + capabilityId, "Help");
+
+    /// <summary>The capability a help crumb is about, or the key itself if it is not one.</summary>
+    public static string CapabilityOf(NavCrumb crumb) =>
+        crumb.Key.StartsWith(Prefix, StringComparison.Ordinal)
+            ? crumb.Key[Prefix.Length..]
+            : crumb.Key;
+
+    /// <summary>
+    /// Opens help for wherever the Commander is standing, and says so. Null when there is nothing
+    /// to open — no band for this level, or a chooser already holding the panel.
+    /// </summary>
+    public static bool Open(PanelNavigator nav) =>
+        !nav.Modal
+        && nav.Help is { Length: > 0 } capability
+        && HelpLibrary.For(capability) is not null
+        && nav.Take(For(capability));
+}
 
 /// <summary>
 /// One page's short-form help — the ELI5 band from the top of its documentation page, as data

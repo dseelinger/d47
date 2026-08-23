@@ -114,7 +114,15 @@ public static class LoadoutPages
     /// item drops it, a slot of the ship you just left cannot stay on the trail.
     /// </summary>
     public static NavCrumb SlotCrumb(ILoadoutMode mode, LoadoutRow row) =>
-        new(mode.SlotPrefix + row.Key, row.Word) { Level = mode.SlotPrefix };
+        new(mode.SlotPrefix + row.Key, row.Word)
+        {
+            Level = mode.SlotPrefix,
+
+            // A slot is where a blueprint is chosen, so its help is the blueprint page rather
+            // than the fleet page the root declares. The mode says which, because the two modes
+            // do not mean the same thing by a slot.
+            Help = mode.SlotHelp,
+        };
 
     internal static (string Item, string Slot) SplitSlot(string key)
     {

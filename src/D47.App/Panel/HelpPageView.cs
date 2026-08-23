@@ -252,12 +252,11 @@ public sealed class HelpFigureView : Control
 /// </summary>
 public static class HelpPageView
 {
-    /// <summary>How a help level is keyed, so the page rebuilds from the trail alone.</summary>
-    public const string CrumbPrefix = "help:";
+    /// <summary>How a help level is keyed. One spelling, shared with the spoken route.</summary>
+    public const string CrumbPrefix = HelpLevel.Prefix;
 
     /// <summary>The crumb that takes the panel for one capability's help.</summary>
-    public static NavCrumb Crumb(string capabilityId) =>
-        new(CrumbPrefix + capabilityId, "Help");
+    public static NavCrumb Crumb(string capabilityId) => HelpLevel.For(capabilityId);
 
     /// <summary>Whether there is anything to show for this capability.</summary>
     public static bool Exists(string? capabilityId) =>
@@ -271,9 +270,7 @@ public static class HelpPageView
     /// </param>
     public static Control Build(NavCrumb crumb, PanelNavigator nav, Action<string>? openUrl)
     {
-        var id = crumb.Key.StartsWith(CrumbPrefix, StringComparison.Ordinal)
-            ? crumb.Key[CrumbPrefix.Length..]
-            : crumb.Key;
+        var id = HelpLevel.CapabilityOf(crumb);
 
         return HelpLibrary.For(id) is { } article ? Build(article, nav, openUrl) : Missing(id);
     }

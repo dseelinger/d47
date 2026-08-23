@@ -454,4 +454,33 @@ public class HelpInTheHeadsetTests
 
         panel.Dispose();
     }
+
+    /// <summary>
+    /// <b>Help, asked for out loud, on the quad.</b> This is the route that matters here: the mark
+    /// needs a ray, and a Commander wearing a headset has their hands on a stick. Everything below
+    /// goes through the same phrase matcher the rest of the panel's spoken navigation does, so
+    /// there is no second vocabulary to keep in step.
+    /// </summary>
+    [AvaloniaFact]
+    public void HelpOpensBySayingSoInTheHeadset()
+    {
+        var (panel, view, _) = Headset();
+
+        Assert.Equal("Help.", PanelPhrases.Apply("what is this", panel.Nav));
+
+        Serve(panel);
+
+        Assert.True(view.Nav.Modal);
+        Assert.Equal(4, view.GetVisualDescendants().OfType<HelpFigureView>().Count());
+
+        // And out again by the same word that leaves any other level.
+        Assert.Equal("Back to Directory.", PanelPhrases.Apply("back", panel.Nav));
+
+        Serve(panel);
+
+        Assert.False(view.Nav.Modal);
+        Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());
+
+        panel.Dispose();
+    }
 }
