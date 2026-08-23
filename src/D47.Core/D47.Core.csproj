@@ -54,6 +54,14 @@
   -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\docs\capabilities\*.md" LogicalName="D47.Core.Help.%(Filename)" />
+
+    <!--
+      The three general help pages — Overview, Installing, Talking to Directive 47 — which live a
+      folder up and are not capabilities. Prefixed, because docs/conversation.md and
+      docs/capabilities/conversation.md would otherwise both want the name "conversation" and one
+      would silently win.
+    -->
+    <EmbeddedResource Include="..\..\docs\*.md" LogicalName="D47.Core.Help.general-%(Filename)" />
   </ItemGroup>
 
 </Project>

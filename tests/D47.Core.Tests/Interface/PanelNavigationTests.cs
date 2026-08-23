@@ -452,18 +452,39 @@ public class PanelNavigationTests
     }
 
     /// <summary>
-    /// A level whose page has no band yet answers nothing, so the phrase falls through to the
-    /// model rather than telling somebody who asked for help that there is none.
+    /// A level whose page has no band opens the index instead of answering nothing.
+    /// <para>
+    /// This asserted a fall-through until the index was written, on the reasoning that answering
+    /// "there is none" to somebody asking for help is worse than letting the model try. Opening
+    /// one level broader is better than either.
+    /// </para>
     /// </summary>
     [Fact]
-    public void SayingItWhereNothingIsWrittenFallsThrough()
+    public void SayingItWhereNothingIsWrittenOpensTheIndex()
     {
         var nav = new PanelNavigator();
 
         nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = "no-such-page" });
         nav.Select(PanelTab.Utilities);
 
+        Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
+        Assert.Equal("help:help", nav.Trail[^1].Key);
+    }
+
+    /// <summary>Asking again while it is open is refused rather than stacking a second copy.</summary>
+    [Fact]
+    public void AskingTwiceDoesNotStackHelpOnHelp()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Select(PanelTab.Engineers);
+
+        Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
+
+        var depth = nav.Trail.Count;
+
         Assert.Null(PanelPhrases.Apply("help", nav));
-        Assert.False(nav.Modal);
+        Assert.Equal(depth, nav.Trail.Count);
     }
 }

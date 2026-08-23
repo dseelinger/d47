@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.Core.Help;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -1161,7 +1162,9 @@ public partial class PanelView : UserControl
     /// reason it lost the button was that the only thing behind it was a browser it could not see.
     /// </summary>
     private void ShowHelpAffordance() =>
-        HelpButton.IsVisible = _openHelp is not null || HelpPageView.Exists(Nav.Help);
+        HelpButton.IsVisible = _openHelp is not null
+            || HelpPageView.Exists(Nav.Help)
+            || HelpPageView.Exists(HelpLevel.Index);
 
     /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
@@ -1181,10 +1184,12 @@ public partial class PanelView : UserControl
             return false;
         }
 
-        // Whatever the level being looked at claims, or the level above it, up to the root.
-        if (HelpPageView.Exists(Nav.Help))
+        // Whatever the level being looked at claims, or the level above it, up to the root — and
+        // the index when this level has nothing of its own. One call, so the mark and the spoken
+        // phrase cannot disagree about what help means here.
+        if (HelpLevel.Open(Nav))
         {
-            return Nav.Take(HelpPageView.Crumb(Nav.Help!));
+            return true;
         }
 
         if (_openHelp is null)
@@ -1192,7 +1197,7 @@ public partial class PanelView : UserControl
             return false;
         }
 
-        // Nothing drawn for here yet, and a desktop to fall out to. The site is still the long
+        // Not even an index drawn yet, and a desktop to fall out to. The site is still the long
         // form, and this is the behaviour the window has always had.
         _openHelp(DocsSite.Root);
         return true;

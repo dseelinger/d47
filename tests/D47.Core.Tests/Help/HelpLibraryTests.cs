@@ -241,9 +241,11 @@ public class HelpLibraryTests
         Assert.Equal("ships", article.Links[0].Article);
         Assert.Null(article.Links[0].Href);
 
-        // A path up out of the folder is not a sibling, whatever it looks like.
-        Assert.Null(article.Links[1].Article);
-        Assert.Equal("../conversation.html", article.Links[1].Href);
+        // A path one folder up reaches a general help page, which this build also carries — so it
+        // is a destination rather than an address. Prefixed, because docs/conversation.md and
+        // docs/capabilities/conversation.md would otherwise both be called "conversation".
+        Assert.Equal("general-conversation", article.Links[1].Article);
+        Assert.Null(article.Links[1].Href);
 
         Assert.Null(article.Links[2].Article);
         Assert.Equal("https://example.invalid/x", article.Links[2].Href);
@@ -316,5 +318,36 @@ public class HelpLibraryTests
         Assert.Single(article.Sections);
         Assert.Equal("A step.", article.Sections[0].Heading);
         Assert.Equal("ships", Assert.Single(article.Links).Article);
+    }
+
+    /// <summary>
+    /// The three general pages are carried too, under a prefix. Overview and Installing are read
+    /// on a monitor, but <em>Talking to Directive 47</em> is exactly the sort of thing wanted in a
+    /// headset — and until they were embedded it was the one band written that nothing could
+    /// reach.
+    /// </summary>
+    [Fact]
+    public void TheGeneralPagesAreCarriedToo()
+    {
+        foreach (var id in new[] { "general-index", "general-install", "general-conversation" })
+        {
+            Assert.True(HelpLibrary.For(id) is not null, $"{id} parsed to null");
+        }
+
+        // And they did not take a capability's name with them on the way in. Compared as raw
+        // pages rather than as parsed articles, because docs/capabilities/conversation.md has no
+        // band yet — the collision is between two files, not between two bands.
+        Assert.Contains("title: Language model", HelpLibrary.PageFor("conversation"));
+        Assert.Contains("title: Talking to Directive 47", HelpLibrary.PageFor("general-conversation"));
+    }
+
+    /// <summary>A page carries where it sits, so the in-app index can read in the site's order.</summary>
+    [Fact]
+    public void APageKnowsItsGroupAndItsPlaceInTheNav()
+    {
+        var engineers = HelpLibrary.For("engineers")!;
+
+        Assert.Equal("Knowledge", engineers.Group);
+        Assert.Equal(107, engineers.NavOrder);
     }
 }
