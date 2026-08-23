@@ -4,6 +4,82 @@ group: Knowledge
 nav_order: 113
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">What your build still needs, what you are already carrying, and how many runs are left.</p>
+<section>
+<h2><span class="num">1</span> The sum you would otherwise do on paper.</h2>
+<svg viewBox="0 0 880 262" role="img" aria-label="What the site needs minus what is in your hold is what is left to find, divided by your capacity">
+ <rect x="20" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="140" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">687 t</text>
+ <text x="140" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">the site still needs</text>
+ <text x="290" y="82" text-anchor="middle" font-size="28" font-weight="800" fill="var(--text-muted)">−</text>
+ <rect x="320" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">309 t</text>
+ <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">already in your hold</text>
+ <text x="590" y="82" text-anchor="middle" font-size="28" font-weight="800" fill="var(--text-muted)">=</text>
+ <rect x="620" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="740" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent)">378 t</text>
+ <text x="740" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">left to go and find</text>
+ <line x1="740" y1="128" x2="740" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="740,166 732,150 748,150" fill="var(--accent-muted)"/>
+ <rect x="320" y="176" width="540" height="58" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="590" y="212" text-anchor="middle" font-size="18" fill="var(--text)">at 720 t a run, that is 1 more full load</text>
+ <text x="440" y="256" text-anchor="middle" font-size="16" fill="var(--text-muted)">Your ship's capacity comes from its own loadout, so the run count is yours rather than generic.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> These figures are from your last visit.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="A site reports its manifest only while you are docked, so the numbers are a record rather than a feed">
+ <line x1="60" y1="120" x2="820" y2="120" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+ <circle cx="200" cy="120" r="11" fill="var(--accent)"/>
+ <text x="200" y="88" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">you were docked</text>
+ <text x="200" y="158" text-anchor="middle" font-size="16" fill="var(--text-muted)">the site told you everything</text>
+ <text x="200" y="182" text-anchor="middle" font-size="16" fill="var(--text-muted)">10:00, and D47 wrote it down</text>
+ <circle cx="700" cy="120" r="11" fill="none" stroke="var(--text-muted)" stroke-width="3"/>
+ <text x="700" y="88" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">now</text>
+ <text x="700" y="158" text-anchor="middle" font-size="16" fill="var(--text-muted)">somebody else may have</text>
+ <text x="700" y="182" text-anchor="middle" font-size="16" fill="var(--text-muted)">delivered ten minutes ago</text>
+ <text x="450" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">nothing on your disk says so</text>
+ <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A site reports its manifest only while you are standing on it.</text>
+ <text x="440" y="258" text-anchor="middle" font-size="16" fill="var(--text-muted)">6,307 of 6,330 events across 912 journals. So this is a record of where you have been.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Whose number is whose.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="Your hold is exact, delivered totals are everybody's, and a carrier reports tonnage with no manifest">
+ <rect x="30" y="20" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="66" y="50" font-size="19" font-weight="800" fill="var(--accent)">YOUR HOLD</text>
+ <text x="66" y="74" font-size="15" fill="var(--text-muted)">exact, and yours alone</text>
+ <text x="820" y="62" text-anchor="end" font-size="17" fill="var(--text)">309 t</text>
+ <rect x="30" y="100" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="66" y="130" font-size="19" font-weight="800" fill="var(--text)">DELIVERED SO FAR</text>
+ <text x="66" y="154" font-size="15" fill="var(--text-muted)">everybody's, not just yours</text>
+ <text x="820" y="142" text-anchor="end" font-size="17" fill="var(--text)">100 of 500</text>
+ <rect x="30" y="180" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="66" y="210" font-size="19" font-weight="800" fill="var(--text-muted)">YOUR CARRIER</text>
+ <text x="66" y="234" font-size="15" fill="var(--text-muted)">a tonnage and nothing else — Elite never writes what it is</text>
+ <text x="820" y="222" text-anchor="end" font-size="17" fill="var(--text)">656 t of something</text>
+ <text x="440" y="264" text-anchor="middle" font-size="16" fill="var(--text-muted)">Said apart on purpose, because adding them together would invent a number.</text>
+</svg>
+<p class="body">Tracking a build needs no key, no account and nothing off this machine — it is subtraction over what Elite has already written to your disk. Finding somewhere to build is a different question, and it goes out to the galaxy index like every other one that leaves.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a construction site sits beside everything else you are working on.</span></a>
+<a class="card" href="galaxy.html"><span class="ct">Galaxy search →</span><span class="cd">Finding somewhere worth colonising, which is the half that leaves the machine.</span></a>
+<a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The hauler whose capacity decides how many runs are left.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 What your construction sites still need, what you are already carrying towards them, what is left to
 haul — and which nearby systems have the bodies your next colony wants.
 
@@ -19,7 +95,7 @@ chain of anything d47 ships. Finding somewhere to build is a question about the 
 to the same index and the same off switch as every other question that leaves this machine — see
 [galaxy search](galaxy.md).
 
-## The arithmetic you would otherwise be doing on paper
+### The arithmetic you would otherwise be doing on paper
 
 ```text
 Ratraii Construction Site, Ratraii — 25.7% built, seen 2026-08-16 10:00 game time.
@@ -43,7 +119,7 @@ rather than live ones. Others may have delivered since.
 Every number there comes off one of three places: the site's own manifest, `Cargo.json`, and your
 ship's cargo capacity from its `Loadout`.
 
-## The one thing to know: these figures are from your last visit
+### The one thing to know: these figures are from your last visit
 
 A construction site reports its manifest **only while you are docked at it** — 6,307 of 6,330 events
 measured across a 912-journal corpus. So what d47 holds is a record of where you have been, not a
@@ -71,7 +147,7 @@ to keep:
 `Name_Localised` is on every one of those 120,208 rows, which is why this needs no commodity table
 at all — not even the one d47 already ships for other things.
 
-## Several sites at once
+### Several sites at once
 
 Three were open simultaneously in the corpus, so this is a list rather than a "current site". With
 one under construction, asking what is needed just answers; with several, d47 names them and asks
@@ -82,7 +158,7 @@ A finished site keeps reporting for a while — 2 to 60 more events after it com
 **completion is the `ConstructionComplete` flag and never "the events stopped"**. Complete and failed
 sites are out of the way unless you ask for them.
 
-## What is in your hold
+### What is in your hold
 
 This comes from `Cargo.json` rather than from the journal, and that is not a preference. The `Cargo`
 event carries its full `Inventory` on only **1,151 of 13,762** occurrences measured — essentially the
@@ -100,7 +176,7 @@ Two things d47 is careful about here:
   rather than assumed — eight tonnes of scoopings reported as your ship's four hundred would be a
   wrong answer nobody could see was wrong.
 
-## What is on your carrier: a tonnage, and no manifest
+### What is on your carrier: a tonnage, and no manifest
 
 d47 will tell you how many tonnes your carrier is holding, and will not tell you what they are. That
 is a measured refusal rather than a gap.
@@ -120,7 +196,7 @@ Commander's delivery, anything loaded before the file d47 is reading. So an item
 manifest would be wrong twice as often as right, and it would look authoritative every time. The
 tonnage is the honest half.
 
-## Your deliveries, apart from everybody else's
+### Your deliveries, apart from everybody else's
 
 `ProvidedAmount` on the manifest is what *everybody* has handed in. On a build several Commanders are
 hauling for, "did my run land" is a different question, and `ColonisationContribution` answers it.
@@ -141,7 +217,7 @@ would join the depot to the hold perfectly and match **no contribution against a
 a delivery you had just completed as never having happened. Names are folded to lowercase for exactly
 that reason.
 
-## Somewhere to put the next one
+### Somewhere to put the next one
 
 The claim rule is Frontier's, in their own words: the System Colonisation Contact offers you "a
 nearby unpopulated star system (within a max distance of 15ly)". Both halves of that are checkable
@@ -189,7 +265,7 @@ that example**. Those are not small systems and they are not empty ones; they ar
 nothing known about them, which on a frontier is often exactly where you would go and look. They are
 counted rather than recommended, and counted rather than quietly dropped.
 
-### What this cannot be: telling you a system is free
+#### What this cannot be: telling you a system is free
 
 **A claim is invisible to everybody except the Commander who made it.** That is not a gap waiting on
 a better source; it is structural, and it was measured before this was built.
@@ -207,7 +283,7 @@ So any "is this free" answer would be stale by up to 24 hours and could not be m
 says which systems have what you want, and the Galaxy Map at a System Colonisation Contact says
 which ones you can have.
 
-### What it can say, and where each half comes from
+#### What it can say, and where each half comes from
 
 | | Where it comes from |
 |---|---|
@@ -224,7 +300,7 @@ by distance. And it **does not tell you which facility wants which body** — Fr
 facility list and not one figure behind it, so the strategy half is a web search with a source
 attached, never a table shipped in d47's own voice.
 
-### Two traps in the index, both of which read as right answers
+#### Two traps in the index, both of which read as right answers
 
 Neither of these produces an error. Both were measured on 2026-08-16 and both are the reason this
 tool decides things locally rather than asking the index to decide them.
@@ -240,7 +316,7 @@ rule to what comes back.
 "true" whenever it is present. Asking for `"false"` returned the same sixteen systems as `"true"`,
 and so did asking for `"banana"`. Neither flag is ever sent.
 
-## What this does not do
+### What this does not do
 
 **Planning** — an objective, which facilities to build and in what order — is not here. It lives on
 the [checklist](checklists.md), beside your ship builds, because a colonisation build is the same
@@ -252,9 +328,9 @@ no licence-clean route to them. See
 **Predicting a site's manifest before you have seen it** is the same problem, and for the same
 reason. A site tells d47 what it wants; d47 does not guess.
 
-## Tools
+### Tools
 
-### `get_construction_sites`
+#### `get_construction_sites`
 
 Every site your journal has reported: where it is, how far along it is, how many commodities are
 outstanding, and when you last saw it.
@@ -263,7 +339,7 @@ outstanding, and when you last saw it.
 {"type":"object","properties":{"include_finished":{"type":"boolean","description":"Also list sites that are complete or have failed. Default false \u2014 a finished site cannot be hauled to."}},"required":[],"additionalProperties":false}
 ```
 
-### `get_construction_needs`
+#### `get_construction_needs`
 
 The hauling list for one site: every commodity still outstanding, how much is left of each, how much
 is already aboard, and how many runs the ship's capacity implies.
@@ -272,7 +348,7 @@ is already aboard, and how many runs the ship's capacity implies.
 {"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."}},"required":[],"additionalProperties":false}
 ```
 
-### `find_colonisation_candidates`
+#### `find_colonisation_candidates`
 
 Unpopulated systems within claim range that hold the bodies a colony wants, and the sentence saying
 what that does not mean.

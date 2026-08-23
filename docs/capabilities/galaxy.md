@@ -4,6 +4,79 @@ group: Knowledge
 nav_order: 104
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
+<section>
+<h2><span class="num">1</span> Off until you turn it on.</h2>
+<svg viewBox="0 0 880 236" role="img" aria-label="Two separate switches, both off by default">
+ <rect x="20" y="24" width="410" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="52" y="52" width="66" height="32" rx="16" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
+ <circle cx="69" cy="68" r="10" fill="var(--text-muted)"/>
+ <text x="136" y="76" font-size="19" font-weight="800" fill="var(--text)">GALAXY SEARCH</text>
+ <text x="52" y="118" font-size="16" fill="var(--text-muted)">asking spansh.co.uk about a system</text>
+ <rect x="450" y="24" width="410" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="482" y="52" width="66" height="32" rx="16" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
+ <circle cx="499" cy="68" r="10" fill="var(--text-muted)"/>
+ <text x="566" y="76" font-size="19" font-weight="800" fill="var(--text)">NOTABLE PLACES</text>
+ <text x="482" y="118" font-size="16" fill="var(--text-muted)">the catalogue an adventure picks stops from</text>
+ <text x="440" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Two switches, both off out of the box, and neither turns the other on.</text>
+ <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">Switched off, asking gets you “I can't look that up” — a capability that is off, not an error.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> What actually leaves, when it is on.</h2>
+<svg viewBox="0 0 880 260" role="img" aria-label="The system name, any filters, and where you are — and nothing else">
+ <rect x="30" y="24" width="380" height="196" rx="12" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
+ <text x="54" y="52" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
+ <rect x="66" y="70" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="221" y="96" text-anchor="middle" font-size="16" fill="var(--text)">the system you asked about</text>
+ <rect x="66" y="122" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="221" y="148" text-anchor="middle" font-size="16" fill="var(--text)">your filters — allegiance, distance</text>
+ <rect x="66" y="174" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="221" y="200" text-anchor="middle" font-size="16" fill="var(--text)">where you are</text>
+ <line x1="420" y1="122" x2="466" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="480,122 464,114 464,130" fill="var(--accent-muted)"/>
+ <rect x="494" y="86" width="356" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="672" y="118" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">spansh.co.uk</text>
+ <text x="672" y="142" text-anchor="middle" font-size="15" fill="var(--text-muted)">no key, no identifier, nothing else</text>
+ <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Where you are goes only when the question is relative to you — “the nearest high tech system”</text>
+ <text x="440" y="258" text-anchor="middle" font-size="16" fill="var(--text-muted)">cannot be asked without saying where from.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> The other one runs the other way.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="The catalogue is downloaded whole and the choosing happens on your machine">
+ <rect x="30" y="30" width="330" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="195" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">edastro.com</text>
+ <text x="195" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">the whole catalogue, about 2 MB</text>
+ <line x1="420" y1="74" x2="466" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="480,74 464,66 464,82" fill="var(--accent-muted)"/>
+ <rect x="494" y="20" width="356" height="108" rx="12" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="9 7"/>
+ <text x="518" y="48" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
+ <text x="672" y="82" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">the choosing happens here</text>
+ <text x="672" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">kept in memory, never written to disk</text>
+ <text x="440" y="176" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing about you goes with that request. Not even where you are.</text>
+ <text x="440" y="208" text-anchor="middle" font-size="16" fill="var(--text-muted)">One asks a question and gets an answer; the other fetches a list and reads it at home.</text>
+</svg>
+<p class="body">You never have to take this page's word for any of it. The Privacy report works the same list out from your actual settings rather than repeating it here, so a page going stale cannot make it wrong.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">Everything that leaves, computed from your settings rather than promised.</span></a>
+<a class="card" href="colonisation.html"><span class="ct">Colonisation →</span><span class="cd">Finding somewhere worth building, which is what this is often for.</span></a>
+<a class="card" href="routes.html"><span class="ct">Route planning →</span><span class="cd">Getting to the system once you have found it.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Look up star systems, and work out how far apart two of them are.
 
 > "how far is Colonia"
@@ -14,7 +87,7 @@ This is the first thing d47 does that needs the internet. It asks
 [spansh.co.uk](https://spansh.co.uk), which indexes the galaxy from data Commanders share, and
 it is **off until you turn it on**.
 
-## Look things up in the galaxy
+### Look things up in the galaxy
 
 The one setting. Off by default.
 
@@ -31,7 +104,7 @@ list rather than repeating it by hand, so it cannot go stale.
 
 Turning it on takes effect immediately. There is no restart.
 
-## Notable places for adventures {#notable-places-for-adventures}
+### Notable places for adventures {#notable-places-for-adventures}
 
 A second setting, added with list.md Phase 47 and off by default, and a second host. When the
 ship's AI writes you an adventure it may pick the story's stops from the
@@ -52,7 +125,7 @@ With this off, a generated adventure still works, choosing its stops from the ga
 the model's own knowledge. With galaxy search off, no adventure can be generated at all, because
 the places in a story have to be real and this is the thing that checks.
 
-## Why the filters are checked here rather than there
+### Why the filters are checked here rather than there
 
 The search service **ignores filter keys it does not recognise**. It does not reject them or
 warn about them. Measured against the live service on 2026-08-14, within 20 light years of Sol:
@@ -77,7 +150,7 @@ The filters are `distance`, `allegiance`, `government`, `primary_economy`, `secu
 Ranges take one number for an upper bound (`30` means within 30) or two separated by a dash
 (`10-50`).
 
-### The list was one filter longer until 2026-08-16, and that one was doing nothing
+#### The list was one filter longer until 2026-08-16, and that one was doing nothing
 
 There was a `population` filter here, from Phase 14 until the colonisation work went looking for
 exactly that field and measured it. Within 15 light years of Sol, where 48 of the 51 systems are
@@ -100,7 +173,7 @@ above describes, shipped inside the class built to prevent it. A filter the serv
 be offered, so it is gone. The number itself is on every result, which is how
 [colonisation](colonisation.md) tells an unpopulated system from a populated one.
 
-### A worse trap than the misspelling: a real filter that matches nothing
+#### A worse trap than the misspelling: a real filter that matches nothing
 
 `state` is not sent under the name `state`, and finding that out cost a measurement rather than a
 guess. There **is** a field called `state`. It has its own published value list carrying exactly the
@@ -123,7 +196,7 @@ a Commander has no way to tell it from one. So d47 offers the short word and sen
 The state itself is **crowd-reported and turns over on the background simulation's tick**, so the
 answer says systems *reported* in Boom — the same framing the station stock carries.
 
-## What comes back
+### What comes back
 
 One system record from the service is **268 KB** — every body, every station, every market. A
 search returning three systems is 44 KB. None of that reaches the model: d47 reads six fields
@@ -136,16 +209,16 @@ worth saying; which ones they are is the next question.
 Results always say how many matched in total, not just how many were read out. "412 systems
 matched; here are the nearest 5" is a different answer from "there are 5".
 
-## When it cannot answer
+### When it cannot answer
 
 Everything that can go wrong becomes a sentence rather than an error: the service being
 unreachable, rate limiting you, taking too long, or having no record of the system you named.
 A system the service does not know produces "I couldn't find one of those systems", not a
 failed turn.
 
-## Tools
+### Tools
 
-### `search_systems`
+#### `search_systems`
 
 Find star systems matching some criteria, nearest first.
 
@@ -155,7 +228,7 @@ Find star systems matching some criteria, nearest first.
 
 A search with no filters is refused rather than run — it would match the whole galaxy.
 
-### `distance_between`
+#### `distance_between`
 
 The straight-line distance in light years between two star systems.
 
@@ -166,7 +239,7 @@ The straight-line distance in light years between two star systems.
 The arithmetic is d47's own. The service returns positions and d47 computes the distance from
 the coordinates, so "how far" has the same answer wherever it is asked from.
 
-### `find_nearest_station`
+#### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first.
 
@@ -200,7 +273,7 @@ Getting a position out of a name takes one search: there is no lookup-by-name en
 so d47 names the system as a *search reference* and reads back the coordinates the service
 resolved it to.
 
-### `find_body`
+#### `find_body`
 
 The nearest planets, moons and stars matching some criteria.
 
@@ -245,7 +318,7 @@ crowd-sourced, and only the rings holding what you asked for are listed — a me
 no Painite in it is not part of the answer to "where is Painite", and naming it invites a trip to
 the wrong one of two rings around the same planet.
 
-## Notes for anyone reading the code
+### Notes for anyone reading the code
 
 There is no published API for this service; the endpoints are reverse-engineered by every third
 party that uses them, and the shapes d47 relies on were established against the live service on
