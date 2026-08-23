@@ -293,6 +293,45 @@ public static class BlueprintCatalogue
             ? Loaded.Value
             : [.. Loaded.Value.Where(b => Same(b.Module, module))];
 
+        return Grades(spoken, candidates);
+    }
+
+    /// <summary>
+    /// Every grade of one named blueprint, narrowed to a module by its <em>type</em> rather than
+    /// by the name a Commander reads.
+    /// <para>
+    /// <b>Those are not the same vocabulary</b>, reported 2026-08-23. A specification's name is
+    /// Frontier's product name — <c>Bi-Weave Shield Generator</c>, <c>Type-10 Defender Lightweight
+    /// Alloy</c> — while <see cref="Blueprint.Module"/> is a category vocabulary that calls those
+    /// two <c>Shield Generator</c> and <c>Armour</c>. Narrowing by the readable name therefore
+    /// matched no row at all for a whole class of modules, and the overload above returns empty
+    /// <em>before the blueprint name is ever consulted</em>, so those lines were dropped from every
+    /// engineer's answer with nothing said. Thirty of one Commander's were invisible this way.
+    /// </para>
+    /// <para>
+    /// <see cref="For(ModuleSpecification?)"/> is the join that was already right — the module's
+    /// own rows, intersected with what Frontier lets it take — so this is that join with
+    /// <see cref="Catalogue.Match"/> over what it returns.
+    /// </para>
+    /// <para>
+    /// <b>Falling back to the whole table when a module narrows to nothing is not the fix.</b>
+    /// Measured: "Heavy Duty" against no module draws Armour and Shield Booster rows together, so
+    /// a shield engineer would be credited with armour work they cannot do. An unknown module
+    /// stays unknown, and the caller decides whether to ask by name alone.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<Blueprint> Named(string? spoken, ModuleSpecification? module) =>
+        string.IsNullOrWhiteSpace(spoken) ? []
+            : module is null ? Named(spoken)
+            : Grades(spoken, For(module) ?? []);
+
+    /// <summary>
+    /// The one matching rule both overloads use: the spoken name against the candidates' names,
+    /// then every grade of whichever it matched. Shared rather than written twice, because two
+    /// rules for one question is how the two overloads would come to disagree about it.
+    /// </summary>
+    private static IReadOnlyList<Blueprint> Grades(string spoken, IReadOnlyList<Blueprint> candidates)
+    {
         if (candidates.Count == 0)
         {
             return [];

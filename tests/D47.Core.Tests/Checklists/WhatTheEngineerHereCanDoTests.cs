@@ -141,6 +141,56 @@ public class WhatTheEngineerHereCanDoTests
         Assert.Empty(EngineersHere.For([Booster("TinyHardpoint1", grade: 3, shipId: 52)], state));
     }
 
+    /// <summary>
+    /// <b>A bi-weave shield generator is still a shield generator</b> (reported 2026-08-23).
+    /// <para>
+    /// The recipe table's module column is a category vocabulary — <c>Shield Generator</c> — and a
+    /// specification's name is Frontier's product name — <c>Bi-Weave Shield Generator</c>. Narrowing
+    /// on the readable name matched no row at all, and the lookup gave up before the blueprint name
+    /// was ever read, so the line left every engineer's answer with nothing said. Thirty of the
+    /// Commander's lines were invisible this way, on four hulls.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ABiWeaveShieldGeneratorIsStillAShieldGenerator()
+    {
+        var state = FlyingWithAShipLeftBehind().Active!;
+
+        var here = Assert.Single(
+            EngineersHere.For([Roll("Slot01_Size3", "Reinforced Shields", grade: 3, shipId: 52)], state));
+
+        Assert.Single(here.Ready);
+    }
+
+    /// <summary>
+    /// And the narrowing still narrows, which is the half that stops the fix being "give up and
+    /// match on the name alone". A hull's own armour — <c>Krait MkII Lightweight Alloy</c> —
+    /// carries Heavy Duty, and Lei Cheung does not do armour. Matching by name alone would draw the
+    /// Armour and Shield Booster rows together and credit him with work he cannot take.
+    /// </summary>
+    [Fact]
+    public void AHullsOwnArmourDoesNotBecomeAShieldEngineersWork()
+    {
+        var state = FlyingWithAShipLeftBehind().Active!;
+
+        Assert.Empty(EngineersHere.For([Roll("Armour", "Heavy Duty", grade: 3, shipId: 52)], state));
+    }
+
+    /// <summary>One line of an engineering plan: a blueprint wanted on a slot, at a grade.</summary>
+    private static ChecklistItem Roll(string slot, string blueprint, int grade, int shipId) => new()
+    {
+        Key = $"blueprint:{slot}",
+        Scope = ChecklistScope.Ship(shipId),
+        Kind = ChecklistItemKind.Derived,
+        Source = ChecklistSource.EngineeringPlan,
+        Text = $"Grade {grade} {blueprint} on {slot}",
+        Intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
+        {
+            Detail = blueprint,
+            Grade = grade,
+        },
+    };
+
     private static ChecklistItem Booster(string slot, int grade, int shipId = 51) => new()
     {
         Key = $"blueprint:{slot}",
@@ -194,7 +244,7 @@ public class WhatTheEngineerHereCanDoTests
                      """{"timestamp":"2026-08-23T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
                      """{"timestamp":"2026-08-23T09:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
                      $$"""{"timestamp":"2026-08-23T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-23T09:00:03Z","event":"Loadout","Ship":"krait_mkii","ShipID":52,"ShipName":"Second Thoughts","ShipIdent":"KR-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint1","Item":"hpt_chafflauncher_tiny","On":true,"Priority":0,"Health":1.0}]}""",
+                     """{"timestamp":"2026-08-23T09:00:03Z","event":"Loadout","Ship":"krait_mkii","ShipID":52,"ShipName":"Second Thoughts","ShipIdent":"KR-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint1","Item":"hpt_chafflauncher_tiny","On":true,"Priority":0,"Health":1.0},{"Slot":"Slot01_Size3","Item":"int_shieldgenerator_size3_class3_fast","On":true,"Priority":0,"Health":1.0},{"Slot":"Armour","Item":"krait_mkii_armour_grade1","On":true,"Priority":0,"Health":1.0}]}""",
                      """{"timestamp":"2026-08-23T09:00:04Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_chafflauncher_tiny","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {

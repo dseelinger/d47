@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Four open, and one partly confirmed.
+## Nine open, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
@@ -242,3 +242,201 @@ record rather than from the game.
 eats them — the shortfall is netted across every live plan at once." That is honest and correct
 about what the tool returns, and it is also a capability the Commander asked for and did not get.
 If it is worth having, it is a `list.md` item, not this file.
+
+---
+
+## Open: "Set tab to checklist" is not a shape the panel phrases recognise
+
+Reported 2026-08-23, from the headset, in the **VR mini panel**. Said *"Set tab to checklist"* and
+expected the mini panel to move to the Checklist. The utterance fell through to the model, which
+answered honestly:
+
+> I don't have a tool that switches panel tabs in the headset display. That's likely a manual or
+> voice-command action on your end, Commander.
+
+**Verified in the code, and it is a near miss of a fix that already shipped.** `PanelPhrases` builds
+its vocabulary as opener + name + suffix (`src/D47.Core/Interface/PanelPhrases.cs:61-91`). `Openers`
+carries fifteen entries — bare, `show `, `open `, `go to `, `switch to `, `select ` and their `the`
+variants — and **`set ` is not among them**. `Suffixes` is bare or `" tab"`, which is what the
+2026-08-21 report added, and that comment names this exact failure mode: *"Select the checklist tab"
+was the reported miss … the phrase fell through to the model, which has no tool for the panel and
+said so.*
+
+So the grammar covers *"select the checklist tab"* — name in the middle, "tab" as a suffix — and
+**does not cover "set tab to checklist"**, which inverts the order and puts the destination last. No
+combination of the two lists produces it; the word "set" appears nowhere in the file.
+
+**The fix is not simply another opener.** Adding `set ` alone still would not match, because the
+destination has to be extractable and here it sits *after* the word "tab". This wants a second
+pattern — "set tab to NAME", and probably "set the tab to NAME", "go to tab NAME", "tab NAME" —
+rather than another row in `Openers`. Whatever is added must reach the same route the existing
+phrases use, so the drawn and spoken paths stay one thing.
+
+**Still only a hypothesis, and the reason this is not a one-liner:** whether the mini panel in the
+headset would have honoured the move even had the phrase matched. `PanelNavigation.Register`
+(`src/D47.Core/Interface/PanelNavigation.cs:201`) is called per surface and the destination
+vocabulary is the union of what each surface registered (`:128-131`) — and mini hides the tab strip,
+so it is unproven that the VR mini surface registers the Checklist root at all. **Reproduce both
+halves before fixing either**: that the phrase matches, and that the headset's mini panel actually
+moves. A phrase that matches and then reports a move nobody can see would be worse than the current
+honest refusal.
+
+Related and already known: `list.md` Phase 51 records that `ApplyChrome` hides the tab strip in mini
+while leaving `PagePane` visible, so a surface driven into mini on the wrong tab draws a page with no
+way to leave it. That hole and this one meet in the same place.
+
+---
+
+## Open: a setting command matches only its exact phrase, so "switch to full panel" misses
+
+Reported 2026-08-23, from the headset, in the VR mini panel, minutes after the entry above. Said
+*"Switch to full panel"* and expected the quad to grow. Instead:
+
+> I've no action for a combined "full panel" view — only the individual ones: left, right, comms
+> and role panels. Want me to open one of those?
+
+That answer is the model reaching for Elite's own ship panels, which is a reasonable reading of
+"panel" once the utterance has already fallen past every model-free route.
+
+**Verified, and the phrase exists.** `VrCapability.cs:146-147` registers exactly what was wanted:
+
+    new SettingCommandPhrase("mini panel", "mini"),
+    new SettingCommandPhrase("full panel", "full"),
+
+**The match is exact whole-utterance equality.** `KeywordRouter.MatchSetting`
+(`src/D47.Core/Conversation/KeywordRouter.cs:186-202`) ends in
+`string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)`. So
+*"full panel"* matches and *"switch to full panel"* does not. **Saying the bare phrase works
+today** — this is a gap in what a Commander may say around it, not a missing capability.
+
+**This is the same defect as the entry above, in a different code path, and that is the finding
+worth acting on.** Both are natural openers defeating a rigid phrase table:
+
+| Said | Route | Why it missed |
+|---|---|---|
+| "Set tab to checklist" | `PanelPhrases` | "set" is not an opener, and the destination is in the wrong position |
+| "Switch to full panel" | `MatchSetting` | no opener stripping at all |
+
+`PanelPhrases` already solved this once — it carries fifteen `Openers` including `"switch to "`
+(`src/D47.Core/Interface/PanelPhrases.cs:61-77`). `SettingCommandPhrase` has no equivalent, so every
+setting command in the app has the same hole, not just this one.
+
+**The fix must not be "loosen the matching", and the code says why.** Whole-utterance is deliberate
+and one notch stricter than the keyword route *because this path acts rather than answers* — the
+comment at `KeywordRouter.cs:204-215` makes that argument, and remediation 16 is the precedent for
+what a loose match costs. The shape that keeps the property is to **strip a closed set of leading
+openers before comparing**, exactly as `PanelPhrases` does: still whole-utterance, still a closed
+grammar, just with "switch to" / "go to" / "set" / "show me" removed from the front first. Sharing
+one opener list between the two routes would be better than a second copy.
+
+**Reproduce before fixing**, and check the collision `list.md` Phase 51 flags: *mini panel* and
+*full panel* belong to the headset, and the desktop's equivalents are *mini window* and *full
+window*. An opener-stripping change widens both vocabularies at once, so it must not make a phrase
+said at a desk reach the quad or the reverse.
+
+---
+
+## Open: the checklist filter is per-surface, so the headset and the window disagree
+
+Reported 2026-08-23. Mini panel in VR showing the Checklist; applied the "What Lei Cheung can do
+here" filter in the Windows app; switched back to the headset. **The mini panel still showed the
+unfiltered list.** The two surfaces are drawing the same list through two different filters and
+neither says so.
+
+**Verified, and this is a mistake the file has already made once and fixed.**
+`src/D47.App/Panel/ChecklistPage.cs:146` and `:149`:
+
+    private string _chosen = Everything;
+    private string _query = string.Empty;
+
+Both are **instance fields on the page**, and there is one page per surface, so each surface keeps
+its own filter and its own search text.
+
+The precedent that settles it is a few files away. `ChecklistService.Selected`
+(`src/D47.Core/Checklists/ChecklistService.cs:63-78`) carries this comment:
+
+> **Here rather than on the page, because two surfaces have to agree what "it" is.** The selection
+> used to be a string inside `ChecklistPage`, so a spoken "move it up" had nothing to refer to and
+> said so — while the panel, a foot away, was drawing a highlight round the very line that was
+> meant.
+
+That was reported 2026-08-21 and fixed by moving the state into Core. **`_chosen` and `_query` are
+the same string on the same page that was not moved with it.** This is therefore an oversight rather
+than a design choice, and Phase 45's rule points the same way: what you are *reading* is shared, and
+only *how a surface draws it* — mini/full, zoom — stays where it is. A filter changes what is on the
+list, not how big it is.
+
+**One place it is not a straight copy of the `Selected` fix.** That comment continues:
+
+> **Not persisted, and that is the distinction.** A selection is where a Commander is looking this
+> minute, not a preference.
+
+A filter is closer to a preference — the same Commander asked on 2026-08-23 for the filter to be
+**remembered between sessions**, which selection deliberately is not. So the filter wants sharing
+*and* persistence, and the two decisions should be made together: shared state in Core, and a home
+for the persisted value. `settings.json` is append-only, and there is a `ViewState` for things that
+are view preferences rather than settings — decide which, with the precedent of how zoom, mode and
+window placement are stored.
+
+**Unverified, and worth checking before building:** whether the VR mini panel draws the filter
+control at all. `ChecklistPage` has no mini awareness — mini/full is applied by `PanelView.ApplyChrome`
+around the page rather than inside it — so the chip row is *probably* drawn, but nobody has looked.
+It matters: if a shared filter can be switched on from the desk and the headset has no control and no
+label for it, the Commander gets a short list in VR with nothing on screen explaining why. Sharing the
+filter without showing its state on both surfaces would trade a disagreement for a mystery.
+
+`_query` should move with `_chosen` or the same report arrives again about the search box.
+
+---
+
+## Open: a parked ship's lines carry no verdict, and the comment saying why is now false
+
+Found 2026-08-23 while diagnosing the engineer filter; **not the cause of that report**, and recorded
+because the reasoning beside it has stopped being true.
+
+`ChecklistEvaluator.Ship` (`src/D47.Core/Checklists/ChecklistEvaluator.cs:63-72`) reads `state.Ship`
+— the ship being flown — and returns null for anything else:
+
+    var loadout = state.Ship;
+    …
+    if (!IsActive(item.Scope, loadout)) { return null; }
+
+So a line about any ship the Commander is not sitting in has no verdict and no next-action text,
+which is the asymmetry that made one report look like d47 "could not see" a ship. It can: the same
+line reads *"0A Shield Booster"* rather than *"TinyHardpoint2"*, and that text comes from
+`ChecklistWording.InSlot` reading `state.Loadouts.For(shipId)`
+(`src/D47.Core/Checklists/ChecklistWording.cs:140-143`). **The line and the verdict beneath it read
+different sources**, and v0.60.0 fixed the engineer join while leaving the verdict on the old rule.
+
+The comment at `:67-69` — that a plan for a ship in another dock "cannot be diffed at all" — was
+true before list.md Phase 37 remembered loadouts and is false now. Leaving it standing beside code
+that no longer needs to obey it is the thing the change-requests file warns about.
+
+**The fix, when it is wanted**, is the `LoadoutFor` treatment `EngineerAtHand.cs:224-240` already
+has. **With one condition**: a remembered loadout is a fact about a moment, and `RememberedShip`
+already carries `SeenAt` (`src/D47.Core/Journal/ShipLoadouts.cs:5-10`) for exactly this. A verdict
+derived from a month-old snapshot presented as current is the one way this change can do harm, so
+it must say when the ship was last seen.
+
+---
+
+## Open: the filtered checklist does not say how big the answer is
+
+Reported 2026-08-23 as "the engineer filter only shows some of my ships", and **that reading was
+wrong** — the filter returns every match across the fleet. What it does not do is say so.
+
+`ChecklistPage.Rebuild` builds one flat `StackPanel` with no cap, no headings and no count
+(`src/D47.App/Panel/ChecklistPage.cs:454`, `:469-472`), and ordering floats the flown ship's project
+to the top (`src/D47.Core/Checklists/ChecklistOrdering.cs:135`) with everything below it in file
+order. One Commander's second project holds 49 lines, ten of them rendering byte-identically because
+several slots hold the same module — so the first screenful is one ship, repeated, and reads as the
+whole answer.
+
+**This cost a false bug report and an afternoon**, which is the argument for fixing it: the list is
+correct and looks broken. The smallest thing that would have prevented it is one muted line above
+the rows — *"Lei Cheung can roll 45 of your lines, across 7 ships."* That does not fight the stated
+"no headings between scopes" decision at `ChecklistPage.cs:467-469`, because the scope already rides
+each line.
+
+Identified while diagnosing, and **not chosen for 0.60.1** — the Commander took the correctness fix
+alone. Recorded so it is not rediscovered from a second report.

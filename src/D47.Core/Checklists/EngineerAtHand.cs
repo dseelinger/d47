@@ -175,6 +175,10 @@ public static class EngineersHere
         // on a Shield Booster is Lei Cheung's and on a Hull Reinforcement Package it is not.
         // Where the module cannot be seen the name alone is used, which is looser and is still
         // better than saying nothing about a ship d47 has never been aboard.
+        //
+        // By the specification rather than by its name, reported 2026-08-23: the name is Frontier's
+        // product name and the recipe table speaks categories, so "Bi-Weave Shield Generator" met
+        // no row called "Shield Generator" and the line left every engineer's answer in silence.
         return BlueprintCatalogue.Named(intent.Detail ?? intent.Subject, ModuleOf(item, state))
             .Where(recipe => recipe.Kind == wanted)
             .Any(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase));
@@ -198,7 +202,7 @@ public static class EngineersHere
     /// name-alone match above was always for.
     /// </para>
     /// </summary>
-    private static string? ModuleOf(ChecklistItem item, CommanderGameState state)
+    private static ModuleSpecification? ModuleOf(ChecklistItem item, CommanderGameState state)
     {
         if (item.Intent?.Subject is not { Length: > 0 } slot)
         {
@@ -213,7 +217,9 @@ public static class EngineersHere
         var fitted = loadout.Modules.FirstOrDefault(module =>
             string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
-        return fitted is null ? null : EliteSpecifications.Module(fitted.Item)?.Name;
+        // The specification rather than its name: see the comment in Offers above. The name is a
+        // product name and the recipe table is keyed on the module's type.
+        return fitted is null ? null : EliteSpecifications.Module(fitted.Item);
     }
 
     /// <summary>

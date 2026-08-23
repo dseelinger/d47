@@ -17,6 +17,42 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.1 — 2026-08-23 — A bi-weave is still a shield generator
+
+**Reported as "the engineer filter still isn't working" the same day 0.60.0 shipped, and the
+investigation found something older and larger underneath.** Standing at Lei Cheung's base, the
+filter was quietly dropping work it should have offered — including every line on the ship the
+Commander happened to be flying, which is why the list opened on a different ship entirely.
+
+**Two vocabularies that were never the same one.** A module's specification carries Frontier's
+product name — *Bi-Weave Shield Generator*, *Krait MkII Lightweight Alloy* — while the recipe
+table's module column is a 64-entry category vocabulary that calls those two *Shield Generator*
+and *Armour*. The engineer join narrowed recipes by the readable name, matched no row at all, and
+returned empty **before the blueprint name was ever consulted**. The line then belonged to no
+engineer anywhere, with nothing said and nothing to search for.
+
+The measurement that shows the size of it: of 558 distinct product names, **524 have no
+identically-named category**. The old join worked only for the 34 where the two vocabularies
+happen to coincide — Shield Booster, Frame Shift Drive and the like — which is why it looked
+right for years.
+
+`BlueprintCatalogue` gains an overload that narrows by the module's **type**, reusing the join
+that was already correct: the module's own rows, intersected with what Frontier lets it take.
+Measured against one Commander's real fleet, on the same 219-line snapshot: **41 items to 45**,
+and a seventh ship joins the answer — the one whose only two engineerable lines were both
+bi-weaves.
+
+**Falling back to the whole table when a module narrows to nothing is deliberately not the fix**,
+and there is a test that fails if someone tries it: *Heavy Duty* with no module draws Armour and
+Shield Booster rows together, which would credit a shield engineer with armour work they cannot
+take. An unknown module stays unknown.
+
+Three things the same investigation ruled out, recorded so they are not chased again: the
+remembered loadouts are fully populated at every cold start, so a restart changes nothing; verdict
+text is absent on a parked ship's lines because verdicts only ever read the flown ship, not because
+d47 cannot see that ship; and the filter was never restricted to one ship — it returns every match
+across the fleet in one flat, uncounted list, which is a presentation problem and is still open.
+
 ## 0.60.0 — 2026-08-23 — The engineer here can see your whole fleet
 
 ### The checklist filter stops at the ship you flew in
