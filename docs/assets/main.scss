@@ -23,6 +23,13 @@
    recolouring — when the panel draws it.
    --------------------------------------------------------------------------- */
 :root {
+  /* Scrollbars, form controls and the canvas behind the page are drawn by the browser, not by
+     this stylesheet, and it draws them light until it is told otherwise — which is why the nav
+     had a white scrollbar down a near-black page. This is the one line that fixes all of them,
+     and it has to sit on the root: a colour-scheme declared further down does not reach the
+     scrollbar of an element above it. */
+  color-scheme: dark;
+
   --background:   #0B0B0D;
   --surface:      #15151A;
   --surface-alt:  #1E1E24;
@@ -242,6 +249,12 @@ hr {
   overflow-y: auto;
   font-size: 0.9rem;
   line-height: 1.5;
+
+  /* Thin, and only as loud as a hairline. Even a dark scrollbar at full width reads as a second
+     column rule between the nav and the page, which is one rule too many — the same argument
+     the tab strip in the app makes about not drawing a bar under a row of tabs. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 .d47-nav-group {
