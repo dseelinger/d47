@@ -81,6 +81,23 @@ hand-written list kept being one phrase short. And the guardrail that already to
 claim the software cannot do something now also tells it **not to prescribe a workaround**: a
 suggestion of another key or another program is a guess about software it cannot see.
 
+### "Set course for my carrier" plots a course
+
+It reported a position instead: *"JOHN DEPARAGON is in Scorpii Sector BB-O a6-2."* `my carrier` is
+a keyword as well as a whole phrase, keywords match anywhere in a sentence, and the router answered
+with Journal's position tool before the model was consulted — the same hijack remediation 16 fixed
+for *"where is my fleet carrier"*, arriving by the same road.
+
+**The keywords are untouched**, because narrowing them was ruled against then and for good reason:
+they are what makes a capability reachable with no model at all. Instead **an instruction now
+out-matches a topic**, using machinery that already existed — dynamic commands are matched first,
+against the whole utterance, and carry the arguments they mean. Fourteen spellings now plot to
+wherever the carrier is, `"where is my fleet carrier"` still answers as it did, and none of it
+costs a byte of tool surface.
+
+With no carrier, or one whose system has not been seen, there is no phrase at all and the sentence
+goes to the model — which says it does not know, rather than plotting a course to nowhere.
+
 ### And what you said, where nothing else was recording it
 
 An utterance that answers a chooser never reaches the turn that would have written it down, so it

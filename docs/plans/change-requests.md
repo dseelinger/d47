@@ -41,17 +41,14 @@ can do 52 items on your list."*
 So this item is a **projection of something already computed**, not new analysis. What is missing
 is a way to see it as the list rather than as a sentence.
 
-**Two shapes, and they are not the same feature.** Worth settling first, because the ask says
-"sort" and the useful thing may be the other one:
+**It is a filter, ruled 2026-08-23.** The ask said "sort" and the Commander's answer when asked was
+filtering — which also settles the thing a sort could not: a sort has to say whether it overrules
+the Commander's own `ProjectOrder` or nests inside it, and a filter never touches that order at all.
+It shows what this engineer can do and hides the rest.
 
-- **A sort** leaves every line on the page and moves the reachable ones to the top. Nothing is
-  hidden, which fits a list a Commander has already ordered by hand — and `ChecklistDocument`
-  carries a `ProjectOrder` the Commander owns, so a sort has to say whether it overrules that
-  order or nests inside it.
-- **A filter** shows only what this engineer can do, which is what somebody standing on the pad
-  actually wants and is nearer to what *"items that can be fulfilled"* says. It is also the one
-  that can show nothing at all, and a checklist that looks empty is alarming in a way a re-ordered
-  one is not.
+**So the one risk is the empty page.** A filter can show nothing, and a checklist that looks empty
+is alarming in a way a re-ordered one is not — which makes the "no engineer here" case below part
+of the feature rather than an edge of it.
 
 **Three things to decide beyond that.**
 
@@ -67,8 +64,9 @@ is a way to see it as the list rather than as a sentence.
 
 **Where it goes.** The spoken half joins the ordering vocabulary CR 20 shipped in 0.45.0; the drawn
 half is the Checklist tab, which already has the Commander's own order and a search box, so this is
-a third way of arranging the same page rather than a new surface. Both routes must reach it — a
-Commander at a workshop has their hands on the stick.
+another way of reading the same page rather than a new surface. Both routes must reach it — a
+Commander at a workshop has their hands on the stick. **Leaving the filter must be as easy as
+entering it**, and it should not survive a jump out of the system that justified it.
 
 ---
 
@@ -346,9 +344,21 @@ Two things make this worth more than one phrase:
   carrier's system is known, so *plot me to my carrier* is a join d47 can make — but there is no
   tool that does it today, so this is not purely a routing fix.
 
-**Not built with the rest of this item**, and deliberately: the phrase-beats-keyword machinery is
-shared by every capability, and getting it wrong trades one wrong answer for a set of silences
-exactly as the earlier ruling warns. It wants its own change with the corpus behind it.
+**Built, and the caution above was wrong.** This was first written up as needing its own change
+"with the corpus behind it", on the assumption that fixing it meant touching the shared
+phrase-beats-keyword machinery. It does not. The router already matches **dynamic commands first,
+against the whole utterance, carrying the arguments they mean** — and the comment beside where they
+are supplied describes this exact case: *"dynamic for the same reason: the argument is not knowable
+when the descriptor is registered."*
+
+So `CarrierCourse` adds fourteen whole-utterance spellings pointing at `plot_route` with `to` set
+to wherever the carrier is now. **The keywords are untouched**, `"where is my fleet carrier"` still
+reaches Journal by the whole-phrase route remediation 16 built for it, and **it costs no tool
+surface at all** — commands are deliberately not part of a tool's schema, so none of this can move
+a byte of the cached prefix.
+
+With no carrier, or one whose system d47 has not seen, **no phrase exists** and the sentence falls
+through to the model, which says it does not know rather than plotting a course to nowhere.
 
 #### The ask on the Technical page
 

@@ -1486,7 +1486,14 @@ public sealed class AppHost : IDisposable
         // reason: the argument is not knowable when the descriptor is registered.
         var router = new KeywordRouter(
             capabilities,
-            () => MacroCapability.Phrases(macros).Concat(clipboardOffer.Phrases()));
+            () => MacroCapability.Phrases(macros)
+                .Concat(clipboardOffer.Phrases())
+
+                // And "set course for my carrier", which is an instruction rather than a topic
+                // and has to out-match the "my carrier" keyword that was answering it with a
+                // position report (change-requests.md 31). Dynamic for the same reason as the two
+                // above: the destination is not knowable when the descriptor is registered.
+                .Concat(CarrierCourse.Phrases(() => gameState.Active?.Carrier)));
 
         var turns = new TurnLoop(
             capabilities,
