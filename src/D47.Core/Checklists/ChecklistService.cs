@@ -658,6 +658,25 @@ public sealed class ChecklistService(
     /// panel compares against enum names and must go on doing so.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The filter key for "what can be done in this system". A constant because the panel matches
+    /// filter keys against enum names, and this one is not an enum.
+    /// </summary>
+    public const string HereKey = "here";
+
+    /// <summary>
+    /// Whether this item is one an engineer in this system could roll now.
+    /// <para>
+    /// <c>Ready</c> only, matching what the spoken <c>here</c> parameter has meant since
+    /// 2026-08-20. The out-of-rank band answers a different question — <i>why can I not do this
+    /// here</i> — and folding it in would quietly change an answer that has already shipped.
+    /// </para>
+    /// </summary>
+    public bool CanBeDoneHere(ChecklistItem item) =>
+        EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State)
+            .SelectMany(engineer => engineer.Ready)
+            .Any(ready => ready.Id.Same(item.Id));
+
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
         var live = Document.Items.Where(item => item.IsLive).ToList();
@@ -703,6 +722,24 @@ public sealed class ChecklistService(
                 live.Select(item => item.IsComplete),
                 done => done ? "complete" : "open",
                 done => done ? "Finished" : "Still open"),
+
+            // **What the engineer in this system can do** (change-requests.md 32), and offered
+            // only where there is one. The spoken half of this shipped on 2026-08-20 as the
+            // `here` parameter on `get_checklist`; this is the row that puts it on the page, which
+            // is the half the request was actually missing.
+            //
+            // Absent rather than empty when there is no engineer here — which is the
+            // overwhelmingly common case. A filter that can show nothing is alarming in a way a
+            // re-ordered list is not, so the answer to "no engineer in this system" is that the
+            // choice is not offered, rather than a blank page after taking it.
+            .. EngineersHere.For(live, State) is { Count: > 0 } workshops
+                ? [new ChecklistFilter(
+                    HereKey,
+                    workshops.Count == 1
+                        ? $"What {workshops[0].Engineer.Name} can do here"
+                        : "What the engineers here can do",
+                    "Where you are")]
+                : Array.Empty<ChecklistFilter>(),
         ];
     }
 

@@ -24,7 +24,13 @@ at 20.
 
 ## Open
 
-### 32. Sort the checklist by what the engineer in this system can do
+Nothing open.
+
+---
+
+## Shipped
+
+### 32. Filter the checklist to what the engineer in this system can do — shipped 0.59.0
 
 Asked for 2026-08-23.
 
@@ -32,14 +38,17 @@ Asked for 2026-08-23.
 > the current system when asked (or indicated in the UI) in addition to the other sort options for
 > the checklist.
 
-**The hard half is already built and is not the sort.** `EngineerAtHand.For(...)` answers exactly
-this question today: given the Commander's system, it returns each engineer there with **`Ready`**
-— the open items they could roll now — and **`OutOfRank`** kept separate, because those are two
-different errands. It is what produces the arrival line *"Lei Cheung is here, at Trader's Rest, and
-can do 52 items on your list."*
+**Most of this was already built, and finding that changed the item.** `EngineersHere.For(...)`
+answers the question: given the Commander's system, each engineer there with **`Ready`** — what
+they could roll now — and **`OutOfRank`** kept separate, because those are two different errands.
+It is what produces *"Lei Cheung is here, at Trader's Rest, and can do 52 items on your list."*
 
-So this item is a **projection of something already computed**, not new analysis. What is missing
-is a way to see it as the list rather than as a sentence.
+**And the spoken half shipped on 2026-08-20**: `get_checklist` takes a `here` boolean —
+*"only what an engineer in this system could roll today"* — which `ChecklistService.Report` has
+honoured ever since.
+
+So what the request was actually missing is its own parenthesis: *"or indicated in the UI"*. The
+Checklist tab had no such row.
 
 **It is a filter, ruled 2026-08-23.** The ask said "sort" and the Commander's answer when asked was
 filtering — which also settles the thing a sort could not: a sort has to say whether it overrules
@@ -50,27 +59,23 @@ It shows what this engineer can do and hides the rest.
 is alarming in a way a re-ordered one is not — which makes the "no engineer here" case below part
 of the feature rather than an edge of it.
 
-**Three things to decide beyond that.**
+**Three things settled in the building.**
 
-1. **`Ready` only, or `OutOfRank` too?** They are already separate for a reason. Showing both in
-   one group would undo that; showing `Ready` alone hides a real answer to *why can I not do this
-   here*. A two-band ordering — can do now, then could after a rank — is probably right and is
-   more than a sort key.
-2. **What happens with no engineer here**, which is the overwhelmingly common case. The mode has
-   to say *"no engineer in this system"* rather than presenting an empty or unchanged list, or it
-   reads as broken every time it is used away from a workshop.
-3. **More than one engineer in the system.** `For` returns a list, not one, so the ordering is
-   over the union — and a line only one of them can roll should probably say which.
+1. **`Ready` only.** That is what the spoken `here` parameter has meant since 2026-08-20, and
+   folding `OutOfRank` in would quietly change an answer that has already shipped. The out-of-rank
+   band answers a different question — *why can I not do this here* — and is worth its own row
+   later rather than being smuggled into this one.
+2. **No engineer here means the row is absent**, not present-and-empty. That is the answer to the
+   empty-page risk above: a choice you cannot take is better than a choice that blanks the page.
+3. **More than one engineer** is the union, and the row says *"What the engineers here can do"*
+   rather than naming one of them. With exactly one it names them, because *"What Lei Cheung can
+   do here"* is a better button than a category.
 
 **Where it goes.** The spoken half joins the ordering vocabulary CR 20 shipped in 0.45.0; the drawn
 half is the Checklist tab, which already has the Commander's own order and a search box, so this is
 another way of reading the same page rather than a new surface. Both routes must reach it — a
 Commander at a workshop has their hands on the stick. **Leaving the filter must be as easy as
 entering it**, and it should not survive a jump out of the system that justified it.
-
----
-
-## Shipped
 
 ### 27. A sold ship leaves its checklist behind — shipped 0.59.0
 

@@ -81,6 +81,23 @@ hand-written list kept being one phrase short. And the guardrail that already to
 claim the software cannot do something now also tells it **not to prescribe a workaround**: a
 suggestion of another key or another program is a guess about software it cannot see.
 
+### The checklist can show only what you can do here
+
+*"I must be able to sort the Checklist by items that can be fulfilled by the engineer that is in
+the current system."* **Filtering rather than sorting**, on the Commander's ruling — a sort would
+have had to decide whether it overrules the order you arranged by hand, and a filter never touches
+it.
+
+Most of this turned out to exist. `EngineersHere` already works out what each engineer in your
+system could roll, and `get_checklist` has taken a `here` parameter since 2026-08-20. What was
+missing was the request's own parenthesis — *"or indicated in the UI"* — so the Checklist tab's
+filter chooser now carries a **Where you are** row: *"What Lei Cheung can do here"* where there is
+one engineer, *"What the engineers here can do"* where there are several.
+
+**It is absent where there is no engineer**, rather than present and blanking the page. A filter
+that can show nothing is alarming in a way a re-ordered list is not, and no engineer in this system
+is the ordinary case.
+
 ### "Set course for my carrier" plots a course
 
 It reported a position instead: *"JOHN DEPARAGON is in Scorpii Sector BB-O a6-2."* `my carrier` is
