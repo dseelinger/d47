@@ -34,12 +34,17 @@ public class HelpButtonTests
     }
 
     /// <summary>
-    /// Pressing it does what the host handed in and nothing of its own. A panel that launched a
-    /// browser would be a panel that knows what a desktop is, and one of the two surfaces it
-    /// renders to has no desktop at all.
+    /// Pressing it draws help in the panel rather than handing the press back to the host.
+    /// <para>
+    /// This test asserted the opposite until the index existed, and both readings were right in
+    /// their turn. When the only thing behind the mark was a browser, the panel had to hand the
+    /// press out — a panel that launched one would be a panel that knows what a desktop is, and
+    /// one of its two surfaces has no desktop at all. Now there is always something to draw, so
+    /// the press is answered here and the host's opener is what <em>links</em> use.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void PressingItDoesWhatTheHostHandedIn()
+    public void PressingItDrawsHelpRatherThanHandingThePressOut()
     {
         var opened = 0;
 
@@ -53,22 +58,29 @@ public class HelpButtonTests
         var help = view.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HelpButton");
         Assert.True(help.IsVisible);
 
-        help.Command?.Execute(null);
         help.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(1, opened);
+        Assert.True(view.Nav.Modal, "help took the panel");
+        Assert.Equal("Help", view.Nav.Trail[^1].Word);
+        Assert.Equal(0, opened);
 
         window.Close();
     }
 
     /// <summary>
-    /// A surface the host handed nothing — which is how the headset builds its copy — has no
-    /// help button. It used to: the press raised an event on the shared model, and the one
-    /// handler opened a browser on the desktop, invisible from inside the headset
-    /// (change-requests.md 24).
+    /// A surface the host handed nothing — which is how the headset builds its copy — shows the
+    /// mark anyway now, and that reverses change-requests.md 24 on purpose.
+    /// <para>
+    /// That request hid the button because the only thing behind it was a browser the headset
+    /// cannot see, and a control that does nothing is worse than an absent one. The complaint was
+    /// never about the mark; it was about there being nothing behind it. There is now — help is
+    /// drawn in the panel — so hiding it would withhold the feature from the surface it was built
+    /// for.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void ASurfaceHandedNoWayToOpenTheSiteShowsNoButton()
+    public void ASurfaceWithNoBrowserShowsTheMarkAnyway()
     {
         var view = new PanelView { DataContext = new PanelViewModel() };
         var window = new Window { Content = view };
@@ -76,7 +88,12 @@ public class HelpButtonTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var help = view.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HelpButton");
-        Assert.False(help.IsVisible);
+        Assert.True(help.IsVisible);
+
+        help.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.True(view.Nav.Modal, "and it opens something, with no browser anywhere");
 
         window.Close();
     }

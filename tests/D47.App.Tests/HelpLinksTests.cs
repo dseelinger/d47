@@ -211,4 +211,59 @@ public class HelpLinksTests
 
         window.Close();
     }
+
+    /// <summary>
+    /// <b>The index is what a mark falls back to.</b> A tab whose page has no band used to offer
+    /// nothing at all on a surface with no browser, which teaches a Commander that the mark
+    /// sometimes does nothing — worse than one that always opens something, even when what it
+    /// opens is a level broader than they asked for.
+    /// </summary>
+    [AvaloniaFact]
+    public void AlevelWithNoPageOfItsOwnOpensTheIndex()
+    {
+        var nav = new PanelNavigator();
+
+        // A root that claims help for a page nobody has illustrated.
+        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = "listening" });
+        nav.Select(PanelTab.Utilities);
+
+        Assert.True(HelpLevel.Open(nav));
+        Assert.Equal("help:help", nav.Trail[^1].Key);
+    }
+
+    /// <summary>
+    /// The help page lists every page that has one, generated from the library. A page written
+    /// next year appears the day it lands; one that never gets a band is never promised.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHelpPageListsEveryIllustratedPage()
+    {
+        var nav = Standing();
+        var (window, page) = Open(HelpLibrary.For("help")!, nav, openUrl: null);
+
+        var shown = page.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("EVERYTHING DRAWN IN HERE", shown);
+
+        var illustrated = HelpLibrary.Pages
+            .Where(id => id != "help")
+            .Select(HelpLibrary.For)
+            .OfType<HelpArticle>()
+            .ToList();
+
+        Assert.NotEmpty(illustrated);
+
+        foreach (var article in illustrated)
+        {
+            Assert.Contains(article.Title, shown);
+        }
+
+        // And pressing one drills into it.
+        Press(page, "Engineers").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal("help:engineers", nav.Trail[^1].Key);
+
+        window.Close();
+    }
 }

@@ -25,15 +25,33 @@ public static class HelpLevel
             ? crumb.Key[Prefix.Length..]
             : crumb.Key;
 
+    /// <summary>The page help falls back to: the one that is about help itself.</summary>
+    public const string Index = "help";
+
     /// <summary>
-    /// Opens help for wherever the Commander is standing, and says so. Null when there is nothing
-    /// to open — no band for this level, or a chooser already holding the panel.
+    /// Opens help for wherever the Commander is standing — or the index, when this level has no
+    /// page of its own. False only when a chooser already holds the panel, or when even the index
+    /// has not been written.
+    /// <para>
+    /// The fallback is what makes the mark worth having everywhere. Before it, a tab whose page
+    /// had no band offered nothing at all on a surface with no browser, so the Commander learnt
+    /// that the mark sometimes does nothing — which is worse than a mark that always opens
+    /// something, even when what it opens is one level broader than they asked for.
+    /// </para>
     /// </summary>
-    public static bool Open(PanelNavigator nav) =>
-        !nav.Modal
-        && nav.Help is { Length: > 0 } capability
-        && HelpLibrary.For(capability) is not null
-        && nav.Take(For(capability));
+    public static bool Open(PanelNavigator nav)
+    {
+        if (nav.Modal)
+        {
+            return false;
+        }
+
+        var here = nav.Help is { Length: > 0 } capability && HelpLibrary.For(capability) is not null
+            ? capability
+            : HelpLibrary.For(Index) is not null ? Index : null;
+
+        return here is not null && nav.Take(For(here));
+    }
 }
 
 /// <summary>
@@ -60,6 +78,15 @@ public sealed record HelpArticle
 
     /// <summary>The page's front-matter title, which is also what the crumb says.</summary>
     public required string Title { get; init; }
+
+    /// <summary>The section it is filed under, as the site's nav groups it.</summary>
+    public string Group { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Where it sits in the nav. Carried so the in-app index can read in the order a reader would
+    /// see on the site rather than alphabetically, which is an order nobody has a use for.
+    /// </summary>
+    public int NavOrder { get; init; }
 
     /// <summary>The one line under the title. Always present; a band without one is malformed.</summary>
     public required string Lede { get; init; }

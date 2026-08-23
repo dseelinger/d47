@@ -85,7 +85,9 @@ public static class HelpLibrary
         return new HelpArticle
         {
             CapabilityId = capabilityId,
-            Title = TitleOf(markdown) ?? capabilityId,
+            Title = FrontMatter(markdown, "title") ?? capabilityId,
+            Group = FrontMatter(markdown, "group") ?? string.Empty,
+            NavOrder = int.TryParse(FrontMatter(markdown, "nav_order"), out var order) ? order : 0,
             Lede = lede?.Value.Trim() ?? string.Empty,
             Sections = frame.Elements("section").Select(Section).ToArray(),
             Links = Links(frame),
@@ -119,23 +121,40 @@ public static class HelpLibrary
             })
             .ToArray();
 
+    /// <summary>How the three general help pages are keyed, a folder up from the capabilities.</summary>
+    public const string GeneralPrefix = "general-";
+
     /// <summary>
-    /// The capability id in <c>ships.html</c>, or null for anything with a slash, a scheme or a
-    /// fragment in it. Deliberately strict: a page beside this one is the only case the panel can
-    /// answer itself.
+    /// The page id in <c>ships.html</c> or <c>../conversation.html</c>, or null for anything else.
+    /// <para>
+    /// Two shapes, because the site has two kinds of page. A bare name beside this one is a
+    /// capability; one climb out of the folder reaches Overview, Installing or Talking to
+    /// Directive 47, which are embedded under a prefix so <c>conversation</c> can mean two
+    /// different pages without either quietly winning.
+    /// </para>
+    /// <para>
+    /// Deliberately strict beyond those two: a scheme, a fragment, or a second slash is somewhere
+    /// this build is not carrying, and is left as an address.
+    /// </para>
     /// </summary>
     private static string? Sibling(string href)
     {
-        if (!href.EndsWith(".html", StringComparison.Ordinal))
+        var general = href.StartsWith("../", StringComparison.Ordinal);
+        var rest = general ? href[3..] : href;
+
+        if (!rest.EndsWith(".html", StringComparison.Ordinal))
         {
             return null;
         }
 
-        var id = href[..^".html".Length];
+        var id = rest[..^".html".Length];
 
-        return id.Length > 0 && id.All(letter => char.IsAsciiLetterLower(letter) || letter is '-')
-            ? id
-            : null;
+        if (id.Length == 0 || !id.All(letter => char.IsAsciiLetterLower(letter) || letter is '-'))
+        {
+            return null;
+        }
+
+        return general ? GeneralPrefix + id : id;
     }
 
     private static string Span(XElement anchor, string kind) =>
@@ -197,16 +216,18 @@ public static class HelpLibrary
 
     private static char At(string text, int index) => index < text.Length ? text[index] : ' ';
 
-    /// <summary>The page's front-matter title, which is the word the crumb shows.</summary>
-    private static string? TitleOf(string markdown)
+    /// <summary>One field of the page's front matter, or null when it does not carry it.</summary>
+    private static string? FrontMatter(string markdown, string field)
     {
+        var wanted = field + ":";
+
         foreach (var line in markdown.Split('\n').Take(20))
         {
             var trimmed = line.Trim();
 
-            if (trimmed.StartsWith("title:", StringComparison.Ordinal))
+            if (trimmed.StartsWith(wanted, StringComparison.Ordinal))
             {
-                return trimmed["title:".Length..].Trim();
+                return trimmed[wanted.Length..].Trim();
             }
         }
 

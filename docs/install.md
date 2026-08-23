@@ -19,10 +19,10 @@ nav_order: 1
 <svg viewBox="0 0 880 240" role="img" aria-label="The installer and the portable zip both produce one folder">
  <rect x="20" y="26" width="255" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="147" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">d47-setup.exe</text>
- <text x="147" y="86" text-anchor="middle" font-size="13" fill="var(--text-muted)">it puts itself away</text>
+ <text x="147" y="86" text-anchor="middle" font-size="14" fill="var(--text-muted)">it puts itself away</text>
  <rect x="20" y="130" width="255" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="147" y="166" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">d47.zip</text>
- <text x="147" y="190" text-anchor="middle" font-size="13" fill="var(--text-muted)">you unpack it yourself</text>
+ <text x="147" y="190" text-anchor="middle" font-size="14" fill="var(--text-muted)">you unpack it yourself</text>
  <path d="M288 68 L404 102" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="418,106 400,96 396,110" fill="var(--accent-muted)"/>
  <path d="M288 172 L404 138" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
@@ -40,14 +40,14 @@ nav_order: 1
  <rect x="20" y="34" width="230" height="106" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <rect x="112" y="52" width="46" height="54" rx="5" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="135" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">WHAT YOU GOT</text>
- <text x="300" y="76" text-anchor="middle" font-size="12" fill="var(--text-muted)">Get-FileHash</text>
+ <text x="300" y="76" text-anchor="middle" font-size="14" fill="var(--text-muted)">Get-FileHash</text>
  <line x1="266" y1="92" x2="320" y2="92" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="334,92 318,84 318,100" fill="var(--accent-muted)"/>
  <rect x="348" y="34" width="200" height="106" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <line x1="378" y1="66" x2="518" y2="66" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
  <line x1="378" y1="82" x2="486" y2="82" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
  <text x="448" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A FINGERPRINT</text>
- <text x="598" y="76" text-anchor="middle" font-size="12" fill="var(--text-muted)">compare</text>
+ <text x="598" y="76" text-anchor="middle" font-size="14" fill="var(--text-muted)">compare</text>
  <line x1="564" y1="92" x2="618" y2="92" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="632,92 616,84 616,100" fill="var(--accent-muted)"/>
  <rect x="646" y="34" width="214" height="106" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -87,19 +87,19 @@ nav_order: 1
 <svg viewBox="0 0 880 232" role="img" aria-label="D47 tells you, you press the button, it verifies and swaps">
  <rect x="20" y="34" width="195" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="117" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">IT TELLS YOU</text>
- <text x="117" y="108" text-anchor="middle" font-size="13" fill="var(--text-muted)">a banner appears</text>
+ <text x="117" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a banner appears</text>
  <polygon points="226,80 240,90 226,100" fill="var(--accent-muted)"/>
  <rect x="252" y="34" width="195" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="349" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOU PRESS IT</text>
- <text x="349" y="108" text-anchor="middle" font-size="13" fill="var(--text-muted)">nothing moves before this</text>
+ <text x="349" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing moves before this</text>
  <polygon points="458,80 472,90 458,100" fill="var(--accent-muted)"/>
  <rect x="484" y="34" width="175" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="571" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">IT CHECKS</text>
- <text x="571" y="108" text-anchor="middle" font-size="13" fill="var(--text-muted)">the fingerprint again</text>
+ <text x="571" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">the fingerprint again</text>
  <polygon points="670,80 684,90 670,100" fill="var(--accent-muted)"/>
  <rect x="696" y="34" width="164" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="778" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">IT SWAPS</text>
- <text x="778" y="108" text-anchor="middle" font-size="13" fill="var(--text-muted)">and restarts</text>
+ <text x="778" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">and restarts</text>
  <text x="440" y="186" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">If any step fails, it puts everything back.</text>
  <text x="440" y="212" text-anchor="middle" font-size="14" fill="var(--text-muted)">You never end up with half an update.</text>
 </svg>
@@ -108,7 +108,7 @@ nav_order: 1
 <h2><span class="num">5</span> What leaves your PC.</h2>
 <svg viewBox="0 0 880 316" role="img" aria-label="Only a version check and a one-off model download leave the machine">
  <rect x="30" y="40" width="510" height="212" rx="12" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
- <text x="54" y="70" font-size="12" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
+ <text x="54" y="70" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
  <rect x="110" y="86" width="350" height="42" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="285" y="113" text-anchor="middle" font-size="16" fill="var(--text)">your voice</text>
  <rect x="110" y="140" width="350" height="42" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -119,12 +119,12 @@ nav_order: 1
  <polygon points="606,122 590,114 590,130" fill="var(--accent-muted)"/>
  <rect x="618" y="88" width="242" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="739" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A VERSION NUMBER</text>
- <text x="739" y="140" text-anchor="middle" font-size="13" fill="var(--text-muted)">the update check — switchable off</text>
+ <text x="739" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">the update check — switchable off</text>
  <line x1="548" y1="200" x2="592" y2="200" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="606,200 590,192 590,208" fill="var(--accent-muted)"/>
  <rect x="618" y="166" width="242" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="739" y="196" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A SPEECH MODEL</text>
- <text x="739" y="218" text-anchor="middle" font-size="13" fill="var(--text-muted)">once, ~75 MB, coming in</text>
+ <text x="739" y="218" text-anchor="middle" font-size="14" fill="var(--text-muted)">once, ~75 MB, coming in</text>
  <text x="440" y="288" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">No analytics. No metrics. No crash reports.</text>
  <text x="440" y="310" text-anchor="middle" font-size="14" fill="var(--text-muted)">Nothing in the dashed box ever crosses the line.</text>
 </svg>

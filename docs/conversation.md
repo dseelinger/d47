@@ -25,7 +25,7 @@ nav_order: 2
  <rect x="220" y="110" width="196" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="318" y="150" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">KEYWORD</text>
  <text x="318" y="172" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ROUTER</text>
- <text x="318" y="194" text-anchor="middle" font-size="13" fill="var(--accent)">always first</text>
+ <text x="318" y="194" text-anchor="middle" font-size="14" fill="var(--accent)">always first</text>
  <path d="M420 140 Q480 66 520 60" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="534,58 516,50 519,66" fill="var(--accent)"/>
  <path d="M420 160 L520 160" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
@@ -34,13 +34,13 @@ nav_order: 2
  <polygon points="534,262 519,254 516,270" fill="var(--accent-muted)"/>
  <rect x="548" y="24" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="704" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">ANSWERED RIGHT HERE</text>
- <text x="704" y="80" text-anchor="middle" font-size="13" fill="var(--text-muted)">a keyword matched — no model needed</text>
+ <text x="704" y="80" text-anchor="middle" font-size="14" fill="var(--text-muted)">a keyword matched — no model needed</text>
  <rect x="548" y="124" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="704" y="156" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">HANDED TO THE MODEL</text>
- <text x="704" y="180" text-anchor="middle" font-size="13" fill="var(--text-muted)">nothing matched — anything else</text>
+ <text x="704" y="180" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing matched — anything else</text>
  <rect x="548" y="226" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="704" y="258" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">“I'M NOT SURE”</text>
- <text x="704" y="282" text-anchor="middle" font-size="13" fill="var(--text-muted)">no match, and no model — a real answer</text>
+ <text x="704" y="282" text-anchor="middle" font-size="14" fill="var(--text-muted)">no match, and no model — a real answer</text>
 </svg>
 <p class="body">That order is deliberate, and it is not a fallback. D47 reads text it did not write — your journal, in-game chat, the web — so anything that must never be reachable by a model is reachable through the router only.</p>
 </section>
@@ -53,12 +53,12 @@ nav_order: 2
  <text x="52" y="122" font-size="15" fill="var(--text)">“what's your status”</text>
  <text x="52" y="150" font-size="15" fill="var(--text)">“stop talking”</text>
  <text x="52" y="178" font-size="15" fill="var(--text)">“what can you do”</text>
- <text x="52" y="210" font-size="13" fill="var(--text-muted)">…and everything else with a keyword</text>
+ <text x="52" y="210" font-size="14" fill="var(--text-muted)">…and everything else with a keyword</text>
  <rect x="452" y="20" width="408" height="212" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="58" font-size="17" font-weight="700" fill="var(--text-muted)">NEEDS A MODEL</text>
  <text x="484" y="94" font-size="15" fill="var(--text)">questions in your own words</text>
  <text x="484" y="122" font-size="15" fill="var(--text)">anything conversational</text>
- <text x="484" y="210" font-size="13" fill="var(--text-muted)">and it says so plainly, rather than failing</text>
+ <text x="484" y="210" font-size="14" fill="var(--text-muted)">and it says so plainly, rather than failing</text>
 </svg>
 <p class="body">Setting the provider to <em>none</em> is a supported setup, not a broken one.</p>
 </section>
@@ -66,21 +66,21 @@ nav_order: 2
 <h2><span class="num">3</span> Every answer shows its receipt.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The provenance line under each turn, explained part by part">
  <rect x="20" y="26" width="840" height="54" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="42" y="59" font-size="13.5" fill="var(--text)">Answered via Model,</text>
- <text x="190" y="59" font-size="13.5" fill="var(--text)">effort Medium,</text>
- <text x="300" y="59" font-size="13.5" fill="var(--text)">1420 in (1180 cached), 96 out,</text>
- <text x="510" y="59" font-size="13.5" fill="var(--text)">$0.0031 this turn, $0.0142 session</text>
+ <text x="42" y="59" font-size="14" fill="var(--text)">Answered via Model,</text>
+ <text x="190" y="59" font-size="14" fill="var(--text)">effort Medium,</text>
+ <text x="300" y="59" font-size="14" fill="var(--text)">1420 in (1180 cached), 96 out,</text>
+ <text x="510" y="59" font-size="14" fill="var(--text)">$0.0031 this turn, $0.0142 session</text>
  <line x1="100" y1="86" x2="100" y2="112" stroke="var(--accent)" stroke-width="2"/>
  <line x1="238" y1="86" x2="238" y2="112" stroke="var(--accent)" stroke-width="2"/>
  <line x1="398" y1="86" x2="398" y2="112" stroke="var(--accent)" stroke-width="2"/>
  <line x1="618" y1="86" x2="618" y2="112" stroke="var(--accent)" stroke-width="2"/>
- <text x="100" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">who answered</text>
- <text x="238" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">how hard it thought</text>
- <text x="398" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">what it read and wrote</text>
- <text x="618" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">what it cost</text>
+ <text x="100" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">who answered</text>
+ <text x="238" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">how hard it thought</text>
+ <text x="398" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it read and wrote</text>
+ <text x="618" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it cost</text>
  <rect x="130" y="168" width="620" height="58" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
  <text x="440" y="194" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">If it ever says “unexplained cold prefix”</text>
- <text x="440" y="216" text-anchor="middle" font-size="13" fill="var(--text-muted)">caching broke, and that turn was billed at full price</text>
+ <text x="440" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">caching broke, and that turn was billed at full price</text>
 </svg>
 </section>
 <section>
@@ -95,12 +95,12 @@ nav_order: 2
  <text x="555" y="136" text-anchor="middle" font-size="16" font-weight="800" fill="var(--background)">HIGH</text>
  <text x="765" y="116" text-anchor="middle" font-size="16" font-weight="800" fill="var(--background)">MAX</text>
  <line x1="40" y1="200" x2="860" y2="200" stroke="var(--border)" stroke-width="2"/>
- <text x="135" y="224" text-anchor="middle" font-size="13" fill="var(--text-muted)">“where am I”</text>
- <text x="345" y="224" text-anchor="middle" font-size="13" fill="var(--text-muted)">most things</text>
- <text x="555" y="224" text-anchor="middle" font-size="13" fill="var(--text-muted)">“plan the</text>
- <text x="555" y="243" text-anchor="middle" font-size="13" fill="var(--text-muted)">cheapest route”</text>
- <text x="765" y="224" text-anchor="middle" font-size="13" fill="var(--text-muted)">“carefully work</text>
- <text x="765" y="243" text-anchor="middle" font-size="13" fill="var(--text-muted)">this out…”</text>
+ <text x="135" y="224" text-anchor="middle" font-size="14" fill="var(--text-muted)">“where am I”</text>
+ <text x="345" y="224" text-anchor="middle" font-size="14" fill="var(--text-muted)">most things</text>
+ <text x="555" y="224" text-anchor="middle" font-size="14" fill="var(--text-muted)">“plan the</text>
+ <text x="555" y="243" text-anchor="middle" font-size="14" fill="var(--text-muted)">cheapest route”</text>
+ <text x="765" y="224" text-anchor="middle" font-size="14" fill="var(--text-muted)">“carefully work</text>
+ <text x="765" y="243" text-anchor="middle" font-size="14" fill="var(--text-muted)">this out…”</text>
 </svg>
 <p class="body">Worked out from the question itself, so you never pick a level and live with it — and the same question always gets the same answer. There is deliberately no <em>off</em>.</p>
 </section>
@@ -115,7 +115,7 @@ nav_order: 2
  <text x="68" y="166" font-size="14" fill="var(--text)">say so when you are not sure</text>
  <line x1="562" y1="100" x2="578" y2="100" stroke="var(--accent)" stroke-width="2"/>
  <text x="590" y="94" font-size="15" font-weight="700" fill="var(--accent)">nothing reaches these</text>
- <text x="590" y="118" font-size="13" fill="var(--text-muted)">no switch, no setting, no code path</text>
+ <text x="590" y="118" font-size="14" fill="var(--text-muted)">no switch, no setting, no code path</text>
  <rect x="40" y="214" width="520" height="80" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="68" y="250" font-size="16" font-weight="800" fill="var(--text-muted)">THE PERSONALITY</text>
  <text x="68" y="276" font-size="14" fill="var(--text-muted)">the voice it answers in</text>
@@ -123,7 +123,7 @@ nav_order: 2
  <circle cx="470" cy="253" r="11" fill="var(--text-muted)"/>
  <line x1="562" y1="254" x2="578" y2="254" stroke="var(--border)" stroke-width="2"/>
  <text x="590" y="248" font-size="15" font-weight="700" fill="var(--text)">this one turns off</text>
- <text x="590" y="272" font-size="13" fill="var(--text-muted)">and the rules above stay exactly as they are</text>
+ <text x="590" y="272" font-size="14" fill="var(--text-muted)">and the rules above stay exactly as they are</text>
  <text x="440" y="312" text-anchor="middle" font-size="14" fill="var(--text-muted)">The rules sit above the personality on every single turn. That is the whole point of the order.</text>
 </svg>
 </section>

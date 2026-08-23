@@ -28,8 +28,8 @@ nav_order: 0
  <rect x="20" y="45" width="220" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <path d="M130 64 L156 116 L130 104 L104 116 Z" fill="var(--accent)"/>
  <text x="130" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ELITE DANGEROUS</text>
- <text x="130" y="168" text-anchor="middle" font-size="13" fill="var(--text-muted)">you, flying</text>
- <text x="290" y="98" text-anchor="middle" font-size="13" fill="var(--text-muted)">writes</text>
+ <text x="130" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">you, flying</text>
+ <text x="290" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">writes</text>
  <line x1="252" y1="118" x2="316" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="330,118 314,110 314,126" fill="var(--accent-muted)"/>
  <rect x="340" y="45" width="200" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -38,8 +38,8 @@ nav_order: 0
  <line x1="426" y1="93" x2="454" y2="93" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
  <line x1="426" y1="107" x2="444" y2="107" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
  <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">THE JOURNAL</text>
- <text x="440" y="168" text-anchor="middle" font-size="13" fill="var(--text-muted)">a file, already on your PC</text>
- <text x="585" y="98" text-anchor="middle" font-size="13" fill="var(--text-muted)">reads</text>
+ <text x="440" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">a file, already on your PC</text>
+ <text x="585" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">reads</text>
  <line x1="552" y1="118" x2="606" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="620,118 604,110 604,126" fill="var(--accent-muted)"/>
  <rect x="630" y="45" width="220" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
@@ -47,7 +47,7 @@ nav_order: 0
  <circle cx="740" cy="92" r="16" fill="none" stroke="var(--accent-muted)" stroke-width="2.5"/>
  <circle cx="740" cy="92" r="6" fill="var(--accent)"/>
  <text x="740" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">DIRECTIVE 47</text>
- <text x="740" y="168" text-anchor="middle" font-size="13" fill="var(--text-muted)">knows where you are</text>
+ <text x="740" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">knows where you are</text>
  <text x="440" y="222" text-anchor="middle" font-size="14" fill="var(--text-muted)">Nothing is added to the game. The journal is something Elite already writes.</text>
 </svg>
 </section>
@@ -75,7 +75,7 @@ nav_order: 0
 <svg viewBox="0 0 880 270" role="img" aria-label="One panel is drawn on the monitor and in the headset">
  <rect x="330" y="16" width="220" height="80" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="440" y="52" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ONE PANEL</text>
- <text x="440" y="74" text-anchor="middle" font-size="13" fill="var(--text-muted)">built once</text>
+ <text x="440" y="74" text-anchor="middle" font-size="14" fill="var(--text-muted)">built once</text>
  <path d="M380 100 L250 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="238,153 256,142 258,157" fill="var(--accent-muted)"/>
  <path d="M500 100 L630 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>

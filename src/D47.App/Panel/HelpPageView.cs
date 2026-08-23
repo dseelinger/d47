@@ -298,6 +298,11 @@ public static class HelpPageView
             stack.Children.Add(Step(section));
         }
 
+        if (Everything(article, nav) is { } index)
+        {
+            stack.Children.Add(index);
+        }
+
         stack.Children.Add(Next(article, nav, openUrl));
 
         return new ScrollViewer
@@ -390,6 +395,76 @@ public static class HelpPageView
     }
 
     /// <summary>
+    /// Everything this build can draw, on the one page that is about help itself.
+    /// <para>
+    /// <b>Generated, never written down.</b> A hand-kept list of which pages have been illustrated
+    /// is a list that is wrong within a month — index.md carried exactly that and was listing
+    /// sixteen of thirty-three by the time anybody counted. This asks the library, so a page
+    /// written next year appears here the day it lands and a page that never gets one is never
+    /// promised. It is the same argument the Help capability makes about the registry, applied to
+    /// the pages rather than to the tools.
+    /// </para>
+    /// <para>
+    /// In the site's own order rather than alphabetically, because that is the order the reader
+    /// has already seen on the web and the only one that groups things the way the panel does.
+    /// </para>
+    /// </summary>
+    private static Control? Everything(HelpArticle article, PanelNavigator nav)
+    {
+        if (!string.Equals(article.CapabilityId, HelpLevel.Index, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var pages = HelpLibrary.Pages
+            .Where(id => !string.Equals(id, HelpLevel.Index, StringComparison.Ordinal))
+            .Select(HelpLibrary.For)
+            .OfType<HelpArticle>()
+            .OrderBy(page => page.NavOrder)
+            .ToList();
+
+        if (pages.Count == 0)
+        {
+            return null;
+        }
+
+        var block = new StackPanel { Spacing = 6, Margin = new Thickness(0, 24, 0, 0) };
+
+        var caption = new TextBlock
+        {
+            Text = "EVERYTHING DRAWN IN HERE",
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(0, 0, 0, 6),
+        };
+
+        LoadoutPages.Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        block.Children.Add(caption);
+
+        foreach (var group in pages.GroupBy(page => page.Group, StringComparer.Ordinal))
+        {
+            var heading = new TextBlock
+            {
+                Text = group.Key.Length > 0 ? group.Key : "Elsewhere",
+                FontSize = TypeScale.Secondary,
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(0, 10, 0, 2),
+            };
+
+            LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            block.Children.Add(heading);
+
+            foreach (var page in group)
+            {
+                var id = page.CapabilityId;
+                block.Children.Add(Pressable(page.Title, page.Lede, () => nav.Take(Crumb(id))));
+            }
+        }
+
+        return block;
+    }
+
+    /// <summary>
     /// Where to go next: what the band names, and then the page it is the short form of.
     /// <para>
     /// <b>The last one is not decoration.</b> The panel draws the band and nothing under it, so
@@ -463,7 +538,11 @@ public static class HelpPageView
     {
         if (link.Article is { } id)
         {
-            return DocsSite.Capability(id);
+            // The three general pages live a folder up from the capabilities, which is where
+            // their ids came from and where their addresses have to point back to.
+            return id.StartsWith(HelpLibrary.GeneralPrefix, StringComparison.Ordinal)
+                ? DocsSite.Root + id[HelpLibrary.GeneralPrefix.Length..] + ".html"
+                : DocsSite.Capability(id);
         }
 
         var href = link.Href ?? string.Empty;
