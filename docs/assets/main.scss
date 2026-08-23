@@ -1,10 +1,212 @@
 ---
 # Empty front matter, which is what makes Jekyll compile this file. It overrides minima's own
 # assets/main.scss, so the import below is what keeps the theme — everything after it is the
-# left nav that _layouts/default.html builds (list.md Phase 19).
+# left nav that _layouts/default.html builds (list.md Phase 19) and the cockpit palette the
+# whole site is painted in.
 ---
 
 @import "minima";
+
+/* ---------------------------------------------------------------------------
+   The palette, once.
+
+   These are the nine roles in the app's Palette.cs, plus the ground, and they are the only
+   place a colour value appears on this site. Everything below asks for a role.
+
+   The values are the **Elite** theme — amber on near-black, the one that matches the cockpit
+   and the one d47 ships with. The site commits to it rather than following the reader's system
+   theme: this is the product's own face, the screenshots are of a dark panel, and a help page
+   that is white while the app beside it is black reads as two different products.
+
+   The same role names are what an ELI5 diagram is drawn from, so a picture authored once comes
+   out amber here and comes out in the Commander's own theme — including their Elite HUD
+   recolouring — when the panel draws it.
+   --------------------------------------------------------------------------- */
+:root {
+  --background:   #0B0B0D;
+  --surface:      #15151A;
+  --surface-alt:  #1E1E24;
+  --border:       #2E2E36;
+  --text:         #E8E2D8;
+  --text-muted:   #9A9288;
+  --accent:       #FF7100;
+  --accent-muted: #A64A00;
+  --danger:       #FF5555;
+  --info:         #2288FF;
+}
+
+/* ---------------------------------------------------------------------------
+   minima, repainted.
+
+   minima 2.5.1 is light-only and hard-codes its greys, so every surface it draws has to be
+   named here. Grouped by what it is rather than by selector, so the next person can find the
+   thing they can see.
+   --------------------------------------------------------------------------- */
+
+html {
+  background: var(--background);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}
+
+a,
+a:visited {
+  color: var(--accent);
+}
+
+a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text);
+}
+
+::selection {
+  background: var(--accent-muted);
+  color: var(--text);
+}
+
+/* The banner. minima's top rule is a slab of its darkest grey, which on a near-black page is a
+   band of nothing; the accent is what the eye should find there instead. */
+.site-header {
+  background: var(--background);
+  border-top: 4px solid var(--accent-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-title,
+.site-title:visited,
+.site-title:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.site-nav,
+.site-nav .page-link,
+.site-nav .page-link:visited {
+  background: var(--background);
+  color: var(--accent);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+}
+
+.footer-heading,
+.site-footer .contact-list,
+.site-footer .footer-col-wrapper,
+.site-footer p {
+  color: var(--text-muted);
+}
+
+/* The attribution block at the foot, which used to carry its grey inline. */
+.d47-attribution {
+  margin-top: 15px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Code, quoted output and the tool schemas. The docs are full of these, so they are the second
+   most-read surface on the site after the prose. */
+code,
+pre,
+.highlight,
+.highlighter-rouge .highlight {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+code {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+pre {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+pre > code {
+  border: 0;
+}
+
+/* Rouge ships a light syntax theme, so its tokens land dark-on-dark. Everything is reset to the
+   body colour first and then three kinds are given a hue back — enough that a JSON schema reads
+   as structured, without inventing a full colour scheme nobody asked for. */
+.highlight span {
+  color: var(--text);
+}
+
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .se,
+.highlight .sr {
+  color: var(--accent);
+}
+
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kt,
+.highlight .m,
+.highlight .mf,
+.highlight .mi,
+.highlight .nb {
+  color: var(--info);
+}
+
+/* The specification tables. minima stripes them in its own greys. */
+table {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+table th {
+  background: var(--surface-alt);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+table td {
+  border-color: var(--border);
+}
+
+table tr:nth-child(even) {
+  background: var(--surface);
+}
+
+/* The "Ask for it" phrases on every capability page are blockquotes, so this is the treatment
+   the Commander's own words get. Accent on the rule rather than on the text: they are examples
+   to read, not links to press. */
+blockquote {
+  color: var(--text);
+  border-left: 4px solid var(--accent-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------------
+   The two-column layout and its nav (list.md Phase 19).
+   --------------------------------------------------------------------------- */
 
 /* The banner and the footer widen with the content. minima sizes all three from one .wrapper,
    and leaving those two at 800px under a 68rem page puts the site's own name somewhere other
@@ -52,7 +254,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #828282;
+  color: var(--text-muted);
 }
 
 .d47-nav ul {
@@ -79,8 +281,8 @@
    tell where they were from the navigation. Not a link, because it goes nowhere. */
 .d47-nav-here {
   font-weight: 600;
-  background: #f2f2f2;
-  color: #111;
+  background: var(--surface-alt);
+  color: var(--text);
 }
 
 .d47-content {
@@ -109,7 +311,7 @@
     overflow-y: visible;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid var(--border);
   }
 
   /* Two columns of entries rather than one very long list to scroll past on the way to the
@@ -122,59 +324,43 @@
 /* ---------------------------------------------------------------------------
    The ELI5 band.
 
-   The top half of a help page: big pictures, few words. It is a dark card
-   inside an otherwise light page on purpose — it reads as the cockpit rather
-   than as the manual, and the manual is directly underneath it.
+   The top half of a help page: big pictures, few words, with the reference half beneath it.
 
-   Every colour below is one of the nine roles in Palette.cs, and this block is
-   the only place their values appear. The same markup renders in the app's
-   panel, where the SVG reader substitutes the live Palette instead — so a
-   diagram follows the Commander's chosen theme and their HUD recolouring
-   without knowing either exists. Nothing inside .d47-eli5 may name a colour
-   any other way.
+   It carries no ground of its own. It was a dark card in a light page while the rest of the
+   site was still minima's white; now that the page is the palette too, a card would be a box
+   drawn around nothing. What separates the band from the prose under it is what should — the
+   size of the type and the pictures themselves.
+
+   Nothing in here names a colour. The same markup is read by the app and drawn in the panel,
+   where these role names resolve against the Commander's live theme instead.
+
+   The inner `.d47-frame` div in the markup has no styling left. It is kept because the pages
+   are the app's help too and HelpLibrary reads the band through it — by name rather than by
+   position, so a band written without one still parses.
    --------------------------------------------------------------------------- */
 .d47-eli5 {
-  --background:   #0B0B0D;
-  --surface:      #15151A;
-  --surface-alt:  #1E1E24;
-  --border:       #2E2E36;
-  --text:         #E8E2D8;
-  --text-muted:   #9A9288;
-  --accent:       #FF7100;
-  --accent-muted: #A64A00;
-  --danger:       #FF5555;
-  --info:         #2288FF;
-
-  /* Sized against the band rather than the viewport, so the same page reads at
-     a phone width, at a desktop width, and on a 1024-pixel quad a metre away. */
+  /* Sized against the band rather than the viewport, so the same page reads at a phone width,
+     at a desktop width, and on a 1024-pixel quad a metre away. */
   container-type: inline-size;
-  margin: 0 0 2.5rem;
-}
-
-.d47-eli5 .d47-frame {
-  background: var(--background);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 34px clamp(18px, 4cqw, 44px) 30px;
+  margin: 0 0 3rem;
 }
 
 .d47-eli5 .lede {
-  margin: 0 0 2rem;
-  font-size: clamp(16px, 2.2cqw, 20px);
+  margin: 0 0 2.25rem;
+  font-size: clamp(17px, 2.4cqw, 22px);
   font-weight: 600;
   color: var(--accent);
 }
 
 .d47-eli5 section {
-  margin-top: 40px;
+  margin-top: 2.75rem;
 }
 
 .d47-eli5 h2 {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 0 18px;
+  margin: 0 0 1.1rem;
   font-size: clamp(19px, 2.7cqw, 25px);
   font-weight: 700;
   line-height: 1.3;
@@ -182,8 +368,8 @@
   border: 0;
 }
 
-/* The step number. A circle rather than "1." so the eye finds the sequence
-   before it reads a word of it. */
+/* The step number. A circle rather than "1." so the eye finds the sequence before it reads a
+   word of it. */
 .d47-eli5 .num {
   flex: none;
   width: 34px;
@@ -198,8 +384,8 @@
   justify-content: center;
 }
 
-/* Pictures scale with the band. Never a fixed pixel size: the whole point of
-   the viewBox is that one drawing serves a phone and a headset. */
+/* Pictures scale with the band. Never a fixed pixel size: the whole point of the viewBox is
+   that one drawing serves a phone and a headset. */
 .d47-eli5 svg {
   display: block;
   width: 100%;
@@ -207,7 +393,7 @@
 }
 
 .d47-eli5 .body {
-  margin: 18px 0 0;
+  margin: 1.1rem 0 0;
   font-size: 15px;
   line-height: 1.65;
   color: var(--text-muted);
@@ -219,13 +405,13 @@
 }
 
 .d47-eli5 .next {
-  margin-top: 46px;
+  margin-top: 2.75rem;
   border-top: 1px solid var(--border);
-  padding-top: 24px;
+  padding-top: 1.5rem;
 }
 
 .d47-eli5 .next-title {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -246,7 +432,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
-  border-radius: 8px;
+  border-radius: 3px;
   text-decoration: none;
   transition: background 0.12s, border-color 0.12s;
 }
@@ -254,6 +440,7 @@
 .d47-eli5 .card:hover {
   background: var(--surface-alt);
   border-color: var(--accent);
+  text-decoration: none;
 }
 
 .d47-eli5 .ct {
