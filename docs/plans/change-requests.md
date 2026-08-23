@@ -24,6 +24,215 @@ at 20.
 
 ## Open
 
+### 31. What the Commander said, and d47 denying something it can do
+
+Asked for 2026-08-23, in two parts and then a third that turned out to be the interesting one.
+
+> * The commander's "Ask" or STT should appear in the Technical sub-tab
+> * Voice Command "Set Elite to Front" or "Set game to front" or "Put Elite in front/focus" or
+>   "put elite/game in front" should be the same as "Set focus to Elite"
+
+> It should definitely not say (from technical tab): *I have no tool to bring the game window to
+> front, Commander. That's yours to do — Alt-Tab or the taskbar.* `[10:52:15] Answered.`
+
+#### The third quote is a different bug from the second, and a worse one
+
+**d47 has that tool.** `FocusCapability` raises Elite to the foreground and has sixteen spoken
+phrases. What it also has is `Protected = true`, which keeps it off the advertised tool surface on
+purpose — a model that can pull the game window over whatever the Commander is doing is a model
+with a hand on the desktop, and the capability's own comment records the reasoning.
+
+So the model's sentence is **true from where the model sits and false about d47**. The phrase missed
+the router, the question fell through to the model, and the model answered honestly about a surface
+that deliberately does not include this. The Commander is told that a feature they are using does
+not exist.
+
+**That will recur, and adding four phrases does not fix it.** `Keywords = Phrases` here, so the
+router's whole vocabulary for this capability is those sixteen strings, and Commanders will keep
+inventing a seventeenth. Two shapes worth weighing, and this is the decision the item turns on:
+
+- **Let the model know a protected capability exists without being able to call it.** It could then
+  answer *"I can — say 'focus the game'"* instead of denying it. That is a change to what the
+  prompt carries, not to what the model may do, and it applies to every protected capability rather
+  than only this one.
+- **Or match this capability more loosely** — it is a closed intent with no arguments, and *bring
+  the game forward* has a small vocabulary. Cheaper, and it fixes only this one.
+
+The four phrases asked for should go in either way, and they are one line each:
+`set elite to front`, `set game to front`, `put elite in front`, `put the game in front`,
+`put elite in focus`. **None of them is in the list today** — checked, not assumed.
+
+#### The ask on the Technical page
+
+**Technical already draws every run unfiltered.** `PanelViewModel` filters to
+`Kind == TranscriptKind.Conversation` for the Conversation page and passes `_runs` straight through
+for Technical, and `Flatten` has a `TranscriptVoice.Commander` case that renders a turn as
+`> what they said`. So the page is not filtering the ask out, and the fix is in whatever should be
+appending it rather than in the page — which is the narrow half of a search that would otherwise
+start at the wrong end.
+
+The quoted line supports that reading: it shows the answer with its timestamp and its *Answered.*
+status and nothing above it saying what was asked.
+
+**Spoken and typed are the same path from `MainWindow` onward** — `_host.Heard` sets `AskText` and
+runs the same `AskAsync` a typed ask runs, with only a `_spoken` flag to tell them apart — so
+whatever is missing is missing for both, and a fix that covers only the microphone would be a fix
+in the wrong place.
+
+Two things to settle: whether the **raw** transcription is worth showing when it differs from what
+was routed (Technical is the page where that belongs, if anywhere), and whether a spoken utterance
+that the **router** answers with no model turn behind it also appears — on the evidence of the
+third quote, that is exactly the case a Commander is looking at Technical to understand.
+
+### 30. Say "it" when it has just said the name
+
+Asked for 2026-08-23.
+
+> When a system name has been read recently (and it was the last one read), it should not be
+> repeated ad nauseum. Refer to it as "it", "that system" or whatever makes sense to you. Hearing
+> "Scorpii Sector BB-O a6-2" repeated 4 times is annoying. It's why we have pronouns.
+
+**The condition is in the ask and it is the whole design.** *Recently* **and** *the last one read* —
+not merely recently. A pronoun that reaches back past a second system is worse than the repetition
+it replaces, because the Commander cannot tell which one it means and has no way to find out from
+a voice line. So the rule fires only when the name about to be said is the same as the last system
+named, with nothing else named in between.
+
+**Seven callouts speak a system name**: `ArrivalCallout`, `CarrierCallout`, `EmissionCallout`,
+`FuelCallout`, `LoreCallout`, `RivalTerritoryCallout`, `RouteCallout`. Four of them firing around
+one arrival is exactly the reported four.
+
+#### The seam already exists, and it is one place
+
+`AppHost.SayAsync` is the single point every callout passes through, and it **already separates
+what is heard from what is written** — `Announcement.Text` is spoken, `Transcript` and
+`ConversationLine` are drawn, and the class documents that the two want different things. So:
+
+**The voice gets the pronoun and the page keeps the name.** That is not a compromise, it is the
+better answer: a Commander who scrolls back can always see which system "it" was, and nothing is
+lost from the record. It also means the rewrite is one function at one call site rather than an
+edit to seven callouts.
+
+#### What is worth measuring, and is not
+
+`Scorpii Sector BB-O a6-2` is **24 characters**; *it* is two. Voices are billed per character and
+the arithmetic is real but small — the reason to do this is that it is **irritating**, and the
+saving is a side effect worth mentioning once and not designing around.
+
+`SystemName.IsProcedural` already tells a generated name from a handcrafted one, which raises a
+genuine question rather than answering it: *Sol* is three characters and pleasant to hear, and a
+Commander may well want it said every time. **Whether the rule applies to every name or only to
+procedural ones is open**, and it is the difference between a rule that is always right and one
+that is right about the case that prompted this.
+
+#### The model half is a different mechanism
+
+Most callouts are assembled in Core and said as written, and those can be rewritten deterministically.
+Some route through `FlavourBriefs` and are re-voiced by the model, which will happily expand
+whatever it was handed back to the full name — so a Core rewrite is silently undone on exactly the
+lines with the most personality in them. That half is a **line in the brief**, not a substitution.
+
+And a model *turn* — an answer to a question — is generated text that must not be regexed after
+the fact: replacing a name inside a sentence the model built is how *"it is 40 light years from it"*
+gets said out loud. Prompt instruction there, or nothing.
+
+#### Open, and worth settling before code
+
+1. **How long is "recently"?** A window in minutes, or "until something else is named", or both.
+   Both is probably right — the referent should expire, or a callout twenty minutes later says "it"
+   about a system the Commander has stopped thinking about.
+2. **Every name, or only procedural ones?** See above.
+3. **Which pronoun?** *It*, *that system*, *there* and *here* are not interchangeable —
+   *"there is 40 light years away"* reads fine and *"it is 40 light years away"* reads better, and
+   arriving somewhere makes *here* correct where it was not a moment before. This probably wants a
+   small closed set chosen by the shape of the line rather than one word substituted everywhere.
+4. **Does the first mention in a line always survive?** Within one line, the second and later
+   occurrences are the ones to replace; across lines, all of them, provided the referent held.
+   Getting this backwards produces a line that opens with a dangling *it*.
+5. **What resets it?** A jump names a new system, so that is one. Whether asking a question about a
+   different system also resets it is a decision — the Commander said the other name, but d47 did
+   not.
+
+### 29. Say something when a game starts and when it ends
+
+Asked for 2026-08-23.
+
+> D47 should react to when you get into and leave a game, but have a cooldown of 30 minutes for
+> each reaction (so as not to become annoying during re-logging).
+
+**This is not the line d47 already says.** `ContinuityCallout` is the opening line of a **d47**
+session — *"Good evening, Commander. Ready to go."* — timed off the first live tick and said once
+per run of the app. What is asked for here is a reaction to the **game**, which d47 can be running
+either side of, and which a Commander enters and leaves several times an evening.
+
+**Getting in is `LoadGame`. Leaving is `Shutdown`, and it is not always there.** Measured across
+the local 925-journal corpus on 2026-08-23:
+
+| | Count | Note |
+|---|---|---|
+| Journals | 925 | |
+| `LoadGame` events | 1,211 | 1.3 per journal |
+| `Shutdown` events | 841 | |
+| Journals with **no** `Shutdown` | **84 (9.1%)** | crash, kill, or still running |
+| Journals with **no** `LoadGame` | **147 (15.9%)** | Elite rotates the file mid-session |
+
+Two things follow and both are load-bearing. **Roughly one session in eleven never says goodbye**,
+so the leaving reaction must be allowed not to happen rather than reconstructed from silence — a
+timeout that guesses at a departure will eventually say it while the Commander is flying.
+And **the journal file is not the session boundary**: 147 files contain no `LoadGame` at all, so
+neither reaction can key off a new file appearing.
+
+**`Shutdown` is currently read nowhere in Core.** The only match in the source is a module name in
+`OutfittingCatalogue`. `LoadGame` is read in six places — identity, the miners' boundaries, the
+session summary — and none of them is a reaction. So the leaving half is genuinely new and the
+arriving half is a new reader on an event already parsed.
+
+#### The cooldown, and the corpus agrees with the number
+
+Of 433 consecutive `LoadGame` pairs within a journal:
+
+| Gap | Count | Share |
+|---|---|---|
+| under 5 minutes | 120 | 28% |
+| under 30 minutes | **248** | **57%** |
+| 30 minutes or more | 185 | 43% |
+
+Median gap **21.2 minutes**, longest 12 hours. So a 30-minute cooldown suppresses a **majority** of
+second-and-later logins while still reacting to a gap that is a real return — and the median re-log
+falls just under the line, which is the outcome the request is after. **The 30 minutes is a good
+default and should be a settings row rather than a constant**, on the same reasoning
+`AmbientCallout.Interval` is one: a Commander who wants a talkative companion turns it down, and
+zero silences it.
+
+#### Where the code is, and what it should reuse
+
+This is a **callout**, not an autonomous action — it presses nothing, so it takes the callout
+family's settings shape, cooldown and precedence rather than a protected row, which is the
+reasoning `ContinuityCallout` and `LoreCallout` both record.
+
+- `AmbientCallout` is the shape to copy for the cooldown: `Interval`, `_lastSpokenAt` seeded on the
+  first tick, and `Enabled()`.
+- **`context.IsPriming` is not optional here.** d47 starting reads a backlog that contains every
+  `LoadGame` of the day; without folding it, launching d47 after an evening's flying would announce
+  an arrival that happened four hours ago. It is the same guard the ambient line uses, and the same
+  trap `AdventureCallout` documents.
+- `FlavourBriefs` is how the line reaches a core's own voice, with personality-off saying it plainly.
+
+#### Open, and worth settling before code
+
+1. **One cooldown or two?** The request says *"a cooldown of 30 minutes for each reaction"*, which
+   reads as one per direction. A shared one would mean a quick exit-and-return costs the arrival
+   line as well, which may be exactly right — a re-log is one event, not two.
+2. **Does leaving get said at all if d47 is about to be quiet?** A goodbye said to an empty room is
+   harmless, but it is also the moment a Commander is reaching for the headset strap. Worth
+   knowing whether the intent is a spoken line or a transcript entry.
+3. **What about the Commander switching?** `LoadGame` carries identity, and a second Commander
+   logging in is arriving for the first time rather than re-logging — so the cooldown is probably
+   per Commander, keyed the way Phase 44's per-Commander projection already keys things.
+4. **Should the arrival line say anything about the gap?** Phase 31 deliberately took the gap,
+   the list and the engineer *out* of the resume line on the Commander's instruction. Whatever
+   this says should stay on the right side of that ruling.
+
 ### 27. A sold ship leaves its checklist behind
 
 Asked for 2026-08-23.
