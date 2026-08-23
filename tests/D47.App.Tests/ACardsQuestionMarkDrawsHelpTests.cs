@@ -156,4 +156,63 @@ public class ACardsQuestionMarkDrawsHelpTests
 
         host.Close();
     }
+
+    /// <summary>
+    /// <b>A chooser no longer makes the mark inert.</b> Reported 2026-08-23 against the module
+    /// picker as "there's no help for this page": it had none twice over — the mark inherited the
+    /// slot's engineering page rather than naming its own, and would not have drawn even that,
+    /// because help refused to open while a chooser held the panel.
+    /// <para>
+    /// Asserted here at the navigator, which is where the refusal lived, rather than by driving
+    /// Loadout to a slot — the claim is about every chooser, and the module picker is one.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void HelpOpensOverAChooserAndBackReturnsToIt()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Loadout, new NavCrumb("ships", "Ships") { Help = "ships" });
+        nav.Select(PanelTab.Loadout);
+
+        // What PanelPrompts does for a page-surface chooser, with the help its request declares.
+        nav.Take(new NavCrumb("loadout.module", "Module") { Help = ShipsMode.ModuleChoiceHelp });
+
+        Assert.True(nav.Modal, "the chooser has the panel");
+
+        Assert.True(HelpLevel.Open(nav), "the mark is not inert over a chooser");
+        Assert.Equal(HelpLevel.Prefix + ShipsMode.ModuleChoiceHelp, nav.Trail[^1].Key);
+
+        // Pressing it again is not a request for help about help.
+        Assert.False(HelpLevel.Open(nav));
+
+        // And the chooser is still underneath, which is what makes this safe to stack.
+        Assert.True(nav.Back());
+        Assert.Equal("loadout.module", nav.Trail[^1].Key);
+        Assert.True(nav.Modal);
+    }
+
+    /// <summary>
+    /// The module picker names its own page rather than inheriting the slot's, which is about
+    /// engineering a module rather than about choosing one.
+    /// </summary>
+    [Fact]
+    public void TheModulePickerAndTheAdventureEditorHavePagesOfTheirOwn()
+    {
+        foreach (var (id, title) in new[]
+                 {
+                     (ShipsMode.ModuleChoiceHelp, "Choosing a module"),
+                     (AdventuresPage.EditHelp, "Writing an adventure"),
+                 })
+        {
+            var article = HelpLibrary.For(id);
+
+            Assert.True(article is not null, $"{id} has no band");
+            Assert.Equal(title, article!.Title);
+            Assert.NotEmpty(article.Sections);
+        }
+
+        // Not the slot's page, which is what the mark used to inherit.
+        Assert.NotEqual(D47.Core.Capabilities.Builtin.EngineeringCapability.Id, ShipsMode.ModuleChoiceHelp);
+    }
 }

@@ -33,6 +33,14 @@ public sealed class AdventuresPage : UserControl
 
     public const string ReadPrefix = "adventure.read.";
 
+    /// <summary>
+    /// The page behind the editor's question mark (asked for 2026-08-23). Its own page rather
+    /// than the Adventures one: that band is about what an adventure <em>is</em> and how one is
+    /// flown, and this level is a form with a spine, beats and triggers in it — the half nobody
+    /// can guess at from the tab.
+    /// </summary>
+    public const string EditHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "writing-an-adventure";
+
     public const string EditPrefix = "adventure.edit.";
 
     public const string AskKey = "adventure.ask";
@@ -78,7 +86,7 @@ public sealed class AdventuresPage : UserControl
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
         var write = new Button { Content = "Write an adventure", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
-        write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write"));
+        write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write") { Help = EditHelp });
 
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
 
@@ -416,12 +424,12 @@ public sealed class AdventuresPage : UserControl
         if (!adventure.IsBegun)
         {
             bar.Children.Add(Action("Begin", () => Begin(adventure.Key)));
-            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit"))));
+            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
         }
         else if (adventure.IsAbandoned)
         {
             bar.Children.Add(Action("Begin again", () => Begin(adventure.Key)));
-            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit"))));
+            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
         }
         else if (!standing.IsDone)
         {

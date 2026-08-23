@@ -17,6 +17,64 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.58.0 — 2026-08-23 — Every question mark answers for the thing beside it
+
+Five reports in one afternoon, all the same complaint from different directions: the help mark
+answered for the *tab* rather than for the thing under your cursor, and on some pages it did not
+answer at all.
+
+### The mark stays in the panel
+
+**A settings card's question mark launched a browser.** Reported with a picture of the Listening
+card: it took you out of the app and away from the row you were reading, with no way back to it —
+and in a headset there was no browser to be taken to, so it did nothing you could see.
+
+It now draws help as a level, so going back is the breadcrumb, the controller button and the
+spoken word, already agreeing with no special case. It takes the ladder the tab's own mark takes —
+the card's page, then the level's, then the index — so a card nobody has illustrated still opens
+something.
+
+**And the card at the foot of every band is now "More details online"** rather than *Read the full
+page*. The old wording did not say that pressing it leaves the app, which is the one thing to know
+before pressing it and the whole story in a headset, where it cannot be pressed at all and is drawn
+as a bare address.
+
+### Three planners, three pages
+
+The Routing tab's Plan page has three cards and had **one** mark, on the tab, opening a page that
+describes all three planners at once. Asking what *Efficiency* does meant reading a Road to Riches
+radius and a trade run's capital on the way to the answer. Reported as more confusing than helpful.
+
+Each card now carries its own mark and its own page: **[Neutron Plotter](neutron-plotter.html)**,
+**[Road to Riches](road-to-riches.html)** and **[Trade run](trade-run.html)** — the boxes that card
+actually has, what the numbers mean, and what each one will not do.
+
+**And "Jump route" is now "Neutron Plotter"**, asked for on 2026-08-22. A jump route is what the
+in-game galaxy map already plots; the name said nothing about the one thing this does that the map
+cannot, and the card now says so in a line of its own. The name you see only — the stored plans and
+their crumbs are untouched, so nothing you plotted has moved.
+
+### Two pages that had no help at all
+
+**The module picker** — Loadout, a ship, a slot, *Module* — is a hundred rows of gear with grades,
+damage types, a Powerplay badge and a *keep what is fitted* line at the top, and its mark was
+**inert**. Two faults on top of each other: it inherited the slot's engineering page rather than
+naming its own, and it would not have drawn even that, because **help refused to open over a
+chooser at all**. That refusal is gone — help is a level and Back dismisses it, so the chooser is
+still underneath and still what you return to — and the picker has
+[a page of its own](choosing-a-module.html).
+
+**The adventure editor** likewise. [Writing an adventure](writing-an-adventure.html) covers the
+three things Save waits for, the five triggers a beat can wait for and why there is no sixth, and
+what the spine is actually for — which is the ship's AI, not you.
+
+### A dead button, caught by a new gate
+
+A settings-jump card pointing at a capability that declares no settings rows dismisses help,
+switches tab and then does nothing, which reads as broken rather than as empty. One had already
+been written — Adventures has a whole tab and not one settings row. A gate now names any card in
+that state, and the pages that quote a schema were never the only thing worth checking.
+
 ## 0.57.0 — 2026-08-23 — Help about the page you are standing on
 
 **The help mark on the Transcript page opened a page about language models.** Reported the day

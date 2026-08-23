@@ -130,6 +130,19 @@ public sealed record ChoiceRequest(
     /// </summary>
     public bool Searchable { get; init; }
 
+    /// <summary>
+    /// The help page this chooser's own question mark opens, or null to inherit whatever the
+    /// level underneath it declares (asked for 2026-08-23).
+    /// <para>
+    /// <b>A chooser is a page, and some of them are the page a Commander most needs explaining.</b>
+    /// The module picker is a hundred rows of gear with grades, damage types, a Powerplay badge
+    /// and a "keep what is fitted" line at the top — reported as having no help at all, which it
+    /// did not: the mark inherited the slot's page, and would not have opened even that, because
+    /// help refused to draw over a chooser.
+    /// </para>
+    /// </summary>
+    public string? Help { get; init; }
+
     /// <summary>Which option a spoken label names, or null when none of them does.</summary>
     /// <remarks>
     /// Whole-label and case-insensitive, deliberately. The router's own rule applies here for the

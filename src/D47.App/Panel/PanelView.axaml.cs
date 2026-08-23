@@ -1251,9 +1251,11 @@ public partial class PanelView : UserControl
     /// </summary>
     public bool OpenHelpFor(string? capabilityId)
     {
-        if (Nav.Modal)
+        if (HelpLevel.Showing(Nav))
         {
-            // Already showing, or a chooser has the panel. Either way this is not the moment.
+            // Already showing. Pressing the mark again is not a request for help about help.
+            // A chooser used to stop this too, which is what made the mark inert on the module
+            // picker — see HelpLevel.Open.
             return false;
         }
 

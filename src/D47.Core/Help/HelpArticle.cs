@@ -47,7 +47,16 @@ public static class HelpLevel
     /// </param>
     public static bool Open(PanelNavigator nav, string? preferred = null)
     {
-        if (nav.Modal)
+        // Already showing. Pressing the mark again is not a request for help about help, and
+        // stacking a second copy would need pressing Back twice to leave one page.
+        //
+        // <b>A chooser is no longer a refusal.</b> It used to be — "a chooser holds the panel" —
+        // and the cost was that the mark did nothing at all on the pages most in need of it: the
+        // module picker is a hundred rows of gear with grades, damage types and a Powerplay
+        // badge, and its question mark was inert. Reported 2026-08-23 as "there's no help for
+        // this page". Help is itself a level and Back dismisses it, so the chooser is still
+        // underneath and still the thing returned to.
+        if (Showing(nav))
         {
             return false;
         }
@@ -62,6 +71,10 @@ public static class HelpLevel
     /// <summary>That page, if this build carries a band for it. One rung of the ladder above.</summary>
     private static string? Reachable(string? capabilityId) =>
         capabilityId is { Length: > 0 } id && HelpLibrary.For(id) is not null ? id : null;
+
+    /// <summary>Whether help itself is what has the panel — as opposed to a chooser, which may.</summary>
+    public static bool Showing(PanelNavigator nav) =>
+        nav.Trail.Count > 0 && nav.Trail[^1].Key.StartsWith(Prefix, StringComparison.Ordinal);
 }
 
 /// <summary>

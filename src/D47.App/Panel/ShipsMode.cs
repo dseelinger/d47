@@ -44,6 +44,17 @@ public sealed class ShipsMode(
     public string? SlotHelp => D47.Core.Capabilities.Builtin.EngineeringCapability.Id;
 
     /// <summary>
+    /// The page behind the module picker's question mark — its own, rather than the slot's.
+    /// <para>
+    /// A slot's page is about engineering a module; this one is the list of every module that
+    /// fits, with grades, damage types, a Powerplay badge and a "keep what is fitted" line at the
+    /// top of it. Different question, different page.
+    /// </para>
+    /// </summary>
+    public const string ModuleChoiceHelp =
+        D47.Core.Help.HelpLibrary.GeneralPrefix + "choosing-a-module";
+
+    /// <summary>
     /// Two things move a ship page, and only one of them was wired (remediation.md 17, item 7).
     /// <para>
     /// The plans file changing is the obvious one and was the only one: <c>ShipBuildStore.Changed</c>
@@ -1346,6 +1357,12 @@ public sealed class ShipsMode(
             {
                 CurrentWord = "planned now",
                 Searchable = true,
+
+                // Its own page, asked for 2026-08-23 ("there's no help for this page"). It had
+                // none twice over: the mark inherited the slot's engineering page rather than
+                // naming this one, and would not have drawn even that, because help refused to
+                // open over a chooser at all.
+                Help = ModuleChoiceHelp,
             },
             option =>
             {

@@ -24,11 +24,103 @@ at 20.
 
 ## Open
 
-Nothing open.
+### 27. A sold ship leaves its checklist behind
+
+Asked for 2026-08-23.
+
+> What happens to checklist items when you sell a ship? I should be able to either A) delete all
+> checklist items associated with an existing (or previously existing) ship. This is the usual
+> scenario. Or B) put everything back to "Open" and add a "Purchase X ship", too.
+
+**Today the answer is "nothing happens", and nothing is the wrong answer.** `ShipyardSell` is read
+in two places and neither is the checklist: `FleetRegistry.cs:99` drops the hull from the fleet, and
+`ShipLoadouts.cs:82` forgets its remembered modules. The checklist has no `Sell` anywhere in it, so
+every `ChecklistScope.Ship(<sold id>)` line survives the sale — a build for a ship the Commander no
+longer owns, sitting among the ones they do.
+
+**What that looks like on the page**, because it decides how visible the problem is. The lines are
+not hidden: `ChecklistEvaluator.IsActive` (`ChecklistEvaluator.cs:544`) only asks whether a
+ship-scoped line is about the ship being *flown*, which sorts the sold ship's lines down rather
+than out. And their wording degrades the moment the sale lands — `ChecklistWording` resolves a slot
+against the remembered loadout, which `ShipLoadouts` has just deleted, so they fall back to the
+stored form (`Anaconda (ship 51)`). Honest, and still a list of work for a ship that is gone.
+
+**A and B are two different features, not two spellings of one.** Worth settling before any code:
+
+- **A — forget it.** Delete every item in that scope. The usual case, in the Commander's words,
+  and the cheaper of the two: it needs the sale event, the scope key, and a decision about whether
+  it is silent or asks first.
+- **B — put it back on the shelf.** Reset the items to *Open* and add a **"Purchase X ship"** item
+  above them, so a build survives selling the hull it was for and comes back when the hull does.
+  That is a real thing a Commander does — sell an Anaconda to fund a Cutter, buy the Anaconda again
+  a month later — but it needs a scope that outlives a `ShipID`, which the current one does not.
+
+**Three things to answer, and the third is the one that could sink B.**
+
+1. **Silently, or asked?** A sale is unambiguous and irreversible from d47's side, but deleting a
+   plan somebody spent an evening on is exactly the shape the Phase 38 banner exists for — *"you
+   sold the Anaconda; the eleven items on its list are yours to keep or clear"*, answered on the
+   Checklist tab. That keeps A and B as one implementation with the Commander picking per sale,
+   which may be the whole answer.
+2. **Is a rebuy the same ship?** `ShipID` is Frontier's, per Commander, and d47 has never had a
+   reason to ask whether one is ever reissued. **B is unbuildable if it is** — the reset list would
+   silently attach to whatever ship next holds that id. Answerable from the 920-journal corpus,
+   which is the first thing to do rather than the last.
+3. **What about a ship destroyed rather than sold?** Insurance rebuys the same hull and, as far as
+   the journal is concerned, it is the same `ShipID` — so the checklist should not react at all.
+   Whatever reads the sale has to be sure it is reading a sale.
+
+**Where it would go.** `ChecklistService` already polls the journal and already writes news for the
+callout, so this is a case in that poll rather than a new reader. The banner-with-a-question shape
+is the one Phase 38 built and Phase 42's *"pressing a tab goes to that tab, even with a question
+up"* ruling already covers.
+
+---
 
 ---
 
 ## Shipped
+
+### 28. Every question mark answers for the thing beside it — shipped 0.58.0
+
+Asked for 2026-08-23, in four reports across one afternoon, and built the same day. They read as
+four asks and are one: **the mark answered for the tab rather than for the thing under it**, and on
+two pages it did not answer at all.
+
+> All these question marks (help) should bring up in-app help with a breadcrumb to get back to
+> where you were. There should be a "More Details Online" link on that page that brings up the
+> website-based help. Currently that question mark glyph runs straight to the browser.
+
+> The Routing tab, Plan sub tab should have a small question mark glyph in each of the different
+> tools like with the Settings tab (Neutron Plotting/Jump Route, Road to Riches, Trade run). The
+> help should be only for that tool and have more detail. Currently it tries to mix-n-match
+> functionality of all 3 and is more confusing than helpful.
+
+> There's no help for this page. There needs to be. *(the module picker)*
+
+> This needs its own unique help page. *(the adventure editor)*
+
+**The "More Details Online" link already existed** under a worse name. Every band already ends with
+a card to the site; it said *Read the full page*, which does not say that pressing it leaves the
+app — the one thing to know before pressing it, and the whole story in a headset where it cannot be
+pressed and is drawn as a bare address. Renamed rather than added.
+
+**Two refusals were behind "there's no help for this page", not one.** The module picker's mark
+inherited the slot's engineering page rather than naming its own — and would not have drawn even
+that, because `HelpLevel.Open` returned false whenever a chooser held the panel. Both had to go.
+Stacking help over a chooser is safe for the reason help is a level at all: Back dismisses it and
+the chooser is still underneath, which is what `PanelPrompts.Abandon` already assumed by popping
+every modal level rather than one.
+
+**The rename came with it.** *Jump route* → **Neutron Plotter** was queued from 2026-08-22 and was
+built here because the card needed a name before it could have a page. Scope as agreed then: the
+Commander-facing title, the card's new line, the test and the prose in `routes.md`.
+`RoutePlanKind.Jump` does not move — it is serialised into the plan book and is the nav crumb key,
+so renaming it would orphan every stored plan to buy nothing visible.
+
+**One thing this uncovered rather than fixed:** a settings-jump card naming a capability that
+declares no settings rows is a button that dismisses help, switches tab and does nothing. One had
+already been written. There is now a gate.
 
 ### 26. Help that addresses how to use the UI — shipped 0.57.0
 
