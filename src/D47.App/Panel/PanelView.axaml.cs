@@ -581,7 +581,12 @@ public partial class PanelView : UserControl
             crumb => crumb.Key == ChecklistPage.SuggestionsKey
                 ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
                 : page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
-            new NavCrumb("checklist", "Checklist"));
+            new NavCrumb("checklist", "Checklist")
+            {
+                // The suggestions level drilled from here inherits it: a proposal is still the
+                // checklist's subject.
+                Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
+            });
 
         // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than
         // every line**: a checklist's whole question is how much is left, and a count that never
