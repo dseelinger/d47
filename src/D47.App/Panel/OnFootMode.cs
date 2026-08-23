@@ -43,6 +43,8 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
     public string SlotPrefix => KitSlotPrefix;
 
+    public string? SlotHelp => D47.Core.Capabilities.Builtin.OnFootCapability.Id;
+
     public event Action? Changed
     {
         add => kit.Store.Changed += value;

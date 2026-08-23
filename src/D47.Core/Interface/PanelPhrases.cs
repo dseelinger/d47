@@ -1,3 +1,5 @@
+using D47.Core.Help;
+
 namespace D47.Core.Interface;
 
 /// <summary>
@@ -23,6 +25,31 @@ namespace D47.Core.Interface;
 /// </summary>
 public static class PanelPhrases
 {
+    /// <summary>
+    /// Asking what you are looking at (asked for 2026-08-22).
+    /// <para>
+    /// <b>Bare "help" is allowed here and refused by the keyword router</b>, and the difference is
+    /// not an inconsistency. The router matches a keyword anywhere in a sentence, so "help me plot
+    /// a route" would hijack; this matches the whole utterance and nothing else, so it cannot.
+    /// </para>
+    /// <para>
+    /// It matters most where there is no mark to press. The corner glyph needs a ray, and the
+    /// Commander this whole feature was built for is wearing a headset with their hands on a
+    /// stick — so help that can only be reached by pointing at it is help they cannot reach.
+    /// </para>
+    /// </summary>
+    public static readonly IReadOnlyList<string> Help =
+    [
+        "help",
+        "help me",
+        "what is this",
+        "what is this page",
+        "what does this do",
+        "how does this work",
+        "explain this",
+        "explain this page",
+    ];
+
     /// <summary>Going back a level, however it is asked for.</summary>
     public static readonly IReadOnlyList<string> Back =
         ["back", "go back", "take me back", "go up", "up a level"];
@@ -88,6 +115,15 @@ public static class PanelPhrases
         if (Back.Any(phrase => input == phrase))
         {
             return nav.Back() ? $"Back to {nav.Trail[^1].Word}." : null;
+        }
+
+        // Help for wherever they are standing, before any of the destinations below: it is about
+        // the page they are on rather than a page they want to be on. Null when this level has no
+        // band written yet, which lets the phrase fall through to the model rather than answering
+        // "no" to somebody who asked for help.
+        if (Help.Any(phrase => input == phrase))
+        {
+            return HelpLevel.Open(nav) ? "Help." : null;
         }
 
         // A crumb of the trail, which is what makes the breadcrumb sayable. The leaf is skipped:

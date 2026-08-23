@@ -308,6 +308,17 @@ public interface ILoadoutMode
 
     string SlotPrefix { get; }
 
+    /// <summary>
+    /// Which capability's help explains a slot of this mode, or null for none.
+    /// <para>
+    /// On the mode rather than on the crumb factory, because <c>SlotCrumb</c> is shared and the
+    /// two modes mean different things by a slot: a ship's is where a blueprint gets chosen, and
+    /// a suit's engineering is a different page entirely. Guessing from the key prefix would work
+    /// today and be wrong the first time a third mode arrives.
+    /// </para>
+    /// </summary>
+    string? SlotHelp { get; }
+
     /// <summary>Raised when anything this mode draws has changed underneath.</summary>
     event Action? Changed;
 

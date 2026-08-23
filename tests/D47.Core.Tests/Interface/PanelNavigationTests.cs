@@ -410,4 +410,60 @@ public class PanelNavigationTests
         Assert.True(nav.Modal);
         Assert.Equal("engineers", nav.Help);
     }
+
+    /// <summary>
+    /// <b>Help can be asked for out loud</b> (asked for 2026-08-22). The mark in the corner needs
+    /// a ray, and the Commander this feature exists for is wearing a headset with their hands on
+    /// a stick — so a route that needs pointing at is a route they do not have.
+    /// </summary>
+    [Fact]
+    public void HelpOpensBySayingSo()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Select(PanelTab.Engineers);
+
+        Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
+        Assert.True(nav.Modal);
+        Assert.Equal("help:engineers", nav.Trail[^1].Key);
+
+        // And back out again by the word that backs out of anything.
+        Assert.Equal("Back to Directory.", PanelPhrases.Apply("back", nav));
+        Assert.False(nav.Modal);
+    }
+
+    /// <summary>
+    /// <b>Bare "help" is safe here and refused by the keyword router</b>, and the difference is
+    /// the matching rule rather than an inconsistency: this matches a whole utterance, so a
+    /// sentence that merely contains the word cannot hijack the panel mid-flight.
+    /// </summary>
+    [Fact]
+    public void ASentenceContainingTheWordDoesNotOpenHelp()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Select(PanelTab.Engineers);
+
+        Assert.Null(PanelPhrases.Apply("help me plot a route to Deciat", nav));
+        Assert.Null(PanelPhrases.Apply("who can help with thrusters", nav));
+        Assert.False(nav.Modal);
+    }
+
+    /// <summary>
+    /// A level whose page has no band yet answers nothing, so the phrase falls through to the
+    /// model rather than telling somebody who asked for help that there is none.
+    /// </summary>
+    [Fact]
+    public void SayingItWhereNothingIsWrittenFallsThrough()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = "no-such-page" });
+        nav.Select(PanelTab.Utilities);
+
+        Assert.Null(PanelPhrases.Apply("help", nav));
+        Assert.False(nav.Modal);
+    }
 }

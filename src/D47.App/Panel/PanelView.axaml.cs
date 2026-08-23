@@ -246,9 +246,20 @@ public partial class PanelView : UserControl
         // roots rather than levels for the reason Fleet, Locker and Directory are: the tab is the
         // root, so pressing Transcript while three levels into something returns to whichever of
         // these was last being read rather than to a fixed one.
-        Nav.Register(PanelTab.Transcript, new NavCrumb(ConversationRoot, "Conversation"));
-        Nav.Register(PanelTab.Transcript, new NavCrumb(TechnicalRoot, "Technical"));
-        Nav.Register(PanelTab.Transcript, new NavCrumb(LogRoot, "Log file"));
+        // Help per root, because these three are three subjects: the conversation, and two
+        // diagnostic readings of it. A root whose page has no band yet simply shows no mark, so
+        // declaring it now is what makes the mark appear the day somebody writes one.
+        Nav.Register(
+            PanelTab.Transcript,
+            new NavCrumb(ConversationRoot, "Conversation") { Help = D47.Core.Capabilities.Builtin.ConversationCapability.Id });
+
+        Nav.Register(
+            PanelTab.Transcript,
+            new NavCrumb(TechnicalRoot, "Technical") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+
+        Nav.Register(
+            PanelTab.Transcript,
+            new NavCrumb(LogRoot, "Log file") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
 
         // The mode button's content, once. See DrawModes for why it is not rebuilt.
         _logBusy.Bind(
@@ -928,17 +939,26 @@ public partial class PanelView : UserControl
 
         if (plan)
         {
-            roots.Add(new NavCrumb(RoutingPages.PlanRoot, "Plan"));
+            roots.Add(new NavCrumb(RoutingPages.PlanRoot, "Plan")
+            {
+                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+            });
         }
 
         if (progress)
         {
-            roots.Add(new NavCrumb(RoutingPages.ProgressRoot, "Progress"));
+            roots.Add(new NavCrumb(RoutingPages.ProgressRoot, "Progress")
+            {
+                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+            });
         }
 
         if (course)
         {
-            roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course"));
+            roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course")
+            {
+                Help = D47.Core.Capabilities.Builtin.NavigationCapability.Id,
+            });
         }
 
         if (roots.Count == 0)
