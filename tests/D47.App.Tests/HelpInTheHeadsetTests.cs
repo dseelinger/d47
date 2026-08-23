@@ -401,21 +401,22 @@ public class HelpInTheHeadsetTests
     }
 
     /// <summary>
-    /// The band's links, on the surface with no browser behind it — and the split that matters.
+    /// The band's links, on the surface with no browser behind it — and the split that decides
+    /// how each one is drawn.
     /// <para>
-    /// Checklists has a band of its own, so it is something this machine is already carrying and
-    /// is drawn as a control: pressing it drills. Engineering and Ships have none yet, so they are
-    /// addresses, and an address is written out rather than drawn as a control that would do
-    /// nothing here.
+    /// A sibling this build already carries is a control: pressing it drills. One with no band is
+    /// an address, written out rather than drawn as a control that would do nothing here.
     /// </para>
     /// <para>
-    /// This test asserted all three were addresses until the Checklists band was written, and
-    /// went red the moment it was. That is the intended behaviour arriving, not a regression: the
-    /// day somebody writes the Engineering band, the line below it goes the same way.
+    /// <b>Derived from the library rather than from a list of names.</b> This test named its
+    /// siblings twice and went red twice — once when Checklists got a band and again when
+    /// Engineering and Ships did. Both times the behaviour was correct and the test was stale,
+    /// which is a test teaching the wrong lesson. It now asks which pages have bands and asserts
+    /// the rule, so writing the next one cannot break it.
     /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheBandsLinksAreWrittenOutRatherThanDrawnAsDeadControls()
+    public void EachLinkIsDrawnAsWhatThisSurfaceCanDoWithIt()
     {
         var (panel, view, _) = Headset(showingHelp: true);
 
@@ -425,20 +426,31 @@ public class HelpInTheHeadsetTests
 
         Assert.Contains("Where to go next".ToUpperInvariant(), shown);
 
-        // No band yet, so an address a Commander can read and type later.
-        Assert.Contains(D47.App.DocsSite.Capability("engineering"), shown);
-        Assert.Contains(D47.App.DocsSite.Capability("ships"), shown);
+        var article = HelpLibrary.For("engineers")!;
+        Assert.NotEmpty(article.Links);
 
-        // The long form of this very page, which the panel does not draw.
+        foreach (var link in article.Links)
+        {
+            var target = link.Article!;
+
+            if (HelpLibrary.For(target) is not null)
+            {
+                Assert.DoesNotContain(D47.App.DocsSite.Capability(target), shown);
+
+                Assert.Contains(
+                    view.GetVisualDescendants().OfType<Button>(),
+                    button => button.GetVisualDescendants().OfType<TextBlock>()
+                        .Any(text => text.Text == link.Title));
+            }
+            else
+            {
+                Assert.Contains(D47.App.DocsSite.Capability(target), shown);
+            }
+        }
+
+        // The long form of this very page is always an address: the panel draws the band and
+        // nothing beneath it, and there is no band to drill to for the reference half.
         Assert.Contains(D47.App.DocsSite.Capability("engineers"), shown);
-
-        // Checklists is here, so it is a control rather than an address.
-        Assert.DoesNotContain(D47.App.DocsSite.Capability("checklists"), shown);
-
-        Assert.Contains(
-            view.GetVisualDescendants().OfType<Button>(),
-            button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == "Checklists"));
 
         panel.Dispose();
     }

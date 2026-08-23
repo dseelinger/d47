@@ -4,6 +4,95 @@ group: Knowledge
 nav_order: 108
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">What a blueprint costs, what it costs you, and how your own roll actually went.</p>
+<section>
+<h2><span class="num">1</span> Two halves, and only one of them is about you.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="A shipped table and your journal combine into one answer">
+ <rect x="30" y="20" width="380" height="98" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="60" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE TABLES</text>
+ <text x="220" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">what a grade costs anybody</text>
+ <rect x="470" y="20" width="380" height="98" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="660" y="60" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
+ <text x="660" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">your rank with the engineer</text>
+ <path d="M220 130 L400 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="414,171 396,161 392,175" fill="var(--accent-muted)"/>
+ <path d="M660 130 L480 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="466,171 488,175 484,161" fill="var(--accent-muted)"/>
+ <rect x="250" y="180" width="380" height="62" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="219" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">ONE ANSWER</text>
+ <text x="440" y="262" text-anchor="middle" font-size="16" fill="var(--text-muted)">Neither half touches the network. The tables ship with D47.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> A full grade is arithmetic, not a grind.</h2>
+<svg viewBox="0 0 880 276" role="img" aria-label="Rank and grade give an exact roll count, which multiplies the recipe into a shopping list">
+ <rect x="20" y="30" width="230" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="135" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOUR RANK</text>
+ <text x="135" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">5 with Farseer</text>
+ <text x="274" y="80" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text-muted)">+</text>
+ <rect x="298" y="30" width="200" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="398" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">THE GRADE</text>
+ <text x="398" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">5</text>
+ <line x1="512" y1="72" x2="536" y2="72" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="550,72 534,64 534,80" fill="var(--accent-muted)"/>
+ <rect x="564" y="30" width="290" height="84" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="709" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">5 ROLLS</text>
+ <text x="709" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">exactly, every time</text>
+ <line x1="709" y1="126" x2="709" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="709,166 701,150 717,150" fill="var(--accent-muted)"/>
+ <rect x="20" y="176" width="834" height="66" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="437" y="216" text-anchor="middle" font-size="17" fill="var(--text)">5 × Arsenic     5 × Chemical Manipulators     5 × Datamined Wake Exceptions</text>
+ <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">Not luck and not a rate. A shopping list you can go and fill.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Below the rank it is a gate, not a longer grind.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="Grade five cannot be rolled below rank five at all">
+ <rect x="20" y="26" width="280" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="160" y="64" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU WANT GRADE 5</text>
+ <text x="160" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">you are rank 2</text>
+ <line x1="360" y1="14" x2="360" y2="132" stroke="var(--danger)" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 10"/>
+ <text x="392" y="62" font-size="17" font-weight="700" fill="var(--danger)">grade 5 needs rank 5</text>
+ <text x="392" y="90" font-size="16" fill="var(--text-muted)">not slower — not at all</text>
+ <rect x="20" y="152" width="834" height="62" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="437" y="190" text-anchor="middle" font-size="17" fill="var(--text)">So you are told the rank and its price: 16,000,000 cr sold at their workshop.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Never a shopping list for something you could not roll today.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> 0.85 is finished. Not 1.0.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="A grade counts as finished from 0.85, where the game stops insisting">
+ <text x="60" y="46" font-size="16" fill="var(--text-muted)">how far your grade got</text>
+ <rect x="60" y="62" width="760" height="48" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="60" y="62" width="646" height="48" rx="6" fill="var(--accent-muted)"/>
+ <line x1="706" y1="56" x2="706" y2="130" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <text x="706" y="152" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">0.85</text>
+ <line x1="820" y1="56" x2="820" y2="130" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"/>
+ <text x="820" y="152" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">1.0</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Anything from 0.85 up is called finished — that band is where the game stops insisting.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text-muted)">926 of 994 completed grades reach a full 1.0. Of the 68 that stopped short, the 45 you</text>
+ <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">could move on from were every one of them above 0.85.</text>
+</svg>
+<p class="body">Rolls remaining are still counted towards a full 1.0 rather than towards 0.85, because the band is where the game stops insisting rather than something to aim at.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="engineers.html"><span class="ct">Engineers →</span><span class="cd">Who can roll this, where they are, and how to reach them.</span></a>
+<a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The build a blueprint is planned against, slot by slot.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a planned roll waits until the materials are in.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 What a blueprint costs and changes, and how the roll on a fitted module actually went.
 
 > "what does increased FSD range cost"
@@ -15,7 +104,7 @@ costs** is a fact about the game and comes from shipped tables. **What it costs 
 your rank with the engineer who would roll it, and only your journal knows that — so the two arrive
 together, the way [engineers](engineers.md) pairs a directory with your own standing.
 
-## What a blueprint costs
+### What a blueprint costs
 
 ```text
 Increased FSD Range — Frame Shift Drive blueprint, grades 1 to 5.
@@ -44,7 +133,7 @@ exact total, not a rate.** How many rolls a grade takes is `5 − (rank − grad
 not luck, not the module — so once your rank with an engineer is known, `ingredients × rolls` is
 arithmetic. Five rolls of a three-material recipe is fifteen units, and that is a shopping list.
 
-## A grade you cannot roll yet is a gate, not a grind
+### A grade you cannot roll yet is a gate, not a grind
 
 ```text
 You are grade 2 with Elvira Martuuk, at Long Sight Base in Khun, and grade 5 needs rank 5. Reaching grade 5 with them takes 16,000,000 cr of profit sold at their workshop.
@@ -55,7 +144,7 @@ costs, never a large shopping list you cannot use. Reputation rises by buying mo
 selling exploration data or commodities at that engineer's own workshop; grade 1 arrives with the
 unlock and has no price.
 
-## How your own roll went
+### How your own roll went
 
 ```text
 5 of 6 modules engineered on Fixture, a Krait_MkII.
@@ -96,7 +185,7 @@ one being picked for you:
   Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 rolls to go (0.2)
 ```
 
-## 0.85 is finished, not 1.0
+### 0.85 is finished, not 1.0
 
 This is the number that would have shipped a bug. Of 994 completed grades measured across a
 912-journal corpus, 926 reach exactly 1.0 — so gating "done" on 1.0 looks right in testing and is
@@ -113,7 +202,7 @@ stops insisting, not a target to aim at. They are quoted only when your rank wit
 rolled it is known, because the step size depends on `rank − grade` and on nothing else — with no
 rank, the fill is reported and the roll count is not.
 
-## Why a fitted module says "FSD LongRange"
+### Why a fitted module says "FSD LongRange"
 
 Because that is what Frontier calls it, and the alternative is inventing a name.
 
@@ -137,7 +226,7 @@ So the symbol goes out with its underscores taken out and nothing else done to i
 treatment stored modules already get. Ugly and true beats invented, and a name the other tool cannot
 look up would be worse than either.
 
-## Where to get it
+### Where to get it
 
 ```text
 Yttrium — a grade 4 raw material.
@@ -173,7 +262,7 @@ Nearest systems reported in Boom, Empire-aligned:
 *Reported* in Boom, not in Boom. State turns over on the background simulation's own tick and the
 index is a snapshot — the same crowd-report framing the station stock carries.
 
-## What a trader could make out of what you have
+### What a trader could make out of what you have
 
 ```text
 A trader could make it out of what you already hold:
@@ -194,7 +283,7 @@ instead would price the commonest trade there is at a sixth of its cost.
 Trades the rules define but the storage cap forbids — grade 1 to grade 5 within a line wants 1,296
 units against a cap of 300 — are simply not offered.
 
-## Traders
+### Traders
 
 ```text
 Nearest traders dealing in raw materials, from Sol:
@@ -212,9 +301,9 @@ stations that carry the service — 209 either way within 150 light years of Sol
 and no type, which is the same station the economy rule could not place either.
 
 
-## Tools
+### Tools
 
-### `get_blueprint`
+#### `get_blueprint`
 
 ```json
 {"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 for example \u0022Increased FSD Range\u0022, \u0022Dirty Drive Tuning\u0022 or \u0022Lightweight\u0022."},"module":{"type":"string","description":"A kind of module \u2014 for example \u0022Frame Shift Drive\u0022 or \u0022Power Plant\u0022. Alone it lists what that module can take; with a blueprint it says which of several modules that blueprint is meant for."}},"required":[],"additionalProperties":false}
@@ -235,7 +324,7 @@ Experimental effects: Deep Charge, Double Braced, Mass Manager, Stripped Down, T
 A blueprint name that belongs to several modules — "Lightweight" is on armour, sensors and a dozen
 other things, with a different recipe each — takes the module as well to say which is meant.
 
-### `get_module_engineering`
+#### `get_module_engineering`
 
 ```json
 {"type":"object","properties":{"module":{"type":"string","description":"A fitted module or its slot \u2014 for example \u0022frame shift drive\u0022, \u0022MainEngines\u0022 or \u0022power plant\u0022. Omit for every engineered module."}},"required":[],"additionalProperties":false}
@@ -244,20 +333,20 @@ other things, with a different recipe each — takes the module as well to say w
 Matches against both the module's name and its slot, because "frame shift drive" is one and
 "MainEngines" is the other and you use whichever you can see.
 
-### `find_material`
+#### `find_material`
 
 ```json
 {"type":"object","properties":{"material":{"type":"string","description":"The material, by name \u2014 \u0022Yttrium\u0022, \u0022Imperial Shielding\u0022."},"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."}},"required":["material"],"additionalProperties":false}
 ```
 
-### `find_material_trader`
+#### `find_material_trader`
 
 ```json
 {"type":"object","properties":{"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."},"type":{"type":"string","description":"Which kind of trader.","enum":["Raw","Manufactured","Encoded"]}},"required":[],"additionalProperties":false}
 ```
 
 
-### Where a grade 5 material is found
+#### Where a grade 5 material is found
 
 Ask where to get one of the ten materials that come from High Grade Emissions and D47 searches on
 the conditions in [the callout's table](callouts.md#emissions) — the system's allegiance, the
@@ -272,7 +361,7 @@ Nearest systems reported Empire-aligned, over 1,000,000 people:
 If nothing within 50 light years matches, D47 says which filter found nothing rather than offering
 the best of a bad list.
 
-### Both searches offer the clipboard
+#### Both searches offer the clipboard
 
 Either answer ends with an offer naming the best system it found — nearest for a material, or the
 trader's own:
@@ -291,7 +380,7 @@ galaxy map takes, and pasting a destination into it is the errand this ends.
 An offer stands until the next answer replaces it, so saying it twice copies it twice. A search
 that found nothing clears the offer rather than leaving the previous system answering to "that".
 
-## Notes for anyone reading the code
+### Notes for anyone reading the code
 
 **Only a modification may be multiplied by a roll count.** The blueprint table keeps six different
 kinds of recipe in one list and only modifications cost their ingredients *per application*; a

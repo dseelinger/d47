@@ -4,9 +4,92 @@ group: Knowledge
 nav_order: 111
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Your fleet, the hulls you mean to buy, and one build per ship.</p>
+<section>
+<h2><span class="num">1</span> The build owns what. The checklist owns when.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="A build and a checklist are separate, and nothing crosses between them unasked">
+ <rect x="20" y="20" width="300" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="170" y="62" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE BUILD</text>
+ <text x="170" y="92" text-anchor="middle" font-size="16" fill="var(--text-muted)">what a ship should be</text>
+ <text x="170" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">one entry per slot</text>
+ <text x="440" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">you promote it</text>
+ <line x1="336" y1="80" x2="530" y2="80" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="544,80 528,72 528,88" fill="var(--accent-muted)"/>
+ <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">and accept it</text>
+ <rect x="560" y="20" width="300" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="710" y="62" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE CHECKLIST</text>
+ <text x="710" y="92" text-anchor="middle" font-size="16" fill="var(--text-muted)">what you are doing next</text>
+ <text x="710" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">in the order you put it in</text>
+ <text x="440" y="180" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Nothing crosses between them unasked.</text>
+ <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text-muted)">So a build can be rearranged without your checklist reordering itself underneath you.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Changing your mind about a slot is an edit.</h2>
+<svg viewBox="0 0 880 272" role="img" aria-label="Replacing a module in a slot edits that slot rather than deleting it and adding another">
+ <rect x="20" y="40" width="300" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="170" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">HARDPOINT 3</text>
+ <text x="170" y="108" text-anchor="middle" font-size="16" fill="var(--text-muted)">long range pulse laser</text>
+ <text x="448" y="66" text-anchor="middle" font-size="15" fill="var(--text-muted)">you change your mind</text>
+ <line x1="336" y1="86" x2="530" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="544,86 528,78 528,94" fill="var(--accent-muted)"/>
+ <rect x="560" y="40" width="300" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="710" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">HARDPOINT 3</text>
+ <text x="710" y="108" text-anchor="middle" font-size="16" fill="var(--text-muted)">overcharged multi cannon</text>
+ <rect x="20" y="164" width="410" height="76" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="225" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The same slot, edited</text>
+ <text x="225" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">it keeps everything it had been through</text>
+ <rect x="450" y="164" width="410" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="655" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">Not a delete and an add</text>
+ <text x="655" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">which used to bury the history beside it</text>
+ <text x="440" y="266" text-anchor="middle" font-size="16" fill="var(--text-muted)">A slot holds one plan, because a slot holds one module.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> You can plan a ship you have not bought.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="An intended hull becomes owned and the plan is pointed at it automatically">
+ <text x="300" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">you buy one</text>
+ <text x="610" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">D47 notices</text>
+ <rect x="20" y="40" width="250" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">CORSAIR</text>
+ <text x="145" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">intended, not bought yet</text>
+ <line x1="282" y1="86" x2="304" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="318,86 302,78 302,94" fill="var(--accent-muted)"/>
+ <rect x="330" y="40" width="250" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="455" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">CORSAIR</text>
+ <text x="455" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">yours now</text>
+ <line x1="592" y1="86" x2="614" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="628,86 612,78 612,94" fill="var(--accent-muted)"/>
+ <rect x="640" y="40" width="220" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="750" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">THE PLAN</text>
+ <text x="750" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">points at it</text>
+ <rect x="20" y="158" width="840" height="56" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="193" text-anchor="middle" font-size="17" fill="var(--text)">“That Corsair is yours now, and the plan you had for one is pointed at it.”</text>
+ <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only when exactly one intended build matches. Two planned and one bought is a question.</text>
+</svg>
+<p class="body">Buying the hull is the plan's <em>first step</em> rather than something you have to do before planning at all — which is also why a hull you own is a derived line and one you only intend is an authored one. That is the same rule the checklist draws, because it is the same rule.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="engineering.html"><span class="ct">Engineering →</span><span class="cd">What a planned roll costs, and how the one you already made went.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a promoted plan lands, and what it does once it is there.</span></a>
+<a class="card" href="engineers.html"><span class="ct">Engineers →</span><span class="cd">Who can roll what a build asks for, and how far away they are.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Your fleet, the hulls you intend to buy, and one build per ship.
 
-## Ask for it
+### Ask for it
 
 > "what have I planned"
 > "plan grade 5 dirty drives on the thrusters"
@@ -15,7 +98,7 @@ Your fleet, the hulls you intend to buy, and one build per ship.
 
 The first and the last need no AI configured at all.
 
-## The plan owns what. The checklist owns when.
+### The plan owns what. The checklist owns when.
 
 These are two different questions and Directive 47 keeps them apart:
 
@@ -30,7 +113,7 @@ way every other suggestion does.
 That separation is what lets you rearrange a build without your checklist reordering itself under
 you, and reorder your checklist without the build forgetting what you decided.
 
-## One build per ship
+### One build per ship
 
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this
 deliberately does not have. A slot holds one plan, because a slot holds one module.
@@ -41,7 +124,7 @@ hull — with whatever history it had. Before this, the first time you changed y
 slot, everything that slot had been through was tombstoned and an identical-looking new item
 opened beside the corpse.
 
-## The fleet, and the fleet you intend
+### The fleet, and the fleet you intend
 
 The Loadout tab opens on your fleet and answers where each ship is before you drill into anything.
 
@@ -63,12 +146,12 @@ That Corsair is yours now, and the plan you had for one is pointed at it.
 Only when exactly one intended build matches the hull. Two Corsairs planned and one bought is a
 question rather than a guess.
 
-## Owned is derived. Intended is authored.
+### Owned is derived. Intended is authored.
 
 The same rule your checklist already draws between a line the journal settles and a line a person
 does — so it looks like the same rule, because it is one.
 
-## Dropping a build keeps what it already produced
+### Dropping a build keeps what it already produced
 
 Delete a plan and whatever it already put on your checklist **stays there**. You ordered your list
 around those lines, and quietly removing them is a history that lies.
@@ -87,7 +170,7 @@ So the one route that genuinely needs a model to understand free English is
 proposing straight to the checklist. Everything below is `Protected`: reachable from the panel and
 from a phrase, and never from the model.
 
-### `get_ship_plans`
+#### `get_ship_plans`
 
 Every ship the Commander owns and every hull they intend to buy, with where each one is and how
 many slots its build has an opinion about.
@@ -100,7 +183,7 @@ Not `get_fleet`, which `JournalCapability` already has and which answers a diffe
 that one reports what the journal saw in the racks, and this one reports what the Commander means
 to do about it.
 
-### `promote_ship_plan`
+#### `promote_ship_plan`
 
 Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and one planned
 change produces the modification plus whatever unlocking and ranking it needs.
@@ -113,7 +196,7 @@ change produces the modification plus whatever unlocking and ranking it needs.
 modification, so promoting one planned change produces several lines — and each carries the slot
 that caused it in its intent, which is what lets a later revision find them again.
 
-### `drop_ship_plan`
+#### `drop_ship_plan`
 
 Drop a ship's build. The Commander's own act: not offered to the model, and refused if it asks.
 What the plan already put on the checklist is kept.
@@ -122,7 +205,7 @@ What the plan already put on the checklist is kept.
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}
 ```
 
-### The file
+#### The file
 
 ```json
 {
