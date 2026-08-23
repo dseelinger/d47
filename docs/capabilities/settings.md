@@ -4,6 +4,80 @@ group: Foundation
 nav_order: 143
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
+<section>
+<h2><span class="num">1</span> Four rows the model cannot touch.</h2>
+<svg viewBox="0 0 880 292" role="img" aria-label="Protected rows: the model, the keys, the update check and every hotkey">
+ <rect x="20" y="20" width="500" height="212" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="52" y="56" font-size="19" font-weight="800" fill="var(--danger)">PROTECTED</text>
+ <text x="52" y="94" font-size="16" fill="var(--text)">which model answers, and where</text>
+ <text x="52" y="126" font-size="16" fill="var(--text)">any API key</text>
+ <text x="52" y="158" font-size="16" fill="var(--text)">checking for updates at all</text>
+ <text x="52" y="190" font-size="16" fill="var(--text)">every hotkey</text>
+ <text x="52" y="218" font-size="15" fill="var(--text-muted)">each one decides what leaves this machine</text>
+ <rect x="546" y="20" width="314" height="98" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="703" y="56" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">you can</text>
+ <text x="703" y="82" text-anchor="middle" font-size="15" fill="var(--text-muted)">the panel, a bound key,</text>
+ <text x="703" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">or saying so yourself</text>
+ <rect x="546" y="134" width="314" height="98" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="703" y="170" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">the model cannot</text>
+ <text x="703" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">they are not on its list</text>
+ <text x="703" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">at all</text>
+ <text x="440" y="266" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Anything the model can be asked to do, a hostile in-game message can try to make it do.</text>
+ <text x="440" y="288" text-anchor="middle" font-size="16" fill="var(--text-muted)">A guard the model can switch off is not a guard. Protected is about who is asking, not how.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Most settings belong to the machine. A few belong to you.</h2>
+<svg viewBox="0 0 880 264" role="img" aria-label="Installation settings are shared; per-Commander settings are separate for each pilot">
+ <rect x="20" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="225" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE INSTALLATION</text>
+ <text x="225" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">keys, devices, theme, zoom, hotkeys</text>
+ <text x="225" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">the same whoever is flying</text>
+ <text x="225" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">and the running cost, which is one bill</text>
+ <rect x="450" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="655" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THIS COMMANDER</text>
+ <text x="655" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">your character sheet, your About Me</text>
+ <text x="655" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">which ship each core is bound to</text>
+ <text x="655" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">Elite says who is flying, and D47 listens</text>
+ <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A second Commander on the same machine never sees the first one's story.</text>
+ <text x="440" y="246" text-anchor="middle" font-size="16" fill="var(--text-muted)">Yours reads the machine's until you set it. Emptying it afterwards is a choice, not a reset.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> A value it does not know is answered, not ignored.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="An unrecognised value is met with the list of valid ones">
+ <rect x="20" y="24" width="340" height="70" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="190" y="66" text-anchor="middle" font-size="17" fill="var(--text)">“use the chatty theme”</text>
+ <line x1="372" y1="59" x2="398" y2="59" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="412,59 396,51 396,67" fill="var(--accent-muted)"/>
+ <rect x="424" y="24" width="436" height="70" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="642" y="52" text-anchor="middle" font-size="16" fill="var(--text)">“'chatty' is not a valid Theme. Expected one of:</text>
+ <text x="642" y="78" text-anchor="middle" font-size="16" fill="var(--text)">elite, dark, light, guardian, elite-palette.”</text>
+ <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Never quietly ignored, and never guessed at.</text>
+ <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text-muted)">TRUE, on and True are one answer rather than three. Clearing a row puts back its default —</text>
+ <text x="440" y="204" text-anchor="middle" font-size="16" fill="var(--text-muted)">which is the greyed-out value the box has been showing you all along.</text>
+</svg>
+<p class="body">Everything here is changeable from the settings panel with no file to hand-edit, and every change takes effect at once — there is no save button and no restart.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">What the protected rows are protecting, worked out from your own settings.</span></a>
+<a class="card" href="interface.html"><span class="ct">Interface →</span><span class="cd">The panel these rows live on, and the themes they switch between.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The most protected row of the four, and what it decides.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 Changing Directive 47's settings by asking, and the things it will not change however nicely
 you ask.
 
@@ -11,7 +85,7 @@ Everything is changeable from the settings panel with no file to hand-edit, and 
 takes effect at once — there is no save button and no restart. This page is about the other way
 in: what you can change by talking to it.
 
-## Ask for it
+### Ask for it
 
 > "what can you change"
 > "what theme are you using"
@@ -28,7 +102,7 @@ you:
 Clearing a setting is always allowed and puts it back to its default — which is the greyed-out
 value the box has been showing you all along.
 
-## What it will not change by voice
+### What it will not change by voice
 
 Some rows are marked **protected**. You can change them from the panel, with a bound key, or by
 saying one of the specific phrases the app recognises on its own — but never through the
@@ -53,7 +127,7 @@ Ask anyway and you get a straight answer rather than a pretence that the setting
 'Provider' is protected. It can be changed from the settings panel, but not by me.
 ```
 
-## Some rows are the Commander's, not the installation's
+### Some rows are the Commander's, not the installation's
 
 Several Commanders can play on one machine, and Elite tells Directive 47 which one is flying.
 Most settings are the installation's — keys, devices, theme, zoom, hotkeys — and stay the same
@@ -80,7 +154,7 @@ How it works, because it affects what you see in the file:
 What is *not* per Commander, and on purpose: the running cost of the AI. That is the person's
 bill across every character they play, so the spend ledger is one ledger for the installation.
 
-## How values are read
+### How values are read
 
 Settings are forgiving about how you say them. `TRUE`, `on` and `True` are one answer, not
 three.
@@ -115,7 +189,7 @@ forgetting. Secrets are refused for the model caller whether or not anyone remem
 mark the row protected. Hotkeys are protected because a gesture is one of the three trusted
 callers: a model that could rebind one could hand itself a caller it is not allowed to be.
 
-### `list_settings`
+#### `list_settings`
 
 Lists the settings a tool call may change, with their current values. Protected rows, secrets
 and read-only disclosures are not listed: a row the model cannot change is a row it has no
@@ -135,7 +209,7 @@ llm.personality — Personality: true
 ui.theme — Theme: elite
 ```
 
-### `get_setting`
+#### `get_setting`
 
 Reports one setting's current value by key.
 
@@ -143,7 +217,7 @@ Reports one setting's current value by key.
 {"type":"object","properties":{"key":{"type":"string","description":"The setting key, as reported by list_settings."}},"required":["key"],"additionalProperties":false}
 ```
 
-### `set_setting`
+#### `set_setting`
 
 Changes one setting. Applies immediately — there is no save step and no restart. Omitting the
 value clears the setting back to its default.

@@ -549,7 +549,13 @@ public partial class PanelView : UserControl
     /// </para>
     /// </summary>
     public void EnableSettings(Func<Control> build) =>
-        Furnish(PanelTab.Settings, _ => build(), new NavCrumb("settings", "Settings"));
+        Furnish(
+            PanelTab.Settings,
+            _ => build(),
+            new NavCrumb("settings", "Settings")
+            {
+                Help = D47.Core.Capabilities.Builtin.SettingsCapability.Id,
+            });
 
     /// <summary>
     /// Gives this surface the checklist (list.md Phase 25, "The checklist leaves its window").
@@ -839,7 +845,10 @@ public partial class PanelView : UserControl
         Furnish(
             PanelTab.Utilities,
             _ => _utilities = new UtilitiesPage(timekeeper, alarms, now, zone, Prompts),
-            new NavCrumb("utilities", "Utilities"));
+            new NavCrumb("utilities", "Utilities")
+            {
+                Help = D47.Core.Capabilities.Builtin.UtilitiesCapability.Id,
+            });
     }
 
     /// <summary>
