@@ -98,14 +98,18 @@ public class HelpLinksTests
     {
         var opened = new List<string>();
 
+        // Whichever page still has none, asked of the library rather than named here — naming one
+        // makes this test go red the day somebody writes that band, which is backwards.
+        var bandless = HelpLibrary.Pages.First(id => HelpLibrary.For(id) is null);
+
         var (window, page) = Open(
-            Article(new HelpLink { Title = "Ships", Article = "ships" }),
+            Article(new HelpLink { Title = "Elsewhere", Article = bandless }),
             Standing(),
             openUrl: opened.Add);
 
-        Press(page, "Ships").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "Elsewhere").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        Assert.Equal([DocsSite.Capability("ships")], opened);
+        Assert.Equal([DocsSite.Capability(bandless)], opened);
 
         window.Close();
     }

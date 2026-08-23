@@ -662,7 +662,16 @@ public partial class PanelView : UserControl
             onFoot.Store.Changed += gap.Invalidate;
         }
 
-        var roots = new List<NavCrumb> { new(LoadoutPages.FleetRoot, "Ships") };
+        // Per root, because this tab's roots are three different subjects. Ships has a band;
+        // Suits and Gap do not yet, so those two simply offer no mark — which is the whole
+        // reason help is declared per crumb rather than per tab.
+        var roots = new List<NavCrumb>
+        {
+            new(LoadoutPages.FleetRoot, "Ships")
+            {
+                Help = D47.Core.Capabilities.Builtin.ShipsCapability.Id,
+            },
+        };
 
         if (onFoot is not null)
         {
