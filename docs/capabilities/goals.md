@@ -1,7 +1,7 @@
 ---
 title: Goals
 group: Conversation
-nav_order: 141
+nav_order: 142
 ---
 
 Your checklist holds what you are doing this week. Goals hold what you are doing this year.

@@ -1,7 +1,7 @@
 ---
 title: Habits
 group: Conversation
-nav_order: 139
+nav_order: 140
 ---
 
 Directive 47 can read through the journals already on your disk and tell you what you keep doing.
