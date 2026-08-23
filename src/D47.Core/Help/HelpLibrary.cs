@@ -71,7 +71,14 @@ public static class HelpLibrary
         }
 
         var root = XElement.Parse(band);
-        var frame = root.Elements("div").FirstOrDefault() ?? root;
+
+        // By name, not by position. The frame used to be "the first child div", which was true
+        // and fragile: it is a styling wrapper, and the day it stopped being needed the first
+        // child div became the cards block at the foot — leaving every band with no sections at
+        // all in the panel while still looking correct on the web.
+        var frame = root.Elements("div")
+            .FirstOrDefault(child => (string?)child.Attribute("class") == "d47-frame")
+            ?? root;
 
         var lede = frame.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "lede");
 

@@ -285,4 +285,36 @@ public class HelpLibraryTests
         <div class="next"><div class="next-title">Where to go next</div><div class="cards">{cards}</div></div>
         </div></div>
         """;
+
+    /// <summary>
+    /// The frame is found by name, not by being the first child div. It is a styling wrapper,
+    /// and it stopped carrying any styling the day the whole site took the palette — so a band
+    /// written without one has to keep working, and the cards block must never be mistaken for
+    /// it. Positionally, it would have been: the cards are the next div along.
+    /// </summary>
+    [Fact]
+    public void ABandWithNoFrameStillParses()
+    {
+        const string Page = """
+            ---
+            title: No frame
+            ---
+
+            <div class="d47-eli5">
+            <p class="lede">Straight in.</p>
+            <section><h2><span class="num">1</span> A step.</h2></section>
+            <div class="next"><div class="cards">
+            <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The fleet.</span></a>
+            </div></div>
+            </div>
+            """;
+
+        var article = HelpLibrary.Parse(Page, "no-frame");
+
+        Assert.NotNull(article);
+        Assert.Equal("Straight in.", article.Lede);
+        Assert.Single(article.Sections);
+        Assert.Equal("A step.", article.Sections[0].Heading);
+        Assert.Equal("ships", Assert.Single(article.Links).Article);
+    }
 }
