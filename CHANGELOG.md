@@ -57,6 +57,32 @@ is currently shown.
 what a page drawn as bubbles can do and what every application with this shape does. Technical and
 Log file still select across the whole page. Copy takes the lot either way.
 
+### And four more help pages lead with a picture
+
+**Checklists, Engineers, Engineering and Ships** now open with pictures the way the three general
+pages did in 0.53.0, and the reference half of each is kept underneath, complete. They link to one
+another, and a link to a page this build already carries opens *in the panel* rather than in a
+browser — so following one with a headset on is a drill, and coming back from it is the same word
+as coming back from anything else. A link to a page nobody has drawn yet still shows you its
+address.
+
+Each was chosen for what its tab cannot say for itself. **Checklists** draws the boundary that
+matters most: Directive 47 writes suggestions to a file of its own, and only you move a line into
+your real list — so the worst a hostile in-game message achieves is a proposal you decline.
+**Engineering** draws the number that would have shipped a bug — 0.85 is finished, not 1.0 — and
+that a full grade is exact arithmetic rather than a grind. **Ships** draws the separation the tab
+rests on: the build owns *what*, the checklist owns *when*, and nothing crosses between them
+unasked.
+
+**And the site is painted in the app's own palette.** The bands arrived as dark diagrams marooned
+in a white page; the whole site now uses the nine colours the panel does, including the scrollbars,
+which were the browser's own and had never been told the page was dark.
+
+Two spellings changed on the way past, both found by trying to explain the thing rather than by
+using it. The Engineers directory's third heading was **"Requires Engineer Intro First"** and is
+now **"Needs a Referral"**. And *Talking to Directive 47* still said the settings surface for an
+API key "arrives in a later phase", which stopped being true several releases ago.
+
 ---
 
 ## 0.53.0 — 2026-08-22 — Help leads with a picture, and the headset can read it
