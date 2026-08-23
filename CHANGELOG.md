@@ -17,7 +17,54 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
-## 0.54.0 — 2026-08-23 — The conversation is drawn as one, and help is something you can ask for
+## 0.55.0 — 2026-08-23 — Help became something you can reach
+
+**Nine capability pages now open with pictures**, the way the three general pages did in 0.53.0 —
+Help, Engineers, Checklists, Engineering, Ships, Colonisation, Clocks and timers, Galaxy search and
+Settings. The reference half of each is kept underneath, complete; nothing was cut to make room.
+
+Each was chosen for what its own tab cannot say for itself. **Checklists** draws the boundary that
+matters most: Directive 47 writes suggestions to a file of its own and only you move a line into
+your real list, so the worst a hostile in-game message achieves is a proposal you decline.
+**Engineering** draws the number that would have shipped a bug — 0.85 is finished, not 1.0 — and
+that a full grade is exact arithmetic rather than a grind. **Ships** draws the separation the tab
+rests on: the build owns *what*, the checklist owns *when*. **Colonisation** draws the caveat the
+whole feature rests on, that a site reports its manifest only while you are standing on it.
+
+**You can ask for help out loud.** *"Help"*, *"what is this"*, *"explain this page"* and several
+more open it for wherever you are standing. That is the one that mattered: the mark in the corner
+needs something to point at it, and a Commander wearing a headset has both hands on a stick. Going
+back out is the word that leaves anything else.
+
+**And the mark always opens something now.** Help is about the page you are on, and a page nobody
+has illustrated yet opens the index instead of doing nothing — which also means the headset has a
+help mark again, reversing a decision from 0.52.2 that was right while the only thing behind it was
+a browser it could not see. The index lists every page that has pictures, worked out each time
+rather than written down, so it can never claim one that does not exist or miss one that does.
+
+Pages link to each other, and a link to something this build already carries opens **in the panel**
+rather than in a browser. With no browser to hand, a link it cannot follow is shown as its address
+rather than drawn as a button that would do nothing. The three general pages are carried too, so
+*Talking to Directive 47* is readable in a headset for the first time.
+
+**Adventures is a capability at last.** A whole tab you can see had never appeared in the list D47
+gives when you ask what it can do, and had no page anywhere. It has both now. It registers no tools
+on purpose: writing, beginning, abandoning and removing a story are all your acts on the panel, and
+nothing about an adventure is callable by the model — so nothing arriving in your comms panel can
+propose a story, end one, or delete one.
+
+**And the site is painted in the app's own palette.** The pictures arrived as dark diagrams
+marooned in a white page; the whole site now uses the nine colours the panel does, including the
+scrollbars, which were the browser's own and had never been told the page was dark.
+
+Two spellings changed on the way past, both found by trying to explain the thing rather than by
+using it. The Engineers directory's third heading was **"Requires Engineer Intro First"** and is
+now **"Needs a Referral"**. And *Talking to Directive 47* still said the settings surface for an
+API key "arrives in a later phase", which stopped being true several releases ago.
+
+---
+
+## 0.54.0 — 2026-08-22 — The conversation is drawn as one, and the markdown is read rather than shown
 
 **The transcript used to print the asterisks.** A reply about a Sidewinder build arrived as
 `**A-rate thrusters**`, markers and all. Models write markdown whatever they are told, and the
@@ -56,50 +103,6 @@ is currently shown.
 **One thing behaves differently.** On Conversation a selection is made within one turn, which is
 what a page drawn as bubbles can do and what every application with this shape does. Technical and
 Log file still select across the whole page. Copy takes the lot either way.
-
-### And help became something you can reach
-
-**Nine capability pages now open with pictures**, the way the three general pages did in 0.53.0 —
-Help, Engineers, Checklists, Engineering, Ships, Colonisation, Clocks and timers, Galaxy search and
-Settings. The reference half of each is kept underneath, complete; nothing was cut to make room.
-
-Each was chosen for what its own tab cannot say for itself. **Checklists** draws the boundary that
-matters most: Directive 47 writes suggestions to a file of its own and only you move a line into
-your real list, so the worst a hostile in-game message achieves is a proposal you decline.
-**Engineering** draws the number that would have shipped a bug — 0.85 is finished, not 1.0 — and
-that a full grade is exact arithmetic rather than a grind. **Ships** draws the separation the tab
-rests on: the build owns *what*, the checklist owns *when*. **Colonisation** draws the caveat the
-whole feature rests on, that a site reports its manifest only while you are standing on it.
-
-**You can ask for help out loud.** *"Help"*, *"what is this"*, *"explain this page"* and several
-more open it for wherever you are standing. That is the one that mattered: the mark in the corner
-needs something to point at it, and a Commander wearing a headset has both hands on a stick. Going
-back out is the word that leaves anything else.
-
-**And the mark always opens something now.** Help is about the page you are on, and a page nobody
-has illustrated yet opens the index instead of doing nothing — which also means the headset has a
-help mark again, reversing a decision from 0.52.2 that was right while the only thing behind it was
-a browser it could not see. The index lists every page that has pictures, worked out each time
-rather than written down, so it can never claim one that does not exist or miss one that does.
-
-Pages link to each other, and a link to something this build already carries opens **in the panel**
-rather than in a browser. With no browser to hand, a link it cannot follow is shown as its address
-rather than drawn as a button that would do nothing.
-
-**Adventures is a capability at last.** A whole tab you can see had never appeared in the list D47
-gives when you ask what it can do, and had no page anywhere. It has both now. It registers no tools
-on purpose: writing, beginning, abandoning and removing a story are all your acts on the panel, and
-nothing about an adventure is callable by the model — so nothing arriving in your comms panel can
-propose a story, end one, or delete one.
-
-**And the site is painted in the app's own palette.** The pictures arrived as dark diagrams
-marooned in a white page; the whole site now uses the nine colours the panel does, including the
-scrollbars, which were the browser's own and had never been told the page was dark.
-
-Two spellings changed on the way past, both found by trying to explain the thing rather than by
-using it. The Engineers directory's third heading was **"Requires Engineer Intro First"** and is
-now **"Needs a Referral"**. And *Talking to Directive 47* still said the settings surface for an
-API key "arrives in a later phase", which stopped being true several releases ago.
 
 ---
 
