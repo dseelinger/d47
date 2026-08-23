@@ -17,6 +17,48 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.54.0 — 2026-08-22 — The conversation is drawn as one, and the markdown is read rather than shown
+
+**The transcript used to print the asterisks.** A reply about a Sidewinder build arrived as
+`**A-rate thrusters**`, markers and all. Models write markdown whatever they are told, and the
+panel had been drawing it literally for as long as it has existed. It is read now: emphasis is
+drawn heavier, `*this*` leans, `` `this` `` gets a chip behind it, a fence loses its rails, and
+`- ` becomes a bullet. Links, tables and rules arrive exactly as they were written — a URL you
+cannot see is worse than one you can, and a table drawn as text that wraps is not a table.
+
+**Anything not recognised is text**, so every case the subset does not cover is the old behaviour
+on one line rather than throughout a reply. `> ` is left alone on purpose: that is D47's own mark
+for what you said, and reformatting it would have the transcript rewriting its own convention.
+The log file is exempt — it is a file, and an asterisk in it means an asterisk.
+
+**And the Conversation page is drawn as a conversation.** A turn to a bubble, yours on the right
+in the theme's own colour and the ship's on the left, the way the messaging app on your phone
+draws one. When D47 notes something *about* the conversation rather than saying something in it —
+the core changing under you — that sits across the middle with no bubble, because it is not a
+side. The headset's big panel does the same; the mini panel does too and gives back the gutter
+and most of the padding, because a surface 512 pixels across cannot say twice over which side a
+turn is on.
+
+**Only that page.** Technical is a diagnostic feed and Log file is a file, and neither is a
+conversation between anybody: both stay the flat block they were, `> ` and all.
+
+**The panel had to be told who spoke, because it could not work it out.** Your words were
+distinguished only by the `> ` written in front of them, and a reply quoting a line back wears the
+same mark — a guess about somebody's prose standing in for a fact the writer had. The mark is now
+how a flat page *draws* a voice rather than something stored, so every reading of the transcript
+is byte-for-byte what it always was while the buffer underneath holds only the words.
+
+**Searching finds what is on the screen.** It was matching the buffer, so typing "A-rate
+thrusters" — as drawn, right there — found nothing, because what was stored said
+`**A-rate thrusters**`. Both copy paths moved with it, and Copy still takes the whole page as it
+is currently shown.
+
+**One thing behaves differently.** On Conversation a selection is made within one turn, which is
+what a page drawn as bubbles can do and what every application with this shape does. Technical and
+Log file still select across the whole page. Copy takes the lot either way.
+
+---
+
 ## 0.53.0 — 2026-08-22 — Help leads with a picture, and the headset can read it
 
 **Help used to be a browser hop, and one of the two surfaces has no browser.** The mark in the
