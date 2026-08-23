@@ -42,4 +42,18 @@
     <EmbeddedResource Include="Knowledge\Lore.tsv" LogicalName="D47.Core.LoreTable" />
   </ItemGroup>
 
+  <!--
+    The capability documentation, embedded so the panel can draw the ELI5 band at the top of a
+    page (asked for 2026-08-22). The published site and the in-app help are the same bytes: the
+    band is authored once, in the markdown, and read a second time by HelpLibrary — so a page
+    cannot say one thing in a browser and another in a headset.
+
+    All of them rather than only the ones written so far. A page with no band parses to null and
+    is simply not offered, which means adding one is an edit to the markdown and nothing else.
+    ~520 KB against a ~50 MB publish, the same trade the cues above already make.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\capabilities\*.md" LogicalName="D47.Core.Help.%(Filename)" />
+  </ItemGroup>
+
 </Project>

@@ -707,11 +707,16 @@ public partial class PanelView : UserControl
         _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
         _engineerState = state;
 
+        // The first tab whose help is drawn in the panel rather than opened in a browser. Declared
+        // on the roots, so the engineer levels drilled from them inherit it — and both surfaces
+        // reach this call, which is the point: a Commander in a headset cannot see a browser.
+        var help = D47.Core.Capabilities.Builtin.EngineerCapability.Id;
+
         Furnish(
             PanelTab.Engineers,
             crumb => EngineersPages.Build(crumb, source, Nav),
-            new NavCrumb(EngineersPages.DirectoryRoot, "Directory"),
-            new NavCrumb(EngineersPages.RouteRoot, "Route"));
+            new NavCrumb(EngineersPages.DirectoryRoot, "Directory") { Help = help },
+            new NavCrumb(EngineersPages.RouteRoot, "Route") { Help = help });
     }
 
     /// <summary>
@@ -1071,13 +1076,91 @@ public partial class PanelView : UserControl
     /// the headset could not see it (change-requests.md 24). Same seam as
     /// <see cref="EnableTurnDetails"/>, for the same reason.
     /// </summary>
-    private Action? _openHelp;
+    private Action<string>? _openHelp;
 
-    /// <summary>Gives this surface a help button, and what it opens. The desktop window calls it; the headset never does.</summary>
-    public void EnableHelp(Action open)
+    /// <summary>
+    /// Gives this surface a way out to the web. The desktop window calls it; the headset never
+    /// does, and every link on a help page is drawn differently as a result.
+    /// </summary>
+    public void EnableHelp(Action<string> open)
     {
         _openHelp = open;
-        HelpButton.IsVisible = true;
+        ShowHelpAffordance();
+    }
+
+    /// <summary>
+    /// The mark shows when this surface can do something with it: open the site, which only the
+    /// desktop can, or draw the help for where the Commander is standing, which either surface
+    /// can. The headset gets one for the second reason — which is the whole point, since the
+    /// reason it lost the button was that the only thing behind it was a browser it could not see.
+    /// </summary>
+    private void ShowHelpAffordance() =>
+        HelpButton.IsVisible = _openHelp is not null || HelpPageView.Exists(Nav.Help);
+
+    /// <summary>
+    /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
+    /// so every route that would navigate away is refused until it is dismissed, and dismissing
+    /// it is <see cref="GoBack"/> — the breadcrumb, the controller button and the spoken word,
+    /// already agreeing with no special case anywhere.
+    /// <para>
+    /// Falls out to the site when this tab has no band and the host gave a way, which is how the
+    /// desktop keeps the behaviour it has always had on the pages nobody has drawn yet.
+    /// </para>
+    /// </summary>
+    public bool OpenHelp()
+    {
+        if (Nav.Modal)
+        {
+            // Already showing, or a chooser has the panel. Either way this is not the moment.
+            return false;
+        }
+
+        // Whatever the level being looked at claims, or the level above it, up to the root.
+        if (HelpPageView.Exists(Nav.Help))
+        {
+            return Nav.Take(HelpPageView.Crumb(Nav.Help!));
+        }
+
+        if (_openHelp is null)
+        {
+            return false;
+        }
+
+        // Nothing drawn for here yet, and a desktop to fall out to. The site is still the long
+        // form, and this is the behaviour the window has always had.
+        _openHelp(DocsSite.Root);
+        return true;
+    }
+
+    /// <summary>What is drawn, and for which crumb. See <see cref="Modal"/>.</summary>
+    private (string Key, Control Page)? _helpPane;
+
+    /// <summary>
+    /// What a level that has taken the panel draws.
+    /// <para>
+    /// A chooser is answered by <see cref="Prompts"/>, which knows the ones it registered. Help is
+    /// not a chooser and does not pretend to be one — it is drawn from the shipped documentation,
+    /// so it is answered here. Both take the content region the same way, because taking it is a
+    /// property of the crumb rather than of what is on it.
+    /// </para>
+    /// <para>
+    /// The page is kept, so a redraw while help is open does not throw away where the Commander
+    /// had scrolled to. Same reason <c>DrillView</c> keeps what each of its levels drew.
+    /// </para>
+    /// </summary>
+    private Control? Modal(NavCrumb crumb)
+    {
+        if (!crumb.Key.StartsWith(HelpPageView.CrumbPrefix, StringComparison.Ordinal))
+        {
+            return Prompts.Build(crumb);
+        }
+
+        if (_helpPane?.Key != crumb.Key)
+        {
+            _helpPane = (crumb.Key, HelpPageView.Build(crumb, Nav, _openHelp));
+        }
+
+        return _helpPane.Value.Page;
     }
 
     /// <summary>
@@ -1428,6 +1511,9 @@ public partial class PanelView : UserControl
             return;
         }
 
+        // The mark is about the page underneath it, so it comes and goes with the tab.
+        ShowHelpAffordance();
+
         _drivingBar = true;
 
         try
@@ -1477,7 +1563,9 @@ public partial class PanelView : UserControl
 
         // A chooser takes the content region, over whichever tab it was opened from - so the tab
         // underneath keeps its state and comes back to where it was rather than to its root.
-        ModalPane.Child = Nav.Modal ? Prompts.Build(Nav.Trail[^1]) : null;
+        // Help takes it on exactly the same terms and by the same mechanism, which is the whole
+        // reason it is a modal level rather than a tab of its own (asked for 2026-08-22).
+        ModalPane.Child = Nav.Modal ? Modal(Nav.Trail[^1]) : null;
 
         ApplyChrome();
 
@@ -2241,7 +2329,7 @@ public partial class PanelView : UserControl
             Transcript.SelectedText is { Length: > 0 }
             && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
-    private void OnHelpClick(object? sender, RoutedEventArgs e) => _openHelp?.Invoke();
+    private void OnHelpClick(object? sender, RoutedEventArgs e) => OpenHelp();
 
     private void OnHelpPointerEntered(object? sender, PointerEventArgs e) =>
         HelpGlyph.Stroke = this.FindResource("D47.Accent") as IBrush;

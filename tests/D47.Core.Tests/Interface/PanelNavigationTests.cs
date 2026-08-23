@@ -348,4 +348,66 @@ public class PanelNavigationTests
         Assert.False(nav.Show("checklist"));
         Assert.Equal(PanelTab.Transcript, nav.Tab);
     }
+
+    /// <summary>
+    /// <b>Help is declared on a crumb and inherited downwards</b> (asked for 2026-08-22). Saying
+    /// it once on the root covers a whole tab; a level says so again only where the subject really
+    /// changes, which is what a per-tab table could not express for a tab like Routing that is
+    /// three readings of one thing.
+    /// </summary>
+    [Fact]
+    public void HelpIsTheDeepestThingOnTheTrailThatClaimsOne()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Select(PanelTab.Engineers);
+
+        Assert.Equal("engineers", nav.Help);
+
+        // An engineer inherits the root's, because an engineer's page is still Engineers.
+        nav.Drill(new NavCrumb("who:1", "Farseer"));
+        Assert.Equal("engineers", nav.Help);
+
+        // A level whose subject really is something else says so, and wins while it is open.
+        nav.Drill(new NavCrumb("blueprint", "Dirty Drive Tuning") { Help = "engineering" });
+        Assert.Equal("engineering", nav.Help);
+
+        nav.Back();
+        Assert.Equal("engineers", nav.Help);
+    }
+
+    /// <summary>A tab nobody wrote help for claims none, rather than claiming the last one.</summary>
+    [Fact]
+    public void ATabThatClaimsNoHelpHasNone()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks"));
+
+        nav.Select(PanelTab.Engineers);
+        Assert.Equal("engineers", nav.Help);
+
+        nav.Select(PanelTab.Utilities);
+        Assert.Null(nav.Help);
+    }
+
+    /// <summary>
+    /// Help itself declares none, so asking while it is open answers with the page underneath
+    /// rather than with help about help.
+    /// </summary>
+    [Fact]
+    public void AHelpLevelDoesNotClaimHelpOfItsOwn()
+    {
+        var nav = new PanelNavigator();
+
+        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Select(PanelTab.Engineers);
+
+        Assert.True(nav.Take(new NavCrumb("help:engineers", "Help")));
+
+        Assert.True(nav.Modal);
+        Assert.Equal("engineers", nav.Help);
+    }
 }

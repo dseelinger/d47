@@ -34,7 +34,7 @@ public class TheTabStripFitsAnyWidthTests
         panel.Furnish(PanelTab.Engineers, _ => new TextBlock(), new NavCrumb("engineers", "Engineers"));
         panel.Furnish(PanelTab.Utilities, _ => new TextBlock(), new NavCrumb("utilities", "Utilities"));
         panel.EnableSettings(() => new TextBlock());
-        panel.EnableHelp(() => { });
+        panel.EnableHelp(_ => { });
 
         var window = new Window { Content = panel, Width = width, Height = 700 };
 

@@ -44,7 +44,7 @@ public class HelpButtonTests
         var opened = 0;
 
         var view = new PanelView { DataContext = new PanelViewModel() };
-        view.EnableHelp(() => opened++);
+        view.EnableHelp(_ => opened++);
 
         var window = new Window { Content = view };
         window.Show();
