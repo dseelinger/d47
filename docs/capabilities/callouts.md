@@ -4,6 +4,88 @@ group: Voice
 nav_order: 124
 ---
 
+<!--
+  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
+  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
+  the nine Palette roles and nothing else.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="lede">The things Directive 47 says without being asked, and what earns the right to interrupt.</p>
+<section>
+<h2><span class="num">1</span> NPCs announce themselves. It listens.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="An attack warning arrives a median of six seconds before the first shot and is right 88% of the time">
+ <rect x="20" y="44" width="300" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="170" y="80" text-anchor="middle" font-size="16" fill="var(--text)">“Pirate lining up an</text>
+ <text x="170" y="104" text-anchor="middle" font-size="16" fill="var(--text)">interdiction. Boost or</text>
+ <text x="170" y="128" text-anchor="middle" font-size="16" fill="var(--text)">high-wake now.”</text>
+ <text x="425" y="72" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">a median of six seconds</text>
+ <line x1="336" y1="96" x2="500" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="514,96 498,88 498,104" fill="var(--accent-muted)"/>
+ <rect x="530" y="44" width="330" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="695" y="88" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE FIRST SHOT</text>
+ <text x="695" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">and the line was right 88% of the time</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">They say what they are about to do before they do it, and there is still time to act.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">A cargo demand gives eight seconds and is right 67% — each situation gets its own sentence and sound.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> It matches on the message id, never on the words.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Matching on hostile-sounding text fires thousands of false alarms, while matching on Elite's message ids does not">
+ <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">MATCHING ON THE WORDS</text>
+ <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">2,399 firings to catch</text>
+ <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
+ <text x="220" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">another was wrong 48 times out of 48</text>
+ <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">MATCHING ON THE ID</text>
+ <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a fixed list, NPC chatter only</text>
+ <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing the message says is</text>
+ <text x="660" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">repeated, shown, or sent to a model</text>
+ <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A hundred false alarms per real event is a warning you switch off within the hour.</text>
+ <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">In-game chat is written by anyone in range, so matching on the text is matching on a string somebody else chose.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Urgent cuts in. Everything else waits its turn.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="Danger and fuel speak over whatever is being said; routine lines like a core asteroid wait">
+ <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">URGENT CUTS IN</text>
+ <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">danger and fuel</text>
+ <text x="220" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">over whatever is being said</text>
+ <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ROUTINE WAITS ITS TURN</text>
+ <text x="660" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">a core asteroid is exciting</text>
+ <text x="660" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">and is not a safety matter</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Announcing a core across a hull warning would be the priority exactly backwards.</text>
+</svg>
+<p class="body">A warning arriving after Directive 47 has finished reading you a commodity list has arrived too late to be one. And a thing is said <em>once</em> as it happens: your shields going down is news; your shields still being down half a second later is not.</p>
+</section>
+<section>
+<h2><span class="num">4</span> The model may ask what it is watching for. It may not switch one off.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="Warnings are readable by the model but only changeable from the panel, a key or a spoken phrase">
+ <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT CAN BE ASKED</text>
+ <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">what it is watching for</text>
+ <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="660" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="var(--danger)">IT CANNOT SWITCH ONE OFF</text>
+ <text x="660" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">not by anything the model calls</text>
+ <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads in-game messages from anyone in range.</text>
+ <text x="440" y="220" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A model that could disable the interdiction warning could be told to by the pirate.</text>
+</svg>
+<p class="body">One measured refusal worth knowing: Directive 47 never repeats Elite's own <code>Material Content</code> grade while prospecting. Across 1,633 prospects, <code>Low</code> and <code>High</code> rocks have the same distribution — and <strong>45% of the rocks holding a material at 40% or more are graded <code>Low</code></strong>. Passing that on would fly you past the best rock in the cluster.</p>
+</section>
+<div class="next">
+<div class="next-title">Where to go next</div>
+<div class="cards">
+<a class="card" href="audio.html"><span class="ct">Audio →</span><span class="cd">The alert category these ride, and what everything else ducks under.</span></a>
+<a class="card" href="habits.html"><span class="ct">Habits →</span><span class="cd">The one callout that fires because of a claim about you, not about the game.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Every switch on this page, and what protected means for them.</span></a>
+</div>
+</div>
+</div></div>
+
+## The details
+
 What Directive 47 says without being asked: danger, fuel, route progress, arrivals, material
 milestones, and an attack somebody has announced but not yet made.
 
@@ -11,7 +93,7 @@ All of it comes from the files Elite already writes, as they change. Nothing her
 language model, so a warning arrives when the thing happens rather than after something has
 finished thinking about it — which for an interdiction is after it is over.
 
-## Ask for it
+### Ask for it
 
 > "what are you watching for"
 > "stop calling things out"
@@ -31,9 +113,9 @@ Route progress every 3 jumps.
 Home system is Shinrarta Dezhra.
 ```
 
-## What it speaks up about
+### What it speaks up about
 
-### Danger {#danger}
+#### Danger {#danger}
 
 Interdiction, shields down, hull damage, overheating, and a full cargo hold.
 
@@ -44,7 +126,7 @@ decision and is not read back to you as an emergency.
 An urgent warning cuts in rather than waiting its turn. A warning that arrives after Directive 47
 has finished reading you a commodity list has arrived too late to be one.
 
-### Announced attacks {#announced-attack}
+#### Announced attacks {#announced-attack}
 
 NPCs say what they are about to do before they do it. Directive 47 listens for that and tells you
 while there is still time to act:
@@ -69,7 +151,7 @@ text would mean matching on a string somebody else chose. The ids come from a fi
 chatter is considered, and **nothing the message says is repeated, shown, or passed to the language
 model** — the spoken line is chosen by which id arrived and is otherwise a constant.
 
-### Fuel and range {#fuel}
+#### Fuel and range {#fuel}
 
 Low fuel is the easy half. The half that matters is this one:
 
@@ -86,7 +168,7 @@ jump range from your ship's loadout, your fuel from the status file, and how muc
 burn per jump averaged from the jumps you have already made this session. Nothing is looked up
 anywhere.
 
-### Route progress {#route}
+#### Route progress {#route}
 
 Jumps remaining, what is next, and what is coming:
 
@@ -105,13 +187,13 @@ stars start with A and cannot be scooped, while orange giants carry a suffix and
 Directive 47 does not recognise is called unknown rather than unscoopable — routing you around a
 star that would have refuelled you is its own kind of harm.
 
-### Long jumps {#long-jump}
+#### Long jumps {#long-jump}
 
 A little conversation during a longer-than-usual jump. It starts once you are actually in
 hyperspace, not when the drive begins charging — throttle up and cancel and you will hear
 nothing.
 
-### Arrivals {#arrival}
+#### Arrivals {#arrival}
 
 Your home system, where your carrier is, ships you have stored where you have just arrived, and
 stations that offer engineering.
@@ -121,7 +203,7 @@ game update, and inventing one is exactly the confident wrong answer Directive 4
 give. Engineering is recognised from what the station itself advertises when you dock — which
 also means it keeps working when a new engineer is added.
 
-### Material milestones {#materials}
+#### Material milestones {#materials}
 
 Your first unit of a material, then a quarter, half and three-quarters full, a running count
 after that, and full.
@@ -135,7 +217,7 @@ list that Coriolis and EDEngineer use, rather than from anyone's memory. A mater
 that table still announces your first unit; the percentages stay quiet rather than being counted
 against a number nobody checked.
 
-### Rival Power territory {#rival-territory}
+#### Rival Power territory {#rival-territory}
 
 If you fly for a Power, Directive 47 tells you when you drop into normal space somewhere another
 Power controls:
@@ -172,7 +254,7 @@ something to you. The message a Power's security sends does exist and does name 
 arrives about a second before the shot, which is a caption rather than a warning. So this says the
 thing it actually knows — that where you are is hostile — instead of implying somebody is close.
 
-### Checklist changes {#checklist}
+#### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.
 
@@ -198,7 +280,7 @@ Switching this off silences both. It does not freeze the list — the verdicts s
 panel keeps showing them; a setting that did two things, one of them invisible, would be the wrong
 setting.
 
-### High grade emissions {#emissions}
+#### High grade emissions {#emissions}
 
 When you arrive somewhere that could be running High Grade Emissions, which grade 5 materials would
 be in them:
@@ -235,7 +317,7 @@ you are full.
 Said once per system, and never for the backlog D47 reads at startup — the only jump in that
 backlog you could still act on is the last one.
 
-### Limpet reminders {#limpets}
+#### Limpet reminders {#limpets}
 
 **Off by default** — this is for Commanders who fly limpets, and one who never does should not have
 to switch it off.
@@ -255,17 +337,17 @@ fault: of 136 limpet purchases measured, three were at a carrier that reported n
 No price is quoted. Limpets are nearly always 101 credits and occasionally not, and D47 has no
 reading of this station's price until after you have bought some.
 
-#### Only remind me about limpets above {#limpet-floor}
+##### Only remind me about limpets above {#limpet-floor}
 
 Cargo capacity, in tonnes. Default **64**. Below it you are not running a limpet operation and the
 reminder is noise.
 
-#### Remind me when limpets are under {#limpet-percent}
+##### Remind me when limpets are under {#limpet-percent}
 
 A percentage **of your cargo capacity**. Default **5**, so twelve limpets in a 256 tonne hold is low
 and thirteen is not.
 
-### Prospector results {#prospector}
+#### Prospector results {#prospector}
 
 What a prospector limpet found, spoken in the ring so you can keep your eyes on the rock instead of
 the panel. Richest material first:
@@ -292,7 +374,7 @@ only one.
 A prospect arrives every 48 seconds at the median, which is about seventy-five lines in an hour of
 mining. That is why this has its own switch, separate from the one below.
 
-### Core asteroids {#core-asteroid}
+#### Core asteroids {#core-asteroid}
 
 ```text
 Core asteroid. Alexandrite.
@@ -305,7 +387,7 @@ It is spoken as a routine line rather than an urgent one — urgent speaks over 
 being said and is reserved for danger and fuel. A core is exciting; it is not a safety matter, and
 announcing one across a hull warning would be the priority exactly backwards.
 
-### Sampling progress {#sampling}
+#### Sampling progress {#sampling}
 
 Each organic specimen as it lands, with the distance you covered to get it:
 
@@ -319,7 +401,7 @@ judge four hundred metres across a ridge, and getting it wrong wastes the sample
 how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
 in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
 
-### Picking up where you left off {#continuity}
+#### Picking up where you left off {#continuity}
 
 One line at the start of a session — a greeting on your own clock, and a readiness:
 
@@ -340,7 +422,7 @@ The first sentence is written by Directive 47. Where a persona is on, the core f
 — *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
 its own and changes nothing else; with personality off it is *"Ready to go."*
 
-### Adventure beats {#adventure}
+#### Adventure beats {#adventure}
 
 A beat of the story you are following, said when you reach the place it waits for
 (list.md Phase 47). An adventure is a story the ship's AI tells you across a flight — a spine,
@@ -375,9 +457,9 @@ it, since both belong to this callout.
 While a beat is between firing and being said, the Adventures tab shows that the core is
 composing, on the desktop window and in the headset alike.
 
-## Settings
+### Settings
 
-### Speak without being asked {#enabled}
+#### Speak without being asked {#enabled}
 
 Off means Directive 47 only ever answers. Every warning above stops with it; everything else
 keeps running.
@@ -385,16 +467,16 @@ keeps running.
 > "stop calling things out"
 > "start calling things out"
 
-### Route progress interval {#route-interval}
+#### Route progress interval {#route-interval}
 
 In jumps. The right answer depends entirely on the trip: every 3 jumps is reassuring over 20 and
 unbearable over 300. Set it to `0` to silence the progress line while keeping the hazard warnings.
 
-### Long jump threshold {#long-jump-threshold}
+#### Long jump threshold {#long-jump-threshold}
 
 In seconds, counted from entering hyperspace.
 
-### Home system {#home-system}
+#### Home system {#home-system}
 
 Where you consider home, for the arrival callout. There is no default — no journal event reports
 that.
@@ -407,7 +489,7 @@ and not by anything the model calls. Directive 47 reads in-game messages from an
 and a model that could disable the interdiction warning is one that could be told to by the
 Commander doing the interdicting.
 
-### Ambient remarks {#ambient}
+#### Ambient remarks {#ambient}
 
 The occasional in-character observation about where you are, said because *nothing* has
 happened. Everything else on this page speaks because something did.
@@ -443,7 +525,7 @@ Set the interval to `0` if you want the switch without finding the switch.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-### `get_callouts`
+#### `get_callouts`
 
 Read-only. Takes no arguments.
 
