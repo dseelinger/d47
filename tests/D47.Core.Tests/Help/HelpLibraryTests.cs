@@ -350,4 +350,149 @@ public class HelpLibraryTests
         Assert.Equal("Knowledge", engineers.Group);
         Assert.Equal(107, engineers.NavOrder);
     }
+
+    /// <summary>
+    /// <b>The class is a list, and a second word must not cost a card.</b> This is the one failure
+    /// in the settings-jump work that is silent: match the attribute whole and the marked card is
+    /// dropped, the band draws one card short, and nothing anywhere is wrong enough to say so.
+    /// </summary>
+    [Fact]
+    public void ACardWithASecondClassIsStillACard()
+    {
+        var article = HelpLibrary.Parse(
+            """
+            <div class="d47-eli5"><div class="d47-frame">
+            <p class="lede">A lede.</p>
+            <div class="cards">
+            <a class="card settings" href="speech.html"><span class="ct">Speech →</span><span class="cd">A blurb.</span></a>
+            <a class="card" href="ships.html"><span class="ct">Ships →</span></a>
+            </div>
+            </div></div>
+            """,
+            "probe");
+
+        Assert.NotNull(article);
+        Assert.Equal(2, article.Links.Count);
+        Assert.Equal("Speech", article.Links[0].Title);
+    }
+
+    /// <summary>
+    /// A settings card names its section, and an ordinary one names none — so the panel can tell
+    /// "take me to those rows" from "read about this too" without a second attribute.
+    /// </summary>
+    [Fact]
+    public void OnlyTheMarkedCardNamesASettingsSection()
+    {
+        var article = HelpLibrary.Parse(
+            """
+            <div class="d47-eli5"><div class="d47-frame">
+            <p class="lede">A lede.</p>
+            <div class="cards">
+            <a class="card settings" href="speech.html"><span class="ct">Speech →</span></a>
+            <a class="card" href="ships.html"><span class="ct">Ships →</span></a>
+            <a class="card settings" href="https://example.com/"><span class="ct">Away →</span></a>
+            </div>
+            </div></div>
+            """,
+            "probe")!;
+
+        Assert.Equal("speech", article.Links[0].Settings);
+        Assert.Null(article.Links[1].Settings);
+
+        // An address is not one of this machine's pages, so it cannot be naming a capability
+        // either. Marked or not, it stays a link out.
+        Assert.Null(article.Links[2].Settings);
+        Assert.Equal("https://example.com/", article.Links[2].Href);
+    }
+
+    /// <summary>
+    /// The page about the Transcript page (asked for 2026-08-23), which is where the help mark on
+    /// the default reading now goes. Its three cards are the three settings sections that decide
+    /// what that page says — and each has to be marked, or the jump is an ordinary drill.
+    /// </summary>
+    [Fact]
+    public void TheTranscriptPageOffersThreeSettingsSections()
+    {
+        var article = HelpLibrary.For("general-transcript");
+
+        Assert.NotNull(article);
+        Assert.Equal("The Transcript page", article.Title);
+        Assert.Equal(4, article.Sections.Count);
+
+        Assert.Equal(
+            new[] { "listening", "conversation", "speech" },
+            article.Links.Select(link => link.Settings).ToArray());
+    }
+
+    /// <summary>
+    /// <b>A bare name means "beside this page", and the general pages are not beside the
+    /// capabilities.</b> Read without knowing which folder the card was written in,
+    /// <c>conversation.html</c> on the Overview page resolved to the Language model page — so the
+    /// card saying <em>Talking to Directive 47</em> opened one about providers and billing. The
+    /// same complaint that started this work, one page over.
+    /// </summary>
+    [Fact]
+    public void ABareNameOnAGeneralPageMeansTheGeneralPageBesideIt()
+    {
+        const string Cards =
+            """
+            <div class="d47-eli5"><div class="d47-frame">
+            <p class="lede">A lede.</p>
+            <div class="cards">
+            <a class="card" href="conversation.html"><span class="ct">Beside →</span></a>
+            <a class="card" href="capabilities/speech.html"><span class="ct">Below →</span></a>
+            </div>
+            </div></div>
+            """;
+
+        var general = HelpLibrary.Parse(Cards, "general-index")!;
+
+        Assert.Equal("general-conversation", general.Links[0].Article);
+        Assert.Equal("speech", general.Links[1].Article);
+
+        // And the same markup read as a capability page means the other two pages entirely. The
+        // climb down is refused there, because a capability page is already in that folder.
+        var capability = HelpLibrary.Parse(Cards, "persona")!;
+
+        Assert.Equal("conversation", capability.Links[0].Article);
+        Assert.Null(capability.Links[1].Article);
+    }
+
+    /// <summary>
+    /// Every card on every shipped page reaches something. A sibling id that no page answers to is
+    /// a link the panel draws as an address to a page the site does not have either.
+    /// </summary>
+    [Fact]
+    public void NoShippedCardNamesAPageThatDoesNotExist()
+    {
+        var broken = HelpLibrary.Pages
+            .Select(id => (Id: id, Article: HelpLibrary.For(id)))
+            .Where(page => page.Article is not null)
+            .SelectMany(page => page.Article!.Links.Select(link => (page.Id, link.Article)))
+            .Where(card => card.Article is { Length: > 0 } target && HelpLibrary.PageFor(target) is null)
+            .Select(card => $"{card.Id} → {card.Article}")
+            .ToArray();
+
+        Assert.True(broken.Length == 0, string.Join(", ", broken));
+    }
+
+    /// <summary>
+    /// Every section a card jumps to has a page of its own to fall back on, which is what the
+    /// headset gets. A marked card whose sibling has no band would be a dead button there.
+    /// </summary>
+    [Fact]
+    public void EverySettingsCardHasABandBehindIt()
+    {
+        var missing = HelpLibrary.Pages
+            .Select(HelpLibrary.For)
+            .OfType<HelpArticle>()
+            .SelectMany(article => article.Links)
+            .Where(link => link.Settings is { Length: > 0 })
+            .Select(link => link.Settings!)
+            .Distinct(StringComparer.Ordinal)
+            .Where(id => HelpLibrary.For(id) is null)
+            .ToArray();
+
+        Assert.True(missing.Length == 0, $"No band behind: {string.Join(", ", missing)}");
+    }
 }

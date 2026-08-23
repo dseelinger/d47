@@ -221,7 +221,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var section in settings.Sections)
         {
             var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var (card, content, heading) = BuildCard(section, title, _sections.Count);
+            var (card, content, heading, expand) = BuildCard(section, title, _sections.Count);
 
             Cards.Children.Add(card);
 
@@ -230,14 +230,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             _sections.Add(
                 new SectionView(
-                    section.Capability.Id, title, card, content, heading, nav.Item, nav.Bar, nav.Text));
+                    section.Capability.Id, title, card, content, heading, nav.Item, nav.Bar, nav.Text)
+                {
+                    Expand = expand,
+                });
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
 
-    private (Border Card, StackPanel Content, TextBlock Heading) BuildCard(
+    private (Border Card, StackPanel Content, TextBlock Heading, Action<bool> Expand) BuildCard(
         SettingsSection section,
         string title,
         int index)
@@ -331,14 +334,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Child = headerRow,
         };
 
-        header.PointerPressed += (_, _) =>
+        // One place either route changes it. The header press is the Commander's; Reveal is a
+        // help card's, and a second copy of these five lines is how the chevron ends up pointing
+        // the wrong way at a card that is open.
+        void Expand(bool expanded)
         {
-            content.IsVisible = !content.IsVisible;
-            chevron.Text = content.IsVisible ? "▾" : "▸";
+            content.IsVisible = expanded;
+            chevron.Text = expanded ? "▾" : "▸";
 
             // Recorded here as well as on disk, because a filter opens a card without being
             // asked and has to put it back the way the Commander left it.
-            if (content.IsVisible)
+            if (expanded)
             {
                 _collapsed.Remove(index);
             }
@@ -347,8 +353,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 _collapsed.Add(index);
             }
 
-            RememberCollapse(section.Capability.Id, expanded: content.IsVisible);
-        };
+            RememberCollapse(section.Capability.Id, expanded);
+        }
+
+        header.PointerPressed += (_, _) => Expand(!content.IsVisible);
 
         header.PointerEntered += (_, _) => header.Background = Res(ThemeManager.SurfaceAltKey);
         header.PointerExited += (_, _) => header.Background = Brushes.Transparent;
@@ -367,7 +375,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return (card, content, heading);
+        return (card, content, heading, Expand);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -576,6 +584,39 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // handlers paint an inactive item on hover and this is the state they paint over.
             section.NavItem.Background = Brushes.Transparent;
         }
+    }
+
+    /// <summary>
+    /// Shows one section, named by the capability that owns it — what a help card pressed on the
+    /// Transcript page does (asked for 2026-08-23).
+    /// <para>
+    /// <b>Expanded before scrolled, and that order is the feature.</b> A card the Commander left
+    /// collapsed is a card that scrolls to a heading with nothing under it, which reads exactly
+    /// like a button that did not work — and the Commander pressed it precisely because they did
+    /// not know where these rows were.
+    /// </para>
+    /// <para>
+    /// An id this page has no section for does nothing rather than throwing. The ids come from
+    /// shipped markup rather than from the registry, so a page naming a capability this build no
+    /// longer registers is a stale link, and a stale link is worth a dead button rather than a
+    /// crash on the settings page.
+    /// </para>
+    /// </summary>
+    public void Reveal(string capabilityId)
+    {
+        var index = _sections.FindIndex(
+            section => string.Equals(section.CapabilityId, capabilityId, StringComparison.Ordinal));
+
+        if (index < 0)
+        {
+            return;
+        }
+
+        _sections[index].Expand?.Invoke(true);
+
+        // After the layout the expansion caused, not before it: CardTop reads the card's position
+        // in the scroller's content, and the cards below one that just opened have not moved yet.
+        Dispatcher.UIThread.Post(() => ScrollTo(index), DispatcherPriority.Loaded);
     }
 
     private void ScrollTo(int index)
@@ -2393,6 +2434,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Border NavBar,
         TextBlock NavText)
     {
+        /// <summary>
+        /// Opens or closes this card, chevron and remembered state together — the header press
+        /// and <see cref="SettingsView.Reveal"/> both go through it, so neither can leave the
+        /// two disagreeing.
+        /// </summary>
+        public Action<bool>? Expand { get; init; }
+
         /// <summary>
         /// How the nav item is currently painted, or null before it has been painted at all —
         /// which is what makes the first pass apply and the rest of them cost nothing.

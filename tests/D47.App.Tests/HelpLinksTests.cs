@@ -223,8 +223,12 @@ public class HelpLinksTests
     {
         var nav = new PanelNavigator();
 
-        // A root that claims help for a page nobody has illustrated.
-        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = "listening" });
+        // A root that claims help for a page nobody has illustrated — asked of the library rather
+        // than named here, for the reason the sibling test above gives. This said "listening"
+        // until that band was written on 2026-08-23, and went red for a page being finished.
+        var bandless = HelpLibrary.Pages.First(id => HelpLibrary.For(id) is null);
+
+        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = bandless });
         nav.Select(PanelTab.Utilities);
 
         Assert.True(HelpLevel.Open(nav));
@@ -263,6 +267,60 @@ public class HelpLinksTests
         // And pressing one drills into it.
         Press(page, "Engineers").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal("help:engineers", nav.Trail[^1].Key);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// <b>A settings card offers the rows, not a second explanation.</b> The Commander pressed it
+    /// from a page describing a control and is asking where that control is decided — arriving at
+    /// another band would be the long way to the same place.
+    /// </summary>
+    [AvaloniaFact]
+    public void ACardNamingASettingsSectionGoesThereRatherThanIntoMoreHelp()
+    {
+        var nav = Standing();
+        var revealed = new List<string>();
+
+        var page = HelpPageView.Build(
+            Article(new HelpLink { Title = "Speech", Article = "speech", Settings = "speech" }),
+            nav,
+            openUrl: null,
+            openSettings: revealed.Add);
+
+        var window = new Window { Content = page, Width = 900, Height = 700 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var before = nav.Trail.Count;
+
+        Press(page, "Speech").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal(["speech"], revealed);
+        Assert.Equal(before, nav.Trail.Count);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// And the same card on a surface with no settings to reach is an ordinary drill. This is the
+    /// headset: it is handed no opener, so the marked card behaves exactly as every other one
+    /// does, with nothing anywhere asking which surface it is on.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSameCardIsAnOrdinaryDrillWhereThereIsNoSettingsTab()
+    {
+        var nav = Standing();
+
+        var (window, page) = Open(
+            Article(new HelpLink { Title = "Speech", Article = "speech", Settings = "speech" }),
+            nav,
+            openUrl: null);
+
+        Press(page, "Speech").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.True(nav.Modal, "another level of help took the panel");
+        Assert.Equal("help:speech", nav.Trail[^1].Key);
 
         window.Close();
     }

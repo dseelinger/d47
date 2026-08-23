@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Globalization;
 using System.Xml.Linq;
 
@@ -90,7 +90,7 @@ public static class HelpLibrary
             NavOrder = int.TryParse(FrontMatter(markdown, "nav_order"), out var order) ? order : 0,
             Lede = lede?.Value.Trim() ?? string.Empty,
             Sections = frame.Elements("section").Select(Section).ToArray(),
-            Links = Links(frame),
+            Links = Links(frame, capabilityId),
         };
     }
 
@@ -101,25 +101,44 @@ public static class HelpLibrary
     /// carries, so it is kept as an id. Everything else keeps its address: a path up out of the
     /// folder reaches a page with no band, and an absolute URL reaches somewhere no panel can go.
     /// </para>
+    /// <para>
+    /// <b>The class is a list, and it is read as one.</b> This used to compare the whole attribute
+    /// against <c>card</c>, which was true right up until a card needed a second word — and the
+    /// failure it produced is the worst shape available: the card is dropped, the band draws
+    /// without it, and nothing anywhere is wrong enough to say so. A foot that is one card short
+    /// reads as a foot that was written that way.
+    /// </para>
     /// </summary>
-    private static IReadOnlyList<HelpLink> Links(XElement frame) =>
+    private static IReadOnlyList<HelpLink> Links(XElement frame, string owner) =>
         frame.Descendants("a")
-            .Where(anchor => (string?)anchor.Attribute("class") == "card")
-            .Select(anchor =>
+            .Select(anchor => (Anchor: anchor, Classes: Classes(anchor)))
+            .Where(card => card.Classes.Contains("card"))
+            .Select(card =>
             {
-                var href = ((string?)anchor.Attribute("href") ?? string.Empty).Trim();
-                var sibling = Sibling(href);
+                var href = ((string?)card.Anchor.Attribute("href") ?? string.Empty).Trim();
+                var sibling = Sibling(href, owner);
 
                 return new HelpLink
                 {
                     // The arrow is a web affordance. A button in the panel is already a button.
-                    Title = Span(anchor, "ct").TrimEnd(' ', '→').Trim(),
-                    Blurb = Span(anchor, "cd") is { Length: > 0 } blurb ? blurb : null,
+                    Title = Span(card.Anchor, "ct").TrimEnd(' ', '→').Trim(),
+                    Blurb = Span(card.Anchor, "cd") is { Length: > 0 } blurb ? blurb : null,
                     Article = sibling,
                     Href = sibling is null ? href : null,
+
+                    // A settings card names its section with the same id as the page it points at,
+                    // which is what lets one href serve the browser and the panel both. Only a
+                    // sibling can carry it: a section is a capability, and an address that is not
+                    // one of this machine's pages cannot be naming a capability either.
+                    Settings = card.Classes.Contains("settings") ? sibling : null,
                 };
             })
             .ToArray();
+
+    /// <summary>The words in an element's <c>class</c>, whitespace-separated as HTML writes them.</summary>
+    private static IReadOnlyList<string> Classes(XElement element) =>
+        ((string?)element.Attribute("class") ?? string.Empty)
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
     /// <summary>How the three general help pages are keyed, a folder up from the capabilities.</summary>
     public const string GeneralPrefix = "general-";
@@ -133,14 +152,55 @@ public static class HelpLibrary
     /// different pages without either quietly winning.
     /// </para>
     /// <para>
-    /// Deliberately strict beyond those two: a scheme, a fragment, or a second slash is somewhere
-    /// this build is not carrying, and is left as an address.
+    /// <b>"Beside this one" depends on which folder this one is in, which is why the owner is
+    /// passed.</b> The general pages live a folder above the capabilities, so a bare
+    /// <c>conversation.html</c> written on one of <em>them</em> means <em>Talking to Directive
+    /// 47</em> and not the Language model page. Read without the owner it meant the second one:
+    /// the Overview band's own card said "Talking to Directive 47" and opened a page about
+    /// providers and billing — the same complaint that started this work, arriving one page over.
+    /// </para>
+    /// <para>
+    /// Deliberately strict beyond those shapes: a scheme, a fragment, or any other second slash is
+    /// somewhere this build is not carrying, and is left as an address.
     /// </para>
     /// </summary>
-    private static string? Sibling(string href)
+    private static string? Sibling(string href, string owner)
     {
-        var general = href.StartsWith("../", StringComparison.Ordinal);
-        var rest = general ? href[3..] : href;
+        const string CapabilityFolder = "capabilities/";
+
+        var fromGeneralPage = owner.StartsWith(GeneralPrefix, StringComparison.Ordinal);
+        var rest = href;
+        bool general;
+
+        if (href.StartsWith("../", StringComparison.Ordinal))
+        {
+            // Climbing out of the capability folder reaches the general pages. Written on a page
+            // that is already up there it climbs out of the site, which is not a page at all.
+            if (fromGeneralPage)
+            {
+                return null;
+            }
+
+            rest = href[3..];
+            general = true;
+        }
+        else if (href.StartsWith(CapabilityFolder, StringComparison.Ordinal))
+        {
+            // The only way down, and only from up there — a capability page naming
+            // capabilities/x.html would be pointing into a folder it is already in.
+            if (!fromGeneralPage)
+            {
+                return null;
+            }
+
+            rest = href[CapabilityFolder.Length..];
+            general = false;
+        }
+        else
+        {
+            // Beside this page, whichever folder that is.
+            general = fromGeneralPage;
+        }
 
         if (!rest.EndsWith(".html", StringComparison.Ordinal))
         {

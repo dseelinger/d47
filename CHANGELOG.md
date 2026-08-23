@@ -17,6 +17,71 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.57.0 — 2026-08-23 — Help about the page you are standing on
+
+**The help mark on the Transcript page opened a page about language models.** Reported the day
+after the bands finished: *"what shows up often does not address how to use the UI properly."* The
+default reading's mark asked for `ConversationCapability`, whose page is titled **Language model**
+and whose four pictures are providers, stop-versus-cancel, the two bills and endpoint demotion —
+all true, none of it about the controls in front of you. It was not merely off-topic. That page is
+one of the three this work now *links* to.
+
+**So there is a page about the page.** It draws the four things the tab cannot say for itself: the
+sub-tab switcher as three readings of one exchange, the ask box beside the microphone badge's three
+states, the controls around the conversation, and the three settings that stand behind every answer
+on it. It is a **general** page rather than a capability's, because no capability owns a tab strip
+and a Copy All button — and the machinery for that already existed, since the three general pages
+have been embedded and reachable since 0.53.0.
+
+Two details it gets right because the code says so rather than because it reads well. The
+microphone badge's third state says **MIC ON** and deliberately not *push-to-talk*: a key you are
+holding and a gate Directive 47 opened for itself are the same fact about your microphone, so
+naming the key there would be false half the time. And **Details is on the desktop only** — it
+opens a window, and the headset is handed no opener — so the page says that instead of promising a
+button that is not there.
+
+### The three links go to the rows, not to three more explanations
+
+A Commander who has just read what the microphone badge means wants the microphone rows. Arriving
+at a second essay about Whisper is the long way to them. So the cards at the foot of that page
+**dismiss help, select Settings and open that section**, expanded and scrolled to.
+
+**Expanded before scrolled, and that order is the whole feature.** A card left collapsed scrolls to
+a heading with nothing under it, which reads exactly like a button that did not work — and it was
+pressed precisely by somebody who did not know where those rows were.
+
+**One href serves the browser and the panel.** The card still points at the page about the same
+subject and is marked with a class rather than an address, because the band is one source for two
+surfaces and a `d47:` scheme would be a broken link on the site. Where there is no Settings tab —
+the headset — the same card is an ordinary drill into that page's band, with nothing anywhere
+testing which surface it is on. That is why **Listening** had to be given a band before this could
+ship: a marked card whose page had none would have been a dead button in the headset.
+
+**Diagnostics got one too**, which is the other two readings of the same tab. Technical and Log
+file both fell back to the generic help index before this; they now answer for themselves, and the
+band leads with the distinction that matters — *why did it say that* is the left one, *why will it
+not start* is the right one.
+
+### Three link faults, two of them shipped and unnoticed
+
+All three are the same shape as the complaint that started this: a link that goes somewhere other
+than where it says.
+
+**A card with a second class vanished.** The parser matched the whole `class` attribute against
+`card`, which was true right up until a card needed a second word. The failure is the worst
+available — the card is dropped, the band draws without it, and nothing anywhere is wrong enough to
+say so. A foot one card short reads as a foot written that way.
+
+**A bare name meant the wrong folder.** `conversation.html` was read as "the capability beside
+this page" no matter which folder the page was in — so the Overview band's own card saying *Talking
+to Directive 47* opened the Language model page. The same complaint, one page over. A card now
+resolves against the folder it was written in.
+
+**"Read the full page" was a 404 on all three general pages.** The long-form card is what stops the
+panel quietly hiding the documentation, and on Overview, Installing and Talking to Directive 47 it
+pointed at `capabilities/general-overview.html` — a folder that does not hold them, under an
+embedding key that is not a filename.
+
 ## 0.56.0 — 2026-08-23 — Every page opens with pictures now
 
 **Thirty-two more capability pages got their illustrated band**, which finishes what 0.53.0 and
