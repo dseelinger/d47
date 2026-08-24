@@ -59,6 +59,39 @@ what a CI runner running seven test projects is, the callback is late. With the 
 deliberately the five-second wait came back empty after 23 seconds. They now watch the token's own
 flag, which flips synchronously and needs no threadpool thread at all.
 
+### Under the hood: the open-defect queue is GitHub Issues
+
+`bugs.md` and `remediation.md` are retired. Open defects and wanted fixes are now
+[GitHub Issues](https://github.com/dseelinger/d47/issues), and the pointer at the top of this file
+says so.
+
+They were the two files that made parallel branches expensive, and the measurement is the argument:
+`bugs.md` averaged **+33/−27 lines per commit** and `remediation.md` **+30/−22**. Neither was a file
+where a branch ticked a box — every touch rewrote paragraphs and restated a hand-written count, so
+two branches touching either conflicted, and merged cleanly into a count that had been true on
+neither. `bugs.md` recorded that happening to itself: it said eleven were open while three were. A
+derived count cannot go stale, which is most of the case in one line.
+
+Four issues carry what was actually open — [#18](https://github.com/dseelinger/d47/issues/18) the
+motion controller that stops answering, [#19](https://github.com/dseelinger/d47/issues/19) the VR
+aim ray, [#20](https://github.com/dseelinger/d47/issues/20) the Ctrl-drag that copies nothing,
+[#21](https://github.com/dseelinger/d47/issues/21) the placement rows that exist twice per surface.
+The aim ray had been written up in **both** files as two entries; it is one issue now. And three
+remediation items were still unticked and had in fact shipped — 2 in 0.47.0, 15 in 0.44.1, 16 in
+0.45.0 — so they are corrected rather than carried forward as work already done.
+
+**Nothing about the record changed.** A fix's permanent record is still the line it gets in this
+file under the release that shipped it; an issue closing is not a record. `list.md` did not move
+either — it is the product description rather than a tracker, cited over a thousand times from code
+as `list.md Phase N`, and a phase still joins the frozen set the day it ships. Wanted changes that
+are not defects still live in `docs/plans/change-requests.md`.
+
+Both files are archived under [`docs/archive/`](docs/archive/README.md) rather than deleted,
+because 382 code comments name `remediation.md` and about twenty name `bugs.md`, and because
+reading back a change that was supposed to have worked is ordinary here. Only batch 17 was ever
+*in* `remediation.md`; batches 1 to 16 are in git history, reachable with
+`git log --follow -- remediation.md` across the move.
+
 ## 0.60.8 — 2026-08-24 — Three from the desk
 
 ### The checklist filter is one filter, and it is remembered
