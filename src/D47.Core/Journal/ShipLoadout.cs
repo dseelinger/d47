@@ -262,7 +262,7 @@ public sealed record ShipLoadout
         Type is not { } symbol ? TypeName
         : TypeName is { } localised && !string.Equals(localised, symbol, StringComparison.Ordinal)
             ? localised
-            : Knowledge.EliteSpecifications.Ship(symbol)?.Name ?? symbol;
+            : Knowledge.EliteSpecifications.HullSaid(symbol);
 
     public ShipLoadout Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {

@@ -384,6 +384,30 @@ public class SpecificationTests
         Assert.DoesNotContain("I don't know a ship", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Reported 2026-08-23 as a ship called <c>smallcombat01_nx</c>: a hull with no measured row
+    /// had no name at all, so every line about it read out Frontier's internal symbol. The name is
+    /// read off the hull's own armour — five bulkheads all called "&lt;hull&gt; something" — rather
+    /// than from a list written here, so a hull Frontier adds is named the day its armour is.
+    /// </summary>
+    [Fact]
+    public void AHullWithNoMeasuredRowIsStillNamedFromItsOwnArmour()
+    {
+        Assert.Equal("Kestrel Mk II", EliteSpecifications.HullName("smallcombat01_nx"));
+
+        // The table's own second opinion: this hull is in the known-but-unmeasured list under
+        // exactly that name, and the two were derived from different columns of it.
+        Assert.Contains("Kestrel Mk II", EliteSpecifications.KnownButUnmeasured);
+
+        // A measured hull keeps the id list's name, which is the naming authority — this must not
+        // become a second answer to a question already answered.
+        Assert.Equal("Krait MkII", EliteSpecifications.HullName("krait_mkii"));
+
+        // And nothing is invented for a symbol no armour and no row knows.
+        Assert.Null(EliteSpecifications.HullName("smallcombat99_zz"));
+        Assert.Equal("smallcombat99_zz", EliteSpecifications.HullSaid("smallcombat99_zz"));
+    }
+
     [Fact]
     public async Task AShipNobodyHasHeardOfGetsSuggestionsRatherThanInventedFigures()
     {

@@ -202,7 +202,7 @@ public static class ChecklistWording
     /// table, exactly as <see cref="Ships.ShipBuild.HullName"/> does.
     /// </summary>
     private static string? HullName(string? hull) =>
-        hull is not { Length: > 0 } ? null : EliteSpecifications.Ship(hull)?.Name ?? hull;
+        hull is not { Length: > 0 } ? null : EliteSpecifications.HullSaid(hull);
 
     /// <summary>
     /// The last occurrence of <paramref name="what"/> replaced, which is the one the slot is in:

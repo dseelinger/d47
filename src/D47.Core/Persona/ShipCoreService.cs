@@ -391,7 +391,7 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
         (binding.Name, binding.Hull) switch
         {
             ({ } name, _) => name,
-            (null, { } hull) => $"{Knowledge.EliteSpecifications.Ship(hull)?.Name ?? hull} {binding.ShipId}",
+            (null, { } hull) => $"{Knowledge.EliteSpecifications.HullSaid(hull)} {binding.ShipId}",
             _ => $"ship {binding.ShipId}",
         };
 

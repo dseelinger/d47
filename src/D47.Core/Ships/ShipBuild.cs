@@ -250,7 +250,7 @@ public sealed record ShipBuild(
     /// <c>krait_mkii</c> reads as "Krait Mk II" wherever it is shown. Falls back to the symbol,
     /// which is ugly and true, for a hull no table covers.
     /// </summary>
-    public string HullName => Knowledge.EliteSpecifications.Ship(Hull)?.Name ?? Hull;
+    public string HullName => Knowledge.EliteSpecifications.HullSaid(Hull);
 
     /// <summary>How a Commander hears it — "Bad Idea (Python)", "Corsair, intended".</summary>
     public string Describe()
