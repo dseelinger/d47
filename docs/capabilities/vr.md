@@ -179,7 +179,7 @@ front of you works the way you would expect.
 
 #### Placing a surface
 
-Six settings each, and the mini panel has its own copies of all six. The big panel has a seventh.
+Five settings each, and the mini panel has its own copies of all five. The big panel has a sixth.
 
 | Setting | What it does |
 |---|---|
@@ -187,9 +187,21 @@ Six settings each, and the mini panel has its own copies of all six. The big pan
 | Distance {#panel-distance} | How far in front of you, in metres. Head-locked only — a surface you put down is where you put it |
 | Size {#panel-size} | How wide, in metres. Height follows the panel's proportions, so there is nothing else to set |
 | Curvature {#panel-curve} | 0 is flat, 1 is wrapped around you |
-| Opacity {#panel-opacity} | How solid it is |
 | Scale {#panel-scale} | How large the content is drawn, on the same steps the desktop window zooms with |
 | Resolution {#panel-resolution} | How many pixels the big panel is rendered at. Big panel only |
+
+##### Opacity is one knob for both {#opacity}
+
+How solid the panel is, from 0.1 to 1 — and **one setting, not one per panel**. Everything in the
+table above is genuinely per-surface: mini exists to be smaller and further out of the way, so its
+distance, size and drop have to be able to differ. How see-through the glass is does not. It is one
+preference about how much cockpit shows through Directive 47, and asking for it at half never means
+*half, in one of the two modes*.
+
+It used to be two, and that is exactly how it went wrong: *"set the opacity to 0.5"* landed on the
+big panel's copy while the mini panel was the one in front of the Commander, so the number they
+could see never moved and nothing was broken. A value already set on either panel is carried up to
+the shared one the first time this version runs, so nobody has to set it again.
 
 ##### Three levers, and they do different things
 
@@ -226,7 +238,8 @@ everything on the panel is, mini changes how much of it there is. Zooming a pane
 makes it readable; switching to mini gives you less to read.
 
 The mini rows work the same way: [locking](#mini-lock), [distance](#mini-distance),
-[size](#mini-size), [curvature](#mini-curve), [opacity](#mini-opacity) and [scale](#mini-scale).
+[size](#mini-size), [curvature](#mini-curve) and [scale](#mini-scale) — but not opacity, which
+[both panels share](#opacity).
 The mini panel defaults to 0.34 m across — it is meant to sit at the edge of vision — against
 1.1 m for the full one.
 

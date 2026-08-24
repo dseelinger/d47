@@ -282,7 +282,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         get
         {
-            var placement = Settings().ToPlacement();
+            var placement = Settings().ToPlacement(_settings.Current.Vr.Opacity);
 
             return _anchor(Slot) is { } anchor
                 ? placement with { Placed = anchor.Placed, PlacedAgainst = anchor.Against }

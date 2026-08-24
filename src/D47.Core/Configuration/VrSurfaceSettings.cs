@@ -95,6 +95,13 @@ public sealed record VrSurfaceSettings
     /// </summary>
     public double Curvature { get; init; }
 
+    /// <summary>
+    /// <b>Read by nothing since 0.60.7, and kept because the settings file is append-only.</b>
+    /// How see-through the glass is turned out to be one preference rather than one per surface,
+    /// so it moved to <see cref="VrSettings.Opacity"/> and this copy stays on disk holding whatever
+    /// it last held. <c>SettingsStore</c> carries the value up once, under
+    /// <see cref="VrSettings.OpacityShared"/>.
+    /// </summary>
     public double Opacity { get; init; } = 0.95;
 
     /// <summary>
@@ -127,7 +134,16 @@ public sealed record VrSurfaceSettings
     public (int Width, int Height) Resolution => Interface.PanelResolution.Parse(
         string.IsNullOrWhiteSpace(Pixels) ? null : Pixels);
 
-    public SurfacePlacement ToPlacement() => new SurfacePlacement
+    /// <summary>
+    /// Where this surface goes and what it looks like.
+    /// <para>
+    /// <b>The opacity is handed in, because it is not this surface's to keep</b> (asked for
+    /// 2026-08-24). Both panels are as see-through as each other, so the number lives once on
+    /// <see cref="VrSettings.Opacity"/> — see the comment there for why this one of the six is the
+    /// odd one out. <see cref="Opacity"/> below is what the file used to hold and nothing reads.
+    /// </para>
+    /// </summary>
+    public SurfacePlacement ToPlacement(double opacity) => new SurfacePlacement
     {
         Lock = string.Equals(Lock, "world", StringComparison.OrdinalIgnoreCase)
             ? SurfaceLock.WorldLocked
@@ -137,7 +153,7 @@ public sealed record VrSurfaceSettings
         PitchDegrees = (float)Pitch,
         WidthMetres = (float)Width,
         Curvature = (float)Curvature,
-        Opacity = (float)Opacity,
+        Opacity = (float)opacity,
         ZoomPercent = Zoom,
     }.Sane();
 

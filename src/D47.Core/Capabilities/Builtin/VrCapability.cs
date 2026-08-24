@@ -20,6 +20,13 @@ public static class VrCapability
 
     public const string ModeKey = "vr.mode";
 
+    /// <summary>
+    /// How solid the panel is — <b>not under a surface slot</b>, because it is one number for both
+    /// of them (asked for 2026-08-24, after <c>vr.panel.opacity</c> was set while the mini panel
+    /// was the one on screen and nothing the Commander could see changed).
+    /// </summary>
+    public const string OpacityKey = "vr.opacity";
+
     /// <summary>The surface a placement row belongs to, as it appears in the key.</summary>
     public const string PanelSlot = "panel";
 
@@ -146,6 +153,34 @@ public static class VrCapability
                     new SettingCommandPhrase("mini panel", "mini"),
                     new SettingCommandPhrase("full panel", "full"),
                 ],
+            },
+            new SettingRow
+            {
+                Key = OpacityKey,
+                Label = "Panel opacity",
+                Help = "How solid the panel is, from 0.1 to 1. One setting for both panels: the mini one "
+                       + "and the full one are as see-through as each other, because how much cockpit "
+                       + "shows through D47 is one preference and not two.",
+                Kind = SettingKind.Number,
+                Step = 0.05,
+                Minimum = 0.1,
+                Maximum = 1,
+                DocsAnchor = "opacity",
+                AppliesWhen = s => s.Vr.Enabled,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Vr.Opacity.ToString("0.##", CultureInfo.InvariantCulture),
+                    Write = (s, v) => s with
+                    {
+                        Vr = s.Vr with
+                        {
+                            Opacity = double.TryParse(
+                                v, NumberStyles.Float, CultureInfo.InvariantCulture, out var wanted)
+                                ? Math.Clamp(wanted, 0.1, 1)
+                                : s.Vr.Opacity,
+                        },
+                    },
+                },
             },
             .. Placement(PanelSlot, "Panel", s => s.Vr.Panel, (s, v) => s with { Vr = s.Vr with { Panel = v } }),
             .. Placement(MiniSlot, "Mini panel", s => s.Vr.Mini, (s, v) => s with { Vr = s.Vr with { Mini = v } }),
@@ -335,15 +370,6 @@ public static class VrCapability
             SettingKind.Number,
             v => Number(v.Curvature),
             (v, x) => v with { Curvature = Parse(x, v.Curvature) },
-            step: 0.05);
-
-        yield return Row(
-            "opacity",
-            "Opacity",
-            "How solid the surface is, from 0.1 to 1.",
-            SettingKind.Number,
-            v => Number(v.Opacity),
-            (v, x) => v with { Opacity = Parse(x, v.Opacity) },
             step: 0.05);
 
         yield return Row(

@@ -17,6 +17,22 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.7 — 2026-08-24 — Two panels, one opacity knob
+
+Opacity was one of the settings each headset surface kept its own copy of, which is what made *"set
+the opacity to 0.5"* a question with two answers — and it got answered with the panel that was not
+in front of the Commander.
+
+**It is one knob now.** Everything else those two surfaces carry has a reason to differ: mini exists
+to be smaller and further out of the way, so its distance, size and drop are its own. How
+see-through the glass is is not that kind of setting. It is one preference about how much cockpit
+shows through Directive 47, and asking for it at half never meant *half, in one of the two modes*.
+
+Whatever you had set on either panel is carried up to the shared knob the first time this version
+runs, so nobody sets it again — a value that was not the default was a decision, and it survives.
+The old per-panel values stay in `settings.json` unread, because that file only ever gains
+properties.
+
 ## 0.60.6 — 2026-08-24 — The carrier crew know their own callsign
 
 ### Tower and the Captain speak again

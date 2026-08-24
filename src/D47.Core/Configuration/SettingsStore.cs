@@ -136,8 +136,53 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
                 settings.Vr.Mini.Pitch);
         }
 
+        // Opacity was one of the six settings each surface kept a copy of, and is now one knob for
+        // both. The value is carried up rather than reset, because a Commander who set it meant it.
+        if (settings.Vr.OpacityShared < OpacitySharing)
+        {
+            var shared = Shared(settings.Vr.Panel.Opacity, settings.Vr.Mini.Opacity);
+
+            settings = settings with
+            {
+                Vr = settings.Vr with { Opacity = shared, OpacityShared = OpacitySharing },
+            };
+
+            logger.LogInformation(
+                "Panel opacity is now one setting for both surfaces; {Panel:0.00} and {Mini:0.00} became {Shared:0.00}",
+                settings.Vr.Panel.Opacity,
+                settings.Vr.Mini.Opacity,
+                shared);
+        }
+
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
+    }
+
+    /// <summary>Which revision of the shared-opacity repair this build performs.</summary>
+    private const int OpacitySharing = 1;
+
+    /// <summary>
+    /// Which of the two old values becomes the one. <b>A value that is not the default is a
+    /// decision</b>, and the whole point of carrying it rather than resetting is that a Commander
+    /// who set one should not have to set it again.
+    /// <para>
+    /// The big panel wins when both were changed: it is the surface the settings page leads with
+    /// and the one a spoken "set the opacity" reached, so it is where a deliberate value is most
+    /// likely to have landed. When only one was touched, that one is the decision whichever surface
+    /// it was on — which is the case that matters, because the report this came from is a file with
+    /// the panel at 0.5 and mini still at the default.
+    /// </para>
+    /// </summary>
+    private static double Shared(double panel, double mini)
+    {
+        const double WhatOpacityDefaultsTo = 0.95;
+
+        if (panel != WhatOpacityDefaultsTo)
+        {
+            return panel;
+        }
+
+        return mini != WhatOpacityDefaultsTo ? mini : WhatOpacityDefaultsTo;
     }
 
     /// <summary>

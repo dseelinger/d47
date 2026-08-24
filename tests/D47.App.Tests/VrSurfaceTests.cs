@@ -167,7 +167,7 @@ public class VrSurfaceTests
 
         foreach (var slot in new[] { VrCapability.PanelSlot, VrCapability.MiniSlot })
         {
-            foreach (var name in new[] { "lock", "distance", "size", "curve", "opacity", "scale" })
+            foreach (var name in new[] { "lock", "distance", "size", "curve", "scale" })
             {
                 var row = settings.Find($"vr.{slot}.{name}");
 
@@ -178,6 +178,15 @@ public class VrSurfaceTests
                 Assert.False(row.Protected);
             }
         }
+
+        // Opacity is not in that list because it is not per-surface: one knob answers for both
+        // panels, which is why "set the opacity" can no longer land on the one you cannot see.
+        var opacity = settings.Find(VrCapability.OpacityKey);
+
+        Assert.NotNull(opacity);
+        Assert.False(opacity.Protected);
+        Assert.Null(settings.Find($"vr.{VrCapability.PanelSlot}.opacity"));
+        Assert.Null(settings.Find($"vr.{VrCapability.MiniSlot}.opacity"));
     }
 
     [AvaloniaFact]
