@@ -709,7 +709,15 @@ public sealed class AppHost : IDisposable
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
                 loggerFactory.CreateLogger<ChecklistProposalStore>()),
-            () => gameState.Active);
+            () => gameState.Active,
+
+            // The chosen filter outlives the session, which is what was asked for on 2026-08-23.
+            // In view state rather than settings: it has no default worth documenting and nothing
+            // should fail loudly because it could not be read, which is the same argument the
+            // window's own position is kept here by.
+            chosen => viewState.Save(viewState.Load() with { ChecklistFilter = chosen }));
+
+        checklists.Restore(viewState.Load().ChecklistFilter);
 
         // What d47 remembers about the Commander (list.md Phase 31). One file, per Commander with
         // the key inside the document, and it has both halves of the store pattern Phase 23 split

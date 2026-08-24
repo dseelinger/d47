@@ -26,10 +26,15 @@ public sealed record ChecklistNews(string Key, string Text);
 /// property of the caller, not of the modality.
 /// </para>
 /// </summary>
+/// <param name="remember">
+/// How the host writes the chosen filter down, or null where nothing should be remembered — a
+/// test, or a surface with no view state behind it. Core never opens a file.
+/// </param>
 public sealed class ChecklistService(
     ChecklistStore list,
     ChecklistProposalStore proposals,
-    Func<CommanderGameState?> commander)
+    Func<CommanderGameState?> commander,
+    Action<string>? remember = null)
 {
     public ChecklistStore List => list;
 
@@ -79,6 +84,82 @@ public sealed class ChecklistService(
 
     /// <summary>Raised when the selection moves and the list did not, so a page can redraw.</summary>
     public event Action? SelectionChanged;
+
+    /// <summary>
+    /// Which filter the list is under — the chooser's key, or <see cref="Everything"/>.
+    /// <para>
+    /// <b>Here for the reason <see cref="Selected"/> is here, and it is the same report.</b> This
+    /// was a string on <c>ChecklistPage</c>, and there is one page per surface — so a filter
+    /// applied at the desk left the headset drawing the unfiltered list a foot away, with neither
+    /// surface saying they disagreed (reported 2026-08-23). What you are <em>reading</em> is
+    /// shared; only how a surface draws it — mini or full, zoom — stays with the surface.
+    /// </para>
+    /// <para>
+    /// <b>And unlike the selection, this one is remembered.</b> A selection is where a Commander is
+    /// looking this minute; a filter is closer to a preference, and was asked for as one on the
+    /// same day. It is kept in <c>view-state.json</c> rather than in settings — it has no default
+    /// worth documenting and nothing should fail loudly because it could not be read — which is
+    /// what <paramref name="remember"/> is for. Core stays clock-free and file-free; the host hands
+    /// in how to read and write it.
+    /// </para>
+    /// </summary>
+    public string Filter { get; private set; } = Everything;
+
+    /// <summary>
+    /// What a surface's search box has narrowed the list to. <b>Shared like the filter and
+    /// <em>not</em> remembered</b>, which is the line between the two: a typed query is where a
+    /// Commander is this minute, and one restored from last week would be a list that looks broken
+    /// until they find the box.
+    /// </summary>
+    public string Query { get; private set; } = string.Empty;
+
+    /// <summary>The key that means no filter at all. One spelling, shared by both surfaces.</summary>
+    public const string Everything = "everything";
+
+    /// <summary>Raised when the filter or the search text moves, so every surface can redraw.</summary>
+    public event Action? FilterChanged;
+
+    /// <summary>
+    /// Puts the list under a filter, or back under <see cref="Everything"/>. Remembered as it is
+    /// applied rather than on shutdown, because d47 is closed by closing its window.
+    /// </summary>
+    public void Choose(string? key)
+    {
+        var wanted = string.IsNullOrWhiteSpace(key) ? Everything : key.Trim();
+
+        if (string.Equals(wanted, Filter, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Filter = wanted;
+        remember?.Invoke(wanted);
+        FilterChanged?.Invoke();
+    }
+
+    /// <summary>Narrows the list to what a Commander typed, or clears it.</summary>
+    public void Search(string? query)
+    {
+        var wanted = (query ?? string.Empty).Trim();
+
+        if (string.Equals(wanted, Query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Query = wanted;
+        FilterChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Takes up the filter a previous run was left under. Separate from <see cref="Choose"/> so
+    /// restoring does not write back what was just read, and silent — the Commander did not do
+    /// anything, so there is nothing to announce and no surface to redraw yet.
+    /// </summary>
+    public void Restore(string? key)
+    {
+        Filter = string.IsNullOrWhiteSpace(key) ? Everything : key.Trim();
+    }
 
     /// <summary>
     /// Points the selection at a line, or clears it. Silently forgets an id nothing answers to,

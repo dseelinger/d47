@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Seven open, and one partly confirmed.
+## Six open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
@@ -236,59 +236,6 @@ exists twice, and a Commander who says *"move it closer"* in mini can still have
 distance move. Those rows have a real reason to differ, so the answer there is not one knob — it is
 either the resolve-from-mode route this entry described or nothing, and nothing is defensible while
 the rows say which surface they belong to.
-
----
-
-## Open: the checklist filter is per-surface, so the headset and the window disagree
-
-Reported 2026-08-23. Mini panel in VR showing the Checklist; applied the "What Lei Cheung can do
-here" filter in the Windows app; switched back to the headset. **The mini panel still showed the
-unfiltered list.** The two surfaces are drawing the same list through two different filters and
-neither says so.
-
-**Verified, and this is a mistake the file has already made once and fixed.**
-`src/D47.App/Panel/ChecklistPage.cs:146` and `:149`:
-
-    private string _chosen = Everything;
-    private string _query = string.Empty;
-
-Both are **instance fields on the page**, and there is one page per surface, so each surface keeps
-its own filter and its own search text.
-
-The precedent that settles it is a few files away. `ChecklistService.Selected`
-(`src/D47.Core/Checklists/ChecklistService.cs:63-78`) carries this comment:
-
-> **Here rather than on the page, because two surfaces have to agree what "it" is.** The selection
-> used to be a string inside `ChecklistPage`, so a spoken "move it up" had nothing to refer to and
-> said so — while the panel, a foot away, was drawing a highlight round the very line that was
-> meant.
-
-That was reported 2026-08-21 and fixed by moving the state into Core. **`_chosen` and `_query` are
-the same string on the same page that was not moved with it.** This is therefore an oversight rather
-than a design choice, and Phase 45's rule points the same way: what you are *reading* is shared, and
-only *how a surface draws it* — mini/full, zoom — stays where it is. A filter changes what is on the
-list, not how big it is.
-
-**One place it is not a straight copy of the `Selected` fix.** That comment continues:
-
-> **Not persisted, and that is the distinction.** A selection is where a Commander is looking this
-> minute, not a preference.
-
-A filter is closer to a preference — the same Commander asked on 2026-08-23 for the filter to be
-**remembered between sessions**, which selection deliberately is not. So the filter wants sharing
-*and* persistence, and the two decisions should be made together: shared state in Core, and a home
-for the persisted value. `settings.json` is append-only, and there is a `ViewState` for things that
-are view preferences rather than settings — decide which, with the precedent of how zoom, mode and
-window placement are stored.
-
-**Unverified, and worth checking before building:** whether the VR mini panel draws the filter
-control at all. `ChecklistPage` has no mini awareness — mini/full is applied by `PanelView.ApplyChrome`
-around the page rather than inside it — so the chip row is *probably* drawn, but nobody has looked.
-It matters: if a shared filter can be switched on from the desk and the headset has no control and no
-label for it, the Commander gets a short list in VR with nothing on screen explaining why. Sharing the
-filter without showing its state on both surfaces would trade a disagreement for a mystery.
-
-`_query` should move with `_chosen` or the same report arrives again about the search box.
 
 ---
 
