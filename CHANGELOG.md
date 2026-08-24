@@ -20,6 +20,74 @@ the file as it stood then.
 
 ---
 
+## 0.63.0 — 2026-08-24 — Directive 47 speaks the language the game speaks
+
+Three things you asked for, none of them a defect.
+
+### "Roll" is a word for a mechanic Frontier removed
+
+A roll was a throw of the dice: you applied materials and got a result somewhere in a band.
+Engineering has not worked that way for years — you progress a **grade** by applying materials a
+known number of times — and Directive 47 was still fluent in a dialect you do not speak, in about
+twenty-five places.
+
+It says **craft** now, which is Frontier's own word: the journal writes `EngineerCraft` every time
+you do it, and the button in the workshop says Craft. *"Three crafts to go"*, *"crafted by Selene
+Jean"*, *"the grade is part crafted"*.
+
+**It still hears "roll", and always will.** Taking a word out of what Directive 47 listens for
+would break something that works today, so "craft" was added beside it and nothing was removed.
+
+Six places kept the old word because they were never about engineering: an axis of rotation, two
+audio pre-rolls, Elite rolling over a log file, the captions' rolling three-line window, and the
+two on-foot lines that say *"bought outright, not rolled"* — which draw the contrast deliberately.
+
+### Asking what a material is for names the blueprint
+
+*"What is Conductive Polymers for?"* used to get an apology. Directive 47 said it could not tell
+which blueprint ate them, because a shortfall is netted across every plan at once.
+
+**It knew more than it was letting on.** It could already name the ship and the slot; only the
+blueprint was missing, and it was one field away the whole time.
+
+```
+Conductive Polymers: 14 short (6 of 20).
+  Bad Idea (Python) · MainEngines · Dirty Drive Tuning 5 — 8
+```
+
+**The full shortfall list looks exactly as it did**, deliberately: one material can be wanted by a
+dozen slots, and a blueprint hung off each would double a line you hear read aloud as often as you
+see it. Ask about one material and there is room.
+
+### The window's tab carries to the mini panel
+
+Switch the window to a tab, and the mini panel goes there too — **as long as the mini panel has
+that tab.** Settings is desktop-only, so asking for Settings moves the window and leaves the mini
+panel where it was rather than blanking it.
+
+The view within the tab carries as well, so changing which transcript you are reading carries
+without changing tabs at all.
+
+**One-way, and that is on purpose.** The mini panel can be moved on its own and **keeps where you
+put it** until the window next moves. Somebody in a headset can put their panel on something and
+have it stay there.
+
+### Under the hood: the tool surface had two bytes left
+
+Saying "craft" instead of "roll" costs a byte a time, and the tools Directive 47 advertises to a
+language model are budgeted to 40,000. The sweep pushed one of them to **40,004**, at which point
+the budget quietly drops your action tools to make room — the honk, the lights, the landing gear —
+and nothing says so.
+
+Trimming one description that had come to say "craft" twice in a sentence bought it back. It now
+sits at 39,998.
+
+**The guard that should have caught this could not.** It measured the surface *after* the budget
+had already trimmed it, and a trimmed surface is under the limit by definition. It now measures
+what was actually asked for.
+
+---
+
 ## 0.62.1 — 2026-08-24 — Directive 47 notices when you rank up
 
 ### Every rank-up you earned was being thrown away
