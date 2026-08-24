@@ -582,13 +582,17 @@ public sealed class ChecklistService(
                 : "Nothing on your checklist matches that.");
         }
 
+        // One set for the whole answer, not one per scope: the explanation is about an engineer
+        // and does not become new again because the next heading is a different ship (#33).
+        var explained = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var scope in open.Select(item => item.Scope).Distinct())
         {
             report.AppendLine($"{Heading(scope)}:");
 
             foreach (var item in open.Where(item => item.Scope.Same(scope)))
             {
-                report.AppendLine("  " + Line(item));
+                report.AppendLine("  " + Line(item, explained: explained));
             }
         }
 
@@ -599,7 +603,7 @@ public sealed class ChecklistService(
 
             foreach (var item in done)
             {
-                report.AppendLine("  " + Line(item, naming: true));
+                report.AppendLine("  " + Line(item, naming: true, explained: explained));
             }
         }
 
@@ -968,7 +972,7 @@ public sealed class ChecklistService(
     /// no heading over it saying which ship it was on — which is how three finished rolls on two
     /// ships came to read as three lines about nothing in particular.
     /// </param>
-    private string Line(ChecklistItem item, bool naming = false)
+    private string Line(ChecklistItem item, bool naming = false, HashSet<string>? explained = null)
     {
         var box = item.IsComplete ? "[x]" : "[ ]";
         var text = $"{box} {(naming ? ChecklistWording.Line(item, State) : Said(item))}";
@@ -981,9 +985,35 @@ public sealed class ChecklistService(
         var verdict = ChecklistEvaluator.Evaluate(item, State);
 
         return verdict is { } known
-            ? $"{text} — {known.Says}"
+            ? $"{text} — {Explaining(known, explained)}"
             : $"{text} — {Stale(item)}";
     }
+
+    /// <summary>
+    /// A verdict's sentence, with the explanation dropped where this answer has already given it
+    /// (<a href="https://github.com/dseelinger/d47/issues/33">#33</a>).
+    /// <para>
+    /// <b>The first line that needs it keeps it and the rest do not.</b> "Rank rises by working
+    /// with them, and it compounds" is one fact about an engineer, so six modules waiting on the
+    /// same rank said it six times and it read as canned — which is what it was.
+    /// </para>
+    /// <para>
+    /// <b>Once per answer rather than once per engineer</b>, and that is the Commander's rule read
+    /// rather than bent: the sentence names no engineer, so keying it per engineer would print the
+    /// identical words twice on a page blocked at two of them, which is the repetition being
+    /// removed. Keyed on the sentence itself for the same reason — two explanations that differ get
+    /// said, two that do not get said once.
+    /// </para>
+    /// <para>
+    /// <b>A line that arrives alone always keeps it</b>: with no set to consult there is nothing to
+    /// have said already, which is what a single-line answer and a one-line spoken reply both are.
+    /// The explanation is never lost, only never repeated.
+    /// </para>
+    /// </summary>
+    private static string Explaining(ChecklistVerdict verdict, HashSet<string>? explained) =>
+        verdict.Advice is { Length: > 0 } advice && explained is not null && !explained.Add(advice)
+            ? verdict.Reason
+            : verdict.Says;
 
     private static string Stale(ChecklistItem item) => item.State switch
     {

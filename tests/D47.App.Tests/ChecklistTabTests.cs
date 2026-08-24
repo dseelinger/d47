@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -593,6 +594,74 @@ public class ChecklistTabTests
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0)];
 
+    /// <summary>
+    /// One fact about an engineer is said once (<a
+    /// href="https://github.com/dseelinger/d47/issues/33">#33</a>), reported 2026-08-24:
+    /// <em>"This is being repeated once per module [...] That line should only appear for a new
+    /// Engineer and only once."</em>
+    /// <para>
+    /// Two modules blocked behind the same rank. Both lines still say what is true of
+    /// <b>them</b> — grade 3 cannot be rolled at rank 1 — because that is a fact about each
+    /// module and a line has to stand on its own. The explanation about the engineer belongs to
+    /// the first line that needs it and to no other.
+    /// </para>
+    /// <para>
+    /// Watched to fail with the de-duplication taken out, where the sentence is drawn twice.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRankExplanationIsDrawnOnceHoweverManyModulesWaitOnIt()
+    {
+        var state = InLaksakWithAShieldBooster(rank: 1);
+        var checklists = Checklists(TempFolders.Create("d47-one-explanation"), () => state);
+
+        checklists.List.Save(
+        [
+            checklists.Document with
+            {
+                Items = [Gated("TinyHardpoint1"), Gated("TinyHardpoint2")],
+            },
+        ]);
+
+        var (window, panel) = Open(checklists);
+
+        var drawn = Lines(panel);
+
+        // Each line keeps its own verdict.
+        Assert.Equal(
+            2,
+            drawn.Count(line => line.Contains("cannot be rolled at rank 1", StringComparison.Ordinal)));
+
+        // The engineer is explained once.
+        Assert.Equal(1, drawn.Count(line => line.Contains("compounds", StringComparison.Ordinal)));
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// A gated roll: grade 3 wanted, the engineer named so the rank can be looked up at all, and
+    /// the Commander at rank 1 — which is no route rather than a slow one.
+    /// </summary>
+    private static ChecklistItem Gated(string slot)
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
+        {
+            Detail = "Heavy Duty",
+            Grade = 3,
+            Engineer = "Lei Cheung",
+        };
+
+        return new ChecklistItem
+        {
+            Key = ChecklistKeys.For(intent),
+            Scope = ChecklistScope.Ship(51),
+            Kind = ChecklistItemKind.Derived,
+            Source = ChecklistSource.EngineeringPlan,
+            Text = $"Grade 3 Heavy Duty on {slot}",
+            Intent = intent,
+        };
+    }
+
     private static ChecklistItem Roll(string slot, int grade)
     {
         var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
@@ -613,7 +682,11 @@ public class ChecklistTabTests
     }
 
     /// <summary>In Lei Cheung's system, in a ship with a shield booster in both utility slots.</summary>
-    private static D47.Core.Journal.CommanderGameState InLaksakWithAShieldBooster()
+    /// <param name="rank">
+    /// The Commander's standing with Lei Cheung. Five by default, which is every caller that does
+    /// not care; a lower one is how a rank gate is made to fire.
+    /// </param>
+    private static D47.Core.Journal.CommanderGameState InLaksakWithAShieldBooster(int rank = 5)
     {
         var store = new D47.Core.Journal.GameStateStore();
 
@@ -621,7 +694,7 @@ public class ChecklistTabTests
                  {
                      """{"timestamp":"2026-08-23T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
                      """{"timestamp":"2026-08-23T09:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
-                     """{"timestamp":"2026-08-23T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":300120,"Progress":"Unlocked","Rank":5}]}""",
+                     """{"timestamp":"2026-08-23T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":300120,"Progress":"Unlocked","Rank":""" + rank.ToString(CultureInfo.InvariantCulture) + """}]}""",
                      """{"timestamp":"2026-08-23T09:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint1","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint2","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
                  })
         {
