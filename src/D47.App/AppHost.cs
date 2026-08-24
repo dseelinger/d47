@@ -3486,7 +3486,14 @@ public sealed class AppHost : IDisposable
     /// another thread. <paramref name="post"/> is called from the tick; it should carry a
     /// dispatcher the surface captured on its own thread rather than read one at call time.
     /// </summary>
-    public void RouteNavigation(Core.Interface.PanelNavigator nav, Action<Action> post)
+    /// <param name="leads">
+    /// Whether this surface's <em>tab</em> carries to the others (change-requests.md 34). True for
+    /// the window and nothing else: the window leads, the mini panel follows and may be moved
+    /// independently, and a follower's tab never drags the window's — which is what
+    /// <c>list.md</c> Phase 48 requires and why this is a flag rather than a mirror.
+    /// </param>
+    public void RouteNavigation(
+        Core.Interface.PanelNavigator nav, Action<Action> post, bool leads = false)
     {
         _navigators.Add(nav);
         _surfaces.Add((nav, post));
@@ -3496,7 +3503,14 @@ public sealed class AppHost : IDisposable
         // mirror moves navigators in the handler rather than through `post`: every surface is on
         // the window's thread (architecture.md D1), and a posted move could cross another in
         // flight (list.md Phase 45).
-        _transcript.Add(nav);
+        if (leads)
+        {
+            _transcript.Lead(nav);
+        }
+        else
+        {
+            _transcript.Add(nav);
+        }
 
         // Taken here and retaken every time a surface moves, on the thread that moved it. Every
         // tab is furnished before a surface routes here, so the roots are complete at the first
