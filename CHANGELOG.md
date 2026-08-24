@@ -20,6 +20,33 @@ the file as it stood then.
 
 ---
 
+## 0.61.1 — 2026-08-24 — Engineers and Utilities stop flickering
+
+Reported from the headset: *"flickering that is so bad as to make Engineers and Utilities tabs
+unreadable — no flicker on other tabs."*
+
+Those two are exactly the tabs the headset pokes on every tick, and both asked for the whole panel
+to be redrawn whether or not anything on them had changed. A redraw re-rasterises the widget tree
+and hands SteamVR a new image, so it did that ten times a second for pixels nobody had touched.
+Every other tab only asks when something moved, which is why only these two flickered.
+
+**Everything on the Utilities page reads to the minute** — both clocks, an alarm's due time, and a
+timer's countdown, which is rounded up so it never shows a stalled-looking zero. So that page
+changes once a minute and was being redrawn six hundred times inside it: **599 of every 600 images
+were identical to the one before.** It now compares what it draws, so nothing has to know which
+field ticks at which rate.
+
+Engineers cost almost nothing to fix. The page has compared a ranking stamp and returned early when
+nothing moved since the engineers tab was built — it simply never told the headset, which set the
+flag anyway.
+
+**This is the fourth time this fault has shipped**, and the previous three are in this file: a carry
+setting the flag every frame (0.22.2), the aiming highlight setting it unconditionally (0.24.0), and
+Utilities rebuilding every timer row ten times a second (0.39.1) — which fixed the rebuild and left
+the flag behind it. Both halves are covered by tests that were watched to fail with the fault put
+back, because three previous fixes means a test that does not really catch it is one that lets the
+fifth through.
+
 ## 0.61.0 — 2026-08-24 — Work an engineer can start
 
 ### Include Partial Grades

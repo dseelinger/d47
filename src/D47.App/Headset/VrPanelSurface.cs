@@ -214,36 +214,25 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public bool Back() => _view.GoBack();
 
     /// <summary>
-    /// Redraws the clocks, from the headset's own tick. Marks the surface dirty only when the
-    /// Utilities tab is what it is showing — a panel with nothing new costs a boolean, and a
-    /// clock ticking behind a transcript is pixels nobody is looking at.
+    /// Redraws the clocks, from the headset's own tick. Marks the surface dirty only when a digit
+    /// actually changed — everything on that page reads to the minute, so at 10 Hz it was being
+    /// re-rasterised six hundred times per change and 599 of those images were identical to the
+    /// one before (#23). The tab check is not change detection and never was: it only stops a
+    /// clock behind a transcript costing pixels.
     /// </summary>
-    public void TickClocks()
-    {
-        if (_view.Tab != D47.Core.Interface.PanelTab.Utilities)
-        {
-            return;
-        }
-
-        _view.TickClocks();
-        _dirty = true;
-    }
+    public void TickClocks() => _dirty |= _view.TickClocks();
 
     /// <summary>
     /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody
     /// (list.md Phase 28). Marks the surface dirty only when something actually moved: unlike a
     /// clock, a ranking with nothing behind it has not changed.
+    /// <para>
+    /// This sentence was true of the intent and not of the code until #23 — the stamp comparison
+    /// that answers it has been in <see cref="PanelView.TickEngineers"/> all along, returning
+    /// <c>void</c>, so the flag went up on the strength of the call rather than the answer.
+    /// </para>
     /// </summary>
-    public void TickEngineers()
-    {
-        if (_view.Tab != D47.Core.Interface.PanelTab.Engineers)
-        {
-            return;
-        }
-
-        _view.TickEngineers();
-        _dirty = true;
-    }
+    public void TickEngineers() => _dirty |= _view.TickEngineers();
 
     /// <summary>
     /// One frame of the <em>d47 is composing</em> animation (asked for 2026-08-22). Marks the
