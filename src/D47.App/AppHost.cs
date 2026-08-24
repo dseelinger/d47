@@ -170,6 +170,21 @@ public sealed class AppHost : IDisposable
     public Headset.VrHost? Vr { get; set; }
 
     /// <summary>
+    /// The flat mini panel over the game, once Avalonia has come up (list.md Phase 48). Null
+    /// before that and on a run where the framework never initialises, for the same reason
+    /// <see cref="Vr"/> is: it is a widget tree, and there is no dispatcher to build one on when
+    /// this host is constructed.
+    /// </summary>
+    public Windowing.OverlayPanel? Overlay { get; set; }
+
+    /// <summary>
+    /// Whether Elite is running and in front. Exposed because the overlay asks it on every tick
+    /// to decide whether to be on screen — the same question, and the same instance, the key
+    /// injector asks before every scancode.
+    /// </summary>
+    public IEliteWindow Elite { get; private set; } = null!;
+
+    /// <summary>
     /// What d47 says without being asked (list.md Phase 8). Exposed because the panel drains it:
     /// the tick that produces an announcement must not block on synthesising it.
     /// </summary>
@@ -1693,6 +1708,11 @@ public sealed class AppHost : IDisposable
         // From here on, a setting takes effect because it changed — not because something was
         // restarted (list.md Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
+
+        // The one instance, shared: the injector's foreground rule and the overlay's visibility
+        // rule are the same question about the same window, and two readers would be two caches
+        // of one handle.
+        host.Elite = eliteWindow;
 
         host.Macros = macros;
         host.OwnPersonas = ownPersonas;

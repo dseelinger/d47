@@ -29,6 +29,14 @@ public partial class App(AppHost? host) : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = window = new MainWindow(host);
+
+            // <b>Closing the window is how d47 is quit</b> — there is no tray icon — and that has
+            // been true only by accident: the default is to shut down when the <em>last</em>
+            // window closes, and d47 had exactly one. The flat mini panel is a second one
+            // (list.md Phase 48), so without this a Commander who closes the window while the
+            // overlay has been on leaves d47 running with nothing on screen to close, which is
+            // the shape of failure a first run never recovers from.
+            desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
         }
 
         // After the framework is up, because the headset path rasterises a widget tree and
@@ -105,6 +113,33 @@ public partial class App(AppHost? host) : Application
             // on this thread (architecture.md D1), so its navigator is reached the same way.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             host.RouteNavigation(host.Vr.Nav, move => ui.Post(move));
+
+            // And the third surface: the mini panel on a monitor, for a Commander with no headset
+            // (list.md Phase 48). Built unconditionally like the headset path and for the same
+            // reason — a code path that only runs for people who turned something on is the code
+            // path that breaks — and it puts nothing on screen until the setting says so.
+            //
+            // After the window, because it takes the window's own adventure surface: the record is
+            // delegates and no visual, so one instance serves all three trees, and a second would
+            // be a second list of what an adventure surface needs wired to it.
+            host.Overlay = Windowing.OverlayPanel.Attach(
+                host.Panel,
+                host.Settings,
+                host.ViewState,
+                host.Tick,
+                host.Elite,
+                host.Loggers.CreateLogger<Windowing.OverlayPanel>(),
+                host.Avatars,
+                window?.Adventures);
+
+            // Through the same route as the other two (list.md Phase 45). Never as the leader:
+            // the window leads and this follows, so a spoken phrase or a switch can put the strip
+            // on a page and the strip's own tab can never drag the window's.
+            //
+            // Its prompts are deliberately not routed. The overlay is output-only — the pointer
+            // goes straight through it — so a chooser opened there would be one nobody could
+            // answer by hand.
+            host.RouteNavigation(host.Overlay.Nav, move => ui.Post(move));
 
             // Last, because it reports the headset and the headset is brought up above. One line
             // saying what this build is and what it is pointed at, so a log can answer "what was
