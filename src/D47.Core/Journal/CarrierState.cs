@@ -88,6 +88,18 @@ public sealed record CarrierState
     /// wrong carrier as readily as this fixes it.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether this docking event is at the carrier this state is already about — its MarketID is
+    /// the carrier id, and it says so is a fleet carrier. Both, because a MarketID is unique across
+    /// every station in the galaxy and the type check costs nothing to state.
+    /// </summary>
+    private bool SaysMyCallsign(JournalEvent journalEvent) =>
+        CarrierId is { } id
+        && journalEvent.Long("MarketID") == id
+        && string.Equals(
+            journalEvent.String("StationType"), "FleetCarrier", StringComparison.OrdinalIgnoreCase)
+        && journalEvent.String("StationName") is { Length: > 0 };
+
     private static bool Mine(JournalEvent journalEvent) =>
         journalEvent.String("CarrierType") is not { Length: > 0 } type
         || string.Equals(type, "FleetCarrier", StringComparison.OrdinalIgnoreCase);
@@ -101,6 +113,29 @@ public sealed record CarrierState
 
     private CarrierState Folded(JournalEvent journalEvent) => journalEvent.Kind switch
     {
+        // <b>The callsign, learned at the airlock</b> — reported 2026-08-23 as <i>"Carrier Captain
+        // and Tower have not been talking to me, and I've been in and around the carrier all day"</i>.
+        //
+        // <see cref="Owned"/> is the callsign being known, and until now only <c>CarrierStats</c>
+        // could supply one: over the 925-journal corpus, <b>1,035 CarrierStats carry a Callsign and
+        // not one of 1,134 CarrierLocation events does</b> — the read below is a hope, not a source.
+        // CarrierStats is written when the Commander opens the carrier management panel, so a day
+        // spent flying in and out of their own carrier without opening it left the crew mute:
+        // <b>69 of the 199 journals that dock at the Commander's own carrier have no CarrierStats
+        // anywhere in them</b>, 148 dockings in all. The day this was reported was one of them —
+        // nine dockings at BNH-T2F, not a word.
+        //
+        // <b>The dock says it, and by id rather than by shape.</b> Docking at a carrier writes the
+        // callsign as the station name and the carrier's id as the MarketID, so an event whose
+        // MarketID is the id this state already holds is the Commander's own carrier saying its own
+        // name. No callsign pattern is matched and no name is guessed: a carrier d47 has not already
+        // identified stays unidentified, which is why the 19 corpus journals that dock before any
+        // carrier event still say nothing.
+        "Docked" or "Undocked" or "Location" when SaysMyCallsign(journalEvent) => this with
+        {
+            CallSign = journalEvent.String("StationName") ?? CallSign,
+        },
+
         "CarrierBuy" => this with
         {
             CallSign = journalEvent.String("Callsign") ?? CallSign,
@@ -119,6 +154,10 @@ public sealed record CarrierState
             StatsSeenAt = journalEvent.Timestamp,
         },
 
+        // The callsign read here has never once arrived — 0 of 1,134 across the corpus — and is
+        // left in place because it costs nothing and would start working the day Frontier adds the
+        // field. It is written down rather than trusted: this event is where the carrier's *id*
+        // comes from, and the dock above is where its name does.
         "CarrierLocation" => this with
         {
             CallSign = journalEvent.String("Callsign") ?? CallSign,

@@ -155,6 +155,78 @@ public class CarrierCalloutTests
         Assert.Contains("Long Way Home", arrival.Text, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Reported 2026-08-23: <i>"Carrier Captain and Tower have not been talking to me, and I've
+    /// been in and around the carrier all day."</i> They knew the carrier's id and not its name,
+    /// and the name is what ownership was made of.
+    /// <para>
+    /// <c>CarrierStats</c> is written when the management panel is opened and is the only event
+    /// that carries a callsign — 1,035 of them across the corpus against 0 of 1,134
+    /// <c>CarrierLocation</c> events. A Commander who flies in and out all day without opening
+    /// that panel used to hear nothing: 69 of the 199 corpus journals that dock at their own
+    /// carrier have no <c>CarrierStats</c> in them at all.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheCrewSpeakWithoutTheManagementPanelEverBeingOpened()
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
+
+        // What the day this was reported actually contained: the carrier's position and id, and
+        // no stats anywhere. Elite writes no callsign here — 0 of 1,134 measured.
+        state.Apply(Event("CarrierLocation",
+            ("CarrierType", "FleetCarrier"),
+            ("CarrierID", 3700000000L),
+            ("StarSystem", "Laksak")));
+
+        var callout = new CarrierCallout();
+
+        var docked = Event(
+            "Docked",
+            ("StationName", CallSign),
+            ("StationType", "FleetCarrier"),
+            ("MarketID", 3700000000L));
+
+        // State folds before the callouts examine, exactly as the tick does it — so the docking
+        // that teaches d47 the callsign is the same docking the tower answers.
+        state.Apply(docked);
+
+        var arrival = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
+
+        Assert.Equal(CarrierCallout.ArrivalKey, arrival.Key);
+        Assert.Equal(VoiceRole.TowerControl, arrival.Voice);
+
+        // The callsign, because no CarrierStats ever named it. Frontier's own string either way.
+        Assert.Contains(CallSign, arrival.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The id is what makes the name safe to take: another Commander's carrier writes its own
+    /// callsign as a station name too, and a welcome home from somebody else's crew is worse than
+    /// silence.
+    /// </summary>
+    [Fact]
+    public void SomebodyElsesCarrierDoesNotTeachUsOurOwnName()
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
+
+        state.Apply(Event("CarrierLocation",
+            ("CarrierType", "FleetCarrier"),
+            ("CarrierID", 3700000000L),
+            ("StarSystem", "Laksak")));
+
+        var theirs = Event(
+            "Docked",
+            ("StationName", "V2X-99Z"),
+            ("StationType", "FleetCarrier"),
+            ("MarketID", 3799999999L));
+
+        state.Apply(theirs);
+
+        Assert.False(state.Carrier.Owned);
+        Assert.Empty(new CarrierCallout().Examine(Context(state, priming: false, theirs)));
+    }
+
     [Fact]
     public void DockingAnywhereElseIsNotTheCarriersBusiness()
     {
