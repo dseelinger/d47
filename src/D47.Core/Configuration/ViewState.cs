@@ -56,6 +56,13 @@ public sealed record ViewState
     public string? ChecklistFilter { get; init; }
 
     /// <summary>
+    /// Whether the engineer filter is also showing work an engineer here can only take part of the
+    /// way (change-requests.md 35). Beside the filter because its own request said it should travel
+    /// the same road rather than growing a second one.
+    /// </summary>
+    public bool ChecklistPartialGrades { get; init; }
+
+    /// <summary>
     /// Whether the Commander has ever asked d47 anything, by any route. What it retires is the
     /// worked example in the ask box's placeholder, which is an onboarding hint wearing a
     /// placeholder's clothes and was still teaching someone a month in.

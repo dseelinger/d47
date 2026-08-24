@@ -85,7 +85,23 @@ public class WhatTheEngineerHereCanDoTests
     {
         var state = Flying("Laksak", rank: 5).Active!;
 
-        Assert.Empty(EngineersHere.For([Booster("TinyHardpoint5", grade: 5)], state));
+        var here = Assert.Single(EngineersHere.For([Booster("TinyHardpoint5", grade: 5)], state));
+
+        // <b>Not his work, and no longer nothing at all</b> (change-requests.md 35). This used to
+        // assert the engineer vanished outright, which was the honest answer while the only two
+        // bands were "can roll it" and "waiting on your standing". He can take this booster from
+        // nothing to 3 — real work, at a workshop the Commander is standing in — so it is listed as
+        // what it is rather than dropped.
+        //
+        // The guarantee the old assertion existed for is the one below: it is not offered as work
+        // he can do, and the filter passes over it unless the Commander asks for partial grades.
+        Assert.Empty(here.Ready);
+        Assert.Empty(here.OutOfRank);
+
+        var partial = Assert.Single(here.Partial);
+
+        Assert.Equal(3, partial.Reaches);
+        Assert.Equal(5, partial.Wanted);
     }
 
     /// <summary>Somewhere no engineer is based answers with nothing, rather than with the list.</summary>
@@ -281,4 +297,80 @@ public class WhatTheEngineerHereCanDoTests
 
         return store;
     }
+
+    /// <summary>
+    /// <b>An effect goes where its module's blueprint went</b>, reported 2026-08-24: <i>"if I'm not
+    /// showing partial grades, then don't show that module's corresponding experimental effect"</i>.
+    /// <para>
+    /// An experimental carries no grade, so nothing holds it back on its own — it landed in
+    /// <c>Ready</c> and stayed on the page after the blueprint it belongs with had been filtered
+    /// off it. The effect is not an errand of its own; it is part of finishing that module, and the
+    /// module is work this engineer cannot finish.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnEffectFollowsItsModulesBlueprintIntoThePartialBand()
+    {
+        var state = Flying("Laksak", rank: 5).Active!;
+
+        var here = Assert.Single(EngineersHere.For(
+            [Booster("TinyHardpoint5", grade: 5), Effect("TinyHardpoint5", "Force Block")],
+            state));
+
+        // Grade 5 Heavy Duty is Lei Cheung's to 3, so both lines are work he cannot finish.
+        Assert.Empty(here.Ready);
+        Assert.Equal(2, here.Partial.Count);
+
+        var effect = Assert.Single(
+            here.Partial,
+            part => part.Item.Intent?.Kind == ChecklistIntentKind.Experimental);
+
+        // And it says why it is here in its own terms rather than borrowing the module's sentence:
+        // an effect is applied outright at any grade, so "takes this to 3 of 5" would be false.
+        Assert.True(effect.RidesAlong);
+        Assert.Equal(
+            "Lei Cheung can apply this, but only takes that module to 3 of 5",
+            effect.Describe(here.Engineer.Name));
+    }
+
+    /// <summary>
+    /// An effect on a module whose blueprint this engineer <em>can</em> finish is ordinary work and
+    /// stays where it was — the rule above follows a sibling rather than demoting every effect.
+    /// </summary>
+    [Fact]
+    public void AnEffectBesideWorkTheEngineerCanFinishIsStillReady()
+    {
+        var state = Flying("Laksak", rank: 5).Active!;
+
+        var here = Assert.Single(EngineersHere.For(
+            [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
+            state));
+
+        Assert.Equal(2, here.Ready.Count);
+        Assert.Empty(here.Partial);
+    }
+
+    /// <summary>And an effect on a slot with no blueprint line at all has no sibling to follow.</summary>
+    [Fact]
+    public void AnEffectOnItsOwnIsUnaffected()
+    {
+        var state = Flying("Laksak", rank: 5).Active!;
+
+        var here = Assert.Single(EngineersHere.For(
+            [Booster("TinyHardpoint5", grade: 5), Effect("TinyHardpoint1", "Force Block")],
+            state));
+
+        Assert.Single(here.Ready);
+        Assert.Single(here.Partial);
+    }
+
+    private static ChecklistItem Effect(string slot, string effect, int shipId = 51) => new()
+    {
+        Key = $"experimental:{slot}",
+        Scope = ChecklistScope.Ship(shipId),
+        Kind = ChecklistItemKind.Derived,
+        Source = ChecklistSource.EngineeringPlan,
+        Text = $"{effect} on {slot}",
+        Intent = new ChecklistIntent(ChecklistIntentKind.Experimental, slot) { Detail = effect },
+    };
 }

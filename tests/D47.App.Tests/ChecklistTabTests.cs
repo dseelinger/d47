@@ -631,4 +631,73 @@ public class ChecklistTabTests
 
         return store.Active!;
     }
+
+    /// <summary>
+    /// <b>Include Partial Grades</b> (change-requests.md 35). The grade check above shut a real
+    /// door: Lei Cheung genuinely can take a Heavy Duty booster from nothing to grade 3, at a
+    /// workshop the Commander is standing in. Checked, the grade 5 line comes back — and says how
+    /// far he takes it, because the two readings of this page are a sentence apart.
+    /// </summary>
+    [AvaloniaFact]
+    public void PartialGradesAreOfferedBesideTheEngineerFilterAndSayHowFarTheyGo()
+    {
+        var state = InLaksakWithAShieldBooster();
+        var checklists = Checklists(TempFolders.Create("d47-partial-grades"), () => state);
+
+        checklists.List.Save(
+        [
+            checklists.Document with
+            {
+                Items = [Roll("TinyHardpoint1", grade: 3), Roll("TinyHardpoint2", grade: 5)],
+            },
+        ]);
+
+        var (window, panel) = Open(checklists);
+
+        var word = checklists.FilterAxes()
+            .Single(filter => filter.Key == ChecklistService.HereKey).Word;
+
+        Press(panel, content => content.StartsWith("Showing", StringComparison.Ordinal));
+        Press(panel, content => content == word);
+
+        // Unchecked stays exactly what shipped.
+        Assert.DoesNotContain(Lines(panel), line => line.Contains("Grade 5", StringComparison.Ordinal));
+
+        var box = panel.GetVisualDescendants().OfType<CheckBox>()
+            .Single(check => check.Content?.ToString() == "Include Partial Grades");
+
+        box.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Lines(panel);
+
+        Assert.Contains(drawn, line => line.Contains("Grade 5", StringComparison.Ordinal));
+        Assert.Contains(drawn, line => line.Contains("Lei Cheung takes this to 3 of 5", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The control is absent rather than hidden anywhere it means nothing — the phrase says
+    /// nothing about a list filtered by ship, and the bar is already crowded.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheCheckboxIsNotThereWhenTheEngineerFilterIsNot()
+    {
+        var state = InLaksakWithAShieldBooster();
+        var checklists = Checklists(TempFolders.Create("d47-partial-grades"), () => state);
+
+        checklists.List.Save(
+        [
+            checklists.Document with { Items = [Roll("TinyHardpoint2", grade: 5)] },
+        ]);
+
+        var (window, panel) = Open(checklists);
+
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<CheckBox>(),
+            check => check.Content?.ToString() == "Include Partial Grades");
+
+        window.Close();
+    }
 }

@@ -165,16 +165,20 @@ public class AuditionDoesNotCommitTests
     [AvaloniaFact]
     public async Task PlayingASecondVoiceCancelsTheFirst()
     {
-        var cancelled = new TaskCompletionSource();
         var entered = new TaskCompletionSource();
         var started = 0;
+        CancellationToken first = default;
 
         var picker = Shown(Voices(async (_, token) =>
         {
             Interlocked.Increment(ref started);
-            entered.TrySetResult();
 
-            using var registration = token.Register(() => cancelled.TrySetResult());
+            if (Volatile.Read(ref started) == 1)
+            {
+                first = token;
+            }
+
+            entered.TrySetResult();
 
             // Stands in for a synthesis still in flight when the next press arrives.
             await Task.Delay(Timeout.Infinite, token);
@@ -204,15 +208,21 @@ public class AuditionDoesNotCommitTests
 
         Glyph(picker, "en-GB-SoniaNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        // The first one being cancelled is the requirement. It happens inside the second press's
-        // handler, before that press has reached Play — so the count is read after it, not with
-        // it.
-        await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-
-        for (var attempt = 0; attempt < 100 && Volatile.Read(ref started) < 2; attempt++)
-        {
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
+        // <b>Observed on the token rather than through a callback</b>, which is the third and last
+        // race this test has had. `StopAsync` cancels with `CancelAsync`, and that schedules the
+        // registered callbacks on the threadpool <em>deliberately</em> — it is what keeps arbitrary
+        // continuations off the UI thread. So a callback is exactly the wrong thing to wait on
+        // here: with the pool saturated, which is what a CI runner running seven test projects is,
+        // the callback is delayed for as long as the pool takes to find a thread. Measured with the
+        // pool starved on purpose, the five-second wait below used to come back empty after 23
+        // seconds — the timeout was not the product being slow, it was the test asking the busiest
+        // resource on the machine to tell it something the token already knew.
+        //
+        // The token's own flag flips synchronously with the cancellation, and the handler that
+        // cancels runs on the dispatcher — so pumping the dispatcher is both necessary and
+        // sufficient, and no threadpool thread is on the path at all.
+        Pump(() => first.IsCancellationRequested, "the first audition was never cancelled");
+        Pump(() => Volatile.Read(ref started) >= 2, "the second audition never started");
 
         Assert.Equal(2, Volatile.Read(ref started));
 
@@ -227,14 +237,14 @@ public class AuditionDoesNotCommitTests
     [AvaloniaFact]
     public async Task TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed()
     {
-        var cancelled = new TaskCompletionSource();
         var started = 0;
+        CancellationToken playing = default;
 
         var picker = Shown(Voices(async (_, token) =>
         {
             Interlocked.Increment(ref started);
+            playing = token;
 
-            using var registration = token.Register(() => cancelled.TrySetResult());
             await Task.Delay(Timeout.Infinite, token);
         }));
 
@@ -253,8 +263,10 @@ public class AuditionDoesNotCommitTests
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        // On the token, for the reason the test above says at length: `CancelAsync` puts its
+        // callbacks on the threadpool on purpose, so waiting on one asks the busiest resource on
+        // the machine about something the token already knows.
+        Pump(() => playing.IsCancellationRequested, "the audition was never stopped");
 
         // Stopped, and not started again — the second press was a stop rather than a restart.
         Assert.False(row.Playing);
@@ -409,5 +421,34 @@ public class AuditionDoesNotCommitTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.False(picker.IsVisible);
+    }
+
+    /// <summary>
+    /// Turns the dispatcher until something is true. <b>No <c>Task.Delay</c> and no threadpool</b>:
+    /// both are timer- and pool-bound, which is the thing this file's flake was made of. What is
+    /// being waited for here always happens on the dispatcher, so turning it is the whole wait.
+    /// </summary>
+    private static void Pump(Func<bool> until, string complaint)
+    {
+        // <b>Wall-clock, not a count of turns.</b> A turn is microseconds on an idle machine and
+        // tens of milliseconds on a saturated one, so a budget in turns is a budget that quietly
+        // becomes minutes exactly when something has gone wrong — measured at eight and a half of
+        // them with the pool pinned. Ten seconds is far past anything the dispatcher needs and
+        // still fails while somebody is watching.
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        while (watch.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+            if (until())
+            {
+                return;
+            }
+
+            Thread.Sleep(1);
+        }
+
+        Assert.Fail(complaint);
     }
 }

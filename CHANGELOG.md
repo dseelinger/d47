@@ -11,11 +11,86 @@ changed. Fixes between phases are patches. **A published tag never moves**: it i
 one exact `d47.exe` and the checksum beside it, so a correction ships as the next patch rather
 than as the same number twice.
 
-Open defects live in [bugs.md](bugs.md), and wanted changes in
-[docs/plans/change-requests.md](docs/plans/change-requests.md). An entry leaves either file when
-it ships, and the line it gets here is its permanent record.
+Open defects live in [GitHub Issues](https://github.com/dseelinger/d47/issues), and wanted changes
+in [docs/plans/change-requests.md](docs/plans/change-requests.md). An issue is closed and an entry
+leaves that file when it ships, and the line it gets here is its permanent record. `bugs.md` and
+`remediation.md` were retired on 2026-08-24 and are archived under
+[docs/archive/](docs/archive/README.md); a release section below that names either of them means
+the file as it stood then.
 
 ---
+
+## 0.61.0 — 2026-08-24 — Work an engineer can start
+
+### Include Partial Grades
+
+Standing at an engineer's base with their filter on, you now get a checkbox beside it. It decides
+which of two questions the page is answering:
+
+- **unchecked** — what this engineer can take **all the way** to the grade the line asks for;
+- **checked** — *and* lines they can only take **part of the way**, which somebody else must finish.
+
+Unchecked is the default and is exactly what shipped before. Checked, each line says how far it goes
+— *"Lei Cheung takes this to 3 of 5"* — so the answer is on the line and not only in the help.
+
+The grade check that landed in 0.60.2 was right and it shut a real door: Heavy Duty on a Shield
+Booster is Lei Cheung's to grade 3, so a Grade 5 line is not his work — but he genuinely can take
+that booster from nothing to 3, at a workshop you are standing in. That was recorded at the time as
+a judgement call and overrulable. This overrules it, without folding the work back into the list that
+report was about.
+
+The box is beside the engineer filter and nowhere else — the phrase means nothing against a list
+filtered by ship — and it is remembered between sessions, on the same road as the filter itself.
+
+**An experimental effect goes where its module's blueprint went.** An effect carries no grade, so
+nothing holds it back on its own — unchecked, it used to stay on the page after the blueprint it
+belongs with had been filtered off it, which reads as a stray errand. It is not one: applying the
+effect is part of finishing that module, and the module is work this engineer cannot finish. It now
+appears with its blueprint or not at all, and says why in its own terms — *"Lei Cheung can apply
+this, but only takes that module to 3 of 5"* — because *"takes this to 3 of 5"* would be a sentence
+about the module wearing the effect's clothes.
+
+### Under the hood: a test that stopped asking the busiest thing on the machine
+
+Two audition tests waited five seconds on a cancellation callback and occasionally did not get one.
+The cause turned out to be measurable: `CancelAsync` schedules its callbacks on the threadpool **on
+purpose**, to keep arbitrary continuations off the UI thread — so with the pool saturated, which is
+what a CI runner running seven test projects is, the callback is late. With the pool starved
+deliberately the five-second wait came back empty after 23 seconds. They now watch the token's own
+flag, which flips synchronously and needs no threadpool thread at all.
+
+### Under the hood: the open-defect queue is GitHub Issues
+
+`bugs.md` and `remediation.md` are retired. Open defects and wanted fixes are now
+[GitHub Issues](https://github.com/dseelinger/d47/issues), and the pointer at the top of this file
+says so.
+
+They were the two files that made parallel branches expensive, and the measurement is the argument:
+`bugs.md` averaged **+33/−27 lines per commit** and `remediation.md` **+30/−22**. Neither was a file
+where a branch ticked a box — every touch rewrote paragraphs and restated a hand-written count, so
+two branches touching either conflicted, and merged cleanly into a count that had been true on
+neither. `bugs.md` recorded that happening to itself: it said eleven were open while three were. A
+derived count cannot go stale, which is most of the case in one line.
+
+Four issues carry what was actually open — [#18](https://github.com/dseelinger/d47/issues/18) the
+motion controller that stops answering, [#19](https://github.com/dseelinger/d47/issues/19) the VR
+aim ray, [#20](https://github.com/dseelinger/d47/issues/20) the Ctrl-drag that copies nothing,
+[#21](https://github.com/dseelinger/d47/issues/21) the placement rows that exist twice per surface.
+The aim ray had been written up in **both** files as two entries; it is one issue now. And three
+remediation items were still unticked and had in fact shipped — 2 in 0.47.0, 15 in 0.44.1, 16 in
+0.45.0 — so they are corrected rather than carried forward as work already done.
+
+**Nothing about the record changed.** A fix's permanent record is still the line it gets in this
+file under the release that shipped it; an issue closing is not a record. `list.md` did not move
+either — it is the product description rather than a tracker, cited over a thousand times from code
+as `list.md Phase N`, and a phase still joins the frozen set the day it ships. Wanted changes that
+are not defects still live in `docs/plans/change-requests.md`.
+
+Both files are archived under [`docs/archive/`](docs/archive/README.md) rather than deleted,
+because 382 code comments name `remediation.md` and about twenty name `bugs.md`, and because
+reading back a change that was supposed to have worked is ordinary here. Only batch 17 was ever
+*in* `remediation.md`; batches 1 to 16 are in git history, reachable with
+`git log --follow -- remediation.md` across the move.
 
 ## 0.60.8 — 2026-08-24 — Three from the desk
 

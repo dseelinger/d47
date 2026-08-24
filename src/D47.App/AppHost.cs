@@ -719,9 +719,16 @@ public sealed class AppHost : IDisposable
             // In view state rather than settings: it has no default worth documenting and nothing
             // should fail loudly because it could not be read, which is the same argument the
             // window's own position is kept here by.
-            chosen => viewState.Save(viewState.Load() with { ChecklistFilter = chosen }));
+            view => viewState.Save(viewState.Load() with
+            {
+                ChecklistFilter = view.Filter,
+                ChecklistPartialGrades = view.IncludePartialGrades,
+            }));
 
-        checklists.Restore(viewState.Load().ChecklistFilter);
+        checklists.Restore(
+            new ChecklistView(
+                viewState.Load().ChecklistFilter ?? ChecklistService.Everything,
+                viewState.Load().ChecklistPartialGrades));
 
         // What d47 remembers about the Commander (list.md Phase 31). One file, per Commander with
         // the key inside the document, and it has both halves of the store pattern Phase 23 split

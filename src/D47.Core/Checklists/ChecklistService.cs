@@ -10,6 +10,17 @@ namespace D47.Core.Checklists;
 public sealed record ChecklistNews(string Key, string Text);
 
 /// <summary>
+/// What the list is being looked at through — remembered between sessions, and the same on every
+/// surface. Not what is <em>on</em> the list, which is the document's business.
+/// </summary>
+/// <param name="Filter">The chooser's key, or <see cref="ChecklistService.Everything"/>.</param>
+/// <param name="IncludePartialGrades">
+/// Whether the engineer filter also shows work an engineer here can only take part of the way
+/// (change-requests.md 35). Off is the default and is exactly what shipped before it existed.
+/// </param>
+public sealed record ChecklistView(string Filter, bool IncludePartialGrades);
+
+/// <summary>
 /// The one place the checklist is read from and written to (list.md Phase 17, "TheApp keeps 'The
 /// Ultimate' checklist").
 /// <para>
@@ -27,14 +38,14 @@ public sealed record ChecklistNews(string Key, string Text);
 /// </para>
 /// </summary>
 /// <param name="remember">
-/// How the host writes the chosen filter down, or null where nothing should be remembered — a
+/// How the host writes the view down, or null where nothing should be remembered — a
 /// test, or a surface with no view state behind it. Core never opens a file.
 /// </param>
 public sealed class ChecklistService(
     ChecklistStore list,
     ChecklistProposalStore proposals,
     Func<CommanderGameState?> commander,
-    Action<string>? remember = null)
+    Action<ChecklistView>? remember = null)
 {
     public ChecklistStore List => list;
 
@@ -133,9 +144,35 @@ public sealed class ChecklistService(
         }
 
         Filter = wanted;
-        remember?.Invoke(wanted);
+        Remember();
         FilterChanged?.Invoke();
     }
+
+    /// <summary>
+    /// Whether the engineer filter also shows work an engineer here can only take part of the way
+    /// — <i>"Include Partial Grades"</i>, asked for 2026-08-23.
+    /// <para>
+    /// <b>Shared and remembered like the filter</b>, and for the same reasons: it changes what is on
+    /// the list rather than how a surface draws it, and its own change request said outright that
+    /// it should travel the same road as the filter rather than growing a second one.
+    /// </para>
+    /// </summary>
+    public bool IncludePartialGrades { get; private set; }
+
+    /// <summary>Switches the partial band on or off.</summary>
+    public void IncludePartial(bool on)
+    {
+        if (on == IncludePartialGrades)
+        {
+            return;
+        }
+
+        IncludePartialGrades = on;
+        Remember();
+        FilterChanged?.Invoke();
+    }
+
+    private void Remember() => remember?.Invoke(new ChecklistView(Filter, IncludePartialGrades));
 
     /// <summary>Narrows the list to what a Commander typed, or clears it.</summary>
     public void Search(string? query)
@@ -156,9 +193,15 @@ public sealed class ChecklistService(
     /// restoring does not write back what was just read, and silent — the Commander did not do
     /// anything, so there is nothing to announce and no surface to redraw yet.
     /// </summary>
-    public void Restore(string? key)
+    public void Restore(ChecklistView? view)
     {
-        Filter = string.IsNullOrWhiteSpace(key) ? Everything : key.Trim();
+        if (view is null)
+        {
+            return;
+        }
+
+        Filter = string.IsNullOrWhiteSpace(view.Filter) ? Everything : view.Filter.Trim();
+        IncludePartialGrades = view.IncludePartialGrades;
     }
 
     /// <summary>
@@ -787,9 +830,37 @@ public sealed class ChecklistService(
     /// </para>
     /// </summary>
     public bool CanBeDoneHere(ChecklistItem item) =>
-        EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State)
-            .SelectMany(engineer => engineer.Ready)
-            .Any(ready => ready.Id.Same(item.Id));
+        Here().SelectMany(engineer => engineer.Ready).Any(ready => ready.Id.Same(item.Id))
+        || (IncludePartialGrades && PartlyHere(item) is not null);
+
+    /// <summary>
+    /// How far an engineer here can take this line, where one can take it part of the way — <i>"Lei
+    /// Cheung takes this to 3 of 5"</i>. Null for anything else.
+    /// <para>
+    /// Said on the line itself as well as in the help, because the two readings of a filtered page
+    /// are a sentence apart and a Commander cannot be expected to infer which one is showing.
+    /// </para>
+    /// </summary>
+    public string? PartlyHere(ChecklistItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        foreach (var engineer in Here())
+        {
+            if (engineer.Partial.FirstOrDefault(partial => partial.Item.Id.Same(item.Id)) is { } found)
+            {
+                return found.Describe(engineer.Engineer.Name);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether any engineer here has work of this kind, so a control can be offered.</summary>
+    public bool HasPartialWorkHere() => Here().Any(engineer => engineer.Partial.Count > 0);
+
+    private IReadOnlyList<EngineerAtHand> Here() =>
+        EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State);
 
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {

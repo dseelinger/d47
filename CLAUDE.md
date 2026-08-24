@@ -15,10 +15,20 @@ Three documents carry the design. They are not summarized here — go read the r
 | What should it do? Is this in scope? | [list.md](list.md) — 160 items in 22 phases, each line carrying its own acceptance criteria |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
+| What is broken? What is wanted next? | [GitHub Issues](https://github.com/dseelinger/d47/issues) — one issue per defect or wanted fix; `gh issue list` |
 
 Before proposing a stack change, check `architecture.md` §10 (rejected alternatives) and §1
 (constraints). Most of the obvious alternatives were already considered and rejected for a
 stated reason.
+
+**Defects and wanted fixes are Issues, not files.** `bugs.md` and `remediation.md` were retired on
+2026-08-24 and archived under [docs/archive/](docs/archive/README.md) — a queue held in a file
+conflicts on every parallel branch and carries a hand-written count that is eventually wrong, and
+both had already happened. Close an issue from the commit that fixes it (`Fixes #21` in the body)
+rather than by editing anything. **`list.md` did not move and is not a tracker** — it is the
+product description, its numbers are cited over a thousand times from code, and a phase joins the
+frozen set the day it ships. `CHANGELOG.md` is untouched and is still the permanent record:
+an issue closing is not a record, the changelog line is.
 
 ## Invariants
 

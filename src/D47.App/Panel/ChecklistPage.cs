@@ -106,6 +106,34 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     };
 
     /// <summary>
+    /// <b>Include Partial Grades</b> (change-requests.md 35): also show work an engineer here can
+    /// start and somebody else has to finish.
+    /// <para>
+    /// <b>Only beside the engineer filter, and only when there is such work.</b> The phrase means
+    /// nothing against a list filtered by ship or by source, and the row is already crowded — so
+    /// this appears where it answers a question and is absent everywhere else.
+    /// </para>
+    /// <para>
+    /// The label is ruled and not a preference: <i>"partial rolls"</i> was proposed and rejected,
+    /// because a roll was a throw of the dice and engineering stopped working that way. A Commander
+    /// flying today progresses a <em>grade</em>.
+    /// </para>
+    /// </summary>
+    private readonly CheckBox _partial = new()
+    {
+        Content = "Include Partial Grades",
+        MinHeight = TouchTarget,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>
+    /// The bar's controls, held so the one above can be taken out of the tree entirely rather than
+    /// hidden. A hidden control is still there — still something a ray can find, and still
+    /// something anything counting the page's own controls has to know to skip.
+    /// </summary>
+    private readonly StackPanel _controls = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+    /// <summary>
     /// The way into the project order (list.md Phase 42). A chooser rather than movers on the
     /// page: projects are a handful where lines are hundreds, ordering them is a sit-down act
     /// rather than a per-row one, and a chooser is the one control that works the same for a ray
@@ -229,6 +257,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // the Commander did not think of as one is a level of navigation for nothing (list.md
         // Phase 25, "Page or layer is declared per call site").
         _scopeButton.Click += (_, _) => ChooseScope();
+
+        // Through the service, like the filter beside it: shared across surfaces and remembered.
+        _partial.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partial.IsChecked == true);
         _orderButton.Click += (_, _) => ChooseProject();
 
         _suggestions.Click += (_, _) =>
@@ -262,12 +293,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // The arcs live beside the scope filter rather than above the whole page: they are another
         // way of reading the same list, which is what the bar is for.
-        bar.Children.Add(new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Children = { _scopeButton, _orderButton, _arcsButton, _transfer },
-        });
+        _controls.Children.Add(_scopeButton);
+        _controls.Children.Add(_orderButton);
+        _controls.Children.Add(_arcsButton);
+        _controls.Children.Add(_transfer);
+
+        bar.Children.Add(_controls);
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
@@ -456,6 +487,22 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _scopeButton.Content = Chosen == Everything
             ? "Showing everything"
             : $"Showing {_checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word ?? Chosen}";
+
+        // Beside the engineer filter and nowhere else, and only where there is such work to include
+        // — a control that can only ever change nothing is a control that reads as broken.
+        var offerPartial = Chosen == ChecklistService.HereKey
+                           && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
+
+        _partial.IsChecked = _checklists.IncludePartialGrades;
+
+        if (offerPartial && !_controls.Children.Contains(_partial))
+        {
+            _controls.Children.Insert(1, _partial);
+        }
+        else if (!offerPartial)
+        {
+            _controls.Children.Remove(_partial);
+        }
 
         RebuildArcs();
 
@@ -844,6 +891,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             // Through the book rather than the catalogue, so a line from a goal the Commander
             // invented names it as they wrote it rather than as a key.
             aside.Add("towards " + (_goals?.Find(goal)?.Arc.Name ?? goal));
+        }
+
+        // How far an engineer here can take it, where that is why the line is on the page at all
+        // (change-requests.md 35). The two readings of a filtered page are a sentence apart, so the
+        // line says which one it belongs to rather than leaving it to the help.
+        if (Chosen == ChecklistService.HereKey
+            && _checklists.IncludePartialGrades
+            && _checklists.PartlyHere(item) is { } reach)
+        {
+            aside.Add(reach);
         }
 
         if (ChecklistNextAction.For(item.State) is { } next)
