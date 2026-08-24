@@ -51,14 +51,41 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void WorkBeyondTheCommandersGradeIsKeptApartRatherThanDropped()
     {
+        // Grade 3, which is the top Lei Cheung offers for Heavy Duty on a Shield Booster. This
+        // read grade 5 until 2026-08-23 and only passed because `Offers` was ignoring the grade
+        // entirely — the rank gate was being handed a line the engineer never offers, so the test
+        // was measuring the bug rather than the rule it names.
         var state = Flying("Laksak", rank: 1).Active!;
-        var items = new[] { Booster("TinyHardpoint5", grade: 5) };
+        var items = new[] { Booster("TinyHardpoint5", grade: 3) };
 
         var here = Assert.Single(EngineersHere.For(items, state));
 
         Assert.Empty(here.Ready);
         Assert.Single(here.OutOfRank);
         Assert.Contains("waiting on your grade", here.Describe(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>An engineer's grades are not the blueprint's</b> (reported 2026-08-23).
+    /// <para>
+    /// Heavy Duty on a Shield Booster is Lei Cheung's work to <b>grade 3</b>; grades 4 and 5
+    /// belong to Mel Brandon and Didi Vatermann. Until this was fixed <c>Offers</c> asked only
+    /// whether the engineer touched the blueprint <i>at all</i>, so a Grade 5 roll he cannot take
+    /// was offered as work he could do today. Fifteen of the forty-five lines a Commander standing
+    /// in Laksak was shown were this — most of a screenful of somebody else's work.
+    /// </para>
+    /// <para>
+    /// Not <c>OutOfRank</c> either, and that is the distinction: out-of-rank is work this engineer
+    /// does, waiting on the Commander's standing with them. This is work he never does at any
+    /// standing, so it is not his errand at all.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AGradeThisEngineerDoesNotOfferIsNotTheirWork()
+    {
+        var state = Flying("Laksak", rank: 5).Active!;
+
+        Assert.Empty(EngineersHere.For([Booster("TinyHardpoint5", grade: 5)], state));
     }
 
     /// <summary>Somewhere no engineer is based answers with nothing, rather than with the list.</summary>

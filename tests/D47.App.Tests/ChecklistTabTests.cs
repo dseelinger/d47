@@ -29,7 +29,10 @@ namespace D47.App.Tests;
 /// </summary>
 public class ChecklistTabTests
 {
-    private static ChecklistService Checklists(string root)
+    private static ChecklistService Checklists(string root) => Checklists(root, () => null);
+
+    private static ChecklistService Checklists(
+        string root, Func<D47.Core.Journal.CommanderGameState?> state)
     {
         var paths = new AppPaths(root);
         paths.EnsureCreated();
@@ -41,7 +44,7 @@ public class ChecklistTabTests
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
                 NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+            state);
     }
 
     /// <summary>
@@ -509,5 +512,123 @@ public class ChecklistTabTests
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         window.Close();
+    }
+
+    /// <summary>
+    /// <b>The engineer filter, driven through the page rather than through the join under it</b>
+    /// (reported 2026-08-23).
+    /// <para>
+    /// The reason this test exists at all: the same evening produced three separate measurements
+    /// of <c>EngineersHere.For</c> in isolation, every one of them right, while the Commander's
+    /// screen kept disagreeing. Core was being verified and the page was not, so nothing ever
+    /// checked the thing being looked at. This drives the real <see cref="PanelView"/>, presses
+    /// the real filter, and reads back the lines that are actually drawn.
+    /// </para>
+    /// <para>
+    /// The case is the defect itself: Heavy Duty on a Shield Booster is Lei Cheung's to grade 3,
+    /// and grades 4 and 5 are Mel Brandon's and Didi Vatermann's. A grade 5 line is not his work
+    /// and must not be drawn under his name.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheEngineerFilterDrawsOnlyWorkThatEngineerCanActuallyDo()
+    {
+        var state = InLaksakWithAShieldBooster();
+        var checklists = Checklists(TempFolders.Create("d47-engineer-filter"), () => state);
+
+        checklists.List.Save(
+        [
+            checklists.Document with
+            {
+                Items =
+                [
+                    Roll("TinyHardpoint1", grade: 3),
+                    Roll("TinyHardpoint2", grade: 5),
+                ],
+            },
+        ]);
+
+        var (window, panel) = Open(checklists);
+
+        var drawn = Lines(panel);
+        Assert.Contains(drawn, line => line.Contains("Grade 3", StringComparison.Ordinal));
+        Assert.Contains(drawn, line => line.Contains("Grade 5", StringComparison.Ordinal));
+
+        // Take the filter the way the Commander does: press the chooser, press the option.
+        // Driven through the buttons rather than through a test-only seam, because a seam would
+        // let the two diverge and the divergence is exactly what went unnoticed here.
+        var word = checklists.FilterAxes()
+            .Single(filter => filter.Key == ChecklistService.HereKey).Word;
+
+        Press(panel, content => content.StartsWith("Showing", StringComparison.Ordinal));
+        Press(panel, content => content == word);
+
+        drawn = Lines(panel);
+
+        Assert.Contains(drawn, line => line.Contains("Grade 3", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, line => line.Contains("Grade 5", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    /// <summary>Presses the first button whose text content matches, then lets the UI settle.</summary>
+    private static void Press(PanelView panel, Func<string, bool> matching)
+    {
+        // Matched on the text a Commander can see, not on Content: a chooser's rows are Buttons
+        // wrapping a StackPanel, so only the plain toolbar buttons carry a string.
+        var button = panel.GetVisualDescendants().OfType<Button>()
+            .FirstOrDefault(b =>
+                (b.Content is string text && matching(text))
+                || b.GetVisualDescendants().OfType<TextBlock>()
+                    .Any(block => block.Text is { Length: > 0 } shown && matching(shown)));
+
+        Assert.NotNull(button);
+        button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>Every line of text the checklist page is drawing right now.</summary>
+    private static IReadOnlyList<string> Lines(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .Where(text => text.Length > 0)];
+
+    private static ChecklistItem Roll(string slot, int grade)
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
+        {
+            Detail = "Heavy Duty",
+            Grade = grade,
+        };
+
+        return new ChecklistItem
+        {
+            Key = ChecklistKeys.For(intent),
+            Scope = ChecklistScope.Ship(51),
+            Kind = ChecklistItemKind.Derived,
+            Source = ChecklistSource.EngineeringPlan,
+            Text = $"Grade {grade} Heavy Duty on {slot}",
+            Intent = intent,
+        };
+    }
+
+    /// <summary>In Lei Cheung's system, in a ship with a shield booster in both utility slots.</summary>
+    private static D47.Core.Journal.CommanderGameState InLaksakWithAShieldBooster()
+    {
+        var store = new D47.Core.Journal.GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-23T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-23T09:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
+                     """{"timestamp":"2026-08-23T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":300120,"Progress":"Unlocked","Rank":5}]}""",
+                     """{"timestamp":"2026-08-23T09:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint1","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint2","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
+                 })
+        {
+            Assert.True(D47.Core.Journal.JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        return store.Active!;
     }
 }

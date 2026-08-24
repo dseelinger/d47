@@ -181,6 +181,15 @@ public static class EngineersHere
         // no row called "Shield Generator" and the line left every engineer's answer in silence.
         return BlueprintCatalogue.Named(intent.Detail ?? intent.Subject, ModuleOf(item, state))
             .Where(recipe => recipe.Kind == wanted)
+
+            // At the grade the line actually asks for, reported 2026-08-23. Without this the
+            // question being answered was "does this engineer touch this blueprint at all", and
+            // an engineer's grades are not the blueprint's: Heavy Duty on a Shield Booster is
+            // Lei Cheung's to grade 3 and Mel Brandon's or Didi Vatermann's above it. Fifteen of
+            // the forty-five lines offered to a Commander standing in Laksak were Grade 5 Heavy
+            // Duty rolls Lei Cheung cannot take, which is most of a screenful of work that is
+            // not his. An intent with no grade — every experimental — is unfiltered here.
+            .Where(recipe => intent.Grade is not { } grade || recipe.Grade == grade)
             .Any(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase));
     }
 
