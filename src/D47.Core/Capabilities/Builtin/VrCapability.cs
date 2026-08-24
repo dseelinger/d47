@@ -32,6 +32,21 @@ public static class VrCapability
 
     public const string MiniSlot = "mini";
 
+    /// <summary>
+    /// The slot that means <em>the one in front of me</em> (#21). Not a stored surface — the rows
+    /// under it resolve <see cref="ModeKey"/> and land on <see cref="PanelSlot"/> or
+    /// <see cref="MiniSlot"/>, so nothing new is ever written to <c>settings.json</c>.
+    /// </summary>
+    public const string CurrentSlot = "current";
+
+    /// <summary>Whether the mini panel is the one on screen.</summary>
+    private static bool IsMini(Configuration.D47Settings s) =>
+        string.Equals(s.Vr.Mode, MiniSlot, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The surface settings for whichever panel is on screen.</summary>
+    private static VrSurfaceSettings Facing(Configuration.D47Settings s) =>
+        IsMini(s) ? s.Vr.Mini : s.Vr.Panel;
+
     /// <summary>The lock row's key for a surface. One spelling, so a caller cannot invent another.</summary>
     public static string LockKey(string slot) => $"vr.{slot}.lock";
 
@@ -182,8 +197,24 @@ public static class VrCapability
                     },
                 },
             },
-            .. Placement(PanelSlot, "Panel", s => s.Vr.Panel, (s, v) => s with { Vr = s.Vr with { Panel = v } }),
-            .. Placement(MiniSlot, "Mini panel", s => s.Vr.Mini, (s, v) => s with { Vr = s.Vr with { Mini = v } }),
+            // **The one the Commander means** (#21). Ruled 2026-08-24: *"whichever panel I'm
+            // looking at."* Stores nothing of its own — it resolves vr.mode at the moment it is
+            // read or written and lands on that surface's values, so settings.json gains no key
+            // and the two surfaces keep their own numbers, which is the point: mini exists to sit
+            // further out of the way.
+            .. Placement(
+                CurrentSlot,
+                "Panel you are looking at",
+                Facing,
+                (s, v) => IsMini(s)
+                    ? s with { Vr = s.Vr with { Mini = v } }
+                    : s with { Vr = s.Vr with { Panel = v } }),
+
+            // Both explicit sets stay on the page, in full, and are no longer offered to the model.
+            // Three ways to say one number is how the wrong one gets picked, and these two are only
+            // ever the two wrong answers to "move the panel closer".
+            .. Placement(PanelSlot, "Panel", s => s.Vr.Panel, (s, v) => s with { Vr = s.Vr with { Panel = v } }, pageOnly: true),
+            .. Placement(MiniSlot, "Mini panel", s => s.Vr.Mini, (s, v) => s with { Vr = s.Vr with { Mini = v } }, pageOnly: true),
             CaptionRow(
                 CaptionsEnabledKey,
                 "Captions",
@@ -287,9 +318,11 @@ public static class VrCapability
         string slot,
         string what,
         Func<Configuration.D47Settings, VrSurfaceSettings> read,
-        Func<Configuration.D47Settings, VrSurfaceSettings, Configuration.D47Settings> write)
+        Func<Configuration.D47Settings, VrSurfaceSettings, Configuration.D47Settings> write,
+        bool pageOnly = false)
     {
         var mini = string.Equals(slot, MiniSlot, StringComparison.Ordinal);
+        var current = string.Equals(slot, CurrentSlot, StringComparison.Ordinal);
 
         // <b>Which of the two surfaces this row is about</b>, said on every row rather than left to
         // the key. Reported 2026-08-23 as "opacity does not change the opacity": the Commander was
@@ -300,9 +333,13 @@ public static class VrCapability
         // The row cannot say "you are in mini" — a descriptor is registered once and never mutated,
         // which is what keeps the tool surface byte-identical across turns — so it says which
         // surface it governs and where the other one's copy lives, which is true at any moment.
-        var scope = $" Applies to the {what.ToLowerInvariant()} alone — what you see while vr.mode "
-                    + $"is {(mini ? "mini" : "full")}. The {(mini ? "big panel" : "mini panel")} keeps "
-                    + $"its own, under vr.{(mini ? PanelSlot : MiniSlot)}.";
+        var scope = current
+            ? " Applies to whichever panel is on screen right now — the big one or the mini one, "
+              + "whichever vr.mode currently names. Each keeps its own number, so changing this "
+              + "while in mini leaves the big panel exactly where it was."
+            : $" Applies to the {what.ToLowerInvariant()} alone — what you see while vr.mode "
+              + $"is {(mini ? "mini" : "full")}. The {(mini ? "big panel" : "mini panel")} keeps "
+              + $"its own, under vr.{(mini ? PanelSlot : MiniSlot)}.";
 
         SettingRow Row(
             string name,
@@ -326,6 +363,7 @@ public static class VrCapability
                         + "reach out and grab it with a controller, which is what the numbers are here for "
                         + "when you would rather not.",
             AppliesWhen = s => s.Vr.Enabled,
+            PageOnly = pageOnly,
             Binding = new SettingBinding
             {
                 Read = s => get(read(s)),

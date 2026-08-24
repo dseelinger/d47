@@ -199,6 +199,24 @@ public sealed record SettingRow
     /// </summary>
     public bool SystemWide { get; init; }
 
+    /// <summary>
+    /// Shown on the settings page, and <b>not offered to the model</b>, because a better-targeted
+    /// row exists for the same value (<a href="https://github.com/dseelinger/d47/issues/21">#21</a>).
+    /// <para>
+    /// <b>This is not <see cref="Protected"/> and must not be confused with it.</b> Protected is a
+    /// safety property — a row the model may never reach by any route. This is an <em>aiming</em>
+    /// property: the value is perfectly safe for the model to change, and there is simply a row
+    /// that says which one it means. The page still shows both, and both are still writable there.
+    /// </para>
+    /// <para>
+    /// It exists because offering the same value three ways is how a model picks the wrong one. The
+    /// VR placement rows are stored per surface and there is a third row that resolves whichever
+    /// surface is on screen; the Commander asking to move <em>the panel</em> means the one they are
+    /// looking at, and the two explicit rows would only ever be the two wrong answers to that.
+    /// </para>
+    /// </summary>
+    public bool PageOnly { get; init; }
+
     /// <summary>How the value is read and written. Null only for <see cref="Kind"/> Secret.</summary>
     public SettingBinding? Binding { get; init; }
 

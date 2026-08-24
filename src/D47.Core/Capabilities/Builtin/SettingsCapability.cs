@@ -95,6 +95,7 @@ public static class SettingsCapability
         settings.Sections
             .SelectMany(section => section.Rows)
             .Where(row => !row.Protected
+                          && !row.PageOnly
                           && row.Kind is not (SettingKind.Secret or SettingKind.Info)
                           && row.Applies(settings.Current));
 
