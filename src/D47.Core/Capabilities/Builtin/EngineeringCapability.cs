@@ -401,15 +401,9 @@ public static class EngineeringCapability
         if (EngineeringRules.RollsFor(grade, rank) is not { } rolls)
         {
             // The gate. Grade N cannot be rolled below rank N at all, so the answer is the rank
-            // and its price rather than a slow path.
-            var price = EngineeringRules.ReputationCost(grade);
-
-            var cost = price is { } profit
-                ? $" Reaching grade {grade} with them takes {profit.ToString("N0", CultureInfo.InvariantCulture)} "
-                  + "cr of profit sold at their workshop."
-                : string.Empty;
-
-            return $"You are grade {rank} with {at}, and grade {grade} needs rank {grade}.{cost}";
+            // and how a rank is raised, rather than a slow path (#26).
+            return $"You are grade {rank} with {at}, and grade {grade} needs rank {grade}. "
+                   + EngineeringRules.RankRises;
         }
 
         var total = top.TotalFor(rank);

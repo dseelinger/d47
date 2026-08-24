@@ -313,9 +313,7 @@ public static class EngineeringPlan
     {
         var who = engineer is { Length: > 0 } named ? $" with {named}" : string.Empty;
 
-        var price = EngineeringRules.ReputationCost(grade) is { } cost
-            ? $" Clearing it takes {cost.ToString("N0", CultureInfo.InvariantCulture)} credits of profit sold there."
-            : string.Empty;
+        var price = $" {EngineeringRules.RankRises}";
 
         return $"{what}: grade {grade} cannot be rolled at rank {rank}{who} at all.{price}";
     }

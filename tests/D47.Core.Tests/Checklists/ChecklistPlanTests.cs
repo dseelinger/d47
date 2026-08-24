@@ -108,7 +108,7 @@ public class ChecklistPlanTests
         // listing work nobody can start.
         Assert.NotEmpty(costing.Gates);
         Assert.Empty(costing.Ingredients);
-        Assert.Contains("16,000,000", string.Join(" ", costing.Gates), StringComparison.Ordinal);
+        Assert.Contains("compounds", string.Join(" ", costing.Gates), StringComparison.Ordinal);
     }
 
     [Fact]

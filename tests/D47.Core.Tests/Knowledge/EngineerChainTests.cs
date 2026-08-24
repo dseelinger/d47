@@ -129,11 +129,15 @@ public class EngineerChainTests
     }
 
     [Fact]
-    public void ReputationHasAPriceForEveryGradeThatCostsOne()
+    public void AChainSaysHowARankIsRaisedRatherThanWhatItCosts()
     {
-        // The chain is only actionable with the price beside it: "rank 5 with Farseer" is not an
-        // answer unless d47 can also say what rank 5 costs.
-        Assert.Equal(16_000_000, EngineeringRules.ReputationCost(5));
+        // "Rank 5 with Farseer" is only an answer if d47 can also say how a rank goes up. It used
+        // to answer that with a credits figure from a wiki, which was never measured and was not
+        // the route the Commander actually took (#26).
+        Assert.Contains("working with them", EngineeringRules.RankRises, StringComparison.Ordinal);
+
+        // The table's own advice per engineer survives and is separate: how reputation with this
+        // one rises fastest is a fact about them rather than a price on a grade.
         Assert.NotNull(EngineerDirectory.ByName("Farseer")!.Reputation);
     }
 }

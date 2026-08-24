@@ -215,7 +215,7 @@ public class EngineerAccessTests
         Assert.Single(climb.Steps);
         Assert.Equal(3, climb.Steps[0].Held);
         Assert.Equal(5, climb.Steps[0].Grade);
-        Assert.Equal(16_000_000, climb.Steps[0].ReputationCost);
+        Assert.True(climb.Steps[0].NeedsRanking);
 
         // Nothing open-ended is invented for somebody already unlocked: the invitation happened.
         Assert.False(climb.Steps[0].IsOpenEnded);

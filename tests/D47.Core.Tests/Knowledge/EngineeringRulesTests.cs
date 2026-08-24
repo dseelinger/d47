@@ -141,18 +141,37 @@ public class EngineeringRulesTests
         Assert.Equal(0, down.CostOf(0));
     }
 
+    /// <summary>
+    /// What d47 says about getting a rank up is true, and it is Frontier's table saying it
+    /// (<a href="https://github.com/dseelinger/d47/issues/26">#26</a>).
+    /// <para>
+    /// <b>This test used to pin the wrong numbers</b>, which is most of why nobody rechecked them:
+    /// 500,000 / 2,000,000 / 8,000,000 / 16,000,000 credits of profit, taken from a wiki and
+    /// rendered as though credits were the way a rank rises. They are not, and this repository
+    /// already contained the disproof — a corpus trace has Selene Jean going rank 2 to rank 4 in
+    /// thirty-eight seconds.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void ReputationHasAPublishedPriceAndGradeOneHasNone()
+    public void GettingARankUpCompounds()
     {
-        Assert.Equal(500_000, EngineeringRules.ReputationCost(2));
-        Assert.Equal(2_000_000, EngineeringRules.ReputationCost(3));
-        Assert.Equal(8_000_000, EngineeringRules.ReputationCost(4));
-        Assert.Equal(16_000_000, EngineeringRules.ReputationCost(5));
+        // The claim in one sentence, checked against the table it is a claim about: for any grade,
+        // the further the rank is above it, the fewer rolls that grade takes.
+        for (var grade = 1; grade <= 5; grade++)
+        {
+            for (var rank = grade; rank < 5; rank++)
+            {
+                Assert.True(
+                    EngineeringRules.RollsFor(grade, rank + 1) < EngineeringRules.RollsFor(grade, rank),
+                    $"grade {grade} must get cheaper going from rank {rank} to {rank + 1}");
+            }
+        }
 
-        // Grade 1 comes with the unlock. Null rather than zero: "no price" and "free" are
-        // different claims and only one of them is checkable.
-        Assert.Null(EngineeringRules.ReputationCost(1));
-        Assert.Null(EngineeringRules.ReputationCost(6));
+        Assert.Contains("compounds", EngineeringRules.RankRises, StringComparison.Ordinal);
+
+        // And the sentence never mentions credits again, which is the whole of the report.
+        Assert.DoesNotContain("credit", EngineeringRules.RankRises, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cr ", EngineeringRules.RankRises, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
