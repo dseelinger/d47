@@ -109,7 +109,7 @@ public class NumberRowTests
 
         foreach (var slot in new[] { VrCapability.PanelSlot, VrCapability.MiniSlot })
         {
-            foreach (var name in new[] { "distance", "size", "curve", "opacity" })
+            foreach (var name in new[] { "distance", "size", "curve" })
             {
                 var row = settings.Find($"vr.{slot}.{name}");
 
@@ -119,5 +119,12 @@ public class NumberRowTests
                     $"vr.{slot}.{name} steps in whole units, so it cannot hold the value it defaults to");
             }
         }
+
+        // Opacity is one knob for both surfaces rather than one each, and is the same kind of
+        // fractional row the four above are.
+        var shared = settings.Find(VrCapability.OpacityKey);
+
+        Assert.NotNull(shared);
+        Assert.True(shared.Step < 1, "the shared opacity steps in whole units");
     }
 }

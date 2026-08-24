@@ -222,12 +222,20 @@ than two identical descriptions. The row cannot say *"and you are in mini right 
 is registered once and never mutated, which is what keeps the tool surface byte-identical across
 turns — so it says the part that is true at any moment.
 
-**The open half is a design question, and it has two coherent answers.** Either the two surfaces
-keep their own numbers and d47 gets better at naming them, which is what shipped; or *"set the
-opacity"* means the surface the Commander is looking at, and the spoken route resolves the slot from
-`vr.mode` before it writes. The second is what a Commander expects and it needs deciding rather than
-assuming: it would make one phrase write two different rows depending on what is on screen, which is
-the kind of thing that is obvious in the headset and baffling in a settings panel.
+**The rest shipped in 0.60.7, and the answer was neither of the two this entry proposed.** Both of
+those — better naming, or a route that resolves the slot from `vr.mode` — kept two numbers and added
+machinery to choose between them. The Commander's answer on 2026-08-24 removed the choice: *"there
+should be 2 panels, 1 opacity knob."* Everything else those surfaces carry is genuinely per-surface,
+because mini exists to be smaller and further out of the way; how see-through the glass is is one
+preference about how much cockpit shows through d47. So `vr.opacity` is one row for both, the
+per-surface copies stay on disk unread because `settings.json` is append-only, and a value already
+set on either panel is carried up once so nobody sets it twice.
+
+**Kept open for the general form**, which the fix does not touch: every other placement row still
+exists twice, and a Commander who says *"move it closer"* in mini can still have the big panel's
+distance move. Those rows have a real reason to differ, so the answer there is not one knob — it is
+either the resolve-from-mode route this entry described or nothing, and nothing is defensible while
+the rows say which surface they belong to.
 
 ---
 

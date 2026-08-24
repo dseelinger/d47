@@ -417,6 +417,33 @@ public sealed record VrSettings
     public VrSurfaceSettings Mini { get; init; } = VrSurfaceSettings.Mini();
 
     /// <summary>
+    /// How solid the panel is, whichever of the two is on screen. <b>One knob for two surfaces</b>
+    /// (asked for 2026-08-24).
+    /// <para>
+    /// It used to be one of the six settings each surface kept its own copy of, and that is what
+    /// made <i>"set the opacity to 0.5"</i> a question with two answers: it went to the big panel's
+    /// copy while the mini panel was the one in front of the Commander, and the number they could
+    /// see never moved. Everything else on those surfaces is genuinely per-surface — mini exists to
+    /// be smaller and further out of the way, so its distance, size and drop have to differ. How
+    /// see-through the glass is does not: it is one preference about how much cockpit shows through
+    /// d47, and a Commander who wants it at half never means <em>half, in one of the two modes</em>.
+    /// </para>
+    /// <para>
+    /// The per-surface copies stay on <see cref="VrSurfaceSettings"/> because
+    /// <c>settings.json</c> is append-only, and <see cref="OpacityShared"/> records that their
+    /// value has been brought up here. Nothing reads them any more.
+    /// </para>
+    /// </summary>
+    public double Opacity { get; init; } = 0.95;
+
+    /// <summary>
+    /// Which revision of the shared-opacity repair this file has had — the same counter idiom as
+    /// <see cref="PitchRepaired"/>, and for the same reason: a repair that ships wrong can only
+    /// reach the files it already stamped if the stamp can be raised.
+    /// </summary>
+    public int OpacityShared { get; init; }
+
+    /// <summary>
     /// The caption layer. Its own block because captions are their own overlay, and because
     /// everything on it is something the caption standard leaves to the viewer - nothing here
     /// is a number the standard fixes.
