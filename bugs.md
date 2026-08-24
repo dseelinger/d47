@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Six open, and one partly confirmed.
+## Five open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
@@ -236,37 +236,6 @@ exists twice, and a Commander who says *"move it closer"* in mini can still have
 distance move. Those rows have a real reason to differ, so the answer there is not one knob — it is
 either the resolve-from-mode route this entry described or nothing, and nothing is defensible while
 the rows say which surface they belong to.
-
----
-
-## Open: a parked ship's lines carry no verdict, and the comment saying why is now false
-
-Found 2026-08-23 while diagnosing the engineer filter; **not the cause of that report**, and recorded
-because the reasoning beside it has stopped being true.
-
-`ChecklistEvaluator.Ship` (`src/D47.Core/Checklists/ChecklistEvaluator.cs:63-72`) reads `state.Ship`
-— the ship being flown — and returns null for anything else:
-
-    var loadout = state.Ship;
-    …
-    if (!IsActive(item.Scope, loadout)) { return null; }
-
-So a line about any ship the Commander is not sitting in has no verdict and no next-action text,
-which is the asymmetry that made one report look like d47 "could not see" a ship. It can: the same
-line reads *"0A Shield Booster"* rather than *"TinyHardpoint2"*, and that text comes from
-`ChecklistWording.InSlot` reading `state.Loadouts.For(shipId)`
-(`src/D47.Core/Checklists/ChecklistWording.cs:140-143`). **The line and the verdict beneath it read
-different sources**, and v0.60.0 fixed the engineer join while leaving the verdict on the old rule.
-
-The comment at `:67-69` — that a plan for a ship in another dock "cannot be diffed at all" — was
-true before list.md Phase 37 remembered loadouts and is false now. Leaving it standing beside code
-that no longer needs to obey it is the thing the change-requests file warns about.
-
-**The fix, when it is wanted**, is the `LoadoutFor` treatment `EngineerAtHand.cs:224-240` already
-has. **With one condition**: a remembered loadout is a fact about a moment, and `RememberedShip`
-already carries `SeenAt` (`src/D47.Core/Journal/ShipLoadouts.cs:5-10`) for exactly this. A verdict
-derived from a month-old snapshot presented as current is the one way this change can do harm, so
-it must say when the ship was last seen.
 
 ---
 

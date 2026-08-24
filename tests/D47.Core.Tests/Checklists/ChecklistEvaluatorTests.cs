@@ -282,4 +282,74 @@ public class ChecklistEvaluatorTests
         Assert.Equal(ChecklistState.Open, verdict!.Value.State);
         Assert.Contains("is not currently engineered", verdict.Value.Reason, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// A plan for a ship in another dock now gets a verdict, from the loadout d47 remembers —
+    /// reported 2026-08-23, and the comment that used to sit over this said it "cannot be diffed at
+    /// all", which stopped being true when list.md Phase 37 started remembering them.
+    /// <para>
+    /// The line already read <i>"5A Thrusters"</i> off that remembered loadout while the verdict
+    /// under it refused to look at the same place, which is the asymmetry that made one report read
+    /// as d47 being unable to see a ship it could describe.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AParkedShipIsDiffedFromTheLoadoutD47Remembers()
+    {
+        // Aboard the Krait, then aboard something else: the Krait's modules are remembered.
+        var state = State(
+            """
+            { "timestamp":"2026-08-16T12:00:00Z", "event":"Loadout", "Ship":"anaconda", "ShipID":51,
+              "Modules":[] }
+            """);
+
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+            {
+                Detail = "Engine_Dirty",
+                Grade = 5,
+            }),
+            state);
+
+        Assert.NotNull(verdict);
+        Assert.Equal(ChecklistState.Done, verdict!.Value.State);
+
+        // And it says which moment it is a fact about. A month-old snapshot presented as current
+        // is the one way this change can do harm.
+        Assert.Contains("As last seen, 16 Aug 2026.", verdict.Value.Reason, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The ship being flown says nothing of the kind, because there is nothing to date: the
+    /// loadout is what Elite is reporting right now.
+    /// </summary>
+    [Fact]
+    public void TheShipUnderYouIsNotDated()
+    {
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+            {
+                Detail = "Engine_Dirty",
+                Grade = 5,
+            }),
+            State());
+
+        Assert.DoesNotContain("As last seen", verdict!.Value.Reason, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A ship d47 has never been aboard still gets silence rather than a guess. Saying "open"
+    /// because the evidence is absent would be an answer d47 invented.
+    /// </summary>
+    [Fact]
+    public void AShipNobodyHasEverSatInStillGetsNoVerdict()
+    {
+        var item = Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+        {
+            Detail = "Engine_Dirty",
+            Grade = 5,
+        }) with { Scope = ChecklistScope.Ship(99) };
+
+        Assert.Null(ChecklistEvaluator.Evaluate(item, State()));
+    }
 }
