@@ -72,6 +72,26 @@ public static class ChecklistWording
     }
 
     /// <summary>
+    /// The line as it is <em>spoken</em>: <see cref="Line"/>, less the ship when the ship is the
+    /// one being flown.
+    /// <para>
+    /// <b>An amendment to the reasoning beside the spoken callout</b>, asked for 2026-08-23:
+    /// <i>"I know what ship I'm in."</i> That comment argued the ship must ride the sentence
+    /// because it is the one checklist line with no heading over it, in a session where three
+    /// ships have been flown — which is right about every ship except the one under the Commander.
+    /// So the ship is named when it is not obvious and dropped when it is, rather than always.
+    /// </para>
+    /// </summary>
+    public static string Aloud(ChecklistItem item, CommanderGameState? state)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        return state?.Ship is { } loadout && ChecklistEvaluator.IsActive(item.Scope, loadout)
+            ? Said(item, state)
+            : Line(item, state);
+    }
+
+    /// <summary>
     /// What list this is, for the caption under the line and for the heading over a group of them:
     /// the ship as its Commander names it, and otherwise the scope's own words.
     /// </summary>

@@ -53,6 +53,23 @@
   </PropertyGroup>
 
   <!--
+    Where a Debug build writes, and it is not beside the Debug executable.
+
+    Everything d47 writes lives in data\ beside the exe, which is right for an installed app and
+    means a *Debug* exe writes into bin\Debug. So the dev checklist, settings and secrets lived in
+    build output, and on 2026-08-23 deleting bin\Debug to clear a stale artifact deleted them —
+    two hours of diagnosis ending in data loss because the obvious remedy was destructive.
+
+    Debug only, and read through AssemblyMetadata rather than an environment variable: a published
+    build carries no such attribute, so the shipped rule is provably untouched and nothing outside
+    the build can redirect where secrets are written. A test host has no entry-assembly attribute
+    either, so the suite is unaffected. See AppPaths.ForRunningBuild.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <AssemblyMetadata Include="DevDataRoot" Value="$(MSBuildThisFileDirectory)..\..\dev-data" />
+  </ItemGroup>
+
+  <!--
     The mark, in the two places it is read from. ApplicationIcon compiles it into the
     executable's icon resource, which is what Explorer, the taskbar and alt-tab read with
     nothing running. AvaloniaResource is what the windows read at runtime for their title

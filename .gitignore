@@ -444,3 +444,8 @@ installer/*.exe
 # workbench artifact, and one `git add -A` away from being in the history for good — which is
 # how it got there once.
 /audition.wav
+
+# The Debug build's data folder (D47.App.csproj, DevDataRoot). A running Commander's checklist,
+# settings and secrets — never in the history, and deliberately not under bin\ any more, because
+# deleting build output used to delete them.
+/dev-data/

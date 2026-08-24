@@ -60,7 +60,7 @@ internal static class SelfTest
 
     public static int Run()
     {
-        var paths = AppPaths.BesideExecutable();
+        var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
 
         // Everything, down to Trace: Whisper.net narrates each candidate path it probes at

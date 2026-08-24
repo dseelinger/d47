@@ -17,6 +17,45 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.4 — 2026-08-23 — Work finished while d47 was off is marked, not announced
+
+### A checklist that arrives from outside is folded in silence
+
+Reported from the debug build: a stream of *"X is completed"* for rolls finished while d47 was not
+running. The rule against exactly that already existed — the startup tick folds the whole journal
+backlog without saying a word — but it was attached to the **tick** rather than to the **document**,
+so it covered only the copy of `checklist.json` that was on disk when d47 started.
+
+A checklist rewritten under a running d47 — the hand edit the store deliberately supports, a restored
+backup, a data folder refreshed from another install — was re-read mid-session, and every
+disagreement between what the file stored and what the game says was read out as though it had just
+happened. It is in the log: `Loaded 1 checklists … (279 items)` and the announcement that followed it
+in the same second. d47's own writes were never this and are not affected — it re-reads inside its
+own save, so a tick that finds the file changed found *somebody else's* change, and the right answer
+to that is the Commander's own: mark them done, say nothing.
+
+### "I know what ship I'm in"
+
+> "Grade 5 Reinforced Shields on 5C Bi-Weave Shield Generator on Tulimiekka (smallcombat01_nx)" is
+> done. 5C Bi-Weave Shield Generator is at grade 5 and finished.
+
+One sentence saying the same thing twice, ending with the name of the ship the Commander is sitting
+in. It now says it once: **"5C Bi-Weave Shield Generator is at grade 5 and finished."**
+
+The ship has not simply been deleted from the wording — it is named when it is *not* the one being
+flown, which is the honest version of the reasoning it replaces. That comment argued the ship must
+ride the sentence because this is the one checklist line with no heading over it; true of every ship
+except the one under the Commander.
+
+### Under the hood: a Debug build stops writing into `bin\`
+
+d47 writes everything beside its executable, which is right for an installed app — and meant a Debug
+build kept its live checklist, settings and secrets inside build output. On 2026-08-23 the obvious
+remedy for a stale build artifact, deleting `bin\Debug`, deleted those too. A Debug build now writes
+to `dev-data/` at the repo root instead. Nothing about a published build changes: the redirect rides
+an assembly attribute written for the Debug configuration alone, so no released d47 can take that
+road and no environment variable can redirect where secrets go.
+
 ## 0.60.3 — 2026-08-23 — The trade offer says whose offer it is
 
 ### An engineer will not be offered as a material trader again

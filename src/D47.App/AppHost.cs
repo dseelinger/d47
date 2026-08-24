@@ -540,7 +540,7 @@ public sealed class AppHost : IDisposable
 
     public static AppHost Start()
     {
-        var paths = AppPaths.BesideExecutable();
+        var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
 
         var version = BuildInfo.Full;

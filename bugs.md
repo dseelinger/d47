@@ -12,14 +12,16 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Seven open, and one partly confirmed.
+## Six open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
 and the filtered checklist that did not say how big its answer was. They are named here because the
 count above was left at eleven when they shipped, and a file that overstates what is open is one
 nobody trusts to say what is closed. The engineer offered as a material trader left in 0.60.3,
-diagnosed off the 2026-08-20 log exactly as its entry said it could be.
+diagnosed off the 2026-08-20 log exactly as its entry said it could be, and the stream of "X is
+done" announcements in 0.60.4 — the entry's own lead was wrong and the log said so, which is the
+argument for writing the lead down.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
@@ -314,38 +316,13 @@ shadowed by a file left in its own output directory is a trap that will be walke
 anyone, with no error. Candidates, cheapest first: a `--selftest`-style check that the exe about to
 run is an apphost rather than a bundle; a build target that fails when the output exe exceeds a few
 megabytes; or moving the dev data folder out of `bin` so the obvious remedy stops being destructive.
-**The last one is worth doing whatever else is decided** — it is the reason a two-hour diagnosis
-ended in data loss.
 
----
+**The third one shipped in 0.60.4, and this entry stays open for the other two.** A Debug build now
+writes to `dev-data/` at the repo root, through an `AssemblyMetadata("DevDataRoot", …)` that
+`D47.App.csproj` writes for that configuration alone — so a published build carries no such
+attribute, `data/` beside the executable is untouched where it matters, and no environment variable
+can redirect where secrets are written. **Deleting `bin` is no longer destructive**, which was the
+half worth doing whatever else was decided. What is still missing is the guard that would have found
+the stale artifact in minutes rather than hours: nothing yet notices that the exe about to run is a
+74 MB bundle rather than a ~150 KB apphost.
 
-## Open: a stream of "X is done" announcements for things that happened while d47 was off
-
-Reported 2026-08-23, from the debug build: *"I should not get a stream of 'X is completed'
-notifications. That happened while D47 was 'off' (as far as the Debug version knows), and shouldn't
-comment on it other than to mark the items done."*
-
-**The rule already exists and is written down.** `CalloutEngine`'s `IsPriming`
-(`src/D47.Core/Callouts/CalloutEngine.cs:10-18`) is for exactly this: *"True on the startup tick,
-which replays the whole journal backlog. A callout must fold that backlog into its state and
-announce nothing from it — otherwise starting d47 after Elite would say everything that happened
-since it was last run."* `Offer` guards on it at `:143`.
-
-**And `ChecklistCallout` honours it.** `Examine` (`src/D47.Core/Callouts/ChecklistCallout.cs:34-42`)
-returns nothing while priming and calls `Prime(context)` instead. So the announcements did **not**
-come from the priming tick, and the obvious fix — "check `IsPriming`" — is already in place.
-
-**A lead, not a diagnosis.** Priming folds the *journal* backlog into the callout's state, but the
-**checklist document is separate persisted state** with its own file. The debug build's
-`checklist.json` was a day stale when this was reported, so a dozen rolls had been finished in the
-world without that document knowing. Priming would leave the document still saying "open" while the
-loadout says "engineered"; the first **live** tick then sees a genuine transition and announces every
-one of them. If that is the mechanism, the fix is that priming must reconcile the document as well
-as the journal — and the same thing would happen to the installed build after any long gap, not just
-to a stale debug copy.
-
-**Reproduce before fixing.** Start with a checklist whose items are open and a loadout where they are
-already done, and watch the first live tick. `d47-20260823.log` has the announcements
-(`CalloutEngine: Callout checklist.done.ship …`) with timestamps that can be read against the startup
-line. Note also that the Commander's remedy is stated in the report and is not silence: **mark them
-done, say nothing.**
