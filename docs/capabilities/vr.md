@@ -175,12 +175,28 @@ go, the transcript stays. It is also drawn smaller, so it can sit at the edge of
 **Mini out of the box.** The full panel is 1.1 m across — close to fifty degrees of view — which
 is a lot to meet before you know it can be moved or shrunk. Switch to full whenever you want it.
 
+Ask for either by name, in whichever words come out:
+
+> "big panel" / "large panel" / "full panel"
+> "small panel" / "little panel" / "minimal panel" / "mini panel"
+
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
 #### Placing a surface
 
 Five settings each, and the mini panel has its own copies of all five. The big panel has a sixth.
+
+**Ask for a change and it lands on the panel you are looking at.** The two surfaces keep their own
+numbers — that is the point of mini, which exists to sit smaller and further out of the way — so
+*"move it closer"* means the one currently on screen, and the other one does not move. Both are on
+this page in full, so setting mini up while the big panel is in front of you is a thing you can do
+here whenever you like.
+
+**"Size" and "Scale" are different questions and it is worth knowing which you want.** Size is how
+big the panel itself is, in metres across — the edges move. Scale is how big the writing and the
+controls on it are drawn, without the edges moving. Wanting bigger text on a panel that is already
+the right size is Scale.
 
 | Setting | What it does |
 |---|---|

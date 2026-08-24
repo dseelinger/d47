@@ -177,7 +177,7 @@ public class ChecklistEvaluatorTests
         // rather than shrugging at the blocker.
         Assert.Equal(ChecklistState.Blocked, verdict!.Value.State);
         Assert.Contains("no amount of gathering fixes that", verdict.Value.Reason, StringComparison.Ordinal);
-        Assert.Contains("16,000,000", verdict.Value.Reason, StringComparison.Ordinal);
+        Assert.Contains("compounds", verdict.Value.Reason, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -272,7 +272,7 @@ public class UnlockPlannerTests
 
         Assert.Single(palin.Chain.Steps);
         Assert.Equal(5, palin.Chain.Steps[0].Grade);
-        Assert.Equal(16_000_000, palin.Chain.Steps[0].ReputationCost);
+        Assert.True(palin.Chain.Steps[0].NeedsRanking);
         Assert.Equal("Professor Palin", report.Route[0].Engineer.Name);
     }
 

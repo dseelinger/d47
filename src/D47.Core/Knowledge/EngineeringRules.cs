@@ -27,11 +27,19 @@ public readonly record struct MaterialExchange(int Paid, int Received)
 /// already makes — the grades are generated, the five capacities beside them are not.
 /// </para>
 /// <para>
-/// <b>Sourced and then checked.</b> The roll table is Frontier's own, published in the 4.0.18.08
-/// update notes; the reputation prices and the referral grade come from the Fandom engineer page.
-/// All of it was then confirmed against <b>6,272 real engineering rolls and 1,096 real trades</b>
-/// from a 912-journal corpus — see <c>docs/spikes/journal-corpus-engineering.md</c>, which is also
-/// where the two corrections below come from.
+/// <b>Sourced, and checked one table at a time — which is not the same as all of it.</b> The roll
+/// table is Frontier's own, published in the 4.0.18.08 update notes, and it was confirmed against
+/// <b>6,272 real engineering rolls</b> from a 912-journal corpus. The referral grade came from the
+/// Fandom engineer page and was confirmed too, to the second, by a progress trace in
+/// <c>docs/spikes/journal-corpus-engineering.md</c>.
+/// <para>
+/// <b>The reputation prices were neither, and this comment used to say otherwise.</b> It read
+/// "all of it was then confirmed", which is the word that stopped anybody checking: joining
+/// "credits of profit sold at a workshop" to a rank-up is not a question that corpus was ever
+/// asked, and could not have been answered by it. The figures came from a wiki, were rendered as
+/// though credits were the way a rank rises, and are gone (#26). The same spike disproves them in
+/// passing — its trace has Selene Jean going rank 2 to rank 4 in thirty-eight seconds.
+/// </para>
 /// </para>
 /// </summary>
 public static class EngineeringRules
@@ -120,22 +128,29 @@ public static class EngineeringRules
     }
 
     /// <summary>
-    /// Profit that must be sold at an engineer's workshop to reach a grade with them, or null for
-    /// a grade that has no price.
+    /// What is true about getting a rank up, said in one sentence
+    /// (<a href="https://github.com/dseelinger/d47/issues/26">#26</a>).
     /// <para>
-    /// Reputation rises by buying modifications and by selling exploration data or commodities at
-    /// the workshop. Grade 1 comes with the unlock and costs nothing, so it answers null rather
-    /// than zero — "no price" and "free" are different claims and only one is checkable.
+    /// <b>This replaced a credits figure that was wrong to state as the route.</b> d47 used to say
+    /// grade 5 "takes 16,000,000 credits of profit sold at that workshop", from a wiki, immediately
+    /// after saying no amount of gathering would fix the gate — so a Commander was told credits
+    /// were the only way up. They are not: <b>working with an engineer is what raises the rank</b>,
+    /// which is how the report arrived, having reached grade 2 with Selene Jean by rolling.
+    /// The corpus in this repository disproves the figures outright — one trace has Selene Jean
+    /// going rank 2 to rank 4 in <b>thirty-eight seconds</b>, which nobody does by selling ten
+    /// million credits of profit.
+    /// </para>
+    /// <para>
+    /// What replaces it is Frontier's own published table rather than anybody's claim, and it is
+    /// the encouraging half as well as the true one. Read <see cref="RollsFor"/> along a row: the
+    /// further a rank is above the grade being rolled, the fewer rolls that grade takes — five at
+    /// the bottom, one when the rank is four above. So the early work really is the slow part, and
+    /// it really does pay for itself afterwards.
     /// </para>
     /// </summary>
-    public static long? ReputationCost(int grade) => grade switch
-    {
-        2 => 500_000,
-        3 => 2_000_000,
-        4 => 8_000_000,
-        5 => 16_000_000,
-        _ => null,
-    };
+    public static string RankRises =>
+        "Rank rises by working with them, and it compounds: every rank you gain makes each later "
+        + "roll count for more.";
 
     /// <summary>
     /// The grade a Commander needs with a referring engineer before that engineer will recommend

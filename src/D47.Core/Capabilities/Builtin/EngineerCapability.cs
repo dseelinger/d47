@@ -458,16 +458,12 @@ public static class EngineerCapability
         }
         else
         {
-            // Priced, because the gap is the answer and a Commander who knows the number can
-            // decide whether to close it.
-            var price = EngineeringRules.ReputationCost(needed);
-
+            // The gap is the answer. It used to be priced in credits and that price was a wiki's
+            // claim rather than a measurement (#26); what is stated now is the mechanism, from
+            // Frontier's own roll table.
             report.AppendLine(
                 $"The Commander is grade {rank} with {best.Name}, and the referral needs grade {needed}"
-                + (price is { } profit
-                    ? $" — {profit.ToString("N0", CultureInfo.InvariantCulture)} cr of profit sold at "
-                      + "their workshop, plus roughly half the bar to the grade after it."
-                    : "."));
+                + $", plus roughly half the bar to the grade after it. {EngineeringRules.RankRises}");
         }
 
         return report.ToString();

@@ -92,11 +92,11 @@ public sealed record UnlockCandidate
                 lines.Add($"    hand over: {tribute}");
             }
 
-            if (step.ReputationCost is { } cost)
+            if (step.NeedsRanking)
             {
                 lines.Add(
-                    $"    grade {step.Grade.ToString(CultureInfo.InvariantCulture)} with them takes "
-                    + $"{cost.ToString("N0", CultureInfo.InvariantCulture)} cr of profit sold there");
+                    $"    grade {step.Grade.ToString(CultureInfo.InvariantCulture)} with them is "
+                    + "rank you still have to earn");
             }
         }
 

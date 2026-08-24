@@ -161,20 +161,48 @@ public sealed class EliteWindow(ILogger<EliteWindow> logger) : IEliteWindow
             ShowWindow(elite, ShowRestore);
         }
 
-        var asked = SetForegroundWindow(elite);
-        var arrived = GetForegroundWindow() == elite;
-
-        if (!asked || !arrived)
+        if (SetForegroundWindow(elite) && GetForegroundWindow() == elite)
         {
-            logger.LogInformation(
-                "Windows refused to bring Elite forward (call returned {Asked}, foreground moved {Arrived})",
-                asked,
-                arrived);
-
-            return FocusResult.Refused;
+            return FocusResult.Raised;
         }
 
-        return FocusResult.Raised;
+        // **Windows only grants the foreground to a process that already has it, or that received
+        // the last input** (#27). d47 running behind Elite is neither, so the plain call is
+        // refused and the shell flashes a taskbar button instead — which from inside a headset or
+        // a full-screen game is no effect at all.
+        //
+        // Attaching this thread's input queue to the thread owning the current foreground window
+        // makes the two share input state for the length of one call, and the lock does not apply
+        // between them. It is the ordinary answer and it costs microseconds; the Commander's stated
+        // ceiling was three seconds on top of a manual desktop round trip, so cost was never the
+        // constraint here — only how often it works.
+        //
+        // The system setting that removes the lock outright (SPI_SETFOREGROUNDLOCKTIMEOUT) would
+        // also work and is deliberately not used: it is machine-wide, it persists, and it affects
+        // every application. d47 is a guest.
+        if (Attached(elite, out var attachedTo))
+        {
+            try
+            {
+                if (SetForegroundWindow(elite) && GetForegroundWindow() == elite)
+                {
+                    logger.LogInformation("Elite was brought forward by attaching to the foreground thread");
+
+                    return FocusResult.Raised;
+                }
+            }
+            finally
+            {
+                AttachThreadInput(GetCurrentThreadId(), attachedTo, false);
+            }
+        }
+
+        // Still refused. Said out loud rather than logged, because these are workarounds against a
+        // lock Microsoft has tightened before and may tighten again — the honest sentence has to
+        // stay behind them.
+        logger.LogInformation("Windows refused to bring Elite forward, with and without attaching");
+
+        return FocusResult.Refused;
     }
 
     private const int ShowRestore = 9;
@@ -197,4 +225,52 @@ public sealed class EliteWindow(ILogger<EliteWindow> logger) : IEliteWindow
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsIconic(nint hWnd);
+
+    /// <summary>
+    /// Attaches this thread's input queue to whichever thread owns the foreground window, so that
+    /// one <see cref="SetForegroundWindow"/> is allowed through (#27).
+    /// <para>
+    /// False when there is nothing to attach to, or when the foreground window is already ours —
+    /// attaching a thread to itself is not a thing, and if we are the foreground the plain call
+    /// would have worked.
+    /// </para>
+    /// </summary>
+    private static bool Attached(nint elite, out uint attachedTo)
+    {
+        attachedTo = 0;
+
+        var front = GetForegroundWindow();
+
+        if (front == 0 || front == elite)
+        {
+            return false;
+        }
+
+        var owner = GetWindowThreadProcessId(front, out _);
+        var mine = GetCurrentThreadId();
+
+        if (owner == 0 || owner == mine)
+        {
+            return false;
+        }
+
+        if (!AttachThreadInput(mine, owner, true))
+        {
+            return false;
+        }
+
+        attachedTo = owner;
+
+        return true;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool AttachThreadInput(uint attach, uint attachTo, bool join);
 }

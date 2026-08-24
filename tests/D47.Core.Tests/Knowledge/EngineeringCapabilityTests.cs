@@ -166,9 +166,8 @@ public class EngineeringCapabilityTests
         Assert.Contains("You are grade 2 with Elvira Martuuk", answer, StringComparison.Ordinal);
         Assert.Contains("grade 5 needs rank 5", answer, StringComparison.Ordinal);
 
-        // Priced rather than shrugged at. 16,000,000 cr of profit sold at their workshop is the
-        // published cost of that rank block.
-        Assert.Contains("16,000,000 cr", answer, StringComparison.Ordinal);
+        // The gate is stated with how a rank is actually raised beside it. It used to be
+        // priced in credits, from a wiki, and that was never how the rank went up (#26).
 
         // And never a shopping list, because below the rank there is no roll count at all.
         Assert.DoesNotContain("rolls, so", answer, StringComparison.Ordinal);

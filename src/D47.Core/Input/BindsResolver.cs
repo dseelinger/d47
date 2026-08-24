@@ -57,15 +57,50 @@ public static partial class BindsResolver
     public static EliteBinds Resolve(
         string bindingsDirectory,
         IEnumerable<string> gameDirectories,
-        ILogger logger)
+        ILogger logger) =>
+        Resolve(bindingsDirectory, gameDirectories, logger, out _);
+
+    /// <summary>
+    /// As above, and says whether the answer is <b>"nothing is bound"</b> or <b>"I could not
+    /// look"</b> — which used to be the same answer and cost a Commander every key d47 can press
+    /// for two hours and forty-one minutes (#24).
+    /// <para>
+    /// Elite holds <c>StartPreset.*.start</c> open for a moment while it writes it. That read
+    /// throws, and a caller told only <see cref="EliteBinds.None"/> cannot tell a file it may
+    /// have in a second from a Commander who has no bindings at all. <paramref name="unreadable"/>
+    /// is true only for the first, so the caller can keep what it already had and come back.
+    /// </para>
+    /// </summary>
+    public static EliteBinds Resolve(
+        string bindingsDirectory,
+        IEnumerable<string> gameDirectories,
+        ILogger logger,
+        out bool unreadable)
     {
-        var preset = ActivePresetName(bindingsDirectory, logger);
+        unreadable = false;
+
+        var preset = ActivePresetName(bindingsDirectory, logger, out var locked);
 
         if (preset is null)
         {
-            logger.LogInformation(
-                "No StartPreset file under {Directory}; D47 cannot say which binds are active",
-                bindingsDirectory);
+            // Two different sentences, because they point at different fixes — and because the
+            // old one said the file was not there while Elite had it open, which is the line that
+            // made #24 read as a configuration problem.
+            if (locked)
+            {
+                unreadable = true;
+
+                logger.LogWarning(
+                    "The StartPreset file under {Directory} could not be read this time; "
+                    + "D47 does not know which binds are active yet",
+                    bindingsDirectory);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "No StartPreset file under {Directory}; D47 cannot say which binds are active",
+                    bindingsDirectory);
+            }
 
             return EliteBinds.None;
         }
@@ -94,8 +129,17 @@ public static partial class BindsResolver
     /// preset name per line — one per control mode in recent versions — and they are normally
     /// the same name; the first non-empty line is taken.
     /// </summary>
-    public static string? ActivePresetName(string bindingsDirectory, ILogger logger)
+    public static string? ActivePresetName(string bindingsDirectory, ILogger logger) =>
+        ActivePresetName(bindingsDirectory, logger, out _);
+
+    /// <summary>
+    /// As above, and reports through <paramref name="locked"/> whether the null means <em>there is
+    /// no such file</em> or <em>a file was there and something else had it open</em>.
+    /// </summary>
+    public static string? ActivePresetName(string bindingsDirectory, ILogger logger, out bool locked)
     {
+        locked = false;
+
         if (!Directory.Exists(bindingsDirectory))
         {
             return null;
@@ -128,6 +172,10 @@ public static partial class BindsResolver
             }
             catch (IOException ex)
             {
+                // Elite writes this file and lets go of it. Recorded rather than swallowed into
+                // the same null an absent file returns (#24).
+                locked = true;
+
                 logger.LogWarning(ex, "Could not read {Path}", path);
             }
         }

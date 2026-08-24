@@ -281,10 +281,7 @@ public static class ChecklistEvaluator
     {
         var who = intent.Engineer is { } engineer ? $" with {engineer}" : string.Empty;
 
-        var price = EngineeringRules.ReputationCost(grade) is { } cost
-            ? $" Reaching grade {grade} takes {cost.ToString("N0", CultureInfo.InvariantCulture)} credits of profit "
-              + "sold at that workshop."
-            : string.Empty;
+        var price = $" {EngineeringRules.RankRises}";
 
         return new ChecklistVerdict(
             ChecklistState.Blocked,
@@ -345,9 +342,7 @@ public static class ChecklistEvaluator
             return new ChecklistVerdict(ChecklistState.Done, $"{engineer.Name} is at rank {rank}.");
         }
 
-        var price = EngineeringRules.ReputationCost(wanted) is { } cost
-            ? $" Rank {wanted} takes {cost.ToString("N0", CultureInfo.InvariantCulture)} credits of profit sold there."
-            : string.Empty;
+        var price = $" {EngineeringRules.RankRises}";
 
         return new ChecklistVerdict(
             ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.{price}");

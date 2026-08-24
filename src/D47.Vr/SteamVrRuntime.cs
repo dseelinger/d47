@@ -294,6 +294,23 @@ public sealed class SteamVrRuntime(
     /// makes an overlay flicker, and a transform is cheap.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Moves one surface's quad and nothing else — no texture, no size, no opacity
+    /// (<a href="https://github.com/dseelinger/d47/issues/30">#30</a>).
+    /// <para>
+    /// <b>For a panel being carried, which has to follow a hand rather than a tick.</b> Placement
+    /// and submission are separate calls to the runtime, so a quad can be moved as often as a hand
+    /// moves while its pixels keep arriving at the serve's own pace. That is what lets the carry
+    /// run on the aim loop without anything else about the surface following it there.
+    /// </para>
+    /// <para>
+    /// Absolute rather than head-relative, and that is not a shortcut: picking a panel up makes it
+    /// world-locked, because a Commander who has physically carried it across the cockpit has said
+    /// where they want it.
+    /// </para>
+    /// </summary>
+    public void Reposition(VrSurface surface, VrPose where) => OverlayFor(surface)?.PlaceAbsolute(where);
+
     public void AimBeam(VrPose? along, VrPose head, float lengthMetres)
     {
         if (_beam is null)
@@ -346,14 +363,33 @@ public sealed class SteamVrRuntime(
     /// off the grip. Both flags are checked in <see cref="VrMatrix.Real"/>, and there is no later
     /// layer that would catch a slot that is merely zeroed.
     /// </summary>
-    public IReadOnlyList<VrHand> Controllers()
+    public IReadOnlyList<VrHand> Controllers() => HandsAndHead().Hands;
+
+    /// <summary>
+    /// The controllers and the head from <b>one</b> pose read, for a caller that needs both and is
+    /// asking at frame rate (<a href="https://github.com/dseelinger/d47/issues/19">#19</a>).
+    /// <para>
+    /// <b>One thread only.</b> This walks every device through <see cref="Note"/>, which keeps a
+    /// plain dictionary of what each was last seen doing; two threads asking at once would corrupt
+    /// it, and a race in a dictionary is not something a test run will show. The aim loop owns this
+    /// call and publishes what it read; nothing else may make it.
+    /// </para>
+    /// <para>
+    /// The head comes out of the same array rather than a second read. Asked ninety times a second
+    /// against a head that is turning, a pose from the last 10 Hz serve is up to a tenth of a
+    /// second stale — which would misplace the beam in precisely the way this was split up to fix.
+    /// </para>
+    /// </summary>
+    public (IReadOnlyList<VrHand> Hands, VrPose? Head) HandsAndHead()
     {
         if (_system is null)
         {
-            return [];
+            return ([], null);
         }
 
-        var poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+        // Reused rather than allocated per call: sixty-four entries at frame rate is garbage this
+        // process makes while sharing a GPU with Elite, and it is the same array every time.
+        var poses = _poses ??= new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 
         // No prediction. A panel is furniture rather than a thing being aimed, and asking where a
         // device will be by the time photons land buys nothing but jitter when the answer decides
@@ -381,8 +417,10 @@ public sealed class SteamVrRuntime(
             }
         }
 
-        return found;
+        return (found, VrMatrix.Real(poses[OpenVR.k_unTrackedDeviceIndex_Hmd]));
     }
+
+    private TrackedDevicePose_t[]? _poses;
 
     /// <summary>
     /// The correction from the grip pose OpenVR reports to the tip the Commander aims with.

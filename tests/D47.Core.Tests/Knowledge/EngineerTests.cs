@@ -297,7 +297,7 @@ public class EngineerTests
 
         // The published price of that rank, and the half of the requirement nobody published as a
         // number said in words rather than invented as one.
-        Assert.Contains("2,000,000 cr", answer, StringComparison.Ordinal);
+        Assert.Contains("compounds", answer, StringComparison.Ordinal);
         Assert.Contains("roughly half the bar", answer, StringComparison.Ordinal);
     }
 

@@ -717,6 +717,25 @@ public sealed class OffscreenSurface : IDisposable
     public const double AimTolerance = 28;
 
     /// <summary>
+    /// How far the ray has to leave a bar to put it <em>out</em>, having lit it at
+    /// <see cref="AimTolerance"/> (<a href="https://github.com/dseelinger/d47/issues/29">#29</a>).
+    /// <para>
+    /// <b>Without this the boundary is a knife edge.</b> One radius decides both directions, so a
+    /// ray held near it answers a different question every frame as the hand wanders — lit, unlit,
+    /// lit, unlit, ten times a second. Reported as flicker, and it is: the highlight really is
+    /// blinking. The frames themselves were measured and are fine, so nothing about the raster
+    /// needed changing.
+    /// </para>
+    /// <para>
+    /// Fourteen pixels of band, against a hand that
+    /// <see cref="TheVrScrollbarsTests"/> already describes as wandering "a few pixels" at arm's
+    /// length — comfortably wider than the tremor it exists to absorb, and far narrower than the
+    /// bar, so a Commander who means to leave still leaves at once.
+    /// </para>
+    /// </summary>
+    public const double AimRelease = 42;
+
+    /// <summary>
     /// The vertical scrollbar a ray at this point is aiming at, or null.
     /// <para>
     /// Distance to the bar's rectangle rather than containment, which is the whole of what makes
@@ -727,7 +746,7 @@ public sealed class OffscreenSurface : IDisposable
     public ScrollBar? ScrollbarNear(Point at)
     {
         ScrollBar? nearest = null;
-        var closest = AimTolerance;
+        var closest = double.MaxValue;
 
         foreach (var bar in _surface.GetVisualDescendants().OfType<ScrollBar>())
         {
@@ -744,7 +763,13 @@ public sealed class OffscreenSurface : IDisposable
             var box = new Rect(corner, bar.Bounds.Size);
             var away = Distance(box, at);
 
-            if (away <= closest)
+            // The bar already lit keeps a wider berth than one being found for the first time,
+            // which is the whole of the hysteresis: leaving costs more than arriving did (#29).
+            // A nearer bar still wins outright, so the wider radius holds a light on rather than
+            // holding a better answer off.
+            var limit = ReferenceEquals(bar, _lit) ? AimRelease : AimTolerance;
+
+            if (away <= limit && away < closest)
             {
                 closest = away;
                 nearest = bar;

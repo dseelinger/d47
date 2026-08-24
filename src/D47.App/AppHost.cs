@@ -4495,6 +4495,17 @@ public sealed class AppHost : IDisposable
             }
         }
 
+        // And their own carrier, so its traffic comes in the tower's voice (#28). Read fresh each
+        // time rather than captured, so a carrier renamed mid-session is matched on its new name.
+        if (GameState.Active?.Carrier is { } carrier)
+        {
+            foreach (var callout in Callouts.Callouts.OfType<IncomingMessages>())
+            {
+                callout.CarrierName = carrier.Name;
+                callout.CarrierCallSign = carrier.CallSign;
+            }
+        }
+
         var system = GameState.Active?.Location.StarSystem;
 
         if (system is null || string.Equals(system, _voiceScopeSystem, StringComparison.Ordinal))

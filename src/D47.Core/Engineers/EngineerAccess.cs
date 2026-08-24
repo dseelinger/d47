@@ -79,8 +79,16 @@ public sealed record UnlockStep(
     /// The reputation climb this stop wants on top of the unlock, priced where Frontier priced it.
     /// Null where the unlock alone is enough.
     /// </summary>
-    public long? ReputationCost =>
-        Grade > Math.Max(Held, 1) ? EngineeringRules.ReputationCost(Grade) : null;
+    /// <summary>
+    /// Whether this stop is a rank the Commander still has to earn, rather than one they hold.
+    /// <para>
+    /// This used to answer a credits figure and did not survive #26: the number came from a wiki,
+    /// was never measured, and was rendered as though credits were the way up. What a stop needs
+    /// to say is that there is climbing to do, and <see cref="EngineeringRules.RankRises"/> says
+    /// how climbing works.
+    /// </para>
+    /// </summary>
+    public bool NeedsRanking => Grade > Math.Max(Held, 1);
 
     /// <summary>One stop, as a Commander hears it.</summary>
     public string Describe() => Engineer.Name + Rest();
