@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -293,9 +294,22 @@ public partial class MainWindow : Window
             host.Tick.Add("routing", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickRouting));
 
+            // And the same window is the one with a keyboard, so it is the one whose mini keeps
+            // the ask line (list.md Phase 51). Furnished rather than branched: the headset's mini
+            // is untouched and the flat overlay stays output-only by not making this call.
+            Panel.EnableAskInMini();
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
-            WindowPlacementMemory.Attach(this, host.ViewState);
+            //
+            // Mini is read here too, so a window left in mini opens in mini on its own rectangle
+            // rather than opening full and shrinking in front of the Commander.
+            var mini = IsMini(host.Settings.Current);
+
+            Panel.Mode = mini ? PanelMode.Mini : PanelMode.Full;
+
+            _placement = WindowPlacementMemory.Attach(
+                this, host.ViewState, startMini: mini, miniSize: mini ? MiniSize() : null);
 
             // Read before the first paint for the same reason: the worked example appearing and
             // then vanishing is worse than either state, and it is the Commander who has already
@@ -431,6 +445,19 @@ public partial class MainWindow : Window
             {
                 BindOverlayKeys();
             }
+
+            // Mini and back, with no restart (list.md Phase 51, and Phase 4's rule about every
+            // setting). Zoom too, because the mini size is measured: a layout transform
+            // re-measures, so a mini window at 150% is a bigger mini window rather than a
+            // clipped one, and nothing but this resizes it.
+            if (change.Key == InterfaceCapability.WindowModeKey)
+            {
+                ApplyWindowMode();
+            }
+            else if (change.Key == InterfaceCapability.ZoomKey)
+            {
+                _placement?.Remeasured(MiniSize());
+            }
         });
 
         // Deliberately not focusing the Ask box. A text field with the caret in it is a trap
@@ -548,6 +575,20 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 Panel.FocusAsk();
             }
+            else if (Matches(_host.Settings.Current.Hotkeys.WindowMode, e))
+            {
+                // The way back that works when there is nothing at all on the surface
+                // (list.md Phase 51). Through the settings service rather than straight at the
+                // view, the same road ZoomHost.Set takes: this is a hotkey reaching a settings
+                // row, which is a caller the service already knows about, and going around it
+                // would leave the row showing a state that is no longer true.
+                e.Handled = true;
+
+                _host.Settings.Apply(
+                    InterfaceCapability.WindowModeKey,
+                    Panel.Mode == PanelMode.Full ? "mini" : "full",
+                    SettingsCaller.Hotkey);
+            }
         }
 
         // Escape leaves the settings page for the one it covered up. Answered here rather than
@@ -646,6 +687,75 @@ public partial class MainWindow : Window
     }
 
     private void OpenSettings() => Panel.Tab = PanelTab.Settings;
+
+    /// <summary>The two rectangles this window remembers, and which one it is in.</summary>
+    private WindowPlacementMemory? _placement;
+
+    private static bool IsMini(D47Settings settings) =>
+        string.Equals(settings.Ui.Mode, "mini", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Puts the window into the shape the setting names, and back (list.md Phase 51).
+    /// <para>
+    /// <see cref="Headset.VrPanelSurface.ApplyMode"/> is the whole pattern, copied rather than
+    /// reinvented: read the setting, compare against what the view is on, assign only if it moved.
+    /// <c>PanelMode</c> is a property of the <em>view</em> rather than of a surface — <c>Mode</c>
+    /// is a styled property and <c>ApplyChrome</c> computes every region from it and the tab
+    /// together — so the desktop has always been a host that simply never set it.
+    /// </para>
+    /// <para>
+    /// <b>The rectangle moves before the content does.</b> Changing the content raises a resize of
+    /// its own, and the placement memory has to have sampled the shape being left before that
+    /// arrives — otherwise the shape being left is recorded as the shape being entered, which is
+    /// the trap this phase names.
+    /// </para>
+    /// </summary>
+    private void ApplyWindowMode()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var mini = IsMini(_host.Settings.Current);
+
+        if (mini == (Panel.Mode == PanelMode.Mini))
+        {
+            return;
+        }
+
+        _placement?.Resize(mini, MiniSize());
+
+        Panel.Mode = mini ? PanelMode.Mini : PanelMode.Full;
+    }
+
+    /// <summary>
+    /// What mini wants: <b>measured rather than typed</b> (list.md Phase 51).
+    /// <para>
+    /// The headset's 512x280 is the floor — mini is a reduced content set and the height is what
+    /// that set needs — and this window's mini keeps the ask line, which the headset's does not.
+    /// So the answer is the floor plus what that line actually asks for, taken at 100% and then
+    /// scaled: everything inside the panel is laid out at 100% and drawn larger by the zoom host's
+    /// layout transform, which is why a mini window at 150% is a bigger mini window rather than a
+    /// clipped one.
+    /// </para>
+    /// <para>
+    /// The frame is nobody's arithmetic here: these are the numbers
+    /// <see cref="WindowPlacementMemory"/> already stores and <see cref="Window.Width"/> already
+    /// takes, and the title bar sits above them — which is the point, because mini keeps its
+    /// decorations so the window can still be moved, resized and closed by the means the Commander
+    /// already knows.
+    /// </para>
+    /// </summary>
+    private Size MiniSize()
+    {
+        var scale = ZoomLadder.ScaleOf(
+            ZoomLadder.Snap(_host?.Settings.Current.Ui.ZoomPercent ?? ZoomLadder.Default));
+
+        return new Size(
+            PanelResolution.Mini.Width * scale,
+            (PanelResolution.Mini.Height + Panel.AskLineHeight(PanelResolution.Mini.Width)) * scale);
+    }
 
     /// <summary>
     /// The settings surface, built the first time the tab is selected.

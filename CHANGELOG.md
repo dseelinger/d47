@@ -20,6 +20,76 @@ the file as it stood then.
 
 ---
 
+## 0.65.0 — 2026-08-24 — The window goes mini too
+
+The headset has had a mini panel for months. Now the window does: the transcript's last few lines,
+the ask box, and the line under it. The same panel showing less — not a smaller copy of it.
+
+**Settings → Interface → *Window content*, `Ctrl+M`, or say "mini window".**
+
+This is for the very ordinary case the overlay is not for: one monitor, and wanting Directive 47
+out of the way without losing it. Unlike the overlay it is still the window — **you can still type
+into it**, which is the difference between a mini window worth having and one you switch off the
+same day.
+
+### The way back is not on the panel
+
+Mini takes the tab strip, the reading control, the breadcrumb, the search box, the banners and the
+header, all of it on purpose. A window with no way out of it is a window you close with Task
+Manager, and that is the only way a feature like this is ever remembered. So there are three ways
+back and none of them is drawn on the panel:
+
+```text
+Ctrl+M           the key, which works with nothing at all on the surface
+"full window"    said out loud
+the title bar    mini keeps its decorations, so ✕ still closes it
+```
+
+The title bar is a decision, not an oversight. A chromeless strip pinned over the game is the
+[overlay](https://dseelinger.github.io/d47/capabilities/interface.html#overlay) and a different
+animal; keeping the frame here means the window can still be moved, resized and closed by the means
+you already know.
+
+### It says "window", never "panel"
+
+*Mini panel* and *full panel* belong to the headset and always did. Someone wearing one must not
+shrink a window they cannot see, and someone at a desk must not resize a quad they are not wearing.
+
+```text
+mini window / small window / little window / shrink the window
+full window / big window / large window
+```
+
+### Going mini and back lands where it started
+
+**This is the part that would have gone wrong quietly.** Directive 47 remembers where you leave the
+window by watching it resize — so a mini toggle looks exactly like you choosing a 512-pixel window,
+and the way back would have arrived 512 pixels wide. Permanently, and across a restart.
+
+The mini window now has a rectangle of its own. Full to mini to full lands on the pixel it started
+on, twice running, with a restart in the middle — and a mini window you widened stays widened.
+
+The first time you go mini it appears at the corner the full window was at, rather than jumping
+across the desk.
+
+### It picks a page mini actually has
+
+Mini can show the transcript, and the story where the surface has one. Switch to mini while you are
+on Settings and it moves to the transcript, rather than drawing a settings page — whose layout wants
+700 pixels — into 512 with no tab strip to leave by. Switching back puts Settings up again.
+
+**This was already broken in the headset**, where it can be reached by setting the panel to mini on
+the wrong tab, and the fix went in where both surfaces get it rather than only where the desktop
+would have found it.
+
+### Size
+
+Mini is the headset's 512 by 280 plus whatever the ask box actually needs, at whatever zoom you are
+on — measured rather than a number typed in. So mini at 150% is a bigger mini window rather than a
+clipped one.
+
+---
+
 ## 0.64.0 — 2026-08-24 — The mini panel, without a headset
 
 You asked for a 2D overlay that does what the VR mini panel does. Here it is: a small strip

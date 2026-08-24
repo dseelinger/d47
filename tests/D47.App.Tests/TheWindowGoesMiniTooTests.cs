@@ -1,0 +1,336 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using D47.App.Panel;
+using D47.App.Theming;
+using D47.App.Windowing;
+using D47.Core.Configuration;
+using D47.Core.Interface;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>
+/// The desktop window shows what the headset already can (list.md Phase 51).
+/// <para>
+/// The phase names three tests and this file carries two of them: a capture of the window in mini
+/// showing the tail, and the round-trip rectangle. The third is <c>MinimiseSafetyTests</c>, which
+/// is deliberately untouched — nothing in this phase is allowed to change what the headset draws.
+/// </para>
+/// </summary>
+public class TheWindowGoesMiniTooTests
+{
+    /// <summary>
+    /// <b>A hole that was already open.</b> <c>ApplyChrome</c> hides the tab strip in mini but left
+    /// <c>PagePane</c> visible whenever the tab was not the transcript — so a surface put into mini
+    /// on Settings drew a page wanting 700 pixels into a 512-wide surface with no tab strip to
+    /// leave by. The headset can be driven into it today; the desktop would have found it on day
+    /// one, because the desktop is where Settings lives.
+    /// </summary>
+    [AvaloniaFact]
+    public void MiniLeavesATabItHasNoReadingOfAndPutsItBack()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableSettings(() => new TextBlock { Text = "settings" });
+        panel.Tab = PanelTab.Settings;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.True(panel.GetControl<Border>("PagePane").IsVisible);
+
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        // Not on Settings, and not on a blank pane either: it is reading the transcript, which is
+        // the reading mini actually has.
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.False(panel.GetControl<Border>("PagePane").IsVisible);
+        Assert.True(panel.GetControl<Border>("TranscriptPane").IsVisible);
+
+        panel.Mode = PanelMode.Full;
+        Dispatcher.UIThread.RunJobs();
+
+        // And coming back restores the tab that was showing, rather than leaving the Commander on
+        // the transcript wondering where their page went.
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Mini keeps the tab it does have a reading of, so the ruling is "a reading mini actually
+    /// has" rather than "the transcript, always".
+    /// </summary>
+    [AvaloniaFact]
+    public void MiniStaysOnAdventuresWhereAHostFurnishedTheShortReading()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableAdventures(AdventureFixture.Surface());
+        panel.Tab = PanelTab.Adventures;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Adventures, panel.Tab);
+        Assert.True(panel.GetControl<Border>("MiniPane").IsVisible);
+        Assert.False(panel.GetControl<Border>("TranscriptPane").IsVisible);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// And while in mini, a move to a tab mini has no reading of is declined — whatever moved the
+    /// navigator. A spoken phrase reaches every surface at once (list.md Phase 45), so a Commander
+    /// with a mini window and a full headset saying "show me the checklist" moves the headset and
+    /// leaves the window where it is, rather than dropping it on an unreachable page.
+    /// </summary>
+    [AvaloniaFact]
+    public void AMoveToATabMiniLacksIsDeclinedWhileMini()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableSettings(() => new TextBlock { Text = "settings" });
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Nav.Select(PanelTab.Settings);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+
+        // And leaving mini does not then jump to a tab the Commander never chose: the bounce is
+        // not the same as having been there.
+        panel.Mode = PanelMode.Full;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// <b>A mini window you cannot type into is worse than the full window in every respect.</b>
+    /// Furnished rather than branched, so no code anywhere tests which surface it is on — the
+    /// headset's mini is untouched and the flat overlay stays output-only by not asking.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheAskLineStaysInMiniOnlyWhereAHostAskedForIt()
+    {
+        var (window, panel) = Open();
+
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(panel.GetControl<Border>("AskRow").IsVisible);
+        Assert.Equal(0, panel.AskLineHeight(PanelResolution.Mini.Width));
+
+        panel.EnableAskInMini();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(panel.GetControl<Border>("AskRow").IsVisible);
+
+        // And it is measured rather than typed, which is what the window's mini height is built
+        // out of: the headset's floor plus whatever this line actually wants.
+        Assert.True(
+            panel.AskLineHeight(PanelResolution.Mini.Width) > 0,
+            "The ask line reported no height, so the mini window would be the headset's size with it clipped.");
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The provenance line and the microphone indicator are unchanged: they are what mini already
+    /// showed, and this phase adds the ask line rather than rearranging the rest.
+    /// </summary>
+    [AvaloniaFact]
+    public void EverythingElseMiniShowsIsUnchanged()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableAskInMini();
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(panel.GetControl<DockPanel>("StatusRow").IsVisible);
+        Assert.False(panel.GetControl<DockPanel>("TabStrip").IsVisible);
+        Assert.False(panel.GetControl<DockPanel>("Header").IsVisible);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The phase's acceptance, exactly as it is worded: <b>full to mini to full lands on the pixel
+    /// it started on, twice running, with a restart in the middle.</b>
+    /// <para>
+    /// The trap it guards is that <see cref="WindowPlacementMemory"/> samples the window on every
+    /// resize and writes the result down as a size the Commander chose — so an untold mini toggle
+    /// would overwrite the full rectangle and the way back would arrive 512 pixels wide,
+    /// permanently and across a restart.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void FullToMiniToFullLandsOnThePixelItStartedOn()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+        var mini = new Size(512, 320);
+
+        var window = new Window { Width = 820, Height = 640 };
+        var memory = WindowPlacementMemory.Attach(window, viewState);
+        window.Show();
+
+        window.Width = 900;
+        window.Height = 700;
+        window.Position = new PixelPoint(120, 80);
+        Dispatcher.UIThread.RunJobs();
+
+        var full = Rect(window);
+
+        // Once.
+        Toggle(memory, window, true, mini);
+        Assert.Equal(512, window.Width);
+        Toggle(memory, window, false, null);
+        Assert.Equal(full, Rect(window));
+
+        // Twice running.
+        Toggle(memory, window, true, mini);
+        Toggle(memory, window, false, null);
+        Assert.Equal(full, Rect(window));
+
+        // And with a restart in the middle, left in mini.
+        Toggle(memory, window, true, mini);
+        window.Close();
+
+        var again = new Window { Width = 820, Height = 640 };
+        var restored = WindowPlacementMemory.Attach(again, viewState, startMini: true, miniSize: mini);
+        again.Show();
+
+        Assert.Equal(512, again.Width);
+
+        Toggle(restored, again, false, null);
+        Assert.Equal(full, Rect(again));
+
+        again.Close();
+    }
+
+    /// <summary>
+    /// And the other half of the same record: a Commander who widens their mini window keeps it,
+    /// because the mini rectangle is remembered separately rather than merely being kept out of
+    /// the full one's way.
+    /// </summary>
+    [AvaloniaFact]
+    public void AWidenedMiniWindowIsKept()
+    {
+        var (_, viewState, _) = TestSurface.Create();
+        var mini = new Size(512, 320);
+
+        var window = new Window { Width = 820, Height = 640 };
+        var memory = WindowPlacementMemory.Attach(window, viewState);
+        window.Show();
+
+        Toggle(memory, window, true, mini);
+
+        window.Width = 700;
+        Dispatcher.UIThread.RunJobs();
+
+        Toggle(memory, window, false, null);
+        Toggle(memory, window, true, mini);
+
+        Assert.Equal(700, window.Width);
+
+        window.Close();
+
+        Assert.Equal(700, viewState.Load().MainWindowMini?.Width);
+
+        // And the full rectangle is still its own, which is the whole point of two records.
+        Assert.NotEqual(700, viewState.Load().MainWindow?.Width);
+    }
+
+    /// <summary>
+    /// The window in mini, drawing the transcript's tail — and drawing something different when a
+    /// line arrives, which is the assertion a "did it render" check would pass while frozen.
+    /// A capture goes beside it, because a line hanging low is something a test can be written to
+    /// miss and an eye cannot.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWindowInMiniDrawsTheTail()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableAskInMini();
+        panel.Mode = PanelMode.Mini;
+
+        window.Width = PanelResolution.Mini.Width;
+        window.Height = PanelResolution.Mini.Height + panel.AskLineHeight(PanelResolution.Mini.Width);
+        Dispatcher.UIThread.RunJobs();
+
+        var model = (PanelViewModel)panel.DataContext!;
+
+        model.Append("Fixture One, docked. Fuel at 82 percent.\n");
+        model.Append("\n> how far to Shinrarta\n");
+        model.Append("Eleven jumps, and you are carrying more than the scoop likes.");
+        Dispatcher.UIThread.RunJobs();
+
+        var before = Frame(window);
+
+        model.Append("\nStill talking, in a window this size.");
+        var after = Frame(window);
+
+        Assert.NotEmpty(after);
+        Assert.NotEqual(before, after);
+
+        window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "window-mini.png"),
+            new PngBitmapEncoderOptions());
+
+        window.Close();
+    }
+
+    /// <summary>Mini is off out of the box: this is a shape a Commander asks for.</summary>
+    [Fact]
+    public void TheWindowIsFullOutOfTheBox() => Assert.Equal("full", new D47Settings().Ui.Mode);
+
+    private static (Window Window, PanelView Panel) Open()
+    {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 900, Height = 640 };
+
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        return (window, panel);
+    }
+
+    /// <summary>What <c>MainWindow.ApplyWindowMode</c> does, in the order it does it.</summary>
+    private static void Toggle(WindowPlacementMemory memory, Window window, bool mini, Size? measured)
+    {
+        _ = window;
+
+        // The rectangle before the content, because changing the content raises a resize of its
+        // own and the sample that has to happen is a sample of the shape being left.
+        memory.Resize(mini, measured);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static (double Width, double Height, PixelPoint At) Rect(Window window) =>
+        (window.Width, window.Height, window.Position);
+
+    private static byte[] Frame(Window window)
+    {
+        Dispatcher.UIThread.RunJobs();
+
+        using var stream = new MemoryStream();
+
+        window.CaptureRenderedFrame()!.Save(stream, new PngBitmapEncoderOptions());
+
+        return stream.ToArray();
+    }
+}

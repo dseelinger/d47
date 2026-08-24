@@ -61,6 +61,15 @@ public partial class PanelView : UserControl
 
     private PanelViewModel? _bound;
 
+    /// <summary>Whether this surface keeps its ask line in mini. See <see cref="EnableAskInMini"/>.</summary>
+    private bool _asksInMini;
+
+    /// <summary>
+    /// The tab that was showing when mini took it away, so leaving mini can put it back
+    /// (list.md Phase 51). Null whenever mini did not have to move anything.
+    /// </summary>
+    private PanelTab? _beforeMini;
+
     /// <summary>
     /// Where the Commander is on this surface: which tab, which of its roots, and how far down
     /// (list.md Phase 25).
@@ -240,6 +249,11 @@ public partial class PanelView : UserControl
         // wrong, and those are different reasons.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
+            // Before the chrome, because it may move the tab and the chrome is drawn from it.
+            // This is the one caller that remembers: what mini takes away is what leaving mini
+            // gives back, and nothing else counts as having been there.
+            view.SettleMini(remember: true);
+
             view.ApplyChrome();
 
             // And redrawn, because mini is not only less chrome around the conversation: the
@@ -1178,6 +1192,66 @@ public partial class PanelView : UserControl
     /// has neither, and a search box the Commander cannot type into is worse than no search.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// How tall the ask line wants to be at a given width, or zero where this surface has not got
+    /// one (list.md Phase 51).
+    /// <para>
+    /// <b>This is what makes the window's mini size measured rather than typed.</b> Mini is
+    /// 512x280 in the headset for a stated reason — apparent size there is the pixel count and the
+    /// quad's width in metres together, so the height is a floor under a reduced content set. The
+    /// window's mini keeps one thing the headset's does without, which is the ask line, so its
+    /// height is that floor plus whatever this line actually wants. Ask a surface that never
+    /// furnished one and the answer is zero, which lands it back on the headset's number exactly.
+    /// </para>
+    /// <para>
+    /// Measured at the unscaled width and left to the caller to scale, because the zoom is a
+    /// <c>LayoutTransform</c> outside this tree: everything in here is laid out at 100% and drawn
+    /// larger, which is the whole reason a mini window at 150% is a bigger mini window rather than
+    /// a clipped one.
+    /// </para>
+    /// <para>
+    /// Invalidated afterwards. Measuring out of band leaves the control marked as measured against
+    /// a constraint the layout pass never gave it, and the arrange that follows would use it.
+    /// </para>
+    /// </summary>
+    public double AskLineHeight(double width)
+    {
+        if (!AskRow.IsVisible)
+        {
+            return 0;
+        }
+
+        AskRow.Measure(new Size(width, double.PositiveInfinity));
+
+        var wanted = AskRow.DesiredSize.Height;
+
+        AskRow.InvalidateMeasure();
+
+        return wanted;
+    }
+
+    /// <summary>
+    /// Keeps the ask line on this surface in mini (list.md Phase 51).
+    /// <para>
+    /// <c>AskRow</c> is hidden in mini everywhere else, and that is right for a headset with no
+    /// keyboard and wrong for the one surface whose entire point is a keyboard. <b>A mini window
+    /// you cannot type into is worse than the full window in every respect</b> and would be
+    /// switched off inside a day, which makes this the difference between the feature landing and
+    /// the feature merely being built.
+    /// </para>
+    /// <para>
+    /// <b>Furnished rather than branched.</b> The host that wants it says so, the way
+    /// <see cref="EnableSettings"/> and <see cref="EnableChecklist"/> already work — so no code
+    /// anywhere tests which surface it is on, the headset's mini is untouched, and the flat
+    /// overlay (list.md Phase 48) stays output-only by simply not calling this.
+    /// </para>
+    /// </summary>
+    public void EnableAskInMini()
+    {
+        _asksInMini = true;
+        ApplyChrome();
+    }
+
     public void EnableSearch()
     {
         _searchable = true;
@@ -1608,7 +1682,11 @@ public partial class PanelView : UserControl
         // A furnished tab brings its own footer — the settings surface has the storage line,
         // About and the data folder — so the ask line and the provenance line give way to it
         // rather than sitting under it saying nothing about a page with no turns on it.
-        AskRow.IsVisible = full && transcript;
+        //
+        // In mini it stays only where a host asked for it (list.md Phase 51). That is the one
+        // line of shared code this phase changes, and it is furnished rather than branched so
+        // the headset's mini is untouched by it — see EnableAskInMini.
+        AskRow.IsVisible = (full || _asksInMini) && transcript;
 
         // The provenance line and the microphone indicator together, because both are about the
         // transcript and no other tab has turns on it.
@@ -1674,6 +1752,75 @@ public partial class PanelView : UserControl
     /// makes for mode and tab together.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether mini has a reading of this tab at all.
+    /// <para>
+    /// Two, and the second is conditional: the transcript, which every surface has by
+    /// construction, and Adventures where a host furnished the short reading of it — which is
+    /// exactly what <c>MiniPane</c> holding a child means.
+    /// </para>
+    /// </summary>
+    private bool MiniShows(PanelTab tab) =>
+        tab == PanelTab.Transcript || (tab == PanelTab.Adventures && MiniPane.Child is not null);
+
+    /// <summary>
+    /// Keeps mini on a page mini actually has, and puts back what it took (list.md Phase 51).
+    /// <para>
+    /// <b>This is a hole that was already open.</b> <see cref="ApplyChrome"/> hides the tab strip
+    /// in mini but leaves <c>PagePane</c> visible whenever the tab is not the transcript, so a
+    /// surface put into mini while it is on Settings draws the settings page — whose nav collapses
+    /// below 900 and whose body wants 700 — into a 512-wide surface <b>with no tab strip to leave
+    /// by</b>. The headset can be driven into it today by setting <c>vr.mode</c> to mini on the
+    /// wrong tab; the desktop would have found it on day one, because the desktop is where
+    /// Settings lives.
+    /// </para>
+    /// <para>
+    /// So it belongs here rather than in the window: both surfaces get it at once, and fixing it
+    /// only for the desktop would leave the headset bug exactly where it was.
+    /// </para>
+    /// <para>
+    /// While in mini, a move to a tab mini does not have is declined the same way a tab nobody
+    /// furnished already is — <b>the constraint is mini's, not the navigator's</b>, so it is
+    /// applied here rather than by unregistering anything.
+    /// </para>
+    /// </summary>
+    /// <param name="remember">
+    /// Whether the tab being left is the one to give back. True only where mini is what took it —
+    /// <b>a refusal is not a destination.</b> A phrase that names Settings while the surface is
+    /// mini is declined, and declining it must not queue up a jump to Settings for whenever the
+    /// Commander next goes full, which would be a move they asked for minutes ago and had every
+    /// reason to think had not happened.
+    /// </param>
+    private void SettleMini(bool remember = false)
+    {
+        if (Mode == PanelMode.Mini)
+        {
+            if (!MiniShows(Tab))
+            {
+                if (remember)
+                {
+                    _beforeMini = Tab;
+                }
+
+                Tab = PanelTab.Transcript;
+            }
+
+            return;
+        }
+
+        if (_beforeMini is not { } restore)
+        {
+            return;
+        }
+
+        _beforeMini = null;
+
+        // Through the navigator, which declines a tab this surface no longer has - a host can
+        // furnish a tab and nothing ever unfurnishes one, so this is belt and braces rather than
+        // a case anybody has seen.
+        Tab = restore;
+    }
+
     private void ApplyNavigation()
     {
         // A surface that was never given a tab cannot be put on one, whether by a stale
@@ -1685,6 +1832,15 @@ public partial class PanelView : UserControl
         if (tab != PanelTab.Transcript && !_builders.ContainsKey(tab))
         {
             Tab = PanelTab.Transcript;
+            return;
+        }
+
+        // And mini refuses a tab it has no reading of, whatever moved the navigator — a press, a
+        // spoken phrase, or a switch (list.md Phase 51). Returning rather than falling through,
+        // because the assignment raises Changed and this method runs again on the tab it lands on.
+        if (Mode == PanelMode.Mini && !MiniShows(tab))
+        {
+            SettleMini();
             return;
         }
 
