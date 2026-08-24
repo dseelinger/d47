@@ -1,10 +1,38 @@
+> **Retired 2026-08-24, and the batch with it. Wanted fixes now live in
+> [GitHub Issues](https://github.com/dseelinger/d47/issues).**
+>
+> This file is kept, rather than deleted, because 382 code comments cite `remediation.md` by name —
+> and because reviewing a change that was supposed to have worked and did not is a thing that
+> happens here. Nothing below is maintained.
+>
+> **Only batch 17 is in this file.** It always held one batch at a time; **batches 1 to 16 are in
+> git history and their permanent record is [`CHANGELOG.md`](../../CHANGELOG.md)**, which is where
+> a citation of an earlier batch should be read. To recover one:
+> `git log --follow --oneline -- remediation.md` and check out the revision you want.
+>
+> What was open when this was retired went to Issues:
+>
+> | Item | Issue |
+> |---|---|
+> | 1. The VR aim ray does not follow the hand | [#19](https://github.com/dseelinger/d47/issues/19) — merged with the `bugs.md` entry for the same defect |
+> | 8. Ctrl-drag between slots copies nothing | [#20](https://github.com/dseelinger/d47/issues/20) |
+>
+> **Three items were left unticked here and had in fact shipped**, which is corrected below rather
+> than carried into Issues: **2** (the headless-session cleanup failure) in 0.47.0, **15** (a
+> finished checklist line naming neither ship nor module) in 0.44.1, and **16** ("where is my fleet
+> carrier") in 0.45.0. Each has its line in `CHANGELOG.md` under that release. A queue that
+> overstates what is open is one nobody trusts to say what is closed — which is most of the
+> argument for a derived count over a hand-written one, and most of the reason this file is retired.
+
+---
+
 # Remediation 17
 
 Being recorded from 2026-08-19 against **v0.39.0**. Each item is checked off as it ships, and
 **checked only once it has been seen to work** — a change that compiles is not a fixed item.
 
 **Remediation 16 is finished and its record has moved.** All six items shipped in
-[v0.38.2](CHANGELOG.md), and the line each got there is its permanent record. This file is the
+[v0.38.2](../../CHANGELOG.md), and the line each got there is its permanent record. This file is the
 current batch and not a growing archive, which is why 16 is gone from it.
 
 **This batch is still open for items.** What is here is the starting set; more will be added as
@@ -94,7 +122,7 @@ reparent**, and the panel now reparents on every tab switch.
   one nobody will run twice. It needs to release what it took on the way out, and to say in its
   own output how to stop it. Item 1 stays open, and this is why it is not in 0.39.1.
 
-- [ ] **2. A headless test session fails late, and the test that reports it is arbitrary.** Three
+- [x] **2. A headless test session fails late, and the test that reports it is arbitrary.** Three
   occurrences now, the third on 2026-08-19 during the **v0.39.0 release run**, which is the first
   time this has cost anything beyond a retry.
 
@@ -562,7 +590,7 @@ reparent**, and the panel now reparents on every tab switch.
   The test asserts reference identity across a tick that moves the clock eleven minutes, because
   identity is precisely what was wrong.
 
-- [ ] **15. A finished checklist line names neither the ship nor the module.** Reported against
+- [x] **15. A finished checklist line names neither the ship nor the module.** Reported against
   0.44.0, of three lines under **Done**: two reading *ship 51* and one *ship 53*, over slots
   called `Slot01_Size7` and `Radar`.
 
@@ -597,7 +625,7 @@ reparent**, and the panel now reparents on every tab switch.
   whether they were the same one. `ChecklistEvaluator.Describe` is now the one place either says
   it. Nothing had pinned the old wording, which is why the alignment cost no test and gained one.
 
-- [ ] **16. "Where is my fleet carrier" answered with where the Commander was.** Reported against
+- [x] **16. "Where is my fleet carrier" answered with where the Commander was.** Reported against
   0.44.0, with the answer quoted: the Commander's own system, their own body, their own station,
   their own route — under their own name, offered as an answer about a carrier that was somewhere
   else.

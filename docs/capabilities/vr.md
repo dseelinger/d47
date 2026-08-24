@@ -146,7 +146,8 @@ too. With it on, the hand-back is what returns the trigger — 0.48.6 meant to d
 and did not, because SteamVR refused the call it made and said so only in d47's log; 0.52.2 does,
 and its log says when the controllers are claimed and given back, and **"headset overlay off"**
 then **"headset overlay on"** still frees a controller on an older build. A controller that stops
-answering everything some way into a session is a different fault, open in bugs.md.
+answering everything some way into a session is a different fault, open as
+[#18](https://github.com/dseelinger/d47/issues/18).
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.

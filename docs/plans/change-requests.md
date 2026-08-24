@@ -1,8 +1,8 @@
 # Change requests
 
-Wanted changes that are not defects. **Bugs are not here** — those are in
-[bugs.md](../../bugs.md). Everything here behaves as built; the request is that it be built
-differently.
+Wanted changes that are not defects. **Bugs are not here** — those are
+[GitHub Issues](https://github.com/dseelinger/d47/issues). Everything here behaves as built; the
+request is that it be built differently.
 
 An entry leaves this file when it ships, and the line it gets in [CHANGELOG.md](../../CHANGELOG.md)
 under the release that carried it is its permanent record.
@@ -163,8 +163,9 @@ panel may be moved independently until the window next moves. The request as wri
 Confirm which, because it decides whether a Commander in a headset can move their own panel and keep
 it there.
 
-**Related, and probably the same fix.** `bugs.md` carries a report from the same day that the
-Checklist *filter* does not agree across surfaces, because `_chosen` and `_query` are instance
-fields on `ChecklistPage` rather than shared state. A filter is arguably "view of the tab" in the
-sense meant here. Decide whether this request covers it or whether the filter is a narrower thing
+**Related, and it was the same fix.** A report from the same day said the Checklist *filter* did
+not agree across surfaces, because `_chosen` and `_query` were instance fields on `ChecklistPage`
+rather than shared state; that shipped in 0.60.8, the filter is shared and remembered and the
+search text is neither. A filter is arguably "view of the tab" in the sense meant here. Decide
+whether this request covers the rest of it or whether the filter was a narrower thing
 that travels by the same road; do not fix them twice.

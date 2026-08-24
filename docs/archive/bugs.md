@@ -1,6 +1,25 @@
+> **Retired 2026-08-24. Open defects now live in
+> [GitHub Issues](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Abug).**
+>
+> This file is kept, rather than deleted, because it is cited by name from the code and because
+> reviewing a change that was supposed to have worked and did not is a thing that happens here.
+> Nothing below is maintained. What was open when it was retired went to Issues:
+>
+> | Entry | Issue |
+> |---|---|
+> | The motion controller stops answering some way into a headset session | [#18](https://github.com/dseelinger/d47/issues/18) |
+> | The aim ray does not follow the hand | [#19](https://github.com/dseelinger/d47/issues/19) |
+> | Opacity was set on the surface the Commander was not looking at — the general form | [#21](https://github.com/dseelinger/d47/issues/21) |
+>
+> Everything else here shipped, and its permanent record is still the line it got in
+> [`CHANGELOG.md`](../../CHANGELOG.md) under the release that fixed it. That rule did not change;
+> only where an entry waits before it ships did.
+
+---
+
 # Open bugs
 
-Defects only. Feature and polish work lives in [list.md](list.md).
+Defects only. Feature and polish work lives in [list.md](../../list.md).
 
 An item leaves this file when it ships, and its record from then on is the line it gets
 in `CHANGELOG.md` under the release that fixed it. There is deliberately no

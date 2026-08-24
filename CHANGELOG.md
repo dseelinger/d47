@@ -11,9 +11,12 @@ changed. Fixes between phases are patches. **A published tag never moves**: it i
 one exact `d47.exe` and the checksum beside it, so a correction ships as the next patch rather
 than as the same number twice.
 
-Open defects live in [bugs.md](bugs.md), and wanted changes in
-[docs/plans/change-requests.md](docs/plans/change-requests.md). An entry leaves either file when
-it ships, and the line it gets here is its permanent record.
+Open defects live in [GitHub Issues](https://github.com/dseelinger/d47/issues), and wanted changes
+in [docs/plans/change-requests.md](docs/plans/change-requests.md). An issue is closed and an entry
+leaves that file when it ships, and the line it gets here is its permanent record. `bugs.md` and
+`remediation.md` were retired on 2026-08-24 and are archived under
+[docs/archive/](docs/archive/README.md); a release section below that names either of them means
+the file as it stood then.
 
 ---
 
