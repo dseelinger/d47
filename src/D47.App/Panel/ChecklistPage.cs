@@ -464,6 +464,28 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                   + "and D47 will propose it."));
         }
 
+        // How big the answer is, whenever the page is showing less than all of it (reported
+        // 2026-08-23, twice in one evening). The list has no headings and no cap, and the ordering
+        // floats the flown ship's project to the top — so a filter that matched forty-five lines
+        // across seven ships opened on fourteen near-identical lines from one of them and read as
+        // "it is only showing one ship". The list was right and looked broken, which cost two bug
+        // reports and an afternoon. One line above the rows is the whole fix; it does not fight
+        // the no-headings decision below, because the scope still rides each line.
+        if (open.Count > 0 && (_chosen != Everything || _query.Length > 0))
+        {
+            var ships = open
+                .Where(item => item.Scope.Group == ChecklistGroup.Ship)
+                .Select(item => item.Scope.Key)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+
+            var lines = open.Count == 1 ? "1 line" : $"{open.Count.ToString(CultureInfo.InvariantCulture)} lines";
+
+            _list.Children.Add(Muted(ships > 1
+                ? $"{lines}, across {ships.ToString(CultureInfo.InvariantCulture)} ships."
+                : $"{lines}."));
+        }
+
         // One list, in the Commander's order, and no headings between scopes. Scope rides each
         // line instead: carving the page into per-ship lists would make the order several orders,
         // and the thing being ordered is everything being worked on.
