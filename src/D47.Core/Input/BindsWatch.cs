@@ -43,8 +43,17 @@ public sealed class BindsWatch
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
 
+    /// <summary>
+    /// How many consecutive polls will retry a read that could not be made, before the watcher
+    /// stops asking and waits for the files to move again. At the tick's 10 Hz this is three
+    /// seconds, and the thing being waited out is Elite finishing with a file of a few dozen
+    /// bytes — so it is generous by a wide margin rather than finely judged.
+    /// </summary>
+    private const int RetryPolls = 30;
+
     private EliteBinds _current;
     private string _stamp;
+    private int _retries;
 
     /// <summary>
     /// Resolves once, immediately, so the first caller sees the same thing it always did. The
@@ -87,11 +96,53 @@ public sealed class BindsWatch
             return false;
         }
 
-        // Advanced before the parse rather than after it, so a file that cannot be read is not
-        // re-parsed ten times a second for the rest of the session.
-        _stamp = now;
+        var reloaded = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, _logger, out var unreadable);
 
-        var reloaded = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, _logger);
+        // **A read that failed never replaces one that worked** (#24). Elite held StartPreset open
+        // for a moment on 2026-08-24, the resolve came back empty, 347 bindings became none, and
+        // nothing asked again for two hours and forty-one minutes — every key d47 can press dead,
+        // and only the arrival honk talkative enough to say so. There is no state in which zero
+        // bindings is a better answer than the ones that were working a moment ago.
+        if (unreadable)
+        {
+            if (_retries < RetryPolls)
+            {
+                _retries++;
+
+                // The stamp is deliberately *not* advanced, which is what makes the next tick try
+                // again. A lock is a moment rather than a state, so waiting for the file to move
+                // a second time is waiting for something that may never happen.
+                _logger.LogWarning(
+                    "The bindings could not be re-read this time; keeping the {Count} already "
+                    + "loaded and trying again ({Attempt} of {Limit})",
+                    _current.Bindings.Count,
+                    _retries,
+                    RetryPolls);
+
+                return false;
+            }
+
+            // Out of attempts. The stamp advances so this stops parsing every tick, and the
+            // bindings still stand — giving up on the read is not a reason to give up on them.
+            _stamp = now;
+            _retries = 0;
+
+            _logger.LogWarning(
+                "The bindings still could not be read after {Limit} attempts; keeping the "
+                + "{Count} already loaded",
+                RetryPolls,
+                _current.Bindings.Count);
+
+            return false;
+        }
+
+        _retries = 0;
+
+        // Advanced after the read rather than before it. It used to go first, so that a file which
+        // could not be read was not re-parsed ten times a second for the rest of the session —
+        // the retry budget above is what buys that now, and it buys it without also making the
+        // failure permanent.
+        _stamp = now;
 
         lock (_gate)
         {
