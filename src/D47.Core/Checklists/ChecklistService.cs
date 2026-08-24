@@ -409,7 +409,7 @@ public sealed class ChecklistService(
             {
                 news.Add(new ChecklistNews(
                     $"checklist.undone.{item.Id}",
-                    $"\"{said}\" is no longer done. {verdict.Reason}"));
+                    $"\"{said}\" is no longer done. {verdict.Says}"));
             }
             else if (verdict.State == ChecklistState.Done)
             {
@@ -429,12 +429,12 @@ public sealed class ChecklistService(
                 news.Add(new ChecklistNews(
                     $"checklist.done.{item.Id}",
                     aboard && verdict.Reason is { Length: > 0 }
-                        ? verdict.Reason
-                        : $"\"{said}\" is done. {verdict.Reason}"));
+                        ? verdict.Says
+                        : $"\"{said}\" is done. {verdict.Says}"));
             }
             else if (verdict.State is ChecklistState.Blocked or ChecklistState.Stale)
             {
-                news.Add(new ChecklistNews($"checklist.{verdict.State}.{item.Id}", verdict.Reason));
+                news.Add(new ChecklistNews($"checklist.{verdict.State}.{item.Id}", verdict.Says));
             }
         }
 
@@ -981,7 +981,7 @@ public sealed class ChecklistService(
         var verdict = ChecklistEvaluator.Evaluate(item, State);
 
         return verdict is { } known
-            ? $"{text} — {known.Reason}"
+            ? $"{text} — {known.Says}"
             : $"{text} — {Stale(item)}";
     }
 
@@ -1494,7 +1494,7 @@ public sealed class ChecklistService(
             var verdict = ChecklistEvaluator.Evaluate(item, State);
 
             return verdict is { } known
-                ? $"\"{item.Text}\" is worked out from your journal rather than agreed: {known.Reason}"
+                ? $"\"{item.Text}\" is worked out from your journal rather than agreed: {known.Says}"
                 : $"\"{item.Text}\" is worked out from your journal, and I cannot see it from here.";
         }
 

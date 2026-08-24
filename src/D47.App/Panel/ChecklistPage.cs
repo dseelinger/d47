@@ -907,7 +907,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             aside.Add(next);
         }
-        else if (!item.TicksByHand && _checklists.Verdict(item)?.Reason is { } reason)
+        else if (!item.TicksByHand && _checklists.Verdict(item)?.Says is { } reason)
         {
             aside.Add(reason);
         }

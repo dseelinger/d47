@@ -2151,7 +2151,7 @@ public sealed class ShipsMode(
             },
             state());
 
-        var said = verdict?.Reason
+        var said = verdict?.Says
                    ?? "Nothing can be said about this right now — Elite reports the loadout of the "
                       + "ship you are sitting in and no other.";
 

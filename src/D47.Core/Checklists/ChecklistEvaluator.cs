@@ -5,7 +5,48 @@ using D47.Core.Knowledge;
 namespace D47.Core.Checklists;
 
 /// <summary>Where an item stands, and the sentence that says so.</summary>
-public readonly record struct ChecklistVerdict(ChecklistState State, string Reason);
+/// <param name="Reason">
+/// What is true of <em>this line</em>: the module, the slot, the grade it is at and the grade it
+/// wants. Per item, because a line has to be able to say why it is blocked on its own — spoken
+/// alone, read through <c>get_checklist</c>, or seen on a filtered page where its neighbours are
+/// not there.
+/// </param>
+public readonly record struct ChecklistVerdict(ChecklistState State, string Reason)
+{
+    /// <summary>
+    /// What is true of the Commander's <em>relationship with an engineer</em>, kept apart from the
+    /// reason rather than appended to it
+    /// (<a href="https://github.com/dseelinger/d47/issues/26">#26</a>).
+    /// <para>
+    /// <b>The state is per line; the explanation is per engineer.</b> "Grade 5 cannot be rolled at
+    /// rank 1" is a fact about this module's plan. "Rank rises by working with them, and it
+    /// compounds" is a fact about the engineer, and it is the same sentence however many modules
+    /// are waiting on it — which is what made it read as canned when six lines said it in a row
+    /// (<a href="https://github.com/dseelinger/d47/issues/33">#33</a>).
+    /// </para>
+    /// <para>
+    /// <b>Separating it changes nothing a Commander sees today</b>, and that is deliberate:
+    /// <see cref="Says"/> composes the two in the order they were always written, so every drawn
+    /// line, spoken answer and tool result is byte-identical to before. What it buys is that the
+    /// two can now be told apart by anything that wants to — a surface that shows the explanation
+    /// once for a page rather than once per line, or a route that hands it to a model as a fact to
+    /// put in its own words instead of a finished sentence to repeat.
+    /// </para>
+    /// <para>
+    /// <b>Core stays deterministic and knows no model.</b> This is a field, not a seam: it carries
+    /// a sentence the rules already produced, and where that sentence is varied — if it is — is a
+    /// decision for the layer that speaks, which is where <c>FlavourBriefs</c> already lives.
+    /// </para>
+    /// </summary>
+    public string? Advice { get; init; }
+
+    /// <summary>
+    /// The whole verdict as one sentence, which is what every surface has always drawn. Reason
+    /// first, then the explanation, separated by a single space — exactly the string that used to
+    /// be built by appending one to the other at the point it was decided.
+    /// </summary>
+    public string Says => Advice is { Length: > 0 } advice ? $"{Reason} {advice}" : Reason;
+}
 
 /// <summary>
 /// What the journal says about a derived item (list.md Phase 17, "Per ship build
@@ -281,11 +322,15 @@ public static class ChecklistEvaluator
     {
         var who = intent.Engineer is { } engineer ? $" with {engineer}" : string.Empty;
 
-        var price = $" {EngineeringRules.RankRises}";
-
+        // The explanation rides its own field rather than the sentence (#26): it is a fact about
+        // the engineer, not about this module, and Says composes the two exactly as they read
+        // before.
         return new ChecklistVerdict(
             ChecklistState.Blocked,
-            $"Grade {grade} cannot be rolled at rank {rank}{who} at all — no amount of gathering fixes that." + price);
+            $"Grade {grade} cannot be rolled at rank {rank}{who} at all — no amount of gathering fixes that.")
+        {
+            Advice = EngineeringRules.RankRises,
+        };
     }
 
     /// <summary>
@@ -342,10 +387,11 @@ public static class ChecklistEvaluator
             return new ChecklistVerdict(ChecklistState.Done, $"{engineer.Name} is at rank {rank}.");
         }
 
-        var price = $" {EngineeringRules.RankRises}";
-
         return new ChecklistVerdict(
-            ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.{price}");
+            ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.")
+        {
+            Advice = EngineeringRules.RankRises,
+        };
     }
 
     // ----------------------------------------------------------- colonising

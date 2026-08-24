@@ -295,7 +295,7 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
             var verdict = ChecklistEvaluator.Evaluate(costed, state());
 
             lines.Add(new LoadoutLine(
-                verdict?.Reason
+                verdict?.Says
                 ?? "Nothing can be said about this right now — Elite reports the loadout you are in "
                    + "and no other.",
                 verdict is { } answered && ChecklistNextAction.IsWrong(answered.State)
