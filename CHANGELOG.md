@@ -54,6 +54,12 @@ executable with loose assemblies beside it, or assemblies newer than the executa
 any build produces. Said rather than enforced — a heuristic that can be wrong must not be the thing
 that stops d47 running.
 
+**And that folder is `dev-install\data\`, not `dev-data\`.** 0.60.4 named it `dev-data\` and was one
+level out: `AppPaths` puts `data\` inside whatever root it is handed, so the folder really was
+`dev-data\data\` — a path nobody can read twice without wondering which is which. A Debug build's
+install root is `dev-install\` and its data folder is `dev-install\data\`, exactly as an installed
+d47's is `data\` beside the exe.
+
 ## 0.60.7 — 2026-08-24 — Two panels, one opacity knob
 
 Opacity was one of the settings each headset surface kept its own copy of, which is what made *"set

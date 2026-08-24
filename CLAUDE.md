@@ -183,7 +183,7 @@ Everything the app writes goes to `data/` beside the executable — never `%APPD
 **A Debug build is the one exception, and it is not a loosening of that rule.** Beside a *Debug*
 executable is `bin\Debug\…`, so dev state used to live in build output and deleting `bin\Debug` to
 clear a stale artifact deleted a Commander's checklist, settings and secrets with it (2026-08-23).
-A Debug build now writes to `dev-data/` at the repo root, through an `AssemblyMetadata("DevDataRoot", …)`
+A Debug build now writes to `dev-install/data/` at the repo root, through an `AssemblyMetadata("DevInstallRoot", …)`
 that `D47.App.csproj` writes for that configuration only — a published build carries no such
 attribute and cannot take the road, and there is deliberately no environment variable that can.
 So **`bin` is disposable again**, which is the point.

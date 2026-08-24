@@ -44,17 +44,26 @@ public sealed class AppPaths
     /// unaffected.
     /// </para>
     /// </summary>
-    public static AppPaths ForRunningBuild() => new(DevDataRoot() ?? AppContext.BaseDirectory);
+    public static AppPaths ForRunningBuild() => new(DevInstallRoot() ?? AppContext.BaseDirectory);
 
     /// <summary>
-    /// The Debug-only redirect, or null. Empty is null too: a metadata value that failed to
-    /// expand must not resolve the data folder to the drive root.
+    /// The Debug-only redirect, or null.
+    /// <para>
+    /// <b>An install root, and not the data folder.</b> This class puts <c>data\</c> inside
+    /// whatever root it is handed, so the folder a Debug build actually writes to is
+    /// <c>dev-install\data\</c> — named for what it is, because <c>dev-data\data\</c> is a path
+    /// nobody can read twice without wondering which one is which.
+    /// </para>
+    /// <para>
+    /// Empty is null too: a metadata value that failed to expand must not resolve the data folder
+    /// to the drive root.
+    /// </para>
     /// </summary>
-    private static string? DevDataRoot() =>
+    private static string? DevInstallRoot() =>
         System.Reflection.Assembly.GetEntryAssembly()
             ?.GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(attribute =>
-                string.Equals(attribute.Key, "DevDataRoot", StringComparison.Ordinal))
+                string.Equals(attribute.Key, "DevInstallRoot", StringComparison.Ordinal))
             ?.Value is { Length: > 0 } root
             ? root
             : null;
