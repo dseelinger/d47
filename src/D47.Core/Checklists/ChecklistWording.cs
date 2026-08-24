@@ -39,9 +39,22 @@ public static class ChecklistWording
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        if (item.Intent is not { } intent
-            || !ChecklistKeys.SlotShaped(intent.Kind)
-            || item.Scope.Group != ChecklistGroup.Ship)
+        if (item.Intent is not { } intent)
+        {
+            return item.Text;
+        }
+
+        // **An unlock line says what the invitation asks for**
+        // (<a href="https://github.com/dseelinger/d47/issues/22">#22</a>). It used to say only
+        // "Unlock Bill Turner at Alioth" and stop, while d47 held the answer all along: the shipped
+        // engineer table carries the prose for 34 of the 38, and two other surfaces already read it.
+        // The checklist is the one that survives leaving the page, so it is the one that needed it.
+        if (intent.Kind == ChecklistIntentKind.EngineerAccess && (intent.Grade ?? 1) <= 1)
+        {
+            return Invitation(item.Text, intent.Subject);
+        }
+
+        if (!ChecklistKeys.SlotShaped(intent.Kind) || item.Scope.Group != ChecklistGroup.Ship)
         {
             return item.Text;
         }
@@ -55,6 +68,48 @@ public static class ChecklistWording
             ? item.Text
             : Swap(item.Text, intent.Subject, said);
     }
+
+    /// <summary>
+    /// What the invitation asks for, on the end of an unlock line (#22).
+    /// <para>
+    /// <b>Resolved when the line is drawn, never stored.</b> Same rule that keeps a plan's figures
+    /// out of the file: a regenerated table reaches lines already on the list, and a line written
+    /// last month does not go on asserting last month's requirement.
+    /// </para>
+    /// <para>
+    /// <b>Four engineers have no invitation text, and they say so rather than nothing.</b> Oden
+    /// Geiger, Uma Laszlo, Yarden Bond and Yi Shen have an empty <c>unlock</c> column; what earns
+    /// the invitation is filled for all thirty-eight, so there is always something true to say and
+    /// it is said as the different thing it is. A line that simply stopped would read as though
+    /// nothing were required.
+    /// </para>
+    /// </summary>
+    private static string Invitation(string text, string engineer)
+    {
+        if (EngineerDirectory.ByName(engineer) is not { } found)
+        {
+            return text;
+        }
+
+        if (found.Unlock is { Length: > 0 } asks)
+        {
+            return $"{text} — {Sentence(asks)}";
+        }
+
+        // Short on purpose. What earns the invitation is filled for all thirty-eight and is worth
+        // reading, but it runs to a hundred and seventy characters on Oden Geiger — and this line
+        // is spoken as well as drawn, with no heading or page around it when it is. So the line
+        // says the honest short thing and the drill keeps the prose.
+        return found.Meeting is { Length: > 0 }
+            ? $"{text} — no invitation task on record"
+            : text;
+    }
+
+    /// <summary>Lower-cased where it is a whole sentence, so the invitation reads as a clause on the end of one.</summary>
+    private static string Sentence(string said) =>
+        said.Length > 1 && char.IsUpper(said[0]) && !char.IsUpper(said[1])
+            ? char.ToLowerInvariant(said[0]) + said[1..].TrimEnd('.')
+            : said.TrimEnd('.');
 
     /// <summary>
     /// The whole sentence, ship and all — "Grade 5 Reinforced Shields on 7A Shield Generator on
