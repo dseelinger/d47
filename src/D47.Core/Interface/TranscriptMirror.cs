@@ -12,10 +12,34 @@ namespace D47.Core.Interface;
 /// are how a surface draws what it is reading and stay where they were.
 /// </para>
 /// <para>
-/// <b>Only the transcript.</b> Mirroring tabs and trails as well would acquire an <em>except</em>:
-/// Settings is desktop-only and Loadout is withdrawn from VR, so that rule would hold only
-/// sometimes, which is the kind people misremember. Every surface furnishes all three transcript
-/// roots, so this one has no except.
+/// <b>The transcript is shared with no preferred surface. The tab is not: the window leads and
+/// the mini panel follows.</b> Those two sentences are the whole of this class and they are
+/// deliberately different, so read them together rather than assuming the second is a bug in the
+/// first (change-requests.md 34, ruled by the Commander 2026-08-24).
+/// </para>
+/// <para>
+/// <b>This reverses what stood here, and the reasoning it reverses was written down.</b> It said:
+/// <em>mirroring tabs and trails as well would acquire an except — Settings is desktop-only and
+/// Loadout is withdrawn from VR, so that rule would hold only sometimes, which is the kind people
+/// misremember.</em> The objection was never that mirroring tabs is hard. It was that the rule
+/// would need an exception, and an exception gets misremembered.
+/// </para>
+/// <para>
+/// <b>The Commander's request supplied the exception in the same breath</b>, which is what
+/// disposes of the objection: <em>switching to a tab (and view of the tab) in the main window
+/// should ALWAYS affect the mini-panel — IFF that tab/view is present on the mini panel.</em>
+/// That is a stated rule with its own condition, not a rule that happens to fail sometimes. And
+/// the condition needs no code: <see cref="PanelNavigator.Select"/> already declines a tab no host
+/// furnished, so <em>not calling Furnish</em> — the same thing that withdrew Loadout from the
+/// headset — is the whole of it.
+/// </para>
+/// <para>
+/// <b>One-way, and that is the half that protects the Commander.</b> The follower may be moved
+/// independently and keeps where it was put until the window next moves, so somebody in a headset
+/// can put their mini panel on something and have it stay there. It also leaves
+/// <c>list.md</c> Phase 48 standing untouched — <em>what must not follow is the overlay's tab
+/// dragging the window's</em> — which was the strongest argument for this shape rather than a
+/// symmetrical one.
 /// </para>
 /// <para>
 /// <b>This is the one mechanism that carries a transcript root between surfaces.</b> A spoken
@@ -55,6 +79,19 @@ public sealed class TranscriptMirror
     /// </summary>
     private readonly Dictionary<PanelNavigator, string> _seen = [];
 
+    /// <summary>
+    /// The tab each navigator was last known to be on, which is to the tab half what
+    /// <see cref="_seen"/> is to the transcript half: the way a move made <em>by this surface</em>
+    /// is told apart from one it was given.
+    /// </summary>
+    private readonly Dictionary<PanelNavigator, PanelTab> _tabs = [];
+
+    /// <summary>
+    /// The navigator whose tab the others follow, or null where nobody leads and the tab half is
+    /// simply off. The window's, set by <see cref="Lead"/>.
+    /// </summary>
+    private PanelNavigator? _leader;
+
     /// <summary>Set while a move of this mirror's own making is raising <c>Changed</c>.</summary>
     private bool _mirroring;
 
@@ -79,6 +116,7 @@ public sealed class TranscriptMirror
 
         _navigators.Add(nav);
         _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
+        _tabs[nav] = nav.Tab;
 
         if (Root is null)
         {
@@ -92,6 +130,22 @@ public sealed class TranscriptMirror
         nav.Changed += (_, _) => OnChanged(nav);
     }
 
+    /// <summary>
+    /// Names the navigator the others follow — the window's (change-requests.md 34). Adds it if it
+    /// is not already in, so a host has one call to make rather than two in an order that matters.
+    /// <para>
+    /// <b>Leading is not a second mirror.</b> The same re-entrancy guard, the same last-seen
+    /// bookkeeping and the same <em>decline a move you have already made</em> answer carry it, for
+    /// the reason the transcript half states: two mechanisms holding one invariant eventually
+    /// disagree about it.
+    /// </para>
+    /// </summary>
+    public void Lead(PanelNavigator nav)
+    {
+        Add(nav);
+        _leader = nav;
+    }
+
     private void OnChanged(PanelNavigator nav)
     {
         // The echo: a move this mirror made, announcing itself. Explicitly nothing.
@@ -99,6 +153,8 @@ public sealed class TranscriptMirror
         {
             return;
         }
+
+        Led(nav);
 
         var root = nav.RootKeyOf(PanelTab.Transcript);
 
@@ -126,6 +182,51 @@ public sealed class TranscriptMirror
             // just did — most likely dismissing that chooser — is a chance to bring it level.
             Mirroring(() => CatchUp(nav));
         }
+    }
+
+    /// <summary>
+    /// The tab half: where the leader moved, the followers go, and where anybody else moved,
+    /// nothing happens.
+    /// <para>
+    /// <b>The follower's own move is recorded and not acted on</b>, which is what "may be moved
+    /// independently and keeps where it was put" means in code. Nothing else has to remember that
+    /// it was moved: the next time the window moves, the leader leads again.
+    /// </para>
+    /// </summary>
+    private void Led(PanelNavigator nav)
+    {
+        var tab = nav.Tab;
+
+        if (_tabs.TryGetValue(nav, out var was) && was == tab)
+        {
+            return;
+        }
+
+        _tabs[nav] = tab;
+
+
+        if (!ReferenceEquals(nav, _leader))
+        {
+            return;
+        }
+
+        // The view of the tab as well as the tab, which is what was asked for: switching the
+        // window to a tab it is already on and changing only the root still carries.
+        var root = nav.RootKeyOf(tab);
+
+        Mirroring(() =>
+        {
+            foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
+            {
+                // Declined outright by a surface that never furnished this tab, which is the
+                // Commander's IFF and costs no special case. Both calls are made either way:
+                // a follower already on the tab still wants the root.
+                other.Select(tab);
+                other.SelectRoot(tab, root);
+
+                _tabs[other] = other.Tab;
+            }
+        });
     }
 
     /// <summary>

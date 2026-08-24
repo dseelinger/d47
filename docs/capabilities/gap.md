@@ -139,10 +139,34 @@ taken once on your behalf. Counting them is honest about the whole ambition; exc
 what can be finished now. **Both are real questions**, and which one you are asking changes through
 the evening.
 
+### Asking about one material names the blueprint
+
+*"What is Conductive Polymers for?"* used to get an apology: d47 said it could not tell which
+blueprint ate them, because the shortfall is netted across every plan at once.
+
+**It knew more than it admitted.** The demands under a shortfall have always named the ship and the
+slot — *for Bad Idea (Python) · MainEngines* — and only the blueprint was missing. It is recorded
+now, at the point the plan is costed, where the slot has it in hand.
+
+**The fleet-wide list does not show it, and that is deliberate.** A shortfall can name a dozen
+demands, and hanging *· Dirty Drive Tuning 3* off each would double a line that is read aloud as
+often as it is drawn. Ask about one material and there is room:
+
+```
+Conductive Polymers: 14 short (6 of 20).
+  Bad Idea (Python) · MainEngines · Dirty Drive Tuning 3 — 8
+  Flamebrand (Anaconda) · PowerPlant · Armoured 4 — 12
+```
+
+Say *"what is Conductive Polymers for"*, *"what do I need Conductive Polymers for"* or *"what wants
+Conductive Polymers"*. Those phrases exist only for materials something you have planned actually
+wants — the vocabulary follows your plans, and asking about anything else falls through to an
+ordinary answer.
+
 #### `get_build_gap`
 
 ```json
-{"type":"object","properties":{"include_unowned":{"type":"boolean","description":"Whether hulls and items they do not own yet are counted. True is the whole ambition; false is what can be finished now. Defaults to true."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"include_unowned":{"type":"boolean","description":"Whether hulls and items they do not own yet are counted. True is the whole ambition; false is what can be finished now. Defaults to true."},"material":{"type":"string","description":"One material, by name or symbol. Narrows the answer to what wants that one and names the blueprint each demand is for. Omit for everything."}},"required":[],"additionalProperties":false}
 ```
 
 ### Not the same set as `get_plan_shortfall`

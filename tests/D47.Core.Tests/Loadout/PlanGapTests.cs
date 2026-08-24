@@ -237,4 +237,61 @@ public class PlanGapTests
 
         Assert.NotEmpty(report.Uncovered);
     }
+
+    /// <summary>
+    /// <b>A demand knows which blueprint it is for</b> (change-requests.md 37), asked for
+    /// indirectly on 2026-08-20 when the Commander asked what a shortfall of Conductive Polymers
+    /// was for and d47 answered that it could not tell which blueprint ate them.
+    /// <para>
+    /// It could. The costing walks one slot at a time so the answer knows who asked, and the slot
+    /// has its blueprint in hand at that moment - so this is one more field recorded there, not a
+    /// join made afterwards.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ADemandNamesTheBlueprintItIsFor()
+    {
+        var report = PlanGap.Of([Ship()], [], State());
+
+        var demands = report.Ledgers
+            .SelectMany(ledger => ledger.Lines)
+            .SelectMany(line => line.Wanted)
+            .ToList();
+
+        Assert.NotEmpty(demands);
+        Assert.All(demands, demand => Assert.Equal("Dirty Drive Tuning 5", demand.Blueprint));
+        Assert.All(demands, demand =>
+            Assert.Equal("Bad Idea (Python) · MainEngines · Dirty Drive Tuning 5", demand.Fully()));
+    }
+
+    /// <summary>
+    /// <b>And the fleet-wide line does not say it</b>, which is the ruling rather than an
+    /// oversight: a shortfall can name a dozen demands, and a blueprint on each would double a line
+    /// that is read aloud as often as it is drawn.
+    /// </summary>
+    [Fact]
+    public void TheShortDescriptionIsUnchanged()
+    {
+        var report = PlanGap.Of([Ship()], [], State());
+
+        var demand = report.Ledgers
+            .SelectMany(ledger => ledger.Lines)
+            .SelectMany(line => line.Wanted)
+            .First();
+
+        Assert.DoesNotContain("Dirty Drive Tuning", demand.Describe(), StringComparison.Ordinal);
+        Assert.Contains("MainEngines", demand.Describe(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A slot planned as a module and nothing else has no blueprint to name, and says the same
+    /// thing it always said rather than an empty separator.
+    /// </summary>
+    [Fact]
+    public void ASlotWithNoBlueprintReadsAsItAlwaysDid()
+    {
+        var demand = new GapDemand("Bad Idea (Python) · MainEngines", 8);
+
+        Assert.Equal("Bad Idea (Python) · MainEngines", demand.Fully());
+    }
 }

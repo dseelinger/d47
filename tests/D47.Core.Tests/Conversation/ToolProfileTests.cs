@@ -41,8 +41,13 @@ public class ToolProfileTests
             ControlContext.Srv, ControlContext.OnFoot, ControlContext.Fighter,
         };
 
+        // Measured before the valve, not after it. ToolProfiles.For returns the degraded profile
+        // once the full one does not fit, and a degraded profile is under the ceiling by
+        // construction - so asking the returned profile its size can never see the thing this test
+        // exists to catch. It went on passing on 2026-08-24 while the SRV profile degraded, and the
+        // only test that noticed was one asserting a tool the degrade happens to drop.
         var over = contexts
-            .Select(context => ToolProfiles.For(registry, context, actionsEnabled: true))
+            .Select(context => ToolProfiles.Full(registry, context))
             .Where(profile => profile.Bytes > ToolProfiles.ComfortableBytes)
             .Select(profile => $"{profile.Id} at {profile.Bytes}")
             .ToArray();

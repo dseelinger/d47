@@ -282,7 +282,7 @@ Professor Palin — 3 steps, 466 ly, about 18 jumps, and 2 planned things covere
 
 **A solver rather than a display.** Walking one engineer's referral chain is exact and cheap, and it
 answers the wrong question — a blueprint usually lists several engineers, and one unlock covers many
-plans. Marsha Hicks rolls multi-cannons, cannons, fragment cannons, fuel scoops, refineries and four
+plans. Marsha Hicks crafts multi-cannons, cannons, fragment cannons, fuel scoops, refineries and four
 limpet controllers, all at grade 5. So the best next unlock is the one that satisfies the most of
 what you have planned, not the shortest chain.
 
@@ -417,10 +417,10 @@ solver keeps that reading; what it does about it is name the referrer it picked 
 text underneath, so you read Frontier's sentence rather than only Directive 47's count of it. That is
 the whole reason a ranking has to show its work.
 
-**Who can roll a thing is read per grade**, because the blueprint table states it per grade: six
+**Who can craft a thing is read per grade**, because the blueprint table states it per grade: six
 engineers offer Increased FSD Range at grade 3 and three of them at grade 5. Deriving the list from
 an engineer's top grade instead would send you to Professor Palin for a grade 5 drive he does not
-roll. The directory's own speciality lists are unioned in beside it, and that half is not
+craft. The directory's own speciality lists are unioned in beside it, and that half is not
 redundant — the four Colonia on-foot engineers have no rows in the blueprint table at all, so reading
 it alone tells a Colonia Commander that nobody within twenty-two thousand light years can do the
 thing three people next door do.

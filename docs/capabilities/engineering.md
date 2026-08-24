@@ -10,7 +10,7 @@ nav_order: 108
   the nine Palette roles and nothing else.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What a blueprint costs, what it costs you, and how your own roll actually went.</p>
+<p class="lede">What a blueprint costs, what it costs you, and how your own craft actually went.</p>
 <section>
 <h2><span class="num">1</span> Two halves, and only one of them is about you.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="A shipped table and your journal combine into one answer">
@@ -31,7 +31,7 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">2</span> A full grade is arithmetic, not a grind.</h2>
-<svg viewBox="0 0 880 276" role="img" aria-label="Rank and grade give an exact roll count, which multiplies the recipe into a shopping list">
+<svg viewBox="0 0 880 276" role="img" aria-label="Rank and grade give an exact craft count, which multiplies the recipe into a shopping list">
  <rect x="20" y="30" width="230" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="135" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOUR RANK</text>
  <text x="135" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">5 with Farseer</text>
@@ -53,7 +53,7 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">3</span> Below the rank it is a gate, not a longer grind.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="Grade five cannot be rolled below rank five at all">
+<svg viewBox="0 0 880 250" role="img" aria-label="Grade five cannot be crafted below rank five at all">
  <rect x="20" y="26" width="280" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="160" y="64" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU WANT GRADE 5</text>
  <text x="160" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">you are rank 2</text>
@@ -62,7 +62,7 @@ nav_order: 108
  <text x="392" y="90" font-size="16" fill="var(--text-muted)">not slower — not at all</text>
  <rect x="20" y="152" width="834" height="62" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="437" y="190" text-anchor="middle" font-size="17" fill="var(--text)">So you are told the rank and its price: 16,000,000 cr sold at their workshop.</text>
- <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Never a shopping list for something you could not roll today.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Never a shopping list for something you could not craft today.</text>
 </svg>
 </section>
 <section>
@@ -84,16 +84,16 @@ nav_order: 108
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="engineers.html"><span class="ct">Engineers →</span><span class="cd">Who can roll this, where they are, and how to reach them.</span></a>
+<a class="card" href="engineers.html"><span class="ct">Engineers →</span><span class="cd">Who can craft this, where they are, and how to reach them.</span></a>
 <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The build a blueprint is planned against, slot by slot.</span></a>
-<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a planned roll waits until the materials are in.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a planned craft waits until the materials are in.</span></a>
 </div>
 </div>
 </div></div>
 
 ## The details
 
-What a blueprint costs and changes, and how the roll on a fitted module actually went.
+What a blueprint costs and changes, and how the craft on a fitted module actually went.
 
 > "what does increased FSD range cost"
 > "how good is my frame shift drive roll"
@@ -101,7 +101,7 @@ What a blueprint costs and changes, and how the roll on a fitted module actually
 
 Nothing here touches the network. Two halves, and they answer different questions. **What a grade 5
 costs** is a fact about the game and comes from shipped tables. **What it costs *you*** depends on
-your rank with the engineer who would roll it, and only your journal knows that — so the two arrive
+your rank with the engineer who would craft it, and only your journal knows that — so the two arrive
 together, the way [engineers](engineers.md) pairs a directory with your own standing.
 
 ### What a blueprint costs
@@ -120,7 +120,7 @@ Per application:
 
 Offered by: Elvira Martuuk to grade 5, Felicity Farseer to grade 5, Mel Brandon to grade 5, Chloe Sedesi to grade 3, Colonel Bris Dekker to grade 3, Professor Palin to grade 3.
 
-You are grade 5 with Felicity Farseer, at Farseer Inc in Deciat: a full grade 5 is 5 rolls, so 5 × Arsenic, 5 × Chemical Manipulators, 5 × Datamined Wake Exceptions.
+You are grade 5 with Felicity Farseer, at Farseer Inc in Deciat: a full grade 5 is 5 crafts, so 5 × Arsenic, 5 × Chemical Manipulators, 5 × Datamined Wake Exceptions.
 
 Experimental effects for Frame Shift Drive: Deep Charge, Double Braced, Mass Manager, Stripped Down, Thermal Spread.
 ```
@@ -129,47 +129,47 @@ The recipe is quoted **per grade**, because it changes as the grade climbs and s
 for grade 3 needs that row rather than the top one.
 
 The last paragraph before the experimentals is the one that needed the journal. **A full grade is an
-exact total, not a rate.** How many rolls a grade takes is `5 − (rank − grade)` and nothing else —
-not luck, not the module — so once your rank with an engineer is known, `ingredients × rolls` is
-arithmetic. Five rolls of a three-material recipe is fifteen units, and that is a shopping list.
+exact total, not a rate.** How many crafts a grade takes is `5 − (rank − grade)` and nothing else —
+not luck, not the module — so once your rank with an engineer is known, `ingredients × crafts` is
+arithmetic. Five crafts of a three-material recipe is fifteen units, and that is a shopping list.
 
-### A grade you cannot roll yet is a gate, not a grind
+### A grade you cannot craft yet is a gate, not a grind
 
 ```text
 You are grade 2 with Elvira Martuuk, at Long Sight Base in Khun, and grade 5 needs rank 5. Reaching grade 5 with them takes 16,000,000 cr of profit sold at their workshop.
 ```
 
-Grade *N* cannot be rolled below rank *N* **at all**. So the answer is the rank you need and what it
+Grade *N* cannot be crafted below rank *N* **at all**. So the answer is the rank you need and what it
 costs, never a large shopping list you cannot use. Reputation rises by buying modifications and by
 selling exploration data or commodities at that engineer's own workshop; grade 1 arrives with the
 unlock and has no price.
 
-### How your own roll went
+### How your own craft went
 
 ```text
 5 of 6 modules engineered on Fixture, a Krait_MkII.
 
   Frame Shift Drive — FSD LongRange, grade 5, finished (1.0)
-  Thrusters in Main Engines — Engine Dirty, grade 3, 3 rolls to go (0.4)
+  Thrusters in Main Engines — Engine Dirty, grade 3, 3 crafts to go (0.4)
   Cargo Rack in Slot01 Size6 — CargoRack IncreasedCapacity, grade 5, finished (1.0)
   Shield Booster in Tiny Hardpoint1 — ShieldBooster HeavyDuty, grade 5, finished (1.0)
-  Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 rolls to go (0.2)
+  Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 crafts to go (0.2)
 ```
 
 Name one and it opens up:
 
 ```text
 Frame Shift Drive.
-FSD LongRange at grade 5, rolled by Felicity Farseer.
+FSD LongRange at grade 5, crafted by Felicity Farseer.
 The grade is finished at 1.0, where 0.85 is as far as the game insists.
 Experimental effect: Mass Manager.
 
-What the roll did:
+What the craft did:
   Mass 26, was 20 (+6, worse)
   FSD Optimal Mass 1692.75, was 1050 (+642.75, better)
 ```
 
-**The last block is the only place your actual roll exists.** The blueprint and the grade say what
+**The last block is the only place your actual craft exists.** The blueprint and the grade say what
 was attempted; these say what came out, in real units, with the figure before engineering beside it
 so the change is subtraction rather than a claim. Which direction counts as better comes from the
 game — mass going up is worse, optimal mass going up is better — and it is read from a field Elite
@@ -182,7 +182,7 @@ one being picked for you:
 ```text
 2 fitted modules match 'shield booster':
   Shield Booster in Tiny Hardpoint1 — ShieldBooster HeavyDuty, grade 5, finished (1.0)
-  Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 rolls to go (0.2)
+  Shield Booster in Tiny Hardpoint2 — ShieldBooster HeavyDuty, grade 3, 3 crafts to go (0.2)
 ```
 
 ### 0.85 is finished, not 1.0
@@ -199,8 +199,8 @@ corpus can move it.
 
 Rolls remaining are counted towards a **full 1.0**, not towards 0.85: the band is where the game
 stops insisting, not a target to aim at. They are quoted only when your rank with the engineer who
-rolled it is known, because the step size depends on `rank − grade` and on nothing else — with no
-rank, the fill is reported and the roll count is not.
+crafted it is known, because the step size depends on `rank − grade` and on nothing else — with no
+rank, the fill is reported and the craft count is not.
 
 ### Why a fitted module says "FSD LongRange"
 
@@ -389,9 +389,9 @@ that found nothing clears the offer rather than leaving the previous system answ
 
 ### Notes for anyone reading the code
 
-**Only a modification may be multiplied by a roll count.** The blueprint table keeps six different
+**Only a modification may be multiplied by a craft count.** The blueprint table keeps six different
 kinds of recipe in one list and only modifications cost their ingredients *per application*; a
-synthesis recipe is a one-off. Multiplying one by a roll count produces a number with no meaning,
+synthesis recipe is a one-off. Multiplying one by a craft count produces a number with no meaning,
 delivered with the same confidence as a correct one, so `Blueprint.TotalFor` returns nothing at all
 for anything that is not a modification and the rank paragraph never appears for one.
 

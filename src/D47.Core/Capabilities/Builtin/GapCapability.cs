@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
 
@@ -74,6 +76,18 @@ public static class GapCapability
                     + "is for. Not the checklist: this counts plans that have never been promoted.",
                 Parameters =
                 [
+                    // <b>A parameter on the tool that already exists</b>, not a second tool
+                    // (change-requests.md 37). "What is this shortfall for" is the same question
+                    // narrowed to one material, and the narrowed answer is the one with room to
+                    // name the blueprint - which the fleet-wide list deliberately does not.
+                    new ToolParameter
+                    {
+                        Name = "material",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "One material, by name or symbol. Narrows the answer to what wants that "
+                            + "one and names the blueprint each demand is for. Omit for everything.",
+                    },
                     new ToolParameter
                     {
                         Name = "include_unowned",
@@ -117,6 +131,15 @@ public static class GapCapability
             onFoot?.Store.Builds ?? [],
             commander?.Invoke(),
             intended);
+
+        // <b>One material asked about is a different answer, not a filtered one</b>
+        // (change-requests.md 37). It has room to say which blueprint each demand is for, which
+        // the fleet-wide list does not, and it is the question the Commander actually asked:
+        // "what is a shortfall of Conductive Polymers for".
+        if (arguments.TryGetString("material", out var asked) && !string.IsNullOrWhiteSpace(asked))
+        {
+            return About(report, asked);
+        }
 
         if (report.Plans == 0)
         {
@@ -180,5 +203,109 @@ public static class GapCapability
         }
 
         return said.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// What one material is for (change-requests.md 37), asked for indirectly on 2026-08-20 when
+    /// the Commander asked what a shortfall of Conductive Polymers was for and d47 said:
+    /// <para>
+    /// <i>"I can't tell you from here which single blueprint eats them — the shortfall is netted
+    /// across every live plan at once, and there are a great many."</i>
+    /// </para>
+    /// <para>
+    /// <b>That was honest about the tool and harder on itself than it needed to be.</b> The demands
+    /// always knew the ship and the slot; what was missing was one field, and it is recorded at the
+    /// fold now. This is where it gets said, because a question about one material has room for it
+    /// and a fleet-wide list does not.
+    /// </para>
+    /// </summary>
+    private static string About(GapReport report, string asked)
+    {
+        if (MaterialCatalogue.Find(asked) is not { } material)
+        {
+            return $"I do not know a material called \"{asked}\".";
+        }
+
+        var line = report.Ledgers
+            .SelectMany(ledger => ledger.Lines)
+            .FirstOrDefault(row => string.Equals(
+                row.Material.Symbol, material.Symbol, StringComparison.OrdinalIgnoreCase));
+
+        if (line is null)
+        {
+            return $"Nothing you have planned wants {material.Name}.";
+        }
+
+        var said = new StringBuilder();
+
+        said.AppendLine(line.Short > 0
+            ? $"{material.Name}: {line.Short.ToString(CultureInfo.InvariantCulture)} short "
+              + $"({line.Held.ToString(CultureInfo.InvariantCulture)} of "
+              + $"{line.Needed.ToString(CultureInfo.InvariantCulture)})."
+            : $"{material.Name}: you have all "
+              + $"{line.Needed.ToString(CultureInfo.InvariantCulture)} your plans want.");
+
+        foreach (var demand in line.Wanted)
+        {
+            said.AppendLine(CultureInfo.InvariantCulture,
+                $"  {demand.Fully()} — {demand.Units.ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        if (line.Trade is { } trade)
+        {
+            said.AppendLine(trade.Describe() + ".");
+        }
+
+        return said.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// <em>"What is Conductive Polymers for"</em>, one phrase per material something actually
+    /// wants (change-requests.md 37).
+    /// <para>
+    /// <b>Dynamic for the reason the carrier's course is</b>: the material is not knowable when the
+    /// descriptor is registered, and a command is not part of a tool's schema, so a vocabulary that
+    /// changes as plans change cannot move a byte of the cached prefix.
+    /// </para>
+    /// <para>
+    /// <b>Only what is planned.</b> Generating a phrase for all 100-odd materials would put most of
+    /// the catalogue in front of every utterance to answer "nothing wants that" — so the vocabulary
+    /// is exactly the materials some plan asks for, which is also the only set the question means
+    /// anything about.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<DynamicCommand> Phrases(
+        ShipPlanService? ships,
+        OnFootPlanService? onFoot,
+        Func<CommanderGameState?>? commander)
+    {
+        if (ships is null && onFoot is null)
+        {
+            yield break;
+        }
+
+        var report = PlanGap.Of(
+            ships?.Store.Builds ?? [],
+            onFoot?.Store.Builds ?? [],
+            commander?.Invoke(),
+            includeIntended: true);
+
+        foreach (var line in report.Ledgers.SelectMany(ledger => ledger.Lines))
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["material"] = line.Material.Symbol,
+            };
+
+            foreach (var shape in new[]
+                     {
+                         $"what is {line.Material.Name} for",
+                         $"what do i need {line.Material.Name} for",
+                         $"what wants {line.Material.Name}",
+                     })
+            {
+                yield return new DynamicCommand(shape, Id, "get_build_gap", arguments);
+            }
+        }
     }
 }

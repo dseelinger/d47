@@ -42,11 +42,12 @@ public static class EngineeringCapability
         Id = Id,
         Group = "Knowledge",
         Name = "Engineering",
-        Summary = "What a blueprint costs and changes, and how the roll on a fitted module went.",
+        Summary = "What a blueprint costs and changes, and how the craft on a fitted module went.",
         Examples =
         [
             "what does increased FSD range cost",
             "how good is my frame shift drive roll",
+            "how good is my frame shift drive craft",
             "what can I engineer on a power plant",
         ],
         Keywords =
@@ -57,6 +58,7 @@ public static class EngineeringCapability
             // about engineering at all, and a single-word keyword hijacks every one of them.
             "blueprint cost",
             "how good is my roll",
+            "how good is my craft",
         ],
         Tools =
         [
@@ -95,7 +97,7 @@ public static class EngineeringCapability
                 Name = "get_module_engineering",
                 Description =
                     "How a fitted module's engineering turned out: blueprint, grade, experimental "
-                    + "effect, who rolled it, whether the grade is finished, and what it changed in real "
+                    + "effect, who crafted it, whether the grade is finished, and what it changed in real "
                     + "units. Name a slot or module, or omit for every engineered module aboard.",
                 Parameters =
                 [
@@ -409,8 +411,8 @@ public static class EngineeringCapability
         var total = top.TotalFor(rank);
 
         return total is null
-            ? $"You are grade {rank} with {at}: a full grade {grade} is {rolls} roll{(rolls == 1 ? "" : "s")}."
-            : $"You are grade {rank} with {at}: a full grade {grade} is {rolls} roll{(rolls == 1 ? "" : "s")}, "
+            ? $"You are grade {rank} with {at}: a full grade {grade} is {rolls} craft{(rolls == 1 ? "" : "s")}."
+            : $"You are grade {rank} with {at}: a full grade {grade} is {rolls} craft{(rolls == 1 ? "" : "s")}, "
               + $"so {Ingredients(total)}.";
     }
 
@@ -1017,7 +1019,7 @@ public static class EngineeringCapability
         }
 
         report.AppendLine(module.Engineer is { } engineer
-            ? $", rolled by {engineer}."
+            ? $", crafted by {engineer}."
 
             // 27 of 772 engineered modules measured carry an engineer id and no name, every one of
             // them id 399999 — a module that arrived already engineered rather than one somebody
@@ -1037,7 +1039,7 @@ public static class EngineeringCapability
         if (module.Modifiers.Count > 0)
         {
             report.AppendLine();
-            report.AppendLine("What the roll did:");
+            report.AppendLine("What the craft did:");
 
             foreach (var modifier in module.Modifiers)
             {
@@ -1090,13 +1092,13 @@ public static class EngineeringCapability
         if (remaining is not { } rolls)
         {
             return full
-                ? $"The grade is part rolled, at {fill} of 1."
-                : $"part rolled ({fill})";
+                ? $"The grade is part crafted, at {fill} of 1."
+                : $"part crafted ({fill})";
         }
 
         return full
-            ? $"The grade is part rolled, at {fill} of 1 — {rolls} more roll{(rolls == 1 ? "" : "s")} to fill it."
-            : $"{rolls} roll{(rolls == 1 ? "" : "s")} to go ({fill})";
+            ? $"The grade is part crafted, at {fill} of 1 — {rolls} more craft{(rolls == 1 ? "" : "s")} to fill it."
+            : $"{rolls} craft{(rolls == 1 ? "" : "s")} to go ({fill})";
     }
 
     /// <summary>

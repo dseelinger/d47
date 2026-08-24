@@ -241,7 +241,9 @@ public partial class MainWindow : Window
             // a switch (list.md Phase 46) — which arrives from the tick thread, so it is given the
             // dispatcher captured here rather than left to read the static one from a worker.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
-            host.RouteNavigation(Panel.Nav, move => ui.Post(move));
+            // The window leads: its tab carries to any surface that furnished the same one
+            // (change-requests.md 34).
+            host.RouteNavigation(Panel.Nav, move => ui.Post(move), leads: true);
 
             // A clock is the one page whose content changes with nothing having happened, so it
             // is pushed rather than pulled (list.md Phase 24). Posted, because the tick loop runs

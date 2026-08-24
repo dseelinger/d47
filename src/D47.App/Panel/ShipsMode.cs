@@ -850,7 +850,7 @@ public sealed class ShipsMode(
                 : to;
 
             return $"{what} cannot take {wanted} — Frontier offers it no engineering under that "
-                   + "name. Plan the module for that slot first and the roll will follow it.";
+                   + "name. Plan the module for that slot first and the engineering will follow it.";
         }
 
         // Same kind, so the module itself is what does not fit — it does not come small enough for
@@ -1555,7 +1555,7 @@ public sealed class ShipsMode(
             new ChoiceRequest(
                 "loadout.blueprint",
                 "Blueprint",
-                wanted is { Length: > 0 } named ? $"What roll on the {named}?" : "What roll?",
+                wanted is { Length: > 0 } named ? $"What are we crafting on the {named}?" : "What are we crafting?",
                 Context(build, slot),
                 [
                     new ChoiceOption(string.Empty, "No engineering — the module as it comes"),

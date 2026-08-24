@@ -92,6 +92,19 @@ public static class ToolProfiles
         capabilityId is not ("flight-controls" or "ship-systems" or "panels" or "srv" or "macros");
 
     /// <summary>
+    /// The profile a context <em>wants</em>, before the relief valve is considered.
+    /// <para>
+    /// <b>Exists so a guard can measure the thing that matters.</b> <see cref="For"/> hands back
+    /// the degraded profile once the full one does not fit, and a degraded profile is under the
+    /// ceiling by construction, so a test that asks the returned profile its size is asking after
+    /// the answer has been hidden. Actions are on, because a profile with no action tools is not
+    /// the one that runs out of room.
+    /// </para>
+    /// </summary>
+    public static ToolProfile Full(CapabilityRegistry registry, ControlContext context) =>
+        Build(registry, context, actionsEnabled: true, degraded: false);
+
+    /// <summary>
     /// The profile for a turn.
     /// <para>
     /// The mode half is a projection of the action catalogue rather than a hand-written table:

@@ -282,7 +282,7 @@ public static class EngineeringPlan
                 // The roll count is a function of rank, and rank is the Commander's own. Without
                 // it there is no exact total, and a total is the one thing this item promises.
                 uncovered.Add(
-                    $"{item.Text} — I do not know your rank with the engineer who would roll it, "
+                    $"{item.Text} — I do not know your rank with the engineer who would craft it, "
                     + "so I cannot state a total.");
                 continue;
             }
@@ -315,7 +315,7 @@ public static class EngineeringPlan
 
         var price = $" {EngineeringRules.RankRises}";
 
-        return $"{what}: grade {grade} cannot be rolled at rank {rank}{who} at all.{price}";
+        return $"{what}: grade {grade} cannot be crafted at rank {rank}{who} at all.{price}";
     }
 
     private static int? RankFor(ChecklistIntent intent, CommanderGameState? state) =>

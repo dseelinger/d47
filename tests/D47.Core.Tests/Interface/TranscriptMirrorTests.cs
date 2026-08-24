@@ -202,4 +202,121 @@ public class TranscriptMirrorTests
         Assert.Equal(PanelTab.Transcript, headset.Tab);
         Assert.False(headset.Show(Log));
     }
+
+    // ------------------------------------------- the window leads (change-requests.md 34)
+
+    /// <summary>A follower that furnishes what the window does, plus one tab the window has not.</summary>
+    private static (PanelNavigator Window, PanelNavigator Mini, TranscriptMirror Mirror) Following()
+    {
+        var window = Surface();
+        window.Register(PanelTab.Settings, new NavCrumb("settings", "Settings"));
+
+        var mini = Surface();
+
+        var mirror = new TranscriptMirror();
+        mirror.Lead(window);
+        mirror.Add(mini);
+
+        return (window, mini, mirror);
+    }
+
+    /// <summary>
+    /// The Commander's words: <em>"switching to a tab in the main window should ALWAYS affect the
+    /// mini-panel — IFF that tab is present on the mini panel."</em>
+    /// </summary>
+    [Fact]
+    public void TheWindowsTabCarriesToTheMiniPanel()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(window.Select(PanelTab.Checklist));
+
+        Assert.Equal(PanelTab.Checklist, mini.Tab);
+    }
+
+    /// <summary>
+    /// <b>And the view of the tab with it</b>, which is the other half of the request: the window
+    /// changing only which root of a tab it is on still carries.
+    /// </summary>
+    [Fact]
+    public void TheViewOfTheTabCarriesToo()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Checklist);
+        window.Select(PanelTab.Transcript);
+        Assert.True(window.SelectRoot(PanelTab.Transcript, Log));
+
+        Assert.Equal(Log, mini.RootKeyOf(PanelTab.Transcript));
+    }
+
+    /// <summary>
+    /// <b>The IFF, and it costs no special case.</b> Settings is desktop-only, so the mini panel
+    /// never furnished it and declines — which is exactly what <c>Select</c> already does for a tab
+    /// no host furnished. The mini panel stays where it was rather than going blank.
+    /// </summary>
+    [Fact]
+    public void ATabTheMiniPanelDoesNotHaveIsSimplyNotCarried()
+    {
+        var (window, mini, _) = Following();
+
+        mini.Select(PanelTab.Checklist);
+
+        Assert.True(window.Select(PanelTab.Settings));
+
+        Assert.Equal(PanelTab.Settings, window.Tab);
+        Assert.Equal(PanelTab.Checklist, mini.Tab);
+    }
+
+    /// <summary>
+    /// <b>One-way, which is the half that protects a Commander in a headset.</b> The mini panel may
+    /// be moved on its own and the window does not follow it — the rule <c>list.md</c> Phase 48
+    /// states as <em>what must not follow is the overlay's tab dragging the window's</em>.
+    /// </summary>
+    [Fact]
+    public void TheMiniPanelDoesNotDragTheWindow()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(mini.Select(PanelTab.Checklist));
+
+        Assert.Equal(PanelTab.Transcript, window.Tab);
+    }
+
+    /// <summary>
+    /// <b>And it keeps where it was put until the window next moves.</b> Independently is not the
+    /// same as briefly.
+    /// </summary>
+    [Fact]
+    public void AFollowerKeepsWhereItWasPutUntilTheWindowMovesAgain()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Checklist);
+        mini.Select(PanelTab.Transcript);
+
+        Assert.Equal(PanelTab.Transcript, mini.Tab);
+        Assert.Equal(PanelTab.Checklist, window.Tab);
+
+        // The window moving again leads it back, which is the "until".
+        window.Select(PanelTab.Transcript);
+        window.Select(PanelTab.Checklist);
+
+        Assert.Equal(PanelTab.Checklist, mini.Tab);
+    }
+
+    /// <summary>
+    /// <b>The transcript half is untouched and still symmetrical.</b> Phase 45's principle survives
+    /// this intact: what you are reading is shared with no preferred surface, and only the tab has
+    /// a leader.
+    /// </summary>
+    [Fact]
+    public void TheTranscriptIsStillMirroredBothWays()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(mini.SelectRoot(PanelTab.Transcript, Technical));
+
+        Assert.Equal(Technical, window.RootKeyOf(PanelTab.Transcript));
+    }
 }
