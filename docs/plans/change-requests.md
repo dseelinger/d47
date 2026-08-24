@@ -50,11 +50,14 @@ carries its blueprint and grade — the costing is done one slot at a time preci
 knows who asked (that comment is at the fold site). Adding the blueprint to `GapDemand` is a change
 to what is recorded there, not a new join.
 
-**The open question is the wording, not the data.** *"for Bad Idea (Python) · MainEngines"* is
-already long, and a fleet-wide shortfall can name a dozen demands; *"· Dirty Drive Tuning 3"* on each
-would double a line that is read aloud as often as it is drawn. So decide whether the blueprint rides
-every demand, or only the answer to a *"what is this for"* question — the spoken route and the panel
-are not under the same pressure.
+**Settled 2026-08-24: only the answer to a *"what is this for"* question.** The wording was the
+question, not the data — *"for Bad Idea (Python) · MainEngines"* is already long, and a fleet-wide
+shortfall can name a dozen demands, so *"· Dirty Drive Tuning 3"* on each would double a line that is
+read aloud as often as it is drawn. So `GapDemand` carries the blueprint from the fold in
+`PlanGap.Of`, and the fleet-wide shortfall list goes on printing exactly what it prints today. The
+field is recorded whether or not a given caller renders it, because the alternative is asking the
+question again later and re-deriving the answer at the point of use — which is the join this item
+exists to avoid.
 
 ### 36. "Roll" is a word from a version of engineering that no longer exists
 
@@ -108,10 +111,18 @@ applied for a full grade is the same number whatever it is called.
 **Also in scope:** `docs/capabilities/engineering.md`, `engineers.md` and `checklists.md` say it too,
 and the docs gate will not catch a stale word.
 
-**One open question.** Is *craft* right, or does the Commander have a different word for it? Frontier
-uses *craft* in the journal and *Craft* on the button in the engineer's workshop, which is the
-strongest evidence available — but this is a vocabulary ruling and item 35 was settled by the
-Commander overruling a proposal, so the same should happen here before twenty-five strings move.
+**Settled 2026-08-24: the word is *craft*.** Frontier uses it in the journal and on the button in
+the engineer's workshop, which was the strongest evidence available, and the Commander confirmed it
+rather than it being assumed — item 35 was settled by the Commander overruling a proposal, so the
+same happened here before twenty-five strings moved.
+
+**The third audience follows the first**, and that is a decision rather than a sweep running on.
+Tool descriptions (`ChecklistCapability.cs:133`, `:260`, `EngineeringCapability.cs:45`, `:98`) move
+too, because the model echoes the vocabulary it is handed and leaving them would quietly reintroduce
+the word in spoken replies — which is most of what a Commander hears. They are advertised surface, so
+the byte cost is real and must be measured against `ToolProfiles.ComfortableBytes` before the change
+lands rather than after: *craft* is one byte longer than *roll* per occurrence, and the keyword
+phrases in audience 2 are not surface and cost nothing at all.
 
 ### 34. The window's tab and view carry to the mini panel, where the mini panel has them
 
@@ -154,18 +165,23 @@ where it now says the opposite, in the Commander's words, the way `TranscriptPag
 reading is shared, how a surface draws it is not — and this request extends the first half without
 touching the second. Mini stays mini.
 
-**Open question, and it needs an answer before code: is this one-way?** The request names one
-direction — window → mini panel. `TranscriptMirror` is deliberately symmetrical with *no preferred
-surface*, and `list.md` Phase 48 states the opposite for tabs: *"What must not follow is the
-overlay's tab dragging the window's."* So there are two coherent designs — a symmetrical mirror
-with a furnished-only filter, or a **follower** relationship where the window leads and the mini
-panel may be moved independently until the window next moves. The request as written is the second.
-Confirm which, because it decides whether a Commander in a headset can move their own panel and keep
-it there.
+**Settled 2026-08-24: it is one-way. The window leads and the mini panel follows.** The request
+named one direction and the ruling keeps it: the window's tab moves the mini panel where the mini
+panel has that tab, and the mini panel may be moved independently and keeps where it was put until
+the window next moves. **A Commander in a headset can move their own panel and keep it there**,
+which is the thing the question was really about.
 
-**Related, and it was the same fix.** A report from the same day said the Checklist *filter* did
-not agree across surfaces, because `_chosen` and `_query` were instance fields on `ChecklistPage`
-rather than shared state; that shipped in 0.60.8, the filter is shared and remembered and the
-search text is neither. A filter is arguably "view of the tab" in the sense meant here. Decide
-whether this request covers the rest of it or whether the filter was a narrower thing
-that travels by the same road; do not fix them twice.
+So this is a **follower**, not the symmetrical mirror with a furnished-only filter that was the
+other coherent design — and `list.md` Phase 48 is therefore untouched and still right: *"What must
+not follow is the overlay's tab dragging the window's."* That line was the strongest argument for
+this shape and it survives the change rather than being overturned by it. `TranscriptMirror`'s own
+symmetry is unaffected: the transcript still has no preferred surface. What is being added beside it
+is directional, and its doc comment must say so plainly, because a reader who finds one symmetrical
+mechanism and one directional one in the same file will assume the second is a bug in the first.
+
+**Settled with it: the Checklist filter was a narrower thing and this request does not cover it.**
+A report from the same day said the filter did not agree across surfaces, because `_chosen` and
+`_query` were instance fields on `ChecklistPage` rather than shared state; that shipped in 0.60.8,
+the filter is shared and remembered and the search text is neither. It works, and **it is not
+revisited here** — folding a shipped fix into a second mechanism is exactly the trap Phase 45 named,
+where two mechanisms holding one invariant eventually disagree about it. This item is tab and view.
