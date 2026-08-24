@@ -55,6 +55,37 @@ public sealed class VrHost : IDisposable
     /// The frozen offset between the hand and the panel, while the panel is being carried.
     /// Null the rest of the time, which is nearly always.
     /// </summary>
+    /// <summary>
+    /// What the aim loop needs to place a ray, published by the 10 Hz serve
+    /// (<a href="https://github.com/dseelinger/d47/issues/19">#19</a>).
+    /// <para>
+    /// The geometry is a function of the placement, the panel's pixel size and the head, all of
+    /// which are read through <see cref="_panel"/> and settings. Publishing it rather than letting
+    /// the aim thread go and get it is what keeps everything crossing threads to one immutable
+    /// record — the alternative is a second thread reading settings and view state while the tick
+    /// writes them.
+    /// </para>
+    /// <para>
+    /// A geometry up to a tenth of a second old is the right trade: it moves when the panel is
+    /// re-anchored or resized, which is rare, while the <em>hand</em> — the thing that made the ray
+    /// look broken — is read fresh every frame.
+    /// </para>
+    /// </summary>
+    private sealed record AimGeometry(VrPose Resting, VrExtent Extent, float Curvature);
+
+    private AimGeometry? _aimGeometry;
+
+    /// <summary>
+    /// The last hands the aim loop read, for the serve to act on.
+    /// <para>
+    /// <b>The pose read has one owner.</b> <c>SteamVrRuntime.HandsAndHead</c> walks every device
+    /// through <c>Note</c>, which keeps a plain dictionary of what each was last seen doing — two
+    /// threads calling it is a corrupted dictionary and a race no test run would show. So the loop
+    /// reads and the serve consumes what it published.
+    /// </para>
+    /// </summary>
+    private IReadOnlyList<VrHand> _aimHands = [];
+
     private Matrix4x4? _carrying;
 
     private uint _carryingHand;
@@ -213,11 +244,25 @@ public sealed class VrHost : IDisposable
     public void Dispose()
     {
         _disposed = true;
+
+        // Stopped and joined before the runtime goes, because this thread makes OpenVR calls and a
+        // session pulled out from under one of them is the shape of fault that takes vrclient down
+        // rather than throwing something catchable.
+        _aimLoop?.Dispose();
+        _aimLoop = null;
+
         _lifecycle.Stop();
         _runtime.Stop();
         _captions.Dispose();
         _panel.Dispose();
     }
+
+    /// <summary>
+    /// Runs only while there is a session to place a ray in. Started on the first active tick and
+    /// stopped with the host: there is nothing to point at when no headset is running, and a loop
+    /// asking a dead runtime for poses ninety times a second is work nobody asked for.
+    /// </summary>
+    private VrAimLoop? _aimLoop;
 
     /// <summary>
     /// What is audible, turned into captions. A clip carrying a caption starts one; nothing
@@ -315,6 +360,10 @@ public sealed class VrHost : IDisposable
 
                 RestIfNeverPlaced();
                 Carry();
+
+                // Started after the first Carry rather than before it, so the loop's first frame
+                // has a published geometry to aim at instead of returning empty-handed.
+                _aimLoop ??= new VrAimLoop(Aim, _logger).Start();
             }
         }
         catch (Exception ex)
@@ -409,6 +458,10 @@ public sealed class VrHost : IDisposable
         // and a quad that answers a ray in front of the cockpit is a beam that stops on a label.
         if (!_panel.TakesPointer || _runtime.Head is not { } head)
         {
+            // Withdrawn before the return, so the aim loop stops placing a ray against geometry
+            // this serve has just declined to stand behind.
+            Volatile.Write(ref _aimGeometry, null);
+
             // A claim made on the last frame that got past this line would otherwise stand for
             // as long as this line keeps returning — see VrActionInput.Release.
             _runtime.Actions.Release();
@@ -421,15 +474,18 @@ public sealed class VrHost : IDisposable
         var (width, height) = _panel.Size;
         var extent = new VrExtent(placement.WidthMetres, (float)width / Math.Max(1, height));
 
-        var hands = _runtime.Controllers();
+        // Published for the aim loop, which places the ray against it at frame rate (#19).
+        Volatile.Write(ref _aimGeometry, new AimGeometry(resting, extent, placement.Curvature));
+
+        // What the aim loop last saw, rather than a read of our own: the pose read has one owner.
+        // A sample up to one aim frame old is nothing beside the tick this decision runs on.
+        var hands = Volatile.Read(ref _aimHands);
         var found = VrRay.PointingAt(hands, resting, extent, placement.Curvature);
 
         // Claimed only while a ray is on the panel or a carry is already running — the second
         // because a hand can swing the panel far enough that its own ray leaves it, and dropping
         // the claim there would drop the panel mid-move.
         var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null);
-
-        Guide(hands, found, resting, extent, head);
 
         // Back, on the grip (list.md Phase 25). One of the three routes that must agree, and the
         // one a Commander with a controller in each hand reaches for without looking. Read after
@@ -582,6 +638,49 @@ public sealed class VrHost : IDisposable
     /// falls short.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// One frame of the aim ray, from <see cref="VrAimLoop"/> and never from the tick (#19).
+    /// <para>
+    /// This is the whole of what moved. It reads the poses, casts the ray at the geometry the last
+    /// serve published, and places the beam and cursor quads — and it decides nothing. Whether a
+    /// trigger was pulled, whether a carry starts, whether the panel goes back a level: all of that
+    /// is still resolved on the tick, against its own sample, with its own state, on one thread.
+    /// </para>
+    /// <para>
+    /// The cost of that split is that the drawn beam can be a few milliseconds ahead of the sample
+    /// a click resolves against. At these rates it is invisible, and it buys single-threaded
+    /// interaction state, which is worth far more.
+    /// </para>
+    /// </summary>
+    private void Aim()
+    {
+        if (Volatile.Read(ref _aimGeometry) is not { } geometry)
+        {
+            return;
+        }
+
+        var (hands, head) = _runtime.HandsAndHead();
+
+        // Published before the ray is placed, so the next tick's decision sees what this frame saw
+        // rather than what the frame before it did.
+        Volatile.Write(ref _aimHands, hands);
+
+        if (head is not { } where)
+        {
+            return;
+        }
+
+        // Read fresh in the same call as the hands. A head pose from the last serve is up to a
+        // tenth of a second old, and a stale head while the head is turning misplaces the beam in
+        // exactly the way this split exists to fix.
+        Guide(
+            hands,
+            VrRay.PointingAt(hands, geometry.Resting, geometry.Extent, geometry.Curvature),
+            geometry.Resting,
+            geometry.Extent,
+            where);
+    }
+
     private void Guide(
         IReadOnlyList<VrHand> hands,
         (VrHand Hand, VrHit Hit)? found,
