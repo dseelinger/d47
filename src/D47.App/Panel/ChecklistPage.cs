@@ -143,10 +143,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         MinHeight = TouchTarget,
     };
 
-    private string _chosen = Everything;
+    /// <summary>
+    /// The filter and the search text. <b>Read from <see cref="ChecklistService"/> rather than
+    /// held here</b>: these were fields on this page and there is one page per surface, so a filter
+    /// applied in the window left the headset drawing the unfiltered list a foot away, with neither
+    /// surface saying they disagreed (reported 2026-08-23). Same move, same reason, as the
+    /// selection before them.
+    /// </summary>
+    private string Chosen => _checklists.Filter;
 
-    /// <summary>What the surface's own search box is narrowing the page to. Empty for nothing.</summary>
-    private string _query = string.Empty;
+    private string Query => _checklists.Query;
 
     /// <summary>
     /// Which line is selected. <b>The movers belong to the selection</b> and to nothing else: a
@@ -314,6 +320,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _checklists.List.Changed += OnChanged;
         _checklists.Proposals.Changed += OnChanged;
 
+        // The filter is shared between the surfaces, so the one that did not change it still has
+        // to redraw — which is the whole of what the report was about.
+        _checklists.FilterChanged += OnChanged;
+
         if (_goals is not null)
         {
             _goals.Store.Changed += OnChanged;
@@ -334,8 +344,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
     public void Filter(string? query)
     {
-        _query = (query ?? string.Empty).Trim();
-        Rebuild();
+        // Through the service, which raises the change back at every surface — this page included,
+        // so there is no rebuild here. One route in, one redraw out.
+        _checklists.Search(query);
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -344,6 +355,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         _checklists.List.Changed -= OnChanged;
         _checklists.Proposals.Changed -= OnChanged;
+        _checklists.FilterChanged -= OnChanged;
 
         if (_goals is not null)
         {
@@ -441,9 +453,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // The filter's own word rather than its key, so the button reads "Showing A ship's build"
         // and not "Showing engineeringplan". Falls back to the key for a filter that has since
         // stopped applying — the list can empty out from under a chosen one.
-        _scopeButton.Content = _chosen == Everything
+        _scopeButton.Content = Chosen == Everything
             ? "Showing everything"
-            : $"Showing {_checklists.FilterAxes().FirstOrDefault(filter => filter.Key == _chosen)?.Word ?? _chosen}";
+            : $"Showing {_checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word ?? Chosen}";
 
         RebuildArcs();
 
@@ -458,7 +470,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (live.Count == 0)
         {
-            _list.Children.Add(Muted(_query.Length > 0 || _chosen != Everything
+            _list.Children.Add(Muted(Query.Length > 0 || Chosen != Everything
                 ? "Nothing on your list matches that."
                 : "Nothing here yet. Say \"add buy limpets to my checklist\", or ask for a build plan, "
                   + "and D47 will propose it."));
@@ -471,7 +483,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // "it is only showing one ship". The list was right and looked broken, which cost two bug
         // reports and an afternoon. One line above the rows is the whole fix; it does not fight
         // the no-headings decision below, because the scope still rides each line.
-        if (open.Count > 0 && (_chosen != Everything || _query.Length > 0))
+        if (open.Count > 0 && (Chosen != Everything || Query.Length > 0))
         {
             var ships = open
                 .Where(item => item.Scope.Group == ChecklistGroup.Ship)
@@ -746,16 +758,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // name of the ship on the caption or the module on the line and find it. Both stored
         // spellings stay searchable: the slot the plan was written against is still what a plan
         // conversation used.
-        if (_query.Length > 0
-            && !item.Text.Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !item.Scope.ToString().Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !_checklists.Said(item).Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !_checklists.Where(item).Contains(_query, StringComparison.OrdinalIgnoreCase))
+        if (Query.Length > 0
+            && !item.Text.Contains(Query, StringComparison.OrdinalIgnoreCase)
+            && !item.Scope.ToString().Contains(Query, StringComparison.OrdinalIgnoreCase)
+            && !_checklists.Said(item).Contains(Query, StringComparison.OrdinalIgnoreCase)
+            && !_checklists.Where(item).Contains(Query, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (_chosen == Everything)
+        if (Chosen == Everything)
         {
             return true;
         }
@@ -763,15 +775,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // The one filter that is about where the Commander is rather than about the line
         // (change-requests.md 32). Asked separately because it is not a property of the item —
         // the same line is reachable in Laksak and not in Sol.
-        if (_chosen == ChecklistService.HereKey)
+        if (Chosen == ChecklistService.HereKey)
         {
             return _checklists.CanBeDoneHere(item);
         }
 
-        return _chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
-               || _chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
-               || _chosen.Equals(ChecklistScope.Word(item.Scope.Group), StringComparison.OrdinalIgnoreCase)
-               || _chosen.Equals(item.IsComplete ? "complete" : "open", StringComparison.OrdinalIgnoreCase);
+        return Chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
+               || Chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
+               || Chosen.Equals(ChecklistScope.Word(item.Scope.Group), StringComparison.OrdinalIgnoreCase)
+               || Chosen.Equals(item.IsComplete ? "complete" : "open", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -1150,16 +1162,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 "Scope is a label and a filter, never a partition — your order is one order across "
                 + "all of them.",
                 options,
-                _chosen,
+                Chosen,
                 ChoiceSurface.Layer)
             {
                 CurrentWord = "showing now",
             },
-            option =>
-            {
-                _chosen = option.Key;
-                Rebuild();
-            });
+            option => _checklists.Choose(option.Key));
     }
 
     /// <summary>

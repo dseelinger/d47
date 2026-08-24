@@ -562,6 +562,10 @@ public sealed class AppHost : IDisposable
         // RecordStartup can say anything fuller (remediation.md 10, item 7).
         logger.LogInformation("d47 {Version} is starting; data folder {Data}", version, paths.Data);
 
+        // Immediately after it, because the thing this catches makes every line below it a
+        // description of a build that is not running (bugs.md, 2026-08-23).
+        StaleBuildCheck.Report(logger, Environment.ProcessPath ?? string.Empty);
+
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
         var loaded = new D47Settings();
         string? startupError = null;
@@ -709,7 +713,15 @@ public sealed class AppHost : IDisposable
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
                 loggerFactory.CreateLogger<ChecklistProposalStore>()),
-            () => gameState.Active);
+            () => gameState.Active,
+
+            // The chosen filter outlives the session, which is what was asked for on 2026-08-23.
+            // In view state rather than settings: it has no default worth documenting and nothing
+            // should fail loudly because it could not be read, which is the same argument the
+            // window's own position is kept here by.
+            chosen => viewState.Save(viewState.Load() with { ChecklistFilter = chosen }));
+
+        checklists.Restore(viewState.Load().ChecklistFilter);
 
         // What d47 remembers about the Commander (list.md Phase 31). One file, per Commander with
         // the key inside the document, and it has both halves of the store pattern Phase 23 split

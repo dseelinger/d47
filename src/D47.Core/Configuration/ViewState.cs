@@ -43,6 +43,19 @@ public sealed record ViewState
     public IReadOnlyList<string> ExpandedCards { get; init; } = [];
 
     /// <summary>
+    /// Which filter the checklist was left under — the chooser's key, or null for none. Asked for
+    /// 2026-08-23, the same day the filter turned out not to be shared between the surfaces.
+    /// <para>
+    /// Here rather than in settings for the reason the window's position is: no default worth
+    /// documenting, nothing behaves differently, and a filter that cannot be read should cost an
+    /// unfiltered list rather than a loud failure. The search box is deliberately <em>not</em>
+    /// here — a typed query is where a Commander is this minute, and one restored from last week
+    /// is a list that looks broken until they find the box.
+    /// </para>
+    /// </summary>
+    public string? ChecklistFilter { get; init; }
+
+    /// <summary>
     /// Whether the Commander has ever asked d47 anything, by any route. What it retires is the
     /// worked example in the ask box's placeholder, which is an onboarding hint wearing a
     /// placeholder's clothes and was still teaching someone a month in.

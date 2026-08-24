@@ -66,7 +66,7 @@
     either, so the suite is unaffected. See AppPaths.ForRunningBuild.
   -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <AssemblyMetadata Include="DevDataRoot" Value="$(MSBuildThisFileDirectory)..\..\dev-data" />
+    <AssemblyMetadata Include="DevInstallRoot" Value="$(MSBuildThisFileDirectory)..\..\dev-install" />
   </ItemGroup>
 
   <!--

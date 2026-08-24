@@ -62,15 +62,59 @@ public static class ChecklistEvaluator
 
     private static ChecklistVerdict? Ship(ChecklistItem item, ChecklistIntent intent, CommanderGameState state)
     {
-        var loadout = state.Ship;
+        var aboard = IsActive(item.Scope, state.Ship);
 
-        // Loadout describes the ship the Commander is in and no other, so a plan for a ship in
-        // another dock cannot be diffed at all. Saying nothing is the honest answer; resetting
-        // the item to open because the evidence is absent would be an answer d47 invented.
-        if (!IsActive(item.Scope, loadout))
+        // <b>A ship in another dock is diffed from the loadout d47 remembers.</b> The comment that
+        // stood here said it "cannot be diffed at all", and that was true until list.md Phase 37
+        // started remembering them — after which a line about a parked ship read out its module by
+        // name, from the remembered loadout, over a verdict that had refused to look at the same
+        // place. The line and the verdict beneath it read different sources, and one report of that
+        // asymmetry arrived as d47 "not being able to see" a ship it could describe.
+        //
+        // <b>A remembered loadout is a fact about a moment</b>, so every verdict from one says
+        // which moment. That is the one way this can do harm: a month-old snapshot presented as
+        // current is worse than the silence it replaces. Still silent where the ship has never been
+        // seen at all, which is the honest answer rather than an invented one.
+        var remembered = aboard ? null : Remembered(item, state);
+        var loadout = aboard ? state.Ship : remembered?.Loadout;
+
+        if (loadout is null)
         {
             return null;
         }
+
+        var verdict = Ship(item, intent, state, loadout);
+
+        return verdict is not { } said || remembered is not { } seen
+            ? verdict
+            : said with { Reason = $"{said.Reason} As last seen, {Seen(seen)}." };
+    }
+
+    /// <summary>
+    /// The remembered loadout for a ship-scoped item, or null where the ship is not one d47 has
+    /// been aboard. Same read as <c>EngineerAtHand.LoadoutFor</c>, which is what the line's own
+    /// wording already comes from.
+    /// </summary>
+    private static RememberedShip? Remembered(ChecklistItem item, CommanderGameState state) =>
+        item.Scope.Group == ChecklistGroup.Ship
+        && int.TryParse(item.Scope.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var shipId)
+            ? state.Loadouts.For(shipId)
+            : null;
+
+    /// <summary>
+    /// When the snapshot was taken, off the journal event that carried it. <b>A date and never
+    /// "three days ago"</b>: no Core component reads the clock, and a relative age computed from
+    /// one would be a different sentence every tick.
+    /// </summary>
+    private static string Seen(RememberedShip ship) =>
+        ship.SeenAt.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
+
+    private static ChecklistVerdict? Ship(
+        ChecklistItem item,
+        ChecklistIntent intent,
+        CommanderGameState state,
+        ShipLoadout loadout)
+    {
 
         // A ShipID now reporting a different hull makes the list stale and says so, rather than
         // quietly diffing an exploration Krait against a Cutter.
