@@ -19,14 +19,30 @@ namespace D47.Core.Checklists;
 /// from <paramref name="Ready"/> because it is a different errand: one is work, the other is a
 /// reason to go and do some of their other work first.
 /// </param>
+/// <param name="Partial">
+/// Open items they offer the blueprint for but only below the grade wanted — work that can be
+/// started here and has to be finished elsewhere (change-requests.md 35). A third kind again, and
+/// kept apart for the same reason the band above is: folding it into <paramref name="Ready"/> would
+/// undo the very report that produced the grade check, because those lines would once more read as
+/// work this engineer can do.
+/// </param>
 public sealed record EngineerAtHand(
     Engineer Engineer,
     bool Unlocked,
     int? Rank,
     IReadOnlyList<ChecklistItem> Ready,
-    IReadOnlyList<ChecklistItem> OutOfRank)
+    IReadOnlyList<ChecklistItem> OutOfRank,
+    IReadOnlyList<PartialGrade> Partial)
 {
-    /// <summary>Whether there is anything worth saying about this engineer at all.</summary>
+    /// <summary>
+    /// Whether there is anything worth saying about this engineer at all.
+    /// <para>
+    /// <b>Partial work does not qualify on its own</b>, because this decides whether the engineer
+    /// is mentioned at all — in the opening callout among other places — and an engineer announced
+    /// for work they cannot finish is the noise the grade check removed. It is offered where the
+    /// Commander has asked to see it, and never volunteered.
+    /// </para>
+    /// </summary>
     public bool HasWork => Ready.Count > 0 || OutOfRank.Count > 0;
 
     /// <summary>
@@ -63,6 +79,25 @@ public sealed record EngineerAtHand(
 
     private static string Count(int many) =>
         many == 1 ? "one item" : $"{many.ToString(global::System.Globalization.CultureInfo.InvariantCulture)} items";
+}
+
+
+/// <summary>
+/// A line this engineer can advance but not finish — asked for 2026-08-23 as
+/// <i>"Include Partial Grades"</i>.
+/// </summary>
+/// <param name="Item">The line itself.</param>
+/// <param name="Reaches">The grade this engineer can take it to.</param>
+/// <param name="Wanted">The grade the line asks for, which somebody else has to reach.</param>
+public sealed record PartialGrade(ChecklistItem Item, int Reaches, int Wanted)
+{
+    /// <summary>
+    /// How far it goes, said on the line itself so the answer is on screen and not only in the
+    /// help — <i>"Lei Cheung takes this to 3 of 5"</i>.
+    /// </summary>
+    public string Describe(string engineer) =>
+        $"{engineer} takes this to {Reaches.ToString(global::System.Globalization.CultureInfo.InvariantCulture)}"
+        + $" of {Wanted.ToString(global::System.Globalization.CultureInfo.InvariantCulture)}";
 }
 
 /// <summary>
@@ -124,11 +159,23 @@ public static class EngineersHere
 
                 var ready = new List<ChecklistItem>();
                 var waiting = new List<ChecklistItem>();
+                var partial = new List<PartialGrade>();
 
                 foreach (var item in open)
                 {
-                    if (!Offers(engineer, item, state))
+                    if (Ceiling(engineer, item, state) is not { } ceiling)
                     {
+                        continue;
+                    }
+
+                    // <b>The third band</b> (change-requests.md 35). The grade check made a line
+                    // appear under an engineer only where they offer it at the grade the line asks
+                    // for, which shut a real door: Lei Cheung genuinely can take a Heavy Duty
+                    // booster from nothing to grade 3, at a workshop the Commander is standing in.
+                    // That was recorded as a judgement call and overrulable, and this overrules it.
+                    if (item.Intent is { Grade: { } wanted } && ceiling < wanted)
+                    {
+                        partial.Add(new PartialGrade(item, ceiling, wanted));
                         continue;
                     }
 
@@ -146,7 +193,8 @@ public static class EngineersHere
                     standing?.IsUnlocked ?? false,
                     standing?.Rank,
                     ready,
-                    waiting);
+                    waiting,
+                    partial);
             }).Where(found => found.HasWork)
         ];
     }
@@ -159,11 +207,11 @@ public static class EngineersHere
     /// <c>BlueprintCatalogue.ForModule</c> exists.
     /// </para>
     /// </summary>
-    private static bool Offers(Engineer engineer, ChecklistItem item, CommanderGameState state)
+    private static int? Ceiling(Engineer engineer, ChecklistItem item, CommanderGameState state)
     {
         if (item.Intent is not { } intent)
         {
-            return false;
+            return null;
         }
 
         var wanted = intent.Kind == ChecklistIntentKind.Experimental
@@ -189,9 +237,27 @@ public static class EngineersHere
             // the forty-five lines offered to a Commander standing in Laksak were Grade 5 Heavy
             // Duty rolls Lei Cheung cannot take, which is most of a screenful of work that is
             // not his. An intent with no grade — every experimental — is unfiltered here.
-            .Where(recipe => intent.Grade is not { } grade || recipe.Grade == grade)
-            .Any(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase));
+            //
+            // <b>The highest grade they offer, rather than a yes to the grade asked for</b>
+            // (change-requests.md 35). Wherever they can finish the work the two answers are the
+            // same — an engineer appears on every grade row up to their ceiling — and where they
+            // cannot, the ceiling is the thing worth saying: "Lei Cheung takes this to 3 of 5."
+            .Where(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase))
+            .Select(recipe => recipe.Grade ?? Ungraded)
+            .DefaultIfEmpty(NotTheirs)
+            .Max() is var top && top == NotTheirs
+            ? null
+            : top;
     }
+
+    /// <summary>
+    /// An experimental has no grade and is bought outright, so its ceiling is a number that clears
+    /// every comparison rather than a real grade.
+    /// </summary>
+    private const int Ungraded = int.MaxValue;
+
+    /// <summary>Not this engineer's blueprint at all, which is a different answer from grade 0.</summary>
+    private const int NotTheirs = -1;
 
     /// <summary>
     /// What is fitted in the slot this item is about, or null where d47 has never seen the ship.

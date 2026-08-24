@@ -22,7 +22,7 @@ namespace D47.App.Tests;
 /// </summary>
 public class TheFilterIsTheSameOnBothSurfacesTests
 {
-    private static ChecklistService Checklists(string root, Action<string>? remember = null)
+    private static ChecklistService Checklists(string root, Action<ChecklistView>? remember = null)
     {
         var paths = new D47.Core.AppPaths(root);
         paths.EnsureCreated();
@@ -151,21 +151,21 @@ public class TheFilterIsTheSameOnBothSurfacesTests
     [AvaloniaFact]
     public void TheFilterIsWrittenDownAndTheSearchIsNot()
     {
-        var written = new List<string>();
+        var written = new List<ChecklistView>();
         var checklists = Checklists(TempFolders.Create("d47-shared-filter"), written.Add);
 
         checklists.Choose("open");
         checklists.Search("limpets");
 
-        Assert.Equal(["open"], written);
+        Assert.Equal(["open"], written.Select(view => view.Filter));
 
         // And a later run takes it up without writing it back or redrawing anything.
         var next = Checklists(TempFolders.Create("d47-shared-filter"), written.Add);
 
-        next.Restore("open");
+        next.Restore(new ChecklistView("open", IncludePartialGrades: false));
 
         Assert.Equal("open", next.Filter);
-        Assert.Equal(["open"], written);
+        Assert.Single(written);
     }
 
     /// <summary>

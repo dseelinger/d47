@@ -237,6 +237,32 @@ A revision arrives as a **diff**, so an ordering you spent time on survives a pl
 The filter is generated from what is actually on your list — kind, source, group and state — so a
 new kind of plan turns up in it without anybody remembering to add it.
 
+**One filter, both surfaces, and it keeps.** What you are reading is the same in the window and in
+the headset — apply *"what Lei Cheung can do here"* at the desk and the panel a foot away is under
+it too — and it is still there next time you start. The search box is not: what you typed is where
+you were that minute, and one restored from last week is a list that looks broken until you find the
+box.
+
+##### Include Partial Grades {#partial-grades}
+
+Beside the engineer filter, and only there, is a checkbox. It decides which of two questions the
+page is answering, and they are a sentence apart:
+
+- **unchecked** — what this engineer can take **all the way** to the grade the line asks for;
+- **checked** — *and* lines they can only take **part of the way**, which somebody else must finish.
+
+Unchecked is the default and is what you had before the box existed. Checked, a line says how far it
+goes on the line itself — *"Lei Cheung takes this to 3 of 5"* — so the answer is on screen and not
+only here.
+
+It matters because an engineer's grades are not the blueprint's. Heavy Duty on a Shield Booster is
+Lei Cheung's to grade 3, and grades 4 and 5 belong to Mel Brandon and Didi Vatermann. A Grade 5
+Heavy Duty line is not his work — but he genuinely can take that booster from nothing to 3, at a
+workshop you are standing in, and that is real work you would otherwise walk past.
+
+Experimental effects never appear here. They carry no grade, are bought outright and are applied at
+any standing, so an engineer either offers one or does not and there is no part of the way to be.
+
 The tab reflects changes live. It is a view of `data/checklist.json`, and that file is re-read
 while Directive 47 is running, so a line edited in a text editor appears a moment later with no
 restart. A line the file gets wrong is **reported rather than silently dropped** — a checklist that
