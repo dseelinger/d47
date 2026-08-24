@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Four open, and one partly confirmed.
+## Three open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
@@ -171,31 +171,6 @@ predicts would freeze the ray, and it is now gone — so **the first thing to do
 **Still not a diagnosis.** What would settle it: whether the beam moves at all when it looks frozen
 — a 10 Hz ray is choppy and a stopped one is not — and whether it recovers when the desktop window
 is idle.
-
-## Open: the audition pair's five-second timeouts are a separate fault
-
-Split out of the entry above, because the diagnosis disproved "treat them as one investigation":
-`PlayingASecondVoiceCancelsTheFirst` (three appearances, once alongside
-`TheGlyphBecomesStopWhileItIsTalkingAndStopsWhenPressed`) times out awaiting a cancellation, and
-that is **not** the dispatcher hijack. A test that dies this way leaves an un-cancelled token and
-an infinite delay that nothing will ever complete — a pure leak that *cannot* later touch the
-dispatcher, so it cannot cause the cleanup failure. Occurrence 9 in the old record — both timeouts,
-no cleanup failure in the run — was already evidence of independence.
-
-**The recorded "stale detached button" lead is dead**, three ways, from the code as written:
-pressing a glyph does not rebuild the row — `PickerChoice.Playing` raises INPC on the same object,
-and rows rebuild only when filter text changes, which these tests never type; `Glyph()` walks
-`GetVisualDescendants()`, which cannot return a detached control — a vanished button would make
-`.First()` throw, a different failure; and a detached button still raises `Click` into its own
-handler, so "Click into nothing" has no mechanism.
-
-**The surviving lead is threadpool starvation.** The second press's cancellation callbacks run on
-a threadpool work item (`CancelAsync`), the wait is five seconds, and the suite loads the pool
-while the session runs: `EchoCancellationTests` spins three near-100% CPU threads for about a
-second as a plain `[Fact]`, in parallel with the Avalonia session. All three appearances were on
-busy CI runners. Unproven — a lead is not a diagnosis. What would settle it: a wall-clock trace
-around the second press on a loaded runner, or starving the pool deliberately and watching the
-same timeout arrive on demand.
 
 ## Open: opacity was set on the surface the Commander was not looking at
 

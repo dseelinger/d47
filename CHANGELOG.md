@@ -17,6 +17,37 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.61.0 — 2026-08-24 — Work an engineer can start
+
+### Include Partial Grades
+
+Standing at an engineer's base with their filter on, you now get a checkbox beside it. It decides
+which of two questions the page is answering:
+
+- **unchecked** — what this engineer can take **all the way** to the grade the line asks for;
+- **checked** — *and* lines they can only take **part of the way**, which somebody else must finish.
+
+Unchecked is the default and is exactly what shipped before. Checked, each line says how far it goes
+— *"Lei Cheung takes this to 3 of 5"* — so the answer is on the line and not only in the help.
+
+The grade check that landed in 0.60.2 was right and it shut a real door: Heavy Duty on a Shield
+Booster is Lei Cheung's to grade 3, so a Grade 5 line is not his work — but he genuinely can take
+that booster from nothing to 3, at a workshop you are standing in. That was recorded at the time as
+a judgement call and overrulable. This overrules it, without folding the work back into the list that
+report was about.
+
+The box is beside the engineer filter and nowhere else — the phrase means nothing against a list
+filtered by ship — and it is remembered between sessions, on the same road as the filter itself.
+
+### Under the hood: a test that stopped asking the busiest thing on the machine
+
+Two audition tests waited five seconds on a cancellation callback and occasionally did not get one.
+The cause turned out to be measurable: `CancelAsync` schedules its callbacks on the threadpool **on
+purpose**, to keep arbitrary continuations off the UI thread — so with the pool saturated, which is
+what a CI runner running seven test projects is, the callback is late. With the pool starved
+deliberately the five-second wait came back empty after 23 seconds. They now watch the token's own
+flag, which flips synchronously and needs no threadpool thread at all.
+
 ## 0.60.8 — 2026-08-24 — Three from the desk
 
 ### The checklist filter is one filter, and it is remembered
