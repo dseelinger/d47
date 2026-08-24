@@ -294,6 +294,23 @@ public sealed class SteamVrRuntime(
     /// makes an overlay flicker, and a transform is cheap.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Moves one surface's quad and nothing else — no texture, no size, no opacity
+    /// (<a href="https://github.com/dseelinger/d47/issues/30">#30</a>).
+    /// <para>
+    /// <b>For a panel being carried, which has to follow a hand rather than a tick.</b> Placement
+    /// and submission are separate calls to the runtime, so a quad can be moved as often as a hand
+    /// moves while its pixels keep arriving at the serve's own pace. That is what lets the carry
+    /// run on the aim loop without anything else about the surface following it there.
+    /// </para>
+    /// <para>
+    /// Absolute rather than head-relative, and that is not a shortcut: picking a panel up makes it
+    /// world-locked, because a Commander who has physically carried it across the cockpit has said
+    /// where they want it.
+    /// </para>
+    /// </summary>
+    public void Reposition(VrSurface surface, VrPose where) => OverlayFor(surface)?.PlaceAbsolute(where);
+
     public void AimBeam(VrPose? along, VrPose head, float lengthMetres)
     {
         if (_beam is null)

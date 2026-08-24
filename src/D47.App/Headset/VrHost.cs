@@ -71,7 +71,18 @@ public sealed class VrHost : IDisposable
     /// look broken — is read fresh every frame.
     /// </para>
     /// </summary>
-    private sealed record AimGeometry(VrPose Resting, VrExtent Extent, float Curvature);
+    /// <param name="Carrying">
+    /// The grab a hand is holding the panel by, and the device holding it, or null when nobody is
+    /// (<a href="https://github.com/dseelinger/d47/issues/30">#30</a>). Published so the loop can
+    /// place a carried panel at frame rate — the tick still decides <em>whether</em> a carry is
+    /// running, which hand owns it, and when it ends. Only the placing moved, which is the same
+    /// rule the ray went by.
+    /// </param>
+    private sealed record AimGeometry(
+        VrPose Resting,
+        VrExtent Extent,
+        float Curvature,
+        (Matrix4x4 Grab, uint Device, VrSurface Surface)? Carrying = null);
 
     private AimGeometry? _aimGeometry;
 
@@ -474,8 +485,15 @@ public sealed class VrHost : IDisposable
         var (width, height) = _panel.Size;
         var extent = new VrExtent(placement.WidthMetres, (float)width / Math.Max(1, height));
 
-        // Published for the aim loop, which places the ray against it at frame rate (#19).
-        Volatile.Write(ref _aimGeometry, new AimGeometry(resting, extent, placement.Curvature));
+        // Published for the aim loop, which places the ray against it at frame rate (#19) and the
+        // panel too while a hand is carrying it (#30).
+        Volatile.Write(
+            ref _aimGeometry,
+            new AimGeometry(
+                resting,
+                extent,
+                placement.Curvature,
+                _carrying is { } grab ? (grab, _carryingHand, _panel.Surface) : null));
 
         // What the aim loop last saw, rather than a read of our own: the pose read has one owner.
         // A sample up to one aim frame old is nothing beside the tick this decision runs on.
@@ -622,23 +640,6 @@ public sealed class VrHost : IDisposable
     }
 
     /// <summary>
-    /// The beam and the cursor: where the Commander is pointing, drawn, because SteamVR is no
-    /// longer drawing it for them.
-    /// <para>
-    /// <b>The beam's rule is "approaching", not "on".</b> A beam that only appeared once the ray
-    /// was already on the panel would answer a question the cursor has already answered, and leave
-    /// the real one — <em>where is the panel, and am I close?</em> — unanswered. So the test is a
-    /// hit against a panel scaled up by <see cref="VrAim.BeamGuideScale"/>, which lights the beam
-    /// as the hand comes near and keeps it off the rest of the time. An always-on laser in a
-    /// cockpit is its own nuisance.
-    /// </para>
-    /// <para>
-    /// The length says the same thing without a number. On the panel the beam stops exactly at the
-    /// cursor, so it reads as touching; near but off, it is drawn a fixed short length and visibly
-    /// falls short.
-    /// </para>
-    /// </summary>
-    /// <summary>
     /// One frame of the aim ray, from <see cref="VrAimLoop"/> and never from the tick (#19).
     /// <para>
     /// This is the whole of what moved. It reads the poses, casts the ray at the geometry the last
@@ -670,6 +671,27 @@ public sealed class VrHost : IDisposable
             return;
         }
 
+        // A panel being carried follows the hand at frame rate rather than at the tick's ten
+        // (#30). Nothing is decided here and nothing shared is written: the tick published that a
+        // carry is running and which device holds it, and the tick still owns _anchors and the
+        // one settings write that happens on release.
+        //
+        // The quad is placed directly rather than through _anchors, and that is the whole reason
+        // this works. The serve is what turns an anchor into an overlay transform, and the serve
+        // runs on the tick — so writing the anchor faster would have moved a number nothing reads
+        // until the next tick anyway, while putting a plain Dictionary on two threads for nothing.
+        if (geometry.Carrying is { } carry)
+        {
+            foreach (var hand in hands)
+            {
+                if (hand.Device == carry.Device)
+                {
+                    _runtime.Reposition(carry.Surface, VrPlacementMath.Carried(carry.Grab, hand.Aim));
+                    break;
+                }
+            }
+        }
+
         // Read fresh in the same call as the hands. A head pose from the last serve is up to a
         // tenth of a second old, and a stale head while the head is turning misplaces the beam in
         // exactly the way this split exists to fix.
@@ -681,6 +703,23 @@ public sealed class VrHost : IDisposable
             where);
     }
 
+    /// <summary>
+    /// The beam and the cursor: where the Commander is pointing, drawn, because SteamVR is no
+    /// longer drawing it for them.
+    /// <para>
+    /// <b>The beam's rule is "approaching", not "on".</b> A beam that only appeared once the ray
+    /// was already on the panel would answer a question the cursor has already answered, and leave
+    /// the real one — <em>where is the panel, and am I close?</em> — unanswered. So the test is a
+    /// hit against a panel scaled up by <see cref="VrAim.BeamGuideScale"/>, which lights the beam
+    /// as the hand comes near and keeps it off the rest of the time. An always-on laser in a
+    /// cockpit is its own nuisance.
+    /// </para>
+    /// <para>
+    /// The length says the same thing without a number. On the panel the beam stops exactly at the
+    /// cursor, so it reads as touching; near but off, it is drawn a fixed short length and visibly
+    /// falls short.
+    /// </para>
+    /// </summary>
     private void Guide(
         IReadOnlyList<VrHand> hands,
         (VrHand Hand, VrHit Hit)? found,
