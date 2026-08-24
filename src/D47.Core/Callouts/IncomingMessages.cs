@@ -40,6 +40,28 @@ public sealed partial class IncomingMessages : ICallout
     public string? CommanderName { get; set; }
 
     /// <summary>
+    /// The Commander's <b>own</b> fleet carrier, so a message from it comes in the tower's voice
+    /// rather than a stranger's (<a href="https://github.com/dseelinger/d47/issues/28">#28</a>).
+    /// <para>
+    /// <b>Both, and only from identified state.</b> The callsign is the stronger of the two:
+    /// <c>CarrierState</c> only takes it from a docking whose MarketID is the carrier id it already
+    /// holds, which is an ownership check rather than a name that happens to match. The name comes
+    /// from <c>CarrierStats</c>, which one corpus account receives for two carrier ids in the same
+    /// journal — so it is matched as well, never instead.
+    /// </para>
+    /// <para>
+    /// A squadron's carrier must not reach this. The state behind it has been filtered on
+    /// <c>CarrierType</c> since 0.45.0, for the same reason: Elite writes <c>CarrierLocation</c> for
+    /// the Commander's own carrier and for a squadron's seconds apart, and 152 of the 173 corpus
+    /// journals carrying both had the squadron's last.
+    /// </para>
+    /// </summary>
+    public string? CarrierName { get; set; }
+
+    /// <inheritdoc cref="CarrierName"/>
+    public string? CarrierCallSign { get; set; }
+
+    /// <summary>
     /// Channels carrying messages a person typed. <c>starsystem</c> is included because system
     /// chat is players; <c>npc</c> is the only channel that is not, which is why it is the one
     /// with its own switch.
@@ -74,6 +96,17 @@ public sealed partial class IncomingMessages : ICallout
     /// One message, or null if it is not one to speak. Separated from the loop so the whole of
     /// the decision is testable against a single event.
     /// </summary>
+    /// <summary>
+    /// Whether a sender is the Commander's own carrier (#28). Contains rather than equals, because
+    /// Elite decorates a carrier's name with its callsign and the two arrive together.
+    /// </summary>
+    private bool IsMyCarrier(string sender) =>
+        sender.Length > 0
+        && ((CarrierCallSign is { Length: > 0 } call
+             && sender.Contains(call, StringComparison.OrdinalIgnoreCase))
+            || (CarrierName is { Length: > 0 } named
+                && sender.Contains(named, StringComparison.OrdinalIgnoreCase)));
+
     public Announcement? Read(JournalEvent journalEvent)
     {
         var channel = journalEvent.String("Channel") ?? "npc";
@@ -118,7 +151,8 @@ public sealed partial class IncomingMessages : ICallout
 
         return new Announcement($"message.{channel}", Spoken(sender, text, isPlayer))
         {
-            Voice = VoiceRole.Comms,
+            // A carrier's traffic is its tower talking, and the Commander has cast a voice for it.
+            Voice = IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,
             Speaker = sender,
             SpeakerIsPlayer = isPlayer,
 

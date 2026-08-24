@@ -46,6 +46,52 @@ public class IncomingMessageTests
         Assert.Contains("watch your six", read.Text, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A message from the Commander's own carrier comes in the tower's voice
+    /// (<a href="https://github.com/dseelinger/d47/issues/28">#28</a>), asked for 2026-08-24.
+    /// <para>
+    /// Every part of this existed except the join: the role, its settings row and its audition were
+    /// all there, and only d47's own carrier callouts ever used them. A message <em>from</em> the
+    /// carrier was answered in a stranger's voice.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("JOHN DEPARAGON")]
+    [InlineData("K7Q-B4Z")]
+    [InlineData("JOHN DEPARAGON K7Q-B4Z")]
+    public void TheCommandersOwnCarrierSpeaksAsItsTower(string from)
+    {
+        var reader = Reader();
+        reader.CarrierName = "JOHN DEPARAGON";
+        reader.CarrierCallSign = "K7Q-B4Z";
+
+        var read = reader.Read(Message(from, "Docking granted.", "npc", localised: "Docking granted."));
+
+        Assert.NotNull(read);
+        Assert.Equal(VoiceRole.TowerControl, read.Voice);
+    }
+
+    /// <summary>
+    /// And nobody else does. A squadron's carrier reaching this would be the fleet-carrier fault of
+    /// 0.45.0 arriving in the ear instead of the answer, so the match is against the Commander's
+    /// own carrier alone.
+    /// </summary>
+    [Theory]
+    [InlineData("SQUADRON PRIDE", "JOHN DEPARAGON", "K7Q-B4Z")]
+    [InlineData("Station Traffic Control", "JOHN DEPARAGON", "K7Q-B4Z")]
+    [InlineData("JOHN DEPARAGON", null, null)]
+    public void EverybodyElseKeepsTheOrdinaryCommsVoice(string from, string? name, string? call)
+    {
+        var reader = Reader();
+        reader.CarrierName = name;
+        reader.CarrierCallSign = call;
+
+        var read = reader.Read(Message(from, "Stand by.", "npc", localised: "Stand by."));
+
+        Assert.NotNull(read);
+        Assert.Equal(VoiceRole.Comms, read.Voice);
+    }
+
     [Fact]
     public void NpcChatterIsItsOwnDecision()
     {
