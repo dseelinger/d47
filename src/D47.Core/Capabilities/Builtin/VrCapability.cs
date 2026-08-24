@@ -166,7 +166,12 @@ public static class VrCapability
                 Commands =
                 [
                     new SettingCommandPhrase("mini panel", "mini"),
+                    new SettingCommandPhrase("small panel", "mini"),
+                    new SettingCommandPhrase("little panel", "mini"),
+                    new SettingCommandPhrase("minimal panel", "mini"),
                     new SettingCommandPhrase("full panel", "full"),
+                    new SettingCommandPhrase("big panel", "full"),
+                    new SettingCommandPhrase("large panel", "full"),
                 ],
             },
             new SettingRow
@@ -393,8 +398,9 @@ public static class VrCapability
         yield return Row(
             "size",
             "Size",
-            "How wide the quad is, in metres. Height follows from the panel's proportions, because SteamVR "
-            + "takes a width and derives the rest.",
+            "How big the panel is, in metres across. Height follows from the panel's proportions, because "
+            + "SteamVR takes a width and derives the rest. This is the size of the panel itself; to make "
+            + "the writing on it bigger without moving the edges, use scale.",
             SettingKind.Number,
             v => Number(v.Width),
             (v, x) => v with { Width = Parse(x, v.Width) },
@@ -413,8 +419,10 @@ public static class VrCapability
         yield return Row(
             "scale",
             "Scale",
-            "How large the panel is drawn, as a percentage. Distinct from mini mode: this changes the size "
-            + "of everything on the panel, mini changes how much of it there is.",
+            "How big everything drawn on the panel is, as a percentage - the text and the controls, without "
+            + "the panel's own edges moving. To make the whole panel bigger instead, use size. Distinct "
+            + "from mini mode again: this changes how large things are, mini changes how much of them "
+            + "there is.",
             SettingKind.Choice,
             v => v.Zoom.ToString(CultureInfo.InvariantCulture),
             (v, x) => v with { Zoom = Interface.ZoomLadder.Snap((int)Parse(x, v.Zoom)) },

@@ -125,6 +125,7 @@ public class ThePanelYouAreLookingAtTests
     [InlineData("distance")]
     [InlineData("size")]
     [InlineData("curve")]
+    [InlineData("scale")]
     public void EveryPlacementKnobHasAResolvingRow(string name)
     {
         var keys = Rows().Select(row => row.Key).ToList();
@@ -132,5 +133,38 @@ public class ThePanelYouAreLookingAtTests
         Assert.Contains($"vr.current.{name}", keys);
         Assert.Contains($"vr.panel.{name}", keys);
         Assert.Contains($"vr.mini.{name}", keys);
+    }
+
+    /// <summary>
+    /// The words a Commander actually reaches for switch the panel
+    /// (<a href="https://github.com/dseelinger/d47/issues/25">#25</a>). "Full panel" shipped alone,
+    /// and it is the one phrase nobody says unprompted.
+    /// </summary>
+    [Theory]
+    [InlineData("big panel", "full")]
+    [InlineData("large panel", "full")]
+    [InlineData("full panel", "full")]
+    [InlineData("little panel", "mini")]
+    [InlineData("small panel", "mini")]
+    [InlineData("minimal panel", "mini")]
+    [InlineData("mini panel", "mini")]
+    public void TheWordsForEachPanelReachIt(string phrase, string mode)
+    {
+        var row = Row(VrCapability.ModeKey);
+
+        Assert.Equal(
+            mode,
+            Assert.Single(row.Commands, spoken => spoken.Phrase == phrase).Value);
+    }
+
+    /// <summary>
+    /// And the two rows that both answer "size" each name the other, because a Commander asking to
+    /// change the size of the panel could mean either and d47 answered with neither (#25).
+    /// </summary>
+    [Fact]
+    public void TheTwoRowsThatBothMeanSizePointAtEachOther()
+    {
+        Assert.Contains("scale", Row("vr.current.size").Help, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("size", Row("vr.current.scale").Help, StringComparison.OrdinalIgnoreCase);
     }
 }
