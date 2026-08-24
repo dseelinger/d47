@@ -17,6 +17,43 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.8 — 2026-08-24 — Three from the desk
+
+### The checklist filter is one filter, and it is remembered
+
+Apply *"what Lei Cheung can do here"* in the window and the headset, a foot away, went on drawing
+the unfiltered list. The filter and the search box were fields on the page, and there is one page
+per surface — the same shape, and now the same fix, as the selected line before them. **What you are
+reading is shared; only how a surface draws it stays with the surface.**
+
+The filter is also **kept between sessions**, which was asked for the same day. The search box
+deliberately is not: a typed query is where you are this minute, and one restored from last week is
+a list that looks broken until you find the box.
+
+The question that decided whether sharing was safe is answered rather than assumed — the mini panel
+*does* draw the chooser, and it says what the list is under. A filter switched on at the desk cannot
+leave you in the headset with a short list and no explanation.
+
+### A parked ship's lines get a verdict
+
+A plan line for a ship in another dock read out its module by name — *"0A Shield Booster"* — over a
+verdict that had refused to look at the same place, because the line read the remembered loadout and
+the verdict only ever read the ship you are sitting in. One report of that asymmetry arrived as d47
+being unable to see a ship it could describe perfectly well.
+
+Now both read the same source, and **a verdict from a remembered loadout says which moment it is a
+fact about**: *"As last seen, 16 Aug 2026."* A date rather than "three days ago", because nothing in
+the core reads the clock. A ship you have never sat in still gets silence rather than a guess.
+
+### Under the hood: a stale build says so
+
+A single-file bundle left in the build output directory shadowed every build for hours — `dotnet
+build` rebuilt the assemblies and the bundle ignored them, three fixes in a row appeared not to
+work, and nothing anywhere said a word. That layout is now called out at startup: a bundle-sized
+executable with loose assemblies beside it, or assemblies newer than the executable, is not a shape
+any build produces. Said rather than enforced — a heuristic that can be wrong must not be the thing
+that stops d47 running.
+
 ## 0.60.7 — 2026-08-24 — Two panels, one opacity knob
 
 Opacity was one of the settings each headset surface kept its own copy of, which is what made *"set

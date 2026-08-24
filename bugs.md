@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Five open, and one partly confirmed.
+## Four open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
@@ -236,51 +236,3 @@ exists twice, and a Commander who says *"move it closer"* in mini can still have
 distance move. Those rows have a real reason to differ, so the answer there is not one knob — it is
 either the resolve-from-mode route this entry described or nothing, and nothing is defensible while
 the rows say which surface they belong to.
-
----
-
-## Open: a stale publish artifact in the build output silently overrode every build
-
-Reported 2026-08-23, and it cost about two hours and a wiped data folder before anybody looked at a
-file size.
-
-**What was there.** `src/D47.App/bin/Debug/net10.0-windows10.0.26100.0/win-x64/d47.exe` was
-**74,742,715 bytes** — a self-contained single-file bundle with every assembly inside it. A normal
-apphost is ~150 KB. That exe never reads the `d47.dll` beside it, so `dotnet build` and `dotnet run`
-faithfully rebuilt the DLLs and the running app ignored them completely.
-
-**Why it took so long to see.** Every check said the fix was present, because every check was
-looking at the wrong artifact: the source had it, the build succeeded, and a byte-level search of
-`d47.dll` found the new strings. The process was even confirmed running from that exact directory.
-Three fixes in a row appeared not to work, and each one was re-diagnosed from scratch. The tell was
-sitting in plain view the whole time — `d47.exe` dated 08-23 21:42 and `d47.deps.json` dated
-**08-16**, in a folder whose DLLs were minutes old. A timestamp hours in the future was noticed
-early and dismissed as a clock quirk.
-
-**Two more things that folder should not have been holding.** `bin/Debug` also contained the debug
-build's **live `data/` folder** — d47 writes beside its executable, which is right for an installed
-app and means dev state lives in build output. So the obvious remedy for the stale exe, deleting
-`bin/Debug`, wiped the Commander's debug checklist, settings and secrets. And two dead framework
-folders (`net10.0`, `net10.0-windows`) still held August 15 binaries.
-
-**How it got there is not known.** `PublishDir` is `bin\$(Configuration)\publish\`
-(`src/D47.App/D47.App.csproj:47`) and has been since Phase 21, so a current `dotnet publish` does not
-write here. `PublishSingleFile` is set for **all** configurations, not just Release, so a
-`dotnet publish -c Debug` from before that line existed is the likeliest source. Do not fix the
-origin without establishing it.
-
-**What is worth building is the guard, not the archaeology.** A `dotnet build` that can be silently
-shadowed by a file left in its own output directory is a trap that will be walked into again, by
-anyone, with no error. Candidates, cheapest first: a `--selftest`-style check that the exe about to
-run is an apphost rather than a bundle; a build target that fails when the output exe exceeds a few
-megabytes; or moving the dev data folder out of `bin` so the obvious remedy stops being destructive.
-
-**The third one shipped in 0.60.4, and this entry stays open for the other two.** A Debug build now
-writes to `dev-data/` at the repo root, through an `AssemblyMetadata("DevDataRoot", …)` that
-`D47.App.csproj` writes for that configuration alone — so a published build carries no such
-attribute, `data/` beside the executable is untouched where it matters, and no environment variable
-can redirect where secrets are written. **Deleting `bin` is no longer destructive**, which was the
-half worth doing whatever else was decided. What is still missing is the guard that would have found
-the stale artifact in minutes rather than hours: nothing yet notices that the exe about to run is a
-74 MB bundle rather than a ~150 KB apphost.
-
