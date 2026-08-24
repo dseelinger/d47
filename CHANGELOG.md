@@ -20,6 +20,54 @@ the file as it stood then.
 
 ---
 
+## 0.62.1 — 2026-08-24 — Directive 47 notices when you rank up
+
+### Every rank-up you earned was being thrown away
+
+Reported: *"this is being repeated once per module, even though my relationship with the engineer
+is 5."* Quite right, and it was worse than a repeated sentence — **Directive 47 believed the rank.**
+
+Elite announces a rank-up by naming the engineer and the new number and nothing else. Directive 47
+wanted a status word alongside it, did not get one, and discarded the whole event. So it kept
+whatever rank you were sitting at when the engineer was first unlocked, and went on saying grade 5
+could not be rolled at rank 1 — correctly, about a rank four steps out of date. Your own morning
+has Selene Jean going from rank 1 to rank 5 in four and a half minutes, with all four steps
+dropped.
+
+Across every journal on this machine that is **172 of 278 announcements**, spanning 24 engineers:
+every rank-up ever earned.
+
+It hid this long because it healed itself. Elite writes a full standing for everybody at launch, so
+the next time you started the game the number was right again — and it was wrong only inside the
+session where you had done the work, which is the session where you would ask.
+
+**It also made Directive 47 pessimistic.** The further your rank is above the grade you are
+rolling, the fewer rolls that grade takes, so a rank held too low overstated how much was left. And
+the engineer filter hid work you could have done standing right there.
+
+### One thing about an engineer, said once
+
+*"Rank rises by working with them, and it compounds"* is one fact about one engineer, and it was
+printed under every module waiting on that rank. Six modules, six copies.
+
+Each line still says what is true of **itself** — this module, this grade, why it is blocked —
+because a line has to make sense when it is read out on its own. The explanation now goes to the
+first line that needs it and to none of the others. A line that arrives by itself always keeps it.
+
+### The scrollbar stops flashing while you drag it
+
+The other half of the flicker reported yesterday, and it survived the fix that went with it.
+
+Dragging the bar is the only way to scroll in the headset, so a hand at arm's length spends the
+whole drag wandering off a bar twelve pixels wide — and every time it strayed, the highlight went
+out and came back. The scroll already survived that on purpose. The light now does too: **once you
+have hold of a bar, it stays lit wherever your hand goes**, and letting go hands the question back
+to where you are pointing.
+
+Widening the target could never have fixed this, which is why yesterday's change did not.
+
+---
+
 ## 0.62.0 — 2026-08-24 — The headset keeps up, and d47 stops saying a wrong number
 
 ### The aim ray runs at frame rate
