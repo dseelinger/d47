@@ -1029,6 +1029,22 @@ public sealed record UiSettings
     public int ZoomPercent { get; init; } = Interface.ZoomLadder.Default;
 
     /// <summary>
+    /// Which content set the desktop window is showing: "full" or "mini" (list.md Phase 51).
+    /// <para>
+    /// <b>Its own row rather than the headset's.</b> Phase 45 settled the principle in one line —
+    /// what you are reading is shared, and mini/full and zoom are how a surface draws it — so this
+    /// sits here beside <see cref="Theme"/> and <see cref="ZoomPercent"/>, and <c>vr.mode</c> goes
+    /// on meaning the quad. A Commander in a headset who says "mini panel" must not shrink a
+    /// window they cannot see, and one at a desk must not resize a quad they are not wearing.
+    /// </para>
+    /// <para>
+    /// Machine-wide rather than per-Commander, which is the default scope and is deliberate here:
+    /// <b>a window is a property of the desk and not of whoever is flying today.</b>
+    /// </para>
+    /// </summary>
+    public string Mode { get; init; } = "full";
+
+    /// <summary>
     /// The mini panel on a monitor, for a Commander with no headset (list.md Phase 48). Under
     /// <see cref="UiSettings"/> rather than beside <see cref="VrSettings"/> because there is no
     /// headset in it: a Commander goes looking where the theme, the zoom and the hotkeys already
@@ -1167,6 +1183,25 @@ public sealed record HotkeySettings
     /// </para>
     /// </summary>
     public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
+
+    /// <summary>
+    /// Puts the desktop window into mini and back (list.md Phase 51).
+    /// <para>
+    /// <b>This is the way back, and the way back must not live in the thing that disappears.</b>
+    /// Mini takes the tab strip, the mode control, the breadcrumb, the search box, the banners and
+    /// the header, all of it by design — so a Commander who lands there with no way out has
+    /// bricked their window, and a first run that ends in a force-quit is the only way a feature
+    /// like this is remembered. This is one of three ways back and the one that works when there
+    /// is nothing at all on the surface; the others are the spoken phrase and the title bar, which
+    /// mini keeps.
+    /// </para>
+    /// <para>
+    /// Window-scoped rather than system-wide, unlike <see cref="Reanchor"/> and
+    /// <see cref="ShowOverlay"/>. Those exist for a moment when Elite is filling the screen and
+    /// d47 cannot be focused; this one is pressed by somebody looking at the window it acts on.
+    /// </para>
+    /// </summary>
+    public string? WindowMode { get; init; } = "Ctrl+M";
 }
 
 public sealed record UpdateSettings

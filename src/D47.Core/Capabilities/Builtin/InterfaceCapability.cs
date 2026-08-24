@@ -34,6 +34,17 @@ public static class InterfaceCapability
     /// </summary>
     public const string BindShipCoreHotkeyKey = "hotkeys.bindShipCore";
 
+    /// <summary>
+    /// Which content set the desktop window is showing (list.md Phase 51).
+    /// <para>
+    /// <c>ui.mode</c> beside <c>vr.mode</c> rather than instead of it, because mode is per
+    /// surface: what you are reading is shared and how a surface draws it is not.
+    /// </para>
+    /// </summary>
+    public const string WindowModeKey = "ui.mode";
+
+    public const string WindowModeHotkeyKey = "hotkeys.windowMode";
+
     /// <summary>The flat mini panel, on or off (list.md Phase 48).</summary>
     public const string OverlayKey = "ui.overlay.enabled";
 
@@ -112,6 +123,38 @@ public static class InterfaceCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = WindowModeKey,
+                Label = "Window content",
+                Help = "Full is everything. Mini is the transcript's tail, the ask box and the "
+                       + "line under it - the same panel showing less, not a smaller copy. The "
+                       + "window keeps its title bar in mini, so it can still be moved and closed.",
+                Kind = SettingKind.Choice,
+                Choices = ["full", "mini"],
+                DocsAnchor = "window-mode",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.Mode,
+                    Write = (s, v) => s with { Ui = s.Ui with { Mode = v == "mini" ? "mini" : "full" } },
+                },
+
+                // <b>And these must not collide with the headset's.</b> `VrCapability.ModeKey`
+                // already owns "mini panel" and "full panel"; a Commander in a headset who says
+                // those must not shrink a window they cannot see, and one at a desk must not
+                // resize a quad they are not wearing. The router matches a whole utterance
+                // exactly, so "mini window" and "mini panel" reach one surface each.
+                Commands =
+                [
+                    new SettingCommandPhrase("mini window", "mini"),
+                    new SettingCommandPhrase("small window", "mini"),
+                    new SettingCommandPhrase("little window", "mini"),
+                    new SettingCommandPhrase("shrink the window", "mini"),
+                    new SettingCommandPhrase("full window", "full"),
+                    new SettingCommandPhrase("big window", "full"),
+                    new SettingCommandPhrase("large window", "full"),
+                ],
+            },
             HotkeyRow(
                 OpenSettingsHotkeyKey,
                 "Open settings",
@@ -131,6 +174,12 @@ public static class InterfaceCapability
                 s => s.Hotkeys.Reanchor,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { Reanchor = v } },
                 systemWide: true),
+            HotkeyRow(
+                WindowModeHotkeyKey,
+                "Switch the window between full and mini",
+                "window-mode-key",
+                s => s.Hotkeys.WindowMode,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { WindowMode = v } }),
             HotkeyRow(
                 BindShipCoreHotkeyKey,
                 "Remember this core for this ship",

@@ -24,6 +24,26 @@ public sealed record ViewState
     public WindowPlacement? MainWindow { get; init; }
 
     /// <summary>
+    /// And where it was left <em>in mini</em>, kept apart from the rectangle above
+    /// (list.md Phase 51).
+    /// <para>
+    /// <b>Two records rather than one, and that is the whole of the trap this phase names.</b>
+    /// The placement memory samples the window on every resize and move and writes the result down
+    /// as a size the Commander chose. A mini toggle is a resize, so one record would have the
+    /// window shrink, record 512 pixels as the size that was wanted, and hand that back as the
+    /// full window — permanently, and across a restart. It is the same shape as the maximised case
+    /// the record already guards and it wants the same treatment: the full rectangle survives the
+    /// toggle, and a Commander who widens their mini window keeps that too.
+    /// </para>
+    /// <para>
+    /// Null until the first time mini is entered, when it takes the full window's position and the
+    /// measured mini size — so the strip appears where the window already was rather than jumping
+    /// across the desk on its first use.
+    /// </para>
+    /// </summary>
+    public WindowPlacement? MainWindowMini { get; init; }
+
+    /// <summary>
     /// Whether the Commander has been asked about a Start Menu entry. Recorded whichever way
     /// they answered, because "no" has to stick — an offer that returns every launch is not an
     /// offer, it is nagging.
@@ -184,6 +204,15 @@ public sealed record ViewState
     /// </para>
     /// </summary>
     public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
+
+    /// <summary>
+    /// Records where the window was left, in whichever of its two shapes it was in
+    /// (list.md Phase 51). The caller says which; nothing here reads a mode, because
+    /// <c>PanelMode</c> is the app's word and Core has never heard it.
+    /// </summary>
+    public ViewState With(WindowPlacement placement, bool mini) => mini
+        ? this with { MainWindowMini = placement }
+        : this with { MainWindow = placement };
 
     /// <summary>Records where the flat mini panel was dragged to (list.md Phase 48).</summary>
     public ViewState With(OverlayPlacement placement) => this with { Overlay = placement };

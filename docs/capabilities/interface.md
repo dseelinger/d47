@@ -152,6 +152,66 @@ and the transcript does not.
 
 It applies to the settings window too, and the level survives a restart like the theme does.
 
+#### Window content {#window-mode}
+
+**Full or mini.** Full is everything. Mini is the transcript's last few lines, the ask box, and the
+line under it — the same panel showing less, not a smaller copy of it.
+
+It is the shape for the very ordinary case of one monitor and wanting Directive 47 out of the way
+without losing it. The window stays interactive: **you can still type into it**, which is the
+difference between a mini window worth having and one you switch off the same day.
+
+**Three ways back, and none of them is drawn on the panel.** Mini takes the tab strip, the reading
+control, the breadcrumb, the search box, the banners and the header, all of it on purpose — so the
+way out cannot live in any of them:
+
+```text
+Ctrl+M               the key, which works with nothing at all on the surface
+"full window"        said out loud
+the title bar        mini keeps its decorations, so ✕ still closes it
+```
+
+That last one is a decision rather than an oversight. A chromeless strip pinned over the game is
+the [overlay](#overlay) and a different thing; keeping the frame here means the window can still be
+moved, resized and closed by the means you already know.
+
+**It says "window", never "panel".** *Mini panel* and *full panel* belong to the headset and always
+did. A Commander wearing one must not shrink a window they cannot see, and one at a desk must not
+resize a quad they are not wearing, so each phrase reaches exactly one surface:
+
+```text
+mini window / small window / little window / shrink the window   this window
+full window / big window / large window                          this window
+mini panel / small panel / little panel / minimal panel          the headset
+full panel / big panel / large panel                             the headset
+```
+
+**Going mini picks a page mini actually has.** Mini can show the transcript, and the story where the
+surface has one — nothing else. Switch to mini while you are on Settings and it moves to the
+transcript rather than drawing a settings page into 512 pixels with no tab strip to leave by, and
+switching back puts Settings up again. While you are in mini, asking for a page it has no reading of
+is declined rather than queued.
+
+**Size is measured, not a number.** Mini is the headset's 512 by 280 plus whatever the ask box
+actually wants, at whatever [zoom](#zoom) you are on — so mini at 150% is a bigger mini window
+rather than a clipped one.
+
+**Its rectangle is its own.** Where you leave the mini window is remembered separately from where
+you leave the full one, so going mini and back lands on the pixel it started on, and a mini window
+you widened stays widened. Both survive a restart. The first time you go mini it appears at the
+corner the full window was at, rather than jumping across the desk.
+
+This is machine-wide rather than per-Commander: a window is a property of the desk, not of whoever
+is flying today.
+
+#### Switch the window between full and mini {#window-mode-key}
+
+`Ctrl+M` out of the box. It works while Directive 47 has focus — which is every moment it is
+wanted, because you are looking at the window it acts on.
+
+It flips the row above, so what you did with the key and what Settings says are one thing and
+survive a restart together.
+
 #### Window size and position
 
 Not something to set. The window opens at a size that fits the screen it opens on, and after

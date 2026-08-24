@@ -332,7 +332,7 @@ public class TheOverlayWithoutAHeadsetTests
             model, settings, viewState, tick, elite,
             NullLogger<OverlayPanel>.Instance,
             avatars: null,
-            adventures: stories ? Stories(paths) : null);
+            adventures: stories ? AdventureFixture.Surface(paths) : null);
 
         Dispatcher.UIThread.RunJobs();
 
@@ -344,34 +344,6 @@ public class TheOverlayWithoutAHeadsetTests
     {
         tick.Tick(new DateTimeOffset(2026, 8, 24, 12, 0, 0, TimeSpan.Zero));
         Dispatcher.UIThread.RunJobs();
-    }
-
-    /// <summary>
-    /// The smallest adventure surface that furnishes a tab. Nothing here is exercised — the point
-    /// is only that the tab exists on this surface and the other five do not.
-    /// </summary>
-    private static AdventureSurface Stories(D47.Core.AppPaths paths)
-    {
-        var store = new AdventureStore(
-            Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance);
-
-        var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
-
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
-
-        return new AdventureSurface(
-            book,
-            generator,
-            () => null,
-            () => "F1",
-            () => new DateTimeOffset(2026, 8, 24, 12, 0, 0, TimeSpan.Zero),
-            _ => { },
-            () => false,
-            () => false,
-            () => null,
-            () => { });
     }
 
     /// <summary>What the surface actually drew, so an assertion is about pixels and not about a call.</summary>
