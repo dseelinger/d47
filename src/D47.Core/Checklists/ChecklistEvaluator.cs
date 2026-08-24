@@ -18,7 +18,7 @@ public readonly record struct ChecklistVerdict(ChecklistState State, string Reas
     /// reason rather than appended to it
     /// (<a href="https://github.com/dseelinger/d47/issues/26">#26</a>).
     /// <para>
-    /// <b>The state is per line; the explanation is per engineer.</b> "Grade 5 cannot be rolled at
+    /// <b>The state is per line; the explanation is per engineer.</b> "Grade 5 cannot be crafted at
     /// rank 1" is a fact about this module's plan. "Rank rises by working with them, and it
     /// compounds" is a fact about the engineer, and it is the same sentence however many modules
     /// are waiting on it — which is what made it read as canned when six lines said it in a row
@@ -262,7 +262,7 @@ public static class ChecklistEvaluator
             return new ChecklistVerdict(
                 ChecklistState.Open,
                 $"{Describe(module)} is part-way through grade {wanted}"
-                + (left is { } rolls ? $", about {Rolls(rolls)} short." : "."));
+                + (left is { } rolls ? $", about {Crafts(rolls)} short." : "."));
         }
 
         return Named(
@@ -311,7 +311,7 @@ public static class ChecklistEvaluator
             // to do. "Point Defence is not engineered" reads as a fact about Point Defence; the
             // only thing d47 knows is a fact about right now. Remediation 15 item 5.
             $"{Describe(module)} is not currently engineered."
-            + (total is { } rolls ? $" Grade {intent.Grade} is {Rolls(rolls)} from here." : string.Empty));
+            + (total is { } rolls ? $" Grade {intent.Grade} is {Crafts(rolls)} from here." : string.Empty));
     }
 
     /// <summary>
@@ -327,7 +327,7 @@ public static class ChecklistEvaluator
         // before.
         return new ChecklistVerdict(
             ChecklistState.Blocked,
-            $"Grade {grade} cannot be rolled at rank {rank}{who} at all — no amount of gathering fixes that.")
+            $"Grade {grade} cannot be crafted at rank {rank}{who} at all — no amount of gathering fixes that.")
         {
             Advice = EngineeringRules.RankRises,
         };
@@ -711,8 +711,8 @@ public static class ChecklistEvaluator
 
     private static string Remaining(int grade, int rank, double quality) =>
         EngineeringRules.RollsRemaining(grade, rank, quality) is { } rolls
-            ? $"About {Rolls(rolls)} at your rank."
+            ? $"About {Crafts(rolls)} at your rank."
             : string.Empty;
 
-    private static string Rolls(int count) => count == 1 ? "1 roll" : $"{count} rolls";
+    private static string Crafts(int count) => count == 1 ? "1 craft" : $"{count} crafts";
 }

@@ -630,7 +630,7 @@ public class ChecklistTabTests
         // Each line keeps its own verdict.
         Assert.Equal(
             2,
-            drawn.Count(line => line.Contains("cannot be rolled at rank 1", StringComparison.Ordinal)));
+            drawn.Count(line => line.Contains("cannot be crafted at rank 1", StringComparison.Ordinal)));
 
         // The engineer is explained once.
         Assert.Equal(1, drawn.Count(line => line.Contains("compounds", StringComparison.Ordinal)));

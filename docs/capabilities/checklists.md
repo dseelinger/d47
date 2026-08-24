@@ -332,13 +332,13 @@ Four answers that are not "open":
 
 - **Elsewhere** — you own it and it is in Deciat, and moving it costs 2.1 million. A completely
   different next action from "go and grind it".
-- **Blocked** — grade 5 cannot be rolled at rank 3 *at all*. Not a slow route, no route; and the
+- **Blocked** — grade 5 cannot be crafted at rank 3 *at all*. Not a slow route, no route; and the
   price of clearing it is quoted, because naming a blocker and shrugging at it is not an answer.
 - **Stale** — that ship id now reports a different hull, so the plan is about a ship that is not
   there any more.
 - **Unverified** — see below.
 
-A grade counts as finished at **0.85 progress, not 1.0**. That is measured across 6,272 real rolls:
+A grade counts as finished at **0.85 progress, not 1.0**. That is measured across 6,272 real crafts:
 of the grades left below 1.0 that the game let a Commander move on from, every one sat at 0.85 or
 above. Testing for 1.0 would tell you a module you can see is finished is not.
 
@@ -361,11 +361,11 @@ Netted across **every** live plan at once, because storage caps are shared and t
 fit can be jointly impossible.
 
 The total is exact rather than a floor. An application costs exactly one of each ingredient —
-measured across 786 blueprints and 1,885 ingredient entries — and the rolls a grade takes are 5, 4,
+measured across 786 blueprints and 1,885 ingredient entries — and the crafts a grade takes are 5, 4,
 3, 2, 1 as your rank exceeds the recipe's grade. Known unit cost times known count is a real number.
 
 Caps are reported **first**, because needing more than you can hold is a flat certainty — at least
-two trips, however the rolls go — while everything below it is a possibility and has to read like
+two trips, however the crafts go — while everything below it is a possibility and has to read like
 one.
 
 Materials, cargo and ship-locker goods are totalled **apart**. Meta-alloys are a material, Gold ×200
@@ -411,12 +411,12 @@ Two moments, both switchable under Callouts → **Checklist changes**:
 Reads the list. Open items by group, then what is done with its count, then anything waiting for
 you. Derived items carry the journal's verdict as of right now.
 
-`here` narrows it to what an engineer in this system could roll today — the blueprint is theirs,
+`here` narrows it to what an engineer in this system could craft today — the blueprint is theirs,
 you have unlocked them, and your grade with them reaches the grade you asked for. Anything they
-offer but cannot yet roll is left out of that answer rather than counted as work.
+offer but cannot yet craft is left out of that answer rather than counted as work.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list: custom, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["custom","ship","system","suit","weapon"]},"here":{"type":"boolean","description":"Only what an engineer in this system could roll today."},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list: custom, ship, system, suit or weapon. Omitted shows all of them. With no name, each means the one the Commander is in or carrying right now.","enum":["custom","ship","system","suit","weapon"]},"here":{"type":"boolean","description":"Only what an engineer in this system could craft today."},"kind":{"type":"string","description":"Only the Commander\u0027s own lines (authored), only the computed ones (derived), or one plan\u0027s \u2014 engineeringPlan, colonisationPlan or onFootPlan."},"name":{"type":"string","description":"A specific ship id, star system, suit id or weapon id, when the group is not the current one."},"state":{"type":"string","description":"Only the open items, or only the finished ones.","enum":["open","complete"]}},"required":[],"additionalProperties":false}
 ```
 
 #### `get_plan_shortfall`
@@ -454,7 +454,7 @@ Proposes what a ship's build should say about **one slot**, leaving everything t
 other slots alone.
 
 ```json
-{"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 \u0022Dirty Drive Tuning\u0022. Omit for any."},"drop":{"type":"boolean","description":"Say nothing about this slot. What it already produced is kept."},"engineer":{"type":"string","description":"Who would roll it. Naming one is what lets D47 quote an exact roll count and say when a grade is out of rank reach entirely."},"experimental":{"type":"string","description":"An experimental effect, which becomes its own item on the same slot."},"grade":{"type":"integer","description":"1 to 5. Omit for any grade \u2014 that is a wildcard, not an unknown."},"ship":{"type":"string","description":"A ship id, name, or a hull they do not own yet. Omit for the one they fly."},"slot":{"type":"string","description":"The slot or the module \u2014 \u0022MainEngines\u0022, \u0022thrusters\u0022, \u0022Slot01_Size4\u0022."}},"required":["slot"],"additionalProperties":false}
+{"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 \u0022Dirty Drive Tuning\u0022. Omit for any."},"drop":{"type":"boolean","description":"Say nothing about this slot. What it already produced is kept."},"engineer":{"type":"string","description":"Who would craft it. Naming one is what lets D47 quote an exact count and say when a grade is out of rank reach entirely."},"experimental":{"type":"string","description":"An experimental effect, which becomes its own item on the same slot."},"grade":{"type":"integer","description":"1 to 5. Omit for any grade \u2014 that is a wildcard, not an unknown."},"ship":{"type":"string","description":"A ship id, name, or a hull they do not own yet. Omit for the one they fly."},"slot":{"type":"string","description":"The slot or the module \u2014 \u0022MainEngines\u0022, \u0022thrusters\u0022, \u0022Slot01_Size4\u0022."}},"required":["slot"],"additionalProperties":false}
 ```
 
 #### `plan_on_foot_build`

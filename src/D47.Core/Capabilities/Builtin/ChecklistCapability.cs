@@ -130,7 +130,7 @@ public static class ChecklistCapability
                     {
                         Name = "here",
                         Type = ToolParameterType.Boolean,
-                        Description = "Only what an engineer in this system could roll today.",
+                        Description = "Only what an engineer in this system could craft today.",
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(checklists.Report(
@@ -257,7 +257,7 @@ public static class ChecklistCapability
                         Name = "engineer",
                         Type = ToolParameterType.String,
                         Description =
-                            "Who would roll it. Naming one is what lets D47 quote an exact roll count and "
+                            "Who would craft it. Naming one is what lets D47 quote an exact count and "
                             + "say when a grade is out of rank reach entirely.",
                     },
                     new ToolParameter

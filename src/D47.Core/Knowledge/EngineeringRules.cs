@@ -150,7 +150,7 @@ public static class EngineeringRules
     /// </summary>
     public static string RankRises =>
         "Rank rises by working with them, and it compounds: every rank you gain makes each later "
-        + "roll count for more.";
+        + "craft count for more.";
 
     /// <summary>
     /// The grade a Commander needs with a referring engineer before that engineer will recommend

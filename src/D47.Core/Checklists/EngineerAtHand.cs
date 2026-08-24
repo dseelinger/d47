@@ -80,7 +80,7 @@ public sealed record EngineerAtHand(
 
         if (Ready.Count == 0)
         {
-            return $"{where} — nothing on your list they can roll yet, "
+            return $"{where} — nothing on your list they can craft yet, "
                    + $"{Count(OutOfRank.Count)} waiting on your grade with them.";
         }
 

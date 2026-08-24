@@ -144,7 +144,7 @@ public class EngineeringCapabilityTests
         // The whole point of folding rank in. At rank 5 a grade 5 is five rolls, so the answer is
         // a shopping list rather than a rate — ingredients × RollsFor, with no hedging.
         Assert.Contains("You are grade 5 with Felicity Farseer", answer, StringComparison.Ordinal);
-        Assert.Contains("a full grade 5 is 5 rolls", answer, StringComparison.Ordinal);
+        Assert.Contains("a full grade 5 is 5 crafts", answer, StringComparison.Ordinal);
         Assert.Contains("5 × Arsenic", answer, StringComparison.Ordinal);
     }
 
@@ -170,7 +170,7 @@ public class EngineeringCapabilityTests
         // priced in credits, from a wiki, and that was never how the rank went up (#26).
 
         // And never a shopping list, because below the rank there is no roll count at all.
-        Assert.DoesNotContain("rolls, so", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("crafts, so", answer, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class EngineeringCapabilityTests
     {
         var answer = await Ask(Flying(), "get_module_engineering", ("module", "frame shift drive"));
 
-        Assert.Contains("FSD LongRange at grade 5, rolled by Felicity Farseer.", answer, StringComparison.Ordinal);
+        Assert.Contains("FSD LongRange at grade 5, crafted by Felicity Farseer.", answer, StringComparison.Ordinal);
         Assert.Contains("The grade is finished", answer, StringComparison.Ordinal);
         Assert.Contains("0.85 is as far as the game insists", answer, StringComparison.Ordinal);
 
@@ -271,7 +271,7 @@ public class EngineeringCapabilityTests
         // insisting rather than a target to aim at.
         var answer = await Ask(Flying(), "get_module_engineering", ("module", "MainEngines"));
 
-        Assert.Contains("The grade is part rolled, at 0.4 of 1 — 3 more rolls to fill it", answer, StringComparison.Ordinal);
+        Assert.Contains("The grade is part crafted, at 0.4 of 1 — 3 more crafts to fill it", answer, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -281,8 +281,8 @@ public class EngineeringCapabilityTests
         // function of rank − grade and of nothing else, so a roll count here would be invented.
         var answer = await Ask(Registry(Commander, Loadout), "get_module_engineering", ("module", "MainEngines"));
 
-        Assert.Contains("The grade is part rolled, at 0.4 of 1.", answer, StringComparison.Ordinal);
-        Assert.DoesNotContain("more roll", answer, StringComparison.Ordinal);
+        Assert.Contains("The grade is part crafted, at 0.4 of 1.", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("more craft", answer, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -290,7 +290,7 @@ public class EngineeringCapabilityTests
     {
         var answer = await Ask(Flying(), "get_module_engineering", ("module", "frame shift drive"));
 
-        Assert.Contains("What the roll did:", answer, StringComparison.Ordinal);
+        Assert.Contains("What the craft did:", answer, StringComparison.Ordinal);
 
         // The two halves of LessIsGood, and the reason it is read as 0/1 rather than as a JSON
         // boolean: read as one, every improvement on mass reports backwards.
