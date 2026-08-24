@@ -1,3 +1,4 @@
+using System.Reflection;
 using D47.Core.Audio;
 
 namespace D47.Core;
@@ -25,11 +26,38 @@ public sealed class AppPaths
     }
 
     /// <summary>
+    /// Where this build writes. <b>Beside the executable</b>, which is the shipped rule and the
+    /// whole of it for anything published.
+    /// <para>
     /// For a single-file publish <see cref="AppContext.BaseDirectory"/> is the executable's
     /// own directory rather than the native-extraction temp folder, which is what the
     /// "one writable folder beside the executable" requirement needs.
+    /// </para>
+    /// <para>
+    /// <b>A Debug build is the one exception, and it exists because of what beside-the-executable
+    /// means there.</b> A Debug executable lives in <c>bin\Debug\…</c>, so the rule put a running
+    /// Commander's checklist, settings and secrets inside build output — and on 2026-08-23 the
+    /// obvious remedy for a stale artifact, deleting <c>bin\Debug</c>, took the lot with it. The
+    /// path comes from <see cref="AssemblyMetadataAttribute"/> on the entry assembly, written by
+    /// <c>D47.App.csproj</c> for the Debug configuration only, so a published build has no such
+    /// attribute and cannot take this road. A test host has none either, which is why the suite is
+    /// unaffected.
+    /// </para>
     /// </summary>
-    public static AppPaths BesideExecutable() => new(AppContext.BaseDirectory);
+    public static AppPaths ForRunningBuild() => new(DevDataRoot() ?? AppContext.BaseDirectory);
+
+    /// <summary>
+    /// The Debug-only redirect, or null. Empty is null too: a metadata value that failed to
+    /// expand must not resolve the data folder to the drive root.
+    /// </summary>
+    private static string? DevDataRoot() =>
+        System.Reflection.Assembly.GetEntryAssembly()
+            ?.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute =>
+                string.Equals(attribute.Key, "DevDataRoot", StringComparison.Ordinal))
+            ?.Value is { Length: > 0 } root
+            ? root
+            : null;
 
     public string InstallRoot { get; }
     public string Data { get; }

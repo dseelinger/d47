@@ -219,8 +219,24 @@ public sealed class ChecklistService(
     /// </param>
     public IReadOnlyList<ChecklistNews> Poll(bool announce = true)
     {
-        list.Poll();
+        // <b>A document that arrived from outside is silent too</b>, reported 2026-08-23 as a
+        // stream of "X is done" for work finished while d47 was not running. The priming rule
+        // above was attached to the <em>tick</em> and not to the <em>document</em>, so it covered
+        // only the copy that was on disk at startup. A file rewritten under a running d47 — the
+        // hand edit <see cref="ChecklistStore.Poll"/> exists to support, a restored backup, a data
+        // folder refreshed from another install — was re-read mid-session and every disagreement
+        // between what it stored and what the game says was announced as though it had just
+        // happened. `Loaded 1 checklists … (279 items)` and the callout that followed it in the
+        // same second are in `d47-20260823.log` at 21:13:34.
+        //
+        // d47's own writes are not this: <see cref="ChecklistStore.Save"/> re-stamps and re-reads
+        // inside the write, so a tick that finds the file changed found somebody else's change.
+        // The Commander's remedy is the one they asked for — mark them done, say nothing.
+        var arrived = list.Poll();
+
         proposals.Poll();
+
+        announce &= !arrived;
 
         var state = State;
 
@@ -260,10 +276,10 @@ public sealed class ChecklistService(
             // only ever *raised* once here, because the state it disagrees with has just been
             // written down. What repeats is the report, which says it whenever it is read.
             //
-            // Said whole, ship and all. This is the one checklist sentence with nothing around it
-            // — no heading, no caption, no page — so a line that does not name its own ship is
-            // spoken into a session where the Commander has flown three of them.
-            var said = ChecklistWording.Line(item, state);
+            // Said with nothing around it — no heading, no caption, no page — so it carries its
+            // own subject. The ship rides it only when the ship is not the one being flown
+            // (<see cref="ChecklistWording.Aloud"/>): "I know what ship I'm in", 2026-08-23.
+            var said = ChecklistWording.Aloud(item, state);
 
             if (item.IsComplete)
             {
@@ -273,7 +289,24 @@ public sealed class ChecklistService(
             }
             else if (verdict.State == ChecklistState.Done)
             {
-                news.Add(new ChecklistNews($"checklist.done.{item.Id}", $"\"{said}\" is done. {verdict.Reason}"));
+                // <b>One way of saying it, and the shorter one</b> — asked for 2026-08-23 against
+                // "Grade 5 Reinforced Shields on 5C Bi-Weave Shield Generator on Tulimiekka
+                // (smallcombat01_nx)" is done. 5C Bi-Weave Shield Generator is at grade 5 and
+                // finished. The verdict's reason already names the module and says what happened
+                // to it, so quoting the line in front of it says the same thing twice.
+                //
+                // The framed form survives for the case the reason cannot cover on its own: a
+                // reason names no ship, so an item about a ship the Commander is not sitting in
+                // keeps the line that does. Today the evaluator returns nothing for those at all
+                // (bugs.md, "a parked ship's lines carry no verdict"), which is exactly why this
+                // must not assume it stays that way.
+                var aboard = ChecklistEvaluator.IsActive(item.Scope, state.Ship);
+
+                news.Add(new ChecklistNews(
+                    $"checklist.done.{item.Id}",
+                    aboard && verdict.Reason is { Length: > 0 }
+                        ? verdict.Reason
+                        : $"\"{said}\" is done. {verdict.Reason}"));
             }
             else if (verdict.State is ChecklistState.Blocked or ChecklistState.Stale)
             {

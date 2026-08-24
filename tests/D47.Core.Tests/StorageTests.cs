@@ -187,3 +187,23 @@ public class SecretStoreTests
         Assert.Empty(store.Names);
     }
 }
+
+/// <summary>
+/// Where a build writes. <b>Beside the executable</b> is the shipped rule and the only thing a
+/// published build can do — the Debug redirect that keeps dev state out of <c>bin\</c> rides an
+/// assembly attribute <c>D47.App.csproj</c> writes for that configuration alone, and nothing
+/// outside the build can ask for it.
+/// </summary>
+public class AppPathsTests
+{
+    [Fact]
+    public void WithoutTheDebugAttributeTheDataFolderIsBesideTheExecutable()
+    {
+        // No entry assembly here carries DevDataRoot, which is equally the situation of every
+        // published d47.exe. If this ever fails, a redirect has become reachable outside a Debug
+        // build — and the Commander's secrets have moved somewhere they were never meant to be.
+        Assert.Equal(
+            Path.GetFullPath(AppContext.BaseDirectory),
+            AppPaths.ForRunningBuild().InstallRoot);
+    }
+}

@@ -180,6 +180,14 @@ LGPL binary is invisible to it, so it raises the floor rather than replacing the
 
 Everything the app writes goes to `data/` beside the executable — never `%APPDATA%`.
 
+**A Debug build is the one exception, and it is not a loosening of that rule.** Beside a *Debug*
+executable is `bin\Debug\…`, so dev state used to live in build output and deleting `bin\Debug` to
+clear a stale artifact deleted a Commander's checklist, settings and secrets with it (2026-08-23).
+A Debug build now writes to `dev-data/` at the repo root, through an `AssemblyMetadata("DevDataRoot", …)`
+that `D47.App.csproj` writes for that configuration only — a published build carries no such
+attribute and cannot take the road, and there is deliberately no environment variable that can.
+So **`bin` is disposable again**, which is the point.
+
 `D47_COVERAGE=1` records which tools and settings rows have actually been driven in the
 running app, and which have changed since they last were, to `data/coverage.md`. A workbench
 aid for knowing what is left to try by hand — off, and entirely absent from the surface,

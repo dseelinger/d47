@@ -158,7 +158,15 @@ public class ChecklistStoreTests
         ]);
 
         checklists.Poll();
-        Assert.Contains(checklists.Drain(), news => news.Text.Contains("is done", StringComparison.Ordinal));
+
+        // One way of saying it, and the shorter one (asked for 2026-08-23). The verdict already
+        // names the module and says what happened to it, so quoting the plan line in front of it
+        // said the same thing twice — and the ship it ended with is the one the Commander is
+        // sitting in.
+        var done = Assert.Single(checklists.Drain());
+
+        Assert.Equal("5A Thrusters is at grade 5 and finished.", done.Text);
+        Assert.DoesNotContain("krait", done.Text, StringComparison.OrdinalIgnoreCase);
 
         // Nothing changed, so nothing is said a second time.
         checklists.Poll();
@@ -179,6 +187,85 @@ public class ChecklistStoreTests
         // And once only. A computed tick going backwards is information, not a nag.
         checklists.Poll();
         Assert.Empty(checklists.Drain());
+    }
+
+    /// <summary>
+    /// Reported 2026-08-23 as a stream of "X is done" for work finished while d47 was not running.
+    /// Priming already folds the backlog silently, but that rule was attached to the tick rather
+    /// than to the document — so a file rewritten under a running d47 was re-read mid-session and
+    /// every disagreement between what it stored and what the game says was read out as news. The
+    /// hand edit the store exists to support is the same path as a restored backup or a data folder
+    /// refreshed from another install.
+    /// </summary>
+    [Fact]
+    public void ADocumentThatArrivedFromOutsideIsFoldedWithoutAnnouncingIt()
+    {
+        using var install = new TempInstall();
+        var gameState = new GameStateStore();
+        var checklists = TestSurface.Checklists(install.Paths, gameState);
+
+        void Apply(string line)
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            gameState.Apply(parsed!);
+        }
+
+        Apply("""{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""");
+
+        Apply(
+            """
+            { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
+                "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0} } ] }
+            """);
+
+        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+        {
+            Detail = "Engine_Dirty",
+            Grade = 5,
+        };
+
+        // Written through a second store over the same file, which is what a hand edit, a restored
+        // backup or another process looks like from here: the running service did not write it, so
+        // its stamp moves and the whole document is new to it.
+        Store(install).Save(
+        [
+            ChecklistDocument.For("F1", "Jameson") with
+            {
+                Items =
+                [
+                    new ChecklistItem
+                    {
+                        Key = ChecklistKeys.For(intent),
+                        Scope = ChecklistScope.Ship(12),
+                        Kind = ChecklistItemKind.Derived,
+                        Source = ChecklistSource.EngineeringPlan,
+                        Text = "Grade 5 dirty drives",
+                        Intent = intent,
+                        Hull = "krait_mkii",
+                    },
+                ],
+            },
+        ]);
+
+        checklists.Poll();
+
+        // The roll was finished before this document arrived. Mark it done, say nothing.
+        Assert.Empty(checklists.Drain());
+        Assert.Equal(ChecklistState.Done, checklists.List.For("F1").Items.Single().State);
+
+        // And the silence is for the arrival, not for the session: the next thing the world does
+        // is still news.
+        Apply(
+            """
+            { "timestamp":"2026-08-16T11:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[] }
+            """);
+
+        checklists.Poll();
+
+        var undone = Assert.Single(checklists.Drain());
+        Assert.Contains("no longer done", undone.Text, StringComparison.Ordinal);
     }
 
     [Fact]
