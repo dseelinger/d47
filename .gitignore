@@ -449,3 +449,21 @@ installer/*.exe
 # settings and secrets — never in the history, and deliberately not under bin\ any more, because
 # deleting build output used to delete them.
 /dev-data/
+
+# ...and the general form of that rule, because the specific one has already gone stale once. The
+# folder was renamed dev-data\ -> dev-install\ on one branch and the line above moved with it on
+# that branch alone, so on every other branch it named a path that no longer existed and ignored
+# nothing. A `git add -A` then swept a Commander's live checklist, settings, secrets and 226 MB of
+# Whisper models into a commit on this public repository (2026-08-24); GitHub's large-file hook
+# refused the push, for the size rather than for the data, which is not a control this repository
+# gets to rely on. A rename must not be able to do that again.
+#
+# Everything a running d47 writes goes to a folder called data\ beside the executable, wherever
+# that executable is (CLAUDE.md, "Everything the app writes goes to data/ beside the executable"),
+# so the name is ignored at any depth rather than at one path. Nothing in this repository is
+# tracked under a folder of that name and nothing is meant to be. Both install roots are named
+# outright as well, so anything a build drops beside data\ - models, audio, captures - is covered
+# too.
+data/
+/dev-install/
+/dev-data/
