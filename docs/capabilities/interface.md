@@ -193,7 +193,108 @@ taken back. Directive 47 says what happened out loud, because you are not lookin
 
 See [A core per ship](persona.md#core-for-this-ship).
 
+#### Show the overlay {#overlay}
+
+**The mini panel, on your monitor.** Off out of the box.
+
+Turn it on and Directive 47 pins a small strip over the game: the transcript's last few lines,
+and the story if one is running. It is the same panel the headset shows in mini — the same view,
+the same model, the same reduced set of things — put on a monitor instead of a quad. Nothing is
+kept in step, because there is nothing to keep in step; it cannot show something stale.
+
+**It appears only while Elite is in front.** A strip pinned over a browser is a strip you turn off
+within a day, so it comes up when the game has the foreground and goes away when anything else
+does — including Directive 47's own window, which is right there showing strictly more.
+
+**You cannot click it, and that is the design.** The pointer goes straight through: a click the
+strip ate would be a click Elite did not get, and a focus steal mid-combat is worse than anything
+it could have been showing. It never takes the foreground and it is not something to Alt-Tab into.
+Everything that changes what it shows is somewhere else — the window, a spoken phrase, or a switch.
+
+**There is no interlock with the headset.** If you are wearing one you have no use for this, but
+wanting both is real — a second monitor somebody else is watching — so nothing here silently
+declines to appear because SteamVR is running.
+
+#### Overlay size {#overlay-size}
+
+How large the strip is drawn, on the same ladder as [Zoom](#zoom):
+
+```text
+50  67  75  80  90  100  110  125  150  175  200  250  300
+```
+
+At 100% it is 512 by 280 — the size the headset's mini panel is fixed at. It re-wraps at every
+step rather than being blown up, so bigger means more readable and not blurrier.
+
+Size is the only lever here. In the headset how big the panel looks is the pixel count and the
+quad's width in metres together; on a monitor there is no width in metres, so this is the whole of
+it.
+
+#### Overlay opacity {#overlay-opacity}
+
+How much cockpit shows through it. `1` is solid, and it does not go below `0.2` — an overlay at
+zero is one that is switched on, invisible, and indistinguishable from broken.
+
+#### Elite's display mode {#overlay-fullscreen}
+
+Not something to set. **Directive 47 reads which display mode Elite is in and tells you**, because
+this is the one way this feature fails without saying anything.
+
+A window pinned on top draws over a **borderless** or **windowed** game. Over an
+**exclusive-fullscreen** one it is simply not there: the game owns the screen, and there is no
+error, no log line and nothing to diagnose. You would turn the overlay on, see nothing, and have
+no way to find out why.
+
+So it reads this file, and never writes it:
+
+```text
+%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Graphics\DisplaySettings.xml
+```
+
+```xml
+<DisplayConfig>
+	<FullScreen>2</FullScreen>
+</DisplayConfig>
+```
+
+| `FullScreen` | What it means |
+|---|---|
+| `0` | Windowed. The overlay draws over it. |
+| `1` | Exclusive full screen. **The overlay will be invisible.** Set Elite to borderless. |
+| `2` | Borderless. The overlay draws over it. |
+
+`2` is the one confirmed against a real machine. `0` and `1` are the community's reading, so
+anything else is reported by number rather than guessed at.
+
+If the file is missing, hand-edited, or written by a mod in a shape Directive 47 does not
+recognise, it says it could not tell **and draws the overlay anyway** — your game configuration is
+yours and Directive 47 is a guest in it, so it never refuses to do something because it could not
+read one of your files.
+
+#### Show or hide the overlay {#show-overlay}
+
+`Ctrl+Alt+O` out of the box, and it works **anywhere** — which is the point, because the moment you
+want it is a moment the game is filling the screen. It flips the row above, so what you did with
+the key and what Settings says are one thing and survive a restart together.
+
+#### Move the overlay {#move-overlay}
+
+`Ctrl+Alt+M` out of the box, and it works **anywhere** too.
+
+Press it and the strip briefly takes clicks so you can drag it, with a border round it to show it
+has hold of them. Let go and it hands them straight back — press again without dragging and it does
+the same. It still never takes the foreground from Elite, even mid-drag.
+
+It comes up for this even if the game is not running, so you can put it where you want it before
+you launch.
+
+**Where you put it is remembered, and it is not a setting.** A screen coordinate is not something
+you typed, so it goes to `view-state.json` beside the main window's position and the headset's
+panel anchors rather than into `settings.json`. If it ends up on a monitor you later unplug, it
+comes back on one you have.
+
 ---
+
 
 **The model cannot change any of these rows.** A bound key is one of the ways to reach a
 protected setting, so a model that could rebind one could hand itself a way in it is not allowed

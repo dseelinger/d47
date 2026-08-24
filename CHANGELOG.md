@@ -20,6 +20,86 @@ the file as it stood then.
 
 ---
 
+## 0.64.0 — 2026-08-24 — The mini panel, without a headset
+
+You asked for a 2D overlay that does what the VR mini panel does. Here it is: a small strip
+pinned over the game with the transcript's last few lines on it, and the story if one is running.
+
+**Off out of the box.** Settings → Interface → *Show the overlay*, or `Ctrl+Alt+O` from anywhere.
+
+### It is the same panel, not a copy of it
+
+The strip is the mini panel — the same view, the same model, the same reduced set of things — put
+on a monitor instead of on a quad a metre away. Nothing is kept in step between the three surfaces
+because there is nothing to keep in step. It cannot show you something stale.
+
+It follows the window the way the headset already does: switch tabs and the strip goes there too,
+as long as it has that tab. It has two — the transcript and the story — and the other six move the
+window and leave the strip where it was rather than blanking it.
+
+### You cannot click it, and that is the point
+
+A click the overlay ate would be a click Elite did not get. So the pointer goes **straight
+through** it, it never takes the foreground, and it is not something to Alt-Tab into. Nothing it
+shows can cost you a moment in a fight.
+
+Which leaves one thing that has to be explicit: where it sits. `Ctrl+Alt+M` hands it the pointer
+just long enough to drag it — a border comes up round it so you can see it has hold — and it hands
+the pointer back the moment you let go. It comes up for this even with the game not running, so you
+can set it up before you launch.
+
+Where you put it is remembered, and it is not a setting: a screen coordinate is not something you
+typed, so it goes beside the main window's position rather than into `settings.json`.
+
+### It appears when the game does
+
+A strip pinned over your browser is a strip you turn off within a day. This one comes up when
+Elite has the foreground and goes away when anything else does — including Directive 47's own
+window, which is right there showing strictly more.
+
+**No interlock with the headset.** If you are wearing one you have no use for this, but wanting
+both is real — a second monitor somebody else is watching — so nothing here quietly declines to
+appear because SteamVR is running.
+
+### The one way this fails without saying so
+
+A window pinned on top draws over a **borderless** or **windowed** game and is **simply not there**
+over an **exclusive-fullscreen** one. No error, no log line, nothing to diagnose. You would turn it
+on, see nothing, and have no way to find out why.
+
+That is the shape of failure this project has paid for twice — the headset overlay that ran with
+sound and no picture, and the microphone whose silent default was indistinguishable from not
+hearing — so a small feature earned a check:
+
+> Elite is set to exclusive full screen. Nothing can draw over that — the overlay will be
+> invisible while the game has the screen. Set Elite's display mode to borderless in its graphics
+> options.
+
+Directive 47 reads Elite's `DisplaySettings.xml` and never writes it. If the file is missing,
+hand-edited, or written by a mod, it says it could not tell **and draws the overlay anyway** — your
+game configuration is yours, and Directive 47 is a guest in it.
+
+### Size and opacity
+
+*Overlay size* is the same ladder as Zoom, starting at 512 by 280 — the size the headset's mini
+panel is fixed at. It re-wraps at each step rather than being blown up, so bigger is more readable
+and not blurrier. In the headset how big the panel looks is the pixel count and the quad's width in
+metres together; on a monitor there is no width in metres, so size is the whole of the lever.
+
+*Overlay opacity* is how much cockpit shows through, and it does not go below 0.2 — an overlay at
+zero is one that is switched on, invisible, and indistinguishable from broken.
+
+### Closing the window still quits Directive 47
+
+There is no tray icon, so closing the window is how you quit — and that has been true only by
+accident. Directive 47 shut down when its **last** window closed, and it had exactly one. The
+overlay is a second, so without this change closing the panel with the overlay on would have left
+Directive 47 running with nothing on screen to close.
+
+It now quits when the main window closes, which is what it always meant.
+
+---
+
 ## 0.63.0 — 2026-08-24 — Directive 47 speaks the language the game speaks
 
 Three things you asked for, none of them a defect.

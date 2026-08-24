@@ -1027,6 +1027,65 @@ public sealed record UiSettings
     /// </para>
     /// </summary>
     public int ZoomPercent { get; init; } = Interface.ZoomLadder.Default;
+
+    /// <summary>
+    /// The mini panel on a monitor, for a Commander with no headset (list.md Phase 48). Under
+    /// <see cref="UiSettings"/> rather than beside <see cref="VrSettings"/> because there is no
+    /// headset in it: a Commander goes looking where the theme, the zoom and the hotkeys already
+    /// are rather than under a card about a device they are not wearing.
+    /// </summary>
+    public OverlaySettings Overlay { get; init; } = new();
+}
+
+/// <summary>
+/// The flat mini panel: a chromeless, click-through, topmost strip pinned over the game
+/// (list.md Phase 48).
+/// <para>
+/// Three knobs and nothing else. Where it sits is deliberately <em>not</em> here — a monitor
+/// coordinate is not something a Commander typed, so it joins the VR anchors and the window's
+/// own rectangle in <see cref="ViewState"/>, and <c>settings.json</c> is append-only for
+/// anything that ever is.
+/// </para>
+/// </summary>
+public sealed record OverlaySettings
+{
+    /// <summary>
+    /// <b>Off by default.</b> A strip pinned over the screen is the most intrusive thing d47 can
+    /// draw, and it is for one arrangement — no headset, one monitor, the game in front — rather
+    /// than for everybody. Off also settles the headset question by itself: a Commander in VR who
+    /// wants this as well turns it on, and one who does not never meets it.
+    /// </summary>
+    public bool Enabled { get; init; }
+
+    /// <summary>
+    /// How large the strip is drawn, on <see cref="Interface.ZoomLadder"/>'s rungs.
+    /// <para>
+    /// <b>Scale is the lever, because there are no metres.</b> The headset's mini panel is fixed
+    /// at 512x280 for a stated reason — apparent size there is the pixel count and the quad's
+    /// width in metres together, so the width is the lever and the height is a floor under a
+    /// reduced content set — and on a monitor half of that product is missing. So the pixel size
+    /// falls out of the ladder instead: a <c>LayoutTransform</c> that re-measures and rewraps
+    /// rather than a scale that blurs, which is the same mechanism as
+    /// <c>ui.zoom</c> seen from a second room.
+    /// </para>
+    /// <para>
+    /// Its own rung rather than following <see cref="ZoomPercent"/>: the window is read at a desk
+    /// and the strip is read at a glance from further back, and a Commander who zooms the window
+    /// to read a table has not asked for a bigger thing over their cockpit.
+    /// </para>
+    /// </summary>
+    public int ScalePercent { get; init; } = Interface.ZoomLadder.Default;
+
+    /// <summary>
+    /// How solid it is. One number for one surface, unlike the headset's, which needed a repair
+    /// to become one knob for two.
+    /// <para>
+    /// Not all the way down to nothing: an overlay at zero is an overlay that is on, invisible,
+    /// and indistinguishable from broken — which is the exact failure the display-mode row exists
+    /// to prevent arriving by another road.
+    /// </para>
+    /// </summary>
+    public double Opacity { get; init; } = 0.9;
 }
 
 /// <summary>
@@ -1080,6 +1139,34 @@ public sealed record HotkeySettings
     /// </para>
     /// </summary>
     public string? BindShipCore { get; init; } = "Ctrl+Alt+B";
+
+    /// <summary>
+    /// Shows and hides the flat mini panel (list.md Phase 48).
+    /// <para>
+    /// <b>System-wide, and it is the one control that reaches the overlay from where it is
+    /// looked at.</b> The strip is output-only — the pointer goes straight through it — so every
+    /// way of changing it is somewhere else, and the somewhere else that works with a game
+    /// filling the screen is a key.
+    /// </para>
+    /// <para>
+    /// It writes the setting rather than holding a visibility of its own, so what a Commander did
+    /// with a key and what the row says are one state and survive a restart together.
+    /// </para>
+    /// </summary>
+    public string? ShowOverlay { get; init; } = "Ctrl+Alt+O";
+
+    /// <summary>
+    /// Puts the flat mini panel into place mode, where it briefly takes clicks so it can be
+    /// dragged, and gives them back the moment it is done (list.md Phase 48).
+    /// <para>
+    /// <b>Its own gesture rather than a row, because placement has to be explicit and has to be
+    /// reachable from where the overlay is visible.</b> The headset's answer to the same question
+    /// is <see cref="Reanchor"/>, which is a gesture for exactly this reason; and a settings page
+    /// cannot be the answer here, since the overlay is hidden whenever d47's own window is the
+    /// thing in front of the Commander.
+    /// </para>
+    /// </summary>
+    public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
 }
 
 public sealed record UpdateSettings

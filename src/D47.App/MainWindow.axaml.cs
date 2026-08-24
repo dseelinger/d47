@@ -37,6 +37,15 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _shutUp;
     private readonly GlobalHotkey _reanchor;
     private readonly GlobalHotkey _bindShipCore;
+
+    /// <summary>
+    /// The two keys that reach the flat mini panel (list.md Phase 48). System-wide, because the
+    /// only moment either is wanted is a moment Elite is filling the screen — and the overlay is
+    /// the one surface a Commander cannot click on to reach.
+    /// </summary>
+    private readonly GlobalHotkey _showOverlay;
+
+    private readonly GlobalHotkey _moveOverlay;
     private readonly PanelViewModel _model;
 
     private AvailableUpdate? _availableUpdate;
@@ -76,6 +85,8 @@ public partial class MainWindow : Window
         _shutUp = new GlobalHotkey(hotkeyLogger);
         _reanchor = new GlobalHotkey(hotkeyLogger);
         _bindShipCore = new GlobalHotkey(hotkeyLogger);
+        _showOverlay = new GlobalHotkey(hotkeyLogger);
+        _moveOverlay = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -357,6 +368,7 @@ public partial class MainWindow : Window
         BindShutUp();
         BindReanchor();
         BindShipCore();
+        BindOverlayKeys();
 
         // Spoken input runs the same turn as typed input, deliberately. A second path would be
         // a second place for the in-flight gate, the interrupt vocabulary and the cancellation
@@ -412,6 +424,12 @@ public partial class MainWindow : Window
             if (change.Key == InterfaceCapability.BindShipCoreHotkeyKey)
             {
                 BindShipCore();
+            }
+
+            if (change.Key == InterfaceCapability.ShowOverlayHotkeyKey
+                || change.Key == InterfaceCapability.MoveOverlayHotkeyKey)
+            {
+                BindOverlayKeys();
             }
         });
 
@@ -971,6 +989,47 @@ public partial class MainWindow : Window
     /// wanted, and reaching for the panel is exactly what a drifted panel prevents.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The two gestures that reach the flat mini panel (list.md Phase 48).
+    /// <para>
+    /// <b>Show/hide writes the setting rather than holding a visibility of its own</b>, through
+    /// the settings service as <see cref="SettingsCaller.Hotkey"/> — the same route
+    /// <see cref="ZoomHost.Set"/> takes, and for the same reason: a key that went straight at the
+    /// window would leave the settings row showing a state that is no longer true.
+    /// </para>
+    /// <para>
+    /// Move goes at the overlay directly, because place mode is not a setting: it is a thing the
+    /// Commander is doing for the next few seconds, and it ends itself.
+    /// </para>
+    /// </summary>
+    private void BindOverlayKeys()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        Bind(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay", ToggleOverlay);
+        Bind(_moveOverlay, _host.Settings.Current.Hotkeys.MoveOverlay, "move-the-overlay",
+            () => Avalonia.Threading.Dispatcher.UIThread.Post(() => _host.Overlay?.Place()));
+
+        void ToggleOverlay() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            _host.Settings.Apply(
+                InterfaceCapability.OverlayKey,
+                (!_host.Settings.Current.Ui.Overlay.Enabled).ToString(),
+                SettingsCaller.Hotkey));
+
+        void Bind(GlobalHotkey key, string? gesture, string named, Action pressed)
+        {
+            if (!key.Bind(gesture, pressed) && !string.IsNullOrWhiteSpace(gesture))
+            {
+                _model.ErrorText =
+                    $"The {named} hotkey {Gestures.Describe(gesture)} could not be registered " +
+                    "system-wide. Another application is probably holding it — pick another in Settings.";
+            }
+        }
+    }
+
     private void BindReanchor()
     {
         if (_host is null)

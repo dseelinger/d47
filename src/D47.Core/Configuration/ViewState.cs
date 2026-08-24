@@ -36,6 +36,24 @@ public sealed record ViewState
     public bool StartMenuOffered { get; init; }
 
     /// <summary>
+    /// Where the Commander put the flat mini panel, or null if they never moved it
+    /// (list.md Phase 48).
+    /// <para>
+    /// Here rather than in settings, and that is a ruling rather than a filing convenience:
+    /// <b>a monitor coordinate is not something a Commander typed</b>, and <c>settings.json</c>
+    /// is append-only for anything that ever is. It joins the VR anchors and the main window's
+    /// own rectangle for the same reason both of those are here — the overlay's <em>size</em>
+    /// falls out of the scale row, so the only thing left to remember is two numbers nobody
+    /// would ever write down.
+    /// </para>
+    /// <para>
+    /// Position only. There is no size to keep: the strip is the mini content at the chosen rung
+    /// and nothing else can resize it.
+    /// </para>
+    /// </summary>
+    public OverlayPlacement? Overlay { get; init; }
+
+    /// <summary>
     /// Capability ids the Commander expanded. Kept separately from the collapsed list because
     /// a card can start collapsed by default: without this, expanding one would be
     /// indistinguishable from never having touched it, and it would close again next time.
@@ -167,6 +185,9 @@ public sealed record ViewState
     /// </summary>
     public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
 
+    /// <summary>Records where the flat mini panel was dragged to (list.md Phase 48).</summary>
+    public ViewState With(OverlayPlacement placement) => this with { Overlay = placement };
+
     /// <summary>Records a card's new state as an explicit choice.</summary>
     public ViewState With(string capabilityId, bool expanded) => this with
     {
@@ -242,6 +263,22 @@ public sealed record WindowPlacement
     public double? MaximizedOnX { get; init; }
 
     public double? MaximizedOnY { get; init; }
+}
+
+/// <summary>
+/// Where the flat mini panel was left, in device-independent pixels on the virtual desktop
+/// (list.md Phase 48).
+/// <para>
+/// Its own record rather than a <see cref="WindowPlacement"/> with two fields left at zero: the
+/// overlay has no size to remember and cannot be maximised, and a record whose meaningful half is
+/// unused is a record the next reader has to be told about.
+/// </para>
+/// </summary>
+public sealed record OverlayPlacement
+{
+    public double X { get; init; }
+
+    public double Y { get; init; }
 }
 
 /// <summary>

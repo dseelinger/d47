@@ -34,7 +34,38 @@ public static class InterfaceCapability
     /// </summary>
     public const string BindShipCoreHotkeyKey = "hotkeys.bindShipCore";
 
-    public static CapabilityDescriptor Create() => new()
+    /// <summary>The flat mini panel, on or off (list.md Phase 48).</summary>
+    public const string OverlayKey = "ui.overlay.enabled";
+
+    public const string OverlayScaleKey = "ui.overlay.scale";
+
+    public const string OverlayOpacityKey = "ui.overlay.opacity";
+
+    /// <summary>
+    /// What Elite's display mode is, stated rather than set. <b>This row is the point of the
+    /// check behind it</b>: a topmost window is simply not there over an exclusive-fullscreen
+    /// game — no error, no log line, nothing to diagnose — and this is the only place that can
+    /// say so by name.
+    /// </summary>
+    public const string OverlayDisplayKey = "ui.overlay.display";
+
+    public const string ShowOverlayHotkeyKey = "hotkeys.showOverlay";
+
+    public const string MoveOverlayHotkeyKey = "hotkeys.moveOverlay";
+
+    private const string OverlayGroup = "The overlay";
+
+    private const string OverlayGroupHelp =
+        "The mini panel on your monitor, for flying without a headset. It draws over the game, "
+        + "the pointer goes straight through it, and it appears only while Elite is in front.";
+
+    /// <param name="display">
+    /// What Elite's display mode is, for the row that says whether the overlay will be visible
+    /// at all. Defaults to reading the Commander's own <c>DisplaySettings.xml</c> — read-only and
+    /// fail-soft, the same terms <see cref="ThemeCatalog"/>'s HUD matrix is read on, because this
+    /// is the Commander's game configuration and d47 is a guest in it.
+    /// </param>
+    public static CapabilityDescriptor Create(Func<string>? display = null) => new()
     {
         Id = Id,
         Group = "Interface",
@@ -107,8 +138,135 @@ public static class InterfaceCapability
                 s => s.Hotkeys.BindShipCore,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { BindShipCore = v } },
                 systemWide: true),
+
+            // The flat mini panel (list.md Phase 48). Here rather than under VR because there is
+            // no headset in it — a Commander goes looking where the theme, the zoom and the
+            // hotkeys already are rather than under a card about a device they are not wearing.
+            new SettingRow
+            {
+                Key = OverlayKey,
+                Label = "Show the overlay",
+                Help = "Pins the mini panel over the game: the transcript's last few lines, and "
+                       + "the story if one is running. It cannot be clicked - the pointer goes "
+                       + "straight through it - so nothing it shows can take a click Elite wanted.",
+                Kind = SettingKind.Toggle,
+                Group = OverlayGroup,
+                GroupHelp = OverlayGroupHelp,
+                DocsAnchor = "overlay",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.Overlay.Enabled.ToString(),
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with
+                        {
+                            Overlay = s.Ui.Overlay with { Enabled = bool.TryParse(v, out var on) && on },
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = OverlayScaleKey,
+                Label = "Overlay size",
+                Help = "How large the overlay is drawn. It re-wraps at each step rather than "
+                       + "being blown up, so bigger means more readable and not blurrier.",
+                Kind = SettingKind.Choice,
+                Choices = [.. ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))],
+                ChoiceLabel = value => ZoomLadder.Describe(Parse(value)),
+                Group = OverlayGroup,
+                GroupHelp = OverlayGroupHelp,
+                DocsAnchor = "overlay-size",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.Overlay.ScalePercent.ToString(CultureInfo.InvariantCulture),
+
+                    // Snapped rather than validated, exactly as the window's zoom is and for the
+                    // same reason: a hand-edited 137 should land on 125 rather than on a level no
+                    // control can step off.
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with
+                        {
+                            Overlay = s.Ui.Overlay with { ScalePercent = ZoomLadder.Snap(Parse(v)) },
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = OverlayOpacityKey,
+                Label = "Overlay opacity",
+                Help = "How much cockpit shows through it. 1 is solid.",
+                Kind = SettingKind.Number,
+                Step = 0.05,
+
+                // Not down to nothing. An overlay at zero is on, invisible, and indistinguishable
+                // from broken - which is the failure the row below exists to prevent, arriving by
+                // a different road.
+                Minimum = 0.2,
+                Maximum = 1,
+                Group = OverlayGroup,
+                GroupHelp = OverlayGroupHelp,
+                DocsAnchor = "overlay-opacity",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.Overlay.Opacity.ToString(CultureInfo.InvariantCulture),
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with
+                        {
+                            Overlay = s.Ui.Overlay with
+                            {
+                                Opacity = double.TryParse(
+                                    v, NumberStyles.Float, CultureInfo.InvariantCulture, out var solid)
+                                    ? Math.Clamp(solid, 0.2, 1)
+                                    : Configuration.D47Settings.Defaults.Ui.Overlay.Opacity,
+                            },
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = OverlayDisplayKey,
+                Label = "Elite's display mode",
+                Help = "A window pinned on top draws over a borderless or windowed game and is "
+                       + "simply not there over an exclusive-fullscreen one - with no error and "
+                       + "nothing to diagnose. So D47 reads which one Elite is set to and says.",
+                Kind = SettingKind.Info,
+                Group = OverlayGroup,
+                GroupHelp = OverlayGroupHelp,
+                DocsAnchor = "overlay-fullscreen",
+                Binding = new SettingBinding
+                {
+                    Read = _ => (display ?? DefaultDisplay)(),
+                },
+            },
+            HotkeyRow(
+                ShowOverlayHotkeyKey,
+                "Show or hide the overlay",
+                "show-overlay",
+                s => s.Hotkeys.ShowOverlay,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ShowOverlay = v } },
+                systemWide: true),
+            HotkeyRow(
+                MoveOverlayHotkeyKey,
+                "Move the overlay",
+                "move-overlay",
+                s => s.Hotkeys.MoveOverlay,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { MoveOverlay = v } },
+                systemWide: true),
         ],
     };
+
+    /// <summary>
+    /// The Commander's own <c>DisplaySettings.xml</c>, read fresh every time the row is drawn.
+    /// Fresh rather than captured because the fix for the sentence it may print is to go and
+    /// change the setting in Elite, and a Commander who has just done that should be able to come
+    /// back and see it say something else.
+    /// </summary>
+    private static string DefaultDisplay() => EliteDisplay.Describe(EliteDisplay.DefaultPath());
 
     private static int Parse(string? value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var percent)
