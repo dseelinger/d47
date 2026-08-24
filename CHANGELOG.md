@@ -17,6 +17,28 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.6 — 2026-08-24 — The carrier crew know their own callsign
+
+### Tower and the Captain speak again
+
+Reported after a day of flying in and out of a fleet carrier in silence. d47 treats *knowing the
+callsign* as owning a carrier, and only one journal event has ever carried one: `CarrierStats`,
+which Elite writes when the Commander opens the carrier management panel. Fly all day without
+opening it and the crew have no name to answer to, so they say nothing — not at the drop, not at the
+dock, not on a jump.
+
+It is not an edge case. Across 925 journals, **69 of the 199 that dock at the Commander's own
+carrier contain no `CarrierStats` at all** — 148 dockings with a mute tower. The day this was
+reported was one of them: nine dockings at BNH-T2F, not a word. And the read that looks like a
+second source is not one — **0 of 1,134 `CarrierLocation` events carry a callsign**, though they do
+carry the carrier's id.
+
+So the callsign now comes from the dock itself. Docking at a carrier writes its callsign as the
+station name and its id as the market id, so an event whose market id is the id d47 already holds is
+the Commander's own carrier stating its own name. Nothing is pattern-matched and no name is guessed:
+another Commander's carrier writes a callsign-shaped station name too, and it teaches d47 nothing.
+The docking that supplies the name is the same docking the tower answers, so the first one speaks.
+
 ## 0.60.5 — 2026-08-23 — Ships Frontier has named and the id list has not
 
 ### Your Kestrel Mk II is a Kestrel Mk II
