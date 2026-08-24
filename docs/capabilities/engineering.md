@@ -265,9 +265,16 @@ index is a snapshot — the same crowd-report framing the station stock carries.
 ### What a trader could make out of what you have
 
 ```text
-A trader could make it out of what you already hold:
+A material trader — the station service, never an engineer and never anybody named elsewhere in
+this turn — could make it out of what you already hold:
   300 × Iron at 6 for 1 — up to 50
 ```
+
+**The trader is named because an unnamed one got borrowed.** Headed only by *"a trader"*, these
+rates once went out in the same breath as the opening callout naming the engineer the Commander was
+docked beside — and came back to him as *that engineer* offering the trade. Every figure was right
+and the sentence was false. A rate is a fact about a station service, and saying so is what stops it
+attaching to the nearest name.
 
 The rate is published and was confirmed across 1,096 real trades, so this is arithmetic rather than
 a guess. Two rules it will not break.

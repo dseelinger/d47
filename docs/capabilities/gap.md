@@ -58,7 +58,7 @@ nav_order: 112
 <svg viewBox="0 0 880 230" role="img" aria-label="A shortfall line names the ships and slots that asked for it, with any trade offered on a second line">
  <rect x="20" y="36" width="840" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">Zirconium: 8 short (2 of 10) — for Bad Idea (Python) · MainEngines.</text>
- <text x="86" y="106" text-anchor="start" font-size="15" fill="var(--accent)">or trade 24 Iron for 8</text>
+ <text x="86" y="106" text-anchor="start" font-size="15" fill="var(--accent)">A material trader would take 24 Iron for 8</text>
  <text x="46" y="136" text-anchor="start" font-size="14" fill="var(--text-muted)">every line names the ships and the slots that asked for it</text>
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A figure you cannot trace is a figure you cannot act on.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">The trade is a second line beside the shortfall, never instead of it — the headline stays the raw number.</text>
@@ -103,7 +103,7 @@ nonsense delivered confidently, so d47 does not:
 14 units still to find, across 3 plans.
 
 Materials — 12 to find:
-  Zirconium: 8 short (2 of 10) — for Bad Idea (Python) · MainEngines. or trade 24 Iron for 8.
+  Zirconium: 8 short (2 of 10) — for Bad Idea (Python) · MainEngines. A material trader would take 24 Iron for 8.
   Chromium: 4 short (0 of 4) — for Bad Idea (Python) · PowerPlant.
 
 Ship locker — 2 to find:

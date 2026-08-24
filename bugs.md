@@ -12,7 +12,14 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Eleven open, and one partly confirmed.
+## Seven open, and one partly confirmed.
+
+Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
+a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
+and the filtered checklist that did not say how big its answer was. They are named here because the
+count above was left at eleven when they shipped, and a file that overstates what is open is one
+nobody trusts to say what is closed. The engineer offered as a material trader left in 0.60.3,
+diagnosed off the 2026-08-20 log exactly as its entry said it could be.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
@@ -188,154 +195,6 @@ busy CI runners. Unproven — a lead is not a diagnosis. What would settle it: a
 around the second press on a loaded runner, or starving the pool deliberately and watching the
 same timeout arrive on demand.
 
-## Open: an engineer was offered as a material trader, with rates attached
-
-Reported 2026-08-20 from the running app. Recorded as scratch — **not diagnosed, not fixed.**
-
-What the Commander heard, across two turns:
-
-> You were 12 Conductive Polymers short. Lei Cheung is here, at Trader's Rest, and can do 52
-> items on your list.
->
-> *"What do we need the Conductive Polymers for?"*
->
-> Conductive Polymers are a grade 4 manufactured material. You hold 3 of 150. Your plans call for
-> 15 of them, so you are 12 short. I can't tell you from here which single blueprint eats them —
-> the shortfall is netted across every live plan at once, and there are a great many. They come
-> from transport ship salvage, surface points of interest, or mission rewards. **Lei Cheung, here
-> at Trader's Rest, would trade for them: 2 Core Dynamics Composites or 2 Proto Heat Radiators
-> buys one, or 1 Biotech Conductor buys three.**
-
-**Lei Cheung is not a material trader.** The Commander says he is not a Manufactured Materials
-Trader, and the table agrees on something stronger: `Engineers.tsv:35` has him as an *engineer* —
-Laksak, Trader's Rest, Sensors/Shield Generator/Surface Scanner grade 5, unlocked with 200 Gold.
-He is not a trader of any category. The app named a person who cannot do the thing it offered.
-
-**The lead, and it is only that.** The two halves of that sentence look like they come from
-different places and were fused by the model, not by code:
-
-- *"Lei Cheung is here, at Trader's Rest, and can do 52 items on your list"* is grounded —
-  `EngineerAtHand` says exactly this shape, off `Engineers.tsv`.
-- The rates are grounded too, but in a different subject: `EngineeringRules.TradeRate` and
-  `PlanGap` compute what *a* material trader would charge to cover a shortfall, and `PlanGap.cs:41`
-  says outright that it is "what a trader could cover it with" — an anonymous one. Nothing in that
-  path names a station or a person.
-
-So the suspicion is that both facts arrived in one context, the only name present was the
-engineer's, and the model attached the rates to him. If that is right, the defect is **not** in the
-rates and **not** in the engineer callout; it is that the gap analysis hands over a trade offer with
-no owner, in the same breath as a named person who is not that owner.
-
-**What would settle it.** Read the actual turn: whether the trade rates reached the model through
-the gap tool with no trader named, and whether the engineer-at-hand callout was in the same window.
-The installed build's logs are the place to look, not a re-run — this is reproducible from the
-record rather than from the game.
-
-**Two adjacent claims from the same turn, unverified, worth checking while there:**
-
-- "can do 52 items on your list" — whether 52 is real or also invented.
-- "2 Core Dynamics Composites or 2 Proto Heat Radiators buys one, or 1 Biotech Conductor buys
-  three" — whether those are what `TradeRate` actually returns for grade 4 from grade 4 and
-  grade 5, or the model's arithmetic on top of them.
-
-**Not a defect, but noted from the same turn:** "I can't tell you from here which single blueprint
-eats them — the shortfall is netted across every live plan at once." That is honest and correct
-about what the tool returns, and it is also a capability the Commander asked for and did not get.
-If it is worth having, it is a `list.md` item, not this file.
-
----
-
-## Open: "Set tab to checklist" is not a shape the panel phrases recognise
-
-Reported 2026-08-23, from the headset, in the **VR mini panel**. Said *"Set tab to checklist"* and
-expected the mini panel to move to the Checklist. The utterance fell through to the model, which
-answered honestly:
-
-> I don't have a tool that switches panel tabs in the headset display. That's likely a manual or
-> voice-command action on your end, Commander.
-
-**Verified in the code, and it is a near miss of a fix that already shipped.** `PanelPhrases` builds
-its vocabulary as opener + name + suffix (`src/D47.Core/Interface/PanelPhrases.cs:61-91`). `Openers`
-carries fifteen entries — bare, `show `, `open `, `go to `, `switch to `, `select ` and their `the`
-variants — and **`set ` is not among them**. `Suffixes` is bare or `" tab"`, which is what the
-2026-08-21 report added, and that comment names this exact failure mode: *"Select the checklist tab"
-was the reported miss … the phrase fell through to the model, which has no tool for the panel and
-said so.*
-
-So the grammar covers *"select the checklist tab"* — name in the middle, "tab" as a suffix — and
-**does not cover "set tab to checklist"**, which inverts the order and puts the destination last. No
-combination of the two lists produces it; the word "set" appears nowhere in the file.
-
-**The fix is not simply another opener.** Adding `set ` alone still would not match, because the
-destination has to be extractable and here it sits *after* the word "tab". This wants a second
-pattern — "set tab to NAME", and probably "set the tab to NAME", "go to tab NAME", "tab NAME" —
-rather than another row in `Openers`. Whatever is added must reach the same route the existing
-phrases use, so the drawn and spoken paths stay one thing.
-
-**Still only a hypothesis, and the reason this is not a one-liner:** whether the mini panel in the
-headset would have honoured the move even had the phrase matched. `PanelNavigation.Register`
-(`src/D47.Core/Interface/PanelNavigation.cs:201`) is called per surface and the destination
-vocabulary is the union of what each surface registered (`:128-131`) — and mini hides the tab strip,
-so it is unproven that the VR mini surface registers the Checklist root at all. **Reproduce both
-halves before fixing either**: that the phrase matches, and that the headset's mini panel actually
-moves. A phrase that matches and then reports a move nobody can see would be worse than the current
-honest refusal.
-
-Related and already known: `list.md` Phase 51 records that `ApplyChrome` hides the tab strip in mini
-while leaving `PagePane` visible, so a surface driven into mini on the wrong tab draws a page with no
-way to leave it. That hole and this one meet in the same place.
-
----
-
-## Open: a setting command matches only its exact phrase, so "switch to full panel" misses
-
-Reported 2026-08-23, from the headset, in the VR mini panel, minutes after the entry above. Said
-*"Switch to full panel"* and expected the quad to grow. Instead:
-
-> I've no action for a combined "full panel" view — only the individual ones: left, right, comms
-> and role panels. Want me to open one of those?
-
-That answer is the model reaching for Elite's own ship panels, which is a reasonable reading of
-"panel" once the utterance has already fallen past every model-free route.
-
-**Verified, and the phrase exists.** `VrCapability.cs:146-147` registers exactly what was wanted:
-
-    new SettingCommandPhrase("mini panel", "mini"),
-    new SettingCommandPhrase("full panel", "full"),
-
-**The match is exact whole-utterance equality.** `KeywordRouter.MatchSetting`
-(`src/D47.Core/Conversation/KeywordRouter.cs:186-202`) ends in
-`string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)`. So
-*"full panel"* matches and *"switch to full panel"* does not. **Saying the bare phrase works
-today** — this is a gap in what a Commander may say around it, not a missing capability.
-
-**This is the same defect as the entry above, in a different code path, and that is the finding
-worth acting on.** Both are natural openers defeating a rigid phrase table:
-
-| Said | Route | Why it missed |
-|---|---|---|
-| "Set tab to checklist" | `PanelPhrases` | "set" is not an opener, and the destination is in the wrong position |
-| "Switch to full panel" | `MatchSetting` | no opener stripping at all |
-
-`PanelPhrases` already solved this once — it carries fifteen `Openers` including `"switch to "`
-(`src/D47.Core/Interface/PanelPhrases.cs:61-77`). `SettingCommandPhrase` has no equivalent, so every
-setting command in the app has the same hole, not just this one.
-
-**The fix must not be "loosen the matching", and the code says why.** Whole-utterance is deliberate
-and one notch stricter than the keyword route *because this path acts rather than answers* — the
-comment at `KeywordRouter.cs:204-215` makes that argument, and remediation 16 is the precedent for
-what a loose match costs. The shape that keeps the property is to **strip a closed set of leading
-openers before comparing**, exactly as `PanelPhrases` does: still whole-utterance, still a closed
-grammar, just with "switch to" / "go to" / "set" / "show me" removed from the front first. Sharing
-one opener list between the two routes would be better than a second copy.
-
-**Reproduce before fixing**, and check the collision `list.md` Phase 51 flags: *mini panel* and
-*full panel* belong to the headset, and the desktop's equivalents are *mini window* and *full
-window*. An opener-stripping change widens both vocabularies at once, so it must not make a phrase
-said at a desk reach the quad or the reverse.
-
----
-
 ## Open: the checklist filter is per-surface, so the headset and the window disagree
 
 Reported 2026-08-23. Mini panel in VR showing the Checklist; applied the "What Lei Cheung can do
@@ -417,29 +276,6 @@ has. **With one condition**: a remembered loadout is a fact about a moment, and 
 already carries `SeenAt` (`src/D47.Core/Journal/ShipLoadouts.cs:5-10`) for exactly this. A verdict
 derived from a month-old snapshot presented as current is the one way this change can do harm, so
 it must say when the ship was last seen.
-
----
-
-## Open: the filtered checklist does not say how big the answer is
-
-Reported 2026-08-23 as "the engineer filter only shows some of my ships", and **that reading was
-wrong** — the filter returns every match across the fleet. What it does not do is say so.
-
-`ChecklistPage.Rebuild` builds one flat `StackPanel` with no cap, no headings and no count
-(`src/D47.App/Panel/ChecklistPage.cs:454`, `:469-472`), and ordering floats the flown ship's project
-to the top (`src/D47.Core/Checklists/ChecklistOrdering.cs:135`) with everything below it in file
-order. One Commander's second project holds 49 lines, ten of them rendering byte-identically because
-several slots hold the same module — so the first screenful is one ship, repeated, and reads as the
-whole answer.
-
-**This cost a false bug report and an afternoon**, which is the argument for fixing it: the list is
-correct and looks broken. The smallest thing that would have prevented it is one muted line above
-the rows — *"Lei Cheung can roll 45 of your lines, across 7 ships."* That does not fight the stated
-"no headings between scopes" decision at `ChecklistPage.cs:467-469`, because the scope already rides
-each line.
-
-Identified while diagnosing, and **not chosen for 0.60.1** — the Commander took the correctness fix
-alone. Recorded so it is not rediscovered from a second report.
 
 ---
 

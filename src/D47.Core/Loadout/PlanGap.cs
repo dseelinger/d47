@@ -27,9 +27,17 @@ public sealed record GapDemand(string What, int Units)
 /// <param name="Get">How many units of the wanted material come back.</param>
 public sealed record TradeOffer(MaterialEntry From, int Give, int Get)
 {
+    /// <summary>
+    /// <b>The trader is named, and it is not a person</b>, reported 2026-08-20. This used to read
+    /// "or trade 24 Iron for 8", which says the rate and not whose rate it is — and a rate with no
+    /// owner, in a turn that also carried the opening callout naming the engineer the Commander was
+    /// standing next to, came back to him as that engineer offering the trade. The same wording
+    /// fix is in <c>EngineeringCapability.Netting</c>, which is where the reported sentence came
+    /// from; both are read by the same model in the same turn, so both say it.
+    /// </summary>
     public string Describe() =>
-        $"or trade {Give.ToString(CultureInfo.InvariantCulture)} {From.Name} for "
-        + $"{Get.ToString(CultureInfo.InvariantCulture)}";
+        $"A material trader would take {Give.ToString(CultureInfo.InvariantCulture)} {From.Name} "
+        + $"for {Get.ToString(CultureInfo.InvariantCulture)}";
 }
 
 /// <summary>One material, what wants it, and how far off the Commander is.</summary>
