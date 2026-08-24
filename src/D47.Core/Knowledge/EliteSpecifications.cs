@@ -308,7 +308,8 @@ public static class EliteSpecifications
         IReadOnlyDictionary<string, IReadOnlyList<ShipSlot>> Slots,
         IReadOnlyDictionary<string, IReadOnlyList<string>> SlotKinds,
         IReadOnlyDictionary<string, int> Limits,
-        IReadOnlyDictionary<string, string> Unnamed);
+        IReadOnlyDictionary<string, string> Unnamed,
+        IReadOnlyDictionary<string, string> HullNames);
 
     public static IReadOnlyCollection<ShipSpecification> Ships => [.. Loaded.Value.Ships.Values];
 
@@ -325,6 +326,49 @@ public static class EliteSpecifications
     /// </para>
     /// </summary>
     public static IReadOnlyList<string> KnownButUnmeasured => Loaded.Value.KnownButUnmeasured;
+
+    /// <summary>
+    /// What to call a hull the journal named, or null for a symbol nothing knows.
+    /// <para>
+    /// <b>The measured row first</b>, whose name comes from the community's id list and is the
+    /// naming authority. Failing that, the name read off the hull's own armour — see
+    /// <see cref="NamesFromArmour"/>, and the report that made it necessary. Failing both, null,
+    /// and a caller that has nothing else says the symbol: a symbol is ugly and true, where a
+    /// guess would be neither.
+    /// </para>
+    /// <para>
+    /// <b>Symbols only.</b> Unlike <see cref="Ship"/> this does not take what a Commander says —
+    /// it is the last rung of a ladder that has already tried Frontier's localised spelling, and
+    /// matching a spoken name there would let "the Kestrel" answer for a hull d47 cannot measure.
+    /// </para>
+    /// </summary>
+    public static string? HullName(string? symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+        {
+            return null;
+        }
+
+        var key = symbol.Trim().ToLowerInvariant();
+
+        return Loaded.Value.Ships.TryGetValue(key, out var measured)
+            ? measured.Name
+            : Loaded.Value.HullNames.GetValueOrDefault(key);
+    }
+
+    /// <summary>
+    /// The whole ladder, ending in what was handed in: the measured row, then the name read off
+    /// the hull's armour, then a spoken match for a caller holding Frontier's localised spelling
+    /// rather than a symbol, and failing all three the string itself.
+    /// <para>
+    /// <b>One ladder, five callers.</b> Every place that turns a stored hull into words wants
+    /// exactly this and each used to write it out again — which is how one of them could say
+    /// "Kestrel Mk II" while another said <c>smallcombat01_nx</c> about the same ship, and is the
+    /// disagreement <c>ShipLoadout.TypeSaid</c>'s own comment was already warning about.
+    /// </para>
+    /// </summary>
+    public static string HullSaid(string hull) =>
+        HullName(hull) ?? Ship(hull)?.Name ?? hull;
 
     /// <summary>
     /// A hull, by the journal's symbol or by the name a Commander says.
@@ -717,7 +761,8 @@ public static class EliteSpecifications
                 new Dictionary<string, IReadOnlyList<ShipSlot>>(StringComparer.Ordinal),
                 new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
                 new Dictionary<string, int>(StringComparer.Ordinal),
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                new Dictionary<string, string>(StringComparer.Ordinal));
         }
 
         using var reader = new StreamReader(stream);
@@ -809,7 +854,80 @@ public static class EliteSpecifications
                 StringComparer.Ordinal),
             kinds,
             limits,
-            unnamed);
+            unnamed,
+            NamesFromArmour(ships, modules));
+    }
+
+    /// <summary>
+    /// What a hull is called, for hulls with no measured row — read off their own armour.
+    /// <para>
+    /// <b>Reported 2026-08-23 as a ship called <c>smallcombat01_nx</c>.</b> A hull reaches this
+    /// table by its id, and Frontier ships hulls before the community's id list catches up, so
+    /// three of them have figures nothing can key and the journal's symbol was all d47 had to say.
+    /// The Commander read <i>"Tulimiekka (smallcombat01_nx)"</i> where the ship is a Kestrel Mk II.
+    /// </para>
+    /// <para>
+    /// <b>Derived, not written down.</b> Armour is per-hull, so every hull owns five bulkhead rows
+    /// named <i>"&lt;hull&gt; Lightweight Alloy"</i>, <i>"&lt;hull&gt; Reactive Surface Composite"</i>
+    /// and so on — and what those five names share, up to the last whole word, is the hull's name in
+    /// Frontier's own spelling. Taking the common prefix rather than stripping a list of bulkhead
+    /// names means there is no second vocabulary to keep in step with theirs: a bulkhead they rename
+    /// changes nothing here, and a hull they add is named the day its armour is.
+    /// </para>
+    /// <para>
+    /// Ships that <em>do</em> have a row are skipped outright — that name is the id list's, which is
+    /// the naming authority, and this must not become a second answer to a question already
+    /// answered.
+    /// </para>
+    /// </summary>
+    private static Dictionary<string, string> NamesFromArmour(
+        IReadOnlyDictionary<string, ShipSpecification> ships,
+        IReadOnlyDictionary<string, ModuleSpecification> modules)
+    {
+        var found = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        var armour = modules.Values
+            .Where(module => module.Hulls.Count == 1 && module.Symbol.Contains("_armour_", StringComparison.Ordinal))
+            .GroupBy(module => module.Hulls[0], StringComparer.Ordinal);
+
+        foreach (var hull in armour)
+        {
+            if (ships.ContainsKey(hull.Key))
+            {
+                continue;
+            }
+
+            // Two at the least. One row's "name" is the whole of that row, which would make a
+            // hull's name include its bulkhead.
+            var names = hull.Select(module => module.Name).Where(name => name.Length > 0).ToList();
+
+            if (names.Count < 2)
+            {
+                continue;
+            }
+
+            var shared = names.Aggregate(CommonPrefix);
+            var cut = shared.LastIndexOf(' ');
+
+            if (cut > 0)
+            {
+                found[hull.Key] = shared[..cut].TrimEnd();
+            }
+        }
+
+        return found;
+    }
+
+    private static string CommonPrefix(string left, string right)
+    {
+        var length = 0;
+
+        while (length < left.Length && length < right.Length && left[length] == right[length])
+        {
+            length++;
+        }
+
+        return left[..length];
     }
 
     private static ShipSpecification ReadShip(string[] cells) => new()

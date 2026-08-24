@@ -254,6 +254,21 @@ public static class VrCapability
         Func<Configuration.D47Settings, VrSurfaceSettings> read,
         Func<Configuration.D47Settings, VrSurfaceSettings, Configuration.D47Settings> write)
     {
+        var mini = string.Equals(slot, MiniSlot, StringComparison.Ordinal);
+
+        // <b>Which of the two surfaces this row is about</b>, said on every row rather than left to
+        // the key. Reported 2026-08-23 as "opacity does not change the opacity": the Commander was
+        // looking at the mini panel, `vr.panel.opacity` went to 0.5, and SteamVR's own readback
+        // still said 0.95 four minutes later — because that is the *other* surface's number and the
+        // one on screen was never asked to change. Nothing was broken and nothing said so.
+        //
+        // The row cannot say "you are in mini" — a descriptor is registered once and never mutated,
+        // which is what keeps the tool surface byte-identical across turns — so it says which
+        // surface it governs and where the other one's copy lives, which is true at any moment.
+        var scope = $" Applies to the {what.ToLowerInvariant()} alone — what you see while vr.mode "
+                    + $"is {(mini ? "mini" : "full")}. The {(mini ? "big panel" : "mini panel")} keeps "
+                    + $"its own, under vr.{(mini ? PanelSlot : MiniSlot)}.";
+
         SettingRow Row(
             string name,
             string label,
@@ -267,7 +282,7 @@ public static class VrCapability
             Step = step,
             Key = $"vr.{slot}.{name}",
             Label = label,
-            Help = help,
+            Help = help + scope,
             Kind = kind,
             Choices = choices ?? [],
             DocsAnchor = $"{slot}-{name}",

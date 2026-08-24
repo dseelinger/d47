@@ -17,6 +17,33 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.5 — 2026-08-23 — Ships Frontier has named and the id list has not
+
+### Your Kestrel Mk II is a Kestrel Mk II
+
+Reported as a checklist line ending *"on Tulimiekka (smallcombat01_nx)"*. A hull reaches d47's
+specification table through the community's id list, Frontier ships hulls faster than that list is
+updated, and until now a hull with no row had **no name at all** — so d47 fell back to the internal
+symbol and read it out.
+
+The table already knew the name; it was in a column nobody had joined. Armour is per-hull, so every
+hull owns five bulkheads called *"&lt;hull&gt; Lightweight Alloy"*, *"&lt;hull&gt; Reactive Surface
+Composite"* and so on, and what those five share is the hull's name in Frontier's own spelling. Four
+ships get their names back this way — **Kestrel Mk II, Caspian Explorer, Corsair and Lynx
+Highliner** — and no list is written down here to go stale: a hull Frontier adds is named the day its
+armour is.
+
+It reads off one ladder now rather than five copies of one, so the fleet page, a spoken line, a
+ship's core and the checklist cannot disagree about what a ship is called.
+
+### The two VR surfaces say which is which
+
+*"Opacity does not change the opacity"* — reported after setting `vr.panel.opacity` to 0.5 while the
+**mini** panel was on screen, which has its own opacity and kept it. Every row in the VR
+placement settings now says which of the two surfaces it governs and where the other one's copy
+lives. See `bugs.md` for the half that is still open: whether *"set the opacity"* should mean the
+surface you are looking at.
+
 ## 0.60.4 — 2026-08-23 — Work finished while d47 was off is marked, not announced
 
 ### A checklist that arrives from outside is folded in silence

@@ -23,7 +23,7 @@ public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsAct
 
     public string Hull => Stored?.Type ?? Build?.Hull ?? "unknown";
 
-    public string HullName => EliteSpecifications.Ship(Hull)?.Name ?? Hull;
+    public string HullName => EliteSpecifications.HullSaid(Hull);
 
     public string? Name => Stored?.Name ?? Build?.Name;
 

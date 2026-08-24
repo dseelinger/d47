@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Six open, and one partly confirmed.
+## Seven open, and one partly confirmed.
 
 Three left in 0.60.2 and their record is that release's section: the two spoken routes that knew
 a phrase and not the words in front of it — *"switch to full panel"* and *"set tab to checklist"* —
@@ -196,6 +196,40 @@ second as a plain `[Fact]`, in parallel with the Avalonia session. All three app
 busy CI runners. Unproven — a lead is not a diagnosis. What would settle it: a wall-clock trace
 around the second press on a loaded runner, or starving the pool deliberately and watching the
 same timeout arrive on demand.
+
+## Open: opacity was set on the surface the Commander was not looking at
+
+Reported 2026-08-23: *"Opacity control does not seem to change the opacity of the VR panels. Set to
+.5 and I saw no appreciable change — no change that I could detect at all."*
+
+**Nothing is broken, and that is the problem.** The installed build's log settles it end to end. The
+value was asked for and stored — `"Model" set vr.panel.opacity to 0.8`, then `0.75`, then `0.5` at
+22:00:42, and `settings.json` holds `vr/panel/opacity: 0.5` now. But d47 had been in **mini** since
+21:48:26 (`"KeywordRouter" set vr.mode to mini`), and mini is a different surface with its own
+number: `vr/mini/opacity` is still 0.95. SteamVR's own readback agrees — `"PanelMini": visible=True
+alpha=0.95` at 22:04:19, four minutes *after* the change. The big panel's opacity did change; the
+big panel was not on screen.
+
+So the defect is not in `SetOverlayAlpha`, which is called on every serve with the placement's
+opacity (`SteamVrRuntime.cs`, `overlay.Look(...)`), and not in the row, which stored what it was
+given. It is that a Commander asked for a change and got a silent one to something they could not
+see.
+
+**Half of it shipped in 0.60.5.** Every row in the shared surface-settings generator now says which
+of the two surfaces it governs and where the other one's copy lives, so the model picking between
+`vr.panel.opacity` and `vr.mini.opacity` is choosing between two rows that say what they are rather
+than two identical descriptions. The row cannot say *"and you are in mini right now"* — a descriptor
+is registered once and never mutated, which is what keeps the tool surface byte-identical across
+turns — so it says the part that is true at any moment.
+
+**The open half is a design question, and it has two coherent answers.** Either the two surfaces
+keep their own numbers and d47 gets better at naming them, which is what shipped; or *"set the
+opacity"* means the surface the Commander is looking at, and the spoken route resolves the slot from
+`vr.mode` before it writes. The second is what a Commander expects and it needs deciding rather than
+assuming: it would make one phrase write two different rows depending on what is on screen, which is
+the kind of thing that is obvious in the headset and baffling in a settings panel.
+
+---
 
 ## Open: the checklist filter is per-surface, so the headset and the window disagree
 
