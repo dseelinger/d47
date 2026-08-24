@@ -10,8 +10,34 @@ namespace D47.Core.Loadout;
 /// <param name="What">The ship and slot, or the item and mod slot, that wants it.</param>
 public sealed record GapDemand(string What, int Units)
 {
+    /// <summary>
+    /// The blueprint this slot is being costed for, and its grade — <em>"Dirty Drive Tuning 3"</em>
+    /// (change-requests.md 37).
+    /// <para>
+    /// <b>Recorded always and printed rarely</b>, which is the ruling: a fleet-wide shortfall can
+    /// name a dozen demands, and hanging a blueprint off each would double a line that is read
+    /// aloud as often as it is drawn. So the list goes on saying what it said, and this is here for
+    /// the answer to <em>what is this for</em>, which asks about one material and has room.
+    /// </para>
+    /// <para>
+    /// <b>Recorded at the fold rather than joined later.</b> The costing already walks one slot at
+    /// a time precisely so the answer knows who asked, and the slot has its blueprint in hand right
+    /// there. Re-deriving it afterwards would mean matching a printed string back to the plan that
+    /// produced it, which is a join this record exists to avoid.
+    /// </para>
+    /// </summary>
+    public string? Blueprint { get; init; }
+
     public string Describe() =>
         $"{What} — {Units.ToString(CultureInfo.InvariantCulture)}";
+
+    /// <summary>
+    /// The demand with the blueprint named, for the one-material answer. Falls back to
+    /// <see cref="What"/> alone where the plan named no blueprint — a slot can be planned as a
+    /// module and nothing else.
+    /// </summary>
+    public string Fully() =>
+        Blueprint is { Length: > 0 } blueprint ? $"{What} · {blueprint}" : What;
 }
 
 /// <summary>
@@ -189,6 +215,7 @@ public static class PlanGap
                 Fold(
                     EngineeringPlan.Cost(items, state),
                     $"{build.Describe()} · {slot.Slot}",
+                    Named(slot.Blueprint, slot.Grade),
                     needed,
                     held,
                     wanted,
@@ -232,6 +259,7 @@ public static class PlanGap
                 Fold(
                     OnFootPlan.Cost(items, state),
                     $"{build.Describe()} · {slot.Slot}",
+                    Named(slot.Modification, slot.Grade ?? 0),
                     needed,
                     held,
                     wanted,
@@ -287,9 +315,25 @@ public static class PlanGap
     /// prevent.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// What a slot is being costed for, said the way a Commander says it — <em>"Dirty Drive Tuning
+    /// 3"</em> — or null where the plan named no blueprint at all (change-requests.md 37).
+    /// <para>
+    /// Grade 0 is "no grade stated" throughout <see cref="SlotPlan"/>, not grade zero, so it is
+    /// left off rather than printed as a number nobody would recognise.
+    /// </para>
+    /// </summary>
+    private static string? Named(string? blueprint, int grade) =>
+        blueprint is not { Length: > 0 } named
+            ? null
+            : grade > 0
+                ? $"{ChecklistNaming.Readable(named)} {grade.ToString(CultureInfo.InvariantCulture)}"
+                : ChecklistNaming.Readable(named);
+
     private static void Fold(
         PlanCosting costing,
         string who,
+        string? blueprint,
         Dictionary<string, int> needed,
         Dictionary<string, int> held,
         Dictionary<string, List<GapDemand>> wanted,
@@ -317,7 +361,7 @@ public static class PlanGap
             }
             else
             {
-                asked.Add(new GapDemand(who, ingredient.Needed));
+                asked.Add(new GapDemand(who, ingredient.Needed) { Blueprint = blueprint });
             }
         }
 
