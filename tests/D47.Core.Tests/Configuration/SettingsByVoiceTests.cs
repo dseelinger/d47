@@ -83,6 +83,95 @@ public class SettingsByVoiceTests
         Assert.True(stale.Length == 0, "Exemptions for rows that no longer exist: " + string.Join(", ", stale));
     }
 
+    /// <summary>
+    /// <b>And still routes with an opener in front of it</b> (reported 2026-08-23).
+    /// <para>
+    /// Saying <i>"switch to full panel"</i> in a headset missed a phrase that exists — the bare
+    /// <i>"full panel"</i> has always worked — fell through to the model, and was answered with an
+    /// offer to open Elite's own ship panels. Every command in the app had the same hole, which is
+    /// why this walks all of them rather than pinning the one that was reported.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("switch to ")]
+    [InlineData("go to ")]
+    [InlineData("set ")]
+    [InlineData("select the ")]
+    [InlineData("show me the ")]
+    public void EveryDeclaredCommandPhraseAlsoRoutesBehindAnOpener(string opener)
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        var router = new KeywordRouter(surface.Registry);
+
+        foreach (var row in surface.Settings.Sections.SelectMany(section => section.Rows))
+        {
+            foreach (var command in row.Commands)
+            {
+                var match = router.MatchSetting(opener + command.Phrase);
+
+                Assert.NotNull(match);
+                Assert.Equal(row.Key, match!.Row.Key);
+                Assert.Equal(command.Value, match.Value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// <b>A phrase that itself opens with an opener still means what it declared.</b>
+    /// <para>
+    /// The trap the opener change nearly walked into, and the reason the exact reading is tried
+    /// before the stripped one. <c>PersonaCapability</c> declares <c>$"switch to {name}"</c>, so
+    /// stripping first would leave "directive 47" — a phrase no row claims — and voice persona
+    /// switching would have gone away silently. Named separately because the theory above catches
+    /// it only as "value is null", which does not say which phrase died.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void APhraseThatBeginsWithAnOpenerIsStillMatchedAsDeclared()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        var router = new KeywordRouter(surface.Registry);
+
+        var declared = surface.Settings.Sections
+            .SelectMany(section => section.Rows)
+            .SelectMany(row => row.Commands.Select(command => (row, command)))
+            .Where(pair => SpokenOpeners.All.Any(
+                opener => pair.command.Phrase.StartsWith(opener, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        Assert.NotEmpty(declared);
+
+        foreach (var (row, command) in declared)
+        {
+            var match = router.MatchSetting(command.Phrase);
+
+            Assert.NotNull(match);
+            Assert.Equal(row.Key, match!.Row.Key);
+            Assert.Equal(command.Value, match.Value);
+        }
+    }
+
+    /// <summary>
+    /// <b>And the opener does not become a way in for a sentence.</b> This path writes, so it is
+    /// one notch stricter than the keyword route on purpose: taking a closed set of words off the
+    /// front is not the same as matching anywhere in an utterance, and these prove it. Each
+    /// contains a real declared phrase and none of them is an instruction.
+    /// </summary>
+    [Theory]
+    [InlineData("can you switch to full panel while I dock")]
+    [InlineData("what does switch to full panel actually do")]
+    [InlineData("switch to full panel is the phrase I keep forgetting")]
+    public void AnOpenerDoesNotMakeASentenceIntoACommand(string spoken)
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        var router = new KeywordRouter(surface.Registry);
+
+        Assert.Null(router.MatchSetting(spoken));
+    }
+
     [Fact]
     public void EveryDeclaredCommandPhraseActuallyRoutes()
     {

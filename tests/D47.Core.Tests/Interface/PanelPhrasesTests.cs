@@ -40,6 +40,15 @@ public class PanelPhrasesTests
     [InlineData("select checklist")]
     [InlineData("checklist tab")]
     [InlineData("show me the checklist tab")]
+    // The destination said last, reported 2026-08-23 from the headset. "Set tab to checklist"
+    // matched nothing because every combination named the destination in the middle, and "set"
+    // was not an opener either — two independent reasons for one miss.
+    [InlineData("set tab to checklist")]
+    [InlineData("set the tab to checklist")]
+    [InlineData("switch to tab checklist")]
+    [InlineData("go to tab checklist")]
+    [InlineData("tab checklist")]
+    [InlineData("set checklist")]
     public void ATabIsReachedByName(string spoken)
     {
         var nav = Furnished();
@@ -58,6 +67,11 @@ public class PanelPhrasesTests
     [InlineData("add buy limpets to my checklist")]
     [InlineData("show me the ships in Deciat")]
     [InlineData("are the settings saved")]
+    // The openers added 2026-08-23 widened the grammar and must not have widened it past whole
+    // phrases. Each of these contains one of the new forms and is still not a request.
+    [InlineData("set tab to checklist when I am docked")]
+    [InlineData("can you set the tab to checklist")]
+    [InlineData("what tab checklist is on")]
     public void APhraseThatMerelyMentionsATabIsNotARequestForIt(string spoken)
     {
         var nav = Furnished();

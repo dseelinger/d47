@@ -58,23 +58,35 @@ public static class PanelPhrases
     /// The openers a destination may be named after. Bare — "checklist" on its own — counts too,
     /// which is why the list has an empty entry rather than a special case.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The plain openers are <see cref="Conversation.SpokenOpeners"/>, shared with the
+    /// setting-command route so the two cannot drift — reported 2026-08-23, when a phrase this
+    /// list would have matched missed in the other route because that one had no openers at all.
+    /// </para>
+    /// <para>
+    /// The rest put the destination <em>last</em>, which is the second miss from the same evening:
+    /// <i>"set tab to checklist"</i> matched nothing because every combination here named the
+    /// destination in the middle. No new pattern was needed — the grammar is
+    /// <c>opener + name + suffix</c>, so an opener ending in "to" and an empty suffix is exactly
+    /// that shape read the other way round.
+    /// </para>
+    /// </remarks>
     private static readonly IReadOnlyList<string> Openers =
     [
         string.Empty,
-        "show ",
-        "show me ",
-        "show the ",
-        "show me the ",
-        "open ",
-        "open the ",
-        "go to ",
-        "go to the ",
-        "take me to ",
-        "take me to the ",
-        "switch to ",
-        "switch to the ",
-        "select ",
-        "select the ",
+        .. Conversation.SpokenOpeners.All,
+        "set the tab to ",
+        "switch to the tab ",
+        "go to the tab ",
+        "set tab to ",
+        "switch to tab ",
+        "select the tab ",
+        "go to tab ",
+        "select tab ",
+        "open the tab ",
+        "open tab ",
+        "tab ",
     ];
 
     /// <summary>

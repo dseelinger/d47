@@ -179,8 +179,20 @@ public sealed class KeywordRouter(
     /// stricter than <see cref="Match"/> on purpose. Asking "what does personality off actually
     /// change" is a question about a setting, not an instruction to change it, and this is the
     /// one router path that writes. A miss costs a fall-through to the model; a false positive
-    /// silently changes something nobody asked about. Variants are declared per row rather than
-    /// inferred here, because stripping politeness words is guessing by another name.
+    /// silently changes something nobody asked about.
+    /// </para>
+    /// <para>
+    /// <b>A leading opener is removed first</b>, reported 2026-08-23. This overturns the sentence
+    /// that used to close this comment — <i>"variants are declared per row rather than inferred
+    /// here, because stripping politeness words is guessing by another name"</i> — and the reason
+    /// it does not hold is that <see cref="SpokenOpeners"/> is a <em>closed</em> list. Taking a
+    /// word off the front from a fixed set is not inference; the comparison after it is still
+    /// exact and the utterance is still matched whole. What the old position cost was measured:
+    /// <i>"switch to full panel"</i> said in a headset missed a phrase that exists, fell through
+    /// to the model, and was answered with an offer to open Elite's own ship panels instead.
+    /// Declaring the variants per row would mean writing sixteen phrasings against every command
+    /// in the app and keeping them in step, which is the duplication that rots rather than the
+    /// safety it resembles.
     /// </para>
     /// </summary>
     public SettingCommandMatch? MatchSetting(string input)
@@ -192,11 +204,18 @@ public sealed class KeywordRouter(
 
         var utterance = Utterance(input);
 
-        return (
+        // As said, before as stripped — and that order is the whole of the safety here.
+        // `PersonaCapability` declares "switch to Directive 47", which *opens with an opener*, so
+        // stripping first would have left "directive 47" matching nothing and silently taken
+        // persona switching by voice away. A declared phrase always wins; the stripped reading is
+        // only ever consulted for an utterance no row claimed.
+        return Matching(utterance) ?? Matching(SpokenOpeners.Strip(utterance));
+
+        SettingCommandMatch? Matching(string said) => (
             from capability in registry.All
             from row in capability.Descriptor.Settings
             from command in row.Commands
-            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            where string.Equals(said, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
             select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
             .FirstOrDefault();
     }
