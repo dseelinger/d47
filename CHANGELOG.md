@@ -20,6 +20,95 @@ the file as it stood then.
 
 ---
 
+## 0.62.0 — 2026-08-24 — The headset keeps up, and d47 stops saying a wrong number
+
+### The aim ray runs at frame rate
+
+The ray was told where your hand was **ten times a second**, which is about where motion stops
+reading as motion and starts reading as a fault. It was reported as one.
+
+The whole headset path ran on one clock. That rate is right for nearly all of it — a transcript
+nobody scrolled does not want redrawing faster — but a pointer has to keep up with a hand. So the
+rate is **split rather than raised**: the pose read, the ray arithmetic and the beam now run on
+their own loop, while everything that *decides* anything — trigger, grip, back, carry — stays where
+it was, on one thread with its state.
+
+**Carrying a panel follows the hand too.** That was the same complaint one step along, and it
+needed a different fix: the quad is placed directly rather than through the serve, which is what
+turns a position into something SteamVR has drawn.
+
+### The scrollbar stops blinking when you hover near it
+
+Held just off a bar, the highlight flickered. One radius decided both lighting up and going out, so
+a hand at arm's length wandering a few pixels crossed it over and over. **Leaving costs more than
+arriving does** now, and it stops.
+
+The frames themselves were measured first and were never the problem — a probe counted the pixels
+in every served frame across ten cycles and got the same number every time.
+
+### Directive 47 can bring Elite forward from behind Elite
+
+Windows only lets the foreground be taken by a process that already has it, so asking used to flash
+a taskbar button — no use at all from inside a headset. It works now, and it still says so plainly
+when Windows refuses anyway.
+
+**Only when you ask.** No automatic action can do this: a honk arriving mid-combat is not a reason
+to take your game's focus.
+
+### A placement change lands on the panel you are looking at
+
+Distance, size, angle and the rest are kept separately for the big panel and the mini one, because
+mini exists to sit smaller and further out of the way. What was missing is that *"move it closer"*
+means the one in front of you. It does now. Both are still on the settings page in full, so setting
+mini up while the big panel is in front of you is a thing you can do whenever you like.
+
+**And the panel answers to the words you would use.** *Big panel*, *large panel*, *little panel*,
+*small panel*, *minimal panel* — where before there was only *"mini panel"* and *"full panel"*, the
+one phrase nobody says unprompted.
+
+Directive 47 also stopped claiming it could not change the panel's size, which it could, twice
+over. *Size* is how big the panel is; *Scale* is how big the writing on it is. Each now says so and
+names the other.
+
+### Your carrier answers in your carrier's voice
+
+You could already cast a voice for your fleet carrier's tower, and only Directive 47's own
+announcements ever used it — a message *from* the carrier came back in a stranger's. Now it is the
+tower.
+
+A squadron's carrier is not, and that took care: Elite writes carrier positions for your own and
+for a squadron's seconds apart, and in 152 of 173 journals carrying both, the squadron's came last.
+
+### An unlock line says what the invitation asks for
+
+*"Unlock Bill Turner at Alioth"* now goes on to say what he actually wants for the invitation.
+Directive 47 had the answer all along — the engineer table carries it for 34 of the 38, and two
+other screens already read it. The checklist, which is the one you fly with, was the only one
+without it. The four with no invitation task on record say so rather than stopping.
+
+### Grade 5 does not cost sixteen million credits
+
+Reported: *"I got that as soon as I did my first Engineering roll with Selene Jean. This is untrue.
+Where did the 16 million figure come from?"*
+
+Quite right. Directive 47 said a grade could not be rolled at your rank — true — and then that
+reaching it took a fixed sum in credits sold at that workshop, which came off a wiki and was never
+measured. **Working with an engineer is what raises the rank**, which is exactly what you had done.
+
+What it says instead is Frontier's own published table rather than anybody's claim: the further
+your rank is above the grade you are rolling, the fewer rolls that grade takes. The early work is
+the slow part, and it pays for itself afterwards.
+
+### Under the hood: a locked file stopped costing every key
+
+A honk that did not fire said *"I cannot read your control bindings."* The bindings were fine. Elite
+had held one file open for a moment eight hours earlier, Directive 47 read that as the file being
+missing, threw away 347 working bindings and never went back for them — so every key it can press
+was dead for two hours and forty-one minutes, and only the honk was talkative enough to mention it.
+
+A read that fails now keeps what it had and tries again, and a locked file is no longer reported as
+an absent one.
+
 ## 0.61.1 — 2026-08-24 — Engineers and Utilities stop flickering
 
 Reported from the headset: *"flickering that is so bad as to make Engineers and Utilities tabs
