@@ -17,6 +17,48 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.2 — 2026-08-23 — Three bugs from one evening in the headset
+
+### "Switch to full panel" now switches to the full panel
+
+Two reports, one defect. d47's spoken routes knew the bare phrase and not the words a Commander
+naturally puts in front of it, so *"switch to full panel"* missed a phrase that exists — the bare
+*"full panel"* has always worked — fell through to the model, and was answered with an offer to open
+Elite's own left, right, comms and role panels. *"Set tab to checklist"* missed for a second reason:
+every phrasing the panel knew named the destination in the middle.
+
+The openers are now one shared list serving both routes, so they cannot drift apart again — and
+**every setting command in d47 gained the same tolerance**, not just the two that were reported.
+Saying the destination last needed no new pattern: the grammar is opener + name + suffix, so an
+opener ending in "to" with an empty suffix is that shape read backwards.
+
+**It is not looser.** Both routes still match the whole utterance, because taking a word off the
+front of a *closed* list is not inference. "Can you switch to full panel while I dock" still moves
+nothing.
+
+### The checklist filter stops showing another engineer's work
+
+Standing at Lei Cheung's base, fifteen of the forty-five lines offered as his were **Grade 5 Heavy
+Duty rolls he cannot take** — that blueprint is his to grade 3, and grades 4 and 5 belong to Mel
+Brandon and Didi Vatermann. The join asked whether an engineer touches a blueprint *at all* and never
+looked at the grade the line wants. An engineer's grades are not the blueprint's grades.
+
+### And it says how big the answer is
+
+The list has no headings and no cap, and the ordering floats the flown ship's project to the top — so
+a filter matching forty-five lines across seven ships opened on fourteen near-identical lines from
+one of them and read as *"it is only showing one ship"*. It was right and looked broken, twice, in
+one evening. One line above the rows now says what was actually matched.
+
+### Under the hood: a test that drives the page
+
+Three separate measurements of the engineer join agreed with each other and disagreed with the
+Commander's screen all evening, because the join was being verified and the drawn list was not. The
+checklist tab now has a test that builds the real panel, presses the real chooser, presses the real
+filter option and reads back the text actually rendered — through the buttons rather than a
+test-only seam, since a seam is a second path that can diverge, and divergence is exactly what went
+unnoticed.
+
 ## 0.60.1 — 2026-08-23 — A bi-weave is still a shield generator
 
 **Reported as "the engineer filter still isn't working" the same day 0.60.0 shipped, and the

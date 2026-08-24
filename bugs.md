@@ -12,7 +12,7 @@ rule, reintroduce the fault afterwards and watch the new test fail.
 
 ---
 
-## Nine open, and one partly confirmed.
+## Eleven open, and one partly confirmed.
 
 The four that were here shipped in 0.16.2, and the log-routing one in 0.21.1. The
 headless-session cleanup failure shipped in 0.47.0 — its changelog line was missed at the time
@@ -440,3 +440,76 @@ each line.
 
 Identified while diagnosing, and **not chosen for 0.60.1** — the Commander took the correctness fix
 alone. Recorded so it is not rediscovered from a second report.
+
+---
+
+## Open: a stale publish artifact in the build output silently overrode every build
+
+Reported 2026-08-23, and it cost about two hours and a wiped data folder before anybody looked at a
+file size.
+
+**What was there.** `src/D47.App/bin/Debug/net10.0-windows10.0.26100.0/win-x64/d47.exe` was
+**74,742,715 bytes** — a self-contained single-file bundle with every assembly inside it. A normal
+apphost is ~150 KB. That exe never reads the `d47.dll` beside it, so `dotnet build` and `dotnet run`
+faithfully rebuilt the DLLs and the running app ignored them completely.
+
+**Why it took so long to see.** Every check said the fix was present, because every check was
+looking at the wrong artifact: the source had it, the build succeeded, and a byte-level search of
+`d47.dll` found the new strings. The process was even confirmed running from that exact directory.
+Three fixes in a row appeared not to work, and each one was re-diagnosed from scratch. The tell was
+sitting in plain view the whole time — `d47.exe` dated 08-23 21:42 and `d47.deps.json` dated
+**08-16**, in a folder whose DLLs were minutes old. A timestamp hours in the future was noticed
+early and dismissed as a clock quirk.
+
+**Two more things that folder should not have been holding.** `bin/Debug` also contained the debug
+build's **live `data/` folder** — d47 writes beside its executable, which is right for an installed
+app and means dev state lives in build output. So the obvious remedy for the stale exe, deleting
+`bin/Debug`, wiped the Commander's debug checklist, settings and secrets. And two dead framework
+folders (`net10.0`, `net10.0-windows`) still held August 15 binaries.
+
+**How it got there is not known.** `PublishDir` is `bin\$(Configuration)\publish\`
+(`src/D47.App/D47.App.csproj:47`) and has been since Phase 21, so a current `dotnet publish` does not
+write here. `PublishSingleFile` is set for **all** configurations, not just Release, so a
+`dotnet publish -c Debug` from before that line existed is the likeliest source. Do not fix the
+origin without establishing it.
+
+**What is worth building is the guard, not the archaeology.** A `dotnet build` that can be silently
+shadowed by a file left in its own output directory is a trap that will be walked into again, by
+anyone, with no error. Candidates, cheapest first: a `--selftest`-style check that the exe about to
+run is an apphost rather than a bundle; a build target that fails when the output exe exceeds a few
+megabytes; or moving the dev data folder out of `bin` so the obvious remedy stops being destructive.
+**The last one is worth doing whatever else is decided** — it is the reason a two-hour diagnosis
+ended in data loss.
+
+---
+
+## Open: a stream of "X is done" announcements for things that happened while d47 was off
+
+Reported 2026-08-23, from the debug build: *"I should not get a stream of 'X is completed'
+notifications. That happened while D47 was 'off' (as far as the Debug version knows), and shouldn't
+comment on it other than to mark the items done."*
+
+**The rule already exists and is written down.** `CalloutEngine`'s `IsPriming`
+(`src/D47.Core/Callouts/CalloutEngine.cs:10-18`) is for exactly this: *"True on the startup tick,
+which replays the whole journal backlog. A callout must fold that backlog into its state and
+announce nothing from it — otherwise starting d47 after Elite would say everything that happened
+since it was last run."* `Offer` guards on it at `:143`.
+
+**And `ChecklistCallout` honours it.** `Examine` (`src/D47.Core/Callouts/ChecklistCallout.cs:34-42`)
+returns nothing while priming and calls `Prime(context)` instead. So the announcements did **not**
+come from the priming tick, and the obvious fix — "check `IsPriming`" — is already in place.
+
+**A lead, not a diagnosis.** Priming folds the *journal* backlog into the callout's state, but the
+**checklist document is separate persisted state** with its own file. The debug build's
+`checklist.json` was a day stale when this was reported, so a dozen rolls had been finished in the
+world without that document knowing. Priming would leave the document still saying "open" while the
+loadout says "engineered"; the first **live** tick then sees a genuine transition and announces every
+one of them. If that is the mechanism, the fix is that priming must reconcile the document as well
+as the journal — and the same thing would happen to the installed build after any long gap, not just
+to a stale debug copy.
+
+**Reproduce before fixing.** Start with a checklist whose items are open and a loadout where they are
+already done, and watch the first live tick. `d47-20260823.log` has the announcements
+(`CalloutEngine: Callout checklist.done.ship …`) with timestamps that can be read against the startup
+line. Note also that the Commander's remedy is stated in the report and is not silence: **mark them
+done, say nothing.**
