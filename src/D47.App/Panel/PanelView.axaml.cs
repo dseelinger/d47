@@ -844,22 +844,27 @@ public partial class PanelView : UserControl
     /// ask without computing the answer.
     /// </para>
     /// </summary>
-    public void TickEngineers()
+    public bool TickEngineers()
     {
         if (_engineers is not { } source || Tab != PanelTab.Engineers)
         {
-            return;
+            return false;
         }
 
         var stamp = D47.Core.Engineers.UnlockPlanner.Stamp(_engineerState?.Invoke());
 
         if (string.Equals(stamp, _engineerStamp, StringComparison.Ordinal))
         {
-            return;
+            // It already knew this and used to say so to nobody, which is the whole of the
+            // flicker: the headset marked the surface dirty on the strength of having called
+            // this method at all (#23).
+            return false;
         }
 
         _engineerStamp = stamp;
         source.Invalidate();
+
+        return true;
     }
 
     private EngineerSource? _engineers;
@@ -970,12 +975,14 @@ public partial class PanelView : UserControl
         return moved;
     }
 
-    public void TickClocks()
+    public bool TickClocks()
     {
-        if (Tab == PanelTab.Utilities)
+        if (Tab != PanelTab.Utilities)
         {
-            _utilities?.Refresh();
+            return false;
         }
+
+        return _utilities?.Refresh() ?? false;
     }
 
     private UtilitiesPage? _utilities;

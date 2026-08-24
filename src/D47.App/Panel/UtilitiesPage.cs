@@ -112,7 +112,7 @@ public sealed class UtilitiesPage : UserControl
 
         Content = root;
 
-        alarms.Changed += () => Dispatcher.UIThread.Post(Refresh);
+        alarms.Changed += () => Dispatcher.UIThread.Post(() => Refresh());
 
         Refresh();
     }
@@ -120,17 +120,35 @@ public sealed class UtilitiesPage : UserControl
     /// <summary>
     /// Redraws the clocks and the running list. Called by the host on every tick, because a clock
     /// that only redraws when something changed is a clock that stopped.
+    /// <para>
+    /// <b>Returns whether any of it actually moved</b>, which the headset needs and the window does
+    /// not. A dirty surface re-rasterises the whole tree and hands SteamVR a new image, and this is
+    /// called ten times a second.
+    /// </para>
+    /// <para>
+    /// <b>Everything on this page reads to the minute</b> — both clocks are <c>HH:mm</c>, an alarm
+    /// is the time it is due, and a timer's countdown is whole minutes, rounded up so it never
+    /// shows a stalled-looking zero. So the page changes once a minute and was being redrawn six
+    /// hundred times in it: <b>599 of every 600 images were identical to the one before</b>, which
+    /// is what the tab flickering was (#23). The window never showed it because it composes its
+    /// frame after the tick.
+    /// </para>
+    /// <para>
+    /// What is compared is therefore <em>what is drawn</em> and not the clock behind it. Nothing
+    /// here has to know which fields tick at which rate — if a countdown ever starts reading to
+    /// the second, this keeps being right without being told.
+    /// </para>
     /// </summary>
-    public void Refresh()
+    public bool Refresh()
     {
         var now = _now();
         var zone = _zone();
         var clocks = GalacticTime.Read(now, zone);
 
-        _galactic.Text = clocks.GalacticTimeOfDay;
-        _galacticDate.Text = clocks.GalacticDate;
-        _local.Text = clocks.LocalTimeOfDay;
-        _localDate.Text = clocks.LocalDate;
+        var moved = Show(_galactic, clocks.GalacticTimeOfDay);
+        moved |= Show(_galacticDate, clocks.GalacticDate);
+        moved |= Show(_local, clocks.LocalTimeOfDay);
+        moved |= Show(_localDate, clocks.LocalDate);
 
         var running = _timekeeper.Running;
 
@@ -158,7 +176,7 @@ public sealed class UtilitiesPage : UserControl
                 _running.Children.Add(Muted(
                     "Nothing running. Say \"set a timer for forty minutes\", or press New timer."));
 
-                return;
+                return true;
             }
 
             foreach (var reminder in running)
@@ -166,16 +184,35 @@ public sealed class UtilitiesPage : UserControl
                 _running.Children.Add(Line(reminder, now, zone));
             }
 
-            return;
+            return true;
         }
 
         foreach (var reminder in running)
         {
             if (_due.TryGetValue(reminder.Id, out var due))
             {
-                due.Text = reminder.Describe(now, zone);
+                moved |= Show(due, reminder.Describe(now, zone));
             }
         }
+
+        return moved;
+    }
+
+    /// <summary>
+    /// Writes a string into a block and says whether that changed what is on screen. The whole of
+    /// the change detection above: the comparison is against the text already drawn, so nothing
+    /// has to model which clocks move at which rate.
+    /// </summary>
+    private static bool Show(TextBlock block, string? text)
+    {
+        if (string.Equals(block.Text, text, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        block.Text = text;
+
+        return true;
     }
 
     /// <summary>What is currently drawn, so a tick that changes nothing draws nothing.</summary>

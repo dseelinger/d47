@@ -248,14 +248,14 @@ public partial class MainWindow : Window
             // on its own thread and every control here belongs to this one; and it does nothing
             // at all until the tab has been opened once.
             host.Tick.Add("clocks", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickClocks));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickClocks()));
 
             // The engineer pages move for a different reason: nothing has to happen for a clock
             // to change, and everything has to happen for a ranking to. So this one asks whether
             // the Commander has moved, re-fitted or unlocked somebody, and redraws only then
             // (list.md Phase 28).
             host.Tick.Add("engineers", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickEngineers));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 
             // And the "d47 is composing" animation on the Adventures tab, by the same route again
             // (asked for 2026-08-22). It is a third reason a page moves with nothing having
