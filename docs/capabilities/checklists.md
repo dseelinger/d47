@@ -260,8 +260,10 @@ Lei Cheung's to grade 3, and grades 4 and 5 belong to Mel Brandon and Didi Vater
 Heavy Duty line is not his work — but he genuinely can take that booster from nothing to 3, at a
 workshop you are standing in, and that is real work you would otherwise walk past.
 
-Experimental effects never appear here. They carry no grade, are bought outright and are applied at
-any standing, so an engineer either offers one or does not and there is no part of the way to be.
+An experimental effect follows the module it belongs to. It carries no grade of its own — it is
+bought outright and applied at any standing — so on its own nothing would ever hold it back. But
+applying it is part of finishing that module, so if the module's blueprint is only partly this
+engineer's work, the effect is too: both appear together or neither does.
 
 The tab reflects changes live. It is a view of `data/checklist.json`, and that file is re-read
 while Directive 47 is running, so a line edited in a text editor appears a moment later with no

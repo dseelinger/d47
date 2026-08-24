@@ -46,6 +46,19 @@ public sealed record EngineerAtHand(
     public bool HasWork => Ready.Count > 0 || OutOfRank.Count > 0;
 
     /// <summary>
+    /// Whether this engineer is worth <em>listing</em> at all, which is a wider question than
+    /// whether they are worth <em>announcing</em>.
+    /// <para>
+    /// <b>The two came apart the moment the partial band existed.</b> An engineer whose only work
+    /// here is work they cannot finish was dropped by <see cref="HasWork"/> — so the filter that
+    /// would have revealed it was never offered, and the control that switches it on lives on that
+    /// filter. The Commander could not reach their own work by any route. Found by the test for the
+    /// effects rule rather than by a report, which is the argument for writing the test.
+    /// </para>
+    /// </summary>
+    public bool IsWorthListing => HasWork || Partial.Count > 0;
+
+    /// <summary>
     /// One sentence, for the opening callout and for a spoken answer.
     /// <para>
     /// <b>What they can do today leads</b>, because that is the errand. The out-of-rank count
@@ -89,15 +102,28 @@ public sealed record EngineerAtHand(
 /// <param name="Item">The line itself.</param>
 /// <param name="Reaches">The grade this engineer can take it to.</param>
 /// <param name="Wanted">The grade the line asks for, which somebody else has to reach.</param>
-public sealed record PartialGrade(ChecklistItem Item, int Reaches, int Wanted)
+/// <param name="RidesAlong">
+/// True where this line has no grade of its own and is here because the module's blueprint is —
+/// an experimental effect, which is part of finishing that module rather than an errand on its
+/// own (reported 2026-08-24).
+/// </param>
+public sealed record PartialGrade(ChecklistItem Item, int Reaches, int Wanted, bool RidesAlong = false)
 {
     /// <summary>
     /// How far it goes, said on the line itself so the answer is on screen and not only in the
     /// help — <i>"Lei Cheung takes this to 3 of 5"</i>.
     /// </summary>
-    public string Describe(string engineer) =>
-        $"{engineer} takes this to {Reaches.ToString(global::System.Globalization.CultureInfo.InvariantCulture)}"
-        + $" of {Wanted.ToString(global::System.Globalization.CultureInfo.InvariantCulture)}";
+    public string Describe(string engineer)
+    {
+        var reaches = Reaches.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        var wanted = Wanted.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+
+        // An effect is applied outright at any grade, so saying it goes "to 3 of 5" would be a
+        // sentence about the module wearing the line's clothes. What is partial is the module.
+        return RidesAlong
+            ? $"{engineer} can apply this, but only takes that module to {reaches} of {wanted}"
+            : $"{engineer} takes this to {reaches} of {wanted}";
+    }
 }
 
 /// <summary>
@@ -188,6 +214,39 @@ public static class EngineersHere
                     (gated ? waiting : ready).Add(item);
                 }
 
+                // <b>An experimental effect goes where its module's blueprint went</b>, reported
+                // 2026-08-24 against the band above: <i>"if I'm not showing partial grades, then
+                // don't show that module's corresponding experimental effect"</i>.
+                //
+                // An experimental carries no grade, so nothing above can hold it back — it lands in
+                // <c>ready</c> and stayed on the page after the blueprint it belongs with had been
+                // filtered off it. That reads as a stray errand: the effect is not a job on its own,
+                // it is part of finishing that module, and the module is work this engineer cannot
+                // finish. So it follows its sibling into the same band and appears with it or not
+                // at all.
+                //
+                // Matched on ship and slot, which is what "that module" means — the same pair the
+                // line's own wording resolves through.
+                foreach (var effect in ready
+                             .Where(item => item.Intent?.Kind == ChecklistIntentKind.Experimental)
+                             .ToList())
+                {
+                    var sibling = partial.FirstOrDefault(part =>
+                        part.Item.Scope.Same(effect.Scope)
+                        && string.Equals(
+                            part.Item.Intent?.Subject,
+                            effect.Intent?.Subject,
+                            StringComparison.OrdinalIgnoreCase));
+
+                    if (sibling is null)
+                    {
+                        continue;
+                    }
+
+                    ready.Remove(effect);
+                    partial.Add(new PartialGrade(effect, sibling.Reaches, sibling.Wanted, RidesAlong: true));
+                }
+
                 return new EngineerAtHand(
                     engineer,
                     standing?.IsUnlocked ?? false,
@@ -195,7 +254,7 @@ public static class EngineersHere
                     ready,
                     waiting,
                     partial);
-            }).Where(found => found.HasWork)
+            }).Where(found => found.IsWorthListing)
         ];
     }
 

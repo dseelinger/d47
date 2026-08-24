@@ -39,6 +39,14 @@ report was about.
 The box is beside the engineer filter and nowhere else — the phrase means nothing against a list
 filtered by ship — and it is remembered between sessions, on the same road as the filter itself.
 
+**An experimental effect goes where its module's blueprint went.** An effect carries no grade, so
+nothing holds it back on its own — unchecked, it used to stay on the page after the blueprint it
+belongs with had been filtered off it, which reads as a stray errand. It is not one: applying the
+effect is part of finishing that module, and the module is work this engineer cannot finish. It now
+appears with its blueprint or not at all, and says why in its own terms — *"Lei Cheung can apply
+this, but only takes that module to 3 of 5"* — because *"takes this to 3 of 5"* would be a sentence
+about the module wearing the effect's clothes.
+
 ### Under the hood: a test that stopped asking the busiest thing on the machine
 
 Two audition tests waited five seconds on a cancellation callback and occasionally did not get one.
