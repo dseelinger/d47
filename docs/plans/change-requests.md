@@ -18,7 +18,7 @@ the file into a liar.
 **Numbers are not reused.** Items cite each other by number, and reusing one would leave an old
 citation resolving to a live entry about something else, reported by nothing — the trap the
 phase-renumbering rule in [CLAUDE.md](../../CLAUDE.md) exists to name. Everything through 33 has
-shipped and been pruned, so **the next number is 37** — the count is not the length of this file.
+shipped and been pruned, so **the next number is 38** — the count is not the length of this file.
 
 **So a number cited in the source is often not here, and that is normal rather than a dangling
 reference.** Comments across the codebase cite these by number — `change-requests.md 18` seven
@@ -29,6 +29,32 @@ into what happens to be open today.
 ---
 
 ## Open
+
+### 37. A shortfall says which ships want a material, but never which blueprint
+
+Asked for indirectly on 2026-08-20 and carried here from `bugs.md` when the entry it sat inside was
+fixed and pruned. The Commander asked what a shortfall of Conductive Polymers was for, and d47
+answered:
+
+> I can't tell you from here which single blueprint eats them — the shortfall is netted across every
+> live plan at once, and there are a great many.
+
+**That was honest about the tool and slightly harder on itself than it needed to be.** The gap report
+does carry attribution — `GapDemand.What` is `"{ship} · {slot}"`, folded in at
+`src/D47.Core/Loadout/PlanGap.cs` and printed by `GapCapability.cs:172` as *"— for Bad Idea (Python)
+· MainEngines"*. So d47 knew which **ships and slots** wanted them and said only that it did not know
+which blueprint. What is genuinely missing is one field: the blueprint name.
+
+**It is available where the demand is built.** `PlanGap.Of` walks `build.Slots`, and a `SlotPlan`
+carries its blueprint and grade — the costing is done one slot at a time precisely so the answer
+knows who asked (that comment is at the fold site). Adding the blueprint to `GapDemand` is a change
+to what is recorded there, not a new join.
+
+**The open question is the wording, not the data.** *"for Bad Idea (Python) · MainEngines"* is
+already long, and a fleet-wide shortfall can name a dozen demands; *"· Dirty Drive Tuning 3"* on each
+would double a line that is read aloud as often as it is drawn. So decide whether the blueprint rides
+every demand, or only the answer to a *"what is this for"* question — the spoken route and the panel
+are not under the same pressure.
 
 ### 36. "Roll" is a word from a version of engineering that no longer exists
 

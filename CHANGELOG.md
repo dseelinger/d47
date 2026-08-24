@@ -17,6 +17,27 @@ it ships, and the line it gets here is its permanent record.
 
 ---
 
+## 0.60.3 — 2026-08-23 — The trade offer says whose offer it is
+
+### An engineer will not be offered as a material trader again
+
+Reported 2026-08-20, standing at Lei Cheung's base: asked what a shortfall of Conductive Polymers
+was for, d47 answered with the rates a trader would charge — and put **Lei Cheung's name on them**.
+He is an engineer. He trades nothing.
+
+The log settled it without a re-run. Every figure in that sentence was d47's own arithmetic and
+every one of them was right: 2 Core Dynamics Composites or 2 Proto Heat Radiators for 1 is the
+published cross-line rate from grade 5 down to grade 4, 1 Biotech Conductor for 3 is the same step
+inside the conductive line, and the *"52 items on your list"* beside it came from the callout rather
+than from the model. **The only invention was the owner.** The rates went out headed *"A trader
+could make it out of what you already hold"* — an actor with no name — in the same turn as the
+opening callout naming the engineer the Commander was docked beside, which d47 hands to the model as
+its own words. One name, one ownerless offer, and the model put them together.
+
+So the offer now says who would make it, in both places that carry one: the material shortfall
+report and the material lookup. A rate is a fact about a station service, and saying so is what
+stops it attaching to whoever happens to be standing there.
+
 ## 0.60.2 — 2026-08-23 — Three bugs from one evening in the headset
 
 ### "Switch to full panel" now switches to the full panel

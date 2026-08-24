@@ -742,6 +742,16 @@ public static class EngineeringCapability
     /// type, decides the rate: within a line a grade names one material, so a same-grade exchange
     /// is always cross-line and costs the extra six.
     /// </para>
+    /// <para>
+    /// <b>The offer names whose offer it is</b>, reported 2026-08-20. These rates went out headed
+    /// only by "a trader" in the same turn as the opening callout saying <i>"Lei Cheung is here, at
+    /// Trader's Rest"</i> — carried in as d47's own words by <see cref="Conversation.TurnLoop"/>'s
+    /// said-aloud block — and the model, holding one ownerless offer and one name, put them
+    /// together and told the Commander an engineer would trade with him. Every figure was right and
+    /// the sentence was false. A fact handed over with no owner beside a name that is not its owner
+    /// is the defect, so the actor is stated here and the one person it is never is ruled out.
+    /// See <see cref="Loadout.TradeOffer.Describe"/>, which had the same hole.
+    /// </para>
     /// </summary>
     private static string Netting(MaterialEntry material, CommanderGameState? active)
     {
@@ -794,7 +804,9 @@ public static class EngineeringCapability
 
         var report = new StringBuilder();
 
-        report.AppendLine("A trader could make it out of what you already hold:");
+        report.AppendLine(
+            "A material trader — the station service, never an engineer and never anybody named "
+            + "elsewhere in this turn — could make it out of what you already hold:");
 
         foreach (var offer in offers.OrderByDescending(offer => offer.Yield).Take(3))
         {

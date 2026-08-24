@@ -188,6 +188,11 @@ public class PlanGapTests
             // the 300 iron, which nothing in the plan wants.
             Assert.True(line.Trade!.Get >= line.Short);
             Assert.NotEqual(line.Material.Symbol, line.Trade.From.Symbol);
+
+            // And it says who would make the trade. "or trade 24 Iron for 8" states a rate with no
+            // owner, and a turn carrying one ownerless offer beside one engineer's name produced
+            // an answer offering that engineer's trade (bugs.md, reported 2026-08-20).
+            Assert.StartsWith("A material trader would take ", line.Trade.Describe(), StringComparison.Ordinal);
         }
     }
 

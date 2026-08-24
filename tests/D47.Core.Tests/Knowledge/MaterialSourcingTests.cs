@@ -232,8 +232,26 @@ public class MaterialSourcingTests
 
         // Iron is grade 1 and Vanadium grade 2, and they are in different lines — so the exchange
         // is the published rate reduced, and 300 Iron is worth a real number of Vanadium.
-        Assert.Contains("A trader could make it out of what you already hold:", answer, StringComparison.Ordinal);
+        Assert.Contains("could make it out of what you already hold:", answer, StringComparison.Ordinal);
         Assert.Contains("Iron", answer, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The offer says whose offer it is</b> (bugs.md, reported 2026-08-20). Headed only by "a
+    /// trader", these rates reached the model in the same turn as the opening callout naming the
+    /// engineer the Commander was docked beside, and came back to him as that engineer offering
+    /// the trade — every figure right and the sentence false. The rates are not the defect and the
+    /// engineer callout is not the defect; an offer with no owner is.
+    /// </summary>
+    [Fact]
+    public async Task TheTradeOfferNamesTheTraderAndRulesOutAnEngineer()
+    {
+        var (registry, _) = Build();
+
+        var answer = await Ask(registry, "find_material", ("material", "Vanadium"));
+
+        Assert.Contains("A material trader", answer, StringComparison.Ordinal);
+        Assert.Contains("never an engineer", answer, StringComparison.Ordinal);
     }
 
     [Fact]
