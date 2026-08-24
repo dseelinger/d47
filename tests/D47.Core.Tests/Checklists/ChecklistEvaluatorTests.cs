@@ -177,7 +177,33 @@ public class ChecklistEvaluatorTests
         // rather than shrugging at the blocker.
         Assert.Equal(ChecklistState.Blocked, verdict!.Value.State);
         Assert.Contains("no amount of gathering fixes that", verdict.Value.Reason, StringComparison.Ordinal);
-        Assert.Contains("compounds", verdict.Value.Reason, StringComparison.Ordinal);
+
+        // The price is still said, and it is now said from its own field (#26): the state is a fact
+        // about this module and the explanation is a fact about the engineer. What a Commander gets
+        // is unchanged, which is what Says holds — the reason, a space, then the explanation.
+        Assert.Contains("compounds", verdict.Value.Advice, StringComparison.Ordinal);
+        Assert.DoesNotContain("compounds", verdict.Value.Reason, StringComparison.Ordinal);
+        Assert.Equal($"{verdict.Value.Reason} {verdict.Value.Advice}", verdict.Value.Says);
+    }
+
+    /// <summary>
+    /// A verdict with nothing to explain says only its reason — no stray space, and
+    /// <see cref="ChecklistVerdict.Says"/> is the same string the reason is. Most verdicts are
+    /// this one, so it is the case that would have gone wrong quietly everywhere.
+    /// </summary>
+    [Fact]
+    public void AVerdictWithNoExplanationSaysExactlyItsReason()
+    {
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
+            {
+                Detail = "Dirty",
+                Grade = 5,
+            }),
+            State());
+
+        Assert.Null(verdict!.Value.Advice);
+        Assert.Equal(verdict.Value.Reason, verdict.Value.Says);
     }
 
     [Fact]

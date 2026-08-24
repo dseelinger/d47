@@ -150,6 +150,82 @@ public class TheAimHighlightDoesNotBlinkAtTheEdgeTests
         }
     }
 
+    /// <summary>
+    /// The other half of #29, reported against 0.62.0 with the hysteresis already in:
+    /// <em>"it's any tab that scrolls"</em>, and only ever while dragging the bar — which is the
+    /// only way to scroll in the headset, so the two descriptions are one interval.
+    /// <para>
+    /// <b>A hand at arm's length does not hold a 12-pixel-wide bar while it drags down 400.</b> It
+    /// wanders off sideways, and it wanders off the panel altogether. The scroll already survives
+    /// that by design; the light did not, because <see cref="VrPanelSurface.Aim"/> re-asked
+    /// "which bar is near the ray" every tick with no idea one was held.
+    /// </para>
+    /// <para>
+    /// Watched to fail with the capture taken out: the first frame off the bar puts the light out,
+    /// which both dirties the surface and drops the pseudo-class — so this asserts both, because
+    /// a version that lights nothing at all would pass on the dirty flag alone.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AHeldBarStaysLitWhileTheHandWanders()
+    {
+        var (panel, view, bar) = Filled();
+
+        using (panel)
+        {
+            var (width, height) = panel.Size;
+
+            var corner = bar.TranslatePoint(new Point(0, 0), view);
+            Assert.NotNull(corner);
+
+            var box = new Rect(corner.Value, bar.Bounds.Size);
+
+            // Down on the bar, which is what starts a scroll rather than a carry. The light is
+            // Aim's business and nothing else's, so the tick that follows is what lights it —
+            // which is the order VrHost runs them in.
+            Assert.True(panel.GrabsScroll((float)(box.Center.X / width), (float)(box.Center.Y / height)));
+
+            panel.Aim((float)(box.Center.X / width), (float)(box.Center.Y / height));
+            Assert.Contains(":pointerover", bar.Classes);
+
+            Serve(panel);
+            Assert.False(panel.IsDirty);
+
+            // Wandering well outside even the release radius, and then off the panel entirely,
+            // which is the frame that used to ask for null.
+            foreach (var step in Tremor(box.Right + (OffscreenSurface.AimRelease * 3), 6, 20))
+            {
+                panel.Aim((float)(step / width), (float)(box.Center.Y / height));
+            }
+
+            panel.Aim(null, null);
+
+            Assert.Contains(":pointerover", bar.Classes);
+            Assert.False(panel.IsDirty);
+
+            // And letting go hands the question back to the ray: off the panel, nothing is lit.
+            panel.ReleaseScroll();
+            panel.Aim(null, null);
+
+            Assert.DoesNotContain(":pointerover", bar.Classes);
+        }
+    }
+
+    /// <summary>One served frame, which is what clears the dirty flag.</summary>
+    private static void Serve(VrPanelSurface panel)
+    {
+        var (width, height) = panel.Size;
+        var buffer = new byte[width * height * 4];
+
+        unsafe
+        {
+            fixed (byte* pixels = buffer)
+            {
+                panel.Draw((IntPtr)pixels, width * 4);
+            }
+        }
+    }
+
     /// <summary>A hand holding still: <paramref name="about"/>, give or take, over and over.</summary>
     private static IEnumerable<double> Tremor(double about, double give, int frames)
     {

@@ -484,9 +484,35 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// for a reason that has nothing to do with aiming, and this is not the place that clears it.
     /// <see cref="Draw"/> is.
     /// </para>
+    /// <para>
+    /// <b>A bar being dragged stays lit wherever the ray goes</b> (<a
+    /// href="https://github.com/dseelinger/d47/issues/29">#29</a>). Reported as the half of that
+    /// issue the hysteresis did not fix: the highlight flashes <em>while scrolling</em>, on every
+    /// tab that scrolls. Dragging is the only way to scroll in the headset, so "while scrolling"
+    /// and "while the trigger is held on a bar" are the same interval.
+    /// </para>
+    /// <para>
+    /// The cause is that this asked <see cref="OffscreenSurface.ScrollbarNear"/> the question from
+    /// scratch every tick, with no idea a bar was already held — so a hand that wandered past the
+    /// release radius, or off the panel entirely, put the light out and lit it again on the way
+    /// back. Widening a radius cannot fix that, which is why the hysteresis did not: the radius is
+    /// the wrong question for the duration of a drag. <b>Capture is what every scrollbar outside
+    /// VR already does</b>, and <see cref="VrHost"/> two lines from where it starts a drag says the
+    /// same thing about the scroll itself — <em>"a drag that wanders off the bar keeps scrolling
+    /// rather than suddenly picking the panel up"</em>. The scroll survived the wander and the
+    /// highlight did not.
+    /// </para>
     /// </summary>
     public void Aim(float? u, float? v)
     {
+        // Held beats aimed. Before the ray is consulted at all, because the whole point is that
+        // where the ray is does not decide this while a bar is captured.
+        if (_scrolling is not null)
+        {
+            _dirty |= _offscreen.Illuminate(_scrolling);
+            return;
+        }
+
         if (u is not { } across || v is not { } down)
         {
             _dirty |= _offscreen.Illuminate(null);
