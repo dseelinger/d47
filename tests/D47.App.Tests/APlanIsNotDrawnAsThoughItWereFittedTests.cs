@@ -85,6 +85,12 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
     /// <summary>
     /// The report. A plan in a slot Elite never mentioned is a plan for an <b>empty</b> slot, and
     /// the row has to say so — it used to be indistinguishable from a fitted module.
+    /// <para>
+    /// Since the row became a table (docs/plans/change-requests.md 38) this is not a flag any
+    /// more: the Current side is the journal's and the journal said nothing, so it is silent while
+    /// the Plan side names the Fuel Scoop. The state the report was about is the one the two
+    /// columns cannot help but show.
+    /// </para>
     /// </summary>
     [Fact]
     public void APlannedModuleInAnEmptySlotSaysTheSlotIsEmpty()
@@ -94,7 +100,9 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "Slot04_Size5");
 
         Assert.NotNull(row.Parts);
-        Assert.True(row.Parts.NotFitted);
+        Assert.True(row.Parts.Current.Silent);
+        Assert.Equal("empty", row.Parts.Vacant);
+        Assert.Equal("Fuel Scoop", row.Parts.Plan?.Module);
     }
 
     /// <summary>And a plan in a slot that really has something in it does not.</summary>
@@ -106,7 +114,8 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "Slot01_Size8");
 
         Assert.NotNull(row.Parts);
-        Assert.False(row.Parts.NotFitted);
+        Assert.False(row.Parts.Current.Silent);
+        Assert.Equal("8E Cargo Rack", row.Parts.Current.Module);
     }
 
     /// <summary>
@@ -181,8 +190,8 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "PowerDistributor");
 
         Assert.NotNull(row.Parts);
-        Assert.Equal("System Focused", row.Parts.Blueprint);
-        Assert.DoesNotContain("_", row.Parts.Blueprint!, StringComparison.Ordinal);
+        Assert.Equal("System Focused", row.Parts.Current.Blueprint);
+        Assert.DoesNotContain("_", row.Parts.Current.Blueprint!, StringComparison.Ordinal);
     }
 
     // ---- A roll that disagrees with the plan (GitHub issue 42) --------------------------------
@@ -203,8 +212,12 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "PowerDistributor");
 
         Assert.NotNull(row.Parts);
-        Assert.Equal("System Focused", row.Parts.RolledInstead);
-        Assert.Equal("Weapon Focused", row.Parts.Blueprint);
+
+        // One row, two columns, and neither borrows from the other: the hull rolled System
+        // Focused and the plan asks for Weapon Focused, and both are said.
+        Assert.Equal("System Focused", row.Parts.Current.Blueprint);
+        Assert.Equal("Weapon Focused", row.Parts.Plan?.Blueprint);
+        Assert.False(row.Parts.Met);
         Assert.True(row.Marked);
     }
 
@@ -244,7 +257,10 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         Assert.DoesNotContain(said, text => text.Contains("asks for", StringComparison.Ordinal));
     }
 
-    /// <summary>A roll that agrees says it once, not twice.</summary>
+    /// <summary>
+    /// A roll that agrees says it once, not twice: the plan is met, so the second column collapses
+    /// rather than repeating the words already in the first (docs/plans/change-requests.md 38).
+    /// </summary>
     [Fact]
     public void ARollThatAgreesWithThePlanSaysItOnce()
     {
@@ -256,7 +272,8 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "PowerDistributor");
 
         Assert.NotNull(row.Parts);
-        Assert.Null(row.Parts.RolledInstead);
+        Assert.True(row.Parts.Met);
+        Assert.False(row.Marked);
     }
 
     /// <summary>
@@ -272,7 +289,8 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var row = Row(mode, "PowerDistributor");
 
         Assert.NotNull(row.Parts);
-        Assert.Null(row.Parts.RolledInstead);
+        Assert.Null(row.Parts.Plan);
+        Assert.False(row.Parts.Met);
         Assert.False(row.Marked);
     }
 

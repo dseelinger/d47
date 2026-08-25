@@ -771,9 +771,11 @@ public class LoadoutTabTests
                 && named.Text is { } said
                 && said.StartsWith("3E Pulse Laser", StringComparison.Ordinal));
 
-        // The name, then the mark, in that order and in one block.
-        Assert.Equal(2, label.Inlines!.Count);
-        Assert.Equal(" ⚙", ((Run)label.Inlines[1]).Text);
+        // The name, then the mark, in that order and in one block. What follows it is the roll,
+        // which joined the same block when the row became a table (docs/plans/change-requests.md
+        // 38) — so the assertion is the gear's *place* rather than the run count, which is what
+        // this test was ever about.
+        Assert.Equal(" ⚙", ((Run)label.Inlines![1]).Text);
 
         // And it is not a glyph of its own anywhere on the row: the gear travels with the last
         // word of the name rather than sitting in a column.
@@ -1537,6 +1539,12 @@ public class LoadoutTabTests
     /// 2026-08-20). Read off the inlines rather than off <c>Text</c>, because a `TextBlock`
     /// carrying inlines reports no text at all — which is how this nearly shipped invisible to
     /// every test that reads the panel by text.
+    /// <para>
+    /// <b>Two cells rather than one arrow</b> since 2026-08-25 (docs/plans/change-requests.md 38):
+    /// what is on the hull is the Current column and what is wanted is the Plan column, and the
+    /// row never composes one sentence out of both. So both are still drawn, and neither is drawn
+    /// in the other's cell.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void TheRowDrawsWhatIsFittedAndWhatIsPlanned()
@@ -1557,14 +1565,17 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         var drawn = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
-            .Select(block => block.Inlines is null
-                ? block.Text ?? string.Empty
-                : string.Concat(block.Inlines.OfType<Run>().Select(run => run.Text)))
+            .Select(block => block.Inlines is { Count: > 0 } inlines
+                ? string.Concat(inlines.OfType<Run>().Select(run => run.Text))
+                : block.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains(drawn, line =>
+        Assert.Contains(drawn, line => line.StartsWith("5A Thrusters", StringComparison.Ordinal));
+        Assert.Contains(drawn, line => line.StartsWith("5C Thrusters", StringComparison.Ordinal));
+
+        // And never both in one cell, which is the shape this replaced.
+        Assert.DoesNotContain(drawn, line =>
             line.Contains("5A Thrusters", StringComparison.Ordinal)
-            && line.Contains("→", StringComparison.Ordinal)
             && line.Contains("5C Thrusters", StringComparison.Ordinal));
 
         surface.Window.Close();

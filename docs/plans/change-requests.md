@@ -17,8 +17,8 @@ the file into a liar.
 
 **Numbers are not reused.** Items cite each other by number, and reusing one would leave an old
 citation resolving to a live entry about something else, reported by nothing — the trap the
-phase-renumbering rule in [CLAUDE.md](../../CLAUDE.md) exists to name. Everything through 33 has
-shipped and been pruned, so **the next number is 38** — the count is not the length of this file.
+phase-renumbering rule in [CLAUDE.md](../../CLAUDE.md) exists to name. Everything through 38 has
+shipped and been pruned, so **the next number is 39** — the count is not the length of this file.
 
 **So a number cited in the source is often not here, and that is normal rather than a dangling
 reference.** Comments across the codebase cite these by number — `change-requests.md 18` seven
@@ -30,5 +30,5 @@ into what happens to be open today.
 
 ## Open
 
-Nothing. Items 34, 36 and 37 shipped on 2026-08-24 and their record is the
-[CHANGELOG.md](../../CHANGELOG.md) line under the release that carried them.
+Nothing open. The last entry shipped on 2026-08-25 and its record is the line it got in
+[CHANGELOG.md](../../CHANGELOG.md); **the next number is 39.**

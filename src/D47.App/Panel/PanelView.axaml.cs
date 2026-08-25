@@ -389,7 +389,16 @@ public partial class PanelView : UserControl
 
             // The model handed over is rarely empty — the window binds one that has already
             // been written to — and nothing else would redraw until the next append.
-            DrawTranscript();
+            //
+            // **And the log page is read here rather than merely drawn** (GitHub issue 43). The
+            // log is the one reading whose content does not come from the model's own buffer: it
+            // is read off disk by ReadLogAsync, which does nothing at all when there is no model
+            // to give the result to. A surface put on the log page *before* it was bound —
+            // `new PanelView { DataContext = model, Page = TranscriptPage.Log }` is exactly that
+            // order, and Avalonia may raise this event after both — therefore had its one read
+            // skipped, and then drew an empty buffer for ever. Redrawing here could not fix that,
+            // because there was nothing to draw.
+            Reread();
         };
     }
 
@@ -668,24 +677,53 @@ public partial class PanelView : UserControl
     /// not about them, where the page draws no band at all rather than an empty one.
     /// </param>
     /// <param name="backfill">What "read my journals" does. Null where there is nowhere to run it.</param>
+    /// <param name="sourcing">
+    /// Where to buy everything a construction site still needs (list.md Phase 50), as a second root
+    /// on this tab — or null for a surface that does not get one.
+    /// <para>
+    /// <b>The desktop window only, for now</b>, and by not making the call rather than by any test
+    /// of which surface this is: the carrier figure is typed, and typing wants a keyboard the
+    /// headset has not got. That is the parity rule working as written rather than an exception to
+    /// it, and the same reason the Market page is desktop-only.
+    /// </para>
+    /// </param>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null)
+        Action? backfill = null,
+        Func<SourcingPage>? sourcing = null)
     {
         ChecklistPage? page = null;
+        SourcingPage? shopping = null;
 
-        Furnish(
-            PanelTab.Checklist,
-            crumb => crumb.Key == ChecklistPage.SuggestionsKey
-                ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
-                : page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
-            new NavCrumb("checklist", "Checklist")
+        var roots = new List<NavCrumb>
+        {
+            new("checklist", "Checklist")
             {
                 // The suggestions level drilled from here inherits it: a proposal is still the
                 // checklist's subject.
                 Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
+            },
+        };
+
+        if (sourcing is not null)
+        {
+            roots.Add(new NavCrumb(SourcingPage.RootKey, "Sourcing")
+            {
+                Help = D47.Core.Capabilities.Builtin.ColonisationCapability.Id,
             });
+        }
+
+        Furnish(
+            PanelTab.Checklist,
+            crumb => crumb.Key switch
+            {
+                SourcingPage.RootKey when sourcing is not null => shopping ??= sourcing(),
+                ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
+                                                ?? new TextBlock { Text = "Nothing waiting." },
+                _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
+            },
+            [.. roots]);
 
         // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than
         // every line**: a checklist's whole question is how much is left, and a count that never
@@ -2121,7 +2159,7 @@ public partial class PanelView : UserControl
         // something has already gone wrong.
         if (Page == TranscriptPage.Log)
         {
-            _ = ReadLogAsync();
+            Reading = ReadLogAsync();
             return;
         }
 
@@ -2683,6 +2721,44 @@ public partial class PanelView : UserControl
             : Transcript.Inlines?.OfType<Run>() ?? [];
 
     /// <summary>What this surface is showing, as text.</summary>
+    /// <summary>
+    /// Draws the transcript — or, on the log page, reads the file first (GitHub issue 43).
+    /// <para>
+    /// The two are not interchangeable and that is the whole of the defect: every other reading
+    /// is in the model already and only wants drawing, and the log is on disk.
+    /// </para>
+    /// </summary>
+    private void Reread()
+    {
+        if (Tab == PanelTab.Transcript && Page == TranscriptPage.Log)
+        {
+            Reading = ReadLogAsync();
+            return;
+        }
+
+        DrawTranscript();
+    }
+
+    /// <summary>
+    /// The log read that is in flight, or a completed task (GitHub issue 43).
+    /// <para>
+    /// <b>A handle on the one thing here that finishes later than the call that started it.</b>
+    /// The log page reads its file on a worker and draws in the continuation, and this was
+    /// <c>_ = ReadLogAsync()</c> — a task nothing could wait on, so a caller that wanted to know
+    /// whether the page had been drawn had no way to ask and could only guess by pumping the
+    /// dispatcher once and hoping. That guess is right almost always and wrong under load, which
+    /// is what a flake is: it failed once in CI on 2026-08-25 with the page still empty, and
+    /// passed on a re-run of the same commit.
+    /// </para>
+    /// <para>
+    /// Nothing about the app's behaviour changes — the read was always going to land, and the
+    /// Commander watches a busy glyph while it does. What changes is that it can now be
+    /// <em>awaited</em>, so a test asserts on a page that has been drawn rather than on one that
+    /// usually has been.
+    /// </para>
+    /// </summary>
+    internal Task Reading { get; private set; } = Task.CompletedTask;
+
     internal string TranscriptShown => string.Concat(TranscriptRuns.Select(run => run.Text));
 
     /// <summary>

@@ -181,9 +181,12 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
 
         // "4E Hull Reinforcement Package", not "Hull Reinforcement Package". Nothing is fitted in
         // that slot, so this is the planned name and it used to arrive without its designation.
-        Assert.NotNull(row.Parts?.Module);
-        Assert.StartsWith("4E ", row.Parts.Module, StringComparison.Ordinal);
-        Assert.Contains("Hull Reinforcement", row.Parts.Module, StringComparison.Ordinal);
+        // Short-named in the column since 2026-08-25, with the long form kept for the tooltip —
+        // a short name is never the only name.
+        Assert.NotNull(row.Parts?.Plan?.Module);
+        Assert.StartsWith("4E ", row.Parts.Plan.Module, StringComparison.Ordinal);
+        Assert.Contains("HRP", row.Parts.Plan.Module, StringComparison.Ordinal);
+        Assert.Equal("4E Hull Reinforcement Package", row.Parts.Plan.Long);
     }
 
     [Fact]
@@ -203,21 +206,23 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot09_Size4", StringComparison.Ordinal));
 
-        Assert.Equal("Hull Reinforcement Package", row.Parts?.Module);
+        Assert.Equal("HRP", row.Parts?.Plan?.Module);
+        Assert.Equal("Hull Reinforcement Package", row.Parts!.Plan!.Long);
     }
 
     [Fact]
     public void WhereThePlanNamesNoModuleTheFittedOneIsNamed()
     {
-        // The fallback, and the half that did not change. Slot05's plan is "grade 5 Heavy Duty
-        // Hull Reinforcement, I do not mind which module" — so there is no planned module to name
-        // and the row names what is in the slot, with its own class and rating.
+        // Slot05's plan is "grade 5 Heavy Duty Hull Reinforcement, I do not mind which module", so
+        // there is no planned module to name — and the Current column names what is in the slot,
+        // with its own class and rating. Unconditional now rather than a fallback: Current is the
+        // journal's column and says what is there whatever the plan does.
         var (mode, ships) = InTheAnaconda();
 
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot05_Size5", StringComparison.Ordinal));
 
-        Assert.StartsWith("5D ", row.Parts?.Module, StringComparison.Ordinal);
+        Assert.StartsWith("5D ", row.Parts?.Current.Module, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -248,13 +253,13 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot07_Size5", StringComparison.Ordinal));
 
-        // The goal, which is the subject of the row.
-        Assert.StartsWith("5E ", row.Parts?.Module, StringComparison.Ordinal);
-        Assert.Contains("Hull Reinforcement", row.Parts!.Module!, StringComparison.Ordinal);
+        // The goal, in its own column.
+        Assert.StartsWith("5E ", row.Parts?.Plan?.Module, StringComparison.Ordinal);
+        Assert.Contains("HRP", row.Parts!.Plan!.Module!, StringComparison.Ordinal);
 
-        // And reality beside it, which the row used to drop.
-        Assert.NotNull(row.Parts.Now);
-        Assert.Contains("Module Reinforcement", row.Parts.Now, StringComparison.Ordinal);
+        // And reality beside it, in its own — which is what the table made unconditional rather
+        // than a second name grown onto a row that had room for one.
+        Assert.Contains("MRP", row.Parts.Current.Module!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -275,7 +280,7 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
         var row = mode.Slots(Item(ships))
             .Single(candidate => candidate.Key.EndsWith("Slot05_Size5", StringComparison.Ordinal));
 
-        Assert.Equal("5D Hull Reinforcement Package", row.Parts?.Module);
-        Assert.Null(row.Parts!.Now);
+        Assert.Equal("5D HRP", row.Parts?.Current.Module);
+        Assert.Equal("5D HRP", row.Parts!.Plan?.Module);
     }
 }

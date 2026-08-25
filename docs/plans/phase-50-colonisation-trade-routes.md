@@ -1,11 +1,26 @@
 # Phase 50 — Colonisation trade routes
 
-**Status: plan, not built.** `list.md` Phase 50 was flagged by the Commander as *not thought
-through yet*, and its last item exists to be struck out by this document: *"Open, and to be settled
+**Status: built 2026-08-25.** `list.md` Phase 50 was flagged by the Commander as *not thought
+through yet*, and its last item existed to be struck out by this document: *"Open, and to be settled
 in a plan before anything is built. Named here so they are not decided by accident."*
 
-This is that plan. It answers the four open questions with a recommendation each, and it separates
-what the earlier phases already settle from what is genuinely a choice.
+This is that plan, and it is kept as written rather than rewritten into a description of what
+shipped — a plan that is edited to match the code stops being evidence of what was decided before
+it. **Three of the four recommendations shipped as recommended. The third was overturned by the
+Commander on the day, and §"Where does the carrier fit?" below is the reasoning it overturned.**
+
+> **Overturned 2026-08-25: the carrier is entered by the Commander and *is* subtracted.** The
+> measurement holding it out of the arithmetic — wrong 679 times against right 347 — is about
+> *deriving* a figure from `CargoTransfer`, and that stands and is unchanged. What the ruling adds
+> is the route this section itself left open: *"a Commander-entered figure, not a derived one"*. A
+> Commander can see the carrier's inventory screen; d47 cannot. So a typed figure is a statement of
+> fact rather than an inference, it comes off the shopping list, and it is named and **dated** on
+> every answer that used it — which is what d47 owes in return for using a number it cannot check.
+> `CarrierManifest` is the store, the Checklist tab's Sourcing page is where it is said, and the
+> site's own outstanding figures are untouched by it.
+
+It answers the four open questions with a recommendation each, and it separates what the earlier
+phases already settle from what is genuinely a choice.
 
 ---
 
@@ -184,6 +199,12 @@ a twenty-row answer belongs anyway.
 4. **The panel page.**
 5. **The voice half**, if the bytes are there when the time comes. Measure, do not estimate — the
    probe that measured Phase 49's cost took one test run and turned a 615-byte guess into a fact.
+
+**All five shipped on 2026-08-25**, and the fifth was measured rather than estimated: the widening
+put the SRV profile at **40,027 against a ceiling of 40,000**, which is a profile that degrades and
+drops the Commander's action tools rather than failing loudly. It was paid for the way Phase 49 paid
+for its own — 136 bytes of redundancy trimmed inside this same capability, four descriptions that
+each said something twice — leaving **39,897, with 103 spare**.
 
 ### The objective, stated
 

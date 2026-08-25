@@ -293,3 +293,60 @@ public static class ColonisationSourcing
 
     private readonly record struct Want(string Symbol, string Name, int Tonnes);
 }
+
+/// <summary>
+/// The last sourcing answer, so the spoken one and the drawn one are one answer (list.md Phase 50).
+/// <para>
+/// <b>The same arrangement <see cref="CommodityBoard"/> makes for one commodity</b>, and in memory
+/// for the same reason: the shopping list is built out of network prices that age in hours, and one
+/// restored from a file would look current because it was saved rather than because it is true.
+/// A route plan survives a restart; this deliberately does not.
+/// </para>
+/// </summary>
+public sealed class SourcingBoard
+{
+    private readonly Lock _gate = new();
+
+    private SourcingPosting? _last;
+
+    /// <summary>What was asked and what came back, or null if nothing has been asked yet.</summary>
+    public SourcingPosting? Last
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _last;
+            }
+        }
+    }
+
+    public void Post(SourcingPosting posting)
+    {
+        lock (_gate)
+        {
+            _last = posting;
+        }
+    }
+
+    /// <summary>Raised when a new answer lands, so a surface can redraw without polling.</summary>
+    public event Action? Posted;
+
+    public void Announce() => Posted?.Invoke();
+}
+
+/// <param name="Site">Which site it was about, in the words the Commander would use for it.</param>
+/// <param name="Answer">What came back.</param>
+/// <param name="Near">The system it was measured from.</param>
+/// <param name="Carrier">
+/// What the Commander said was already on their carrier and was therefore taken off the shopping
+/// list. Empty where they have said nothing — and never derived, which is the ruling this whole
+/// field exists under.
+/// </param>
+/// <param name="AskedAt">When. Shown on the page, because the answer has its own age.</param>
+public sealed record SourcingPosting(
+    string Site,
+    SourcingAnswer Answer,
+    string Near,
+    IReadOnlyList<CarrierStock> Carrier,
+    DateTimeOffset AskedAt);

@@ -198,7 +198,14 @@ public static class BuiltinCapabilities
         // Where the last commodity answer is posted (list.md Phase 49), so the Routing tab draws
         // what the Commander was told rather than searching again. Null under the designer and in
         // tests that are not about it; the answer is then spoken and nothing is kept.
-        Knowledge.CommodityBoard? commodities = null) =>
+        Knowledge.CommodityBoard? commodities = null,
+
+        // What the Commander says is on their carrier, and where the last shopping list is posted
+        // (list.md Phase 50). Null under the designer and in tests that are not about them; asking
+        // where to buy then says markets are not composed, and the tracking half is untouched. At
+        // the end, by the rule the comment above records the cost of.
+        Knowledge.CarrierManifest? carrier = null,
+        Knowledge.SourcingBoard? sourcing = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -229,7 +236,17 @@ public static class BuiltinCapabilities
         ChecklistCapability.Create(checklists, ships, onFoot),
         ShipsCapability.Create(ships),
         GapCapability.Create(ships, onFoot, () => gameState.Active),
-        ColonisationCapability.Create(() => gameState.Active, galaxy, settings),
+        ColonisationCapability.Create(
+            () => gameState.Active,
+            galaxy,
+            settings,
+
+            // The same sweep and the same cache the commodity search uses, so a build's shopping
+            // list and "where do I buy tritium" cost one pull between them (list.md Phase 50).
+            trade,
+            carrier,
+            sourcing,
+            now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab
         // itself (list.md Phase 47). Registry order is nav order on the site, so this

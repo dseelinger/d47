@@ -156,7 +156,21 @@ public partial class MainWindow : Window
             // headline of the item that moved it out of a Window. A Window cannot appear in the
             // headset, so a Commander in VR could not see their checklist at all (list.md
             // Phase 25).
-            Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
+            //
+            // Its second root, where to buy everything a build still needs (list.md Phase 50), is
+            // this window's alone: the carrier figure is typed, and typing wants a keyboard. Passed
+            // as a factory so the page is built on the way into it rather than at startup.
+            Panel.EnableChecklist(
+                host.Checklists,
+                host.Goals?.Book,
+                host.Goals?.Backfill,
+                () => new SourcingPage(
+                    host.Capabilities,
+                    host.Sourcing,
+                    host.Carrier,
+                    () => host.GameState.Active,
+                    () => host.Settings.Current.Knowledge.GalaxySearch,
+                    OpenSettings));
 
             // The stories the Commander flies (list.md Phase 47). **Both surfaces from
             // 2026-08-22**, on the Commander's instruction: the tab was desktop-only on the

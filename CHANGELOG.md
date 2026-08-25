@@ -20,6 +20,133 @@ the file as it stood then.
 
 ---
 
+## 0.71.0 — 2026-08-25 — What is there, and what you wanted
+
+Phase 50, one change request, and a flake that could have drawn you an empty page.
+
+### The slot list is a table now
+
+Current and Plan side by side, one row per slot:
+
+```text
+SLOT          CURRENT                              PLAN
+Utility 2     C SB                                 Heavy Duty G5 · Super Capacitor
+Utility 8     empty                                SB · Heavy Duty G5 · Super Capacitor
+Military 1    HRP · Heavy Duty G5 · Deep Plating   ✓
+Power Dist.   7A ⚙ · System Focused G5             Weapon Focused G5
+Comp 6 (5)    HRP · Heavy Duty G5 · Deep Plating
+```
+
+**Asked for after an evening of the Loadout tab being read wrongly in three different ways.** Every
+one of those readings came from the same place: one line had to carry both what is on the hull and
+what you had planned, so it had to pick — and whichever it picked, the row described something that
+was not there. A planned Shield Booster in an empty mount drew exactly like the five fitted ones
+beside it. Two columns is the answer that was not available while the row was one line.
+
+**The left column is your ship and the right column is your plan, and neither ever borrows from the
+other.** That one rule is the whole change.
+
+### Agreement collapses
+
+Where the hull already matches the plan, the second column is a tick and stops. Where only the
+module matches, the plan column names the roll alone. Repeating the same words twice on one row
+asks your eye to compare two strings that were never going to differ.
+
+**And a slot rolled exactly as you planned it now clears.** The dot compared the name you picked
+against the symbol Elite writes — *System Focused* against `PowerDistributor_PrioritySystems` — and
+found them different every time, so a finished slot kept its marker for ever. Same fault as the one
+fixed yesterday, arriving by the other road.
+
+### Shorter names, and the long one is never lost
+
+`HRP`, `SB`, `SCB`, `FSD`, `AFMU`, `DSS` — about forty of them, and only where the short form is
+one you already write. *Pulse Laser* and *Cargo Rack* keep every word: an initialism for those is a
+puzzle where a name used to be.
+
+**Point Defence is `Point Def.` and the Power Distributor is `Power Dist.`** Both are `PD`, and a
+rule for remembering which is a rule you should not have to hold at a workshop. A test checks all
+138 module names for another pair like it, so the next entry cannot bring the clash back quietly.
+
+Hover any of them for the full name, and the slot page below still writes everything out.
+
+**The blueprint stops saying the module twice.** *Heavy Duty Hull Reinforcement* on a row already
+reading *HRP* is now just **Heavy Duty** — which is shorter, and lets you see "this whole ship is
+Heavy Duty" straight down the column instead of working it out line by line. Only where the module
+is the last thing it says: *Increased FSD Range* keeps every word.
+
+### Mini shows what is left to do
+
+Two columns do not fit 512 pixels thirty times over, so the mini panel shows **only the rows that
+disagree** — and gets those rows instead of the hull's figures. A mini surface that spends all six
+of its rows telling you what a Python is has not answered the question you switched to it for.
+
+---
+
+### Where to buy everything your build needs
+
+Phase 50. Ask **"what does my construction site still need, and where do I buy it"** and D47 works
+out which stations between them stock the whole list:
+
+```text
+2 stops cover it, 704,160 cr in all:
+  Jameson Memorial (Shinrarta Dezhra), 14.5 ly — covers 3: 400 tonnes Aluminium at 312 cr,
+  300 tonnes Steel at 486 cr, 180 tonnes Copper at 402 cr. 342,960 cr.
+  Hutton Orbital (Alpha Centauri), 22.1 ly — covers 1: 300 tonnes Titanium at 1,204 cr.
+```
+
+**Fewest stops first, not a plotted course.** You are flying this loop a dozen times; what is worth
+knowing is which four stations carry the whole list, and the order to visit them in is on the
+Routing tab. Ties break on what the trip costs and then on distance.
+
+**Nothing is dropped in silence.** Every commodity you owe either lands on a station above, or is
+named as one D47 could not price — and *stocked but not enough* is said separately from *nobody
+nearby sells it*, because widening the search is the right advice for one and useless for the other.
+
+Nothing extra is fetched for any of it: the trade planner already pulls whole markets and caches
+them, so asking where to buy tritium and then asking about the whole build costs one lookup.
+
+### Tell it what is on the carrier
+
+**D47 cannot see inside a fleet carrier.** The journal's transfer events do not add up to an
+inventory — reconciled against the carrier's own totals they came out wrong 679 times against right
+347, and drove eleven commodities negative — so it does not guess.
+
+You can simply tell it. On the Checklist tab's new **Sourcing** page, type a commodity and a
+tonnage, and it comes off the shopping list:
+
+```text
+Taking off what you told me is on the carrier — 100 tonnes Steel — as of 2026-08-24 04:08.
+```
+
+Dated on every answer that used it, because this is the one figure D47 has no way of checking. A
+week-old "300 tritium" is a week-old memory of a carrier that has been flown since.
+
+**What the site itself still owes is untouched by it.** Those numbers come straight off your own
+disk and nothing recalculates them; what your carrier changes is what is left to go and buy.
+
+### The Sourcing page
+
+Beside your checklist rather than beside route plotting — you are looking at what you owe, and where
+to get it belongs next to what is left. Ask by voice and the page shows the answer you were just
+given, not a second search that might disagree with it.
+
+This window only, for now: the carrier figure is typed, and typing wants a keyboard the headset has
+not got.
+
+---
+
+### A log page opened before it was ready stayed empty
+
+[#43](https://github.com/dseelinger/d47/issues/43). A test drew an empty transcript once in CI and
+passed on a re-run, which is the shape of a fault that is right almost always.
+
+Underneath it was a real one. The log file is the only page whose text is not already in memory —
+it is read off disk — and a panel put on the log page **before** it was handed the conversation it
+belongs to had that read skipped, then drew the empty result faithfully for ever afterwards. It
+re-reads now.
+
+---
+
 ## 0.70.0 — 2026-08-25 — Say it and the ship does it; where to buy it; bind it with the stick
 
 Three phases, and six fixes to the Loadout page. The ship now does five things you say to

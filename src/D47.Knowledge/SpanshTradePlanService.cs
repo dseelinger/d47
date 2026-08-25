@@ -148,6 +148,60 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
+    /// Where to buy everything one construction site still needs (list.md Phase 50).
+    /// <para>
+    /// <b>Nothing new is fetched here either.</b> It is the planner's sweep, its cache and its
+    /// <c>MarketBook</c> merge, and then <see cref="ColonisationSourcing"/> — which reads no clock
+    /// and opens no socket — does the whole of the arithmetic. So a Commander who asks where to
+    /// buy tritium and then asks what the whole build needs pays for one pull.
+    /// </para>
+    /// </summary>
+    public async Task<SourcingAnswer> SourceConstructionAsync(
+        SourcingSearch search,
+        CancellationToken cancellationToken)
+    {
+        if (search.Outstanding.Count == 0)
+        {
+            return SourcingAnswer.Empty;
+        }
+
+        var fetched = await SweepAsync(search.System, search.MaxDistance, cancellationToken).ConfigureAwait(false);
+
+        var origin = fetched.FirstOrDefault(market =>
+            string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
+            && (search.Station is null || market.IsSamePlaceAs(search.Station, search.System)));
+
+        origin ??= fetched.FirstOrDefault(market =>
+            string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase));
+
+        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+        var usable = new List<MarketSnapshot>(fetched.Count);
+        var stale = 0;
+
+        foreach (var market in Merge(fetched))
+        {
+            if (market.UpdatedAt is { } when && when < oldest)
+            {
+                stale++;
+                continue;
+            }
+
+            usable.Add(market);
+        }
+
+        return new SourcingAnswer(
+            ColonisationSourcing.Plan(
+                search.Outstanding,
+                usable,
+                origin,
+                search.LargePadOnly,
+                search.MaxStops),
+            usable.Count + stale,
+            stale,
+            origin is not null);
+    }
+
+    /// <summary>
     /// The sweep with the Commander's own markets folded in, newer wins. Their <c>Market.json</c>
     /// is exact where a report is somebody's word, but only where it is also current — nothing
     /// here assumes their eyes are automatically better than this morning's report.
