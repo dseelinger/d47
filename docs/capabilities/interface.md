@@ -166,15 +166,16 @@ the banners and the header, all of it on purpose — so three of the four delibe
 the panel at all:
 
 ```text
-Expand               a button in the panel's bottom corner
+⤢ in the corner      the expand mark, in the panel's bottom-right
 Ctrl+M               the key, which works with nothing at all on the surface
 "full window"        said out loud
 the title bar        mini keeps its decorations, so ✕ still closes it
 ```
 
-The button is on every page mini has, and it stays put while a chooser is open — a chooser is
-exactly the state you can feel stuck in, so it is the one control that is never the thing you are
-stuck behind. In the full window the same button reads **Shrink**.
+The mark is the four-corner one every video player uses for full screen, and in the full window it
+is the same mark pulled inwards. Hover it for the words. It is on every page mini has, and it stays
+put while a chooser is open — a chooser is exactly the state you can feel stuck in, so it is the one
+control that is never the thing you are stuck behind.
 
 That last one is a decision rather than an oversight. A chromeless strip pinned over the game is
 the [overlay](#overlay) and a different thing; keeping the frame here means the window can still be
@@ -280,6 +281,10 @@ mini cannot fit.
 strip ate would be a click Elite did not get, and a focus steal mid-combat is worse than anything
 it could have been showing. It never takes the foreground and it is not something to Alt-Tab into.
 Everything that changes what it shows is somewhere else — the window, a spoken phrase, or a switch.
+
+**Which is why it is scrolled by voice.** The wheel goes straight through it as well, so
+["page down"](#scrolling) and its three companions are the only way to read past the fold on this
+surface.
 
 **There is no interlock with the headset.** If you are wearing one you have no use for this, but
 wanting both is real — a second monitor somebody else is watching — so nothing here silently
@@ -543,6 +548,45 @@ Which mode you are on belongs to the surface you are looking at, not to the tran
 desktop window can sit on the log while the headset panel shows the conversation — same
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
 has no bar at all, being the transcript's tail and the provenance line and nothing else.
+
+#### Scrolling by saying so {#scrolling}
+
+Four phrases, on **all three surfaces at once** — the window, the headset panel and the flat
+overlay:
+
+```text
+page down       page forward      next page
+page up         page back         previous page
+scroll down     down a bit        scroll down a bit
+scroll up       up a bit          scroll up a bit
+```
+
+A page is a screenful less one line, so the line you were reading when you said it is still there
+when the page settles. A scroll is three lines, which is what one notch of a wheel does nearly
+everywhere.
+
+**It moves whichever page is showing**, not the transcript specifically — the checklist, the
+engineers and the clocks scroll the same way. If a chooser is open, it moves the chooser.
+
+**Why this exists, on each surface:**
+
+```text
+the window     the wheel already works; this is for hands on a stick
+the headset    a ray on a twelve-pixel bar was the only way
+the overlay    there was no way at all — the wheel goes straight through it
+```
+
+Dragging the scrollbar is unchanged and is not being replaced. The thumbsticks stay unbound.
+
+**Nothing happens at the end, and that is deliberate.** Say "page down" at the bottom and Directive
+47 declines rather than reporting a scroll it did not make, so the phrase falls through to be
+answered instead of vanishing into a silence that looks like not being heard.
+
+Scrolling up stops the transcript following the newest line, exactly as dragging it up does. Press
+the jump-to-latest control, or scroll back to the bottom, to start following again.
+
+**It is never a tool.** Like moving between tabs, this is matched before any provider is consulted
+— so it works with no model configured, and nothing an in-game message says can move your page.
 
 #### Following it, or not {#following}
 

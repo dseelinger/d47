@@ -345,7 +345,11 @@ public class TheWindowGoesMiniTooTests
         var toggle = panel.GetControl<Button>("ModeToggle");
 
         Assert.True(panel.GetControl<DockPanel>("ModeRow").IsVisible);
-        Assert.Equal("Expand", toggle.Content);
+
+        // A mark, not a word (asked for 2026-08-24) — so the assertion is on the name it answers
+        // to, which is what a screen reader says and what the tooltip shows. A glyph-only control
+        // with no name is a control that does not exist for anybody not looking at it.
+        Assert.Equal("Expand to the whole panel", Name(toggle));
 
         toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -356,7 +360,7 @@ public class TheWindowGoesMiniTooTests
         panel.Mode = PanelMode.Full;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Shrink", toggle.Content);
+        Assert.Equal("Shrink to the mini panel", Name(toggle));
 
         toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -400,6 +404,9 @@ public class TheWindowGoesMiniTooTests
     /// <summary>Mini is off out of the box: this is a shape a Commander asks for.</summary>
     [Fact]
     public void TheWindowIsFullOutOfTheBox() => Assert.Equal("full", new D47Settings().Ui.Mode);
+
+    private static string? Name(Control control) =>
+        Avalonia.Automation.AutomationProperties.GetName(control);
 
     private static (Window Window, PanelView Panel) Open()
     {

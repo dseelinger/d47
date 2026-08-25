@@ -114,6 +114,10 @@ public partial class App(AppHost? host) : Application
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             host.RouteNavigation(host.Vr.Nav, move => ui.Post(move));
 
+            // And a spoken "page down" moves the headset panel (#34) — the surface the request was
+            // made from, where a ray on a twelve-pixel bar is the only alternative.
+            host.RouteScrolling(host.Vr.Scroll);
+
             // And the third surface: the mini panel on a monitor, for a Commander with no headset
             // (list.md Phase 48). Built unconditionally like the headset path and for the same
             // reason — a code path that only runs for people who turned something on is the code
@@ -158,6 +162,10 @@ public partial class App(AppHost? host) : Application
             // goes straight through it — so a chooser opened there would be one nobody could
             // answer by hand.
             host.RouteNavigation(host.Overlay.Nav, move => ui.Post(move));
+
+            // And the strip, which has no other way to scroll at all: the pointer goes straight
+            // through it, so the wheel does too (#34).
+            host.RouteScrolling(host.Overlay.Scroll);
 
             // Last, because it reports the headset and the headset is brought up above. One line
             // saying what this build is and what it is pointed at, so a log can answer "what was

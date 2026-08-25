@@ -257,6 +257,9 @@ public partial class MainWindow : Window
             // (change-requests.md 34).
             host.RouteNavigation(Panel.Nav, move => ui.Post(move), leads: true);
 
+            // And a spoken "page down" moves whatever page this surface is showing (#34).
+            host.RouteScrolling(Panel.Scroll);
+
             // A clock is the one page whose content changes with nothing having happened, so it
             // is pushed rather than pulled (list.md Phase 24). Posted, because the tick loop runs
             // on its own thread and every control here belongs to this one; and it does nothing
@@ -945,6 +948,17 @@ public partial class MainWindow : Window
         {
             _model.AskText = string.Empty;
             _model.Append($"\n\n> {input}\n{moved}\n", TranscriptKind.Technical);
+            return;
+        }
+
+        // And moving the page rather than the panel (#34). Beside navigating and on the same
+        // terms: deterministic, provider-free, never a tool, and ahead of the in-flight gate —
+        // reading further down a page is a thing about the surface rather than about the
+        // conversation, and it is most wanted while d47 is still talking.
+        if (_host.Scroll(input) is { } scrolled)
+        {
+            _model.AskText = string.Empty;
+            _model.Append($"\n\n> {input}\n{scrolled}\n", TranscriptKind.Technical);
             return;
         }
 

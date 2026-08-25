@@ -3578,6 +3578,61 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// How each surface moves the page it is showing (#34). Registered rather than reached
+    /// through <see cref="_navigators"/>, because a scroll position is the view's and a navigator
+    /// has never held one.
+    /// </summary>
+    private readonly List<Func<Core.Interface.PanelScrollStep, bool>> _scrollers = [];
+
+    /// <summary>
+    /// Adds a surface to the ones a spoken scroll moves (#34).
+    /// <para>
+    /// No poster beside it, unlike <see cref="RouteNavigation"/>. A scroll arrives from the turn,
+    /// which runs on the window's thread, and every surface is built on that thread
+    /// (architecture.md D1) — where <see cref="Show"/> needs one is the switch path, which arrives
+    /// from the tick.
+    /// </para>
+    /// </summary>
+    public void RouteScrolling(Func<Core.Interface.PanelScrollStep, bool> scroll) =>
+        _scrollers.Add(scroll);
+
+    /// <summary>
+    /// Moves the page on every surface, and says so — or null when the phrase was not a scroll,
+    /// which is the common case and falls through to the turn (#34).
+    /// <para>
+    /// <b>All three, because a phrase has no surface attached to it</b> — the same reading that
+    /// makes <see cref="Navigate"/> move every navigator. A Commander with a window, a headset and
+    /// a strip said it once, into the room.
+    /// </para>
+    /// <para>
+    /// It answers only where something actually moved. A surface already at that end scrolls
+    /// nothing and says so, so "page down" at the bottom of the page falls through and is heard
+    /// rather than swallowed into silence that looks like not being heard at all.
+    /// </para>
+    /// </summary>
+    public string? Scroll(string spoken)
+    {
+        if (Core.Interface.PanelScroll.Match(spoken) is not { } step)
+        {
+            return null;
+        }
+
+        // Every one of them, and the answer is about the phrase rather than about any one
+        // surface's share of it.
+        var moved = _scrollers.Count(scroll => scroll(step));
+
+        return moved > 0 ? Describe(step) : null;
+    }
+
+    private static string Describe(Core.Interface.PanelScrollStep step) => step switch
+    {
+        Core.Interface.PanelScrollStep.PageDown => "Page down.",
+        Core.Interface.PanelScrollStep.PageUp => "Page up.",
+        Core.Interface.PanelScrollStep.LineDown => "Scrolled down.",
+        _ => "Scrolled up.",
+    };
+
+    /// <summary>
     /// Moves every surface the phrase named somewhere, and says what happened — or null when it
     /// named nowhere, which is the common case and falls through to the turn.
     /// </summary>

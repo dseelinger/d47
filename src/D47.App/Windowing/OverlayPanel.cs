@@ -220,6 +220,23 @@ public sealed class OverlayPanel : Window
     /// </summary>
     public PanelNavigator Nav => _view.Nav;
 
+    /// <summary>
+    /// Moves the page the strip is showing, for a spoken scroll
+    /// (<a href="https://github.com/dseelinger/d47/issues/34">#34</a>).
+    /// <para>
+    /// <b>On this surface there was no other way at all.</b> The pointer goes straight through the
+    /// strip, so the wheel does too — and 0.67.0 gave it the checklist and the engineer pages,
+    /// which are exactly the ones with more in them than 512 by 280 can hold. A page you can see
+    /// the top of and nothing else is what that would have been.
+    /// </para>
+    /// <para>
+    /// This is not a crack in <em>output-only</em>. Nothing here takes a click or the foreground;
+    /// the phrase was said into the room and reaches every surface, which is the same reading that
+    /// already routes a spoken tab to all three.
+    /// </para>
+    /// </summary>
+    public bool Scroll(PanelScrollStep step) => IsVisible && _view.Scroll(step);
+
     /// <summary>Whether the strip is in place mode — taking clicks so it can be dragged.</summary>
     public bool IsPlacing => _placing;
 

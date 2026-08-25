@@ -111,7 +111,12 @@ public class TheTabStripFitsAnyWidthTests
         var copy = panel.GetControl<Button>("CopyButton");
 
         Assert.True(copy.IsVisible);
-        Assert.Equal("Copy All", copy.Content);
+
+        // It draws a mark rather than the words now (asked for 2026-08-24), so what is asserted is
+        // the name it still answers to — which is the half that has to survive a picture.
+        Assert.Equal(
+            "Copy this whole page to the clipboard",
+            Avalonia.Automation.AutomationProperties.GetName(copy));
 
         panel.Tab = PanelTab.Checklist;
         Dispatcher.UIThread.RunJobs();

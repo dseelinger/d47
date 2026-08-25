@@ -20,6 +20,64 @@ the file as it stood then.
 
 ---
 
+## 0.68.0 — 2026-08-24 — Say "page down"
+
+Two things you asked for.
+
+### Scrolling by voice, on all three surfaces
+
+```text
+page down       page forward      next page
+page up         page back         previous page
+scroll down     down a bit        scroll down a bit
+scroll up       up a bit          scroll up a bit
+```
+
+You asked for this for the two headset panels, where a ray on a twelve-pixel bar is the only way to
+move a page and a hand on the stick cannot use it. By the time it was built the **flat overlay
+needed it more**: the pointer goes straight through that strip, so the wheel does too — and the
+release before this one had just given it the checklist and the engineer pages, which are exactly
+the ones with more in them than 512 by 280 holds. It could show you a page and no way to read past
+the top of it.
+
+A page is a screenful less one line. A scroll is three lines, which is one notch of a wheel. It
+moves **whichever page is showing**, not the transcript specifically, and a chooser if one is open.
+
+**At the end, nothing happens and it says so** — the phrase falls through to be answered rather than
+vanishing into a silence that looks like not being heard. Scrolling up stops the transcript
+following the newest line, exactly as dragging it up does.
+
+Dragging is unchanged and is not replaced. The thumbsticks stay unbound. It is never a tool, so it
+works with no model configured and nothing an in-game message says can move your page.
+
+**One bug this only had because it was tested on the surface it was for.** On the headset the panel
+re-asserts "keep up with the newest line" between its layout and its draw, and the handler that
+normally notices you have scrolled away does not run until after that — so the page scrolled up and
+was hauled straight back to the bottom, once per frame, and you would have seen nothing move at all.
+A deliberate scroll now says where it landed instead of waiting to be told.
+
+### Marks instead of words
+
+Where a word already had a standard picture, it is the picture now:
+
+```text
+⤢  ⤡     expand and shrink, the four-corner mark every video player uses
+▢▢       copy this page
++        add a checklist line
+```
+
+They are **drawn rather than typed** — the rule the microphone indicator and the help mark already
+follow, because a glyph out of a font is whatever weight that font happens to have, sits off its
+baseline, and is missing outright on a machine whose font does not carry it.
+
+**The words did not go away.** Every one of these keeps its sentence on the tooltip and on the name
+a screen reader says: a picture is only an improvement if the word is still reachable.
+
+**And only where the picture is genuinely standard.** *Order*, *Import/Export*, *Details* and the
+tab names stay as words, because a glyph you have to learn is worse than the word it replaced.
+
+---
+
 ## 0.67.0 — 2026-08-24 — The overlay carries the checklist
 
 Asked for: *"It should have the same tabs as the VR mini panel (including Checklist)."*

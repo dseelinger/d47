@@ -643,7 +643,6 @@
                   HorizontalContentAlignment="Center"
                   Padding="10,0"
                   FontSize="{StaticResource D47.Type.Secondary}"
-                  Content="Copy All"
                   ToolTip.Tip="Copy this whole page to the clipboard"
                   Click="OnCopyClick" />
           <!--
