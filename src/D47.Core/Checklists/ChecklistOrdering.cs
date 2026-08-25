@@ -153,13 +153,47 @@ public static class ChecklistOrdering
             .Select((project, position) => (project.Key, position))
             .ToDictionary(entry => entry.Key, entry => entry.position, StringComparer.Ordinal);
 
-        // OrderBy is stable, so two lines in one band keep the order the file holds them in.
+        var live = document.Items.Where(item => item.IsLive).ToList();
+
+        // Where each line sits in the file, which used to be implicit in OrderBy's stability and
+        // has to be explicit now that an effect can borrow its upgrade's place.
+        var stored = live
+            .Select((item, index) => (item, index))
+            .ToDictionary(entry => entry.item, entry => entry.index);
+
+        // <b>An experimental effect sorts as though it were its upgrade</b> (GitHub issue 31).
+        //
+        // Banding is by state, and the two lines of one pair are in different states exactly when
+        // it matters most: a module that is unengineered and rank-gated has a Blocked blueprint and
+        // an Open effect — <i>"has no experimental effect on it"</i> is true of an unrolled module —
+        // so they landed in bands 3 and 0, at opposite ends of the project. The effect floated to
+        // the top as though it were the next thing to do, with the upgrade it depends on four bands
+        // below. An experimental effect cannot exist without its upgrade, so it is never the next
+        // thing to do on its own.
+        //
+        // Borrowing the upgrade's band <em>and</em> its stored place puts the effect immediately
+        // after it wherever that lands, which also closes the second half of the report: Revise
+        // appends every newly opened item after every kept one, so an effect added to a module
+        // already on the list went to the bottom of the plan. Fixed in the reading rather than the
+        // document, because Arrange is a reading and a hand edit still has to land where the
+        // Commander put it.
+        //
+        // An effect with no upgrade on the list keeps its own place, which is the case the report
+        // says is already right: the upgrade is rolled, and the effect is a job on its own.
+        var upgrade = live.ToDictionary(
+            item => item,
+            item => ChecklistKinship.UpgradeFor(item, live));
+
         return
         [
-            .. document.Items
-                .Where(item => item.IsLive)
+            .. live
                 .OrderBy(item => at.GetValueOrDefault(Key(item.Scope)))
-                .ThenBy(Band),
+                .ThenBy(item => Band(upgrade[item] ?? item))
+                .ThenBy(item => stored[upgrade[item] ?? item])
+
+                // And the effect after its upgrade rather than before it, which is the order they
+                // are born in and the order the work happens in.
+                .ThenBy(item => upgrade[item] is null ? 0 : 1),
         ];
     }
 

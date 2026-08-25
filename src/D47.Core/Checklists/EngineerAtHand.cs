@@ -239,12 +239,11 @@ public static class EngineersHere
                              .Where(item => item.Intent?.Kind == ChecklistIntentKind.Experimental)
                              .ToList())
                 {
+                    // Through ChecklistKinship, so this and the ordering answer "is this that
+                    // module's effect?" the same way rather than deriving it twice (GitHub issue
+                    // 31). One decides whether the pair is shown and the other where it sits.
                     var sibling = partial.FirstOrDefault(part =>
-                        part.Item.Scope.Same(effect.Scope)
-                        && string.Equals(
-                            part.Item.Intent?.Subject,
-                            effect.Intent?.Subject,
-                            StringComparison.OrdinalIgnoreCase));
+                        ChecklistKinship.SameModule(part.Item, effect));
 
                     if (sibling is null)
                     {
