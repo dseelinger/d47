@@ -20,6 +20,9 @@ public static class ListeningCapability
 
     public const string DeviceKey = "listening.inputDevice";
     public const string PushToTalkKeyKey = "listening.pushToTalkKey";
+
+    /// <summary>The stick button beside it (list.md Phase 53).</summary>
+    public const string PushToTalkButtonKey = "listening.pushToTalkButton";
     public const string ModeKey = "listening.mode";
     public const string PreRollKey = "listening.preRoll";
     public const string ModelKey = "listening.model";
@@ -222,6 +225,33 @@ public static class ListeningCapability
                         Listening = s.Listening with
                         {
                             PushToTalkKey = string.IsNullOrWhiteSpace(v) ? null : v,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = PushToTalkButtonKey,
+                Label = "Push-to-talk button",
+                Help =
+                    "The same thing on your stick or throttle: press the button you want and D47 works out "
+                    + "which one it was. It sits beside the key rather than replacing it — with both set, "
+                    + "either one opens the microphone. Needs a button that springs back, not a switch that "
+                    + "stays where you put it.",
+                Kind = SettingKind.HotasButton,
+                DocsAnchor = "push-to-talk-button",
+
+                // Protected for the same reason the key is: rebinding or clearing this takes away
+                // the Commander's way of speaking to d47.
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.PushToTalkButton,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            PushToTalkButton = string.IsNullOrWhiteSpace(v) ? null : v,
                         },
                     },
                 },

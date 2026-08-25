@@ -122,6 +122,51 @@ caches them, so two questions in an evening cost one lookup and the ranking runs
 
 ---
 
+## 0.72.0 — 2026-08-25 — Bind it with the stick, not the keyboard
+
+Phase 53. Push-to-talk on a HOTAS button.
+
+Press **Press to bind** on the new row, then press and release the button you want. Same gesture
+as binding a key, pointed at your stick.
+
+### It sits beside your key, not instead of it
+
+With both set, **either one opens the microphone**, and the last one you let go of closes it — so
+letting go of the key while your thumb is still on the button does not cut you off mid-sentence.
+Binding a button does not unbind your key. You said two things rather than changed your mind.
+
+### It has to be a button that springs back
+
+A switch that stays where you put it would hold the microphone open until you moved it again, so
+the walk declines one and says why. Those belong on the switch panel, which is the other half of
+the same hardware: Phase 21 turned away every springing button because a switch needs a *position*
+to mean anything, and this is that decision read the other way round. Between them the two now
+cover your whole stick.
+
+Buttons already held when the walk opens are ignored — sixteen were held at rest on the test
+bench, which is what a maintained switch looks like from the inside.
+
+### If the stick is not there
+
+D47 says so, and your key carries on working. A controller that is asleep is one of the ways "D47
+cannot hear me" happens with no reason attached.
+
+### The Elite collision check, hedged honestly
+
+Elite records a joystick binding against its own internal name for the device, which is not the
+name Windows gives it. So D47 cannot tell whether Elite's *button 24* is on the same stick as
+yours — and says exactly that rather than staying quiet:
+
+```text
+Push-to-talk button 24 may collide: Elite (Custom) binds a button of that number to
+UseBoostJuice. D47 cannot tell whether that is the same controller.
+```
+
+A false warning costs a sentence. A missed one costs an evening of a microphone that will not
+open.
+
+---
+
 ## 0.69.0 — 2026-08-24 — A line says what it is about
 
 ### An empty slot names the module, not the mounting point

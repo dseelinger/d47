@@ -209,6 +209,39 @@ something in Elite on your setup, the status report above says so by name.
 **The model cannot change this.** A model that could unbind your microphone key has taken away
 how you talk to it.
 
+#### Push-to-talk button {#push-to-talk-button}
+
+The same thing on your stick or throttle. Press **Press to bind**, then press and release the
+button you want, and Directive 47 works out which one it was — the same gesture as binding a key,
+pointed at a controller.
+
+**It sits beside the key rather than replacing it.** With both set, *either* opens the microphone,
+and the last one you let go of closes it. So letting go of the key while your thumb is still on
+the button does not cut you off mid-sentence. Binding a button does not unbind your key, because
+you said two things rather than changed your mind about one.
+
+**It has to be a button that springs back.** A switch that stays where you put it would hold the
+microphone open until you moved it again, so the capture declines one and says why. Those belong
+on the [switch panel](switches.html) instead, which is the other half of the same hardware — Phase
+21 turned away every springing button because a switch needs a *position* to mean anything, and
+this feature is that decision read the other way round.
+
+**If the controller is not there when D47 starts**, it says so and your key carries on working. A
+stick that is asleep is one of the ways "D47 cannot hear me" happens with no reason attached.
+
+**The collision check is weaker here than for a key, and it says so.** Elite records a joystick
+binding against its own internal name for the device, which is not the name Windows gives it, so
+Directive 47 cannot tell whether Elite's *button 24* is on the *same* stick as yours. What it can
+say is that a button of that number is spoken for somewhere — worth saying on a HOTAS, where every
+button is usually already used:
+
+```text
+Push-to-talk button 24 may collide: Elite (Custom) binds a button of that number to
+UseBoostJuice. D47 cannot tell whether that is the same controller.
+```
+
+**The model cannot change this one either**, for the same reason.
+
 #### How D47 decides you are talking to it {#mode}
 
 Four settings, and the key works in all four — a policy that decides for itself is not a reason to
