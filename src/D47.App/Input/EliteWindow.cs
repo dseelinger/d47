@@ -26,6 +26,21 @@ public interface IEliteWindow
     /// </para>
     /// </summary>
     FocusResult Raise();
+
+    /// <summary>
+    /// Where Elite's window is on the virtual desktop, in physical pixels, or null when it cannot
+    /// be found (#36).
+    /// <para>
+    /// Here rather than on the concrete class because the one thing that asks — the flat overlay,
+    /// deciding which monitor to sit on — has to be testable on a machine with no game running and
+    /// on a headless platform with one screen.
+    /// </para>
+    /// <para>
+    /// A rectangle rather than a screen: which monitor a rectangle is on is Avalonia's question to
+    /// answer, and this interface is the one place in d47 that already knows how to find Elite.
+    /// </para>
+    /// </summary>
+    (int X, int Y, int Width, int Height)? Bounds { get; }
 }
 
 /// <summary>
@@ -75,6 +90,22 @@ public sealed class EliteWindow(ILogger<EliteWindow> logger) : IEliteWindow
         {
             var elite = Handle;
             return elite != 0 && GetForegroundWindow() == elite;
+        }
+    }
+
+    /// <inheritdoc />
+    public (int X, int Y, int Width, int Height)? Bounds
+    {
+        get
+        {
+            var elite = Handle;
+
+            if (elite == 0 || !GetWindowRect(elite, out var rect))
+            {
+                return null;
+            }
+
+            return (rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
     }
 
@@ -262,6 +293,19 @@ public sealed class EliteWindow(ILogger<EliteWindow> logger) : IEliteWindow
         attachedTo = owner;
 
         return true;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(nint hWnd, out Rect rect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
     }
 
     [DllImport("user32.dll")]

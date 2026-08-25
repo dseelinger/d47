@@ -284,6 +284,68 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>
+    /// <b>Which monitor</b> (<a href="https://github.com/dseelinger/d47/issues/36">#36</a>).
+    /// Reported on a multi-monitor desk: the strip opened on the primary screen with the game on
+    /// another. It asked the wrong question, and it asked it once — so the corner is now chosen
+    /// from Elite's own window rectangle, and chosen again every time the strip comes up.
+    /// <para>
+    /// <b>What this cannot prove.</b> Avalonia's headless platform has one screen, so no test here
+    /// can show the strip landing on the second of two. What it can show is the mechanism: that
+    /// the game's rectangle is consulted at all, and that it is consulted on every show rather
+    /// than at startup. The monitor choice itself is verified by a Commander with two.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ItAsksWhereTheGameIsEveryTimeItComesUp()
+    {
+        var (overlay, _, elite, tick) = Open(on: true, eliteInFront: true);
+
+        elite.Bounds = (0, 0, 1920, 1080);
+        var asked = elite.BoundsAsked;
+
+        elite.IsForeground = false;
+        Beat(tick);
+
+        elite.IsForeground = true;
+        Beat(tick);
+
+        Assert.True(
+            elite.BoundsAsked > asked,
+            "The strip came up without asking where the game was, so it cannot have followed it "
+            + "to another monitor.");
+
+        overlay.Close();
+    }
+
+    /// <summary>
+    /// <b>A default may follow the game around, and a choice may not.</b> Once the Commander has
+    /// put the strip somewhere, nothing picks a corner again — which is the half of #36 that a
+    /// fix chasing the game everywhere would have broken.
+    /// </summary>
+    [AvaloniaFact]
+    public void OnceTheCommanderHasPlacedItNothingMovesItAgain()
+    {
+        var (overlay, _, elite, tick) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(240, 160);
+        overlay.Place();
+        overlay.Place();
+
+        var theirs = overlay.Position;
+
+        elite.Bounds = (0, 0, 1920, 1080);
+        elite.IsForeground = false;
+        Beat(tick);
+
+        elite.IsForeground = true;
+        Beat(tick);
+
+        Assert.Equal(theirs, overlay.Position);
+
+        overlay.Close();
+    }
+
+    /// <summary>
     /// A picture of the strip, for looking at rather than for asserting on — the repo's own
     /// convention for a layout, since a line hanging low or a tail clipped by four pixels is
     /// something a test can be written to miss and an eye cannot.
@@ -368,6 +430,30 @@ public class TheOverlayWithoutAHeadsetTests
         public bool IsRunning => IsForeground;
 
         public bool IsForeground { get; set; }
+
+        /// <summary>
+        /// Where the game's window is, so the strip can pick the monitor it is on
+        /// (<a href="https://github.com/dseelinger/d47/issues/36">#36</a>). Null by default, which
+        /// is a machine with no game running and falls back to the primary screen.
+        /// </summary>
+        public (int X, int Y, int Width, int Height)? Bounds
+        {
+            get
+            {
+                BoundsAsked++;
+                return _bounds;
+            }
+
+            set => _bounds = value;
+        }
+
+        private (int X, int Y, int Width, int Height)? _bounds;
+
+        /// <summary>
+        /// How many times the strip has asked where the game is. Counted rather than merely
+        /// answered, because #36's second half is that the question used to be asked once.
+        /// </summary>
+        public int BoundsAsked { get; private set; }
 
         public FocusResult Raise() => FocusResult.AlreadyThere;
     }

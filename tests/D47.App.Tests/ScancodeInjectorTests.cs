@@ -28,6 +28,9 @@ public class ScancodeInjectorTests
         /// the game forward so it could type into it would defeat the foreground check these
         /// tests are about, so this failing loudly if it were ever called is the point.
         /// </summary>
+        /// <summary>Not this test's subject: the injector never asks where Elite's window is.</summary>
+        public (int X, int Y, int Width, int Height)? Bounds => null;
+
         public FocusResult Raise() =>
             throw new InvalidOperationException("the injector must never raise the game itself");
     }

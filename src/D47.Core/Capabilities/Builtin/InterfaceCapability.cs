@@ -196,15 +196,22 @@ public static class InterfaceCapability
                 Key = OverlayKey,
                 Label = "Show the overlay",
                 Help = "Pins the mini panel over the game: the transcript's last few lines, and "
-                       + "the story if one is running. It cannot be clicked - the pointer goes "
-                       + "straight through it - so nothing it shows can take a click Elite wanted.",
+                       + "the story if one is running. It shows itself only while Elite is in "
+                       + "front, so turning it on here shows you nothing until the game is - that "
+                       + "is on rather than broken. It cannot be clicked either: the pointer goes "
+                       + "straight through, so nothing it shows can take a click Elite wanted.",
                 Kind = SettingKind.Toggle,
                 Group = OverlayGroup,
                 GroupHelp = OverlayGroupHelp,
                 DocsAnchor = "overlay",
                 Binding = new SettingBinding
                 {
-                    Read = s => s.Ui.Overlay.Enabled.ToString(),
+                    // "true" and "false", spelled out, because the toggle control compares this
+                    // string ordinally and `bool.ToString()` is "True" (#37). The write side parses
+                    // case-insensitively, which is exactly what made this invisible: the setting
+                    // took, the overlay appeared, and the switch that had just been flipped read
+                    // off.
+                    Read = s => s.Ui.Overlay.Enabled ? "true" : "false",
                     Write = (s, v) => s with
                     {
                         Ui = s.Ui with

@@ -161,15 +161,20 @@ It is the shape for the very ordinary case of one monitor and wanting Directive 
 without losing it. The window stays interactive: **you can still type into it**, which is the
 difference between a mini window worth having and one you switch off the same day.
 
-**Three ways back, and none of them is drawn on the panel.** Mini takes the tab strip, the reading
-control, the breadcrumb, the search box, the banners and the header, all of it on purpose — so the
-way out cannot live in any of them:
+**Four ways back.** Mini takes the tab strip, the reading control, the breadcrumb, the search box,
+the banners and the header, all of it on purpose — so three of the four deliberately do not live on
+the panel at all:
 
 ```text
+Expand               a button in the panel's bottom corner
 Ctrl+M               the key, which works with nothing at all on the surface
 "full window"        said out loud
 the title bar        mini keeps its decorations, so ✕ still closes it
 ```
+
+The button is on every page mini has, and it stays put while a chooser is open — a chooser is
+exactly the state you can feel stuck in, so it is the one control that is never the thing you are
+stuck behind. In the full window the same button reads **Shrink**.
 
 That last one is a decision rather than an oversight. A chromeless strip pinned over the game is
 the [overlay](#overlay) and a different thing; keeping the frame here means the window can still be
@@ -352,6 +357,14 @@ you launch.
 you typed, so it goes to `view-state.json` beside the main window's position and the headset's
 panel anchors rather than into `settings.json`. If it ends up on a monitor you later unplug, it
 comes back on one you have.
+
+**Until you place it, it follows the game.** With no corner of your own chosen, the strip goes to
+the bottom-right of **whichever monitor Elite is on** — asked afresh every time it appears, so
+moving the game to another screen takes the strip with it. Bottom-right because that is the corner
+of Elite's HUD with the least on it.
+
+Once you have dragged it somewhere, that corner is yours and nothing moves it again. **A default
+may follow the game around; a choice may not.**
 
 ---
 

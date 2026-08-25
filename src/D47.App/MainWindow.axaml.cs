@@ -299,6 +299,14 @@ public partial class MainWindow : Window
             // is untouched and the flat overlay stays output-only by not making this call.
             Panel.EnableAskInMini();
 
+            // And a control you can see, which is the way out a Commander finds without being
+            // told (asked for 2026-08-24). Through the settings service like the hotkey, so the
+            // button, the key, the phrase and the row are one state.
+            Panel.EnableModeToggle(mode => host.Settings.Apply(
+                InterfaceCapability.WindowModeKey,
+                mode == PanelMode.Mini ? "mini" : "full",
+                SettingsCaller.Panel));
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             //
@@ -754,7 +762,7 @@ public partial class MainWindow : Window
 
         return new Size(
             PanelResolution.Mini.Width * scale,
-            (PanelResolution.Mini.Height + Panel.AskLineHeight(PanelResolution.Mini.Width)) * scale);
+            (PanelResolution.Mini.Height + Panel.MiniExtraHeight(PanelResolution.Mini.Width)) * scale);
     }
 
     /// <summary>

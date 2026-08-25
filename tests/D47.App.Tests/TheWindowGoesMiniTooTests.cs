@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using D47.App.Panel;
@@ -129,7 +130,9 @@ public class TheWindowGoesMiniTooTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(panel.GetControl<Border>("AskRow").IsVisible);
-        Assert.Equal(0, panel.AskLineHeight(PanelResolution.Mini.Width));
+
+        // Nothing furnished, so mini is the headset's floor exactly.
+        Assert.Equal(0, panel.MiniExtraHeight(PanelResolution.Mini.Width));
 
         panel.EnableAskInMini();
         Dispatcher.UIThread.RunJobs();
@@ -137,10 +140,22 @@ public class TheWindowGoesMiniTooTests
         Assert.True(panel.GetControl<Border>("AskRow").IsVisible);
 
         // And it is measured rather than typed, which is what the window's mini height is built
-        // out of: the headset's floor plus whatever this line actually wants.
+        // out of: the headset's floor plus whatever these rows actually want.
+        var withAsk = panel.MiniExtraHeight(PanelResolution.Mini.Width);
+
         Assert.True(
-            panel.AskLineHeight(PanelResolution.Mini.Width) > 0,
+            withAsk > 0,
             "The ask line reported no height, so the mini window would be the headset's size with it clipped.");
+
+        // And the sum grows with the rows, which is the half that was got wrong once: the drawn
+        // way out arrived a day after the ask line, and a height that forgets a row it is drawing
+        // takes the difference out of the transcript in silence.
+        panel.EnableModeToggle(_ => { });
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(
+            panel.MiniExtraHeight(PanelResolution.Mini.Width) > withAsk,
+            "The way out is drawn in mini and costs no height, so it is standing on the transcript.");
 
         window.Close();
     }
@@ -264,10 +279,11 @@ public class TheWindowGoesMiniTooTests
         var (window, panel) = Open();
 
         panel.EnableAskInMini();
+        panel.EnableModeToggle(_ => { });
         panel.Mode = PanelMode.Mini;
 
         window.Width = PanelResolution.Mini.Width;
-        window.Height = PanelResolution.Mini.Height + panel.AskLineHeight(PanelResolution.Mini.Width);
+        window.Height = PanelResolution.Mini.Height + panel.MiniExtraHeight(PanelResolution.Mini.Width);
         Dispatcher.UIThread.RunJobs();
 
         var model = (PanelViewModel)panel.DataContext!;
@@ -288,6 +304,89 @@ public class TheWindowGoesMiniTooTests
         window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "window-mini.png"),
             new PngBitmapEncoderOptions());
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// <b>A way out you can see</b> (asked for 2026-08-24, on meeting the mini window).
+    /// <para>
+    /// Phase 51 ruled that the way back must not live in the thing that disappears and named three
+    /// that do not — the hotkey, the phrase and the title bar. All three still stand; what was
+    /// missing is that a way out nobody can see is a way out somebody has to be told about.
+    /// </para>
+    /// <para>
+    /// It is on every tab the surface has, and it survives a chooser: a modal is exactly the state
+    /// a Commander can feel stuck in, and this is the one control that must never be the thing
+    /// they are stuck behind.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void MiniDrawsAControlThatLeavesIt()
+    {
+        var (window, panel) = Open();
+
+        var asked = new List<PanelMode>();
+
+        // Absent until a host furnishes it, so the headset's mini and the click-through overlay
+        // do not draw a button nobody there could press.
+        Assert.False(panel.GetControl<DockPanel>("ModeRow").IsVisible);
+
+        panel.EnableModeToggle(asked.Add);
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        var toggle = panel.GetControl<Button>("ModeToggle");
+
+        Assert.True(panel.GetControl<DockPanel>("ModeRow").IsVisible);
+        Assert.Equal("Expand", toggle.Content);
+
+        toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal([PanelMode.Full], asked);
+
+        // And it reads the other way round in full, so one word never has to be got backwards.
+        panel.Mode = PanelMode.Full;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Shrink", toggle.Content);
+
+        toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal([PanelMode.Full, PanelMode.Mini], asked);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// And it is reachable from mini's other reading too. The status line is the transcript's and
+    /// is hidden on the story — a way out that lived there would have a hole in it exactly where
+    /// mini is showing something else.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWayOutSurvivesTheStoryAndAChooser()
+    {
+        var (window, panel) = Open();
+
+        panel.EnableModeToggle(_ => { });
+        panel.EnableAdventures(AdventureFixture.Surface());
+        panel.Tab = PanelTab.Adventures;
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Adventures, panel.Tab);
+        Assert.False(panel.GetControl<DockPanel>("StatusRow").IsVisible);
+        Assert.True(panel.GetControl<DockPanel>("ModeRow").IsVisible);
+
+        panel.Nav.Take(new NavCrumb("chooser", "Pick one"));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(
+            panel.GetControl<DockPanel>("ModeRow").IsVisible,
+            "A chooser hid the only control that leaves mini, which is the state a Commander "
+            + "cannot get out of.");
 
         window.Close();
     }

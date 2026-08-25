@@ -325,6 +325,36 @@
     </DockPanel>
 
     <!--
+      The way out of mini, drawn (asked for 2026-08-24). Phase 51 ruled that the way back must not
+      live in the thing that disappears and listed three that do not: the hotkey, the phrase and
+      the title bar. The Commander's answer on meeting it was that a surface with no visible
+      control to leave by is one you have to be told about — so there is one, and the other three
+      stand beside it rather than being replaced.
+
+      Its own row rather than a seat in StatusRow, because StatusRow is the transcript's: it
+      carries the provenance line and the microphone, and it is hidden on any other tab. A way out
+      that vanished when mini was showing the story would be a way out with a hole in it.
+
+      Hidden unless a host furnishes it, exactly as TurnDetails above is — so the headset's mini is
+      untouched and the flat overlay, which the pointer goes straight through, does not draw a
+      button nobody could press.
+    -->
+    <DockPanel x:Name="ModeRow" DockPanel.Dock="Bottom" IsVisible="False" Margin="0,8,0,0">
+      <Button x:Name="ModeToggle"
+              DockPanel.Dock="Right"
+              Padding="6,1"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              Click="OnModeToggleClick" />
+      <TextBlock />
+    </DockPanel>
+
+    <!--
       Which surface of the panel this instantiation is showing, and which reading of it. On the
       view rather than on the view model, for the same reason PanelMode is: both surfaces bind
       one model, so a page held there would send the headset to the log file the moment the

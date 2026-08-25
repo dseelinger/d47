@@ -1305,6 +1305,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// would be ninety-odd animations running for the life of the surface.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The control the Commander touches for a row, by key
+    /// (<a href="https://github.com/dseelinger/d47/issues/37">#37</a>).
+    /// <para>
+    /// Internal and for tests only. A toggle that read its setting wrongly rendered off for ever
+    /// while everything behind it worked, and the only place that fault was visible was on the
+    /// drawn control — so a gate has to be able to reach one by name rather than by guessing at
+    /// the visual tree.
+    /// </para>
+    /// </summary>
+    internal Control? ControlFor(string key) =>
+        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Control;
+
     public void ShowBusy(string key, bool busy)
     {
         if (_rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))
