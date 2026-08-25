@@ -20,6 +20,72 @@ the file as it stood then.
 
 ---
 
+## 0.71.2 — 2026-08-25 — Two things it was saying that were not true
+
+Both found in one evening of flying, and both were D47 misdescribing itself rather than
+misbehaving.
+
+### Push-to-talk on a stick button worked, and D47 said it did not
+
+Bind push-to-talk to a joystick button, ask *"can you hear me?"*, and the answer was:
+
+```text
+No — not properly.
+No push-to-talk key is set, so I never open the microphone.
+```
+
+The microphone was open the whole time. Directive 47 had just transcribed the question through
+that very button, and then told you it could not hear you.
+
+Phase 53 gave the button its own setting and wired it to the microphone correctly. **What it did
+not do was tell any of the sentences about it** — so five separate things went on asking only
+about the key: the spoken answer above, the line that tells you what to hold, the technical
+listing, the panel's own microphone caption, and the pre-roll setting, which **hid itself
+entirely** if a button was all you had bound.
+
+All five now read one answer. The wording moved with them: **"no push-to-talk key or button is
+set"**, so somebody with a stick in their hand is not sent looking for a keyboard. A button is
+named as being on your stick, because *button 7* on its own does not say what to reach for. And
+with both bound, both are named — either one opens the microphone, so naming one would be advice
+missing the half you just set up.
+
+### The ship's AI said something it never wrote
+
+Departing a carrier, the tower said something to the effect of *"I don't have that capability"*.
+The log held the line that was **written** — *"No fire zone exited"* — and nothing anywhere held
+the line that was **said**.
+
+Two separate faults, and this release fixes both.
+
+**A callout is written first and then said in character**, and only the first half was ever
+written down. So the log recorded the draft and the voice, a second apart, with nothing to
+indicate the words had changed in between. **Directive 47 now writes down what it actually
+said**, once per utterance, at the point the words reach the speaker — so a line you cut off
+records the part that was spoken rather than the part that was drafted. If you hear something
+odd, it is now in `data/logs/` in your own words.
+
+**And the odd line should not have been said at all.** When a model is asked to re-word a callout
+in character and answers by talking about itself instead, that is not a re-worded callout — it is
+the model answering a question nobody asked. Directive 47 now notices and says the written line
+instead. You lose a little variety on that one callout and nothing else; the written line was
+always there as the fallback, which is the whole reason it exists.
+
+This matters most on the cheaper models, which are likelier to read *"say this again in your own
+words"* as a request to go and do something.
+
+### Smaller things
+
+**The headset's mini panel has no buttons on it**, matching the flat overlay. Nothing on it could
+be usefully pressed, and at 512 pixels across every control was space taken from the words. The
+big headset panel keeps its buttons — those you can point at.
+
+**A fifth thinking level, `xhigh`, sits between High and Max.** Nothing selects it yet; it is
+groundwork for the forthcoming setting that lets you put a floor and a ceiling on what Directive
+47 spends thinking. Two providers were quietly translating it to a level *below* High; they no
+longer do.
+
+---
+
 ## 0.71.1 — 2026-08-25 — The cheap model can actually answer you
 
 One defect, and it was the quiet kind.
