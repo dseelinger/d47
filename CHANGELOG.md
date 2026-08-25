@@ -78,6 +78,50 @@ the wrong moment.
 
 ---
 
+## 0.71.0 — 2026-08-25 — Where to buy it, and what it costs there
+
+Phase 49. *Where can I buy tritium* — and, the same question backwards, *where do I dump 700
+tonnes of it.*
+
+### How much you want is part of the question
+
+A station 40 light years further out that is 200 credits a tonne cheaper is the wrong answer for
+eight tonnes and the right one for seven hundred and eighty. Tell D47 the tonnage and it ranks by
+what the whole load costs to go and get; leave it out and it ranks on price and tells you the
+distance.
+
+Say the tonnage and **stations that cannot fill the order drop out**. The cheapest steel in the
+bubble is not an answer if the station is holding nine tonnes of it.
+
+### Every price has a date on it
+
+Prices come from other Commanders docking and sharing what they saw. Supply ages fastest — a
+colonisation rush strips a station in hours — so an answer that sounded current would be worse
+than one admitting it is a month old:
+
+```text
+Jameson Memorial (Shinrarta Dezhra), 14.5 ly, 42,050 cr a tonne, 12,400 in stock,
+29,435,000 cr for the load — reported 6 hours ago.
+```
+
+A market **you** stood in yourself is labelled as yours. Stations left out for quoting prices too
+old to trust are counted rather than skipped quietly, because "nothing within fifty light years"
+and "eleven stations, all quoting last month" mean different things.
+
+**Fleet carriers are out unless you ask for one.** Player-set prices, and the carrier may be a
+hundred light years away by the time you arrive.
+
+### A Market page on the Routing tab
+
+Six stations with a price, a stock figure, a distance and a date each is a table to look at rather
+than a paragraph to listen to. Ask by voice and the page shows the answer you were just given —
+one answer, not a second search that might disagree with it.
+
+Nothing extra is fetched for any of it. The trade planner already pulls whole markets and already
+caches them, so two questions in an evening cost one lookup and the ranking runs on your machine.
+
+---
+
 ## 0.69.0 — 2026-08-24 — A line says what it is about
 
 ### An empty slot names the module, not the mounting point

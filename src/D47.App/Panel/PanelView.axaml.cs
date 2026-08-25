@@ -1032,7 +1032,8 @@ public partial class PanelView : UserControl
         RoutingSurface surface,
         bool plan = true,
         bool progress = true,
-        bool course = true)
+        bool course = true,
+        bool market = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -1057,6 +1058,16 @@ public partial class PanelView : UserControl
             roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course")
             {
                 Help = D47.Core.Capabilities.Builtin.NavigationCapability.Id,
+            });
+        }
+
+        // Last of the four, because it is the newest and because the three before it are the
+        // journey and this is the errand (list.md Phase 49).
+        if (market && surface.Commodities is not null)
+        {
+            roots.Add(new NavCrumb(RoutingPages.MarketRoot, "Market")
+            {
+                Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id,
             });
         }
 

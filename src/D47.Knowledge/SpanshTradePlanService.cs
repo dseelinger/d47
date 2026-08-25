@@ -102,6 +102,89 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
+    /// Where to buy one commodity, or where to dump it (list.md Phase 49).
+    /// <para>
+    /// <b>Nothing new is fetched.</b> This is the planner's own sweep, its own cache and its own
+    /// merge with the Commander's <c>MarketBook</c>, followed by one local pass. Spansh will not
+    /// rank on a commodity's price server-side and its demand bounds are accepted and ignored, so
+    /// local is the arrangement a "cheapest" answer needs rather than a workaround for one.
+    /// </para>
+    /// </summary>
+    public async Task<CommodityAnswer> FindCommodityAsync(
+        CommoditySearch search,
+        CancellationToken cancellationToken)
+    {
+        var radius = search.Query.MaxDistance;
+        var fetched = await SweepAsync(search.System, radius, cancellationToken).ConfigureAwait(false);
+        var origin = fetched.FirstOrDefault(market =>
+            string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
+            && (search.Station is null || market.IsSamePlaceAs(search.Station, search.System)));
+
+        // Failing that, anything in the reference system at all: the coordinates are the system's
+        // rather than the station's, and a question asked in light years does not need the pad.
+        origin ??= fetched.FirstOrDefault(market =>
+            string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase));
+
+        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+        var usable = new List<MarketSnapshot>(fetched.Count);
+        var stale = 0;
+
+        foreach (var market in Merge(fetched))
+        {
+            if (market.UpdatedAt is { } when && when < oldest)
+            {
+                stale++;
+                continue;
+            }
+
+            usable.Add(market);
+        }
+
+        return new CommodityAnswer(
+            CommodityMarketSearch.Rank(search.Query, usable, origin),
+            usable.Count + stale,
+            stale,
+            origin is not null);
+    }
+
+    /// <summary>
+    /// The sweep with the Commander's own markets folded in, newer wins. Their <c>Market.json</c>
+    /// is exact where a report is somebody's word, but only where it is also current — nothing
+    /// here assumes their eyes are automatically better than this morning's report.
+    /// </summary>
+    private IEnumerable<MarketSnapshot> Merge(IReadOnlyList<MarketSnapshot> fetched)
+    {
+        if (_book is null)
+        {
+            return fetched;
+        }
+
+        var merged = new List<MarketSnapshot>(fetched.Count);
+
+        foreach (var market in fetched)
+        {
+            var seen = _book.Markets.FirstOrDefault(local => local.IsSamePlaceAs(market.Station, market.System));
+
+            merged.Add(seen is not null && seen.UpdatedAt > market.UpdatedAt
+                ? seen with { X = market.X, Y = market.Y, Z = market.Z, DistanceToArrival = market.DistanceToArrival }
+                : market);
+        }
+
+        // One the sweep never returned: the outpost under their feet, most often, since three
+        // pages of fifty is not the whole radius. It keeps no coordinates of its own, so it can
+        // still be priced and simply has no measurable distance.
+        foreach (var seen in _book.Markets)
+        {
+            if (!merged.Any(market => market.IsSamePlaceAs(seen.Station, seen.System)))
+            {
+                merged.Add(seen);
+            }
+        }
+
+        return merged;
+    }
+
+    /// <summary>
     /// Everything worth planning over: the sweep, the Commander's own markets folded in, and
     /// anything too old to trust dropped.
     /// </summary>

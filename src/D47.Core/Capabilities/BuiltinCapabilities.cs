@@ -193,13 +193,28 @@ public static class BuiltinCapabilities
         // and in tests that are not about them; the tool still registers, so its page and its
         // three settings rows exist, and every command answers that it is switched off. At the
         // end, by the rule the comment above records the cost of.
-        Builtin.ShipCommandSurface? shipCommands = null) =>
+        Builtin.ShipCommandSurface? shipCommands = null,
+
+        // Where the last commodity answer is posted (list.md Phase 49), so the Routing tab draws
+        // what the Commander was told rather than searching again. Null under the designer and in
+        // tests that are not about it; the answer is then spoken and nothing is kept.
+        Knowledge.CommodityBoard? commodities = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
-        GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
+        GalaxyCapability.Create(
+            galaxy,
+            () => gameState.Active?.Location.StarSystem,
+            settings,
+
+            // Whole markets already live behind the trade planner, and this fetches nothing new
+            // (list.md Phase 49).
+            trade,
+            () => gameState.Active?.Location.StationName,
+            commodities,
+            now),
         RouteCapability.Create(
             routes,
             trade,
