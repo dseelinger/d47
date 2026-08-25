@@ -668,24 +668,53 @@ public partial class PanelView : UserControl
     /// not about them, where the page draws no band at all rather than an empty one.
     /// </param>
     /// <param name="backfill">What "read my journals" does. Null where there is nowhere to run it.</param>
+    /// <param name="sourcing">
+    /// Where to buy everything a construction site still needs (list.md Phase 50), as a second root
+    /// on this tab — or null for a surface that does not get one.
+    /// <para>
+    /// <b>The desktop window only, for now</b>, and by not making the call rather than by any test
+    /// of which surface this is: the carrier figure is typed, and typing wants a keyboard the
+    /// headset has not got. That is the parity rule working as written rather than an exception to
+    /// it, and the same reason the Market page is desktop-only.
+    /// </para>
+    /// </param>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null)
+        Action? backfill = null,
+        Func<SourcingPage>? sourcing = null)
     {
         ChecklistPage? page = null;
+        SourcingPage? shopping = null;
 
-        Furnish(
-            PanelTab.Checklist,
-            crumb => crumb.Key == ChecklistPage.SuggestionsKey
-                ? page?.BuildSuggestions() ?? new TextBlock { Text = "Nothing waiting." }
-                : page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
-            new NavCrumb("checklist", "Checklist")
+        var roots = new List<NavCrumb>
+        {
+            new("checklist", "Checklist")
             {
                 // The suggestions level drilled from here inherits it: a proposal is still the
                 // checklist's subject.
                 Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
+            },
+        };
+
+        if (sourcing is not null)
+        {
+            roots.Add(new NavCrumb(SourcingPage.RootKey, "Sourcing")
+            {
+                Help = D47.Core.Capabilities.Builtin.ColonisationCapability.Id,
             });
+        }
+
+        Furnish(
+            PanelTab.Checklist,
+            crumb => crumb.Key switch
+            {
+                SourcingPage.RootKey when sourcing is not null => shopping ??= sourcing(),
+                ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
+                                                ?? new TextBlock { Text = "Nothing waiting." },
+                _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
+            },
+            [.. roots]);
 
         // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than
         // every line**: a checklist's whole question is how much is left, and a count that never

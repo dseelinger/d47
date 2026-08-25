@@ -98,6 +98,21 @@ public class RouteCapabilityTests
                 ? Task.FromException<CommodityAnswer>(Throws)
                 : Task.FromResult(Commodity);
         }
+
+        public SourcingSearch? LastSourcing { get; private set; }
+
+        public SourcingAnswer Sourcing { get; set; } = SourcingAnswer.Empty;
+
+        public Task<SourcingAnswer> SourceConstructionAsync(
+            SourcingSearch search,
+            CancellationToken cancellationToken)
+        {
+            LastSourcing = search;
+
+            return Throws is not null
+                ? Task.FromException<SourcingAnswer>(Throws)
+                : Task.FromResult(Sourcing);
+        }
     }
 
     private static void Apply(GameStateStore gameState, string json)

@@ -555,6 +555,66 @@ public interface ITradePlanService
     /// </para>
     /// </summary>
     Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Where to buy everything one construction site still needs (list.md Phase 50).
+    /// <para>
+    /// Here for the same reason <see cref="FindCommodityAsync"/> is, and more so: this is the same
+    /// sweep and the same cache again, and the difference is entirely in the arithmetic done on
+    /// what comes back. Phase 49 answers <em>where do I buy tritium</em>; a build asks about twenty
+    /// commodities at once, which is a covering problem rather than twenty of the same question.
+    /// </para>
+    /// </summary>
+    Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// One build's sourcing question (list.md Phase 50).
+/// </summary>
+/// <param name="System">Where to search out from.</param>
+/// <param name="Station">
+/// Where the Commander is standing, if they are. Only used to find the origin's own coordinates.
+/// </param>
+/// <param name="Outstanding">
+/// What the site still needs, <b>already taken as given</b>. Nothing downstream recomputes it:
+/// <c>ColonisationConstructionDepot</c> is a snapshot rather than a delta and this is a fact off
+/// the Commander's own disk, which is the trap that caught <c>EngineerProgressState</c> and
+/// <c>ModuleStore</c>, silently both times.
+/// </param>
+/// <param name="MaxDistance">How far to sweep, in light years.</param>
+/// <param name="LargePadOnly">Whether to insist on a large pad.</param>
+/// <param name="MaxStops">A ceiling on stations, so the answer stays one a Commander can act on.</param>
+/// <param name="MaxPriceAge">
+/// How stale a reported price may be, in hours. Inherited from the planner's bound rather than
+/// invented a third time.
+/// </param>
+public sealed record SourcingSearch(
+    string System,
+    string? Station,
+    IReadOnlyList<Journal.ConstructionResource> Outstanding,
+    double MaxDistance = 50,
+    bool LargePadOnly = false,
+    int MaxStops = 6,
+    int MaxPriceAge = 720);
+
+/// <summary>
+/// The covering plan, and what a Commander is owed alongside it.
+/// </summary>
+/// <param name="Plan">The stops, best first, and what could not be priced or filled.</param>
+/// <param name="Considered">How many markets the sweep returned at all.</param>
+/// <param name="DroppedAsStale">
+/// How many carried a price older than the bound. Said rather than swallowed, for the reason
+/// <see cref="CommodityAnswer.DroppedAsStale"/> gives: "nothing within fifty light years" and
+/// "eleven stations, all quoting last month" are different answers.
+/// </param>
+/// <param name="OriginKnown">Whether the sweep found the reference system at all.</param>
+public sealed record SourcingAnswer(
+    SourcingPlan Plan,
+    int Considered,
+    int DroppedAsStale,
+    bool OriginKnown)
+{
+    public static readonly SourcingAnswer Empty = new(SourcingPlan.Empty, 0, 0, false);
 }
 
 /// <summary>

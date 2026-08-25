@@ -63,10 +63,29 @@ public static class ColonisationCapability
     /// not about it. The journal half still answers, which is what a capability being partly off
     /// looks like rather than one being absent (list.md Phase 3).
     /// </param>
+    /// <param name="trade">
+    /// Where the shopping list comes from (list.md Phase 50). Null under the designer and in tests
+    /// that are not about it, and the tracking half still answers — asking where to buy then says
+    /// it has nothing composed that reads markets, which is a capability being partly off rather
+    /// than absent.
+    /// </param>
+    /// <param name="carrier">
+    /// What the Commander has <em>told</em> d47 is on their fleet carrier, which is taken off the
+    /// shopping list. Never derived: see <see cref="CarrierManifest"/> for the measurement that
+    /// settled that.
+    /// </param>
+    /// <param name="sourcing">
+    /// Where the last shopping list is posted, so the Checklist tab draws the answer the Commander
+    /// was just given rather than searching again.
+    /// </param>
     public static CapabilityDescriptor Create(
         Func<CommanderGameState?> commander,
         IGalaxyService? galaxy = null,
-        Configuration.SettingsService? settings = null) => new()
+        Configuration.SettingsService? settings = null,
+        ITradePlanService? trade = null,
+        CarrierManifest? carrier = null,
+        SourcingBoard? sourcing = null,
+        Func<DateTimeOffset>? now = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -105,7 +124,7 @@ public static class ColonisationCapability
                 Description =
                     "Every construction site this Commander's journal has reported: where it is, how "
                     + "far along it is, how many commodities are still outstanding, and when they last "
-                    + "saw it. The figures are as of their last visit to each site, not live.",
+                    + "saw it. Those figures are as of that visit, not live.",
                 Parameters =
                 [
                     new ToolParameter
@@ -125,9 +144,9 @@ public static class ColonisationCapability
                 Description =
                     "The hauling list for one construction site: every commodity still outstanding, how "
                     + "much is left of each, how much of it is already in the cargo hold, and how many "
-                    + "trips the ship's capacity implies. Names a site by its station or system; with no "
-                    + "name, the only site under construction, or a list to choose from if there are "
-                    + "several.",
+                    + "trips the ship's capacity implies. Can also say where to buy the whole list. Names "
+                    + "a site by its station or system; with no name, the only site under construction, or "
+                    + "a list to choose from if there are several.",
                 Parameters =
                 [
                     new ToolParameter
@@ -138,8 +157,16 @@ public static class ColonisationCapability
                             "The station or system name of the site. Leave out when only one is under "
                             + "construction.",
                     },
+                    new ToolParameter
+                    {
+                        Name = "where_to_buy",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Also work out which nearby stations between them stock the whole list.",
+                    },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Needs(commander(), arguments))),
+                Handler = (arguments, cancellationToken) =>
+                    NeedsAsync(
+                        commander(), settings, trade, carrier, sourcing, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -148,8 +175,7 @@ public static class ColonisationCapability
                     "Unpopulated systems within claim range that hold the bodies a colony wants: how "
                     + "many bodies, of what kinds, how many can be landed on, which have rings, and how "
                     + "far apart they are. No index outside the game can see a claim, so these are "
-                    + "systems to check in the System Colonisation Contact. Range is measured from "
-                    + "the station the claim would be made at.",
+                    + "systems to check in the System Colonisation Contact.",
                 Parameters =
                 [
                     new ToolParameter
@@ -165,8 +191,8 @@ public static class ColonisationCapability
                         Name = "body_type",
                         Type = ToolParameterType.String,
                         Description =
-                            "A kind of planet the system must hold — for example \"Earth-like world\", "
-                            + "\"High metal content world\" or \"Class I gas giant\".",
+                            "A kind of planet the system must hold — for example \"Earth-like world\" "
+                            + "or \"Class I gas giant\".",
                     },
                     new ToolParameter
                     {
@@ -191,8 +217,8 @@ public static class ColonisationCapability
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
                         Description =
-                            "How far to look, in light years. Defaults to 15, which is the furthest a "
-                            + "claim reaches, and is capped there.",
+                            "How far to look, in light years. Defaults to 15, the furthest a claim "
+                            + "reaches, and capped there.",
                     },
                     new ToolParameter
                     {
@@ -267,11 +293,30 @@ public static class ColonisationCapability
 
     // ------------------------------------------------------------------ needs
 
-    private static string Needs(CommanderGameState? state, ToolArguments arguments)
+    /// <summary>
+    /// The hauling list for one site, and — since list.md Phase 50 — where to buy it.
+    /// <para>
+    /// <b>The outstanding list itself is never recomputed here.</b> <c>ColonisationConstructionDepot</c>
+    /// is a snapshot rather than a delta, measured over 6,330 events with <c>RequiredAmount</c> never
+    /// moving mid-build, so <see cref="ConstructionSite.Outstanding"/> is a fact off the Commander's
+    /// own disk. What the carrier figure changes is the <em>shopping list</em> — what is left to go and
+    /// buy — and that distinction is deliberate: recomputing what a site owes is the trap that caught
+    /// <c>EngineerProgressState</c> and <c>ModuleStore</c>, silently both times.
+    /// </para>
+    /// </summary>
+    private static async Task<ToolResult> NeedsAsync(
+        CommanderGameState? state,
+        Configuration.SettingsService? settings,
+        ITradePlanService? trade,
+        CarrierManifest? carrier,
+        SourcingBoard? board,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
     {
         if (state is null)
         {
-            return "No Elite Dangerous journal has been detected yet.";
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
         var wanted = arguments.TryGetString("site", out var name) && !string.IsNullOrWhiteSpace(name)
@@ -280,7 +325,7 @@ public static class ColonisationCapability
 
         if (Choose(state, wanted) is not { } site)
         {
-            return Ambiguous(state, wanted);
+            return ToolResult.Ok(Ambiguous(state, wanted));
         }
 
         var report = new StringBuilder();
@@ -303,7 +348,7 @@ public static class ColonisationCapability
             report.AppendLine();
             report.AppendLine(Freshness);
 
-            return report.ToString().TrimEnd();
+            return ToolResult.Ok(report.ToString().TrimEnd());
         }
 
         var hold = state.Hold;
@@ -341,11 +386,168 @@ public static class ColonisationCapability
             report.AppendLine(line);
         }
 
+        if (arguments.TryGetBoolean("where_to_buy", out var shopping) && shopping)
+        {
+            report.AppendLine();
+            report.AppendLine(await SourceAsync(
+                    state, settings, trade, carrier, board, now, site, cancellationToken)
+                .ConfigureAwait(false));
+        }
+
         report.AppendLine();
         report.AppendLine(Freshness);
 
-        return report.ToString().TrimEnd();
+        return ToolResult.Ok(report.ToString().TrimEnd());
     }
+
+    /// <summary>
+    /// Which stations between them carry the whole list (list.md Phase 50).
+    /// <para>
+    /// <b>The unit is <em>this station covers six of your twenty</em></b>, because that is the
+    /// sentence a Commander acts on. Not a plotted course: they are flying a loop they will repeat
+    /// a dozen times, and the ordering is the easy part and is on the Routing tab. Not a checklist
+    /// project either: it is built out of network prices that age in hours, and one that survived a
+    /// restart would look current because it was saved.
+    /// </para>
+    /// <para>
+    /// <b>The carrier is taken off the shopping list and never off the site's own figures.</b> What
+    /// the Commander says is aboard is a statement of fact d47 cannot check, so it is used, said,
+    /// and dated — and the depot's outstanding list above is untouched by it.
+    /// </para>
+    /// </summary>
+    private static async Task<string> SourceAsync(
+        CommanderGameState state,
+        Configuration.SettingsService? settings,
+        ITradePlanService? trade,
+        CarrierManifest? carrier,
+        SourcingBoard? board,
+        Func<DateTimeOffset>? now,
+        ConstructionSite site,
+        CancellationToken cancellationToken)
+    {
+        if (trade is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return "Looking markets up is switched off, so I cannot say where to buy any of it.";
+        }
+
+        if (state.Location.StarSystem is not { Length: > 0 } near)
+        {
+            return "I don't know where the Commander is right now, so I have nowhere to search out from.";
+        }
+
+        var (outstanding, counted) = CarrierManifest.Deduct(
+            site.Outstanding, carrier?.For(state.Identity.FrontierId) ?? []);
+
+        var said = new StringBuilder();
+
+        if (counted.Count > 0)
+        {
+            said.AppendLine(
+                $"Taking off what you told me is on the carrier — {Listed(counted)} — "
+                + $"as of {Said(counted.Max(stock => stock.SaidAt))}.");
+        }
+
+        if (outstanding.Count == 0)
+        {
+            said.Append("The carrier covers the whole of it. Nothing to buy.");
+
+            return said.ToString().TrimEnd();
+        }
+
+        SourcingAnswer answer;
+
+        try
+        {
+            answer = await trade
+                .SourceConstructionAsync(
+                    new SourcingSearch(near, state.Location.StationName, outstanding), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException error)
+        {
+            return error.Message;
+        }
+
+        // Posted on the way out, so the Checklist tab draws the answer the Commander was just told
+        // rather than running a second search that could disagree with it (the arrangement
+        // CommodityBoard already makes for one commodity, and RoutePlanBook for routes).
+        if (board is not null)
+        {
+            board.Post(new SourcingPosting(
+                site.Where, answer, near, counted, now?.Invoke() ?? DateTimeOffset.UtcNow));
+
+            board.Announce();
+        }
+
+        said.Append(Describe(answer, near));
+
+        return said.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// The shopping list in words. <b>Nothing is dropped in silence</b>: every outstanding row
+    /// either resolves to a station or is named as one d47 could not price, and found-but-short is
+    /// reported separately from never-found, because "widen the search" is right for one and
+    /// useless for the other.
+    /// </summary>
+    private static string Describe(SourcingAnswer answer, string near)
+    {
+        var said = new StringBuilder();
+
+        if (answer.Plan.Stops.Count == 0)
+        {
+            said.AppendLine($"Nothing within range of {near} is selling any of it.");
+        }
+        else
+        {
+            said.AppendLine(
+                $"{answer.Plan.Stops.Count} stop{(answer.Plan.Stops.Count == 1 ? string.Empty : "s")} "
+                + $"cover{(answer.Plan.Stops.Count == 1 ? "s" : string.Empty)} it, "
+                + $"{Credits(answer.Plan.Total)} in all:");
+
+            foreach (var stop in answer.Plan.Stops)
+            {
+                var lots = stop.Lots
+                    .OrderByDescending(lot => lot.Tonnes)
+                    .Select(lot => $"{Tonnes(lot.Tonnes)} {lot.Commodity} at {Credits(lot.UnitPrice)}");
+
+                said.AppendLine(
+                    $"  {stop.Market.Station} ({stop.Market.System}), {stop.Distance:0.#} ly — "
+                    + $"covers {stop.Covers}: {string.Join(", ", lots)}. {Credits(stop.Total)}.");
+            }
+        }
+
+        if (answer.Plan.Unpriced.Count > 0)
+        {
+            said.AppendLine($"Nothing in range prices: {string.Join(", ", answer.Plan.Unpriced)}.");
+        }
+
+        if (answer.Plan.Shortfalls.Count > 0)
+        {
+            var short_ = answer.Plan.Shortfalls
+                .OrderByDescending(pair => pair.Value)
+                .Select(pair => $"{pair.Key} by {Tonnes(pair.Value)}");
+
+            said.AppendLine($"Stocked but not enough: {string.Join(", ", short_)}.");
+        }
+
+        if (answer.DroppedAsStale > 0)
+        {
+            said.AppendLine(
+                $"{answer.DroppedAsStale} market{(answer.DroppedAsStale == 1 ? " was" : "s were")} "
+                + "left out for quoting prices too old to trust.");
+        }
+
+        said.Append("Prices are other Commanders' reports and supply ages fastest during a rush.");
+
+        return said.ToString();
+    }
+
+    private static string Listed(IReadOnlyList<CarrierStock> counted) =>
+        string.Join(", ", counted.Select(stock => $"{Tonnes(stock.Tonnes)} {stock.Commodity}"));
+
+    private static string Credits(long value) =>
+        $"{value.ToString("N0", CultureInfo.InvariantCulture)} cr";
 
     /// <summary>
     /// The arithmetic a Commander would otherwise be doing on paper: what is aboard, what the ship
@@ -842,6 +1044,14 @@ public static class ColonisationCapability
         when is { } at
             ? at.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " game time"
             : "at a time I did not record";
+
+    /// <summary>
+    /// When the Commander said something. <b>Not <see cref="Stamp"/></b>, which says "game time"
+    /// and means it: every other date in this capability comes off a journal event, and this one
+    /// came off a keyboard.
+    /// </summary>
+    private static string Said(DateTimeOffset when) =>
+        when.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
 
     private static string Percent(double fraction) =>
         (fraction * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";

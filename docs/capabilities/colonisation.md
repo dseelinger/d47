@@ -344,8 +344,21 @@ outstanding, and when you last saw it.
 The hauling list for one site: every commodity still outstanding, how much is left of each, how much
 is already aboard, and how many runs the ship's capacity implies.
 
+Ask for `where_to_buy` and it also works out **which stations between them stock the whole list**
+(list.md Phase 50) — fewest stops first, ties broken on what the trip costs and then on distance.
+That half is a covering problem rather than the trade planner: the cargo is decided before the
+Commander leaves, the objective is trips rather than credits, and the binding constraint is supply
+where you buy. It fetches nothing new — the sweep and the cache are the trade planner's own.
+
+Two things it will not do. It **never recomputes what the site owes**: the depot event is a snapshot
+rather than a delta, measured over 6,330 events, so the outstanding list is a fact off the
+Commander's own disk. And it **never derives what is on the fleet carrier** — reconciling
+`CargoTransfer` against `CarrierStats` came out wrong 679 times against right 347 — so a carrier
+figure is one the Commander typed on the Checklist tab's Sourcing page, taken off the shopping list,
+and dated wherever it is used.
+
 ```json
-{"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."},"where_to_buy":{"type":"boolean","description":"Also work out which nearby stations between them stock the whole list."}},"required":[],"additionalProperties":false}
 ```
 
 #### `find_colonisation_candidates`
@@ -354,5 +367,5 @@ Unpopulated systems within claim range that hold the bodies a colony wants, and 
 what that does not mean.
 
 ```json
-{"type":"object","properties":{"body_type":{"type":"string","description":"A kind of planet the system must hold \u2014 for example \u0022Earth-like world\u0022, \u0022High metal content world\u0022 or \u0022Class I gas giant\u0022."},"landable":{"type":"integer","description":"At least this many bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 5. Default 3."},"max_distance":{"type":"number","description":"How far to look, in light years. Defaults to 15, which is the furthest a claim reaches, and is capped there."},"near":{"type":"string","description":"Search out from this system. Defaults to where the Commander is, which is where they would claim from."},"rings":{"type":"boolean","description":"Only systems with a ringed body in them."},"terraformable":{"type":"boolean","description":"Only systems with at least one terraforming candidate."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"body_type":{"type":"string","description":"A kind of planet the system must hold \u2014 for example \u0022Earth-like world\u0022 or \u0022Class I gas giant\u0022."},"landable":{"type":"integer","description":"At least this many bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 5. Default 3."},"max_distance":{"type":"number","description":"How far to look, in light years. Defaults to 15, the furthest a claim reaches, and capped there."},"near":{"type":"string","description":"Search out from this system. Defaults to where the Commander is, which is where they would claim from."},"rings":{"type":"boolean","description":"Only systems with a ringed body in them."},"terraformable":{"type":"boolean","description":"Only systems with at least one terraforming candidate."}},"required":[],"additionalProperties":false}
 ```

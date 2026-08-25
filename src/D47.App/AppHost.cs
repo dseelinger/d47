@@ -436,6 +436,19 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
 
     /// <summary>
+    /// The last shopping list for a construction site (list.md Phase 50), on the same terms as
+    /// <see cref="Commodities"/> and for the same reason.
+    /// </summary>
+    public D47.Core.Knowledge.SourcingBoard Sourcing { get; private set; } = new();
+
+    /// <summary>
+    /// What the Commander has told d47 is on their fleet carrier. On disk, unlike the two boards
+    /// above: it is a statement of theirs rather than a price, so it is worth keeping across a
+    /// restart — and it is dated wherever it is used, because d47 has no way of checking it.
+    /// </summary>
+    public D47.Core.Knowledge.CarrierManifest? Carrier { get; private set; }
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -731,6 +744,13 @@ public sealed class AppHost : IDisposable
         // thing here that ages fastest, so one restored from disk would look current because it
         // was saved rather than because it is true (list.md Phase 49).
         var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
+        var sourcingBoard = new D47.Core.Knowledge.SourcingBoard();
+
+        // On disk, unlike the two boards: a carrier figure is the Commander's own statement rather
+        // than a price, and it is dated wherever it is used (list.md Phase 50).
+        var carrierManifest = new D47.Core.Knowledge.CarrierManifest(
+            Path.Combine(paths.Data, "carrier.json"),
+            loggerFactory.CreateLogger<D47.Core.Knowledge.CarrierManifest>());
 
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
@@ -1560,7 +1580,12 @@ public sealed class AppHost : IDisposable
 
                 // Where a commodity answer is posted on its way out (list.md Phase 49), so the
                 // Routing tab draws what was just said rather than asking again.
-                commodityBoard));
+                commodityBoard,
+
+                // What the Commander says is aboard their carrier, and where a build's shopping
+                // list is posted on its way out (list.md Phase 50).
+                carrierManifest,
+                sourcingBoard));
 
         built = capabilities;
 
@@ -1832,6 +1857,8 @@ public sealed class AppHost : IDisposable
         host.Plans = planBook;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
+        host.Sourcing = sourcingBoard;
+        host.Carrier = carrierManifest;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
