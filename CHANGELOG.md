@@ -20,6 +20,60 @@ the file as it stood then.
 
 ---
 
+## 0.71.1 — 2026-08-25 — The cheap model can actually answer you
+
+One defect, and it was the quiet kind.
+
+### Claude Haiku 4.5 was in the model list and could not answer a turn
+
+Pick it and every question failed. Worse, most of what Directive 47 says without being asked —
+ambient remarks, the opening brief, the reaction when you have been away, the two lore lookups, the
+voice casting — failed **silently**: the line fell back to its written-in text, nothing appeared on
+screen, and nothing anywhere said the model had refused.
+
+Haiku 4.5 predates the generation that introduced the two fields Directive 47 sends on every
+request, and it rejects them outright. It is the only model in the picker that does. When that code
+was written every Anthropic model took them, which is why the question never came up.
+
+Both fields are now left off for models that will not take them, and **nothing is invented in their
+place** — a made-up thinking budget on the model you chose because it is cheap is the wrong trade in
+both directions.
+
+### And a model it has never heard of now teaches it
+
+The list of models that refuse those fields is the smaller half of the fix. Behind it, **any** model
+that turns out to refuse something has that recorded for the rest of the session and the question is
+asked again without it — so the turn succeeds, and you never learn there was a first attempt.
+
+The OpenAI-compatible path has worked that way since 0.29.0; the Anthropic path never had it. That
+was the actual gap. It matters most for models that do not exist yet: one that arrives with its own
+rules now corrects Directive 47 the first time it says no, instead of being broken until somebody
+notices and ships a fix.
+
+**What is learned is remembered against the model, not just the address.** Anthropic serves five
+models from one address and they do not all accept the same things. A refusal from the cheap one
+must never quietly take a capability away from Opus 5, and now it cannot.
+
+### A turn that thought at no particular level says so
+
+Effort is reported per turn in the panel. On a model with no effort dial it used to report one
+anyway — a number describing something that never happened. It now reports nothing, and the turn
+reads without an effort clause.
+
+### The cheaper models carry live game state under a weaker guarantee
+
+Written down on the model row, because it is now worth knowing rather than a detail. On Claude
+Opus 5, Opus 4.8 and Fable 5, what your ship is doing reaches the model under a role that in-game
+text cannot imitate. On Haiku 4.5, Sonnet 5 and every OpenAI-compatible endpoint it is folded into
+the message instead, marked off by a convention.
+
+That is the ordinary path rather than a new risk, and the rules saying in-game text is information
+and never instruction sit above all of it either way. But a hostile ship name has one more thing it
+can try on the cheap models than on the expensive ones, and choosing between them should not require
+reading the source.
+
+---
+
 ## 0.71.0 — 2026-08-25 — What is there, and what you wanted
 
 Phase 50, one change request, and a flake that could have drawn you an empty page.
