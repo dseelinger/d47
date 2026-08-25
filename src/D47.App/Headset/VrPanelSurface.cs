@@ -323,8 +323,51 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     public void Observe(VrPose head) => _head = head;
 
+    /// <summary>
+    /// Which way <c>output-only</c> was last set, so the class is touched when the mode changes
+    /// and not once a frame. Null until the first draw.
+    /// </summary>
+    private bool? _outputOnly;
+
+    /// <summary>
+    /// Mini carries no buttons, the same as the flat overlay (change-requests.md 42).
+    /// <para>
+    /// <c>PanelView</c> already declares the rule — <c>output-only</c> hides an exact
+    /// <c>Button</c> — and <see cref="Windowing.OverlayPanel"/> already applies it. Its argument
+    /// carries over unchanged: nothing there can be clicked, and the room is better spent on the
+    /// data. Mini is <b>512 pixels wide</b>, chosen for apparent text size rather than for
+    /// comfort, so every control on it is space taken from the transcript tail.
+    /// </para>
+    /// <para>
+    /// <b>Toggled rather than set once, because this surface is one <c>PanelView</c> with a
+    /// mode.</b> Adding the class at construction would strip the buttons from the big headset
+    /// panel too — and that is the one surface where they are genuinely pressable, since the ray
+    /// reaches them through the geometric hit test. The negative half is the half worth testing.
+    /// </para>
+    /// <para>
+    /// Called from <see cref="Draw"/> before the render rather than on a settings change, so the
+    /// frame that goes to the headset cannot disagree with the mode it was drawn for — and only
+    /// on a change, so a mode that has not moved costs nothing and cannot restyle the tree
+    /// underneath a frame.
+    /// </para>
+    /// </summary>
+    private void KeepChromeInStep()
+    {
+        var outputOnly = Mode == PanelMode.Mini;
+
+        if (_outputOnly == outputOnly)
+        {
+            return;
+        }
+
+        _outputOnly = outputOnly;
+        _view.Classes.Set("output-only", outputOnly);
+    }
+
     public void Draw(IntPtr destination, int rowBytes)
     {
+        KeepChromeInStep();
+
         var (width, height) = Size;
         _offscreen.Resize(new PixelSize(width, height));
         // Following is re-asserted between the layout and the rasterise, because that is the one

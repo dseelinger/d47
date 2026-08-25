@@ -316,6 +316,7 @@ public class PromptOnTheWireTests
     [InlineData(ThinkingEffort.Low, "low")]
     [InlineData(ThinkingEffort.Medium, "medium")]
     [InlineData(ThinkingEffort.High, "high")]
+    [InlineData(ThinkingEffort.Xhigh, "xhigh")]
     [InlineData(ThinkingEffort.Max, "max")]
     public async Task TheThinkingEffortIsSent(ThinkingEffort effort, string expected)
     {
