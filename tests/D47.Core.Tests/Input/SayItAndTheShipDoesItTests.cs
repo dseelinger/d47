@@ -370,4 +370,163 @@ public class SayItAndTheShipDoesItTests
 
         Assert.True(input.ReleaseAllCalls > 0);
     }
+
+    // ---- Take us out (list.md Phase 52, item 2) ----------------------------------------------
+
+    private const uint Panel = 0x31;
+    private const uint Left = 0x41;
+    private const uint Up = 0x57;
+    private const uint Select = 0x5A;
+
+    private static EliteBinds PanelBinds() => Binds(
+        ("FocusLeftPanel", "Key_1"),
+        ("UI_Left", "Key_A"),
+        ("UI_Up", "Key_W"),
+        ("UI_Select", "Key_Z"));
+
+    private static GameStatus Docked(GuiFocus focus = GuiFocus.None) => new()
+    {
+        Flags = StatusFlags.InMainShip | StatusFlags.Docked,
+        GuiFocus = focus,
+        ReadAt = DateTimeOffset.UnixEpoch,
+    };
+
+    private static Func<bool, CancellationToken, Task<bool?>> Panels(bool? answer) => (_, _) => Task.FromResult(answer);
+
+    private static Func<CancellationToken, Task<bool?>> Undocks(bool? answer) => _ => Task.FromResult(answer);
+
+    /// <summary>The whole walk, in order: open, left to the leftmost tab, up to the top, select.</summary>
+    [Fact]
+    public async Task TakeUsOutOpensTheLeftPanelAndWalksItToTheLaunchItem()
+    {
+        var input = new RecordingGameInput();
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            Panels(true),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Launched, outcome.Ending);
+
+        uint[] expected =
+        [
+            Panel,
+            .. Enumerable.Repeat(Left, Launch.WalkPresses),
+            .. Enumerable.Repeat(Up, Launch.WalkPresses),
+            Select,
+        ];
+
+        Assert.Equal(expected, Pressed(input));
+    }
+
+    /// <summary>A panel that is already open is not toggled shut first.</summary>
+    [Fact]
+    public async Task TakeUsOutDoesNotReopenAPanelThatIsAlreadyShowing()
+    {
+        var input = new RecordingGameInput();
+
+        await Launch.RunAsync(
+            Surface(input, Docked(GuiFocus.InternalPanel), PanelBinds()),
+            Panels(true),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(Panel, Pressed(input));
+        Assert.Equal(Left, Pressed(input)[0]);
+    }
+
+    /// <summary>
+    /// Not docked is a refusal rather than an attempt. The same walk in space opens a panel and
+    /// selects whatever happens to be at the top of it.
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutInSpacePressesNothing()
+    {
+        var input = new RecordingGameInput();
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Flying(), PanelBinds()),
+            Panels(true),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Refused, outcome.Ending);
+        Assert.Empty(Pressed(input));
+        Assert.Contains("not docked", outcome.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The direction keys are only safe inside the panel. If it never opened, they would be
+    /// direction inputs to a docked ship, so nothing beyond the panel key is sent.
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutStopsIfThePanelNeverOpens()
+    {
+        var input = new RecordingGameInput();
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            Panels(false),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Refused, outcome.Ending);
+        Assert.Equal([Panel], Pressed(input));
+    }
+
+    /// <summary>
+    /// Still docked afterwards is its own answer, and it is the reason the macro verifies at all:
+    /// believing the ship launched when it did not leaves a Commander talking to a docked ship.
+    /// </summary>
+    [Theory]
+    [InlineData(false, LaunchEnding.StillDocked)]
+    [InlineData(null, LaunchEnding.Unknown)]
+    public async Task TakeUsOutSaysSoWhenTheShipDidNotLeave(bool? undocked, LaunchEnding expected)
+    {
+        var input = new RecordingGameInput();
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            Panels(true),
+            Undocks(undocked),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, outcome.Ending);
+        Assert.False(outcome.Ok);
+    }
+
+    /// <summary>All four bindings or none, before a key is sent.</summary>
+    [Fact]
+    public async Task TakeUsOutWithNoSelectBindingPressesNothingAtAll()
+    {
+        var input = new RecordingGameInput();
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), Binds(("FocusLeftPanel", "Key_1"), ("UI_Left", "Key_A"), ("UI_Up", "Key_W"))),
+            Panels(true),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Refused, outcome.Ending);
+        Assert.Empty(Pressed(input));
+    }
+
+    /// <summary>
+    /// Elite has no launch control, and the catalogue must not grow one. A variant naming a bind
+    /// Frontier does not ship would resolve to nothing and fail as silence — which is why this is
+    /// a macro at all, and the assertion that keeps it one.
+    /// </summary>
+    [Fact]
+    public void NoActionClaimsALaunchBindingEliteDoesNotHave()
+    {
+        var invented = (
+            from action in GameActions.All
+            from variant in action.Variants
+            where variant.EliteAction.Contains("launch", StringComparison.OrdinalIgnoreCase)
+               || variant.EliteAction.Contains("undock", StringComparison.OrdinalIgnoreCase)
+            select variant.EliteAction).ToArray();
+
+        Assert.Empty(invented);
+    }
 }
