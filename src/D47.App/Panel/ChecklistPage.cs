@@ -279,7 +279,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // whole thing to another machine is what they do once.
         _transfer.Click += (_, _) => ChooseTransfer();
 
-        var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+        // <b>A WrapPanel, because this bar overlapped itself below about 700 pixels.</b> It was a
+        // DockPanel with one group docked right and one filling, and a filling StackPanel does not
+        // shrink — so the two groups drew over each other, which the strip's 512 made obvious and a
+        // narrow desktop window has been doing quietly all along. Wrapping costs a second row only
+        // at the widths where the alternative was an unreadable one.
+        var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 };
 
         var right = new StackPanel
         {
@@ -288,9 +293,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Children = { _suggestions, add },
         };
 
-        DockPanel.SetDock(right, Dock.Right);
-        bar.Children.Add(right);
-
         // The arcs live beside the scope filter rather than above the whole page: they are another
         // way of reading the same list, which is what the bar is for.
         _controls.Children.Add(_scopeButton);
@@ -298,7 +300,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _controls.Children.Add(_arcsButton);
         _controls.Children.Add(_transfer);
 
+        // The filter group first, so a bar that wraps drops "Add a line" to the second row rather
+        // than the thing the page is filtered by.
         bar.Children.Add(_controls);
+        bar.Children.Add(right);
 
         var root = new DockPanel { Margin = new Thickness(14) };
 

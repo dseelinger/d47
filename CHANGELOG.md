@@ -20,6 +20,44 @@ the file as it stood then.
 
 ---
 
+## 0.67.0 — 2026-08-24 — The overlay carries the checklist
+
+Asked for: *"It should have the same tabs as the VR mini panel (including Checklist)."*
+
+It does now. The strip carries the **transcript**, the **checklist**, the **engineers**, the
+**clocks** and the **story**, and it follows the main window between them exactly as the headset's
+mini panel does.
+
+**Settings is the one it does not have**, for two reasons that agree: the strip is click-through,
+so a page of controls on it is a page you could not touch — and it is the one page that genuinely
+does not fit, with a nav that collapses below 900 pixels and a body wanting 700, against a surface
+512 wide.
+
+### Mini can draw these pages at all now
+
+This is the part that had to change underneath. Yesterday mini showed the transcript and the story
+and nothing else, on two grounds: the settings page does not fit, **and** there was no tab strip to
+leave by.
+
+The second ground disappeared a few hours ago — mini draws an **Expand** button on every page it
+has. And the first was never general: it is one page's measured minimum width, and the checklist,
+the engineer pages and the clocks have no such number.
+
+So the rule is now the other way round — **mini shows everything the surface has, except Settings**
+— which is one line with a measurement behind it rather than a list somebody has to remember to add
+to. **The headset's mini panel gets this back too**, since it is the same rule in the same place.
+
+### And a bar that had been overlapping itself
+
+Rendering the checklist at 512 pixels to check it was readable showed *Import/Export* and *Add a
+line* drawn on top of each other.
+
+The cause was a layout whose left-hand group could not shrink, so it was wrong below about **700**
+pixels — which means a narrow desktop window has been doing this quietly for as long as the tab has
+existed. It wraps now, and the filter buttons keep the first row.
+
+---
+
 ## 0.66.0 — 2026-08-24 — What the overlay and the mini window got wrong on their first evening
 
 Everything in here came from twenty minutes of you actually using 0.64.0 and 0.65.0.

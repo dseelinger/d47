@@ -191,11 +191,11 @@ mini panel / small panel / little panel / minimal panel          the headset
 full panel / big panel / large panel                             the headset
 ```
 
-**Going mini picks a page mini actually has.** Mini can show the transcript, and the story where the
-surface has one — nothing else. Switch to mini while you are on Settings and it moves to the
-transcript rather than drawing a settings page into 512 pixels with no tab strip to leave by, and
-switching back puts Settings up again. While you are in mini, asking for a page it has no reading of
-is declined rather than queued.
+**Mini shows every page except Settings.** The checklist, the engineers, the clocks and the story
+all read fine at this size; Settings does not — its nav collapses below 900 pixels and its body
+wants 700, against a window 512 wide. So switching to mini while you are on Settings moves to the
+transcript, and switching back puts Settings up again. While you are in mini, asking for Settings is
+declined rather than queued.
 
 **Size is measured, not a number.** Mini is the headset's 512 by 280 plus whatever the ask box
 actually wants, at whatever [zoom](#zoom) you are on — so mini at 150% is a bigger mini window
@@ -270,6 +270,11 @@ kept in step, because there is nothing to keep in step; it cannot show something
 **It appears only while Elite is in front.** A strip pinned over a browser is a strip you turn off
 within a day, so it comes up when the game has the foreground and goes away when anything else
 does — including Directive 47's own window, which is right there showing strictly more.
+
+**It carries the same tabs as the headset's mini panel** — the transcript, the checklist, the
+engineers, the clocks and the story — and it follows the main window between them. Settings is the
+one it does not have, for two reasons that agree: you could not touch it, and it is the one page
+mini cannot fit.
 
 **You cannot click it, and that is the design.** The pointer goes straight through: a click the
 strip ate would be a click Elite did not get, and a focus steal mid-combat is worse than anything
