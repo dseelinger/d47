@@ -83,6 +83,21 @@ public class RouteCapabilityTests
             LastTrade = query;
             return Throws is not null ? Task.FromException<TradeRoute?>(Throws) : Task.FromResult(Trade);
         }
+
+        public CommoditySearch? LastCommodity { get; private set; }
+
+        public CommodityAnswer Commodity { get; set; } = CommodityAnswer.Empty;
+
+        public Task<CommodityAnswer> FindCommodityAsync(
+            CommoditySearch search,
+            CancellationToken cancellationToken)
+        {
+            LastCommodity = search;
+
+            return Throws is not null
+                ? Task.FromException<CommodityAnswer>(Throws)
+                : Task.FromResult(Commodity);
+        }
     }
 
     private static void Apply(GameStateStore gameState, string json)

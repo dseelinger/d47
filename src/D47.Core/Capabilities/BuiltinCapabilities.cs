@@ -199,7 +199,15 @@ public static class BuiltinCapabilities
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
         JournalCapability.Create(gameState),
         CrewCapability.Create(() => gameState.Active),
-        GalaxyCapability.Create(galaxy, () => gameState.Active?.Location.StarSystem, settings),
+        GalaxyCapability.Create(
+            galaxy,
+            () => gameState.Active?.Location.StarSystem,
+            settings,
+
+            // Whole markets already live behind the trade planner, and this fetches nothing new
+            // (list.md Phase 49).
+            trade,
+            () => gameState.Active?.Location.StationName),
         RouteCapability.Create(
             routes,
             trade,

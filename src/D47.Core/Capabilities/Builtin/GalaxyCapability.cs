@@ -23,10 +23,17 @@ public static class GalaxyCapability
     /// about it. Null and switched off give the same answer for the same reason: a capability
     /// that cannot act says so and the turn carries on (list.md Phase 3).
     /// </param>
+    /// <param name="trade">
+    /// The trade planner, which is where whole markets already live (list.md Phase 49). Null where
+    /// none is composed, and <c>find_nearest_station</c> then answers the module and ship halves of
+    /// its question and says it cannot price a commodity.
+    /// </param>
     public static CapabilityDescriptor Create(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
-        Configuration.SettingsService settings) => new()
+        Configuration.SettingsService settings,
+        ITradePlanService? trade = null,
+        Func<string?>? currentStation = null) => new()
     {
         Id = "galaxy",
         Group = "Knowledge",
@@ -60,14 +67,16 @@ public static class GalaxyCapability
                     {
                         Name = "near",
                         Type = ToolParameterType.String,
-                        Description =
-                            "Measure from this system. Defaults to the Commander's own.",
+                        Description = "Measure from this system. Defaults to theirs.",
                     },
                     new ToolParameter
                     {
                         Name = "distance",
                         Type = ToolParameterType.String,
-                        Description = "How far to look, in light years. For example \"30\" or \"10-50\".",
+
+                        // The range syntax is spelled out in this tool's own description, one
+                        // line up. Saying it twice is bytes the action tools pay for.
+                        Description = "How far to look, in light years.",
                     },
                     new ToolParameter
                     {
@@ -135,7 +144,7 @@ public static class GalaxyCapability
                     {
                         Name = "from",
                         Type = ToolParameterType.String,
-                        Description = "The system to measure from. Defaults to the Commander's current system.",
+                        Description = "The system to measure from. Defaults to theirs.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -145,22 +154,41 @@ public static class GalaxyCapability
             {
                 Name = "find_nearest_station",
                 Description =
-                    "Find the nearest station selling a named module or ship.",
+                    "Find the nearest station selling a named module or ship, or trading a commodity.",
                 Parameters =
                 [
+                    // Three short descriptions on purpose. The names carry the meaning here, and
+                    // the surface is close enough to its ceiling that prose which repeats a
+                    // parameter's own name is prose the Commander's action tools pay for.
+                    new ToolParameter
+                    {
+                        Name = "commodity",
+                        Type = ToolParameterType.String,
+                        Description = "A commodity traded there, by name.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "selling",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Sell it rather than buy it.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "tonnes",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many tonnes, if they said.",
+                    },
                     new ToolParameter
                     {
                         Name = "module",
                         Type = ToolParameterType.String,
-                        Description =
-                            "A module to be sold there, by name — for example \"Frame Shift Drive\" or "
-                            + "\"Bi-Weave Shield Generator\".",
+                        Description = "A module to be sold there, by name — \"Frame Shift Drive\".",
                     },
                     new ToolParameter
                     {
                         Name = "ship",
                         Type = ToolParameterType.String,
-                        Description = "A ship to be sold there, by name — for example \"Krait MkII\".",
+                        Description = "A ship to be sold there, by name — \"Krait MkII\".",
                     },
                     new ToolParameter
                     {
@@ -180,7 +208,7 @@ public static class GalaxyCapability
                     {
                         Name = "near",
                         Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to the Commander's own.",
+                        Description = "Search out from this system. Defaults to theirs.",
                     },
                     new ToolParameter
                     {
@@ -202,7 +230,8 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    FindStationAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+                    FindStationAsync(
+                        galaxy, trade, currentSystem, currentStation, settings, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -216,9 +245,11 @@ public static class GalaxyCapability
                     {
                         Name = "body_type",
                         Type = ToolParameterType.String,
-                        Description =
-                            "The kind of body, by name — for example \"Earth-like world\", \"Neutron Star\", "
-                            + "\"Water world\" or \"Class I gas giant\".",
+
+                        // Two examples rather than four. They exist to teach the shape of a name,
+                        // and two teach it; the other two were paid for on every turn by the
+                        // Commander's action tools (list.md Phase 49).
+                        Description = "The kind of body, by name — \"Earth-like world\", \"Class I gas giant\".",
                     },
                     new ToolParameter
                     {
@@ -233,24 +264,22 @@ public static class GalaxyCapability
                         Name = "signal_count",
                         Type = ToolParameterType.Integer,
                         Description =
-                            "Exactly how many of that signal — not a minimum. Leave it out unless the "
-                            + "Commander asked for a specific number.",
+                            "Exactly how many of that signal — not a minimum. Omit unless they asked "
+                            + "for a number.",
                     },
                     new ToolParameter
                     {
                         Name = "hotspot",
                         Type = ToolParameterType.String,
                         Description =
-                            "A mining hotspot material in one of the body's rings — for example \"Painite\", "
-                            + "\"Low Temperature Diamonds\" or \"Void Opal\".",
+                            "A mining hotspot material in the body's rings — \"Painite\", \"Void Opal\".",
                     },
                     new ToolParameter
                     {
                         Name = "hotspot_count",
                         Type = ToolParameterType.Integer,
                         Description =
-                            "Exactly how many overlapping hotspots of that material — not a minimum. "
-                            + "A double or triple hotspot is 2 or 3.",
+                            "Exactly how many overlapping hotspots — not a minimum. A triple is 3.",
                     },
                     new ToolParameter
                     {
@@ -282,7 +311,7 @@ public static class GalaxyCapability
                     {
                         Name = "near",
                         Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to the Commander's own.",
+                        Description = "Search out from this system. Defaults to theirs.",
                     },
                     new ToolParameter
                     {
@@ -458,7 +487,9 @@ public static class GalaxyCapability
 
     private static async Task<ToolResult> FindStationAsync(
         IGalaxyService? galaxy,
+        ITradePlanService? trade,
         Func<string?> currentSystem,
+        Func<string?>? currentStation,
         Configuration.SettingsService settings,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -466,6 +497,17 @@ public static class GalaxyCapability
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
         {
             return ToolResult.Error(Unavailable);
+        }
+
+        // The commodity half is a different source and a different ranking, so it forks here
+        // rather than threading a second kind of answer through the module search (list.md Phase
+        // 49). Everything above it — near, max_distance, large_pad, limit — means the same thing
+        // on both sides, which is most of why this is a parameter and not a second tool.
+        if (arguments.TryGetString("commodity", out var commodity) && !string.IsNullOrWhiteSpace(commodity))
+        {
+            return await FindCommodityAsync(
+                trade, currentSystem, currentStation, arguments, commodity, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         arguments.TryGetString("module", out var module);
@@ -517,6 +559,183 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Where to buy a commodity, or where to dump one (list.md Phase 49).
+    /// </summary>
+    private static async Task<ToolResult> FindCommodityAsync(
+        ITradePlanService? trade,
+        Func<string?> currentSystem,
+        Func<string?>? currentStation,
+        ToolArguments arguments,
+        string commodity,
+        CancellationToken cancellationToken)
+    {
+        if (trade is null)
+        {
+            return ToolResult.Error(
+                "I can find modules and ships, but I have nothing composed that reads commodity markets, "
+                + "so I cannot price one.");
+        }
+
+        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear
+            : currentSystem();
+
+        if (string.IsNullOrWhiteSpace(near))
+        {
+            return ToolResult.Error(
+                "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        arguments.TryGetBoolean("large_pad", out var largePad);
+        arguments.TryGetBoolean("selling", out var selling);
+
+        int? tonnes = arguments.TryGetInt32("tonnes", out var asked) && asked > 0 ? asked : null;
+
+        if (!arguments.TryGetInt32("limit", out var limit) || limit is < 1 or > 20)
+        {
+            limit = 5;
+        }
+
+        var maxDistance = arguments.Values.TryGetValue("max_distance", out var raw)
+                          && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? Math.Clamp(parsed, 1, 250)
+            : 50;
+
+        var query = new CommodityQuery(
+            commodity.Trim(),
+            selling ? TradeSide.Selling : TradeSide.Buying,
+            tonnes,
+            maxDistance,
+            largePad,
+            IncludeCarriers: false,
+            limit);
+
+        try
+        {
+            var answer = await trade
+                .FindCommodityAsync(
+                    new CommoditySearch(near, currentStation?.Invoke(), query), cancellationToken)
+                .ConfigureAwait(false);
+
+            return ToolResult.Ok(DescribeCommodity(query, answer, near));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The answer, and the date on every price in it.
+    /// <para>
+    /// <b>This is the way this feature is wrong while looking right.</b> A quoted supply figure
+    /// ages badly — a colonisation rush strips a station in hours — and an answer that sounds
+    /// current is worse than one that admits it is a month old. So every line carries its age, a
+    /// market the Commander stood in themselves is called theirs, and stations dropped for being
+    /// too old are counted rather than swallowed: "nothing within fifty light years" and "eleven
+    /// stations, all quoting last month" are different answers and only one of them means widen
+    /// the search.
+    /// </para>
+    /// </summary>
+    private static string DescribeCommodity(CommodityQuery query, CommodityAnswer answer, string near)
+    {
+        var verb = query.Side == TradeSide.Buying ? "buying" : "selling";
+
+        if (answer.Offers.Count == 0)
+        {
+            var nothing = $"Nothing within {query.MaxDistance:0} light years of {near} is {verb} {query.Commodity}";
+
+            if (query.Tonnes is { } wanted)
+            {
+                nothing += $" in {wanted} tonne lots";
+            }
+
+            nothing += ".";
+
+            if (answer.DroppedAsStale > 0)
+            {
+                nothing +=
+                    $" {answer.DroppedAsStale} of the {answer.Considered} markets nearby were left out for "
+                    + "quoting prices too old to trust rather than for having none.";
+            }
+
+            return nothing;
+        }
+
+        var lines = new List<string>();
+
+        foreach (var offer in answer.Offers)
+        {
+            var line = $"{offer.Market.Station} ({offer.Market.System})";
+
+            if (answer.OriginKnown)
+            {
+                line += $", {offer.Distance:0.#} ly";
+            }
+
+            line += query.Side == TradeSide.Buying
+                ? $", {offer.UnitPrice:N0} cr a tonne, {offer.Market.Quote(query.Commodity)?.Supply ?? 0:N0} in stock"
+                : $", pays {offer.UnitPrice:N0} cr a tonne, wants {offer.Market.Quote(query.Commodity)?.Demand ?? 0:N0}";
+
+            if (query.Tonnes is not null)
+            {
+                line += $", {offer.Total:N0} cr for the load";
+            }
+
+            line += $" — {Age(offer)}";
+
+            lines.Add(line);
+        }
+
+        var heading = query.Tonnes is { } load
+            ? $"{verb} {load} tonnes of {query.Commodity} within {query.MaxDistance:0} ly of {near}"
+            : $"{verb} {query.Commodity} within {query.MaxDistance:0} ly of {near}";
+
+        var report = $"Best for {heading}: " + string.Join("; ", lines) + ".";
+
+        if (!answer.OriginKnown)
+        {
+            report +=
+                " I could not place " + near + " from the markets I have, so these are ranked on price alone "
+                + "and the distances are unknown.";
+        }
+
+        if (answer.DroppedAsStale > 0)
+        {
+            report += $" {answer.DroppedAsStale} more were left out for quoting prices too old to trust.";
+        }
+
+        report += " Prices are reported by other Commanders and can be out of date; supply moves fastest.";
+
+        return report;
+    }
+
+    /// <summary>
+    /// How old one quote is, in the words a Commander would use. A market they stood in themselves
+    /// is named as theirs, because it is the one figure with no caveat on it.
+    /// </summary>
+    private static string Age(CommodityOffer offer)
+    {
+        if (offer.Market.UpdatedAt is not { } when)
+        {
+            return offer.IsTheirs ? "your own reading, undated" : "undated";
+        }
+
+        var whose = offer.IsTheirs ? "you saw it" : "reported";
+        var old = DateTimeOffset.UtcNow - when;
+
+        var howLong = old switch
+        {
+            { TotalHours: < 1 } => "within the hour",
+            { TotalHours: < 24 } => $"{old.TotalHours:0} hours ago",
+            { TotalDays: < 14 } => $"{old.TotalDays:0} days ago",
+            _ => $"{old.TotalDays / 7:0} weeks ago",
+        };
+
+        return $"{whose} {howLong}";
     }
 
     private static async Task<ToolResult> FindBodyAsync(
