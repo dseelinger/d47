@@ -45,21 +45,50 @@ for `ShipAi` **and** `Crew` and true for everything else: the code's own stateme
 aboard rather than on a radio. Grouping crew with the ship's AI follows a division that already
 exists rather than inventing a second one.
 
-**Proposed grouping — four provider slots, derived rather than invented:**
+**Grouping settled with the Commander, 2026-08-25**, and it is by *category* rather than by role:
+Carrier is two roles under one provider, Crew and the ship's AI are one category, NPCs are *"not
+real people"*, and friends and squadron mates are one category.
+
+**Applying that to the channels the code already reads leaves a fifth category, and it is the one
+the security argument is about.** `IncomingMessages.PlayerChannels` is
+`{ player, wing, local, friend, squadron, starsystem }` against the single non-person channel
+`npc`. Sorted by the Commander's own rule — is this a real person, and is it a person the Commander
+chose to be in contact with — those six do not fall into one bucket:
+
+| Channel | Who that is |
+|---|---|
+| `npc` | not a person |
+| `friend`, `wing`, `squadron` | a real person the Commander has accepted, teamed with, or joined |
+| `local`, `starsystem` | **any real person in range, with no consent anywhere in it** |
+| `player` | a direct message — a real person, and whether that implies contact is a question for the Commander |
+
+**`local` and `starsystem` are the spam vector**, and they are the reason this phase exists: *"a
+player spamming local chat spends the Commander's money."* A friend is a real person whose lines
+the Commander probably *wants* on the good voice; a stranger in local is a real person whose lines
+are heard once, are unbounded in volume, and are chosen by somebody else. Cost and trust point the
+same way and both separate those two.
+
+So **five slots**, which is the Commander's four with the human channels split by consent rather
+than by humanity:
 
 | Slot | Covers | Why |
 |---|---|---|
-| **Aboard** | `ShipAi`, `Crew` | `RadioVoice` already groups exactly these two |
-| **Carrier** | `CarrierCaptain`, `TowerControl` | one installation, two staff; nobody wants the captain paid-for and the tower free |
-| **NPC comms** | `Comms` where `isPlayer` is false | game-authored, bounded |
-| **Player comms** | `Comms` where `isPlayer` is true | **the untrusted path** — attacker-influenced and unbounded |
+| **Aboard** | `ShipAi`, `Crew` | the Commander's rule, and `RadioVoice.IsOverTheAir` already groups exactly these two |
+| **Carrier** | `CarrierCaptain`, `TowerControl` | two roles, one installation, one provider |
+| **NPCs** | channel `npc` | not real people; game-authored, bounded, unspammable |
+| **People you know** | `friend`, `wing`, `squadron` | real people the Commander is in contact with by choice |
+| **Anyone in range** | `local`, `starsystem`, and `player` pending a ruling | **the untrusted path** — real people, no consent, unbounded volume |
 
-That is the brief's four, with Crew placed and the NPC/player split made real. **It is a
-`VoiceGroup` above `VoiceRole`, not a replacement for it** — no existing role changes meaning, and
-`VoiceCast` keeps its five.
+**This needs no new plumbing to be knowable.** The channel is already carried:
+`IncomingMessages` builds the key as `$"message.{channel}"`, so every announcement already says
+which channel it came from. What is *not* carried is a distinction finer than the
+`SpeakerIsPlayer` boolean, which is all that reaches `Cast.ForSender` today — so the routing key
+becomes the channel, and the boolean keeps its existing job of deciding how long a voice sticks.
 
-**Your call needed on two points:** whether Crew belongs with the ship's AI (recommended) or with
-NPCs, and whether Carrier is one slot (recommended) or two.
+**Two rulings still wanted:** where channel `player` belongs — a direct message is a real person,
+but whether reaching you that way implies contact is a game question rather than a code one — and
+whether four slots with friends and strangers together is preferred anyway, accepting that the
+free-provider setting would then also apply to squadron mates.
 
 ### 1.2 The ONNX Runtime licence — the gate would not fail. It would pass, and be wrong to.
 
@@ -166,17 +195,19 @@ yet.
 
 - [ ] **Four slots, and they come from the roles that already exist** — Asked for 2026-08-25.
   Today one provider speaks for everybody. It becomes a choice per group: **Aboard** (the ship's
-  AI and the crew), **Carrier** (the captain and the tower), **NPC comms**, and **Player comms**.
+  AI and the crew), **Carrier** (the captain and the tower), **NPCs**, **people you know**, and
+  **anyone in range**.
   **The groups are derived rather than invented**: `RadioVoice.IsOverTheAir` already separates
   aboard from over-the-air, `VoiceCast` already holds five roles, and `ForSender`'s `isPlayer` flag
-  already separates a Commander from an NPC. A `VoiceGroup` sits above `VoiceRole` and no existing
-  role changes meaning. Accepted when each slot can name a different provider and every voice still
+  already separates a Commander from an NPC — and `IncomingMessages` already carries the channel in
+  the announcement key, which is what separates a squadron mate from a stranger in local. A
+  `VoiceGroup` sits above `VoiceRole` and no existing role changes meaning. Accepted when each slot can name a different provider and every voice still
   comes out of the arbiter in the order it was written.
 - [ ] **No other player's text has to leave the machine** — The reason this phase exists rather
   than a nicety it enables. `speech.md {#egress}` already says re-voiced messages are *"written by
-  other players"*, which makes Player comms an **untrusted, attacker-influenced, unbounded-volume**
+  other players"*, which makes local and system chat an **untrusted, attacker-influenced, unbounded-volume**
   path pointed at a per-character paid API — someone spamming local chat spends the Commander's
-  money. Accepted when the ship's core can be on a paid provider **while Player comms is on one
+  money. Accepted when the ship's core can be on a paid provider **while anyone-in-range is on one
   that costs nothing and sends nothing**, and when the settings surface states that plainly rather
   than leaving it to be inferred.
 - [ ] **One client per provider, never one per slot** — `ElevenLabsTtsProvider.MaxConcurrent`
@@ -220,7 +251,7 @@ item list changes. The shape it will take is in §3.6.
 
 ### Phase 59 — A voice that never leaves the machine
 
-**Blocked on §1.2 and not written until it clears.** Intended for NPC and Player comms, which is
+**Blocked on §1.2 and not written until it clears.** Intended for NPCs and anyone-in-range, which is
 where "free, offline, unlimited, and nobody else's text leaves" is worth most.
 
 ---
@@ -230,7 +261,7 @@ where "free, offline, unlimited, and nobody else's text leaves" is worth most.
 | Seam | Change |
 |---|---|
 | `VoiceRole` | **Unchanged.** Five roles keep their meaning. |
-| `VoiceGroup` (new) | Four members. A pure `GroupOf(VoiceRole, bool isPlayer)` maps role plus player-ness to a slot, in Core, testable, with the mapping asserted rather than commented. |
+| `VoiceGroup` (new) | Five members. A pure `GroupOf(VoiceRole, string? channel)` maps role plus channel to a slot, in Core, testable, with the mapping asserted rather than commented — the channel because the `SpeakerIsPlayer` boolean cannot tell a squadron mate from a stranger in local. |
 | `SpeechWiring.Plan` | Per-slot diff. Still pure, still builds nothing. |
 | `SpeechWiringState` | Holds a provider id and key-presence **per slot**, not one pair. |
 | `VoiceMemory.Switched` | Per-group stash and restore. `VoiceChoices` unchanged. |
