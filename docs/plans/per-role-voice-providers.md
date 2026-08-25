@@ -437,19 +437,27 @@ OpenAI can hold a language — it cannot — but whether it drifts when it is no
 
 ## 4. Out of scope — Issues, not phase items
 
-1. **Spike OpenAI's language stability** *(blocking Phase 58's text)*. §3.7 settled that it cannot
+**Filed 2026-08-25:** [#47](https://github.com/dseelinger/d47/issues/47) the stale Edge class doc,
+[#48](https://github.com/dseelinger/d47/issues/48) the OpenAI spike, and
+[#49](https://github.com/dseelinger/d47/issues/49) `instructions` from the persona pack. Per-role
+speaking rate went to `change-requests.md` **43** rather than to an Issue, because it is a wanted
+change and not a defect. Cartesia stays argued here rather than queued anywhere — it is a case, not
+a task.
+
+1. **Spike OpenAI's language stability** *(blocking Phase 58's text)* — [#48](https://github.com/dseelinger/d47/issues/48). §3.7 settled that it cannot
    be told a language, so the open question is narrower and sharper: **does it drift when it is not
    asked to?** Synthesise a Guardian line seeded with `Shinrarta Dezhra`, `Ngalinn`, `Deciat`,
    `LHS 3447` and two HIP designations against `gpt-4o-mini-tts-2025-12-15`, and report what comes
    back. Measure `speed` in the same run, since the spec documents it and the brief reports it
    ignored. Written to `docs/spikes/` either way, because a negative result is the finding.
-2. **The Edge class doc is stale** — the drive-by. `EdgeNeuralTtsProvider.cs:19-21` still says audio
+2. **The Edge class doc is stale** — the drive-by, [#47](https://github.com/dseelinger/d47/issues/47). `EdgeNeuralTtsProvider.cs:19-21` still says audio
    is requested as raw PCM "on purpose"; `EdgeProtocol.cs:83` requests
    `audio-24khz-48kbitrate-mono-mp3`, and the comment above it records that the raw formats were
    withdrawn mid-2026. Mentioned, not folded into any of this.
 3. **`instructions` from `guardian-personas.md`** — the reason to want OpenAI, deliberately not in
-   Phase 58.
-4. **Per-role speaking rate** — §1.4. A change request once the shared-provider case has been felt.
+   Phase 58. [#49](https://github.com/dseelinger/d47/issues/49).
+4. **Per-role speaking rate** — §1.4. Filed as `change-requests.md` **43**, with its own open
+   question: which range the row narrows to when two categories disagree.
 5. **Cartesia** — see below.
 
 ### Cartesia: not ahead of OpenAI, but ahead of it on one axis

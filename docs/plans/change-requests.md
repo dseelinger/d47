@@ -18,7 +18,7 @@ the file into a liar.
 **Numbers are not reused.** Items cite each other by number, and reusing one would leave an old
 citation resolving to a live entry about something else, reported by nothing — the trap the
 phase-renumbering rule in [CLAUDE.md](../../CLAUDE.md) exists to name. Everything through 38 has
-shipped and been pruned, so **the next number is 43** — the count is not the length of this file.
+shipped and been pruned, so **the next number is 44** — the count is not the length of this file.
 41 is taken by an entry on a branch that has not merged yet, which is exactly why the number is
 written down rather than counted: two branches counting entries would both have arrived at 41.
 
@@ -126,3 +126,45 @@ a language inferred from a line, and that distinction is probably where the answ
 **Not accents for the Commander, and not for d47 itself.** The personas are written in English and
 cast deliberately; this is about the voices d47 *quotes*, not the voice it *has*. And **not
 translation** — nothing here proposes that d47 speak anything but English to the Commander.
+
+---
+
+## 43 — A speaking rate per category, not only per provider
+
+Raised 2026-08-25 while proposing per-role voice providers, and deliberately kept out of that
+phase — see [per-role-voice-providers.md](per-role-voice-providers.md) §1.4. The Commander's lean:
+brisk NPCs, a measured ship's core.
+
+### It overturns a stated ruling, which is why it is an entry rather than a line in the phase
+
+`VoiceCast.Rate`'s own comment: *"One value for the whole cast rather than per role: it is a
+property of how fast the Commander likes to be spoken to, not of who is speaking."*
+
+**That comment is not wrong, it is answering a narrower question.** It was written when one
+provider spoke for everybody, and against that world it is plainly right. What it did not have to
+consider is a cast drawn from several providers at once.
+
+### Most of what is wanted arrives free with the phase, and that is the argument for waiting
+
+Rate is stored per **provider** today (`SpeechSettings.ProviderRates`), because providers disagree
+about units and range — Edge takes a wide percentage offset, ElevenLabs a multiplier it refuses to
+exceed — and the settings row narrows to the selected one's range.
+
+So once each category names its own provider, **NPCs on Edge and the ship's core on ElevenLabs are
+already two independently-set rates.** What this entry adds is only the case where **two categories
+share one provider** and the Commander wants them at different speeds — over-the-air voices all
+default to Edge, so that case is the common one rather than the exotic one, but it is still
+narrower than "rate is per role".
+
+### The open question — this wants an answer before the code
+
+**Which range does the row narrow to when the categories disagree?** `speech.md {#rate}` documents
+one row narrowing to the selected provider's limits, and ElevenLabs rejects an out-of-range speed
+outright rather than clamping — so a row showing one range while writing a value for a category on
+a different provider is the failure `docs/capabilities/listening.md` already names in the other
+direction: a control that appears to work and does nothing.
+
+Either the row becomes one per category, each narrowed to its own provider, or there is one row and
+the value is clamped per category on the way out. The first is honest and is six rows; the second
+is one row that silently means different things. **Neither is obviously right**, which is most of
+why this is not in the phase.
