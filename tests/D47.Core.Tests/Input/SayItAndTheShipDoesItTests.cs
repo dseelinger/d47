@@ -512,6 +512,120 @@ public class SayItAndTheShipDoesItTests
         Assert.Empty(Pressed(input));
     }
 
+    // ---- The route in, and the switches (list.md Phase 52, item 5) ---------------------------
+
+    private static CapabilityRegistry Commands(
+        RecordingGameInput input,
+        GameStatus status,
+        bool keyboard = true,
+        bool permitted = true,
+        Func<CancellationToken, Task<GameStatus>>? stream = null) =>
+        CapabilityRegistry.Build(ActionCapabilities.All(
+            new ActionSurface
+            {
+                Binds = () => Binds(
+                    ("Hyperspace", "Key_E"),
+                    ("Supercruise", "Key_S"),
+                    ("UseBoostJuice", "Key_B"),
+                    ("SetSpeed100", "Key_T"),
+                    ("FocusLeftPanel", "Key_1"),
+                    ("UI_Left", "Key_A"),
+                    ("UI_Up", "Key_W"),
+                    ("UI_Select", "Key_Z")),
+                Status = () => status,
+                Input = input,
+                Enabled = () => keyboard,
+            },
+            new ShipCommandSurface
+            {
+                Enabled = _ => permitted,
+                AwaitInternalPanel = (_, _) => Task.FromResult<bool?>(true),
+                AwaitUndocked = _ => Task.FromResult<bool?>(true),
+                NextStatus = stream ?? Stream(Clear(1)),
+            }));
+
+    [Theory]
+    [InlineData("take us out", ShipCommands.TakeUsOut)]
+    [InlineData("separate and engage", ShipCommands.SeparateAndEngage)]
+    [InlineData("separate and supercruise", ShipCommands.SeparateAndSupercruise)]
+    public void EachCompoundCommandHasAModelFreeRouteIn(string utterance, string command)
+    {
+        var registry = Commands(new RecordingGameInput(), Docked());
+        var match = new KeywordRouter(registry).MatchToolCommand(utterance);
+
+        Assert.NotNull(match);
+        Assert.Equal("ship_command", match.ToolName);
+        Assert.True(match.Arguments.TryGetString("command", out var named));
+        Assert.Equal(command, named);
+    }
+
+    /// <summary>
+    /// These reach the ship, so the model never sees them: it reads untrusted text, and a hostile
+    /// in-game message that can make d47 boost out of a station is a different category of problem
+    /// from one that can turn the lights on. Being protected is also what makes them free.
+    /// </summary>
+    [Fact]
+    public void TheCompoundCommandsAreNeverAdvertisedToTheModel()
+    {
+        var registry = Commands(new RecordingGameInput(), Docked());
+
+        var tool = registry.All
+            .SelectMany(capability => capability.Descriptor.Tools)
+            .Single(t => t.Name == "ship_command");
+
+        Assert.True(tool.Protected);
+
+        foreach (var profile in ToolProfiles.All(registry))
+        {
+            Assert.DoesNotContain(profile.Tools, advert => advert.Name == "ship_command");
+        }
+    }
+
+    /// <summary>
+    /// Two gates and two different sentences. "You have not let me press keys at all" and "you
+    /// have not let me do this one" send the Commander to different rows.
+    /// </summary>
+    [Theory]
+    [InlineData(false, true, "switched off")]
+    [InlineData(true, false, "its own row")]
+    public async Task ACommandThatIsSwitchedOffPressesNothingAndSaysWhichSwitch(
+        bool keyboard, bool permitted, string expected)
+    {
+        var input = new RecordingGameInput();
+        var registry = Commands(input, Docked(), keyboard, permitted);
+
+        var result = await registry.InvokeAsync(
+            "ship_command",
+            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["command"] = ShipCommands.TakeUsOut,
+            }),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Empty(Pressed(input));
+        Assert.Contains(expected, result.Content, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Switched on, the routed command reaches the sequence and presses real keys.</summary>
+    [Fact]
+    public async Task ASwitchedOnCommandRunsTheWholeSequence()
+    {
+        var input = new RecordingGameInput();
+        var registry = Commands(input, Flying(StatusFlags.FsdMassLocked), stream: Stream(Clear(1)));
+
+        var result = await registry.InvokeAsync(
+            "ship_command",
+            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["command"] = ShipCommands.SeparateAndSupercruise,
+            }),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal([T, B, S], Pressed(input));
+    }
+
     /// <summary>
     /// Elite has no launch control, and the catalogue must not grow one. A variant naming a bind
     /// Frontier does not ship would resolve to nothing and fail as silence — which is why this is
