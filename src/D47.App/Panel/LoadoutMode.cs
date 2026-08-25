@@ -264,6 +264,20 @@ public sealed record LoadoutParts(
     public string? Now { get; init; }
 
     /// <summary>
+    /// Whether this row names a planned module and the slot is <b>empty</b> (GitHub issue 38).
+    /// <para>
+    /// <b>The absence is a fact and the row has to carry it.</b> Elite omits empty slots from
+    /// <c>Loadout</c> entirely, so "no module here" and "no module reported" are the same silence —
+    /// and <see cref="Now"/> only speaks when a fitted module <em>exists and differs</em>, which
+    /// left a planned module in an empty slot drawing exactly like a fitted one. Reported twice on
+    /// 2026-08-24: <i>"something IS fitted on oxen utility mount 8"</i>, against a ship whose own
+    /// Loadout has seven utility mounts and no eighth. Nothing was fitted, and the checklist was
+    /// right throughout — the page was not.
+    /// </para>
+    /// </summary>
+    public bool NotFitted { get; init; }
+
+    /// <summary>
     /// Whether the module this row names is one a Powerplay pledge is needed to buy
     /// (list.md Phase 38).
     /// <para>

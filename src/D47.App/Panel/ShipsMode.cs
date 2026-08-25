@@ -586,13 +586,13 @@ public sealed class ShipsMode(
                     // word for neither — because a row with a blank note reads as a row d47 has
                     // nothing to say about rather than as an empty slot.
                     plan is not null ? plan.Describe() : Describe(module) ?? Vacant(build, fitted),
-                    plan is not null)
+                    Outstanding(plan, module))
                 {
                     Group = ShipSlot.Heading(slot.Kind),
 
                     // Read off the fitted module rather than off the plan, because they answer
-                    // different questions (remediation.md 15, item 10): the dot beside this says a
-                    // plan exists, and the gear says a roll has already been done.
+                    // different questions (remediation.md 15, item 10): the dot beside this says
+                    // there is work left to do, and the gear says a roll has already been done.
                     Engineered = module?.Blueprint is { Length: > 0 },
 
                     Parts = Parted(slot, plan, module, build, fitted),
@@ -652,10 +652,108 @@ public sealed class ShipsMode(
             // because they are different facts and neither is the other's substitute.
             Now = Standing(plan, module),
 
+            // And where the plan names something and the slot is *empty*, which drew exactly like
+            // a fitted module and was reported twice as "something IS fitted on oxen utility mount
+            // 8" (GitHub issue 38). Nothing was: Elite omits empty slots, so the absence is the
+            // fact, and the row has to carry it rather than leaving the plan to speak for the hull.
+            NotFitted = plan is { IsEmpty: false } && module is null,
+
             // Whether the module this row names — the planned one where there is a plan — is one a
             // pledge is needed to buy (list.md Phase 38).
             Gated = EliteSpecifications.Module(plan?.Variant ?? module?.Item)?.NeedsPledge ?? false,
         };
+
+    /// <summary>
+    /// Whether this slot still has work in it (GitHub issue 38).
+    /// <para>
+    /// <b>The marker used to mean "a plan exists", and that is why it never cleared.</b> Reported
+    /// against <c>Military01</c> and <c>Military02</c>, rolled <c>HullReinforcement_HeavyDuty</c> G5
+    /// with Deep Plating exactly as planned and still carrying a dot that reads as outstanding
+    /// work — <i>"these have been engineered, the orange circles should be gone, right?"</i> Yes.
+    /// A plan that has been carried out is a plan with nothing left in it, and a mark that cannot
+    /// go out is not a mark, it is decoration.
+    /// </para>
+    /// <para>
+    /// So it means <em>the hull does not match the plan yet</em>: nothing fitted, a different
+    /// module fitted, or the right module without the roll the plan asks for. Where the plan names
+    /// no engineering, having the module is the whole of it.
+    /// </para>
+    /// </summary>
+    private static bool Outstanding(SlotPlan? plan, ShipModule? module)
+    {
+        if (plan is null || plan.IsEmpty)
+        {
+            return false;
+        }
+
+        // Nothing there yet, so everything the plan asks for is still to do. This is also the case
+        // that used to draw as though the planned module were fitted (GitHub issue 38).
+        if (module is null)
+        {
+            return true;
+        }
+
+        if (!IsWhatWasWanted(plan, module))
+        {
+            // Something else is in the slot.
+            return true;
+        }
+
+        if (plan.Blueprint is not { Length: > 0 })
+        {
+            // The plan wanted a module and not a roll, and the module is here.
+            return false;
+        }
+
+        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (plan.Grade > 0 && module.BlueprintLevel < plan.Grade)
+        {
+            return true;
+        }
+
+        // An experimental the plan asks for and the roll has not got. The other way round is not
+        // outstanding work — a Commander who took a better effect than they planned has finished.
+        return plan.Experimental is { Length: > 0 } wanted
+               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Whether the fitted module is the one the plan asked for (GitHub issue 38).
+    /// <para>
+    /// <b>How exact the plan is decides how exact the match has to be</b>, and that is
+    /// <see cref="SlotPlan.Variant"/>'s whole reason for existing: <em>"a pulse laser, I do not
+    /// mind which"</em> is a real plan and is the name alone, and a large gimballed one is that
+    /// plan made exact. So a plan naming only a module is met by any module of that kind, and one
+    /// naming a variant is met by that symbol and nothing else.
+    /// </para>
+    /// <para>
+    /// Not <see cref="Standing"/>, which compares the <em>printed</em> names and would read an 8E
+    /// Cargo Rack as failing to satisfy a plan for "a Cargo Rack". That comparison is right for
+    /// deciding whether a row has two things worth saying and wrong for deciding whether there is
+    /// work left, which is how one function serving both would have gone quietly wrong.
+    /// </para>
+    /// </summary>
+    private static bool IsWhatWasWanted(SlotPlan plan, ShipModule module)
+    {
+        if (plan.Variant is { Length: > 0 } variant)
+        {
+            return string.Equals(variant, module.Item, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (plan.Module is not { Length: > 0 } wanted)
+        {
+            // A plan asking only for a roll is about whatever is in the slot.
+            return true;
+        }
+
+        var here = EliteSpecifications.Module(module.Item)?.Name;
+
+        return here is { Length: > 0 } && string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// The fitted module's name, where a plan names a <em>different</em> one and both are worth

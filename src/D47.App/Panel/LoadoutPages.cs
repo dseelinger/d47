@@ -821,6 +821,21 @@ public static class LoadoutPages
                 Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
                 inlines.Add(arrow);
             }
+            else if (parts.NotFitted)
+            {
+                // An empty slot, in the place the fitted module would be (GitHub issue 38). Without
+                // it a planned module in an empty slot draws exactly like one on the hull, which is
+                // what "something IS fitted on oxen utility mount 8" was reading.
+                var empty = new Run("empty");
+
+                Themed(empty, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(empty);
+
+                var arrow = new Run("  →  ");
+
+                Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(arrow);
+            }
 
             inlines.Add(new Run(wanted) { FontWeight = FontWeight.Bold });
 
