@@ -97,6 +97,42 @@ public sealed record ShipSlot(
         _ => Spaced(Name),
     };
 
+    /// <summary>
+    /// The same slot in a column narrow enough to sit beside two others
+    /// (docs/plans/change-requests.md 38).
+    /// <para>
+    /// <b>The heading above it already says the block.</b> A row under <i>Utility Mounts</i> does
+    /// not need the words "Utility Mount" on it, and one under <i>Hardpoints</i> does not need
+    /// "Hardpoint" — so what is left is the part that tells one row from its neighbours: the
+    /// ordinal, and for a compartment the size, which is the fact that decides what fits.
+    /// </para>
+    /// <para>
+    /// <b>A core internal is named rather than numbered</b>, because there is one of each and the
+    /// name is the only thing distinguishing them — through <see cref="ShortNames"/>, which is why
+    /// <c>PowerDistributor</c> reads <b>Power Dist.</b> here and <i>Power Distributor</i> in
+    /// <see cref="Describe"/>. The long form is never lost: it is what the drill and the
+    /// breadcrumb say, and <see cref="Describe"/> is unchanged.
+    /// </para>
+    /// </summary>
+    public string Short() => Kind switch
+    {
+        ShipSlotKind.Core => ShortNames.Of(Spaced(Name)),
+
+        // "Large Hardpoint 1" under a heading that already says Hardpoints, so: "Large 1". The
+        // mount size is the half a Commander is looking for.
+        ShipSlotKind.Hardpoint => Spaced(Name).Replace("Hardpoint ", string.Empty, StringComparison.Ordinal),
+
+        ShipSlotKind.Utility => Ordinal(Name) is { } utility
+            ? utility.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : Spaced(Name),
+
+        _ when Ordinal(Trim(Name)) is { } compartment => Restrict.Count > 0
+            ? $"{Spaced(Letters(Trim(Name)))} {compartment} ({Size})"
+            : $"{compartment} ({Size})",
+
+        _ => Spaced(Name),
+    };
+
     /// <summary>The trailing number, where the name carries one.</summary>
     private static int? Ordinal(string name)
     {

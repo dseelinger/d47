@@ -164,15 +164,23 @@ public sealed record LoadoutNotice(string Text, Func<string> Yes, Func<string> N
 /// <summary>
 /// One pressable line of a loadout index.
 /// <para>
-/// <b>An index rather than a table</b>: one line each, a mark where a plan exists, and everything
-/// else in the pane that opens.
+/// <b>An index rather than a table</b>: one line each, a mark, and everything else in the pane
+/// that opens. That still holds for every list here <em>except</em> a ship's slots, which became
+/// a table on 2026-08-25 (docs/plans/change-requests.md 38) because one line carrying both what
+/// is fitted and what is planned had to choose between them, and either choice describes
+/// something that is not there. A row with <see cref="Parts"/> is that table's; every other row
+/// is the index it always was.
 /// </para>
 /// </summary>
 /// <param name="Key">What the crumb below this row is keyed on.</param>
 /// <param name="Word">What the breadcrumb calls it.</param>
 /// <param name="Text">The line itself.</param>
 /// <param name="Aside">The right-hand note: where it is, or what is planned there.</param>
-/// <param name="Marked">Whether a plan exists here. A mark, never a column.</param>
+/// <param name="Marked">
+/// Whether there is outstanding work here. A mark, never a column — and on a slot row it means
+/// <b>the hull does not match the plan</b> rather than <em>a plan exists</em>, which is why it
+/// now goes out when the work is done (GitHub issue 38).
+/// </param>
 public sealed record LoadoutRow(string Key, string Word, string Text, string? Aside, bool Marked)
 {
     /// <summary>
@@ -210,97 +218,128 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
 }
 
 /// <summary>
-/// A slot row, in the order it reads: size, then the plan dot, then the module, then what was
-/// done to it (asked for 2026-08-20).
+/// One side of a slot row: what is in the slot, or what the plan asks for
+/// (docs/plans/change-requests.md 38).
 /// <para>
-/// <b>Parts rather than one string</b>, because they are drawn differently — the size and the
-/// module are bold, "empty" is greyed, the gear is a glyph — and because the effects are trimmed
-/// to whatever room is left, which cannot be decided until the row is measured.
+/// <b>Current is the journal and Plan is <c>ships.json</c>, and neither ever borrows from the
+/// other.</b> That one rule is the whole of this change. A row used to carry a single blended
+/// description — <c>Planned(plan) ?? fitted</c> for the module, <c>plan?.Blueprint ??
+/// module?.Blueprint</c> for the roll — and every value it produced was true of *something* while
+/// describing nothing that existed: a planned Shield Booster in an empty mount drew exactly like
+/// the five fitted ones beside it, and a power distributor planned Weapon Focused and rolled
+/// Priority Systems read as finished. Both were reported on 2026-08-24, and both are the same
+/// sentence: one column had to choose which truth to tell, and there was never a good answer.
+/// </para>
+/// <para>
+/// <b>Effects are only ever Current's.</b> Elite reports what a roll actually landed — 3,384
+/// modifiers across the corpus, each with the figure before it — and a planned roll has no
+/// figures at all, so a Plan side is built with none and cannot grow any.
 /// </para>
 /// </summary>
-/// <param name="Size">
-/// The class of module the slot takes, or null where saying it adds nothing — a utility mount is
-/// size 0 by definition, so the 0 is noise on every one of them.
+/// <param name="Module">
+/// What is there, or what is wanted, in <see cref="D47.Core.Knowledge.ShortNames"/>'s words.
+/// Null where the slot is empty, which is the state that had no representation at all.
 /// </param>
-/// <param name="Module">What is fitted, or null where nothing is.</param>
-/// <param name="Vacant">
-/// The word for a slot with nothing in it, which is <b>not always "empty"</b>: empty is a fact
-/// about the slot and it is only a fact when d47 can see the ship. For one the Commander is not
-/// sitting in, the row names the fix instead — boarding it is what makes Elite write the
-/// <c>Loadout</c> the page is waiting for.
+/// <param name="Long">
+/// The same module in Frontier's words, for the tooltip — null where the short form <em>is</em>
+/// the long one. A short name is never the only name (the Commander's ruling, 2026-08-25).
 /// </param>
-/// <param name="Blueprint">The roll, where one has been done or planned.</param>
-/// <param name="Grade">Its grade, shown as (G5). Null where there is no roll.</param>
+/// <param name="Blueprint">
+/// The roll, with the module struck off the end of it: <i>Heavy Duty Hull Reinforcement</i> on a
+/// row already saying <i>HRP</i> reads <b>Heavy Duty</b>, which is shorter and — the part worth
+/// more than the width — comparable straight down the column.
+/// </param>
+/// <param name="Grade">Its grade, shown as G5. Null where there is no roll.</param>
 /// <param name="Experimental">The experimental effect, where there is one.</param>
 /// <param name="Effects">
-/// What the roll actually did, biggest first. Drawn until the row runs out of room and cut at a
-/// whole effect rather than mid-word.
+/// What the roll actually did, biggest first. Drawn until the column runs out of room and cut at a
+/// whole effect rather than mid-word. Empty on a Plan side, always.
 /// </param>
-public sealed record LoadoutParts(
-    int? Size,
+public sealed record LoadoutSide(
     string? Module,
-    string Vacant,
+    string? Long,
     string? Blueprint,
     int? Grade,
     string? Experimental,
     IReadOnlyList<string> Effects)
 {
     /// <summary>
-    /// What is fitted in the slot right now, where that is known and is <b>not</b> what
-    /// <see cref="Module"/> already names.
-    /// <para>
-    /// <b>Both facts, because they are different facts</b> (the Commander's ruling, 2026-08-20:
-    /// *"one is reality, the other is the goal"*). This row has now been wrong in both directions
-    /// in two days — naming the fitted module beside the plan's roll described a thing that does
-    /// not exist, and naming the plan's module alone dropped what is actually on the hull. A row
-    /// that carries one of them has to choose which truth to tell, and there was never a good
-    /// answer.
-    /// </para>
-    /// <para>
-    /// Null where they agree, where nothing is fitted, and where d47 cannot see the ship — so a
-    /// row only ever grows a second module when there is genuinely a second thing to say.
-    /// </para>
-    /// </summary>
-    public string? Now { get; init; }
-
-    /// <summary>
-    /// Whether this row names a planned module and the slot is <b>empty</b> (GitHub issue 38).
-    /// <para>
-    /// <b>The absence is a fact and the row has to carry it.</b> Elite omits empty slots from
-    /// <c>Loadout</c> entirely, so "no module here" and "no module reported" are the same silence —
-    /// and <see cref="Now"/> only speaks when a fitted module <em>exists and differs</em>, which
-    /// left a planned module in an empty slot drawing exactly like a fitted one. Reported twice on
-    /// 2026-08-24: <i>"something IS fitted on oxen utility mount 8"</i>, against a ship whose own
-    /// Loadout has seven utility mounts and no eighth. Nothing was fitted, and the checklist was
-    /// right throughout — the page was not.
-    /// </para>
-    /// </summary>
-    public bool NotFitted { get; init; }
-
-    /// <summary>
-    /// The blueprint actually on the module, where the plan asked for a different one
-    /// (GitHub issue 42).
-    /// <para>
-    /// <b>The disagreement a plan exists to catch.</b> A slot never rolled is obvious the moment
-    /// you look at it. A slot rolled the <em>wrong way</em> looks exactly like one rolled right,
-    /// and d47 was silent about it: <see cref="Blueprint"/> takes the plan's word where there is
-    /// one, so a power distributor planned Weapon Focused and rolled Priority Systems read as
-    /// finished on this row and on the checklist both.
-    /// </para>
-    /// </summary>
-    public string? RolledInstead { get; init; }
-
-    /// <summary>
-    /// Whether the module this row names is one a Powerplay pledge is needed to buy
+    /// Whether the module this side names is one a Powerplay pledge is needed to buy
     /// (list.md Phase 38).
     /// <para>
     /// <b>Nineteen modules</b>, named by <c>outfitting.csv</c>'s own <c>entitlement</c> column
     /// rather than by a list anybody maintains — the Prismatic Shield Generator in all eight
     /// sizes, and eleven weapons. Drawn as a coin beside the name, in the danger hue, because it
-    /// is a gate rather than a property.
+    /// is a gate rather than a property — and per side, since planning one you have not got is
+    /// exactly when the gate is worth knowing about.
     /// </para>
     /// </summary>
     public bool Gated { get; init; }
+
+    /// <summary>Whether this side has nothing to say: an empty slot, or a slot with no plan.</summary>
+    public bool Silent => Module is not { Length: > 0 }
+                          && Blueprint is not { Length: > 0 }
+                          && Experimental is not { Length: > 0 };
+}
+
+/// <summary>
+/// A slot row: the slot, what is fitted in it, and what the plan asks for — one row with two
+/// columns rather than an index with a mark (docs/plans/change-requests.md 38).
+/// <para>
+/// <b>This overturns a stated Phase 26 ruling rather than filling a gap</b>, and the ruling is in
+/// the item's own words: <i>"the slot list an index rather than a table: one line each, a mark
+/// where a plan exists, and everything else in the pane"</i>. The product description already
+/// promised both facts; what is overturned is the shape, and the shape is what produced an evening
+/// of the page being read wrongly in three different ways.
+/// </para>
+/// <para>
+/// <b>Four states, where the row had two.</b> Nothing planned, planned and met, planned and not
+/// rolled, and <b>planned with the slot empty</b> — the fourth had no representation of its own
+/// and is the one that misled. Each now falls out of the two sides rather than out of a flag:
+/// nothing planned is a silent Plan side, met is <see cref="Met"/>, not rolled is two sides that
+/// differ, and an empty slot is a silent Current side.
+/// </para>
+/// <para>
+/// <b>Parts rather than one string</b>, because they are drawn differently — the module is bold,
+/// "empty" is greyed, the gear is a glyph — and because the effects are trimmed to whatever room
+/// is left, which cannot be decided until the column is measured.
+/// </para>
+/// </summary>
+/// <param name="Size">
+/// The class of module the slot takes, or null where saying it adds nothing — a utility mount is
+/// size 0 by definition, so the 0 is noise on every one of them.
+/// </param>
+/// <param name="Slot">
+/// The slot itself, short enough for a column: the heading above already says which block this is,
+/// so what is left is the ordinal, the size, or a core internal's name.
+/// </param>
+/// <param name="Current">What the journal says is in the slot.</param>
+/// <param name="Plan">What <c>ships.json</c> says is wanted there, or null where nothing is.</param>
+/// <param name="Vacant">
+/// The word for a slot with nothing in it, which is <b>not always "empty"</b>: empty is a fact
+/// about the slot and it is only a fact when d47 can see the ship. For one the Commander is not
+/// sitting in, the row names the fix instead — boarding it is what makes Elite write the
+/// <c>Loadout</c> the page is waiting for.
+/// </param>
+public sealed record LoadoutParts(
+    int? Size,
+    string Slot,
+    LoadoutSide Current,
+    LoadoutSide? Plan,
+    string Vacant)
+{
+    /// <summary>
+    /// Whether the hull already matches the plan, in which case <b>the second column collapses</b>
+    /// to a tick and stops.
+    /// <para>
+    /// <b>Repeating identical words in two columns is noise</b>, and worse than noise: it is the
+    /// eye being asked to compare two strings that were never going to differ. This is also the
+    /// answer to <i>"these have been engineered, the orange circles should be gone, right?"</i> —
+    /// the marker means <em>disagreement</em> rather than <em>a plan exists</em>, which is the
+    /// thing worth an eye-catching colour.
+    /// </para>
+    /// </summary>
+    public bool Met { get; init; }
 }
 
 /// <summary>

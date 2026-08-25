@@ -566,7 +566,7 @@ public sealed class ShipsMode(
         var layout = EliteSpecifications.Slots(build.Hull);
 
         var slots = layout.Count > 0
-            ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe(), slot.Size))]
+            ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe(), Brief: slot.Short(), slot.Size))]
             : Unlaid(build, fitted);
 
         return
@@ -602,22 +602,25 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// One slot row broken into the parts it is drawn from (asked for 2026-08-20).
+    /// One slot row broken into the two sides it is drawn from — what is in the slot, and what the
+    /// plan asks for (docs/plans/change-requests.md 38; the row itself asked for 2026-08-20).
     /// <para>
-    /// <b>The plan first, and what is fitted where there is no plan.</b> This was the other way
-    /// round for a day — fitted first, on the argument that what is in the slot is a fact and a
-    /// plan is only a want — and the argument is sound about the <em>slot</em> and wrong about
-    /// <em>this row</em>. The row already carries the plan's roll and the dot that says a plan
-    /// exists, so naming the fitted module beside them produced a line describing a thing that
-    /// does not exist: reported twice on 2026-08-20, once as a Module Reinforcement Package
-    /// apparently carrying a Hull Reinforcement roll, and once as <i>"I just changed this to 6A,
-    /// but it still says 6D"</i>. Both are the same sentence: the roll came from the plan and the
-    /// module did not.
+    /// <b>Current is the journal and Plan is <c>ships.json</c>, and neither ever borrows from the
+    /// other.</b> This method used to blend them and the blend was the defect: it took the plan's
+    /// module where there was one and the fitted module otherwise, and the plan's blueprint where
+    /// there was one and the rolled blueprint otherwise, so a row could name a module that is not
+    /// there wearing a roll that has not been done. Both halves were reported on 2026-08-24 —
+    /// <i>"something IS fitted on oxen utility mount 8"</i> against an empty mount, and a power
+    /// distributor planned Weapon Focused and rolled Priority Systems reading as finished.
     /// </para>
     /// <para>
-    /// <b>The fitted module is not lost, it is one level down.</b> The slot drill names it under
-    /// its own <c>Fitted</c> heading, beside <c>Planned</c>, which is where the two are meant to
-    /// be told apart — and that page can afford to say both where a one-line row cannot.
+    /// <b>The argument that produced the blend was sound and is now unnecessary.</b> It ran: the
+    /// row already carries the plan's roll and the plan's mark, so naming the fitted module beside
+    /// them describes a thing that does not exist — which is true, and was equally true the other
+    /// way round. Both readings are right and neither survives one column. Two columns is the
+    /// answer that was unavailable while the row was an index, and the three flags that were
+    /// carrying the difference — the standing module, the empty slot and the roll that disagrees —
+    /// are not needed any more, because each of them is now just what one of the two sides says.
     /// </para>
     /// <para>
     /// <b>The effects are the fitted module's own</b> and are never a plan's. Elite reports what a
@@ -627,55 +630,159 @@ public sealed class ShipsMode(
     /// </para>
     /// </summary>
     private LoadoutParts Parted(
-        (string Name, ShipSlotKind Kind, string Word, int Size) slot,
+        (string Name, ShipSlotKind Kind, string Word, string Brief, int Size) slot,
         SlotPlan? plan,
         ShipModule? module,
         ShipBuild build,
-        IReadOnlyList<ShipModule> fitted) =>
-        new(
+        IReadOnlyList<ShipModule> fitted)
+    {
+        var planned = plan is { IsEmpty: false } ? plan : null;
+
+        return new LoadoutParts(
             // No size on a utility mount: they are 0 by definition, so a 0 on all eight of them is
             // noise in the first column the eye lands on.
             slot.Kind == ShipSlotKind.Utility ? null : slot.Size,
-            // The full name — "3E Pulse Laser, gimballed" — beside the slot's own size, and the
-            // two are not the same fact: a size 3 slot can hold a class 2 module, and seeing a 2
-            // beside a 3 is how a Commander spots one. The rating and the mount are in it for the
-            // same reason, and the mount is the half that decides how a weapon behaves.
-            Planned(plan)
-            ?? (module is not null ? EliteSpecifications.ModuleName(module.Item) ?? module.Item : null),
-            Vacant(build, fitted),
+            slot.Brief,
+            Fitting(
+                slot.Kind,
+                slot.Brief,
+                Side(
+                // The full name — "3E Pulse Laser, gimballed" — beside the slot's own size, and
+                // the two are not the same fact: a size 3 slot can hold a class 2 module, and
+                // seeing a 2 beside a 3 is how a Commander spots one. The rating and the mount are
+                // in it for the same reason, and the mount is the half that decides how a weapon
+                // behaves.
+                module is not null
+                    ? EliteSpecifications.ModuleName(module.Item) ?? module.Item
+                    : null,
+                Bare(module?.Item),
 
-            // The Commander's words either way. A plan stores the readable name they picked and
-            // the journal stores a symbol, so taking whichever is there put two spellings of one
-            // blueprint on one page — "Heavy Duty Hull Reinforcement" on the planned slots and
-            // "HullReinforcement_HeavyDuty" on the fitted-but-unplanned one (GitHub issue 39).
-            // BlueprintCatalogue.NameOf is the join and nothing here was reading it.
-            plan?.Blueprint ?? Readable(module?.Blueprint),
-            plan?.Grade ?? module?.BlueprintLevel,
-            plan?.Experimental ?? module?.Experimental,
-            Effects(module))
+                // The Commander's words either way. A plan stores the readable name they picked
+                // and the journal stores a symbol, so taking whichever is there put two spellings
+                // of one blueprint on one page — "Heavy Duty Hull Reinforcement" on the planned
+                // slots and "HullReinforcement_HeavyDuty" on the fitted-but-unplanned one (GitHub
+                // issue 39). BlueprintCatalogue.NameOf is the join and nothing here was reading it.
+                Readable(module?.Blueprint),
+                module?.BlueprintLevel,
+                module?.Experimental,
+                Effects(module),
+                module?.Item)),
+            planned is null
+                ? null
+                : Fitting(
+                    slot.Kind,
+                    slot.Brief,
+                    Side(
+                        Planned(planned),
+                        Bare(planned.Variant) ?? planned.Module,
+                        planned.Blueprint,
+                        planned.Grade,
+                        planned.Experimental,
+                        [],
+                        planned.Variant)),
+            Vacant(build, fitted))
         {
-            // What is on the hull now, where the plan names something else. Both facts on the row,
-            // because they are different facts and neither is the other's substitute.
-            Now = Standing(plan, module),
-
-            // And where the plan names something and the slot is *empty*, which drew exactly like
-            // a fitted module and was reported twice as "something IS fitted on oxen utility mount
-            // 8" (GitHub issue 38). Nothing was: Elite omits empty slots, so the absence is the
-            // fact, and the row has to carry it rather than leaving the plan to speak for the hull.
-            NotFitted = plan is { IsEmpty: false } && module is null,
-
-            // The roll that is actually on the module, where the plan asked for a different one
-            // (GitHub issue 42). Silent before this, because the row showed the plan's own words
-            // back: a power distributor planned Weapon Focused and rolled Priority Systems read as
-            // finished everywhere. A slot never rolled is obvious the moment you look at it; a slot
-            // rolled the wrong way looks exactly like one rolled right, which is the case a plan
-            // exists to catch.
-            RolledInstead = RolledInstead(plan, module),
-
-            // Whether the module this row names — the planned one where there is a plan — is one a
-            // pledge is needed to buy (list.md Phase 38).
-            Gated = EliteSpecifications.Module(plan?.Variant ?? module?.Item)?.NeedsPledge ?? false,
+            // The plan is carried out, so the second column has nothing left to say. Read off the
+            // same function as the marker rather than worked out again here: two mechanisms
+            // answering "is there work left" differently is how the marker came to mean something
+            // else in the first place.
+            Met = planned is not null && !Outstanding(planned, module),
         };
+    }
+
+    /// <summary>
+    /// The two words a column does not need to carry, because the slot beside it already does
+    /// (docs/plans/change-requests.md 38).
+    /// <para>
+    /// <b>A core internal is named by its slot.</b> The Power Distributor sits in the slot called
+    /// Power Distributor, so a cell reading <i>7A Power Dist.</i> beside a column reading <i>Power
+    /// Dist.</i> says one thing twice and spends the width that the roll needs. What is left —
+    /// <b>7A</b> — is the whole of what the row does not already say.
+    /// </para>
+    /// <para>
+    /// <b>And a utility mount is size 0 by definition</b>, so <i>0C Shield Booster</i> leads with a
+    /// digit that is true of all eight of them. The rating is the half that differs, which is the
+    /// same argument that keeps the size column off a utility row.
+    /// </para>
+    /// <para>
+    /// The long form is untouched either way: it is what the tooltip and the drill say, and this
+    /// only ever shortens what is drawn.
+    /// </para>
+    /// </summary>
+    private static LoadoutSide Fitting(ShipSlotKind kind, string brief, LoadoutSide side)
+    {
+        if (side.Module is not { Length: > 0 } module)
+        {
+            return side;
+        }
+
+        var said = module;
+
+        if (kind == ShipSlotKind.Utility && said.StartsWith('0'))
+        {
+            said = said[1..];
+        }
+
+        if (kind == ShipSlotKind.Core && said.EndsWith(brief, StringComparison.OrdinalIgnoreCase))
+        {
+            said = said[..^brief.Length].TrimEnd();
+        }
+
+        // Nothing left means the slot's name was the whole of the module's, and a blank cell says
+        // less than a repeated word does.
+        return said.Length == 0 || said.Length == module.Length ? side : side with { Module = said };
+    }
+
+    /// <summary>
+    /// One side of a slot row, short-named and with the module struck off its blueprint.
+    /// <para>
+    /// <b>The short name and the long one are both kept</b>, because a short name is never the
+    /// only name (the Commander's ruling, 2026-08-25): the row draws the short form and hangs the
+    /// long one on the tooltip, and the slot drill below is untouched and still says everything in
+    /// full. Where they are the same string the long one is null, so nothing hangs a tooltip
+    /// repeating the word underneath it.
+    /// </para>
+    /// </summary>
+    /// <param name="bare">
+    /// The module in Frontier's words with the size, the rating and the mount off it, which is
+    /// what a blueprint's tail has to be compared against — <c>6D Hull Reinforcement Package</c>
+    /// never ends a blueprint name and <c>Hull Reinforcement Package</c> does.
+    /// </param>
+    private static LoadoutSide Side(
+        string? name,
+        string? bare,
+        string? blueprint,
+        int? grade,
+        string? experimental,
+        IReadOnlyList<string> effects,
+        string? symbol)
+    {
+        var brief = ShortNames.Of(name);
+
+        return new LoadoutSide(
+            brief.Length > 0 ? brief : null,
+            name is { Length: > 0 } && !string.Equals(brief, name, StringComparison.Ordinal)
+                ? name
+                : null,
+            ShortNames.Bare(blueprint, bare),
+            grade,
+            experimental,
+            effects)
+        {
+            // Whether the module this side names is one a pledge is needed to buy (list.md Phase
+            // 38). Per side, because planning one you have not got is exactly when the gate is
+            // worth knowing about.
+            Gated = EliteSpecifications.Module(symbol)?.NeedsPledge ?? false,
+        };
+    }
+
+    /// <summary>
+    /// A module's name with the size, the rating and the mount off it, for the blueprint join.
+    /// <see cref="EliteSpecifications.ModuleName"/> composes those on and this is the part
+    /// underneath, so a symbol the table has never heard of has no bare name rather than a
+    /// guessed one.
+    /// </summary>
+    private static string? Bare(string? symbol) => EliteSpecifications.Module(symbol)?.Name;
 
     /// <summary>
     /// Whether this slot still has work in it (GitHub issue 38).
@@ -719,7 +826,15 @@ public sealed class ShipsMode(
             return false;
         }
 
-        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase))
+        // **Both spellings, because a plan and the journal do not use the same one.** A plan
+        // stores the readable name the Commander picked — "System Focused" — and Elite stores a
+        // symbol — `PowerDistributor_PrioritySystems`. Comparing one to the other found them
+        // different every time, so a slot rolled exactly as planned kept its dot: the same fault
+        // as GitHub issue 38 arriving by the other road, and invisible until the plan column had
+        // to decide whether to collapse. `BlueprintCatalogue.NameOf` is the join, and the raw
+        // symbols are still compared for a blueprint the catalogue has never heard of.
+        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(plan.Blueprint, Readable(module.Blueprint), StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
@@ -872,7 +987,7 @@ public sealed class ShipsMode(
     /// kind of decoration.
     /// </para>
     /// </summary>
-    private static List<(string Name, ShipSlotKind Kind, string Word, int Size)> Unlaid(
+    private static List<(string Name, ShipSlotKind Kind, string Word, string Brief, int Size)> Unlaid(
         ShipBuild build, IReadOnlyList<ShipModule> fitted)
     {
         var names = new List<string>();
@@ -893,7 +1008,7 @@ public sealed class ShipsMode(
                 .Select(name => (Name: name, Kind: EliteSpecifications.KindOf(name)))
                 .Where(slot => slot.Kind is not null)
                 .OrderBy(slot => slot.Kind)
-                .Select(slot => (slot.Name, slot.Kind!.Value, Word: slot.Name, Size: 0)),
+                .Select(slot => (slot.Name, slot.Kind!.Value, Word: slot.Name, Brief: slot.Name, Size: 0)),
         ];
     }
 

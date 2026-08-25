@@ -11,6 +11,8 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.Reactive;
+using Avalonia.VisualTree;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Loadout;
@@ -734,242 +736,377 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// A slot row, drawn as the loadout rather than as the slot (asked for 2026-08-20).
+    /// The columns every slot row and the header above them share
+    /// (docs/plans/change-requests.md 38).
     /// <para>
-    /// <b>Left-justified throughout, with no gap in the middle.</b> The old row put the slot's
-    /// name at one end and everything about the module at the other, so the eye crossed the panel
-    /// once per row and the width went to whitespace. The slot's name was leading it, and the
-    /// slot's name is not the primary information about a loadout — what is fitted, what was
-    /// rolled on it and what that did are.
+    /// <b>Stars rather than shared sizes.</b> Each row is its own control in a stack, so nothing
+    /// measures them together — proportions do line them up, and they do it at 512 pixels and at
+    /// 2048 without a measure pass that has to visit every row before any of them can draw.
+    /// </para>
+    /// </summary>
+    private static ColumnDefinitions Columns() => new("22,0.75*,1.45*,1.15*");
+
+    /// <summary>
+    /// The one header above a ship's slot list, because two columns that are not labelled are two
+    /// columns a Commander has to work out (docs/plans/change-requests.md 38).
+    /// <para>
+    /// <b>Once, above the first group</b>, rather than once per group: the headings below it say
+    /// which block of the outfitting screen each run of rows is, and repeating SLOT / CURRENT /
+    /// PLAN four times would cost four rows to say nothing new.
+    /// </para>
+    /// </summary>
+    internal static Control SlotHeader()
+    {
+        var line = new Grid
+        {
+            ColumnDefinitions = Columns(),
+            Margin = new Thickness(12, 6, 12, 2),
+        };
+
+        var at = 1;
+
+        foreach (var word in new[] { "SLOT", "CURRENT", "PLAN" })
+        {
+            var said = new TextBlock
+            {
+                Text = word,
+                FontSize = TypeScale.Secondary,
+                FontWeight = FontWeight.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            Themed(said, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Grid.SetColumn(said, at++);
+            line.Children.Add(said);
+        }
+
+        return line;
+    }
+
+    /// <summary>
+    /// A slot row: what the slot is, what is in it, and what the plan asks for
+    /// (docs/plans/change-requests.md 38).
+    /// <para>
+    /// <b>A table, overturning the index this was</b> — and overturning it on the evidence the
+    /// index produced. One line carrying both facts had to pick which to say, and every pick
+    /// described something that was not there: a planned Shield Booster in an empty mount drew
+    /// exactly like the five fitted ones beside it, and a distributor rolled the wrong way read as
+    /// finished. Two columns is the answer that was unavailable while the row was one line.
+    /// </para>
+    /// <para>
+    /// <b>Agreement collapses.</b> Where the hull already matches the plan the second column is a
+    /// tick and stops, and where only the module agrees the plan column names the roll alone —
+    /// repeating identical words in two columns asks the eye to compare two strings that were
+    /// never going to differ.
     /// </para>
     /// <para>
     /// <b>Ellipsis rather than wrapping.</b> A row is one line: a wrapping row changes height,
-    /// which moves every row under it and makes a list impossible to scan or to aim a ray at.
+    /// which moves every row under it and makes a list impossible to scan or to aim a ray at. Each
+    /// cell is one <see cref="TextBlock"/> for the same reason it is one line — a stack of blocks
+    /// inside a star column is measured with infinite width and would bleed into the next column
+    /// rather than trimming at the edge of its own.
     /// </para>
     /// </summary>
     internal static Control SlotRow(LoadoutRow row, Action pressed)
     {
         var parts = row.Parts!;
 
-        var line = new StackPanel
+        var line = new Grid
         {
-            Orientation = Orientation.Horizontal,
+            ColumnDefinitions = Columns(),
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        // The size, bold, and absent where saying it adds nothing. A utility mount is size 0 by
-        // definition, so a 0 on all eight of them is noise in the one column the eye starts at.
-        if (parts.Size is { } size)
-        {
-            var said = new TextBlock
-            {
-                Text = size.ToString(CultureInfo.InvariantCulture),
-                FontSize = TypeScale.Body,
-                FontWeight = FontWeight.Bold,
-                VerticalAlignment = VerticalAlignment.Center,
-                MinWidth = 14,
-            };
-
-            line.Children.Add(said);
-        }
-
-        // The dot: a plan exists for this slot. Its own mark rather than a column, and it keeps
-        // the gutter position it has always had — a plan existing is a fact about the row.
+        // The dot: there is work left in this slot. Its own mark rather than a column, and it
+        // keeps the gutter position it has always had — kept in the layout when there is none, so
+        // the slot names line up down the list rather than stepping in and out by the width of it.
         var mark = new TextBlock
         {
             Text = "●",
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 8, 0),
-
-            // Kept in the layout when there is no plan, so the module names line up down the list
-            // rather than stepping in and out by the width of a dot.
             Opacity = row.Marked ? 1 : 0,
         };
 
         Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Grid.SetColumn(mark, 0);
         line.Children.Add(mark);
 
-        // What is fitted, bold — or the word for nothing, greyed, because a blank reads as a row
-        // d47 has nothing to say about rather than as an empty slot.
-        var module = new TextBlock
+        // The slot, muted: it is what the row is *about* rather than what the row says, and the
+        // heading above already names the block it belongs to.
+        var slot = new TextBlock
         {
+            Text = parts.Slot,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            Margin = new Thickness(0, 0, 10, 0),
         };
 
-        if (parts.Module is { Length: > 0 } wanted)
-        {
-            // **Reality, then the goal** (the Commander's ruling, 2026-08-20: *"can you hold both
-            // the current module and the planned module? one is reality, the other is the goal"*).
-            // Where a plan names a different module from the one on the hull, the row says both —
-            // what is there muted, an arrow, and what is planned in bold, because the plan is the
-            // subject of a row the Commander is working through. Carrying one of them was wrong in
-            // both directions inside two days.
-            var inlines = new InlineCollection();
+        Themed(slot, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Grid.SetColumn(slot, 1);
+        line.Children.Add(slot);
 
-            if (parts.Now is { Length: > 0 } standing)
-            {
-                var was = new Run(standing);
+        var current = Cell(parts.Current, parts.Vacant, row.Engineered, bold: true);
 
-                Themed(was, Run.ForegroundProperty, ThemeManager.TextMutedKey);
-                inlines.Add(was);
+        Grid.SetColumn(current, 2);
+        line.Children.Add(current);
 
-                var arrow = new Run("  →  ");
+        var plan = Planned(parts);
 
-                Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
-                inlines.Add(arrow);
-            }
-            else if (parts.NotFitted)
-            {
-                // An empty slot, in the place the fitted module would be (GitHub issue 38). Without
-                // it a planned module in an empty slot draws exactly like one on the hull, which is
-                // what "something IS fitted on oxen utility mount 8" was reading.
-                var empty = new Run("empty");
-
-                Themed(empty, Run.ForegroundProperty, ThemeManager.TextMutedKey);
-                inlines.Add(empty);
-
-                var arrow = new Run("  →  ");
-
-                Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
-                inlines.Add(arrow);
-            }
-
-            inlines.Add(new Run(wanted) { FontWeight = FontWeight.Bold });
-
-            // The gear travels with the last word of the name (remediation.md 17, item 10).
-            if (row.Engineered)
-            {
-                inlines.Add(Gear());
-            }
-
-            // And the coin, for a module a Powerplay pledge is needed to buy (list.md Phase 38).
-            // Beside the gear rather than instead of it: a Prismatic Shield Generator can be both
-            // gated and engineered, and they are different facts.
-            if (parts.Gated)
-            {
-                inlines.Add(Coin());
-            }
-
-            // **`Text` where one run would do.** A `TextBlock` carrying `Inlines` reports no
-            // `Text` at all, so a row drawn as inlines is invisible to anything reading the panel
-            // by text — which is how the tests read it, and how the VR surface's capture check
-            // does. Inlines only where there is genuinely more than one thing to draw.
-            if (inlines.Count == 1)
-            {
-                module.Text = wanted;
-                module.FontWeight = FontWeight.Bold;
-            }
-            else
-            {
-                module.Inlines = inlines;
-            }
-        }
-        else
-        {
-            // Greyed, and in the mode's own word: "empty" is a fact about the slot and only a
-            // fact when d47 can see the ship, so a ship the Commander is not sitting in says it
-            // has not been seen instead.
-            module.Text = parts.Vacant;
-            Themed(module, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        }
-
-        line.Children.Add(module);
-
-        // Everything the roll did, in one run so it can be trimmed as one thing. Muted, because
-        // the module is the subject and this is what was done to it.
-        var rolled = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(10, 0, 0, 0),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-
-        Themed(rolled, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        line.Children.Add(rolled);
-
-        var head = Rolled(parts);
-
-        // **Re-figured whenever the row changes width**, which is what "dynamic" has to mean on a
-        // panel that runs from 512 to 2048 logical pixels and is resized by hand. Whole effects
-        // are dropped rather than the line being cut mid-word: "+3% pow…" says less than nothing.
-        line.SizeChanged += (_, _) => rolled.Text = Fitted(rolled, head, parts.Effects, line);
-
-        rolled.Text = Fitted(rolled, head, parts.Effects, line);
+        Grid.SetColumn(plan, 3);
+        line.Children.Add(plan);
 
         var button = new Button
         {
             Content = line,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
             MinHeight = 34,
             Padding = new Thickness(12, 6),
         };
 
-        // The slot's name, for anything that cannot see the row. It stopped being drawn when the
-        // row was rebuilt around the loadout, and a row that no longer says which slot it is must
-        // still be able to say so to a screen reader — and to a test, which is the same need.
+        // The slot's name in full, for anything that cannot see the row — and now for the eye as
+        // well, since the column is the short form. A row that says "Power Dist." must still be
+        // able to say Power Distributor to a screen reader, to a test, and to a Commander who
+        // hovers it.
         AutomationProperties.SetName(button, row.Word);
+        ToolTip.SetTip(slot, row.Word);
 
         button.Click += (_, _) => pressed();
 
         return button;
     }
 
-    /// <summary>The roll itself — blueprint, grade, experimental — which never gets trimmed away.</summary>
-    private static string Rolled(LoadoutParts parts)
+    /// <summary>
+    /// The plan column: a tick where the hull already matches, the roll alone where only the
+    /// module does, and nothing at all where there is no plan.
+    /// <para>
+    /// <b>An empty cell is the fourth state and needs no word for it.</b> The sketch this came
+    /// from wrote "(no plan)" there; on a real hull that is filler on most of thirty-odd rows, and
+    /// the column's own heading already says what a blank one under it means.
+    /// </para>
+    /// </summary>
+    private static Control Planned(LoadoutParts parts)
+    {
+        if (parts.Plan is not { } plan)
+        {
+            return new TextBlock();
+        }
+
+        if (parts.Met)
+        {
+            var tick = new TextBlock
+            {
+                Text = "✓",
+                FontSize = TypeScale.Body,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            Themed(tick, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+
+            return tick;
+        }
+
+        // Where the module is already the right one, the plan is about the roll and says only
+        // that: "7A Power Dist." twice over is the noise this change exists to remove.
+        var agreed = plan.Module is { Length: > 0 } wanted
+                     && string.Equals(wanted, parts.Current.Module, StringComparison.Ordinal);
+
+        return Cell(
+            agreed ? plan with { Module = null, Long = null } : plan,
+            string.Empty,
+            gear: false,
+            bold: false);
+    }
+
+    /// <summary>
+    /// One side of a slot row, drawn: the module, then what was rolled on it, then as much of what
+    /// the roll did as the column has room for.
+    /// </summary>
+    /// <param name="vacant">
+    /// What a silent side says. "empty" for the hull, and nothing for a plan — a slot with no plan
+    /// is not an empty plan, it is a slot nobody has asked anything of.
+    /// </param>
+    /// <param name="gear">Whether a roll has been done here, which is only ever the hull's fact.</param>
+    /// <param name="bold">Whether the module leads in bold, which the hull's side does and a plan does not.</param>
+    private static Control Cell(LoadoutSide side, string vacant, bool gear, bool bold)
+    {
+        var cell = new TextBlock
+        {
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Margin = new Thickness(0, 0, 10, 0),
+        };
+
+        if (side.Silent)
+        {
+            cell.Text = vacant;
+            Themed(cell, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+            return cell;
+        }
+
+        var head = Rolled(side);
+        var module = side.Module ?? string.Empty;
+
+        // **`Text` where one run would do.** A `TextBlock` carrying `Inlines` reports no `Text` at
+        // all, so a cell drawn as inlines is invisible to anything reading the panel by text —
+        // which is how the tests read it, and how the VR surface's capture check does. Inlines
+        // only where there is genuinely more than one thing to draw.
+        if (module.Length == 0)
+        {
+            cell.Text = head;
+            cell.FontSize = TypeScale.Secondary;
+            Themed(cell, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Trailing(cell, null, string.Empty, head, side.Effects, bold);
+            Hover(cell, side);
+
+            return cell;
+        }
+
+        var inlines = new InlineCollection { new Run(module) { FontWeight = bold ? FontWeight.Bold : FontWeight.Normal } };
+
+        // The gear travels with the last word of the name (remediation.md 17, item 10).
+        if (gear)
+        {
+            inlines.Add(Gear());
+        }
+
+        // And the coin, for a module a Powerplay pledge is needed to buy (list.md Phase 38).
+        // Beside the gear rather than instead of it: a Prismatic Shield Generator can be both
+        // gated and engineered, and they are different facts.
+        if (side.Gated)
+        {
+            inlines.Add(Coin());
+        }
+
+        if (head.Length > 0 || side.Effects.Count > 0)
+        {
+            var rest = new Run(head.Length > 0 ? $" · {head}" : string.Empty)
+            {
+                FontSize = TypeScale.Secondary,
+            };
+
+            Themed(rest, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+            inlines.Add(rest);
+            Trailing(cell, rest, module, head, side.Effects, bold);
+        }
+
+        if (inlines.Count == 1)
+        {
+            cell.Text = module;
+            cell.FontWeight = bold ? FontWeight.Bold : FontWeight.Normal;
+        }
+        else
+        {
+            cell.Inlines = inlines;
+        }
+
+        Hover(cell, side);
+
+        return cell;
+    }
+
+    /// <summary>
+    /// Keeps the trailing run — the roll and what it did — to whatever the column has left, and
+    /// <b>re-figures it whenever the cell changes width</b>, which is what "dynamic" has to mean on
+    /// a panel that runs from 512 to 2048 logical pixels and is resized by hand.
+    /// </summary>
+    private static void Trailing(
+        TextBlock cell,
+        Run? run,
+        string module,
+        string head,
+        IReadOnlyList<string> effects,
+        bool bold)
+    {
+        if (effects.Count == 0)
+        {
+            return;
+        }
+
+        void Fit()
+        {
+            var said = Fitted(cell, module, head, effects, bold);
+
+            if (run is null)
+            {
+                cell.Text = said;
+            }
+            else
+            {
+                run.Text = said.Length > 0 ? $" · {said}" : string.Empty;
+            }
+        }
+
+        cell.SizeChanged += (_, _) => Fit();
+        Fit();
+    }
+
+    /// <summary>
+    /// The long name on the tooltip, so a short one is never the only one (the Commander's ruling,
+    /// 2026-08-25). Nothing is hung where the two are the same string.
+    /// </summary>
+    private static void Hover(Control cell, LoadoutSide side)
+    {
+        if (side.Long is { Length: > 0 } spelled)
+        {
+            ToolTip.SetTip(cell, spelled);
+        }
+    }
+
+    /// <summary>
+    /// The roll itself — blueprint, grade, experimental — which never gets trimmed away.
+    /// <para>
+    /// <b>The module is not in it.</b> <see cref="D47.Core.Knowledge.ShortNames.Bare"/> has
+    /// already struck the module off the blueprint's tail, so a row saying HRP says <i>Heavy
+    /// Duty</i> beside it rather than <i>Heavy Duty Hull Reinforcement</i> — which is shorter, and
+    /// comparable straight down the column, which is worth more than the width.
+    /// </para>
+    /// </summary>
+    private static string Rolled(LoadoutSide side)
     {
         var said = new List<string>();
 
-        if (parts.Blueprint is { Length: > 0 } blueprint)
+        if (side.Blueprint is { Length: > 0 } blueprint)
         {
-            // Deliberately the plan's word alone, even where the roll disagrees with it (GitHub
-            // issue 42). This text never gets trimmed, so it has to fit at 620 pixels, and naming
-            // both blueprints does not — measured at 395 in a 368 row. The disagreement is carried
-            // by the row's marker and said in full one level down, which is the division the slot
-            // drill already exists for: it can afford to say both where a one-line row cannot.
-            said.Add(parts.Grade is { } grade and > 0
-                ? $"{blueprint} (G{grade.ToString(CultureInfo.InvariantCulture)})"
+            said.Add(side.Grade is { } grade and > 0
+                ? $"{blueprint} G{grade.ToString(CultureInfo.InvariantCulture)}"
                 : blueprint);
         }
 
-        if (parts.Experimental is { Length: > 0 } experimental)
+        if (side.Experimental is { Length: > 0 } experimental)
         {
             said.Add(experimental);
         }
 
-        return string.Join(", ", said);
+        return string.Join(" · ", said);
     }
 
     /// <summary>
-    /// As many effects as the row has room for, cut at a whole effect.
+    /// As many effects as the cell has room for, cut at a whole effect.
     /// <para>
     /// Measured rather than guessed: <see cref="FormattedText"/> is asked how wide each candidate
     /// would be, and the longest one that fits wins. Guessing by character count is wrong the
-    /// moment the Commander changes the zoom, which this panel lets them do.
+    /// moment the Commander changes the zoom, which this panel lets them do. Whole effects are
+    /// dropped rather than the line being cut mid-word: "+3% pow…" says less than nothing.
     /// </para>
     /// </summary>
     private static string Fitted(
-        TextBlock block, string head, IReadOnlyList<string> effects, Control row)
+        TextBlock cell, string module, string head, IReadOnlyList<string> effects, bool bold)
     {
-        if (effects.Count == 0)
-        {
-            return head;
-        }
-
-        // What is left after everything ahead of this run has taken its share. Below a floor there
-        // is no point measuring: the roll itself is what matters and it is already trimming.
-        var room = row.Bounds.Width - block.Bounds.X - 12;
+        // What is left after the module has taken its share. Below a floor there is no point
+        // measuring: the roll itself is what matters and the cell's own ellipsis is already on it.
+        var room = cell.Bounds.Width
+                   - Wide(module, cell.FontFamily, TypeScale.Body, bold)
+                   - 12;
 
         if (room < 60)
         {
             return head;
         }
-
-        var typeface = new Typeface(block.FontFamily, block.FontStyle, block.FontWeight);
 
         for (var count = effects.Count; count > 0; count--)
         {
@@ -977,15 +1114,7 @@ public static class LoadoutPages
                 ? $"{head} · {string.Join(", ", effects.Take(count))}"
                 : string.Join(", ", effects.Take(count));
 
-            var measured = new FormattedText(
-                candidate,
-                CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight,
-                typeface,
-                block.FontSize,
-                Brushes.Black);
-
-            if (measured.Width <= room)
+            if (Wide(candidate, cell.FontFamily, TypeScale.Secondary, false) <= room)
             {
                 return candidate;
             }
@@ -993,6 +1122,17 @@ public static class LoadoutPages
 
         return head;
     }
+
+    private static double Wide(string said, FontFamily family, double size, bool bold) =>
+        said.Length == 0
+            ? 0
+            : new FormattedText(
+                said,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(family, FontStyle.Normal, bold ? FontWeight.Bold : FontWeight.Normal),
+                size,
+                Brushes.Black).Width;
 
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
@@ -1025,10 +1165,29 @@ public static class LoadoutPages
 public abstract class LoadoutPage : UserControl
 {
     private readonly ILoadoutMode _mode;
+    private IDisposable? _sized;
+    private bool _settled;
 
     protected LoadoutPage(ILoadoutMode mode) => _mode = mode;
 
     protected ILoadoutMode Mode => _mode;
+
+    /// <summary>
+    /// Whether the surface drawing this page is the mini one — 512 by 280, six rows
+    /// (docs/plans/change-requests.md 38).
+    /// <para>
+    /// <b>Read off the surface rather than passed in</b>, because mini is a property of the
+    /// instantiation and a page outlives a switch into it and back: the Commander flips the window
+    /// to mini with a ship already open, and the page it is holding has to answer differently
+    /// without being rebuilt. This is the same lookup the settings view already makes for the same
+    /// reason.
+    /// </para>
+    /// <para>
+    /// False on a surface with no <see cref="PanelView"/> above it, which is every test that draws
+    /// a page on its own — the full reading, which is the one those tests are about.
+    /// </para>
+    /// </summary>
+    protected bool Mini { get; private set; }
 
     protected abstract void Refresh();
 
@@ -1037,6 +1196,14 @@ public abstract class LoadoutPage : UserControl
         base.OnAttachedToVisualTree(e);
 
         _mode.Changed += OnChanged;
+
+        _sized = this.GetSelfAndVisualAncestors()
+            .OfType<PanelView>()
+            .FirstOrDefault()
+            ?.GetObservable(PanelView.ModeProperty)
+            .Subscribe(new AnonymousObserver<PanelMode>(OnSurface));
+
+        _settled = true;
 
         // Being put back by the strip means having missed whatever happened while it was out, so
         // a page catches up rather than trusting what it last drew.
@@ -1047,6 +1214,31 @@ public abstract class LoadoutPage : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _mode.Changed -= OnChanged;
+
+        _sized?.Dispose();
+        _sized = null;
+        _settled = false;
+    }
+
+    /// <summary>
+    /// The surface went mini, or came back. Nothing is redrawn on the way in — the subscription
+    /// delivers the current mode immediately and the attach below is about to draw anyway.
+    /// </summary>
+    private void OnSurface(PanelMode mode)
+    {
+        var mini = mode == PanelMode.Mini;
+
+        if (mini == Mini)
+        {
+            return;
+        }
+
+        Mini = mini;
+
+        if (_settled)
+        {
+            Dispatcher.UIThread.Post(Refresh);
+        }
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
@@ -1292,10 +1484,24 @@ public sealed class ItemPage : LoadoutPage
             }));
         }
 
+        var rows = Mode.Slots(_item);
+
+        if (rows.Count == 0)
+        {
+            _list.Children.Add(LoadoutPages.Muted(Mode.EmptySlots));
+            return;
+        }
+
+        // **Mini gets neither of the two blocks below.** They are read once when the page opens
+        // and then scrolled past, which is a fair trade on a window and not on six rows: a mini
+        // surface that spends all six saying what a Python is has not answered the question it was
+        // switched to (docs/plans/change-requests.md 38). The full reading is one flip away.
+        var roomy = !Mini || rows.All(row => row.Parts is null);
+
         // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
         // scroller rather than docked above it, or a hull's figures would cost the slot list the
         // same rows on every window.
-        foreach (var line in Mode.Details(_item))
+        foreach (var line in roomy ? Mode.Details(_item) : [])
         {
             // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system
             // a ship is parked in goes on the clipboard from here, to be pasted into the Galaxy
@@ -1307,26 +1513,41 @@ public sealed class ItemPage : LoadoutPage
         // (list.md Phase 38). Here rather than docked above the scroller for the same reason the
         // details are: two gauges would cost the slot list two rows on every window, and they are
         // read once when the page opens rather than watched while scrolling.
-        foreach (var gauge in Mode.Gauges(_item))
+        foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
         {
             _list.Children.Add(LoadoutPages.Gauge(gauge));
         }
 
-        var rows = Mode.Slots(_item);
+        // **Mini shows only the rows that disagree** (the Commander's ruling, 2026-08-25).
+        // Two columns do not fit 512 pixels thirty times over, and the alternative readings were
+        // worse rather than smaller: current-only drops the one fact a Commander standing at a
+        // workshop is there for, and the whole list squeezed is a list nobody can read. What is
+        // left is the question they are actually asking — *what is still to do on this ship* —
+        // which is also the shortest list there is.
+        var slots = Mini && rows.Any(row => row.Parts is not null)
+            ? [.. rows.Where(row => row.Parts is null || row.Marked)]
+            : rows;
 
-        if (rows.Count == 0)
+        if (slots.Count == 0)
         {
-            _list.Children.Add(LoadoutPages.Muted(Mode.EmptySlots));
+            _list.Children.Add(LoadoutPages.Muted("Nothing outstanding on this ship."));
             return;
         }
 
+        // The header, once, above the first slot row — and only where there are slot rows to head
+        // (docs/plans/change-requests.md 38). A suit's list is still an index and has no columns
+        // to label.
+        if (slots.Any(row => row.Parts is not null))
+        {
+            _list.Children.Add(LoadoutPages.SlotHeader());
+        }
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the
         // outfitting screen rather than as thirty-odd names in journal order
         // (remediation.md 12, item 1). A mode that groups nothing draws nothing extra.
         var group = (string?)null;
 
-        foreach (var row in rows)
+        foreach (var row in slots)
         {
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
