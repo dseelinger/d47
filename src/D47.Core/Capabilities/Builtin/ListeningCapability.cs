@@ -539,7 +539,10 @@ public static class ListeningCapability
                 // covers the detector's onset delay in the hands-free modes for the same reason
                 // and by the same mechanism — the gate opens retroactively into the ring either
                 // way (list.md Phase 13).
-                AppliesWhen = s => s.Listening.PushToTalkKey is not null || IsHandsFree(s.Listening.Mode),
+                // The button counts as much as the key: pre-roll covers the polling delay on
+                // whichever opened the gate, and a Commander bound only to a stick used to find
+                // this row missing (GitHub issue 44).
+                AppliesWhen = s => !NothingIsBound(s.Listening) || IsHandsFree(s.Listening.Mode),
                 Binding = new SettingBinding
                 {
                     Read = s => s.Listening.PreRollMilliseconds.ToString(),
@@ -586,10 +589,10 @@ public static class ListeningCapability
 
         var faults = new StringBuilder();
 
-        if (listening.PushToTalkKey is null && !IsHandsFree(listening.Mode))
+        if (NothingIsBound(listening) && !IsHandsFree(listening.Mode))
         {
             faults.AppendLine(
-                "No push-to-talk key is set, so I never open the microphone. "
+                "No push-to-talk key or button is set, so I never open the microphone. "
                 + "Set one in Settings and I will listen while you hold it.");
         }
 
@@ -632,15 +635,78 @@ public static class ListeningCapability
     }
 
     /// <summary>
+    /// The stick button bound to push-to-talk, printed as a Commander would say it, or null
+    /// (GitHub issue 44).
+    /// <para>
+    /// <b>The one place in this file that reads the setting.</b> Phase 53 gave the button a
+    /// settings key of its own and wired it to the same gate as the key — <c>AppHost</c> opens
+    /// the microphone on <c>boundKey || boundButton</c> — but every sentence here went on asking
+    /// about the key alone. A Commander bound only to a button was told <em>"No push-to-talk key
+    /// is set, so I never open the microphone"</em> while the microphone was opening perfectly
+    /// well. Five sentences said versions of the same wrong thing, which is what a fact read in
+    /// five places eventually does.
+    /// </para>
+    /// </summary>
+    private static string? PrintedButton(ListeningSettings listening) =>
+        Hotas.HotasButton.Parse(listening.PushToTalkButton)?.Describe();
+
+    /// <summary>
+    /// Whether nothing at all opens the microphone on purpose.
+    /// <para>
+    /// <b>Either one, never both required</b> — the Commander's ruling of 2026-08-25. Someone who
+    /// bound a key and later bound a button has said two things, and neither answer is inferred
+    /// from the other having been given.
+    /// </para>
+    /// <para>
+    /// A bound button whose stick is not plugged in is <b>not</b> this case and must never
+    /// collapse into it: that is a Commander whose stick is asleep rather than one who never set
+    /// this up, it has its own warning at the point of binding, and
+    /// <see cref="Hotas.PushToTalkButton.DevicePresent"/> is nullable precisely to keep the two
+    /// apart.
+    /// </para>
+    /// </summary>
+    private static bool NothingIsBound(ListeningSettings listening) =>
+        listening.PushToTalkKey is null && PrintedButton(listening) is null;
+
+    /// <summary>
+    /// Everything the Commander can press to be heard, in one phrase, or null when there is
+    /// nothing. The button is qualified — <em>button 7</em> alone, printed where a key is
+    /// expected, does not say what to reach for.
+    /// <para>
+    /// Public, and taking the key renderer as an argument rather than a
+    /// <see cref="ListeningSurface"/>, so that <c>AppHost</c>'s panel narration reads the same
+    /// sentence this file does. Describing a key is the App's business — Core has no keyboard —
+    /// but deciding <em>what is bound</em> is not, and the panel having its own opinion about
+    /// that is how it came to say the microphone was unbound while it was open
+    /// (GitHub issue 44).
+    /// </para>
+    /// </summary>
+    public static string? PushToTalkGesture(ListeningSettings listening, Func<string, string>? keyLabel)
+    {
+        var printedKey = listening.PushToTalkKey is { } key
+            ? keyLabel?.Invoke(key) ?? key
+            : null;
+
+        return (printedKey, PrintedButton(listening)) switch
+        {
+            ({ } bound, { } button) => $"{bound} or {button} on your stick",
+            ({ } bound, null) => bound,
+            (null, { } button) => $"{button} on your stick",
+            _ => null,
+        };
+    }
+
+    private static string? Gesture(ListeningSettings listening, ListeningSurface surface) =>
+        PushToTalkGesture(listening, surface.KeyLabel);
+
+    /// <summary>
     /// What the Commander should actually do to be heard, which is a different sentence in each
     /// of the four modes. Stated rather than assumed, because "hold RightShift" is wrong advice
     /// in three of them and it is the last line of the answer.
     /// </summary>
     private static string HowToBeHeard(ListeningSettings listening, ListeningSurface surface)
     {
-        var printedKey = listening.PushToTalkKey is { } key
-            ? surface.KeyLabel?.Invoke(key) ?? key
-            : null;
+        var gesture = Gesture(listening, surface);
 
         return listening.Mode switch
         {
@@ -651,14 +717,14 @@ public static class ListeningCapability
 
             WakeMode => "Say my name, and then whatever you want.",
 
-            ToggleMode when printedKey is not null => $"Press {printedKey} to start, and again to stop.",
+            ToggleMode when gesture is not null => $"Press {gesture} to start, and again to stop.",
 
-            _ when printedKey is not null => $"Hold {printedKey} and say something.",
+            _ when gesture is not null => $"Hold {gesture} and say something.",
 
-            // Hands free with no key bound is a legitimate configuration and the branches above
+            // Hands free with nothing bound is a legitimate configuration and the branches above
             // cover it; this is the one that cannot happen, and says so rather than inventing a
             // gesture.
-            _ => "No key is bound, so nothing opens the microphone.",
+            _ => "Nothing is bound, so nothing opens the microphone.",
         };
     }
 
@@ -685,16 +751,20 @@ public static class ListeningCapability
             report.AppendLine($"Right now: {StateName(state)}.");
         }
 
-        if (listening.PushToTalkKey is { } key)
+        // Both are reported, and both by name. This is the surface whose whole purpose is to
+        // show the state of things that are fine, so a bound button that went unmentioned was
+        // the worst of the five omissions rather than the mildest (GitHub issue 44).
+        if (Gesture(listening, surface) is { } gesture)
         {
-            var printed = surface.KeyLabel?.Invoke(key) ?? key;
-
             report.AppendLine(
-                $"Push-to-talk: {printed} ({(listening.Mode == ToggleMode ? "toggle" : "hold")}).");
+                $"Push-to-talk: {gesture} ({(listening.Mode == ToggleMode ? "toggle" : "hold")}).");
 
-            foreach (var line in DescribeCollision(key, printed, surface))
+            if (listening.PushToTalkKey is { } key)
             {
-                report.AppendLine(line);
+                foreach (var line in DescribeCollision(key, surface.KeyLabel?.Invoke(key) ?? key, surface))
+                {
+                    report.AppendLine(line);
+                }
             }
         }
         else if (IsHandsFree(listening.Mode))

@@ -4149,14 +4149,18 @@ public sealed class AppHost : IDisposable
 
         var listening = Settings.Current.Listening;
 
-        // Describing a key is the App's business — Core has no keyboard — so the gesture is
-        // rendered here and the sentence is chosen in Core, where a test reads what a Commander
-        // reads.
+        // Describing a key is the App's business — Core has no keyboard — so the renderer is
+        // passed down and the sentence is chosen in Core, where a test reads what a Commander
+        // reads. Which bindings exist is Core's answer, not this method's: reading the key alone
+        // here told a Commander bound to a stick button that nothing opened the microphone,
+        // while it was open (GitHub issue 44).
+        var gesture = ListeningCapability.PushToTalkGesture(listening, Input.Gestures.Describe);
+
         Panel.MicrophoneDetail = MicrophoneNarration.For(
             state,
             listening.Mode,
             Wake.Phrases,
-            listening.PushToTalkKey is { } key ? Input.Gestures.Describe(key) : null,
+            gesture,
             listening.PreRollMilliseconds);
 
         // The same three facts, worded for a prompt that is waiting on one (remediation.md 10,
@@ -4165,7 +4169,7 @@ public sealed class AppHost : IDisposable
         Panel.ListeningPrompt = MicrophoneNarration.Prompt(
             listening.Mode,
             Wake.Phrases,
-            listening.PushToTalkKey is { } bound ? Input.Gestures.Describe(bound) : null);
+            gesture);
     }
 
     /// <summary>
