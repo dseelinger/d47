@@ -19,8 +19,17 @@ the file into a liar.
 citation resolving to a live entry about something else, reported by nothing — the trap the
 phase-renumbering rule in [CLAUDE.md](../../CLAUDE.md) exists to name. Everything through 38 has
 shipped and been pruned, so **the next number is 44** — the count is not the length of this file.
-41 is taken by an entry on a branch that has not merged yet, which is exactly why the number is
-written down rather than counted: two branches counting entries would both have arrived at 41.
+
+**41 was declined and its number is retired with it.** It asked for a picker among ElevenLabs'
+synthesis models; the answer, 2026-08-25, was to move the pin to the best one and offer no choice
+at all — see `ElevenLabsTtsProvider.DefaultModel` for why, and `CHANGELOG.md` for the release that
+carried it. Declining an entry retires its number exactly as shipping one does: it was cited while
+it was open, and a later entry reusing 41 would leave those citations resolving to something the
+number was never about.
+
+**And this very paragraph arrived as a merge conflict**, because two branches edited the line that
+records the next number — which is the failure the line exists to prevent, arriving by the road it
+warns about. It conflicted rather than resolving quietly, which is the outcome to want.
 
 **So a number cited in the source is often not here, and that is normal rather than a dangling
 reference.** Comments across the codebase cite these by number — `change-requests.md 18` seven
