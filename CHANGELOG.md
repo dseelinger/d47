@@ -167,6 +167,52 @@ open.
 
 ---
 
+## 0.72.1 — 2026-08-25 — The Loadout page tells the truth about your ship
+
+Five defects from one evening, all on the same page, all fixed.
+[#38](https://github.com/dseelinger/d47/issues/38)–[#42](https://github.com/dseelinger/d47/issues/42).
+
+### An empty slot says it is empty
+
+*"Something IS fitted on oxen utility mount 8."* Nothing was — your Type-10 has seven utility
+mounts and no eighth, and Elite leaves empty slots out of the loadout entirely. The page was
+drawing your **plan** as though it were the ship. Empty slots now say `empty →` before the module
+you planned, the same way a slot being swapped says what is in it now.
+
+### The orange dot goes out when the work is done
+
+*"These have been engineered, the orange circles should be gone, right?"* Yes. The dot meant "a
+plan exists", so it could never clear. It now means the hull does not match the plan yet — nothing
+fitted, the wrong module fitted, or the right one without the roll.
+
+### A roll that disagrees with your plan is reported
+
+**The one you could not see.** Your power distributor is planned Weapon Focused and rolled Priority
+Systems, grade 5 with Super Conduits — and it read as finished everywhere, because the row showed
+your plan's own words back. The slot drill now says so outright:
+
+```text
+Your plan asks for Weapon Focused, and this is rolled System Focused.
+```
+
+A slot you never rolled is obvious the moment you look at it. A slot you rolled the wrong way looks
+exactly like one you rolled right.
+
+### Blueprints are named the way you name them
+
+One page carried two spellings of one blueprint — `Heavy Duty Hull Reinforcement` on the planned
+slots and `HullReinforcement_HeavyDuty` on the fitted-but-unplanned one. The join existed; nothing
+was reading it.
+
+### Engineers stop offering work they cannot do
+
+*"Selene Jean can't do Shield Boosters, shouldn't appear."* Quite right — and worse, every line
+offered under her name was about a slot with **nothing in it**. An engineer cannot roll an empty
+mount; that is shopping, not engineering, and putting it under an engineer's name sends you to a
+workshop for work that cannot be done there.
+
+---
+
 ## 0.69.0 — 2026-08-24 — A line says what it is about
 
 ### An empty slot names the module, not the mounting point

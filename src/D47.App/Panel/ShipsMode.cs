@@ -586,13 +586,13 @@ public sealed class ShipsMode(
                     // word for neither — because a row with a blank note reads as a row d47 has
                     // nothing to say about rather than as an empty slot.
                     plan is not null ? plan.Describe() : Describe(module) ?? Vacant(build, fitted),
-                    plan is not null)
+                    Outstanding(plan, module))
                 {
                     Group = ShipSlot.Heading(slot.Kind),
 
                     // Read off the fitted module rather than off the plan, because they answer
-                    // different questions (remediation.md 15, item 10): the dot beside this says a
-                    // plan exists, and the gear says a roll has already been done.
+                    // different questions (remediation.md 15, item 10): the dot beside this says
+                    // there is work left to do, and the gear says a roll has already been done.
                     Engineered = module?.Blueprint is { Length: > 0 },
 
                     Parts = Parted(slot, plan, module, build, fitted),
@@ -643,7 +643,13 @@ public sealed class ShipsMode(
             Planned(plan)
             ?? (module is not null ? EliteSpecifications.ModuleName(module.Item) ?? module.Item : null),
             Vacant(build, fitted),
-            plan?.Blueprint ?? module?.Blueprint,
+
+            // The Commander's words either way. A plan stores the readable name they picked and
+            // the journal stores a symbol, so taking whichever is there put two spellings of one
+            // blueprint on one page — "Heavy Duty Hull Reinforcement" on the planned slots and
+            // "HullReinforcement_HeavyDuty" on the fitted-but-unplanned one (GitHub issue 39).
+            // BlueprintCatalogue.NameOf is the join and nothing here was reading it.
+            plan?.Blueprint ?? Readable(module?.Blueprint),
             plan?.Grade ?? module?.BlueprintLevel,
             plan?.Experimental ?? module?.Experimental,
             Effects(module))
@@ -652,10 +658,158 @@ public sealed class ShipsMode(
             // because they are different facts and neither is the other's substitute.
             Now = Standing(plan, module),
 
+            // And where the plan names something and the slot is *empty*, which drew exactly like
+            // a fitted module and was reported twice as "something IS fitted on oxen utility mount
+            // 8" (GitHub issue 38). Nothing was: Elite omits empty slots, so the absence is the
+            // fact, and the row has to carry it rather than leaving the plan to speak for the hull.
+            NotFitted = plan is { IsEmpty: false } && module is null,
+
+            // The roll that is actually on the module, where the plan asked for a different one
+            // (GitHub issue 42). Silent before this, because the row showed the plan's own words
+            // back: a power distributor planned Weapon Focused and rolled Priority Systems read as
+            // finished everywhere. A slot never rolled is obvious the moment you look at it; a slot
+            // rolled the wrong way looks exactly like one rolled right, which is the case a plan
+            // exists to catch.
+            RolledInstead = RolledInstead(plan, module),
+
             // Whether the module this row names — the planned one where there is a plan — is one a
             // pledge is needed to buy (list.md Phase 38).
             Gated = EliteSpecifications.Module(plan?.Variant ?? module?.Item)?.NeedsPledge ?? false,
         };
+
+    /// <summary>
+    /// Whether this slot still has work in it (GitHub issue 38).
+    /// <para>
+    /// <b>The marker used to mean "a plan exists", and that is why it never cleared.</b> Reported
+    /// against <c>Military01</c> and <c>Military02</c>, rolled <c>HullReinforcement_HeavyDuty</c> G5
+    /// with Deep Plating exactly as planned and still carrying a dot that reads as outstanding
+    /// work — <i>"these have been engineered, the orange circles should be gone, right?"</i> Yes.
+    /// A plan that has been carried out is a plan with nothing left in it, and a mark that cannot
+    /// go out is not a mark, it is decoration.
+    /// </para>
+    /// <para>
+    /// So it means <em>the hull does not match the plan yet</em>: nothing fitted, a different
+    /// module fitted, or the right module without the roll the plan asks for. Where the plan names
+    /// no engineering, having the module is the whole of it.
+    /// </para>
+    /// </summary>
+    private static bool Outstanding(SlotPlan? plan, ShipModule? module)
+    {
+        if (plan is null || plan.IsEmpty)
+        {
+            return false;
+        }
+
+        // Nothing there yet, so everything the plan asks for is still to do. This is also the case
+        // that used to draw as though the planned module were fitted (GitHub issue 38).
+        if (module is null)
+        {
+            return true;
+        }
+
+        if (!IsWhatWasWanted(plan, module))
+        {
+            // Something else is in the slot.
+            return true;
+        }
+
+        if (plan.Blueprint is not { Length: > 0 })
+        {
+            // The plan wanted a module and not a roll, and the module is here.
+            return false;
+        }
+
+        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (plan.Grade > 0 && module.BlueprintLevel < plan.Grade)
+        {
+            return true;
+        }
+
+        // An experimental the plan asks for and the roll has not got. The other way round is not
+        // outstanding work — a Commander who took a better effect than they planned has finished.
+        return plan.Experimental is { Length: > 0 } wanted
+               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The blueprint in the Commander's words rather than the journal's (GitHub issue 39).
+    /// <para>
+    /// A symbol nothing knows is passed through rather than dropped: an unknown blueprint spelled
+    /// badly is still information, and hiding it would turn a cosmetic fault into a missing one.
+    /// </para>
+    /// </summary>
+    private static string? Readable(string? blueprint) =>
+        blueprint is not { Length: > 0 }
+            ? null
+            : BlueprintCatalogue.NameOf(blueprint) ?? blueprint;
+
+    /// <summary>
+    /// The roll that is on the module, where the plan asked for a different one (GitHub issue 42).
+    /// <para>
+    /// <b>The disagreement a plan exists to catch, and the one d47 was silent about.</b> A slot
+    /// with nothing in it is reported by two different paths already; a slot carrying the right
+    /// module engineered the <em>wrong way</em> was reported by none, because the row printed
+    /// <c>plan?.Blueprint ?? module?.Blueprint</c> and the plan always won. Measured on the
+    /// Commander's own Type-10: a power distributor planned Weapon Focused, rolled Priority
+    /// Systems, grade 5 with Super Conduits, reading as finished on the checklist and on this row.
+    /// </para>
+    /// <para>
+    /// Null where they agree, where either side is silent, and where nothing is fitted — that last
+    /// one is <see cref="LoadoutParts.NotFitted"/>'s to say, and two marks for one fact would be
+    /// worse than the one that was missing.
+    /// </para>
+    /// </summary>
+    private static string? RolledInstead(SlotPlan? plan, ShipModule? module)
+    {
+        if (plan?.Blueprint is not { Length: > 0 } wanted || module?.Blueprint is not { Length: > 0 } rolled)
+        {
+            return null;
+        }
+
+        var here = Readable(rolled);
+
+        return here is { Length: > 0 } && !string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase)
+            ? here
+            : null;
+    }
+
+    /// <summary>
+    /// Whether the fitted module is the one the plan asked for (GitHub issue 38).
+    /// <para>
+    /// <b>How exact the plan is decides how exact the match has to be</b>, and that is
+    /// <see cref="SlotPlan.Variant"/>'s whole reason for existing: <em>"a pulse laser, I do not
+    /// mind which"</em> is a real plan and is the name alone, and a large gimballed one is that
+    /// plan made exact. So a plan naming only a module is met by any module of that kind, and one
+    /// naming a variant is met by that symbol and nothing else.
+    /// </para>
+    /// <para>
+    /// Not <see cref="Standing"/>, which compares the <em>printed</em> names and would read an 8E
+    /// Cargo Rack as failing to satisfy a plan for "a Cargo Rack". That comparison is right for
+    /// deciding whether a row has two things worth saying and wrong for deciding whether there is
+    /// work left, which is how one function serving both would have gone quietly wrong.
+    /// </para>
+    /// </summary>
+    private static bool IsWhatWasWanted(SlotPlan plan, ShipModule module)
+    {
+        if (plan.Variant is { Length: > 0 } variant)
+        {
+            return string.Equals(variant, module.Item, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (plan.Module is not { Length: > 0 } wanted)
+        {
+            // A plan asking only for a roll is about whatever is in the slot.
+            return true;
+        }
+
+        var here = EliteSpecifications.Module(module.Item)?.Name;
+
+        return here is { Length: > 0 } && string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// The fitted module's name, where a plan names a <em>different</em> one and both are worth
@@ -1026,6 +1180,25 @@ public sealed class ShipsMode(
                 $"{grade}{ChecklistNaming.Readable(blueprint)}"
                 + (module.Experimental is { Length: > 0 } effect ? $", {effect}" : string.Empty),
                 LoadoutTone.Engineered));
+        }
+
+        // And whether that is the roll the plan asked for (GitHub issue 42).
+        //
+        // **The case a plan exists to catch, and the one nothing said out loud.** Both facts were
+        // already on this page — the plan in its own block, the roll in this one — and a Commander
+        // had to notice that two blueprint names differed. A slot never rolled is obvious the
+        // moment you look at it; a slot rolled the wrong way looks exactly like one rolled right.
+        // Measured on the Commander's own Type-10: a power distributor planned Weapon Focused,
+        // rolled Priority Systems to grade 5 with Super Conduits, reading as finished everywhere.
+        //
+        // Said here rather than on the row because the row's roll text is never trimmed and has to
+        // fit at 620 pixels; naming both blueprints measured 395 in a 368 row. The row carries the
+        // marker and this page carries the sentence, which is the division it exists for.
+        if (RolledInstead(build.For(slot), module) is { Length: > 0 } instead)
+        {
+            lines.Add(new LoadoutLine(
+                $"Your plan asks for {build.For(slot)!.Blueprint}, and this is rolled {instead}.",
+                LoadoutTone.Danger));
         }
 
         return lines;

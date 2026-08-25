@@ -821,6 +821,21 @@ public static class LoadoutPages
                 Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
                 inlines.Add(arrow);
             }
+            else if (parts.NotFitted)
+            {
+                // An empty slot, in the place the fitted module would be (GitHub issue 38). Without
+                // it a planned module in an empty slot draws exactly like one on the hull, which is
+                // what "something IS fitted on oxen utility mount 8" was reading.
+                var empty = new Run("empty");
+
+                Themed(empty, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(empty);
+
+                var arrow = new Run("  →  ");
+
+                Themed(arrow, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+                inlines.Add(arrow);
+            }
 
             inlines.Add(new Run(wanted) { FontWeight = FontWeight.Bold });
 
@@ -911,6 +926,11 @@ public static class LoadoutPages
 
         if (parts.Blueprint is { Length: > 0 } blueprint)
         {
+            // Deliberately the plan's word alone, even where the roll disagrees with it (GitHub
+            // issue 42). This text never gets trimmed, so it has to fit at 620 pixels, and naming
+            // both blueprints does not — measured at 395 in a 368 row. The disagreement is carried
+            // by the row's marker and said in full one level down, which is the division the slot
+            // drill already exists for: it can afford to say both where a one-line row cannot.
             said.Add(parts.Grade is { } grade and > 0
                 ? $"{blueprint} (G{grade.ToString(CultureInfo.InvariantCulture)})"
                 : blueprint);
