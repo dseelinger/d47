@@ -20,6 +20,84 @@ the file as it stood then.
 
 ---
 
+## 0.72.0 — 2026-08-25 — Every voice can come from somewhere different
+
+**Phase 57.** One provider used to speak for everybody. Now six slots each name their own, and the
+one that matters most is the one you never chose: **anything carrying another Commander's words
+speaks through Edge, which is free.**
+
+### Six slots, and they were already there
+
+| Slot | Who is in it |
+|---|---|
+| **Aboard** | Your ship's AI and your crew |
+| **Carrier** | Your fleet carrier's captain and its tower |
+| **NPCs** | Stations, police, and every other ship the game speaks for |
+| **People you know** | Your friends, your wing and your squadron |
+| **Direct messages** | A Commander messaging you directly |
+| **Anyone in range** | Local and system chat — anybody at all |
+
+None of those lines is new. `RadioVoice.IsOverTheAir` has separated the cockpit from the radio
+since Phase 11, the cast has held five roles since then, and every re-voiced message has always
+carried the channel it arrived on. What was missing was anything reading them together.
+
+The human channels sort **by consent rather than by humanity**, which is the part worth arguing
+about: a squadron mate and a stranger shouting in local are both real people, and only one of them
+is somebody you chose. `player` gets its own slot because whether a direct message implies contact
+is your call and not the code's.
+
+### Why the strangers are on the free one
+
+Local and system chat are written by other players, arrive in whatever volume they choose, and go
+straight to a synthesiser billed **per character**. Somebody spamming local chat was spending your
+money by typing. Every slot that reaches you over a radio now starts on Edge, and choosing a paid
+provider for one of them says plainly what that means at the moment you choose it.
+
+**Your carrier moved too**, and it is worth saying why: its captain and its tower are Directive
+47's own inventions rather than anybody else's text, and they cost almost nothing. They went to
+Edge because they come over a radio, which is the line being drawn. Put them back whenever you
+like — the voices you cast are remembered per provider, so moving them and moving them back costs
+nothing.
+
+**Free is not private, and the disclosure no longer lets that read the other way.** Edge costs
+nothing and still sends every line to `speech.platform.bing.com`. Putting local chat on Edge means
+nobody can run up a bill with it; it does not mean those words stay on your machine. Nothing does
+that yet — it needs a voice that runs *on* the machine, which is what Phase 59 is for.
+
+### What you will notice
+
+- **Five new rows**, under *Where each voice comes from*. Leaving one empty puts that slot back on
+  your ship's provider.
+- **Your existing settings are migrated once**, the first time Directive 47 runs with a provider
+  that speaks. The two voices in your cockpit keep whatever you chose; the other five move to
+  Edge. Nothing moves if you have chosen `none` — asking for silence is not answered by five slots
+  starting to talk.
+- **Each slot's voice picker offers its own provider's voices**, and what you have chosen is filed
+  under the provider it came from. A carrier left on Edge keeps its captain while your companion
+  moves to ElevenLabs and back.
+- **What it costs now breaks down per slot**, beside the per-provider total it has had since Phase
+  19. The two sum the same charges, so they cannot drift apart.
+- **The privacy disclosure is a table**, leading with whether another player's words are leaving
+  and where they are going.
+
+### Underneath
+
+Two slots choosing one provider **share one client**. That is not tidiness:
+`ElevenLabsTtsProvider.MaxConcurrent` gates the account rather than the pipeline, and six clients
+would each believe they owned the whole concurrency budget — the fault Phase 11 already fixed once,
+which arrives as a red banner and a sentence you never hear. A provider is released only when the
+*last* slot leaves it.
+
+The speaking rate follows the slot's provider, which nobody had written down and which is not
+optional: ElevenLabs **rejects** a rate outside its range rather than clamping it, so a figure
+chosen for Edge, applied to a carrier that has since moved, is not a fast carrier but a silent one.
+
+One item of the phase is **not** finished and is left open rather than ticked on its better half:
+*no other player's text has to leave the machine*. The cost half is settled outright; the egress
+half needs a local voice, and there is not one yet.
+
+---
+
 ## 0.71.2 — 2026-08-25 — Two things it was saying that were not true
 
 Both found in one evening of flying, and both were D47 misdescribing itself rather than

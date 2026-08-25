@@ -79,8 +79,8 @@ public sealed class ScenarioWorld : IDisposable
             {
                 Silence = () => { },
                 Beds = () => [],
-                Voices = () => [],
-                VoiceLabel = id => id,
+                Voices = _ => [],
+                VoiceLabel = (_, id) => id,
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),

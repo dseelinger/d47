@@ -86,20 +86,57 @@ public static class VoiceMemory
     /// </summary>
     public static D47Settings Reconciled(D47Settings settings)
     {
-        var selected = TtsProviderCatalog.Selected(settings.Speech.Provider).Id;
+        // Before anything is compared, because the comparison is against the slot's provider and
+        // a file from before Phase 57 has not got one yet. Returns the same instance when there
+        // is nothing to move, so a reconciled file stays a no-write.
+        settings = VoiceGroups.Migrated(settings);
 
-        if (string.Equals(settings.Speech.VoicesProvider, selected, StringComparison.Ordinal))
+        settings = Reconciled(settings, VoiceGroup.Aboard);
+        settings = Reconciled(settings, VoiceGroup.Carrier);
+
+        return settings;
+    }
+
+    /// <summary>
+    /// The same question asked of one slot. The two slots that own a stored voice are reconciled
+    /// independently since Phase 57, because they can be on two different providers — a carrier
+    /// left on Edge while the companion moves to ElevenLabs must not have its captain's voice
+    /// filed away as though it had moved too.
+    /// </summary>
+    private static D47Settings Reconciled(D47Settings settings, VoiceGroup group)
+    {
+        var selected = VoiceGroups.ProviderFor(settings.Speech, group);
+        var chosenFor = ChosenFor(settings.Speech, group);
+
+        if (string.Equals(chosenFor, selected, StringComparison.Ordinal))
         {
             return settings;
         }
 
-        if (settings.Speech.VoicesProvider is { } chosenFor)
-        {
-            return Switched(settings, chosenFor, selected);
-        }
-
-        return settings with { Speech = settings.Speech with { VoicesProvider = selected } };
+        return chosenFor is null
+            ? Stamped(settings, group, selected)
+            : Switched(settings, group, chosenFor, selected);
     }
+
+    /// <summary>Which provider this slot's live voices were chosen from, or null if unrecorded.</summary>
+    private static string? ChosenFor(SpeechSettings speech, VoiceGroup group) => group switch
+    {
+        VoiceGroup.Carrier => speech.CarrierVoicesProvider,
+        _ => speech.VoicesProvider,
+    };
+
+    /// <summary>
+    /// Records which provider this slot's voices belong to without touching them. For a file
+    /// written before d47 kept the fact — trusted rather than cleared, for the reason above.
+    /// </summary>
+    private static D47Settings Stamped(D47Settings settings, VoiceGroup group, string provider) => group switch
+    {
+        VoiceGroup.Carrier => settings with
+        {
+            Speech = settings.Speech with { CarrierVoicesProvider = provider },
+        },
+        _ => settings with { Speech = settings.Speech with { VoicesProvider = provider } },
+    };
 
     /// <summary>
     /// The same settings with the live voice slots emptied of <paramref name="from"/>'s choices,
@@ -112,9 +149,27 @@ public static class VoiceMemory
     /// any of this was remembered. Filing them under a guess would offer one provider's ids back
     /// as another's, which is the failure this whole mechanism exists to stop.
     /// </param>
-    public static D47Settings Switched(D47Settings settings, string? from, string to)
+    public static D47Settings Switched(D47Settings settings, string? from, string to) =>
+        Switched(Switched(settings, VoiceGroup.Aboard, from, to), VoiceGroup.Carrier, from, to);
+
+    /// <summary>
+    /// The same move for one slot's voices only (list.md Phase 57).
+    /// <para>
+    /// <b>Which fields belong to which slot is the whole of the difference.</b> The ship's AI owns
+    /// the one voice and every per-core pairing behind it; the carrier owns its captain and its
+    /// tower. A slot moving takes its own fields and leaves the other's alone — and both file into
+    /// the same <see cref="VoiceChoices"/> under the provider they came from, merging rather than
+    /// overwriting, so a provider that held both does not lose half of itself when one slot leaves.
+    /// </para>
+    /// <para>
+    /// The four comms slots never reach here. They have no stored voice: a sender is drawn from
+    /// the provider's pool at the moment they speak, and <see cref="Audio.VoiceCasting"/> drops
+    /// those assignments when the slot moves.
+    /// </para>
+    /// </summary>
+    public static D47Settings Switched(D47Settings settings, VoiceGroup group, string? from, string to)
     {
-        var stashed = Remembered(settings);
+        var mine = Remembered(settings);
         var restoring = settings.Speech.ProviderVoices.GetValueOrDefault(to) ?? new VoiceChoices();
 
         var remembered = new Dictionary<string, VoiceChoices>(
@@ -123,7 +178,9 @@ public static class VoiceMemory
 
         if (from is not null)
         {
-            if (stashed.IsEmpty)
+            var filed = Merged(remembered.GetValueOrDefault(from) ?? new VoiceChoices(), mine, group);
+
+            if (filed.IsEmpty)
             {
                 // Nothing was chosen while that provider was selected, so there is nothing to
                 // come back to. Removed rather than written empty: an entry that restores
@@ -132,36 +189,72 @@ public static class VoiceMemory
             }
             else
             {
-                remembered[from] = stashed;
+                remembered[from] = filed;
             }
         }
 
-        // The provider being switched to no longer has anything owed to it — what it had is now
-        // live. Left in place it would be restored a second time over choices made since.
-        remembered.Remove(to);
+        // The provider being switched to no longer has *this slot's* choices owed to it — they
+        // are now live. Left in place they would be restored a second time over choices made
+        // since. The other slot's stay exactly where they are, because they are still owed.
+        var owed = Merged(restoring, new VoiceChoices(), group);
 
-        return settings with
+        if (owed.IsEmpty)
         {
-            Speech = settings.Speech with
-            {
-                Voice = restoring.Ship,
-                CarrierCaptainVoice = restoring.CarrierCaptain,
-                TowerVoice = restoring.Tower,
-                VoicesProvider = to,
-                ProviderVoices = remembered,
-            },
-            Persona = settings.Persona with
-            {
-                Voices = new Dictionary<string, string>(restoring.Cores, StringComparer.Ordinal),
+            remembered.Remove(to);
+        }
+        else
+        {
+            remembered[to] = owed;
+        }
 
-                // Restored with the pairings it describes. Cleared when there are none, which is
-                // what lets the pairing run against a provider's list for the first time —
-                // leaving it set was how eleven cores kept pointing at voices that had stopped
-                // existing.
-                VoicesPaired = restoring.Paired,
+        var restored = Stamped(Restored(settings, restoring, group), group, to);
+
+        return restored with { Speech = restored.Speech with { ProviderVoices = remembered } };
+    }
+
+    /// <summary>One slot's fields taken from <paramref name="taking"/>, the rest left as they are.</summary>
+    private static VoiceChoices Merged(VoiceChoices held, VoiceChoices taking, VoiceGroup group) => group switch
+    {
+        VoiceGroup.Carrier => held with
+        {
+            CarrierCaptain = taking.CarrierCaptain,
+            Tower = taking.Tower,
+        },
+        _ => held with
+        {
+            Ship = taking.Ship,
+            Cores = taking.Cores,
+            Paired = taking.Paired,
+        },
+    };
+
+    /// <summary>The live slots filled from what was filed under the provider being switched to.</summary>
+    private static D47Settings Restored(D47Settings settings, VoiceChoices restoring, VoiceGroup group) =>
+        group switch
+        {
+            VoiceGroup.Carrier => settings with
+            {
+                Speech = settings.Speech with
+                {
+                    CarrierCaptainVoice = restoring.CarrierCaptain,
+                    TowerVoice = restoring.Tower,
+                },
+            },
+            _ => settings with
+            {
+                Speech = settings.Speech with { Voice = restoring.Ship },
+                Persona = settings.Persona with
+                {
+                    Voices = new Dictionary<string, string>(restoring.Cores, StringComparer.Ordinal),
+
+                    // Restored with the pairings it describes. Cleared when there are none, which
+                    // is what lets the pairing run against a provider's list for the first time —
+                    // leaving it set was how eleven cores kept pointing at voices that had stopped
+                    // existing.
+                    VoicesPaired = restoring.Paired,
+                },
             },
         };
-    }
 
     /// <summary>The choices currently live, as one value.</summary>
     public static VoiceChoices Remembered(D47Settings settings) => new()

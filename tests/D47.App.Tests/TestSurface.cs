@@ -81,8 +81,8 @@ public static class TestSurface
             {
                 Silence = () => { },
                 Beds = () => [.. CueLibrary.Load().BedNames],
-                Voices = () => [.. (voices ?? []).Select(voice => voice.Id)],
-                VoiceLabel = id => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
+                Voices = _ => [.. (voices ?? []).Select(voice => voice.Id)],
+                VoiceLabel = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),

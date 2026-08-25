@@ -4,7 +4,20 @@ using D47.Core.Configuration;
 namespace D47.Core.Audio;
 
 /// <summary>What one provider has been asked to say this session.</summary>
-public sealed record SpeechCharge(string ProviderId, long Characters, int Utterances);
+public sealed record SpeechCharge(string ProviderId, long Characters, int Utterances)
+{
+    /// <summary>
+    /// Which slot it was speaking for, or null for the per-provider total that covers all of
+    /// them (list.md Phase 57).
+    /// <para>
+    /// An init property rather than a fourth positional one, deliberately: every existing reader
+    /// asks a provider what it cost, and that question and its answer are unchanged. The slot is
+    /// the breakdown underneath — a question nobody could ask before, because until this phase
+    /// one provider spoke for everybody and the answer would always have been "all of it".
+    /// </para>
+    /// </summary>
+    public VoiceGroup? Group { get; init; }
+}
 
 /// <summary>
 /// What the voices have cost, beside what the model costs (list.md Phase 19).
@@ -31,7 +44,13 @@ public sealed record SpeechCharge(string ProviderId, long Characters, int Uttera
 /// </summary>
 public sealed class SpeechSpend
 {
-    private readonly Dictionary<string, SpeechCharge> _byProvider = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Counted against the provider <em>and</em> the slot, because the two answer different
+    /// questions and the bill only knows the first. Keyed by both so the per-provider total is a
+    /// sum of the rows beneath it rather than a second tally kept alongside them — two counters
+    /// for one fact are two counters that can disagree.
+    /// </summary>
+    private readonly Dictionary<(string Provider, VoiceGroup? Group), SpeechCharge> _charges = new();
     private readonly Lock _lock = new();
 
     /// <summary>
@@ -68,7 +87,11 @@ public sealed class SpeechSpend
     /// synthesised before it — which is the case that makes "count what was sent" different from
     /// "count what was said".
     /// </summary>
-    public void Record(string providerId, int characters)
+    /// <param name="group">
+    /// Which slot was speaking, or null where the caller has no slot to name — the audition path
+    /// and every test that is not about the breakdown.
+    /// </param>
+    public void Record(string providerId, int characters, VoiceGroup? group = null)
     {
         if (characters <= 0)
         {
@@ -77,9 +100,10 @@ public sealed class SpeechSpend
 
         lock (_lock)
         {
-            var held = _byProvider.GetValueOrDefault(providerId) ?? new SpeechCharge(providerId, 0, 0);
+            var key = (providerId, group);
+            var held = _charges.GetValueOrDefault(key) ?? new SpeechCharge(providerId, 0, 0) { Group = group };
 
-            _byProvider[providerId] = held with
+            _charges[key] = held with
             {
                 Characters = held.Characters + characters,
                 Utterances = held.Utterances + 1,
@@ -116,7 +140,33 @@ public sealed class SpeechSpend
         {
             lock (_lock)
             {
-                return [.. _byProvider.Values.OrderByDescending(charge => charge.Characters)];
+                return
+                [
+                    .. _charges.Values
+                        .GroupBy(charge => charge.ProviderId, StringComparer.OrdinalIgnoreCase)
+                        .Select(perProvider => new SpeechCharge(
+                            perProvider.Key,
+                            perProvider.Sum(charge => charge.Characters),
+                            perProvider.Sum(charge => charge.Utterances)))
+                        .OrderByDescending(charge => charge.Characters),
+                ];
+            }
+        }
+    }
+
+    /// <summary>
+    /// The same characters, broken down by the slot that spoke them, most first (list.md Phase
+    /// 57). Charges recorded without a slot are here with a null <see cref="SpeechCharge.Group"/>
+    /// rather than dropped — an audition is real spend and hiding it would make this disagree
+    /// with <see cref="Charges"/>.
+    /// </summary>
+    public IReadOnlyList<SpeechCharge> BySlot
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return [.. _charges.Values.OrderByDescending(charge => charge.Characters)];
             }
         }
     }
@@ -164,6 +214,44 @@ public sealed class SpeechSpend
 
         return line.ToString();
     }
+
+    /// <summary>
+    /// What each slot has cost, one line per slot that has spoken, or null when nothing has
+    /// (list.md Phase 57).
+    /// <para>
+    /// The question the refactor makes askable for the first time. Until six slots could name six
+    /// providers, "which of them is costing money" had one answer and it was "the one provider" —
+    /// so this is new information rather than a second rendering of <see cref="Describe"/>, and
+    /// the two agree by construction because they sum the same rows.
+    /// </para>
+    /// </summary>
+    public string? DescribeSlots(D47Settings settings)
+    {
+        var charges = BySlot;
+
+        if (charges.Count == 0)
+        {
+            return null;
+        }
+
+        return string.Join(
+            "; ",
+            charges.Select(charge =>
+                $"{SlotName(charge.Group)} {charge.Characters.ToString("N0", CultureInfo.CurrentCulture)} "
+                + $"through {Name(charge.ProviderId)} ({Cost(settings, charge)})"));
+    }
+
+    /// <summary>
+    /// What a slot is called.
+    /// <para>
+    /// Nothing in the running app records a charge without one — an audition bills to the slot
+    /// being cast, which is what keeps this and <see cref="Charges"/> summing the same rows. The
+    /// unattributed case is the harness's, and it is named rather than hidden: a charge dropped
+    /// from this view would make the two disagree, which is the one thing they must not do.
+    /// </para>
+    /// </summary>
+    private static string SlotName(VoiceGroup? group) =>
+        group is { } slot ? VoiceGroups.Info(slot).Name : "Not attributed";
 
     /// <summary>
     /// What one provider's characters came to, in words. Three answers, and they are three
@@ -230,7 +318,15 @@ public sealed class SpeechSpend
 /// what a character is.
 /// </para>
 /// </summary>
-public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend) : ITtsProvider, IDisposable
+/// <param name="group">
+/// Which slot this decorator counts for, or null where there is no slot to name. <b>One thin
+/// decorator per slot over a <em>shared</em> client</b> (list.md Phase 57): the count learns
+/// which slot spoke without <see cref="ITtsProvider"/> learning that slots exist, and without a
+/// second connection to the provider — which is the property
+/// <c>ElevenLabsTtsProvider.MaxConcurrent</c> depends on.
+/// </param>
+public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, VoiceGroup? group = null)
+    : ITtsProvider, IDisposable
 {
     public string Id => inner.Id;
 
@@ -253,14 +349,20 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend) : 
         // Asked of the provider rather than measured here, because a provider may rewrite a line
         // on its way out — ElevenLabs spells numerals — and it is the rewritten length that
         // arrives on the bill.
-        spend.Record(inner.Id, inner.Billable(text).Length);
+        spend.Record(inner.Id, inner.Billable(text).Length, group);
 
         return clip;
     }
 
     /// <summary>
-    /// Forwarded, because the composition root disposes what it built through this interface and
-    /// a decorator that swallowed it would leak an HTTP handle on every provider switch.
+    /// <b>Deliberately does not forward.</b> It used to, because one decorator wrapped one client
+    /// and the root disposed what it built through this interface. Since Phase 57 several of
+    /// these wrap <em>one shared</em> client, and forwarding would have the first slot to be
+    /// rewired dispose the connection the other five are still speaking through. The root owns
+    /// the clients and disposes them by provider, which is the only place that knows when the
+    /// last slot has left one.
     /// </summary>
-    public void Dispose() => (inner as IDisposable)?.Dispose();
+    public void Dispose()
+    {
+    }
 }

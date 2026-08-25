@@ -891,6 +891,26 @@ public sealed record SpeechSettings
     /// </summary>
     public string Provider { get; init; } = "edge";
 
+    /// <summary>
+    /// Which provider speaks for each of the other five slots, keyed by
+    /// <see cref="Audio.VoiceGroupInfo.Id"/> (list.md Phase 57). <see cref="Provider"/> above is
+    /// the sixth and is the one aboard the ship; it keeps its meaning exactly.
+    /// <para>
+    /// <b>Null means a file written before Phase 57</b>, and it loads as every slot following
+    /// <see cref="Provider"/> — which is what d47 did, so such a file sounds identical until
+    /// <see cref="Audio.VoiceGroups.Migrated"/> moves it, once and deliberately. An empty map is
+    /// a different thing: a file this build has written whose Commander has put every slot back
+    /// onto the ship's provider by hand. Nullable rather than merely empty so those two are
+    /// distinguishable, exactly as <see cref="VoicesProvider"/> is.
+    /// </para>
+    /// <para>
+    /// An absent key means the same as <see cref="Provider"/>, so a map that is written but
+    /// partial is safe rather than silent — and a provider id d47 no longer ships resolves the
+    /// way every other selection does, through <c>TtsProviderCatalog.Selected</c>.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? GroupProviders { get; init; }
+
     /// <summary>Null means the provider's own default voice rather than pinning one here.</summary>
     public string? Voice { get; init; }
 
@@ -914,6 +934,22 @@ public sealed record SpeechSettings
     /// </para>
     /// </summary>
     public string? VoicesProvider { get; init; }
+
+    /// <summary>
+    /// The same fact for the carrier's two voices, which since Phase 57 can be on a different
+    /// provider from the ship's.
+    /// <para>
+    /// A second property rather than a map keyed by slot, because exactly two slots own a stored
+    /// voice: the ship's AI (with the per-core pairings behind it) and the carrier. The other
+    /// four draw their voices from the provider's pool at the moment somebody speaks, so there is
+    /// nothing of theirs to remember and a map would have four keys that could never be written.
+    /// </para>
+    /// <para>
+    /// Null carries the same meaning it does above — a file written before this was recorded, and
+    /// trusted rather than cleared for the same reason.
+    /// </para>
+    /// </summary>
+    public string? CarrierVoicesProvider { get; init; }
 
     /// <summary>
     /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
