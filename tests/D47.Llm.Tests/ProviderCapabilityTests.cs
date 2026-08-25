@@ -10,7 +10,13 @@ namespace D47.Llm.Tests;
 /// each has a default — so the failure mode is not an exception but a model being quietly
 /// treated as less capable, or more, than it is.
 /// </para>
+/// <para>
+/// In the demotion collection because one of these answers is no longer a table lookup alone:
+/// effort also reads what the endpoint has refused this session, which is process-wide state
+/// another test class can clear underneath it.
+/// </para>
 /// </summary>
+[Collection(nameof(EndpointDemotionCollection))]
 public class ProviderCapabilityTests
 {
     private static AnthropicLlmProvider Own() => new("test-key");
@@ -84,20 +90,58 @@ public class ProviderCapabilityTests
     }
 
     /// <summary>
-    /// Caching, effort and tool calls are true for everything this provider speaks to, gateway or
-    /// not — they are protocol features rather than deployment ones.
+    /// Caching and tool calls are true for everything this provider speaks to, gateway or not —
+    /// they are protocol features rather than deployment ones.
+    /// <para>
+    /// <b>Effort used to be asserted here and is not any more</b> (list.md Phase 54). It is a
+    /// per-model fact, not a protocol one: Haiku 4.5 predates the 4.6 generation and rejects the
+    /// two fields that carry it. Left in this list, the claim would have been true of the model
+    /// it was written against and wrong about the picker.
+    /// </para>
     /// </summary>
     [Fact]
-    public void CachingEffortAndToolCallsHoldEverywhere()
+    public void CachingAndToolCallsHoldEverywhere()
     {
         foreach (var provider in new[] { Own(), Gateway() })
         {
             var capabilities = provider.CapabilitiesFor("claude-opus-5");
 
             Assert.True(capabilities.SupportsPromptCaching);
-            Assert.True(capabilities.SupportsThinkingEffort);
             Assert.True(capabilities.SupportsToolCalls);
         }
+    }
+
+    /// <summary>
+    /// Which models take <c>thinking</c> and <c>output_config.effort</c>. Haiku 4.5 is the only
+    /// one in the picker that does not, and getting this wrong is not a worse answer — it is a
+    /// 400 on every turn, and a silent one on anything going through <c>FlavourTurn</c>.
+    /// </summary>
+    [Theory]
+    [InlineData("claude-opus-5", true)]
+    [InlineData("claude-opus-4-8", true)]
+    [InlineData("claude-sonnet-5", true)]
+    [InlineData("claude-fable-5", true)]
+    [InlineData("claude-haiku-4-5", false)]
+    public void AnEffortIsDeclaredPerModel(string model, bool expected)
+    {
+        foreach (var provider in new[] { Own(), Gateway() })
+        {
+            Assert.Equal(expected, provider.CapabilitiesFor(model).SupportsThinkingEffort);
+        }
+    }
+
+    /// <summary>
+    /// A model d47 has not heard of is assumed to take an effort, which is the opposite default
+    /// to the cacheable prefix above and deliberately so. Taking an effort is the family rule —
+    /// 4.6 and later — so guessing "current" is right for everything Anthropic ships next, and
+    /// the one case it is wrong about heals itself on the first refusal rather than being wrong
+    /// for ever. Guessing the other way would silently cost every future model its effort dial,
+    /// and nothing would ever correct it.
+    /// </summary>
+    [Fact]
+    public void AModelD47HasNotHeardOfIsAssumedToTakeAnEffort()
+    {
+        Assert.True(Own().CapabilitiesFor("claude-something-7").SupportsThinkingEffort);
     }
 
     /// <summary>

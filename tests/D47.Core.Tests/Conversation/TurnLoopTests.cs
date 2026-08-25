@@ -274,6 +274,61 @@ public class TurnLoopTests
         Assert.True(hard.Effort > lookup.Effort, "A deliberate ask should outrank a plain one.");
     }
 
+    /// <summary>
+    /// A model with no effort dial says so rather than reporting one it never applied (list.md
+    /// Phase 54). Haiku 4.5 predates the 4.6 generation and rejects the fields that carry it, so
+    /// a turn on it thought at whatever it thinks at and no rung describes that.
+    /// <para>
+    /// <b>The request still carries the chosen rung, and that clause is the point of the test.</b>
+    /// What the Commander asked for and what the provider can send are two different questions
+    /// with two different owners: the router picks a rung from the words, and the provider is the
+    /// only thing that knows whether the model will take it. A later simplification that
+    /// short-circuited the request as well as the report would take the effort away from every
+    /// model the moment one endpoint refused it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task AModelWithNoEffortDialReportsNoEffortAndIsStillAskedForOne()
+    {
+        using var install = new TempInstall();
+
+        var provider = new FakeLlmProvider(
+            new LlmStreamEvent.TextDelta("Answered."),
+            new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))
+        {
+            ThinkingEffort = false,
+        };
+
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        ThinkingEffort? routed = null;
+        TurnResult? result = null;
+
+        await foreach (var turnEvent in loop.RunAsync(
+                           "carefully plan the cheapest route to Colonia",
+                           cancellationToken: TestContext.Current.CancellationToken))
+        {
+            switch (turnEvent)
+            {
+                case TurnEvent.Routed step:
+                    routed = step.Effort;
+                    break;
+                case TurnEvent.Completed completed:
+                    result = completed.Result;
+                    break;
+            }
+        }
+
+        Assert.NotNull(result);
+        Assert.Equal(TurnRoute.Model, result.Route);
+
+        Assert.Null(routed);
+        Assert.Null(result.Effort);
+
+        // Asked for all the same. The router's answer is unchanged by the provider's answer.
+        Assert.Equal(ThinkingEffort.Max, provider.LastRequest!.Effort);
+    }
+
     [Fact]
     public async Task HistoryAccumulatesOnlyAnsweredTurns()
     {

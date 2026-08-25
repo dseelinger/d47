@@ -62,6 +62,26 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         new(StringComparer.Ordinal) { "claude-haiku-4-5" };
 
     /// <summary>
+    /// Models that predate the 4.6 generation and so reject <c>thinking</c> and
+    /// <c>output_config.effort</c> outright (list.md Phase 54).
+    /// <para>
+    /// The same family rule as <see cref="BasicWebSearchOnly"/> — 4.6 or later — named as its
+    /// exceptions rather than its members, so a model d47 has not heard of is assumed current.
+    /// <b>A separate field even though the membership is identical today</b>: these are two
+    /// failure modes, not one, and web search is also absent on models that take an effort
+    /// perfectly well. Collapsing them would tie the next correction to either one to both.
+    /// </para>
+    /// <para>
+    /// This is the half that handles what is known, so the case in front of us never costs even
+    /// one failed turn. <see cref="EndpointDemotions"/> is the half that handles what is not.
+    /// Between them the allow-list-versus-deny-list argument stops mattering: neither has to be
+    /// right about the future.
+    /// </para>
+    /// </summary>
+    private static readonly HashSet<string> LegacyThinkingModels =
+        new(StringComparer.Ordinal) { "claude-haiku-4-5" };
+
+    /// <summary>
     /// The ceiling on searches in one turn. Three, which is two things at once.
     /// <para>
     /// It is a <b>cost</b> control, because a search is billed at a penny and a model told to
@@ -103,6 +123,13 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     private readonly bool _ownEndpoint;
 
     /// <summary>
+    /// The address demotions are recorded against. Anthropic's own endpoint is named rather than
+    /// left empty, so that a Commander who types the real URL into <c>llm.endpoint</c> and one
+    /// who leaves it blank share what has been learned instead of probing it twice.
+    /// </summary>
+    private readonly string _endpoint;
+
+    /// <summary>
     /// <paramref name="baseUrl"/> is null for Anthropic's own endpoint. A value points at
     /// something else speaking the same protocol — a gateway or a proxy — which is a setting
     /// the Commander can change without restarting d47 (list.md Phase 4).
@@ -110,6 +137,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     public AnthropicLlmProvider(string apiKey, string? baseUrl = null)
     {
         _ownEndpoint = string.IsNullOrWhiteSpace(baseUrl);
+        _endpoint = string.IsNullOrWhiteSpace(baseUrl) ? "https://api.anthropic.com" : baseUrl;
 
         // Still testing baseUrl rather than the field just set from it: the null analysis
         // follows IsNullOrWhiteSpace and does not follow a bool that happens to mean the same.
@@ -127,7 +155,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
-        SupportsThinkingEffort = true,
+
+        // Both halves, and in this order: what is known, then what has been learned. The flag
+        // has to keep telling the truth after a refusal as well as before one, because it is
+        // what decides whether the fields go on the next request at all.
+        SupportsThinkingEffort =
+            !LegacyThinkingModels.Contains(model)
+            && EndpointDemotions.Allows(_endpoint, Demotable.AdaptiveThinking, model),
+
         SupportsOperatorSystemMessages = OperatorSystemMessageModels.Contains(model),
         MinimumCacheablePrefixTokens = MinimumCacheablePrefix.GetValueOrDefault(model, 1024),
         SupportsToolCalls = true,
@@ -138,8 +173,6 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         LlmRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var parameters = BuildParameters(request);
-
         var usage = LlmUsage.None;
         var stopReason = LlmStopReason.Completed;
 
@@ -150,7 +183,15 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         // not make possible.
         var building = new Dictionary<long, PendingToolCall>();
 
-        var stream = _client.Messages.CreateStreaming(parameters, cancellationToken).GetAsyncEnumerator(cancellationToken);
+        var stream = _client.Messages.CreateStreaming(BuildParameters(request), cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+
+        // How many events have come off the stream, and whether this turn has already spent its
+        // one demotion. Together they are the guard on the retry below: a turn can only be sent
+        // again while nothing has come off it, because nothing yielded can be taken back — the
+        // same point the OpenAI providers make the decision at, arrived at from the other side.
+        var advanced = 0;
+        var demoted = false;
 
         while (true)
         {
@@ -161,6 +202,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             RawMessageStreamEvent streamEvent = default!;
             string? failureMessage = null;
             var failureTransient = false;
+            Demotable? refused = null;
 
             try
             {
@@ -169,6 +211,8 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 {
                     streamEvent = stream.Current;
                 }
+
+                advanced++;
             }
             catch (OperationCanceledException)
             {
@@ -178,10 +222,37 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             {
                 failureMessage = Describe(ex);
                 failureTransient = IsTransient(ex);
+
+                // Read from the exception's own text rather than from Describe's, which
+                // replaces the body with one of d47's sentences for the cases it recognises.
+                refused = ex is AnthropicBadRequestException or AnthropicUnprocessableEntityException
+                    ? WhatWasRejected(ex.Message)
+                    : null;
             }
 
             if (failureMessage is not null)
             {
+                // Advertise, then demote (list.md Phase 29, ported here by Phase 54). The
+                // endpoint named a field it will not accept, so it is recorded against this
+                // endpoint and this model and the turn is sent once more without it. Demote
+                // returns false if that pairing had already refused, which is what makes this
+                // happen exactly once rather than forever.
+                if (advanced == 0 && !demoted && refused is { } rejected
+                    && EndpointDemotions.Demote(_endpoint, rejected, request.Model))
+                {
+                    demoted = true;
+
+                    await stream.DisposeAsync().ConfigureAwait(false);
+
+                    // Rebuilt rather than amended: CapabilitiesFor reads the demotion just
+                    // recorded, so the second request is assembled by the same code that will
+                    // assemble every request after it.
+                    stream = _client.Messages.CreateStreaming(BuildParameters(request), cancellationToken)
+                        .GetAsyncEnumerator(cancellationToken);
+
+                    continue;
+                }
+
                 yield return new LlmStreamEvent.Failed(failureMessage, failureTransient);
                 yield break;
             }
@@ -388,8 +459,22 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             // Adaptive rather than a token budget: budget_tokens is removed on Opus 5 and
             // returns a 400. Summarised display costs nothing extra — thinking is billed the
             // same either way — and it is what lets the panel show progress instead of a pause.
-            Thinking = new ThinkingConfigAdaptive { Display = Display.Summarized },
-            OutputConfig = new OutputConfig { Effort = Translate(request.Effort) },
+            //
+            // Both omitted together on a model that will not take them, and omitted rather than
+            // substituted (list.md Phase 54). Falling back to a budget_tokens thinking config
+            // would mean inventing a token budget per effort rung on the one model that exists
+            // to be cheap, which is the wrong trade in both directions: guess high and the
+            // saving is gone, guess low and the model is worse than the one it replaced. A
+            // model with no effort dial says so — the turn reports no effort rather than a
+            // number nobody chose.
+            // Cast on the null branch because the union type converts from the concrete config
+            // implicitly but not from null, so the ternary needs telling which type it is.
+            Thinking = capabilities.SupportsThinkingEffort
+                ? new ThinkingConfigAdaptive { Display = Display.Summarized }
+                : (ThinkingConfigParam?)null,
+            OutputConfig = capabilities.SupportsThinkingEffort
+                ? new OutputConfig { Effort = Translate(request.Effort) }
+                : null,
             Messages = messages,
         };
     }
@@ -477,6 +562,35 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         }
 
         return properties;
+    }
+
+    /// <summary>
+    /// Which optional field the endpoint refused, if it named one (list.md Phase 54).
+    /// <para>
+    /// Only ever consulted on a 400 or a 422 — a request the server would not accept as written
+    /// — so the question being asked is already "which part of it". <b>Nothing is inferred from
+    /// a rejection that names nothing</b>: a demotion made on a guess is how a working
+    /// capability gets turned off for a session with no way for the Commander to see why.
+    /// </para>
+    /// <para>
+    /// One answer, because <c>thinking</c> and <c>output_config</c> are one capability. Whichever
+    /// of the two the server complained about first, both come off the retry.
+    /// </para>
+    /// </summary>
+    internal static Demotable? WhatWasRejected(string? detail)
+    {
+        if (string.IsNullOrWhiteSpace(detail))
+        {
+            return null;
+        }
+
+        var said = detail.ToLowerInvariant();
+
+        return said.Contains("output_config", StringComparison.Ordinal)
+               || said.Contains("thinking", StringComparison.Ordinal)
+               || said.Contains("effort", StringComparison.Ordinal)
+            ? Demotable.AdaptiveThinking
+            : null;
     }
 
     private static Effort Translate(CoreConversation.ThinkingEffort effort) => effort switch

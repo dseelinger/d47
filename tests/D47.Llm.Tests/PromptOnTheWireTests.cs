@@ -338,4 +338,45 @@ public class PromptOnTheWireTests
         Assert.Equal("adaptive", thinking.GetProperty("type").GetString());
         Assert.False(thinking.TryGetProperty("budget_tokens", out _));
     }
+
+    /// <summary>
+    /// Haiku 4.5 predates the 4.6 generation and rejects both fields outright — a 400, not a
+    /// worse answer (list.md Phase 54). Asserted as <b>absent keys</b> rather than as null
+    /// values, which is the whole question: a serialised <c>"thinking": null</c> is still the
+    /// field being sent, and the model refuses it either way.
+    /// <para>
+    /// Nothing is substituted for them. A <c>budget_tokens</c> fallback would mean inventing a
+    /// token budget per effort rung on the one model that exists to be cheap.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task NeitherThinkingNorEffortReachesAModelThatRejectsThem()
+    {
+        var sent = await SentAsync(Recordings.Request("claude-haiku-4-5"));
+
+        Assert.False(sent.TryGetProperty("thinking", out _));
+        Assert.False(sent.TryGetProperty("output_config", out _));
+
+        // The turn is otherwise a turn. Omitting an effort is not omitting the ceiling.
+        Assert.Equal("claude-haiku-4-5", sent.GetProperty("model").GetString());
+        Assert.True(sent.GetProperty("max_tokens").GetInt32() > 0);
+    }
+
+    /// <summary>
+    /// The partner to the test above, and the reason it is a theory over every current model
+    /// rather than a second <c>Fact</c>. <b>The obvious wrong fix — omit the two fields for
+    /// everyone — makes the Haiku test pass</b>, and only this one catches it.
+    /// </summary>
+    [Theory]
+    [InlineData("claude-opus-5")]
+    [InlineData("claude-opus-4-8")]
+    [InlineData("claude-sonnet-5")]
+    [InlineData("claude-fable-5")]
+    public async Task CurrentModelsAreSentBothOfThem(string model)
+    {
+        var sent = await SentAsync(Recordings.Request(model));
+
+        Assert.Equal("adaptive", sent.GetProperty("thinking").GetProperty("type").GetString());
+        Assert.Equal("medium", sent.GetProperty("output_config").GetProperty("effort").GetString());
+    }
 }

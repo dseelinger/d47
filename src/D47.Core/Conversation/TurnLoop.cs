@@ -530,12 +530,23 @@ public sealed class TurnLoop(
         // rather than a turn that fails (architecture.md §6).
         var webSearch = providerCapabilities.SupportsWebSearch && (WebSearchEnabled?.Invoke() ?? false);
 
+        // What this turn says it thought at, which is not always what it asked for (list.md
+        // Phase 54). A model with no effort dial — Haiku 4.5, or anything an endpoint has
+        // refused the field for — is still sent the chosen rung in the request, because the
+        // provider is the only thing that knows whether it can carry it. What it must not do is
+        // report an effort nobody applied: Routed.Effort and TurnResult.Effort are both nullable
+        // and already render with no effort clause, so the honest answer is available for free.
+        //
+        // This is SupportsThinkingEffort's first reader in src/ — it has been assigned in three
+        // providers and read nowhere, which is how the Haiku defect stayed invisible.
+        var effortReported = providerCapabilities.SupportsThinkingEffort ? effort : (ThinkingEffort?)null;
+
         // What this turn has said so far, tool rounds included. Kept apart from _history until
         // the turn succeeds, so a turn that fails commits nothing — a half-written exchange
         // ending in a tool call nobody answered is worse than no memory of it at all.
         List<ConversationMessage> pending = [new ConversationMessage(ConversationRole.User, Spoken() + input)];
 
-        yield return new TurnEvent.Routed(TurnRoute.Model, effort);
+        yield return new TurnEvent.Routed(TurnRoute.Model, effortReported);
 
         var usage = LlmUsage.None;
         var answer = string.Empty;
@@ -591,7 +602,7 @@ public sealed class TurnLoop(
 
                 yield return new TurnEvent.TextDelta(text);
                 yield return new TurnEvent.Completed(new TurnResult(
-                    TurnOutcome.Failed, TurnRoute.Model, text, effort, Cost: null));
+                    TurnOutcome.Failed, TurnRoute.Model, text, effortReported, Cost: null));
                 yield break;
             }
 
@@ -708,7 +719,7 @@ public sealed class TurnLoop(
             usage.OutputTokens,
             cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
 
-        yield return new TurnEvent.Completed(new TurnResult(turnOutcome, TurnRoute.Model, answer, effort, cost));
+        yield return new TurnEvent.Completed(new TurnResult(turnOutcome, TurnRoute.Model, answer, effortReported, cost));
     }
 
     /// <summary>
