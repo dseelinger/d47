@@ -167,6 +167,27 @@ open.
 
 ---
 
+## 0.72.2 — 2026-08-25 — An effect stays with the upgrade it belongs to
+
+[#31](https://github.com/dseelinger/d47/issues/31). Experimental effects drifted away from the
+engineering upgrade they belong to, and they drifted hardest exactly when it mattered.
+
+A module that is unengineered **and** rank-gated has a blocked upgrade line and an open effect line
+— "has no experimental effect on it" is true of a module you have not rolled yet — so the checklist
+put them in different bands, at opposite ends of the project. The effect floated to the top as
+though it were the next thing to do, with the upgrade it depends on four bands below. An
+experimental effect cannot exist without its upgrade, so it is never the next thing to do on its
+own.
+
+The other half: adding an effect to a module already on your list put it at the **bottom** of the
+plan, with the whole rest of the build in between. Nothing chose that — it fell out of how a
+revision is assembled.
+
+Both are fixed where the list is read rather than where it is stored, so a line you moved by hand
+still lands where you put it.
+
+---
+
 ## 0.72.1 — 2026-08-25 — The Loadout page tells the truth about your ship
 
 Five defects from one evening, all on the same page, all fixed.
