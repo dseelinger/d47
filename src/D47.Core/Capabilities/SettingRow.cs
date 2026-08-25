@@ -12,6 +12,18 @@ public enum SettingKind
     Hotkey,
 
     /// <summary>
+    /// A controller button, bound by pressing it (list.md Phase 53).
+    /// <para>
+    /// Its own kind rather than <see cref="Hotkey"/> with a flag, because the gesture that fills
+    /// it is a different one: a key is caught by the window that has focus, and a button has to be
+    /// walked for — the Commander presses it, d47 works out which one it was, and neither of those
+    /// is a keystroke arriving at a control. The stored form is <c>NonRoamableId#index</c> and is
+    /// never typed by hand.
+    /// </para>
+    /// </summary>
+    HotasButton,
+
+    /// <summary>
     /// Read-only disclosure. Not a value the Commander sets — a value d47 states, rendered as
     /// a row so it sits where the setting it describes does. The egress disclosures are these.
     /// </summary>

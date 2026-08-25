@@ -22,13 +22,18 @@ namespace D47.App.Panel;
 /// <param name="Plans">The last plan of each kind, written by whoever plotted it.</param>
 /// <param name="LookupsEnabled">Whether the galaxy setting is on, for the Plan page's gate.</param>
 /// <param name="OpenSettings">A way to the row that turns it on, where the surface has one.</param>
+/// <param name="Commodities">
+/// The last commodity answer (list.md Phase 49), written by whoever asked — by voice or from the
+/// Market page — so both routes show one answer rather than two searches that could disagree.
+/// </param>
 public sealed record RoutingSurface(
     Func<NavRoute> Route,
     Func<string?> Here,
     CapabilityRegistry? Registry = null,
     RoutePlanBook? Plans = null,
     Func<bool>? LookupsEnabled = null,
-    Action? OpenSettings = null);
+    Action? OpenSettings = null,
+    CommodityBoard? Commodities = null);
 
 /// <summary>
 /// The Routing tab (list.md Phase 37).
@@ -54,6 +59,9 @@ public static class RoutingPages
 
     /// <summary>A system name onto the clipboard, and into the galaxy map.</summary>
     public const string CourseRoot = "routing.course";
+
+    /// <summary>Where to buy a commodity, or where to dump one (list.md Phase 49).</summary>
+    public const string MarketRoot = "routing.market";
 
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
@@ -82,6 +90,7 @@ public static class RoutingPages
         {
             PlanRoot => Plan(surface, nav),
             CourseRoot => Course(surface),
+            MarketRoot => Market(surface),
 
             // Progress is the fallback rather than Plan, because it is the mode that works with
             // nothing switched on and nothing typed.
@@ -105,6 +114,15 @@ public static class RoutingPages
                 registry,
                 () => surface.Route() is { IsPlotted: true } route ? route.Hops[^1].StarSystem : null)
             : Missing("Setting a course is not available on this surface.");
+
+    private static Control Market(RoutingSurface surface) =>
+        surface is { Registry: { } registry, Commodities: { } board }
+            ? new RouteMarketPage(
+                registry,
+                board,
+                surface.LookupsEnabled ?? (() => false),
+                surface.OpenSettings)
+            : Missing("Market lookups are not available on this surface.");
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface)
     {

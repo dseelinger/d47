@@ -213,7 +213,11 @@ public partial class MainWindow : Window
                 host.Capabilities,
                 host.Plans,
                 () => host.Settings.Current.Knowledge.GalaxySearch,
-                OpenSettings));
+                OpenSettings,
+
+                // And the Market page beside them (list.md Phase 49), for the same reason the
+                // plan forms are here and not in the headset: it wants a keyboard.
+                host.Commodities));
 
             // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at

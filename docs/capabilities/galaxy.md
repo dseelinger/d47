@@ -209,6 +209,41 @@ worth saying; which ones they are is the next question.
 Results always say how many matched in total, not just how many were read out. "412 systems
 matched; here are the nearest 5" is a different answer from "there are 5".
 
+### Where to buy it, and what it costs there {#where-to-buy-it}
+
+*Where can I buy tritium?* — and, the same question read backwards, *where do I dump 700 tonnes
+of it?*
+
+**How much you want is part of the question, not a detail.** A station 40 light years further out
+that is 200 credits a tonne cheaper is the wrong answer for eight tonnes and the right one for
+seven hundred and eighty. Tell Directive 47 the tonnage and it ranks by what the whole load costs
+to go and get; leave it out and it ranks by price and tells you the distance.
+
+Say the tonnage and **stations that cannot fill the order drop out entirely**. The cheapest steel
+in the bubble is not an answer if the station is holding nine tonnes of it.
+
+**Every price has a date on it, and this is the part to take seriously.** Prices come from other
+Commanders docking and sharing what they saw. Supply ages fastest of all — a colonisation rush
+strips a station in hours — so an answer that sounded current would be worse than one that admits
+it is a month old:
+
+```text
+Best for buying 700 tonnes of Tritium within 50 ly of Sol: Jameson Memorial (Shinrarta Dezhra),
+14.5 ly, 42,050 cr a tonne, 12,400 in stock, 29,435,000 cr for the load — reported 6 hours ago.
+```
+
+A market **you** stood in yourself is labelled as yours, because it is the one figure with no
+caveat. Stations dropped for quoting prices too old to trust are counted rather than quietly
+skipped — "nothing within fifty light years" and "eleven stations, all quoting last month" are
+different answers, and only one of them means you should look further out.
+
+**Fleet carriers are left out unless you ask for one.** Their prices are set by their owner and
+can be a joke, and the carrier may be a hundred light years away by the time you arrive.
+
+Nothing extra is fetched for any of this. The trade route planner already pulls whole markets for
+everything in range and already caches them, so asking about two commodities in one evening costs
+one lookup, and the ranking runs here on your own machine.
+
 ### When it cannot answer
 
 Everything that can go wrong becomes a sentence rather than an error: the service being
@@ -223,7 +258,7 @@ failed turn.
 Find star systems matching some criteria, nearest first.
 
 ```json
-{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years. For example \u002230\u0022 or \u002210-50\u0022."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to the Commander\u0027s own."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"distance":{"type":"string","description":"How far to look, in light years."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to theirs."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
 ```
 
 A search with no filters is refused rather than run — it would match the whole galaxy.
@@ -233,7 +268,7 @@ A search with no filters is refused rather than run — it would match the whole
 The straight-line distance in light years between two star systems.
 
 ```json
-{"type":"object","properties":{"from":{"type":"string","description":"The system to measure from. Defaults to the Commander\u0027s current system."},"to":{"type":"string","description":"The system to measure to."}},"required":["to"],"additionalProperties":false}
+{"type":"object","properties":{"from":{"type":"string","description":"The system to measure from. Defaults to theirs."},"to":{"type":"string","description":"The system to measure to."}},"required":["to"],"additionalProperties":false}
 ```
 
 The arithmetic is d47's own. The service returns positions and d47 computes the distance from
@@ -244,7 +279,7 @@ the coordinates, so "how far" has the same answer wherever it is asked from.
 Where to buy a named module or ship, nearest first.
 
 ```json
-{"type":"object","properties":{"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 for example \u0022Frame Shift Drive\u0022 or \u0022Bi-Weave Shield Generator\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 for example \u0022Krait MkII\u0022."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
 ```
 
 Module and ship names are **not** in the schema. There are 132 modules and 48 ships, and an
@@ -278,7 +313,7 @@ resolved it to.
 The nearest planets, moons and stars matching some criteria.
 
 ```json
-{"type":"object","properties":{"body_type":{"type":"string","description":"The kind of body, by name \u2014 for example \u0022Earth-like world\u0022, \u0022Neutron Star\u0022, \u0022Water world\u0022 or \u0022Class I gas giant\u0022."},"hotspot":{"type":"string","description":"A mining hotspot material in one of the body\u0027s rings \u2014 for example \u0022Painite\u0022, \u0022Low Temperature Diamonds\u0022 or \u0022Void Opal\u0022."},"hotspot_count":{"type":"integer","description":"Exactly how many overlapping hotspots of that material \u2014 not a minimum. A double or triple hotspot is 2 or 3."},"landable":{"type":"boolean","description":"Only bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."},"reserve_level":{"type":"string","description":"How rich the rings are.","enum":["Common","Depleted","Low","Major","Pristine"]},"ring_type":{"type":"string","description":"Ring composition.","enum":["Icy","Metal Rich","Metallic","Rocky"]},"signal":{"type":"string","description":"A signal on the body\u0027s surface: \u0022Biological\u0022, \u0022Geological\u0022, \u0022Human\u0022, \u0022Guardian\u0022 or \u0022Thargoid\u0022."},"signal_count":{"type":"integer","description":"Exactly how many of that signal \u2014 not a minimum. Leave it out unless the Commander asked for a specific number."},"terraformable":{"type":"boolean","description":"Only terraforming candidates, which are worth far more to map."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"body_type":{"type":"string","description":"The kind of body, by name \u2014 \u0022Earth-like world\u0022, \u0022Class I gas giant\u0022."},"hotspot":{"type":"string","description":"A mining hotspot material in the body\u0027s rings \u2014 \u0022Painite\u0022, \u0022Void Opal\u0022."},"hotspot_count":{"type":"integer","description":"Exactly how many overlapping hotspots \u2014 not a minimum. A triple is 3."},"landable":{"type":"boolean","description":"Only bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"reserve_level":{"type":"string","description":"How rich the rings are.","enum":["Common","Depleted","Low","Major","Pristine"]},"ring_type":{"type":"string","description":"Ring composition.","enum":["Icy","Metal Rich","Metallic","Rocky"]},"signal":{"type":"string","description":"A signal on the body\u0027s surface: \u0022Biological\u0022, \u0022Geological\u0022, \u0022Human\u0022, \u0022Guardian\u0022 or \u0022Thargoid\u0022."},"signal_count":{"type":"integer","description":"Exactly how many of that signal \u2014 not a minimum. Omit unless they asked for a number."},"terraformable":{"type":"boolean","description":"Only terraforming candidates, which are worth far more to map."}},"required":[],"additionalProperties":false}
 ```
 
 One index answers three questions that sound unrelated:

@@ -545,4 +545,57 @@ public interface IRouteService
 public interface ITradePlanService
 {
     Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Where to buy one commodity, or where to dump it (list.md Phase 49).
+    /// <para>
+    /// On this interface rather than on its own, because it fetches nothing new: the same sweep
+    /// the planner runs already returns whole markets, and the same cache already holds them. Two
+    /// questions about the same evening's trading cost one pull.
+    /// </para>
+    /// </summary>
+    Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// One commodity question, with everything the sweep needs beside it (list.md Phase 49).
+/// </summary>
+/// <param name="System">Where to search out from.</param>
+/// <param name="Station">
+/// Where the Commander is standing, if they are. Only used to find the origin's own coordinates,
+/// which is exact for the station under their feet and the one case that matters.
+/// </param>
+/// <param name="Query">What was asked, and how to rank it.</param>
+/// <param name="MaxPriceAge">
+/// How stale a reported price may be, in hours. Inherited from <see cref="TradeQuery.MaxPriceAge"/>
+/// rather than invented a second time — a price bound that meant one thing to the planner and
+/// another to this would be two answers to one question.
+/// </param>
+public sealed record CommoditySearch(
+    string System,
+    string? Station,
+    CommodityQuery Query,
+    int MaxPriceAge = 720);
+
+/// <summary>
+/// What came back, and what a Commander is owed alongside it.
+/// </summary>
+/// <param name="Offers">The ranking, best first.</param>
+/// <param name="Considered">How many markets the sweep returned at all.</param>
+/// <param name="DroppedAsStale">
+/// How many carried a price older than the bound. <b>Said rather than swallowed</b>: "nothing
+/// within fifty light years" and "eleven stations, all of them quoting last month" are different
+/// answers, and only one of them means the Commander should widen the search.
+/// </param>
+/// <param name="OriginKnown">
+/// Whether the sweep found the reference system at all. False means every distance is unknown and
+/// the ranking fell back to price.
+/// </param>
+public sealed record CommodityAnswer(
+    IReadOnlyList<CommodityOffer> Offers,
+    int Considered,
+    int DroppedAsStale,
+    bool OriginKnown)
+{
+    public static readonly CommodityAnswer Empty = new([], 0, 0, false);
 }

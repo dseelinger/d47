@@ -77,6 +77,8 @@ public sealed class AppHost : IDisposable
         EchoCanceller echo,
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
+        D47.Core.Hotas.PushToTalkButton pushToTalkButton,
+        D47.Core.Hotas.PushToTalkSources pushToTalkSources,
         BindsWatch binds,
         HttpModelStore models,
         WhisperTranscriber transcriber,
@@ -114,6 +116,8 @@ public sealed class AppHost : IDisposable
         _binds = binds;
         _microphone = microphone;
         _pushToTalk = pushToTalk;
+        _pushToTalkButton = pushToTalkButton;
+        _pushToTalkSources = pushToTalkSources;
         Models = models;
         _transcriber = transcriber;
         Version = version;
@@ -425,6 +429,13 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
 
     /// <summary>
+    /// The last commodity answer (list.md Phase 49), so the spoken one and the drawn one are one
+    /// answer. In memory rather than on disk, unlike <see cref="Plans"/>: a price is the thing
+    /// here that ages fastest, and a saved one would look current because it was saved.
+    /// </summary>
+    public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -540,6 +551,18 @@ public sealed class AppHost : IDisposable
     private StrongBox<DateTimeOffset?>? _heardAt;
 
     private readonly PushToTalkKey _pushToTalk;
+
+    /// <summary>The stick's half of push-to-talk (list.md Phase 53).</summary>
+    private readonly D47.Core.Hotas.PushToTalkButton _pushToTalkButton;
+
+    /// <summary>The two of them as one gate. Either opens it; the last release closes it.</summary>
+    private readonly D47.Core.Hotas.PushToTalkSources _pushToTalkSources;
+
+    /// <summary>
+    /// The controllers, for the one question the push-to-talk button has to ask outside the tick:
+    /// whether the device list has stopped changing. Null until composition assigns it.
+    /// </summary>
+    public D47.Core.Hotas.IHotasReader? Controllers { get; private set; }
 
     public string Version { get; }
 
@@ -703,6 +726,11 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>());
 
         planBook.Load();
+
+        // In memory rather than loaded, unlike the plan book above: a commodity price is the
+        // thing here that ages fastest, so one restored from disk would look current because it
+        // was saved rather than because it is true (list.md Phase 49).
+        var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
 
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
@@ -1189,6 +1217,13 @@ public sealed class AppHost : IDisposable
         var microphone = new WasapiMicrophone(echo, loggerFactory.CreateLogger<WasapiMicrophone>());
         var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
 
+        // The stick's half of push-to-talk, and the two of them as one gate (list.md Phase 53).
+        // Both are Core types: reading a controller is already a Core contract where reading a
+        // key is a P/Invoke, and the asymmetry buys a path that is driveable with nothing
+        // plugged in.
+        var pushToTalkButton = new D47.Core.Hotas.PushToTalkButton();
+        var sources = new D47.Core.Hotas.PushToTalkSources();
+
         // The only thing that presses a key in the game (architecture.md D4). Built here so
         // there is exactly one, because release_all has to be able to let go of everything and
         // a second injector would hold keys the first one knows nothing about.
@@ -1492,7 +1527,40 @@ public sealed class AppHost : IDisposable
 
                 // What d47 last offered to copy (asked for 2026-08-21). Composed here rather than
                 // inside a capability because two of them write it and the router reads it.
-                clipboardOffer));
+                clipboardOffer,
+
+                // The three waits the compound ship commands need (list.md Phase 52). Core owns
+                // the sequences and none of the waiting, which is what lets the whole boost loop
+                // run in a test in microseconds against a scripted status stream.
+                new ShipCommandSurface
+                {
+                    Enabled = command => ShipCommands.IsEnabled(settings.Current, command),
+
+                    AwaitInternalPanel = (open, token) => AwaitStatus(
+                        status,
+                        current => (current.GuiFocus == Core.Journal.GuiFocus.InternalPanel) == open,
+                        TimeSpan.FromSeconds(3),
+                        open ? "left panel open" : "left panel closed",
+                        logger,
+                        token),
+
+                    // Longer than the others on purpose: the pad lift and the mail slot take real
+                    // seconds, and a launch reported as failed because d47 stopped watching too
+                    // early is the same lie as one reported as succeeded.
+                    AwaitUndocked = token => AwaitStatus(
+                        status,
+                        current => !current.Has(Core.Journal.StatusFlags.Docked),
+                        TimeSpan.FromSeconds(30),
+                        "undocked",
+                        logger,
+                        token),
+
+                    NextStatus = token => NextStatus(status, token),
+                },
+
+                // Where a commodity answer is posted on its way out (list.md Phase 49), so the
+                // Routing tab draws what was just said rather than asking again.
+                commodityBoard));
 
         built = capabilities;
 
@@ -1646,6 +1714,8 @@ public sealed class AppHost : IDisposable
             echo,
             microphone,
             pushToTalk,
+            pushToTalkButton,
+            sources,
             binds,
             models,
             transcriber,
@@ -1760,6 +1830,8 @@ public sealed class AppHost : IDisposable
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
         host.Plans = planBook;
+        host.Controllers = controllers;
+        host.Commodities = commodityBoard;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
@@ -1786,6 +1858,11 @@ public sealed class AppHost : IDisposable
         {
             pushToTalk.Poll();
 
+            // And the stick, on the same tick (list.md Phase 53). The polling rate is not a risk
+            // here for the reason it is not one above: a button read on this tick is no less
+            // responsive than the key it replaces.
+            pushToTalkButton.Poll(controllers.Poll());
+
             // Whether the device is actually delivering audio, which only it knows and which is
             // half of what the panel's microphone indicator says. Sampled here rather than
             // raised, because a device disappearing does not always announce itself.
@@ -1798,8 +1875,16 @@ public sealed class AppHost : IDisposable
             gate.Poll(context.Now);
         });
 
-        pushToTalk.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
-        pushToTalk.Released += () => gate.KeyUp();
+        // Two sources, one gate (list.md Phase 53). Either opens the microphone and the last
+        // release closes it, so letting go of the key while the button is still held does not cut
+        // the Commander off mid-sentence.
+        pushToTalk.Pressed += sources.KeyPressed;
+        pushToTalk.Released += sources.KeyReleased;
+        pushToTalkButton.Pressed += sources.ButtonPressed;
+        pushToTalkButton.Released += sources.ButtonReleased;
+
+        sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
+        sources.Released += () => gate.KeyUp();
 
         // That d47 is listening, said both ways. Both signals have existed since their own
         // phases and neither was ever connected to anything: `listening.wav` ships in
@@ -3801,6 +3886,7 @@ public sealed class AppHost : IDisposable
         // Rebinding while the key is held would leave the gate open with nothing able to close
         // it — the listening equivalent of a stranded key (architecture.md D4, rule 2).
         _pushToTalk.ForceUp();
+        _pushToTalkButton.ForceUp();
 
         // The model, before the key. A Commander who binds a key and finds d47 captures but
         // cannot understand should see the reason in the status answer, not infer it.
@@ -3843,7 +3929,16 @@ public sealed class AppHost : IDisposable
         // re-enters here; the fetch above needs no such thing, because it leaves the setting
         // exactly where the Commander put it.
 
-        var bound = _pushToTalk.Bind(listening.PushToTalkKey);
+        var boundKey = _pushToTalk.Bind(listening.PushToTalkKey);
+
+        // And the stick (list.md Phase 53). Both stay live: a Commander who bound a key and later
+        // bound a button has said two things rather than replaced one.
+        var boundButton = _pushToTalkButton.Bind(
+            D47.Core.Hotas.HotasButton.Parse(listening.PushToTalkButton));
+
+        WarnIfTheStickIsMissing(boundButton);
+
+        var bound = boundKey || boundButton;
 
         if (!ListeningWiring.NeedsMicrophone(listening.Mode, bound))
         {
@@ -3867,7 +3962,7 @@ public sealed class AppHost : IDisposable
             return;
         }
 
-        if (Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
+        if (boundKey && Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
         {
             // Logged at startup as well as answered on request: the symptom of a double-bound
             // key is that nothing happens, which reads as d47 being broken.
@@ -3877,6 +3972,50 @@ public sealed class AppHost : IDisposable
                 Binds.PresetName,
                 string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
         }
+
+        if (_pushToTalkButton.Bound is { } button
+            && Binds.UsingJoystickButton(button.Button) is { Count: > 0 } sharing)
+        {
+            // Hedged, and the hedge is the honest part. Elite writes a joystick binding against
+            // its own device hash, which is not the NonRoamableId d47 reads, so this cannot say
+            // whether that Joy_N is on the same stick. A false warning costs a sentence; a missed
+            // one costs an evening of a microphone that will not open.
+            _logger.LogWarning(
+                "Push-to-talk {Button} may collide: Elite ({Preset}) binds a button of that number to "
+                + "{Actions}. D47 cannot tell whether that is the same controller.",
+                button.Describe(),
+                Binds.PresetName,
+                string.Join(", ", sharing.Select(binding => binding.Action).Distinct()));
+        }
+    }
+
+    /// <summary>
+    /// The stick bound to push-to-talk is not here (list.md Phase 53).
+    /// <para>
+    /// <b>Said, and the key carries on</b> (the Commander's call, 2026-08-25). A silent controller
+    /// otherwise means no voice at all until they notice, and "d47 cannot hear me" with no reason
+    /// attached has cost real evenings before. If a key is bound too, it is still live — which is
+    /// the whole reason both stay bound rather than one replacing the other.
+    /// </para>
+    /// </summary>
+    private void WarnIfTheStickIsMissing(bool boundButton)
+    {
+        if (!boundButton || _pushToTalkButton.DevicePresent is not false)
+        {
+            return;
+        }
+
+        // Not while the readers are still enumerating: a single enumeration at startup reported
+        // three of six devices on the bench, which is the whole of Phase 21's finding 1, and a
+        // warning raised then would be wrong more often than right.
+        if (Controllers?.IsSettled != true)
+        {
+            return;
+        }
+
+        _logger.LogWarning(
+            "Push-to-talk is bound to {Button} on a controller that is not here",
+            _pushToTalkButton.Bound?.Describe());
     }
 
     /// <summary>
@@ -5174,6 +5313,80 @@ public sealed class AppHost : IDisposable
     /// game was slow.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Waits for Status.json to say something, or gives up (list.md Phase 52).
+    /// <para>
+    /// The same three answers <see cref="AwaitGalaxyMap"/> gives, and for the same reason: true
+    /// means it happened, false means it did not, and <c>null</c> means d47 never got a readable
+    /// status file and so cannot claim either. A macro that reports failure when it simply could
+    /// not see is the failure mode this shape exists to avoid.
+    /// </para>
+    /// </summary>
+    private static async Task<bool?> AwaitStatus(
+        GameStatusReader status,
+        Func<Core.Journal.GameStatus, bool> arrived,
+        TimeSpan within,
+        string what,
+        Microsoft.Extensions.Logging.ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var started = DateTimeOffset.Now;
+        var deadline = started + within;
+        var sawTheFile = false;
+
+        while (DateTimeOffset.Now < deadline)
+        {
+            var current = status.Current;
+
+            if (current.IsKnown)
+            {
+                sawTheFile = true;
+
+                if (arrived(current))
+                {
+                    logger.LogInformation(
+                        "Status reached {What} after {Elapsed:0.0}s",
+                        what,
+                        (DateTimeOffset.Now - started).TotalSeconds);
+                    return true;
+                }
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+        }
+
+        logger.LogInformation(
+            "Status never reached {What} within {Seconds:0}s; Status.json {Readable}",
+            what,
+            within.TotalSeconds,
+            sawTheFile ? "readable" : "never readable");
+
+        return sawTheFile ? false : null;
+    }
+
+    /// <summary>
+    /// The next status sample, which is what the boost loop watches (list.md Phase 52).
+    /// <para>
+    /// Elite rewrites Status.json several times a second, so this waits one polling interval and
+    /// reads again rather than trying to detect a change: the loop only cares what the flag says
+    /// now, and a sample identical to the last one is a perfectly good answer to that.
+    /// </para>
+    /// </summary>
+    private static async Task<Core.Journal.GameStatus> NextStatus(
+        GameStatusReader status,
+        CancellationToken cancellationToken)
+    {
+        await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        return status.Current;
+    }
+
     private static async Task<bool?> AwaitGalaxyMap(
         GameStatusReader status,
         bool open,
@@ -5381,6 +5594,7 @@ public sealed class AppHost : IDisposable
 
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
         _pushToTalk.ForceUp();
+        _pushToTalkButton.ForceUp();
         _microphone.Dispose();
         _transcriber.Dispose();
         (Models as IDisposable)?.Dispose();

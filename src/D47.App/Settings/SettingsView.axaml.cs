@@ -1452,6 +1452,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Hotkey:
                 return BuildHotkey(row, message);
 
+            case SettingKind.HotasButton:
+                return BuildHotasButton(row, message);
+
             default:
                 return BuildText(row, message);
         }
@@ -2290,6 +2293,67 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             var bound = _settings!.Read(row.Key);
             button.Content = bound is null ? "Press to bind" : Gestures.Describe(bound);
+        }, true);
+    }
+
+    /// <summary>
+    /// The stick's push-to-talk row (list.md Phase 53).
+    /// <para>
+    /// Built like <see cref="BuildHotkey"/> because it is the same gesture — press the thing you
+    /// want — and it reuses the reader and the clock the switch walk already carries rather than
+    /// asking composition for a second pair. With no controllers composed the button says so and
+    /// is disabled, rather than being present and dead.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildHotasButton(SettingRow row, TextBlock message)
+    {
+        var button = new Button
+        {
+            Name = "BindHotasButton",
+            MinWidth = 150,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        var clear = new Button { Content = "Unbind" };
+
+        button.Click += async (_, _) =>
+        {
+            if (_switches is not { } editing || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            var window = new Controls.ButtonBindWindow(editing.Reader, editing.Now);
+
+            await window.Over(owner);
+
+            if (window.Result is { } caught)
+            {
+                Apply(row, caught.ToString(), message);
+            }
+        };
+
+        clear.Click += (_, _) => Apply(row, null, message);
+
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        panel.Children.Add(button);
+        panel.Children.Add(clear);
+
+        return (panel, () =>
+        {
+            var bound = D47.Core.Hotas.HotasButton.Parse(_settings!.Read(row.Key));
+
+            button.Content = _switches is null
+                ? "No controllers"
+                : bound?.Describe() ?? "Press to bind";
+
+            button.IsEnabled = _switches is not null;
         }, true);
     }
 

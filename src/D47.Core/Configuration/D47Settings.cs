@@ -369,6 +369,30 @@ public sealed record ActionSettings
     /// </para>
     /// </summary>
     public bool Switches { get; init; }
+
+    /// <summary>
+    /// Whether "take us out" may walk the left panel to the launch button (list.md Phase 52).
+    /// <para>
+    /// Its own row, and the one here with the weakest guarantee: Elite has no launch binding, so
+    /// this is a menu walk rather than a key press and it depends on the panel starting where d47
+    /// expects. Gated by <see cref="Keyboard"/> as well, which is off until the Commander says
+    /// otherwise, so on by default here does not mean on out of the box.
+    /// </para>
+    /// </summary>
+    public bool TakeUsOut { get; init; } = true;
+
+    /// <summary>
+    /// Whether "separate and engage" may go to full throttle and boost out of a mass lock
+    /// (list.md Phase 52). Gated by <see cref="Keyboard"/>.
+    /// </summary>
+    public bool SeparateAndEngage { get; init; } = true;
+
+    /// <summary>
+    /// The same, ending in supercruise. Its own row because the two fail differently in the game:
+    /// a jump needs a destination locked in the nav panel and refuses without one, where
+    /// supercruise needs nothing.
+    /// </summary>
+    public bool SeparateAndSupercruise { get; init; } = true;
 }
 
 /// <summary>
@@ -506,6 +530,22 @@ public sealed record ListeningSettings
     /// </para>
     /// </summary>
     public string? PushToTalkKey { get; init; } = "RightShift";
+
+    /// <summary>
+    /// A stick button to talk with, as <c>NonRoamableId#index</c> (list.md Phase 53).
+    /// <para>
+    /// <b>A new key beside <see cref="PushToTalkKey"/> rather than that key learning a second
+    /// meaning</b>, because <c>settings.json</c> is append-only and because a Commander who bound
+    /// a key and later bound a button has said two things. Both stay live and either opens the
+    /// microphone (the Commander's call, 2026-08-25) — neither answer should be inferred from the
+    /// other having been set.
+    /// </para>
+    /// <para>
+    /// Empty by default, and a machine with no stick is not a fault: the button is simply never
+    /// seen and the key carries on.
+    /// </para>
+    /// </summary>
+    public string? PushToTalkButton { get; init; }
 
     /// <summary>
     /// "hold", "toggle", "continuous" or "wake" — the gate policy (list.md Phase 6 and 13).

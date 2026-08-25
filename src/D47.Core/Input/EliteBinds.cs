@@ -81,6 +81,35 @@ public sealed record EliteBinds
             string.Equals(Normalise(binding.Gesture()), Normalise(gesture), StringComparison.OrdinalIgnoreCase))];
 
     /// <summary>
+    /// Every binding on a controller button of this index, whichever device (list.md Phase 53).
+    /// <para>
+    /// <b>Deliberately weaker than <see cref="Using"/>, and the weakness is stated where it is
+    /// used.</b> Elite writes a joystick binding against its own device hash —
+    /// <c>Device="4098BD65" Key="Joy_24"</c> — and that hash is not the <c>NonRoamableId</c>
+    /// d47 reads through <c>Windows.Gaming.Input</c>. Nothing published joins the two, so d47
+    /// cannot tell whether Elite's <c>Joy_24</c> is on the <em>same</em> stick as the button being
+    /// bound. What it can say is that a button of that number is spoken for somewhere, which on a
+    /// HOTAS is worth saying: a key bound in both places has no symptom other than not working, in
+    /// one direction or the other, and a stick is far likelier than a keyboard to have every
+    /// button already used.
+    /// </para>
+    /// <para>
+    /// So this reports and the caller hedges. A false warning costs a sentence; a missed one costs
+    /// an evening of a microphone that will not open.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<EliteBinding> UsingJoystickButton(int button)
+    {
+        // Elite counts from one and HotasReading counts from zero, which is the off-by-one this
+        // whole feature is most likely to ship.
+        var name = $"Joy_{button + 1}";
+
+        return [.. Bindings.Where(binding =>
+            !binding.IsKeyboard
+            && string.Equals(binding.Key, name, StringComparison.OrdinalIgnoreCase))];
+    }
+
+    /// <summary>
     /// Keyboard gestures bound to more than one action, each with the actions that share it.
     /// <para>
     /// Elite binds the same key in different control modes on purpose — the ship, the SRV and
