@@ -3158,9 +3158,13 @@ public sealed class AppHost : IDisposable
                         PriceTable.Default,
                         _logger).ConfigureAwait(false);
 
-                    if (generated is not null)
+                    // Checked rather than merely non-null: a rewording brief answered with the
+                    // model talking about itself is not a line this core said (GitHub issue 46).
+                    // The instruction above already asks it not to offer a list of what it can
+                    // do, which is the same failure anticipated and not guarded.
+                    if (FlavourBriefs.MayBeSpoken(generated))
                     {
-                        line = generated;
+                        line = generated!;
                     }
                 }
                 else if (FlavourBriefs.Introducing(
@@ -3183,9 +3187,13 @@ public sealed class AppHost : IDisposable
                         PriceTable.Default,
                         _logger).ConfigureAwait(false);
 
-                    if (generated is not null)
+                    // Checked rather than merely non-null: a rewording brief answered with the
+                    // model talking about itself is not a line this core said (GitHub issue 46).
+                    // The instruction above already asks it not to offer a list of what it can
+                    // do, which is the same failure anticipated and not guarded.
+                    if (FlavourBriefs.MayBeSpoken(generated))
                     {
-                        line = generated;
+                        line = generated!;
                     }
                 }
             }
@@ -4535,7 +4543,11 @@ public sealed class AppHost : IDisposable
             _logger,
             budget.Token).ConfigureAwait(false);
 
-        return line is null ? announcement : announcement with { Text = line };
+        // The authored line stands unless the rewrite is one that may be spoken. Null is a call
+        // that failed; the other case is a call that succeeded and came back talking about the
+        // model rather than about the callout, which is a non-empty string and used to win
+        // (GitHub issue 46). Falling back costs a less varied line and nothing else.
+        return FlavourBriefs.MayBeSpoken(line) ? announcement with { Text = line! } : announcement;
     }
 
     /// <summary>
