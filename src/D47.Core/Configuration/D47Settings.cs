@@ -532,6 +532,22 @@ public sealed record ListeningSettings
     public string? PushToTalkKey { get; init; } = "RightShift";
 
     /// <summary>
+    /// A stick button to talk with, as <c>NonRoamableId#index</c> (list.md Phase 53).
+    /// <para>
+    /// <b>A new key beside <see cref="PushToTalkKey"/> rather than that key learning a second
+    /// meaning</b>, because <c>settings.json</c> is append-only and because a Commander who bound
+    /// a key and later bound a button has said two things. Both stay live and either opens the
+    /// microphone (the Commander's call, 2026-08-25) — neither answer should be inferred from the
+    /// other having been set.
+    /// </para>
+    /// <para>
+    /// Empty by default, and a machine with no stick is not a fault: the button is simply never
+    /// seen and the key carries on.
+    /// </para>
+    /// </summary>
+    public string? PushToTalkButton { get; init; }
+
+    /// <summary>
     /// "hold", "toggle", "continuous" or "wake" — the gate policy (list.md Phase 6 and 13).
     /// <para>
     /// Protected, and this is the row where that matters most. The last two open the microphone
