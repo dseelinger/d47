@@ -146,6 +146,61 @@ Firing your weapons is deliberately not on this list. Directive 47 reads text fr
 that anyone can write, and a companion that can be talked into opening fire is a different kind
 of problem from one that can be talked into turning the lights on.
 
+### Engage
+
+Say **engage** and you jump. Say **supercruise** and you supercruise.
+
+These are whole sentences rather than keywords, which matters more than it sounds. The word
+*engage* already sits inside three things you could say — *engage supercruise*, *engage boost*,
+*engage the frame shift drive* — so a companion that reacted to the word anywhere in a sentence
+would jump when you asked it to boost. Directive 47 matches what you said, all of it, or nothing.
+"Should I engage?" is a question, and it is answered rather than obeyed.
+
+### Take us out
+
+Say **take us out** while docked and Directive 47 walks the left panel to the launch button.
+
+**This one is a menu walk, not a key press, and it is the least reliable thing here.** Elite has
+no launch binding at all — launching is a button on a panel, and Frontier ships no control for it —
+so instead of pressing your own key, Directive 47 opens the left panel, walks left to the first
+tab, walks up to the top item, and selects it. If your panel does not start where it expects, it
+selects the wrong thing.
+
+Everything around the walk is checked against the game rather than assumed. It refuses unless you
+are docked. It confirms the panel is actually open before sending a single direction key, because
+those keys typed into a cockpit instead of a panel are steering inputs. And it watches for your
+ship leaving the pad before it claims anything:
+
+```
+I walked the left panel and we are still docked, so assume it did not work.
+The panel may not have been where I expected it.
+```
+
+It has its own switch, separate from the others, because it is the one here that works by
+guesswork.
+
+### Separate
+
+Say **separate and engage** and Directive 47 goes to full throttle, boosts until the mass lock
+breaks, and jumps the moment it does. **Separate and supercruise** is the same thing ending in
+supercruise.
+
+It watches the game rather than counting seconds. Elite reports mass lock continuously, so instead
+of boosting a fixed number of times and hoping, Directive 47 boosts, looks, and stops the instant
+the lock clears. If you were never mass locked it does not boost at all.
+
+**It gives up rather than boosting forever**, at four boosts or twenty seconds, and says so:
+
+```
+Still mass locked after 4 boosts; you may be too close to the station. I have not engaged.
+```
+
+Neither of those endings presses the engage key. Engaging while still mass locked is the thing the
+limit exists to prevent.
+
+The two have separate switches because they fail differently in the game: a jump needs a
+destination locked in your nav panel and refuses without one, where supercruise needs nothing.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
@@ -163,5 +218,24 @@ The enum is the whole group and never changes, which is what keeps the schema by
 across turns and prompt caching alive. What is reachable *now* rides in the live game-state
 block below the cache breakpoint, and the handler enforces it regardless of what the model asked
 for.
+
+#### `ship_command`
+
+Compound ship commands: leave the pad, or break a mass lock and engage. Spoken only — the
+Commander reaches these by voice or from the panel.
+
+```json
+{"type":"object","properties":{"command":{"type":"string","description":"Which command to run.","enum":["take_us_out","separate_and_engage","separate_and_supercruise"]}},"required":["command"],"additionalProperties":false}
+```
+
+**Protected, so the model never sees this one.** It is registered, and it is left out of the
+advertisement entirely — which means it costs no tool-surface bytes, and that it is reachable
+only from the model-free keyword router and the panel. Both facts are deliberate. A spoken command
+that has to wait for a model round trip is a command given at the wrong moment, and the surface is
+close enough to its ceiling that a tool nobody needs advertised should not be paying for a place
+there.
+
+Each of the three has its own settings row, and every one of them is gated by *let D47 press keys
+in Elite* as well, so a Commander who has not allowed key injection at all has not allowed these.
 
 </details>

@@ -115,6 +115,14 @@ public static class GameActions
     public const string Weapons = "Weapons";
 
     /// <summary>
+    /// Actions that exist only as steps of something larger — on no tool, with no phrase, and
+    /// never named by the Commander or the model. <see cref="Weapons"/> is the same idea and the
+    /// precedent: the catalogue carries an entry because something inside d47 presses it, not
+    /// because anybody can ask for it.
+    /// </summary>
+    public const string Steps = "Compound command steps";
+
+    /// <summary>
     /// Every action, in the order a Commander would meet them. Registration order is display
     /// order and it is stable, because the advertised profile is a projection of this list.
     /// </summary>
@@ -208,7 +216,16 @@ public static class GameActions
             Label = "supercruise",
             Group = Flight,
             Variants = [new ActionVariant("Supercruise", ControlContext.NormalSpace)],
-            Phrases = [("engage supercruise", DesiredState.Toggle), ("take us to supercruise", DesiredState.Toggle)],
+
+            // The bare word is safe here for the reason the router is whole-utterance: "engage
+            // supercruise" is a different utterance from "supercruise" and matches its own
+            // phrase, so the short one shadows nothing (list.md Phase 52, item 1).
+            Phrases =
+            [
+                ("supercruise", DesiredState.Toggle),
+                ("engage supercruise", DesiredState.Toggle),
+                ("take us to supercruise", DesiredState.Toggle),
+            ],
         },
 
         new()
@@ -217,7 +234,18 @@ public static class GameActions
             Label = "the hyperspace jump",
             Group = Flight,
             Variants = [new ActionVariant("Hyperspace", ControlContext.Flying)],
-            Phrases = [("hyperspace jump", DesiredState.Toggle), ("jump to the next system", DesiredState.Toggle)],
+
+            // "Engage" is the Commander's word for the jump (list.md Phase 52, item 1), and it
+            // is a whole utterance rather than a keyword. As a keyword it would hijack every
+            // sentence containing it — "engage supercruise", "engage boost", "engage the frame
+            // shift drive" are all live phrases and all contain it, which is remediation.md 16
+            // arriving by a new road.
+            Phrases =
+            [
+                ("engage", DesiredState.Toggle),
+                ("hyperspace jump", DesiredState.Toggle),
+                ("jump to the next system", DesiredState.Toggle),
+            ],
         },
 
         new()
@@ -248,6 +276,26 @@ public static class GameActions
             // Not "stop". That is the interrupt word, and it has to stay the fastest way to
             // silence d47 rather than a way to park the ship (list.md Phase 5).
             Phrases = [("all stop", DesiredState.Toggle), ("throttle to zero", DesiredState.Toggle)],
+        },
+
+        new()
+        {
+            // The other end of the throttle, and the first step of "separate" (list.md Phase 52,
+            // item 3). A real binding in Frontier's own presets — verified against every .binds
+            // under ControlSchemes rather than assumed, which is the rule Phase 10 set after
+            // finding three things Elite has no control for.
+            //
+            // In Steps rather than Flight, so it is on no tool: the closed vocabularies are
+            // advertised on every turn, and one more id put the SRV profile at 40,014 against
+            // ComfortableBytes of 40,000 — which does not fail loudly, it drops the Commander's
+            // action tools. Phase 52 asks for five phrases and "full throttle" is not one of
+            // them, so this is a step rather than a command, and the bytes stay unspent for a
+            // phase that needs them. Moving it into Flight with a phrase is a two-line change
+            // and costs 17 bytes that would have to come from somewhere.
+            Id = "throttle_full",
+            Label = "full throttle",
+            Group = Steps,
+            Variants = [new ActionVariant("SetSpeed100", ControlContext.Flying)],
         },
 
         new()

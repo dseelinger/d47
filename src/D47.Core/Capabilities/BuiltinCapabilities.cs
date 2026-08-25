@@ -187,7 +187,13 @@ public static class BuiltinCapabilities
         // optional, so **a new parameter goes at the end**: anywhere else changes what every
         // existing call means. Null under the designer and in tests that are not about it, and the
         // searches then make no offer.
-        Conversation.ClipboardOffer? clipboard = null) =>
+        Conversation.ClipboardOffer? clipboard = null,
+
+        // The waits the compound ship commands need (list.md Phase 52). Null under the designer
+        // and in tests that are not about them; the tool still registers, so its page and its
+        // three settings rows exist, and every command answers that it is switched off. At the
+        // end, by the rule the comment above records the cost of.
+        Builtin.ShipCommandSurface? shipCommands = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -246,7 +252,7 @@ public static class BuiltinCapabilities
         VrCapability.Create(settings, headset),
         ReanchorCapability.Create(headset),
         FocusCapability.Create(raiseGame),
-        .. ActionCapabilities.All(actions),
+        .. ActionCapabilities.All(actions, shipCommands),
         AutonomousCapability.Create(autonomous),
         NavigationCapability.Create(navigation),
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),

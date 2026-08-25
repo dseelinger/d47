@@ -45,6 +45,45 @@ public sealed record ActionSurface
 }
 
 /// <summary>
+/// What the compound ship commands need on top of <see cref="ActionSurface"/> (list.md Phase 52):
+/// somewhere to wait for the game to change its mind.
+/// <para>
+/// Three waits, all injected, for the reason every wait in Core is injected: no component here
+/// owns a thread or reads the clock, which is what keeps the replay harness able to drive the
+/// whole path at any speed. Production supplies them from the tick loop; a test supplies a
+/// scripted stream and the loop runs in microseconds.
+/// </para>
+/// </summary>
+public sealed record ShipCommandSurface
+{
+    /// <summary>Whether each command is switched on. One switch per command, keyed by its id.</summary>
+    public required Func<string, bool> Enabled { get; init; }
+
+    /// <summary>Awaits <c>GuiFocus</c> reaching or leaving the internal panel.</summary>
+    public required Func<bool, CancellationToken, Task<bool?>> AwaitInternalPanel { get; init; }
+
+    /// <summary>Awaits the <c>Docked</c> flag clearing, which is what says the ship actually left.</summary>
+    public required Func<CancellationToken, Task<bool?>> AwaitUndocked { get; init; }
+
+    /// <summary>Awaits the next status sample, which is what the boost loop watches.</summary>
+    public required Func<CancellationToken, Task<GameStatus>> NextStatus { get; init; }
+
+    /// <summary>
+    /// A surface that reaches no game and permits nothing. What a test that is not about these
+    /// commands should use, and what the tool refuses through before the Commander has switched
+    /// anything on — the tool registers either way, because which tools exist is not allowed to
+    /// depend on which are permitted.
+    /// </summary>
+    public static ShipCommandSurface Inert => new()
+    {
+        Enabled = _ => false,
+        AwaitInternalPanel = (_, _) => Task.FromResult<bool?>(null),
+        AwaitUndocked = _ => Task.FromResult<bool?>(null),
+        NextStatus = _ => Task.FromResult(GameStatus.Unknown),
+    };
+}
+
+/// <summary>
 /// Voice control of the ship, its systems, its panels and the SRV (list.md Phase 10, items 6
 /// to 9). One capability per checklist item, because each gets its own documentation page and
 /// its own place in spoken help, and because a tool with forty values in its vocabulary is one
@@ -71,7 +110,9 @@ public static class ActionCapabilities
 {
     public const string KeyboardActionsKey = "actions.keyboard";
 
-    public static IReadOnlyList<CapabilityDescriptor> All(ActionSurface surface) =>
+    public static IReadOnlyList<CapabilityDescriptor> All(
+        ActionSurface surface,
+        ShipCommandSurface? shipCommands = null) =>
     [
         Create(
             "flight-controls",
@@ -81,7 +122,8 @@ public static class ActionCapabilities
             "Operate the landing gear, lights, cargo scoop, hardpoints and the frame shift drive.",
             ["put the gear down", "retract hardpoints", "engage supercruise", "lights off"],
             surface,
-            order: 50),
+            order: 50,
+            extra: ShipCommands.Tool(surface, shipCommands ?? ShipCommandSurface.Inert)),
 
         Create(
             "ship-systems",
@@ -153,7 +195,8 @@ public static class ActionCapabilities
         string summary,
         IReadOnlyList<string> examples,
         ActionSurface surface,
-        int order)
+        int order,
+        ToolDefinition? extra = null)
     {
         // Computed once at registration and never again. This is the closed vocabulary that
         // has to serialise byte-identically across turns.
@@ -175,7 +218,14 @@ public static class ActionCapabilities
 
             // One row, on the first card only. Pressing keys in the game is one decision, not
             // four, and four copies of it is four things to switch off.
-            Settings = order == 50 ? [KeyboardActionsRow()] : [],
+            //
+            // The compound commands are the exception, and deliberately: each is its own row
+            // (list.md Phase 52, item 5), because a Commander who trusts d47 to supercruise may
+            // well not trust it to boost, and because "take us out" walks a menu by guesswork
+            // where everything else presses one key the Commander bound themselves. Every one of
+            // them is gated by the row above as well, so a Commander who has not allowed key
+            // injection at all has not allowed it here either.
+            Settings = order == 50 ? [KeyboardActionsRow(), .. ShipCommands.Rows()] : [],
 
             Tools =
             [
@@ -210,6 +260,8 @@ public static class ActionCapabilities
                     Commands = [.. Phrases(actions)],
                     Handler = (arguments, cancellationToken) => Perform(arguments, surface, cancellationToken),
                 },
+
+                .. extra is null ? Array.Empty<ToolDefinition>() : [extra],
             ],
         };
     }

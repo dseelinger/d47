@@ -20,6 +20,64 @@ the file as it stood then.
 
 ---
 
+## 0.70.0 — 2026-08-25 — Say it and the ship does it
+
+Phase 52. Five spoken commands, and the boost loop that watches the game instead of the clock.
+
+### Engage, and supercruise
+
+Say **engage** and you jump. Say **supercruise** and you supercruise.
+
+Both are whole sentences rather than keywords, which is the only interesting thing about them.
+*Engage* already sat inside three phrases that worked — *engage supercruise*, *engage boost*,
+*engage the frame shift drive* — so a companion that reacted to the word anywhere in a sentence
+would jump when you asked it to boost. "Should I engage?" stays a question.
+
+### Separate and engage, separate and supercruise
+
+Full throttle, boost until the mass lock breaks, then go.
+
+It watches Elite's own mass-lock flag rather than counting seconds, so it stops the instant the
+lock clears and does not boost at all if you were never locked. It gives up rather than boosting
+forever — four boosts or twenty seconds — and says which:
+
+```text
+Still mass locked after 4 boosts; you may be too close to the station. I have not engaged.
+```
+
+Neither ending presses the engage key. Engaging while still mass locked is what the limit is for.
+
+The second one ends in supercruise even though it was asked for as a jump, because two commands
+with different names and identical behaviour is not what was wanted. They fail differently in the
+game as well: a jump needs a destination locked in your nav panel and refuses without one.
+
+### Take us out
+
+Say **take us out** while docked and D47 walks the left panel to the launch button.
+
+**Elite has no launch binding** — it is a panel button, and Frontier ships no control for it, which
+was re-checked against every preset file rather than assumed. So this one is a menu walk and is the
+least reliable thing here: if your panel does not start where D47 expects, it selects the wrong
+thing. Everything around the walk is checked against the game — it refuses unless you are docked,
+confirms the panel is really open before sending a direction key, and watches for the ship leaving
+the pad before claiming anything:
+
+```text
+I walked the left panel and we are still docked, so assume it did not work.
+```
+
+### Three new switches
+
+One per command, each its own row, all of them still behind *let D47 press keys in Elite*. A
+Commander who trusts D47 to supercruise may well not trust it to boost, and *take us out* is the
+one that works by guesswork.
+
+None of the three is on the tool surface: they are reachable by voice and from the panel and the
+model never sees them. A spoken command that waits for a model round trip is a command given at
+the wrong moment.
+
+---
+
 ## 0.69.0 — 2026-08-24 — A line says what it is about
 
 ### An empty slot names the module, not the mounting point

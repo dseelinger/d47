@@ -1492,7 +1492,36 @@ public sealed class AppHost : IDisposable
 
                 // What d47 last offered to copy (asked for 2026-08-21). Composed here rather than
                 // inside a capability because two of them write it and the router reads it.
-                clipboardOffer));
+                clipboardOffer,
+
+                // The three waits the compound ship commands need (list.md Phase 52). Core owns
+                // the sequences and none of the waiting, which is what lets the whole boost loop
+                // run in a test in microseconds against a scripted status stream.
+                new ShipCommandSurface
+                {
+                    Enabled = command => ShipCommands.IsEnabled(settings.Current, command),
+
+                    AwaitInternalPanel = (open, token) => AwaitStatus(
+                        status,
+                        current => (current.GuiFocus == Core.Journal.GuiFocus.InternalPanel) == open,
+                        TimeSpan.FromSeconds(3),
+                        open ? "left panel open" : "left panel closed",
+                        logger,
+                        token),
+
+                    // Longer than the others on purpose: the pad lift and the mail slot take real
+                    // seconds, and a launch reported as failed because d47 stopped watching too
+                    // early is the same lie as one reported as succeeded.
+                    AwaitUndocked = token => AwaitStatus(
+                        status,
+                        current => !current.Has(Core.Journal.StatusFlags.Docked),
+                        TimeSpan.FromSeconds(30),
+                        "undocked",
+                        logger,
+                        token),
+
+                    NextStatus = token => NextStatus(status, token),
+                }));
 
         built = capabilities;
 
@@ -5174,6 +5203,80 @@ public sealed class AppHost : IDisposable
     /// game was slow.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Waits for Status.json to say something, or gives up (list.md Phase 52).
+    /// <para>
+    /// The same three answers <see cref="AwaitGalaxyMap"/> gives, and for the same reason: true
+    /// means it happened, false means it did not, and <c>null</c> means d47 never got a readable
+    /// status file and so cannot claim either. A macro that reports failure when it simply could
+    /// not see is the failure mode this shape exists to avoid.
+    /// </para>
+    /// </summary>
+    private static async Task<bool?> AwaitStatus(
+        GameStatusReader status,
+        Func<Core.Journal.GameStatus, bool> arrived,
+        TimeSpan within,
+        string what,
+        Microsoft.Extensions.Logging.ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var started = DateTimeOffset.Now;
+        var deadline = started + within;
+        var sawTheFile = false;
+
+        while (DateTimeOffset.Now < deadline)
+        {
+            var current = status.Current;
+
+            if (current.IsKnown)
+            {
+                sawTheFile = true;
+
+                if (arrived(current))
+                {
+                    logger.LogInformation(
+                        "Status reached {What} after {Elapsed:0.0}s",
+                        what,
+                        (DateTimeOffset.Now - started).TotalSeconds);
+                    return true;
+                }
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+        }
+
+        logger.LogInformation(
+            "Status never reached {What} within {Seconds:0}s; Status.json {Readable}",
+            what,
+            within.TotalSeconds,
+            sawTheFile ? "readable" : "never readable");
+
+        return sawTheFile ? false : null;
+    }
+
+    /// <summary>
+    /// The next status sample, which is what the boost loop watches (list.md Phase 52).
+    /// <para>
+    /// Elite rewrites Status.json several times a second, so this waits one polling interval and
+    /// reads again rather than trying to detect a change: the loop only cares what the flag says
+    /// now, and a sample identical to the last one is a perfectly good answer to that.
+    /// </para>
+    /// </summary>
+    private static async Task<Core.Journal.GameStatus> NextStatus(
+        GameStatusReader status,
+        CancellationToken cancellationToken)
+    {
+        await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        return status.Current;
+    }
+
     private static async Task<bool?> AwaitGalaxyMap(
         GameStatusReader status,
         bool open,
