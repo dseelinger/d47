@@ -68,16 +68,17 @@ the Commander probably *wants* on the good voice; a stranger in local is a real 
 are heard once, are unbounded in volume, and are chosen by somebody else. Cost and trust point the
 same way and both separate those two.
 
-So **five slots**, which is the Commander's four with the human channels split by consent rather
-than by humanity:
+**Settled 2026-08-25: `player` gets its own category, and the split is kept.** So **six slots** —
+the Commander's four, with the human channels sorted by consent rather than by humanity:
 
-| Slot | Covers | Why |
-|---|---|---|
-| **Aboard** | `ShipAi`, `Crew` | the Commander's rule, and `RadioVoice.IsOverTheAir` already groups exactly these two |
-| **Carrier** | `CarrierCaptain`, `TowerControl` | two roles, one installation, one provider |
-| **NPCs** | channel `npc` | not real people; game-authored, bounded, unspammable |
-| **People you know** | `friend`, `wing`, `squadron` | real people the Commander is in contact with by choice |
-| **Anyone in range** | `local`, `starsystem`, and `player` pending a ruling | **the untrusted path** — real people, no consent, unbounded volume |
+| Slot | Covers | Default | Why |
+|---|---|---|---|
+| **Aboard** | `ShipAi`, `Crew` | `Provider` | `RadioVoice.IsOverTheAir` already groups exactly these two |
+| **Carrier** | `CarrierCaptain`, `TowerControl` | `Provider` | two roles, one installation; and these are d47's own fictions, not other people |
+| **NPCs** | `npc` | **Edge** | not real people; game-authored, bounded, unspammable |
+| **People you know** | `friend`, `wing`, `squadron` | **Edge** | real people the Commander is in contact with by choice |
+| **Direct messages** | `player` | **Edge** | a real person reaching the Commander directly — its own category by ruling, because whether that implies contact is neither obvious nor the code's to decide |
+| **Anyone in range** | `local`, `starsystem` | **Edge** | **the untrusted path** — real people, no consent, unbounded volume |
 
 **This needs no new plumbing to be knowable.** The channel is already carried:
 `IncomingMessages` builds the key as `$"message.{channel}"`, so every announcement already says
@@ -85,10 +86,41 @@ which channel it came from. What is *not* carried is a distinction finer than th
 `SpeakerIsPlayer` boolean, which is all that reaches `Cast.ForSender` today — so the routing key
 becomes the channel, and the boolean keeps its existing job of deciding how long a voice sticks.
 
-**Two rulings still wanted:** where channel `player` belongs — a direct message is a real person,
-but whether reaching you that way implies contact is a game question rather than a code one — and
-whether four slots with friends and strangers together is preferred anyway, accepting that the
-free-provider setting would then also apply to squadron mates.
+### 1.1b The default is Edge for every voice that is not d47's own, and that overturns something above
+
+**Settled 2026-08-25: Edge by default, with a warning about moving off it.**
+
+Edge is free, so nothing another player types can cost the Commander anything. The warning goes on
+the *change*: choosing a paid provider for one of those four slots is choosing to be billed, per
+character, for text somebody else writes and can write as much of as they like.
+
+**Be plain about what Edge does and does not buy.** It is free; it is **not local**. Edge sends
+the line to `speech.platform.bing.com`. So this default settles the *cost* half of the phase's
+acceptance criterion outright and leaves the *egress* half — *"no other player's text leaves the
+machine"* — for a local provider, which is Phase 59 and is why Phase 59 exists. The disclosure
+table must not let those two be confused, because "free" reading as "private" is exactly the
+mistake a Commander would make unaided.
+
+**This overturns the upgrade claim in §1.3, and the contradiction is deliberate rather than
+missed.** That section proposes absent-means-`Provider` so a file written before this change
+behaves identically. That cannot also be true of a slot whose default is Edge: a Commander on
+ElevenLabs today has every NPC and every stranger on ElevenLabs, and applying the new default
+changes what they hear.
+
+Two ways to resolve it, and this is a ruling worth making explicitly rather than discovering:
+
+- **Migrate.** On first load of an older file, the four non-d47 slots are set to Edge. The
+  Commander's bill for other people's text drops to nothing without them doing anything, which is
+  the whole point of the phase — and strangers start sounding different, which they will notice.
+  **Recommended**, with the release note saying so in plain words rather than leaving it to be
+  found.
+- **Grandfather.** Absent keeps meaning `Provider`, so nothing changes for anyone already
+  installed and only new installs get the safe default. Nothing is surprising and nobody is
+  protected until they go and look.
+
+Recommending migration, because the defect being fixed is one the Commander cannot see happening —
+a bill going up is not a symptom that points anywhere — and because the safe direction is the
+cheap one.
 
 ### 1.2 The ONNX Runtime licence — the gate would not fail. It would pass, and be wrong to.
 
@@ -195,21 +227,34 @@ yet.
 
 - [ ] **Four slots, and they come from the roles that already exist** — Asked for 2026-08-25.
   Today one provider speaks for everybody. It becomes a choice per group: **Aboard** (the ship's
-  AI and the crew), **Carrier** (the captain and the tower), **NPCs**, **people you know**, and
-  **anyone in range**.
+  AI and the crew), **Carrier** (the captain and the tower), **NPCs**, **people you know**,
+  **direct messages**, and **anyone in range**.
   **The groups are derived rather than invented**: `RadioVoice.IsOverTheAir` already separates
   aboard from over-the-air, `VoiceCast` already holds five roles, and `ForSender`'s `isPlayer` flag
   already separates a Commander from an NPC — and `IncomingMessages` already carries the channel in
   the announcement key, which is what separates a squadron mate from a stranger in local. A
   `VoiceGroup` sits above `VoiceRole` and no existing role changes meaning. Accepted when each slot can name a different provider and every voice still
   comes out of the arbiter in the order it was written.
+- [ ] **Free by default for every voice that is not d47's own** — The four slots carrying other
+  people's words — NPCs, people you know, direct messages, anyone in range — default to **Edge**,
+  which costs nothing, so nothing another Commander types can spend the Commander's money. The
+  warning goes on the change rather than on the state: choosing a paid provider for one of those is
+  choosing to be billed per character for text somebody else writes and can write as much of as
+  they like. **Edge is free and is not local** — it sends the line to `speech.platform.bing.com` —
+  so the row must not let "free" read as "private", which is the mistake a Commander would make
+  unaided and the reason the item below is a separate item. Accepted when a fresh install speaks
+  every stranger through Edge without being asked, when moving one of those slots to a paid
+  provider says plainly what that means, and when an existing installation is migrated to it rather
+  than left paying quietly.
 - [ ] **No other player's text has to leave the machine** — The reason this phase exists rather
   than a nicety it enables. `speech.md {#egress}` already says re-voiced messages are *"written by
   other players"*, which makes local and system chat an **untrusted, attacker-influenced, unbounded-volume**
   path pointed at a per-character paid API — someone spamming local chat spends the Commander's
-  money. Accepted when the ship's core can be on a paid provider **while anyone-in-range is on one
-  that costs nothing and sends nothing**, and when the settings surface states that plainly rather
-  than leaving it to be inferred.
+  money. **The item above settles the cost half and not this one**: Edge is free and still sends every
+  line to Microsoft, so this half waits on a provider that runs on the machine — which is Phase 59,
+  and is why Phase 59 exists. Accepted when the ship's core can be on a paid provider **while no
+  other player's words leave the machine at all**, and when the settings surface states which of
+  those two things is currently true rather than leaving it to be inferred.
 - [ ] **One client per provider, never one per slot** — `ElevenLabsTtsProvider.MaxConcurrent`
   justifies itself with *"Callouts, crew lines and re-voiced comms all share the same account, so
   the gate has to be here rather than in any one pipeline."* **That reasoning only survives if two
@@ -261,7 +306,7 @@ where "free, offline, unlimited, and nobody else's text leaves" is worth most.
 | Seam | Change |
 |---|---|
 | `VoiceRole` | **Unchanged.** Five roles keep their meaning. |
-| `VoiceGroup` (new) | Five members. A pure `GroupOf(VoiceRole, string? channel)` maps role plus channel to a slot, in Core, testable, with the mapping asserted rather than commented — the channel because the `SpeakerIsPlayer` boolean cannot tell a squadron mate from a stranger in local. |
+| `VoiceGroup` (new) | Six members. A pure `GroupOf(VoiceRole, string? channel)` maps role plus channel to a slot, in Core, testable, with the mapping asserted rather than commented — the channel because the `SpeakerIsPlayer` boolean cannot tell a squadron mate from a stranger in local. |
 | `SpeechWiring.Plan` | Per-slot diff. Still pure, still builds nothing. |
 | `SpeechWiringState` | Holds a provider id and key-presence **per slot**, not one pair. |
 | `VoiceMemory.Switched` | Per-group stash and restore. `VoiceChoices` unchanged. |
