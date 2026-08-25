@@ -248,4 +248,44 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.Contains("\"max_tokens\":", endpoint.Requests[1], StringComparison.Ordinal);
         Assert.DoesNotContain("max_completion_tokens", endpoint.Requests[1], StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// What each rung actually becomes in the body, on both OpenAI shapes (list.md Phase 54).
+    /// <para>
+    /// <b>Closing a gap rather than covering a change.</b> Nothing asserted that OpenAI effort
+    /// reached the wire at all, which is how adding a fifth rung compiled clean while both
+    /// providers sent <c>"medium"</c> for it — below the High it is supposed to exceed. Every
+    /// <c>Translate</c> ends in a fallback arm, so the compiler had nothing to say.
+    /// </para>
+    /// <para>
+    /// <c>Xhigh</c> and <c>Max</c> both map <b>down</b> to <c>"high"</c> on purpose. d47 has not
+    /// seen a real 200 for <c>"xhigh"</c> from these endpoints, and mapping down costs a rung
+    /// while mapping up optimistically costs the turn.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(ThinkingEffort.Low, "low")]
+    [InlineData(ThinkingEffort.Medium, "medium")]
+    [InlineData(ThinkingEffort.High, "high")]
+    [InlineData(ThinkingEffort.Xhigh, "high")]
+    [InlineData(ThinkingEffort.Max, "high")]
+    public async Task EachRungReachesTheWireAsItself(ThinkingEffort effort, string expected)
+    {
+        using var endpoint = RecordedEndpoint.Streaming(
+            OpenAiRecordings.Chat.TextDelta("Half full."),
+            OpenAiRecordings.Chat.Finish("stop"),
+            OpenAiRecordings.Done());
+
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, endpoint.BaseUrl);
+
+        await OpenAiRecordings.DrainAsync(
+            provider,
+            OpenAiRecordings.Ask() with { Effort = effort },
+            Token);
+
+        Assert.Contains(
+            $"\"reasoning_effort\":\"{expected}\"",
+            Assert.Single(endpoint.Requests),
+            StringComparison.Ordinal);
+    }
 }

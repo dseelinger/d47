@@ -1500,10 +1500,30 @@ public partial class PanelView : UserControl
     /// can. The headset gets one for the second reason — which is the whole point, since the
     /// reason it lost the button was that the only thing behind it was a browser it could not see.
     /// </summary>
+    /// <summary>
+    /// Whether this instantiation is a surface nothing can be pressed on — the flat overlay, and
+    /// the headset's mini panel (change-requests.md 42).
+    /// <para>
+    /// <b>Read from the class rather than from a second flag</b>, so there is one answer and the
+    /// hosts keep setting it the one way they already do.
+    /// </para>
+    /// <para>
+    /// <b>Why any code has to ask at all.</b> The <c>output-only</c> style hides an exact
+    /// <c>Button</c> and reaches every one a furnished page brings with it, which is the whole
+    /// argument for a selector over a pass. It cannot reach a button whose <c>IsVisible</c> is
+    /// assigned here: in Avalonia a local value outranks a style setter, so the two buttons this
+    /// class sets by hand ignored the rule and stayed on the headset's mini panel. Those two ask;
+    /// nothing else needs to, and <c>MiniInTheHeadsetCarriesNoButtonsTests</c> is what catches the
+    /// next one that starts setting its own visibility and forgets.
+    /// </para>
+    /// </summary>
+    private bool OutputOnly => Classes.Contains("output-only");
+
     private void ShowHelpAffordance() =>
-        HelpButton.IsVisible = _openHelp is not null
-            || HelpPageView.Exists(Nav.Help)
-            || HelpPageView.Exists(HelpLevel.Index);
+        HelpButton.IsVisible = !OutputOnly
+            && (_openHelp is not null
+                || HelpPageView.Exists(Nav.Help)
+                || HelpPageView.Exists(HelpLevel.Index));
 
     /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
@@ -2192,7 +2212,7 @@ public partial class PanelView : UserControl
         var roots = Nav.Roots(Nav.Tab);
         var showing = Nav.RootKeyOf(Nav.Tab);
 
-        ModeButton.IsVisible = roots.Count > 1 && Nav.AtRoot;
+        ModeButton.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
 
         ShowPageBar();
 

@@ -598,6 +598,10 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         CoreConversation.ThinkingEffort.Low => Effort.Low,
         CoreConversation.ThinkingEffort.Medium => Effort.Medium,
         CoreConversation.ThinkingEffort.High => Effort.High,
+
+        // Straight through: the pinned SDK's Effort is { Low, Medium, High, Xhigh, Max }, which
+        // is the note this enum used to carry the opposite of (list.md Phase 54).
+        CoreConversation.ThinkingEffort.Xhigh => Effort.Xhigh,
         CoreConversation.ThinkingEffort.Max => Effort.Max,
         _ => Effort.High,
     };

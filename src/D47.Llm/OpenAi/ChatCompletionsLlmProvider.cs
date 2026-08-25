@@ -635,6 +635,12 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         ThinkingEffort.Low => "low",
         ThinkingEffort.Medium => "medium",
         ThinkingEffort.High => "high",
+
+        // Both map down rather than through. OpenAI's acceptance of "xhigh" is not something
+        // d47 has seen a 200 for, and the fallback arm below would send "medium" -- a rung
+        // *below* High for the setting that asks for more than it (list.md Phase 54). Raising
+        // either of these wants a real response, not a guess.
+        ThinkingEffort.Xhigh => "high",
         ThinkingEffort.Max => "high",
         _ => "medium",
     };
