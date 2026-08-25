@@ -20,11 +20,18 @@ the file as it stood then.
 
 ---
 
-## 0.70.0 — 2026-08-25 — Say it and the ship does it
+## 0.70.0 — 2026-08-25 — Say it and the ship does it; where to buy it; bind it with the stick
+
+Three phases, and six fixes to the Loadout page. The ship now does five things you say to
+it, Directive 47 answers *where do I buy this and what does it cost there*, and push-to-talk
+can live on a button on your stick instead of a key on the keyboard. The Loadout page also
+stops telling you things about your ship that were not so.
+
+### Say it and the ship does it
 
 Phase 52. Five spoken commands, and the boost loop that watches the game instead of the clock.
 
-### Engage, and supercruise
+#### Engage, and supercruise
 
 Say **engage** and you jump. Say **supercruise** and you supercruise.
 
@@ -33,7 +40,7 @@ Both are whole sentences rather than keywords, which is the only interesting thi
 *engage the frame shift drive* — so a companion that reacted to the word anywhere in a sentence
 would jump when you asked it to boost. "Should I engage?" stays a question.
 
-### Separate and engage, separate and supercruise
+#### Separate and engage, separate and supercruise
 
 Full throttle, boost until the mass lock breaks, then go.
 
@@ -51,7 +58,7 @@ The second one ends in supercruise even though it was asked for as a jump, becau
 with different names and identical behaviour is not what was wanted. They fail differently in the
 game as well: a jump needs a destination locked in your nav panel and refuses without one.
 
-### Take us out
+#### Take us out
 
 Say **take us out** while docked and D47 walks the left panel to the launch button.
 
@@ -66,7 +73,7 @@ the pad before claiming anything:
 I walked the left panel and we are still docked, so assume it did not work.
 ```
 
-### Three new switches
+#### Three new switches
 
 One per command, each its own row, all of them still behind *let D47 press keys in Elite*. A
 Commander who trusts D47 to supercruise may well not trust it to boost, and *take us out* is the
@@ -76,14 +83,12 @@ None of the three is on the tool surface: they are reachable by voice and from t
 model never sees them. A spoken command that waits for a model round trip is a command given at
 the wrong moment.
 
----
-
-## 0.71.0 — 2026-08-25 — Where to buy it, and what it costs there
+### Where to buy it, and what it costs there
 
 Phase 49. *Where can I buy tritium* — and, the same question backwards, *where do I dump 700
 tonnes of it.*
 
-### How much you want is part of the question
+#### How much you want is part of the question
 
 A station 40 light years further out that is 200 credits a tonne cheaper is the wrong answer for
 eight tonnes and the right one for seven hundred and eighty. Tell D47 the tonnage and it ranks by
@@ -93,7 +98,7 @@ distance.
 Say the tonnage and **stations that cannot fill the order drop out**. The cheapest steel in the
 bubble is not an answer if the station is holding nine tonnes of it.
 
-### Every price has a date on it
+#### Every price has a date on it
 
 Prices come from other Commanders docking and sharing what they saw. Supply ages fastest — a
 colonisation rush strips a station in hours — so an answer that sounded current would be worse
@@ -111,7 +116,7 @@ and "eleven stations, all quoting last month" mean different things.
 **Fleet carriers are out unless you ask for one.** Player-set prices, and the carrier may be a
 hundred light years away by the time you arrive.
 
-### A Market page on the Routing tab
+#### A Market page on the Routing tab
 
 Six stations with a price, a stock figure, a distance and a date each is a table to look at rather
 than a paragraph to listen to. Ask by voice and the page shows the answer you were just given —
@@ -120,22 +125,20 @@ one answer, not a second search that might disagree with it.
 Nothing extra is fetched for any of it. The trade planner already pulls whole markets and already
 caches them, so two questions in an evening cost one lookup and the ranking runs on your machine.
 
----
-
-## 0.72.0 — 2026-08-25 — Bind it with the stick, not the keyboard
+### Bind it with the stick, not the keyboard
 
 Phase 53. Push-to-talk on a HOTAS button.
 
 Press **Press to bind** on the new row, then press and release the button you want. Same gesture
 as binding a key, pointed at your stick.
 
-### It sits beside your key, not instead of it
+#### It sits beside your key, not instead of it
 
 With both set, **either one opens the microphone**, and the last one you let go of closes it — so
 letting go of the key while your thumb is still on the button does not cut you off mid-sentence.
 Binding a button does not unbind your key. You said two things rather than changed your mind.
 
-### It has to be a button that springs back
+#### It has to be a button that springs back
 
 A switch that stays where you put it would hold the microphone open until you moved it again, so
 the walk declines one and says why. Those belong on the switch panel, which is the other half of
@@ -146,12 +149,12 @@ cover your whole stick.
 Buttons already held when the walk opens are ignored — sixteen were held at rest on the test
 bench, which is what a maintained switch looks like from the inside.
 
-### If the stick is not there
+#### If the stick is not there
 
 D47 says so, and your key carries on working. A controller that is asleep is one of the ways "D47
 cannot hear me" happens with no reason attached.
 
-### The Elite collision check, hedged honestly
+#### The Elite collision check, hedged honestly
 
 Elite records a joystick binding against its own internal name for the device, which is not the
 name Windows gives it. So D47 cannot tell whether Elite's *button 24* is on the same stick as
@@ -165,9 +168,51 @@ UseBoostJuice. D47 cannot tell whether that is the same controller.
 A false warning costs a sentence. A missed one costs an evening of a microphone that will not
 open.
 
----
+### The Loadout page tells the truth about your ship
 
-## 0.72.2 — 2026-08-25 — An effect stays with the upgrade it belongs to
+Five defects from one evening, all on the same page, all fixed.
+[#38](https://github.com/dseelinger/d47/issues/38)–[#42](https://github.com/dseelinger/d47/issues/42).
+
+#### An empty slot says it is empty
+
+*"Something IS fitted on oxen utility mount 8."* Nothing was — your Type-10 has seven utility
+mounts and no eighth, and Elite leaves empty slots out of the loadout entirely. The page was
+drawing your **plan** as though it were the ship. Empty slots now say `empty →` before the module
+you planned, the same way a slot being swapped says what is in it now.
+
+#### The orange dot goes out when the work is done
+
+*"These have been engineered, the orange circles should be gone, right?"* Yes. The dot meant "a
+plan exists", so it could never clear. It now means the hull does not match the plan yet — nothing
+fitted, the wrong module fitted, or the right one without the roll.
+
+#### A roll that disagrees with your plan is reported
+
+**The one you could not see.** Your power distributor is planned Weapon Focused and rolled Priority
+Systems, grade 5 with Super Conduits — and it read as finished everywhere, because the row showed
+your plan's own words back. The slot drill now says so outright:
+
+```text
+Your plan asks for Weapon Focused, and this is rolled System Focused.
+```
+
+A slot you never rolled is obvious the moment you look at it. A slot you rolled the wrong way looks
+exactly like one you rolled right.
+
+#### Blueprints are named the way you name them
+
+One page carried two spellings of one blueprint — `Heavy Duty Hull Reinforcement` on the planned
+slots and `HullReinforcement_HeavyDuty` on the fitted-but-unplanned one. The join existed; nothing
+was reading it.
+
+#### Engineers stop offering work they cannot do
+
+*"Selene Jean can't do Shield Boosters, shouldn't appear."* Quite right — and worse, every line
+offered under her name was about a slot with **nothing in it**. An engineer cannot roll an empty
+mount; that is shopping, not engineering, and putting it under an engineer's name sends you to a
+workshop for work that cannot be done there.
+
+### An effect stays with the upgrade it belongs to
 
 [#31](https://github.com/dseelinger/d47/issues/31). Experimental effects drifted away from the
 engineering upgrade they belong to, and they drifted hardest exactly when it mattered.
@@ -185,52 +230,6 @@ revision is assembled.
 
 Both are fixed where the list is read rather than where it is stored, so a line you moved by hand
 still lands where you put it.
-
----
-
-## 0.72.1 — 2026-08-25 — The Loadout page tells the truth about your ship
-
-Five defects from one evening, all on the same page, all fixed.
-[#38](https://github.com/dseelinger/d47/issues/38)–[#42](https://github.com/dseelinger/d47/issues/42).
-
-### An empty slot says it is empty
-
-*"Something IS fitted on oxen utility mount 8."* Nothing was — your Type-10 has seven utility
-mounts and no eighth, and Elite leaves empty slots out of the loadout entirely. The page was
-drawing your **plan** as though it were the ship. Empty slots now say `empty →` before the module
-you planned, the same way a slot being swapped says what is in it now.
-
-### The orange dot goes out when the work is done
-
-*"These have been engineered, the orange circles should be gone, right?"* Yes. The dot meant "a
-plan exists", so it could never clear. It now means the hull does not match the plan yet — nothing
-fitted, the wrong module fitted, or the right one without the roll.
-
-### A roll that disagrees with your plan is reported
-
-**The one you could not see.** Your power distributor is planned Weapon Focused and rolled Priority
-Systems, grade 5 with Super Conduits — and it read as finished everywhere, because the row showed
-your plan's own words back. The slot drill now says so outright:
-
-```text
-Your plan asks for Weapon Focused, and this is rolled System Focused.
-```
-
-A slot you never rolled is obvious the moment you look at it. A slot you rolled the wrong way looks
-exactly like one you rolled right.
-
-### Blueprints are named the way you name them
-
-One page carried two spellings of one blueprint — `Heavy Duty Hull Reinforcement` on the planned
-slots and `HullReinforcement_HeavyDuty` on the fitted-but-unplanned one. The join existed; nothing
-was reading it.
-
-### Engineers stop offering work they cannot do
-
-*"Selene Jean can't do Shield Boosters, shouldn't appear."* Quite right — and worse, every line
-offered under her name was about a slot with **nothing in it**. An engineer cannot roll an empty
-mount; that is shopping, not engineering, and putting it under an engineer's name sends you to a
-workshop for work that cannot be done there.
 
 ---
 
