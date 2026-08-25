@@ -1,6 +1,21 @@
 # Proposal — per-role voice providers, then OpenAI, then Kokoro
 
-**Status: proposal, awaiting sign-off. No code written.** Asked for 2026-08-25.
+**Status: signed off 2026-08-25. Phase 57 is ready to build; 58 and 59 are not, for stated reasons.
+No code written yet.**
+
+Asked for 2026-08-25. Every open question in this document has been ruled on:
+
+| Ruling | Answer | Where |
+|---|---|---|
+| How the roles group | Six slots, by category | §1.1 |
+| Where `player` belongs | Its own slot | §1.1 |
+| What defaults to what | In the room keeps the provider; over the air goes to Edge | §1.1b |
+| Upgrade behaviour | Migrate, not grandfather — the install base is two | §1.1b |
+| MPL-2.0 in ONNX Runtime | Accepted; `NOTICE` entry, gate untouched | §1.2 |
+| Per-role speaking rate | Out of this phase; its own change request | §1.4 |
+
+**What still gates 58 and 59 is measurement, not permission**: OpenAI's language drift (§4.1), and
+spiking Kokoro's voice blending through the ONNX path before designing around it.
 
 Three phases are proposed — **57**, **58**, **59** — and the numbers are free: 1–21 and 23–53 are
 frozen, 22 is retired and never reused, and 54, 55 and 56 are already spoken for.
@@ -74,7 +89,7 @@ the Commander's four, with the human channels sorted by consent rather than by h
 | Slot | Covers | Default | Why |
 |---|---|---|---|
 | **Aboard** | `ShipAi`, `Crew` | `Provider` | `RadioVoice.IsOverTheAir` already groups exactly these two |
-| **Carrier** | `CarrierCaptain`, `TowerControl` | `Provider` | two roles, one installation; and these are d47's own fictions, not other people |
+| **Carrier** | `CarrierCaptain`, `TowerControl` | **Edge** | two roles, one installation — and it reaches the Commander over a radio, which is the side of the line the ruling below puts on Edge |
 | **NPCs** | `npc` | **Edge** | not real people; game-authored, bounded, unspammable |
 | **People you know** | `friend`, `wing`, `squadron` | **Edge** | real people the Commander is in contact with by choice |
 | **Direct messages** | `player` | **Edge** | a real person reaching the Commander directly — its own category by ruling, because whether that implies contact is neither obvious nor the code's to decide |
@@ -86,41 +101,43 @@ which channel it came from. What is *not* carried is a distinction finer than th
 `SpeakerIsPlayer` boolean, which is all that reaches `Cast.ForSender` today — so the routing key
 becomes the channel, and the boolean keeps its existing job of deciding how long a voice sticks.
 
-### 1.1b The default is Edge for every voice that is not d47's own, and that overturns something above
+### 1.1b In the room keeps the provider. Over the air goes to Edge.
 
-**Settled 2026-08-25: Edge by default, with a warning about moving off it.**
+**Settled 2026-08-25.** *"Everything outside the cockpit defaults to Edge. Everything inside the
+cockpit takes whatever the current provider is during this upgrade."*
 
-Edge is free, so nothing another player types can cost the Commander anything. The warning goes on
-the *change*: choosing a paid provider for one of those four slots is choosing to be billed, per
-character, for text somebody else writes and can write as much of as they like.
+**That division already exists in the code, exactly.** `RadioVoice.IsOverTheAir` returns false for
+`ShipAi` and `Crew` and true for everything else — the two who are in the room against everyone who
+arrives through a radio. So the rule needs no new line drawn: **Aboard follows `Provider`, and the
+other five default to Edge.**
 
-**Be plain about what Edge does and does not buy.** It is free; it is **not local**. Edge sends
-the line to `speech.platform.bing.com`. So this default settles the *cost* half of the phase's
-acceptance criterion outright and leaves the *egress* half — *"no other player's text leaves the
-machine"* — for a local provider, which is Phase 59 and is why Phase 59 exists. The disclosure
-table must not let those two be confused, because "free" reading as "private" is exactly the
-mistake a Commander would make unaided.
+**One consequence worth naming rather than leaving to be discovered: this moves the Carrier to
+Edge.** The captain and the tower are d47's own fictions rather than other people's text, and they
+carry no cost risk — a handful of lines on arrival and departure. They go to Edge because they come
+over a radio, not because anything is wrong with them. If they should follow the cockpit instead,
+that is a one-word change and this is the paragraph to overturn.
 
-**This overturns the upgrade claim in §1.3, and the contradiction is deliberate rather than
-missed.** That section proposes absent-means-`Provider` so a file written before this change
-behaves identically. That cannot also be true of a slot whose default is Edge: a Commander on
-ElevenLabs today has every NPC and every stranger on ElevenLabs, and applying the new default
-changes what they hear.
+Edge is free, so nothing another Commander types can cost anything. The warning goes on the
+*change*: choosing a paid provider for a slot that carries other people's words is choosing to be
+billed, per character, for text somebody else writes and can write as much of as they like.
 
-Two ways to resolve it, and this is a ruling worth making explicitly rather than discovering:
+**Be plain about what Edge does and does not buy.** It is free; it is **not local**. Edge sends the
+line to `speech.platform.bing.com`. So this settles the *cost* half of the phase's acceptance
+criterion outright and leaves the *egress* half — *"no other player's text leaves the machine"* —
+for a provider that runs on the machine, which is Phase 59 and is why Phase 59 exists. The
+disclosure table must not let those two be confused, because "free" reading as "private" is exactly
+the mistake a Commander would make unaided.
 
-- **Migrate.** On first load of an older file, the four non-d47 slots are set to Edge. The
-  Commander's bill for other people's text drops to nothing without them doing anything, which is
-  the whole point of the phase — and strangers start sounding different, which they will notice.
-  **Recommended**, with the release note saying so in plain words rather than leaving it to be
-  found.
-- **Grandfather.** Absent keeps meaning `Provider`, so nothing changes for anyone already
-  installed and only new installs get the safe default. Nothing is surprising and nobody is
-  protected until they go and look.
+**The upgrade migrates rather than grandfathers, and the reason is dated.** §1.3 proposes
+absent-means-`Provider` so an older file behaves identically. That stays true of Aboard and is now
+deliberately false of the other five: a Commander on ElevenLabs today hears every NPC, every
+stranger and their own carrier through it, and this changes that on first load.
 
-Recommending migration, because the defect being fixed is one the Commander cannot see happening —
-a bill going up is not a symptom that points anywhere — and because the safe direction is the
-cheap one.
+The Commander's own reason, 2026-08-25: **there are two installations, theirs and one other.** That
+is what makes migrating the safe choice rather than the bold one — the population that can be
+surprised is two people, one of whom decided it. **Recorded with its date because it expires**: the
+same migration proposed against a real install base is a different proposal, and a later reader
+finding "we moved everybody" needs to know it was two.
 
 ### 1.2 The ONNX Runtime licence — the gate would not fail. It would pass, and be wrong to.
 
@@ -163,9 +180,29 @@ graph declares a licence d47 may not ship"* — remains true and remains insuffi
 | **B. Accept and widen `Permissive` to include MPL-2.0** | Wrong instrument: the gate would not have caught this anyway, and widening it lowers the floor for every future package, including ones that *do* declare MPL and would have been caught. |
 | **C. Refuse** | No local TTS except the Windows built-ins, which the brief has already ruled out. Phase 59 does not happen. |
 
-**Recommending A.** The gate stays as it is and keeps its meaning; a person made a decision and it
-is written down where the obligation is discharged. Per the gate's own failure text, that record
-should name who decided and when.
+**Decided: A. Accepted by Doug Seelinger on 2026-08-25.**
+
+The gate stays exactly as it is and keeps its meaning. `LicenceGate.Permissive` is **not** widened,
+because it would be the wrong instrument twice over: it never saw this package's MPL in the first
+place, so widening would not have changed the outcome — and it *would* lower the floor for a future
+package that genuinely declares MPL and which this gate would otherwise catch.
+
+What the decision costs, and what must actually happen when Phase 59 is built:
+
+- **`NOTICE` gains an entry** naming Eigen, MPL-2.0, and where the source may be obtained. That is
+  what discharges MPL-2.0 §3.2, which requires telling recipients how to get the Covered Software's
+  source rather than shipping it.
+- **The entry says which commit**, because ONNX Runtime pins Eigen by hash in `cmake/deps.txt`
+  rather than by version, and "Eigen" without one does not identify what was actually compiled in.
+- **This decision is cited from the code**, so the next reader finds the reasoning rather than
+  re-deriving it: Phase 59's provider names this section, and this section names §1.2's two
+  verifiable facts — `EIGEN_MPL2_ONLY` compiled in unconditionally, and MPL-2.0's Larger Work
+  clause.
+
+**What is still outstanding and is not covered by this decision:** the verification named at the
+end of §1.2 — that the shipped `onnxruntime.dll` contains no other third-party code the notices do
+not mention. The notices and the build flag were read; the binary was not. That check belongs in
+Phase 59 before the package is referenced, not to this ruling.
 
 **One thing I did not verify and would before building:** that the shipped `onnxruntime.dll`
 contains no other third-party code the notices do not mention. I read the notices and the build
@@ -235,17 +272,21 @@ yet.
   the announcement key, which is what separates a squadron mate from a stranger in local. A
   `VoiceGroup` sits above `VoiceRole` and no existing role changes meaning. Accepted when each slot can name a different provider and every voice still
   comes out of the arbiter in the order it was written.
-- [ ] **Free by default for every voice that is not d47's own** — The four slots carrying other
-  people's words — NPCs, people you know, direct messages, anyone in range — default to **Edge**,
-  which costs nothing, so nothing another Commander types can spend the Commander's money. The
+- [ ] **In the room keeps the provider; over the air goes free** — Everything that reaches the
+  Commander through a radio — the carrier, NPCs, people you know, direct messages, anyone in range —
+  defaults to **Edge**, which costs nothing, so nothing another Commander types can spend the
+  Commander's money. Only the two voices actually in the cockpit, the ship's AI and the crew, keep
+  whatever provider is selected. **The line is `RadioVoice.IsOverTheAir` and it already exists**, so
+  this is an existing division being given a second job rather than a new one being invented. The
   warning goes on the change rather than on the state: choosing a paid provider for one of those is
   choosing to be billed per character for text somebody else writes and can write as much of as
   they like. **Edge is free and is not local** — it sends the line to `speech.platform.bing.com` —
   so the row must not let "free" read as "private", which is the mistake a Commander would make
   unaided and the reason the item below is a separate item. Accepted when a fresh install speaks
-  every stranger through Edge without being asked, when moving one of those slots to a paid
-  provider says plainly what that means, and when an existing installation is migrated to it rather
-  than left paying quietly.
+  every stranger through Edge without being asked, when moving one of those slots to a paid provider
+  says plainly what that means, and when an existing file is **migrated** rather than left paying
+  quietly — which is safe here because the install base is two, and is recorded as being true on
+  2026-08-25 rather than for ever.
 - [ ] **No other player's text has to leave the machine** — The reason this phase exists rather
   than a nicety it enables. `speech.md {#egress}` already says re-voiced messages are *"written by
   other players"*, which makes local and system chat an **untrusted, attacker-influenced, unbounded-volume**
@@ -296,8 +337,9 @@ item list changes. The shape it will take is in §3.6.
 
 ### Phase 59 — A voice that never leaves the machine
 
-**Blocked on §1.2 and not written until it clears.** Intended for NPCs and anyone-in-range, which is
-where "free, offline, unlimited, and nobody else's text leaves" is worth most.
+**§1.2 cleared on 2026-08-25; the phase is unblocked and still unwritten**, because its text should
+be written against a spiked blend rather than a community wrapper's account of one. Intended for the
+over-the-air slots, which is where "free, offline, unlimited, and nobody else's text leaves" is worth most.
 
 ---
 
