@@ -20,6 +20,72 @@ the file as it stood then.
 
 ---
 
+## 0.66.0 — 2026-08-24 — What the overlay and the mini window got wrong on their first evening
+
+Everything in here came from twenty minutes of you actually using 0.64.0 and 0.65.0.
+
+### The overlay opened on the wrong monitor
+
+Reported: *"It's displaying on the primary monitor even when Elite is not on the primary."*
+
+Two faults, not one. It asked which screen Windows calls **primary** rather than which screen the
+**game** is on — and it asked **once**, at startup, so even the right answer would have gone stale
+the moment you moved Elite.
+
+It now reads Elite's own window rectangle and picks the monitor that is on, **every time the strip
+appears**. Move the game to another screen and the strip goes with it.
+
+**Unless you have placed it yourself**, in which case your corner wins and nothing moves it again.
+A default may follow the game around; a choice may not.
+
+### "Show the overlay" always read off
+
+Reported: *"'Show the overlay' is always toggled off ... even when it is visible, it still shows as
+being toggled off."*
+
+Quite right, and the overlay was working the whole time — the switch was the thing lying. The
+settings surface compares a row's value against the lowercase word `true`, and this row answered
+`True`. The write side parses either spelling, which is exactly why nothing looked broken except
+the one control you had just touched.
+
+**Every toggle in the app is now checked against its own setting, both ways round, through the real
+drawn switch.** Spelling it correctly was a convention every other capability happened to follow
+with nothing enforcing it.
+
+The row also says out loud that the overlay appears only while Elite is in front, so turning it on
+at the desk and seeing nothing reads as **on** rather than as broken.
+
+### The mini window has a button now
+
+Reported: *"in the mini window there does need to be a physical UI control to switch it between
+modes."*
+
+There was a deliberate decision behind its absence — the way back must not live in the thing that
+disappears, so it was the hotkey, the spoken phrase and the title bar. All three still work. But
+that argument was that a drawn control must not be the **only** way out, and it got read one step
+too far into there not being one at all.
+
+**Expand** now sits in the mini panel's bottom corner, and **Shrink** in the same place in the full
+window. It is on every page mini has — including the story, where the status line is not — and it
+stays put while a chooser is open, because a chooser is exactly the state you can feel stuck in.
+
+The mini window is that much taller to hold it, measured rather than typed, so the button is not
+standing on the transcript.
+
+### While you are there: the overlay does follow the window's tab
+
+Asked: *"How do I get it to show a different tab?"*
+
+It already tracks the main window — **for the two tabs it has**, which are the transcript and the
+story. Switch the window to Checklist or Routing and the window moves alone rather than the strip
+blanking. Which reading of the transcript you are on is shared in both directions, always.
+
+If you want more of the panel on the strip than that, say so — it is one call per tab, and the
+reason it is two is a judgement about what is readable at 512 pixels rather than anything
+structural.
+
+---
+
 ## 0.65.0 — 2026-08-24 — The window goes mini too
 
 The headset has had a mini panel for months. Now the window does: the transcript's last few lines,

@@ -65,6 +65,12 @@ public partial class PanelView : UserControl
     private bool _asksInMini;
 
     /// <summary>
+    /// How this surface changes its own mode, or null where it cannot. See
+    /// <see cref="EnableModeToggle"/>.
+    /// </summary>
+    private Action<PanelMode>? _switchMode;
+
+    /// <summary>
     /// The tab that was showing when mini took it away, so leaving mini can put it back
     /// (list.md Phase 51). Null whenever mini did not have to move anything.
     /// </summary>
@@ -1193,15 +1199,20 @@ public partial class PanelView : UserControl
     /// </para>
     /// </summary>
     /// <summary>
-    /// How tall the ask line wants to be at a given width, or zero where this surface has not got
-    /// one (list.md Phase 51).
+    /// How tall the rows this surface keeps in mini <em>beyond the headset's</em> want to be at a
+    /// given width, or zero where it keeps none (list.md Phase 51).
     /// <para>
     /// <b>This is what makes the window's mini size measured rather than typed.</b> Mini is
     /// 512x280 in the headset for a stated reason — apparent size there is the pixel count and the
     /// quad's width in metres together, so the height is a floor under a reduced content set. The
-    /// window's mini keeps one thing the headset's does without, which is the ask line, so its
-    /// height is that floor plus whatever this line actually wants. Ask a surface that never
-    /// furnished one and the answer is zero, which lands it back on the headset's number exactly.
+    /// window's mini keeps things the headset's does without: the ask line, and the control that
+    /// leaves mini. So its height is that floor plus whatever those actually want, and a surface
+    /// that furnished neither lands back on the headset's number exactly.
+    /// </para>
+    /// <para>
+    /// A sum rather than one row, because the list has already grown once: it was the ask line
+    /// alone until the drawn way out arrived a day later, and a height that forgets a row it is
+    /// drawing takes the difference out of the transcript, silently.
     /// </para>
     /// <para>
     /// Measured at the unscaled width and left to the caller to scale, because the zoom is a
@@ -1209,26 +1220,57 @@ public partial class PanelView : UserControl
     /// larger, which is the whole reason a mini window at 150% is a bigger mini window rather than
     /// a clipped one.
     /// </para>
+    /// </summary>
+    public double MiniExtraHeight(double width) => Wanted(AskRow, width) + Wanted(ModeRow, width);
+
+    /// <summary>
+    /// What one row wants, or zero when it is not drawn.
     /// <para>
     /// Invalidated afterwards. Measuring out of band leaves the control marked as measured against
     /// a constraint the layout pass never gave it, and the arrange that follows would use it.
     /// </para>
     /// </summary>
-    public double AskLineHeight(double width)
+    private static double Wanted(Control row, double width)
     {
-        if (!AskRow.IsVisible)
+        if (!row.IsVisible)
         {
             return 0;
         }
 
-        AskRow.Measure(new Size(width, double.PositiveInfinity));
+        row.Measure(new Size(width, double.PositiveInfinity));
 
-        var wanted = AskRow.DesiredSize.Height;
+        var wanted = row.DesiredSize.Height;
 
-        AskRow.InvalidateMeasure();
+        row.InvalidateMeasure();
 
         return wanted;
     }
+
+    /// <summary>
+    /// Draws a control that switches this surface between full and mini (asked for 2026-08-24).
+    /// <para>
+    /// <b>This softens a Phase 51 ruling on the Commander's instruction.</b> That phase said the
+    /// way back must not live in the thing that disappears, and listed three that do not: the
+    /// hotkey, the spoken phrase and the title bar. The reasoning still holds and none of those
+    /// three has been taken away — but the first thing said on meeting a mini window was that
+    /// there needs to be a control you can see. A way out that has to be explained is a way out
+    /// half the people who need it will not have been told about, and the argument was only ever
+    /// that a drawn control must not be the <em>only</em> one.
+    /// </para>
+    /// <para>
+    /// Furnished rather than branched, like <see cref="EnableAskInMini"/> and
+    /// <see cref="EnableTurnDetails"/>: the headset's mini is untouched, and the flat overlay of
+    /// Phase 48 does not draw a button the pointer would pass straight through.
+    /// </para>
+    /// </summary>
+    public void EnableModeToggle(Action<PanelMode> switchTo)
+    {
+        _switchMode = switchTo;
+        ApplyChrome();
+    }
+
+    private void OnModeToggleClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        _switchMode?.Invoke(Mode == PanelMode.Full ? PanelMode.Mini : PanelMode.Full);
 
     /// <summary>
     /// Keeps the ask line on this surface in mini (list.md Phase 51).
@@ -1691,6 +1733,21 @@ public partial class PanelView : UserControl
         // The provenance line and the microphone indicator together, because both are about the
         // transcript and no other tab has turns on it.
         StatusRow.IsVisible = transcript;
+
+        // And the way out, on every tab this surface has, because a way out with a hole in it is
+        // the failure this control exists to prevent (asked for 2026-08-24). Its words say where
+        // pressing it goes rather than where it is, which is the only reading of a one-word button
+        // that cannot be got backwards.
+        //
+        // Furnishing is the whole condition — not the tab, not the mode, and deliberately not the
+        // modal below either. A chooser is exactly the state a Commander can feel stuck in, and
+        // this is the one control that should never be the thing they are stuck behind.
+        ModeRow.IsVisible = _switchMode is not null;
+        ModeToggle.Content = full ? "Shrink" : "Expand";
+
+        ToolTip.SetTip(
+            ModeToggle,
+            full ? "Show less, in a smaller window" : "Back to the whole panel");
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs,
         // the mode control, the breadcrumb and the search box go with the rest of the chrome. A

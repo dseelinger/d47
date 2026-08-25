@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using D47.App.Input;
 using D47.App.Panel;
@@ -75,6 +76,19 @@ public sealed class OverlayPanel : Window
     /// is the honest default and also the one that draws nothing.
     /// </summary>
     private Func<bool> _eliteInFront = () => false;
+
+    /// <summary>
+    /// Elite's window, for the one question this surface asks of it beyond the foreground: which
+    /// monitor it is on (#36). Null for a surface built by a caller with no game to ask about,
+    /// which falls back to the primary screen.
+    /// </summary>
+    private IEliteWindow? _elite;
+
+    /// <summary>
+    /// Whether the Commander has put the strip somewhere themselves (#36). Their corner wins for
+    /// ever after; until then d47 picks one, and picking one is a thing it may do more than once.
+    /// </summary>
+    private bool _placed;
 
     private bool _placing;
     private Point? _grab;
@@ -201,6 +215,7 @@ public sealed class OverlayPanel : Window
         var overlay = new OverlayPanel(model, settings, viewState, logger, avatars, adventures)
         {
             _eliteInFront = () => elite.IsForeground,
+            _elite = elite,
         };
 
         overlay.Restore();
@@ -304,6 +319,11 @@ public sealed class OverlayPanel : Window
             Hide();
             return;
         }
+
+        // Which monitor, asked now rather than at startup (#36). The game can be moved between
+        // screens between one showing and the next, and a corner d47 chose is a corner d47 may
+        // choose again — see Park, which declines the moment the Commander has placed it.
+        Park();
 
         Show();
 
@@ -421,26 +441,46 @@ public sealed class OverlayPanel : Window
     }
 
     /// <summary>
-    /// Where the Commander left it, or the bottom-right of the screen in front of them.
-    /// <para>
-    /// Bottom-right because that is the corner of Elite's HUD with the least on it, and because a
-    /// strip that opens over the compass is a strip that gets moved before it gets read.
-    /// </para>
+    /// Where the Commander left it, if they ever said. Otherwise nothing is decided here — see
+    /// <see cref="Park"/>, which decides it again every time the strip comes up.
     /// </summary>
     private void Restore()
     {
         WindowStartupLocation = WindowStartupLocation.Manual;
 
-        if (_viewState.Load().Overlay is { } placement)
+        if (_viewState.Load().Overlay is not { } placement)
         {
-            Position = new PixelPoint((int)placement.X, (int)placement.Y);
-            Clamp();
+            Park();
             return;
         }
 
-        var screen = Screens?.Primary ?? Screens?.All.FirstOrDefault();
+        _placed = true;
+        Position = new PixelPoint((int)placement.X, (int)placement.Y);
+        Clamp();
+    }
 
-        if (screen is null)
+    /// <summary>
+    /// Puts the strip in the bottom-right of <b>the screen Elite is on</b> (<a
+    /// href="https://github.com/dseelinger/d47/issues/36">#36</a>).
+    /// <para>
+    /// Reported on a multi-monitor desk: the strip opened on the primary monitor with the game on
+    /// another. It asked the wrong question — the screen that matters is the one the game is on,
+    /// not the one Windows calls primary — and it asked it <b>once</b>, at startup, so even a
+    /// right answer would have gone stale the moment the Commander moved Elite.
+    /// </para>
+    /// <para>
+    /// So it is asked on every show, and only while the Commander has not said otherwise. Once
+    /// they have dragged it somewhere, <see cref="_placed"/> is true and that corner wins for
+    /// ever: <b>a default may follow the game around, and a choice may not.</b>
+    /// </para>
+    /// <para>
+    /// Bottom-right because that is the corner of Elite's HUD with the least on it, and because a
+    /// strip that opens over the compass is a strip that gets moved before it gets read.
+    /// </para>
+    /// </summary>
+    private void Park()
+    {
+        if (_placed || ScreenForElite() is not { } screen)
         {
             return;
         }
@@ -452,6 +492,34 @@ public sealed class OverlayPanel : Window
         Position = new PixelPoint(
             area.X + area.Width - (int)(Width * screen.Scaling) - Margin,
             area.Y + area.Height - (int)(Height * screen.Scaling) - Margin);
+    }
+
+    /// <summary>
+    /// The screen Elite's window is on, or the primary one when d47 cannot tell — which is every
+    /// case where the game is not running, and is why this feature can be set up before it is.
+    /// <para>
+    /// The centre of Elite's rectangle rather than its corner: a borderless window sits at exactly
+    /// the screen origin, and a window manager that reports it a pixel to the left would put the
+    /// answer on the monitor next door.
+    /// </para>
+    /// </summary>
+    private Screen? ScreenForElite()
+    {
+        if (Screens is not { } screens || screens.All.Count == 0)
+        {
+            return null;
+        }
+
+        var fallback = screens.Primary ?? screens.All[0];
+
+        if (_elite?.Bounds is not { } elite || elite.Width <= 0 || elite.Height <= 0)
+        {
+            return fallback;
+        }
+
+        var centre = new PixelPoint(elite.X + (elite.Width / 2), elite.Y + (elite.Height / 2));
+
+        return screens.ScreenFromPoint(centre) ?? fallback;
     }
 
     /// <summary>
@@ -471,7 +539,9 @@ public sealed class OverlayPanel : Window
             return;
         }
 
-        var area = (screens.Primary ?? screens.All[0]).WorkingArea;
+        // Onto the screen the game is on, which is the one the Commander is looking at — the same
+        // answer Park gives, rather than the primary monitor this used to fall back to (#36).
+        var area = (ScreenForElite() ?? screens.Primary ?? screens.All[0]).WorkingArea;
 
         Position = new PixelPoint(area.X + area.Width / 2, area.Y + area.Height / 2);
     }
@@ -542,6 +612,9 @@ public sealed class OverlayPanel : Window
     /// </summary>
     private void Remember()
     {
+        // From here the corner is theirs, and nothing picks one again (#36).
+        _placed = true;
+
         var placement = new OverlayPlacement { X = Position.X, Y = Position.Y };
 
         _viewState.Save(_viewState.Load().With(placement));
