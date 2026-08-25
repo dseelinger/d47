@@ -174,6 +174,14 @@ public static class EngineersHere
         var open = items
             .Where(item => item.IsLive && !item.IsComplete)
             .Where(item => item.Intent?.Kind is ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental)
+
+            // And there has to be something in the slot to roll (GitHub issue 41). An engineer
+            // cannot work an empty mount, so a line about one is shopping rather than engineering,
+            // and putting it under an engineer's name sends the Commander to a workshop for work
+            // that cannot be done there. Measured against the Commander's own Type-10: every line
+            // offered under "What Selene Jean can do here" was about a slot with nothing in it,
+            // while everything of hers that was fitted was already finished.
+            .Where(item => IsFitted(item, state))
             .ToList();
 
         return
@@ -338,23 +346,45 @@ public static class EngineersHere
     /// </summary>
     private static ModuleSpecification? ModuleOf(ChecklistItem item, CommanderGameState state)
     {
+        if (Fitted(item, state) is not { } fitted)
+        {
+            return null;
+        }
+
+        // The specification rather than its name: see the comment in Offers above. The name is a
+        // product name and the recipe table is keyed on the module's type.
+        return EliteSpecifications.Module(fitted.Item);
+    }
+
+    /// <summary>
+    /// The module in this item's slot, or null where the slot is empty or the ship unseen.
+    /// </summary>
+    private static ShipModule? Fitted(ChecklistItem item, CommanderGameState state)
+    {
         if (item.Intent?.Subject is not { Length: > 0 } slot)
         {
             return null;
         }
 
-        if (LoadoutFor(item, state) is not { } loadout)
-        {
-            return null;
-        }
-
-        var fitted = loadout.Modules.FirstOrDefault(module =>
-            string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
-
-        // The specification rather than its name: see the comment in Offers above. The name is a
-        // product name and the recipe table is keyed on the module's type.
-        return fitted is null ? null : EliteSpecifications.Module(fitted.Item);
+        return LoadoutFor(item, state) is not { } loadout
+            ? null
+            : loadout.Modules.FirstOrDefault(module =>
+                string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
     }
+
+    /// <summary>
+    /// Whether there is anything in this item's slot for an engineer to work on (GitHub issue 41).
+    /// <para>
+    /// <b>A line about a slot d47 cannot see is kept</b>, and that is the difference between this
+    /// and simply asking whether a module was found. A ship the Commander has never been aboard
+    /// has no remembered loadout, so every one of its slots reads as empty — dropping those would
+    /// silently empty an engineer's list for the whole fleet rather than for the empty mounts it
+    /// is about. Where there is a loadout, the absence of a module in it is Elite's way of saying
+    /// the slot is empty, and that is the case this exists for.
+    /// </para>
+    /// </summary>
+    private static bool IsFitted(ChecklistItem item, CommanderGameState state) =>
+        LoadoutFor(item, state) is null || Fitted(item, state) is not null;
 
     /// <summary>
     /// Which loadout this item's modules are read from: the live one for the ship being flown, and

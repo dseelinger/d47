@@ -278,6 +278,19 @@ public sealed record LoadoutParts(
     public bool NotFitted { get; init; }
 
     /// <summary>
+    /// The blueprint actually on the module, where the plan asked for a different one
+    /// (GitHub issue 42).
+    /// <para>
+    /// <b>The disagreement a plan exists to catch.</b> A slot never rolled is obvious the moment
+    /// you look at it. A slot rolled the <em>wrong way</em> looks exactly like one rolled right,
+    /// and d47 was silent about it: <see cref="Blueprint"/> takes the plan's word where there is
+    /// one, so a power distributor planned Weapon Focused and rolled Priority Systems read as
+    /// finished on this row and on the checklist both.
+    /// </para>
+    /// </summary>
+    public string? RolledInstead { get; init; }
+
+    /// <summary>
     /// Whether the module this row names is one a Powerplay pledge is needed to buy
     /// (list.md Phase 38).
     /// <para>

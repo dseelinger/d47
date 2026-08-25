@@ -165,4 +165,167 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
 
         Assert.False(Row(mode, "Slot04_Size5").Marked);
     }
+
+    // ---- The blueprint, in the Commander's words (GitHub issue 39) ----------------------------
+
+    /// <summary>
+    /// A fitted-but-unplanned slot used to print the journal's symbol, so one page carried two
+    /// spellings of one blueprint: <c>Heavy Duty Hull Reinforcement</c> on the planned slots and
+    /// <c>HullReinforcement_HeavyDuty</c> on this one.
+    /// </summary>
+    [Fact]
+    public void AFittedRollIsNamedTheWayTheCommanderNamesIt()
+    {
+        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5);
+
+        var row = Row(mode, "PowerDistributor");
+
+        Assert.NotNull(row.Parts);
+        Assert.Equal("System Focused", row.Parts.Blueprint);
+        Assert.DoesNotContain("_", row.Parts.Blueprint!, StringComparison.Ordinal);
+    }
+
+    // ---- A roll that disagrees with the plan (GitHub issue 42) --------------------------------
+
+    /// <summary>
+    /// <b>The case a plan exists to catch.</b> The right module, engineered to the right grade,
+    /// with the wrong blueprint — and d47 was silent, because the row printed the plan's own words
+    /// back.
+    /// </summary>
+    [Fact]
+    public void ARollThatDisagreesWithThePlanIsReported()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            new SlotPlan("PowerDistributor", "Weapon Focused", 5));
+
+        var row = Row(mode, "PowerDistributor");
+
+        Assert.NotNull(row.Parts);
+        Assert.Equal("System Focused", row.Parts.RolledInstead);
+        Assert.Equal("Weapon Focused", row.Parts.Blueprint);
+        Assert.True(row.Marked);
+    }
+
+    /// <summary>
+    /// And it is said out loud on the slot drill, which is where it belongs: the row's roll text is
+    /// never trimmed and has to fit at 620 pixels, and naming both blueprints measured 395 in a 368
+    /// row. Both facts were already on the drill in separate blocks; what was missing was anything
+    /// saying they disagree.
+    /// </summary>
+    [Fact]
+    public void TheDisagreementIsSaidOutLoudOnTheSlotDrill()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            new SlotPlan("PowerDistributor", "Weapon Focused", 5));
+
+        var ship = Assert.Single(mode.Items());
+        var said = mode.Fitted(ship.Key, "PowerDistributor").Select(line => line.Text).ToArray();
+
+        Assert.Contains(said, text => text.Contains("asks for Weapon Focused", StringComparison.Ordinal));
+        Assert.Contains(said, text => text.Contains("rolled System Focused", StringComparison.Ordinal));
+    }
+
+    /// <summary>And a roll that agrees says nothing of the kind.</summary>
+    [Fact]
+    public void ARollThatAgreesRaisesNothingOnTheDrill()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            new SlotPlan("PowerDistributor", "System Focused", 5));
+
+        var ship = Assert.Single(mode.Items());
+        var said = mode.Fitted(ship.Key, "PowerDistributor").Select(line => line.Text).ToArray();
+
+        Assert.DoesNotContain(said, text => text.Contains("asks for", StringComparison.Ordinal));
+    }
+
+    /// <summary>A roll that agrees says it once, not twice.</summary>
+    [Fact]
+    public void ARollThatAgreesWithThePlanSaysItOnce()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            new SlotPlan("PowerDistributor", "System Focused", 5));
+
+        var row = Row(mode, "PowerDistributor");
+
+        Assert.NotNull(row.Parts);
+        Assert.Null(row.Parts.RolledInstead);
+    }
+
+    /// <summary>
+    /// And an unplanned roll has nothing to disagree with, so it is not reported as a
+    /// disagreement — which would put a mark on every slot a Commander engineered without
+    /// planning it first.
+    /// </summary>
+    [Fact]
+    public void AnUnplannedRollIsNotADisagreement()
+    {
+        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5);
+
+        var row = Row(mode, "PowerDistributor");
+
+        Assert.NotNull(row.Parts);
+        Assert.Null(row.Parts.RolledInstead);
+        Assert.False(row.Marked);
+    }
+
+    /// <summary>
+    /// One ship whose power distributor carries a real roll, plus whatever plan the test wants.
+    /// </summary>
+    private static (ShipsMode Mode, ShipPlanService Ships) Rolled(
+        string blueprint,
+        int grade,
+        params SlotPlan[] plans)
+    {
+        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-roll-vs-plan-tests"));
+
+        paths.EnsureCreated();
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(paths.Data, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => null);
+
+        var store = new GameStateStore();
+
+        var loadout =
+            """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"PowerDistributor","Item":"int_powerdistributor_size7_class5","On":true,"Priority":1,"Health":1.0,"Engineering":{"Engineer":"The Dweller","EngineerID":1,"BlueprintID":1,"BlueprintName":"BLUEPRINT","Level":99,"Quality":1.0,"Modifiers":[]}}]}"""
+                .Replace("BLUEPRINT", blueprint, StringComparison.Ordinal)
+                .Replace("99", grade.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-24T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     loadout,
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        var live = store.Active!;
+
+        var ships = new ShipPlanService(
+            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            checklists,
+            () => live);
+
+        var build = ships.BuildFor(53, live.Ship!.Type!);
+
+        foreach (var plan in plans)
+        {
+            ships.Plan(build.Id, plan);
+        }
+
+        return (new ShipsMode(ships, checklists, () => live), ships);
+    }
 }
