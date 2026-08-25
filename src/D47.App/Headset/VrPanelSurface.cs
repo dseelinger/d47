@@ -246,6 +246,29 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;
 
+    /// <summary>
+    /// Moves the page this surface is showing, for a spoken scroll
+    /// (<a href="https://github.com/dseelinger/d47/issues/34">#34</a>).
+    /// <para>
+    /// <b>This is the surface the phrase was asked for.</b> A ray on a twelve-pixel bar is the only
+    /// way to scroll in a headset — the thumbsticks are unbound and stay that way — and a Commander
+    /// with their hands on a stick cannot use it. Dragging is not replaced; this is a second way in.
+    /// </para>
+    /// <para>
+    /// Dirty only when something moved, which is the bargain every other tick on this surface
+    /// strikes: a flag held true for a scroll that did nothing re-renders the whole widget tree and
+    /// hands SteamVR an identical image.
+    /// </para>
+    /// </summary>
+    public bool Scroll(D47.Core.Interface.PanelScrollStep step)
+    {
+        var moved = _view.Scroll(step);
+
+        _dirty |= moved;
+
+        return moved;
+    }
+
     /// <summary>Which mode the Commander has the panel in. Read from settings, never held here.</summary>
     public PanelMode Mode =>
         string.Equals(_settings.Current.Vr.Mode, "mini", StringComparison.OrdinalIgnoreCase)

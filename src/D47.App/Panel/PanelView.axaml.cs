@@ -268,6 +268,15 @@ public partial class PanelView : UserControl
             view.DrawTranscript();
         });
 
+        // Two sheets rather than the words "Copy All" (asked for 2026-08-24). Standard enough to
+        // need no learning, and it buys back a row that already carries the search box and two
+        // steppers. The word stays on the tooltip and on the accessible name.
+        Controls.Glyphs.Mark(
+            CopyButton,
+            Controls.Glyphs.Copy,
+            Theming.ThemeManager.TextMutedKey,
+            "Copy this whole page to the clipboard");
+
         Watch(Transcript);
 
         // The three readings of one exchange, registered as the Transcript tab's roots. They are
@@ -1247,6 +1256,105 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Moves the page this surface is showing, by however much was asked for
+    /// (<a href="https://github.com/dseelinger/d47/issues/34">#34</a>).
+    /// <para>
+    /// <b>Whichever region is on screen</b>, rather than the transcript alone: mini and the flat
+    /// strip carry the checklist and the engineer pages now, and those are the ones with more in
+    /// them than fits. A modal wins over all of them, because a chooser is a level of the stack and
+    /// the page behind it is not what the Commander is reading.
+    /// </para>
+    /// <para>
+    /// <b>Following is decided here rather than left to the scroll handler.</b> Scrolling up by
+    /// voice means what scrolling up by hand means — stop following the newest line — and
+    /// <see cref="OnTranscriptScrolled"/> would normally conclude that on its own. It cannot be
+    /// relied on to: on the headset's offscreen surface the change is not raised until the next
+    /// layout pass, which happens inside the render that has already called
+    /// <see cref="KeepUp"/> — so the page scrolled up and was pulled straight back to the bottom,
+    /// once per frame, and the Commander saw nothing move at all. A deliberate scroll says where it
+    /// landed rather than waiting to be told.
+    /// </para>
+    /// <para>
+    /// False when there is nothing to scroll — no scroller in the region, or a layout that has not
+    /// happened yet — so the phrase falls through to whatever else wanted it rather than being
+    /// silently eaten.
+    /// </para>
+    /// </summary>
+    public bool Scroll(PanelScrollStep step)
+    {
+        if (ActiveScroller() is not { } scroller)
+        {
+            return false;
+        }
+
+        var viewport = scroller.Viewport.Height;
+
+        if (viewport <= 0 || scroller.Extent.Height <= viewport)
+        {
+            return false;
+        }
+
+        // A page is a screenful less one line, so the line a Commander was reading when they said
+        // it is still there when the page settles. The same overlap a browser leaves.
+        var line = Transcript.FontSize * 1.4;
+
+        var by = step switch
+        {
+            PanelScrollStep.PageDown => Math.Max(line, viewport - line),
+            PanelScrollStep.PageUp => -Math.Max(line, viewport - line),
+            PanelScrollStep.LineDown => line * PanelScroll.Lines,
+            _ => -line * PanelScroll.Lines,
+        };
+
+        var was = scroller.Offset.Y;
+        var wanted = Math.Clamp(was + by, 0, Math.Max(0, scroller.Extent.Height - viewport));
+
+        if (Math.Abs(wanted - was) < 0.5)
+        {
+            // Already at that end. Answered as "nothing happened" rather than as a move, because a
+            // Commander who says "page down" at the bottom should hear that they are at the bottom
+            // rather than watch nothing and wonder whether they were heard.
+            return false;
+        }
+
+        scroller.Offset = scroller.Offset.WithY(wanted);
+
+        if (ReferenceEquals(scroller, TranscriptScroller))
+        {
+            _following = AtTheEnd();
+            ShowFollowButton();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The scroller for whatever region is showing, or null where the region has none.
+    /// <para>
+    /// Found rather than held, because which region is on screen is <see cref="ApplyChrome"/>'s
+    /// answer and it changes with the tab, the mode and whether a chooser is open. Asking the
+    /// visible pane is the one question that stays right as those move.
+    /// </para>
+    /// </summary>
+    private ScrollViewer? ActiveScroller()
+    {
+        var pane = ModalPane.IsVisible ? ModalPane
+            : TranscriptPane.IsVisible ? TranscriptPane
+            : MiniPane.IsVisible ? MiniPane
+            : PagePane.IsVisible ? PagePane
+            : null;
+
+        if (pane is null)
+        {
+            return null;
+        }
+
+        return ReferenceEquals(pane, TranscriptPane)
+            ? TranscriptScroller
+            : pane.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+    }
+
+    /// <summary>
     /// Draws a control that switches this surface between full and mini (asked for 2026-08-24).
     /// <para>
     /// <b>This softens a Phase 51 ruling on the Commander's instruction.</b> That phase said the
@@ -1742,12 +1850,22 @@ public partial class PanelView : UserControl
         // Furnishing is the whole condition — not the tab, not the mode, and deliberately not the
         // modal below either. A chooser is exactly the state a Commander can feel stuck in, and
         // this is the one control that should never be the thing they are stuck behind.
+        // A mark rather than the word (asked for 2026-08-24). The pair is the one every video
+        // player and browser uses for full screen and leaving it, so it needs no learning — and
+        // the word it replaced is still on the tooltip and on the name a screen reader says, which
+        // is what keeps a picture from being a downgrade.
         ModeRow.IsVisible = _switchMode is not null;
-        ModeToggle.Content = full ? "Shrink" : "Expand";
 
-        ToolTip.SetTip(
+        Controls.Glyphs.Mark(
             ModeToggle,
-            full ? "Show less, in a smaller window" : "Back to the whole panel");
+            full ? Controls.Glyphs.Shrink : Controls.Glyphs.Expand,
+            Theming.ThemeManager.AccentKey,
+            full ? "Shrink to the mini panel" : "Expand to the whole panel",
+
+            // Larger than the row's other marks. This is the way out of a surface that has taken
+            // every other control away, so it is the one glyph a Commander has to find rather than
+            // merely recognise.
+            size: 17);
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs,
         // the mode control, the breadcrumb and the search box go with the rest of the chrome. A

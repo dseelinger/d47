@@ -271,7 +271,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Rebuild();
         };
 
-        var add = new Button { Content = "Add a line", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        // A plus rather than the words (asked for 2026-08-24). There is no ambiguity about this
+        // one anywhere, and it is the widest button on a bar that had already outgrown its row —
+        // see the WrapPanel below. The words stay on the tooltip and on the accessible name.
+        var add = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+
+        D47.App.Controls.Glyphs.Mark(
+            add, D47.App.Controls.Glyphs.Add, Theming.ThemeManager.TextKey, "Add a line");
+
         add.Click += (_, _) => AddLine();
 
         // Import and export (remediation.md 10, item 15). Beside the filter rather than beside
