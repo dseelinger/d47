@@ -888,8 +888,16 @@ public sealed class SteamVrRuntime(
     /// <c>vrserver</c> rather than <c>vrmonitor</c>: the monitor window is the visible half and
     /// can be closed while the session lives, so it answers a slightly different question.
     /// </para>
+    /// <para>
+    /// <b>Public because a test has to be able to ask it without connecting</b> (<a
+    /// href="https://github.com/dseelinger/d47/issues/35">#35</a>). The suite was the biggest
+    /// SteamVR client on the Commander's machine — 94 connects over two days against d47's own 32 —
+    /// and every one of them took a headset out of standby. This is the question that decides
+    /// whether the attach tests have anything to prove on this machine, and it touches nothing:
+    /// it reads the process list.
+    /// </para>
     /// </summary>
-    private static bool SteamVrIsRunning()
+    public static bool SteamVrIsRunning()
     {
         try
         {

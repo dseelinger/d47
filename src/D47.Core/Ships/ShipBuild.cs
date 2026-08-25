@@ -63,8 +63,15 @@ public sealed record SlotPlan(
     /// lines of it in red.
     /// </para>
     /// </summary>
+    /// <param name="withModule">
+    /// Whether the module travels with the request (asked for 2026-08-24). It does, and it is
+    /// named here rather than passed silently because <c>ShipPlanService</c> carries a comment
+    /// saying <c>BuildRequest</c> carries no module at all — true when it was written, and true of
+    /// what that comment is about: <b>this is the module's name for the sentence, not a request to
+    /// fit one.</b> No module checklist item comes of it.
+    /// </param>
     public BuildRequest ToRequest() =>
-        new(Slot, Blueprint, Grade > 0 ? Grade : null, Engineer, Experimental);
+        new(Slot, Blueprint, Grade > 0 ? Grade : null, Engineer, Experimental, Module);
 
     /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
     /// <param name="withGrade">

@@ -332,6 +332,32 @@ public sealed record ChecklistIntent(ChecklistIntentKind Kind, string Subject)
 
     /// <summary>Who would roll it, where an intent names one.</summary>
     public string? Engineer { get; init; }
+
+    /// <summary>
+    /// The module the plan means to put in this slot, where it says — <em>Shield Booster</em>,
+    /// <em>Hull Reinforcement Package</em> (asked for 2026-08-24).
+    /// <para>
+    /// <b>So a line about an empty slot can still say what it is about.</b> Reported as
+    /// <em>"Utility Mount 8 and Compartment 4 don't tell me the module type — it should always be
+    /// Module Type, not location within the group type."</em> Quite right, and d47 already knew:
+    /// the ship plan stores <c>"module": "Shield Booster"</c> beside the blueprint and the wording
+    /// layer never saw it, because that layer asked the <em>ship</em> what was fitted and fell back
+    /// to the slot's position when the answer was nothing.
+    /// </para>
+    /// <para>
+    /// <b>Out of the key, like <see cref="Detail"/> and <see cref="Grade"/>.</b> The slot alone is
+    /// the identity of a slot-shaped intent (list.md Phase 26), so changing which module is
+    /// intended for a slot is the Commander changing their mind rather than abandoning the item —
+    /// and this field must not be what makes a plan revision read as a fortnight of progress
+    /// thrown away.
+    /// </para>
+    /// <para>
+    /// <b>It does not make this a "fit this module" item.</b> That is still unbuilt and still on
+    /// Phase 38; this is the name of the thing the engineering is for, and nothing reads it except
+    /// the sentence.
+    /// </para>
+    /// </summary>
+    public string? Module { get; init; }
 }
 
 /// <summary>

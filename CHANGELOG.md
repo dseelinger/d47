@@ -20,6 +20,71 @@ the file as it stood then.
 
 ---
 
+## 0.69.0 — 2026-08-24 — A line says what it is about
+
+### An empty slot names the module, not the mounting point
+
+Reported, against your own Type-10:
+
+```text
+Grade 5 Heavy Duty on Utility Mount 8
+Grade 5 Heavy Duty Hull Reinforcement on Compartment 4 (size 5)
+```
+
+> Utility Mount 8 and Compartment 4 don't tell me the module type. It should always be Module Type,
+> not location within the group type.
+
+They read like that because **both slots are empty**. A checklist line resolves its slot by asking
+the ship what is fitted there, and when the answer is nothing it fell back to naming the mounting
+point.
+
+**Directive 47 knew all along.** Your plan for those slots stores the module beside the blueprint —
+`Shield Booster`, `Hull Reinforcement Package` — and the sentence had never been shown it. It is
+now:
+
+```text
+Grade 5 Heavy Duty on Shield Booster
+Grade 5 Heavy Duty Hull Reinforcement on Hull Reinforcement Package
+```
+
+**What is actually fitted still wins**, because a real module says more than a plan's name for one:
+a slot with a shield generator in it reads "7A Shield Generator", size and rating included. The
+plan's word is the fallback, and the mounting point is the fallback after that — for a slot you
+asked for engineering on without choosing what goes in it.
+
+**And the line under it now says where.** That sentence became the only thing telling you which of
+eight utility mounts, so it stopped saying `TinyHardpoint8` and started saying **Utility Mount 8**.
+
+### The overlay draws no buttons
+
+> Clickable controls should be removed from the 2D overlay. Nothing can be clicked, and it makes
+> more room for the data.
+
+Quite right. The pointer goes straight through that strip, so every control on it was a control
+that did nothing — and on 512 by 280 the checklist's own bar was costing two of the six rows there
+are. With it gone, three items fit where two did.
+
+The checkboxes stay, and so does the scrollbar: those show you something. It is only the things
+whose entire purpose was being pressed that go.
+
+### The test suite stops waking your headset
+
+`dotnet test` was the biggest SteamVR client on this machine — **94 connections over two days,
+against Directive 47's own 32** — and each one took the headset out of standby for five seconds.
+
+The attach tests connect on purpose, and the regression they guard is real: Directive 47 must
+*attach* to SteamVR and never *launch* it. But that guard only means anything **when SteamVR is not
+running** — and read closely, on a machine where it was, one of those tests asserted nothing at all
+and the other asserted one thing about the live path.
+
+So they skip when a session is up. **No coverage is lost**, because there was none there to lose,
+and the one live assertion moved to a check you can ask for deliberately with `D47_VR_LIVE=1`.
+
+This also cleans an instrument: those wakes were polluting `vrserver.txt`, which is the only
+evidence [#18](https://github.com/dseelinger/d47/issues/18) has to work from.
+
+---
+
 ## 0.68.0 — 2026-08-24 — Say "page down"
 
 Two things you asked for.

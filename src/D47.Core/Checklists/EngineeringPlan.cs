@@ -20,7 +20,13 @@ public sealed record BuildRequest(
     string? Blueprint = null,
     int? Grade = null,
     string? Engineer = null,
-    string? Experimental = null);
+    string? Experimental = null,
+
+    // What the plan means to put there, where it says (asked for 2026-08-24). Carried so a line
+    // about an empty slot can name the module rather than the mounting point — see
+    // ChecklistIntent.Module, which is where the reasoning is. It is not a request to fit
+    // anything: nothing emits a module item off the back of this.
+    string? Module = null);
 
 /// <summary>What one ingredient of a plan costs, and how far off the Commander is.</summary>
 /// <param name="Held">What they have now. Recomputed every time; never stored.</param>
@@ -135,6 +141,10 @@ public static class EngineeringPlan
                         Detail = Blank(request.Blueprint),
                         Grade = request.Grade,
                         Engineer = Blank(request.Engineer),
+
+                        // So an empty slot's line can name what is going in it rather than where
+                        // (asked for 2026-08-24).
+                        Module = Blank(request.Module),
                     },
                     Say(request)));
             }
@@ -148,6 +158,7 @@ public static class EngineeringPlan
                     {
                         Detail = experimental,
                         Engineer = Blank(request.Engineer),
+                        Module = Blank(request.Module),
                     },
                     $"{experimental} on {request.Slot.Trim()}"));
             }
