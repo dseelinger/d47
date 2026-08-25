@@ -262,7 +262,7 @@ yet.
 
 ### Phase 57 — Every voice can come from somewhere different
 
-- [ ] **Four slots, and they come from the roles that already exist** — Asked for 2026-08-25.
+- [ ] **Six slots, and they come from the roles that already exist** — Asked for 2026-08-25.
   Today one provider speaks for everybody. It becomes a choice per group: **Aboard** (the ship's
   AI and the crew), **Carrier** (the captain and the tower), **NPCs**, **people you know**,
   **direct messages**, and **anyone in range**.
@@ -299,7 +299,7 @@ yet.
 - [ ] **One client per provider, never one per slot** — `ElevenLabsTtsProvider.MaxConcurrent`
   justifies itself with *"Callouts, crew lines and re-voiced comms all share the same account, so
   the gate has to be here rather than in any one pipeline."* **That reasoning only survives if two
-  slots choosing the same provider share one instance.** Four clients would each believe they owned
+  slots choosing the same provider share one instance.** Six clients would each believe they owned
   the account's whole concurrency budget, and the failure is the one Phase 11 already fixed: a red
   banner and a sentence the Commander never heard. Accepted when a test pins that selecting one
   provider for two slots constructs it once.
@@ -312,7 +312,7 @@ yet.
 - [ ] **A file written before this still loads, and sounds the same** — `ProviderVoices` already
   holds one field per role inside `VoiceChoices`, so the store gains no dimension; what changes is
   which fields move on a switch, and `VoiceMemory.Switched` becomes per-group. `Speech.Provider`
-  keeps its meaning as the Aboard group's, and the other three read a new nullable map where
+  keeps its meaning as the Aboard group's, and the other five read a new nullable map where
   **absent means "the same as Provider"**. Phase 19's rule is unchanged and applies twice over: a
   choice that cannot be filed under a known provider is dropped rather than filed under a guess.
   Accepted when a settings file from before this change loads, and every voice is the one it was.
@@ -320,7 +320,7 @@ yet.
   requires stating exactly what leaves for the selected provider, and there is no longer one.
   Accepted when the row states what leaves **per slot**, when the Privacy list agrees with it
   rather than restating it, and when the state the item above describes — the core paid for, no
-  other player's words leaving — reads as one legible sentence rather than four rows a Commander
+  other player's words leaving — reads as one legible sentence rather than six rows a Commander
   has to combine.
 - [ ] **Which slot is costing money is a question worth being able to ask** — `SpeechSpend` records
   per provider and that survives untouched. Per-slot is what the refactor makes askable for the
