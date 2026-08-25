@@ -85,19 +85,23 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>
-    /// <b>Two roots and no more.</b> The overlay furnishes the transcript, which every surface has
-    /// by construction, and the Adventures reading. Everything else is refused with no special
-    /// case anywhere — the navigator already declines a tab nobody furnished, which is the same
-    /// <em>not calling <c>Furnish</c></em> that withdrew Loadout from the headset.
+    /// <b>A tab nobody furnished is refused, with no special case anywhere.</b> The navigator
+    /// already declines one, which is the same <em>not calling <c>Furnish</c></em> that withdrew
+    /// Loadout from the headset — so a host that hands the strip nothing gets a strip with the
+    /// transcript on it and no dead tabs.
+    /// <para>
+    /// Which tabs the shipped strip actually carries is
+    /// <c>TheOverlayCarriesTheHeadsetsTabsTests</c>: the headset's, minus Settings. This one is
+    /// about the mechanism that makes furnishing the whole of the decision.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void ItIsSparseAndThatCostsNoSpecialCase()
+    public void AnUnfurnishedTabCostsNoSpecialCase()
     {
         var (overlay, _, _, _) = Open(on: true, eliteInFront: true, stories: true);
 
         Assert.True(overlay.Nav.Has(PanelTab.Transcript));
         Assert.True(overlay.Nav.Has(PanelTab.Adventures));
-        Assert.True(overlay.Nav.Select(PanelTab.Adventures));
 
         foreach (var tab in new[]
                  {
@@ -105,8 +109,12 @@ public class TheOverlayWithoutAHeadsetTests
                      PanelTab.Engineers, PanelTab.Utilities, PanelTab.Routing,
                  })
         {
-            Assert.False(overlay.Nav.Has(tab), $"The overlay furnished {tab} and should not have.");
-            Assert.False(overlay.Nav.Select(tab), $"The overlay let itself be put on {tab}.");
+            Assert.False(overlay.Nav.Has(tab), $"The overlay furnished {tab} and was handed nothing for it.");
+
+            overlay.Nav.Select(tab);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(PanelTab.Transcript, overlay.Nav.Tab);
         }
 
         overlay.Close();

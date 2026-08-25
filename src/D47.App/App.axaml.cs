@@ -130,7 +130,25 @@ public partial class App(AppHost? host) : Application
                 host.Elite,
                 host.Loggers.CreateLogger<Windowing.OverlayPanel>(),
                 host.Avatars,
-                window?.Adventures);
+                window?.Adventures,
+
+                // The headset's pages, minus Settings (asked for 2026-08-24: "it should have the
+                // same tabs as the VR mini panel, including Checklist"). The same services on the
+                // same terms, so "the same tabs" stays true as either surface changes — and
+                // Settings is withheld because the strip is click-through and because it is the
+                // one page mini cannot fit.
+                new Windowing.OverlayTabs
+                {
+                    Checklists = host.Checklists,
+                    Goals = host.Goals?.Book,
+                    BackfillGoals = host.Goals?.Backfill,
+                    Unlocks = host.Unlocks,
+                    Ships = host.Ships,
+                    GameState = () => host.GameState.Active,
+                    OnFoot = host.OnFootPlans,
+                    Timekeeper = host.Timekeeper,
+                    Alarms = host.Alarms,
+                });
 
             // Through the same route as the other two (list.md Phase 45). Never as the leader:
             // the window leads and this follows, so a spoken phrase or a switch can put the strip

@@ -64,8 +64,9 @@ public class TheWindowGoesMiniTooTests
     }
 
     /// <summary>
-    /// Mini keeps the tab it does have a reading of, so the ruling is "a reading mini actually
-    /// has" rather than "the transcript, always".
+    /// Mini keeps the tab it is on, and the story gets its own short reading rather than the full
+    /// page — which is what <c>MiniPane</c> is, and is why "mini shows this tab" and "mini shows
+    /// this tab the same way" are two different questions.
     /// </summary>
     [AvaloniaFact]
     public void MiniStaysOnAdventuresWhereAHostFurnishedTheShortReading()
@@ -87,10 +88,15 @@ public class TheWindowGoesMiniTooTests
     }
 
     /// <summary>
-    /// And while in mini, a move to a tab mini has no reading of is declined — whatever moved the
-    /// navigator. A spoken phrase reaches every surface at once (list.md Phase 45), so a Commander
-    /// with a mini window and a full headset saying "show me the checklist" moves the headset and
-    /// leaves the window where it is, rather than dropping it on an unreachable page.
+    /// And while in mini, a move to Settings is declined — whatever moved the navigator. A spoken
+    /// phrase reaches every surface at once (list.md Phase 45), so a Commander with a mini window
+    /// and a full headset saying "settings" moves the headset and leaves the window where it is,
+    /// rather than dropping it on a page that cannot fit.
+    /// <para>
+    /// <b>Settings is now the only tab this is true of</b> (asked for 2026-08-24). Mini draws
+    /// every other page the surface has, which is what "the same tabs as the VR mini panel" asked
+    /// for; Settings alone has a measured minimum width that says it cannot.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void AMoveToATabMiniLacksIsDeclinedWhileMini()

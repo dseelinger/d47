@@ -94,13 +94,24 @@ public sealed class OverlayPanel : Window
     private Point? _grab;
     private int _appliedScale = ZoomLadder.Default;
 
+    /// <param name="tabs">
+    /// The pages this strip carries beyond the transcript (asked for 2026-08-24:
+    /// <em>"it should have the same tabs as the VR mini panel, including Checklist"</em>).
+    /// <para>
+    /// <b>The headset's set, minus Settings.</b> Settings is withheld for two reasons that agree:
+    /// the strip is click-through, so a page of controls on it is a page nobody could touch; and it
+    /// is the one page mini cannot fit, which is <see cref="PanelView"/>'s own rule rather than
+    /// this host's.
+    /// </para>
+    /// </param>
     public OverlayPanel(
         PanelViewModel model,
         SettingsService settings,
         ViewStateStore viewState,
         ILogger logger,
         AvatarLibrary? avatars = null,
-        AdventureSurface? adventures = null)
+        AdventureSurface? adventures = null,
+        OverlayTabs? tabs = null)
     {
         _settings = settings;
         _viewState = viewState;
@@ -118,6 +129,8 @@ public sealed class OverlayPanel : Window
             // withdrew Loadout from the headset.
             _view.EnableAdventures(adventures);
         }
+
+        Furnish(tabs);
 
         // The same scaling host the window zooms with, for the same reason: a render transform
         // would draw the strip larger and let it clip, where a layout transform re-measures so
@@ -150,6 +163,53 @@ public sealed class OverlayPanel : Window
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
+    }
+
+    /// <summary>
+    /// The rest of the headset's pages, where the app has them to give (asked for 2026-08-24).
+    /// Each is furnished on exactly the terms <c>VrPanelSurface</c> furnishes it, because "the same
+    /// tabs as the VR mini panel" is a claim that has to stay true as either surface changes.
+    /// </summary>
+    private void Furnish(OverlayTabs? tabs)
+    {
+        if (tabs is null)
+        {
+            return;
+        }
+
+        if (tabs.Checklists is { } checklists)
+        {
+            // What the Commander is working on — the tab this instruction named. It rides its
+            // goals and the button that ages them, exactly as the headset's does (list.md
+            // Phase 34).
+            _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals);
+        }
+
+        if (tabs.Unlocks is { } unlocks && tabs.Ships is { } ships && tabs.GameState is { } state)
+        {
+            _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot);
+        }
+
+        if (tabs.Timekeeper is { } timekeeper && tabs.Alarms is { } alarms)
+        {
+            _view.EnableUtilities(
+                timekeeper, alarms, () => D47.Core.SystemWallClock.Instance.UtcNow, () => TimeZoneInfo.Local);
+        }
+    }
+
+    /// <summary>
+    /// Redraws the pages that change with nothing having happened — the clocks, and the engineer
+    /// ranking when the Commander has moved or re-fitted (list.md Phases 24 and 28).
+    /// <para>
+    /// Pulled rather than pushed, like the window's and the headset's: a clock is the one page
+    /// whose content moves with no event behind it. Registered on the tick and posted onto this
+    /// surface's own thread.
+    /// </para>
+    /// </summary>
+    private void TickPages()
+    {
+        _view.TickClocks();
+        _view.TickEngineers();
     }
 
     /// <summary>
@@ -210,9 +270,10 @@ public sealed class OverlayPanel : Window
         IEliteWindow elite,
         ILogger logger,
         AvatarLibrary? avatars = null,
-        AdventureSurface? adventures = null)
+        AdventureSurface? adventures = null,
+        OverlayTabs? tabs = null)
     {
-        var overlay = new OverlayPanel(model, settings, viewState, logger, avatars, adventures)
+        var overlay = new OverlayPanel(model, settings, viewState, logger, avatars, adventures, tabs)
         {
             _eliteInFront = () => elite.IsForeground,
             _elite = elite,
@@ -231,6 +292,17 @@ public sealed class OverlayPanel : Window
         // Polled on the tick, like everything else that reads the world. The foreground question
         // is a syscall and the rest is a comparison, so a tick where nothing moved costs nothing.
         tick.Add("overlay", _ => ui.Post(overlay.ApplyVisibility));
+
+        // And the pages that move with nothing having happened. Its own subscriber rather than a
+        // line in the one above, because visibility is asked on every tick and this is only worth
+        // asking while there is something on screen to redraw.
+        tick.Add("overlay-pages", _ => ui.Post(() =>
+        {
+            if (overlay.IsVisible)
+            {
+                overlay.TickPages();
+            }
+        }));
 
         return overlay;
     }

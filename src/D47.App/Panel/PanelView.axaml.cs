@@ -1810,15 +1810,33 @@ public partial class PanelView : UserControl
     /// </para>
     /// </summary>
     /// <summary>
-    /// Whether mini has a reading of this tab at all.
+    /// Whether mini can show this tab.
     /// <para>
-    /// Two, and the second is conditional: the transcript, which every surface has by
-    /// construction, and Adventures where a host furnished the short reading of it — which is
-    /// exactly what <c>MiniPane</c> holding a child means.
+    /// <b>Everything the surface was furnished with, except Settings</b> (asked for 2026-08-24:
+    /// <em>"it should have the same tabs as the VR mini panel, including Checklist"</em>).
+    /// </para>
+    /// <para>
+    /// <b>This narrows a Phase 51 ruling rather than reversing it, and the reason it can narrow is
+    /// that half of what that ruling was defending has since been built.</b> Phase 51 said mini
+    /// shows the transcript and the story and nothing else, on two grounds: the settings page does
+    /// not fit — its nav collapses below <c>NavCollapsesBelow</c> of 900 and its body wants 700,
+    /// against a surface 512 wide — and there was <em>no tab strip to leave by</em>. The second
+    /// ground is gone: mini now draws a way out on every page it has (see
+    /// <see cref="EnableModeToggle"/>). The first is not gone, and it was never general — it is one
+    /// page's measured minimum width, and the checklist, the engineer pages and the clocks have no
+    /// such number.
+    /// </para>
+    /// <para>
+    /// So the exclusion is Settings alone and it is named rather than listed the other way round.
+    /// A list of what mini <em>may</em> show is a list somebody has to remember to add to; a list
+    /// of what it may not is one line with a measurement behind it.
+    /// </para>
+    /// <para>
+    /// A tab nobody furnished is refused before this is ever asked — the navigator declines it —
+    /// so this says what mini does with a tab the surface has, and nothing about which tabs it has.
     /// </para>
     /// </summary>
-    private bool MiniShows(PanelTab tab) =>
-        tab == PanelTab.Transcript || (tab == PanelTab.Adventures && MiniPane.Child is not null);
+    private static bool MiniShows(PanelTab tab) => tab != PanelTab.Settings;
 
     /// <summary>
     /// Keeps mini on a page mini actually has, and puts back what it took (list.md Phase 51).
