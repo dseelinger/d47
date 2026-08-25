@@ -18,6 +18,9 @@ namespace D47.Core.Capabilities.Builtin;
 /// </summary>
 public static class GalaxyCapability
 {
+    /// <summary>The descriptor's id, named once so a help link cannot spell it differently.</summary>
+    public const string Id = "galaxy";
+
     /// <param name="galaxy">
     /// The service, or null where none is composed — under the designer and in a test that is not
     /// about it. Null and switched off give the same answer for the same reason: a capability
@@ -33,9 +36,11 @@ public static class GalaxyCapability
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
         ITradePlanService? trade = null,
-        Func<string?>? currentStation = null) => new()
+        Func<string?>? currentStation = null,
+        CommodityBoard? board = null,
+        Func<DateTimeOffset>? now = null) => new()
     {
-        Id = "galaxy",
+        Id = Id,
         Group = "Knowledge",
         Name = "Galaxy search",
         Summary = "Look up star systems, and work out how far apart two of them are.",
@@ -231,7 +236,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(
-                        galaxy, trade, currentSystem, currentStation, settings, arguments, cancellationToken),
+                        galaxy, trade, currentSystem, currentStation, settings, board, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -491,6 +496,8 @@ public static class GalaxyCapability
         Func<string?> currentSystem,
         Func<string?>? currentStation,
         Configuration.SettingsService settings,
+        CommodityBoard? board,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -506,7 +513,7 @@ public static class GalaxyCapability
         if (arguments.TryGetString("commodity", out var commodity) && !string.IsNullOrWhiteSpace(commodity))
         {
             return await FindCommodityAsync(
-                trade, currentSystem, currentStation, arguments, commodity, cancellationToken)
+                trade, currentSystem, currentStation, board, now, arguments, commodity, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -568,6 +575,8 @@ public static class GalaxyCapability
         ITradePlanService? trade,
         Func<string?> currentSystem,
         Func<string?>? currentStation,
+        CommodityBoard? board,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         string commodity,
         CancellationToken cancellationToken)
@@ -619,6 +628,17 @@ public static class GalaxyCapability
                 .FindCommodityAsync(
                     new CommoditySearch(near, currentStation?.Invoke(), query), cancellationToken)
                 .ConfigureAwait(false);
+
+            // Posted on the way out, so the Routing tab draws the answer the Commander was just
+            // told rather than running a second search that could disagree with it (list.md Phase
+            // 49; the arrangement RoutePlanBook already makes for routes).
+            if (board is not null)
+            {
+                board.Post(new CommodityPosting(
+                    query, answer, near, now?.Invoke() ?? DateTimeOffset.UtcNow));
+
+                board.Announce();
+            }
 
             return ToolResult.Ok(DescribeCommodity(query, answer, near));
         }

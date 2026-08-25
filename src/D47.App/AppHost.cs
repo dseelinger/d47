@@ -425,6 +425,13 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
 
     /// <summary>
+    /// The last commodity answer (list.md Phase 49), so the spoken one and the drawn one are one
+    /// answer. In memory rather than on disk, unlike <see cref="Plans"/>: a price is the thing
+    /// here that ages fastest, and a saved one would look current because it was saved.
+    /// </summary>
+    public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
+
+    /// <summary>
     /// Speech models on disk, and the way to fetch one. Exposed because the settings surface is
     /// where a model is chosen, and it shows the progress of the download that choice starts.
     /// </summary>
@@ -703,6 +710,11 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>());
 
         planBook.Load();
+
+        // In memory rather than loaded, unlike the plan book above: a commodity price is the
+        // thing here that ages fastest, so one restored from disk would look current because it
+        // was saved rather than because it is true (list.md Phase 49).
+        var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
 
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
@@ -1521,7 +1533,11 @@ public sealed class AppHost : IDisposable
                         token),
 
                     NextStatus = token => NextStatus(status, token),
-                }));
+                },
+
+                // Where a commodity answer is posted on its way out (list.md Phase 49), so the
+                // Routing tab draws what was just said rather than asking again.
+                commodityBoard));
 
         built = capabilities;
 
@@ -1789,6 +1805,7 @@ public sealed class AppHost : IDisposable
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
         host.Plans = planBook;
+        host.Commodities = commodityBoard;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities);
 
