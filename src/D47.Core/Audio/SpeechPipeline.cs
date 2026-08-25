@@ -312,6 +312,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     private async Task DrainAsync()
     {
+        var said = new System.Text.StringBuilder();
+
         try
         {
             await foreach (var pending in _rendered.Reader.ReadAllAsync().ConfigureAwait(false))
@@ -332,12 +334,58 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     Group = _group,
                     Caption = _captioned ? spoken.Text : null,
                 });
+
+                // Accumulated here rather than where the text arrived, because this is the point
+                // a sentence is actually going to be heard. A sentence that was abandoned or
+                // failed to render never reaches this line and so is never recorded as said.
+                said.Append(said.Length == 0 ? string.Empty : " ").Append(spoken.Text);
             }
         }
         catch (OperationCanceledException)
         {
             // Abandoned mid-drain.
         }
+
+        Said(said);
+    }
+
+    /// <summary>
+    /// Writes down <em>what</em> was spoken, beside <see cref="Record"/>'s note of who spoke it.
+    /// <para>
+    /// <b>Because the text that reaches the speaker is not always the text anybody logged.</b>
+    /// A callout is written by <c>CalloutEngine</c>, which records its own line — and then the
+    /// announcement may be handed to a model to be rewritten in character, and the rewrite is
+    /// what is heard. On 2026-08-25 a Commander heard their carrier's tower say <em>"I don't
+    /// have that capability"</em>; the log held the authored line, <em>"No fire zone exited"</em>,
+    /// with nothing to say the two differed (GitHub issue 46). Every other announcing caller —
+    /// the startup warning, a persona's acknowledgement, a crew line — logs nothing at all.
+    /// </para>
+    /// <para>
+    /// Here for the same reason <see cref="Record"/> is here: this is where everything audible
+    /// converges, so it is the one place that can record every spoken line whatever produced it.
+    /// One line per utterance rather than per sentence, and it is the text as it actually went
+    /// out — a reply the Commander cut off logs the part that was said, not the part that was
+    /// written.
+    /// </para>
+    /// <para>
+    /// <b>Information rather than Debug, deliberately.</b> A released build's log is the first
+    /// thing read on a bug report, and "what did it say" is the first question asked of one. It
+    /// is also the reason to be plain about what this writes down: a re-voiced in-game message
+    /// is another Commander's words, and they land in this file. Nothing leaves the machine —
+    /// there is no telemetry — but a log that is pasted into a report carries them along.
+    /// </para>
+    /// </summary>
+    private void Said(System.Text.StringBuilder said)
+    {
+        if (said.Length == 0)
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "{Who} said: {Said}",
+            _speaker ?? "D47",
+            said.ToString());
     }
 
     public async ValueTask DisposeAsync()

@@ -249,6 +249,71 @@ public static class FlavourBriefs
     }
 
     /// <summary>
+    /// Phrases that mean a model has answered a rewording brief by talking about itself
+    /// (GitHub issue 46).
+    /// <para>
+    /// Matched case-insensitively against the whole line, with no word boundaries, because a
+    /// refusal is a sentence rather than a token and these are its load-bearing middles.
+    /// </para>
+    /// </summary>
+    private static readonly string[] TalkingAboutItself =
+    [
+        "i don't have that capabilit",
+        "i do not have that capabilit",
+        "i don't have the capabilit",
+        "i do not have the capabilit",
+        "i don't have a tool",
+        "i do not have a tool",
+        "i don't have any tool",
+        "i have no tool",
+        "i'm not able to do that",
+        "i am not able to do that",
+        "i'm unable to do that",
+        "i am unable to do that",
+        "i can't do that",
+        "i cannot do that",
+        "as an ai",
+        "as a language model",
+        "i don't have access to",
+        "i do not have access to",
+    ];
+
+    /// <summary>
+    /// Whether a model's answer to a rewording brief may be spoken (GitHub issue 46).
+    /// <para>
+    /// <b>Every brief in this file is a rewording brief and never a composition one</b> — the
+    /// substance is authored and only the sentences are the model's. So a line that has stopped
+    /// being about the authored subject and started being about the model is not a reworded
+    /// callout, whatever else it is.
+    /// </para>
+    /// <para>
+    /// <b>Why this exists.</b> <c>FlavourTurn</c> already rejects a protocol refusal —
+    /// <c>stop_reason: "refusal"</c> — and an empty answer. On 2026-08-25 a Commander heard their
+    /// carrier's tower say <em>"I don't have that capability"</em> where the authored line was
+    /// <em>"No fire zone exited"</em>. The model had not refused: it completed normally, and the
+    /// content of the completion was a refusal, which is a non-empty string and therefore won.
+    /// The guardrails were working as written — <em>asked for something you have no tool for, say
+    /// so plainly</em> — and a cheap model read a rewrite brief as a request.
+    /// </para>
+    /// <para>
+    /// <b>The asymmetry is the whole argument for a list of phrases.</b> A phrase list is a poor
+    /// classifier and would be indefensible almost anywhere else. Here rejecting wrongly costs a
+    /// line that is slightly less varied, because the fallback is the authored text and the
+    /// authored text is always good; accepting wrongly costs d47 saying something false in
+    /// somebody else's voice, over the air, to a Commander who has no way to tell. So this is
+    /// built to err toward rejecting, and it is a <b>floor rather than a solution</b>: it catches
+    /// the shapes that have actually been heard and it will not catch the next one.
+    /// </para>
+    /// <para>
+    /// It matters more the cheaper the model gets. list.md Phase 54 points every background call
+    /// at a deliberately cheap model, which is exactly the traffic these briefs are.
+    /// </para>
+    /// </summary>
+    public static bool MayBeSpoken(string? line) =>
+        !string.IsNullOrWhiteSpace(line)
+        && !TalkingAboutItself.Any(said => line.Contains(said, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
     /// Which situation an ambient announcement was about, from its key. Carried on the key rather
     /// than read back off the callout, because a batch may hold more than one and the callout
     /// only remembers the last.
