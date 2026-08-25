@@ -337,16 +337,70 @@ where "free, offline, unlimited, and nobody else's text leaves" is worth most.
   is on the provider's construction, not on the selection record. Answering the brief's question
   directly: **accepting it later does not change `VoiceSelection`'s shape**, provided it is not
   made per-sentence.
-- **Both ⚠️ items are measurements, not assumptions.** `speed` and language drift are in §4.1.
+- **Both ⚠️ items are measurements, not assumptions.** `speed` and language drift are in §4.1 —
+  though §3.7 now settles half of one of them.
+
+### 3.7 Read from the OpenAPI spec, 2026-08-25 — one of the brief's warnings is now a certainty
+
+Read from `openai/openai-openapi` `master`, at `components.schemas.CreateSpeechRequest`, which is
+authoritative for what the endpoint accepts in a way that prose is not.
+
+**`CreateSpeechRequest` is `additionalProperties: false`, and its whole property set is
+`model`, `input`, `instructions`, `voice`, `response_format`, `speed`, `stream_format`.**
+
+- **There is no language parameter, and one cannot be smuggled in.** The brief said so and it is
+  right. `additionalProperties: false` makes this stronger than the brief claims: sending a
+  language field would be **rejected**, not ignored. **This is the exact property that moved the
+  ElevenLabs pin off Multilingual 2** — and where that model at least accepted the parameter's
+  absence as its own design, here there is nothing to send.
+  <br><br>
+  **The `"language": "fr"` visible in the guide is a different object entirely.** It belongs to
+  `VoiceConsent` — the BCP 47 tag of the phrase a real person speaks on a consent recording used to
+  authorise creating a **custom voice**. It has nothing to do with what language a line is
+  synthesised in, and reading it as the guide invites is precisely the mistake this check existed
+  to catch.
+- **`fable`, `nova` and `onyx` are current.** The brief flagged them as possibly stale. The `voice`
+  description enumerates **thirteen** built-ins — `alloy`, `ash`, `ballad`, `coral`, `echo`,
+  `fable`, `onyx`, `nova`, `sage`, `shimmer`, `verse`, `marin`, `cedar` — so all thirteen ship.
+- **`speed` is in the spec**, `0.25`–`4.0`, default `1.0`. So the brief's warning is precisely
+  *documented but historically ignored on this model*, and a spec cannot settle that. It stays a
+  measurement, and the honest outcome if it does nothing is `MinimumRate = MaximumRate = 1.0` with
+  a comment saying why, rather than a row that moves and changes nothing.
+- **The dated snapshot to pin is `gpt-4o-mini-tts-2025-12-15`**, enumerated beside the floating
+  `gpt-4o-mini-tts`. That answers the brief's instruction to pin one.
+- **`instructions` is capped at 4096 and explicitly works on this model** — the schema notes it
+  does *not* work on `tts-1` or `tts-1-hd`, which is another reason the pin matters.
+- **`input` is capped at 4096**, confirming the brief. d47 synthesises a sentence at a time, so the
+  cap is not reachable by any ordinary line.
+- **`stream_format: sse` exists** and is not in the brief. Out of scope and worth knowing: d47's
+  latency win already comes from rendering a sentence while the previous one plays, so
+  sentence-level streaming is a second mechanism for a problem already solved.
+
+**What this does to the fork.** The language risk is no longer a thing to check for — it is
+confirmed absent as a capability, and the only lever is an `instructions` prefix, which is a
+suggestion. That does not by itself disqualify OpenAI, and the reason is where it is being put:
+
+- In **Aboard**, the text is d47's own English prose and the exposure is proper nouns —
+  `Shinrarta Dezhra`, `Ngalinn`, `LHS 3447`. That is what §4.1 measures.
+- In any **comms** slot the text is *other people's*, which can be in any language at all, and a
+  provider that cannot be told what language to speak would follow it. **OpenAI is therefore
+  disqualified from the four comms slots on this finding alone**, before cost or catalogue size are
+  considered — which agrees with the brief's instinct to keep it off NPCs, and hardens it from a
+  preference into a rule.
+
+So the spike still decides Phase 58, but it now decides one question rather than two: **not whether
+OpenAI can hold a language — it cannot — but whether it drifts when it is not asked to.**
 
 ---
 
 ## 4. Out of scope — Issues, not phase items
 
-1. **Spike OpenAI's language stability** *(blocking Phase 58's text)*. Synthesise a Guardian line
-   seeded with `Shinrarta Dezhra`, `Ngalinn`, `Deciat`, `LHS 3447` and two HIP designations against
-   the pinned snapshot. Report drift, and whether `speed` is honoured or silently ignored. Written
-   to `docs/spikes/` either way, because a negative result is the finding.
+1. **Spike OpenAI's language stability** *(blocking Phase 58's text)*. §3.7 settled that it cannot
+   be told a language, so the open question is narrower and sharper: **does it drift when it is not
+   asked to?** Synthesise a Guardian line seeded with `Shinrarta Dezhra`, `Ngalinn`, `Deciat`,
+   `LHS 3447` and two HIP designations against `gpt-4o-mini-tts-2025-12-15`, and report what comes
+   back. Measure `speed` in the same run, since the spec documents it and the brief reports it
+   ignored. Written to `docs/spikes/` either way, because a negative result is the finding.
 2. **The Edge class doc is stale** — the drive-by. `EdgeNeuralTtsProvider.cs:19-21` still says audio
    is requested as raw PCM "on purpose"; `EdgeProtocol.cs:83` requests
    `audio-24khz-48kbitrate-mono-mp3`, and the comment above it records that the raw formats were
@@ -371,8 +425,9 @@ Two things against it now: its concurrency cap of 2–3 on entry tiers is *tight
 `MaxConcurrent` was written for, and its voice-library size is unpublished, which matters for a
 provider whose value would be NPC variety.
 
-**But:** OpenAI has **no language parameter at all**, and language inferred from text is the exact
-failure that moved the ElevenLabs pin off Multilingual 2. Cartesia pins language explicitly. So if
-the §4.1 spike shows drift on system names, **Cartesia is the better Aboard provider and OpenAI is
-the worse one for the reason d47 has already been bitten by.** That is a real fork in the plan and
-it is worth knowing before Phase 58 is written rather than after.
+**But:** OpenAI has **no language parameter at all** — confirmed from the spec in §3.7, where the
+request schema is closed and there is nothing to send. Language inferred from text is the exact
+failure that moved the ElevenLabs pin off Multilingual 2, and Cartesia pins language explicitly.
+So if the §4.1 spike shows drift on system names, **Cartesia is the better Aboard provider and
+OpenAI is the worse one for the reason d47 has already been bitten by.** That is a real fork in the
+plan and it is worth knowing before Phase 58 is written rather than after.
