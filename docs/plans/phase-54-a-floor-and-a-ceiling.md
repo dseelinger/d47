@@ -1,0 +1,346 @@
+# Phase 54 — A floor and a ceiling
+
+**Status: planned, not built.** The six `list.md` items landed on 2026-08-25; no code has been
+written. The plan was approved on 2026-08-23 and deliberately not started — see the standing
+instruction at the end of this file.
+
+This is the plan of record. It exists because the reasoning below lived only in a chat plan outside
+the repository, where nobody else can read it and nothing cites it.
+
+**Anchors here are symbols, not line numbers.** The approved plan carried line numbers, and by the
+day it was transcribed three of them had already decayed — `FlavourTurn`'s `coldPrefixExpected` had
+moved two lines, and `AppHost.cs` had shifted by tens after Phases 49 to 53. A plan of record that
+cites a wrong line is worse than one that cites none, so every reference below names a symbol or
+quotes a phrase you can search for.
+
+---
+
+## What was asked, and what changed the shape
+
+Asked for 2026-08-23: **Min and Max "Model" and "Thinking Level"**, with dynamic routing, per
+provider where possible. The examples given were Haiku 4.5 → Opus 5/High as the default band; Haiku
+only, to save money; Opus 5 Medium → Opus 5 High.
+
+Exploration changed it. Three findings:
+
+**1. The two dials do not behave alike.** `output_config.effort` is a top-level request field, so it
+sits outside the cached prefix (`tools → system → messages`) — routing effort per turn is free,
+which is why `EffortRouter` already gets away with it. Model is the opposite: caches are
+model-scoped, and `TurnLoop` already knows a switch costs a cold prefix.
+
+**2. Per-turn model routing loses money.** Against an assumed ~6k-token prefix: a warm Opus 5 turn is
+~1.05¢, a warm Haiku turn ~0.21¢, and *returning* to Opus after a detour costs ~3.5¢ in cache
+writes. One detour costs roughly **23×** what the cheap turn saved. Alternation is strictly worse
+than never routing; it only pays across runs of five-plus consecutive cheap turns.
+
+**3. The free money is in the background calls.** The `FlavourTurn` sites — ambient remarks, opening
+brief, gap reaction, two lore lookups, voice casting, adventure generation — all read `Turns.Model`.
+They carry **no conversation history** (`FlavourTurn` builds `History` from the instruction alone)
+and already declare `coldPrefixExpected: true`. Routing them to a cheap model costs zero cache and
+is a straight ~5× saving on that traffic. It needs a floor **setting**, not a router.
+
+And a live defect: **`claude-haiku-4-5` is in the picker and cannot answer a turn.**
+`AnthropicLlmProvider` sets `Thinking = new ThinkingConfigAdaptive { … }` and
+`OutputConfig = new OutputConfig { Effort = … }` unconditionally. Haiku 4.5 is pre-4.6 and rejects
+both. `FlavourTurn` swallows the failure at `LogDebug`, so the first thing anybody does with a floor
+setting would silently kill every ambient line with nothing on screen. That is why it is item one.
+
+### Decisions made — settled, do not re-litigate
+
+| | |
+|---|---|
+| **Model dial** | By call class, not per turn. Conversation pins to the ceiling; background takes the floor. |
+| **Haiku fix** | Inside this phase, as item one. |
+| **Defaults** | New properties null ⇒ behaviour identical to today. |
+| **`Xhigh`** | Joins the ladder. Five rungs. |
+
+**Phase number 54**, taken on 2026-08-25 when `list.md` still ended at 53. `docs/plans/build-order.md`
+records no ordering commitment for 48–53, so building this ahead of Phase 55 costs nothing and
+neither blocks the other.
+
+---
+
+## 1. The Haiku fix
+
+**A deny-list, not an allow-list** — follow `BasicWebSearchOnly` in `AnthropicLlmProvider`, whose doc
+comment already argues this exact case for the same 4.6-or-later family rule. An allow-list gets the
+failure direction wrong: every future model d47 has not heard of would silently lose its effort
+field.
+
+```csharp
+private static readonly HashSet<string> LegacyThinkingModels =
+    new(StringComparer.Ordinal) { "claude-haiku-4-5" };
+```
+
+Keep it **separate from `BasicWebSearchOnly`** even though membership is identical today — two
+fields, two failure modes, and web search is also absent on models that do take an effort.
+
+- `SupportsThinkingEffort = true` in the Anthropic capability block becomes
+  `!LegacyThinkingModels.Contains(model)`.
+- The unconditional `Thinking` / `OutputConfig` assignments become conditional on
+  `capabilities.SupportsThinkingEffort`, which `BuildParameters` already computes. Omit **both**
+  fields; do **not** substitute `budget_tokens` — that means inventing a token budget per rung on the
+  model that exists to be cheap. Say so in the comment.
+- `Translate` stays total and stays where it is. The gate is a property of the model.
+
+**Report it, don't drop it silently.** `TurnEvent.Routed.Effort` and `TurnResult.Effort` are already
+`ThinkingEffort?`, and null already renders with no effort clause in the window. In `TurnLoop`, where
+`providerCapabilities` is already in hand:
+
+```csharp
+var effortReported = providerCapabilities.SupportsThinkingEffort ? effort : (ThinkingEffort?)null;
+```
+
+Use it for the reported values; leave the diagnostic log on the chosen value. This gives
+`SupportsThinkingEffort` its **first reader in `src/`** — today it is assigned in three providers and
+read nowhere.
+
+**Uncertain:** whether `MessageCreateParams.Thinking` / `.OutputConfig` are nullable, and whether
+null is omitted rather than serialised as `"thinking": null`. The wire test settles it in one run;
+the fallback is two-branch construction.
+
+---
+
+## 2. `Xhigh`
+
+Insert between `High` and `Max` — **declaration order is the ladder and the clamp depends on it**.
+Ordinal churn is safe: settings serialise enums as camelCase strings, the spend ledger records no
+effort, and there is no `(int)` cast on it anywhere in `src/`.
+
+**Correct the doc comment on `ThinkingEffort` with it.** Its claim that the C# SDK's enum lacks
+`xhigh` is **false** for the pinned `Anthropic 12.40.0`, where `Anthropic.Models.Messages.Effort` is
+`{ Low, Medium, High, Xhigh, Max }`. Leaving it standing beside code that now sends `Xhigh` turns the
+file into a liar.
+
+- Anthropic `Translate`: add `Xhigh => Effort.Xhigh`. Keep `_ => Effort.High` as the guard.
+- Both OpenAI `Translate`s: `Xhigh => "high"`, joining `Max`. Their doc comments say "four levels" —
+  make it five. *Uncertain:* OpenAI may accept `"xhigh"` on GPT-5.6 today; mapping down is the safe
+  default and can be raised against a real 200.
+- **No `EffortRouter` case moves onto it.** The router keeps its four outputs; `Xhigh` is reachable
+  only through the floor or the ceiling. `EffortRouterTests` is untouched, which is the evidence the
+  change is additive.
+
+---
+
+## 3. Settings
+
+Three properties on `LlmSettings`, appended after `WebSearch`:
+
+```csharp
+public string? BackgroundModel { get; init; }
+public ThinkingEffort? EffortFloor { get; init; }
+public ThinkingEffort? EffortCeiling { get; init; }
+```
+
+**`BackgroundModel`, not `MinModel`.** `Model` can never be renamed to `MaxModel` — the settings file
+is append-only — and *min* implies a range that something picks *within*, which is what decision 1
+rejects. The name should say the call class, because that is what the value selects.
+
+Three rows in `ConversationCapability.BuildSettingRows`, inserted after the `llm.model` row. **No
+`Group`**: the renderer resets on exit with no divider, so a group of three would leave the ungrouped
+key rows below it sitting under a heading that does not cover them.
+
+| Key | Kind | Notes |
+|---|---|---|
+| `llm.backgroundModel` | `Choice`, `AllowsFreeText` | Same `ChoiceSource` as `llm.model`. Placeholder `"(the conversation model)"`. `AppliesWhen` excludes `none`. Not Protected. No voice commands — a model id cannot be extracted from a closed phrase. |
+| `llm.effortFloor` | `Choice` | **Set both `Choices` and `ChoiceSource`.** Open-vocabulary is `ChoiceSource != null && Choices.Count == 0`, so a source alone would turn a five-rung ladder into a search window. `ChoiceSource` truncates at the current ceiling. |
+| `llm.effortCeiling` | `Choice` | Same, from the floor upward. Two voice commands: *"stop thinking so hard"* → medium, *"think as hard as you like"* → clears. `KeywordRouter.MatchSetting` compares the whole utterance, so there is no hijack risk. |
+
+Both effort rows are `Install` scope. Neither is Protected, matching `llm.model` — **flagged**: if the
+spend levers should be Protected, `llm.model` should change with them rather than just these.
+
+### The amendment that fails in silence
+
+`BackgroundModel` is a model id and belongs to the endpoint's namespace. Add `BackgroundModel = null`
+to **both** clearing writes in `ConversationCapability` — the provider row's `Write` and the endpoint
+row's.
+
+**Highest-risk detail in the phase.** A stale background model after a provider switch produces a
+400/404 that `FlavourTurn` logs at Debug and returns null from; every ambient line then quietly falls
+back to its authored text with nothing on screen.
+
+---
+
+## 4. The clamp
+
+**At the `EffortRouter.ChooseFor` call site in `TurnLoop`, from properties on `TurnLoop`** — not
+inside `ChooseFor`. `TurnLoop` already receives every settings-derived value as a settable property
+(`Model`, `Persona`, `WebSearchEnabled`), assigned by `AppHost.ApplyLlmSettings`. Follow `Model`.
+
+This keeps two decisions with two owners apart — *what did the Commander ask for*, a pure heuristic,
+against *what will they pay for* — and it leaves `EffortRouterTests` entirely untouched.
+
+```csharp
+var effort = ThinkingEffortRange.Clamp(EffortRouter.ChooseFor(input), EffortFloor, EffortCeiling);
+```
+
+`ThinkingEffortRange` is a small static beside the enum holding `Clamp`, the ordered ladder, and the
+`Parse`/`Name` the row bindings use — so the clamp and the rows cannot disagree about spelling or
+order.
+
+**`Clamp` orders the bounds before applying them.** `Math.Clamp` throws when min exceeds max, and a
+hand-edited settings file can produce exactly that. Core must never throw on a settings file.
+
+The ceiling earns its keep twice over, because `EffortRouter` matches substrings with no word
+boundaries: *"what do you think about"* hits `"think about"` and routes to Max.
+
+**Background efforts are not clamped, deliberately.** They are call-site decisions with stated
+reasons, and a floor of High would turn every ambient remark into a reasoning call — the exact
+blow-up the floor *model* exists to prevent. Comment it; "clamp it everywhere" is the obvious later
+tidy-up and it is wrong here.
+
+---
+
+## 5. The floor's consumers
+
+One property on `TurnLoop` mirroring `Model`, resolved **once** in `AppHost.ApplyLlmSettings`:
+
+```csharp
+Turns.Model = current.Llm.Model;
+Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;
+```
+
+A property means **zero signature changes** — not `FlavourTurn.AskAsync` (already at eleven
+parameters), not `VoicePairing`, not `AdventureGenerator`. Each site is a one-token edit.
+
+### Corrected 2026-08-25 against the current tree
+
+The approved plan named eight floor sites and three ceiling sites. Re-checked when this document was
+written, **there are eight and two**, and one of the three was wrong:
+
+**Take the floor** (`Turns.Model` → `Turns.BackgroundModel`) — eight sites, all confirmed present:
+
+- the gap reaction and the opening brief, two adjacent `FlavourTurn.AskAsync` calls
+- the ambient re-speak inside `VaryAsync`
+- the lore web search in `SearchForAsync`, and `LookUpLore`
+- voice casting, three calls: `VoicePairing.ChooseOneAsync`, `VoicePairing.ChooseAsync`, and
+  `WithReplacementsAsync` — a mechanical question about d47's own configuration, never spoken aloud,
+  answered in a fixed format
+
+**Keep the ceiling** — each with a comment saying why, because *"it uses `FlavourTurn`"* is exactly
+the reason someone would later change it by accident:
+
+- **Adventure generation.** Already asks Medium against 1500/4000/4500/4000-token budgets where every
+  other caller asks Low/400. The Commander pressed a button and is waiting; the output must name real
+  systems exactly, is validated, and is re-asked on refusal. **Note for whoever greps:** the
+  `AdventureGenerator` construction reads it as a lowercase `() => turns.Model` lambda, so a search
+  for `Turns.Model` misses it. That is precisely the accident this bullet exists to prevent.
+- **The Commander's log.** The Commander is shown a price quote and agrees to it, and
+  `LogbookBook.WriteAsync` refuses to write if the model changed between quote and write.
+
+**Key verification is no longer on this list.** The approved plan kept it at the ceiling as a third
+site. `VerifyLanguageModelKeyAsync` does not read `Turns.Model` at all — it lists the endpoint's
+models and works with **no model selected**. Nothing to do; do not go looking for it.
+
+**Flagged, not fixed:** the web-search capability check asks `CapabilitiesFor(Turns.Model)` while now
+gating a lookup that runs on the background model. Correct today by accident — web search is
+endpoint-gated in all three providers — but `ILlmProvider` says it is model-gated in principle. Note
+it; leave the line alone.
+
+---
+
+## 6. Tests
+
+**Revise:** `ProviderCapabilityTests.CachingEffortAndToolCallsHoldEverywhere` still passes (it tests
+opus-5), but its doc comment *"protocol features rather than deployment ones"* becomes wrong. Move
+effort into a per-model theory.
+
+**Add:**
+
+- `WebSearchDeclarationTests` — `HaikuIsSentNoThinkingConfigAndNoEffort`, plus a
+  `CurrentModelsAreSentBothOfThem` partner for opus-5. That file already builds a real Haiku request
+  and looks only at tool names.
+- `PromptOnTheWireTests` — `NeitherThinkingNorEffortReachesAModelThatRejectsThem`, asserting the
+  **bytes**, which also settles the omitted-versus-explicit-null question. Plus
+  `[InlineData(ThinkingEffort.Xhigh, "xhigh")]` on `TheThinkingEffortIsSent` — that one fails at
+  *compile* time if `Effort.Xhigh` does not exist, the earliest possible signal.
+- A per-model effort capability theory, plus a separate
+  `AModelD47HasNotHeardOfIsAssumedToTakeAnEffort`.
+- `Xhigh` → `"high"` on both OpenAI providers. **Note the gap being closed:** there is currently no
+  test asserting OpenAI effort reaches the wire at all.
+- `EffortRangeTests` — both bounds unset changes nothing; floor lifts; ceiling lowers; equal bounds
+  pin; **floor above ceiling does not throw**.
+- Through `TurnLoop`: floor High plus a "where am I" input ⇒ `Routed` carries High and the request
+  carries High.
+- A `SupportsThinkingEffort = false` fake ⇒ `Routed.Effort` and `TurnResult.Effort` are null **and the
+  request's effort is still the chosen rung** — that last clause stops a later "simplification"
+  short-circuiting the request as well as the report.
+- The floor reaches the right callers **and only them**. The negative half matters more.
+- Provider switch and endpoint switch each clear `BackgroundModel` — §3's silent failure.
+- "Nothing changed on upgrade": all three null ⇒ routed effort is exactly `ChooseFor`'s answer and
+  `BackgroundModel == Model`. Decision 3, written down.
+
+**Prove the test catches it** — the standing rule. Write both Haiku tests against the unmodified
+provider, run them, **record the failure text**; apply the fix; re-run; then deliberately revert
+`SupportsThinkingEffort` to `true` and confirm they fail again *for the right reason*. The obvious
+wrong fix — omit the fields for everyone — makes the Haiku tests pass, and only the opus-5 partners
+catch it.
+
+**No test can prove** Haiku's real endpoint accepts the result. That is a manual item.
+
+---
+
+## 7. Docs
+
+**No tool schema changes and no tool-surface bytes are spent.** `SettingsCapability`'s tools take a
+free-text `key`; `ConversationCapability`'s two are parameterless. The docs gate cannot fire on schema
+and the free bytes are untouched — worth stating, because "add a settings row" and "grow the tool
+surface" are usually the same act and here they are not.
+
+- `docs/capabilities/conversation.md` — three anchored subsections after `#### Model {#model}`;
+  `SettingsServiceTests` requires a `DocsAnchor` per row. Amend `#### Model` by one sentence: this is
+  the model **conversation turns** take.
+- `docs/conversation.md` — *"What each turn reports"* and *"Effort is chosen per turn"*: five rungs,
+  and the fifth is reached by setting a bound.
+- `get_model_status` (`ConversationCapability.DescribeModel`) — one line, **only when the background
+  model differs**, following the rule the endpoint line already uses.
+- `list.md` Phase 54 is already written. Do **not** touch Phase 3's line — frozen; cite it.
+
+---
+
+## 8. Order, and what to verify
+
+| Step | Verify |
+|---|---|
+| 0. Phase 54 into `list.md` + this plan of record | Both done 2026-08-25 |
+| 1. **The Haiku defect alone, own commit** | Tests fail → fix → pass → re-break → fail correctly. Then by hand: pin `llm.model` to Haiku and ask one question. *Can ship as a patch ahead of the phase.* |
+| 2. `Xhigh` into the enum and three `Translate`s | New inline row, two OpenAI mappings, ladder-order assertion, **full build** — warnings are errors and a non-exhaustive switch is the likely surprise |
+| 3. `ThinkingEffortRange` + tests | `EffortRangeTests`, floor-above-ceiling included |
+| 4. Three `LlmSettings` properties | Round-trip: a file without the keys still loads |
+| 5. `TurnLoop` properties, the clamp, the reported effort, `ApplyLlmSettings` | Behaviour on a default install is byte-identical — **assert it, don't assume** |
+| 6. Point the eight background sites at `BackgroundModel` | The negative test, plus a grep that the remaining readers are exactly the intended two — **searching both `Turns.Model` and `turns.Model`**, per §5 |
+| 7. Three rows + the two `Write` amendments | Settings tests. The anchor gate fails until step 8 — expected |
+| 8. Docs | `dotnet test` — docs, anchor and nav gates are all tests |
+| 9. By hand (`manual-test`) | Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry |
+| 10. `tools/release.ps1 minor` | A completed phase is a minor. CHANGELOG section first, via `-ShowVersion` |
+
+---
+
+## Open
+
+1. Whether `MessageCreateParams.Thinking` / `.OutputConfig` are nullable and omit on null. Settled by
+   the wire test in one run; fallback is two-branch construction.
+2. Whether OpenAI accepts `"xhigh"` today. Mapping down is safe; raising it needs a real 200.
+3. Whether the effort rows should be `Protected`. Recommending no, matching `llm.model` — but that
+   precedent may itself be the gap, and if it changes, both change.
+4. The web-search capability check now gates a lookup running on a different model. Correct by
+   accident; see §5.
+5. Whether `get_model_status` grows a background-model line. Leaning yes, conditionally; the easiest
+   item to drop if the phase runs long.
+
+---
+
+## Not part of this phase
+
+**The checklist change request (2026-08-23)**, to be added as its own entry rather than fixed here:
+
+> All checklist items fulfillable by the Engineer should appear for that filter, not just for the
+> ship I'm in. If that's undoable, then at least notice when I switch ships and re-filter for the new
+> ship — but I'd rather the previous bullet be implemented instead.
+
+**The voices topic (2026-08-23)**, queued for discussion: multilingual ethnic voices matching NPC
+names where appropriate, which requires choosing an appropriate ElevenLabs model when ElevenLabs is
+the provider.
+
+**Standing instruction (2026-08-23):** do not begin implementation after plan approval, including in
+auto mode, until explicitly told to start.
