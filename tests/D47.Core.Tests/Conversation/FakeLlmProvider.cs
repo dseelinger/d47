@@ -30,10 +30,17 @@ public sealed class FakeLlmProvider : ILlmProvider
     /// <summary>Whether this endpoint can run a web search on the model's behalf.</summary>
     public bool WebSearch { get; init; } = true;
 
+    /// <summary>
+    /// Whether the model this provider is standing in for takes a thinking effort at all. False
+    /// is the pre-4.6 case — Haiku 4.5, or anything an endpoint has refused the field for — and
+    /// it is what the turn reports rather than what it asks for (list.md Phase 54).
+    /// </summary>
+    public bool ThinkingEffort { get; init; } = true;
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
-        SupportsThinkingEffort = true,
+        SupportsThinkingEffort = ThinkingEffort,
         SupportsOperatorSystemMessages = true,
         MinimumCacheablePrefixTokens = 512,
         SupportsToolCalls = ToolCalls,

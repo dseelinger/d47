@@ -1,8 +1,14 @@
 # Phase 54 — A floor and a ceiling
 
-**Status: planned, not built.** The six `list.md` items landed on 2026-08-25; no code has been
-written. The plan was approved on 2026-08-23 and deliberately not started — see the standing
-instruction at the end of this file.
+**Status: step 1 built 2026-08-25, steps 2–10 not started.** The `list.md` items landed on
+2026-08-25. The plan was approved on 2026-08-23 and deliberately not started — see the standing
+instruction at the end of this file — and the Commander gave the word for item one on 2026-08-25.
+
+**What is in the tree now** is the Haiku fix and nothing else: the deny-list, the model-keyed
+demotion, the two fields made conditional, and the reported effort. `Xhigh`, `ThinkingEffortRange`,
+the three settings rows, the clamp and the background-model routing are all still to build, so
+**nothing about a floor or a ceiling is reachable yet** — the phase is not shippable as a minor.
+Item one stands alone as a defect fix and can ship as a patch, which is what §8 step 1 anticipated.
 
 This is the plan of record. It exists because the reasoning below lived only in a chat plan outside
 the repository, where nobody else can read it and nothing cites it.
@@ -330,9 +336,15 @@ effort into a per-model theory.
 
 **Add:**
 
-- `WebSearchDeclarationTests` — `HaikuIsSentNoThinkingConfigAndNoEffort`, plus a
+- ~~`WebSearchDeclarationTests` — `HaikuIsSentNoThinkingConfigAndNoEffort`, plus a
   `CurrentModelsAreSentBothOfThem` partner for opus-5. That file already builds a real Haiku request
-  and looks only at tool names.
+  and looks only at tool names.~~ **Not done there, and the departure is recorded rather than
+  silent.** Both tests went into `PromptOnTheWireTests` instead, where the partner is a theory over
+  all four current models. The convenience argument for the other file did not survive contact:
+  `D47.Llm.Tests` has the same `InternalsVisibleTo`, so it can build the same request — and it can
+  additionally assert the **bytes**, which is what settles the omitted-versus-explicit-null question
+  above. A weaker duplicate of an assertion that already exists, filed under a name about web
+  search, would have bought nothing and made the file's title a lie.
 - `PromptOnTheWireTests` — `NeitherThinkingNorEffortReachesAModelThatRejectsThem`, asserting the
   **bytes**, which also settles the omitted-versus-explicit-null question. Plus
   `[InlineData(ThinkingEffort.Xhigh, "xhigh")]` on `TheThinkingEffortIsSent` — that one fails at
@@ -391,7 +403,7 @@ surface" are usually the same act and here they are not.
 | Step | Verify |
 |---|---|
 | 0. Phase 54 into `list.md` + this plan of record | Both done 2026-08-25 |
-| 1. **The Haiku defect alone, own commit** | Tests fail → fix → pass → re-break → fail correctly. Then by hand: pin `llm.model` to Haiku and **hold a real conversation**, not one question — viable is the bar now. Watch the spend ledger's warmth column for the 4096-token cache floor. *Can ship as a patch ahead of the phase.* |
+| 1. **The Haiku defect alone, own commit** | **Built 2026-08-25.** Both directions proven against the unmodified tree — see below. Suite green: 4,732 tests. **The manual half has not been done**: pin `llm.model` to Haiku and hold a real conversation, watching the spend ledger's warmth column for the 4096-token cache floor. *Can ship as a patch ahead of the phase.* |
 | 2. `Xhigh` into the enum and three `Translate`s | New inline row, two OpenAI mappings, ladder-order assertion, **full build** — warnings are errors and a non-exhaustive switch is the likely surprise |
 | 3. `ThinkingEffortRange` + tests | `EffortRangeTests`, floor-above-ceiling included |
 | 4. Three `LlmSettings` properties | Round-trip: a file without the keys still loads |
@@ -406,8 +418,13 @@ surface" are usually the same act and here they are not.
 
 ## Open
 
-1. Whether `MessageCreateParams.Thinking` / `.OutputConfig` are nullable and omit on null. Settled by
-   the wire test in one run; fallback is two-branch construction.
+1. ~~Whether `MessageCreateParams.Thinking` / `.OutputConfig` are nullable and omit on null.~~
+   **Settled 2026-08-25, both yes.** Both properties are nullable and a null is omitted from the
+   JSON rather than serialised as `"thinking": null` — asserted as absent keys by
+   `NeitherThinkingNorEffortReachesAModelThatRejectsThem`, so no two-branch construction was
+   needed. One wrinkle worth recording: `Thinking` is a union type that converts implicitly from
+   the concrete config but **not** from null, so the null branch of the ternary needs an explicit
+   `(ThinkingConfigParam?)` cast or the build fails on nullability. `OutputConfig` does not.
 2. Whether OpenAI accepts `"xhigh"` today. Mapping down is safe; raising it needs a real 200.
 3. Whether the effort rows should be `Protected`. Recommending no, matching `llm.model` — but that
    precedent may itself be the gap, and if it changes, both change.
@@ -415,9 +432,19 @@ surface" are usually the same act and here they are not.
    accident; see §5.
 5. Whether `get_model_status` grows a background-model line. Leaning yes, conditionally; the easiest
    item to drop if the phase runs long.
-6. **Added 2026-08-25:** whether the shared demotion type is lifted into a common namespace or twinned
-   on the Anthropic side. Recommending lifted; the deciding factor is how far the refactor reaches
-   into the OpenAI providers, which one attempt will show.
+6. ~~**Added 2026-08-25:** whether the shared demotion type is lifted into a common namespace or twinned
+   on the Anthropic side.~~ **Settled 2026-08-25: lifted, and the refactor reached nothing.** It was
+   measured before it was chosen, which is what the recommendation asked for. `EndpointDemotions.cs`
+   moved from `src/D47.Llm/OpenAi/` to `src/D47.Llm/` and its namespace changed by one line;
+   **not a single call site moved.** `D47.Llm.OpenAi` and `D47.Llm.Tests` are both child namespaces
+   of `D47.Llm`, so every existing reference resolves without so much as a `using`. The widened key
+   is a trailing `string model = ""` on all three methods, so the fifteen OpenAI call sites read
+   exactly as they did and mean exactly what they did.
+   <br><br>
+   **The one thing not to tidy:** the model parameter is *last*, after `Demotable`, which reads
+   slightly oddly. That is deliberate — it is what makes the OpenAI callers byte-identical instead
+   of a fifteen-site rename, and reordering it to `(endpoint, model, what)` would buy nothing but
+   churn.
 7. **Added 2026-08-25:** whether the `<system-reminder>` fallback deserves more than a documentation
    sentence now that a cheap model is being recommended rather than tolerated. Recommending no — it is
    already every ChatCompletions endpoint's normal path — but it is a trust boundary, so it is written

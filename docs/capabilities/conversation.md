@@ -266,6 +266,15 @@ address, the turn is free — that is a fact about the address rather than a gue
 and reporting "unknown" forever about something that genuinely costs nothing is noise pretending
 to be rigour.
 
+**The cheaper models carry live game state under a weaker guarantee, and it is worth knowing before
+you pick one.** On Claude Opus 5, Opus 4.8 and Fable 5, what your ship is doing right now reaches
+the model under a role that journal content cannot imitate. Everywhere else — Claude Haiku 4.5,
+Sonnet 5, and every OpenAI-compatible endpoint — it is folded into the message instead, marked off
+by a convention rather than by a boundary. That is the well-travelled path rather than a new risk,
+and the guardrails that say in-game text is information rather than instruction are above all of it
+either way. But a hostile ship name has one more thing it can try on the cheap models than on the
+expensive ones, so the choice is a real one and not only about money.
+
 #### API key {#api-key}
 
 Encrypted for your Windows account and kept in `data/secrets.json` beside the executable.
