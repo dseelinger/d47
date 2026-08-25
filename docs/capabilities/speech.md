@@ -288,7 +288,7 @@ Two rows, and they are deliberately different kinds of thing.
 
 **Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
 published list price for the model Directive 47 asks for — $0.05 per thousand for ElevenLabs'
-`eleven_turbo_v2_5`, read from their API pricing page. That is a list price and not your
+`eleven_flash_v2_5`, read from their API pricing page. That is a list price and not your
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.

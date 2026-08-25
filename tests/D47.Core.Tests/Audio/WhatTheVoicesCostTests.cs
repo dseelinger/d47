@@ -157,9 +157,11 @@ public class WhatTheVoicesCostTests
     [Fact]
     public void TheListPriceIsWhatTheProviderPublishes()
     {
-        // Read from elevenlabs.io/pricing/api on 2026-08-16 for eleven_turbo_v2_5, which is the
-        // model ElevenLabsTtsProvider pins. If that pin ever moves, this figure moves with it —
-        // and it has: the pin moved to Turbo for language enforcement, which is half the price.
+        // Read from elevenlabs.io/pricing/api for eleven_flash_v2_5, which is the model
+        // ElevenLabsTtsProvider pins. If that pin ever moves, this figure moves with it — and it
+        // has moved twice: to Turbo 2.5 on 2026-08-16 for language enforcement, which halved the
+        // rate, and to Flash 2.5 on 2026-08-25 because ElevenLabs deprecated Turbo. Flash is
+        // billed at the same $0.05, so the figure survived the second move unchanged.
         Assert.Equal(0.05m, TtsProviderCatalog.ElevenLabs.ListDollarsPerThousandCharacters);
         Assert.True(TtsProviderCatalog.ElevenLabs.Billed);
 

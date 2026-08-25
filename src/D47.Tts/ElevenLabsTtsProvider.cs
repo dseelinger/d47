@@ -60,14 +60,33 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// side is not a change in what the Commander hears, and because the speed control this
     /// provider exposes is a property of the model generation rather than of the account.
     /// <para>
-    /// <b>Turbo 2.5 rather than Multilingual 2, and the reason is language.</b> Multilingual 2
-    /// infers the language of every line from the line, which is the behaviour it is built for
-    /// and which produced a material milestone read half in German. The 2.5 generation accepts
-    /// <c>language_code</c> and holds it; Multilingual 2 rejects the parameter outright, so
-    /// there was no version of pinning English that kept that model. It is also half the price.
+    /// <b>The 2.5 generation rather than Multilingual 2, and the reason is language.</b>
+    /// Multilingual 2 infers the language of every line from the line, which is the behaviour it
+    /// is built for and which produced a material milestone read half in German. The 2.5
+    /// generation accepts <c>language_code</c> and holds it; Multilingual 2 rejects the parameter
+    /// outright, so there was no version of pinning English that kept that model. It is also half
+    /// the price.
+    /// </para>
+    /// <para>
+    /// <b>Flash 2.5 rather than Turbo 2.5, from 2026-08-25.</b> ElevenLabs has deprecated Turbo
+    /// and names Flash as its replacement, in terms that make the swap uninteresting: the two are
+    /// <em>"functionally equivalent … except the latency on the Flash models is lower on
+    /// average"</em>. Same list price, same <c>language_code</c>, less delay before the first
+    /// sound — and the pin that was moving away from was the one being switched off. This is not
+    /// a second opinion about the August ruling above; it is the same ruling, on the model that
+    /// still exists.
+    /// </para>
+    /// <para>
+    /// <b>One model, deliberately, and there is no setting for it</b> (change-requests.md 41,
+    /// declined 2026-08-25 in favour of this). A picker here would have to carry a per-model
+    /// price into the spend ledger, a per-model speed range into the rate row, and a rule keeping
+    /// Multilingual 2 off the list for ever — three mechanisms so a Commander could choose
+    /// between one model that is right and several that are slower, dearer, or unable to hold
+    /// English. The cheapest and fastest option that satisfies the language rule is not a
+    /// preference.
     /// </para>
     /// </summary>
-    public const string DefaultModel = "eleven_turbo_v2_5";
+    public const string DefaultModel = "eleven_flash_v2_5";
 
     /// <summary>
     /// The language every line is synthesised as. English, fixed: d47 speaks English, its

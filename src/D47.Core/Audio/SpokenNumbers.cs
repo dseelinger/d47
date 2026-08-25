@@ -22,7 +22,7 @@ namespace D47.Core.Audio;
 /// <para>
 /// <b>Conservative on purpose, and the unit is the word.</b> Any whitespace-delimited word with
 /// a letter anywhere in it is passed through untouched — <c>c2-23</c>, <c>b6-2</c>,
-/// <c>eleven_turbo_v2_5</c>, <c>24kHz</c> are identifiers and part-words, not quantities, and a
+/// <c>eleven_flash_v2_5</c>, <c>24kHz</c> are identifiers and part-words, not quantities, and a
 /// procedurally generated system name is the commonest thing d47 says out loud that has digits
 /// in it. Judging each digit run by its immediate neighbours was not enough: the <c>23</c> of
 /// <c>c2-23</c> touches a hyphen on one side and nothing on the other, and came out as

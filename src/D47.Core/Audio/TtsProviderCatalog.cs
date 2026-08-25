@@ -140,10 +140,12 @@ public static class TtsProviderCatalog
 
         Billed = true,
 
-        // The published API list price for eleven_turbo_v2_5, which is the model d47 pins —
-        // $0.05 per 1,000 characters, half the Multilingual 2 rate this used to read, from
-        // elevenlabs.io/pricing/api on 2026-08-16. The pin moved for language enforcement
-        // rather than for price; the price moved with it.
+        // The published API list price for eleven_flash_v2_5, which is the model d47 pins —
+        // $0.05 per 1,000 characters, half the Multilingual 2 rate this used to read. From
+        // elevenlabs.io/pricing/api, read on 2026-08-16 for Turbo 2.5 and again on 2026-08-25
+        // when the pin moved to Flash 2.5, which ElevenLabs bills at the same rate. Neither move
+        // was made for price: the first was language enforcement and the second was Turbo being
+        // deprecated. The figure has not changed through either.
         //
         // A list price and not a bill. A subscription burns bundled credits instead — 121,000 a
         // month for $22 on Creator, so an effective $0.18 per thousand until the bundle runs out

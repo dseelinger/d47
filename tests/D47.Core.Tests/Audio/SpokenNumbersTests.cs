@@ -65,7 +65,7 @@ public class SpokenNumbersTests
     /// </summary>
     [Theory]
     [InlineData("Hyades Sector DR-V c2-23")]
-    [InlineData("eleven_turbo_v2_5")]
+    [InlineData("eleven_flash_v2_5")]
     [InlineData("24kHz")]
     [InlineData("Col 285 Sector YZ-O b6-2")]
     public void SomethingWithLettersInItIsLeftAlone(string text) =>
