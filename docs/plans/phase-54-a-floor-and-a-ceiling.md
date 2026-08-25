@@ -50,7 +50,7 @@ setting would silently kill every ambient line with nothing on screen. That is w
 | | |
 |---|---|
 | **Model dial** | By call class, not per turn. Conversation pins to the ceiling; background takes the floor. |
-| **Haiku fix** | Inside this phase, as item one. |
+| **Haiku fix** | Inside this phase, as item one. **Amended 2026-08-25** — see below: the goal is Haiku as a *viable choice*, not merely a safe floor, and the fix is a deny-list **and** a model-keyed demotion rather than the deny-list alone. |
 | **Defaults** | New properties null ⇒ behaviour identical to today. |
 | **`Xhigh`** | Joins the ladder. Five rungs. |
 
@@ -62,21 +62,106 @@ neither blocks the other.
 
 ## 1. The Haiku fix
 
-**A deny-list, not an allow-list** — follow `BasicWebSearchOnly` in `AnthropicLlmProvider`, whose doc
-comment already argues this exact case for the same 4.6-or-later family rule. An allow-list gets the
-failure direction wrong: every future model d47 has not heard of would silently lose its effort
-field.
+> **Amended 2026-08-25, and the decision it changes is named.** The plan as approved fixed the
+> defect: stop sending two fields Haiku rejects, so a floor pointed at it does not kill every
+> ambient line. The Commander's instruction on 2026-08-25 raised the bar — **make Haiku a viable
+> option**, not merely a safe one to point a floor at. That is a different target and it wants two
+> mechanisms rather than one, plus two capability differences named rather than discovered.
+
+### Why it fails, exactly
+
+`AnthropicLlmProvider` puts two fields on every request with no condition:
+
+```csharp
+Thinking = new ThinkingConfigAdaptive { Display = Display.Summarized },
+OutputConfig = new OutputConfig { Effort = Translate(request.Effort) },
+```
+
+Both are 4.6-generation features; Haiku 4.5 is pre-4.6 and rejects them. `CapabilitiesFor` hardcodes
+`SupportsThinkingEffort = true` for **every** model, so nothing upstream ever learns to omit them.
+
+Of the five models in the picker — `claude-sonnet-5`, `claude-opus-5`, `claude-opus-4-8`,
+`claude-haiku-4-5`, `claude-fable-5` — **Haiku 4.5 is the only pre-4.6 one.** When this code was
+written every Anthropic model took both fields, which is why the question never arose.
+
+Two different failures follow, and only one of them is loud. Pinned as the conversation model, turns
+fail visibly. Anything going through `FlavourTurn` fails **silently**: it catches, logs at Debug and
+returns null, so the line falls back to its authored text with nothing on screen.
+
+### The OpenAI path already solves this, and the shape is worth copying
+
+Both OpenAI providers wrap every optional field:
+
+```csharp
+if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort))
+    json.WriteString("reasoning_effort", Translate(request.Effort));
+```
+
+That is Phase 29's **advertise, then demote**: send the field, and if the endpoint refuses with an
+error naming it, record the refusal and retry the turn exactly once without it. Session-only, never
+written to disk, once per capability per endpoint. Its own comment states the principle — a model
+list says what an endpoint *serves* and nothing about what it *accepts*, so that is learned from the
+first failure rather than assumed.
+
+**The Anthropic provider has no demotion at all.** That is the actual gap: not that Haiku is
+unusual, but that one provider learns from refusals and the other cannot.
+
+### Both mechanisms, and what each is for
+
+**A deny-list in front**, so the known case never costs even one failed turn:
 
 ```csharp
 private static readonly HashSet<string> LegacyThinkingModels =
     new(StringComparer.Ordinal) { "claude-haiku-4-5" };
 ```
 
-Keep it **separate from `BasicWebSearchOnly`** even though membership is identical today — two
-fields, two failure modes, and web search is also absent on models that do take an effort.
+Follow `BasicWebSearchOnly`, whose doc comment already argues this exact case for the same
+4.6-or-later family rule. Keep it a **separate** field even though membership is identical today —
+two fields, two failure modes, and web search is also absent on models that do take an effort.
+
+**A model-keyed demotion behind it**, so a model d47 has not heard of heals itself instead of
+failing for ever. This is the half the amendment adds, and it is what makes an allow-list versus
+deny-list argument stop mattering: the deny-list handles what is known, the demotion handles what is
+not, and neither has to be right about the future.
+
+**Key it on endpoint *and* model.** `EndpointDemotions` keys on endpoint alone, which is correct for
+OpenAI — one endpoint, one server, one set of accepted fields — and wrong for Anthropic, where one
+endpoint serves five models. A Haiku refusal must not switch effort off for Opus 5.
+
+*Recommended shape:* lift the type to a namespace both providers can see and widen the key to
+`(endpoint, model)`, with the OpenAI callers passing an empty model so their behaviour is byte-identical.
+One mechanism with one set of semantics beats a twin that drifts. If that refactor looks like it will
+reach further than it should, an Anthropic-side twin is acceptable — but say in its comment that it is
+a twin and why, or the next reader will unify them without knowing what it cost.
+
+### What "viable" needs beyond the two fields — checked, and neither is a blocker
+
+**Caching still works, with less headroom than you would think.** `MinimumCacheablePrefix` gives
+`claude-haiku-4-5` **4096** tokens against Sonnet's 1024 and Opus 5's 512, and its own comment warns
+that below the minimum *"a prefix silently does not cache — no error, just no entry."* d47's
+conversation prefix clears 4096 comfortably — the phase's own arithmetic assumes ~6k — so this is
+noted rather than fixed. **It is worth a manual check on a real turn** anyway, because a silent
+non-cache on the model chosen to be cheap would undo the whole point, and the spend ledger's warmth
+column is where it would show.
+
+**Live game state arrives under a weaker boundary.** `SupportsOperatorSystemMessages` lists
+opus-5, opus-4-8, fable-5 and mythos-5 — **not Haiku 4.5**. Without it, `LiveGameState` is folded
+into the last user message as a `<system-reminder>` instead of an operator system message, and the
+provider's own comment says what that costs: an operator system message *"cannot be spoofed by
+journal content, while a `<system-reminder>` in the user turn caches identically but is only a
+convention."* Journal and in-game comms are untrusted input by invariant.
+
+**This is not new and not a reason to refuse Haiku** — every ChatCompletions endpoint already
+declares the flag false, so the fallback is well travelled. It is a reason to **say so where the
+model is chosen**: recommending Haiku moves more traffic onto the weaker path, and a Commander
+picking the cheap model should not have to read the provider to find that out. One sentence on the
+`llm.model` row's documentation, not a warning dialog.
+
+### The rest of the fix, unchanged from the approved plan
 
 - `SupportsThinkingEffort = true` in the Anthropic capability block becomes
-  `!LegacyThinkingModels.Contains(model)`.
+  `!LegacyThinkingModels.Contains(model)` — and then also honours the demotion, so the flag tells the
+  truth after a refusal as well as before one.
 - The unconditional `Thinking` / `OutputConfig` assignments become conditional on
   `capabilities.SupportsThinkingEffort`, which `BuildParameters` already computes. Omit **both**
   fields; do **not** substitute `budget_tokens` — that means inventing a token budget per rung on the
@@ -98,8 +183,6 @@ read nowhere.
 **Uncertain:** whether `MessageCreateParams.Thinking` / `.OutputConfig` are nullable, and whether
 null is omitted rather than serialised as `"thinking": null`. The wire test settles it in one run;
 the fallback is two-branch construction.
-
----
 
 ## 2. `Xhigh`
 
@@ -256,6 +339,11 @@ effort into a per-model theory.
   *compile* time if `Effort.Xhigh` does not exist, the earliest possible signal.
 - A per-model effort capability theory, plus a separate
   `AModelD47HasNotHeardOfIsAssumedToTakeAnEffort`.
+- **The demotion, added 2026-08-25.** A model d47 has not heard of that refuses the field is retried
+  once without it and succeeds; the second turn sends no effort at all; and — the one that matters —
+  **a refusal on one Anthropic model does not demote another.** That last is the whole reason the key
+  carries the model, so it fails loudly if anyone narrows it back. Plus: the OpenAI callers'
+  behaviour is unchanged by the widened key, asserted rather than assumed.
 - `Xhigh` → `"high"` on both OpenAI providers. **Note the gap being closed:** there is currently no
   test asserting OpenAI effort reaches the wire at all.
 - `EffortRangeTests` — both bounds unset changes nothing; floor lifts; ceiling lowers; equal bounds
@@ -303,7 +391,7 @@ surface" are usually the same act and here they are not.
 | Step | Verify |
 |---|---|
 | 0. Phase 54 into `list.md` + this plan of record | Both done 2026-08-25 |
-| 1. **The Haiku defect alone, own commit** | Tests fail → fix → pass → re-break → fail correctly. Then by hand: pin `llm.model` to Haiku and ask one question. *Can ship as a patch ahead of the phase.* |
+| 1. **The Haiku defect alone, own commit** | Tests fail → fix → pass → re-break → fail correctly. Then by hand: pin `llm.model` to Haiku and **hold a real conversation**, not one question — viable is the bar now. Watch the spend ledger's warmth column for the 4096-token cache floor. *Can ship as a patch ahead of the phase.* |
 | 2. `Xhigh` into the enum and three `Translate`s | New inline row, two OpenAI mappings, ladder-order assertion, **full build** — warnings are errors and a non-exhaustive switch is the likely surprise |
 | 3. `ThinkingEffortRange` + tests | `EffortRangeTests`, floor-above-ceiling included |
 | 4. Three `LlmSettings` properties | Round-trip: a file without the keys still loads |
@@ -327,6 +415,13 @@ surface" are usually the same act and here they are not.
    accident; see §5.
 5. Whether `get_model_status` grows a background-model line. Leaning yes, conditionally; the easiest
    item to drop if the phase runs long.
+6. **Added 2026-08-25:** whether the shared demotion type is lifted into a common namespace or twinned
+   on the Anthropic side. Recommending lifted; the deciding factor is how far the refactor reaches
+   into the OpenAI providers, which one attempt will show.
+7. **Added 2026-08-25:** whether the `<system-reminder>` fallback deserves more than a documentation
+   sentence now that a cheap model is being recommended rather than tolerated. Recommending no — it is
+   already every ChatCompletions endpoint's normal path — but it is a trust boundary, so it is written
+   down rather than assumed.
 
 ---
 
