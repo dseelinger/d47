@@ -286,6 +286,11 @@ Everything that changes what it shows is somewhere else — the window, a spoken
 ["page down"](#scrolling) and its three companions are the only way to read past the fold on this
 surface.
 
+**And why it draws no buttons.** A control nobody can press is a control spending room the data
+wants, so the strip leaves them out — the checklist's filter and its Add, and anything else whose
+whole purpose was being pressed. Checkboxes and the scrollbar stay, because those show you
+something.
+
 **There is no interlock with the headset.** If you are wearing one you have no use for this, but
 wanting both is real — a second monitor somebody else is watching — so nothing here silently
 declines to appear because SteamVR is running.

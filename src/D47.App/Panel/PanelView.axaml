@@ -23,6 +23,27 @@
     Colour by role, never by literal: every brush is a theme resource, so switching theme
     repaints this without it knowing a theme exists (list.md Phase 4).
   -->
+  <!--
+    A surface the pointer goes straight through draws no buttons (asked for 2026-08-24: "clickable
+    controls should be removed from the 2D overlay - nothing can be clicked, and it makes more room
+    for the data").
+
+    A style rather than a pass over each page, because the pages are furnished by hosts and there
+    are five of them: the checklist's filter and Add, the engineer pages, the clocks. One selector
+    reaches all of them and reaches the next one nobody has written yet.
+
+    <b>Exact `Button`, deliberately.</b> Avalonia matches the type rather than the hierarchy unless
+    asked with `:is()`, and that is the distinction wanted here: a `Button` exists to be pressed and
+    is nothing without a pointer, while `CheckBox` shows whether a checklist line is done and
+    `RepeatButton` is half of a scrollbar. Removing those would take away the data rather than make
+    room for it.
+  -->
+  <UserControl.Styles>
+    <Style Selector="panel|PanelView.output-only Button">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+  </UserControl.Styles>
+
   <UserControl.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>

@@ -225,9 +225,20 @@ public static class ChecklistWording
             return ChecklistEvaluator.Describe(module);
         }
 
-        // An empty slot still has a name, and it is not `Slot01_Size7`. The layout is keyed on the
-        // hull, so this answers for the ship the plan was written for as readily as for the one
-        // being flown.
+        // Nothing fitted, so the next best answer is what the plan says is going there (asked for
+        // 2026-08-24). <b>The module type, never the mounting point.</b> Reported as "Utility Mount
+        // 8 and Compartment 4 don't tell me the module type", and d47 knew all along — the ship
+        // plan stores the module beside the blueprint and this method had never been shown it.
+
+        if (item.Intent?.Module is { Length: > 0 } planned)
+        {
+            return planned;
+        }
+
+        // And where even the plan does not say — a slot the Commander asked for engineering on
+        // without choosing what goes in it — the slot's own name is all there is. It is at least
+        // not `Slot01_Size7`: the layout is keyed on the hull, so this answers for the ship the
+        // plan was written for as readily as for the one being flown.
         return EliteSpecifications.Slot(loadout.Type ?? item.Hull, subject)?.Describe();
     }
 

@@ -120,6 +120,12 @@ public sealed class OverlayPanel : Window
         _view = new PanelView { DataContext = model, Mode = PanelMode.Mini };
         _view.Avatar.Library = avatars;
 
+        // <b>No buttons on a surface nothing can press</b> (asked for 2026-08-24). The pointer goes
+        // straight through this strip, so every control on it was a control that did nothing —
+        // and on 512 by 280 the checklist's own bar was costing two rows of the six there are.
+        // One class rather than a flag each page reads: see the style on PanelView.
+        _view.Classes.Add("output-only");
+
         if (adventures is not null)
         {
             // The story, at mini's size (list.md Phase 48). <b>These two roots are all the overlay

@@ -178,7 +178,7 @@ public static class ChecklistEvaluator
 
         if (module is null)
         {
-            return Missing(intent, state);
+            return Missing(intent, state, loadout);
         }
 
         return intent.Kind switch
@@ -338,7 +338,18 @@ public static class ChecklistEvaluator
     /// "you own that already, it is in Deciat, and moving it costs 2.1 million" is a completely
     /// different next action from "go and grind it".
     /// </summary>
-    private static ChecklistVerdict Missing(ChecklistIntent intent, CommanderGameState state)
+    /// <param name="loadout">
+    /// The ship this slot is on, so the slot can be named as a Commander says it rather than as
+    /// the journal spells it (asked for 2026-08-24).
+    /// <para>
+    /// <b>This line became load-bearing the moment the title stopped carrying the slot.</b> The
+    /// title now names the module — <em>Grade 5 Heavy Duty on Shield Booster</em> — which is what
+    /// was asked for, and which means this sentence is the only thing left saying <em>which</em> of
+    /// eight utility mounts. <c>TinyHardpoint8</c> is not that thing; <em>Utility Mount 8</em> is.
+    /// </para>
+    /// </param>
+    private static ChecklistVerdict Missing(
+        ChecklistIntent intent, CommanderGameState state, ShipLoadout loadout)
     {
         var wanted = intent.Detail ?? intent.Subject;
 
@@ -356,7 +367,10 @@ public static class ChecklistEvaluator
                 $"You already own {stored.Name} — it is in {stored.StarSystem}{cost}.");
         }
 
-        return new ChecklistVerdict(ChecklistState.Open, $"Nothing is fitted in {intent.Subject}.");
+        var where = Knowledge.EliteSpecifications.Slot(loadout.Type, intent.Subject)?.Describe()
+                    ?? intent.Subject;
+
+        return new ChecklistVerdict(ChecklistState.Open, $"Nothing is fitted in {where}.");
     }
 
     // ------------------------------------------------------------ engineers

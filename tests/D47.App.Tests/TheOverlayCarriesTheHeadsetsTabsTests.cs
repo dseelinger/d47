@@ -129,8 +129,11 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Mini };
 
+        // As the strip is: nothing on it can be pressed, so nothing on it is drawn to be pressed
+        // (asked for 2026-08-24).
+        panel.Classes.Add("output-only");
+
         panel.EnableChecklist(checklists);
-        panel.EnableModeToggle(_ => { });
         panel.Nav.Select(PanelTab.Checklist);
 
         var window = new Avalonia.Controls.Window
