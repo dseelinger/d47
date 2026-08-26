@@ -17,6 +17,10 @@ Asked for 2026-08-25. Every open question in this document has been ruled on:
 **What still gates 58 and 59 is measurement, not permission**: OpenAI's language drift (§4.1), and
 spiking Kokoro's voice blending through the ONNX path before designing around it.
 
+**Phase 58's gate lifted 2026-08-26.** The drift spike was run and came back clean; §3.7 is amended
+where it was wrong about the mechanism, and Phase 58 is now writeable. Phase 59 still waits on the
+Kokoro spike. Phase 57 shipped in **v0.72.0** on 2026-08-25.
+
 Three phases are proposed — **57**, **58**, **59** — and the numbers are free: 1–21 and 23–53 are
 frozen, 22 is retired and never reused, and 54, 55 and 56 are already spoken for.
 
@@ -396,6 +400,16 @@ authoritative for what the endpoint accepts in a way that prose is not.
   ElevenLabs pin off Multilingual 2** — and where that model at least accepted the parameter's
   absence as its own design, here there is nothing to send.
   <br><br>
+  **Corrected 2026-08-26 by measurement, and the correction matters.** The schema says
+  `additionalProperties: false`; **the live endpoint does not enforce it.** `language: "fr"` is
+  accepted with `200` and changes nothing, and so is `d47_nonsense_field: "banana"` — while a
+  *declared* field with a bad value is refused with a precise `400`. So the parameter is
+  **ignored, not rejected**, which is the worse of the two and is the ElevenLabs failure exactly:
+  a rejected parameter is a contract a caller can see and adapt to, and `EndpointDemotions` exists
+  to do that, while an accepted-and-ignored one is invisible. The ruling below is unchanged and
+  its argument is stronger. See
+  [openai-tts-language-and-speed.md](../spikes/openai-tts-language-and-speed.md) §2.
+  <br><br>
   **The `"language": "fr"` visible in the guide is a different object entirely.** It belongs to
   `VoiceConsent` — the BCP 47 tag of the phrase a real person speaks on a consent recording used to
   authorise creating a **custom voice**. It has nothing to do with what language a line is
@@ -408,6 +422,12 @@ authoritative for what the endpoint accepts in a way that prose is not.
   *documented but historically ignored on this model*, and a spec cannot settle that. It stays a
   measurement, and the honest outcome if it does nothing is `MinimumRate = MaximumRate = 1.0` with
   a comment saying why, rather than a row that moves and changes nothing.
+  <br><br>
+  **Measured 2026-08-26: it is honoured**, monotonically across the whole range — `0.25` gives
+  40.82s where `1.0` gives 10.75s. So the row ships with real bounds. Two things to carry into the
+  phase: it **saturates at the top** (`4.0` buys 3.30×, not 4×), and **synthesis is not
+  deterministic** — the same string at `1.0` varied by about ±7% across four calls, which any test
+  asserting on duration has to tolerate.
 - **The dated snapshot to pin is `gpt-4o-mini-tts-2025-12-15`**, enumerated beside the floating
   `gpt-4o-mini-tts`. That answers the brief's instruction to pin one.
 - **`instructions` is capped at 4096 and explicitly works on this model** — the schema notes it
@@ -433,6 +453,12 @@ suggestion. That does not by itself disqualify OpenAI, and the reason is where i
 So the spike still decides Phase 58, but it now decides one question rather than two: **not whether
 OpenAI can hold a language — it cannot — but whether it drifts when it is not asked to.**
 
+**Answered 2026-08-26: it does not drift.** A Guardian line carrying `Shinrarta Dezhra`,
+`Ngalinn`, `Deciat`, `LHS 3447` and two HIP designations came back as English on both runs, read
+by a multilingual transcriber that reports the language it heard, and the control line without
+proper nouns behaved identically. **So the fork resolves toward OpenAI: it is fit for Aboard, and
+Cartesia does not displace it.** Phase 58 can now be written.
+
 ---
 
 ## 4. Out of scope — Issues, not phase items
@@ -444,7 +470,9 @@ speaking rate went to `change-requests.md` **43** rather than to an Issue, becau
 change and not a defect. Cartesia stays argued here rather than queued anywhere — it is a case, not
 a task.
 
-1. **Spike OpenAI's language stability** *(blocking Phase 58's text)* — [#48](https://github.com/dseelinger/d47/issues/48). §3.7 settled that it cannot
+1. **Spike OpenAI's language stability** *(blocked Phase 58's text; **run 2026-08-26**, finding in
+   [openai-tts-language-and-speed.md](../spikes/openai-tts-language-and-speed.md), and Phase 58 is
+   unblocked)* — [#48](https://github.com/dseelinger/d47/issues/48). §3.7 settled that it cannot
    be told a language, so the open question is narrower and sharper: **does it drift when it is not
    asked to?** Synthesise a Guardian line seeded with `Shinrarta Dezhra`, `Ngalinn`, `Deciat`,
    `LHS 3447` and two HIP designations against `gpt-4o-mini-tts-2025-12-15`, and report what comes
