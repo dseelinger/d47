@@ -2882,7 +2882,22 @@ public sealed class AppHost : IDisposable
 
         TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
             () => Secrets.TryGet(OpenAiTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
+            _loggerFactory.CreateLogger<OpenAiTtsProvider>(),
+
+            // How the core aboard should be performed, asked per sentence because a Commander
+            // switches core while d47 is running (#49).
+            //
+            // ONE CLIENT SERVES ALL SIX SLOTS (list.md Phase 57), so this reaches every slot on
+            // OpenAI rather than the ship's AI alone - the Commander's call, 2026-08-26, taking
+            // the small honest cost over a second client. A second client would be correct in
+            // every configuration and would put two concurrency gates against one account, which
+            // is the property ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on.
+            //
+            // In practice it reaches the core and little else: Phase 57's own default puts every
+            // slot carrying another player's words on Edge, and a Commander who moves one to
+            // OpenAI has chosen that.
+            direction: () => VoiceDirection.For(
+                Settings.Current.Llm.PersonalityEnabled ? Personas.Current : null)),
 
         _ => null,
     };

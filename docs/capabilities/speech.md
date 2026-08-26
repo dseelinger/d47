@@ -128,6 +128,17 @@ and still costing.
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
+**OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
+and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —
+and Directive 47 sends it the description of whichever Guardian core is aboard. So a core on OpenAI
+is cast rather than merely given a larynx, and the same core on Edge or ElevenLabs is not. There is
+nothing to switch on: it happens whenever the ship's AI speaks through OpenAI with personality on.
+
+One honest limit. Directive 47 keeps **one connection per provider** shared across all six voice
+slots, so if you also put the carrier or the NPCs on OpenAI, they are performed the same way. The
+default puts everything carrying another player's words on Edge, so this usually reaches the core
+and nothing else.
+
 `none` is a real choice rather than a way of switching something off: Directive 47 stays useful
 without a voice, and the cues and the thinking loop still play.
 
