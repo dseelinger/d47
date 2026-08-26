@@ -2851,6 +2851,10 @@ public sealed class AppHost : IDisposable
             () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
             _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
 
+        TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
+            () => Secrets.TryGet(OpenAiTtsProvider.KeySecretName, out var key) ? key : null,
+            _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
+
         _ => null,
     };
 
@@ -5391,12 +5395,25 @@ public sealed class AppHost : IDisposable
                 () => key,
                 _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
 
+            TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
+                () => key,
+                _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
+
             _ => null,
         };
 
         if (provider is null)
         {
             return SecretCheck.Unreachable($"D47 has no client for {selected.Name} yet.");
+        }
+
+        // A provider whose catalogue is static cannot be checked by listing it: the list is known
+        // without a key, so it would answer "accepted the key" for a key that had never left this
+        // machine. One character, synthesised and discarded, proves the call that actually has to
+        // work — a fraction of a cent (list.md Phase 58).
+        if (selected.VoicesAreStatic)
+        {
+            return await ProveSpeechKeyAsync(provider, selected, budget.Token).ConfigureAwait(false);
         }
 
         try
@@ -5430,6 +5447,47 @@ public sealed class AppHost : IDisposable
         }
         catch (Exception ex)
         {
+            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
+            return SecretCheck.Unreachable(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Proves a key by speaking one character and throwing the audio away (list.md Phase 58).
+    /// <para>
+    /// For a provider whose voice list is static, where listing proves nothing. The distinction
+    /// the answer has to keep is the one that makes a key check worth having: <b>"refused the
+    /// key" and "could not be reached" are different answers with different remedies</b>, and one
+    /// reported as the other sends the Commander to rotate a key that was fine
+    /// (docs/spikes/elevenlabs-voice-sources.md §3).
+    /// </para>
+    /// </summary>
+    private async Task<SecretCheck> ProveSpeechKeyAsync(
+        ITtsProvider provider,
+        TtsProviderInfo selected,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _ = await provider
+                .SynthesizeAsync(".", VoiceSelection.Default, cancellationToken)
+                .ConfigureAwait(false);
+
+            return SecretCheck.Works($"{selected.Name} accepted the key.");
+        }
+        catch (OperationCanceledException)
+        {
+            return SecretCheck.Unreachable(
+                $"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
+        }
+        catch (TtsException ex) when (ex.Fault == TtsFault.KeyRejected)
+        {
+            return SecretCheck.Rejected(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            // Everything else is the network's problem rather than the key's, which is what the
+            // Commander needs to know: there is nothing here for them to change.
             _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
             return SecretCheck.Unreachable(ex.Message);
         }

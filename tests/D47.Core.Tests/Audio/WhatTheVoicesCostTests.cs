@@ -89,21 +89,64 @@ public class WhatTheVoicesCostTests
     }
 
     /// <summary>
-    /// Every provider that charges publishes a rate, today — so the "count with no price"
-    /// wording is unreachable and is kept for the next one that does not.
+    /// A provider that charges and publishes no rate says so, in words, and never quotes a figure.
     /// <para>
-    /// Asserted rather than assumed, because the alternative is a branch nobody notices has gone
-    /// live: a provider added with <c>Billed = true</c> and no list price would start quoting a
-    /// character count with no explanation of why there is no money beside it, and this is the
-    /// test that says so at the moment it is added.
+    /// <b>This test used to assert that every billed provider published a rate</b>, on the
+    /// reasoning that the "count with no price" wording was therefore unreachable and kept for
+    /// the next provider that did not — and it named its own trigger: <i>"a provider added with
+    /// <c>Billed = true</c> and no list price … this is the test that says so at the moment it is
+    /// added"</i>. OpenAI is that provider (list.md Phase 58), and it fired exactly as written.
+    /// </para>
+    /// <para>
+    /// So the guard moves rather than goes. What it was really protecting is that a character
+    /// count never acquires money d47 made up: OpenAI publishes per minute of audio and d47
+    /// counts characters, and the conversion between them moves about 40% with the *content* of
+    /// the line — 951 characters a minute for plain prose against 671 for a line of system names
+    /// (docs/spikes/openai-tts-language-and-speed.md). There is no rate to state, and the honest
+    /// answer is the one the wording already had.
     /// </para>
     /// </summary>
     [Fact]
-    public void EveryProviderThatChargesPublishesARateOrTheWordingSaysSo()
+    public void AProviderThatChargesWithNoPublishedRateSaysSoRatherThanQuotingZero()
     {
-        Assert.All(
-            TtsProviderCatalog.All.Where(provider => provider.Billed),
-            provider => Assert.NotNull(provider.ListDollarsPerThousandCharacters));
+        var unpriced = TtsProviderCatalog.All
+            .Where(provider => provider.Billed && provider.ListDollarsPerThousandCharacters is null)
+            .ToList();
+
+        Assert.NotEmpty(unpriced);
+
+        foreach (var provider in unpriced)
+        {
+            var spend = new SpeechSpend();
+            spend.Record(provider.Id, 5_000);
+
+            var said = spend.Describe(On(provider.Id));
+
+            Assert.NotNull(said);
+
+            // The three readings that must stay apart: free, a figure, and a count with no rate
+            // behind it. "$0.00" here would be the first of those said about the third.
+            Assert.Contains($"no rate set for {provider.Name}", said, StringComparison.Ordinal);
+            Assert.DoesNotContain("$0.00", said, StringComparison.Ordinal);
+            Assert.DoesNotContain("is free", said, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// And the Commander can still put one in, which is what makes the absence a starting point
+    /// rather than a dead end.
+    /// </summary>
+    [Fact]
+    public void AndTheCommanderCanSetOneThemselves()
+    {
+        var spend = new SpeechSpend();
+        spend.Record(TtsProviderCatalog.OpenAiId, 10_000);
+
+        var said = spend.Describe(On(TtsProviderCatalog.OpenAiId, price: 0.015));
+
+        Assert.NotNull(said);
+        Assert.DoesNotContain("no rate set", said, StringComparison.Ordinal);
+        Assert.Contains("0.15", said, StringComparison.Ordinal);
     }
 
     [Fact]

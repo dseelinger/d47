@@ -167,6 +167,24 @@ public enum TtsFault
     /// removed from the account. Both mean the id is worth forgetting rather than retrying.
     /// </summary>
     VoiceRejected,
+
+    /// <summary>
+    /// The credential was refused, or there is none stored. The Commander's to fix, and from a
+    /// row they can see (list.md Phase 58).
+    /// </summary>
+    KeyRejected,
+
+    /// <summary>
+    /// It was asked and did not answer: network, outage, a proxy, a rate limit. Nothing about
+    /// the request was wrong, so nothing about the settings needs changing.
+    /// <para>
+    /// <b>Kept apart from <see cref="KeyRejected"/> deliberately.</b> Those two are the answers a
+    /// key check has to tell apart — docs/spikes/elevenlabs-voice-sources.md §3 establishes it as
+    /// load-bearing — and a provider whose voice list cannot prove a key has nothing else to
+    /// answer with.
+    /// </para>
+    /// </summary>
+    Unreachable,
 }
 
 public sealed class TtsException(string message, Exception? inner = null, TtsFault fault = TtsFault.Unknown)

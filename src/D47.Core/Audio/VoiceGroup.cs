@@ -248,11 +248,21 @@ public static class VoiceGroups
             return TtsProviderCatalog.Selected(speech.Provider).Id;
         }
 
-        var chosen = speech.GroupProviders?.GetValueOrDefault(Info(group).Id);
+        var slot = Info(group);
+        var chosen = speech.GroupProviders?.GetValueOrDefault(slot.Id);
 
-        return chosen is null
-            ? TtsProviderCatalog.Selected(speech.Provider).Id
-            : TtsProviderCatalog.Selected(chosen).Id;
+        var resolved = chosen is null
+            ? TtsProviderCatalog.Selected(speech.Provider)
+            : TtsProviderCatalog.Selected(chosen);
+
+        // A provider that cannot be told a language never speaks for a slot carrying other
+        // people's words, however it got named — the picker does not offer it, and a hand-edited
+        // file naming one is treated the way every unusable value is rather than obeyed
+        // (list.md Phase 58). Falling back to Edge rather than to `Provider`: the ship's provider
+        // could be the very one being refused, and a fallback that can loop is not one.
+        return TtsProviderCatalog.For(slot).Contains(resolved)
+            ? resolved.Id
+            : TtsProviderCatalog.EdgeId;
     }
 
     /// <summary>Every slot's provider, resolved. What the wiring plan is asked to arrange.</summary>

@@ -20,6 +20,61 @@ the file as it stood then.
 
 ---
 
+## 0.73.0 — 2026-08-26 — A voice from OpenAI
+
+**Phase 58.** A third voice provider, and the first to arrive since slots became the unit — so it
+is a choice per slot rather than a choice for the whole app. Thirteen voices, no key needed to see
+them, and one rule about where it is allowed to speak.
+
+### Where you can use it, and where you cannot
+
+| Slot | OpenAI offered? |
+|---|---|
+| Aboard, Carrier, NPCs | **Yes** |
+| People you know, Direct messages, Anyone in range | **No** |
+
+**Those three carry text other Commanders typed, which can be in any language.** Edge and
+ElevenLabs can both be *told* what language to speak, and Directive 47 sends one with every line.
+OpenAI has no such setting — and a language sent to it anyway is accepted and then quietly ignored,
+which is worse than a refusal because nothing can tell it happened. A message written in French
+would come back read in French, in the voice you chose for English.
+
+So those slots do not list it, and a hand-edited `settings.json` naming it there falls back to
+Edge rather than being obeyed. A rule that lived only in a dropdown would be a rule a text editor
+walks past.
+
+### What it costs, honestly
+
+**The price row is empty on purpose, and that is a finding rather than an oversight.** Directive 47
+counts characters, because that is how ElevenLabs bills. OpenAI publishes per minute of audio, and
+the conversion between the two moves with the *content* of the line — measured on its own output,
+plain prose runs at about 951 characters a minute and a line full of system names and catalogue
+numbers at 671. There is no honest exchange rate, so none is invented: the session line quotes your
+character count and says **"no rate set for OpenAI"** beside it until you put in a figure you can
+stand behind. It never quotes `$0.00`, which would mean *free* and would be a different thing
+entirely.
+
+### The rest
+
+- **The key is the same one your language model uses.** One account, one credential — paste it in
+  either row and it is stored once. Two copies of one secret is a rotation that half-works.
+- **The voice list needs no key**, because there is no list to fetch: the thirteen are fixed and
+  public. Which is why **Check** proves your key by speaking a single character and throwing it
+  away — listing voices would have told you a key was good when it had never left this machine.
+- **Speaking rate works**, across the whole `0.25`–`4.0` range. It was reported as a setting this
+  model ignores; it is not. It does flatten out near the top: `4.0` is about 3.3× rather than 4×.
+- **No gender is claimed for any of the thirteen**, because OpenAI publishes none and guessing
+  would decide which NPC gets which voice on a hunch.
+
+### Fixed on the way past
+
+**A key row could go missing.** Since 0.72.0 you could put your carrier on ElevenLabs and leave the
+cockpit on Edge — and the ElevenLabs key row, which still asked only about your *ship's* provider,
+went off the page. The slot that needed a key was configured and the box to put one in was not
+there. Key rows now appear while any slot names their provider.
+
+---
+
 ## 0.72.0 — 2026-08-25 — Every voice can come from somewhere different
 
 **Phase 57.** One provider used to speak for everybody. Now six slots each name their own, and the
