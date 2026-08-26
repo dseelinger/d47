@@ -22,6 +22,17 @@ public static class ConversationCapability
     public const string ModelKey = "llm.model";
 
     /// <summary>
+    /// The model for calls the Commander is not waiting on (list.md Phase 54). A separate key
+    /// rather than a range around <see cref="ModelKey"/>, because it selects a call class and
+    /// not a bound — see <see cref="Configuration.LlmSettings.BackgroundModel"/>.
+    /// </summary>
+    public const string BackgroundModelKey = "llm.backgroundModel";
+
+    public const string EffortFloorKey = "llm.effortFloor";
+
+    public const string EffortCeilingKey = "llm.effortCeiling";
+
+    /// <summary>
     /// Whether the model may search the web. An <c>llm.</c> key because the search happens at
     /// the provider rather than from here — see <see cref="Configuration.LlmSettings.WebSearch"/>.
     /// </summary>
@@ -257,7 +268,14 @@ public static class ConversationCapability
                         {
                             Provider = v ?? LlmProviderCatalog.AnthropicId,
                             Endpoint = null,
+
+                            // Both models, and the second one is the quiet half: a background
+                            // model left over from another provider is a request that fails
+                            // where nothing is watching — FlavourTurn logs at Debug and returns
+                            // null, so every ambient line falls back to its authored text with
+                            // nothing on screen (list.md Phase 54).
                             Model = null,
+                            BackgroundModel = null,
                         },
                     },
                 },
@@ -276,8 +294,12 @@ public static class ConversationCapability
                 {
                     Read = s => s.Llm.Endpoint,
                     // Changing the endpoint resets the model list to that endpoint's namespace
-                    // rather than leaving a stale selection (list.md Phase 4).
-                    Write = (s, v) => s with { Llm = s.Llm with { Endpoint = v, Model = null } },
+                    // rather than leaving a stale selection (list.md Phase 4) — both models, for
+                    // the reason the provider row above states.
+                    Write = (s, v) => s with
+                    {
+                        Llm = s.Llm with { Endpoint = v, Model = null, BackgroundModel = null },
+                    },
                 },
             },
             new()
@@ -313,6 +335,98 @@ public static class ConversationCapability
                 {
                     Read = s => s.Llm.Model,
                     Write = (s, v) => s with { Llm = s.Llm with { Model = v } },
+                },
+            },
+            new()
+            {
+                Key = BackgroundModelKey,
+                Label = "Model for the quiet calls",
+                Help =
+                    "Which model writes the things you did not ask for — ambient remarks, the opening "
+                    + "brief, what D47 says after a long gap, a lore lookup, and choosing a voice. None "
+                    + "of them carry the conversation, so a cheaper model here costs nothing in cache "
+                    + "and saves most of what D47 spends when you are not talking to it. Leave it unset "
+                    + "and they use the model above.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(the conversation model)",
+                DocsAnchor = "background-model",
+
+                // The model row's contract, for the model row's reason: an endpoint d47 has
+                // never heard of still has model names (list.md Phase 4).
+                AllowsFreeText = true,
+                ChoiceSource = s =>
+                {
+                    var known = LlmProviderCatalog.Selected(s.Llm.Provider).ModelsFor(s.Llm.Endpoint);
+
+                    return known.Count > 0 ? known : endpointModels?.Invoke() ?? [];
+                },
+                AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+
+                // No voice commands, and not for want of a phrase. A model id cannot be
+                // extracted from a closed one, and free-text extraction is how a router points
+                // d47 at something nobody named.
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Llm.BackgroundModel,
+                    Write = (s, v) => s with { Llm = s.Llm with { BackgroundModel = v } },
+                },
+            },
+            new()
+            {
+                Key = EffortFloorKey,
+                Label = "Think at least this hard",
+                Help =
+                    "The least effort a question gets, however plain it looked. D47 gauges each question "
+                    + "on its own and spends the cheapest setting that answers it; this is where you say "
+                    + "the cheapest setting is not enough.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(gauged per question)",
+                DocsAnchor = "effort-floor",
+
+                // Both, and the pair is load-bearing. An open vocabulary is a source with no
+                // Choices behind it, so a source alone would turn a five-rung ladder into a
+                // search window; the source is what truncates the ladder at the other bound.
+                Choices = ThinkingEffortRange.Names,
+                ChoiceSource = s => s.Llm.EffortCeiling is { } ceiling
+                    ? ThinkingEffortRange.NamesUpTo(ceiling)
+                    : ThinkingEffortRange.Names,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Llm.EffortFloor is { } floor ? ThinkingEffortRange.Name(floor) : null,
+                    Write = (s, v) => s with { Llm = s.Llm with { EffortFloor = ThinkingEffortRange.Parse(v) } },
+                },
+            },
+            new()
+            {
+                Key = EffortCeilingKey,
+                Label = "Never think harder than this",
+                Help =
+                    "The most effort a question gets, however hard it sounded. Thinking is what a turn "
+                    + "mostly costs, so this is the dial that decides what a heavy question is allowed to "
+                    + "spend — and it catches the times D47 reads a passing remark as a request to "
+                    + "deliberate.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(gauged per question)",
+                DocsAnchor = "effort-ceiling",
+                Choices = ThinkingEffortRange.Names,
+                ChoiceSource = s => s.Llm.EffortFloor is { } floor
+                    ? ThinkingEffortRange.NamesFrom(floor)
+                    : ThinkingEffortRange.Names,
+
+                // Said the way a Commander would say it, and each maps to a fixed rung from the
+                // closed ladder rather than to anything extracted from the words. MatchSetting
+                // compares the whole utterance, so neither phrase can be hit in passing.
+                Commands =
+                [
+                    new SettingCommandPhrase(
+                        "stop thinking so hard",
+                        ThinkingEffortRange.Name(ThinkingEffort.Medium)),
+                    new SettingCommandPhrase("think as hard as you like", null),
+                ],
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Llm.EffortCeiling is { } ceiling ? ThinkingEffortRange.Name(ceiling) : null,
+                    Write = (s, v) => s with { Llm = s.Llm with { EffortCeiling = ThinkingEffortRange.Parse(v) } },
                 },
             },
         };
