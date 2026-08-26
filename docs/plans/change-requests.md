@@ -41,60 +41,6 @@ into what happens to be open today.
 
 ## Open
 
-## 44 — Two identical modules give two identical checklist lines
-
-Reported 2026-08-26, after an hour spent believing d47 had missed an experimental effect it had
-not missed.
-
-The Kestrel *Tulimiekka* carries **two** 2D Hull Reinforcement Packages, in `Slot04_Size2` and
-`Slot05_Size2`. Both have a plan item for Deep Plating. One is applied and one is not, and the
-checklist draws them as:
-
-```
-Deep Plating on 2D Hull Reinforcement Package
-  Tulimiekka (Kestrel Mk II) · 2D Hull Reinforcement Package has no experimental effect on it.
-```
-
-— twice, identically, with nothing on either line to say which module it is about. One is done and
-one is open, and the only way to tell them apart is to go and look.
-
-**Nothing here is wrong.** The intents are slot-addressed, the verdicts are correct, and the stored
-text on the item even says `Deep Plating on Slot04_Size2`. What is drawn is the module *type*,
-resolved from the slot at render time by `ChecklistWording.InSlot`.
-
-### It refines a stated ruling rather than reversing one
-
-That method's own comment records why it names the type:
-
-> **The module type, never the mounting point.** Reported as "Utility Mount 8 and Compartment 4
-> don't tell me the module type", and d47 knew all along — the ship plan stores the module beside
-> the blueprint and this method had never been shown it.
-
-That request was right and the change was an improvement: `Slot04_Size2` tells a Commander nothing
-about what belongs there. The cost only appears when a ship carries two of the same module, which
-this one is the first to do — and then the line loses the one fact that distinguishes it.
-
-**So the ask is not to go back to slot ids.** It is that where two lines on the same ship would
-otherwise read identically, the mounting point comes back as a qualifier — the type first, because
-that is what the earlier ruling was about, and the slot after it only where it is doing work.
-
-### The open question — this wants an answer before the code
-
-**Is "would two lines read the same" the condition, or "does the ship carry two of this module"?**
-The first is exact and is what a Commander actually experiences, but it means a line's wording
-depends on what else is in the list — which changes as items are filtered, ordered and completed,
-so the same item could read two ways on two screens. The second is stable and slightly broader: a
-ship with two 2D HRPs qualifies both lines whether or not both are on screen.
-
-Leaning to the second, on the grounds that a line should read the same wherever it appears.
-
-### Where the code is
-
-`ChecklistWording.InSlot` resolves the subject to `ChecklistEvaluator.Describe(module)` and returns
-it. The slot's own readable form is already available on the line below it —
-`EliteSpecifications.Slot(hull, subject)?.Describe()` — and is what the method already falls back
-to when nothing is fitted, so both halves exist and nothing new has to be derived.
-
 ## 39 — The engineer filter should cover the fleet, not the ship you are in
 
 Asked for 2026-08-23, in the Commander's own words:
