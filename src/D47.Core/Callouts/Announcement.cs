@@ -98,6 +98,26 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     public bool SpeakerIsPlayer { get; init; }
 
     /// <summary>
+    /// The in-game chat channel this arrived on, or null for a line that is not chat — every
+    /// callout, the crew, the carrier (list.md Phase 57).
+    /// <para>
+    /// <b><see cref="SpeakerIsPlayer"/> cannot answer what this answers.</b> That boolean says
+    /// whether a person typed it, which is the question Phase 11 needed: it decides how long a
+    /// voice assignment sticks. Phase 57 asks a different one — is this a person the Commander
+    /// <em>chose</em> to be in contact with — and a squadron mate and a stranger shouting in
+    /// local are both players. The channel is what separates them, and
+    /// <see cref="Audio.VoiceGroups.Of"/> is what reads it.
+    /// </para>
+    /// <para>
+    /// Carried rather than parsed back out of <see cref="Key"/>, which does hold it today. That
+    /// key is an identity for cooldown purposes and nothing else promises to keep its shape;
+    /// routing a bill to a provider off a string that exists to suppress repeats is a coupling
+    /// that would break quietly.
+    /// </para>
+    /// </summary>
+    public string? CommsChannel { get; init; }
+
+    /// <summary>
     /// The line to write onto the panel's Technical page, or null for an announcement that is
     /// only ever heard.
     /// <para>

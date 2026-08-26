@@ -323,12 +323,103 @@ public static class EgressDisclosure
     }
 
     /// <summary>
-    /// What the selected voice provider receives. Active whenever one is selected, because that
-    /// is the setting that causes the transfer — every line D47 speaks goes out, so there is no
-    /// weaker state than "a provider is chosen".
+    /// What the voice providers receive — a table since Phase 57, because one sentence can no
+    /// longer be true.
+    /// <para>
+    /// Phase 4 requires stating exactly what leaves for the selected provider, and there is no
+    /// longer a selected provider: there are six slots and up to three services. So the entry
+    /// leads with the one thing a Commander most needs to know — whether anybody else's words are
+    /// leaving, and to whom — and then lists the slots that are actually going somewhere.
+    /// </para>
+    /// <para>
+    /// <b>Free is not the same as private, and the wording must not let it read that way.</b>
+    /// Edge costs nothing and still sends every line to <c>speech.platform.bing.com</c>. That is
+    /// the mistake a Commander would make unaided, and the whole reason the cost half and the
+    /// egress half of Phase 57 are two different sentences.
+    /// </para>
     /// </summary>
-    private static EgressEntry TextToSpeechEntry(D47Settings settings) =>
-        TextToSpeechFor(Audio.TtsProviderCatalog.Selected(settings.Speech.Provider));
+    private static EgressEntry TextToSpeechEntry(D47Settings settings)
+    {
+        var speaking = Audio.VoiceGroups.All
+            .Select(slot => (Slot: slot, Provider: Audio.TtsProviderCatalog.Selected(
+                Audio.VoiceGroups.ProviderFor(settings.Speech, slot.Group))))
+            .Where(pair => pair.Provider.Speaks)
+            .ToList();
+
+        if (speaking.Count == 0)
+        {
+            return EgressEntry.Silent(
+                TextToSpeech,
+                NameOf(TextToSpeech),
+                Audio.TtsProviderCatalog.None.Egress);
+        }
+
+        var others = speaking.Where(pair => pair.Slot.OtherPeoplesWords).ToList();
+
+        var what = new System.Text.StringBuilder();
+
+        // The legible sentence first. Four rows a Commander has to combine is not a disclosure of
+        // the thing they care about, which is whether another player's text is leaving and where
+        // it is going.
+        what.Append(others.Count == 0
+            ? "No other player's words are being sent anywhere: every slot that could carry them "
+              + "is silent. "
+            : $"Another player's words are sent to {Destinations(others.Select(pair => pair.Provider))}"
+              + " to be spoken aloud. ");
+
+        what.Append("Line by line: ");
+        what.AppendJoin(
+            "; ",
+            speaking.Select(pair => $"{pair.Slot.Name} ({pair.Slot.Covers}) → {pair.Provider.Name}"));
+        what.Append(". ");
+
+        // Each service's own disclosure, once, whichever slots reached it. Two slots on ElevenLabs
+        // do not send it two different things.
+        what.AppendJoin(
+            " ",
+            speaking
+                .Select(pair => pair.Provider)
+                .DistinctBy(provider => provider.Id)
+                .Select(provider => provider.Egress));
+
+        return new EgressEntry(
+            TextToSpeech,
+            NameOf(TextToSpeech),
+            Destinations(speaking.Select(pair => pair.Provider)),
+            what.ToString(),
+            Active: true);
+    }
+
+    /// <summary>Where the bytes actually go, each host once, in the order the slots run.</summary>
+    private static string Destinations(IEnumerable<Audio.TtsProviderInfo> providers) =>
+        string.Join(
+            ", ",
+            providers.Select(provider => provider.Destination).Distinct(StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// What choosing one provider for <em>one slot</em> causes to leave (list.md Phase 57).
+    /// <para>
+    /// The slot row's own question, and it is not the one the privacy section asks. A Commander
+    /// on that row is deciding whether a particular set of voices should go to a particular
+    /// service, and the two facts that decide it are what the service does with the text and
+    /// whose text it is.
+    /// </para>
+    /// </summary>
+    public static EgressEntry TextToSpeechForSlot(Audio.VoiceGroupInfo slot, Audio.TtsProviderInfo provider)
+    {
+        var what = $"{slot.Name} — {slot.Covers} — is spoken by {provider.Name}. {provider.Egress}";
+
+        if (slot.OtherPeoplesWords && provider.Billed)
+        {
+            what += " This slot carries text written by other players, so choosing a paid "
+                    + "provider for it means being billed per character for words somebody else "
+                    + "typed, in whatever volume they choose to type them.";
+        }
+
+        return provider.Speaks
+            ? new EgressEntry(TextToSpeech, NameOf(TextToSpeech), provider.Destination, what, Active: true)
+            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), what);
+    }
 
     /// <summary>
     /// What <em>one named</em> voice provider receives, whether or not it is the one selected.

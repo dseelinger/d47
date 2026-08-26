@@ -44,8 +44,26 @@ public sealed class VoicePipeline(
     /// </summary>
     private bool _spoke;
 
-    /// <summary>The provider, or null when no voice is configured. Swapped on a settings change.</summary>
+    /// <summary>
+    /// The provider aboard the ship, or null when no voice is configured. Swapped on a settings
+    /// change, and the one a turn's reply is spoken through — a reply is the ship's AI talking,
+    /// which is <see cref="VoiceGroup.Aboard"/> by construction.
+    /// </summary>
     public ITtsProvider? Tts { get; set; }
+
+    /// <summary>
+    /// The client for one slot, since Phase 57 let each name a different provider. Null, or a
+    /// function answering null, falls back to <see cref="Tts"/> — which is what every surface
+    /// that has not been told about slots gets, and is exactly what d47 did before them.
+    /// <para>
+    /// A lookup rather than a map so the host can answer from whatever it holds, and so this
+    /// stays a seam rather than a copy of the host's wiring kept in step by hand.
+    /// </para>
+    /// </summary>
+    public Func<VoiceGroup, ITtsProvider?>? SpeakerFor { get; set; }
+
+    /// <summary>Which client speaks for a slot. One place, so no caller has to remember the fallback.</summary>
+    private ITtsProvider? Speaker(VoiceGroup group) => SpeakerFor?.Invoke(group) ?? Tts;
 
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
@@ -193,9 +211,10 @@ public sealed class VoicePipeline(
         string group = "announcement",
         Func<AudioClip, AudioClip>? colour = null,
         string? speaker = null,
-        bool captioned = true)
+        bool captioned = true,
+        VoiceGroup slot = VoiceGroup.Aboard)
     {
-        if (Tts is not { } provider)
+        if (Speaker(slot) is not { } provider)
         {
             return;
         }
@@ -300,7 +319,13 @@ public sealed class VoicePipeline(
                 // same property rather than a second list: Transcript is non-null exactly for a
                 // re-voiced in-game message, which is the traffic the request is about
                 // (remediation.md, "NPC speech does not need captioning").
-                captioned: announcement.Transcript is null)
+                captioned: announcement.Transcript is null,
+
+                // Which slot pays for it, and so which provider says it. Resolved here for the
+                // same reason the radio treatment is: this is the one point where a role and a
+                // synthesiser meet, and a callout knows whose line it is and nothing more
+                // (list.md Phase 57).
+                slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel))
             .ConfigureAwait(false);
     }
 

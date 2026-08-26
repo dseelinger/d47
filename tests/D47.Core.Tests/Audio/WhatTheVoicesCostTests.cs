@@ -169,6 +169,66 @@ public class WhatTheVoicesCostTests
         Assert.False(TtsProviderCatalog.Edge.Billed);
         Assert.False(TtsProviderCatalog.None.Billed);
     }
+    /// <summary>
+    /// Which slot is costing money, which is a question nobody could ask before six of them could
+    /// name six providers (list.md Phase 57).
+    /// </summary>
+    [Fact]
+    public void TheCharactersBreakDownBySlot()
+    {
+        var spend = new SpeechSpend();
+
+        spend.Record(Eleven, 1_000, VoiceGroup.Aboard);
+        spend.Record(Edge, 4_000, VoiceGroup.AnyoneInRange);
+        spend.Record(Edge, 250, VoiceGroup.Npcs);
+
+        var slots = spend.BySlot;
+
+        Assert.Equal(3, slots.Count);
+        Assert.Equal(VoiceGroup.AnyoneInRange, slots[0].Group);
+        Assert.Equal(4_000, slots[0].Characters);
+    }
+
+    /// <summary>
+    /// The two views sum the same rows rather than keeping two tallies, so they cannot drift. Two
+    /// counters for one fact are two counters that eventually disagree about a bill.
+    /// </summary>
+    [Fact]
+    public void AndTheProviderTotalStillAgreesWithItself()
+    {
+        var spend = new SpeechSpend();
+
+        spend.Record(Edge, 4_000, VoiceGroup.AnyoneInRange);
+        spend.Record(Edge, 250, VoiceGroup.Npcs);
+        spend.Record(Edge, 100, VoiceGroup.Carrier);
+
+        var edge = Assert.Single(spend.Charges);
+
+        Assert.Equal(4_350, edge.Characters);
+        Assert.Equal(3, edge.Utterances);
+        Assert.Equal(spend.BySlot.Sum(charge => charge.Characters), edge.Characters);
+    }
+
+    [Fact]
+    public void OneSlotOnAPaidProviderIsPricedAndTheFreeOnesAreNamedAsFree()
+    {
+        var spend = new SpeechSpend();
+
+        spend.Record(Eleven, 1_000, VoiceGroup.Aboard);
+        spend.Record(Edge, 20_000, VoiceGroup.AnyoneInRange);
+
+        var said = spend.DescribeSlots(On(Eleven));
+
+        Assert.NotNull(said);
+        Assert.Contains("Anyone in range", said, StringComparison.Ordinal);
+        Assert.Contains("Edge Neural is free", said, StringComparison.Ordinal);
+        Assert.Contains("Aboard", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NothingSpokenSaysNothingPerSlotEither() =>
+        Assert.Null(new SpeechSpend().DescribeSlots(On(Eleven)));
+
 }
 
 /// <summary>

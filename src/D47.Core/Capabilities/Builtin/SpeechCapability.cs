@@ -45,13 +45,23 @@ public static class SpeechCapability
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
     /// <summary>
+    /// The row key for one slot's provider (list.md Phase 57). Beneath
+    /// <see cref="ProviderKey"/> rather than beside it, because that row <em>is</em>
+    /// <see cref="VoiceGroup.Aboard"/>'s and these are the other five.
+    /// </summary>
+    public static string SlotProviderKey(VoiceGroupInfo slot) => $"speech.provider.{slot.Id}";
+
+    /// <summary>What has been spoken this session, broken down by slot (list.md Phase 57).</summary>
+    public const string SpentBySlotKey = "speech.spentBySlot";
+
+    /// <summary>
     /// The sentence the three voice rows show when their picker has nothing in it. One
     /// expression shared by all three, because a Commander opening the carrier tower's picker
     /// deserves the same explanation as one opening the ship AI's — and because three copies of
     /// this is three places for it to stop agreeing with the provider.
     /// </summary>
-    private static Func<D47Settings, string?> WhyNoVoices(SpeechSurface surface) => _ =>
-        surface.WhyNoVoices?.Invoke();
+    private static Func<D47Settings, string?> WhyNoVoices(SpeechSurface surface, VoiceGroup group) => _ =>
+        surface.WhyNoVoices?.Invoke(group);
 
     /// <summary>
     /// The audition the three voice rows offer, or null where nothing composed one — under the
@@ -67,8 +77,12 @@ public static class SpeechCapability
         surface.Audition is not { } play ? null : new SettingAudition
         {
             Play = (voiceId, token) => play(voiceId, role, token),
-            Cost = AuditionCost,
-            Unavailable = AuditionUnavailable(surface),
+
+            // Priced and gated against the provider speaking for *this* row's slot, not the
+            // ship's. A tower on free Edge beside a companion on a paid provider must not be
+            // announced as costing a fraction of a cent a press (list.md Phase 57).
+            Cost = AuditionCost(VoiceGroups.Of(role)),
+            Unavailable = AuditionUnavailable(surface, VoiceGroups.Of(role)),
         };
 
     /// <summary>
@@ -86,9 +100,9 @@ public static class SpeechCapability
     /// for the same reason the spend line does not print "$0.00" for Edge (list.md Phase 19).
     /// </para>
     /// </summary>
-    private static string AuditionCost(D47Settings settings)
+    private static Func<D47Settings, string> AuditionCost(VoiceGroup group) => settings =>
     {
-        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
 
         if (!provider.Billed)
         {
@@ -102,22 +116,23 @@ public static class SpeechCapability
         return SpeechSpend.RateFor(settings, provider.Id) is { } rate
             ? $"Play a voice to hear it. Each one costs about {(rate * AuditionLine.TypicalCharacters / 1000m):C3}."
             : "Play a voice to hear it. This provider charges for each one.";
-    }
+    };
 
     /// <summary>
     /// Why the button cannot be pressed. Two reasons, and both are things the Commander can act
     /// on from rows they can see — which is the difference between a shut button and a broken one.
     /// </summary>
-    private static Func<D47Settings, string?> AuditionUnavailable(SpeechSurface surface) => settings =>
+    private static Func<D47Settings, string?> AuditionUnavailable(SpeechSurface surface, VoiceGroup group) =>
+        settings =>
     {
-        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
 
         if (!provider.Speaks)
         {
             return "No voice provider is selected, so there is nothing to hear it with.";
         }
 
-        return provider.NeedsKey && surface.HasKey?.Invoke() == false
+        return provider.NeedsKey && surface.HasKey?.Invoke(group) == false
             ? $"{provider.Name} needs an API key before it will speak."
             : null;
     };
@@ -142,8 +157,13 @@ public static class SpeechCapability
         /// <summary>Stops everything audible, immediately. The whole point of the capability.</summary>
         public required Action Silence { get; init; }
 
-        /// <summary>Voices the selected provider offers, or empty when it cannot say.</summary>
-        public Func<IReadOnlyList<string>>? Voices { get; init; }
+        /// <summary>
+        /// Voices the provider speaking for one slot offers, or empty when it cannot say. Takes
+        /// the slot because since Phase 57 the ship's AI and the carrier's tower can be on two
+        /// different providers, and offering one provider's ids in the other's picker is offering
+        /// a list of values that will be refused.
+        /// </summary>
+        public Func<VoiceGroup, IReadOnlyList<string>>? Voices { get; init; }
 
         /// <summary>
         /// Why <see cref="Voices"/> came back empty, in a sentence, or null when it did not or
@@ -155,7 +175,7 @@ public static class SpeechCapability
         /// two of them are the Commander's to fix (list.md Phase 19).
         /// </para>
         /// </summary>
-        public Func<string?>? WhyNoVoices { get; init; }
+        public Func<VoiceGroup, string?>? WhyNoVoices { get; init; }
 
         /// <summary>
         /// What speech has cost this session (list.md Phase 19). A function because the tracker
@@ -181,7 +201,7 @@ public static class SpeechCapability
         /// none. The secret store is the app's and settings do not hold keys, so this is the only
         /// way a row can tell "no key yet" from "ready".
         /// </summary>
-        public Func<bool>? HasKey { get; init; }
+        public Func<VoiceGroup, bool>? HasKey { get; init; }
 
         /// <summary>
         /// Tries a provider's stored key against the real service (list.md Phase 16). Takes the
@@ -198,7 +218,7 @@ public static class SpeechCapability
 
         public Func<string, string>? DeviceLabel { get; init; }
 
-        public Func<string, string>? VoiceLabel { get; init; }
+        public Func<VoiceGroup, string, string>? VoiceLabel { get; init; }
 
         /// <summary>
         /// Bed names — shipped and dropped in. Read from the cue library, never a literal list.
@@ -309,9 +329,9 @@ public static class SpeechCapability
                     : "(the voice d47 picks for this core)",
                 DefaultDisplay = "(the voice d47 picks for this core)",
                 AllowsFreeText = true,
-                ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
-                ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
-                WhyNoChoices = WhyNoVoices(surface),
+                ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Aboard) ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
                 Audition = AuditionOf(surface, VoiceRole.ShipAi),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
@@ -410,15 +430,31 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = SpentBySlotKey,
+                Label = "Spoken by each voice",
+                Help =
+                    "The same characters, split by who was speaking. Which slot is costing money "
+                    + "is a question worth being able to ask, and until each of them could name "
+                    + "its own provider there was only ever one answer.",
+                Kind = SettingKind.Info,
+                Group = "What it costs",
+                DocsAnchor = "voice-cost",
+                Binding = new SettingBinding
+                {
+                    Read = s => surface.SpeechSpend?.Invoke()?.DescribeSlots(s) ?? "Nothing spoken yet.",
+                },
+            },
+            new SettingRow
+            {
                 Key = CarrierCaptainVoiceKey,
                 Label = "Carrier captain voice",
                 Help = "Who answers for your fleet carrier. Empty uses the ship AI's voice.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the ship AI's voice)",
                 AllowsFreeText = true,
-                ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
-                ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
-                WhyNoChoices = WhyNoVoices(surface),
+                ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
                 Audition = AuditionOf(surface, VoiceRole.CarrierCaptain),
 
                 // Only on offer to a Commander who has one. A row for a carrier you do not own
@@ -443,9 +479,9 @@ public static class SpeechCapability
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the ship AI's voice)",
                 AllowsFreeText = true,
-                ChoiceSource = _ => surface.Voices?.Invoke() ?? [],
-                ChoiceLabel = id => surface.VoiceLabel?.Invoke(id) ?? id,
-                WhyNoChoices = WhyNoVoices(surface),
+                ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
                 Audition = AuditionOf(surface, VoiceRole.TowerControl),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
@@ -696,6 +732,50 @@ public static class SpeechCapability
             },
         };
 
+        // One row per slot that is not the ship's, offering the same providers the row above
+        // does. Placed between the ship's own voice and what it costs, because that is the order
+        // the decision is actually made in: pick the companion's voice, say where everybody else
+        // comes from, then look at the bill (list.md Phase 57).
+        rows.InsertRange(
+            rows.FindIndex(row => row.Key == CharacterPriceKey),
+            from slot in VoiceGroups.All
+            where slot.Group != VoiceGroup.Aboard
+            select new SettingRow
+            {
+                Key = SlotProviderKey(slot),
+                Label = $"{slot.Name} — provider",
+                Help = SlotHelp(slot),
+                Kind = SettingKind.Choice,
+                Choices = [.. TtsProviderCatalog.All.Select(provider => provider.Id)],
+                ChoiceLabel = id => TtsProviderCatalog.Selected(id).Label,
+
+                // What an unwritten entry means, said in the row rather than left to be inferred
+                // from a blank: absent follows the ship's provider, which is what a settings file
+                // from before this phase does and what it sounded like.
+                DefaultDisplay = "(the same as your ship's)",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Where each voice comes from",
+                GroupHelp =
+                    "Every voice that reaches you over a radio can come from somewhere different "
+                    + "from the one in your cockpit. Anything carrying another Commander's words "
+                    + "defaults to Edge, which is free — so nobody else can spend your money by "
+                    + "typing.",
+                DocsAnchor = "voice-slots",
+                EgressId = EgressDisclosure.TextToSpeech,
+
+                // This slot's own consequence, not whichever provider happens to be selected for
+                // the ship. The key row learned this lesson first: a disclosure resolved against
+                // the wrong subject is worse than none, because it is believed.
+                EgressFor = s => EgressDisclosure.TextToSpeechForSlot(
+                    slot,
+                    TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(s.Speech, slot.Group))),
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GroupProviders?.GetValueOrDefault(slot.Id),
+                    Write = (s, v) => WriteSlotProvider(s, slot, v),
+                },
+            });
+
         // One key row per provider that needs one, rather than a single row whose secret name
         // shifts underneath it. Each declares when it applies, so only the selected provider's
         // key is on screen — the same shape the language-model capability uses.
@@ -734,6 +814,47 @@ public static class SpeechCapability
             });
 
         return rows;
+    }
+
+    /// <summary>
+    /// What one slot's row says it is for, with the warning where the warning belongs.
+    /// <para>
+    /// <b>On the change rather than on the state.</b> A slot sitting on a paid provider is not a
+    /// standing alarm to be lived with; choosing one for a slot that carries other people's words
+    /// is a decision, and the sentence belongs at the moment it is made. The disclosure on the
+    /// row carries the rest.
+    /// </para>
+    /// </summary>
+    private static string SlotHelp(VoiceGroupInfo slot) =>
+        slot.OtherPeoplesWords
+            ? $"Who speaks for {slot.Covers}. A paid provider here bills you per character for "
+              + "text somebody else wrote, and they can write as much of it as they like."
+            : $"Who speaks for {slot.Covers}.";
+
+    /// <summary>
+    /// Writes one slot's provider, and clearing the row puts that slot back onto the ship's.
+    /// <para>
+    /// The map is created on the first write if it was never written, which is the same act as
+    /// the migration: a file that reaches here has a Commander choosing per slot, so "before this
+    /// phase" has stopped being true of it.
+    /// </para>
+    /// </summary>
+    private static D47Settings WriteSlotProvider(D47Settings settings, VoiceGroupInfo slot, string? value)
+    {
+        var providers = new Dictionary<string, string>(
+            settings.Speech.GroupProviders ?? new Dictionary<string, string>(),
+            StringComparer.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            providers.Remove(slot.Id);
+        }
+        else
+        {
+            providers[slot.Id] = TtsProviderCatalog.Selected(value).Id;
+        }
+
+        return settings with { Speech = settings.Speech with { GroupProviders = providers } };
     }
 
     /// <summary>
@@ -830,9 +951,24 @@ public static class SpeechCapability
     /// through here by the row and by the app, so the two cannot disagree about which value is
     /// actually being spoken at.
     /// </summary>
-    public static double RateFor(D47Settings settings)
+    public static double RateFor(D47Settings settings) => RateFor(settings, settings.Speech.Provider);
+
+    /// <summary>
+    /// The same question asked of a named provider rather than of the selected one, which is what
+    /// six slots made necessary (list.md Phase 57).
+    /// <para>
+    /// <b>A rate is a property of the synthesiser, so it follows the slot's provider.</b> The
+    /// ranges are not comparable — Edge takes a wide percentage offset and ElevenLabs a narrow
+    /// multiplier it <em>rejects outright</em> rather than clamping — so a 1.5 chosen for Edge,
+    /// applied to a carrier that has since moved to ElevenLabs, is not a fast carrier: it is a
+    /// silent one. This is not the per-role rate that change-requests.md 43 asks for and Phase 57
+    /// deliberately left out; it is the existing per-provider row, read for the provider actually
+    /// doing the speaking.
+    /// </para>
+    /// </summary>
+    public static double RateFor(D47Settings settings, string? providerId)
     {
-        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var provider = TtsProviderCatalog.Selected(providerId);
 
         var rate = settings.Speech.ProviderRates.TryGetValue(provider.Id, out var own)
             ? own

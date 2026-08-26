@@ -21,13 +21,28 @@ public class VoicesAreRememberedPerProviderTests
     private const string Edge = TtsProviderCatalog.EdgeId;
     private const string Eleven = TtsProviderCatalog.ElevenLabsId;
 
-    /// <summary>Settings with a full set of Edge choices, recorded as Edge's.</summary>
+    /// <summary>
+    /// Settings with a full set of Edge choices, recorded as Edge's.
+    /// <para>
+    /// <b>Every slot follows the ship's provider</b>, which is what an empty
+    /// <see cref="SpeechSettings.GroupProviders"/> means since Phase 57 — a Commander who has put
+    /// them all back onto one. That is the configuration this file's behaviour is about: the
+    /// carrier moving with the companion is only true while the carrier is following it, and
+    /// <c>VoicesFollowTheirOwnSlotTests</c> covers the case where it is not.
+    /// </para>
+    /// <para>
+    /// Written rather than absent, because absent means "before Phase 57" and reconciling such a
+    /// file migrates it — which is a change, and this file is about the ones that are not.
+    /// </para>
+    /// </summary>
     private static D47Settings OnEdge() => new()
     {
         Speech = new SpeechSettings
         {
             Provider = Edge,
             VoicesProvider = Edge,
+            CarrierVoicesProvider = Edge,
+            GroupProviders = new Dictionary<string, string>(),
             Voice = "en-US-RogerNeural",
             CarrierCaptainVoice = "en-GB-RyanNeural",
             TowerVoice = "en-AU-NatashaNeural",
@@ -144,7 +159,13 @@ public class VoicesAreRememberedPerProviderTests
     {
         var fresh = new D47Settings
         {
-            Speech = new SpeechSettings { Provider = Edge, VoicesProvider = Edge },
+            Speech = new SpeechSettings
+            {
+                Provider = Edge,
+                VoicesProvider = Edge,
+                CarrierVoicesProvider = Edge,
+                GroupProviders = new Dictionary<string, string>(),
+            },
         };
 
         // An entry that restores nothing is a row in a file the Commander reads.
@@ -161,7 +182,12 @@ public class VoicesAreRememberedPerProviderTests
     {
         var unrecorded = OnEdge() with
         {
-            Speech = OnEdge().Speech with { VoicesProvider = null, Provider = Eleven },
+            Speech = OnEdge().Speech with
+            {
+                VoicesProvider = null,
+                CarrierVoicesProvider = null,
+                Provider = Eleven,
+            },
         };
 
         var after = VoiceMemory.Reconciled(unrecorded);

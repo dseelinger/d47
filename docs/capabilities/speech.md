@@ -278,6 +278,48 @@ ElevenLabs accepts `0.7` to `1.2` and rejects anything outside that outright —
 arrives as silence, so a wider value is clamped to the nearest one it will take rather than
 being sent and failing.
 
+#### Where each voice comes from {#voice-slots}
+
+The provider row above is your **ship's** voice. Everything that reaches you over a radio can come
+from somewhere else, and each of these rows says where:
+
+| Slot | Who is in it | Where it starts |
+|---|---|---|
+| Aboard | Your ship's AI and your crew | The [voice provider](#provider) row above |
+| Carrier | Your fleet carrier's captain and its tower | Edge Neural |
+| NPCs | Stations, police, and every other ship the game speaks for | Edge Neural |
+| People you know | Your friends, your wing and your squadron | Edge Neural |
+| Direct messages | A Commander messaging you directly | Edge Neural |
+| Anyone in range | Local and system chat — anybody at all | Edge Neural |
+
+Leaving a row empty puts that slot back on your ship's provider. Nothing has to be set: a fresh
+install has the two voices in your cockpit on whatever you chose, and everybody else on Edge.
+
+**Why everyone else starts on Edge.** Three of those slots carry text *other players typed*. A
+paid provider bills by the character, and somebody spamming local chat would be spending your
+money by typing — so the free provider is the default for anything arriving over a radio, and
+choosing a paid one for those slots is a decision you make rather than one you discover. The row
+says so when you make it.
+
+**Free is not the same as private.** Edge Neural costs nothing and still sends every line to
+`speech.platform.bing.com`. Putting local chat on Edge means nobody can run up a bill with it; it
+does not mean those messages stay on your machine. Nothing here does that yet — see
+[what the providers receive](#egress) for what is actually leaving right now.
+
+**Your carrier moved to Edge too, and that is on purpose.** Its captain and its tower are
+Directive 47's own inventions rather than anybody else's text, and they cost almost nothing to
+run — but they still reach you over a radio, which is the line being drawn. Put them back on your
+ship's provider whenever you like; the voices you cast for them are remembered per provider, so
+moving them and moving them back costs you nothing.
+
+**A voice belongs to the provider that issued it.** Each slot's voice picker offers the voices of
+*its own* provider, and the ones you have chosen are filed under the provider they came from —
+so a carrier left on Edge keeps its captain while your companion moves to ElevenLabs and back.
+
+**If your settings file predates this**, every slot follows your ship's provider exactly as it
+used to, until Directive 47 moves the five over-the-air ones to Edge — once, the first time it
+runs with a provider that speaks. Nothing moves if you have chosen `none`.
+
 #### What the voices cost {#voice-cost}
 
 Speech is billed **by the character** where it is billed at all. ElevenLabs charges per
@@ -311,6 +353,16 @@ numerals are spelled out before they are sent, so "88 of 100" leaves as
 The same line appears beside the model's price on the panel's status row after each turn, and in
 the answer to *"what has this session cost"*, so the question has one answer rather than one per
 subsystem.
+
+**Spoken by each voice** splits the same characters by the slot that spoke them, which is a
+question worth being able to ask once each of them can be on a different provider:
+
+```text
+Anyone in range 18,240 through Edge Neural (Edge Neural is free); Aboard 3,102 through ElevenLabs ($0.1551)
+```
+
+The two lines sum the same charges, so the per-provider total and the per-slot breakdown cannot
+drift apart.
 
 #### Other voices {#carrier-voices}
 
@@ -412,9 +464,27 @@ When the attempts run out, it tells you:
 I couldn't reach the model after 3 tries. Overloaded.
 ```
 
-#### What the voice provider receives {#egress}
+#### What the voice providers receive {#egress}
 
-This row states the disclosure for whichever provider you have selected, not a fixed one:
+This row is a table rather than a sentence, because there is no longer one provider to write a
+sentence about. It leads with the thing worth knowing first — whether anybody else's words are
+leaving, and to whom — and then says which slot is going where:
+
+```text
+Another player's words are sent to speech.platform.bing.com to be spoken aloud. Line by
+line: Aboard (your ship's AI and your crew) → ElevenLabs; Carrier (your fleet carrier's
+captain and its tower) → Edge Neural; NPCs (stations, police, and every other ship the
+game speaks for) → Edge Neural; People you know (your friends, your wing and your
+squadron) → Edge Neural; Direct messages (a Commander messaging you directly) → Edge
+Neural; Anyone in range (local and system chat — anybody at all, whether you know them
+or not) → Edge Neural.
+```
+
+Each service's own disclosure follows, once, whichever slots reached it. And each slot's own row
+states what *that* choice sends, so the decision is disclosed where it is made rather than only
+in aggregate afterwards — see [where each voice comes from](#voice-slots).
+
+The per-provider disclosures are these:
 
 ```text
 The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to be
@@ -434,6 +504,11 @@ Spoken replies are also listed under **Privacy** alongside every other destinati
 was added in Phase 11 and should have existed from Phase 5: until then the disclosure had no
 text-to-speech row at all, so every word Directive 47 said went to Microsoft without appearing
 anywhere in the list of what leaves this machine.
+
+**One thing this cannot yet say.** Putting the untrusted slots on Edge means nobody can spend
+your money by typing in local chat — but Edge is free, not local, so those words still leave the
+machine. "No other player's words leave this machine at all" needs a voice that runs *on* the
+machine, and there is not one yet.
 
 ### If the voice stops working
 

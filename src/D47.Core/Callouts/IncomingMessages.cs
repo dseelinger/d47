@@ -65,9 +65,14 @@ public sealed partial class IncomingMessages : ICallout
     /// Channels carrying messages a person typed. <c>starsystem</c> is included because system
     /// chat is players; <c>npc</c> is the only channel that is not, which is why it is the one
     /// with its own switch.
+    /// <para>
+    /// The list itself lives in <see cref="VoiceGroups"/> as of Phase 57, which sorts the same
+    /// channels into the slots that pay for them. Two copies of it would be two things to keep
+    /// agreeing about <c>starsystem</c> — and a channel spoken by one and gated by the other is
+    /// exactly the disagreement that would not report itself.
+    /// </para>
     /// </summary>
-    private static readonly HashSet<string> PlayerChannels =
-        new(StringComparer.OrdinalIgnoreCase) { "player", "wing", "local", "friend", "squadron", "starsystem" };
+    private static bool IsAPlayerChannel(string channel) => VoiceGroups.IsAPerson(channel);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -110,7 +115,7 @@ public sealed partial class IncomingMessages : ICallout
     public Announcement? Read(JournalEvent journalEvent)
     {
         var channel = journalEvent.String("Channel") ?? "npc";
-        var isPlayer = PlayerChannels.Contains(channel);
+        var isPlayer = IsAPlayerChannel(channel);
 
         if (!isPlayer && !IncludeNpcs())
         {
@@ -155,6 +160,10 @@ public sealed partial class IncomingMessages : ICallout
             Voice = IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,
             Speaker = sender,
             SpeakerIsPlayer = isPlayer,
+
+            // Which slot pays for this line, and it is not derivable from the boolean above:
+            // a squadron mate and a stranger in local are both players (list.md Phase 57).
+            CommsChannel = channel,
 
             // Written down with the sender on it, whoever they are. The page has no voices to
             // tell two senders apart with, and a wall of unattributed lines is worse than the

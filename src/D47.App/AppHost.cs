@@ -1369,12 +1369,17 @@ public sealed class AppHost : IDisposable
 
                     // Late-bound like the headset surface below, and for the same reason: the
                     // list is fetched from the provider over the network after this point.
-                    Voices = () => self?.VoiceIds() ?? [],
-                    VoiceLabel = id => self?.VoiceLabelFor(id) ?? id,
-                    WhyNoVoices = () => self?.WhyNoVoices(),
+                    Voices = group => self?.VoiceIds(group) ?? [],
+                    VoiceLabel = (group, id) => self?.VoiceLabelFor(group, id) ?? id,
+                    WhyNoVoices = group => self?.WhyNoVoices(group),
                     SpeechSpend = () => self?.SpeechSpend,
-                    HasKey = () => self is not { } host
-                                   || host.HasKeyFor(TtsProviderCatalog.Selected(settings.Current.Speech.Provider)),
+
+                    // Asked of the slot's own provider, not the ship's. A carrier left on free
+                    // Edge must not have its audition greyed out because ElevenLabs — which is
+                    // speaking for the companion and for nobody else — has no key yet.
+                    HasKey = group => self is not { } host
+                                      || host.HasKeyFor(TtsProviderCatalog.Selected(
+                                          VoiceGroups.ProviderFor(settings.Current.Speech, group))),
                     Audition = (voiceId, role, token) => self is { } host
                         ? host.AuditionVoiceAsync(voiceId, role, token)
                         : Task.CompletedTask,
@@ -2520,8 +2525,9 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>The ids the voice picker offers.</summary>
-    internal IReadOnlyList<string> VoiceIds() => [.. _voices.Voices.Select(voice => voice.Id)];
+    /// <summary>The ids the voice picker offers for one slot.</summary>
+    internal IReadOnlyList<string> VoiceIds(VoiceGroup group = VoiceGroup.Aboard) =>
+        [.. VoicesFor(group).Voices.Select(voice => voice.Id)];
 
     /// <summary>
     /// How the picker labels one — "Ava — Female, en-US" rather than the raw id.
@@ -2533,7 +2539,7 @@ public sealed class AppHost : IDisposable
     /// (remediation.md 10, item 9).
     /// </summary>
     internal string? VoiceNameFor(string id) =>
-        _voices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+        AboardVoices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Name;
 
     /// <summary>
@@ -2541,8 +2547,13 @@ public sealed class AppHost : IDisposable
     /// the picker all read this. The rule itself is <see cref="VoiceCatalogue.LabelFor"/>; this
     /// supplies the two things it needs that only the host knows.
     /// </summary>
-    internal string VoiceLabelFor(string id) =>
-        _voices.LabelFor(id, TtsProviderCatalog.Selected(Settings.Current.Speech.Provider));
+    internal string VoiceLabelFor(string id) => VoiceLabelFor(VoiceGroup.Aboard, id);
+
+    /// <inheritdoc cref="VoiceLabelFor(string)"/>
+    internal string VoiceLabelFor(VoiceGroup group, string id) =>
+        VoicesFor(group).LabelFor(
+            id,
+            TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, group)));
 
     /// <summary>
     /// Why the voice picker has nothing in it, when it has nothing in it (list.md Phase 19;
@@ -2557,11 +2568,11 @@ public sealed class AppHost : IDisposable
     /// is not on screen is a sentence nobody reads.
     /// </para>
     /// </summary>
-    internal string? WhyNoVoices()
+    internal string? WhyNoVoices(VoiceGroup group = VoiceGroup.Aboard)
     {
-        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider);
+        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, group));
 
-        return provider.Speaks ? _voices.WhyEmpty(provider.Name) : null;
+        return provider.Speaks ? VoicesOf(provider.Id).WhyEmpty(provider.Name) : null;
     }
 
     /// <summary>
@@ -2592,7 +2603,7 @@ public sealed class AppHost : IDisposable
     {
         var persona = Personas.Current;
 
-        if (_voices.Count == 0 || Settings.Current.Persona.Voices.ContainsKey(persona.Id))
+        if (AboardVoices.Count == 0 || Settings.Current.Persona.Voices.ContainsKey(persona.Id))
         {
             return;
         }
@@ -2601,7 +2612,7 @@ public sealed class AppHost : IDisposable
         {
             var voice = await VoicePairing.ChooseOneAsync(
                 persona,
-                _voices.Voices,
+                AboardVoices.Voices,
                 Settings.Current.Persona.Voices.Values,
                 Turns.Provider,
                 Turns.Model,
@@ -2653,7 +2664,7 @@ public sealed class AppHost : IDisposable
 
         var repair = await WithReplacementsAsync(
             before,
-            VoicePairing.WithoutMiscastVoices(before, _voices.Voices, _logger)).ConfigureAwait(false);
+            VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -2678,7 +2689,7 @@ public sealed class AppHost : IDisposable
         VoicePairing.WithReplacementsAsync(
             before,
             after,
-            _voices.Voices,
+            AboardVoices.Voices,
             Turns.Provider,
             Turns.Model,
             Spend,
@@ -2706,7 +2717,7 @@ public sealed class AppHost : IDisposable
 
         var repair = await WithReplacementsAsync(
             before,
-            VoicePairing.WithNamedDefaultsRestored(before, _voices.Voices, provider, _logger)).ConfigureAwait(false);
+            VoicePairing.WithNamedDefaultsRestored(before, AboardVoices.Voices, provider, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -2723,13 +2734,13 @@ public sealed class AppHost : IDisposable
 
     private async Task PairPersonaVoicesAsync()
     {
-        if (_voices.Count > 0)
+        if (AboardVoices.Count > 0)
         {
             await RepairMiscastVoicesAsync().ConfigureAwait(false);
             await RestoreNamedVoicesAsync().ConfigureAwait(false);
         }
 
-        if (Settings.Current.Persona.VoicesPaired || _voices.Count == 0)
+        if (Settings.Current.Persona.VoicesPaired || AboardVoices.Count == 0)
         {
             // The pass has run, but it may have run in a session with no model configured and
             // left the core aboard with nothing. Asking now costs nothing when it already has
@@ -2742,7 +2753,7 @@ public sealed class AppHost : IDisposable
         try
         {
             var paired = await VoicePairing.ChooseAsync(
-                _voices.Voices,
+                AboardVoices.Voices,
                 Settings.Current.Persona.Voices,
                 Turns.Provider,
                 Turns.Model,
@@ -2827,35 +2838,67 @@ public sealed class AppHost : IDisposable
         ApplySpeechSettings();
     }
 
+    /// <summary>
+    /// One provider's client, or null for a provider that does not speak. The only place a
+    /// concrete synthesiser is named, which is what keeps the seam a seam (architecture.md §2).
+    /// </summary>
+    private ITtsProvider? BuildSpeechClient(string providerId) => providerId switch
+    {
+        SpeechCapability.EdgeId =>
+            new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>()),
+
+        SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
+            () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
+            _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
+
+        _ => null,
+    };
+
     private async Task LoadVoicesAsync(ITtsProvider provider)
     {
         try
         {
-            _voices = await provider.ListVoicesAsync().ConfigureAwait(false);
-            _logger.LogInformation(
-                "The voice list has {Count} voices ({Listing})", _voices.Count, _voices.Listing);
+            var listed = await provider.ListVoicesAsync().ConfigureAwait(false);
+            _voicesByProvider[provider.Id] = listed;
 
-            // The pool a re-voiced sender is drawn from. Which voices those are is decided in
-            // Core, where the distinction between a locale and an accent label can be asserted —
-            // this used to read ElevenLabs' accent as a locale and discard 472 of a 473-voice
-            // account, leaving every NPC in a system sharing one voice.
-            Cast.Pool = VoicePool.From(_voices.Voices);
+            _logger.LogInformation(
+                "{Provider}'s voice list has {Count} voices ({Listing})",
+                provider.Id,
+                listed.Count,
+                listed.Listing);
+
+            // The pool a re-voiced sender is drawn from, on this provider's cast. Which voices
+            // those are is decided in Core, where the distinction between a locale and an accent
+            // label can be asserted — this used to read ElevenLabs' accent as a locale and
+            // discard 472 of a 473-voice account, leaving every NPC in a system sharing one voice.
+            var cast = Casting.Of(provider.Id);
+            cast.Pool = VoicePool.From(listed.Voices);
 
             // And which of them are a woman's, so a sender whose name reads as one is given one.
-            Cast.Feminine = VoicePool.Feminine(_voices.Voices);
+            cast.Feminine = VoicePool.Feminine(listed.Voices);
 
             // Both numbers, because one of them alone is what hid that: "1 voice available" is
             // alarming beside "473 offered" and unremarkable on its own.
             _logger.LogInformation(
                 "{Count} of {Offered} voices are available for re-voiced senders, {Feminine} of them women's",
-                Cast.Pool.Count,
-                _voices.Count,
-                Cast.Feminine.Count);
+                cast.Pool.Count,
+                listed.Count,
+                cast.Feminine.Count);
 
             // Pairing a voice to each core needs the list, so it starts once the list arrives
             // rather than at startup. Background and best-effort: picking a character must never
             // wait on it (list.md Phase 11, #33).
-            _ = PairPersonaVoicesAsync();
+            //
+            // Only for the ship's own provider. A pairing is the companion's voice, and pairing
+            // eleven cores against the list belonging to whoever speaks for local chat would
+            // write ids the companion's provider has never heard of.
+            if (string.Equals(
+                    provider.Id,
+                    VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                _ = PairPersonaVoicesAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -3307,54 +3350,67 @@ public sealed class AppHost : IDisposable
     private void ApplySpeechSettings()
     {
         var speech = ReconcileVoicesWithProvider();
-        var provider = TtsProviderCatalog.Selected(speech.Provider);
 
-        // Whether to rebuild and whether to refetch are decided in Core, where a test can reach
-        // them; what to build and how to fetch it stay here, where the loggers and the secret
-        // store are. Both of the faults an afternoon's hand-testing found lived on the far side
-        // of that line (list.md Phase 19).
-        var plan = SpeechWiring.Plan(_speechWiring, speech.Provider, HasKeyFor(provider));
+        // What to build, what to release, which slots moved and whose list to ask for again are
+        // decided in Core, where a test can reach them; what to build and how to fetch it stay
+        // here, where the loggers and the secret store are. Both of the faults an afternoon's
+        // hand-testing found lived on the far side of that line (list.md Phase 19), and Phase 57
+        // widened the answer from one bool to six slots without moving the line.
+        var plan = SpeechWiring.Plan(
+            _speechWiring,
+            VoiceGroups.Selected(speech),
+            id => HasKeyFor(TtsProviderCatalog.Selected(id)));
+
         _speechWiring = plan.Next;
 
-        if (plan.RebuildClient)
+        // Released first, so a slot moving from ElevenLabs to Edge and another moving the other
+        // way do not hold two of each at once.
+        foreach (var released in plan.Dispose)
         {
-            // Through the interface, so this stays correct for a provider that needs no
-            // disposal. ITtsProvider deliberately does not require IDisposable: it is a text-to-
-            // audio seam, and whether an implementation holds an HTTP handle is its own business.
-            (_tts as IDisposable)?.Dispose();
-            _voices = VoiceCatalogue.Silent;
-            Cast.Reset();
-
-            _tts = provider.Id switch
+            if (_clients.Remove(released, out var client))
             {
-                SpeechCapability.EdgeId =>
-                    new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>()),
-
-                SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
-                    () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
-                    _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
-
-                _ => null,
-            };
-
-            // Counted at the seam, which is the only place every caller passes — the ship's AI,
-            // a callout, a re-voiced sender and a core's own introduction all converge on it,
-            // and counting at any caller means missing the next one (list.md Phase 19).
-            if (_tts is not null)
-            {
-                _tts = new MeteredTtsProvider(_tts, SpeechSpend);
+                // Through the interface, so this stays correct for a provider that needs no
+                // disposal. ITtsProvider deliberately does not require IDisposable: it is a
+                // text-to-audio seam, and whether an implementation holds an HTTP handle is its
+                // own business.
+                (client as IDisposable)?.Dispose();
             }
+
+            _voicesByProvider.Remove(released);
+            Casting.Forget(released);
+        }
+
+        foreach (var wanted in plan.Build)
+        {
+            if (BuildSpeechClient(wanted) is { } built)
+            {
+                _clients[wanted] = built;
+            }
+        }
+
+        // One decorator per slot over the shared client, which is what lets the spend row answer
+        // "which slot is costing money" without a second connection to the provider — the thing
+        // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (list.md Phase 57).
+        foreach (var moved in plan.Rewire)
+        {
+            _slots[moved] = _clients.GetValueOrDefault(VoiceGroups.ProviderFor(speech, moved)) is { } client
+                ? new MeteredTtsProvider(client, SpeechSpend, moved)
+                : null;
         }
 
         // Fetched in the background. The picker asks synchronously and the list comes over the
         // network, so it is cached rather than requested on open — and not awaited, because a
         // settings change must not wait on a provider being reachable.
-        if (plan.RefetchVoices && _tts is not null)
+        foreach (var asking in plan.RefetchVoices)
         {
-            _ = LoadVoicesAsync(_tts);
+            if (_clients.GetValueOrDefault(asking) is { } client)
+            {
+                _ = LoadVoicesAsync(client);
+            }
         }
 
-        Voice.Tts = _tts;
+        Voice.Tts = Speaker(VoiceGroup.Aboard);
+        Voice.SpeakerFor = Speaker;
 
         // Everyone d47 can speak as, filled in from settings. The ship AI's voice is the one
         // paired to the core aboard (#33), then whatever was chosen before voices were kept per
@@ -3366,12 +3422,35 @@ public sealed class AppHost : IDisposable
         // thing you hear. `Speech.Voice` is now the fallback for a core with no pairing, and the
         // Voice row writes the core aboard — which is what PersonaSettings.Voices always said it
         // held.
-        Cast.Rate = SpeechCapability.RateFor(Settings.Current);
-        Cast.DefaultVoice = SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id);
-        Cast.Assign(VoiceRole.CarrierCaptain, speech.CarrierCaptainVoice);
-        Cast.Assign(VoiceRole.TowerControl, speech.TowerVoice);
+        var aboard = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
+        var carrier = VoiceGroups.ProviderFor(speech, VoiceGroup.Carrier);
 
-        Voice.Voice = Cast.For(VoiceRole.ShipAi);
+        foreach (var providerId in VoiceGroups.ProvidersInUse(speech))
+        {
+            var cast = Casting.Of(providerId);
+
+            // A rate is a property of the synthesiser rather than of the Commander's patience,
+            // once two of them can be speaking at once: ElevenLabs *rejects* a speed outside its
+            // range rather than clamping it, so a figure chosen for Edge and applied here would
+            // not be a fast carrier but a silent one (list.md Phase 57).
+            cast.Rate = SpeechCapability.RateFor(Settings.Current, providerId);
+
+            // The ship's voice belongs to the ship's provider and to nobody else's. Where a comms
+            // slot happens to share that provider, this does double duty: VoiceCast.ForSender
+            // steps past whatever is already aboard, so a pirate cannot be handed the
+            // companion's voice.
+            cast.DefaultVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
+                ? SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id)
+                : null;
+
+            // Likewise the carrier's two, which are ids issued by whoever speaks for the carrier.
+            var speaksForTheCarrier = string.Equals(providerId, carrier, StringComparison.OrdinalIgnoreCase);
+
+            cast.Assign(VoiceRole.CarrierCaptain, speaksForTheCarrier ? speech.CarrierCaptainVoice : null);
+            cast.Assign(VoiceRole.TowerControl, speaksForTheCarrier ? speech.TowerVoice : null);
+        }
+
+        Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
         Voice.Bed = speech.ThinkingBed;
@@ -4240,13 +4319,32 @@ public sealed class AppHost : IDisposable
     /// is the point of the seam — Phase 11's paid provider arrives without anything above this
     /// line noticing (architecture.md §2).
     /// </summary>
-    private ITtsProvider? _tts;
+    /// <summary>
+    /// One client per provider, shared by every slot that named it (list.md Phase 57).
+    /// <para>
+    /// <b>Never one per slot.</b> <c>ElevenLabsTtsProvider.MaxConcurrent</c> gates the account
+    /// rather than the pipeline, and that reasoning only survives if two slots choosing one
+    /// provider share one instance — six clients would each believe they owned the whole
+    /// concurrency budget.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<string, ITtsProvider> _clients = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Which provider <see cref="_tts"/> is, and whether that provider had its key last time
-    /// speech settings were applied. Tracked rather than inferred, because "is it null" answered
-    /// "does one need building" only while there was exactly one to build — and because a key
-    /// arriving is an edge rather than a level.
+    /// What each slot actually speaks through: a thin metering decorator over one of the shared
+    /// clients above, or null for a slot on "none". The decorator is what lets the spend row
+    /// break down per slot without <see cref="ITtsProvider"/> learning that slots exist.
+    /// </summary>
+    private readonly Dictionary<VoiceGroup, ITtsProvider?> _slots = new();
+
+    /// <summary>Which client speaks for a slot. The one place the map is read.</summary>
+    private ITtsProvider? Speaker(VoiceGroup group) => _slots.GetValueOrDefault(group);
+
+    /// <summary>
+    /// Which provider each slot is on, and whether it had its key last time speech settings were
+    /// applied. Tracked rather than inferred, because "is it null" answered "does one need
+    /// building" only while there was exactly one to build — and because a key arriving is an
+    /// edge rather than a level.
     /// <para>
     /// Handed to <see cref="SpeechWiring.Plan"/> and replaced with what it answers. This field
     /// and that function are the whole of the state; nothing else here remembers the last apply.
@@ -4259,14 +4357,43 @@ public sealed class AppHost : IDisposable
     /// voice a line is synthesised in, and the line still goes through the one arbiter, because
     /// separate paths per voice are how a line gets spoken in the wrong one (architecture.md D7).
     /// </summary>
-    public VoiceCast Cast { get; } = new();
+    /// <summary>
+    /// One cast per provider since Phase 57, because a voice id means nothing to a provider that
+    /// did not issue it — and six slots can name up to three of them at once.
+    /// </summary>
+    public VoiceCasting Casting { get; } = new();
 
     /// <summary>
-    /// What the selected provider offers, cached. Empty until the first fetch returns, which is
+    /// The cast aboard the ship. Everything that was <c>Cast</c> before Phase 57 means this one,
+    /// which is the provider the companion and the crew speak through.
+    /// </summary>
+    public VoiceCast Cast => Casting.Of(VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard));
+
+    /// <summary>
+    /// What each provider in use offers, cached. Empty until the first fetch returns, which is
     /// the honest answer in the meantime: the picker allows a typed value, so an empty list is a
     /// smaller list rather than a dead end.
+    /// <para>
+    /// Per provider rather than per slot, for the reason the clients are: two slots on one
+    /// service ask it one question.
+    /// </para>
     /// </summary>
-    private VoiceCatalogue _voices = VoiceCatalogue.Silent;
+    private readonly Dictionary<string, VoiceCatalogue> _voicesByProvider = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>What one provider offers, or nothing if it has not answered yet.</summary>
+    private VoiceCatalogue VoicesOf(string providerId) =>
+        _voicesByProvider.GetValueOrDefault(providerId) ?? VoiceCatalogue.Silent;
+
+    /// <summary>What one slot's provider offers.</summary>
+    private VoiceCatalogue VoicesFor(VoiceGroup group) =>
+        VoicesOf(VoiceGroups.ProviderFor(Settings.Current.Speech, group));
+
+    /// <summary>
+    /// The ship's own provider's list. Every voice the <em>companion</em> is chosen from comes
+    /// from here — the per-core pairing, the miscast check, the named defaults — and all of that
+    /// is about <see cref="VoiceGroup.Aboard"/> and always was.
+    /// </summary>
+    private VoiceCatalogue AboardVoices => VoicesFor(VoiceGroup.Aboard);
 
     /// <summary>What the language-model endpoint last said it serves (list.md Phase 29).</summary>
     private volatile IReadOnlyList<string> _endpointModels = [];
@@ -4319,7 +4446,11 @@ public sealed class AppHost : IDisposable
     /// </summary>
     internal async Task AuditionVoiceAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
     {
-        if (_tts is not { } provider)
+        // The slot the role belongs to, so the carrier's tower is auditioned through whoever
+        // speaks for the carrier — and billed to that slot (list.md Phase 57).
+        var group = VoiceGroups.Of(role);
+
+        if (Speaker(group) is not { } provider)
         {
             throw new InvalidOperationException("No voice provider is selected.");
         }
@@ -4335,7 +4466,11 @@ public sealed class AppHost : IDisposable
         {
             clip = await provider.SynthesizeAsync(
                 role == VoiceRole.ShipAi ? AuditionLine.For(Personas.Current) : AuditionLine.For(role),
-                new VoiceSelection(voiceId, SpeechCapability.RateFor(Settings.Current)),
+                new VoiceSelection(
+                    voiceId,
+                    SpeechCapability.RateFor(
+                        Settings.Current,
+                        VoiceGroups.ProviderFor(Settings.Current.Speech, group))),
                 cancellationToken).ConfigureAwait(false);
 
             // Cached after the await, so a cancelled or failed synthesis caches nothing and the
@@ -4472,9 +4607,17 @@ public sealed class AppHost : IDisposable
             Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
         };
 
+        // Drawn from the cast belonging to whoever speaks for this slot. A voice id means
+        // nothing to a provider that did not issue it, so a stranger in local gets one of the
+        // voices their own slot's provider offers and never one of the companion's
+        // (list.md Phase 57).
+        var cast = Casting.Of(VoiceGroups.ProviderFor(
+            Settings.Current.Speech,
+            VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
+
         var voice = announcement.Speaker is { Length: > 0 } speaker
-            ? Cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
-            : Cast.For(announcement.Voice);
+            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            : cast.For(announcement.Voice);
 
         // Written before it is spoken, and whether or not the speaking works. A message that
         // could not be synthesised is still a message that arrived, and the page is the only
@@ -4794,7 +4937,7 @@ public sealed class AppHost : IDisposable
         // to drop.
         if (_voiceScopeSystem is not null)
         {
-            Cast.EnteredSystem();
+            Casting.EnteredSystem();
         }
 
         _voiceScopeSystem = system;
@@ -5647,7 +5790,13 @@ public sealed class AppHost : IDisposable
         Audio.Silence();
         Audio.Dispose();
         _audioSink.Dispose();
-        (_tts as IDisposable)?.Dispose();
+        foreach (var client in _clients.Values)
+        {
+            (client as IDisposable)?.Dispose();
+        }
+
+        _clients.Clear();
+        _slots.Clear();
 
         // Before the factory that owns the sink it writes to. Reaching this line is the whole of
         // the clean marker -- anything that threw above it leaves the "is stopping" line standing
