@@ -746,7 +746,12 @@ public static class SpeechCapability
                 Label = $"{slot.Name} — provider",
                 Help = SlotHelp(slot),
                 Kind = SettingKind.Choice,
-                Choices = [.. TtsProviderCatalog.All.Select(provider => provider.Id)],
+
+                // Not every provider, for a slot carrying other people's words: one that cannot
+                // be told a language would read a French message in French, in the voice the
+                // Commander chose for English. The list and the resolver read the same rule, so
+                // the picker cannot offer something the app would then refuse to use.
+                Choices = [.. TtsProviderCatalog.For(slot).Select(provider => provider.Id)],
                 ChoiceLabel = id => TtsProviderCatalog.Selected(id).Label,
 
                 // What an unwritten entry means, said in the row rather than left to be inferred
@@ -810,7 +815,12 @@ public static class SpeechCapability
                 Verify = surface.VerifyKey is { } verify
                     ? token => verify(provider.Id, token)
                     : null,
-                AppliesWhen = s => string.Equals(s.Speech.Provider, provider.Id, StringComparison.OrdinalIgnoreCase),
+                // On screen while *any* slot names this provider, not only while the ship does.
+                // Phase 57 let the carrier sit on ElevenLabs while the companion stayed on Edge,
+                // and this row went on asking about `speech.provider` alone — so the slot that
+                // needed a key was configured and the box to put one in was not on the page.
+                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
+                    .Any(id => string.Equals(id, provider.Id, StringComparison.OrdinalIgnoreCase)),
             });
 
         return rows;

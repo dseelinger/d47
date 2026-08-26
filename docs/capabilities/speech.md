@@ -125,6 +125,7 @@ and still costing.
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
+| `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
 `none` is a real choice rather than a way of switching something off: Directive 47 stays useful
@@ -149,9 +150,20 @@ And if a voice is refused anyway — deleted from the account, or a mismatch not
 Directive 47 drops that one voice, says the sentence in the provider's own default, and stops
 using the refused id. One voice going bad no longer costs you the reply.
 
-#### ElevenLabs API key {#api-key}
+#### API keys {#api-key}
 
-Only on screen while ElevenLabs is the selected provider. Stored encrypted for your Windows
+A key row is on screen while **any** slot names the provider it belongs to — not only while your
+ship does. Put your carrier on ElevenLabs and leave the cockpit on Edge, and the ElevenLabs key
+row is still there, because that is the slot that needs it.
+
+**OpenAI's key is the same key the language model uses.** One account, one credential: pasting it
+in either row stores it once, and rotating it in either row rotates it everywhere. That is
+deliberate — two copies of one secret is a rotation that half-works, where some of Directive 47
+keeps going and the rest stops with an error naming neither.
+
+The rest of this section is about ElevenLabs, which is where these rows were first built.
+
+Only on screen while ElevenLabs is named by some slot. Stored encrypted for your Windows
 account, write-only — Directive 47 will show you whether one is present and let you replace it,
 and will never show it back.
 
@@ -319,6 +331,18 @@ so a carrier left on Edge keeps its captain while your companion moves to Eleven
 **If your settings file predates this**, every slot follows your ship's provider exactly as it
 used to, until Directive 47 moves the five over-the-air ones to Edge — once, the first time it
 runs with a provider that speaks. Nothing moves if you have chosen `none`.
+
+**OpenAI is not offered for three of these slots, and that is on purpose.** *People you know*,
+*Direct messages* and *Anyone in range* carry text other Commanders typed, which can be in any
+language at all. Edge and ElevenLabs can both be *told* what language to speak — Directive 47
+sends one with every line — and OpenAI has no such setting: a language sent to it is accepted and
+then quietly ignored, so a message written in French would come back read in French, in the voice
+you chose for English. Rather than warn about that, those three slots simply do not list it. If
+you hand-edit `settings.json` to name it anyway, the slot falls back to Edge rather than obeying
+the file.
+
+The cockpit, your carrier and the NPCs may all use it: that text is Directive 47's own or
+Frontier's, and it is English.
 
 #### What the voices cost {#voice-cost}
 

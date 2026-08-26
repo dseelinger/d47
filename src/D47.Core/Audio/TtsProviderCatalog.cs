@@ -73,6 +73,38 @@ public sealed record TtsProviderInfo
     /// </summary>
     public bool VoiceIdsAreOpaque { get; init; }
 
+    /// <summary>
+    /// Whether this provider can be told which language to speak (list.md Phase 58).
+    /// <para>
+    /// <b>The property a slot carrying other people's text depends on.</b> Edge sends
+    /// <c>xml:lang</c> in its SSML and ElevenLabs sends a <c>language_code</c>; both therefore
+    /// read a line the way d47 asked for whatever the words look like. OpenAI has no such field,
+    /// and — measured 2026-08-26 — sending one anyway is accepted with <c>200</c> and ignored,
+    /// which is worse than a refusal because nothing can see it happen
+    /// (docs/spikes/openai-tts-language-and-speed.md §2).
+    /// </para>
+    /// <para>
+    /// A message from another Commander can be in any language at all, so a provider that cannot
+    /// be told one would follow it — a French line read as French, in a voice the Commander chose
+    /// for English. So the settings surface does not offer such a provider for those slots. False
+    /// is the exception rather than the default, because the two providers that were here first
+    /// both pin.
+    /// </para>
+    /// </summary>
+    public bool LanguageCanBePinned { get; init; } = true;
+
+    /// <summary>
+    /// Whether the voice list is known without asking, so listing it proves nothing about a key
+    /// (list.md Phase 58).
+    /// <para>
+    /// True for a provider with no voices endpoint at all. The Check button lists voices to prove
+    /// a credential everywhere else, and for such a provider that check would answer "accepted
+    /// the key" for a key that had never been sent anywhere — which is the exact fault Phase 19
+    /// fixed on the other side, arriving from the other direction.
+    /// </para>
+    /// </summary>
+    public bool VoicesAreStatic { get; init; }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>
@@ -95,6 +127,8 @@ public static class TtsProviderCatalog
     public const string EdgeId = "edge";
 
     public const string ElevenLabsId = "elevenlabs";
+
+    public const string OpenAiId = "openai";
 
     public static TtsProviderInfo None { get; } = new()
     {
@@ -155,8 +189,61 @@ public static class TtsProviderCatalog
         ListDollarsPerThousandCharacters = 0.05m,
     };
 
+    public static TtsProviderInfo OpenAi { get; } = new()
+    {
+        Id = OpenAiId,
+        Name = "OpenAI",
+        Label = "OpenAI (paid — needs a key)",
+
+        // The same secret the language-model provider uses. One account, one credential: asking a
+        // Commander to paste the same key twice charges them for an implementation detail, and
+        // two copies of one secret is a rotation that half-works.
+        KeySecretName = "openai.apiKey",
+        Destination = "api.openai.com",
+        Egress = "The text of every line D47 speaks through this slot is sent to OpenAI to be turned "
+                 + "into audio, along with your API key — the same key the language model uses if you "
+                 + "have set one. No journal content, game state or other keys are sent.",
+
+        // It cannot be told a language, so it is never offered for a slot carrying somebody
+        // else's words. See the property's own note; this is the whole reason it is declared.
+        LanguageCanBePinned = false,
+
+        // Thirteen built-ins and no voices endpoint, so the list needs no key and proves nothing
+        // about one.
+        VoicesAreStatic = true,
+
+        // Measured 2026-08-26 across the documented range, and honoured
+        // (docs/spikes/openai-tts-language-and-speed.md §3).
+        MinimumRate = 0.25,
+        MaximumRate = 4.0,
+
+        Billed = true,
+
+        // Deliberately unpriced, and that is the finding rather than an omission (list.md Phase
+        // 58). d47 counts characters because ElevenLabs bills by the character; OpenAI publishes
+        // per minute of audio. Measured on the spike's own clips, plain prose runs at 951
+        // characters a minute and a line of system names and numerals at 671 — a spread of about
+        // 40% with *content* — so no conversion exists, and any figure derived here would be
+        // wrong by a different amount on every line. Null is already a supported answer: the row
+        // reads "(not published — no price will be quoted)" and the spend line quotes the
+        // character count on its own until the Commander sets a rate they can stand behind.
+        ListDollarsPerThousandCharacters = null,
+    };
+
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>
-    public static IReadOnlyList<TtsProviderInfo> All { get; } = [Edge, ElevenLabs, None];
+    public static IReadOnlyList<TtsProviderInfo> All { get; } = [Edge, ElevenLabs, OpenAi, None];
+
+    /// <summary>
+    /// The providers that may speak for one slot. Everything, except that a slot carrying other
+    /// people's words is not offered a provider that cannot be told a language (list.md Phase 58).
+    /// <para>
+    /// Read by the settings row and by <see cref="VoiceGroups.ProviderFor"/>, so what the picker
+    /// offers and what the app will actually use cannot disagree — which is the failure mode a
+    /// filtered list invites if only one of the two knows about the filter.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<TtsProviderInfo> For(VoiceGroupInfo slot) =>
+        slot.OtherPeoplesWords ? [.. All.Where(provider => provider.LanguageCanBePinned)] : All;
 
     /// <summary>
     /// The provider this id names, or <see cref="Edge"/> if it names none. Unknown rather than
