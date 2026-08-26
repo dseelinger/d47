@@ -47,6 +47,7 @@ public sealed class SpendWindow : Window
 
         var body = new StackPanel { Margin = new Thickness(24), Spacing = 18 };
 
+        body.Children.Add(Estimates());
         body.Children.Add(Section("This turn", TurnRows(turn)));
         body.Children.Add(Section("This session", SessionRows(session, speech, settings)));
 
@@ -136,6 +137,44 @@ public sealed class SpendWindow : Window
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// Said once, at the top, rather than as a suffix on each of a dozen figures.
+    /// <para>
+    /// <b>Almost every figure in this window is an estimate, and the codebase already knew it.</b>
+    /// <c>TtsProviderCatalog.ElevenLabs</c> argues the case in its own comment: a subscription
+    /// burns bundled credits rather than paying a list rate, so a published $0.05 per thousand
+    /// can be 3.6× too low or infinitely too high depending on account state no API reports. The
+    /// model rates carry the same problem — a table is what is published, not what an account is
+    /// charged.
+    /// </para>
+    /// <para>
+    /// <b>At the top rather than as a footnote</b>, because a Commander who reads the first
+    /// figure and closes the window never reaches the bottom. It qualifies before any number is
+    /// read, and costs one line of muted type to do it.
+    /// </para>
+    /// <para>
+    /// It does not hedge itself with "for the most part", true though that is: hedging the hedge
+    /// reads as evasive, and where a figure genuinely is exact it is already visible — a local
+    /// endpoint prices at zero and Edge is free, and nobody disputes a zero.
+    /// </para>
+    /// </summary>
+    private static Control Estimates()
+    {
+        var line = new TextBlock
+        {
+            Text =
+                "Estimates. D47 knows each provider's published rates, not what your account is "
+                + "actually billed — a subscription with bundled credits can make the real cost "
+                + "anything from higher to nothing at all.",
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Themed(line, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        return line;
     }
 
     private static Control Section(string heading, IReadOnlyList<Control> rows)
