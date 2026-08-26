@@ -882,6 +882,7 @@ public static class ChecklistCapability
     private static SettingRow SummaryRow(ChecklistService checklists) => new()
     {
         Key = SummaryKey,
+        Advanced = true,
         Label = "Your checklist",
         Help = "What you are working on: your own lines, your ship builds and your construction sites. "
                + "Computed items cannot be ticked by hand — they follow your journal.",

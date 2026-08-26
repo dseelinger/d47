@@ -171,6 +171,7 @@ public static class CommsCapability
     private static SettingRow ChatRow() => new()
     {
         Key = ChatKey,
+        Advanced = true,
         Label = "Let D47 send messages in Elite",
         Help = "Lets D47 type into Elite's chat on your behalf. Messages go out under your "
                + "Commander name and cannot be taken back, and D47 reads your message back to you "

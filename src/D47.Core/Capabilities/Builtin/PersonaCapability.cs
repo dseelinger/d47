@@ -188,6 +188,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipNameKey,
+            Advanced = true,
             Label = "Ship AI name",
             Help = "What you call your ship's AI. Empty uses the persona's own name.",
             Kind = SettingKind.Text,
@@ -210,6 +211,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = KeepShipNameKey,
+            Advanced = true,
             Label = "Keep Ship AI name on persona switch",
             Help =
                 "On, the name above stays whoever is aboard. Off, changing core clears it and "
@@ -238,6 +240,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = IntroductionsKey,
+            Advanced = true,
             Label = "Introductions",
             Help =
                 "A core introduces itself the first time you ever pick it, and reacts to the gap "
@@ -278,6 +281,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipCoreShipKey,
+            Advanced = true,
             Label = "Ship",
             Help =
                 "Which ship the core below belongs to. Every ship in your fleet is here, so you do "
@@ -322,6 +326,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipCoreKey,
+            Advanced = true,
             Label = "Core for that ship",
             Help =
                 "A ship can remember the core that flies it, so changing ship changes who answers "
@@ -372,6 +377,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipCoresKey,
+            Advanced = true,
             Label = "Cores by ship",
             Help =
                 "Every ship you have bound, and what it flies with. The file behind it is "

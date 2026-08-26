@@ -109,6 +109,7 @@ public static class CommunityGoalCapability
             new SettingRow
             {
                 Key = KeyRow,
+                Advanced = true,
                 Label = "Inara API key",
                 Help =
                     "Lets D47 see community goals running where you have not been. Without it, it sees only "

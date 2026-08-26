@@ -171,6 +171,7 @@ public static class DiagnosticsCapability
             new()
             {
                 Key = "logging.default",
+                Advanced = true,
                 Label = "Default log level",
                 Help = "Applies to any subsystem without its own level below.",
                 Kind = SettingKind.Choice,
@@ -193,6 +194,7 @@ public static class DiagnosticsCapability
         rows.AddRange(Subsystems.All.Select(subsystem => new SettingRow
         {
             Key = LevelRowFor(subsystem),
+            Advanced = true,
             // Terse on purpose: nine rows each explaining that they are one subsystem's level
             // is nine copies of one sentence. The group heading says it once.
             Label = Subsystems.DisplayName(subsystem),
@@ -236,6 +238,7 @@ public static class DiagnosticsCapability
             rows.Add(new SettingRow
             {
                 Key = CoverageKey,
+                Advanced = true,
                 Label = "Exercised by hand",
                 Help =
                     "Which tools and settings rows have actually been driven in the running app, and "

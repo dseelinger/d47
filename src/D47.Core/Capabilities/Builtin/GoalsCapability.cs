@@ -188,6 +188,7 @@ public static class GoalsCapability
     private static SettingRow StoreRow(GoalBook? book, Func<Action?> backfill, Func<DateTimeOffset> now) => new()
     {
         Key = StoreKey,
+        Advanced = true,
         Label = "Your long goals",
         Help =
             "Campaigns that take months — Elite in each career, every engineer, the ship collection, "

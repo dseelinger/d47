@@ -387,6 +387,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CharacterPriceKey,
+                Advanced = true,
                 Label = "Price per 1,000 characters",
                 Help =
                     "What this provider charges, in US dollars, so the session's speech can be "
@@ -428,6 +429,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = MinutePriceKey,
+                Advanced = true,
                 Label = "Price per minute of audio",
                 Help =
                     "What this provider charges for a minute of speech, in US dollars. D47 measures "
@@ -458,6 +460,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpentKey,
+                Advanced = true,
                 Label = "Spoken this session",
                 Help =
                     "Characters handed to the voice provider since D47 started, and what that "
@@ -476,6 +479,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpentBySlotKey,
+                Advanced = true,
                 Label = "Spoken by each voice",
                 Help =
                     "The same characters, split by who was speaking. Which slot is costing money "
@@ -492,6 +496,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CarrierCaptainVoiceKey,
+                Advanced = true,
                 Label = "Carrier captain voice",
                 Help = "Who answers for your fleet carrier. Empty uses the ship AI's voice.",
                 Kind = SettingKind.Choice,
@@ -519,6 +524,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = TowerVoiceKey,
+                Advanced = true,
                 Label = "Carrier tower voice",
                 Help = "Who handles arrivals and departures. A different person from the captain.",
                 Kind = SettingKind.Choice,
@@ -540,6 +546,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakIncomingKey,
+                Advanced = true,
                 Label = "Speak incoming messages",
                 Help = "Read in-game chat aloud, each sender in their own voice. Off by default.",
                 Kind = SettingKind.Toggle,
@@ -559,6 +566,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakNpcKey,
+                Advanced = true,
                 Label = "Include NPC chatter",
                 Help = "Also speak messages from NPCs. A station approach produces a lot of these.",
                 Kind = SettingKind.Toggle,
@@ -598,6 +606,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CuesKey,
+                Advanced = true,
                 Label = "Loop-state cues",
                 Help = "A short sound as D47 starts listening, starts thinking, and finishes.",
                 Kind = SettingKind.Toggle,
@@ -612,6 +621,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = BedEnabledKey,
+                Advanced = true,
                 Label = "Thinking bed",
                 Help = "A quiet loop while a turn runs, so a slow answer is not silence.",
                 Kind = SettingKind.Toggle,
@@ -627,6 +637,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = BedKey,
+                Advanced = true,
                 Label = "Thinking bed sound",
                 Help = "Which loop plays while D47 works.",
                 Kind = SettingKind.Choice,
@@ -650,6 +661,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ShutUpHotkeyKey,
+                Advanced = true,
                 Label = "Stop speaking",
                 Help =
                     "Silences D47 instantly, from anywhere — including while Elite has the foreground. " +
@@ -674,6 +686,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryAttemptsKey,
+                Advanced = true,
                 Label = "Attempts",
                 Kind = SettingKind.Number,
                 Help = "How many times a failing turn is tried in total. 1 means do not retry.",
@@ -695,6 +708,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryWaitKey,
+                Advanced = true,
                 Label = "Wait between attempts",
                 Kind = SettingKind.Number,
 
@@ -718,6 +732,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryBackoffKey,
+                Advanced = true,
                 Label = "Backoff",
                 Kind = SettingKind.Choice,
                 Help = "How the wait grows: sequential adds the base each time, logarithmic decelerates.",
@@ -737,6 +752,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = TurnTimeoutKey,
+                Advanced = true,
                 Label = "Give up after",
                 Kind = SettingKind.Number,
                 Step = 0.5,
@@ -757,6 +773,7 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = EgressKey,
+                Advanced = true,
                 Label = "What the voice provider receives",
                 Kind = SettingKind.Info,
 
@@ -788,6 +805,7 @@ public static class SpeechCapability
             select new SettingRow
             {
                 Key = SlotProviderKey(slot),
+                Advanced = true,
                 Label = $"{slot.Name} — provider",
                 Help = SlotHelp(slot),
                 Kind = SettingKind.Choice,

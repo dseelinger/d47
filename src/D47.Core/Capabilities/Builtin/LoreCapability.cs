@@ -208,6 +208,7 @@ public static class LoreCapability
     private static SettingRow RemarksRow() => new()
     {
         Key = RemarksKey,
+        Advanced = true,
         Label = "Remark on arrival",
         Help =
             "Say something on arriving in a system with a story attached, at most once a day per system. "
@@ -283,6 +284,7 @@ public static class LoreCapability
     private static SettingRow BookRow(LoreBook? book) => new()
     {
         Key = BookKey,
+        Advanced = true,
         Label = "Your own notes",
         Help = "What you have told D47 about a system, kept between sessions and said back on arrival.",
         Kind = SettingKind.Info,

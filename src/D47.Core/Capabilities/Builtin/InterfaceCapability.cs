@@ -15,6 +15,12 @@ public static class InterfaceCapability
 
     public const string ThemeKey = "ui.theme";
 
+    /// <summary>
+    /// Whether the settings page is showing all of itself
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
+    /// </summary>
+    public const string ShowEverySettingKey = "ui.showEverySetting";
+
     public const string ZoomKey = "ui.zoom";
 
     public const string OpenSettingsHotkeyKey = "hotkeys.openSettings";
@@ -188,6 +194,47 @@ public static class InterfaceCapability
                 (s, v) => s with { Hotkeys = s.Hotkeys with { BindShipCore = v } },
                 systemWide: true),
 
+            // Seventy-five knobs is not a welcome (#60). Here beside Theme, Zoom and the window
+            // rows, whose grammar it copies — "Show the overlay", "Show every setting".
+            //
+            // A Toggle rather than a Simple/Advanced choice: those labels describe the Commander
+            // rather than the settings, and a choice would force a name for the calm state that
+            // then needs defining in help. A toggle needs no name for off.
+            //
+            // The label never says "advanced" and the phrases below happily accept it, which is
+            // not an inconsistency: the phrase list is where d47 meets the Commander's words and
+            // the label is where it chooses its own. "Go local only" writes the provider to none
+            // under a label that just says Provider.
+            new SettingRow
+            {
+                Key = ShowEverySettingKey,
+                Label = "Show every setting",
+                Help =
+                    "Off, D47 shows the settings most Commanders change. Nothing is switched off "
+                    + "by being hidden — every hidden setting keeps working at its default, or at "
+                    + "the last thing you set it to. Anything you have changed yourself stays on "
+                    + "the page either way.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "show-every-setting",
+                Commands =
+                [
+                    new SettingCommandPhrase("show me every setting", "true"),
+                    new SettingCommandPhrase("show all the settings", "true"),
+                    new SettingCommandPhrase("show the advanced settings", "true"),
+                    new SettingCommandPhrase("hide the advanced settings", "false"),
+                    new SettingCommandPhrase("show fewer settings", "false"),
+                    new SettingCommandPhrase("just the usual settings", "false"),
+                ],
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.ShowEverySetting ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with { ShowEverySetting = bool.TryParse(v, out var show) && show },
+                    },
+                },
+            },
+
             // The flat mini panel (list.md Phase 48). Here rather than under VR because there is
             // no headset in it — a Commander goes looking where the theme, the zoom and the
             // hotkeys already are rather than under a card about a device they are not wearing.
@@ -224,6 +271,7 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayScaleKey,
+                Advanced = true,
                 Label = "Overlay size",
                 Help = "How large the overlay is drawn. It re-wraps at each step rather than "
                        + "being blown up, so bigger means more readable and not blurrier.",
@@ -252,6 +300,7 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayOpacityKey,
+                Advanced = true,
                 Label = "Overlay opacity",
                 Help = "How much cockpit shows through it. 1 is solid.",
                 Kind = SettingKind.Number,
@@ -286,6 +335,7 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayDisplayKey,
+                Advanced = true,
                 Label = "Elite's display mode",
                 Help = "A window pinned on top draws over a borderless or windowed game and is "
                        + "simply not there over an exclusive-fullscreen one - with no error and "
@@ -343,6 +393,7 @@ public static class InterfaceCapability
         bool systemWide = false) => new()
     {
         Key = key,
+        Advanced = true,
         Label = label,
         Help = "Press the key combination to bind it. Clear it to leave the action unbound."
                + (systemWide

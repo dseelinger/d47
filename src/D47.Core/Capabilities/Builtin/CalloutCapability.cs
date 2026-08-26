@@ -317,6 +317,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = AmbientSecondsKey,
+            Advanced = true,
             Label = "At most one ambient remark every",
             Help = "In seconds. Lower is a talkative companion; higher is a quiet one; 0 silences them.",
             Kind = SettingKind.Number,
@@ -342,6 +343,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = RouteEveryKey,
+            Advanced = true,
             Label = "Report route progress every",
             Help = "In jumps. Every 3 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
             Kind = SettingKind.Number,
@@ -366,6 +368,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LimpetCargoFloorKey,
+            Advanced = true,
             Label = "Only remind me about limpets above",
             Help = "Cargo capacity, in tonnes. Below it you are not running limpets and the reminder is noise.",
             Kind = SettingKind.Number,
@@ -390,6 +393,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LimpetPercentKey,
+            Advanced = true,
             Label = "Remind me when limpets are under",
 
             // The denominator is on the row, in words. A percentage whose denominator is not
@@ -417,6 +421,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LongJumpSecondsKey,
+            Advanced = true,
             Label = "A jump is long after",
             Help = "In seconds, measured from entering hyperspace rather than from starting the jump.",
             Kind = SettingKind.Number,
@@ -448,6 +453,7 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = HomeSystemKey,
+            Advanced = true,
             Label = "Home system",
             Help = "Named for the arrival callout. There is no default — no journal event reports where you call home.",
             Kind = SettingKind.Text,
@@ -486,6 +492,7 @@ public static class CalloutCapability
         bool defaultOn = true) => new()
     {
         Key = key,
+        Advanced = true,
         Label = label,
         Help = help,
         Kind = SettingKind.Toggle,

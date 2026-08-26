@@ -108,6 +108,7 @@ public static class MacroCapability
     private static SettingRow ListRow(MacroStore store) => new()
     {
         Key = ListKey,
+        Advanced = true,
         Label = "Your macros",
         Help = "Named sequences of ship actions. Say the name to run one. Authoring is here rather "
                + "than by voice, because a new sequence is the one thing D47 cannot offer you a "

@@ -174,6 +174,7 @@ public static class SwitchCapability
     private static SettingRow EnabledRow(Func<bool> keyboardEnabled) => new()
     {
         Key = EnabledKey,
+        Advanced = true,
         Label = "Let a HOTAS switch operate the ship",
         Help = "When you flip a mapped switch, D47 asks whether Elite is already in the state that "
                + "position means and presses your own binding only if it is not. Between flips it "
@@ -208,6 +209,7 @@ public static class SwitchCapability
     private static SettingRow ListRow(SwitchSurface surface) => new()
     {
         Key = ListKey,
+        Advanced = true,
         Label = "Your switches",
         Help = "Maintained toggles on your stick or throttle, each learned by walking it through its "
                + "positions. There is no device list to pick from: Windows reports every stick as "

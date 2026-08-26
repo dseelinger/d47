@@ -1162,6 +1162,17 @@ public sealed record UiSettings
     public string Theme { get; init; } = "elite";
 
     /// <summary>
+    /// Whether the settings page shows every row, or only the ones most Commanders change
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
+    /// <para>
+    /// <b>Off by default, and nothing is switched off by being hidden.</b> Every folded row keeps
+    /// working at its value or its last setting — this is a display decision and touches no other
+    /// setting, ever. See <see cref="SettingsFold"/>, which owns the three cases that outrank it.
+    /// </para>
+    /// </summary>
+    public bool ShowEverySetting { get; init; }
+
+    /// <summary>
     /// How large the panel is drawn, as a percentage (list.md Phase 9, "Zoom the desktop
     /// window"). A setting rather than view state, because the checklist puts it alongside the
     /// theme: it is how the Commander wants d47 to look, not how they happened to leave a card.
