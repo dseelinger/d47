@@ -27,12 +27,11 @@ nav_order: 121
 <p class="body">If you want it to stop <em>working</em> rather than stop talking, that is cancelling the turn — which is a different word, on the Language model page, and the difference lands on your bill.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The free voices are not the private ones.</h2>
+<h2><span class="num">2</span> Free is not the same as private.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Edge Neural is free but sends every line to Microsoft; only the none provider sends nothing">
  <rect x="20" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EDGE NEURAL</text>
- <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">free, and sent to</text>
- <text x="155" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">speech.platform.bing.com</text>
+ <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">free</text>
  <rect x="305" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELEVENLABS</text>
  <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">paid, and sent along</text>
@@ -41,7 +40,7 @@ nav_order: 121
  <text x="725" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">NONE</text>
  <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the only setting</text>
  <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">that sends nothing</text>
- <text x="440" y="200" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is easy to assume the free option is the private one. It is not.</text>
+ <text x="440" y="200" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is easy to assume the free option is private. Edge Neural is not.</text>
  <text x="440" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">And “none” is a real choice rather than an off switch — the cues and the thinking loop still play.</text>
 </svg>
 <p class="body">Speech is billed by the <em>character</em> where it is billed at all, which is why it is counted separately from the model. The price row is an assumption you can correct; the characters-spoken row is a fact, counted at the one seam every caller passes.</p>
@@ -62,7 +61,7 @@ nav_order: 121
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> An empty list says which empty it is.</h2>
+<h2><span class="num">4</span> An empty list may mean different things.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Four different reasons a voice list can be empty, only two of which the Commander can fix">
  <rect x="20" y="30" width="840" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="62" text-anchor="start" font-size="15" fill="var(--text)">…needs an API key before it will list its voices</text>
@@ -73,8 +72,7 @@ nav_order: 121
  <text x="580" y="126" text-anchor="start" font-size="14" fill="var(--text-muted)">← waiting is the fix</text>
  <text x="46" y="158" text-anchor="start" font-size="15" fill="var(--text-muted)">…answered, and has no voices on this account</text>
  <text x="580" y="158" text-anchor="start" font-size="14" fill="var(--text-muted)">← nothing is wrong</text>
- <text x="440" y="214" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Four reasons, and only two of them are yours to fix.</text>
- <text x="440" y="244" text-anchor="middle" font-size="15" fill="var(--text-muted)">Before this they were one empty list telling you to type a voice id — a value you have no way of knowing.</text>
+ <text x="440" y="214" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Four reasons, but only two of them are yours to fix.</text>
 </svg>
 </section>
 <div class="next">

@@ -29,24 +29,23 @@ nav_order: 144
  <text x="703" y="170" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">the model cannot</text>
  <text x="703" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">they are not on its list</text>
  <text x="703" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">at all</text>
- <text x="440" y="266" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Anything the model can be asked to do, a hostile in-game message can try to make it do.</text>
- <text x="440" y="288" text-anchor="middle" font-size="16" fill="var(--text-muted)">A guard the model can switch off is not a guard. Protected is about who is asking, not how.</text>
+ <text x="440" y="266" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Protecting settings helps keep you and your information safe.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Most settings belong to the machine. A few belong to you.</h2>
+<h2><span class="num">2</span> Most settings apply to the installed app. A few belong to each of your CMDRs.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Installation settings are shared; per-Commander settings are separate for each pilot">
  <rect x="20" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="225" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE INSTALLATION</text>
+ <text x="225" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE APP</text>
  <text x="225" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">keys, devices, theme, zoom, hotkeys</text>
  <text x="225" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">the same whoever is flying</text>
  <text x="225" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">and the running cost, which is one bill</text>
  <rect x="450" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="655" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THIS COMMANDER</text>
+ <text x="655" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">PER COMMANDER</text>
  <text x="655" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">your character sheet, your About Me</text>
  <text x="655" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">which ship each core is bound to</text>
  <text x="655" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">Elite says who is flying, and D47 listens</text>
- <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A second Commander on the same machine never sees the first one's story.</text>
+ <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A second Commander on the same machine never sees the first's story.</text>
  <text x="440" y="246" text-anchor="middle" font-size="16" fill="var(--text-muted)">Yours reads the machine's until you set it. Emptying it afterwards is a choice, not a reset.</text>
 </svg>
 </section>
