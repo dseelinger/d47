@@ -951,6 +951,14 @@ public sealed class ShipsMode(
     /// headline. Modifiers Elite reports without a before-figure carry no change to state, so they
     /// are left out rather than shown as zero.
     /// </para>
+    /// <para>
+    /// <b>An attribute that is already a percentage is shown as its value instead</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/53">#53</a>). A resistance that moved
+    /// from 1% to 15.8% is <c>15.8% KineticResistance</c> — which is the figure the game's own
+    /// ring shows and the one a Commander compares against — where the proportional reading made
+    /// it <c>+1485%</c>. Such a modifier needs no before-figure to be worth showing, so it is kept
+    /// where the guard below would have dropped it for having a base of zero.
+    /// </para>
     /// </summary>
     private static IReadOnlyList<string> Effects(ShipModule? module)
     {
@@ -962,11 +970,37 @@ public sealed class ShipsMode(
         return
         [
             .. module.Modifiers
-                .Where(modifier => modifier.Change is not null && modifier.OriginalValue is not 0)
-                .OrderByDescending(modifier => Math.Abs(Proportion(modifier)))
-                .Select(modifier => $"{Signed(Proportion(modifier))} {modifier.Label}")
+                .Where(Worth)
+                .OrderByDescending(Magnitude)
+                .Select(Describe)
         ];
     }
+
+    /// <summary>
+    /// Whether this modifier says anything. A percentage attribute needs only its own figure;
+    /// everything else needs a before-figure to be a change at all, and a base of zero is one
+    /// nothing can be divided by.
+    /// </summary>
+    private static bool Worth(ShipModifier modifier) =>
+        modifier.IsPercentage
+            ? modifier.Value is not null
+            : modifier.Change is not null && modifier.OriginalValue is not 0;
+
+    /// <summary>
+    /// How loud this one is, for the ordering. <b>Points for a percentage attribute and a
+    /// proportion for everything else</b>, which is the only way the two are comparable at all:
+    /// ranking a resistance by its proportional change put it above every real change on the
+    /// module for ever, because the number was a hundred times too big.
+    /// </summary>
+    private static double Magnitude(ShipModifier modifier) =>
+        modifier.IsPercentage
+            ? Math.Abs(modifier.Change ?? 0)
+            : Math.Abs(Proportion(modifier));
+
+    private static string Describe(ShipModifier modifier) =>
+        modifier.IsPercentage
+            ? $"{modifier.Value!.Value.ToString("0.#", CultureInfo.InvariantCulture)}% {modifier.Label}"
+            : $"{Signed(Proportion(modifier))} {modifier.Label}";
 
     private static double Proportion(ShipModifier modifier) =>
         modifier.Change!.Value / Math.Abs(modifier.OriginalValue!.Value) * 100;

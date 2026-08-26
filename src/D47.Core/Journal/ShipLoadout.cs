@@ -40,6 +40,39 @@ public sealed record ShipModifier(string Label)
     public double? Change => Value is { } value && OriginalValue is { } original ? value - original : null;
 
     /// <summary>
+    /// Attributes whose <see cref="Value"/> <b>is already a percentage</b>, so the proportional
+    /// reading every other modifier gets is nonsense for them
+    /// (<a href="https://github.com/dseelinger/d47/issues/53">#53</a>).
+    /// <para>
+    /// A resistance that moved from 1% to 15.8% moved <b>14.85 points</b>. Divided by its base it
+    /// reads <c>+1485%</c>, which is what the Loadout tab showed — off by two orders of magnitude
+    /// in how a Commander reads it, and the near-1.0 base is what makes it explode. Measured
+    /// across the corpus, <c>ThermicResistance</c> is routinely <b>negative</b> (−20.0 → −21.2),
+    /// where a ratio is not merely wrong but meaningless, and a base of exactly 0 is dropped from
+    /// the list outright by the guard that avoids dividing by it.
+    /// </para>
+    /// <para>
+    /// <b>A declared set rather than a guess at the shape of the number</b>, and the same reason
+    /// <see cref="Audio.TtsProviderInfo.Billed"/> is declared: this is a fact about the attribute,
+    /// and no run of values can tell a percentage from a coincidence. Measured from the corpus's
+    /// 34 distinct labels rather than recalled. <c>ShieldGenStrength</c> is deliberately not here:
+    /// its base is far from zero and never negative, so both readings stay sane, and adding it on
+    /// a hunch would be inventing a fact about the game.
+    /// </para>
+    /// </summary>
+    private static readonly HashSet<string> AlreadyPercentages = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "KineticResistance",
+        "ThermicResistance",
+        "ExplosiveResistance",
+        "CausticResistance",
+        "DefenceModifierHealthMultiplier",
+    };
+
+    /// <inheritdoc cref="AlreadyPercentages"/>
+    public bool IsPercentage => AlreadyPercentages.Contains(Label);
+
+    /// <summary>
     /// Whether the change is an improvement, or null when it did not move or cannot be measured.
     /// Null rather than false: "unchanged" and "worse" are different things to say out loud.
     /// </summary>
