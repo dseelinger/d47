@@ -20,6 +20,85 @@ the file as it stood then.
 
 ---
 
+## 0.74.0 — 2026-08-26 — A floor and a ceiling
+
+**Phase 54.** Two dials, in Settings under the language model, and both of them are empty until you
+say otherwise — a fresh install and an upgraded one behave exactly as they did.
+
+### The things D47 says without being asked can go somewhere cheaper
+
+An ambient remark, the brief when you sit down, what D47 says after a long gap, a lore lookup,
+choosing a voice for a core: none of them carry your conversation, and all of them can now run on a
+different model from the one you talk to.
+
+**Model for the quiet calls** — leave it empty and they use the model above, which is what every
+version before this one did.
+
+It is closer to free money than the rate card suggests, and the reason is caching. A conversation
+turn re-sends everything said so far, and the provider charges a cheap rate for a prefix it has
+seen before — but a cache belongs to one model, so *alternating* between two pays to write the
+cache again every time you come back. Measured against a six-thousand-token prefix: a cheap turn
+saves about 0.8¢ and coming back afterwards costs about 3.5¢. **One detour costs roughly 23× what
+it saved**, which is why D47 will never switch models question by question, and why this is a
+choice about a *class* of call rather than a router.
+
+The quiet calls are the opposite case. Not one of them carries the conversation, every one already
+starts cold, so sending them somewhere cheaper costs nothing at all.
+
+**Two calls ignore the row deliberately.** Writing an adventure and writing your Commander's log
+both stay on your conversation model: you pressed a button and are waiting, the output has to name
+real systems exactly, and the log is quoted at a price before a word of it is written.
+
+### Think at least this hard, never think harder than this
+
+D47 gauges how hard to think from the question itself, and always has. Now you can put a floor and
+a ceiling around that gauge.
+
+| Row | What it is for |
+|---|---|
+| **Think at least this hard** | The bottom rung is not enough for you |
+| **Never think harder than this** | Thinking is most of what a turn costs, and this is the dial |
+
+The rungs are Low, Medium, High, **Xhigh** and Max. The gauge itself keeps its four answers, so
+Xhigh is reachable only by setting a bound.
+
+**The ceiling earns its keep twice.** It is a cost dial, and it also catches the gauge being wrong
+in the expensive direction: the gauge matches on words rather than grammar, so an idle *"what do you
+think about the Corvette"* contains "think about" and was priced as a request to deliberate. It is
+not any more, if you have said it must not be.
+
+Two things you can say out loud, because this is the row you will want with your hands on the
+stick:
+
+```text
+stop thinking so hard      → the ceiling becomes Medium
+think as hard as you like  → the ceiling is cleared
+```
+
+Each row offers only the rungs the other allows, so you cannot set a floor above a ceiling from the
+panel. A hand-edited settings file that says one anyway is read as the pair in the order that keeps
+both numbers meaning something, rather than refused or crashed on.
+
+**Your conversation only.** The quiet calls above are not held to the floor, and that is on purpose:
+a floor of High would turn every ambient remark into a reasoning call, which is exactly the spending
+the other row exists to stop.
+
+### The model this was waiting on
+
+0.71.1 fixed Claude Haiku 4.5 — it had been in the model list and unable to answer a turn at all,
+because it predates the generation that introduced two of the fields D47 sends. That release is
+what made a cheap model worth pointing anything at, and this one is what gives you somewhere to
+point it.
+
+One thing worth knowing before you do. The cheaper models carry your live game state under a
+weaker guarantee: on Claude Opus 5, Opus 4.8 and Fable 5 it reaches the model under a role that
+journal text cannot imitate, and everywhere else it is folded into the message behind a convention
+instead. That is the well-travelled path rather than a new risk — every OpenAI-compatible endpoint
+has always used it — and the guardrails that say in-game text is information rather than
+instruction sit above all of it either way.
+
+---
+
 ## 0.73.3 — 2026-08-26 — A material is not cargo, and D47 stops answering as though it were
 
 Asked *"where are the closest core dynamics composites?"*, Directive 47 answered:

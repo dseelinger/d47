@@ -1151,6 +1151,12 @@ public sealed class AppHost : IDisposable
             // because all three can change between the quote and the writing, and a log priced
             // against one model and written by another would make the quote a fiction — which
             // LogbookBook.WriteAsync checks for rather than assumes.
+            //
+            // The conversation model, deliberately, and not Turns.BackgroundModel (list.md
+            // Phase 54). This one is quoted at a price the Commander agrees to before anything
+            // is written, so the cheap model is not d47's to substitute — and the check above is
+            // exactly what would refuse the write if it were. "It uses FlavourTurn" is the
+            // reasoning that would otherwise move this by accident.
             () => new D47.Core.Logbook.LogbookContext
             {
                 Provider = self?.Turns.Provider,
@@ -1701,6 +1707,14 @@ public sealed class AppHost : IDisposable
 
         // What writes an adventure, once, for the Commander to agree to. Not a tool: it runs from
         // the panel with the flavour turn's bookkeeping, and the model it asks never sees an id.
+        //
+        // The conversation model, deliberately, and not turns.BackgroundModel (list.md Phase 54).
+        // Every reason the floor exists points the other way here: the Commander pressed a button
+        // and is waiting, the output must name real systems exactly, it is validated and re-asked
+        // on refusal, and it already asks Medium effort against token budgets an order of
+        // magnitude above every other caller. Note for whoever greps: this reads the property
+        // through a lowercase local, so a search for Turns.Model does not find it — which is
+        // precisely the accident this comment exists to prevent.
         var adventureGenerator = new D47.Core.Adventures.AdventureGenerator(
             () => turns.Provider,
             () => turns.Model,
@@ -2359,6 +2373,16 @@ public sealed class AppHost : IDisposable
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
 
+        // Resolved once, here, rather than at each of the eight call sites (list.md Phase 54).
+        // Null means the Commander has not split the two, so the background calls take the
+        // conversation model and nothing about them changes.
+        Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;
+
+        // What the Commander will pay for, kept apart from what the router thinks they asked
+        // for. Both null is the router's own answer, unchanged.
+        Turns.EffortFloor = current.Llm.EffortFloor;
+        Turns.EffortCeiling = current.Llm.EffortCeiling;
+
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
         // thirteen hundred tokens are paid once per edit rather than per turn (list.md Phase 43).
         Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
@@ -2615,7 +2639,7 @@ public sealed class AppHost : IDisposable
                 AboardVoices.Voices,
                 Settings.Current.Persona.Voices.Values,
                 Turns.Provider,
-                Turns.Model,
+                Turns.BackgroundModel,
                 Spend,
                 PriceTable.Default,
                 _logger,
@@ -2691,7 +2715,7 @@ public sealed class AppHost : IDisposable
             after,
             AboardVoices.Voices,
             Turns.Provider,
-            Turns.Model,
+            Turns.BackgroundModel,
             Spend,
             PriceTable.Default,
             _logger,
@@ -2756,7 +2780,7 @@ public sealed class AppHost : IDisposable
                 AboardVoices.Voices,
                 Settings.Current.Persona.Voices,
                 Turns.Provider,
-                Turns.Model,
+                Turns.BackgroundModel,
                 Spend,
                 PriceTable.Default,
                 _logger,
@@ -3188,7 +3212,7 @@ public sealed class AppHost : IDisposable
 
                     var generated = await FlavourTurn.AskAsync(
                         Turns.Provider,
-                        Turns.Model,
+                        Turns.BackgroundModel,
                         Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled),
 
                         // The sheet and not the story: a core reacting to lost time is speaking
@@ -3225,7 +3249,7 @@ public sealed class AppHost : IDisposable
                     // personality or a failed call all sound exactly as they did before.
                     var generated = await FlavourTurn.AskAsync(
                         Turns.Provider,
-                        Turns.Model,
+                        Turns.BackgroundModel,
                         Personas.RenderBlock(brief.NeedsPersona),
                         StoryFor(brief),
                         brief.Instruction,
@@ -4684,7 +4708,7 @@ public sealed class AppHost : IDisposable
 
         var line = await FlavourTurn.AskAsync(
             Turns.Provider,
-            Turns.Model,
+            Turns.BackgroundModel,
             brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
             StoryFor(brief),
             brief.Instruction,
@@ -4734,6 +4758,14 @@ public sealed class AppHost : IDisposable
     /// there is nothing about <em>search</em> to report there, and the language-model row already
     /// says the real thing.
     /// </para>
+    /// <para>
+    /// <b>Flagged rather than fixed (list.md Phase 54).</b> This asks about the conversation
+    /// model while one of the two things it gates — the lore lookup — now runs on
+    /// <see cref="TurnLoop.BackgroundModel"/>. It is correct today by accident: web search is
+    /// endpoint-gated in all three providers, so the model named makes no difference to the
+    /// answer. <see cref="D47.Core.Conversation.ILlmProvider"/> says the capability is
+    /// model-gated in principle, so the day a provider disagrees this is where it will show.
+    /// </para>
     /// </summary>
     private bool SearchReachesTheWeb =>
         Turns.Provider is not { } provider
@@ -4757,7 +4789,7 @@ public sealed class AppHost : IDisposable
     private Task<string?> SearchForAsync(string systemName, CancellationToken cancellationToken) =>
         FlavourTurn.AskAsync(
             Turns.Provider,
-            Turns.Model,
+            Turns.BackgroundModel,
             persona: null,
             aboutMe: null,
             LoreLookup.Instruction(systemName),
@@ -4802,7 +4834,7 @@ public sealed class AppHost : IDisposable
 
             var found = await FlavourTurn.AskAsync(
                 Turns.Provider,
-                Turns.Model,
+                Turns.BackgroundModel,
 
                 // No persona block. This is a report of what a search returned, and a core's
                 // voice is for what d47 has to say rather than for what somebody else wrote —

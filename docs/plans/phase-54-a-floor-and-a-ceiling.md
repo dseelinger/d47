@@ -1,14 +1,25 @@
 # Phase 54 — A floor and a ceiling
 
-**Status: step 1 built 2026-08-25, steps 2–10 not started.** The `list.md` items landed on
-2026-08-25. The plan was approved on 2026-08-23 and deliberately not started — see the standing
-instruction at the end of this file — and the Commander gave the word for item one on 2026-08-25.
+**Status: built. Steps 1–8 are in the tree; step 9, the pass by hand, is owed.** The plan was
+approved on 2026-08-23 and deliberately not started — see the standing instruction at the end of
+this file. Item one was built on the Commander's word on 2026-08-25 and shipped as a patch; `Xhigh`
+went out quietly with v0.71.2 the same day; the rest was built on 2026-08-26 in one pass, on the
+Commander's word again.
 
-**What is in the tree now** is the Haiku fix and nothing else: the deny-list, the model-keyed
-demotion, the two fields made conditional, and the reported effort. `Xhigh`, `ThinkingEffortRange`,
-the three settings rows, the clamp and the background-model routing are all still to build, so
-**nothing about a floor or a ceiling is reachable yet** — the phase is not shippable as a minor.
-Item one stands alone as a defect fix and can ship as a patch, which is what §8 step 1 anticipated.
+**What is in the tree now** is the whole phase: the Haiku fix, the fifth rung,
+`ThinkingEffortRange`, the clamp at the `TurnLoop` call site, the three settings rows with both
+clearing writes amended, the eight background callers pointed at `BackgroundModel`, and the docs.
+Suite green at 4,934 tests.
+
+**Two things are still owed and neither is code.** The manual half of item one — a real
+conversation on Haiku with the spend ledger's warmth column in view, because no test can prove the
+4096-token cache floor is cleared, and it fails in silence when it is not. And step 9's pass by
+hand over the three rows.
+
+**Three findings worth reading before the next plan cites this one**, all recorded against their
+`list.md` items: `Math.Clamp` cannot take an enum at all, the anchor gate does not fail before the
+docs are written, and Anthropic's endpoint row does not apply so the endpoint-clearing test runs on
+OpenAI.
 
 This is the plan of record. It exists because the reasoning below lived only in a chat plan outside
 the repository, where nobody else can read it and nothing cites it.
@@ -404,15 +415,15 @@ surface" are usually the same act and here they are not.
 |---|---|
 | 0. Phase 54 into `list.md` + this plan of record | Both done 2026-08-25 |
 | 1. **The Haiku defect alone, own commit** | **Built 2026-08-25.** Both directions proven against the unmodified tree — see below. Suite green: 4,732 tests. **The manual half has not been done**: pin `llm.model` to Haiku and hold a real conversation, watching the spend ledger's warmth column for the 4096-token cache floor. *Can ship as a patch ahead of the phase.* |
-| 2. `Xhigh` into the enum and three `Translate`s | New inline row, two OpenAI mappings, ladder-order assertion, **full build** — warnings are errors and a non-exhaustive switch is the likely surprise |
-| 3. `ThinkingEffortRange` + tests | `EffortRangeTests`, floor-above-ceiling included |
-| 4. Three `LlmSettings` properties | Round-trip: a file without the keys still loads |
-| 5. `TurnLoop` properties, the clamp, the reported effort, `ApplyLlmSettings` | Behaviour on a default install is byte-identical — **assert it, don't assume** |
-| 6. Point the eight background sites at `BackgroundModel` | The negative test, plus a grep that the remaining readers are exactly the intended two — **searching both `Turns.Model` and `turns.Model`**, per §5 |
-| 7. Three rows + the two `Write` amendments | Settings tests. The anchor gate fails until step 8 — expected |
-| 8. Docs | `dotnet test` — docs, anchor and nav gates are all tests |
-| 9. By hand (`manual-test`) | Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry |
-| 10. `tools/release.ps1 minor` | A completed phase is a minor. CHANGELOG section first, via `-ShowVersion` |
+| 2. `Xhigh` into the enum and three `Translate`s | **Built 2026-08-25, shipped in v0.71.2.** No switch turned out to be non-exhaustive: every `Translate` ends in a `_ =>` arm, so the rung built silently and `TheEffortLadderTests` is what holds it |
+| 3. `ThinkingEffortRange` + tests | **Built 2026-08-26.** `EffortRangeTests`, floor-above-ceiling included. `Math.Clamp` is not used and cannot be: its generic overload wants `IComparable<T>`, which an enum does not implement |
+| 4. Three `LlmSettings` properties | **Built 2026-08-26.** Round-trip both ways, plus a file with none of the three keys loading as three nulls |
+| 5. `TurnLoop` properties, the clamp, the reported effort, `ApplyLlmSettings` | **Built 2026-08-26.** A four-shape theory asserts that no bounds is exactly `ChooseFor`'s answer, and reverting the clamp fails the floor and ceiling tests while that theory stays green |
+| 6. Point the eight background sites at `BackgroundModel` | **Built 2026-08-26.** The grep became a gate — `TheFloorReachesTheBackgroundCallsAndOnlyThemTests` reads `AppHost.cs`, ignores comments, and names the three readers of the conversation model — because there is nothing to observe at runtime |
+| 7. Three rows + the two `Write` amendments | **Built 2026-08-26.** The anchor gate did **not** fail: nothing asserts an anchor resolves to a heading, only that a row declares one. Both amendments proven by reverting each |
+| 8. Docs | **Written 2026-08-26.** Three anchored sections, the model row amended by a sentence, the general page at five rungs, and the status line |
+| 9. By hand (`manual-test`) | **Owed.** Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry. Item one's manual half rides with it: a real Haiku conversation with the warmth column in view |
+| 10. `tools/release.ps1 minor` | **Owed — v0.74.0.** A completed phase is a minor. The CHANGELOG section is written and waiting |
 
 ---
 

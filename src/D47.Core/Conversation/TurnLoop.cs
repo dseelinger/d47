@@ -329,6 +329,48 @@ public sealed class TurnLoop(
     /// <summary>The pinned model, or null for the provider's own default.</summary>
     public string? Model { get; set; } = model;
 
+    /// <summary>
+    /// The model for calls the Commander is not waiting on — ambient remarks, the opening
+    /// brief, the gap reaction, the two lore lookups, voice casting (list.md Phase 54). Never
+    /// null once settings have been applied: the host resolves it to <see cref="Model"/> where
+    /// the Commander has chosen nothing.
+    /// <para>
+    /// <b>This loop never reads it</b>, and it lives here anyway. Every one of those callers
+    /// already holds the loop to find out which model is configured, so a property is what makes
+    /// each of them a one-token edit instead of an argument threaded through
+    /// <c>FlavourTurn.AskAsync</c> — which is at eleven parameters — and through
+    /// <c>VoicePairing</c> and <c>AdventureGenerator</c> besides.
+    /// </para>
+    /// <para>
+    /// Two callers deliberately keep <see cref="Model"/>: adventure generation, where the
+    /// Commander pressed a button and is waiting on output that must name real systems exactly,
+    /// and the Commander's log, which is quoted at a price and refuses to write if the model
+    /// changed between quote and write.
+    /// </para>
+    /// </summary>
+    public string? BackgroundModel { get; set; } = model;
+
+    /// <summary>
+    /// The least effort a turn may run at, or null for whatever <see cref="EffortRouter"/>
+    /// answered (list.md Phase 54).
+    /// <para>
+    /// A property assigned from settings, exactly as <see cref="Model"/> and
+    /// <see cref="Persona"/> are, and the clamp is applied at the call site rather than inside
+    /// <c>ChooseFor</c>. That keeps two decisions with two owners apart — <em>what did the
+    /// Commander ask for</em>, which is a pure heuristic, against <em>what will they pay for</em>
+    /// — and it is why the router's own tests are untouched by the bounds existing.
+    /// </para>
+    /// </summary>
+    public ThinkingEffort? EffortFloor { get; set; }
+
+    /// <summary>
+    /// The most effort a turn may run at, or null for whatever <see cref="EffortRouter"/>
+    /// answered (list.md Phase 54). A cost dial, and a guard against the router's own false
+    /// positives: it matches substrings with no word boundaries, so "what do you think about"
+    /// hits "think about" and routes to Max.
+    /// </summary>
+    public ThinkingEffort? EffortCeiling { get; set; }
+
     /// <summary>The persona block, or null for "personality off". Never reaches the guardrails.</summary>
     public string? Persona { get; set; }
 
@@ -500,7 +542,11 @@ public sealed class TurnLoop(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var chosenModel = Model ?? activeProvider.DefaultModel;
-        var effort = EffortRouter.ChooseFor(input);
+        // What the Commander asked for, held between what they will pay for (list.md Phase 54).
+        // The clamp is here rather than inside ChooseFor so the router stays a pure heuristic
+        // with nothing to say about money — and so its own tests never have to know the bounds
+        // exist. Both bounds unset is exactly ChooseFor's answer.
+        var effort = ThinkingEffortRange.Clamp(EffortRouter.ChooseFor(input), EffortFloor, EffortCeiling);
 
         // A cold prefix is only sanctioned on the first turn and after a model change. Anything
         // else writing cache is a regression the running total surfaces rather than hides.
