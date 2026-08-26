@@ -20,6 +20,44 @@ the file as it stood then.
 
 ---
 
+## 0.73.3 — 2026-08-26 — A material is not cargo, and D47 stops answering as though it were
+
+Asked *"where are the closest core dynamics composites?"*, Directive 47 answered:
+
+> Core Dynamics Composite isn't trading within 50 light years of Kuk. The market data in reach is
+> stale anyway — 19 stations didn't quote because their prices are too old to trust.
+
+**Core Dynamics Composites is an engineering material.** It is not a commodity, no station has ever
+traded it, and no search of any radius would have found one. The answer was true and useless, and
+it took three more turns of being walked through before anything useful came out.
+
+Now:
+
+> Core Dynamics Composites is not a commodity — no station trades it. It is a manufactured
+> engineering material, grade 3. Found at: … Ask find_material for where to get it and what a
+> trader could turn into it.
+
+**It answers rather than redirects.** Directive 47 already holds the table that says where the
+material comes from, so reading it out is free — being told to ask a different question would have
+been a fourth turn rather than the answer.
+
+It also answers **whether or not galaxy search is switched on**, because nothing about it needs the
+network. A Commander running local-only gets the correct answer rather than "the search is off"
+and the wrong idea about what the thing is.
+
+### Why it started
+
+It worked until 0.71.0. Then `find_nearest_station` learned to search commodity markets, and
+*"where are the closest …"* about a named thing you might buy started reading as a market question.
+The tool that answers properly — `find_material` — was advertised the whole time and was simply
+passed over; the tool descriptions now say plainly that commodities are cargo carried in tonnes and
+never engineering materials.
+
+The reverse was already right and stays that way: a commodity name handed to the material tool is
+told it is cargo rather than searched for as a material.
+
+---
+
 ## 0.73.2 — 2026-08-26 — Your carrier stops quoting the rulebook, and two of a kind are told apart
 
 ### The tower said something nobody wrote
