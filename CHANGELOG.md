@@ -20,6 +20,36 @@ the file as it stood then.
 
 ---
 
+## 0.73.1 — 2026-08-26 — A resistance is a percentage, not a multiplier
+
+Reported from the Loadout tab against a Heavy Duty G5 hull reinforcement:
+
+```
+2D HRP · Heavy Duty G5 · +1485% KineticResistance
+```
+
+The resistance had gone from 1.0% to 15.8% — **14.85 points**. Directive 47 divided that by its
+base and reported a number a hundred times too large.
+
+It now shows the figure the game's own ring shows, which is the one you are comparing against:
+
+```
+2D HRP · Heavy Duty G5 · 15.8% KineticResistance
+```
+
+Every other modifier is unchanged, because for them the proportion is the right reading — mass
+going 2.0 → 2.8 really is **+40%**, and that is still what it says.
+
+**Two more faults went with it, both invisible until you looked for them.** A resistance Elite
+writes as *negative* — thermal resistance on this blueprint routinely is — came out with a sign
+that said the opposite of what happened. And a resistance rolled up from a base of exactly zero
+was **dropped from the list entirely**, because zero is what the code was avoiding dividing by.
+
+The ordering is fixed with them. The list puts the biggest change first, and a resistance scored
+at a hundred times its true size outranked every real change on the module for ever.
+
+---
+
 ## 0.73.0 — 2026-08-26 — A voice from OpenAI
 
 **Phase 58.** A third voice provider, and the first to arrive since slots became the unit — so it
