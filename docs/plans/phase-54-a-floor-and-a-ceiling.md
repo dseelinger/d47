@@ -1,6 +1,6 @@
 # Phase 54 — A floor and a ceiling
 
-**Status: built. Steps 1–8 are in the tree; step 9, the pass by hand, is owed.** The plan was
+**Status: SHIPPED v0.74.0, 2026-08-26. Steps 1–8 and 10 are done; step 9, the pass by hand, is owed.** The plan was
 approved on 2026-08-23 and deliberately not started — see the standing instruction at the end of
 this file. Item one was built on the Commander's word on 2026-08-25 and shipped as a patch; `Xhigh`
 went out quietly with v0.71.2 the same day; the rest was built on 2026-08-26 in one pass, on the
@@ -422,8 +422,8 @@ surface" are usually the same act and here they are not.
 | 6. Point the eight background sites at `BackgroundModel` | **Built 2026-08-26.** The grep became a gate — `TheFloorReachesTheBackgroundCallsAndOnlyThemTests` reads `AppHost.cs`, ignores comments, and names the three readers of the conversation model — because there is nothing to observe at runtime |
 | 7. Three rows + the two `Write` amendments | **Built 2026-08-26.** The anchor gate did **not** fail: nothing asserts an anchor resolves to a heading, only that a row declares one. Both amendments proven by reverting each |
 | 8. Docs | **Written 2026-08-26.** Three anchored sections, the model row amended by a sentence, the general page at five rungs, and the status line |
-| 9. By hand (`manual-test`) | **Owed.** Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry. Item one's manual half rides with it: a real Haiku conversation with the warmth column in view |
-| 10. `tools/release.ps1 minor` | **Owed — v0.74.0.** A completed phase is a minor. The CHANGELOG section is written and waiting |
+| 9. By hand (`manual-test`) | **Owed, and it did not gate the release** — the rows are covered by tests at the store and the surface, and the one thing no test reaches is a real endpoint. Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry. Item one's manual half rides with it: a real Haiku conversation with the warmth column in view |
+| 10. `tools/release.ps1 minor` | **Shipped v0.74.0 on 2026-08-26.** Suite green in Release, CI green on `be55749` before the tag, and the release workflow published the installer, the zip and both checksums |
 
 ---
 
