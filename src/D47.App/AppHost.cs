@@ -1909,6 +1909,11 @@ public sealed class AppHost : IDisposable
             // responsive than the key it replaces.
             pushToTalkButton.Poll(controllers.Poll());
 
+            // And then, and only then, whether the stick it is bound to turned up (#45). Asked
+            // here because this is the only place that has looked; the button answers once per
+            // binding, so this is a warning rather than ten of them a second.
+            host.WarnIfTheStickIsMissing();
+
             // Whether the device is actually delivering audio, which only it knows and which is
             // half of what the panel's microphone indicator says. Sampled here rather than
             // raised, because a device disappearing does not always announce itself.
@@ -4078,7 +4083,9 @@ public sealed class AppHost : IDisposable
         var boundButton = _pushToTalkButton.Bind(
             D47.Core.Hotas.HotasButton.Parse(listening.PushToTalkButton));
 
-        WarnIfTheStickIsMissing(boundButton);
+        // Whether that stick is actually here is asked from the tick, not from here (#45).
+        // Nothing has polled yet at this point, so the only answer available on this line is
+        // "not seen", which is the question rather than the answer to it.
 
         var bound = boundKey || boundButton;
 
@@ -4139,25 +4146,37 @@ public sealed class AppHost : IDisposable
     /// attached has cost real evenings before. If a key is bound too, it is still live — which is
     /// the whole reason both stay bound rather than one replacing the other.
     /// </para>
+    /// <para>
+    /// <b>Called from the tick rather than from the settings apply</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/45">#45</a>). It used to run on the line
+    /// after the bind, where nothing had polled yet, so it warned on every single binding — the
+    /// Commander's own log has it firing at 16:03:34 and the Commander speaking through that
+    /// button at 16:03:42. The button now answers the question only once something has looked,
+    /// and answers it once per binding rather than once per tick.
+    /// </para>
     /// </summary>
-    private void WarnIfTheStickIsMissing(bool boundButton)
+    private void WarnIfTheStickIsMissing()
     {
-        if (!boundButton || _pushToTalkButton.DevicePresent is not false)
+        // Not while the readers are still enumerating: a single enumeration at startup reported
+        // three of six devices on the bench, which is the whole of Phase 21's finding 1, and a
+        // warning raised then would be wrong more often than right.
+        //
+        // Checked before the notice is taken rather than after, so an unsettled tick costs the
+        // button nothing — the notice fires once per binding and must not be spent on a tick
+        // that was never going to say anything.
+        if (Controllers?.IsSettled != true)
         {
             return;
         }
 
-        // Not while the readers are still enumerating: a single enumeration at startup reported
-        // three of six devices on the bench, which is the whole of Phase 21's finding 1, and a
-        // warning raised then would be wrong more often than right.
-        if (Controllers?.IsSettled != true)
+        if (_pushToTalkButton.MissingDeviceNotice() is not { } button)
         {
             return;
         }
 
         _logger.LogWarning(
             "Push-to-talk is bound to {Button} on a controller that is not here",
-            _pushToTalkButton.Bound?.Describe());
+            button.Describe());
     }
 
     /// <summary>
