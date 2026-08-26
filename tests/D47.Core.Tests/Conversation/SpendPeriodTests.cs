@@ -4,9 +4,10 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// The four windows the spend dialog reports (docs/plans/change-requests.md item 2).
+/// The five windows the spend dialog reports (docs/plans/change-requests.md item 2; Today added
+/// by <a href="https://github.com/dseelinger/d47/issues/62">#62</a>).
 /// <para>
-/// Two of them are elapsed durations and two are local-calendar ideas, and the difference is the
+/// Two of them are elapsed durations and three are local-calendar ideas, and the difference is the
 /// reason rows are stored as absolute instants: a boundary computed at query time against the
 /// Commander's zone is right across a clock change, and one baked in at write time is not.
 /// </para>
@@ -43,7 +44,7 @@ public class SpendPeriodTests
     /// <summary>
     /// The charge a Commander is most likely to be looking for is the one just made, stamped at
     /// the same instant the windows end. An exclusive upper bound left the current turn out of
-    /// all four totals — visible as "This week: nothing yet" on a page reporting a turn that had
+    /// every total — visible as "This week: nothing yet" on a page reporting a turn that had
     /// just been charged.
     /// </summary>
     [Fact]
@@ -195,13 +196,112 @@ public class SpendPeriodTests
         Assert.Equal(TimeSpan.Zero, localStart.TimeOfDay);
     }
 
+    /// <summary>
+    /// Today leads the list, because the freshest window is the most-read one — the same instinct
+    /// that closes every window at both ends.
+    /// </summary>
     [Fact]
-    public void AllFourWindowsAreReportedInOrder()
+    public void TodayIsFirstAndTheListIsFive()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
+        var all = SpendPeriods.All(now, London);
+
+        Assert.Equal(5, all.Count);
+        Assert.Equal("Today", all[0].Name);
+        Assert.Equal(
+            ["Today", "Last 7 days", "Last 30 days", "This week", "This month"],
+            all.Select(period => period.Name));
+    }
+
+    /// <summary>
+    /// Named as a decision rather than left as an absence. "What have I spent today" is a question
+    /// a Commander asks; "what have I spent in the last twenty-four hours" is the same number with
+    /// a boundary they cannot point at, and the class doc's defence of carrying both kinds of
+    /// window would otherwise read as an invitation to complete the set.
+    /// </summary>
+    [Fact]
+    public void ThereIsNoRollingTwentyFourHourTwin()
     {
         var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
 
-        Assert.Equal(
-            ["Last 7 days", "Last 30 days", "This week", "This month"],
-            SpendPeriods.All(now, London).Select(window => window.Name));
+        Assert.DoesNotContain(
+            SpendPeriods.All(now, London),
+            period => period.Name.Contains("24", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The trap Today inherits rather than re-solves. On 29 March 2026 London goes forward at
+    /// 01:00, so the day still starts at midnight GMT — but the day is 23 hours long, and a naive
+    /// "now minus 24 hours" would reach back into the previous day. The window is anchored to the
+    /// midnight that happened, not to a duration.
+    /// </summary>
+    [Fact]
+    public void TodayStartsAtTheMidnightThatHappened()
+    {
+        // 14:00 local on the day the clocks went forward, which is 13:00 UTC (BST is +1 by then).
+        var now = new DateTimeOffset(2026, 3, 29, 13, 0, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, London);
+
+        Assert.Equal(new DateTimeOffset(2026, 3, 29, 0, 0, 0, TimeSpan.Zero), today.From);
+        Assert.Equal(now, today.To);
+
+        // A charge from 23:30 the previous evening is yesterday's, and a 24-hour window would
+        // have swept it in.
+        Assert.False(today.Holds(new DateTimeOffset(2026, 3, 28, 23, 30, 0, TimeSpan.Zero)));
+        Assert.True(today.Holds(new DateTimeOffset(2026, 3, 29, 0, 0, 0, TimeSpan.Zero)));
+    }
+
+    /// <summary>
+    /// The other direction: 25 October 2026, when London falls back at 02:00 and 01:30 happens
+    /// twice. The day begins at the midnight the Commander's clock first showed, so the repeated
+    /// hour is inside the window rather than outside it.
+    /// </summary>
+    [Fact]
+    public void TodayCoversTheRepeatedHourWhenTheClocksGoBack()
+    {
+        var now = new DateTimeOffset(2026, 10, 25, 12, 0, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, London);
+
+        Assert.Equal(new DateTimeOffset(2026, 10, 25, 0, 0, 0, TimeSpan.FromHours(1)), today.From);
+
+        // 01:30 BST — the first pass through the ambiguous hour, 00:30 UTC.
+        Assert.True(today.Holds(new DateTimeOffset(2026, 10, 25, 0, 30, 0, TimeSpan.Zero)));
+
+        // 01:30 GMT — the second pass, an hour later in absolute terms. Also today.
+        Assert.True(today.Holds(new DateTimeOffset(2026, 10, 25, 1, 30, 0, TimeSpan.Zero)));
+    }
+
+    /// <summary>
+    /// A zone whose offset is not a whole number of hours, which is where "subtract the offset"
+    /// arithmetic goes wrong. Chatham is +12:45 in winter.
+    /// </summary>
+    [Fact]
+    public void TodayIsRightInAZoneWithAQuarterHourOffset()
+    {
+        // 08:00 on 17 August 2026 in Chatham is 19:15 UTC on the 16th (+12:45).
+        var now = new DateTimeOffset(2026, 8, 16, 19, 15, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, Chatham);
+
+        Assert.Equal(new DateTimeOffset(2026, 8, 17, 0, 0, 0, TimeSpan.FromMinutes(765)), today.From);
+        Assert.True(today.Holds(now));
+    }
+
+    /// <summary>
+    /// Expected, and written down so it is not "fixed" later. On a Sunday, Today and This week
+    /// begin at the same midnight; on the 1st, Today and This month do; on a Sunday the 1st, all
+    /// three agree. 1 November 2026 is a Sunday.
+    /// </summary>
+    [Fact]
+    public void OnASundayTheFirstAllThreeCalendarWindowsAgree()
+    {
+        var now = new DateTimeOffset(2026, 11, 1, 15, 0, 0, TimeSpan.Zero);
+        var all = SpendPeriods.All(now, London);
+
+        var today = all.Single(period => period.Name == "Today");
+        var week = all.Single(period => period.Name == "This week");
+        var month = all.Single(period => period.Name == "This month");
+
+        Assert.Equal(today.From, week.From);
+        Assert.Equal(today.From, month.From);
     }
 }

@@ -127,18 +127,19 @@ public class SpendDialogTests
     }
 
     /// <summary>
-    /// All four windows are named, whether or not anything was spent in them. A window that is
+    /// All five windows are named, whether or not anything was spent in them. A window that is
     /// silent because it is empty and one that is silent because it was not computed look the
     /// same, and only one of those is acceptable.
     /// </summary>
     [AvaloniaFact]
-    public void AllFourRunningTotalsAreListed()
+    public void AllFiveRunningTotalsAreListed()
     {
         var window = Dialog(out _);
         window.Show();
 
         var text = Words(window);
 
+        Assert.Contains("Today", text, StringComparison.Ordinal);
         Assert.Contains("Last 7 days", text, StringComparison.Ordinal);
         Assert.Contains("Last 30 days", text, StringComparison.Ordinal);
         Assert.Contains("This week", text, StringComparison.Ordinal);

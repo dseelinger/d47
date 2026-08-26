@@ -51,8 +51,9 @@ public sealed class SpendWindow : Window
         body.Children.Add(Section("This turn", TurnRows(turn)));
         body.Children.Add(Section("This session", SessionRows(session, speech, settings)));
 
-        // The four windows the request asked for. Two are elapsed durations and two are local
-        // calendar ideas; the ledger works out which instants those are, against this zone.
+        // Five windows, freshest first. Two are elapsed durations and three are local calendar
+        // ideas; the ledger works out which instants those are, against this zone. SpendPeriods
+        // owns the order and the reason there is no "Last 24 hours" beside Today.
         body.Children.Add(Section(
             "Running totals",
             [.. ledger.Summary(zone).Select(row => Row(
