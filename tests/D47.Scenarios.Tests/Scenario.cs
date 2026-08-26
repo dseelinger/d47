@@ -165,6 +165,23 @@ public static class Corpus
 
     public static IReadOnlyList<Scenario> Scenarios() => Load<Scenario>("scenarios.json").Select(Validate).ToList();
 
+    /// <summary>
+    /// The routing table: a real Commander sentence and the tool it must call
+    /// (<a href="https://github.com/dseelinger/d47/issues/57">#57</a>).
+    /// <para>
+    /// <b>A suite and a table, not an instrument.</b> Everything it needs already existed —
+    /// <see cref="ScenarioRunner"/> drives a turn, <c>TurnTrace.ToolCalls</c> records what ran, and
+    /// <see cref="ScenarioAssertion"/> asserts against that list. What was missing was the rows.
+    /// </para>
+    /// <para>
+    /// It is what makes <em>growing</em> the tool surface safe. Count is close to free while every
+    /// tool is unambiguous; what costs is two tools that could both catch one sentence. A
+    /// description is a hope about how a model reads, and until this there was no way to check the
+    /// hope except a Commander hitting it while flying.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<Scenario> Routing() => Load<Scenario>("routing.json").Select(Validate).ToList();
+
     public static IReadOnlyList<Attack> Attacks() => Load<Attack>("attacks.json");
 
     public static IReadOnlyList<Vector> Vectors() => Load<Vector>("vectors.json");
