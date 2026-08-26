@@ -20,6 +20,20 @@ the file as it stood then.
 
 ---
 
+## 0.75.1 — 2026-08-26 — Show every setting moves to the top
+
+**Show every setting** shipped four rows into the Interface card yesterday, which is exactly where
+a Commander who cannot see the rest of the settings will not think to look for the reason.
+
+It is now at the **top of the settings page**, above every card. It decides what the whole page
+draws, so it belongs to the page rather than to one card on it — and it is the control you need
+when the page is folded, which is the state it exists to get you out of.
+
+Nothing else moves. The cards are in the same order, the setting keeps its key and its spoken
+phrases, and a search that leaves nothing at the top no longer answers with a floating toggle.
+
+---
+
 ## 0.75.0 — 2026-08-26 — Helpful, not anxiety-inducing
 
 Seven wanted changes, and five of them are about the same thing: a settings page with seventy-five
