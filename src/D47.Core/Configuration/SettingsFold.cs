@@ -40,7 +40,7 @@ public static class SettingsFold
     /// <param name="showEverything">The Commander's own answer, which outranks all of it.</param>
     public static bool IsFolded(SettingRow row, D47Settings settings, bool changed, bool showEverything)
     {
-        if (showEverything || !row.Advanced)
+        if (showEverything || !row.Advanced || row.PageTop)
         {
             return false;
         }

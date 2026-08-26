@@ -102,6 +102,10 @@ rebind your keys, and was never given a way to.
 
 #### Show every setting {#show-every-setting}
 
+**At the top of the settings page, above every card**, rather than inside this one. It decides what
+the whole page draws, and somebody who cannot see the rest of the settings should not have to go
+looking for the reason four rows into Interface.
+
 Off by default. Directive 47 shows the settings most Commanders change, and folds the rest away
 until you ask for them.
 
