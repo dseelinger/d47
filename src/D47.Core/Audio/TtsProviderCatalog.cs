@@ -56,6 +56,25 @@ public sealed record TtsProviderInfo
     public decimal? ListDollarsPerThousandCharacters { get; init; }
 
     /// <summary>
+    /// The same thing per minute of audio, for a provider whose bill is not a function of the
+    /// characters handed over.
+    /// <para>
+    /// <b>Two providers genuinely bill in two units, and forcing one unit on both is what
+    /// produced the gap this closes</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>). A provider declares the
+    /// unit it is billed in and the rate in that unit; <see cref="SpeechSpend"/> multiplies the
+    /// matching measure. Exactly one of these two should be set — see <see cref="BilledByMinute"/>.
+    /// </para>
+    /// </summary>
+    public decimal? ListDollarsPerMinute { get; init; }
+
+    /// <summary>
+    /// Which measure this provider's bill is a function of. Declared by which rate is set rather
+    /// than by a third field that could disagree with both.
+    /// </summary>
+    public bool BilledByMinute => ListDollarsPerMinute is not null;
+
+    /// <summary>
     /// Whether this provider's voice ids mean nothing to a person, so one must never be shown in
     /// place of a voice's name.
     /// <para>
@@ -219,15 +238,36 @@ public static class TtsProviderCatalog
 
         Billed = true,
 
-        // Deliberately unpriced, and that is the finding rather than an omission (list.md Phase
-        // 58). d47 counts characters because ElevenLabs bills by the character; OpenAI publishes
-        // per minute of audio. Measured on the spike's own clips, plain prose runs at 951
+        // Not priced by the character, and that is still the finding rather than an omission
+        // (list.md Phase 58). Measured on the spike's own clips, plain prose runs at 951
         // characters a minute and a line of system names and numerals at 671 — a spread of about
-        // 40% with *content* — so no conversion exists, and any figure derived here would be
-        // wrong by a different amount on every line. Null is already a supported answer: the row
-        // reads "(not published — no price will be quoted)" and the spend line quotes the
-        // character count on its own until the Commander sets a rate they can stand behind.
+        // 40% with *content* — so no character-to-minute conversion exists and any figure derived
+        // that way would be wrong by a different amount on every line.
+        //
+        // What changed is that the conversion is not needed: d47 has the audio, so it knows each
+        // clip's length to the sample, and duration is a measurement rather than an estimate
+        // (#63).
         ListDollarsPerThousandCharacters = null,
+
+        // $0.015 per minute of audio. **This is a proxy and is recorded as one**, which is the
+        // honest half of #63 and the half worth reading before trusting the figure.
+        //
+        // OpenAI publishes no per-minute rate. From developers.openai.com/api/docs/pricing, read
+        // on 2026-08-26: gpt-4o-mini-tts is $12.00 per 1M audio *output tokens* and $0.60 per 1M
+        // text input tokens, and no minute appears anywhere on the page. The commonly quoted
+        // $0.015 a minute is the equivalent third parties arrive at, not a rate OpenAI states.
+        //
+        // So duration is a proxy for the billed quantity rather than the billed quantity itself.
+        // It is a far better proxy than characters — audio tokens track the length of the audio,
+        // which is exactly what is being measured, rather than tracking content the way a
+        // character count does — and it is the closest thing to ground truth available, because
+        // /v1/audio/speech returns audio bytes and **no usage object**, so there is nothing to
+        // read the real token count back from.
+        //
+        // A good proxy stated as one is honest; a proxy presented as the bill is not. The row is
+        // editable for the same reason ElevenLabs' is, and the spend dialog says once, at the top,
+        // that every figure in it is an estimate.
+        ListDollarsPerMinute = 0.015m,
     };
 
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>

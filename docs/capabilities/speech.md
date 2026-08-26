@@ -346,11 +346,14 @@ Frontier's, and it is English.
 
 #### What the voices cost {#voice-cost}
 
-Speech is billed **by the character** where it is billed at all. ElevenLabs charges per
-character, Edge Neural charges nothing, and quoting either in tokens would be a number whose
-basis is wrong — so this is counted separately from [what the model costs](conversation.md).
+**Providers disagree about what they are selling, so they disagree about what they charge for.**
+ElevenLabs bills by the character, OpenAI by how much audio comes back, and Edge Neural charges
+nothing at all. Directive 47 measures both — the characters it sent, and the length of the clip it
+got — and prices whichever one your provider's bill is a function of. Quoting either in tokens
+would be a number whose basis is wrong, which is why this is counted separately from
+[what the model costs](conversation.md).
 
-Two rows, and they are deliberately different kinds of thing.
+You see one price row, not two: the one that matches the provider you are on.
 
 **Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
 published list price for the model Directive 47 asks for — $0.05 per thousand for ElevenLabs'
@@ -358,6 +361,20 @@ published list price for the model Directive 47 asks for — $0.05 per thousand 
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.
+
+**Price per minute of audio** is the same row for a provider billed that way, and it is where
+OpenAI lands. The minutes are a **fact**: Directive 47 asks OpenAI for raw audio samples, so it
+knows each clip's length exactly — it does not estimate it from the text, which would be hopeless,
+because the same thousand characters run to 951 characters a minute as plain prose and 671 as a
+line of system names.
+
+**The rate behind it is a proxy, and that is worth knowing.** OpenAI publishes no per-minute price
+at all — they charge $12.00 per million audio output tokens and $0.60 per million text input
+tokens, read from their pricing page on 2026-08-26 — and their speech endpoint returns the audio
+with no usage figures attached, so there is nothing to read the real token count back from. The
+$0.015 a minute this row defaults to is the equivalent everyone else arrives at, not a number
+OpenAI states. It is a good proxy, it is far better than guessing from characters, and it is
+still a proxy. Correct the row if your account tells you otherwise.
 
 **Spoken this session** is a fact. It is the number of characters actually handed to the
 provider since Directive 47 started, counted at the one seam every caller passes — the ship's AI,
