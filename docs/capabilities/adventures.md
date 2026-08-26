@@ -152,7 +152,9 @@ Next: dock at Maren Anchorage in Dyson's Hollow.
 The hand-off names the place and the act and nothing else — never the next beat's title or its
 line, which is the spoiler rule holding. A scan's hand-off says *how*, because "scan X" sent a
 Commander looking for a detailed surface scanner when the ship's own scanner was what the story
-meant.
+meant. It also says that going there counts: a body already scanned writes no second `Scan`, so a
+scan beat is satisfied by the approach as well, and a story cannot strand a Commander on somewhere
+they had already been.
 
 **No counts where you read.** The card says the story's name and where it is — *not yet begun*, the
 current beat's title, or *finished*. *Beat 3 of 7* is checklist language and lives in the Technical

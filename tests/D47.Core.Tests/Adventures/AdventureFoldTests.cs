@@ -103,6 +103,54 @@ public class AdventureFoldTests
         Assert.False(AdventureFold.Matches(trigger, Scan(Veyl, 9, Accepted)));
     }
 
+    /// <summary>
+    /// #77: a story stuck on a body the Commander had already scanned, because Elite writes
+    /// <c>Scan</c> once and then, overwhelmingly, never again. Going to the body satisfies the
+    /// beat too, by the two events the corpus says fire whatever was discovered when.
+    /// </summary>
+    [Fact]
+    public void AScanBeatAlsoFiresOnGoingToTheBody()
+    {
+        var trigger = new AdventureTrigger { Kind = TriggerKind.Scan, SystemAddress = Veyl, BodyId = 9 };
+
+        Assert.True(AdventureFold.Matches(trigger, Scan(Veyl, 9, Accepted)));
+        Assert.True(AdventureFold.Matches(trigger, ApproachBody(Veyl, 9, Accepted)));
+        Assert.True(AdventureFold.Matches(trigger, SupercruiseExit(Veyl, 9, Accepted)));
+
+        // The widening is in which events count, never in which place counts.
+        Assert.False(AdventureFold.Matches(trigger, ApproachBody(Veyl, 8, Accepted)));
+        Assert.False(AdventureFold.Matches(trigger, SupercruiseExit(Home, 9, Accepted)));
+        Assert.False(AdventureFold.Matches(trigger, Touchdown(Veyl, 9, Accepted)));
+    }
+
+    /// <summary>
+    /// #77 as the tester met it: the destination is a body scanned long ago, so no <c>Scan</c> is
+    /// ever written again and the beat waits forever. Flying there moves the story on.
+    /// </summary>
+    [Fact]
+    public void AStoryDoesNotStickOnABodyScannedLongAgo()
+    {
+        var adventure = new Adventure
+        {
+            Key = "the-quiet-field",
+            Name = "The Quiet Field",
+            AcceptedAt = Accepted,
+            Beats =
+            [
+                Beat(
+                    "The Survey",
+                    "catalyst",
+                    new AdventureTrigger { Kind = TriggerKind.Scan, SystemAddress = Veyl, BodyId = 9, System = "Cairn of Veyl", Body = "Veyl 3 c" },
+                    "Filed in 3306."),
+            ],
+        };
+
+        var standing = Run(adventure, [SupercruiseExit(Veyl, 9, Accepted.AddMinutes(5))]);
+
+        Assert.Single(standing.Fired);
+        Assert.True(standing.IsDone);
+    }
+
     [Fact]
     public void ARankBeatFiresOnReachingOrPassingTheRank()
     {

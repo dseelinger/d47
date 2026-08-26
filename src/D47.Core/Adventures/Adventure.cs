@@ -96,9 +96,14 @@ public sealed record AdventureTrigger
     /// to fly a story went looking for a surface scanner, and the journal's <c>Scan</c> is written by
     /// the ship's own scanner in supercruise, by a close approach, or by a nav beacon — never by a
     /// surface scanner, which writes a different event.
+    /// <para>
+    /// <b>And going there counts, from #77.</b> A body already scanned is one Elite will not
+    /// write a <c>Scan</c> for again, so the beat fires on the approach as well; the sentence
+    /// says so rather than leaving a Commander to find it out by being stuck.
+    /// </para>
     /// </summary>
     public string HandOff() => Kind == TriggerKind.Scan
-        ? $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed."
+        ? $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before."
         : $"Next: {Describe()}.";
 
     private string In() => System is { Length: > 0 } system && !string.Equals(system, Body, StringComparison.Ordinal)

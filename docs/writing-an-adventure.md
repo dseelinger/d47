@@ -127,6 +127,12 @@ it is not offered rather than offered and broken.
 to pin a beat to a real place — or a name you type, resolved through the galaxy search. For a rank
 beat it is the rank instead.
 
+**A scan beat also fires on going there.** Elite writes a `Scan` the first time a body enters your
+discovered set and then, in the overwhelming majority of cases, never again — so a story that sent
+you to somewhere you had already scanned used to wait for an event the game had already spent, with
+no way past it. Arriving at the body counts as well, so pick the body you want the story to visit
+and do not worry about whether you have been there before.
+
 Beats fire **in order**. Progress comes from your journal as you fly, not from anything you press.
 
 ### The spine

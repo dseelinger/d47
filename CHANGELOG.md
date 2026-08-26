@@ -20,6 +20,43 @@ the file as it stood then.
 
 ---
 
+## 0.76.1 — 2026-08-26 — An adventure no longer strands you on a body you have been to
+
+Reported from a flight: *the Adventure will get stuck if the destination is a body that has already
+been scanned, and it expects you to scan it.*
+
+It would, and there was no way out of it but to abandon the story. Elite writes a `Scan` the first
+time a body enters your discovered set and then, overwhelmingly, never again — across the three
+Commanders in the journals here, only 239 of 7,091, 155 of 2,722 and 289 of 11,727 scanned bodies
+were ever seen a second time, and most of those are a nav beacon re-reading a whole system at once.
+So a beat that waited for a scan of somewhere you had already been was waiting for an event the
+game had already spent. It could never fire, and because a story only ever waits on its current
+beat, everything after it waited too.
+
+**Going to the body now counts.** The approach and the drop out of supercruise both say you went,
+both carry the ids the beat matches on, and both happen whatever you discovered and whenever. The
+hand-off says so too, so the story tells you rather than leaving you to work it out while stuck:
+
+```text
+Next: scan Veyl 3 c in Cairn of Veyl — the ship's own scanner from supercruise does it, or a
+close pass; no surface scanner is needed, and simply going there counts if you have scanned it
+before.
+```
+
+This can move a beat a few seconds earlier on a body you had *not* scanned — the corpus's own
+example fires at 21:29:26, when the Commander dropped out of supercruise at the body, rather than
+21:29:39 when they read the nav beacon. Same body, same visit, thirteen seconds. That is the price,
+and a story that can never continue was the alternative.
+
+Fixes [#77](https://github.com/dseelinger/d47/issues/77).
+
+### Two ELI5 bands in plainer words
+
+The settings and speech help pages lost a flourish apiece and gained a closer that finishes its
+sentence. No behaviour, only the reading.
+
+---
+
 ## 0.76.0 — 2026-08-26 — Asking the right tool, and saying which ship
 
 Five wanted changes, and the start of a sixth.

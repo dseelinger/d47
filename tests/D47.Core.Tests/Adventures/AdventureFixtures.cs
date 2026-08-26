@@ -69,6 +69,12 @@ internal static class AdventureFixtures
     public static JournalEvent Scan(long systemAddress, int bodyId, DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"Scan", "ScanType":"Detailed", "BodyName":"A body", "BodyID":{{bodyId}}, "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}} }""");
 
+    public static JournalEvent ApproachBody(long systemAddress, int bodyId, DateTimeOffset at) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"ApproachBody", "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}}, "Body":"A body", "BodyID":{{bodyId}} }""");
+
+    public static JournalEvent SupercruiseExit(long systemAddress, int bodyId, DateTimeOffset at) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"SupercruiseExit", "Taxi":false, "Multicrew":false, "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}}, "Body":"A body", "BodyID":{{bodyId}}, "BodyType":"Planet" }""");
+
     public static JournalEvent Docked(long marketId, DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"Docked", "StationName":"Some Station", "StationType":"Outpost", "StarSystem":"Somewhere", "SystemAddress":1, "MarketID":{{marketId}} }""");
 

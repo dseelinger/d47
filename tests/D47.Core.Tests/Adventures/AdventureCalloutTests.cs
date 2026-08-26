@@ -59,9 +59,10 @@ public class AdventureCalloutTests : IDisposable
         Assert.Equal("adventure.the-lantern-route.0", said.Key);
 
         // The line, then where to go next — and for a scan, how, because "scan X" sends a
-        // Commander looking for a surface scanner they do not need.
+        // Commander looking for a surface scanner they do not need. The last clause is #77: a body
+        // they have already scanned writes no second Scan, so going there is the other way in.
         Assert.Equal(
-            "Scoop here. Next: scan The Quiet Field A 2 in The Quiet Field — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed.",
+            "Scoop here. Next: scan The Quiet Field A 2 in The Quiet Field — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
             said.Text);
         Assert.Equal(0, said.Variant);
         Assert.Equal(CalloutUrgency.Routine, said.Urgency);

@@ -198,8 +198,32 @@ public static class AdventureFold
                 && raw.Long("SystemAddress") == trigger.SystemAddress
                 && raw.Int("BodyID") == trigger.BodyId,
 
+            // A scan beat is satisfied by the scan, or by the Commander going to the body
+            // (#77). Elite writes Scan when a body enters the Commander's discovered set and
+            // then, overwhelmingly, never again: across the corpus's three Commanders only
+            // 239 of 7,091, 155 of 2,722 and 289 of 11,727 scanned bodies were ever seen in a
+            // second session, and most of those are a nav beacon re-reading a whole system.
+            // So a story that sends a Commander to a body they have already been to waits on
+            // an event Elite has already spent, and the beat can never fire — which stuck the
+            // first flown story, with abandon as the only way out.
+            //
+            // ApproachBody and SupercruiseExit are the evidence that they went. Both carry
+            // SystemAddress and BodyID on every occurrence, and both fire regardless of what
+            // was discovered when. ApproachBody alone is not enough: across 1,203 of them not
+            // one is a star and not one a body that cannot be landed on. SupercruiseExit
+            // covers the rest, firing on already-scanned stars, non-landable and landable
+            // bodies alike. SupercruiseDestinationDrop is not here — it carries no body
+            // fields at all (0 of 3,910), and a Commander drops at a destination when they
+            // mean to land rather than to look.
+            //
+            // This can fire the beat on arrival rather than on the scan: of 528 first-ever
+            // scans where the Commander also reached the body in normal space that session,
+            // 90 reached it first. It costs the instant and never the place — in every one of
+            // those the scan followed in the same session — and unsticking a dead end is
+            // worth an early beat. Touchdown is deliberately absent as redundant: a body that
+            // can be landed on is one ApproachBody already fired for.
             TriggerKind.Scan =>
-                journalEvent.Kind is "Scan"
+                journalEvent.Kind is "Scan" or "ApproachBody" or "SupercruiseExit"
                 && raw.Long("SystemAddress") == trigger.SystemAddress
                 && raw.Int("BodyID") == trigger.BodyId,
 

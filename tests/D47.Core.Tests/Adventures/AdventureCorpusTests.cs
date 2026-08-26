@@ -74,10 +74,16 @@ public class AdventureCorpusTests
         var standing = book.Standing(Commander, "june-2026")!;
 
         Assert.True(standing.IsDone, standing.Describe(Accepted.AddDays(10)));
+
+        // The scan beat fires at 21:29:26 and not at 21:29:39, and the thirteen seconds are #77
+        // priced on the Commander's own journal. They dropped out of supercruise at the body at
+        // :26 and read the nav beacon at :39; the widened trigger takes the arrival. It is the
+        // same visit to the same body — what the widening buys is that a body already scanned,
+        // which writes no second Scan at all, stops being a beat the story can never leave.
         Assert.Equal(
             [
                 new DateTimeOffset(2026, 6, 21, 21, 18, 55, TimeSpan.Zero),
-                new DateTimeOffset(2026, 6, 21, 21, 29, 39, TimeSpan.Zero),
+                new DateTimeOffset(2026, 6, 21, 21, 29, 26, TimeSpan.Zero),
                 new DateTimeOffset(2026, 6, 21, 21, 39, 23, TimeSpan.Zero),
                 new DateTimeOffset(2026, 6, 23, 12, 34, 35, TimeSpan.Zero),
                 new DateTimeOffset(2026, 6, 26, 13, 44, 7, TimeSpan.Zero),
