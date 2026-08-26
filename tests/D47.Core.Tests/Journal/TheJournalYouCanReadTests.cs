@@ -98,12 +98,35 @@ public class TheJournalYouCanReadTests
     public void ALoadoutNeverShowsAShipSymbol()
     {
         Assert.Equal(
-            "Loadout reported for Tulimiekka",
+            "Loadout reported for Tulimiekka (Kestrel Mk II)",
             Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"Loadout", "Ship":"smallcombat01_nx", "ShipName":"Tulimiekka" }"""));
 
         Assert.Equal(
-            "Loadout reported",
+            "Loadout reported for the Kestrel Mk II",
             Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"Loadout", "Ship":"smallcombat01_nx" }"""));
+    }
+
+    /// <summary>
+    /// <b>The Commander asked why a Kestrel was reading as <c>smallcombat01_nx</c>, and the answer
+    /// was that this formatter was not asking.</b> d47 solved that on 2026-08-23:
+    /// <c>EliteSpecifications.HullSaid</c> is the ladder — the measured row, then the name read off
+    /// the hull's own armour, then a spoken match — and it exists precisely because Frontier ships
+    /// hulls before the community id list catches up.
+    /// <para>
+    /// Two hulls, both of which have figures nothing can key, and both of which d47 can name
+    /// anyway. Asserted here so a new caller cannot go back to reading the raw symbol.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("smallcombat01_nx", "Kestrel")]
+    [InlineData("explorer_nx", "Caspian Explorer")]
+    public void AHullWithNoMeasuredRowIsStillNamed(string symbol, string expected)
+    {
+        var said = Said(
+            $$"""{ "timestamp":"2026-08-26T00:00:00Z", "event":"ShipyardSwap", "ShipType":"{{symbol}}" }""");
+
+        Assert.Contains(expected, said, StringComparison.Ordinal);
+        Assert.DoesNotContain(symbol, said, StringComparison.Ordinal);
     }
 
     /// <summary>

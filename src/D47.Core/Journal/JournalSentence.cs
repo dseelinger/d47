@@ -239,12 +239,17 @@ public static class JournalSentence
                 : "Paid bounties",
 
             // ---- Ships and modules --------------------------------------------------------
-            // The ship's own name where the Commander gave it one, and otherwise nothing:
-            // Loadout carries Ship as a bare symbol with no localised twin, and "the
-            // smallcombat01_nx" is worse than saying nothing at all.
+            // Loadout carries Ship as a BARE SYMBOL with no localised twin, so this asked for the
+            // Commander's own ship name and said nothing otherwise. That was solving a problem d47
+            // had already solved and not asking: EliteSpecifications.HullSaid is the ladder - the
+            // measured row, then the name read off the hull's own armour, then a spoken match -
+            // and it exists because Frontier ships hulls before the community id list catches up.
+            // "smallcombat01_nx" is a Kestrel Mk II and d47 has always been able to say so.
+            //
+            // Reported by the Commander, 2026-08-26, reading this formatter's own output.
             "Loadout" => Blank(raw.String("ShipName")) is { } named
-                ? $"Loadout reported for {named}"
-                : "Loadout reported",
+                ? $"Loadout reported for {named} ({Hull(raw, "Ship")})"
+                : $"Loadout reported for the {Hull(raw, "Ship")}",
             "ModuleBuy" => Named(raw, "BuyItem") is { } module
                 ? $"Bought a {module}{Cost(raw, "BuyPrice")}"
                 : "Bought a module",
@@ -264,11 +269,11 @@ public static class JournalSentence
                 ? $"Bought and stored a {boughtStored}"
                 : "Bought and stored a module",
             "FetchRemoteModule" => "Sent for a stored module",
-            "ShipyardSwap" => Named(raw, "ShipType") is { } swapped
-                ? $"Switched to the {swapped}"
+            "ShipyardSwap" => Named(raw, "ShipType") is not null
+                ? $"Switched to the {Hull(raw, "ShipType")}"
                 : "Switched ship",
-            "ShipyardBuy" => Named(raw, "ShipType") is { } boughtShip
-                ? $"Bought a {boughtShip}"
+            "ShipyardBuy" => Named(raw, "ShipType") is not null
+                ? $"Bought a {Hull(raw, "ShipType")}"
                 : "Bought a ship",
             "ShipyardSell" => Named(raw, "ShipType") is { } soldShip
                 ? $"Sold a {soldShip}"
@@ -410,8 +415,8 @@ public static class JournalSentence
             "Commander" => raw.String("Name") is { } commander
                 ? $"Commander {commander}"
                 : "Commander identified",
-            "LoadGame" => Named(raw, "Ship") is { } loaded
-                ? $"Loaded, flying the {loaded}"
+            "LoadGame" => Named(raw, "Ship") is not null
+                ? $"Loaded, flying the {Hull(raw, "Ship")}"
                 : "Game loaded",
             "Shutdown" => "Game closed",
             "NewCommander" => "New Commander created",
@@ -533,6 +538,17 @@ public static class JournalSentence
     }
 
     private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    /// <summary>
+    /// A hull, through the one ladder every caller is supposed to use. Frontier ships hulls before
+    /// the community id list catches up, so <c>Knowledge.EliteSpecifications.HullSaid</c> reads
+    /// the name off the hull's own armour rows where there is no measured one — which is how
+    /// <c>smallcombat01_nx</c> says "Kestrel Mk II".
+    /// </summary>
+    private static string Hull(JsonElement raw, string property) =>
+        Named(raw, property) is { } localised
+            ? Knowledge.EliteSpecifications.HullSaid(localised)
+            : "ship";
 
     /// <summary>
     /// Everything before the first underscore. Some of Elite's localised strings carry a symbol
