@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Configuration;
 
@@ -876,6 +876,54 @@ public sealed record LlmSettings
     /// </para>
     /// </summary>
     public bool WebSearch { get; init; }
+
+    /// <summary>
+    /// Which model answers the calls the Commander is not waiting on — ambient remarks, the
+    /// opening brief, the gap reaction, the two lore lookups, and casting a voice (list.md
+    /// Phase 54). Null means they take <see cref="Model"/>, exactly as they always have.
+    /// <para>
+    /// <b>A call class, not a floor the router picks within.</b> The two dials do not behave
+    /// alike: effort is a top-level request field outside the cached prefix, so routing it per
+    /// turn is free, while caches are model-scoped and returning to the conversation model after
+    /// a cheap detour costs roughly 23× what the detour saved. So there is no per-turn model
+    /// routing and there is not going to be. What makes this one pay is that every call it
+    /// reaches carries no conversation history and already declares a cold prefix — pointing
+    /// them at a cheap model costs no cache at all.
+    /// </para>
+    /// <para>
+    /// <b>Named for the call class rather than as <c>MinModel</c>.</b> <see cref="Model"/> can
+    /// never be renamed to <c>MaxModel</c> — this file is append-only — and <em>min</em> implies
+    /// a range something picks within, which is the reading above rejects.
+    /// </para>
+    /// <para>
+    /// A model id belongs to its endpoint's namespace, so this is cleared by both the provider
+    /// row and the endpoint row exactly as <see cref="Model"/> is. A stale one left behind is a
+    /// request that fails where nothing is watching: <c>FlavourTurn</c> logs at Debug and returns
+    /// null, and every ambient line then falls back to its authored text with nothing on screen.
+    /// </para>
+    /// </summary>
+    public string? BackgroundModel { get; init; }
+
+    /// <summary>
+    /// The least effort any conversation turn may run at, or null for the router's own answer
+    /// (list.md Phase 54). The Commander saying a lookup still deserves more than the cheapest
+    /// setting.
+    /// <para>
+    /// Conversation turns only. The background calls above are call-site decisions with stated
+    /// reasons and are deliberately not clamped — a floor of High would turn every ambient
+    /// remark into a reasoning call, which is the blow-up <see cref="BackgroundModel"/> exists
+    /// to prevent.
+    /// </para>
+    /// </summary>
+    public Conversation.ThinkingEffort? EffortFloor { get; init; }
+
+    /// <summary>
+    /// The most effort any conversation turn may run at, or null for the router's own answer
+    /// (list.md Phase 54). A cost dial, and a guard against the router's own false positives:
+    /// <c>EffortRouter</c> matches substrings with no word boundaries, so "what do you think
+    /// about" hits "think about" and routes to Max.
+    /// </summary>
+    public Conversation.ThinkingEffort? EffortCeiling { get; init; }
 }
 
 /// <summary>
