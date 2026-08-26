@@ -20,6 +20,100 @@ the file as it stood then.
 
 ---
 
+## 0.75.0 — 2026-08-26 — Helpful, not anxiety-inducing
+
+Seven wanted changes, and five of them are about the same thing: a settings page with seventy-five
+knobs on it should not be the first thing a new Commander sees, and the figures beside them should
+say what they actually are.
+
+### The page shows what you need, and folds the rest
+
+**Show every setting** — a new toggle under Interface, off by default.
+
+Folded, Directive 47 shows the settings you need to get running: a provider, a model, a voice, a
+microphone, a switch that stops it talking, and the handful that decide what leaves your machine.
+Fifty-three rows go quiet.
+
+**Nothing is switched off by being hidden.** Every folded setting keeps working, at its default or
+at the last thing you set it to. This decides what is drawn and nothing else.
+
+Four things stay on the page whatever the toggle says:
+
+| | Why |
+|---|---|
+| **Anything you changed yourself** | The promise is *you are not missing anything*, and a row you set is something you did |
+| **Your API keys** | A hidden key box is a Commander who cannot work out why nothing speaks |
+| **Anything that decides what leaves this machine** | A page that went calm by no longer mentioning egress would be calm about the wrong thing |
+| **The rows that get you running** | Otherwise it is not a settings page |
+
+That last rule makes it adjust itself: a new Commander sees the calm version, and somebody who has
+been tinkering sees their own work — and would have the toggle on anyway.
+
+**A card with nothing left on it disappears** rather than sitting there empty, which does more for
+the clutter than folding rows does. **Following a help link still works**: if a page says "change X
+here" and X is folded, the jump unfolds the page for the session rather than turning the setting on
+behind your back.
+
+```text
+show me every setting · show fewer settings · just the usual settings
+```
+
+### And a way back when a knob has gone the wrong way
+
+**A row you have changed grows a small ↺ beside its label.** Press it and that row goes back to the
+way it shipped. Rows you have not touched do not have one, so it doubles as a quiet marker of what
+you have actually changed.
+
+**A card you have changed grows a Reset** beside its heading — the useful gesture when something is
+wrong and you do not know which of twenty-two rows did it.
+
+Two things it never touches. **Your keys**: forgetting one means going and finding it again, so it
+is a separate act and never swept up by a card reset. And **anyone else's settings**: on a row that
+is yours rather than the installation's, reset means *stop having my own answer*, so the
+installation's value shows through again — clearing the box by hand still means deliberately blank,
+which stays a different thing.
+
+**Directive 47 cannot reset anything by itself.** Reset writes safety-critical settings, and one
+call that reached all of them at once is exactly what the rule about protected settings exists to
+prevent. The panel can, your voice can, the model cannot.
+
+### What this has cost, said straight
+
+**Today** joins the running totals, at the top of the list because it is the one you read. There is
+deliberately no "last 24 hours" beside it: that is the same number with a boundary you cannot point
+at. A day the clocks moved in is 23 or 25 hours long, and *today* still means the midnight your
+clock showed.
+
+**The window now says once, at the top, that the figures are estimates.** Directive 47 knows each
+provider's published rates, not what your account is billed — a subscription with bundled credits
+can make the real cost anything from higher to nothing at all. One sentence, before the first
+number, rather than an abbreviation stamped on twelve of them.
+
+**OpenAI speech is no longer priced at "I don't know."** Directive 47 asks OpenAI for raw audio, so
+it has known each clip's length to the sample all along and was throwing it away. It now prices
+that speech per minute of audio, which is a measurement rather than a guess from the text — and the
+text would have been hopeless, since the same thousand characters run to 951 characters a minute as
+prose and 671 as a line of system names.
+
+**The rate behind it is a proxy, and the row says so.** OpenAI publishes no per-minute price at all
+— they bill per million audio tokens, and their speech endpoint returns no usage figures — so the
+$0.015 a minute this defaults to is the equivalent everyone else arrives at rather than a number
+OpenAI states. Correct it if your account says otherwise.
+
+### Two smaller things
+
+**Push-to-talk stopped claiming your stick was missing.** Binding a button logged *"push-to-talk is
+bound to a controller that is not here"* every single time, including with the stick sitting right
+there — the warning was raised on the line after the bind, before anything had looked. It now waits
+until the controller has had a fair chance to turn up, and says it once per binding. A stick that
+really is unplugged is still reported, which is the case the warning exists for.
+
+**A comment that had gone false was corrected.** The Edge voice provider's own documentation said it
+requests raw audio and puts no decoder in the dependency graph. Neither has been true since the
+service withdrew its raw formats in mid-2026, and it was the first thing a reader met.
+
+---
+
 ## 0.74.0 — 2026-08-26 — A floor and a ceiling
 
 **Phase 54.** Two dials, in Settings under the language model, and both of them are empty until you
