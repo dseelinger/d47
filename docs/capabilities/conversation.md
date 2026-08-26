@@ -153,6 +153,12 @@ have not set a rate for — is recorded with its tokens or characters and no dol
 window containing one reports **at least** its total rather than presenting a figure that quietly
 leaves part of the cost out.
 
+**Every figure in there is an estimate, and the window says so once at the top.** Directive 47
+knows each provider's *published* rate, not what your account is actually billed — a subscription
+with bundled credits can make the real cost anything from higher than the estimate to nothing at
+all, and no API reports which arrangement you are on. It is said once rather than stamped on each
+number: one sentence has room to say why, and a three-letter suffix does not.
+
 The file is only ever appended to, so nothing that has already been written can be lost by a
 later crash. Delete it and the running totals start again from empty; nothing else is affected.
 

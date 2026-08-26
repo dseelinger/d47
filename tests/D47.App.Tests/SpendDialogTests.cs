@@ -79,6 +79,54 @@ public class SpendDialogTests
             window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
 
     /// <summary>
+    /// Said once, above everything, rather than as a suffix on each figure
+    /// (<a href="https://github.com/dseelinger/d47/issues/64">#64</a>). One sentence beats twelve
+    /// abbreviations: it is less noise, the same truth, and it has room to say <em>why</em>,
+    /// which three letters never did.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWindowSaysOnceThatTheFiguresAreEstimates()
+    {
+        var window = Dialog(out _);
+        window.Show();
+
+        var blocks = window.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        var estimates = blocks.FindIndex(text => text.StartsWith("Estimates.", StringComparison.Ordinal));
+        var thisTurn = blocks.FindIndex(text => text == "This turn");
+
+        Assert.True(estimates >= 0, "The spend dialog says nothing about the figures being estimates.");
+        Assert.True(
+            estimates < thisTurn,
+            "The estimates line must come before the first figure — a Commander who reads the first "
+            + "number and closes the window never reaches a footnote.");
+
+        // The reason, not just the disclaimer. A caveat that does not say why reads as boilerplate.
+        Assert.Contains("published rates", blocks[estimates], StringComparison.Ordinal);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The shape that was replaced, asserted as absent. The first draft of this was an "(est.)"
+    /// suffix on every dollar figure, and the ruling was one sentence instead — so a later kindness
+    /// re-adding the suffixes would undo the decision rather than reinforce it.
+    /// </summary>
+    [AvaloniaFact]
+    public void NoIndividualFigureCarriesAnEstimateSuffix()
+    {
+        var window = Dialog(out _);
+        window.Show();
+
+        Assert.DoesNotContain("(est.)", Words(window), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("est.)", Words(window), StringComparison.OrdinalIgnoreCase);
+
+        window.Close();
+    }
+
+    /// <summary>
     /// All four windows are named, whether or not anything was spent in them. A window that is
     /// silent because it is empty and one that is silent because it was not computed look the
     /// same, and only one of those is acceptable.
