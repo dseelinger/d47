@@ -137,16 +137,26 @@ and the line is absent entirely until something has been spoken.
 #### What it has cost over time {#running-totals}
 
 The line under the panel says what the last turn cost, and **Details** beside it opens the rest:
-the token counts, what the session has come to, and four running totals — **the last 7 days**,
-**the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
+the token counts, what the session has come to, and five running totals — **today**, **the last 7
+days**, **the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
+
+**Today is first because it is the one you read**, and the freshest window earns the top of the
+list. There is deliberately **no "last 24 hours"** beside it: that is the same number with a
+boundary you cannot point at, and "what have I spent today" is the question people actually ask.
+
+On a Sunday, *today* and *this week* start at the same midnight and show the same figure. On the
+1st, *today* and *this month* do. On a Sunday the 1st, all three agree — that is right, not a
+fault.
 
 Those four are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
 back when Directive 47 starts. Both the model and the voices go in it; a total covering only half
 of what you spent would be worse than no total at all.
 
-Each row records the instant it happened, in UTC. "This week" and "this month" are worked out
-against **your** clock at the moment you ask, which is what keeps them right across a daylight
-saving change and right if you ask from a different timezone than you flew in.
+Each row records the instant it happened, in UTC. "Today", "this week" and "this month" are
+worked out against **your** clock at the moment you ask, which is what keeps them right across a
+daylight saving change and right if you ask from a different timezone than you flew in. A day the
+clocks moved in is 23 or 25 hours long, and *today* still means the midnight your clock showed
+rather than a fixed number of hours back.
 
 A charge Directive 47 could not price — a model with no published rate, or a voice provider you
 have not set a rate for — is recorded with its tokens or characters and no dollar figure. Any
