@@ -275,6 +275,75 @@ public class TurnLoopTests
     }
 
     /// <summary>
+    /// Decision 3 of Phase 54, through the whole loop rather than at the clamp: a Commander who
+    /// has set neither bound gets exactly what the router answered, on every shape of input.
+    /// Asserted rather than assumed, because "identical to today" is the only promise an upgrade
+    /// makes.
+    /// </summary>
+    [Theory]
+    [InlineData("tell me about hyperspace")]
+    [InlineData("what do you think about the Corvette")]
+    [InlineData("what's the best route to Colonia")]
+    [InlineData("carefully plan the cheapest route to Colonia")]
+    public async Task NoBoundsIsExactlyWhatTheRouterAnswered(string input)
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        var (result, _) = await RunAsync(loop, input);
+
+        Assert.Equal(EffortRouter.ChooseFor(input), result.Effort);
+        Assert.Equal(EffortRouter.ChooseFor(input), provider.LastRequest!.Effort);
+    }
+
+    /// <summary>
+    /// The floor lifts a turn the router priced below it — and the request carries the lifted
+    /// rung, not merely the report. A clamp that only reached the report would be a setting that
+    /// changed what d47 says it did and nothing about what it cost.
+    /// </summary>
+    [Fact]
+    public async Task TheFloorLiftsAPlainTurnAndTheRequestCarriesIt()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        Assert.Equal(ThinkingEffort.Medium, EffortRouter.ChooseFor("tell me about hyperspace"));
+
+        loop.EffortFloor = ThinkingEffort.Xhigh;
+
+        var (result, _) = await RunAsync(loop, "tell me about hyperspace");
+
+        Assert.Equal(TurnRoute.Model, result.Route);
+        Assert.Equal(ThinkingEffort.Xhigh, result.Effort);
+        Assert.Equal(ThinkingEffort.Xhigh, provider.LastRequest!.Effort);
+    }
+
+    /// <summary>
+    /// The ceiling earns its keep twice: it is a cost dial, and it is the guard against the
+    /// router's own false positives. <c>EffortRouter</c> matches substrings with no word
+    /// boundaries, so an idle "what do you think about" hits "think about" and is priced at Max.
+    /// </summary>
+    [Fact]
+    public async Task TheCeilingCatchesTheRoutersOwnFalsePositive()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        Assert.Equal(ThinkingEffort.Max, EffortRouter.ChooseFor("what do you think about the Corvette"));
+
+        loop.EffortCeiling = ThinkingEffort.Medium;
+
+        var (result, _) = await RunAsync(loop, "what do you think about the Corvette");
+
+        Assert.Equal(TurnRoute.Model, result.Route);
+        Assert.Equal(ThinkingEffort.Medium, result.Effort);
+        Assert.Equal(ThinkingEffort.Medium, provider.LastRequest!.Effort);
+    }
+
+    /// <summary>
     /// A model with no effort dial says so rather than reporting one it never applied (list.md
     /// Phase 54). Haiku 4.5 predates the 4.6 generation and rejects the fields that carry it, so
     /// a turn on it thought at whatever it thinks at and no rung describes that.

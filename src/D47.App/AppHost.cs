@@ -2359,6 +2359,16 @@ public sealed class AppHost : IDisposable
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
 
+        // Resolved once, here, rather than at each of the eight call sites (list.md Phase 54).
+        // Null means the Commander has not split the two, so the background calls take the
+        // conversation model and nothing about them changes.
+        Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;
+
+        // What the Commander will pay for, kept apart from what the router thinks they asked
+        // for. Both null is the router's own answer, unchanged.
+        Turns.EffortFloor = current.Llm.EffortFloor;
+        Turns.EffortCeiling = current.Llm.EffortCeiling;
+
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
         // thirteen hundred tokens are paid once per edit rather than per turn (list.md Phase 43).
         Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
