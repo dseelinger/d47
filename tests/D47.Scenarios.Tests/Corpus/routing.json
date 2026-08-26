@@ -1,0 +1,102 @@
+// Which tool a Commander's question actually calls (#57).
+//
+// Out of #54, where "where are the closest core dynamics composites?" called find_nearest_station
+// instead of find_material. NOTHING WAS BROKEN AND NOTHING WAS DROPPED: the right tool was
+// advertised, every profile fitted, and the model chose the other one. There was no test in the
+// repository that could have caught it, and none that would have caught the next one.
+//
+// EVERY ROW ASSERTS TWO THINGS: the tool that must run, and the neighbour that must not be chosen
+// as well. A row that only says "find_material ran" passes on a model that calls both, which is a
+// different behaviour with a different bill and the same green tick.
+//
+// ToolNotChosen, NOT ToolDidNotRun. They test the same fact and mean opposite things: the latter
+// is the safety claim that a hostile message could not reach a tool, carries no tolerance ever,
+// and is reported in the safety section. A routing preference filed there would read as a question
+// about whether d47 was safe, which it is not. The harness refused the first draft of this file
+// for exactly that, which is the vocabulary working.
+//
+// ASSERT THE TOOL, NOT THE SENTENCE. What matters is which switch was thrown. Asserting on the
+// wording of the reply would make this suite fail every time a model gets better at English.
+//
+// A tolerance rather than always: routing is a quality property, not a safety one. "Nine times in
+// ten it called the right tool" is a real result — see AssertionClass, where the split is spelled
+// out and where "nine times in ten no tool was called" is named as the one number this harness
+// must never report as a pass.
+//
+// EVERY PAIR WITH A CROSS-CHECK IN MaterialSeam (#58) IS A ROW HERE. That is the intended
+// relationship between the two: the seam makes a wrong choice cost a sentence, and this says
+// whether the choice is being made wrongly at all.
+[
+  {
+    "id": "routing/material-not-a-commodity",
+    "note": "#54 itself, and the row this whole suite was proposed from. A manufactured material, asked about the way a Commander asks — 'closest' and a named thing, which is what the market search advertises.",
+    "utterance": "Where are the closest core dynamics composites?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_material", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_nearest_station", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/commodity-not-a-material",
+    "note": "The same sentence shape about a thing that really is traded. If this and the row above do not separate, the descriptions are not carrying the distinction at all.",
+    "utterance": "Where can I buy tritium?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_nearest_station", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_material", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/a-trader-is-not-a-material",
+    "note": "'Where's the nearest material trader' names a material in the sentence and wants a station. The word 'material' appearing in both tool names is exactly the overlap that makes this worth asserting.",
+    "utterance": "Where's the nearest material trader?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_material_trader", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_material", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/an-engineer-by-name",
+    "note": "A person, not a place and not a thing. Named engineers are the case where a model reaches for a station search because the answer is somewhere.",
+    "utterance": "What can Selene Jean do for me?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_engineer", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_nearest_station", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/on-foot-not-ship",
+    "note": "The on-foot and ship-material ledgers are different tables and Commanders do not speak in ledgers (#58). Graphene is an Odyssey good and the question is phrased exactly like the ship-material one.",
+    "utterance": "Where do I find graphene?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_micro_resource", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_material", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/a-module-is-not-a-material",
+    "note": "A module name handed to the material search — the second pair #58 names. 'Where can I get' is the same opening as the material question.",
+    "utterance": "Where can I get a 5A power plant?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_nearest_station", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_material", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/a-body-is-not-a-system",
+    "note": "A body type asked for by name. search_systems and find_body both answer 'where is there a...' and the difference is what kind of thing follows.",
+    "utterance": "Find me the nearest Earth-like world.",
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_body", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "search_systems", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/a-system-is-not-a-body",
+    "note": "And the reverse: a question about systems, which find_body would answer with planets. Both directions, so the pair cannot drift.",
+    "utterance": "Which systems within 30 light years have a high-tech economy?",
+    "assertions": [
+      { "kind": "ToolRan", "target": "search_systems", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "find_body", "tolerance": "4/5" }
+    ]
+  }
+]

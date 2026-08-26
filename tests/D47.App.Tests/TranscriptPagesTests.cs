@@ -174,8 +174,8 @@ public class TranscriptPagesTests
 
         // Each surface's own control says Conversation, which is what "each keeps its own" means
         // when one model serves both.
-        Assert.Equal("Conversation", PanelModes.Showing(window));
-        Assert.Equal("Conversation", PanelModes.Showing(headset));
+        Assert.Equal("Thread", PanelModes.Showing(window));
+        Assert.Equal("Thread", PanelModes.Showing(headset));
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public class TranscriptPagesTests
 
         Assert.Equal(TranscriptPage.Log, window.Page);
         Assert.Equal(TranscriptPage.Conversation, headset.Page);
-        Assert.Equal("Conversation", PanelModes.Showing(headset));
+        Assert.Equal("Thread", PanelModes.Showing(headset));
     }
 
     private static string Shown(PanelView panel) => panel.TranscriptShown;

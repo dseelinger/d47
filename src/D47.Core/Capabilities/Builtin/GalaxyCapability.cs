@@ -520,7 +520,7 @@ public static class GalaxyCapability
             && MaterialCatalogue.Find(named) is
                 { Ledger: not (MaterialLedger.Cargo or MaterialLedger.RareCargo) } material)
         {
-            return ToolResult.Ok(NotCargo(material));
+            return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MarketTool));
         }
 
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
@@ -588,40 +588,6 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
-    }
-
-    /// <summary>
-    /// What to say when the name is not something any station trades (#54).
-    /// <para>
-    /// It names the ledger it really belongs to, says where it comes from when the catalogue
-    /// knows, and names the tool that answers properly — so the turn ends with the Commander's
-    /// question answered rather than with a market report about a thing that has no market.
-    /// </para>
-    /// </summary>
-    private static string NotCargo(MaterialEntry material)
-    {
-        var said = new StringBuilder();
-
-        said.Append($"{material.Name} is not a commodity — no station trades it. ");
-
-        said.Append(material.Ledger switch
-        {
-            MaterialLedger.Material =>
-                $"It is a{(material.Category is { Length: > 0 } kind ? " " + kind.ToLowerInvariant() : "n")} "
-                + $"engineering material{(material.Grade is { } grade ? $", grade {grade}" : string.Empty)}.",
-
-            MaterialLedger.ShipLocker => "It is an Odyssey ship-locker item, carried on foot.",
-            _ => "It is not carried as cargo.",
-        });
-
-        if (material.Origins.Count > 0)
-        {
-            said.Append($" Found at: {string.Join("; ", material.Origins)}.");
-        }
-
-        said.Append(" Ask find_material for where to get it and what a trader could turn into it.");
-
-        return said.ToString();
     }
 
     /// <summary>

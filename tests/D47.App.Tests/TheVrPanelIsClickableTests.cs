@@ -72,14 +72,14 @@ public class TheVrPanelIsClickableTests
 
         OpenModes(view, surface);
 
-        Assert.True(surface.Click(Centre(view, Saying(view, "Technical"))), "the press landed on something");
+        Assert.True(surface.Click(Centre(view, Saying(view, "Details"))), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TranscriptPage.Technical, view.Page);
 
         OpenModes(view, surface);
 
-        surface.Click(Centre(view, Saying(view, "Conversation")));
+        surface.Click(Centre(view, Saying(view, "Thread")));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
@@ -104,7 +104,7 @@ public class TheVrPanelIsClickableTests
 
         OpenModes(view, surface);
 
-        surface.Click(Centre(view, Saying(view, "Technical")));
+        surface.Click(Centre(view, Saying(view, "Details")));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.NotEqual(before, Frame(surface));

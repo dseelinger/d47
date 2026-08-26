@@ -455,7 +455,13 @@ public static class EngineeringCapability
             // A commodity or an Odyssey good rather than a ship material. Saying which beats
             // running an engineering search that cannot apply — Gold in the hold is two hundred
             // tonnes of cargo, not two hundred units against a materials cap.
-            return ToolResult.Ok(report.ToString().TrimEnd());
+            //
+            // It used to stop there, correctly identifying the thing and leaving the Commander
+            // to ask again (#58). It now says where it comes from when the table knows and names
+            // the tool that answers, which is the other half of the same seam: the market search
+            // has said the reverse since v0.73.0, and a pair checked in one direction only is a
+            // pair that drifts.
+            return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MaterialTool));
         }
 
         report.Append(Held(material, active));

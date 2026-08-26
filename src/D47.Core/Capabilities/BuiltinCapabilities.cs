@@ -205,7 +205,16 @@ public static class BuiltinCapabilities
         // where to buy then says markets are not composed, and the tracking half is untouched. At
         // the end, by the rule the comment above records the cost of.
         Knowledge.CarrierManifest? carrier = null,
-        Knowledge.SourcingBoard? sourcing = null) =>
+        Knowledge.SourcingBoard? sourcing = null,
+
+        // What this build is, for the About area (#50). LAST, and by the rule the carrier comment
+        // above records the cost of: every optional here is passed positionally by the host, so a
+        // parameter inserted in the middle silently rebinds every argument after it.
+        //
+        // Optional like the rest. A caller with nothing to say about the build - the designer, and
+        // every test that is not about it - gets the version and the data folder, which Core knows
+        // by itself, and no buttons at all.
+        Builtin.AboutSurface? about = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -316,5 +325,19 @@ public static class BuiltinCapabilities
 
         PrivacyCapability.Create(settings, searchAvailable, memories, habits),
         SettingsCapability.Create(settings),
+
+        // LAST, and it has to be last twice over (#50). Last on the page because something read
+        // once belongs at the bottom - and last in this list because DocumentationGateTests
+        // derives every page's nav_order from its INDEX here, so a capability inserted anywhere
+        // but the end renumbers every page after it.
+        AboutCapability.Create(
+            paths,
+            version,
+            about?.Build ?? version,
+            about?.ShowChangelog,
+            about?.ShowChangelogOnline,
+            about?.AddToStartMenu,
+            about?.StartMenuWanted,
+            about?.SetUpKeys),
     ];
 }

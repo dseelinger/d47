@@ -868,6 +868,15 @@ public partial class MainWindow : Window
             // changed, so the row that says what was found has no other way to know. Posted
             // because the rescan runs on the tick thread (list.md Phase 12).
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
+
+            // The two About rows that need a window to open one over (#50). Joined here for the
+            // reason the two above are: this is the one place that holds both the host and a
+            // window. About is an area in the nav now rather than a button in the footer, so
+            // there is no second way in that could drift from this one.
+            _host.ShowChangelog = () =>
+                _ = new Controls.ChangelogWindow(D47.Core.Help.Changelog.Text).Over(this);
+
+            _host.SetUpKeys = ShowKeySetupAsync;
         }
 
         // A card's question mark draws help in the panel rather than launching a browser (asked

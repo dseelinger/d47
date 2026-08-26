@@ -163,49 +163,47 @@ public class FirstRunKeysTests
     }
 
     /// <summary>
-    /// About carries the way back in, because keys get rotated and revoked — the state that
-    /// triggers the guide is one a working install can return to.
+    /// The key setup is reachable again after first run, because <b>keys get rotated and
+    /// revoked</b> — so the state that triggers the guide is one a working install can return to.
+    /// <para>
+    /// It used to be a button on <c>AboutWindow</c>. About is a settings area now
+    /// (<a href="https://github.com/dseelinger/d47/issues/50">#50</a>), so the offer is a row, and
+    /// a caller with nothing to open still gets no row rather than a button that does nothing.
+    /// </para>
     /// </summary>
-    [AvaloniaFact]
+    [Fact]
     public void AboutOffersTheKeySetupAgain()
     {
         var (_, _, paths) = TestSurface.Create();
         var opened = 0;
 
-        var about = new AboutWindow(paths, () =>
-        {
-            opened++;
-            return Task.CompletedTask;
-        });
+        var about = D47.Core.Capabilities.Builtin.AboutCapability.Create(
+            paths,
+            "1.2.3",
+            "1.2.3+abcdef0",
+            setUpKeys: () => opened++);
 
-        about.Show();
+        var row = about.Settings.Single(
+            candidate => candidate.Key == D47.Core.Capabilities.Builtin.AboutCapability.SetUpKeysKey);
 
-        var button = about.GetVisualDescendants().OfType<Button>()
-            .First(candidate => candidate.Name == "SetUpKeys");
+        Assert.NotNull(row.Press);
+        row.Press!();
 
-        Assert.True(button.IsVisible);
-
-        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal(1, opened);
-
-        about.Close();
     }
 
-    /// <summary>
-    /// And a caller with nothing to open hides the button rather than offering one that does
-    /// nothing — the designer and the tests that are not about this.
-    /// </summary>
-    [AvaloniaFact]
+    [Fact]
     public void AboutHidesTheButtonWhenThereIsNothingToOpen()
     {
         var (_, _, paths) = TestSurface.Create();
-        var about = new AboutWindow(paths);
-        about.Show();
 
-        var button = about.GetVisualDescendants().OfType<Button>()
-            .First(candidate => candidate.Name == "SetUpKeys");
+        var about = D47.Core.Capabilities.Builtin.AboutCapability.Create(
+            paths,
+            "1.2.3",
+            "1.2.3+abcdef0");
 
-        Assert.False(button.IsVisible);
-        about.Close();
+        Assert.DoesNotContain(
+            about.Settings,
+            row => row.Key == D47.Core.Capabilities.Builtin.AboutCapability.SetUpKeysKey);
     }
 }

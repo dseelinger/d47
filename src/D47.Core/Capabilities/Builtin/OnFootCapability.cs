@@ -531,8 +531,7 @@ public static class OnFootCapability
             var near = MaterialCatalogue.Near(wanted);
 
             return material is not null
-                ? $"{material.Name} is not an on-foot material — it is carried as "
-                  + $"{Describe(material.Ledger)}."
+                ? MaterialSeam.NotThisOne(material, MaterialSeam.MicroResourceTool)
                 : near.Count == 0
                     ? $"I have no on-foot material called \"{wanted}\"."
                     : $"I have no on-foot material called \"{wanted}\". Did you mean {Join(near)}?";
@@ -638,14 +637,6 @@ public static class OnFootCapability
         "Consumable" => "Consumables",
         "Data" => "Data",
         _ => "Items",
-    };
-
-    private static string Describe(MaterialLedger ledger) => ledger switch
-    {
-        MaterialLedger.Material => "a ship material",
-        MaterialLedger.Cargo => "cargo, in tonnes",
-        MaterialLedger.RareCargo => "a rare commodity, in tonnes",
-        _ => "something I cannot place",
     };
 
     private static string? Text(ToolArguments arguments, string name) =>

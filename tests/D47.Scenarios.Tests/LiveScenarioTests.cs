@@ -154,6 +154,81 @@ public class LiveScenarioTests
     }
 
     /// <summary>
+    /// <b>Which tool does a Commander's question actually call?</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/57">#57</a>) — the other question that
+    /// cannot be answered without a model.
+    /// <para>
+    /// Its own test rather than rows folded into the corpus above, because the two answer different
+    /// questions and are read by different people at different times. That one asks whether an
+    /// endpoint resists attack and is all-or-nothing; this one asks whether it routes well and is a
+    /// rate. Folding them together would put a routing miss in the same failure as an injection
+    /// getting through.
+    /// </para>
+    /// <para>
+    /// <b>The table is checked without a model on every push</b> — see
+    /// <see cref="RoutingTableTests"/>, which asserts that every tool named exists, that every row
+    /// names both halves, and that no row uses the safety kind to say a quality thing. What needs
+    /// paying for is only the measurement.
+    /// </para>
+    /// <para>
+    /// <b>It is the thing that makes growing the tool surface safe.</b> The intention is to add
+    /// tools. Count is close to free while every tool is unambiguous; what costs is two that could
+    /// both catch one sentence. A description is a hope about how a model reads, and until this
+    /// there was no way to check the hope except a Commander hitting it while flying.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TheRoutingTableAgainstAConfiguredEndpoint()
+    {
+        Assert.SkipUnless(Enabled, "set D47_SCENARIOS_LIVE=1 to measure routing; CI checks the table only");
+
+        var provider = Compose();
+        var model = Model ?? Blank(provider.DefaultModel);
+
+        var report = new ScenarioReport
+        {
+            Mode = ScenarioReport.ModeOf(provider, scripted: false),
+            Answered = $"{provider.DisplayName} ({provider.Id})",
+            Model = model,
+            Endpoint = Endpoint ?? "the provider's own default address",
+            Runs = Runs,
+        };
+
+        var progressPath = Path.Combine(AppContext.BaseDirectory, "routing-progress.log");
+        File.WriteAllText(
+            progressPath,
+            $"routing: {provider.Id} / {model ?? "default"}, {Runs} run(s) each{Environment.NewLine}");
+
+        await ScenarioSuite.RunAsync(
+            Select(Corpus.Routing()),
+            provider,
+            Persona,
+            report,
+            Runs,
+            model,
+            Resolver(report),
+            line => File.AppendAllText(progressPath, line + Environment.NewLine),
+            Token);
+
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            $"routing-report-{provider.Id}-{Sanitise(model)}.md");
+
+        var rendered = report.Render();
+        File.WriteAllText(path, rendered);
+
+        // Routing is quality, so the gate is the safety one — which nothing in this table declares,
+        // so it holds vacuously and the report is the output. A red suite here would say a model
+        // was unsafe, which is not what a routing miss is; the number to read is in the file.
+        Assert.True(
+            report.SafetyHeld,
+            $"a safety assertion did not hold on every run. Report written to {path}"
+            + Environment.NewLine
+            + Environment.NewLine
+            + rendered);
+    }
+
+    /// <summary>
     /// What a run costs, written down before the first one so the estimate can be checked against
     /// it.
     /// <para>
@@ -168,7 +243,7 @@ public class LiveScenarioTests
     [Fact]
     public void TheCostEstimateIsWrittenDownWhereARunCanBeComparedAgainstIt()
     {
-        var scenarios = Corpus.Injections().Count + Corpus.Scenarios().Count;
+        var scenarios = Corpus.Injections().Count + Corpus.Scenarios().Count + Corpus.Routing().Count;
         var turns = scenarios * ScenarioSuite.DefaultRuns;
 
         Assert.True(

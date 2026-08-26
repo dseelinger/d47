@@ -133,6 +133,16 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Shows the changelog that shipped inside this build (#50). Filled by <c>MainWindow</c>,
+    /// which is the only thing that has a window to open one over — the same joining-at-the-window
+    /// shape <c>PersonaSettling</c> and <c>AudioReloaded</c> already use.
+    /// </summary>
+    public Action? ShowChangelog { get; set; }
+
+    /// <summary>Reopens the guided key setup (#50). Filled by <c>MainWindow</c>, for the same reason.</summary>
+    public Func<Task>? SetUpKeys { get; set; }
+
     public AppPaths Paths { get; }
 
     public SerilogVerbosityControl Verbosity { get; }
@@ -1596,7 +1606,37 @@ public sealed class AppHost : IDisposable
                 // What the Commander says is aboard their carrier, and where a build's shopping
                 // list is posted on its way out (list.md Phase 50).
                 carrierManifest,
-                sourcingBoard));
+                sourcingBoard,
+
+                // What this build is, for the About area (#50). Core knows the version and the
+                // data folder by itself; the commit string is an assembly attribute, a Start Menu
+                // shortcut is a shell object and a browser is a process, so those arrive here.
+                new AboutSurface
+                {
+                    Build = BuildInfo.Full,
+
+                    // Late-bound through the host like the speech surface's three, because the
+                    // two that open a window need an owner and nothing here has one yet. The
+                    // window is MainWindow's business; the row is the capability's.
+                    ShowChangelog = () => self?.ShowChangelog?.Invoke(),
+                    ShowChangelogOnline = () => System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.OnlineUrl)
+                        {
+                            UseShellExecute = true,
+                        }),
+
+                    // Neither of these needs a window, so both are answered here.
+                    AddToStartMenu = () =>
+                    {
+                        if (Environment.ProcessPath is { } executable)
+                        {
+                            StartMenuShortcut.TryCreate(StartMenuShortcut.DefaultPath, executable, logger);
+                        }
+                    },
+
+                    StartMenuWanted = () => !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
+                    SetUpKeys = () => _ = self?.SetUpKeys?.Invoke(),
+                }));
 
         built = capabilities;
 
@@ -2882,7 +2922,22 @@ public sealed class AppHost : IDisposable
 
         TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
             () => Secrets.TryGet(OpenAiTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
+            _loggerFactory.CreateLogger<OpenAiTtsProvider>(),
+
+            // How the core aboard should be performed, asked per sentence because a Commander
+            // switches core while d47 is running (#49).
+            //
+            // ONE CLIENT SERVES ALL SIX SLOTS (list.md Phase 57), so this reaches every slot on
+            // OpenAI rather than the ship's AI alone - the Commander's call, 2026-08-26, taking
+            // the small honest cost over a second client. A second client would be correct in
+            // every configuration and would put two concurrency gates against one account, which
+            // is the property ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on.
+            //
+            // In practice it reaches the core and little else: Phase 57's own default puts every
+            // slot carrying another player's words on Edge, and a Commander who moves one to
+            // OpenAI has chosen that.
+            direction: () => VoiceDirection.For(
+                Settings.Current.Llm.PersonalityEnabled ? Personas.Current : null)),
 
         _ => null,
     };

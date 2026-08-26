@@ -62,6 +62,17 @@
       would silently win.
     -->
     <EmbeddedResource Include="..\..\docs\*.md" LogicalName="D47.Core.Help.general-%(Filename)" />
+
+    <!--
+      The changelog, so About can show it with no internet (#50). It is not under docs/ and so
+      falls into neither glob above, and it is a release list rather than a banded help article -
+      so it is read as text by Core.Help.Changelog rather than parsed by HelpLibrary.
+
+      6,000-odd lines. Compressed into a ~50 MB bundle that is not a size problem, and the
+      alternative was the button that was there before: a browser, which needs a network to answer
+      a question about the build already on the machine.
+    -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="D47.Core.Changelog" />
   </ItemGroup>
 
 </Project>

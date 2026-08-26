@@ -23,9 +23,9 @@ nav_order: 3
 <svg viewBox="0 0 880 268" role="img" aria-label="One exchange read three ways: as conversation, as the working behind it, and as the raw log file">
  <rect x="20" y="26" width="840" height="46" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="28" y="33" width="266" height="32" rx="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="161" y="55" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Conversation</text>
- <text x="450" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">Technical</text>
- <text x="730" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">Log file</text>
+ <text x="161" y="55" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Thread</text>
+ <text x="450" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">Details</text>
+ <text x="730" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 Log</text>
  <rect x="20" y="96" width="266" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="153" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">WHAT WAS SAID</text>
  <text x="153" y="162" text-anchor="middle" font-size="14" fill="var(--text-muted)">your words and its</text>
@@ -126,19 +126,23 @@ nav_order: 3
 The Transcript page is where Directive 47 talks to you. It is the tab the panel opens on, and the
 one it returns to when you leave everything else.
 
-### The three readings
+### The readings
 
 The switcher at the top of the page offers the same session read three ways.
 
-**Conversation** is what was said — your questions and the answers, in order, with a marker where
-the core changed. This is the reading you want almost always.
+**Thread** is what was said — your questions and the answers, in order, with a marker where the
+core changed. This is the reading you want almost always.
 
-**Technical** is the working behind it: which capability answered, which tools it called, what it
+**Details** is the working behind it: which capability answered, which tools it called, what it
 looked up, and what the turn cost. When an answer surprises you, this is the page that says why.
 
-**Log file** is the record on disk, read a screenful at a time. Nothing here is Directive 47's to
-clear — it is a file — which is why the clear control is refused on this reading and offered on the
-other two.
+**D47 Log** is Directive 47's own record on disk, read a screenful at a time. Nothing here is its
+to clear — it is a file — which is why the clear control is refused on this reading and offered on
+the other two.
+
+Each is a word you can **say** as well as press, which is why they are short and why none of them
+is a parenthetical: a crumb is matched by the keyword router, and nobody says "log file, brackets,
+raw".
 
 All three are **roots** rather than levels. Pressing Transcript while several levels deep in
 another tab returns you to whichever of the three you were last reading, not to a fixed one.

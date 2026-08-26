@@ -44,6 +44,14 @@ public partial class PanelView : UserControl
     /// one, and a test reaching for one, have nothing else to ask for.
     /// </para>
     /// </summary>
+    /// <remarks>
+    /// <b>The key does not change when the word does</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/51">#51</a>). "Conversation" became
+    /// <em>Thread</em>, "Technical" became <em>Details</em> and "Log file" became <em>D47 Log</em>
+    /// — all three are <see cref="NavCrumb.Word"/> changes and nothing else. These keys are
+    /// internal, a host drives one by name and a test reaches for one by name, so renaming them
+    /// alongside the labels would be churn with a chance of breaking something and no upside.
+    /// </remarks>
     public const string ConversationRoot = "transcript.conversation";
 
     /// <inheritdoc cref="ConversationRoot"/>
@@ -296,15 +304,15 @@ public partial class PanelView : UserControl
         // three general pages be reached the same way as the forty-five.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(ConversationRoot, "Conversation") { Help = TranscriptHelp });
+            new NavCrumb(ConversationRoot, "Thread") { Help = TranscriptHelp });
 
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(TechnicalRoot, "Technical") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+            new NavCrumb(TechnicalRoot, "Details") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
 
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(LogRoot, "Log file") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+            new NavCrumb(LogRoot, "D47 Log") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
 
         // The mode button's content, once. See DrawModes for why it is not rebuilt.
         _logBusy.Bind(
