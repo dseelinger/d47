@@ -71,15 +71,10 @@
                   FontSize="{StaticResource D47.Type.Body}"
                   Padding="10,4"
                   Click="OnOpenDataFolderClick" />
-          <!-- Beside the data folder because both answer "where is this thing and what is it",
-               and one click from the tab strip is close enough for something read once. -->
-          <Button x:Name="AboutButton"
-                  DockPanel.Dock="Right"
-                  Content="About"
-                  Margin="0,0,8,0"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  Padding="10,4"
-                  Click="OnAboutClick" />
+          <!-- About was here, beside the data folder, on the reasoning that both answer "where is
+               this thing and what is it". It is an area in the nav now (#50), where a Commander
+               looks for it - and the button is gone rather than kept, because two ways in that can
+               drift is the thing this repository keeps writing rules about. -->
           <!--
             One line, trimmed, with the whole thing on the tooltip. Wrapped, it was the footer's
             fill child: the buttons took what they needed and this took the rest, which at a high

@@ -133,6 +133,16 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Shows the changelog that shipped inside this build (#50). Filled by <c>MainWindow</c>,
+    /// which is the only thing that has a window to open one over — the same joining-at-the-window
+    /// shape <c>PersonaSettling</c> and <c>AudioReloaded</c> already use.
+    /// </summary>
+    public Action? ShowChangelog { get; set; }
+
+    /// <summary>Reopens the guided key setup (#50). Filled by <c>MainWindow</c>, for the same reason.</summary>
+    public Func<Task>? SetUpKeys { get; set; }
+
     public AppPaths Paths { get; }
 
     public SerilogVerbosityControl Verbosity { get; }
@@ -1596,7 +1606,37 @@ public sealed class AppHost : IDisposable
                 // What the Commander says is aboard their carrier, and where a build's shopping
                 // list is posted on its way out (list.md Phase 50).
                 carrierManifest,
-                sourcingBoard));
+                sourcingBoard,
+
+                // What this build is, for the About area (#50). Core knows the version and the
+                // data folder by itself; the commit string is an assembly attribute, a Start Menu
+                // shortcut is a shell object and a browser is a process, so those arrive here.
+                new AboutSurface
+                {
+                    Build = BuildInfo.Full,
+
+                    // Late-bound through the host like the speech surface's three, because the
+                    // two that open a window need an owner and nothing here has one yet. The
+                    // window is MainWindow's business; the row is the capability's.
+                    ShowChangelog = () => self?.ShowChangelog?.Invoke(),
+                    ShowChangelogOnline = () => System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.OnlineUrl)
+                        {
+                            UseShellExecute = true,
+                        }),
+
+                    // Neither of these needs a window, so both are answered here.
+                    AddToStartMenu = () =>
+                    {
+                        if (Environment.ProcessPath is { } executable)
+                        {
+                            StartMenuShortcut.TryCreate(StartMenuShortcut.DefaultPath, executable, logger);
+                        }
+                    },
+
+                    StartMenuWanted = () => !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
+                    SetUpKeys = () => _ = self?.SetUpKeys?.Invoke(),
+                }));
 
         built = capabilities;
 

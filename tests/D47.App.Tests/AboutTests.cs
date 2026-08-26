@@ -55,65 +55,16 @@ public class AboutTests
     }
 
     /// <summary>
-    /// The dialog carries the exact build, selectable — a build number you cannot copy is a
-    /// build number you transcribe wrongly into a bug report.
+    /// About is an <em>area</em> in the settings nav rather than a button in the footer
+    /// (<a href="https://github.com/dseelinger/d47/issues/50">#50</a>).
+    /// <para>
+    /// The tests below used to drive <c>AboutWindow</c>, which is gone. The behaviour did not
+    /// disappear — it moved into a capability, so the rows are asserted where they now live and
+    /// the window that is left is the changelog.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheAboutDialogCarriesTheExactBuildAndCanBeCopied()
-    {
-        var (_, _, paths) = TestSurface.Create();
-
-        var about = new AboutWindow(paths);
-        about.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        var selectable = about.GetVisualDescendants().OfType<SelectableTextBlock>().ToList();
-        var shown = selectable.Select(block => block.Text).ToList();
-
-        Assert.Contains(BuildInfo.Full, shown);
-        Assert.Contains(paths.Data, shown);
-
-        Assert.NotNull(about.CaptureRenderedFrame());
-
-        about.Close();
-    }
-
-    /// <summary>
-    /// Frontier's media usage rules permit a non-commercial project to use their game content
-    /// provided it is attributed somewhere a person can find, and d47 ships their ship figures,
-    /// blueprints, material names and engineer locations. The README and the documentation site
-    /// carry the same words, but a Commander who installs the binary and never visits either
-    /// still has to be able to see it, so it has to be in the app.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheAboutDialogAttributesFrontier()
-    {
-        var (_, _, paths) = TestSurface.Create();
-
-        var about = new AboutWindow(paths);
-        about.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        var shown = about.GetVisualDescendants().OfType<SelectableTextBlock>()
-            .Select(block => block.Text)
-            .ToList();
-
-        Assert.Contains(AboutWindow.Attribution, shown);
-
-        // Their wording, not a paraphrase of it. The rules supply the sentence.
-        Assert.Contains(
-            "with the permission of Frontier Developments plc",
-            AboutWindow.Attribution,
-            StringComparison.Ordinal);
-
-        Assert.Contains("non-commercial", AboutWindow.Attribution, StringComparison.Ordinal);
-
-        about.Close();
-    }
-
-    /// <summary>It is reachable, which a dialog nobody can open is not.</summary>
-    [AvaloniaFact]
-    public void TheSettingsFooterOffersAWayIn()
+    public void AboutIsACardInTheSettingsNav()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -122,10 +73,95 @@ public class AboutTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        Assert.Contains(
+        var text = host.View.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => block.IsEffectivelyVisible)
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("About", text, StringComparer.Ordinal);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// And not in two places. The footer button is gone rather than kept beside the area, because
+    /// two ways in that can drift is the thing this repository keeps writing rules about.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheFooterNoLongerOffersASecondWayIn()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        Assert.DoesNotContain(
             host.View.GetVisualDescendants().OfType<Button>(),
             button => button.Name == "AboutButton");
 
         host.Close();
+    }
+
+    /// <summary>
+    /// The exact build is still a row, and still the reason the area exists: a build number you
+    /// cannot copy is one that gets transcribed wrongly into a bug report.
+    /// </summary>
+    [Fact]
+    public void TheAreaStatesTheExactBuild()
+    {
+        var (_, _, paths) = TestSurface.Create();
+
+        var about = D47.Core.Capabilities.Builtin.AboutCapability.Create(
+            paths,
+            "1.2.3",
+            "1.2.3+abcdef0");
+
+        var build = about.Settings.Single(
+            row => row.Key == D47.Core.Capabilities.Builtin.AboutCapability.BuildKey);
+
+        Assert.Equal("1.2.3+abcdef0", build.Binding!.Read(new D47.Core.Configuration.D47Settings()));
+    }
+
+    /// <summary>
+    /// Frontier's own wording, verbatim, because their media usage rules supply the sentence and
+    /// ask that it be somewhere a person can find. It lives in Core now, so the bytes that ship
+    /// and the bytes this reads are the same ones.
+    /// </summary>
+    [Fact]
+    public void TheAttributionIsFrontiersOwnWording()
+    {
+        var attribution = D47.Core.Capabilities.Builtin.AboutCapability.Attribution;
+
+        Assert.Contains("not endorsed by Frontier Developments plc", attribution, StringComparison.Ordinal);
+        Assert.Contains("registered trademark", attribution, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The changelog ships inside the build, which is what lets the area answer with no internet
+    /// at all — the one thing the browser button it replaces could never do.
+    /// </summary>
+    [Fact]
+    public void TheChangelogIsInsideTheBuild()
+    {
+        Assert.True(D47.Core.Help.Changelog.Exists);
+        Assert.Contains("## 0.75", D47.Core.Help.Changelog.Text, StringComparison.Ordinal);
+
+        // Newest first, which is the order the file is already written in and the reason the
+        // window shows the whole thing rather than hunting for a section.
+        var newest = D47.Core.Help.Changelog.Text.IndexOf("## 0.75", StringComparison.Ordinal);
+        var older = D47.Core.Help.Changelog.Text.IndexOf("## 0.1.0", StringComparison.Ordinal);
+
+        Assert.True(newest >= 0 && (older < 0 || newest < older));
+    }
+
+    /// <summary>And the online one survives, because it is the only one that can show a newer release.</summary>
+    [Fact]
+    public void TheOnlineChangelogPointsAtTheBranchRatherThanATag()
+    {
+        Assert.Equal(
+            "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md",
+            Controls.ChangelogWindow.OnlineUrl);
     }
 }
