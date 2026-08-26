@@ -30,9 +30,10 @@ namespace D47.Core.Capabilities.Builtin;
 /// </para>
 /// <para>
 /// <b>Protected, so it is advertised to nothing and reachable by phrase and by press.</b> Phase 26
-/// measured the advertised surface at 39,693 bytes against a 40,000 ceiling and
-/// <c>ToolProfiles.ComfortableBytes</c> says raising it again is the wrong answer; nothing here
-/// needs a model to read free English.
+/// measured the advertised surface at 39,693 bytes against the 40,000 ceiling of the day, and
+/// argued against raising it — which the Commander then did, to 50,000, on 2026-08-26. The
+/// argument for advertising nothing here is untouched either way: nothing here needs a model to
+/// read free English.
 /// </para>
 /// </summary>
 public static class GapCapability

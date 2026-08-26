@@ -80,8 +80,29 @@ public static class ToolProfiles
     /// §6). That model is what d47 runs on today, so this constant and the profiles beneath it are
     /// removable work rather than a someday. **Raising the number a third time is the wrong answer.**
     /// </para>
+    /// <para>
+    /// <b>Raised a third time anyway, to 50,000, on the Commander's instruction on 2026-08-26 —
+    /// and the paragraph above is left standing because it is still the better argument.</b> The
+    /// case for the raise is that this number is d47's own invention: there is no provider limit
+    /// under it, so a feature blocked by it is blocked by nothing but a figure d47 picked. At the
+    /// margin it had become one — 39,954 with 46 bytes spare, where a single tightened sentence
+    /// could take the Commander's action tools away without a word.
+    /// </para>
+    /// <para>
+    /// <b>What the raise does not fix, recorded here so the next reader does not have to
+    /// rediscover it.</b> On the same night, a Commander asked where the closest Core Dynamics
+    /// Composites were and the model called <c>find_nearest_station</c> instead of
+    /// <c>find_material</c> (<a href="https://github.com/dseelinger/d47/issues/54">#54</a>).
+    /// <b>Nothing had been dropped</b> — every profile fitted, and the tool it needed was
+    /// advertised. The failure was the model choosing among 74 tools, several of which plausibly
+    /// answer "where is X". A ceiling is the only thing currently applying pressure to keep that
+    /// set small, and raising it relieves pressure on the failure d47 does not have while doing
+    /// nothing about the one it does. Tool search — deferred schemas, appended rather than
+    /// swapped, so the cached prefix survives — answers both, and remains the work this constant
+    /// is waiting to be deleted by.
+    /// </para>
     /// </summary>
-    public const int ComfortableBytes = 40_000;
+    public const int ComfortableBytes = 50_000;
 
     /// <summary>
     /// The tools that ship in every profile, including the degraded one. Answering, help,
