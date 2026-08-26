@@ -106,22 +106,56 @@ public class SeventyFiveKnobsTests
     }
 
     /// <summary>
-    /// The Commander's ruling on the one item flagged in the proposed list, 2026-08-26. These are
-    /// the rows that decide what leaves the machine, and a page that went calm by no longer
-    /// mentioning egress would be calm about the wrong thing.
+    /// The rows that decide what leaves this machine stay on the calm page, named one by one.
+    /// <para>
+    /// <b>This used to be a rule about a property and is now a list, and the list is the honest
+    /// form.</b> The rule exempted anything carrying an <c>EgressId</c>, which turned out to reach
+    /// exactly two kinds of row: the API key rows, already exempt for being secrets, and the five
+    /// per-slot voice provider rows — which are not consent at all. It never touched the rows
+    /// below, none of which carries a disclosure. What keeps these visible is that they are not
+    /// marked <c>Advanced</c>, and that is worth asserting by name rather than inferring.
+    /// </para>
     /// </summary>
-    [Fact]
-    public void NothingCarryingAnEgressDisclosureIsFolded()
+    [Theory]
+    [InlineData("llm.webSearch")]
+    [InlineData("knowledge.galaxy")]
+    [InlineData("knowledge.notablePlaces")]
+    [InlineData("privacy.memory")]
+    [InlineData("privacy.habits")]
+    [InlineData("memory.enabled")]
+    public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)
     {
         using var install = new TempInstall();
         var surface = TestSurface.For(install);
 
-        var carrying = Rows(surface)
-            .Where(row => row.EgressId is not null || row.EgressFor is not null)
+        var row = surface.Settings.Find(key);
+
+        Assert.NotNull(row);
+        Assert.False(row.Advanced, $"{key} decides what leaves this machine and must not be folded.");
+        Assert.False(Folded(surface, row));
+    }
+
+    /// <summary>
+    /// And a slot provider row <em>is</em> folded, which is the narrowing itself (the Commander's
+    /// instruction, 2026-08-26). It chooses which of several providers speaks a line that is
+    /// already going out; it does not decide whether anything goes. The provider row above it,
+    /// which does, stays on the page.
+    /// </summary>
+    [Fact]
+    public void APerSlotVoiceProviderRowIsFolded()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var slots = Rows(surface)
+            .Where(row => row.Key.StartsWith("speech.provider.", StringComparison.Ordinal))
             .ToList();
 
-        Assert.NotEmpty(carrying);
-        Assert.All(carrying, row => Assert.False(Folded(surface, row)));
+        Assert.Equal(5, slots.Count);
+        Assert.All(slots, row => Assert.True(Folded(surface, row)));
+
+        // The one that decides whether the ship's AI speaks at all is not folded.
+        Assert.False(Folded(surface, surface.Settings.Find(SpeechCapability.ProviderKey)!));
     }
 
     /// <summary>

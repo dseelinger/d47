@@ -53,14 +53,27 @@ public static class SettingsFold
             return false;
         }
 
-        // Anything that decides what leaves this machine. The fold's job is to be calm, and a
-        // page that went calm by no longer mentioning egress would be calm about the wrong thing
-        // — the Commander's own ruling, 2026-08-26, taking the recommendation on the one flagged
-        // item in the proposed list.
-        if (row.EgressId is not null || row.EgressFor is not null)
-        {
-            return false;
-        }
+        // There was a third rule here and it was too wide. It exempted anything carrying an
+        // egress disclosure, on the reasoning that a page which went calm by no longer mentioning
+        // egress would be calm about the wrong thing. That reasoning still holds; the rule did not
+        // express it.
+        //
+        // Exactly two kinds of row carry a disclosure: the API key rows, which are secrets and are
+        // already exempt one clause up, and the five per-slot voice provider rows. So the rule
+        // reached nothing it was written for and one thing it was not — five "who speaks for X"
+        // pickers on a page whose whole job is to be short. Narrowed on the Commander's
+        // instruction, 2026-08-26.
+        //
+        // <b>What actually protects the rows that decide what leaves this machine is that they are
+        // not marked Advanced</b> — llm.webSearch, the two galaxy-search rows, the two privacy
+        // rows and memory.enabled. That was true while this clause stood as well; the clause was
+        // never what was doing it. It is asserted by name in SeventyFiveKnobsTests rather than
+        // left to be inferred from a property none of them carry.
+        //
+        // <b>A slot provider is not that kind of row.</b> It chooses which of several providers
+        // speaks a line that is already going out; it does not decide whether anything goes.
+        // Turning egress off for those slots is the provider row above them, which stays on the
+        // page.
 
         // The fold's promise is "you are not missing anything", and a row the Commander changed is
         // by definition something they did. This also makes the whole rule self-adjusting: a new

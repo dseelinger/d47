@@ -119,9 +119,11 @@ Four kinds of row are on the page whatever this says:
   you set is by definition something you did. It also means the page adjusts itself: a new
   Commander sees the calm version, and a tinkerer sees their own work.
 - **Your API keys.** A hidden key box is a Commander who cannot work out why nothing speaks.
-- **Anything that decides what leaves this machine** — web search, the galaxy search, what
-  Directive 47 remembers about you. A page that went calm by no longer mentioning those would be
-  calm about the wrong thing.
+- **Anything that decides what leaves this machine** — web search, the galaxy search, notable
+  places, what Directive 47 remembers about you, and the two privacy summaries. A page that went
+  calm by no longer mentioning those would be calm about the wrong thing. Choosing *which*
+  provider speaks a particular slot is not one of these: that picks who says a line that is
+  already going out, and the provider row that decides whether it goes at all stays on the page.
 - **The rows you need to get running**: a provider, a model, a voice, a microphone, and one switch
   that stops Directive 47 talking.
 
