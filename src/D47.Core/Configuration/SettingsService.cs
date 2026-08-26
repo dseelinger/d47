@@ -299,6 +299,166 @@ public sealed class SettingsService
     public string? Read(string key) =>
         Find(key) is { Kind: not SettingKind.Secret, Binding: { } binding } ? binding.Read(Current) : null;
 
+    /// <summary>
+    /// Whether this row's value differs from what a fresh install would show
+    /// (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
+    /// <para>
+    /// <b>Needs no new state, which is what makes it cheap.</b>
+    /// <see cref="D47Settings.Defaults"/> is a settings document with nothing chosen in it, and
+    /// a row's own binding read against that is what the row would say on a fresh install. So
+    /// "changed" is a comparison between two reads rather than a flag somebody has to remember
+    /// to set — and a row put back by hand stops being changed without anything being told.
+    /// </para>
+    /// <para>
+    /// <b>Not simply "the value is non-null".</b> That was the first shape of this and it was
+    /// wrong for most of the surface: a row like the theme always reads a value, because its
+    /// unset state <em>is</em> a value. Only the rows whose binding returns null when nothing is
+    /// chosen — the model, the endpoint, About Me — would have answered correctly, and every
+    /// toggle and every choice with a default would have claimed to be changed on a fresh
+    /// install.
+    /// </para>
+    /// <para>
+    /// <b>A per-Commander row asks a different question</b>, and it is the one the glyph should
+    /// answer: not "does this differ from the shipped default" but "do I have my own answer
+    /// here". A Commander looking at a value the installation set has nothing of theirs to undo.
+    /// </para>
+    /// <para>
+    /// Always false for a secret. A key is not a setting with a default to fall back to, and
+    /// clearing one is destructive in a way nothing else here is.
+    /// </para>
+    /// </summary>
+    public bool IsChanged(string key)
+    {
+        if (Find(key) is not { Kind: not SettingKind.Secret, Binding: { } binding } row)
+        {
+            return false;
+        }
+
+        if (row.Scope == SettingScope.Commander)
+        {
+            return CommanderScope.WithOneFieldForgotten(_stored, _commanderFid).Any(candidate =>
+                !string.Equals(
+                    binding.Read(CommanderScope.Project(candidate, _commanderFid)),
+                    binding.Read(Current),
+                    StringComparison.Ordinal));
+        }
+
+        return !string.Equals(binding.Read(Current), binding.Read(D47Settings.Defaults), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Puts a row back to its default (#61).
+    /// <para>
+    /// <b>The mechanism already existed and had never been used.</b>
+    /// <see cref="SettingBinding.Write"/> takes a <c>string?</c>, and a null written value means
+    /// "no choice made" — so reset is a write of null, with no default table to author and
+    /// nothing to keep in step with the shipped defaults.
+    /// </para>
+    /// <para>
+    /// <b>It is not reachable from the tool surface, and that is the point rather than an
+    /// omission.</b> Protected is a property of the caller: a <c>reset_settings</c> tool would
+    /// hand the model one call that reaches every protected row at once, which is the exact thing
+    /// the invariant exists to prevent. There is no reset tool at any scope, and this refuses a
+    /// model caller on a protected row exactly as <see cref="Apply"/> does, because it is
+    /// <see cref="Apply"/> that does it.
+    /// </para>
+    /// <para>
+    /// <b>A secret is never reset.</b> Forgetting a key is destructive and unrecoverable — the
+    /// Commander has to go and find it again — so it is a separate, differently worded, confirmed
+    /// action rather than something a card-level reset sweeps up. Somebody asking for a working
+    /// Speech tab is not asking to be logged out of ElevenLabs.
+    /// </para>
+    /// </summary>
+    public SettingApplyResult Reset(string key, SettingsCaller caller)
+    {
+        if (Find(key) is not { } row)
+        {
+            return new SettingApplyResult(SettingApplyStatus.UnknownKey, $"There is no setting called '{key}'.");
+        }
+
+        if (row.Kind == SettingKind.Secret)
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Refused,
+                $"'{row.Label}' is a stored key, not a setting with a default. Forgetting it is its own action.");
+        }
+
+        // A row that is the Commander's own resets by forgetting their answer rather than by
+        // writing a blank one — see CommanderScope.WithOneFieldForgotten for why an ordinary
+        // write cannot express that.
+        if (row.Scope == SettingScope.Commander && ForgetCommanderAnswer(row) is { } forgotten)
+        {
+            return forgotten;
+        }
+
+        return Apply(key, null, caller);
+    }
+
+    /// <summary>
+    /// Every row on one capability's card, put back to its default (#61). Returns how many moved.
+    /// <para>
+    /// <b>The gesture that matters when things are haywire.</b> A Commander who has been fiddling
+    /// with twenty-two Speech rows does not know which one did it, and "reset Speech" is what they
+    /// actually want to say.
+    /// </para>
+    /// <para>
+    /// Secrets are not swept up, and rows the Commander never touched are not written — so this
+    /// is exactly as destructive as the changes it is undoing and no more.
+    /// </para>
+    /// </summary>
+    public int ResetCard(string capabilityId, SettingsCaller caller)
+    {
+        var rows = Sections
+            .Where(section => string.Equals(section.Capability.Id, capabilityId, StringComparison.Ordinal))
+            .SelectMany(section => section.Rows)
+            .Where(row => IsChanged(row.Key))
+            .Select(row => row.Key)
+            .ToList();
+
+        return rows.Count(key => Reset(key, caller).Status == SettingApplyStatus.Applied);
+    }
+
+    /// <summary>
+    /// Removes this Commander's own answer for a row, or null when there is nothing of theirs to
+    /// remove and the ordinary write should handle it.
+    /// <para>
+    /// Which of their fields the row is asking about is found by trying each and seeing which one
+    /// moves this row's value — the same rule <c>CommanderScopeTests</c> uses to decide which rows
+    /// the overlay reaches, rather than a second list of keys that could disagree with it.
+    /// </para>
+    /// </summary>
+    private SettingApplyResult? ForgetCommanderAnswer(SettingRow row)
+    {
+        if (row.Binding is not { } binding)
+        {
+            return null;
+        }
+
+        var mine = binding.Read(Current);
+
+        foreach (var candidate in CommanderScope.WithOneFieldForgotten(_stored, _commanderFid))
+        {
+            var without = CommanderScope.Project(candidate, _commanderFid);
+
+            if (string.Equals(binding.Read(without), mine, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            _store.Save(candidate);
+            _stored = candidate;
+            Current = CommanderScope.Project(candidate, _commanderFid);
+
+            _logger.LogInformation("Reset {Key} to the installation's value", row.Key);
+            Changed?.Invoke(new SettingsChanged(row.Key, Current));
+            Applied?.Invoke(new SettingApplied(row.Key, SettingApplyStatus.Applied));
+
+            return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is back to its default.");
+        }
+
+        return null;
+    }
+
     /// <summary>Whether a secret has a value stored. Never what it is.</summary>
     public bool HasSecret(string? secretName) =>
         secretName is not null && _secrets.Has(secretName);

@@ -48,6 +48,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private readonly List<RowView> _rows = [];
 
     private SettingsService? _settings;
+
+    /// <summary>
+    /// The per-card reset controls, so each can be hidden again once its card is back at its
+    /// defaults (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
+    /// </summary>
+    private readonly List<(SettingsSection Section, Button Button)> _cardResets = [];
+
+    /// <summary>
+    /// The name on a row's reset glyph, so a lookup for the row's own control can exclude it
+    /// (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
+    /// </summary>
+    public const string RowResetName = "RowReset";
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
     private AppPaths? _paths;
@@ -325,6 +337,43 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         docs.PointerPressed += (_, e) => e.Handled = true;
 
         headerRow.Children.Add(docs);
+
+        // The gesture that matters when things have gone wrong
+        // (https://github.com/dseelinger/d47/issues/61). A Commander who has been fiddling with
+        // twenty-two Speech rows does not know which one did it, and "reset Speech" is what they
+        // actually want to say.
+        //
+        // Present only while something on this card has been changed, so a card at its defaults
+        // offers nothing to undo — the same rule as the row glyph below, and it doubles as a
+        // quiet "you have changed something here".
+        var reset = new Button
+        {
+            Content = "Reset",
+            FontSize = TypeScale.Small,
+            Padding = new Thickness(6, 0),
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            IsVisible = CardHasChanges(section),
+        };
+
+        Themed(reset, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+        ToolTip.SetTip(reset, $"Put every {title} setting you have changed back to its default. Keys are untouched.");
+
+        reset.Click += (_, _) =>
+        {
+            _settings!.ResetCard(section.Capability.Id, SettingsCaller.Panel);
+            Refresh();
+        };
+
+        // Held so its visibility can follow the card's state, the same way each row's glyph
+        // follows its own.
+        _cardResets.Add((section, reset));
+
+        reset.PointerPressed += (_, e) => e.Handled = true;
+
+        headerRow.Children.Add(reset);
 
         var header = new Border
         {
@@ -820,6 +869,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                        && _sections[i].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
         }
 
+        foreach (var (section, button) in _cardResets)
+        {
+            button.IsVisible = CardHasChanges(section);
+        }
+
         _refreshing = true;
         try
         {
@@ -1089,6 +1143,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// resources — worth a look on the captures before deciding whether that needs answering too.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether anything on this card has been changed from its default, which is what decides
+    /// whether the card offers a way back (#61).
+    /// <para>
+    /// Rows that do not currently apply are not counted. A Commander looking at a Speech card
+    /// configured for Edge is not offered a reset because of an ElevenLabs rate they set months
+    /// ago on a row that is not on screen — and if they switch back, the offer returns with the
+    /// row.
+    /// </para>
+    /// </summary>
+    private bool CardHasChanges(SettingsSection section) =>
+        _settings is { } settings
+        && section.Rows.Any(row => row.Applies(settings.Current) && settings.IsChanged(row.Key));
+
     private void DressAsAChoice(TemplatedControl control)
     {
         // Fixed rather than a floor. Both are one line of text and a glyph, and a floor let the
@@ -1201,6 +1269,54 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = false,
         };
         Themed(keyLine, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        // A way back from this one row (https://github.com/dseelinger/d47/issues/61), on the
+        // rows the Commander has actually changed and nowhere else. A glyph on all seventy-five
+        // is noise; a glyph on the handful somebody has touched is useful, and doubles as a quiet
+        // "you changed this" marker — which is knowable with no new state, because a set value is
+        // already distinguishable from a default.
+        //
+        // Absent on a secret, where there is no default to go back to and forgetting a key is a
+        // different and destructive act.
+        if (row is { Kind: not SettingKind.Secret, Binding.Write: not null })
+        {
+            var back = new Button
+            {
+                // Named so anything looking for "the control this row is about" can tell this
+                // apart from it. Two tests took the first Button in a row and got this instead,
+                // which is the same hazard a Commander does not have and a search does.
+                Name = RowResetName,
+                Content = "↺",
+                FontSize = TypeScale.Secondary,
+                Padding = new Thickness(4, 0),
+                MinWidth = 0,
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                IsVisible = false,
+            };
+
+            Themed(back, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+            ToolTip.SetTip(back, $"Put {row.Label} back to its default");
+
+            back.Click += (_, _) =>
+            {
+                _settings!.Reset(row.Key, SettingsCaller.Panel);
+                Refresh();
+            };
+
+            header.Children.Add(back);
+
+            // Folded into the row's refresh rather than set once, because whether this row has
+            // been changed is exactly what a reset — or any other write — moves.
+            var shownBefore = refresh;
+
+            refresh = () =>
+            {
+                shownBefore();
+                back.IsVisible = _settings?.IsChanged(row.Key) ?? false;
+            };
+        }
 
         var caption = new StackPanel { Spacing = 0 };
         caption.Children.Add(header);
