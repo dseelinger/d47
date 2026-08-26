@@ -103,6 +103,33 @@ overlay.
 This site is the long form. In-app help is the short form: every settings row links to the
 page that explains it.
 
+### A way back
+
+Every setting has a default, and you can always get back to it.
+
+**A row you have changed grows a small ↺ beside its label.** Press it and that row goes back to
+the way it shipped. Rows you have not touched do not have one, so the glyph doubles as a quiet
+marker of what you have actually changed.
+
+**A card you have changed grows a Reset** beside its heading. That puts back everything on that
+card in one go, which is the useful gesture when something has gone wrong and you do not know
+which of twenty-two rows did it.
+
+Two things reset never touches:
+
+- **Your API keys.** Forgetting a key means going and finding it again, so it is a separate act
+  and never something a card reset sweeps up. Asking for a working Speech tab is not asking to be
+  logged out of ElevenLabs.
+- **Anyone else's settings.** On a row that is yours rather than the installation's — About Me,
+  your character sheet, the core paired to your ship — reset means *stop having my own answer*, so
+  the installation's value shows through again. Clearing the box by hand still means deliberately
+  blank, which is a different thing and stays different.
+
+**Directive 47 cannot reset anything by itself**, and that is deliberate rather than an
+oversight. Reset writes safety-critical settings, and a single call that reached all of them at
+once is exactly what the rule about protected settings exists to prevent. The panel can, your
+keyboard can, and the model cannot.
+
 ### Where everything is
 
 **The nav on the left is the whole site**, grouped the way the settings panel is grouped —

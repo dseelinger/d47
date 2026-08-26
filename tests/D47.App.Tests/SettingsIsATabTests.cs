@@ -350,6 +350,7 @@ public class SettingsIsATabTests
                     .Any(text => text.Text == "Push-to-talk key"));
 
         var bind = row.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Name != D47.App.Settings.SettingsView.RowResetName)
             .First(button => (button.Content as string) != "Unbind");
 
         bind.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

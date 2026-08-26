@@ -105,7 +105,10 @@ public class VoiceRowFitsItsColumnTests
     {
         var host = Open();
 
-        var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>().First();
+        // Not the reset glyph beside the label, which is a different button about a different
+        // thing (#61).
+        var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>()
+            .First(control => control.Name != D47.App.Settings.SettingsView.RowResetName);
 
         Assert.Contains("Bill", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
 

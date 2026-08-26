@@ -136,6 +136,55 @@ public static class CommanderScope
         };
     }
 
+    /// <summary>
+    /// This Commander's document with one of their own fields forgotten — one entry per field
+    /// they could have set (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
+    /// <para>
+    /// <b>Reset on a per-Commander row means "stop having my own answer", not "write a blank
+    /// one".</b> <see cref="Persist"/> records a cleared field as <em>empty</em> rather than null,
+    /// deliberately, because that is what keeps <em>this Commander blanked it</em> apart from
+    /// <em>this Commander never set it</em>. Reset wants the second of those, so it cannot go
+    /// through the ordinary write at all — an empty would leave the Commander permanently opted
+    /// out of the installation's value, which is the opposite of a way back.
+    /// </para>
+    /// <para>
+    /// <b>The candidates are returned rather than a row-to-field map being kept here.</b> The
+    /// caller finds its field by asking which candidate moves the row's own value, which is
+    /// exactly how <c>CommanderScopeTests</c> already decides which rows the overlay reaches. One
+    /// rule, used twice; a second list of row keys is a list that would drift.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<D47Settings> WithOneFieldForgotten(D47Settings stored, string? fid)
+    {
+        if (fid is not { Length: > 0 } || OverlayFor(stored, fid) is not { } overlay)
+        {
+            return [];
+        }
+
+        return
+        [
+            Without(stored, fid, overlay with { AboutMe = null }),
+            Without(stored, fid, overlay with { CharacterSheet = null }),
+            Without(stored, fid, overlay with { ShipCoreShip = null }),
+        ];
+    }
+
+    /// <summary>
+    /// The document with this Commander's entry replaced — or removed outright once nothing of
+    /// theirs is left in it, so forgetting the last field leaves no husk behind carrying only an
+    /// id and a name.
+    /// </summary>
+    private static D47Settings Without(D47Settings stored, string fid, CommanderSettings updated)
+    {
+        var others = stored.Commanders.Where(entry => !IsFor(entry, fid)).ToList();
+
+        var empty = updated.AboutMe is null
+                    && updated.CharacterSheet is null
+                    && updated.ShipCoreShip is null;
+
+        return stored with { Commanders = empty ? [.. others] : [.. others, updated] };
+    }
+
     private static CommanderSettings? OverlayFor(D47Settings stored, string? fid) =>
         fid is { Length: > 0 } ? stored.Commanders.FirstOrDefault(entry => IsFor(entry, fid)) : null;
 
