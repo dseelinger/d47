@@ -131,16 +131,34 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     };
 
     private readonly Func<string?> _key;
+
+    /// <summary>How the core aboard should be performed, or null where nothing is being performed.</summary>
+    private readonly Func<string?>? _direction;
     private readonly ILogger<OpenAiTtsProvider> _logger;
     private readonly HttpClient _http;
 
+    /// <param name="direction">
+    /// How the core aboard should be performed, asked at the moment of synthesis
+    /// (<a href="https://github.com/dseelinger/d47/issues/49">#49</a>). Null, or a source
+    /// returning null, sends no <c>instructions</c> field at all — which is what every slot that
+    /// is not the ship's AI gets, and what personality-off gets.
+    /// <para>
+    /// <b>Construction rather than the selection record</b>, deliberately. <c>VoiceSelection</c>
+    /// is built all over the codebase and the persona is known here; putting it on the selection
+    /// would push a field through every one of those call sites. <b>A source rather than a
+    /// value</b>, because a Commander switches core while d47 is running and the client is not
+    /// rebuilt for it.
+    /// </para>
+    /// </param>
     public OpenAiTtsProvider(
         Func<string?> key,
         ILogger<OpenAiTtsProvider> logger,
-        HttpMessageHandler? handler = null)
+        HttpMessageHandler? handler = null,
+        Func<string?>? direction = null)
     {
         _key = key;
         _logger = logger;
+        _direction = direction;
         _http = handler is null ? new HttpClient() : new HttpClient(handler);
         _http.Timeout = TimeSpan.FromSeconds(60);
     }
@@ -194,6 +212,11 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
                     // way to the arbiter — the same trade ElevenLabs makes with pcm_24000.
                     ResponseFormat = "pcm",
                     Speed = SpeedFor(voice.Rate),
+
+                    // Omitted entirely when there is nobody to perform — the field is nullable and
+                    // is left out of the JSON on null, so a slot with no core sends exactly the
+                    // request it sent before this existed (#49).
+                    Instructions = Blank(_direction?.Invoke()),
                 },
                 options: Json);
 
@@ -340,7 +363,17 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
         public required string ResponseFormat { get; init; }
 
         public double Speed { get; init; } = 1.0;
+
+        /// <summary>
+        /// How to perform it — accent, tone, intonation, delivery. Documented at 4,096 characters
+        /// and documented <b>not</b> to work on <c>tts-1</c> or <c>tts-1-hd</c>, which is a second
+        /// reason <see cref="DefaultModel"/> is pinned where it is.
+        /// </summary>
+        [JsonPropertyName("instructions")]
+        public string? Instructions { get; init; }
     }
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     public void Dispose() => _http.Dispose();
 }
