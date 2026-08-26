@@ -1,0 +1,201 @@
+using D47.Core.Journal;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.Core.Tests.Journal;
+
+/// <summary>
+/// One journal event as a line a person can read
+/// (<a href="https://github.com/dseelinger/d47/issues/51">#51</a>).
+/// <para>
+/// <b>Every line asserted here was produced from a real journal line</b>, not from a hand-built
+/// one that agrees with what the formatter expects. Four defects were found that way and none of
+/// them would have been found any other way — the fields are all plausible and all wrong until you
+/// look.
+/// </para>
+/// </summary>
+public class TheJournalYouCanReadTests
+{
+    private static JournalEvent Parse(string line)
+    {
+        Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var entry));
+
+        return entry!;
+    }
+
+    private static string Said(string line) => JournalSentence.For(Parse(line));
+
+    [Theory]
+
+    // Flying. Every one of these is a line lifted out of the corpus.
+    [InlineData(
+        """{ "timestamp":"2026-08-26T02:12:59Z", "event":"FSDJump", "StarSystem":"LDS 2314", "JumpDist":29.44 }""",
+        "Jumped to LDS 2314 — 29.44 ly")]
+    [InlineData(
+        """{ "timestamp":"2026-08-26T00:29:17Z", "event":"Docked", "StationName":"Prospector's Rest", "StarSystem":"Kuk" }""",
+        "Docked at Prospector's Rest, Kuk")]
+    [InlineData(
+        """{ "timestamp":"2026-08-26T00:28:16Z", "event":"SupercruiseExit", "StarSystem":"Kuk", "Body":"Kuk B 3" }""",
+        "Dropped out of supercruise at Kuk B 3")]
+    [InlineData(
+        """{ "timestamp":"2026-08-21T15:13:44Z", "event":"FuelScoop", "Scooped":4.709673, "Total":32.0 }""",
+        "Scooped 4.7 tonnes of fuel")]
+
+    // The localised name wins. "fedcorecomposites" is the symbol; nobody reads that.
+    [InlineData(
+        """{ "timestamp":"2026-08-26T02:17:22Z", "event":"MaterialCollected", "Category":"Manufactured", "Name":"fedcorecomposites", "Name_Localised":"Core Dynamics Composites", "Count":3 }""",
+        "Collected 3 × Core Dynamics Composites")]
+
+    // Danger reads as danger.
+    [InlineData(
+        """{ "timestamp":"2026-07-03T01:40:29Z", "event":"HullDamage", "Health":0.535646, "PlayerPilot":true }""",
+        "Hull damage — 54% remaining")]
+    [InlineData(
+        """{ "timestamp":"2026-02-03T13:23:28Z", "event":"Died", "KillerName":"Martin Caspersson" }""",
+        "Destroyed by Martin Caspersson")]
+    public void ARealLineReadsAsASentence(string line, string expected)
+    {
+        Assert.Equal(expected, Said(line));
+    }
+
+    /// <summary>
+    /// <b>The first defect reading real output found.</b> <c>BlueprintName</c> is
+    /// <c>Armour_HeavyDuty</c>: replacing the underscore with a space and then splitting the camel
+    /// hump put two spaces in the middle. It is fixed in <c>Spaced</c> rather than at the call
+    /// site, so every future caller inherits it.
+    /// </summary>
+    [Fact]
+    public void ABlueprintNameHasNoDoubleSpaceInIt()
+    {
+        var said = Said(
+            """{ "timestamp":"2026-08-26T00:43:37Z", "event":"EngineerCraft", "Engineer":"Selene Jean", "BlueprintName":"Armour_HeavyDuty", "Level":1 }""");
+
+        Assert.Equal("Selene Jean applied Armour Heavy Duty, grade 1", said);
+        Assert.DoesNotContain("  ", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The second.</b> Elite's localised crime name carries a symbol tail, so the line read
+    /// "...in no fire zone_hulldamage". An underscore in a sentence is a leaked implementation
+    /// detail.
+    /// </summary>
+    [Fact]
+    public void ACrimeNameLosesItsSymbolTail()
+    {
+        var said = Said(
+            """{ "timestamp":"2026-08-21T00:39:10Z", "event":"CommitCrime", "CrimeType":"collidedAtSpeedInNoFireZone_hullDamage" }""");
+
+        Assert.Equal("Committed a crime: collided at speed in no fire zone", said);
+        Assert.DoesNotContain("_", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The third.</b> <c>Loadout</c> carries <c>Ship</c> as a bare symbol with no localised
+    /// twin, so it read "Loadout reported for the smallcombat01_nx". Saying nothing about which
+    /// ship beats saying that; the ship's own name is used where the Commander gave it one.
+    /// </summary>
+    [Fact]
+    public void ALoadoutNeverShowsAShipSymbol()
+    {
+        Assert.Equal(
+            "Loadout reported for Tulimiekka",
+            Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"Loadout", "Ship":"smallcombat01_nx", "ShipName":"Tulimiekka" }"""));
+
+        Assert.Equal(
+            "Loadout reported",
+            Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"Loadout", "Ship":"smallcombat01_nx" }"""));
+    }
+
+    /// <summary>
+    /// A symbol that arrives wrapped in Frontier's <c>$name;</c> form is unwrapped rather than
+    /// shown. A dollar sign in a summary line is the same leak as an underscore.
+    /// </summary>
+    [Fact]
+    public void AWrappedSymbolIsUnwrapped()
+    {
+        var said = Said(
+            """{ "timestamp":"2026-08-26T00:55:30Z", "event":"ModuleBuy", "BuyItem":"$int_hullreinforcement_size2_class2_name;", "BuyItem_Localised":"Hull Reinforcement", "BuyPrice":28800 }""");
+
+        Assert.Equal("Bought a Hull Reinforcement for 28,800 Cr", said);
+        Assert.DoesNotContain("$", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The rule that makes the whole page safe.</b> An event nobody wrote a sentence for reads
+    /// as its own name, spaced into words — and loses nothing, because the detail pane beside it
+    /// is exactly as complete as any other's. A summary that is missing is a summary; a summary
+    /// that is wrong is a data-accuracy defect.
+    /// </summary>
+    [Fact]
+    public void AnEventWithNoSentenceReadsAsItsOwnName()
+    {
+        Assert.Equal(
+            "Fake Event Nobody Wrote",
+            Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"FakeEventNobodyWrote" }"""));
+
+        // And an acronym stays an acronym rather than becoming "F S S Signal Discovered".
+        Assert.Equal(
+            "FSS Signal Discovered",
+            Said("""{ "timestamp":"2026-08-26T00:00:00Z", "event":"FSSSignalDiscovered" }"""));
+    }
+
+    /// <summary>
+    /// A field that is absent never produces a blank or a broken sentence — every kind has a
+    /// fallback, because a journal from a future game version can omit anything.
+    /// </summary>
+    [Theory]
+    [InlineData("FSDJump")]
+    [InlineData("Docked")]
+    [InlineData("Scan")]
+    [InlineData("MaterialCollected")]
+    [InlineData("EngineerCraft")]
+    [InlineData("MarketBuy")]
+    [InlineData("Bounty")]
+    [InlineData("MissionAccepted")]
+    [InlineData("Died")]
+    [InlineData("CarrierJump")]
+    public void AKindWithNoFieldsAtAllStillReads(string kind)
+    {
+        var said = Said($$"""{ "timestamp":"2026-08-26T00:00:00Z", "event":"{{kind}}" }""");
+
+        Assert.False(string.IsNullOrWhiteSpace(said));
+        Assert.DoesNotContain("  ", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The noise floor is measured rather than chosen. Across 931 journals
+    /// <c>FSSSignalDiscovered</c> and <c>ShipLocker</c> alone are 48% of the corpus by volume, and
+    /// a Commander wants to read neither.
+    /// </summary>
+    [Fact]
+    public void TheNoiseFloorNamesTheTwoThatDominateTheCorpus()
+    {
+        Assert.Contains("FSSSignalDiscovered", JournalSentence.Noise);
+        Assert.Contains("ShipLocker", JournalSentence.Noise);
+
+        // And never anything a Commander did. Hiding a jump would make the page a liar.
+        Assert.DoesNotContain("FSDJump", JournalSentence.Noise);
+        Assert.DoesNotContain("Docked", JournalSentence.Noise);
+        Assert.DoesNotContain("Died", JournalSentence.Noise);
+    }
+
+    /// <summary>
+    /// <b>Other players' text gets no sentence at all, deliberately.</b> The message is the
+    /// content, and the page renders it unformatted and muted — a player who types <c>**</c> must
+    /// see <c>**</c> rather than bold, and the summary line must never let a message impersonate
+    /// d47's own line format. This is the untrusted-input invariant arriving at a new surface.
+    /// </summary>
+    [Theory]
+    [InlineData("ReceiveText")]
+    [InlineData("SendText")]
+    public void AMessageFromAnotherPlayerIsNeverFormattedIntoASentence(string kind)
+    {
+        var said = Said(
+            $$"""{ "timestamp":"2026-08-26T00:18:40Z", "event":"{{kind}}", "From":"CMDR Hostile", "Message":"**not bold**", "Channel":"local" }""");
+
+        // The bare kind, which is what "no sentence" looks like — the message itself never
+        // reaches this line at all.
+        Assert.DoesNotContain("not bold", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("CMDR Hostile", said, StringComparison.Ordinal);
+    }
+}
