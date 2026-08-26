@@ -159,7 +159,8 @@ public static class GalaxyCapability
             {
                 Name = "find_nearest_station",
                 Description =
-                    "Find the nearest station selling a named module or ship, or trading a commodity.",
+                    "Find the nearest station selling a named module or ship, or trading a commodity "
+                    + "— cargo carried in tonnes, never an engineering material.",
                 Parameters =
                 [
                     // Three short descriptions on purpose. The names carry the meaning here, and
@@ -501,6 +502,27 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
+        // **A material is not cargo, and d47 holds the table that says so**
+        // (<a href="https://github.com/dseelinger/d47/issues/54">#54</a>). Asked where the closest
+        // Core Dynamics Composites were, the model reached for this tool — reasonably, since
+        // "closest" and a named thing to buy is what it advertises — and the honest market answer
+        // was "not trading within 50 light years", which is true of every engineering material
+        // that has ever existed and helps nobody.
+        //
+        // **Above the availability check on purpose.** This is a local table lookup: it reaches
+        // no network, spends nothing, and is the right answer whether or not galaxy search is
+        // switched on — so a Commander running local-only gets it too, rather than being told
+        // the search is off and left with the wrong idea about what the thing is.
+        //
+        // Answered rather than redirected, because the catalogue carries where it actually
+        // comes from and reading it costs nothing.
+        if (arguments.TryGetString("commodity", out var named)
+            && MaterialCatalogue.Find(named) is
+                { Ledger: not (MaterialLedger.Cargo or MaterialLedger.RareCargo) } material)
+        {
+            return ToolResult.Ok(NotCargo(material));
+        }
+
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
         {
             return ToolResult.Error(Unavailable);
@@ -566,6 +588,40 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// What to say when the name is not something any station trades (#54).
+    /// <para>
+    /// It names the ledger it really belongs to, says where it comes from when the catalogue
+    /// knows, and names the tool that answers properly — so the turn ends with the Commander's
+    /// question answered rather than with a market report about a thing that has no market.
+    /// </para>
+    /// </summary>
+    private static string NotCargo(MaterialEntry material)
+    {
+        var said = new StringBuilder();
+
+        said.Append($"{material.Name} is not a commodity — no station trades it. ");
+
+        said.Append(material.Ledger switch
+        {
+            MaterialLedger.Material =>
+                $"It is a{(material.Category is { Length: > 0 } kind ? " " + kind.ToLowerInvariant() : "n")} "
+                + $"engineering material{(material.Grade is { } grade ? $", grade {grade}" : string.Empty)}.",
+
+            MaterialLedger.ShipLocker => "It is an Odyssey ship-locker item, carried on foot.",
+            _ => "It is not carried as cargo.",
+        });
+
+        if (material.Origins.Count > 0)
+        {
+            said.Append($" Found at: {string.Join("; ", material.Origins)}.");
+        }
+
+        said.Append(" Ask find_material for where to get it and what a trader could turn into it.");
+
+        return said.ToString();
     }
 
     /// <summary>
