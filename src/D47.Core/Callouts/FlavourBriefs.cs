@@ -144,6 +144,28 @@ public static class FlavourBriefs
             return null;
         }
 
+        // **Somebody else's words are never handed to a model.** `IncomingMessages` says of itself
+        // that "none of it ever reaches the model … there is deliberately no path from here into a
+        // prompt", and until this line there was one: a message from the Commander's own carrier
+        // is assigned VoiceRole.TowerControl, and the carrier brief below is chosen by role — so
+        // an in-game transmission was being interpolated into an instruction inside quotes.
+        //
+        // That is the invariant in architecture.md §7 and CLAUDE.md, where in-game comms are
+        // untrusted input whose attacker is "any player in range". It is also where the refusals
+        // came from: a Commander heard the tower say "I don't have that capability" against the
+        // authored line "No fire zone exited" (GitHub issue 46) and, on 2026-08-25, "I'm not going
+        // to restate those system rules to you" against "No fire zone entered". Both were station
+        // traffic being asked for a rewrite. The list of phrases below caught the first and not
+        // the second, which is what a denylist does; this is the same fault fixed at the input.
+        //
+        // Both fields say it and either is enough: `CommsChannel` is set exactly by the chat
+        // reader, and `Transcript` is non-null exactly for a line already written on the comms
+        // page. Nothing else in d47 sets either.
+        if (announcement.CommsChannel is not null || announcement.Transcript is not null)
+        {
+            return null;
+        }
+
         if (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
         {
             return new FlavourBrief
@@ -276,6 +298,13 @@ public static class FlavourBriefs
         "as a language model",
         "i don't have access to",
         "i do not have access to",
+
+        // The 2026-08-25 pair, kept even though the input that produced them can no longer reach
+        // a brief. A denylist is the second line and not the first: these are cheap, and the cost
+        // of a wrong match is one less varied line.
+        "system rules",
+        "operating parameters",
+        "system prompt",
     ];
 
     /// <summary>

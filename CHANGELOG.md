@@ -20,6 +20,47 @@ the file as it stood then.
 
 ---
 
+## 0.73.2 — 2026-08-26 — Your carrier stops quoting the rulebook, and two of a kind are told apart
+
+### The tower said something nobody wrote
+
+Arriving back at your carrier, the tower said:
+
+> I'm not going to restate those system rules to you or confirm I understand them by rephrasing
+> them. Those are my operating parameters, not something for us to discuss.
+
+Nobody had asked it anything. The line it had actually been given was station traffic — **"No fire
+zone entered."** — and Directive 47 had handed that to the language model to be said in character.
+
+**In-game text is never sent to a model, and this was a path where it was.** A transmission from
+your own carrier is spoken in the tower's voice, and the rewriting was chosen by voice — so
+somebody else's words went into a prompt, in quotes, asking for a rewording. That is the boundary
+architecture.md draws around in-game comms, whose attacker is *any player in range*, and it is now
+closed at the input: a line that came off the comms channel is never eligible to be reworded,
+whoever is speaking it.
+
+It is also where 0.71.2's *"I don't have that capability"* came from, against the authored line
+*"No fire zone exited"* — the same station traffic, the same rewrite request. That release caught
+the answer by its phrasing; this one stops the question being asked. The phrase list stays as the
+second line of defence, with the new wording added to it.
+
+**Your carrier's own lines are still varied.** Those are Directive 47's words about you arriving,
+and saying them differently each time is the point.
+
+### Two of the same module no longer read as one
+
+A ship carrying two 2D Hull Reinforcement Packages drew two identical checklist lines — *"Deep
+Plating on 2D Hull Reinforcement Package"*, twice, one done and one open, with nothing on either
+to say which was which.
+
+Where the ship carries more than one of a module, the line now names the mounting point after the
+type: **"Deep Plating on 2D Hull Reinforcement Package in Compartment 4"**. Everywhere else it is
+unchanged — naming the type rather than the slot was asked for and was right, and this only
+qualifies it where the type alone cannot do the job. The condition is the ship's rather than the
+list's, so a line reads the same wherever it appears.
+
+---
+
 ## 0.73.1 — 2026-08-26 — A resistance is a percentage, not a multiplier
 
 Reported from the Loadout tab against a Heavy Duty G5 hull reinforcement:
