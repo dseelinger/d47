@@ -104,14 +104,28 @@ public class AMaterialIsNotCargoTests
     }
 
     /// <summary>
-    /// The other direction was already right and stays asserted, so the pair cannot drift: a
-    /// commodity handed to the engineering tool is told it is cargo rather than searched for.
+    /// The other direction, and <b>this assertion has inverted on purpose</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/58">#58</a>).
+    /// <para>
+    /// It used to require that the reverse said <em>nothing</em> about where to find the thing —
+    /// which was true of the code and was the weaker half of the pair. The engineering tool
+    /// correctly identified Gold as cargo and stopped, leaving the Commander to ask again. That is
+    /// the redirect this whole seam exists to stop, and it was being held in place by a test.
+    /// </para>
+    /// <para>
+    /// Both directions now answer: what it is, where the table knows it comes from, and which tool
+    /// tells them the rest.
+    /// </para>
     /// </summary>
     [Fact]
-    public async Task AndACommodityHandedToTheMaterialToolIsToldSo()
+    public async Task AndACommodityHandedToTheMaterialToolIsAnsweredRatherThanJustCorrected()
     {
         var said = await AskedAsync("find_material", "material", "Gold");
 
-        Assert.DoesNotContain("Found at:", said, StringComparison.Ordinal);
+        Assert.Contains("not a ship material", said, StringComparison.Ordinal);
+        Assert.Contains("find_nearest_station", said, StringComparison.Ordinal);
+
+        // No engineering search ran — that is still the half the old test was protecting.
+        Assert.DoesNotContain("trader", said, StringComparison.OrdinalIgnoreCase);
     }
 }
