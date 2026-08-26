@@ -193,6 +193,7 @@ public static class HabitsCapability
     private static SettingRow StoreRow(HabitBook? book, Func<Action?> mine) => new()
     {
         Key = StoreKey,
+        Advanced = true,
         Label = "What D47 has noticed",
         Help =
             "D47 reads through the journals already on this disk and looks for things you keep doing. "

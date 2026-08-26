@@ -100,6 +100,44 @@ rebind your keys, and was never given a way to.
 
 ### Settings
 
+#### Show every setting {#show-every-setting}
+
+Off by default. Directive 47 shows the settings most Commanders change, and folds the rest away
+until you ask for them.
+
+**Nothing is switched off by being hidden.** Every folded setting keeps working — at its default,
+or at the last thing you set it to. This decides what is drawn and nothing else: it never writes,
+clears or resets a single value.
+
+Four kinds of row are on the page whatever this says:
+
+- **Anything you have changed yourself.** The promise is *you are not missing anything*, and a row
+  you set is by definition something you did. It also means the page adjusts itself: a new
+  Commander sees the calm version, and a tinkerer sees their own work.
+- **Your API keys.** A hidden key box is a Commander who cannot work out why nothing speaks.
+- **Anything that decides what leaves this machine** — web search, the galaxy search, what
+  Directive 47 remembers about you. A page that went calm by no longer mentioning those would be
+  calm about the wrong thing.
+- **The rows you need to get running**: a provider, a model, a voice, a microphone, and one switch
+  that stops Directive 47 talking.
+
+**A card with nothing left on it disappears rather than sitting there empty**, which does more for
+the clutter than folding rows does — Diagnostics goes, and so does the headset card when there is
+no headset.
+
+**Following a help link always works.** If a page says "change X here" and X is folded, the jump
+unfolds the page for the rest of the session. It does not turn this setting on behind your back.
+
+You can say it out loud, too:
+
+```text
+show me every setting · show all the settings · show the advanced settings
+hide the advanced settings · show fewer settings · just the usual settings
+```
+
+The label never uses the word *advanced*, and the phrases happily accept it. That is on purpose:
+the phrase list is where Directive 47 meets your words, and the label is where it chooses its own.
+
 #### Theme {#theme}
 
 | Choice | What it looks like |

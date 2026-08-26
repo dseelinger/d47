@@ -483,6 +483,7 @@ public static class NavigationCapability
     private static SettingRow AutoPlotRow() => new()
     {
         Key = AutoPlotKey,
+        Advanced = true,
         Label = "Try to plot courses in the galaxy map",
         Help = "After copying a system name, opens the galaxy map, searches for it, plots to it and "
                + "closes the map again, using your own galaxy map, UI up, UI select and sideways "

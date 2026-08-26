@@ -59,6 +59,7 @@ public static class AutonomousCapability
     private static SettingRow HonkRow() => new()
     {
         Key = HonkKey,
+        Advanced = true,
         Label = "Honk on arriving in a system",
         Help = "Fires the discovery scanner by itself after each jump, by holding your own fire "
                + "button for six seconds. Needs the scanner in your current fire group and "

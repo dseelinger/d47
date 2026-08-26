@@ -292,6 +292,7 @@ public static class ConversationCapability
             new()
             {
                 Key = EndpointKey,
+                Advanced = true,
                 Label = "Endpoint",
                 Help = "Point at something else speaking the same protocol. Clearing it restores the provider's own.",
                 Kind = SettingKind.Text,
@@ -349,6 +350,7 @@ public static class ConversationCapability
             new()
             {
                 Key = BackgroundModelKey,
+                Advanced = true,
                 Label = "Model for the quiet calls",
                 Help =
                     "Which model writes the things you did not ask for — ambient remarks, the opening "
@@ -383,6 +385,7 @@ public static class ConversationCapability
             new()
             {
                 Key = EffortFloorKey,
+                Advanced = true,
                 Label = "Think at least this hard",
                 Help =
                     "The least effort a question gets, however plain it looked. D47 gauges each question "
@@ -408,6 +411,7 @@ public static class ConversationCapability
             new()
             {
                 Key = EffortCeilingKey,
+                Advanced = true,
                 Label = "Never think harder than this",
                 Help =
                     "The most effort a question gets, however hard it sounded. Thinking is what a turn "
@@ -528,6 +532,7 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.characterSheet",
+            Advanced = true,
             Label = "Character sheet",
             Help =
                 "Who your Commander is, in a few lines — name, where they are from, age, how they "
@@ -551,6 +556,7 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.aboutMe",
+            Advanced = true,
             Label = "About Me",
             Help =
                 "Your Commander's story, in your own words — as long as you like. D47 treats it as true "

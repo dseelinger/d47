@@ -173,6 +173,7 @@ public static class LogbookCapability
     private static SettingRow VoiceRow() => new()
     {
         Key = VoiceKey,
+        Advanced = true,
         Label = "Whose log it is",
         Help =
             "Your own account in the first person, or D47 writing about you in the personality you have "
@@ -202,6 +203,7 @@ public static class LogbookCapability
     private static SettingRow RangeRow() => new()
     {
         Key = RangeKey,
+        Advanced = true,
         Label = "What a log covers",
         Help =
             "The span a log covers when you have not said. Two exact dates are available from this panel; "
@@ -224,6 +226,7 @@ public static class LogbookCapability
     private static SettingRow LengthRow() => new()
     {
         Key = LengthKey,
+        Advanced = true,
         Label = "How long a log runs",
         Help =
             "Longer logs cost more, and the estimate says how much before anything is written. This is most "
@@ -254,6 +257,7 @@ public static class LogbookCapability
     private static SettingRow StoreRow(LogbookBook? book) => new()
     {
         Key = StoreKey,
+        Advanced = true,
         Label = "Your logs",
         Help =
             "Logs are written as plain markdown beside D47, in data/commander-log. They are yours — D47 "

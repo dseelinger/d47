@@ -80,6 +80,7 @@ public static class AudioCapability
     private static SettingRow DropsRow(Func<string> drops) => new()
     {
         Key = DropsKey,
+        Advanced = true,
         Label = "Your own audio",
         Help = "Drop 16-bit mono 48 kHz .wav files into data/audio: cues/<state>.wav replaces a "
                + "sound cue, beds/<name>.wav adds a thinking bed, and music/<situation>/*.wav is "
@@ -100,6 +101,7 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = LevelKey(channel),
+            Advanced = true,
             Label = "Level",
             Help = "0 is silent and 1 is full. Muting is separate, so turning something off does not "
                    + "cost you the level you had it at.",
@@ -116,6 +118,7 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = MuteKey(channel),
+            Advanced = true,
             Label = "Mute",
             Help = "Off, without losing the level. A level of zero and a mute sound the same and mean "
                    + "different things.",
@@ -141,6 +144,7 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = DuckKey(channel),
+            Advanced = true,
             Label = "Duck while speaking",
             Help = "What this drops to while D47 is talking, as a fraction of its level. 1 does not duck "
                    + "at all; 0 goes silent until the sentence ends.",

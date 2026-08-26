@@ -134,6 +134,7 @@ public static class ShipCommands
         new()
         {
             Key = LaunchKey,
+            Advanced = true,
             Label = "Let D47 take us out of a station",
             Help = "Lets \"take us out\" walk the left panel to the launch button. Elite has no launch "
                    + "binding, so this is a menu walk rather than a key press, and it depends on the "
@@ -157,6 +158,7 @@ public static class ShipCommands
         new()
         {
             Key = SeparateEngageKey,
+            Advanced = true,
             Label = "Let D47 separate and engage",
             Help = "Lets \"separate and engage\" go to full throttle and boost until the mass lock "
                    + "breaks, then jump. Bounded at four boosts and twenty seconds, and it says so "
@@ -180,6 +182,7 @@ public static class ShipCommands
         new()
         {
             Key = SeparateSupercruiseKey,
+            Advanced = true,
             Label = "Let D47 separate and supercruise",
             Help = "The same, ending in supercruise instead of a jump. Its own row because a "
                    + "Commander may want one and not the other: a jump needs a destination locked "

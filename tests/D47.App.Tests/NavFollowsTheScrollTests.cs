@@ -36,6 +36,11 @@ public class NavFollowsTheScrollTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
         settings.Apply(InterfaceCapability.ZoomKey, zoom.ToString(), SettingsCaller.Panel);
 
+        // The whole page. This is about the nav following the scroll over a page of cards, not
+        // about which rows a new Commander sees first (#60) — and a folded page has fewer cards
+        // to scroll past, which is a different test.
+        settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
+
         var view = new SettingsView();
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

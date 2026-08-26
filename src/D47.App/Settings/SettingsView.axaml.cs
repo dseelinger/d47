@@ -60,6 +60,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
     /// </summary>
     public const string RowResetName = "RowReset";
+
+    /// <summary>
+    /// Whether a jump has revealed the folded rows for this session
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
+    /// <para>
+    /// <b>A jump must unfold.</b> A hundred and seven help links point at rows and say "change X
+    /// here"; landing on a row that is not drawn is the silent-link fault class that already cost
+    /// three bugs in the help pass.
+    /// </para>
+    /// <para>
+    /// <b>Session-only rather than writing the toggle on.</b> Following a link is not the
+    /// Commander asking for a different settings page for ever, and a navigation that quietly
+    /// changed a setting would be the fold breaking its own promise to touch nothing.
+    /// </para>
+    /// </summary>
+    private bool _revealedByJump;
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
     private AppPaths? _paths;
@@ -661,6 +677,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
+        // A jump unfolds (#60). Help says "change X here" and points at a card; landing on one
+        // whose rows are folded away is a link that goes nowhere, which is the silent-link fault
+        // class the help pass already paid for three times. Session-only: following a link is not
+        // the Commander asking for a different settings page for ever.
+        if (!_revealedByJump)
+        {
+            _revealedByJump = true;
+            Refresh();
+        }
+
         _sections[index].Expand?.Invoke(true);
 
         // After the layout the expansion caused, not before it: CardTop reads the card's position
@@ -882,6 +908,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (list.md Phase 4).
                 var shown = row.Row.Applies(_settings.Current)
+                            && !SettingsFold.IsFolded(
+                                row.Row,
+                                _settings.Current,
+                                _settings.IsChanged(row.Row.Key),
+                                ShowingEverything)
                             && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
 
                 row.Container.IsVisible = shown;
@@ -1086,8 +1117,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // right now would otherwise answer a search for its own name by vanishing.
             var holds = showing[i] > 0 || named[i];
 
-            section.Card.IsVisible = !filtering || holds;
-            section.NavItem.IsVisible = !filtering || holds;
+            // A card the fold has emptied is absent rather than an empty box (#60), which does
+            // more for the anxiety than folding rows does — it takes Diagnostics, and VR with no
+            // headset, off the page entirely. AppliesWhen's own doc already argues this shape:
+            // "a row that does not apply is absent rather than disabled — a greyed-out control
+            // still asserts the setting exists."
+            var anyRows = showing[i] > 0;
+
+            section.Card.IsVisible = (!filtering || holds) && anyRows;
+            section.NavItem.IsVisible = (!filtering || holds) && anyRows;
 
             section.Content.IsVisible = filtering ? holds : !_collapsed.Contains(i);
         }
@@ -1153,6 +1191,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// row.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether the folded rows are on screen — because the Commander asked, or because a jump
+    /// revealed them for this session (#60).
+    /// </summary>
+    private bool ShowingEverything =>
+        _revealedByJump || (_settings?.Current.Ui.ShowEverySetting ?? true);
+
     private bool CardHasChanges(SettingsSection section) =>
         _settings is { } settings
         && section.Rows.Any(row => row.Applies(settings.Current) && settings.IsChanged(row.Key));

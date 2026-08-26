@@ -408,6 +408,39 @@ public sealed record SettingRow
     /// </summary>
     public SettingScope Scope { get; init; }
 
+    /// <summary>
+    /// Whether this row is folded away on the calm settings page
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
+    /// <para>
+    /// <b>Declared on the row, as every other row property is.</b> A panel holding its own list
+    /// of which rows are advanced is a second list to keep in step, which is the exact failure
+    /// that put <c>Help</c> and <c>Level</c> onto <c>NavCrumb</c> rather than into the view.
+    /// </para>
+    /// <para>
+    /// <b>The rule for setting it:</b> a row stays on the calm page if a Commander cannot get d47
+    /// working, or cannot control how much it talks, without it. That is narrower than "things
+    /// people change" on purpose — it is the difference between <em>what do I need</em> and
+    /// <em>what might I want</em>, and only the first belongs on a page whose job is to not
+    /// frighten anybody.
+    /// </para>
+    /// <para>
+    /// <b>Folding is display and nothing else.</b> A hidden row keeps working at its value or its
+    /// default, is still reachable by voice, and is still where a help link lands. Nothing about
+    /// this ever writes, clears, normalises or defaults a setting — the way that breaks is a
+    /// well-meaning tidy-on-save pass, so it is a test rather than a comment.
+    /// </para>
+    /// <para>
+    /// <b>Three kinds of row are never folded, whatever this says.</b> A secret, because a hidden
+    /// row with no default and no value is a row that silently does nothing. Anything carrying an
+    /// <see cref="EgressId"/>, because those decide what leaves the machine and a calm page that
+    /// stopped mentioning egress would be calm about the wrong thing. And a row the Commander has
+    /// actually changed, because the fold's promise is <em>you are not missing anything</em> and a
+    /// changed row is by definition something they did. See <c>SettingsFold</c>, which is where
+    /// those three are applied.
+    /// </para>
+    /// </summary>
+    public bool Advanced { get; init; }
+
     public IReadOnlyList<string> ChoicesFor(D47Settings settings) =>
         ChoiceSource?.Invoke(settings) ?? Choices;
 

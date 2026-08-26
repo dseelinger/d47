@@ -63,6 +63,15 @@ internal sealed class SettingsHost
         double width = DefaultWidth,
         double height = DefaultHeight)
     {
+        // The whole page, for every test that is about a row rather than about the fold
+        // (https://github.com/dseelinger/d47/issues/60). These tests press controls, read labels
+        // and measure columns; none of them is asking what a new Commander sees first, and the
+        // fold has its own tests in Core where the predicate lives.
+        settings.Apply(
+            D47.Core.Capabilities.Builtin.InterfaceCapability.ShowEverySettingKey,
+            "true",
+            D47.Core.Configuration.SettingsCaller.Panel);
+
         var view = new SettingsView();
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

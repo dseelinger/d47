@@ -232,6 +232,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PushToTalkButtonKey,
+                Advanced = true,
                 Label = "Push-to-talk button",
                 Help =
                     "The same thing on your stick or throttle: press the button you want and D47 works out "
@@ -308,6 +309,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = EchoKey,
+                Advanced = true,
                 Label = "Cancel D47's own voice out of the microphone",
                 Help =
                     "Subtracts what D47 is playing from what it hears, so you can talk over it on "
@@ -328,6 +330,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = NoiseKey,
+                Advanced = true,
                 Label = "Take the room out of what D47 hears",
                 Help =
                     "Suppresses steady background noise — fans, a headset's own hiss — before the "
@@ -375,6 +378,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = SilenceKey,
+                Advanced = true,
                 Label = "Quiet that ends a sentence, in milliseconds",
                 Help =
                     "How long you have to stop talking before D47 decides you have finished. Short "
@@ -403,6 +407,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = WakeWordsKey,
+                Advanced = true,
                 Label = "What D47 answers to",
                 Help =
                     "Comma-separated. Leave it unset and D47 answers to whatever you call your ship's "
@@ -430,6 +435,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = WakeWindowKey,
+                Advanced = true,
                 Label = "Seconds D47 keeps listening after you say its name",
                 Help =
                     "Say the name alone, D47 answers, and the next thing you say is the request — the "
@@ -458,6 +464,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = ModelKey,
+                Advanced = true,
                 Label = "Speech model",
                 Help =
                     "Which Whisper model turns your speech into words. Choosing one that is not yet on "
@@ -502,6 +509,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = GpuKey,
+                Advanced = true,
                 Label = "Run the speech model on the GPU",
 
                 // The cost stated on the row, which the checklist asks for by name. A Commander
@@ -527,6 +535,7 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PreRollKey,
+                Advanced = true,
                 Label = "Capture before the key, in milliseconds",
                 Help =
                     "How much audio from just before the key was noticed is kept. The key is sampled ten "

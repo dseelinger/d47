@@ -151,6 +151,7 @@ public static class VrCapability
             new SettingRow
             {
                 Key = ModeKey,
+                Advanced = true,
                 Label = "Panel content",
                 Help = "Full shows everything the desktop window does. Mini reduces what is on the panel "
                        + "rather than shrinking it - it is the same panel showing less, not a smaller copy.",
@@ -177,6 +178,7 @@ public static class VrCapability
             new SettingRow
             {
                 Key = OpacityKey,
+                Advanced = true,
                 Label = "Panel opacity",
                 Help = "How solid the panel is, from 0.1 to 1. One setting for both panels: the mini one "
                        + "and the full one are as see-through as each other, because how much cockpit "
@@ -299,6 +301,7 @@ public static class VrCapability
             new SettingRow
             {
                 Key = StateKey,
+                Advanced = true,
                 Label = "Headset",
                 Help = "What D47 can currently see. Not a setting — a state, reported where the switch is, "
                        + "because \"it is off\" and \"SteamVR is not running\" look identical from the outside.",
@@ -358,6 +361,7 @@ public static class VrCapability
         {
             Step = step,
             Key = $"vr.{slot}.{name}",
+            Advanced = true,
             Label = label,
             Help = help + scope,
             Kind = kind,
@@ -478,6 +482,7 @@ public static class VrCapability
         double step = 1) => new()
     {
         Key = key,
+        Advanced = true,
         Label = label,
         Help = help,
         Kind = kind,

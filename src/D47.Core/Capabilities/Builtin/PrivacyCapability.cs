@@ -195,6 +195,7 @@ public static class PrivacyCapability
         rows.AddRange(EgressDisclosure.Ids.Select(id => new SettingRow
         {
             Key = $"egress.{id}",
+            Advanced = true,
             Label = EgressDisclosure.NameOf(id),
             // The heading below says "read-only" once for all of them. Repeating it per row is
             // how a disclosure starts reading as boilerplate instead of as a statement.

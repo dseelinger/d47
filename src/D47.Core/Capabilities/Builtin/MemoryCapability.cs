@@ -262,6 +262,7 @@ public static class MemoryCapability
     private static SettingRow ExpiryRow() => new()
     {
         Key = ExpiryKey,
+        Advanced = true,
         Label = "Forget after",
         Help =
             "How long a fact lasts before D47 drops it. Anything you told D47 yourself is said out "
@@ -306,6 +307,7 @@ public static class MemoryCapability
     private static SettingRow StoreRow(MemoryBook? book) => new()
     {
         Key = StoreKey,
+        Advanced = true,
         Label = "What D47 remembers",
         Help = "Everything written down, where it came from, and the one place a fact can be added by hand.",
         Kind = SettingKind.Info,

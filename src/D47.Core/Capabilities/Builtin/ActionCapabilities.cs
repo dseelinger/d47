@@ -352,6 +352,7 @@ public static class ActionCapabilities
     private static SettingRow KeyboardActionsRow() => new()
     {
         Key = KeyboardActionsKey,
+        Advanced = true,
         Label = "Let D47 press keys in Elite",
         Help = "Lets spoken commands operate the ship by sending your own key bindings to the game. "
                + "Keys are only ever sent while Elite is the window in front. Off until you turn it on.",
