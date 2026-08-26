@@ -335,9 +335,18 @@ yet.
 
 ### Phase 58 — A voice from OpenAI
 
-**Not written yet, deliberately.** Its text depends on the spike in §4.1: if the language drift the
-brief flags is real, this provider's fit for the Aboard slot is the phase's own subject and the
-item list changes. The shape it will take is in §3.6.
+**Written 2026-08-26 and now lives in [list.md](../../list.md)**, where every phase's text lives —
+this section is not a second copy of it. It was held back until the spike in §4.1 had run, because
+if the drift the brief flagged had been real, this provider's fit for the Aboard slot would have
+been the phase's own subject and the item list a different one. It came back clean, so the phase is
+the one §3.6 sketched: a catalogue entry, a pinned snapshot, a static voice list, a probe for the
+Check button, and the language finding turned into a rule at the settings surface.
+
+Three of its nine items are settled by measurement rather than by argument, which is what the wait
+bought: the rate row ships with real bounds, the price row ships **unpriced** because a per-minute
+figure cannot be converted into the per-character unit d47 counts in — 951 characters a minute for
+plain prose against 671 for a line of system names — and OpenAI is refused for the four comms slots
+because a language sent to it is *ignored* rather than rejected.
 
 ### Phase 59 — A voice that never leaves the machine
 
