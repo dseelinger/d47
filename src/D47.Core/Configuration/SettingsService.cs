@@ -258,10 +258,18 @@ public sealed class SettingsService
         {
             // A row with nothing behind it renders as a control that silently does nothing,
             // which is worse than a missing row. Fail at startup instead.
+            //
+            // An Info row does something if it can be read *or* pressed, and #78 is what
+            // requiring both cost: About shipped four button-only rows — the changelog, the
+            // changelog online, set up keys, add to Start Menu — and every one of them is an
+            // Info row whose whole content is its button. The first was reached at startup and
+            // the app died before drawing a window. The check below, which insists a Press
+            // carries a label, is the same rule already treating Press as a thing a row can be
+            // made of.
             var wired = row.Kind switch
             {
                 SettingKind.Secret => row.SecretName is not null,
-                SettingKind.Info => row.Binding?.Read is not null,
+                SettingKind.Info => row.Binding?.Read is not null || row.Press is not null,
                 _ => row.Binding?.Write is not null,
             };
 

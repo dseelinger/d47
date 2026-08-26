@@ -1666,6 +1666,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
     }
 
+    /// <summary>
+    /// The read-out an Info row shows. <b>A row with no binding has none</b> (#78): a button-only
+    /// Info row — the changelog, set up keys — is made of its button, and reading a binding
+    /// that is not there is how the About area killed the app at startup. The refresh is a no-op
+    /// rather than a null read, and <see cref="BuildPressable"/> leaves the empty inset out
+    /// altogether rather than drawing a blank panel above the button.
+    /// </summary>
     private (Control, Action, bool) BuildInfo(SettingRow row)
     {
         var text = new SelectableTextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
@@ -1679,7 +1686,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
         Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
 
-        return (inset, () => text.Text = row.Binding!.Read(_settings!.Current), false);
+        return row.Binding?.Read is { } read
+            ? (inset, () => text.Text = read(_settings!.Current), false)
+            : (inset, () => { }, false);
     }
 
     /// <summary>
@@ -1887,7 +1896,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Refresh();
         };
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, press } };
+        // Nothing to read means nothing to show above the button, so the inset stays out (#78).
+        var stack = row.Binding?.Read is null
+            ? new StackPanel { Spacing = 8, Children = { press } }
+            : new StackPanel { Spacing = 8, Children = { inset, press } };
 
         return (stack, refresh, false);
     }

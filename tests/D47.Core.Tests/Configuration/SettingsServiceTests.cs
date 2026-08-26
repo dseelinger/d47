@@ -479,6 +479,62 @@ public class SettingsServiceTests
         Assert.Throws<CapabilityRegistrationException>(() =>
             service.Bind(CapabilityRegistry.Build([descriptor])));
     }
+
+    /// <summary>
+    /// #78: an Info row whose whole content is a button is wired, and insisting on something to
+    /// read killed 0.76.0 at startup — About's changelog row is exactly this shape, and the app
+    /// died before it drew a window. A row with neither still fails, which is the rule the one
+    /// above is about.
+    /// </summary>
+    [Fact]
+    public void AnInfoRowMadeOfItsButtonIsWired()
+    {
+        using var install = new TempInstall();
+
+        static CapabilityDescriptor Descriptor(SettingRow row) => new()
+        {
+            Id = "pressable",
+            Group = "Test",
+            Name = "Pressable",
+            Summary = "A capability whose row is a button.",
+            Settings = [row],
+        };
+
+        var store = new SettingsStore(install.Paths, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(
+            install.Paths,
+            new ReversibleProtector(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
+
+        SettingsService Service() => new(
+            store,
+            secrets,
+            new D47Settings(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsService>.Instance);
+
+        var pressable = Descriptor(new SettingRow
+        {
+            Key = "pressable.row",
+            Label = "Press me",
+            Help = "Nothing to read, something to do.",
+            Kind = SettingKind.Info,
+            Press = () => { },
+            PressLabel = "Do it",
+        });
+
+        Service().Bind(CapabilityRegistry.Build([pressable]));
+
+        var hollow = Descriptor(new SettingRow
+        {
+            Key = "pressable.row",
+            Label = "Press me",
+            Help = "Nothing to read and nothing to do.",
+            Kind = SettingKind.Info,
+        });
+
+        Assert.Throws<CapabilityRegistrationException>(() =>
+            Service().Bind(CapabilityRegistry.Build([hollow])));
+    }
 }
 
 public class SettingsSurfaceShapeTests

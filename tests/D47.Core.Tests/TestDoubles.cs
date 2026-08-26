@@ -261,7 +261,22 @@ public sealed class TestSurface
                 new D47.Core.Persona.ShipCoreStore(
                     Path.Combine(install.Paths.Data, "ship-cores.json"),
                     NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
-                () => state.Active)));
+                () => state.Active),
+
+            // #78: every About delegate supplied, because a null one makes its row *absent* and
+            // an absent row is one no test can see. The app supplies all of these, so a registry
+            // built without them is not the registry that ships — which is how four button-only
+            // rows reached a release that could not start. Same trap the ship cores above are
+            // real for, one capability along.
+            about: new D47.Core.Capabilities.Builtin.AboutSurface
+            {
+                Build = "0.0.0-test+0000000",
+                ShowChangelog = () => { },
+                ShowChangelogOnline = () => { },
+                AddToStartMenu = () => { },
+                StartMenuWanted = () => true,
+                SetUpKeys = () => { },
+            }));
 
         built = registry;
 

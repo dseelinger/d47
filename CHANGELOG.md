@@ -20,6 +20,38 @@ the file as it stood then.
 
 ---
 
+## 0.76.2 — 2026-08-26 — 0.76.0 and 0.76.1 could not start
+
+**If you are on 0.76.0 or 0.76.1, this is the release that launches.** Both die before drawing a
+window, on every launch, with nothing on screen to say why. The log says it plainly:
+
+```text
+[FTL] d47 is going down on an unhandled exception
+CapabilityRegistrationException: Settings row 'about.changelog' is a Info row with nothing bound
+behind it.
+```
+
+The About area is new in 0.76.0, and four of its rows — **What changed**, **What changed since**,
+**Set up keys**, **Add to Start Menu** — are rows whose whole content is a button. There is nothing
+to *read* in them, and a guard that refuses a settings row with nothing behind it counted only
+reading. It was right that a dead row should stop the app at startup rather than appear on screen
+doing nothing; it was wrong about what makes a row alive. A row you can press is a row that does
+something, which the same guard already assumed one line further down, where it insists a button
+has words on it.
+
+Fixed in both places it was wrong: the guard now counts a button, and the settings surface draws a
+button-only row as its button instead of reaching for a read-out that was never there.
+
+**Why no test caught a crash on every launch.** The two test surfaces built the capability registry
+without the About delegates the app supplies, and a missing delegate makes its row absent by
+design — so five thousand tests bound a settings surface that did not contain the four rows that
+break it. They now build the registry the app actually ships. Put the fault back and 413 of them
+fail.
+
+Fixes [#78](https://github.com/dseelinger/d47/issues/78).
+
+---
+
 ## 0.76.1 — 2026-08-26 — An adventure no longer strands you on a body you have been to
 
 Reported from a flight: *the Adventure will get stuck if the destination is a body that has already
