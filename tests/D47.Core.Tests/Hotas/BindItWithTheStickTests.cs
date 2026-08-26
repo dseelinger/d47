@@ -368,4 +368,138 @@ public class BindItWithTheStickTests
 
         Assert.Empty(binds.UsingJoystickButton(5));
     }
+
+    /// <summary>
+    /// The defect itself (<a href="https://github.com/dseelinger/d47/issues/45">#45</a>): the
+    /// question asked at the instant of binding has no answer, and the old caller read the
+    /// absence of an answer as a "no".
+    /// </summary>
+    [Fact]
+    public void NothingIsSaidAboutADeviceNothingHasLookedFor()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(new HotasButton(Stick, 6));
+
+        // The line the warning used to be raised on. The stick may well be sitting right there.
+        Assert.Null(button.MissingDeviceNotice());
+
+        // And still nothing while the polls are being counted.
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled - 1; i++)
+        {
+            button.Poll([]);
+            Assert.Null(button.MissingDeviceNotice());
+        }
+    }
+
+    /// <summary>
+    /// The case the warning exists for, which the obvious fix would have silenced along with the
+    /// false one. A stick that really is not there is still reported.
+    /// </summary>
+    [Fact]
+    public void ADeviceThatNeverTurnsUpIsReportedOnceTheChancesRunOut()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(new HotasButton(Stick, 6));
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        {
+            button.Poll([]);
+        }
+
+        var notice = button.MissingDeviceNotice();
+
+        Assert.True(notice.HasValue);
+        Assert.Equal(Stick, notice!.Value.DeviceId);
+        Assert.Equal(6, notice.Value.Button);
+    }
+
+    /// <summary>
+    /// Once per binding, not once per tick. This is polled ten times a second, so a notice that
+    /// re-armed itself would be a log line ten times a second for as long as the stick was away.
+    /// </summary>
+    [Fact]
+    public void TheNoticeIsGivenOncePerBinding()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(new HotasButton(Stick, 6));
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        {
+            button.Poll([]);
+        }
+
+        Assert.NotNull(button.MissingDeviceNotice());
+
+        for (var i = 0; i < 50; i++)
+        {
+            button.Poll([]);
+            Assert.Null(button.MissingDeviceNotice());
+        }
+
+        // Binding again is a new question about a new button, so it re-arms.
+        button.Bind(new HotasButton(Throttle, 9));
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        {
+            button.Poll([]);
+        }
+
+        Assert.Equal(Throttle, button.MissingDeviceNotice()?.DeviceId);
+    }
+
+    /// <summary>
+    /// The stick from the Commander's log: bound, present, and spoken through eight seconds
+    /// later. Nothing should ever have been said about it.
+    /// </summary>
+    [Fact]
+    public void AStickThatIsActuallyThereIsNeverReported()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(new HotasButton(Stick, 11));
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled * 4; i++)
+        {
+            button.Poll([Reading(Stick, 32)]);
+            Assert.Null(button.MissingDeviceNotice());
+        }
+
+        Assert.True(button.DevicePresent);
+    }
+
+    /// <summary>
+    /// A stick that appears late — a wireless one waking up, or a hub enumerating slowly — is not
+    /// reported either, as long as it arrives within its chances.
+    /// </summary>
+    [Fact]
+    public void ADeviceThatArrivesLateIsStillNotReported()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(new HotasButton(Stick, 6));
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled - 1; i++)
+        {
+            button.Poll([]);
+        }
+
+        button.Poll([Reading(Stick, 32)]);
+
+        Assert.Null(button.MissingDeviceNotice());
+        Assert.True(button.DevicePresent);
+    }
+
+    /// <summary>Nothing bound is not a missing device, and never becomes one.</summary>
+    [Fact]
+    public void NothingBoundIsNeverAMissingDevice()
+    {
+        var button = new PushToTalkButton();
+        button.Bind(null);
+
+        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled * 2; i++)
+        {
+            button.Poll([]);
+        }
+
+        Assert.Null(button.MissingDeviceNotice());
+        Assert.Null(button.DevicePresent);
+    }
 }

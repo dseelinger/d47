@@ -20,6 +20,8 @@ public sealed class PushToTalkButton
     private HotasButton? _bound;
     private bool _wasDown;
     private bool _sawDevice;
+    private int _pollsSinceBind;
+    private bool _noticedAbsence;
 
     /// <summary>Raised on the tick that first sees the button down.</summary>
     public event Action? Pressed;
@@ -33,14 +35,78 @@ public sealed class PushToTalkButton
     public bool IsDown => _wasDown;
 
     /// <summary>
+    /// How many polls the bound device gets to turn up in before its absence is called.
+    /// <para>
+    /// <b>Fifteen, which is 1.5 s at the tick's 10 Hz.</b> That is <c>HotasControllers.Settle</c>'s
+    /// figure, arrived at for this same hardware; the six-second one beside it is not the right
+    /// number here, because that one waits for a first device to exist at all and this is asked
+    /// only after the enumeration has already settled.
+    /// </para>
+    /// <para>
+    /// <b>Counted in polls rather than timed</b>, because no Core component reads the clock and
+    /// this one has no need to be handed one — the same shape as
+    /// <c>LlmAvailabilityState.ProbeAfterTurns</c>. It is sound because this button is polled from
+    /// the tick and from nowhere else, so a poll is a known interval rather than an arbitrary one.
+    /// </para>
+    /// </summary>
+    public const int PollsBeforeAbsenceIsCalled = 15;
+
+    /// <summary>
     /// Whether the bound device has been seen at all since binding.
     /// <para>
     /// <b>Null means nothing is bound</b>, which is not the same as a device that is missing, and
     /// the two must not collapse: one is a Commander who never set this up and the other is one
     /// whose stick is asleep. Only the second is worth interrupting them about.
     /// </para>
+    /// <para>
+    /// <b>There is a third state and this property does not carry it.</b> <c>false</c> here means
+    /// "not seen yet", which is <em>looked and it is absent</em> only once something has looked.
+    /// Read at the instant of binding it is always <c>false</c>, and that is not an answer — it is
+    /// the question not yet asked. Anything deciding whether to tell the Commander their stick is
+    /// missing wants <see cref="MissingDeviceNotice"/> instead, which is the same fact with the
+    /// looking done.
+    /// </para>
     /// </summary>
     public bool? DevicePresent => _bound is null ? null : _sawDevice;
+
+    /// <summary>
+    /// The button whose device has not turned up, once per binding, or null.
+    /// <para>
+    /// <b>The question is not answerable at bind time, so it is not asked there</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/45">#45</a>). It used to be: the warning
+    /// was raised on the line after <see cref="Bind"/>, where <see cref="DevicePresent"/> is
+    /// always false because nothing has polled — so a Commander who bound a button on a stick
+    /// sitting right in front of them was told it was not there, eight seconds before speaking
+    /// through it.
+    /// </para>
+    /// <para>
+    /// <b>Null until the device has had its fair chance</b>, and non-null exactly once after that
+    /// — a warning worth saying is worth saying once, and this is polled ten times a second.
+    /// Binding again re-arms it, because that is a new question about a new button.
+    /// </para>
+    /// <para>
+    /// The obvious alternative — making <see cref="DevicePresent"/> null until the first poll —
+    /// silences the false warning and the true one together, because the old caller asked once
+    /// and never again. A Commander whose stick really is unplugged would then hear nothing,
+    /// which is the case the warning exists for.
+    /// </para>
+    /// </summary>
+    public HotasButton? MissingDeviceNotice()
+    {
+        if (_bound is not { } bound || _sawDevice || _noticedAbsence)
+        {
+            return null;
+        }
+
+        if (_pollsSinceBind < PollsBeforeAbsenceIsCalled)
+        {
+            return null;
+        }
+
+        _noticedAbsence = true;
+
+        return bound;
+    }
 
     /// <summary>Binds a button, or unbinds with null. Returns whether anything is bound after.</summary>
     public bool Bind(HotasButton? button)
@@ -49,6 +115,10 @@ public sealed class PushToTalkButton
 
         _bound = button;
         _sawDevice = false;
+
+        // A new binding is a new question, so the counting and the notice both start again.
+        _pollsSinceBind = 0;
+        _noticedAbsence = false;
 
         return _bound is not null;
     }
@@ -66,6 +136,13 @@ public sealed class PushToTalkButton
         if (_bound is not { } bound)
         {
             return;
+        }
+
+        // Counted before the lookup, so "how many chances has it had" means polls that happened
+        // rather than polls that found something.
+        if (_pollsSinceBind < PollsBeforeAbsenceIsCalled)
+        {
+            _pollsSinceBind++;
         }
 
         var device = readings.FirstOrDefault(reading =>
