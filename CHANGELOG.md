@@ -20,6 +20,80 @@ the file as it stood then.
 
 ---
 
+## 0.76.0 — 2026-08-26 — Asking the right tool, and saying which ship
+
+Five wanted changes, and the start of a sixth.
+
+### A tool handed the wrong thing answers anyway
+
+Ask *"where are the closest core dynamics composites?"* and the market search would tell you no
+station trades them — true of every engineering material that has ever existed, and useless. 0.73.3
+fixed that one direction. Now **all six directions work**.
+
+Three tools read three different tables — commodities, ship materials, Odyssey goods — and you do
+not speak in ledgers. Whichever one your question lands on, Directive 47 now says what the thing
+actually is, where the table knows it comes from, and which tool will tell you the rest:
+
+```text
+Core Dynamics Composites is not a commodity — no station trades it. It is a manufactured
+engineering material, grade 3. Found at: … Ask find_material for where to get it.
+```
+
+**This is the strongest defence against a wrong tool choice, because it does not depend on the
+model choosing correctly at all.** A wrong choice costs a sentence instead of three turns of you
+steering.
+
+### And a way to find out when it does choose wrongly
+
+A **routing eval**: real questions, and the tool each one must call. It runs against your own
+endpoint when you ask it to, never on a release, and it is what makes *adding* tools safe — a
+description is a hope about how a model reads, and until now there was no way to check the hope
+except hitting it while flying.
+
+### A Guardian core is now performed, not just voiced
+
+OpenAI's speech takes a **direction** — accent, tone, intonation, delivery — and no other provider
+does. Directive 47 now sends it the description of whichever core is aboard, so the core on OpenAI
+is *cast* rather than given a larynx. There is nothing to switch on.
+
+One honest limit: Directive 47 keeps one connection per provider across all six voice slots, so if
+you also put the carrier or the NPCs on OpenAI they are performed the same way. The default keeps
+everything carrying another player's words on Edge.
+
+### About is a place, and the changelog is in the app
+
+**About moves out of the footer and into the settings nav**, where you look for it — version, the
+exact build, the data folder, Frontier's attribution, and the buttons.
+
+**What changed** now opens the changelog **from inside the build**, so it reads with no internet at
+all. The old button opened a browser, on a comment saying a self-contained app had no renderer for
+markdown worth carrying — which stopped being true when the help pages were embedded. The web link
+survives beside it, because it is the only place a release *newer* than the one you are running
+appears.
+
+### The Transcript's readings are renamed
+
+**Conversation → Thread**, **Technical → Details**, **Log file → D47 Log**. Each is a word you say
+as well as press, and *D47 Log* says whose log it is — which matters now that a second one is coming
+to sit beside it.
+
+That second one is the journal, readable, with the raw file a sub-tab away. **The half that decides
+whether Directive 47 is right about Elite is done**: every journal event now has a sentence, checked
+against 931 real journals rather than against the schema. The pages themselves are next.
+
+### And a Kestrel is called a Kestrel
+
+Reading that formatter's own output against real journals turned up four faults it would have
+shipped with — a doubled space in a blueprint name, a symbol tail on a crime, thousands unseparated,
+and a ship reading as `smallcombat01_nx`.
+
+That last one is worth naming, because Directive 47 already knew better: it works a new hull's name
+out from its own armour data, which is how a ship Frontier ships before the community catalogue
+catches up still gets called **Kestrel Mk II** and **Caspian Explorer**. The new code simply was not
+asking. It is now, and both are pinned by tests.
+
+---
+
 ## 0.75.2 — 2026-08-26 — Five pickers leave the calm page
 
 The folded settings page was keeping the five **who speaks for this slot** provider rows — Carrier,
