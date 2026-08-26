@@ -11,10 +11,18 @@ Commander's word again.
 clearing writes amended, the eight background callers pointed at `BackgroundModel`, and the docs.
 Suite green at 4,934 tests.
 
-**Two things are still owed and neither is code.** The manual half of item one — a real
-conversation on Haiku with the spend ledger's warmth column in view, because no test can prove the
-4096-token cache floor is cleared, and it fails in silence when it is not. And step 9's pass by
-hand over the three rows.
+**The manual half of item one is answered, by use rather than by a session at the bench.** The
+Commander reported on 2026-08-26 that Haiku has been in service for a while and works. That settles
+the question the item was really asking — whether Haiku is a viable choice rather than merely a
+safe one to point a floor at.
+
+**The 4096-token cache floor stays unmeasured, deliberately.** No test can prove it and a silent
+non-cache would not announce itself, so the warmth column remains the only instrument. It is not
+worth chasing on the Commander's instruction: [#55](https://github.com/dseelinger/d47/issues/55)
+asks whether a small local model can carry these calls, and a local model makes the whole question
+moot rather than answered.
+
+**Step 9's pass by hand over the three rows is still owed.**
 
 **Three findings worth reading before the next plan cites this one**, all recorded against their
 `list.md` items: `Math.Clamp` cannot take an enum at all, the anchor gate does not fail before the
@@ -422,7 +430,7 @@ surface" are usually the same act and here they are not.
 | 6. Point the eight background sites at `BackgroundModel` | **Built 2026-08-26.** The grep became a gate — `TheFloorReachesTheBackgroundCallsAndOnlyThemTests` reads `AppHost.cs`, ignores comments, and names the three readers of the conversation model — because there is nothing to observe at runtime |
 | 7. Three rows + the two `Write` amendments | **Built 2026-08-26.** The anchor gate did **not** fail: nothing asserts an anchor resolves to a heading, only that a row declares one. Both amendments proven by reverting each |
 | 8. Docs | **Written 2026-08-26.** Three anchored sections, the model row amended by a sentence, the general page at five rungs, and the status line |
-| 9. By hand (`manual-test`) | **Owed, and it did not gate the release** — the rows are covered by tests at the store and the surface, and the one thing no test reaches is a real endpoint. Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry. Item one's manual half rides with it: a real Haiku conversation with the warmth column in view |
+| 9. By hand (`manual-test`) | **Owed, and it did not gate the release** — the rows are covered by tests at the store and the surface, and the one thing no test reaches is a real endpoint. Rows render correctly; the floor stops offering above the ceiling; switching provider clears the background model; an ambient remark actually goes to the floor model — visible in the spend ledger, which stamps model per entry. **Item one's half is answered**: the Commander has had Haiku in service and reports it works (2026-08-26). The cache-warmth question is left open on their instruction, since #55 would make it moot |
 | 10. `tools/release.ps1 minor` | **Shipped v0.74.0 on 2026-08-26.** Suite green in Release, CI green on `be55749` before the tag, and the release workflow published the installer, the zip and both checksums |
 
 ---

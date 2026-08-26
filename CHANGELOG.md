@@ -20,6 +20,23 @@ the file as it stood then.
 
 ---
 
+## 0.75.2 — 2026-08-26 — Five pickers leave the calm page
+
+The folded settings page was keeping the five **who speaks for this slot** provider rows — Carrier,
+NPCs, People you know, Direct messages, Anyone in range — on the grounds that they carry a disclosure
+about what leaves your machine.
+
+They do, and it was the wrong reason. A slot provider picks *which* provider speaks a line that is
+already going out; the row that decides whether it goes at all is **Voice provider**, one card up,
+and that stays on the page. Five pickers is a lot of a page whose whole job is to be short.
+
+The rows that genuinely decide what leaves your machine are untouched and always were: web search,
+the galaxy search, notable places, the two privacy summaries and what Directive 47 remembers about
+you. None of those carries a disclosure either — they stay because they are not the folding kind,
+which the app now checks by name rather than inferring.
+
+---
+
 ## 0.75.1 — 2026-08-26 — Show every setting moves to the top
 
 **Show every setting** shipped four rows into the Interface card yesterday, which is exactly where
