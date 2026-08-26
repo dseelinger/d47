@@ -216,6 +216,15 @@ public static class InterfaceCapability
                     + "the page either way.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "show-every-setting",
+
+                // At the top of the page, not in this card. It governs what the whole page draws,
+                // and a Commander who cannot see the rest of the settings will not go looking for
+                // the reason four rows into Interface (the Commander's call, 2026-08-26).
+                PageTop = true,
+
+                // At the top of the page, not in this card. It governs what the whole page draws,
+                // and a Commander who cannot see the rest of the settings will not go looking for
+                // the reason four rows into Interface (the Commander's call, 2026-08-26).
                 Commands =
                 [
                     new SettingCommandPhrase("show me every setting", "true"),

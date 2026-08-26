@@ -76,6 +76,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </para>
     /// </summary>
     private bool _revealedByJump;
+
+    /// <summary>
+    /// The strip above the cards holding the page's own controls, or null where there are none
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>). Held so it can be hidden
+    /// when a filter leaves nothing in it — empty furniture at the top of the page is the same
+    /// fault as an empty card, and a search for "audio mixer" should not answer with a toggle.
+    /// </summary>
+    private StackPanel? _pageStrip;
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
     private AppPaths? _paths;
@@ -245,6 +253,35 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _rows.Clear();
         _collapsed.Clear();
         _activeSection = -1;
+        _pageStrip = null;
+
+        // The rows that govern the page rather than a card, drawn once above everything
+        // (https://github.com/dseelinger/d47/issues/60). "Show every setting" decides what the
+        // whole page draws, and a Commander who cannot see the rest of the settings will not go
+        // looking for the reason four rows into Interface.
+        //
+        // Which rows these are is declared on the row, not known here — a panel holding its own
+        // list of which rows are special is a second list to keep in step.
+        var pageRows = settings.Sections
+            .SelectMany(section => section.Rows)
+            .Where(row => row.PageTop)
+            .ToList();
+
+        if (pageRows.Count > 0)
+        {
+            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(18, 0, 18, 6) };
+
+            foreach (var row in pageRows)
+            {
+                var view = BuildRow(SectionOwning(settings, row), row);
+
+                _rows.Add(view);
+                strip.Children.Add(view.Container);
+            }
+
+            Cards.Children.Add(strip);
+            _pageStrip = strip;
+        }
 
         foreach (var section in settings.Sections)
         {
@@ -268,6 +305,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Refresh();
     }
 
+    /// <summary>
+    /// The capability a page-level row still belongs to. Lifting a row to the top of the page
+    /// changes where it is drawn and nothing else — its help still opens its own capability's
+    /// page, exactly as it would have from inside the card (#60).
+    /// </summary>
+    private static CapabilityDescriptor SectionOwning(SettingsService settings, SettingRow row) =>
+        settings.Sections.First(section => section.Rows.Any(other => other.Key == row.Key)).Capability;
+
     private (Border Card, StackPanel Content, TextBlock Heading, Action<bool> Expand) BuildCard(
         SettingsSection section,
         string title,
@@ -289,7 +334,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         string? currentGroup = null;
 
-        foreach (var row in section.Rows)
+        // Minus the page's own, which are drawn above every card rather than inside one (#60).
+        foreach (var row in section.Rows.Where(row => !row.PageTop))
         {
             // A group heading, stated once, in place of the same sentence on every row.
             if (row.Group is { } group && group != currentGroup)
@@ -900,6 +946,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             button.IsVisible = CardHasChanges(section);
         }
 
+        var pageRowsShown = 0;
+
         _refreshing = true;
         try
         {
@@ -929,11 +977,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 {
                     showing[row.Section]++;
                 }
+                else if (shown)
+                {
+                    pageRowsShown++;
+                }
             }
         }
         finally
         {
             _refreshing = false;
+        }
+
+        if (_pageStrip is { } strip)
+        {
+            strip.IsVisible = pageRowsShown > 0;
         }
 
         // The section's own name, marked in both places it is written. Painted after the rows so

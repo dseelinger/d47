@@ -229,6 +229,29 @@ public sealed record SettingRow
     /// </summary>
     public bool PageOnly { get; init; }
 
+    /// <summary>
+    /// Drawn once at the top of the settings page rather than inside its card
+    /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
+    /// <para>
+    /// <b>For a row that governs the page itself.</b> "Show every setting" decides what the whole
+    /// page draws, and a Commander asking <em>how do I see everything</em> looks at the top of the
+    /// page rather than inside a card called Interface — where it was, four rows down, which is
+    /// exactly where somebody who cannot see the rest of the page will not look.
+    /// </para>
+    /// <para>
+    /// <b>Declared here rather than known by the view</b>, for the reason every other row property
+    /// is: a panel holding its own list of which rows are special is a second list to keep in
+    /// step. It still belongs to a capability, so its key, its documentation anchor, its spoken
+    /// phrases and its coverage all work exactly as any other row's do — only where it is drawn
+    /// changes.
+    /// </para>
+    /// <para>
+    /// Never folded, whatever <see cref="Advanced"/> says: a control that hides the page cannot
+    /// hide itself, or there is no way back.
+    /// </para>
+    /// </summary>
+    public bool PageTop { get; init; }
+
     /// <summary>How the value is read and written. Null only for <see cref="Kind"/> Secret.</summary>
     public SettingBinding? Binding { get; init; }
 
