@@ -247,6 +247,9 @@ type the name yourself. That has always been supported.
 Which model answers. Leave it empty for the provider's default, shown greyed out so "I have not
 chosen" stays distinguishable from "I chose that one".
 
+**This is the model your *conversation* takes.** The things Directive 47 says without being asked
+can be sent somewhere cheaper — see [Model for the quiet calls](#background-model), two rows down.
+
 Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5**. A companion answering
 questions about a game in flight is not the work the Opus tiers are priced for, and the Opus
 models are the next entries in the list if you want one. OpenAI's default is the middle tier for
@@ -274,6 +277,65 @@ by a convention rather than by a boundary. That is the well-travelled path rathe
 and the guardrails that say in-game text is information rather than instruction are above all of it
 either way. But a hostile ship name has one more thing it can try on the cheap models than on the
 expensive ones, so the choice is a real one and not only about money.
+
+#### Model for the quiet calls {#background-model}
+
+Which model writes the things you did not ask for: an ambient remark, the brief when you sit down,
+what Directive 47 says after a long gap, a lore lookup, and choosing a voice for a core. Leave it
+empty and they use the model above, which is what every version before this one did.
+
+**It is close to free money, and the reason is caching rather than the rate card.** A conversation
+turn re-sends everything said so far, and the provider charges the cheap cached rate for a prefix
+it has seen before — but a cache belongs to one model, so *alternating* between two models pays to
+write the cache again each time you come back. One detour costs several times what the cheap turn
+saved, which is why Directive 47 will never switch models question by question. The quiet calls are
+the opposite case: none of them carry the conversation, every one of them already starts cold, so
+sending them somewhere cheaper costs nothing at all and saves most of what Directive 47 spends
+while you are not talking to it.
+
+**Two calls deliberately ignore this row.** Writing an adventure and writing your Commander's log
+both stay on the model above — you pressed a button and are waiting, the output has to name real
+systems exactly, and the log is quoted at a price before it is written.
+
+It clears itself when you change provider or endpoint, exactly as the model row does: a model name
+belongs to the endpoint that serves it, and one carried across would fail on the first ambient
+remark, which is a failure nobody is watching for.
+
+#### Think at least this hard {#effort-floor}
+
+The least effort a question gets, however plain it looked.
+
+Directive 47 gauges every question on its own — a lookup gets the cheapest setting, planning a
+route gets more, and asking it to think carefully gets the most. That gauge is a heuristic reading
+your words, and it is sometimes wrong in the cheap direction. This row is where you say the bottom
+rung is not enough for you.
+
+The rungs are **Low, Medium, High, Xhigh and Max**. Leave it empty and the gauge decides, which is
+the default.
+
+Only your *conversation* is held to it. The quiet calls above are not, and that is deliberate: a
+floor of High would turn every ambient remark into a reasoning call, which is exactly the spending
+the row two above exists to stop.
+
+#### Never think harder than this {#effort-ceiling}
+
+The most effort a question gets, however hard it sounded.
+
+Thinking is most of what a turn costs, so this is the dial that decides what an expensive-looking
+question is allowed to spend. It also catches the gauge being wrong in the other direction: it
+matches on the words you used and not on grammar, so an idle "what do you think about the Corvette"
+contains "think about" and is priced as a request to deliberate.
+
+Each of the two rows offers only the rungs the other allows, so you cannot set a floor above a
+ceiling from the panel.
+
+**Two things you can say out loud**, because this is the row you will want to reach with your hands
+on the stick:
+
+```text
+stop thinking so hard      → the ceiling becomes Medium
+think as hard as you like  → the ceiling is cleared
+```
 
 #### API key {#api-key}
 
@@ -507,7 +569,8 @@ spend. Takes no arguments.
 ```
 
 The endpoint is reported only when the Commander has chosen one; a line stating where Anthropic
-lives tells them something they knew.
+lives tells them something they knew. **The model for the quiet calls follows the same rule** and
+appears only where it differs — otherwise it would repeat the model named on the line above.
 
 About Me and the character sheet sit inside the cached prompt prefix, so editing either costs one
 cold prefix on the next turn and nothing after that. Off the turn path there is no such shelter:

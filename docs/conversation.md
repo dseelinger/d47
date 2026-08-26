@@ -194,7 +194,9 @@ Answered via Model, effort Medium, 1420 in (1180 cached), 96 out, $0.0031 this t
 
 - **Route and outcome** — which path answered, and whether it answered, was unsure, or failed.
 - **Effort** — how hard the model was asked to think, chosen per turn rather than set once.
-  Low through Max; there is deliberately no "off".
+  Low, Medium, High, Xhigh, Max; there is deliberately no "off". The clause is **absent** on a
+  model with no effort dial — Claude Haiku 4.5 is one — because a turn that applied no rung
+  should not report one.
 - **Tokens** — total input including what was served from cache, and output. Reading uncached
   input alone badly under-reports a cached turn.
 - **Cost** — this turn and the session, priced from a per-provider, per-model table so the
@@ -221,6 +223,14 @@ live with it:
 | "carefully work out…", "walk me through…" — you asked it to deliberate | Max |
 
 The heuristic is deterministic, so the same question always gets the same effort.
+
+**You can put a floor and a ceiling on it**, in Settings under the language model, and both are
+empty by default. The floor is where you say the cheapest rung is not enough for you; the ceiling
+is a cost dial, and it also catches the gauge reading a passing remark as a request to deliberate —
+it matches on words rather than grammar, so "what do you think about the Corvette" contains "think
+about". **`Xhigh` is reachable only by setting a bound**: the gauge above keeps its four answers.
+See [think at least this hard](capabilities/conversation.md#effort-floor) and
+[never think harder than this](capabilities/conversation.md#effort-ceiling).
 
 ### The rules the model cannot be talked out of
 

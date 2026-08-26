@@ -187,6 +187,15 @@ public static class ConversationCapability
         if (provider.Id != LlmProviderCatalog.NoneId)
         {
             report.AppendLine($"Model: {settings.Llm.Model ?? provider.DefaultModel ?? "(provider default)"}");
+
+            // Only when the Commander has split the two (list.md Phase 54), following the rule
+            // the endpoint line below already uses: a line saying the quiet calls use the model
+            // that was named one line above tells them nothing they did not just read.
+            if (settings.Llm.BackgroundModel is { Length: > 0 } background)
+            {
+                report.AppendLine($"Model for the quiet calls: {background}");
+            }
+
             // Only when it is not the provider's own. "Endpoint: https://api.anthropic.com" is a
             // line that tells the Commander where Anthropic is, which they knew.
             if (settings.Llm.Endpoint is { Length: > 0 } chosen)
