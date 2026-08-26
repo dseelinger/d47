@@ -18,6 +18,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [exobiology-sources.md](exobiology-sources.md) | Is there an exobiology route planner, does the mass code predict what pays, and can sample spacing be computed at all? |
 | [blueprint-name-join.md](blueprint-name-join.md) | Does anything d47 ships join Frontier's `Engine_Dirty` to the table's "Dirty Drive Tuning"? A null result, with the one place nobody looked named. |
 | [elevenlabs-voice-sources.md](elevenlabs-voice-sources.md) | What does an ElevenLabs account's voice list actually hold, is the picker empty on a fresh one, and does the named default survive? |
+| [openai-tts-language-and-speed.md](openai-tts-language-and-speed.md) | Does OpenAI's TTS drift language on Elite proper nouns, can it be told a language at all, and does `speed` do anything? Two noes and a yes, and one of them contradicts the published schema. |
 | [journal-corpus-soak.md](journal-corpus-soak.md) | Phases 17, 18 and 19 shipped in one day — what do 692,631 real events say about them? One fix, two reports, and a crash hunt that came back empty. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
