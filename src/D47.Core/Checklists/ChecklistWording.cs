@@ -202,6 +202,19 @@ public static class ChecklistWording
     /// The module in a slot, as a Commander says it — "7A Shield Generator". Null for a slot
     /// nothing is in, or one on a ship d47 has never been aboard.
     /// </summary>
+    /// <summary>
+    /// Whether the ship carries more than one of this module, which is what makes the type alone
+    /// ambiguous (docs/plans/change-requests.md 44).
+    /// <para>
+    /// On the item rather than on the readable name: two modules of one item are two of the same
+    /// thing however they are spelled, and the name is derived from the item anyway.
+    /// </para>
+    /// </summary>
+    private static bool Twinned(ShipLoadout loadout, ShipModule module) =>
+        module.Item is { Length: > 0 } item
+        && loadout.Modules.Count(other =>
+            string.Equals(other.Item, item, StringComparison.OrdinalIgnoreCase)) > 1;
+
     private static string? InSlot(ChecklistItem item, string subject, CommanderGameState? state)
     {
         if (state is null
@@ -222,7 +235,26 @@ public static class ChecklistWording
         // different conclusions about which module the item is about.
         if (ChecklistEvaluator.Fitted(loadout, subject) is { } module)
         {
-            return ChecklistEvaluator.Describe(module);
+            var described = ChecklistEvaluator.Describe(module);
+
+            // **And the mounting point back where the type alone cannot tell two lines apart**
+            // (docs/plans/change-requests.md 44). Naming the type rather than the slot was asked
+            // for on 2026-08-24 and was right — `Slot04_Size2` says nothing about what belongs
+            // there — but a ship carrying two of a module then draws two identical lines, one done
+            // and one open, with nothing on either to say which is which. Reported 2026-08-26
+            // against a Kestrel with two 2D hull reinforcements, after an hour spent believing d47
+            // had missed an experimental effect it had not.
+            //
+            // **The condition is the ship's, not the list's**, ruled 2026-08-26: a line reads the
+            // same wherever it appears, rather than changing with what happens to be beside it as
+            // items are filtered, ordered and ticked.
+            if (Twinned(loadout, module)
+                && EliteSpecifications.Slot(loadout.Type ?? item.Hull, subject)?.Describe() is { } mount)
+            {
+                return $"{described} in {mount}";
+            }
+
+            return described;
         }
 
         // Nothing fitted, so the next best answer is what the plan says is going there (asked for
