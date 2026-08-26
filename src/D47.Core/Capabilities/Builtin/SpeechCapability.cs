@@ -38,6 +38,18 @@ public static class SpeechCapability
     public const string TowerVoiceKey = "speech.towerVoice";
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
     public const string CharacterPriceKey = "speech.characterPrice";
+
+    /// <summary>
+    /// The same row for a provider billed by the length of the audio rather than by the
+    /// characters handed over (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>).
+    /// <para>
+    /// A second key rather than a unit that changes underneath the first: <c>settings.json</c> is
+    /// append-only, so <see cref="CharacterPriceKey"/> means dollars per thousand characters for
+    /// ever. Only one of the two is ever on screen, because each declares the kind of provider it
+    /// applies to — a row that does not apply is absent rather than reinterpreted.
+    /// </para>
+    /// </summary>
+    public const string MinutePriceKey = "speech.minutePrice";
     public const string SpentKey = "speech.spent";
     public const string SpeakNpcKey = "speech.speakNpcMessages";
 
@@ -389,9 +401,11 @@ public static class SpeechCapability
                 Minimum = 0,
                 Maximum = 10,
 
-                // Only where money changes hands. Edge and "none" cost nothing, and a price row
-                // on a free provider invites a figure that would then be reported as spend.
-                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider).Billed,
+                // Only where money changes hands, and only where it changes hands per character.
+                // Edge and "none" cost nothing, and a price row on a free provider invites a
+                // figure that would then be reported as spend.
+                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider) is
+                    { Billed: true, BilledByMinute: false },
                 DefaultDisplaySource = s =>
                     TtsProviderCatalog.Selected(s.Speech.Provider).ListDollarsPerThousandCharacters
                         is { } list
@@ -399,15 +413,46 @@ public static class SpeechCapability
                         : "(not published — no price will be quoted)",
                 Group = "What it costs",
                 GroupHelp =
-                    "Speech is billed by the character where it is billed at all. D47 counts the "
-                    + "characters it actually sent, which is a fact; turning that into money needs "
-                    + "a rate, which is not.",
+                    "D47 counts what it actually sent and how much audio came back, which are "
+                    + "facts; turning either into money needs a rate, which is not. Providers "
+                    + "disagree about which of the two they bill for, so this row asks about "
+                    + "whichever one yours uses.",
                 DocsAnchor = "voice-cost",
                 Binding = new SettingBinding
                 {
                     Read = s => SpeechSpend.RateFor(s, s.Speech.Provider)
                         ?.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
                     Write = WriteCharacterPrice,
+                },
+            },
+            new SettingRow
+            {
+                Key = MinutePriceKey,
+                Label = "Price per minute of audio",
+                Help =
+                    "What this provider charges for a minute of speech, in US dollars. D47 measures "
+                    + "each clip's length exactly — it has the audio — so the minutes are a fact. "
+                    + "The rate is not: correct it if your account pays differently.",
+                Kind = SettingKind.Number,
+
+                // Tenths of a cent, matching the character row. A minute of OpenAI speech is
+                // around a cent and a half, so this is the same order of precision.
+                Step = 0.001,
+                Minimum = 0,
+                Maximum = 10,
+
+                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider).BilledByMinute,
+                DefaultDisplaySource = s =>
+                    TtsProviderCatalog.Selected(s.Speech.Provider).ListDollarsPerMinute is { } list
+                        ? list.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
+                        : "(not published — no price will be quoted)",
+                Group = "What it costs",
+                DocsAnchor = "voice-cost",
+                Binding = new SettingBinding
+                {
+                    Read = s => SpeechSpend.MinuteRateFor(s, s.Speech.Provider)
+                        ?.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
+                    Write = WriteMinutePrice,
                 },
             },
             new SettingRow
@@ -1066,6 +1111,23 @@ public static class SpeechCapability
         }
 
         return settings with { Speech = settings.Speech with { CharacterPrices = prices } };
+    }
+
+    private static D47Settings WriteMinutePrice(D47Settings settings, string? value)
+    {
+        var provider = TtsProviderCatalog.Selected(settings.Speech.Provider);
+        var prices = new Dictionary<string, double>(settings.Speech.MinutePrices, StringComparer.OrdinalIgnoreCase);
+
+        if (value is null)
+        {
+            prices.Remove(provider.Id);
+        }
+        else
+        {
+            prices[provider.Id] = ParseDouble(value, 0, 0, 10);
+        }
+
+        return settings with { Speech = settings.Speech with { MinutePrices = prices } };
     }
 
     private static D47Settings WriteRate(D47Settings settings, string? value)

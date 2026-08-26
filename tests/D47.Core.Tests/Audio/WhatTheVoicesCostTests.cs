@@ -28,6 +28,17 @@ public class WhatTheVoicesCostTests
         },
     };
 
+    private static D47Settings PerMinute(string provider, double? price = null) => new()
+    {
+        Speech = new SpeechSettings
+        {
+            Provider = provider,
+            MinutePrices = price is { } rate
+                ? new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { [provider] = rate }
+                : new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase),
+        },
+    };
+
     [Fact]
     public void NothingSpokenSaysNothing()
     {
@@ -89,64 +100,104 @@ public class WhatTheVoicesCostTests
     }
 
     /// <summary>
-    /// A provider that charges and publishes no rate says so, in words, and never quotes a figure.
+    /// Every provider that charges now has a rate, in whichever unit it bills in
+    /// (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>).
     /// <para>
-    /// <b>This test used to assert that every billed provider published a rate</b>, on the
-    /// reasoning that the "count with no price" wording was therefore unreachable and kept for
-    /// the next provider that did not — and it named its own trigger: <i>"a provider added with
-    /// <c>Billed = true</c> and no list price … this is the test that says so at the moment it is
-    /// added"</i>. OpenAI is that provider (list.md Phase 58), and it fired exactly as written.
+    /// <b>This test has now been three things, and the sequence is the point.</b> It first
+    /// asserted every billed provider published a rate, and named its own trigger: a provider
+    /// added with <c>Billed = true</c> and no list price. OpenAI was that provider (list.md Phase
+    /// 58) and it fired exactly as written. It then asserted the opposite — that such a provider
+    /// says "no rate set" rather than quoting zero — because OpenAI publishes per minute and d47
+    /// counted characters, and the conversion between them moves about 40% with the content of
+    /// the line.
     /// </para>
     /// <para>
-    /// So the guard moves rather than goes. What it was really protecting is that a character
-    /// count never acquires money d47 made up: OpenAI publishes per minute of audio and d47
-    /// counts characters, and the conversion between them moves about 40% with the *content* of
-    /// the line — 951 characters a minute for plain prose against 671 for a line of system names
-    /// (docs/spikes/openai-tts-language-and-speed.md). There is no rate to state, and the honest
-    /// answer is the one the wording already had.
+    /// <b>That second reading was true and was answering the wrong question.</b> The 40% spread
+    /// only mattered while d47 had to turn characters into minutes, and it never had to: it holds
+    /// the audio, so it knows each clip's length to the sample. The gap was a measurement being
+    /// computed and discarded, not a conversion that could not be made.
+    /// </para>
+    /// <para>
+    /// So the assertion returns to its first form, with the unit no longer assumed. The wording it
+    /// used to guard is still live and still reachable — a provider added tomorrow with neither
+    /// rate set trips this, which is what it is for.
     /// </para>
     /// </summary>
     [Fact]
-    public void AProviderThatChargesWithNoPublishedRateSaysSoRatherThanQuotingZero()
+    public void EveryBilledProviderHasARateInTheUnitItBillsIn()
     {
         var unpriced = TtsProviderCatalog.All
-            .Where(provider => provider.Billed && provider.ListDollarsPerThousandCharacters is null)
+            .Where(provider => provider.Billed)
+            .Where(provider => provider.BilledByMinute
+                ? provider.ListDollarsPerMinute is null
+                : provider.ListDollarsPerThousandCharacters is null)
+            .Select(provider => provider.Name)
             .ToList();
 
-        Assert.NotEmpty(unpriced);
-
-        foreach (var provider in unpriced)
-        {
-            var spend = new SpeechSpend();
-            spend.Record(provider.Id, 5_000);
-
-            var said = spend.Describe(On(provider.Id));
-
-            Assert.NotNull(said);
-
-            // The three readings that must stay apart: free, a figure, and a count with no rate
-            // behind it. "$0.00" here would be the first of those said about the third.
-            Assert.Contains($"no rate set for {provider.Name}", said, StringComparison.Ordinal);
-            Assert.DoesNotContain("$0.00", said, StringComparison.Ordinal);
-            Assert.DoesNotContain("is free", said, StringComparison.Ordinal);
-        }
+        Assert.True(
+            unpriced.Count == 0,
+            $"Billed with no rate in the unit they bill in: {string.Join(", ", unpriced)}. Set "
+            + "ListDollarsPerThousandCharacters or ListDollarsPerMinute, or say in a comment why "
+            + "neither can be known.");
     }
 
     /// <summary>
-    /// And the Commander can still put one in, which is what makes the absence a starting point
-    /// rather than a dead end.
+    /// The measurement that was already being computed and thrown away. A minute-billed provider
+    /// is priced from the length of the audio, which d47 has to the sample, rather than from the
+    /// characters it handed over.
+    /// </summary>
+    [Fact]
+    public void AMinuteBilledProviderIsPricedFromTheAudioItProduced()
+    {
+        var spend = new SpeechSpend();
+
+        // Two minutes of audio, from a line whose character count is nothing like proportional
+        // to it — which is the whole reason characters were the wrong measure.
+        spend.Record(TtsProviderCatalog.OpenAiId, 900, group: null, audio: TimeSpan.FromMinutes(2));
+
+        var said = spend.Describe(PerMinute(TtsProviderCatalog.OpenAiId, price: 0.015))!;
+
+        Assert.DoesNotContain("no rate set", said, StringComparison.Ordinal);
+
+        // 2 minutes at $0.015 is $0.03, and nothing about the 900 characters enters into it.
+        Assert.Contains("0.03", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The two units never cross. A per-minute rate multiplied by a character count, or the
+    /// reverse, is the failure that forcing one unit on both providers would produce.
+    /// </summary>
+    [Fact]
+    public void ACharacterRateIsNeverAppliedToAMinuteBilledProvider()
+    {
+        var spend = new SpeechSpend();
+        spend.Record(TtsProviderCatalog.OpenAiId, 10_000, group: null, audio: TimeSpan.FromMinutes(1));
+
+        // A character price set for a provider that does not bill by the character is ignored
+        // rather than multiplied by ten thousand.
+        var said = spend.Describe(On(TtsProviderCatalog.OpenAiId, price: 0.05))!;
+
+        // One minute at the published $0.015, not $0.50.
+        Assert.Contains("0.015", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("0.50", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And the Commander can still correct it, which is what makes a published figure a starting
+    /// point rather than a claim. It matters more here than for ElevenLabs: OpenAI publishes no
+    /// per-minute rate at all, so the default is a proxy derived from the token rate they do
+    /// publish.
     /// </summary>
     [Fact]
     public void AndTheCommanderCanSetOneThemselves()
     {
         var spend = new SpeechSpend();
-        spend.Record(TtsProviderCatalog.OpenAiId, 10_000);
+        spend.Record(TtsProviderCatalog.OpenAiId, 10_000, group: null, audio: TimeSpan.FromMinutes(10));
 
-        var said = spend.Describe(On(TtsProviderCatalog.OpenAiId, price: 0.015));
+        var said = spend.Describe(PerMinute(TtsProviderCatalog.OpenAiId, price: 0.02))!;
 
-        Assert.NotNull(said);
         Assert.DoesNotContain("no rate set", said, StringComparison.Ordinal);
-        Assert.Contains("0.15", said, StringComparison.Ordinal);
+        Assert.Contains("0.20", said, StringComparison.Ordinal);
     }
 
     [Fact]

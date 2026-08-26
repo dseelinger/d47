@@ -17,14 +17,32 @@ public sealed record SpeechCharge(string ProviderId, long Characters, int Uttera
     /// </para>
     /// </summary>
     public VoiceGroup? Group { get; init; }
+
+    /// <summary>
+    /// How much audio came back, for a provider whose bill is a function of that rather than of
+    /// the characters handed over (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>).
+    /// <para>
+    /// An init property rather than a fourth positional one, following the precedent
+    /// <see cref="Group"/> set and for the same reason: every existing reader asks a provider
+    /// what its characters came to, and that question and its answer are unchanged.
+    /// </para>
+    /// <para>
+    /// <b>Measured, not estimated.</b> d47 asks OpenAI for raw PCM and holds the samples, so
+    /// <c>AudioClip.Duration</c> is the clip's length to the sample. It used to be computed and
+    /// thrown away.
+    /// </para>
+    /// </summary>
+    public TimeSpan Audio { get; init; }
 }
 
 /// <summary>
 /// What the voices have cost, beside what the model costs (list.md Phase 19).
 /// <para>
-/// <b>The unit is characters, not tokens.</b> ElevenLabs bills per character, Edge bills
-/// nothing, and reusing <see cref="Conversation.SpendTracker"/>'s shape would quote a number
-/// whose basis is wrong.
+/// <b>The unit is not tokens, and it is not one unit either.</b> ElevenLabs bills per character,
+/// OpenAI by the length of the audio, Edge nothing at all — so a charge carries both measures and
+/// the provider says which of them its bill is a function of (#63). Reusing
+/// <see cref="Conversation.SpendTracker"/>'s shape would quote a number whose basis is wrong for
+/// all three.
 /// </para>
 /// <para>
 /// <b>Characters are a fact and dollars are an assumption</b>, and the two are kept apart all
@@ -91,7 +109,7 @@ public sealed class SpeechSpend
     /// Which slot was speaking, or null where the caller has no slot to name — the audition path
     /// and every test that is not about the breakdown.
     /// </param>
-    public void Record(string providerId, int characters, VoiceGroup? group = null)
+    public void Record(string providerId, int characters, VoiceGroup? group = null, TimeSpan audio = default)
     {
         if (characters <= 0)
         {
@@ -107,6 +125,7 @@ public sealed class SpeechSpend
             {
                 Characters = held.Characters + characters,
                 Utterances = held.Utterances + 1,
+                Audio = held.Audio + audio,
             };
         }
 
@@ -120,7 +139,7 @@ public sealed class SpeechSpend
         // file: an unpriced provider records the count with Priced false, so a window containing
         // it reports a floor rather than pretending to a total.
         var settings = _settings();
-        var one = new SpeechCharge(providerId, characters, 1);
+        var one = new SpeechCharge(providerId, characters, 1) { Audio = audio };
 
         _ledger.Append(new Conversation.SpendEntry
         {
@@ -130,6 +149,7 @@ public sealed class SpeechSpend
             Dollars = DollarsFor(settings, one) ?? 0m,
             Priced = Priced(settings, providerId),
             Characters = characters,
+            AudioSeconds = audio > TimeSpan.Zero ? audio.TotalSeconds : null,
         });
     }
 
@@ -147,7 +167,14 @@ public sealed class SpeechSpend
                         .Select(perProvider => new SpeechCharge(
                             perProvider.Key,
                             perProvider.Sum(charge => charge.Characters),
-                            perProvider.Sum(charge => charge.Utterances)))
+                            perProvider.Sum(charge => charge.Utterances))
+                        {
+                            // Summed with the rest, or a provider billed by the minute would be
+                            // priced from a total that lost the measure it is billed on (#63).
+                            Audio = perProvider.Aggregate(
+                                TimeSpan.Zero,
+                                (total, charge) => total + charge.Audio),
+                        })
                         .OrderByDescending(charge => charge.Characters),
                 ];
             }
@@ -273,8 +300,19 @@ public sealed class SpeechSpend
 
     private static string Name(string providerId) => TtsProviderCatalog.Selected(providerId).Name;
 
-    private static bool Priced(D47Settings settings, string providerId) =>
-        !TtsProviderCatalog.Selected(providerId).Billed || RateFor(settings, providerId) is not null;
+    private static bool Priced(D47Settings settings, string providerId)
+    {
+        var provider = TtsProviderCatalog.Selected(providerId);
+
+        if (!provider.Billed)
+        {
+            return true;
+        }
+
+        return provider.BilledByMinute
+            ? MinuteRateFor(settings, providerId) is not null
+            : RateFor(settings, providerId) is not null;
+    }
 
     private static decimal? DollarsFor(D47Settings settings, SpeechCharge charge)
     {
@@ -283,6 +321,15 @@ public sealed class SpeechSpend
         if (!provider.Billed)
         {
             return 0m;
+        }
+
+        // The rate and the measure are chosen together, from the same fact about the provider, so
+        // a per-minute rate can never be multiplied by a character count (#63).
+        if (provider.BilledByMinute)
+        {
+            return MinuteRateFor(settings, charge.ProviderId) is { } perMinute
+                ? perMinute * (decimal)charge.Audio.TotalMinutes
+                : null;
         }
 
         return RateFor(settings, charge.ProviderId) is { } rate
@@ -302,6 +349,25 @@ public sealed class SpeechSpend
         return settings.Speech.CharacterPrices.TryGetValue(provider.Id, out var own)
             ? (decimal)own
             : provider.ListDollarsPerThousandCharacters;
+    }
+
+    /// <summary>
+    /// The dollars-per-minute-of-audio in force for a provider, on the same three-step ladder as
+    /// <see cref="RateFor"/>: the Commander's own, then the published figure, then nothing.
+    /// <para>
+    /// A separate dictionary rather than a re-meaning of <c>CharacterPrices</c>, because
+    /// <c>settings.json</c> is append-only — a property never changes what it means, and a
+    /// per-minute number arriving under a name that says characters would be read as characters by
+    /// every build that came before (#63).
+    /// </para>
+    /// </summary>
+    public static decimal? MinuteRateFor(D47Settings settings, string providerId)
+    {
+        var provider = TtsProviderCatalog.Selected(providerId);
+
+        return settings.Speech.MinutePrices.TryGetValue(provider.Id, out var own)
+            ? (decimal)own
+            : provider.ListDollarsPerMinute;
     }
 }
 
@@ -349,7 +415,10 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
         // Asked of the provider rather than measured here, because a provider may rewrite a line
         // on its way out — ElevenLabs spells numerals — and it is the rewritten length that
         // arrives on the bill.
-        spend.Record(inner.Id, inner.Billable(text).Length, group);
+        // The clip's own length goes with the characters, because a provider billing by the
+        // minute is billing for exactly this and d47 has it to the sample (#63). Free for the
+        // providers that bill by the character — it is recorded and not multiplied by anything.
+        spend.Record(inner.Id, inner.Billable(text).Length, group, clip.Duration);
 
         return clip;
     }

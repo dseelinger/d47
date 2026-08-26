@@ -52,6 +52,18 @@ public sealed record SpendEntry
 
     /// <summary>Characters sent to a speech provider. Zero on a model row; speech is billed by these.</summary>
     public long Characters { get; init; }
+
+    /// <summary>
+    /// How much audio a speech charge produced, for a provider billed by the length of it rather
+    /// than by the characters handed over
+    /// (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>).
+    /// <para>
+    /// Null on a model row and on a charge from a provider that bills by the character, so the
+    /// absence says which kind of charge this was rather than claiming a zero-length clip. Rows
+    /// written before this existed read as null, which is correct for every one of them.
+    /// </para>
+    /// </summary>
+    public double? AudioSeconds { get; init; }
 }
 
 /// <summary>What a window came to, and whether the figure is the whole of it.</summary>

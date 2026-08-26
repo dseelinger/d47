@@ -1055,6 +1055,26 @@ public sealed record SpeechSettings
         new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// The same thing per minute of audio, for a provider whose bill is a function of that rather
+    /// than of the characters handed over
+    /// (<a href="https://github.com/dseelinger/d47/issues/63">#63</a>).
+    /// <para>
+    /// <b>A second dictionary rather than a re-meaning of <see cref="CharacterPrices"/>.</b> This
+    /// file is append-only: a property never changes what it means, and a per-minute number
+    /// arriving under a name that says characters would be read as characters by every build
+    /// written before it.
+    /// </para>
+    /// <para>
+    /// Absent carries the same meaning it does above — the published figure stands — and the same
+    /// caveat applies with one more on top: OpenAI publishes no per-minute rate at all, so the
+    /// default is a proxy derived from the rate they do publish. See
+    /// <c>TtsProviderCatalog.OpenAi</c>, where that is set out rather than assumed.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, double> MinutePrices { get; init; } =
+        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// The voice a fleet carrier answers in, or null for the ship AI's (list.md Phase 11,
     /// "Carrier Captain").
     /// </summary>
