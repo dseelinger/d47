@@ -16,9 +16,20 @@ namespace D47.Tts;
 /// (list.md Phase 3, "Capabilities as state, not guard").
 /// </para>
 /// <para>
-/// Audio is requested as raw PCM rather than MP3 on purpose: no decoder in the graph, which
-/// keeps FFmpeg and its copyleft problem out of the dependency set entirely
-/// (architecture.md §10). The wire format itself lives in <see cref="EdgeProtocol"/>.
+/// <b>This is the one provider that decodes.</b> Raw PCM was preferred here for as long as it
+/// was offered — no decoder in the graph, which is what keeps FFmpeg and its copyleft problem
+/// out of the dependency set (architecture.md §10) — and the endpoint withdrew the raw formats
+/// in mid-2026. So audio arrives as 24 kHz mono MP3 and is decoded through NAudio, which is
+/// already in the graph and is MIT. <see cref="EdgeProtocol.SourceSampleRate"/> carries the
+/// history and the exact refusal; it is not repeated here.
+/// </para>
+/// <para>
+/// Stated as an exception rather than left implied, because the sentence that used to stand
+/// here read as a rule the whole audio path keeps. It is not one: the preference for a format
+/// nothing has to decode is real and every other provider still meets it, and this one no
+/// longer can. A provider argued against on the grounds that it would put a decoder in the
+/// graph is being held to a bar Edge itself does not clear — which is a different argument
+/// from the licence one, and the licence one is the one that binds.
 /// </para>
 /// </summary>
 public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger, HttpClient? http = null)
