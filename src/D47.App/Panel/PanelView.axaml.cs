@@ -1534,6 +1534,26 @@ public partial class PanelView : UserControl
                 || HelpPageView.Exists(HelpLevel.Index));
 
     /// <summary>
+    /// Shows the pre-release mark beside the help glyph, or takes it away
+    /// (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>).
+    /// <para>
+    /// <b>Off on the headset's copy</b>, by the same <see cref="OutputOnly"/> lever the help button
+    /// uses and for the same stated reason: a local <c>IsVisible</c> outranks a style setter, so
+    /// the buttons this class furnishes by hand have to ask, and this is a third one that asks.
+    /// A Commander in a headset is flying; which build they are on is not a question they are
+    /// asking mid-flight, and chrome in an overlay cannot be dismissed.
+    /// </para>
+    /// <para>
+    /// <b>Takes the mark away as readily as it puts it up</b>, because promoting a pre-release
+    /// changes the answer without changing the binary — so this can be called again with a
+    /// different channel and must not be a one-way door.
+    /// </para>
+    /// </summary>
+    public void ShowChannel(D47.Core.Updates.ReleaseChannel channel) =>
+        PreReleaseBadge.IsVisible =
+            !OutputOnly && channel == D47.Core.Updates.ReleaseChannel.PreRelease;
+
+    /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
     /// so every route that would navigate away is refused until it is dismissed, and dismissing
     /// it is <see cref="GoBack"/> — the breadcrumb, the controller button and the spoken word,

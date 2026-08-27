@@ -19,6 +19,8 @@ using D47.Core.Audio;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging;
 
+using D47.Core.Updates;
+
 namespace D47.App;
 
 /// <summary>
@@ -1309,6 +1311,11 @@ public partial class MainWindow : Window
 
     private async Task CheckForUpdateAsync(AppHost host)
     {
+        // Asked alongside the update check because it is the same trip and the same failure
+        // policy: anything that goes wrong leaves the channel Unknown and shows no marker (#92).
+        // Awaited first so the mark is up before any update banner competes for the same corner.
+        await ShowReleaseChannelAsync(host);
+
         var update = await host.Updates.CheckAsync(host.Version, CancellationToken.None);
         if (update is null)
         {
@@ -1317,6 +1324,25 @@ public partial class MainWindow : Window
 
         _availableUpdate = update;
         _model.UpdateText = $"D47 {update.Version} is available — you're on {host.Version}.";
+    }
+
+    /// <summary>
+    /// Puts the pre-release mark in the three places it belongs, or leaves them bare
+    /// (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>).
+    /// <para>
+    /// One judgement, three sites, so they cannot disagree — the same argument <c>BuildInfo</c>
+    /// already makes about the version itself. The title bar takes the short form because it is
+    /// chrome that is never off screen; About takes the fullest because it is the line a bug
+    /// report quotes; the panel takes a mark beside the help glyph, and only on the desktop.
+    /// </para>
+    /// </summary>
+    private async Task ShowReleaseChannelAsync(AppHost host)
+    {
+        host.Channel = await host.Updates.ChannelAsync(host.Version, CancellationToken.None);
+
+        Title = $"Directive 47 — {ReleaseChannelText.Marked(BuildInfo.Semantic, host.Channel)}";
+
+        Panel?.ShowChannel(host.Channel);
     }
 
     /// <summary>

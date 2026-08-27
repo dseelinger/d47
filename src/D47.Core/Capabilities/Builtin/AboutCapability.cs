@@ -64,6 +64,12 @@ public static class AboutCapability
         + "All game data is the property of Frontier Developments plc.";
 
     /// <param name="version">The version a Commander would quote — <c>BuildInfo.Semantic</c>.</param>
+    /// <param name="channel">
+    /// Whether GitHub calls this build's Release a pre-release, asked each time the row is drawn
+    /// because the answer arrives over the network after the page exists — and because promoting a
+    /// pre-release changes it without changing the binary (#92). Null, or
+    /// <c>ReleaseChannel.Unknown</c>, shows the bare version and claims nothing.
+    /// </param>
     /// <param name="build">
     /// The full build string including the commit, which is the thing a bug report cannot do
     /// without and the reason this area exists at all.
@@ -96,11 +102,18 @@ public static class AboutCapability
         Action? addToStartMenu = null,
         Func<bool>? startMenuWanted = null,
         Action? setUpKeys = null,
-        Action? showCommunity = null)
+        Action? showCommunity = null,
+        Func<Updates.ReleaseChannel>? channel = null)
     {
         var rows = new List<SettingRow>
         {
-            Stated(VersionKey, "Version", version, "version", "Which release this is."),
+            Live(
+                VersionKey,
+                "Version",
+                () => Updates.ReleaseChannelText.Marked(version, channel?.Invoke() ?? Updates.ReleaseChannel.Unknown),
+                "version",
+                "Which release this is. A pre-release says so: it is a build offered to nobody "
+                + "automatically, and it is not final."),
             Stated(
                 BuildKey,
                 "Build",
@@ -222,6 +235,22 @@ public static class AboutCapability
         };
     }
 
+    /// <summary>
+    /// A stated row whose value is asked for each time it is drawn, for the one fact here that can
+    /// change while d47 is running: the release channel arrives from the network some moments
+    /// after the page is built (#92).
+    /// </summary>
+    private static SettingRow Live(string key, string label, Func<string> value, string anchor, string help) =>
+        new()
+        {
+            Key = key,
+            Label = label,
+            Help = help,
+            Kind = SettingKind.Info,
+            DocsAnchor = anchor,
+            Binding = new SettingBinding { Read = _ => value() },
+        };
+
     private static SettingRow Stated(string key, string label, string value, string anchor, string help) =>
         new()
         {
@@ -252,6 +281,12 @@ public sealed record AboutSurface
 {
     /// <summary>The full build string including the commit.</summary>
     public string? Build { get; init; }
+
+    /// <summary>
+    /// Whether GitHub calls this build's Release a pre-release. Asked rather than held: it arrives
+    /// over the network after startup, and it changes when a pre-release is promoted (#92).
+    /// </summary>
+    public Func<Updates.ReleaseChannel>? Channel { get; init; }
 
     /// <summary>Shows the changelog that shipped inside this build.</summary>
     public Action? ShowChangelog { get; init; }
@@ -300,6 +335,7 @@ public sealed record AboutSurface
     public static AboutSurface Inert => new()
     {
         Build = "0.0.0-test+0000000",
+        Channel = () => Updates.ReleaseChannel.Unknown,
         ShowChangelog = () => { },
         ShowChangelogOnline = () => { },
         AddToStartMenu = () => { },

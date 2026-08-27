@@ -589,6 +589,24 @@ public sealed class AppHost : IDisposable
 
     public string Version { get; }
 
+    /// <summary>
+    /// Whether GitHub calls this build's Release a pre-release
+    /// (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>).
+    /// <para>
+    /// <b>Held here rather than stamped into the binary</b>, because it is a property of the
+    /// Release and not of the build: promoting a pre-release changes it while the executable and
+    /// its checksum stay exactly what they were, and a published tag never moves — so a stamped
+    /// build would keep calling itself a pre-release for ever after being promoted.
+    /// </para>
+    /// <para>
+    /// <see cref="D47.Core.Updates.ReleaseChannel.Unknown"/> until the check comes back, and
+    /// again whenever it cannot. That state shows no marker at all, which is what a final release
+    /// looks like — the difference being that it claims nothing rather than claiming that.
+    /// </para>
+    /// </summary>
+    public D47.Core.Updates.ReleaseChannel Channel { get; internal set; }
+        = D47.Core.Updates.ReleaseChannel.Unknown;
+
     /// <summary>For surfaces that need a logger of their own — the theme manager, so far.</summary>
     public ILoggerFactory Loggers => _loggerFactory;
 
@@ -1658,6 +1676,11 @@ public sealed class AppHost : IDisposable
                 new AboutSurface
                 {
                     Build = BuildInfo.Full,
+
+                    // Asked each time the row is drawn, not captured: the answer arrives over the
+                    // network after this page exists, and it changes again if the release is
+                    // promoted while d47 is running (#92).
+                    Channel = () => self?.Channel ?? D47.Core.Updates.ReleaseChannel.Unknown,
 
                     // Late-bound through the host like the speech surface's three, because the
                     // two that open a window need an owner and nothing here has one yet. The

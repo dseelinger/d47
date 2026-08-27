@@ -39,6 +39,12 @@ public sealed class UpdateChecker
     private const string LatestReleaseUrl = "https://api.github.com/repos/dseelinger/d47/releases/latest";
 
     /// <summary>
+    /// Where one release is looked up by its tag. Pinned like every other URL in this file, and
+    /// only ever completed with a tag d47 built from its own version.
+    /// </summary>
+    private const string TagReleaseUrlPrefix = "https://api.github.com/repos/dseelinger/d47/releases/tags/";
+
+    /// <summary>
     /// The only URL shape the "an update is available" button will hand to the shell. Both the
     /// version and the link come out of a network response, and the link is opened with
     /// UseShellExecute - which resolves anything, not just http - so an API that is redirected,
@@ -129,6 +135,72 @@ public sealed class UpdateChecker
         {
             _logger.LogInformation(ex, "Update check failed; continuing without one");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Whether GitHub calls this build's own Release a pre-release
+    /// (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>).
+    /// <para>
+    /// <b>A second call rather than a cleverer first one.</b> <see cref="CheckAsync"/> asks
+    /// <c>/releases/latest</c>, which by construction cannot answer this: that endpoint returns the
+    /// newest release that is <em>not</em> a pre-release, which is precisely not the build asking.
+    /// One request to <c>/releases</c> could serve both, and would be worth doing if the request
+    /// budget ever mattered — GitHub allows sixty an hour unauthenticated and this makes it two per
+    /// start — but it would mean rewriting the update path, which is pinned, tested and load-bearing,
+    /// to add a badge.
+    /// </para>
+    /// <para>
+    /// <b>The tag is d47's own and never the network's.</b> It is built from the running version,
+    /// so nothing a response says can steer the URL — the concern the pinned prefixes above exist
+    /// for, arriving here from the other direction.
+    /// </para>
+    /// <para>
+    /// Every failure resolves to <see cref="ReleaseChannel.Unknown"/> rather than to
+    /// <see cref="ReleaseChannel.Release"/>, on the same principle the update check follows: this
+    /// is optional, and an optional check must never be why d47 tells a Commander something untrue.
+    /// A build with no parseable version — a local one — never asks at all.
+    /// </para>
+    /// </summary>
+    public async Task<ReleaseChannel> ChannelAsync(string runningVersion, CancellationToken cancellationToken)
+    {
+        if (!ReleaseVersion.TryParse(runningVersion, out var current))
+        {
+            return ReleaseChannel.Unknown;
+        }
+
+        try
+        {
+            var url = $"{TagReleaseUrlPrefix}v{current}";
+
+            using var response = await Http.GetAsync(url, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // A 404 is the ordinary answer for a build that was never released - a local
+                // build, or one from a branch. Not a fault, and not evidence of anything.
+                _logger.LogInformation(
+                    "No release channel for {Version}: GitHub returned {Status}", current, response.StatusCode);
+
+                return ReleaseChannel.Unknown;
+            }
+
+            await using var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var document = await JsonDocument.ParseAsync(body, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!document.RootElement.TryGetProperty("prerelease", out var flag)
+                || flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                return ReleaseChannel.Unknown;
+            }
+
+            return flag.GetBoolean() ? ReleaseChannel.PreRelease : ReleaseChannel.Release;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            _logger.LogInformation(ex, "Release channel check failed; showing no marker");
+            return ReleaseChannel.Unknown;
         }
     }
 

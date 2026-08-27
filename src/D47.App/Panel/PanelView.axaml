@@ -95,6 +95,31 @@
         copy is never handed one: the button opened a browser on the desktop, which a Commander in
         the headset cannot see (change-requests.md 24).
       -->
+      <!--
+        The pre-release mark (#92). Docked right so it sits immediately left of the help mark, and
+        hidden by default for the same reason the help button is: a local IsVisible outranks a
+        style setter, so this one is furnished by hand and is off on the headset's copy along with
+        the button it sits beside. A Commander in a headset is flying, and a badge about which
+        build they are on is chrome they cannot dismiss and did not ask for.
+      -->
+      <Border x:Name="PreReleaseBadge"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              VerticalAlignment="Top"
+              Margin="0,9,6,0"
+              Padding="7,2"
+              CornerRadius="3"
+              Background="Transparent"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource D47.TextMuted}"
+              ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
+        <TextBlock x:Name="PreReleaseBadgeText"
+                   Text="PRE-RELEASE"
+                   FontSize="{StaticResource D47.Type.Small}"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+      </Border>
+
       <Button x:Name="HelpButton"
               DockPanel.Dock="Right"
               IsVisible="False"
