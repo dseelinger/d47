@@ -14,7 +14,8 @@
       "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "allow": [
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File tools/issues.ps1:*)"
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File tools/issues.ps1:*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File tools/repo-guard.ps1:*)"
     ]
   }
 }
