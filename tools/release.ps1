@@ -473,8 +473,17 @@ if ($PreRelease) {
     $published = $false
 
     while ((Get-Date) -lt $deadline) {
-        # gh exits non-zero until the Release exists, which is the signal being waited on.
-        $state = gh release view $next --json isDraft --jq '.isDraft' 2>$null
+        # gh exits non-zero until the Release exists, which is the signal being waited on — and
+        # it says "release not found" on stderr while doing it.
+        #
+        # **Through Invoke-Native, which is not optional here.** Called bare, this is the trap that
+        # helper was written for and documents at its own definition: while ErrorActionPreference
+        # is Stop, Windows PowerShell turns any stderr line from a native command into a
+        # terminating error. `2>$null` does not save it — the redirection is applied after the
+        # error record has already been raised. So the first poll of a workflow that had not
+        # finished publishing killed the whole step, and the switch this block implements failed
+        # on its first real use, on v0.78.0, in the one case it was written to handle.
+        $state = Invoke-Native { gh release view $next --json isDraft --jq '.isDraft' 2>&1 }
 
         if ($LASTEXITCODE -eq 0 -and $state -eq 'false') {
             $published = $true
