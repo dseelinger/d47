@@ -1,4 +1,4 @@
-using D47.Core.Actions;
+﻿using D47.Core.Actions;
 using D47.Core.Conversation;
 using D47.Core.Input;
 
@@ -35,7 +35,7 @@ public static class MacroCapability
         Summary = "Run one of your own named sequences of ship actions.",
         Examples = ["run docking prep", "what macros do I have"],
         Keywords = ["what macros do i have", "list my macros"],
-        Display = new CapabilityDisplay { PanelTitle = "Macros", Order = 57 },
+        Display = new CapabilityDisplay { PanelTitle = "Macros", Order = 62 },
         Settings = [ListRow(store)],
         Tools =
         [

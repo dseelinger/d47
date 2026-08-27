@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -99,7 +99,7 @@ public static class LoreCapability
             "what is special about this system",
             "is there anything out here",
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Lore", Order = 59 },
+        Display = new CapabilityDisplay { PanelTitle = "Lore", Order = 65 },
         Settings = [RemarksRow(), BookRow(book)],
         Tools =
         [

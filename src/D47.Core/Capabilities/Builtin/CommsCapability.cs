@@ -1,4 +1,4 @@
-using D47.Core.Configuration;
+﻿using D47.Core.Configuration;
 using D47.Core.Input;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -59,7 +59,7 @@ public static class CommsCapability
         Name = "Comms",
         Summary = "Send a message in Elite's chat, to local, system, wing or squadron.",
         Examples = ["tell my wing I am on the way", "say o7 in local"],
-        Display = new CapabilityDisplay { PanelTitle = "Comms", Order = 56 },
+        Display = new CapabilityDisplay { PanelTitle = "Comms", Order = 61 },
         Settings = [ChatRow()],
         Tools =
         [

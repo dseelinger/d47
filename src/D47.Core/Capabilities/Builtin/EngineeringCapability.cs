@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -162,7 +162,7 @@ public static class EngineeringCapability
                     FindTraderAsync(galaxy, commander, clipboard, arguments, cancellationToken),
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 51 },
+        Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 52 },
     };
 
     // ---- What a blueprint costs ----------------------------------------------------------------

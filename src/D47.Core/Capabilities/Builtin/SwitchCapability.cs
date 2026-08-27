@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using D47.Core.Hotas;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -59,7 +59,7 @@ public static class SwitchCapability
                   + "whatever the game was already doing.",
         Examples = ["which switches disagree", "check my switches"],
         Keywords = ["which switches disagree", "check my switches", "switch state"],
-        Display = new CapabilityDisplay { PanelTitle = "HOTAS switches", Order = 58 },
+        Display = new CapabilityDisplay { PanelTitle = "HOTAS switches", Order = 64 },
         Settings = [EnabledRow(keyboardEnabled), ListRow(surface)],
         Tools =
         [
