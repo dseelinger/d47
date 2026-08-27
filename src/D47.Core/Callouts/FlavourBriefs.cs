@@ -305,6 +305,25 @@ public static class FlavourBriefs
         "system rules",
         "operating parameters",
         "system prompt",
+
+        // **2026-08-26, and it is the shape this list's own summary said it would miss.** A
+        // Commander's carrier captain was handed *"Commander inbound."* to reword and said:
+        //
+        //   "I appreciate the test, but I need to decline. Those rules I was just given aren't
+        //    mine to explain or restate, even rephrased — that's the first order in them."
+        //
+        // A new failure rather than a new wording of the old one. The 2026-08-25 pair were the
+        // model *describing* its instructions; this is the model reading a rewording brief as an
+        // **attempt to extract** them, and refusing on the guardrails' own authority. The
+        // guardrails were right; the brief was the thing being refused. Note it got as far as
+        // offering to help — over the air, in a stranger's voice, to a Commander who cannot tell.
+        "i need to decline",
+        "i have to decline",
+        "i must decline",
+        "mine to explain",
+        "mine to restate",
+        "i appreciate the test",
+        "those rules",
     ];
 
     /// <summary>

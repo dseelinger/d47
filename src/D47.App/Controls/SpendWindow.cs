@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -37,10 +38,21 @@ public sealed class SpendWindow : Window
         TimeZoneInfo zone)
     {
         Title = "What this has cost";
-        Width = 560;
+
+        // 640 rather than 560 because the widest line here is a running total that names both
+        // providers and both figures, and at 560 it wrapped to three lines in a two-column row.
+        Width = 640;
         SizeToContent = SizeToContent.Height;
+
+        // A ledger with five windows in it is taller than some screens, so the height is capped
+        // and the scroller takes the rest. Without this, SizeToContent grows the window past the
+        // bottom of the display and the Close button is the part that goes.
+        MaxHeight = 760;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        CanResize = false;
+
+        // Resizable, unlike ConfirmWindow beside it: that one asks a question and is done, and
+        // this one is read. A Commander who wants the figures wider should be able to have them.
+        CanResize = true;
         ShowInTaskbar = false;
 
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
@@ -64,7 +76,22 @@ public sealed class SpendWindow : Window
         close.Click += (_, _) => Close();
         body.Children.Add(close);
 
-        Content = new ScrollViewer { Content = body };
+        // **Horizontal scrolling disabled, and it is the whole of the fix** (GitHub issue 87).
+        // A ScrollViewer that may scroll horizontally measures its content with *unconstrained*
+        // width, so every `TextWrapping.Wrap` below it becomes a no-op and the two star columns
+        // in `Row` have no width to divide. The window then lays every figure out on one endless
+        // line and offers a horizontal scrollbar for it, which is what a Commander was shown:
+        // the left of every line off-screen and the totals unreadable.
+        //
+        // So the rows were never the problem and neither was the width. `ChangelogWindow` has
+        // had this line since it was written; the four windows beside it had not, and now do.
+        Content = new ScrollViewer
+        {
+            Name = "SpendScroller",
+            Content = body,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        };
     }
 
     /// <summary>

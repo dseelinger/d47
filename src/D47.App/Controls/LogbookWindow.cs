@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -136,7 +137,15 @@ public sealed class LogbookWindow : Window
             },
         };
 
-        Content = new ScrollViewer { Content = body };
+        // Horizontal scrolling off, so wrapping below it actually wraps (GitHub issue 87). A
+        // scroller that may scroll sideways measures its content with unbounded width, and every
+        // TextWrapping under it stops meaning anything.
+        Content = new ScrollViewer
+        {
+            Content = body,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        };
 
         book.Changed += OnChanged;
         Closed += (_, _) =>

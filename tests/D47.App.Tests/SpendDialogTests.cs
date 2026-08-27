@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
@@ -40,7 +41,12 @@ public class SpendDialogTests
         session.Record(new TurnCost(usage, 0.0231m, true), coldPrefixExpected: true, "anthropic", "claude-opus-5");
 
         var speech = new SpeechSpend();
-        speech.Record("elevenlabs", 412);
+
+        // Two providers, as the reported window had (#87): the session voice line then reads
+        // "$0.0149 - ElevenLabs 298 ($0.0149), Edge Neural 180 (Edge Neural is free)", which is
+        // the longest string this window ever renders.
+        speech.Record("elevenlabs", 298);
+        speech.Record("edge", 180);
 
         // A charge from earlier in the month, so the running totals are not all the same figure.
         ledger.Append(new SpendEntry
@@ -77,6 +83,44 @@ public class SpendDialogTests
         string.Join(
             "\n",
             window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
+
+    /// <summary>
+    /// <b>Nothing in this window scrolls sideways</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/87">#87</a>). Reported with a screenshot
+    /// of the figures with their left-hand halves off the edge: *"Details window's screwed up."*
+    /// <para>
+    /// The rows already said <c>TextWrapping.Wrap</c> and the columns were already stars, and
+    /// neither did anything, because <b>a ScrollViewer that may scroll horizontally measures its
+    /// content with unconstrained width</b>. Wrapping cannot happen against infinity, so every
+    /// figure laid out on one endless line.
+    /// </para>
+    /// <para>
+    /// Asserted on the measurement rather than on the property. Setting
+    /// <c>HorizontalScrollBarVisibility</c> is the fix, but what a Commander cares about is that
+    /// the content fits, and only the extent against the viewport says that.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void NothingInTheWindowScrollsSideways()
+    {
+        var window = Dialog(out _);
+        window.Show();
+
+        var scroller = Assert.Single(window.GetVisualDescendants().OfType<ScrollViewer>());
+
+        // The window sizes to its content's height, so lay it out before measuring anything.
+        window.UpdateLayout();
+
+        Assert.Equal(ScrollBarVisibility.Disabled, scroller.HorizontalScrollBarVisibility);
+
+        Assert.True(
+            scroller.Extent.Width <= scroller.Viewport.Width + 0.5,
+            $"The content is {scroller.Extent.Width:0} wide in a {scroller.Viewport.Width:0} viewport, so it "
+            + "scrolls sideways. Every row wraps, so this means the scroller measured them against "
+            + "an unbounded width - see #87.");
+
+        window.Close();
+    }
 
     /// <summary>
     /// Said once, above everything, rather than as a suffix on each figure

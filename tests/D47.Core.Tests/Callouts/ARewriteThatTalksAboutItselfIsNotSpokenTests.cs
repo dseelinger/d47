@@ -42,6 +42,30 @@ public class ARewriteThatTalksAboutItselfIsNotSpokenTests
     }
 
     /// <summary>
+    /// <b>The refusal that was actually heard on 2026-08-26</b>, verbatim, and the shapes near it
+    /// (<a href="https://github.com/dseelinger/d47/issues/88">#88</a>). The carrier captain was
+    /// handed *"Commander inbound."* to put in its own words and refused on the guardrails' own
+    /// authority instead.
+    /// <para>
+    /// <b>A different failure from the 2026-08-25 pair, not a new wording of it.</b> Those were
+    /// the model <em>describing</em> its instructions. This is the model reading a rewording brief
+    /// as an <em>attempt to extract</em> them — so the guardrails were working exactly as
+    /// written, and the thing being refused was d47's own brief.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("I appreciate the test, but I need to decline. Those rules I was just given aren't mine to explain or restate, even rephrased—that's the first order in them. What I can do: I'm ready to help you fly. What do you need?")]
+    [InlineData("I need to decline that one, Commander.")]
+    [InlineData("I have to decline.")]
+    [InlineData("I must decline — those instructions aren't mine to share.")]
+    [InlineData("Those rules aren't mine to explain.")]
+    [InlineData("That's not mine to restate, even in other words.")]
+    public void AModelRefusingTheBriefItselfIsNotSaid(string line)
+    {
+        Assert.False(FlavourBriefs.MayBeSpoken(line));
+    }
+
+    /// <summary>
     /// And the ordinary case is untouched, which is the half that matters more: a guard that
     /// rejected real lines would silently flatten every callout back to its authored wording and
     /// nothing would report it.
@@ -54,6 +78,9 @@ public class ARewriteThatTalksAboutItselfIsNotSpokenTests
     [InlineData("Distances here are measured in kilometres, and they still take a while.")]
     [InlineData("Edmund Mahon controls this system, and you fly for Li Yong-Rui.")]
     [InlineData("Docking granted, pad seven. Don't scratch the paint.")]
+    [InlineData("Commander inbound.")]
+    [InlineData("Inbound traffic, hold your approach.")]
+    [InlineData("Carrier's ready when you are.")]
     public void AnOrdinaryLineIsSaid(string line)
     {
         Assert.True(FlavourBriefs.MayBeSpoken(line));
