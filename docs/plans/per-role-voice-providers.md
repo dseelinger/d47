@@ -497,6 +497,53 @@ a task.
    question: which range the row narrows to when two categories disagree.
 5. **Cartesia** — see below.
 
+### Overturned 2026-08-26: the fork was the wrong question
+
+**The Commander's ruling: _"Nothing should be predicated on 'OpenAI is good enough' — 12 voices is
+crap. Include Cartesia."_** Everything below this line was written to answer *does Cartesia displace
+OpenAI on the Aboard slot*, and the §4.1 spike answered it: no drift, so no displacement, so
+Cartesia stays a case rather than a task. That reasoning is sound and the **question was wrong**.
+
+Casting a Guardian core is not one slot on one axis. OpenAI ships **thirteen** voices, all of them
+enumerated in §3.6, and a ship's AI, a carrier, five NPC classes and the comms slots are being cast
+from that pool plus Edge. Sufficiency on *drift* was never sufficiency on *variety*, and the plan
+read the spike's answer as though it were.
+
+So Cartesia is queued on its own merits as **Phase 60**, and the argument below is kept as written
+rather than edited into agreement — it is the record of how the case was framed, and the framing is
+the part that was wrong.
+
+**Two things in it survive the overturn and become Phase 60's first questions.** Its **voice-library
+size is unpublished**, which is now load-bearing rather than a footnote: variety is the whole reason
+it is being built, so the number is the first thing to establish and the phase should not be written
+around a guess. And its **concurrency cap of 2—3 on entry tiers** is tighter than `MaxConcurrent`
+was written for, which is a real constraint on a provider that may end up carrying several NPC slots
+at once.
+
+**One thing in it gains value rather than losing it.** Cartesia **pins language explicitly**, and
+Phase 58 established that a provider which cannot be told a language must not be offered for a slot
+carrying other people's words — which is why OpenAI is refused for all four comms slots, in two
+places. Cartesia is eligible where OpenAI is barred, so it is not "a better ElevenLabs" as written
+below; it is the second provider that can legally take the re-voiced slots at all.
+
+### Declined 2026-08-26: Azure Neural HD, the "DragonHD" voices
+
+Raised as the value option — better than Edge, more voices than OpenAI, cheaper than Cartesia or
+ElevenLabs. **Declined by the Commander: _"it doesn't differ from the FREE option enough to warrant
+it."_**
+
+The reasoning is worth keeping so it is not re-proposed. Azure AI Speech is the supported, paid
+endpoint for **the same neural voices d47 already reaches for nothing** through Edge's
+`speech.platform.bing.com`. Standard neural is $16 per million characters and Neural HD, whose base
+model is `DragonHDLatestNeural`, is $22 — for a catalogue whose 322-voice overlap a Commander
+already hears free. What it adds is HD prosody and the HD-only voices, which is not the axis this
+project is short on.
+
+**The one argument that was not about voices is noted and not acted on:** the Edge endpoint is
+undocumented, and if Microsoft closes it every Commander without a key goes silent. Azure would be
+the insurance policy for that. That is a resilience case, not a voice case, and it should be argued
+as one if the day comes rather than smuggled in as variety.
+
 ### Cartesia: not ahead of OpenAI, but ahead of it on one axis
 
 The brief invites the case. **It does not displace OpenAI, but one of its properties should worry
