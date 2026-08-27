@@ -32,8 +32,8 @@ nav_order: 123
  <rect x="450" y="152" width="410" height="102" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="655" y="188" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHEN I SAY ITS NAME</text>
  <text x="655" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">the same, and then thrown away</text>
- <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">unless you addressed it</text>
- <text x="440" y="280" text-anchor="middle" font-size="15" font-weight="700" fill="var(--danger)">The bottom two are off out of the box, and that is why.</text>
+ <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">unless it is followed by a request</text>
+ <text x="440" y="280" text-anchor="middle" font-size="15" font-weight="700" fill="var(--danger)">The bottom two are off out of the box.</text>
 </svg>
 <p class="body">The key works in all four. A policy that decides for itself is not a reason to take away the one that does not.</p>
 </section>
@@ -42,7 +42,7 @@ nav_order: 123
 <svg viewBox="0 0 880 236" role="img" aria-label="The speech model is downloaded once from huggingface.co; after that audio and transcripts stay on your machine">
  <rect x="20" y="34" width="250" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONCE</text>
- <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">the model file, from</text>
+ <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">the speech-to-text model, from</text>
  <text x="145" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">huggingface.co</text>
  <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="332,86 316,78 316,94" fill="var(--accent-muted)"/>
@@ -55,10 +55,10 @@ nav_order: 123
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Your key might already be Elite's, and nothing would say so.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="A key bound in both Elite and Directive 47 simply does nothing in one of them, with no error anywhere">
+<h2><span class="num">3</span> Elite might already be using that key.</h2>
+<svg viewBox="0 0 880 244" role="img" aria-label="A keyboard key bound in both Elite and Directive 47 simply does nothing in one of them, with no error anywhere">
  <rect x="20" y="34" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE KEY</text>
+ <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE KEYBOARD KEY</text>
  <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">bound in both places</text>
  <line x1="282" y1="82" x2="318" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="332,82 316,74 316,90" fill="var(--accent-muted)"/>
@@ -76,7 +76,7 @@ nav_order: 123
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> "It cannot hear me" has five causes, and the answer names which.</h2>
+<h2><span class="num">4</span> Five things can stop it hearing you.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="Five separate reasons speech might not reach Directive 47, all reported together in one answer">
  <rect x="20" y="30" width="164" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="102" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO KEY</text>
@@ -95,7 +95,7 @@ nav_order: 123
  <text x="792" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">yet</text>
  <rect x="20" y="138" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="170" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ASK "CAN YOU HEAR ME"</text>
- <text x="440" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">All five come back together, every time, so you never have to guess which one it was.</text>
+ <text x="440" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">All five are tested and tell you the result.</text>
 </svg>
 </section>
 <div class="next">

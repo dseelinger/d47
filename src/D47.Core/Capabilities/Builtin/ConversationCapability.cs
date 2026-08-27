@@ -513,7 +513,7 @@ public static class ConversationCapability
                 + "community guide, patch notes, what other Commanders are reporting. The search runs "
                 + "at your language-model provider, not here, so nothing new leaves this machine "
                 + "beyond what you already send them. What comes back is spoken as something D47 read, "
-                + "never written into its own tables. Off by default; see Privacy for what is sent. "
+                + "never written into its own tables. Off by default; see [Privacy](privacy) for what is sent. "
                 + "Searches are billed separately by the provider, about a penny each.",
             Kind = SettingKind.Toggle,
             DefaultDisplay = "off",

@@ -424,10 +424,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // Present only while something on this card has been changed, so a card at its defaults
         // offers nothing to undo — the same rule as the row glyph below, and it doubles as a
         // quiet "you have changed something here".
+        // The mark rather than the word (#69), and the same mark the row-level one uses: a card
+        // reset and a row reset are the same promise at two scales, so they should not be a picture
+        // and a word. Drawn at Small's size so it sits with the header text beside it.
         var reset = new Button
         {
-            Content = "Reset",
-            FontSize = TypeScale.Small,
+            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.TextMutedKey, TypeScale.Small),
             Padding = new Thickness(6, 0),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
@@ -437,6 +439,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
 
         Themed(reset, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        // The word was this button's accessible name by being its content; a Path has no text, so
+        // without this a screen reader finds an unnamed button where it used to find "Reset".
+        AutomationProperties.SetName(reset, $"Reset {title}");
         ToolTip.SetTip(reset, $"Put every {title} setting you have changed back to its default. Keys are untouched.");
 
         reset.Click += (_, _) =>
@@ -1103,21 +1109,37 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// highlight for a string nobody is searching for any more.
     /// </para>
     /// </summary>
-    private void Paint(TextBlock block, string text)
+    private void Paint(TextBlock block, string markup)
     {
+        // The sentence without its markup: what is read out, what is searched, and what is drawn
+        // where there is no link to draw. Every offset below is into this rather than into the
+        // written string, or a hit would be marked at the wrong place in any caption with a link
+        // ahead of it (#65).
+        var segments = D47.Core.Interface.HelpLinks.Parse(markup);
+        var text = D47.Core.Interface.HelpLinks.Plain(markup);
+
         // A block composed of runs reports no Text of its own, and Text is what an automation
         // peer reads — so the name is set outright rather than left to be inferred. Without it,
-        // marking a hit would quietly cost a screen reader the whole caption.
+        // marking a hit would quietly cost a screen reader the whole caption. It is the plain
+        // sentence: a link's own accessible name must not replace the one the block carries.
         AutomationProperties.SetName(block, text);
 
         // Qualified: Avalonia.Controls has a TextSearch of its own, about typing to select an
         // item in a list, and it is the one that wins in this file's usings.
         var matches = D47.Core.Interface.TextSearch.Find(text, _query);
 
-        if (matches.Count == 0)
+        var links = segments.Any(segment => segment.Target is not null);
+
+        if (matches.Count == 0 && !links)
         {
             block.Inlines?.Clear();
             block.Text = text;
+            return;
+        }
+
+        if (links)
+        {
+            PaintWithLinks(block, segments, matches);
             return;
         }
 
@@ -1150,10 +1172,130 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
     }
 
+    /// <summary>
+    /// The same caption when some of it is a cross-reference (#65).
+    /// <para>
+    /// <b>The two markings have to compose rather than take turns.</b> A link inside a highlighted
+    /// match and a match inside a link are both ordinary — searching for "priv" marks part of the
+    /// word <em>Privacy</em>, which is also the link — so the runs are cut at <em>both</em> sets of
+    /// boundaries and each piece carries whichever of the two it falls inside. Painting one and
+    /// then the other would have the second erase the first.
+    /// </para>
+    /// <para>
+    /// The jump itself is <see cref="ScrollTo"/>, which is the whole gesture the nav column already
+    /// makes: select the section, expand the card, then scroll. A link needed no navigation, only
+    /// a caller.
+    /// </para>
+    /// </summary>
+    private void PaintWithLinks(
+        TextBlock block,
+        IReadOnlyList<D47.Core.Interface.HelpSegment> segments,
+        IReadOnlyList<D47.Core.Interface.SearchMatch> matches)
+    {
+        block.Text = null;
+        block.Inlines!.Clear();
+
+        var at = 0;
+
+        foreach (var segment in segments)
+        {
+            var start = at;
+            var end = at + segment.Text.Length;
+            at = end;
+
+            // Every boundary inside this stretch: where it starts, where it ends, and every edge of
+            // every hit that falls in it. Sorted and de-duplicated, so a hit that exactly covers the
+            // link produces one piece rather than three empty ones.
+            var cuts = new SortedSet<int> { start, end };
+
+            foreach (var match in matches)
+            {
+                if (match.Start > start && match.Start < end) { cuts.Add(match.Start); }
+                if (match.End > start && match.End < end) { cuts.Add(match.End); }
+            }
+
+            var edges = cuts.ToArray();
+
+            for (var i = 0; i + 1 < edges.Length; i++)
+            {
+                var from = edges[i];
+                var to = edges[i + 1];
+
+                var run = new Run(segment.Text[(from - start)..(to - start)]);
+                var marked = matches.Any(match => match.Start <= from && match.End >= to);
+
+                if (marked)
+                {
+                    run.Bind(
+                        TextElement.BackgroundProperty,
+                        this.GetResourceObservable(ThemeManager.AccentMutedKey));
+                }
+
+                if (segment.Target is not null)
+                {
+                    run.Bind(
+                        TextElement.ForegroundProperty,
+                        this.GetResourceObservable(ThemeManager.AccentKey));
+
+                    run.TextDecorations = TextDecorations.Underline;
+                }
+
+                block.Inlines!.Add(run);
+            }
+        }
+
+        // The click is on the block rather than per-run: a Run is not an input element in Avalonia,
+        // so it has no pointer events of its own. Hit-testing the pointer against the block's
+        // inlines is what turns "somewhere in this caption" into "on the link".
+        var targets = segments.Where(segment => segment.Target is not null).ToList();
+
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        block.Cursor = new Cursor(StandardCursorType.Hand);
+
+        // One handler per painted block, and Paint runs again on every filter keystroke - so the
+        // old one is dropped rather than stacked, or a caption painted twenty times would jump
+        // twenty times on one click.
+        if (_linkHandlers.TryGetValue(block, out var previous))
+        {
+            block.PointerPressed -= previous;
+        }
+
+        EventHandler<PointerPressedEventArgs> handler = (_, e) =>
+        {
+            // Whichever section the first link on this caption names. Every one of the four in the
+            // repository points at Privacy, and a caption with two different targets would want the
+            // pointer tested against each run's bounds - deliberately not built until there is one.
+            var target = targets[0].Target!;
+            var index = _sections.FindIndex(section => section.CapabilityId == target);
+
+            if (index >= 0)
+            {
+                ScrollTo(index);
+                e.Handled = true;
+            }
+        };
+
+        block.PointerPressed += handler;
+        _linkHandlers[block] = handler;
+    }
+
+    /// <summary>
+    /// The click handler each linked caption currently carries, so repainting replaces it instead
+    /// of adding a second one. Keyed weakly on the block itself, which is rebuilt with the card.
+    /// </summary>
+    private readonly Dictionary<TextBlock, EventHandler<PointerPressedEventArgs>> _linkHandlers = [];
+
+    // Against the plain sentence rather than the written one (#65): searching the markup would let
+    // a query match a capability id inside (privacy) and show a row whose visible text does not
+    // contain the query anywhere.
     private bool Matches(SettingRow row) =>
         _query.Length == 0
         || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
-        || row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        || D47.Core.Interface.HelpLinks.Plain(row.Help).Contains(_query, StringComparison.OrdinalIgnoreCase)
         || row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
@@ -1392,8 +1534,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // apart from it. Two tests took the first Button in a row and got this instead,
                 // which is the same hazard a Commander does not have and a search does.
                 Name = RowResetName,
-                Content = "↺",
-                FontSize = TypeScale.Secondary,
+
+                // A stroked Path rather than U+21BA (#69). The character was whatever the installed
+                // font carried - a different weight from the marks beside it, and a box on a machine
+                // without it - and it could not be sized or coloured with them.
+                Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.TextMutedKey, TypeScale.Secondary),
                 Padding = new Thickness(4, 0),
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -1404,6 +1549,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             Themed(back, Button.ForegroundProperty, ThemeManager.TextMutedKey);
             ToolTip.SetTip(back, $"Put {row.Label} back to its default");
+
+            // The character used to be this button's accessible name by being its content; a Path
+            // has no text, so a screen reader would have found an unnamed button where it used to
+            // find one. Set outright rather than left to be inferred - the same fault, and the same
+            // fix, as the run-composed caption at Paint.
+            AutomationProperties.SetName(back, $"Reset {row.Label}");
 
             back.Click += (_, _) =>
             {

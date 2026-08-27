@@ -73,27 +73,7 @@ nav_order: 119
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">A charge it cannot price is kept without a figure, and the total says at least.</text>
 </svg>
 </section>
-<section>
-<h2><span class="num">4</span> An endpoint that cannot do something loses that, not your turn.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="Every request offers everything; a refusal that names its field drops that one capability and the turn is sent again">
- <rect x="20" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="135" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EVERY REQUEST</text>
- <text x="135" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">offers everything</text>
- <line x1="262" y1="88" x2="298" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <polygon points="312,88 296,80 296,96" fill="var(--accent-muted)"/>
- <rect x="325" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT REFUSES ONE</text>
- <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">and names the field</text>
- <line x1="567" y1="88" x2="603" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <polygon points="617,88 601,80 601,96" fill="var(--accent-muted)"/>
- <rect x="630" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="745" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SENT AGAIN</text>
- <text x="745" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">without that one thing</text>
- <rect x="20" y="160" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">You see an answer, not an error and not a retry.</text>
- <text x="440" y="236" text-anchor="middle" font-size="15" fill="var(--text-muted)">Once per address, and never written to disk — a saved demotion outlives the upgrade that fixed it.</text>
-</svg>
-</section>
+
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

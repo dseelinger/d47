@@ -109,8 +109,8 @@ public static class PersonaCapability
         {
             Name = "bind_ship_core",
             Description =
-                "Remember the core aboard as the core that flies the ship the Commander is in. "
-                + "Boarding that ship puts it aboard from then on.",
+                "Remember the core aboard as this ship's own core. Boarding that ship puts it "
+                + "aboard from then on.",
             Protected = true,
             Commands =
             [
@@ -329,7 +329,7 @@ public static class PersonaCapability
             Advanced = true,
             Label = "Core for that ship",
             Help =
-                "A ship can remember the core that flies it, so changing ship changes who answers "
+                "A ship can have its own core, so changing ship changes who answers "
                 + "you. Nothing is bound until you say so, and boarding a ship you have not bound "
                 + "leaves whoever is aboard aboard. Choosing nobody takes a binding back.",
             Kind = SettingKind.Choice,

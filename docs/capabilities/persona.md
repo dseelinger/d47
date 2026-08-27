@@ -28,7 +28,7 @@ nav_order: 120
  <text x="611" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">correction</text>
  <rect x="704" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="782" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">SEVEN MORE</text>
- <text x="782" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">each damaged</text>
+ <text x="782" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">each with its own quirk</text>
  <text x="440" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each keeps its own transcript. Come back to one and it picks up where it left off.</text>
  <text x="440" y="154" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">None of them knows the others are aboard.</text>
  <rect x="20" y="176" width="840" height="56" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -37,7 +37,7 @@ nav_order: 120
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> A ship can remember the core that flies it.</h2>
+<h2><span class="num">2</span> A ship has its own AI core.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Boarding a bound ship brings its core aboard without remarking on it">
  <text x="155" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">YOU BOARD</text>
  <rect x="20" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -94,7 +94,7 @@ nav_order: 120
  <text x="750" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">A VOICE</text>
  <text x="750" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">chosen once, then kept</text>
  <rect x="20" y="156" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">No model configured? Nothing is chosen, and the core keeps the voice already in force.</text>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">With no language model, or no voices to choose from, nothing is chosen and the core keeps the voice it has.</text>
 </svg>
 <p class="body">Gender is <em>told</em> to the model rather than left to be inferred, because a voice of the wrong gender is not a near miss — it is a different character reading the lines.</p>
 </section>
@@ -155,7 +155,7 @@ Transcripts are per session. Closing Directive 47 clears them.
 
 ### A core per ship {#core-for-this-ship}
 
-A ship can remember the core that flies it — Sentinel on the combat ships, Quartermaster on the
+A ship can have its own core — Sentinel on the combat ships, Quartermaster on the
 haulers — so you stop picking one every time you change ship. Board a bound ship and that core
 comes aboard.
 

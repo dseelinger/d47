@@ -238,7 +238,7 @@ public static class MemoryCapability
         Help =
             "Keep facts between sessions, and send a few of the relevant ones with each question. "
             + "Off stops every new entry and stops any of it reaching the model — it does not erase "
-            + "what is already there, which is its own action in Privacy.",
+            + "what is already there, which is its own action in [Privacy](privacy).",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "on",
         DocsAnchor = "remembering",
