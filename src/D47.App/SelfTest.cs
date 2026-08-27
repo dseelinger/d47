@@ -57,6 +57,7 @@ internal static class SelfTest
     private const int ErrorsLoggedExitCode = 4;
     private const int NativeLoadFailedExitCode = 5;
     private const int ControllerProjectionFailedExitCode = 6;
+    private const int CompositionFailedExitCode = 7;
 
     public static int Run()
     {
@@ -171,10 +172,39 @@ internal static class SelfTest
             return ErrorsLoggedExitCode;
         }
 
+        // Last, and much the widest. Everything above proves one native or one projection loads
+        // in this layout; this proves the app can be *composed* — every capability registered,
+        // the settings surface bound, the callouts and tick subscribers wired. That is where
+        // 0.76.0 and 0.76.1 died, on every launch, before a window existed (#78).
+        //
+        // It runs the real AppHost.Compose rather than rebuilding the registry here, and that is
+        // the whole point: a copy of composition is exactly what let #78 through. The test
+        // surfaces mirrored it, the mirror was missing the rows that broke it, and 5,042 tests
+        // passed a build that could not start. A third mirror would buy nothing.
+        //
+        // Gated on nothing throwing rather than on the error count, unlike the transcriber check
+        // above. Composition legitimately logs errors on a machine with no keys and no model, and
+        // a gate that fails on a fresh install is one that gets switched off.
+        try
+        {
+            using var composed = AppHost.Compose();
+
+            logger.LogInformation(
+                "Composed: {Capabilities} capabilities, {Tools} tools, {Rows} settings rows",
+                composed.Capabilities.All.Count,
+                composed.Capabilities.ToolNames.Count(),
+                composed.Settings.Sections.Sum(section => section.Rows.Count));
+        }
+        catch (Exception ex)
+        {
+            Report($"SELFTEST FAIL: the app could not be composed, so it would not start: {ex}");
+            return CompositionFailedExitCode;
+        }
+
         Report(
             $"SELFTEST OK: {modelId} loaded and transcribed 1s of silence "
-            + $"in {heard.Elapsed.TotalMilliseconds:0} ms, echo cancellation loaded, and "
-            + "Windows.Gaming.Input activated.");
+            + $"in {heard.Elapsed.TotalMilliseconds:0} ms, echo cancellation loaded, "
+            + "Windows.Gaming.Input activated, and the app composed.");
         return PassedExitCode;
     }
 

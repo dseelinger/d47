@@ -599,7 +599,42 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public string? StartupError { get; }
 
-    public static AppHost Start()
+    public static AppHost Start() => Start(startTicking: true);
+
+    /// <summary>
+    /// The whole of <see cref="Start"/> except the last line
+    /// (<a href="https://github.com/dseelinger/d47/issues/79">#79</a>). Everything is built,
+    /// every capability is registered, the settings surface is bound and every tick subscriber
+    /// is wired — and then the loop that would drive them is not started, and the host is
+    /// returned for the caller to dispose.
+    /// <para>
+    /// <b>This is what <c>--selftest</c> runs, and it is the real composition rather than a copy
+    /// of it.</b> A copy is precisely what let
+    /// <a href="https://github.com/dseelinger/d47/issues/78">#78</a> through: the test surfaces
+    /// mirrored this, the mirror was missing the four About rows, and two releases shipped that
+    /// died here before drawing a window.
+    /// </para>
+    /// <para>
+    /// <b>Safe beside a Commander's running copy</b>, which is the promise <c>--selftest</c>
+    /// already makes and the reason this seam is where it is. <see cref="AppHost"/> claims no
+    /// mutex, registers no global hotkey, attaches to no headset and opens no window — those
+    /// four live in <c>Program</c> and <c>MainWindow</c>, which is what makes the seam viable at
+    /// all.
+    /// </para>
+    /// <para>
+    /// <b>It is not inert, though, and the list matters more than the reassurance.</b> Measured
+    /// by running it: composing opens the default audio output, <em>opens the microphone</em>
+    /// when listening is configured to want one, tails the journal, enumerates controllers, and
+    /// reaches the network for the voice lists. Audio and capture are shared-mode and a second
+    /// client does not evict the first; the journal and the controllers are read-only; the voice
+    /// fetch is the same egress the settings surface already discloses. So it is safe to run
+    /// beside a live copy, but it is not silent, and anyone shortening this to "it does nothing"
+    /// would be wrong about five things.
+    /// </para>
+    /// </summary>
+    internal static AppHost Compose() => Start(startTicking: false);
+
+    private static AppHost Start(bool startTicking)
     {
         var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
@@ -2198,7 +2233,14 @@ public sealed class AppHost : IDisposable
         // Last, so every subscriber registered during composition is in place before the first
         // timer-driven tick — and so a failure above happens against a loop that never started
         // rather than one already running against half-built state.
-        host._ticking = new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start();
+        //
+        // Being last is also what makes <see cref="Compose"/> possible: not starting it is the
+        // entire difference between composing the app and running it, so the seam costs one
+        // branch rather than a restructuring of everything above (#79).
+        if (startTicking)
+        {
+            host._ticking = new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start();
+        }
 
         return host;
     }
