@@ -20,6 +20,28 @@ the file as it stood then.
 
 ---
 
+## 0.77.1 — 2026-08-26 — A slot engineered exactly as planned no longer keeps its dot
+
+Reported flying a Kestrel: *"Didn't this get taken care of? All my HRPs are correctly engineered."*
+
+They were. All four hull reinforcements rolled Heavy Duty G5, three of them with Deep Plating,
+exactly as the plan asked — and three of them carried a mark that reads as outstanding work.
+
+Your plan stores what you picked, **Deep Plating**. Elite writes **`special_hullreinforcement_chunky`**.
+They are the same effect, and they were being compared as plain text, so they never matched. The
+blueprint beside it learned that join a while ago; the experimental did not, so a roll finished
+exactly as planned kept its dot forever.
+
+**Nothing to repair.** The mark is worked out fresh each time the page is drawn, so it is right the
+moment you run this build — no rescan, no repair step, nothing to tick off by hand. Your
+checklist was never wrong either: it already knew those two names were the same thing, which is why
+the plan lines for those slots have been sitting there ticked while the dots argued with them.
+
+One of that Commander's four reinforcements really does have no experimental on it. **That dot
+stays**, and it is right.
+
+---
+
 ## 0.77.0 — 2026-08-26 — There is a Discord, and a build that cannot start can no longer ship
 
 ### Come and say hello
