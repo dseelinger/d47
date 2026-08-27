@@ -11,7 +11,35 @@ public sealed record ShipSpecification
 
     public required string Name { get; init; }
 
+    /// <summary>
+    /// Who builds it — Faulcon DeLacy, Lakon, Zorgon Peterson — from column three of the ships
+    /// table. Null for a hull with no measured row, which today is the Kestrel Mk II, the Caspian
+    /// Explorer and the Corsair: those are named from their armour and there is no column three to
+    /// read. **Not fillable by hand** — game data is Frontier's and this table is derived by a
+    /// generator with its provenance recorded, so those three stay silent until the upstream source
+    /// carries them (https://github.com/dseelinger/d47/issues/108).
+    /// </summary>
     public string? Manufacturer { get; init; }
+
+    /// <summary>
+    /// The hull named, with its builder when there is one to name
+    /// (https://github.com/dseelinger/d47/issues/108).
+    /// <para>
+    /// <b>One spelling of it, because there were already two</b> — the Ships page wrote
+    /// <c>"{Name}, by {maker}"</c> and the spoken specification wrote <c>"{Name}, built by
+    /// {maker}"</c>, each with its own null guard. A third copy was about to be written, which is
+    /// the point at which two ways of saying the same thing become a way of saying two different
+    /// things.
+    /// </para>
+    /// <para>
+    /// <b>It has to survive a null rather than assume one.</b> Three hulls have no maker and are
+    /// exactly the newest ones a Commander is most likely to ask about, so the missing case is the
+    /// common case rather than the edge — and what it produces is a clean sentence, not a gap where
+    /// a name should be.
+    /// </para>
+    /// </summary>
+    public string Described() =>
+        Manufacturer is { Length: > 0 } maker ? $"{Name}, by {maker}" : Name;
 
     /// <summary>small, medium or large. The first thing anybody actually needs to know.</summary>
     public string? Pad { get; init; }

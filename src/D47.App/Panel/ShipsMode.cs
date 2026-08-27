@@ -260,7 +260,8 @@ public sealed class ShipsMode(
 
         var lines = new List<LoadoutLine> { new("The ship", LoadoutTone.Heading) };
 
-        var made = hull.Manufacturer is { Length: > 0 } maker ? $"{hull.Name}, by {maker}" : hull.Name;
+        // One spelling of name-and-maker, shared with the spoken specification (#108).
+        var made = hull.Described();
 
         lines.Add(new LoadoutLine(
             hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}."));

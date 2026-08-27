@@ -27,7 +27,34 @@ public sealed record StoredShip(int ShipId, string Type, string? Name, string St
     public bool HasSystem =>
         StarSystem is { Length: > 0 } && !string.Equals(StarSystem, "unknown", StringComparison.OrdinalIgnoreCase);
 
-    public string Describe() => Name is not null ? $"{Name} ({Type})" : Type;
+    /// <summary>
+    /// The ship as a person reads it, with the hull named rather than spelled
+    /// (https://github.com/dseelinger/d47/issues/105).
+    /// <para>
+    /// <b>Through <c>HullSaid</c>, which is the ladder every caller turning a stored hull into
+    /// words is meant to climb.</b> This was the one <c>Describe</c> that did not, and it is the
+    /// third time a raw symbol has reached the Commander — <c>HullSaid</c>'s own comment predicted
+    /// exactly this, that "one of them could say Kestrel Mk II while another said smallcombat01_nx
+    /// about the same ship".
+    /// </para>
+    /// <para>
+    /// <c>StoredShips</c> carries no <c>ShipType_Localised</c> at all, so <see cref="Type"/> is
+    /// always the bare symbol here — unlike <c>ShipLoadout</c>, where Frontier sends a localised
+    /// name and the fleet reads correctly. That is why the same fleet had two spellings, decided by
+    /// which event a row happened to come from.
+    /// </para>
+    /// <para>
+    /// Safe even when <see cref="Type"/> already holds a name: the ladder tries the measured row,
+    /// then the armour prefix, then a spoken match — and hands back what it was given when all
+    /// three miss, so a hull nothing knows is no worse than before.
+    /// </para>
+    /// </summary>
+    public string Describe()
+    {
+        var hull = Knowledge.EliteSpecifications.HullSaid(Type);
+
+        return Name is not null ? $"{Name} ({hull})" : hull;
+    }
 }
 
 /// <summary>
