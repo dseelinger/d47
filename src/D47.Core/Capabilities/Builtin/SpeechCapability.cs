@@ -372,7 +372,13 @@ public static class SpeechCapability
                 // this row rejected the exact value it offers as an example.
                 Step = 0.05,
                 DefaultDisplay = "1.0",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
+
+                // Not offered where it would do nothing. Cartesia validates a speed precisely and
+                // then ignores it, so a row here would be a control that appears to work — the
+                // exact failure docs/capabilities/listening.md names (list.md Phase 60). The
+                // resolver refuses it too; this half only keeps it off the screen.
+                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider)
+                    is { Speaks: true, RateCanBeSet: true },
                 DocsAnchor = "rate",
                 Binding = new SettingBinding
                 {
@@ -1042,6 +1048,15 @@ public static class SpeechCapability
     public static double RateFor(D47Settings settings, string? providerId)
     {
         var provider = TtsProviderCatalog.Selected(providerId);
+
+        // A provider that cannot be told a rate speaks at its own pace, whatever a settings file
+        // says — the half of the rule the picker cannot enforce, because `settings.json` is a file
+        // a Commander reads and edits (list.md Phase 60). Natural pace rather than the stored
+        // number, so the value the app uses and the value the provider honours are the same one.
+        if (!provider.RateCanBeSet)
+        {
+            return 1.0;
+        }
 
         var rate = settings.Speech.ProviderRates.TryGetValue(provider.Id, out var own)
             ? own

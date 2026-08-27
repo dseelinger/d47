@@ -63,6 +63,17 @@ public static class AudioCapability
         Display = new CapabilityDisplay
         {
             PanelTitle = "Audio mixer",
+
+            // Stated rather than defaulted (#83). This declared no order at all and so took
+            // `CapabilityDisplay.Order`'s default of 100 — which is past Diagnostics, past Privacy
+            // and past About, so this card was the bottom of the left nav and nothing anywhere
+            // said it should be. It is the only capability that relied on that default, and the
+            // default is a sink: anything that forgets an order lands underneath the page's
+            // deliberate ending.
+            //
+            // 96 keeps it exactly where a Commander is used to finding it — below Privacy, above
+            // About — while making the position a decision rather than an omission.
+            Order = 96,
             StartCollapsed = true,
         },
         Settings =

@@ -147,10 +147,96 @@ narrated itself.
 
 ## What this spike does not answer
 
-- **Whether the machine can run it while Elite is running.** A 12B at Q4 next to Elite Dangerous
-  on one GPU is a different question and wants measuring on the real machine, not inferring.
+- ~~**Whether the machine can run it while Elite is running.**~~ **Answered 2026-08-26 — see §"The
+  headroom, measured" below. It was the first thing the run actually settled, and it settles the
+  VR surface against the phase.**
 - **Whether a local model can hold a conversation.** These eight sites are the *background* class.
   The conversation model is 74 tools, history, a warm cache and a Commander waiting — nothing here
   says anything about it.
 - **Anything about egress.** A local model sends nothing anywhere, which is Phase 59's whole
   point, and needs no measuring.
+
+---
+
+## Two corrections to the text above, found on the first attempt to run it
+
+**The gap reaction needs thirty days, not eleven.** `PersonaHost.GapAfter` is
+`TimeSpan.FromDays(30)`, and the arrival ladder only reaches `PersonaArrival.Gap` for a core the
+Commander **selects** — a startup adoption is silent. So prompt 4 is provoked by backdating that
+core's entry in `coresLastAboard` in `data/view-state.json`, restarting, and then selecting it.
+
+**The scoring sheet needs a blank tally, and without one the spike scores the wrong thing.** See
+below: a thinking model returns *nothing* rather than flat prose, `FlavourTurn` answers null, and
+d47 falls back to the authored line silently. A blank read as prose is a model being credited with
+Anthropic's writing.
+
+---
+
+## The 400-token cliff, measured 2026-08-26
+
+`FlavourTurn.AskAsync` caps output at **400 tokens** and there is no settings row for it — only the
+adventure generator passes anything else. **A reasoning model spends that budget thinking and
+returns an empty string.**
+
+Measured against `qwen3:4b` through Ollama's `/v1` shim, one user turn, no system prompt:
+
+| Cap | Runs | Result |
+|---|---|---|
+| 2000 | 306, 336, 343 tokens | content every time, `finish=stop` |
+| **400** (d47's real cap) | 4 runs | **2 returned empty**, 2 returned 74 and 28 characters |
+
+So the model sits *on* the boundary rather than clear of it. The reasoning lands in a separate
+`reasoning` field through the shim, so nothing leaks into a spoken line — the failure is silence,
+not gibberish, which is the harder one to notice.
+
+**Thinking cannot be switched off from d47's side.** Three attempts, all measured:
+
+| Attempt | Result |
+|---|---|
+| `chat_template_kwargs: {"enable_thinking": false}` via `/v1` | ignored — 400 tokens, blank |
+| `/no_think` in a system message | ignored — 400 tokens, blank |
+| native `/api/chat` with `think: false` | **worse** — the reasoning moves into `content` |
+
+`qwen3:8b` is worse and more variable: 234, 335, **573** tokens across three runs. `llama3.1:8b`
+does not think at all — 46 tokens, `finish=stop`, a clean in-character line first try — and is
+therefore the model to start a *tone* comparison with, whatever the size axis says.
+
+---
+
+## The headroom, measured 2026-08-26 — and this is what decides the VR surface
+
+Hardware: **RTX 5080, 16 GB**. Elite Dangerous in VR through SteamVR, flying around a Coriolis
+station with traffic, `qwen3:4b` resident at 3.2 GB:
+
+```
+memory.used 15,211 MiB     memory.free 767 MiB
+```
+
+Elite and the compositor therefore hold roughly 12 GB between them. **That split is inference, not
+measurement** — on consumer WDDM drivers `nvidia-smi --query-compute-apps` returns `[N/A]` for
+per-process VRAM, so only the total is a fact.
+
+767 MiB is less than Elite's own allocation spikes when it jumps, drops into a new instance or
+loads a station interior. And a busy station is **not** the peak: on-foot in an Odyssey settlement
+runs higher, so this is close to the *best* free memory available while actually flying.
+
+**The finding: 16 GB does not hold Elite, SteamVR and a local model with room for Elite's own
+peaks.** For the VR surface, Phase 59 buys privacy at the cost of flying, which is not a trade a
+Commander would take — and that outranks anything the tone comparison could have said.
+
+### What is still open, and it is not small
+
+**The desktop surface was not measured.** The compositor and the doubled framebuffer are a large
+share of that 12 GB and neither exists on the flat-screen path, which plausibly frees 4–5 GB. The
+same three readings without SteamVR running are a different question, and Phase 59 may well survive
+there. Worth taking on a night nobody is in the headset.
+
+### One thing that is not evidence
+
+`EliteDangerous64.exe` crashed during this session, followed by a *Mauve Adder*. **It is not a
+result.** Three models were cycled through that GPU in ninety seconds by an agent benchmarking the
+token cliff above — the last load finished at `23:18:12`, sixty seconds before the crash — which is
+nothing like d47's actual usage of one resident model answering every few minutes. The headroom
+figure stands on its own; the crash does not, and is recorded here only so nobody later reads it as
+one. A repeat needs `OLLAMA_KEEP_ALIVE="-1"`, or the reading catches a model mid-eviction and
+reports headroom that is really just the model leaving.

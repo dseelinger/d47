@@ -205,6 +205,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Build();
 
         settings.Changed += OnSettingsChanged;
+
+        // **Symmetric, which it was not** (<a href="https://github.com/dseelinger/d47/issues/90">#90</a>).
+        // Subscribing once in the constructor and unsubscribing on *every* detach is a
+        // subscription that survives exactly one detach and is then gone for the life of the
+        // view — so from that moment the page never hears a settings change again, and every
+        // control showing a derived caption keeps whatever it drew at build time. The two
+        // subscriptions further down this file already do it this way; this one did not.
+        //
+        // Unsubscribed before resubscribing rather than merely added, so an attach that arrives
+        // without a matching detach cannot leave two handlers posting two refreshes.
+        AttachedToVisualTree += (_, _) =>
+        {
+            settings.Changed -= OnSettingsChanged;
+            settings.Changed += OnSettingsChanged;
+        };
+
         DetachedFromVisualTree += (_, _) => settings.Changed -= OnSettingsChanged;
     }
 
@@ -2695,16 +2711,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var result = _settings.Apply(row.Key, value, SettingsCaller.Panel);
 
-        // Only failures are worth saying. A change that worked is visible in the control that
-        // made it, and the panel is not a log.
+        // Only failures are worth *saying*. A message on every success would make the panel a log.
         message.IsVisible = !result.Ok;
         message.Text = result.Message;
 
-        if (!result.Ok)
-        {
-            // A rejected value never reached the store, so the control has to stop showing it.
-            Refresh();
-        }
+        // **But every outcome is worth redrawing**
+        // (<a href="https://github.com/dseelinger/d47/issues/90">#90</a>). This used to refresh on
+        // failure alone, reasoning that "a change that worked is visible in the control that made
+        // it" — true of a toggle or a text box, which hold what was typed into them, and false of
+        // a picker button, whose caption is *derived*: it is the voice's name looked up from the
+        // provider's catalogue, and nothing about clicking "use this" puts that name on the button.
+        //
+        // It was covered by the settings subscription, until the one detach that silently ended
+        // that subscription. Both halves are fixed; this is the half that does not depend on a
+        // subscription existing at all, which is why it is worth having even though the other is
+        // now symmetric.
+        Refresh();
 
         return result.Ok;
     }

@@ -20,6 +20,73 @@ the file as it stood then.
 
 ---
 
+## 0.78.0 — 2026-08-27 — 924 voices to cast from
+
+### A fourth voice provider, and it is here for the size of its library
+
+**Cartesia.** Paid, needs its own API key, and it offers **924 voices — 417 of them English** —
+against several hundred at ElevenLabs, 322 on Edge Neural and thirteen at OpenAI. Every one is
+tagged with a language, an accent, a country and a gender, which is what lets Directive 47 give a
+Commander whose name reads as a woman's a woman's voice — something OpenAI publishes nothing at all
+for.
+
+That is the whole reason it was built. Eleven Guardian cores, a ship's AI, a carrier captain, a
+tower and five classes of NPC were being cast from thirteen voices plus Edge.
+
+**It may speak for any of the six slots, including the four that carry other players' words.** It
+takes a language and holds it, so a message typed in French is still read in the voice and the
+language you chose. That makes it the second provider after ElevenLabs that is offered for a
+re-voiced slot at all — OpenAI is still refused there, and for the same unchanged reason.
+
+### It has no speaking rate, so it is not given one
+
+Cartesia has a speed control. It is documented, it is validated precisely — hand it a value outside
+its range and it refuses the request naming the field and the bounds — and **it does not change the
+audio**.
+
+Measured three times per setting: the largest difference *between* settings came out smaller than
+the largest spread *within* a single setting, and the "slowest" setting produced *shorter* audio
+than "normal". A first pass that took one sample per setting showed a tidy 26% spread running
+neatly in order, and would have shipped you a slider that controls nothing.
+
+So the Speaking rate row simply is not there while a slot is on Cartesia — and a rate typed into
+`settings.json` by hand is ignored rather than sent, because a rule that lives only in a dropdown is
+one a text editor walks straight past.
+
+### What it costs is not quoted, and that is deliberate
+
+Their API will not say. The four endpoints that would carry a rate or a balance all answer 404, so
+Directive 47 does not know their rate and does not even know which *unit* they bill in. Rather than
+derive a figure that would be wrong, the price row reads **(not published — no price will be
+quoted)** and the session line reports the characters it sent with no dollars beside them. Read
+their price page, type the number in, and every figure follows it as it does for anyone else.
+
+Concurrency is held at two requests at once, which is the floor their own documentation gives for
+entry tiers — lower than the three Directive 47 allows ElevenLabs. That figure is read rather than
+measured, and it is recorded as such.
+
+### A voice you pick now shows on its row
+
+Choosing a voice for your carrier's captain or its tower wrote the choice down and then went on
+showing the row's default, so there was no way to tell it had worked short of listening.
+
+**The store was never the problem.** Both voices were saved, both applies are in the log, and both
+ids resolve to real names. The row had simply stopped re-reading — twice over. The settings page
+subscribed to changes once when it was built and unsubscribed every time it left the screen, so
+after the first time it did, it never heard about a change again. And applying a setting only
+redrew the page when the change was *rejected*, on the reasoning that a change which worked is
+visible in the control that made it — true of a switch, false of a button whose caption is a voice's
+name looked up from your provider.
+
+### About is the bottom of the page
+
+It was second from the bottom, under an Audio mixer card that had never been given a position at
+all and so took the one the code falls back to — which is past everything deliberate. About now
+states its own place, and so does the mixer.
+
+
+---
+
 ## 0.77.2 — 2026-08-26 — A readable cost window, and a carrier that answers
 
 ### The cost window fits again

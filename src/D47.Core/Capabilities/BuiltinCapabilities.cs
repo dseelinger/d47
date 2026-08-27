@@ -326,10 +326,17 @@ public static class BuiltinCapabilities
         PrivacyCapability.Create(settings, searchAvailable, memories, habits),
         SettingsCapability.Create(settings),
 
-        // LAST, and it has to be last twice over (#50). Last on the page because something read
-        // once belongs at the bottom - and last in this list because DocumentationGateTests
-        // derives every page's nav_order from its INDEX here, so a capability inserted anywhere
-        // but the end renumbers every page after it.
+        // LAST, and it has to be last twice over (#50) - for two different reasons, which is what
+        // makes this easy to get wrong twice (#83).
+        //
+        // Last in THIS LIST because DocumentationGateTests derives every page's nav_order from its
+        // INDEX here, so a capability inserted anywhere but the end renumbers every page after it.
+        // That is the only thing this position decides.
+        //
+        // Last ON THE PAGE is NOT decided here and never was: that is Display.Order, and it is
+        // stated on the capability itself. Saying it here instead is how About came to share
+        // Privacy's 95 while a comment on this list claimed it was last - a claim the stable sort
+        // could not read, leaving the bottom of the nav to whichever line came first.
         AboutCapability.Create(
             paths,
             version,

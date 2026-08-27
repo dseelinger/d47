@@ -122,12 +122,22 @@ public class WhatTheVoicesCostTests
     /// used to guard is still live and still reachable — a provider added tomorrow with neither
     /// rate set trips this, which is what it is for.
     /// </para>
+    /// <para>
+    /// <b>It fired again on Cartesia (list.md Phase 60), and the escape it grew is a sentence
+    /// rather than a widening.</b> That provider's API publishes neither a rate nor a balance —
+    /// four account endpoints, four 404s — so d47 does not know the <em>unit</em>, let alone the
+    /// figure. A silent null there would be indistinguishable from a field nobody set, which is
+    /// precisely what this test exists to catch; <c>NoRateBecause</c> makes it a claim somebody
+    /// wrote down, and <see cref="AProviderThatCannotBePricedSaysSoRatherThanQuotingZero"/> keeps
+    /// the wording that claim implies.
+    /// </para>
     /// </summary>
     [Fact]
     public void EveryBilledProviderHasARateInTheUnitItBillsIn()
     {
         var unpriced = TtsProviderCatalog.All
             .Where(provider => provider.Billed)
+            .Where(provider => provider.NoRateBecause is null)
             .Where(provider => provider.BilledByMinute
                 ? provider.ListDollarsPerMinute is null
                 : provider.ListDollarsPerThousandCharacters is null)
@@ -137,8 +147,38 @@ public class WhatTheVoicesCostTests
         Assert.True(
             unpriced.Count == 0,
             $"Billed with no rate in the unit they bill in: {string.Join(", ", unpriced)}. Set "
-            + "ListDollarsPerThousandCharacters or ListDollarsPerMinute, or say in a comment why "
-            + "neither can be known.");
+            + "ListDollarsPerThousandCharacters or ListDollarsPerMinute, or say in NoRateBecause "
+            + "why neither can be known.");
+    }
+
+    /// <summary>
+    /// The wording the escape above depends on. A provider d47 cannot price reports what it
+    /// counted and no dollars — never <c>$0.00</c>, which is what free looks like.
+    /// <para>
+    /// Three readings must not collapse into one: free, a figure, and a count with no rate behind
+    /// it. This is the guard that was moved rather than removed when OpenAI got a rate, applied to
+    /// the provider that now has none.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AProviderThatCannotBePricedSaysSoRatherThanQuotingZero()
+    {
+        var unpriced = TtsProviderCatalog.All
+            .Where(provider => provider is { Billed: true, NoRateBecause: not null })
+            .ToList();
+
+        Assert.NotEmpty(unpriced);
+
+        foreach (var provider in unpriced)
+        {
+            var spend = new SpeechSpend();
+            spend.Record(provider.Id, 4_000, group: null, audio: TimeSpan.FromMinutes(1));
+
+            var said = spend.Describe(new D47Settings())!;
+
+            Assert.Contains("no rate set", said, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("$0.00", said, StringComparison.Ordinal);
+        }
     }
 
     /// <summary>

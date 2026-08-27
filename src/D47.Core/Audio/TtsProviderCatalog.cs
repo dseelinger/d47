@@ -124,6 +124,44 @@ public sealed record TtsProviderInfo
     /// </summary>
     public bool VoicesAreStatic { get; init; }
 
+    /// <summary>
+    /// Whether telling this provider to speak faster or slower actually changes the audio
+    /// (list.md Phase 60).
+    /// <para>
+    /// <b>The second thing a provider turned out not to be able to do, and it fails in a stranger
+    /// way than the first.</b> OpenAI has no language field at all. Cartesia <em>has</em> a speed
+    /// control, <em>validates</em> it to a precise range — <c>2.0</c> is a <c>400</c> naming the
+    /// field and the bounds — and then does not act on it: three runs per setting put the largest
+    /// difference between settings (1.19s) below the largest spread within one setting (2.14s),
+    /// and <c>slowest</c> came out shorter than <c>normal</c>
+    /// (docs/spikes/cartesia-voices-and-speed.md §3).
+    /// </para>
+    /// <para>
+    /// So the rate row is not offered for such a provider, and <c>SpeechCapability.RateFor</c>
+    /// answers 1.0 for it however a settings file was edited — the same two places
+    /// <see cref="LanguageCanBePinned"/> is enforced in, because a rule living only in a dropdown
+    /// is one a text editor walks straight past. <see cref="MinimumRate"/> and
+    /// <see cref="MaximumRate"/> are not consulted while this is false; the declaration is here.
+    /// </para>
+    /// <para>
+    /// A single-sample pass showed a tidy 26% monotonic spread across the enum and would have
+    /// shipped a slider controlling nothing. Repeating the discriminating cases is the only reason
+    /// this property reads the way it does.
+    /// </para>
+    /// </summary>
+    public bool RateCanBeSet { get; init; } = true;
+
+    /// <summary>
+    /// Why d47 quotes no rate for a provider that charges, or null where it quotes one.
+    /// <para>
+    /// <b>Declared so that arriving unpriced is a sentence somebody wrote rather than a field
+    /// nobody set.</b> <see cref="Billed"/> with neither rate is otherwise indistinguishable from
+    /// an omission, which is exactly what the guard in <c>WhatTheVoicesCostTests</c> was built to
+    /// catch — so the guard now asks for this instead of merely being widened past it.
+    /// </para>
+    /// </summary>
+    public string? NoRateBecause { get; init; }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>
@@ -148,6 +186,8 @@ public static class TtsProviderCatalog
     public const string ElevenLabsId = "elevenlabs";
 
     public const string OpenAiId = "openai";
+
+    public const string CartesiaId = "cartesia";
 
     public static TtsProviderInfo None { get; } = new()
     {
@@ -270,8 +310,55 @@ public static class TtsProviderCatalog
         ListDollarsPerMinute = 0.015m,
     };
 
+    public static TtsProviderInfo Cartesia { get; } = new()
+    {
+        Id = CartesiaId,
+        Name = "Cartesia",
+        Label = "Cartesia (paid — needs a key)",
+        KeySecretName = "cartesia.apiKey",
+        Destination = "api.cartesia.ai",
+        Egress = "The text of every line D47 speaks through this slot is sent to Cartesia to be "
+                 + "turned into audio, along with your API key. That includes re-voiced in-game "
+                 + "messages when you have turned those on, which are written by other players. "
+                 + "No journal content, game state or other keys are sent.",
+
+        // Opaque, the way ElevenLabs' are: measured 2026-08-26 across all 924
+        // (docs/spikes/cartesia-voices-and-speed.md §1).
+        VoiceIdsAreOpaque = true,
+
+        // It takes a `language` field and holds it, so unlike OpenAI it is eligible for the four
+        // slots carrying other people's words — the second provider after ElevenLabs that can be.
+        // A capability rather than a preference, which is why it is stated here rather than
+        // argued at the row.
+        LanguageCanBePinned = true,
+
+        // Measured, not read: `speed` validates to [-1.0, 1.0] inside
+        // `voice.__experimental_controls` and moves nothing beyond the instrument's own noise.
+        // See RateCanBeSet, which is where the finding lives.
+        RateCanBeSet = false,
+
+        Billed = true,
+
+        // Not published, and not for the reason OpenAI's is not. OpenAI publishes a rate in a
+        // unit that had to be converted; here d47 does not know the *unit*. Four account
+        // endpoints — /balance, /usage, /subscriptions/current, /account — are all 404, so there
+        // is no rate and no balance to read (docs/spikes/cartesia-voices-and-speed.md §2), and
+        // the price page is a fact about a web page to be read by a person and recorded rather
+        // than scraped.
+        //
+        // So the row takes the treatment OpenAI's took before #63: "(not published — no price
+        // will be quoted)", a character count with no dollars beside it, and an editable row for
+        // a Commander who has read the page. Both rates stay null until somebody has.
+        ListDollarsPerThousandCharacters = null,
+        NoRateBecause =
+            "Cartesia's API publishes neither a rate nor a balance — /balance, /usage, "
+            + "/subscriptions/current and /account are all 404 — and the price page has not been "
+            + "read. Set the rate in Settings once it has.",
+    };
+
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>
-    public static IReadOnlyList<TtsProviderInfo> All { get; } = [Edge, ElevenLabs, OpenAi, None];
+    public static IReadOnlyList<TtsProviderInfo> All { get; } =
+        [Edge, ElevenLabs, OpenAi, Cartesia, None];
 
     /// <summary>
     /// The providers that may speak for one slot. Everything, except that a slot carrying other

@@ -204,9 +204,21 @@ public static class AboutCapability
             Tools = [],
             Settings = rows,
 
-            // Last, past Diagnostics' 90. It is read once and it is the bottom of the page in
-            // every application that has one.
-            Display = new CapabilityDisplay { PanelTitle = "About", Order = 95 },
+            // Last, past Diagnostics' 90 and past Privacy's 95
+            // (<a href="https://github.com/dseelinger/d47/issues/83">#83</a>). It is read once and
+            // it is the bottom of the page in every application that has one.
+            //
+            // **99 rather than 96, and above Privacy rather than beside it.** This used to read 95,
+            // which is Privacy's, and `SettingsService` sorts with a *stable* `OrderBy` — so the
+            // last item in the left nav was decided by which of two lines came first in
+            // `BuiltinCapabilities.All`, and nothing on either capability said so. The intent was
+            // written down, in a comment on that list, where the sort cannot read it.
+            //
+            // The bottom of the page runs diagnose, disclose, identify. Privacy is read while
+            // *deciding* something — it is the page opened before turning a provider on. This one
+            // is read once, or while filing a bug. 99 leaves room, matching how the rest of the
+            // scale is spaced.
+            Display = new CapabilityDisplay { PanelTitle = "About", Order = 99 },
         };
     }
 

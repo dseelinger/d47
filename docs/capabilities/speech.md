@@ -124,6 +124,7 @@ and still costing.
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
+| `cartesia` | Cartesia. Paid, needs an API key. **924 voices**, far the largest library here. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
 **OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
@@ -136,6 +137,13 @@ One honest limit. Directive 47 keeps **one connection per provider** shared acro
 slots, so if you also put the carrier or the NPCs on OpenAI, they are performed the same way. The
 default puts everything carrying another player's words on Edge, so this usually reaches the core
 and nothing else.
+
+**Cartesia is here for the size of the library.** 924 voices against ElevenLabs' several hundred,
+Edge's 322 and OpenAI's thirteen, tagged with a language, an accent, a country and a gender — which
+is what lets Directive 47 give a Commander who reads as a woman a woman's voice, something OpenAI
+publishes nothing for. It is also the second provider after ElevenLabs that may speak for the slots
+carrying other players' words, because it can be told which language to use. What it cannot be told
+is a speaking rate: see [Speaking rate](#rate).
 
 `none` is a real choice rather than a way of switching something off: Directive 47 stays useful
 without a voice, and the cues and the thinking loop still play.
@@ -297,7 +305,17 @@ else.
 
 ElevenLabs accepts `0.7` to `1.2` and rejects anything outside that outright — a rejected request
 arrives as silence, so a wider value is clamped to the nearest one it will take rather than
-being sent and failing.
+being sent and failing. OpenAI accepts `0.25` to `4.0`, though it saturates near the top: asking
+for `4.0` buys about 3.3x rather than four.
+
+**Cartesia has no speaking rate, and this row disappears when a slot is on it.** It is not that
+the setting is missing at their end — it is there, and it is validated precisely; a value outside
+its range comes back as a refusal naming the field. It simply does not change the audio. Measured
+three times per setting, the largest difference *between* settings was smaller than the largest
+spread *within* one, and the "slowest" setting produced shorter audio than "normal". So rather than
+offer you a control that appears to work and does nothing, Directive 47 offers none — and a rate
+typed into `settings.json` against Cartesia is ignored rather than sent, exactly as a language named
+for OpenAI is.
 
 #### Where each voice comes from {#voice-slots}
 
@@ -353,11 +371,17 @@ the file.
 The cockpit, your carrier and the NPCs may all use it: that text is Directive 47's own or
 Frontier's, and it is English.
 
+**Cartesia is offered for all six**, for the reason OpenAI is not: it takes a language and holds
+it, so a French message is still read in the voice and the language you chose. Together with
+ElevenLabs that gives you two paid options for a re-voiced slot — and the warning that goes with
+any of them is unchanged, because a paid provider there bills you per character for text somebody
+else wrote and can write as much of as they like.
+
 #### What the voices cost {#voice-cost}
 
 **Providers disagree about what they are selling, so they disagree about what they charge for.**
-ElevenLabs bills by the character, OpenAI by how much audio comes back, and Edge Neural charges
-nothing at all. Directive 47 measures both — the characters it sent, and the length of the clip it
+ElevenLabs bills by the character, OpenAI by how much audio comes back, Cartesia by something
+Directive 47 cannot read, and Edge Neural charges nothing at all. Directive 47 measures both — the characters it sent, and the length of the clip it
 got — and prices whichever one your provider's bill is a function of. Quoting either in tokens
 would be a number whose basis is wrong, which is why this is counted separately from
 [what the model costs](conversation.md).
@@ -370,6 +394,14 @@ published list price for the model Directive 47 asks for — $0.05 per thousand 
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.
+
+**On Cartesia it reads *(not published — no price will be quoted)*, and that is honest rather than
+lazy.** Their API will not say: the four endpoints that would carry a rate or a balance —
+`/balance`, `/usage`, `/subscriptions/current`, `/account` — all answer 404, so Directive 47 does
+not know their rate and does not even know which *unit* they bill in. Rather than invent a figure
+it reports what it counted and no dollars at all, and the session line says "no rate set for
+Cartesia" beside the character count. Read their price page and type the number in, and every
+figure below follows it as it does for anyone else.
 
 **Price per minute of audio** is the same row for a provider billed that way, and it is where
 OpenAI lands. The minutes are a **fact**: Directive 47 asks OpenAI for raw audio samples, so it

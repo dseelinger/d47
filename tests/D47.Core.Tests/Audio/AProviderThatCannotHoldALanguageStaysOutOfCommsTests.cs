@@ -36,6 +36,48 @@ public class AProviderThatCannotHoldALanguageStaysOutOfCommsTests
         Assert.False(TtsProviderCatalog.OpenAi.LanguageCanBePinned);
     }
 
+    /// <summary>
+    /// And the third one does too, which is half of why it was added (list.md Phase 60).
+    /// <para>
+    /// Cartesia sends a <c>language</c> with every line and holds it, so it is the second provider
+    /// after ElevenLabs that may legally carry another player's words at all. <b>A capability
+    /// rather than a preference</b>: the rule above has teeth, and this is what passing it buys.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("known")]
+    [InlineData("direct")]
+    [InlineData("range")]
+    public void AndTheOneAddedForItsVoiceLibraryIsEligibleWhereOpenAiIsBarred(string slotId)
+    {
+        var slot = VoiceGroups.ById(slotId)!;
+
+        Assert.True(TtsProviderCatalog.Cartesia.LanguageCanBePinned);
+        Assert.Contains(TtsProviderCatalog.Cartesia, TtsProviderCatalog.For(slot));
+    }
+
+    /// <summary>
+    /// And a settings file naming it for one of those slots is honoured rather than treated as
+    /// unusable — the other side of the resolver's rule, and the assertion that would catch it
+    /// being refused by accident along with OpenAI.
+    /// </summary>
+    [Fact]
+    public void AHandEditedFileNamingItForLocalChatIsObeyed()
+    {
+        var speech = new SpeechSettings
+        {
+            Provider = Edge,
+            GroupProviders = new Dictionary<string, string>
+            {
+                ["range"] = TtsProviderCatalog.CartesiaId,
+            },
+        };
+
+        Assert.Equal(
+            TtsProviderCatalog.CartesiaId,
+            VoiceGroups.ProviderFor(speech, VoiceGroup.AnyoneInRange));
+    }
+
     [Fact]
     public void TheCockpitAndTheCarrierMayNameIt()
     {
