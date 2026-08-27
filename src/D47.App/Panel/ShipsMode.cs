@@ -846,8 +846,22 @@ public sealed class ShipsMode(
 
         // An experimental the plan asks for and the roll has not got. The other way round is not
         // outstanding work — a Commander who took a better effect than they planned has finished.
+        //
+        // **Both spellings here too, and this line is why the dot came back** (GitHub issue 86).
+        // The blueprint comparison above learned the join; this one was left comparing a plan's
+        // readable name to the journal's symbol, so a plan asking for "Deep Plating" never matched
+        // a roll carrying `special_hullreinforcement_chunky` — which is the same effect. Reported
+        // against a Kestrel whose four hull reinforcements were all rolled Heavy Duty G5 with Deep
+        // Plating exactly as planned, and three of them kept a dot that reads as outstanding work.
+        //
+        // Three times now the same fault has arrived by a different road: the marker meaning "a
+        // plan exists" (issue 38), the blueprint compared symbol-to-name (issue 39), and now the
+        // experimental. A plan stores what the Commander picked and Elite stores a symbol, so
+        // **every comparison between the two sides has to go through the catalogue**, and the ones
+        // that do not are the ones nobody has looked at yet.
         return plan.Experimental is { Length: > 0 } wanted
-               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase);
+               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase)
+               && !string.Equals(wanted, Readable(module.Experimental), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

@@ -185,7 +185,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
     [Fact]
     public void AFittedRollIsNamedTheWayTheCommanderNamesIt()
     {
-        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5);
+        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5, experimental: null);
 
         var row = Row(mode, "PowerDistributor");
 
@@ -207,6 +207,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var (mode, _) = Rolled(
             "PowerDistributor_PrioritySystems",
             5,
+            experimental: null,
             new SlotPlan("PowerDistributor", "Weapon Focused", 5));
 
         var row = Row(mode, "PowerDistributor");
@@ -233,6 +234,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var (mode, _) = Rolled(
             "PowerDistributor_PrioritySystems",
             5,
+            experimental: null,
             new SlotPlan("PowerDistributor", "Weapon Focused", 5));
 
         var ship = Assert.Single(mode.Items());
@@ -249,6 +251,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var (mode, _) = Rolled(
             "PowerDistributor_PrioritySystems",
             5,
+            experimental: null,
             new SlotPlan("PowerDistributor", "System Focused", 5));
 
         var ship = Assert.Single(mode.Items());
@@ -267,6 +270,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var (mode, _) = Rolled(
             "PowerDistributor_PrioritySystems",
             5,
+            experimental: null,
             new SlotPlan("PowerDistributor", "System Focused", 5));
 
         var row = Row(mode, "PowerDistributor");
@@ -284,7 +288,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
     [Fact]
     public void AnUnplannedRollIsNotADisagreement()
     {
-        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5);
+        var (mode, _) = Rolled("PowerDistributor_PrioritySystems", 5, experimental: null);
 
         var row = Row(mode, "PowerDistributor");
 
@@ -294,12 +298,59 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         Assert.False(row.Marked);
     }
 
+    // ---- The experimental, in the Commander's words (GitHub issue 86) ------------------------
+
+    /// <summary>
+    /// <b>The dot came back, by the third road.</b> Reported 2026-08-26 against a Kestrel whose
+    /// four hull reinforcements were rolled Heavy Duty G5 with Deep Plating exactly as planned:
+    /// <i>"Didn't this get taken care of? All my HRPs are correctly engineered."</i> They were.
+    /// <para>
+    /// The plan stores <c>Deep Plating</c>, the Commander's words; Elite writes
+    /// <c>special_hullreinforcement_chunky</c>, which is the same effect. The blueprint comparison
+    /// learned that join for issue 39 and the experimental comparison did not, so a slot finished
+    /// exactly as planned kept a mark that reads as outstanding work.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnExperimentalRolledAsPlannedClearsTheMark()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            experimental: "special_hullreinforcement_chunky",
+            new SlotPlan("PowerDistributor", "System Focused", 5, Experimental: "Deep Plating"));
+
+        var row = Row(mode, "PowerDistributor");
+
+        Assert.NotNull(row.Parts);
+        Assert.True(row.Parts.Met);
+        Assert.False(row.Marked, "the roll is exactly what the plan asked for, so nothing is outstanding");
+    }
+
+    /// <summary>
+    /// And the other half, which is what makes the mark worth anything: an experimental the plan
+    /// asks for and the roll has <em>not</em> got is still outstanding. One of the Kestrel's four
+    /// hull reinforcements really was bare, and its dot is correct.
+    /// </summary>
+    [Fact]
+    public void AnExperimentalThePlanAsksForAndTheRollHasNotGotIsStillMarked()
+    {
+        var (mode, _) = Rolled(
+            "PowerDistributor_PrioritySystems",
+            5,
+            experimental: null,
+            new SlotPlan("PowerDistributor", "System Focused", 5, Experimental: "Deep Plating"));
+
+        Assert.True(Row(mode, "PowerDistributor").Marked);
+    }
+
     /// <summary>
     /// One ship whose power distributor carries a real roll, plus whatever plan the test wants.
     /// </summary>
     private static (ShipsMode Mode, ShipPlanService Ships) Rolled(
         string blueprint,
         int grade,
+        string? experimental,
         params SlotPlan[] plans)
     {
         var paths = new D47.Core.AppPaths(TempFolders.Create("d47-roll-vs-plan-tests"));
@@ -316,9 +367,15 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var store = new GameStateStore();
 
         var loadout =
-            """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"PowerDistributor","Item":"int_powerdistributor_size7_class5","On":true,"Priority":1,"Health":1.0,"Engineering":{"Engineer":"The Dweller","EngineerID":1,"BlueprintID":1,"BlueprintName":"BLUEPRINT","Level":99,"Quality":1.0,"Modifiers":[]}}]}"""
+            """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"PowerDistributor","Item":"int_powerdistributor_size7_class5","On":true,"Priority":1,"Health":1.0,"Engineering":{"Engineer":"The Dweller","EngineerID":1,"BlueprintID":1,"BlueprintName":"BLUEPRINT","Level":99,"Quality":1.0,EXPERIMENTAL"Modifiers":[]}}]}"""
                 .Replace("BLUEPRINT", blueprint, StringComparison.Ordinal)
-                .Replace("99", grade.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+                .Replace("99", grade.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)
+
+                // Elite writes the symbol here, never the name, which is the whole of issue 86.
+                .Replace(
+                    "EXPERIMENTAL",
+                    experimental is { Length: > 0 } effect ? $"\"ExperimentalEffect\":\"{effect}\"," : string.Empty,
+                    StringComparison.Ordinal);
 
         foreach (var line in new[]
                  {
