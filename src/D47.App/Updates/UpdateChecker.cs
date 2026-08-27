@@ -164,6 +164,22 @@ public sealed class UpdateChecker
     /// </summary>
     public async Task<ReleaseChannel> ChannelAsync(string runningVersion, CancellationToken cancellationToken)
     {
+        var channel = await ResolveChannelAsync(runningVersion, cancellationToken).ConfigureAwait(false);
+
+        // **One line per call, whatever the answer.** This used to log only its failures, so a
+        // silent log meant either "resolved, and here is the badge" or "gave up and said nothing" —
+        // two states that look identical from a log file and produce different things on screen.
+        // A feature whose whole job is to display a state should record which state it chose, and
+        // it matters more here than usual because the answer changes when a release is promoted
+        // without anything else about the build changing at all.
+        _logger.LogInformation("Release channel for {Version}: {Channel}", runningVersion, channel);
+
+        return channel;
+    }
+
+    /// <inheritdoc cref="ChannelAsync"/>
+    private async Task<ReleaseChannel> ResolveChannelAsync(string runningVersion, CancellationToken cancellationToken)
+    {
         if (!ReleaseVersion.TryParse(runningVersion, out var current))
         {
             return ReleaseChannel.Unknown;
@@ -192,6 +208,7 @@ public sealed class UpdateChecker
             if (!document.RootElement.TryGetProperty("prerelease", out var flag)
                 || flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
             {
+                _logger.LogInformation("The release for {Version} carries no prerelease flag", current);
                 return ReleaseChannel.Unknown;
             }
 
