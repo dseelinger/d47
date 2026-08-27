@@ -19,3 +19,5 @@ tests/fixtures/** -text -diff
 # in the working tree it was written in, which is the worst way for this to fail.
 tools/get-ver text eol=lf
 *.sh text eol=lf
+tools/prerelease text eol=lf
+tools/promote text eol=lf

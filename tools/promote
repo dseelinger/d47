@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Shim. The rules live in promote.ps1 and only there - see get-ver for why.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script="$here/promote.ps1"
+if command -v cygpath >/dev/null 2>&1; then script="$(cygpath -w "$script")"; fi
+for candidate in pwsh powershell powershell.exe; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    exec "$candidate" -NoProfile -ExecutionPolicy Bypass -File "$script" "$@"
+  fi
+done
+echo "promote: no PowerShell found (looked for pwsh, powershell)." >&2
+exit 1
