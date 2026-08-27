@@ -20,6 +20,52 @@ the file as it stood then.
 
 ---
 
+## 0.77.0 — 2026-08-26 — There is a Discord, and a build that cannot start can no longer ship
+
+### Come and say hello
+
+There is now a **Discord** for Directive 47, and **About** has a row that opens it. It is the
+fastest way to get an answer, it needs no GitHub account, and it is where a bug report reaches
+somebody who can fix it. Questions, screenshots, and what you want it to do next — all welcome.
+
+The button opens the [community page](https://dseelinger.github.io/d47/community.html) rather than
+the invite itself, which is deliberate: an invite compiled into a build is permanent, so revoking
+one would leave a dead button in every copy already installed, fixable only by shipping a release.
+The page is a file in the repository, so reissuing an invite is a commit and every build follows it.
+
+### A build that cannot start can no longer reach you
+
+0.76.0 and 0.76.1 both died before drawing a window, and **both passed every gate on the way out**.
+That is the real defect, and this release fixes it rather than the symptom.
+
+`--selftest` — the check the release pipeline runs against the actual published `d47.exe` — used
+to return before the app was ever assembled. It proved the speech model loads, the echo canceller
+loads and the controller projection activates, and then stopped short of the step where those two
+releases died. It now **composes the whole application**: every capability registered, the settings
+surface bound, the callouts and background work wired. If that fails, the release fails, and
+because it runs in CI before the tag is signed, the version number is not spent on a build nobody
+can run.
+
+It runs the *real* composition rather than a copy of it, and that distinction is the entire lesson
+of 0.76.0: the tests had a copy, the copy was missing the four rows that broke it, and five
+thousand tests passed a build that could not start. There is now one canonical description of what
+the app is made of, and a test that fails the moment a new piece is left out of it.
+
+### Releases can be flown before they are offered
+
+`tools/release.ps1` gains **`-PreRelease`**: it cuts the version and publishes it, but marks it so
+that nobody is offered the update. The Commander installs it, flies an evening, and promotes it
+when it has earned that. One that fails its soak is simply never promoted and the fix goes forward
+to the next patch — so no public release carries the fault, and no tag ever moves.
+
+### Also
+
+The README said phases 1 to 15 were complete with phase 16 next, which was true in June. There is a
+`CONTRIBUTING.md` for anyone who wants to change the code, and a round mark for the Discord drawn
+from the icon that already ships, so the circular crop has nothing to slice.
+
+---
+
 ## 0.76.2 — 2026-08-26 — 0.76.0 and 0.76.1 could not start
 
 **If you are on 0.76.0 or 0.76.1, this is the release that launches.** Both die before drawing a
