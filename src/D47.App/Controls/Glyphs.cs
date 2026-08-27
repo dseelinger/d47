@@ -55,6 +55,24 @@ public static class Glyphs
     public const string Add = "M 12,5 L 12,19  M 5,12 L 19,12";
 
     /// <summary>
+    /// Go back to how it was: a circle open at the upper right, travelled anticlockwise from the
+    /// top, with the arrowhead where it starts. The undo and refresh mark near enough everywhere
+    /// (https://github.com/dseelinger/d47/issues/69).
+    /// <para>
+    /// <b>Anticlockwise, and that is the whole of why it reads as undo.</b> The same circle drawn
+    /// the other way is refresh — do it again — which is a different promise to make about a button
+    /// that throws away what the Commander typed.
+    /// </para>
+    /// <para>
+    /// It replaces <c>↺</c> (U+21BA), which was a text character and therefore whatever the
+    /// installed font happened to have: a different weight from the four marks beside it, hung off
+    /// a baseline rather than centred in its box, and a hollow rectangle on a machine without it.
+    /// </para>
+    /// </summary>
+    public const string Reset =
+        "M 12,4 A 8,8 0 1 0 20,12  M 15,1 L 12,4 L 15,7";
+
+    /// <summary>
     /// One mark, sized and coloured for the row it sits in.
     /// </summary>
     /// <param name="data">One of the constants above.</param>

@@ -12,25 +12,15 @@ nav_order: 144
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
 <section>
-<h2><span class="num">1</span> Four rows the model cannot touch.</h2>
-<svg viewBox="0 0 880 292" role="img" aria-label="Protected rows: the model, the keys, the update check and every hotkey">
- <rect x="20" y="20" width="500" height="212" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="52" y="56" font-size="19" font-weight="800" fill="var(--danger)">PROTECTED</text>
- <text x="52" y="94" font-size="16" fill="var(--text)">which model answers, and where</text>
- <text x="52" y="126" font-size="16" fill="var(--text)">any API key</text>
- <text x="52" y="158" font-size="16" fill="var(--text)">checking for updates at all</text>
- <text x="52" y="190" font-size="16" fill="var(--text)">every hotkey</text>
- <text x="52" y="218" font-size="15" fill="var(--text-muted)">each one decides what leaves this machine</text>
- <rect x="546" y="20" width="314" height="98" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="703" y="56" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">you can</text>
- <text x="703" y="82" text-anchor="middle" font-size="15" fill="var(--text-muted)">the panel, a bound key,</text>
- <text x="703" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">or saying so yourself</text>
- <rect x="546" y="134" width="314" height="98" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="703" y="170" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">the model cannot</text>
- <text x="703" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">they are not on its list</text>
- <text x="703" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">at all</text>
- <text x="440" y="266" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Protecting settings helps keep you and your information safe.</text>
+<h2><span class="num">1</span> Some settings have a safety catch.</h2>
+<svg viewBox="0 0 880 208" role="img" aria-label="Some settings are protected: Directive 47's AI cannot change them, and you still can">
+ <rect x="20" y="20" width="840" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">Some settings are protected.</text>
+ <text x="440" y="96" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47's AI cannot change them — and asking it to will not either.</text>
+ <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">It is a safety catch, and it is there for you.</text>
+ <text x="440" y="176" text-anchor="middle" font-size="15" fill="var(--text-muted)">You can still change any of them yourself: on this page, with a hotkey, or by saying so.</text>
 </svg>
+
 </section>
 <section>
 <h2><span class="num">2</span> Most settings apply to the installed app. A few belong to each of your CMDRs.</h2>
@@ -70,7 +60,7 @@ nav_order: 144
 <div class="cards">
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">What the protected rows are protecting, worked out from your own settings.</span></a>
 <a class="card" href="interface.html"><span class="ct">Interface →</span><span class="cd">The panel these rows live on, and the themes they switch between.</span></a>
-<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The most protected row of the four, and what it decides.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The most protected row of all, and what it decides.</span></a>
 </div>
 </div>
 </div></div>

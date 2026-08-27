@@ -5,8 +5,14 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Persona;
 
 /// <summary>
-/// One ship, and the core that flies it (list.md Phase 35, "A ship remembers the core that flew
-/// it").
+/// One ship, and the core aboard it (list.md Phase 35).
+/// <para>
+/// <b>Aboard it, not flying it.</b> This used to quote Phase 35's heading — <em>"A ship remembers
+/// the core that flew it"</em> — which has the Commander and the core the wrong way round: the
+/// Commander flies the ship and the core is the AI aboard. The heading in <c>list.md</c> is the
+/// product's own record and is left as it stands; this stops repeating it
+/// (https://github.com/dseelinger/d47/issues/80).
+/// </para>
 /// <para>
 /// <b>Keyed on the journal's <c>ShipID</c> rather than on the hull</b>, which is the whole of the
 /// requirement: two Kraits are two ships, and a Commander who kitted one for mining and one for a

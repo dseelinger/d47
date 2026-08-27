@@ -26,6 +26,69 @@ file never moves.
 
 ---
 
+## 0.80.0 — 2026-08-27 — Help that takes you there
+
+### Settings help now links to the settings it mentions
+
+Four rows told you to "see Privacy" and then left you to go and find it. **Privacy is now a link**
+— click it and the page selects that section, opens the card and scrolls to it, exactly as if you
+had used the sidebar.
+
+It works while you are searching, too. A query that matches part of a link still highlights that
+part, and the link still works.
+
+### Reset is a picture, not a word
+
+The **Reset** at the top of a settings card was the word; the one on each row was a small arrow.
+They are the same promise at two scales, so they are now the same mark — a circular arrow drawn
+anticlockwise, which is the near-universal sign for *undo*.
+
+**The old row arrow was a font character**, which meant it was whatever your installed font happened
+to have: a slightly different weight from the other marks around it, sitting slightly off, and on a
+machine without that character, an empty rectangle. The new one is drawn, so it looks the same
+everywhere.
+
+Both now announce themselves properly to a screen reader, which the drawn version would otherwise
+have lost.
+
+### The ELI5 pictures say what they mean
+
+One read-through of the illustrated summaries turned up nine places where a sentence had been
+squeezed until the point fell out. Headings that were riddles are now statements — *"Five things can
+stop it hearing you"* instead of *"'It cannot hear me' has five causes, and the answer names which"*.
+A figure whose explanation had been cut is gone from the picture and kept in the writing below it,
+where it makes sense.
+
+**Two bigger changes.** The Settings page opened with four rows listed in warning-red under *"Four
+rows the model cannot touch"*. Red is the colour of something being wrong, and nothing there is
+wrong — it now simply says **some settings have a safety catch**, that D47's AI cannot change them,
+and — the part that was missing — that **you still can**, any time, on the page or with a hotkey or
+by saying so. Reading only "the AI cannot change this" beside fifty protected rows, you could
+reasonably have concluded they were locked to you as well.
+
+And a picture on the Conversation page has gone entirely. It illustrated something you cannot see by
+design — its own caption said *"you see an answer, not an error"* — so it was a picture of nothing
+happening. The explanation stays in the text.
+
+### A ship has a core; the core does not fly the ship
+
+*"The core that flies it"* had spread to six places, including a tool description and a settings
+row. **You** fly the ship. The core is the AI aboard it. Corrected everywhere it was said.
+
+---
+
+**Under the hood.** Cross-references are written as links in the help text itself with a section id
+as the target, rather than being detected by matching words in prose — *privacy* is an ordinary
+English word and a matcher would light up the wrong ones while going silent the day a section was
+renamed. Because the target is declared, a test asserts every link points at a section that exists,
+so a broken cross-reference fails a build rather than your click.
+
+Fixes [#65](https://github.com/dseelinger/d47/issues/65),
+[#69](https://github.com/dseelinger/d47/issues/69) and
+[#80](https://github.com/dseelinger/d47/issues/80).
+
+---
+
 ## 0.79.0 — 2026-08-27 — Panes you can set where you want them
 
 ### Drag the line between two panes

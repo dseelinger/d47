@@ -345,7 +345,7 @@ public static class GalaxyCapability
                 Help =
                     "Lets d47 answer questions about star systems, stations and bodies, and plot routes, "
                     + "by asking spansh.co.uk. System names you ask about, and where you are when the "
-                    + "question is relative to you, leave this machine. Off by default; see Privacy for "
+                    + "question is relative to you, leave this machine. Off by default; see [Privacy](privacy) for "
                     + "exactly what is sent.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
@@ -366,7 +366,7 @@ public static class GalaxyCapability
                 Help =
                     "Lets a generated adventure pick its stops from the Galactic Exploration Catalog at "
                     + "edastro.com. One request fetches the whole catalogue and the choosing happens here, so "
-                    + "where you are never leaves this machine. Off by default; see Privacy.",
+                    + "where you are never leaves this machine. Off by default; see [Privacy](privacy).",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "notable-places-for-adventures",

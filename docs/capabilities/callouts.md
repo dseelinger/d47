@@ -34,14 +34,13 @@ nav_order: 124
  <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">MATCHING ON THE WORDS</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">2,399 firings to catch</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
- <text x="220" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">another was wrong 48 times out of 48</text>
+ <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
  <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">MATCHING ON THE ID</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a fixed list, NPC chatter only</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing the message says is</text>
  <text x="660" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">repeated, shown, or sent to a model</text>
- <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A hundred false alarms per real event is a warning you switch off within the hour.</text>
+ <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A hundred false alarms per real event is a warning you switch off within the hour — and then do not have when it matters.</text>
  <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">In-game chat is written by anyone in range, so matching on the text is matching on a string somebody else chose.</text>
 </svg>
 </section>
