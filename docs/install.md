@@ -170,6 +170,13 @@ to keep them.
 
 ### Verifying the download
 
+**Code signing is pending.** Directive 47 has applied to the
+[SignPath Foundation](https://signpath.org/), which grants free code signing certificates to
+open-source projects, with the signing itself run by [SignPath.io](https://about.signpath.io/).
+Once that is granted and wired into the release pipeline, releases will be signed and Windows
+will show a publisher name instead of an unknown one. **It is not granted yet**, so everything
+below describes how things stand today.
+
 Builds are unsigned, so Windows SmartScreen will likely warn — on the installer as readily as
 on the executable. Rather than ask you to trust that, every release publishes a SHA-256
 beside each download. Compare whichever you took:
