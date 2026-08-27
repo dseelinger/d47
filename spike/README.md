@@ -21,6 +21,7 @@ be deleted once the answer is written down.
 | `HabitProbe` | What does Phase 32's miner actually claim about 914 real journals, and does each detector clear its own floor? | list.md Phase 32 — **instrument, kept: every figure in the plan and the changelog came out of it** |
 | `LogbookProbe` | What does Phase 33's digest make of a real session, what would writing it cost, and does the finished log survive being read against the journal by hand? | list.md Phase 33 — **instrument, kept: it is the acceptance test the item asks for, and its dry mode spends nothing** |
 | `RadioAudition` | Does `RadioVoice` actually sound like a radio? | 0.22.0 shipped from it — **instrument, kept: the question recurs every time the filter is touched** |
+| `KokoroProbe` | Does Kokoro blend voices through the ONNX path from C#, what does it cost, and can d47 phonemise without the GPL one? | [docs/spikes/kokoro-through-onnx.md](../docs/spikes/kokoro-through-onnx.md) — **instrument, kept while #101 is open: it is where the pronunciation question gets re-measured** |
 
 `RadioAudition` says a sentence through Edge Neural, optionally over the comms link, writes it as a
 WAV and plays it. It exists because the one thing a test cannot assert about an audio effect is

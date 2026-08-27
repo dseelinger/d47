@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>KokoroProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      1.29.0 rather than "latest", because this is the exact version
+      per-role-voice-providers.md 1.2 downloaded and read: MIT nuspec, Eigen under MPL-2.0 in
+      ThirdPartyNotices.txt, EIGEN_MPL2_ONLY compiled in unconditionally. Measuring one version and
+      shipping another would put the licence finding back where it started.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+  </ItemGroup>
+
+</Project>
