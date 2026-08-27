@@ -639,7 +639,16 @@ public sealed class AppHost : IDisposable
         var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
 
-        var version = BuildInfo.Full;
+        // **The version, not the stamp** (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>).
+        // This read BuildInfo.Full, which is version *and* commit — so About's Version row and its
+        // Build row printed the same forty characters, and the row a bug report quotes could not
+        // tell two builds of one release apart any better than the row beside it could.
+        //
+        // AboutCapability.Create's own parameter documents what belongs here: "the version a
+        // Commander would quote — BuildInfo.Semantic". The distinction was lost when About became a
+        // settings area; the old AboutWindow had it right, and BuildInfo has carried both values
+        // the whole time.
+        var version = BuildInfo.Semantic;
 
         // Logging first, so everything below has somewhere to report a failure.
         var verbosity = new SerilogVerbosityControl();

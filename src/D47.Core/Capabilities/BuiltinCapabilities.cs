@@ -339,7 +339,13 @@ public static class BuiltinCapabilities
         // could not read, leaving the bottom of the nav to whichever line came first.
         AboutCapability.Create(
             paths,
-            version,
+
+            // **Derived from the stamp rather than taken from the caller** (#92). These two
+            // arguments used to be the same value, because AppHost passed the full build string as
+            // both - so the row that answers "which release is this" and the row that answers
+            // "which exact commit" printed the same forty characters, each disproving the other's
+            // help text. Deriving the first from the second means no caller can make them agree.
+            Updates.ReleaseVersion.Semantic(about?.Build ?? version),
             about?.Build ?? version,
             about?.ShowChangelog,
             about?.ShowChangelogOnline,

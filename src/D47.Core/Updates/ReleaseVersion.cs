@@ -8,6 +8,27 @@ namespace D47.Core.Updates;
 /// </summary>
 public readonly record struct ReleaseVersion(int Major, int Minor, int Patch) : IComparable<ReleaseVersion>
 {
+    /// <summary>
+    /// Just the release out of a build stamp — <c>0.78.0</c> from
+    /// <c>0.78.0+4b18aaecbe2510b0aeae95d3f19583edd18ea205</c>, and the string unchanged when it
+    /// does not parse as a version at all.
+    /// <para>
+    /// <b>Here so that "the version" and "the stamp" cannot be the same value by accident</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/92">#92</a>). About's Version and Build
+    /// rows both printed the full stamp for as long as About has been a settings area, because
+    /// the composition root handed one string to both and nothing could observe that it had.
+    /// Deriving one from the other makes the two rows structurally unable to agree, which is a
+    /// stronger guarantee than a caller remembering which of two parameters is which.
+    /// </para>
+    /// <para>
+    /// Falling back to the input rather than to empty: a build with no parseable version — a
+    /// local one, or <c>"unknown"</c> — is better described by whatever it does say than by
+    /// nothing at all.
+    /// </para>
+    /// </summary>
+    public static string Semantic(string? stamp) =>
+        TryParse(stamp, out var version) ? version.ToString() : stamp ?? string.Empty;
+
     public static bool TryParse(string? text, out ReleaseVersion version)
     {
         version = default;
