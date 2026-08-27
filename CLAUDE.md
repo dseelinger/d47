@@ -176,8 +176,8 @@ Each of these is cheap to break by accident and expensive to fix later.
   stops being one subject — a phase is a minor release, so one that cannot be finished holds its
   ready items hostage.
 - **A number is allocated when the phase ships, not when it is planned.** *Added 2026-08-27, with
-  planning.* A `phase` issue is titled by its **subject** — "The panes move where you want them",
-  never "Phase 61" — and takes its number on the commit that lands it in `list.md`. That keeps the
+  planning.* A `phase` issue is titled by its **subject** — "Panel panes: drag the divider to resize
+  them", never "Phase 61" — and takes its number on the commit that lands it in `list.md`. That keeps the
   renumbering freedom the two 2026-08-15 passes needed, right up to the build, and it costs nothing:
   issues cross-reference each other by issue number, which cannot go stale the way a prose "Phase 56"
   can. **The exception is a number something permanent has already spent**, and the rule for spotting
@@ -192,6 +192,21 @@ Each of these is cheap to break by accident and expensive to fix later.
   `phase-54-a-floor-and-a-ceiling.md` already named it, and joined the frozen set on the commit that
   landed it. Before allocating, grep the prose as well as the source: a number is spent by a
   changelog line or a frozen phase naming it, not only by a `list.md Phase N` comment.
+- **An issue title is diagnostic prose, not `list.md`'s prose.** *Added 2026-08-27, the day the
+  first six planning issues were filed with the wrong register.* `list.md` is a product description
+  read top to bottom, so *"A voice that never leaves the machine"* is exactly right there: it tells a
+  Commander what they would get. An issue title has a different job — it is **scanned in a list of
+  twenty, searched for, and cited in a commit** — and that line does not say *local text-to-speech*
+  to anybody who does not already know. The test the Commander set: **you should know what an issue
+  is about at a glance at 3am without opening it.**
+  The defect titles already passed it and the planning ones did not, because the planning ones were
+  moved across from `list.md` verbatim and nobody asked whether the voice travelled. It does not.
+  So: **say the subject plainly first**, and keep the evocative line for `list.md`, where it lands in
+  full on the commit that ships the phase. A colon is the usual shape — subject, then the sharp part
+  — and length is not the problem: `#89` and `#98` are long and every word earns its place. **Vagueness
+  is the problem.** [#99](https://github.com/dseelinger/d47/issues/99) to
+  [#104](https://github.com/dseelinger/d47/issues/104) were renamed under this rule the day it was
+  written; their `list.md` headings were left exactly as they were.
 - **Renumbering: remap the numbers mechanically, then check the moved items by hand.** Both passes
   moved every number correctly and both got the same thing wrong: a citation naming an *item* that
   changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,
