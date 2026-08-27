@@ -12,10 +12,11 @@ Three documents carry the design. They are not summarized here — go read the r
 
 | Question | File |
 |---|---|
-| What should it do? Is this in scope? | [list.md](list.md) — 160 items in 22 phases, each line carrying its own acceptance criteria |
+| What has it shipped? Is this in scope? | [list.md](list.md) — 351 items in 56 phases, each line carrying its own acceptance criteria. **Built phases only** |
+| What is planned but not built? | [Issues labelled `phase`](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Aphase) — one per unbuilt phase; it lands in `list.md` when it ships |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
-| What is broken? What is wanted next? | [GitHub Issues](https://github.com/dseelinger/d47/issues) — one issue per defect or wanted fix; `gh issue list` |
+| What is broken? What is wanted next? | [GitHub Issues](https://github.com/dseelinger/d47/issues) — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1 list`, never `gh issue list`, which is denied |
 
 Before proposing a stack change, check `architecture.md` §10 (rejected alternatives) and §1
 (constraints). Most of the obvious alternatives were already considered and rejected for a
@@ -29,6 +30,36 @@ rather than by editing anything. **`list.md` did not move and is not a tracker**
 product description, its numbers are cited over a thousand times from code, and a phase joins the
 frozen set the day it ships. `CHANGELOG.md` is untouched and is still the permanent record:
 an issue closing is not a record, the changelog line is.
+
+**And since 2026-08-27, planning is an Issue too — which finishes the sentence above rather than
+contradicting it.** The Commander's reason: *"I dislike having to modify the repo when planning new
+work."* It is the argument that retired `bugs.md` reaching the same file from the other end — a
+phase that is being *designed* is a queue, conflicts on every parallel branch, and makes a repo edit
+the price of thinking. So the two jobs `list.md` was doing are split, and the split falls along a
+line that already existed: **1,463 code citations of `list.md Phase N` name a shipped phase and not
+one names an unbuilt one.** The frozen half cannot move and does not. The unbuilt tail was free, and
+went.
+
+- **An unbuilt phase is an Issue labelled `phase`.** It lands in `list.md` on the commit that ships
+  it, closing the issue with `Fixes #N` — the changelog rule applied to the product description.
+  Phases 55, 56 and 59 moved out on 2026-08-27 as [#99](https://github.com/dseelinger/d47/issues/99),
+  [#100](https://github.com/dseelinger/d47/issues/100) and
+  [#101](https://github.com/dseelinger/d47/issues/101).
+- **A wanted change is an Issue labelled `change-request`.** `change-requests.md`'s `## Open` section
+  went the same day and for the same reason — it was a queue with nothing else in it. The file stays
+  for the numbering rules its 61 code citations depend on.
+- **A plan of record is an Issue while it is a plan.** It lands in `docs/plans/` with the build, and
+  only if the code needs to cite it — four of twenty-five ever did, so most never needed to be files.
+- **What does *not* move: work being planned in order to be built now.** A design written and
+  executed in one sitting is not a queue and does not conflict with anything, so it may go straight
+  into the repo. The rule is about planning that outlives the session that wrote it.
+
+**Two consequences worth knowing before relying on this.** `tools/issues.ps1` **drops third-party
+comments even on the Commander's own issues** — right for a defect report, but it means a stranger's
+good idea about a phase plan reaches no agent, and the Commander has to restate it. And the move
+makes [#94](https://github.com/dseelinger/d47/issues/94) load-bearing: unattended work used to read
+phases from a trusted in-repo file and now depends entirely on the `ready` label, which #94 says is
+not checked against who applied it.
 
 ## Invariants
 
@@ -141,6 +172,21 @@ Each of these is cheap to break by accident and expensive to fix later.
   renumbered again. Moving items *between* unbuilt phases stays free and encouraged when a phase
   stops being one subject — a phase is a minor release, so one that cannot be finished holds its
   ready items hostage.
+- **A number is allocated when the phase ships, not when it is planned.** *Added 2026-08-27, with
+  planning.* A `phase` issue is titled by its **subject** — "The panes move where you want them",
+  never "Phase 61" — and takes its number on the commit that lands it in `list.md`. That keeps the
+  renumbering freedom the two 2026-08-15 passes needed, right up to the build, and it costs nothing:
+  issues cross-reference each other by issue number, which cannot go stale the way a prose "Phase 56"
+  can. **The exception is a number something permanent has already spent**, and the rule for spotting
+  one is that it is *not* the ship date. `CHANGELOG.md` names **Phase 59** under 0.72.0, and a
+  published tag never moves — so 59 was spent on 2026-08-25 by the release that shipped a *different*
+  phase, and the one it names is still unbuilt today. **55, 56 and 59 are
+  reserved to [#99](https://github.com/dseelinger/d47/issues/99),
+  [#100](https://github.com/dseelinger/d47/issues/100) and
+  [#101](https://github.com/dseelinger/d47/issues/101)** — 56 by courtesy, since nothing cites it, and
+  the other two because something already does. Before allocating, grep the prose as well as the
+  source: a number is spent by a changelog line or a frozen phase naming it, not only by a `list.md
+  Phase N` comment.
 - **Renumbering: remap the numbers mechanically, then check the moved items by hand.** Both passes
   moved every number correctly and both got the same thing wrong: a citation naming an *item* that
   changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,
