@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using D47.Core.Interface;
@@ -51,6 +53,23 @@ public sealed class DrillView : UserControl, IFilterablePage
     /// <summary>The most panes ever shown. A fourth is a column nobody reads at a metre.</summary>
     public const int MostPanes = 3;
 
+    /// <summary>
+    /// How much of the gutter answers the mouse, in logical pixels (list.md Phase 55).
+    /// <para>
+    /// Wider than the rule it sits on, because a one-pixel target is one nobody can hit — and
+    /// narrower than the 28-pixel gutter, so a click just inside a pane is a click in that pane
+    /// rather than a drag that did not move.
+    /// </para>
+    /// </summary>
+    private const double HandleWidth = 9;
+
+    /// <summary>
+    /// Where the rule is, measured from the left edge of the pane's own column: the host border's
+    /// left margin. Named rather than repeated so the handle cannot drift off the line it is a
+    /// handle for — see the two <c>14</c>s in <see cref="Draw"/>, which are this same gutter.
+    /// </summary>
+    private const double RuleOffset = 14;
+
     private readonly PanelNavigator _nav;
     private readonly PanelTab _tab;
     private readonly Func<NavCrumb, Control> _build;
@@ -67,6 +86,19 @@ public sealed class DrillView : UserControl, IFilterablePage
     private IReadOnlyList<string> _showing = [];
 
     private int _panes = 1;
+
+    /// <summary>
+    /// Where the Commander dragged the rules, or null on every surface that was not handed a
+    /// mouse (list.md Phase 55). <b>Null is what makes this the window's alone.</b>
+    /// <para>
+    /// Furnished rather than branched, like <c>PanelView.EnableSearch</c> and
+    /// <c>EnableTurnDetails</c>: no code here asks which surface it is on. The headset drives this
+    /// same view through a geometric hit test, so a handle that existed there would be draggable
+    /// by the ray — the one outcome the ask rules out — and the flat overlay is output-only. Both
+    /// are covered by simply never calling <see cref="EnableDrag"/>.
+    /// </para>
+    /// </summary>
+    private PaneWidthMemory? _widths;
 
     /// <param name="build">
     /// Draws one level. Called once per crumb and the result is kept, so it may be expensive; it
@@ -212,9 +244,30 @@ public sealed class DrillView : UserControl, IFilterablePage
 
         Empty();
 
+        // Re-applied on every draw and not only on the first, which is the trap this phase names:
+        // Empty() clears the column definitions on every navigation, so a width the Commander
+        // dragged would otherwise be discarded the moment they open a ship. The panes themselves
+        // are already kept across redraws for the same class of reason; the widths now are too.
+        var shares = _widths?.Remembered(visible.Count);
+
         for (var index = 0; index < visible.Count; index++)
         {
-            _strip.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+            var column = new ColumnDefinition(shares?[index] ?? 1, GridUnitType.Star);
+
+            // The reflow's floor is the drag's floor, and it has to be the same number: otherwise
+            // a Commander can drag a pane down to a sliver that ArrangeOverride still believes is
+            // 380 wide, which is two mechanisms disagreeing about how much room a pane has. A drag
+            // that would cross it stops at it rather than refusing - a handle that stops moving
+            // says what the limit is, and one that snaps back says nothing.
+            //
+            // Only when there is something to drag. On the headset this would be a layout
+            // constraint bought for a control that surface never draws.
+            if (_widths is not null)
+            {
+                column.MinWidth = MinimumPaneWidth;
+            }
+
+            _strip.ColumnDefinitions.Add(column);
 
             var crumb = visible[index];
 
@@ -242,7 +295,110 @@ public sealed class DrillView : UserControl, IFilterablePage
 
             Grid.SetColumn(host, index);
             _strip.Children.Add(host);
+
+            // After the pane, so it is above it in z-order and the pointer reaches it rather than
+            // the page underneath.
+            if (_widths is not null && index > 0)
+            {
+                _strip.Children.Add(Handle(index));
+            }
         }
+    }
+
+    /// <summary>
+    /// The grab area on one rule (list.md Phase 55).
+    /// <para>
+    /// <b>In the pane's own column rather than a column of its own</b>, aligned left and sitting
+    /// in the gutter the border already leaves. A splitter column would change what
+    /// <c>Grid.SetColumn</c> means for every pane and put a second thing in the arithmetic
+    /// <see cref="ArrangeOverride"/> does — so the reflow stays the sole authority on how many
+    /// panes there are, and this only ever changes their proportions within that count.
+    /// </para>
+    /// <para>
+    /// <b>Templated down to nothing</b>, because the page at rest has to look exactly as it does
+    /// now: the theme's own splitter draws a visible bar, and what should be visible here is the
+    /// hairline the border is already drawing. A transparent background is still hit-testable, so
+    /// what is left is a cursor change and a drag.
+    /// </para>
+    /// </summary>
+    private Control Handle(int index)
+    {
+        var handle = new GridSplitter
+        {
+            ResizeDirection = GridResizeDirection.Columns,
+
+            // The splitter sits in column `index`, so "previous and current" is the pane to its
+            // left and the pane it is in - the two the rule is between.
+            ResizeBehavior = GridResizeBehavior.PreviousAndCurrent,
+
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Width = HandleWidth,
+
+            // Centred on the rule rather than on the column edge: the border is inset by its own
+            // left margin, so the line the Commander is aiming at is RuleOffset in from here.
+            Margin = new Thickness(RuleOffset - (HandleWidth / 2), 0, 0, 0),
+
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.SizeWestEast),
+            Template = new FuncControlTemplate<GridSplitter>(
+                (_, _) => new Border { Background = Brushes.Transparent }),
+        };
+
+        // On completion rather than on every delta: a drag is one decision, and writing the file
+        // on each frame of it would be hundreds of writes for one choice.
+        handle.DragCompleted += (_, _) => Remember();
+
+        Grid.SetColumn(handle, index);
+        return handle;
+    }
+
+    /// <summary>
+    /// Writes down what a drag left, as each pane's share of the strip.
+    /// <para>
+    /// From the arranged widths rather than from the star coefficients, because the arranged width
+    /// is what the Commander actually sees and needs no assumption about what the splitter did to
+    /// the units. Normalised here so the record is proportions and the layout is free to express
+    /// them however it likes.
+    /// </para>
+    /// </summary>
+    private void Remember()
+    {
+        if (_widths is null)
+        {
+            return;
+        }
+
+        var widths = _strip.ColumnDefinitions.Select(column => column.ActualWidth).ToList();
+        var total = widths.Sum();
+
+        // A strip that has not been arranged yet measures zero, and a zero share would be a pane
+        // that can never be dragged back. Nothing to record rather than something wrong.
+        if (total <= 0 || widths.Any(width => !double.IsFinite(width) || width <= 0))
+        {
+            return;
+        }
+
+        _widths.Remember(widths.Count, widths.Select(width => width / total).ToList());
+    }
+
+    /// <summary>
+    /// Gives this strip's rules a handle the mouse can drag, and remembers where they are left
+    /// (list.md Phase 55). The desktop window calls it; the headset and the flat overlay never do.
+    /// <para>
+    /// Redraws rather than waiting for the next navigation, because a strip that is already on
+    /// screen when this arrives would otherwise have no handles until the Commander drilled
+    /// somewhere — and the reason to call it at all is the page in front of them.
+    /// </para>
+    /// </summary>
+    public void EnableDrag(PaneWidthMemory memory)
+    {
+        _widths = memory;
+
+        // The short-circuit in Draw compares against what is already laid out, and the keys have
+        // not changed - only whether they are draggable has.
+        _showing = [];
+        Draw();
     }
 
     /// <summary>

@@ -1466,6 +1466,37 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
+    /// (list.md Phase 55). Null everywhere else, which is what keeps this the window's alone.
+    /// </summary>
+    private PaneWidthMemory? _paneWidths;
+
+    /// <summary>
+    /// Lets the mouse drag the rule between two panes, on every tab at once (list.md Phase 55).
+    /// <para>
+    /// Furnished rather than branched, like <see cref="EnableSearch"/> and
+    /// <see cref="EnableTurnDetails"/> — and here that is a safety property rather than a
+    /// convention. The headset drives this same view through a geometric hit test, so a handle
+    /// that existed there would be draggable by the ray, and the ask names the mouse and only the
+    /// mouse. The headset simply never calls this.
+    /// </para>
+    /// <para>
+    /// Reaches strips already built as well as ones built later, the way
+    /// <see cref="ApplyChrome"/> does: whichever tab the Commander is looking at when this is
+    /// called is the one they would try it on first.
+    /// </para>
+    /// </summary>
+    public void EnableDraggablePanes(PaneWidthMemory memory)
+    {
+        _paneWidths = memory;
+
+        foreach (var page in _pages.Values)
+        {
+            page.EnableDrag(memory);
+        }
+    }
+
+    /// <summary>
     /// Offers the turn's figures behind a link, for a host that has somewhere to show them
     /// (docs/plans/change-requests.md item 2).
     /// <para>
@@ -2424,6 +2455,14 @@ public partial class PanelView : UserControl
             // levels themselves are built by the strip, on first sight, which is what keeps a
             // Commander who never opens Suggestions from paying for it.
             page = new DrillView(Nav, tab, build);
+
+            // A strip built after the host furnished this surface still gets handles - the tabs
+            // are built on first sight rather than up front, so most of them arrive here (Phase 55).
+            if (_paneWidths is not null)
+            {
+                page.EnableDrag(_paneWidths);
+            }
+
             _pages[tab] = page;
         }
 
