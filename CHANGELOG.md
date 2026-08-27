@@ -26,6 +26,71 @@ file never moves.
 
 ---
 
+## 0.81.0 — 2026-08-27 — Read the journal
+
+### Elite's journal, in the Transcript, in English
+
+The Transcript has two new readings beside Thread, Details and D47 Log.
+
+**Journal** is what Elite has been writing, one line per event, in sentences rather than JSON:
+
+```
+12:03:15  Course set for Kusauts
+12:03:27  Undocked from BNH-T2F
+12:05:16  Jumping to Kusauts
+```
+
+Click a line and **the fields behind it appear beside the list** — the event exactly as Elite wrote
+it, indented and selectable. That pairing is the point: the sentence is easy to read and could be
+wrong; the fields cannot be. An event nobody has written a sentence for still lists, and its fields
+are just as complete as any other's.
+
+**The detail pane folds away** if you would rather have one column of sentences, and the rule between
+the two panes drags, like the ones on the other tabs.
+
+**Raw Journal** is the same events shown as the JSON, wide, for when you are copying something into
+a bug report.
+
+### The noise is hidden until you ask for it
+
+Nearly half of what Elite writes, by volume, is inventory and signal chatter — `ShipLocker`,
+`FSSSignalDiscovered` and their kind. A page that opened on those would have to be scrolled past
+before it could be used, so they are hidden, and one toggle brings them back.
+
+They are still **kept**, not discarded. d47 never re-opens the journal to find them again — Elite
+holds that file open while you play — so hiding them on the way in would have made the toggle
+one-way.
+
+### Ships are named, not spelled
+
+A ship stored at another station could come out as **`Kofu (corsair)`** — the journal's own symbol
+rather than the hull's name — while the same fleet listed *Tulimiekka (Kestrel Mk II)* correctly
+beside it. Which spelling you got depended on which event the row came from, which is not something
+anybody should have to know.
+
+Every stored ship now names its hull properly, including the three newest ones — the Kestrel Mk II,
+the Caspian Explorer and the Corsair — which have no specification table entry and are named from
+their armour instead. That reached further than the fleet list: the ship chooser, the report d47
+reads to itself, and the facts an adventure is written against were all showing the symbol.
+
+And where d47 **describes** a ship rather than naming one, it says who built it — *"Anaconda, by
+Faulcon DeLacy"*. Those same three newest hulls have no builder recorded anywhere, so they say
+nothing rather than guessing.
+
+---
+
+**Under the hood.** The journal page reads events the tick loop has already polled rather than
+opening the file a second time — Elite holds the current journal open, so a second reader is a
+second place to get the sharing flags right. Raw Journal is furnished by the desktop window alone
+and never registered for the headset: a wall of JSON exists to be selected and pasted, which is an
+act with no meaning in mid-air. The sentences go to both.
+
+Fixes [#51](https://github.com/dseelinger/d47/issues/51),
+[#105](https://github.com/dseelinger/d47/issues/105) and
+[#108](https://github.com/dseelinger/d47/issues/108).
+
+---
+
 ## 0.80.0 — 2026-08-27 — Help that takes you there
 
 ### Settings help now links to the settings it mentions
