@@ -249,11 +249,43 @@ section gets written before the run that reads it. `-SkipTests` leaves the suite
 the same one on the pushed commit — worth it on a resume, where the tree has not changed since it
 last passed, and refused alongside `-SkipCi`.
 
+**Three commands sit on top of it, and they are on the Commander's PATH.** *Added 2026-08-27.*
+Each is a `.ps1` in `tools/` with a bash and a `.cmd` shim beside it that contain no logic, and a
+pointer in `%LOCALAPPDATA%\..\.local\bin` — so `release.ps1` stays the one implementation and there
+is no second description of any rule to disagree with the first.
+
+| Command | What it does |
+|---|---|
+| `prerelease` | Decides **minor or patch**, then runs `release.ps1` with `-PreRelease -Yes` |
+| `release` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`) |
+| `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
+
+**`prerelease` automates the one decision a person gets wrong.** It reads the phase state out of
+`list.md` **at the last tag** and compares it with the working tree: a phase ticked now that was not
+ticked then is a minor, so is a `change-request` issue closed since that tag, and anything else is a
+patch. That is the rule two paragraphs down, applied rather than remembered — and it is the trap
+this repository has already recorded, because a newly ticked phase is obvious on the day it ships
+and invisible three days later. `-Minor` and `-Patch` override it and say so when they disagree;
+`-DryRun` explains its reasoning and stops. It checks `CHANGELOG.md` **before** anything is
+committed, for the same reason `release.ps1` works the version out first.
+
+**`release` is the other half, and it is the direction that cannot be taken back.** It refuses a
+draft, refuses a release missing `d47.zip` or its checksum — the two names every build in the field
+reads back — reads the result back afterwards, and **refuses to go backwards**: its default is the
+newest pre-release *newer than the current latest*, compared as a version rather than by date, and
+naming an older tag by hand is refused too. That guard exists because the plain reading picked a
+superseded pre-release on its first run and would have offered the install base a downgrade.
+`tools/release.ps1` still exists and still does the work; the file behind `release` is
+`promote.ps1`, because two files named release doing different things is the hazard.
+
 **A release is never promoted automatically.** *Stated 2026-08-27.* Cutting, tagging and
 publishing a release is one command and may be run on request. Deciding a build is fit for
-**everyone** is the Commander's, and it is a separate act: `gh release edit vX.Y.Z
---prerelease=false --latest`. Until that runs, `UpdateChecker` reads `/releases/latest` and is
-offered the previous release, so a pre-release reaches nobody who does not go and fetch it.
+**everyone** is the Commander's, and it is a separate act — `release`, or
+`gh release edit vX.Y.Z --prerelease=false --latest`. **Having a command for it does not make it
+automatic**: it is still a thing the Commander types on purpose, and never a step an agent adds to
+the end of a flow. Until it runs, `UpdateChecker` reads `/releases/latest` and is
+offered the previous release, so a pre-release reaches nobody who does not go and fetch it with
+`get-ver`.
 **A plain `release.ps1 <patch|minor>` with no `-PreRelease` publishes straight to latest**, which is
 the same act by omission — so under this rule the flag is not optional. The reason is that a
 published tag never moves: a mistake in a pre-release costs a version number, and the same mistake
