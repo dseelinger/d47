@@ -20,6 +20,34 @@ the file as it stood then.
 
 ---
 
+## 0.78.2 — 2026-08-27 — Room to think before answering
+
+### A model that reasons could not get a word in
+
+The unprompted lines — the ambient remarks, the opening brief, what Directive 47 says after a long
+gap, a lore lookup — are given a budget of 400 tokens each. **On a model that reasons before it
+answers, the reasoning came out of the same 400.** It would think, run out of budget mid-thought,
+and never write anything. Directive 47 read that as "nothing to say" and quietly used the written
+line instead.
+
+**Nothing looked wrong.** No error, no warning, nothing in the log. The generated lines just stopped
+appearing, which is indistinguishable from a model that is dull — so it is not the sort of thing
+anyone would think to report.
+
+That budget now covers the thinking as well as the answer, and the answer keeps the same room it
+always had. This costs nothing on a model that does not reason: it is a ceiling rather than a
+purchase, and a model that answers in forty tokens is charged for forty either way.
+
+**If it does run out, that is now written to the log** rather than passing in silence — naming the
+model and how far it got. A model that ran out of room and a model that declined to speak used to
+be the same nothing.
+
+This was found while testing a local model and has nothing to do with local models: it reaches any
+reasoning model, including ones reached through OpenRouter or a gateway, and the **Model for the
+quiet calls** setting makes it easier to meet rather than harder.
+
+---
+
 ## 0.78.1 — 2026-08-27 — A build that says which one it is
 
 ### About told you the same thing twice
