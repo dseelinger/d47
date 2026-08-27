@@ -148,6 +148,13 @@ public partial class MainWindow : Window
             // stays free of a disk and a test can hand it a string.
             _model.LogSource = () => Logging.LogTail.Read(host.Paths.Logs);
 
+            // Elite's journal, from the events the tick loop already polled (#51).
+            _model.JournalSource = noise => host.JournalLog.Read(noise);
+
+            // And the JSON behind them, which is this window's alone: a wall of fields is there to
+            // be selected and pasted into a bug report, which is an act with no meaning in mid-air.
+            Panel.EnableRawJournal();
+
             // The window that can show settings says so; the headset's copy of this same view
             // is handed nothing and therefore has no Settings tab (list.md Phase 12). The second
             // argument is what a help card naming a settings section does when pressed, and it

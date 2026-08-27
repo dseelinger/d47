@@ -61,6 +61,16 @@ public partial class PanelView : UserControl
     public const string LogRoot = "transcript.log";
 
     /// <summary>
+    /// Elite's own journal, read as sentences (#51). A new key rather than a rename: the three
+    /// above are internal and are cited from settings, tests and the keyword router, and only their
+    /// spoken <c>Word</c> changed when this issue renamed them.
+    /// </summary>
+    public const string JournalRoot = "transcript.journal";
+
+    /// <summary>The same events as the JSON Elite wrote (#51).</summary>
+    public const string RawJournalRoot = "transcript.rawjournal";
+
+    /// <summary>
     /// The help the Transcript tab's default reading offers: a page about the page, rather than
     /// about any one capability (asked for 2026-08-23). Named here so the test that checks where
     /// the mark goes and the registration that sends it there cannot spell it differently.
@@ -314,6 +324,14 @@ public partial class PanelView : UserControl
             PanelTab.Transcript,
             new NavCrumb(LogRoot, "D47 Log") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
 
+        // Elite's own journal, in a form that is not JSON (#51). "Raw Journal" and not
+        // "Journal (RAW)": a crumb is matched by the keyword router as well as pressed, and a
+        // parenthetical is not a phrase anybody says - one word order for both routes rather than
+        // a label and a synonym.
+        Nav.Register(
+            PanelTab.Transcript,
+            new NavCrumb(JournalRoot, "Journal") { Help = TranscriptHelp });
+
         // The mode button's content, once. See DrawModes for why it is not rebuilt.
         _logBusy.Bind(
             Avalonia.Controls.Shapes.Shape.StrokeProperty,
@@ -443,6 +461,8 @@ public partial class PanelView : UserControl
         {
             TechnicalRoot => TranscriptPage.Technical,
             LogRoot => TranscriptPage.Log,
+            JournalRoot => TranscriptPage.Journal,
+            RawJournalRoot => TranscriptPage.RawJournal,
             _ => TranscriptPage.Conversation,
         };
 
@@ -450,6 +470,8 @@ public partial class PanelView : UserControl
         {
             TranscriptPage.Technical => TechnicalRoot,
             TranscriptPage.Log => LogRoot,
+            TranscriptPage.Journal => JournalRoot,
+            TranscriptPage.RawJournal => RawJournalRoot,
             _ => ConversationRoot,
         });
     }
@@ -1466,6 +1488,25 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Adds the Raw Journal reading (#51), on a surface that has somewhere useful to put it.
+    /// <para>
+    /// <b>Furnished rather than registered, which is what keeps it off the headset.</b> Journal is
+    /// registered for every surface because a sentence at a metre is readable; a wall of JSON is
+    /// not, and it is there to be selected and pasted into a bug report — an act with no meaning in
+    /// mid-air. Same seam as <see cref="EnableSearch"/> and for the same reason: the surface that
+    /// wants it says so, and no code anywhere tests which surface it is on.
+    /// </para>
+    /// </summary>
+    public void EnableRawJournal()
+    {
+        Nav.Register(
+            PanelTab.Transcript,
+            new NavCrumb(RawJournalRoot, "Raw Journal") { Help = TranscriptHelp });
+
+        DrawModes();
+    }
+
+    /// <summary>
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
     /// (list.md Phase 55). Null everywhere else, which is what keeps this the window's alone.
     /// </summary>
@@ -2242,6 +2283,14 @@ public partial class PanelView : UserControl
             return;
         }
 
+        // Rebuilt when the page is opened, for the reason the log is read then: the events are
+        // already in memory, but projecting four thousand of them into lines is not worth doing
+        // per tick for a page nobody is looking at (#51).
+        if (Page is TranscriptPage.Journal or TranscriptPage.RawJournal)
+        {
+            Model?.RefreshJournal();
+        }
+
         DrawTranscript();
     }
 
@@ -2518,11 +2567,112 @@ public partial class PanelView : UserControl
     /// else: a reply streams a delta at a time, and rebuilding every turn in the conversation
     /// per token is work that grows with how long the Commander has been flying.
     /// </param>
+    /// <summary>
+    /// The journal, as a list of sentences with the selected event's fields beside it (#51).
+    /// <para>
+    /// <b>Two pages share this pane</b>, and the only difference is which column the reader is
+    /// looking at. Journal lists sentences; Raw Journal lists the same events and shows the JSON
+    /// wide, with the list narrowed to the times — the same events, the same selection, one
+    /// mechanism rather than two pages that have to be kept in step.
+    /// </para>
+    /// </summary>
+    private void DrawJournal()
+    {
+        if (Model is not { } model)
+        {
+            JournalList.ItemsSource = null;
+            JournalDetail.Text = string.Empty;
+            return;
+        }
+
+        var raw = Page == TranscriptPage.RawJournal;
+
+        // Raw Journal is the fields, so the list is only there to choose between them; Journal is
+        // the sentences, so the list is the page and the fields are the aside.
+        JournalPane.ColumnDefinitions[0].Width = new GridLength(raw ? 1 : 2, GridUnitType.Star);
+        JournalPane.ColumnDefinitions[2].Width = new GridLength(raw ? 3 : 2, GridUnitType.Star);
+
+        // The detail is always shown on Raw Journal - it *is* Raw Journal - and follows the toggle
+        // on the sentence page, which is the Commander's amendment to the design and what keeps
+        // that page usable in one narrow column.
+        var detail = raw || model.JournalDetail;
+
+        JournalDetailScroller.IsVisible = detail;
+        JournalSplitter.IsVisible = detail;
+
+        JournalList.ItemsSource = model.Journal.Select(entry => entry.Line).ToList();
+
+        if (model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count)
+        {
+            JournalList.SelectedIndex = model.JournalSelected;
+        }
+
+        JournalDetail.Text = model.JournalDetailText;
+    }
+
+    /// <summary>
+    /// A line was chosen, so the fields beside it change. Straight onto the model rather than into
+    /// a field here, because the headset's copy of this panel shows the same selection and reads it
+    /// from the same place.
+    /// </summary>
+    private void OnJournalSelected(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (Model is not { } model || JournalList.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        model.JournalSelected = JournalList.SelectedIndex;
+        JournalDetail.Text = model.JournalDetailText;
+    }
+
+    /// <summary>
+    /// Whether the fields are drawn beside the list. Furnished by the host rather than read from a
+    /// setting, so a surface that cannot show two panes simply never turns it on.
+    /// </summary>
+    public void ShowJournalDetail(bool shown)
+    {
+        if (Model is { } model)
+        {
+            model.JournalDetail = shown;
+            DrawTranscript();
+        }
+    }
+
+    /// <summary>
+    /// Whether the kinds nobody reads are listed. Rebuilds rather than filters what is drawn: the
+    /// list is a projection of the log and the log is where the filter belongs.
+    /// </summary>
+    public void ShowJournalNoise(bool shown)
+    {
+        if (Model is { } model)
+        {
+            model.JournalNoise = shown;
+            model.RefreshJournal();
+            DrawTranscript();
+        }
+    }
+
     private void DrawTranscript(bool appended)
     {
         if (!Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => DrawTranscript(appended));
+            return;
+        }
+
+        // The journal is a shape of its own - a list and the fields beside it - so it takes the
+        // pane rather than a presentation inside the shared scroller (#51). Drawn and returned
+        // from here, because everything below this line is about runs of transcript text and none
+        // of it applies.
+        var journal = Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+
+        JournalPane.IsVisible = journal;
+        TranscriptScroller.IsVisible = !journal;
+
+        if (journal)
+        {
+            DrawJournal();
             return;
         }
 

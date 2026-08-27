@@ -163,6 +163,13 @@ public sealed class AppHost : IDisposable
     public JournalSpine Journal { get; }
 
     /// <summary>
+    /// The last few thousand journal events, kept so the Transcript can show them
+    /// (https://github.com/dseelinger/d47/issues/51). Fed from the spine's own poll below, and
+    /// never by opening the file a second time - Elite holds the current journal open.
+    /// </summary>
+    public D47.Core.Journal.JournalLog JournalLog { get; private set; } = new();
+
+    /// <summary>
     /// The ~4-10 Hz loop (architecture.md §4). Exposed because a surface that needs sampling
     /// rather than events — push-to-talk edge detection, the VR connection state machine —
     /// registers here instead of growing a timer of its own.
@@ -1030,6 +1037,10 @@ public sealed class AppHost : IDisposable
         // Registration order is what makes this safe - "journal" runs first, by design.
         IReadOnlyList<JournalEvent> arrived = [];
 
+        // Captured rather than reached through the host, for the same reason `arrived` is: this
+        // closure is built before the instance exists (#51).
+        var journalLog = new D47.Core.Journal.JournalLog();
+
         tick.Add("journal", context =>
         {
             // The first tick is the replay of the backlog, and the switch signal has to know that
@@ -1037,6 +1048,12 @@ public sealed class AppHost : IDisposable
             var events = journal.Poll(priming: context.IsFirst);
 
             arrived = events;
+
+            // Kept for the Journal page to read (#51). Every event, including the priming replay:
+            // a Commander opening the page wants the session they have been flying rather than
+            // only what has happened since they opened it. Noise is marked there and filtered by
+            // the page, never dropped here - a read filter could not be switched back on.
+            journalLog.Add(events);
             status.Poll();
             route.Poll();
 
@@ -1892,6 +1909,9 @@ public sealed class AppHost : IDisposable
         // startup; the drawn face is what every state falls back to, so an empty data/avatar is
         // the normal case rather than a missing asset.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
+
+        // The buffer the tick closure has been filling since before this instance existed (#51).
+        host.JournalLog = journalLog;
 
         // The face follows the loop. Set straight onto the view model from whichever thread the
         // state arrived on: a view model is affine to nothing, and the view marshals — which is

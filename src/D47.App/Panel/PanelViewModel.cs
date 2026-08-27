@@ -62,6 +62,15 @@ public enum TranscriptPage
 
     /// <summary>Today's log file, read when this page is opened.</summary>
     Log,
+
+    /// <summary>
+    /// Elite's journal as sentences, with the fields behind the selected line beside it
+    /// (https://github.com/dseelinger/d47/issues/51).
+    /// </summary>
+    Journal,
+
+    /// <summary>The same events, shown as the JSON Elite wrote.</summary>
+    RawJournal,
 }
 
 /// <summary>
@@ -202,6 +211,79 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// view model that knows nothing about a disk and a test can hand it a string.
     /// </summary>
     public Func<string>? LogSource { get; set; }
+
+    private IReadOnlyList<D47.Core.Journal.JournalEntry> _journal = [];
+    private int _journalSelected = -1;
+    private bool _journalDetail = true;
+    private bool _journalNoise;
+
+    /// <summary>Elite's journal as the page holds it, newest first (#51).</summary>
+    public IReadOnlyList<D47.Core.Journal.JournalEntry> Journal
+    {
+        get => _journal;
+        private set => Set(ref _journal, value);
+    }
+
+    /// <summary>
+    /// Where <see cref="Journal"/> comes from — the log the tick loop feeds, asked for what it
+    /// holds. A function for the reason <see cref="LogSource"/> is one: this stays a view model
+    /// that knows nothing about a disk, and a test hands it a list.
+    /// <para>
+    /// <b>Never a second reader.</b> Elite holds the current journal open, so a page opening its
+    /// own stream needs <c>FileShare.ReadWrite | FileShare.Delete</c> and is a second place to get
+    /// that right. The events are already in hand where the spine polled them.
+    /// </para>
+    /// </summary>
+    public Func<bool, IReadOnlyList<D47.Core.Journal.JournalEntry>>? JournalSource { get; set; }
+
+    /// <summary>Which line's fields the detail pane is showing, or -1 for none.</summary>
+    public int JournalSelected
+    {
+        get => _journalSelected;
+        set => Set(ref _journalSelected, value);
+    }
+
+    /// <summary>
+    /// Whether the fields are shown beside the list. <b>The Commander's amendment to the design</b>,
+    /// and what keeps the page usable narrow — off, it is one scrolling column of sentences.
+    /// </summary>
+    public bool JournalDetail
+    {
+        get => _journalDetail;
+        set => Set(ref _journalDetail, value);
+    }
+
+    /// <summary>
+    /// Whether the kinds nobody reads are listed. Off by default: <c>ShipLocker</c>,
+    /// <c>FSSSignalDiscovered</c> and their kind are 48% of the corpus by volume, and a page that
+    /// opens on them has to be scrolled past before it can be used.
+    /// </summary>
+    public bool JournalNoise
+    {
+        get => _journalNoise;
+        set => Set(ref _journalNoise, value);
+    }
+
+    /// <summary>The fields behind the selected line, or empty when nothing is selected.</summary>
+    public string JournalDetailText =>
+        JournalSelected >= 0 && JournalSelected < Journal.Count
+            ? Journal[JournalSelected].Raw
+            : string.Empty;
+
+    /// <summary>
+    /// Re-reads the journal from the log. Called when the page is opened and when the noise toggle
+    /// moves, for the reason the log is read on opening: a page nobody is looking at is not worth
+    /// rebuilding per tick.
+    /// </summary>
+    public void RefreshJournal()
+    {
+        Journal = JournalSource is { } read ? read(JournalNoise) : [];
+
+        // The selection is an index into a list that has just been rebuilt, so it cannot survive
+        // it. Dropped rather than clamped: keeping it would show the fields of whichever event
+        // happened to land at that position, which is worse than showing none.
+        JournalSelected = Journal.Count > 0 ? 0 : -1;
+    }
 
     /// <summary>
     /// Re-reads the log. Called when a surface switches to it and when the Commander asks

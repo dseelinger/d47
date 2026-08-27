@@ -60,9 +60,14 @@ public class ThePanelIsAPlaceTests
             Assert.False(panel.GetControl<RadioButton>(name).IsVisible, name);
         }
 
-        // And there is no second tab strip: the three readings are one drop-down inside the pane,
-        // not four more tabs beside it (remediation.md 10, item 1).
-        Assert.Equal(3, PanelModes.Count(panel));
+        // And there is no second tab strip: the readings are one drop-down inside the pane, not
+        // more tabs beside it (remediation.md 10, item 1).
+        //
+        // Four rather than three since #51: Thread, Details, D47 Log and Journal are registered for
+        // every surface. **Raw Journal is not**, and its absence here is the assertion worth having
+        // — it is furnished by the desktop window alone, so an unfurnished panel like this one must
+        // not have it. TheJournalIsAReadingTests says so directly.
+        Assert.Equal(4, PanelModes.Count(panel));
     }
 
     /// <summary>
