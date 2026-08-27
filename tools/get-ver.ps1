@@ -28,11 +28,13 @@
     `get-ver 0.79` answer "no such release" about a release that plainly exists. `latest` means the
     opposite thing on purpose: it is the question "what would I get if I did nothing?"
 
-.PARAMETER Yes
-    Install without asking. The unattended switch, spelled the same as `release.ps1`'s.
-
 .PARAMETER DownloadOnly
     Fetch and verify, then stop and say where the file is. Nothing is run.
+
+    **This is the only brake, because there is no prompt.** The command is "get me this version", so
+    it fetches it, checks it and installs it — a confirmation asking whether you meant the thing you
+    just typed is friction rather than safety. `release.ps1` asks before it tags because a tag cannot
+    be taken back; an install can simply be redone with a different argument.
 
 .PARAMETER Zip
     Take `d47.zip` instead of the installer — the portable build, for a side-by-side that must not
@@ -43,7 +45,7 @@
 
 .EXAMPLE
     tools/get-ver.ps1 0.79.0
-    tools/get-ver.ps1 0.79 -Yes
+    tools/get-ver.ps1 0.79
     tools/get-ver.ps1 prerelease -DownloadOnly
     tools/get-ver.ps1 latest
 
@@ -59,8 +61,6 @@
 param(
     [Parameter(Mandatory, Position = 0)]
     [string] $Version,
-
-    [switch] $Yes,
 
     [switch] $DownloadOnly,
 
@@ -277,22 +277,6 @@ if ($DownloadOnly) {
     Write-Step 'Downloaded and verified. Not installed, because -DownloadOnly.'
     Write-Note $file
     return
-}
-
-if (-not $Yes) {
-    Write-Host ''
-    Write-Host "About to run $assetName ($tag$(if ($isPre) { ', a pre-release' }))." -ForegroundColor Yellow
-    Write-Host 'It is a per-user install and asks for no elevation.' -ForegroundColor DarkGray
-
-    # Read-Host with no console attached does not ask, it hangs - so the unattended road is the
-    # switch rather than a timeout. Same reasoning as release.ps1's -Yes.
-    $answer = Read-Host 'Install it? [y/N]'
-
-    if ($answer -notmatch '^(y|yes)$') {
-        Write-Step 'Left alone.'
-        Write-Note $file
-        return
-    }
 }
 
 Write-Step "Installing $tag"
