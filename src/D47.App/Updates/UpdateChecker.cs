@@ -67,8 +67,33 @@ public sealed class UpdateChecker
     /// several files now, and updating only the exe would ship the bug class this replaced.
     /// Builds older than that see no <c>d47.exe</c> asset and fall back to the release page.
     /// </summary>
-    private const string ArchiveAsset = "d47.zip";
-    private const string ChecksumAsset = "d47.zip.sha256";
+    /// <summary>
+    /// <b>These two names are a published interface, and they can never be changed.</b>
+    /// <para>
+    /// Every d47 ever installed looks for these exact strings — the match below is ordinal
+    /// equality against these literals — so renaming the release asset does not break the next
+    /// release, it breaks <em>every build already on a Commander's machine</em>, permanently.
+    /// <c>DownloadUrl</c> comes back null, <c>CanInstall</c> goes false, and the in-app update
+    /// silently degrades to "open the release page", which reads as a quiet release cycle rather
+    /// than as a fault.
+    /// </para>
+    /// <para>
+    /// <b>And it cannot be fixed forward.</b> Teaching this class to match a pattern helps only
+    /// builds released after the change; the ones already out there are fixed for ever. This is
+    /// the one part of a release that older binaries reach back and read.
+    /// </para>
+    /// <para>
+    /// It has already cost this once, in the other direction: moving from a bare exe to an archive
+    /// at v0.5.14 left every earlier build unable to update in place. That is recorded below as
+    /// history — this is the same fact stated as a rule, because history did not stop it happening.
+    /// The installer carries no such contract and is free to be versioned; nothing in
+    /// <c>src/</c> reads its name.
+    /// </para>
+    /// </summary>
+    internal const string ArchiveAsset = "d47.zip";
+
+    /// <inheritdoc cref="ArchiveAsset"/>
+    internal const string ChecksumAsset = "d47.zip.sha256";
 
     private static readonly HttpClient Http = CreateClient();
 

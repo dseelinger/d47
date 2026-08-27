@@ -148,7 +148,7 @@ jobs:
           cd src/D47.App/bin/Release/publish
           sha256sum d47.zip | tee d47.zip.sha256
           cd "$GITHUB_WORKSPACE/installer"
-          sha256sum d47-setup.exe | tee d47-setup.exe.sha256
+          sha256sum d47-setup-${{ steps.v.outputs.version }}.exe | tee d47-setup-${{ steps.v.outputs.version }}.exe.sha256
 
       # Unsigned with published checksums, per architecture.md §9.
       - uses: softprops/action-gh-release@v2
@@ -157,7 +157,7 @@ jobs:
           body_path: notes.md
           generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
           files: |
-            installer/d47-setup.exe
-            installer/d47-setup.exe.sha256
+            installer/d47-setup-${{ steps.v.outputs.version }}.exe
+            installer/d47-setup-${{ steps.v.outputs.version }}.exe.sha256
             src/D47.App/bin/Release/publish/d47.zip
             src/D47.App/bin/Release/publish/d47.zip.sha256

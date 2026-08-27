@@ -18,7 +18,7 @@ nav_order: 1
 <h2><span class="num">1</span> Two ways to get it. Same result.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="The installer and the portable zip both produce one folder">
  <rect x="20" y="26" width="255" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="147" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">d47-setup.exe</text>
+ <text x="147" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">d47-setup-….exe</text>
  <text x="147" y="86" text-anchor="middle" font-size="14" fill="var(--text-muted)">it puts itself away</text>
  <rect x="20" y="130" width="255" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="147" y="166" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">d47.zip</text>
@@ -133,8 +133,9 @@ nav_order: 1
 
 ## The details
 
-Download **`d47-setup.exe`** from the
-[latest release](https://github.com/dseelinger/d47/releases/latest) and run it. There is no
+Download the installer — **`d47-setup-0.78.1.exe`**, or whatever version is current — from the
+[latest release](https://github.com/dseelinger/d47/releases/latest) and run it. The version is in
+the filename on purpose, so a folder with several of them in it still tells you which is which. There is no
 runtime prerequisite, and it never asks for administrator rights.
 
 It installs for your account only, into `%LOCALAPPDATA%\Programs\d47`, and appears in
@@ -174,10 +175,10 @@ on the executable. Rather than ask you to trust that, every release publishes a 
 beside each download. Compare whichever you took:
 
 ```powershell
-Get-FileHash .\d47-setup.exe -Algorithm SHA256
+Get-FileHash .\d47-setup-0.78.1.exe -Algorithm SHA256
 ```
 
-Match the result against `d47-setup.exe.sha256` from the same release — or `d47.zip.sha256`
+Match the result against the `.sha256` file published beside it in the same release — or `d47.zip.sha256`
 if you took the zip. If it differs, do not run or unpack the file.
 
 ### Where things are written

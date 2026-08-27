@@ -45,7 +45,12 @@ DisableDirPage=auto
 DisableReadyPage=no
 
 OutputDir=.
-OutputBaseFilename=d47-setup
+; Versioned, deliberately, and this is the asset that may be (#96). Nothing in src/ reads this
+; name and no test pins it - the in-app updater fetches d47.zip and never the installer. So this is
+; the one release asset free to say which build it is, which is worth it for the file a person
+; downloads and may still have in a folder a year later. d47.zip is the opposite case and must
+; never be renamed; see UpdateChecker.ArchiveAsset.
+OutputBaseFilename=d47-setup-{#Version}
 SetupIconFile=..\assets\directive-47.ico
 UninstallDisplayIcon={app}\{#ExeName}
 UninstallDisplayName={#Name}

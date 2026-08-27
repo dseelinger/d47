@@ -183,6 +183,18 @@ section gets written before the run that reads it. `-SkipTests` leaves the suite
 the same one on the pushed commit — worth it on a resume, where the tree has not changed since it
 last passed, and refused alongside `-SkipCi`.
 
+**A release is never promoted automatically.** *Stated 2026-08-27.* Cutting, tagging and
+publishing a release is one command and may be run on request. Deciding a build is fit for
+**everyone** is the Commander's, and it is a separate act: `gh release edit vX.Y.Z
+--prerelease=false --latest`. Until that runs, `UpdateChecker` reads `/releases/latest` and is
+offered the previous release, so a pre-release reaches nobody who does not go and fetch it.
+**A plain `release.ps1 <patch|minor>` with no `-PreRelease` publishes straight to latest**, which is
+the same act by omission — so under this rule the flag is not optional. The reason is that a
+published tag never moves: a mistake in a pre-release costs a version number, and the same mistake
+in a latest reaches the install base and can only be superseded. Every build is flown by hand first,
+because a green suite and a working feature are different claims — Phase 60 shipped fully green with
+Cartesia never once heard aloud.
+
 **A completed phase is always a minor release.** Finishing a phase in `list.md` means the
 next tag is `0.<minor+1>.0`, not another patch — the version is how a Commander tells "some
 fixes landed" from "there is a whole capability here now". Fixes between phases are patches.
