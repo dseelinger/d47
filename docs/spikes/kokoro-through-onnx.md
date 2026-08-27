@@ -66,6 +66,18 @@ still reads as a specific person. **Blend across gender and you get androgyny**,
 rather than a failure — and plausibly the right one for a Guardian core, which is not a person and
 has never been claimed to be. That is the Commander's call, not the layout's.
 
+**Confirmed by ear, and this is the half that makes it usable.** The three same-gender blends were
+listened to on 2026-08-27: *"they all sounded the way their names suggest."* So the rule is verified
+rather than inferred from a pitch estimate that the paragraph below admits is crude.
+
+**And the consequence is a label that can be derived instead of auditioned.** Kokoro's voice names
+encode accent and gender — `af_` American female, `bm_` British male — and a blend of two `af_`
+voices *is* an `af_` voice, by ear as well as by measurement. So a casting surface can name and group
+a blend from its parents without anybody hearing it first, which is what makes offering blends
+tractable at all: 417 English voices blend into far too many pairs to audition. **Only the
+cross-gender case needs a human**, because that is the one where the parents' names do not answer
+what the child should be called.
+
 **A caveat about the instrument, stated because the table invites over-reading it.** The pitch figure
 is the strongest FFT peak in a 70–320 Hz band over the whole clip, which is crude: `bm_george`
 *alone* measures 156 Hz and is plainly a man. **The ordering is trustworthy and the absolute
