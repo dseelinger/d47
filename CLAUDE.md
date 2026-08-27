@@ -12,7 +12,7 @@ Three documents carry the design. They are not summarized here — go read the r
 
 | Question | File |
 |---|---|
-| What has it shipped? Is this in scope? | [list.md](list.md) — 351 items in 56 phases, each line carrying its own acceptance criteria. **Built phases only** |
+| What has it shipped? Is this in scope? | [list.md](list.md) — 356 items in 57 phases, each line carrying its own acceptance criteria. **Built phases only** |
 | What is planned but not built? | [Issues labelled `phase`](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Aphase) — one per unbuilt phase; it lands in `list.md` when it ships |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
@@ -153,7 +153,7 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-21, 23-54, 57, 58 and 60 are frozen.** Several hundred code comments
+- **Phase numbers are references, and phases 1-21, 23-55, 57, 58 and 60 are frozen.** Several hundred code comments
   cite `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
   phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
   Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
@@ -183,13 +183,15 @@ Each of these is cheap to break by accident and expensive to fix later.
   can. **The exception is a number something permanent has already spent**, and the rule for spotting
   one is that it is *not* the ship date. `CHANGELOG.md` names **Phase 59** under 0.72.0, and a
   published tag never moves — so 59 was spent on 2026-08-25 by the release that shipped a *different*
-  phase, and the one it names is still unbuilt today. **55, 56 and 59 are
-  reserved to [#99](https://github.com/dseelinger/d47/issues/99),
-  [#100](https://github.com/dseelinger/d47/issues/100) and
-  [#101](https://github.com/dseelinger/d47/issues/101)** — 56 by courtesy, since nothing cites it, and
-  the other two because something already does. Before allocating, grep the prose as well as the
-  source: a number is spent by a changelog line or a frozen phase naming it, not only by a `list.md
-  Phase N` comment.
+  phase, and the one it names is still unbuilt today. **56 and 59 are
+  reserved to [#100](https://github.com/dseelinger/d47/issues/100) and
+  [#101](https://github.com/dseelinger/d47/issues/101)** — 56 by courtesy, since nothing cites it,
+  and 59 because something already does. **55 was reserved the same way and took its number on
+  2026-08-27**, which is the whole rule working once: it was planned as
+  [#99](https://github.com/dseelinger/d47/issues/99) under its subject, kept 55 because
+  `phase-54-a-floor-and-a-ceiling.md` already named it, and joined the frozen set on the commit that
+  landed it. Before allocating, grep the prose as well as the source: a number is spent by a
+  changelog line or a frozen phase naming it, not only by a `list.md Phase N` comment.
 - **Renumbering: remap the numbers mechanically, then check the moved items by hand.** Both passes
   moved every number correctly and both got the same thing wrong: a citation naming an *item* that
   changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,

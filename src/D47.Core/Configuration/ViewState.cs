@@ -152,6 +152,62 @@ public sealed record ViewState
         new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
 
     /// <summary>
+    /// How the Commander last dragged the rule between panes, keyed by how many panes were
+    /// showing at the time (list.md Phase 55).
+    /// <para>
+    /// <b>Proportions rather than pixels.</b> The window is resizable and a remembered 640 means
+    /// something different at 1024 and at 2048, so what is kept is each pane's share of the strip.
+    /// The shares for one entry always sum to 1.
+    /// </para>
+    /// <para>
+    /// <b>Keyed by pane count, because a two-pane split and a three-pane split are different
+    /// arrangements</b> a Commander will want set differently — and the reflow moves between them
+    /// on its own as the window is dragged. One list would have widening the window silently
+    /// restate the two-pane choice as a three-pane one.
+    /// </para>
+    /// <para>
+    /// Here rather than in settings for the reason the window's own rectangle is: it is a number
+    /// nobody would ever type, and a split that cannot be read should cost equal panes rather than
+    /// a loud failure. It is deliberately <em>not</em> keyed by tab or by crumb — the unit is the
+    /// surface's split at a given pane count, and a saved layout per subject is a much larger
+    /// promise than the one that was asked for.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<double>> PaneShares { get; init; } =
+        new Dictionary<int, IReadOnlyList<double>>();
+
+    /// <summary>Records a drag, as each pane's share of the strip at that pane count.</summary>
+    public ViewState With(int panes, IReadOnlyList<double> shares)
+    {
+        var next = new Dictionary<int, IReadOnlyList<double>>(PaneShares)
+        {
+            [panes] = shares,
+        };
+
+        return this with { PaneShares = next };
+    }
+
+    /// <summary>
+    /// The remembered shares for a pane count, or null for equal panes — which is both the
+    /// untouched default and the honest answer when what was stored cannot be trusted.
+    /// <para>
+    /// Validated on the way out rather than on the way in, because this record is deserialised
+    /// from a file a Commander can edit and a wrong-length or non-positive list would otherwise
+    /// reach the layout. The count must match, every share must be a positive real, and the
+    /// caller normalises — so a hand-edited <c>[1, 3]</c> means the same as <c>[0.25, 0.75]</c>.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<double>? SharesFor(int panes)
+    {
+        if (!PaneShares.TryGetValue(panes, out var shares) || shares.Count != panes)
+        {
+            return null;
+        }
+
+        return shares.All(share => share > 0 && double.IsFinite(share)) ? shares : null;
+    }
+
+    /// <summary>
     /// Whether a card should be open, given what the capability asked for and what the
     /// Commander has since said. Their choice wins in both directions.
     /// </summary>

@@ -249,6 +249,11 @@ public partial class MainWindow : Window
             // are made from the same line of the same file, which is where "desktop only" lives.
             Panel.EnableSearch();
 
+            // And the same window is the one with a mouse, which is the only thing the ask lets
+            // drag a pane (list.md Phase 55). Third call on the same line of the same file, for
+            // the same reason: "desktop only" lives here rather than in a test inside the view.
+            Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));
+
             // And the same window is the one with somewhere to open a dialog, which is what the
             // turn line's figures need. The headset's copy is handed nothing.
             Panel.EnableTurnDetails(() => _ = ShowSpendAsync());

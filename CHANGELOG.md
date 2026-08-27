@@ -26,6 +26,67 @@ file never moves.
 
 ---
 
+## 0.79.0 — 2026-08-27 — Panes you can set where you want them
+
+### Drag the line between two panes
+
+The panel shows the level you are on beside the one above it, and a third beside those when there
+is room. Until now those panes were always equal thirds, or equal halves, and there was no way to
+say *"give the ship list less and the slot detail more."*
+
+**Now the line between them is a handle.** Point at it, drag it, and the two panes either side move.
+It works on every tab that has panes — Loadout, Engineers, the Checklist, Routing and Adventures —
+because they are all drawn by one thing, so this arrived on all of them at once.
+
+**The page at rest looks exactly as it did.** No bar, no grip dots, no line that thickens when you
+approach it. It is the same hairline it always was until the pointer is actually on it, and then
+the cursor changes.
+
+### It stays where you put it
+
+The panel redraws itself constantly — every time you open a ship, drill into a slot, or come back
+up. **A width that survived only until the next click would not be a feature**, so what you dragged
+is remembered and re-applied every time.
+
+It is remembered as a **proportion rather than a number of pixels**, because the window is
+resizable and 640 pixels means something different on a 1024-wide window and a 2048-wide one. And
+it is remembered **separately for two panes and for three**, because those are different
+arrangements you will want set differently — and the panel already moves between them on its own as
+you resize the window. Widening the window to open a third pane no longer restates a two-pane
+choice you made as a three-pane one.
+
+### It cannot be dragged into a mess
+
+A pane has a minimum width, and that was already the number deciding how many panes fit. **It is
+now the same number that stops a drag**, so you cannot drag a pane down to a sliver that the layout
+still believes is full width. The handle stops at the limit rather than refusing to move or
+springing back — a handle that stops says where the edge is, and one that snaps back says nothing.
+
+Dragging changes the proportions of the panes you have. It never changes how many there are; that
+is still decided by how wide the window is.
+
+### The headset is untouched, on purpose
+
+This is the desktop window only, and that is a safety property rather than an oversight. The same
+panel is drawn in the headset, where it is driven by pointing a controller at it — so a handle that
+existed there would be draggable by the ray, whenever the ray crossed it. The ask was for the mouse
+and only the mouse, so the headset and the flat mini panel never get one, and there is a test that
+fails if they ever do.
+
+---
+
+**Under the hood.** `PaneWidthMemory` keeps the splits in `ViewState` beside the window's own
+rectangle, out of the append-only settings file — a proportion is not something a Commander types.
+It re-reads before it writes, because that record also carries the collapse states and the
+checklist filter, and saving a cached copy would silently undo whichever moved most recently. A
+hand-edited split file gets equal panes rather than a broken layout: the count has to match and
+every share has to be a positive real.
+
+Phase 55 in [list.md](list.md), which took its number on the commit that shipped it — the first
+phase to be planned as an issue rather than as a file.
+
+---
+
 ## 0.78.2 — 2026-08-27 — Room to think before answering
 
 ### A model that reasons could not get a word in
