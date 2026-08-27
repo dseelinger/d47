@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -121,7 +121,7 @@ public static class CommunityGoalCapability
                 DocsAnchor = "inara-api-key",
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Community goals", Order = 52 },
+        Display = new CapabilityDisplay { PanelTitle = "Community goals", Order = 53 },
     };
 
     private static async Task<ToolResult> DescribeAsync(

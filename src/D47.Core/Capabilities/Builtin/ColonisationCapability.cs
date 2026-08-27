@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -231,7 +231,7 @@ public static class ColonisationCapability
                     CandidatesAsync(galaxy, settings, commander, arguments, cancellationToken),
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Colonisation", Order = 53 },
+        Display = new CapabilityDisplay { PanelTitle = "Colonisation", Order = 54 },
     };
 
     // ------------------------------------------------------------------ sites

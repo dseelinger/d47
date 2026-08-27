@@ -1,4 +1,4 @@
-using D47.Core.Checklists;
+﻿using D47.Core.Checklists;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -78,7 +78,7 @@ public static class ChecklistCapability
             "my checklist",
             "what am i building",
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Checklists", Order = 58 },
+        Display = new CapabilityDisplay { PanelTitle = "Checklists", Order = 63 },
         Settings = [SummaryRow(checklists)],
         Tools =
         [

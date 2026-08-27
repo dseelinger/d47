@@ -473,8 +473,17 @@ if ($PreRelease) {
     $published = $false
 
     while ((Get-Date) -lt $deadline) {
-        # gh exits non-zero until the Release exists, which is the signal being waited on.
-        $state = gh release view $next --json isDraft --jq '.isDraft' 2>$null
+        # gh exits non-zero until the Release exists, which is the signal being waited on — and
+        # it says "release not found" on stderr while doing it.
+        #
+        # **Through Invoke-Native, which is not optional here.** Called bare, this is the trap that
+        # helper was written for and documents at its own definition: while ErrorActionPreference
+        # is Stop, Windows PowerShell turns any stderr line from a native command into a
+        # terminating error. `2>$null` does not save it — the redirection is applied after the
+        # error record has already been raised. So the first poll of a workflow that had not
+        # finished publishing killed the whole step, and the switch this block implements failed
+        # on its first real use, on v0.78.0, in the one case it was written to handle.
+        $state = Invoke-Native { gh release view $next --json isDraft --jq '.isDraft' 2>&1 }
 
         if ($LASTEXITCODE -eq 0 -and $state -eq 'false') {
             $published = $true
@@ -500,8 +509,20 @@ if ($PreRelease) {
 
     # Read it back rather than trusting the exit code: the whole value of this switch is that
     # nobody is offered the build, and "probably marked" is not that.
-    $isPre = gh release view $next --json isPrerelease --jq '.isPrerelease' 2>$null
-    $latest = gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>$null
+    # Both through Invoke-Native, for the reason given at the poll above: a bare native call with
+    # stderr in it is a terminating error while the preference is Stop, and `2>$null` is applied
+    # too late to prevent one.
+    $isPre = Invoke-Native { gh release view $next --json isPrerelease --jq '.isPrerelease' 2>&1 }
+
+    # `gh release list` rather than `gh api repos/:owner/:repo/releases/latest`, which says the
+    # same thing: the newest release that is neither a draft nor a pre-release is the definition
+    # of that endpoint's answer. The raw API is denied to agents by .claude/settings.json, because
+    # it is the road around tools/issues.ps1 — an issue body is one `gh api` call away otherwise —
+    # and a script that needs a denied command is a reason to lift the deny.
+    $latest = Invoke-Native {
+        gh release list --limit 1 --exclude-drafts --exclude-pre-releases `
+            --json tagName --jq '.[0].tagName' 2>&1
+    }
 
     if ($isPre -ne 'true') {
         Write-Warning "$next does not read back as a pre-release. Check it: gh release view $next"

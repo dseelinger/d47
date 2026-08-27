@@ -1,4 +1,4 @@
-using D47.Core.Configuration;
+﻿using D47.Core.Configuration;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -223,7 +223,7 @@ public static class NavigationCapability
         Name = "Navigation",
         Summary = "Put a system name on your clipboard, and try to plot a course to it.",
         Examples = ["plot a course to Shinrarta Dezhra", "copy that system name", "set course for Colonia"],
-        Display = new CapabilityDisplay { PanelTitle = "Navigation", Order = 55 },
+        Display = new CapabilityDisplay { PanelTitle = "Navigation", Order = 59 },
         Settings = [AutoPlotRow()],
         Tools =
         [

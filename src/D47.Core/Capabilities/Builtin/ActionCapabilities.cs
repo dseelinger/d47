@@ -122,7 +122,8 @@ public static class ActionCapabilities
             "Operate the landing gear, lights, cargo scoop, hardpoints and the frame shift drive.",
             ["put the gear down", "retract hardpoints", "engage supercruise", "lights off"],
             surface,
-            order: 50,
+            order: 51,
+            primary: true,
             extra: ShipCommands.Tool(surface, shipCommands ?? ShipCommandSurface.Inert)),
 
         Create(
@@ -196,6 +197,14 @@ public static class ActionCapabilities
         IReadOnlyList<string> examples,
         ActionSurface surface,
         int order,
+
+        // Whether this is the card the whole group's rows live on, rather than a number that
+        // happens to be 50 (#83). This used to be `order == 50` in two places, which quietly
+        // made the display order load-bearing for two things that are not about ordering at
+        // all: whether the card is drawn, and whether it carries the keyboard-actions row and
+        // the ship commands. Changing where the card sits in the nav would have switched both
+        // off, silently, and neither has anything to do with where it sits.
+        bool primary = false,
         ToolDefinition? extra = null)
     {
         // Computed once at registration and never again. This is the closed vocabulary that
@@ -214,7 +223,7 @@ public static class ActionCapabilities
             // tool here requires an action — so a keyword would match and then reach nothing.
             // The declared phrases below are the model-free route instead, and they name the
             // action rather than merely the subject.
-            Display = new CapabilityDisplay { PanelTitle = name, Order = order, ShowOnPanel = order == 50 },
+            Display = new CapabilityDisplay { PanelTitle = name, Order = order, ShowOnPanel = primary },
 
             // One row, on the first card only. Pressing keys in the game is one decision, not
             // four, and four copies of it is four things to switch off.
@@ -225,7 +234,7 @@ public static class ActionCapabilities
             // where everything else presses one key the Commander bound themselves. Every one of
             // them is gated by the row above as well, so a Commander who has not allowed key
             // injection at all has not allowed it here either.
-            Settings = order == 50 ? [KeyboardActionsRow(), .. ShipCommands.Rows()] : [],
+            Settings = primary ? [KeyboardActionsRow(), .. ShipCommands.Rows()] : [],
 
             Tools =
             [

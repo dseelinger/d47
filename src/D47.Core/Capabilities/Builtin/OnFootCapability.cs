@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -190,7 +190,7 @@ public static class OnFootCapability
                 Handler = (arguments, _) => Task.FromResult(Drop(plans, arguments)),
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "On foot", Order = 55 },
+        Display = new CapabilityDisplay { PanelTitle = "On foot", Order = 57 },
     };
 
     private static readonly IReadOnlyDictionary<string, string> Nothing =

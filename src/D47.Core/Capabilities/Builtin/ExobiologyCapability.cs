@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -150,7 +150,7 @@ public static class ExobiologyCapability
                     PlotAsync(routes, commander, arguments, cancellationToken),
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Exobiology", Order = 55 },
+        Display = new CapabilityDisplay { PanelTitle = "Exobiology", Order = 58 },
     };
 
     // --------------------------------------------------------------- the body

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -78,7 +78,7 @@ public static class SystemNameCapability
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Read(commander(), arguments))),
             },
         ],
-        Display = new CapabilityDisplay { PanelTitle = "System names", Order = 54 },
+        Display = new CapabilityDisplay { PanelTitle = "System names", Order = 55 },
     };
 
     private static string Read(CommanderGameState? state, ToolArguments arguments)

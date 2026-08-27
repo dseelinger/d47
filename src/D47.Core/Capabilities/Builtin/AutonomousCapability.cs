@@ -1,4 +1,4 @@
-using D47.Core.Actions;
+﻿using D47.Core.Actions;
 using D47.Core.Configuration;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -36,7 +36,7 @@ public static class AutonomousCapability
         Name = "Acting on its own",
         Summary = "Things D47 does to your ship without being asked. All off until you turn them on.",
         Examples = ["turn on the arrival honk", "stop honking on arrival"],
-        Display = new CapabilityDisplay { PanelTitle = "Acting on its own", Order = 54 },
+        Display = new CapabilityDisplay { PanelTitle = "Acting on its own", Order = 56 },
         Tools =
         [
             new ToolDefinition
