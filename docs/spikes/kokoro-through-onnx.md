@@ -38,9 +38,38 @@ direction the two endpoints imply. Cartesia's speed control was measured the sam
 [cartesia-voices-and-speed.md](cartesia-voices-and-speed.md) and *failed* that test — accepted and
 ignored. This one passes it.
 
-**A caveat the numbers cannot settle**: monotonic movement proves the blend is not a switch. Whether
-a blend at `t=0.5` sounds like a *person* rather than like two people at once is a question for ears,
-and nobody has listened yet. The WAVs are in the probe's output folder.
+### Listened to on 2026-08-27, and the ears found the rule the numbers had already written down
+
+The Commander's verdict on the clips above: **"they all sound like people, but a couple are very
+non-binary — somewhere between male and female."**
+
+**Both halves matter.** *Sounding like people* is the thing that could not be measured and is the
+answer to whether a blend is usable at all: it produces a coherent voice, not two voices at once and
+not an artifact. **And the androgyny is not a defect** — it is what interpolating across a gender
+boundary *is*, and the table above predicted it without anybody noticing: `t=0.5` measures 166 Hz,
+between the two endpoints, which is exactly where "between male and female" lives.
+
+So the follow-up was to blend *within* a gender, and that settles the design rule:
+
+| blend at `t=0.5` | pitch | centroid |
+|---|---|---|
+| `af_heart` alone | 187.9 Hz | 4266 |
+| **`af_heart` × `bm_george`** — across gender | **166.0 Hz** | 2890 |
+| `bm_george` alone | 156.3 Hz | 2589 |
+| **`af_heart` × `af_bella`** — two American women | **184.9 Hz** | 4267 |
+| **`am_michael` × `am_onyx`** — two American men | **100.2 Hz** | 2516 |
+| **`af_heart` × `bf_emma`** — across *accent*, same gender | **179.8 Hz** | 4315 |
+
+**Blend within a gender and the result stays in it** — `af × af` lands beside `af_heart` itself.
+**Blend across accent and it also stays put**, which is the more useful axis: it is a new voice that
+still reads as a specific person. **Blend across gender and you get androgyny**, which is a choice
+rather than a failure — and plausibly the right one for a Guardian core, which is not a person and
+has never been claimed to be. That is the Commander's call, not the layout's.
+
+**A caveat about the instrument, stated because the table invites over-reading it.** The pitch figure
+is the strongest FFT peak in a 70–320 Hz band over the whole clip, which is crude: `bm_george`
+*alone* measures 156 Hz and is plainly a man. **The ordering is trustworthy and the absolute
+boundaries are not** — the finding rests on the listening, and the numbers only explain it.
 
 ## 2. The interface, from C#
 
@@ -153,11 +182,15 @@ Three things follow, in the order they should be decided:
    Commander hears for an untabled name has to be a decision rather than whatever the net emits.
 3. **The size/latency trade is a settings question**, not an implementation detail: 310 MB at ×9
    realtime, or 82 MB at ×2.1. Neither is obviously right for an installer that is 70 MB today.
+4. **If blending is ever offered, the axis is accent and not gender.** Blending two voices of the
+   same gender gives a new voice that still reads as a specific person; blending across gender gives
+   androgyny. Both are legitimate — but they are different features, and a slider that does not know
+   which one it is doing will produce the second by accident.
 
-**What is not yet known**: whether a blend sounds like a person, how any of this behaves under the
-arbiter's 48 kHz resample, and whether the original PyTorch OpenPhonemizer fallback is better than
-its ONNX conversion. The first needs ears; the last would need a Python run this spike deliberately
-did not take, because a Python result would not tell d47 anything it can ship.
+**What is not yet known**: how any of this behaves under the arbiter's 48 kHz resample, and whether
+the original PyTorch OpenPhonemizer fallback is better than its ONNX conversion. The last would need
+a Python run this spike deliberately did not take, because a Python result would not tell d47
+anything it can ship.
 
 ---
 
