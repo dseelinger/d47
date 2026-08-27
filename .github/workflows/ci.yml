@@ -6,6 +6,19 @@ on:
   pull_request:
   workflow_dispatch:
 
+# This workflow declares NO `permissions:` block, and that is deliberate rather than an omission.
+#
+# It runs on `pull_request`, so a fork's code runs here. With no block it inherits the repository
+# default, which is set to read contents and packages only - so the GITHUB_TOKEN this job holds
+# cannot label an issue. That matters because `ready` means "approved by the maintainer" and is what
+# tools/issues.ps1 lets autonomous work act on (#94). A token that could apply it would be an
+# approval that never passed through a person.
+#
+# So: do not add a `permissions:` block here to gain a scope. Declaring one overrides the default
+# outright, and `issues: write` in particular would reopen the one path to that label that does not
+# require trusting somebody. release.yml declares `contents: write` because it publishes a release;
+# that is its whole scope and it needs no other.
+
 # No telemetry (CLAUDE.md). Directory.Build.props opts the test platform out for every project;
 # these cover the dotnet CLI itself, which is the agent's rather than the build's.
 env:
