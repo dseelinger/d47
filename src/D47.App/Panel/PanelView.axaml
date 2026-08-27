@@ -860,6 +860,62 @@
           </ScrollViewer>
 
           <!--
+            The journal (https://github.com/dseelinger/d47/issues/51). A sibling of the scroller
+            above rather than a third presentation inside it, because it is the one page here with
+            a shape of its own: a list and a detail beside it, each scrolling separately.
+
+            Design C of the four proposed, and the two panes answer each other's weakness — which
+            is the whole argument for it. The summary line is prose, so it is lossy and capable of
+            being wrong; the detail is the untouched fields, so it is complete and cannot be. An
+            event nobody wrote a sentence for still lists, and its detail is exactly as complete as
+            any other's.
+
+            DrillView draws this shape already and is deliberately not used: it is a tab-level
+            construct built around a navigation trail, and the Transcript tab has never had one.
+            Borrowing it would mean giving this tab a drill stack it has no levels for.
+          -->
+          <Grid x:Name="JournalPane" IsVisible="False" ColumnDefinitions="*,Auto,1.2*">
+            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller">
+              <ListBox x:Name="JournalList"
+                       Background="Transparent"
+                       BorderThickness="0"
+                       FontFamily="Cascadia Mono,Consolas,monospace"
+                       FontSize="{StaticResource D47.Type.Secondary}"
+                       SelectionChanged="OnJournalSelected" />
+            </ScrollViewer>
+
+            <!--
+              The same rule between panes the drill strip draws, and draggable for the same reason
+              Phase 55 made those draggable. In its own column here rather than overlaid, because
+              this grid is built once and never rebuilt by a navigation - the trap that phase names
+              does not exist on this page.
+            -->
+            <GridSplitter Grid.Column="1"
+                          x:Name="JournalSplitter"
+                          Width="9"
+                          Background="Transparent"
+                          ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" />
+
+            <Border Grid.Column="1"
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    IsHitTestVisible="False"
+                    Background="{DynamicResource D47.Border}" />
+
+            <ScrollViewer Grid.Column="2" x:Name="JournalDetailScroller" Padding="14,0,0,0">
+              <!--
+                Selectable, because the reason to open this pane at all is usually to put a field
+                into a bug report. Same control and the same free copy the live log gets.
+              -->
+              <SelectableTextBlock x:Name="JournalDetail"
+                                   FontFamily="Cascadia Mono,Consolas,monospace"
+                                   FontSize="{StaticResource D47.Type.Secondary}"
+                                   TextWrapping="NoWrap" />
+            </ScrollViewer>
+          </Grid>
+
+          <!--
             Floating over the transcript rather than docked beside it, because it is about where
             the reader is rather than about the page: it appears only when there is something
             below the fold and takes no layout when there is not (list.md Phase 19, "Follow the
