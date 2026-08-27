@@ -26,6 +26,31 @@ file never moves.
 
 ---
 
+## 0.81.1 — 2026-08-27 — Raw Journal is actually raw
+
+### The two journal readings looked the same, because they were
+
+Reported straight after 0.81.0: **Journal and Raw Journal were the same page.** Both showed the list
+of sentences, both showed the same indented fields beside it, and the only thing that changed
+between them was how wide the two columns were.
+
+So the raw reading was not raw. If you went to it to copy the JSON for a bug report, you got a
+prettified version of one event — the same thing the other page was already showing you.
+
+**Raw Journal is now the file**: one event per line, as Elite wrote it, in one scrolling column —
+the same shape as the D47 Log beside it. Journal keeps the list and the fields.
+
+**And it is never treated as formatted text.** A journal carries other players' messages exactly as
+they typed them, and JSON is full of asterisks and underscores. Passing that through the panel's
+own formatting would have reformatted a Commander's message — and would have let one dress a
+message up to look like a line d47 had written itself.
+
+---
+
+Fixes the reading shipped in [#51](https://github.com/dseelinger/d47/issues/51).
+
+---
+
 ## 0.81.0 — 2026-08-27 — Read the journal
 
 ### Elite's journal, in the Transcript, in English
