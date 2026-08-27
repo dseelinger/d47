@@ -21,9 +21,14 @@
     tree, rather than remembered. Two things make it a minor:
 
       - a phase header that is ticked now and was not at the last tag, or is ticked and new
-      - a `change-request` issue closed since the last tag - a batch of wanted changes
+      - a commit since that tag saying it closes an issue labelled `enhancement` or
+        `change-request` - a batch of wanted changes
 
     Anything else is a patch.
+
+    **The second one reads the commits and not GitHub's closed list**, because an issue closes when
+    the commit reaching it is pushed and this decision is made before anything is pushed. A closed
+    query can never see the issues that the release it is deciding about is the one closing.
 
 .PARAMETER Minor
     Force a minor. For the case the rules cannot see: a change request that never had an issue, or a
@@ -131,27 +136,48 @@ try {
         }
     )
 
-    # A batch of wanted changes is a minor for the same reason a phase is. Since 2026-08-27 those
-    # are issues rather than a file, so this asks GitHub rather than diffing anything.
-    $tagged = (Invoke-Native { git log -1 --format=%cI $lastTag } | Select-Object -First 1)
+    <#
+        A batch of wanted changes is a minor for the same reason a phase is.
 
+        **Read out of the commits rather than out of GitHub's closed list, and that is not a
+        preference.** An issue closes when the commit reaching it is pushed, and this decision is
+        made *before* anything is pushed - the changelog has to be written against the version
+        first. So a closed-issue query can never see the issues that the release it is deciding
+        about is the one closing. It said "patch" for a batch of three on 2026-08-27 and was wrong
+        in exactly that way.
+
+        What a commit says it closes is knowable now, so that is what is asked.
+    #>
+    $log = (Invoke-Native { git log "$lastTag..HEAD" --format=%B }) -join "`n"
+
+    $mentioned = [regex]::Matches($log, '(?i)\b(?:fixes|closes|resolves)\s+#(\d+)') |
+        ForEach-Object { [int]$_.Groups[1].Value } |
+        Sort-Object -Unique
+
+    # Both spellings, because the repository has two labels for one idea: `enhancement`, which the
+    # Commander has always used, and `change-request`, added on 2026-08-27 with planning. Counting
+    # only the newer one misses every wanted change filed before that day.
+    $wantedLabels = @('change-request', 'enhancement')
     $closedRequests = @()
 
-    try {
-        $raw = Invoke-Native {
-            gh issue list --repo dseelinger/d47 --state closed --label change-request `
-                --limit 50 --json number,title,closedAt 2>&1
-        }
+    foreach ($number in @($mentioned)) {
+        try {
+            $raw = Invoke-Native {
+                gh issue view $number --repo dseelinger/d47 --json number,labels 2>&1
+            }
 
-        if ($LASTEXITCODE -eq 0) {
-            $closedRequests = @(
-                $raw | ConvertFrom-Json | ForEach-Object { $_ } |
-                    Where-Object { $_.closedAt -and ([datetime]$_.closedAt) -gt ([datetime]$tagged) }
-            )
+            if ($LASTEXITCODE -ne 0) { continue }
+
+            $issue = $raw | ConvertFrom-Json
+            $labels = @($issue.labels | ForEach-Object { $_.name })
+
+            if (@($labels | Where-Object { $wantedLabels -contains $_ }).Count -gt 0) {
+                $closedRequests += [pscustomobject]@{ number = $number }
+            }
         }
-    }
-    catch {
-        Write-Warning "Could not read closed change requests, so only list.md was consulted: $($_.Exception.Message)"
+        catch {
+            Write-Warning "Could not read #${number}'s labels, so it did not count toward the decision."
+        }
     }
 
     foreach ($number in $landed) {
@@ -159,7 +185,7 @@ try {
     }
 
     foreach ($request in $closedRequests) {
-        Write-Note "change-request #$($request.number) closed since $lastTag"
+        Write-Note "a commit since $lastTag closes #$($request.number), a wanted change"
     }
 
     if ($landed.Count -eq 0 -and $closedRequests.Count -eq 0) {
