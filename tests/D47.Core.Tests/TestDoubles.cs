@@ -268,16 +268,7 @@ public sealed class TestSurface
             // built without them is not the registry that ships — which is how four button-only
             // rows reached a release that could not start. Same trap the ship cores above are
             // real for, one capability along.
-            about: new D47.Core.Capabilities.Builtin.AboutSurface
-            {
-                Build = "0.0.0-test+0000000",
-                ShowChangelog = () => { },
-                ShowChangelogOnline = () => { },
-                AddToStartMenu = () => { },
-                StartMenuWanted = () => true,
-                SetUpKeys = () => { },
-                ShowCommunity = () => { },
-            }));
+            about: D47.Core.Capabilities.Builtin.AboutSurface.Inert));
 
         built = registry;
 

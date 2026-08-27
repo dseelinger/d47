@@ -266,4 +266,33 @@ public sealed record AboutSurface
     /// </para>
     /// </summary>
     public Action? ShowCommunity { get; init; }
+
+    /// <summary>
+    /// Every member supplied, each doing nothing — the surface a test binds when the test is
+    /// not about About (<a href="https://github.com/dseelinger/d47/issues/79">#79</a>).
+    /// <para>
+    /// <b>This exists because a null member is not a smaller surface, it is a different app.</b>
+    /// Each optional member above makes its row <em>absent</em> when null, and an absent row is
+    /// one no test can see. That is how <a href="https://github.com/dseelinger/d47/issues/78">#78</a>
+    /// shipped two releases that could not start: four button-only rows reached a Commander
+    /// having never once been bound by the 5,042 tests, because every test built this surface
+    /// with nulls.
+    /// </para>
+    /// <para>
+    /// So a test registry uses <b>this</b> rather than constructing one inline, and
+    /// <c>HostSurfaceTests</c> asserts every property here is non-null. Add a member to the
+    /// record without adding it here and that test fails, which is the whole point: the
+    /// omission is caught at the moment it is made rather than at a Commander's next launch.
+    /// </para>
+    /// </summary>
+    public static AboutSurface Inert => new()
+    {
+        Build = "0.0.0-test+0000000",
+        ShowChangelog = () => { },
+        ShowChangelogOnline = () => { },
+        AddToStartMenu = () => { },
+        StartMenuWanted = () => true,
+        SetUpKeys = () => { },
+        ShowCommunity = () => { },
+    };
 }
