@@ -177,3 +177,27 @@ Either the row becomes one per category, each narrowed to its own provider, or t
 the value is clamped per category on the way out. The first is honest and is six rows; the second
 is one row that silently means different things. **Neither is obviously right**, which is most of
 why this is not in the phase.
+
+### Answered 2026-08-26: one row, at ElevenLabs' range
+
+**The Commander's ruling: _"I think ElevenLabs speaking rate is the common denominator. Use that
+until if/when we decide to change it."_**
+
+So it is **one row, narrowed to ElevenLabs' range for every category**, and not six. The reasoning
+the question could not settle is settled by picking the range that is safe everywhere: ElevenLabs
+is the strictest of the three — it **refuses** an out-of-range speed outright rather than clamping,
+where Edge takes a wide percentage offset and OpenAI accepts `0.25`—`4.0` and saturates near the
+top. A value inside ElevenLabs' range is therefore a value every current provider will accept, so
+the row can mean one thing and the control cannot appear to work while doing nothing — which is the
+failure named above and the one this question was really about.
+
+**What it costs, stated rather than discovered later.** A Commander whose cast is entirely on Edge
+loses the far ends of Edge's wider offset, because the row is narrowed for a provider none of their
+voices use. That is the price of one honest row over six, and it is the Commander's call, made
+knowing it.
+
+**It is a default and not a settlement** — *"until if/when we decide to change it"*. The per-category
+rows stay written up above rather than deleted, because the argument for them survives intact and
+this entry is where the next person will look. **Revisit it when a fourth provider arrives**: if
+Cartesia's range is tighter than ElevenLabs' (Phase 60), the common denominator moves and this
+ruling has to be re-taken rather than inherited.
