@@ -1,11 +1,20 @@
 # Change requests
 
-Wanted changes that are not defects. **Bugs are not here** — those are
-[GitHub Issues](https://github.com/dseelinger/d47/issues). Everything here behaves as built; the
-request is that it be built differently.
+**This file no longer holds any open request, and on 2026-08-27 it stopped being a queue.** A wanted
+change that is not a defect is now a
+[GitHub Issue labelled `change-request`](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Achange-request),
+for the reason CLAUDE.md gives about planning generally: a queue held in a file conflicts on every
+parallel branch, and this one was nothing *but* a queue. Items 39, 40 and 43 left that day as
+[#102](https://github.com/dseelinger/d47/issues/102),
+[#103](https://github.com/dseelinger/d47/issues/103) and
+[#104](https://github.com/dseelinger/d47/issues/104).
 
-An entry leaves this file when it ships, and the line it gets in [CHANGELOG.md](../../CHANGELOG.md)
-under the release that carried it is its permanent record.
+**What remains is the numbering, and it remains because 61 comments in the source depend on it.**
+The rules below are not history; they govern every number an issue may be given from here. Read them
+before allocating one.
+
+An entry's permanent record is still the line it gets in [CHANGELOG.md](../../CHANGELOG.md) under
+the release that carried it. An issue closing is not a record.
 
 An entry states what is wanted and where the code is. Where one carries an **open question** that
 changes the work materially, it says so — those want an answer before the code does, because the
@@ -39,173 +48,14 @@ into what happens to be open today.
 
 ---
 
-## Open
+## How an issue gets one of these numbers
 
-## 39 — The engineer filter should cover the fleet, not the ship you are in
+**At build time, not when it is filed** — the same rule phases take, and for the same reason. A
+`change-request` issue is titled by its subject and identified by its **issue** number, which is
+unique and permanent for free. It takes a **change-request** number only when source comments start
+citing it, because being citable from code is the entire job that number does. Allocating one
+earlier spends it on something that may never be built, which is how 41 became a retired hole.
 
-Asked for 2026-08-23, in the Commander's own words:
-
-> All checklist items fulfillable by the Engineer should appear for that filter, not just for the
-> ship I'm in.
->
-> If that's undoable, then at least notice when I switch ships and re-filter for the new ship — but
-> I'd rather the previous bullet be implemented instead.
-
-**The fallback is named as the lesser option and should be read that way.** Re-filtering on a ship
-switch is a consolation prize for a filter that cannot see past the cockpit; it is not the ask, and
-building it instead would close the entry without answering it.
-
-`ChecklistService.FilterAxes` offers the row — *"What {engineer} can do here"* — and
-`EngineersHere.For(live, State)` decides what is under it, per engineer, in `EngineerAtHand`.
-
-### The ground moved after this was reported, and that is the first thing to check
-
-Two changes landed between the ask and this entry, both of which touch exactly this code, so
-**reproduce it before designing anything**:
-
-- **Other ships' modules became readable.** `EngineerAtHand.LoadoutFor` already answers with the
-  remembered loadout for a ship the Commander is not in — *"the live one for the ship being flown …
-  the remembered one for any other ship"* — which is the per-ship loadout memory shipped in v0.41.1.
-  Whatever was scoping the filter to one cockpit in August, it was not a lack of data about the
-  others.
-- **A fitted gate was added on 2026-08-25** (GitHub issue 41), because every line offered under
-  *"What Selene Jean can do here"* was about a slot with nothing in it. `IsFitted` passes an item
-  whose ship has **never been seen** — `LoadoutFor(…) is null` returns true — so it is permissive
-  rather than restrictive about the rest of the fleet.
-
-So the entry may already be half-answered, or the restriction may live somewhere neither of those
-touched. **Open question, and it wants measuring rather than arguing**: with a plan on a stored ship
-and its engineer in the current system, does that line appear under the filter today?
-
-### What it must not become
-
-**Not a filter that offers work the Commander cannot do.** The three bands `EngineerAtHand` keeps
-apart — ready, out of rank, and partial — exist because folding them together was reported as noise,
-and widening the filter across the fleet must not quietly widen it across those bands too. A line
-about a ship in another system is still work; it is *"fly there first"* work, and if the filter grows
-to include it, the row has to say which ship it is about or it becomes a list of errands with no
-addresses.
-
----
-
-## 40 — Voices that suit the names they are speaking
-
-Asked for 2026-08-23, queued behind Phase 54 for discussion: **multilingual and ethnic voices that
-match NPC names where appropriate.** An engineer called Hera Tani, Marco Qwent or Etienne Dorn read
-in the same flat English as everyone else is a small thing that adds up over a hundred hours.
-
-`VoicePairing` is where a voice is chosen, and it already asks a model to do the choosing, so the
-question is what it is allowed to choose *from* and what it is allowed to say about language.
-
-### This contradicts two stated rulings, and both are in the source
-
-The file's own rule is that a request overturning a comment says so, because leaving the comment
-standing beside code that no longer obeys it turns the file into a liar. Two comments are in the way,
-and **neither is wrong** — they are answers to a question this request asks differently.
-
-**Turbo 2.5 rather than Multilingual 2, and the reason is language.** `ElevenLabsTtsProvider`
-records it: Multilingual 2 *"infers the language of every line from the line, which is the behaviour
-it is built for and which produced a material milestone read half in German."* The 2.5 generation
-accepts `language_code` and holds it; Multilingual 2 rejects the parameter outright, so there was no
-version of pinning English that kept that model. It is also half the price. **A request for voices
-that sound like their names is not a request for lines that switch language mid-sentence**, and the
-difference between those two is the whole of this entry's design problem.
-
-**`Language = "en"`, fixed, and the argument behind it is about untrusted input.** The comment: *"the
-one thing an in-game message can do to this path is arrive in another language — which is not a
-reason to let it choose the voice's."* Anything here that lets the spoken language follow the text
-has to answer that, because in-game comms are untrusted input by invariant. An accent chosen from a
-**name d47 already knows** — an engineer from the shipped directory — is a different proposition from
-a language inferred from a line, and that distinction is probably where the answer lives.
-
-### Open questions — these want answers before the code
-
-1. **Accent or language?** A voice with a French accent reading English is not the same feature as a
-   line spoken in French, and only the first is obviously wanted. If it is accent only, the model
-   pin may not need to move at all — it becomes a casting question rather than a synthesis one.
-2. **Which names?** The engineers are a shipped table with known origins. Station and system names
-   are not, and a Commander's own invented ship names certainly are not. Naming the source list is
-   most of the scope.
-3. **What happens on the other providers?** Edge Neural is the free path and most Commanders' path,
-   and its voice list is its own. A feature that only exists on the paid provider needs to say so on
-   the row rather than being discovered.
-
-### What this is not
-
-**Not accents for the Commander, and not for d47 itself.** The personas are written in English and
-cast deliberately; this is about the voices d47 *quotes*, not the voice it *has*. And **not
-translation** — nothing here proposes that d47 speak anything but English to the Commander.
-
----
-
-## 43 — A speaking rate per category, not only per provider
-
-Raised 2026-08-25 while proposing per-role voice providers, and deliberately kept out of that
-phase — see [per-role-voice-providers.md](per-role-voice-providers.md) §1.4. The Commander's lean:
-brisk NPCs, a measured ship's core.
-
-### It overturns a stated ruling, which is why it is an entry rather than a line in the phase
-
-`VoiceCast.Rate`'s own comment: *"One value for the whole cast rather than per role: it is a
-property of how fast the Commander likes to be spoken to, not of who is speaking."*
-
-**That comment is not wrong, it is answering a narrower question.** It was written when one
-provider spoke for everybody, and against that world it is plainly right. What it did not have to
-consider is a cast drawn from several providers at once.
-
-### Most of what is wanted arrives free with the phase, and that is the argument for waiting
-
-Rate is stored per **provider** today (`SpeechSettings.ProviderRates`), because providers disagree
-about units and range — Edge takes a wide percentage offset, ElevenLabs a multiplier it refuses to
-exceed — and the settings row narrows to the selected one's range.
-
-So once each category names its own provider, **NPCs on Edge and the ship's core on ElevenLabs are
-already two independently-set rates.** What this entry adds is only the case where **two categories
-share one provider** and the Commander wants them at different speeds — over-the-air voices all
-default to Edge, so that case is the common one rather than the exotic one, but it is still
-narrower than "rate is per role".
-
-### The open question — this wants an answer before the code
-
-**Which range does the row narrow to when the categories disagree?** `speech.md {#rate}` documents
-one row narrowing to the selected provider's limits, and ElevenLabs rejects an out-of-range speed
-outright rather than clamping — so a row showing one range while writing a value for a category on
-a different provider is the failure `docs/capabilities/listening.md` already names in the other
-direction: a control that appears to work and does nothing.
-
-Either the row becomes one per category, each narrowed to its own provider, or there is one row and
-the value is clamped per category on the way out. The first is honest and is six rows; the second
-is one row that silently means different things. **Neither is obviously right**, which is most of
-why this is not in the phase.
-
-### Answered 2026-08-26: one row, at ElevenLabs' range
-
-**The Commander's ruling: _"I think ElevenLabs speaking rate is the common denominator. Use that
-until if/when we decide to change it."_**
-
-So it is **one row, narrowed to ElevenLabs' range for every category**, and not six. The reasoning
-the question could not settle is settled by picking the range that is safe everywhere: ElevenLabs
-is the strictest of the three — it **refuses** an out-of-range speed outright rather than clamping,
-where Edge takes a wide percentage offset and OpenAI accepts `0.25`—`4.0` and saturates near the
-top. A value inside ElevenLabs' range is therefore a value every current provider will accept, so
-the row can mean one thing and the control cannot appear to work while doing nothing — which is the
-failure named above and the one this question was really about.
-
-**What it costs, stated rather than discovered later.** A Commander whose cast is entirely on Edge
-loses the far ends of Edge's wider offset, because the row is narrowed for a provider none of their
-voices use. That is the price of one honest row over six, and it is the Commander's call, made
-knowing it.
-
-**Cartesia does not tighten it** (measured 2026-08-26, [cartesia-voices-and-speed.md](../spikes/cartesia-voices-and-speed.md)).
-The revisit condition below anticipated that a fourth provider's range might move the common
-denominator. It does not: Cartesia **validates a speed and then does not act on it**, so it never
-joins the set of providers that have a rate at all, and Phase 60 declares it as taking none. Worth
-recording that its float is an **offset** in `[-1.0, 1.0]` rather than a multiplier — so even had it
-been honoured it would have been a third unit needing conversion, not a narrower version of an
-existing one.
-
-**It is a default and not a settlement** — *"until if/when we decide to change it"*. The per-category
-rows stay written up above rather than deleted, because the argument for them survives intact and
-this entry is where the next person will look. **Revisit it when a fourth provider arrives**: if
-Cartesia's range is tighter than ElevenLabs' (Phase 60), the common denominator moves and this
-ruling has to be re-taken rather than inherited.
+So: when the commit that implements a request adds a comment citing it, take the next number from
+the line above, cite it as `change-requests.md <N>`, and update that line in the same commit. The
+number then belongs to that request permanently, whether or not it is ever written here again.
