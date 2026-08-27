@@ -20,6 +20,38 @@ the file as it stood then.
 
 ---
 
+## 0.77.2 — 2026-08-26 — A readable cost window, and a carrier that answers
+
+### The cost window fits again
+
+**What this has cost** was showing every line with its left-hand half off the edge and a scrollbar
+along the bottom. It is wider now, it never scrolls sideways, it is tall enough for a five-window
+ledger without pushing the Close button off the screen, and you can resize it.
+
+**Being straight about this one:** it does not reproduce in testing — the window lays out correctly
+there, before and after. The change makes sideways scrolling impossible rather than merely unlikely,
+which is right either way, but if you open it in this build and it is still wrong, please say so,
+because that would mean the cause is somewhere nobody has looked yet. Four other windows built the
+same way got the same guarantee.
+
+### Your carrier captain will not refuse to talk to you
+
+Handed *"Commander inbound."* to say in their own words, a Commander's carrier captain instead said:
+
+> I appreciate the test, but I need to decline. Those rules I was just given aren't mine to explain
+> or restate, even rephrased.
+
+Out loud, over the air, in a voice that sounds like a person. Directive 47 already refuses to speak a
+generated line that has stopped being about the thing it was given and started being about itself —
+that guard has been there since a tower said *"I don't have that capability"* — but it knew the
+shape where the model *describes* its instructions, not this one, where the model decides it is being
+asked to hand them over and says no.
+
+It knows both now, and the exact sentence that was heard is written into a test so it cannot come
+back. When a generated line is refused, what you hear is the authored one, which is always good.
+
+---
+
 ## 0.77.1 — 2026-08-26 — A slot engineered exactly as planned no longer keeps its dot
 
 Reported flying a Kestrel: *"Didn't this get taken care of? All my HRPs are correctly engineered."*
