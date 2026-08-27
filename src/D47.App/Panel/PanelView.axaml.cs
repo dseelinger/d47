@@ -2570,10 +2570,10 @@ public partial class PanelView : UserControl
     /// <summary>
     /// The journal, as a list of sentences with the selected event's fields beside it (#51).
     /// <para>
-    /// <b>Two pages share this pane</b>, and the only difference is which column the reader is
-    /// looking at. Journal lists sentences; Raw Journal lists the same events and shows the JSON
-    /// wide, with the list narrowed to the times — the same events, the same selection, one
-    /// mechanism rather than two pages that have to be kept in step.
+    /// <b>This pane is Journal's alone.</b> Raw Journal is a file and is drawn as one, through the
+    /// flat block the log file uses. They shared this pane in 0.81.0, differing only in their
+    /// column widths — which made the two readings look identical and made the raw one not raw:
+    /// both showed sentences, and both showed the same pretty-printed fields.
     /// </para>
     /// </summary>
     private void DrawJournal()
@@ -2585,20 +2585,10 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var raw = Page == TranscriptPage.RawJournal;
-
-        // Raw Journal is the fields, so the list is only there to choose between them; Journal is
-        // the sentences, so the list is the page and the fields are the aside.
-        JournalPane.ColumnDefinitions[0].Width = new GridLength(raw ? 1 : 2, GridUnitType.Star);
-        JournalPane.ColumnDefinitions[2].Width = new GridLength(raw ? 3 : 2, GridUnitType.Star);
-
-        // The detail is always shown on Raw Journal - it *is* Raw Journal - and follows the toggle
-        // on the sentence page, which is the Commander's amendment to the design and what keeps
-        // that page usable in one narrow column.
-        var detail = raw || model.JournalDetail;
-
-        JournalDetailScroller.IsVisible = detail;
-        JournalSplitter.IsVisible = detail;
+        // The fields fold away, which is the Commander's amendment to the design and what keeps
+        // this reading usable in one narrow column.
+        JournalDetailScroller.IsVisible = model.JournalDetail;
+        JournalSplitter.IsVisible = model.JournalDetail;
 
         JournalList.ItemsSource = model.Journal.Select(entry => entry.Line).ToList();
 
@@ -2665,12 +2655,16 @@ public partial class PanelView : UserControl
         // pane rather than a presentation inside the shared scroller (#51). Drawn and returned
         // from here, because everything below this line is about runs of transcript text and none
         // of it applies.
-        var journal = Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+        // **Journal alone takes the pane.** Raw Journal is a file, so it is drawn the way the other
+        // file on this tab is drawn - one flat, selectable, searchable block through the scroller
+        // below. It shipped in 0.81.0 sharing this pane and differing only in its column widths,
+        // which made the two readings look identical and made the raw one not raw at all.
+        var listed = Page == TranscriptPage.Journal;
 
-        JournalPane.IsVisible = journal;
-        TranscriptScroller.IsVisible = !journal;
+        JournalPane.IsVisible = listed;
+        TranscriptScroller.IsVisible = !listed;
 
-        if (journal)
+        if (listed)
         {
             DrawJournal();
             return;
@@ -3029,7 +3023,11 @@ public partial class PanelView : UserControl
     private static IReadOnlyList<DrawnSegment> Drawn(
         IReadOnlyList<TranscriptSegment> segments,
         TranscriptPage page) =>
-        page == TranscriptPage.Log
+        // Raw Journal joins the log here, and it is the more important of the two: a journal
+        // carries other players' text verbatim, and JSON is full of asterisks and underscores.
+        // Through the markup parser, a Commander who types ** would see their message reformatted
+        // and could dress it up as one of d47's own lines (#51).
+        page is TranscriptPage.Log or TranscriptPage.RawJournal
             ? [.. segments.Select(segment =>
                 new DrawnSegment(segment.Text, segment.Marker, segment.Voice, MarkupStyle.None))]
             : [.. segments.SelectMany(segment => TranscriptMarkup
