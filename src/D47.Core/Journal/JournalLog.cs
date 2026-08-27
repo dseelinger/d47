@@ -7,7 +7,14 @@ namespace D47.Core.Journal;
 /// <param name="Kind">The event name, kept so the page can filter noise without re-parsing.</param>
 /// <param name="Said">The sentence, or the kind spaced into words where there is no sentence.</param>
 /// <param name="Raw">The event's own JSON, pretty-printed. The half that cannot be wrong.</param>
-public sealed record JournalEntry(DateTimeOffset Timestamp, string Kind, string Said, string Raw)
+/// <param name="Compact">
+/// The same JSON on one line, as the file holds it. <b>Both are kept because they answer different
+/// questions.</b> The detail pane beside a sentence wants the fields laid out to be read; the Raw
+/// Journal reading wants the file — one event per line, the shape a Commander comparing it against
+/// Frontier's own documentation is expecting.
+/// </param>
+public sealed record JournalEntry(
+    DateTimeOffset Timestamp, string Kind, string Said, string Raw, string Compact)
 {
     /// <summary>Whether this is one of the kinds the page hides by default.</summary>
     public bool IsNoise => JournalSentence.Noise.Contains(Kind);
@@ -44,6 +51,8 @@ public sealed record JournalEntry(DateTimeOffset Timestamp, string Kind, string 
 public sealed class JournalLog(int keep = 4000)
 {
     private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
+
+    private static readonly JsonSerializerOptions Flat = new() { WriteIndented = false };
 
     private readonly Queue<JournalEntry> _entries = new();
     private readonly int _keep = keep > 0 ? keep : 1;
@@ -85,22 +94,30 @@ public sealed class JournalLog(int keep = 4000)
         return held;
     }
 
+    /// <summary>
+    /// The events as the file holds them, newest first, one per line — what the Raw Journal reading
+    /// shows.
+    /// </summary>
+    public string Document(bool noise = false) =>
+        string.Join(Environment.NewLine, Read(noise).Select(entry => entry.Compact));
+
     private static JournalEntry Entry(JournalEvent journalEvent) =>
         new(journalEvent.Timestamp,
             journalEvent.Kind,
             JournalSentence.For(journalEvent),
-            Raw(journalEvent.Raw));
+            Raw(journalEvent.Raw, indented: true),
+            Raw(journalEvent.Raw, indented: false));
 
     /// <summary>
     /// The event's own JSON, indented. <b>Pretty-printed rather than reformatted</b>: the point of
     /// the detail pane is that it is the fields exactly as Elite wrote them, so a bug report made
     /// from it is worth something. The summary line is prose and can be wrong; this cannot.
     /// </summary>
-    private static string Raw(JsonElement raw)
+    private static string Raw(JsonElement raw, bool indented)
     {
         try
         {
-            return JsonSerializer.Serialize(raw, Pretty);
+            return JsonSerializer.Serialize(raw, indented ? Pretty : Flat);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

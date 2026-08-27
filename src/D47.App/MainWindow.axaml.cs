@@ -150,6 +150,7 @@ public partial class MainWindow : Window
 
             // Elite's journal, from the events the tick loop already polled (#51).
             _model.JournalSource = noise => host.JournalLog.Read(noise);
+            _model.JournalDocumentSource = noise => host.JournalLog.Document(noise);
 
             // And the JSON behind them, which is this window's alone: a wall of fields is there to
             // be selected and pasted into a bug report, which is an act with no meaning in mid-air.

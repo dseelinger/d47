@@ -26,6 +26,7 @@ public sealed class TheJournalIsAReadingTests
         var kept = log ?? Filled();
 
         model.JournalSource = noise => kept.Read(noise);
+        model.JournalDocumentSource = noise => kept.Document(noise);
 
         var panel = new PanelView { DataContext = model };
 
@@ -193,6 +194,62 @@ public sealed class TheJournalIsAReadingTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(detail.IsVisible);
+
+        window.Close();
+    }
+    /// <summary>
+    /// <b>The two readings are different readings.</b> Reported after 0.81.0 shipped: they looked
+    /// identical, because they shared one pane and differed only in column widths — so both showed
+    /// sentences and both showed the same pretty-printed fields, and the raw one was not raw.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRawReadingIsTheFileAndTheOtherIsNot()
+    {
+        var (panel, window) = Shown(rawJournal: true);
+
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        // Journal is the list-and-fields pane.
+        Assert.True(panel.GetVisualDescendants().OfType<Grid>().Single(g => g.Name == "JournalPane").IsVisible);
+
+        panel.Page = TranscriptPage.RawJournal;
+        Dispatcher.UIThread.RunJobs();
+
+        // Raw Journal is not. It is a document, drawn where the log file is drawn.
+        Assert.False(panel.GetVisualDescendants().OfType<Grid>().Single(g => g.Name == "JournalPane").IsVisible);
+
+        var model = (PanelViewModel)panel.DataContext!;
+
+        // One event per line, as the file holds them - not indented, and not a sentence.
+        Assert.Contains("{\"event\":\"Docked\"", model.JournalRawText);
+        Assert.DoesNotContain("  \"event\"", model.JournalRawText);
+        Assert.DoesNotContain("Undocked from", model.JournalRawText);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// And it never goes through the markup parser. A journal carries other players' text verbatim
+    /// and JSON full of asterisks, so a Commander who types <c>**</c> must see <c>**</c> — and must
+    /// not be able to dress their message up as one of d47's own lines.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRawReadingIsNotParsedAsMarkup()
+    {
+        var log = new JournalLog();
+
+        log.Add([Event("ReceiveText", """{"event":"ReceiveText","Message":"**not bold**"}""")]);
+
+        var (panel, window) = Shown(rawJournal: true, log);
+
+        panel.Page = TranscriptPage.RawJournal;
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = panel.GetVisualDescendants().OfType<SelectableTextBlock>()
+            .Single(block => block.Name == "Transcript");
+
+        Assert.Contains("**not bold**", drawn.Inlines!.Text);
 
         window.Close();
     }

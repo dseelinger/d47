@@ -264,6 +264,22 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _journalNoise, value);
     }
 
+    private string _journalRaw = string.Empty;
+
+    /// <summary>
+    /// The events as the file holds them, one per line — what Raw Journal shows. Kept beside the
+    /// list rather than derived from it, because the two readings want different shapes of the
+    /// same events and neither should have to reformat the other's.
+    /// </summary>
+    public string JournalRawText
+    {
+        get => _journalRaw;
+        private set => Set(ref _journalRaw, value);
+    }
+
+    /// <summary>Where <see cref="JournalRawText"/> comes from.</summary>
+    public Func<bool, string>? JournalDocumentSource { get; set; }
+
     /// <summary>The fields behind the selected line, or empty when nothing is selected.</summary>
     public string JournalDetailText =>
         JournalSelected >= 0 && JournalSelected < Journal.Count
@@ -278,6 +294,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public void RefreshJournal()
     {
         Journal = JournalSource is { } read ? read(JournalNoise) : [];
+        JournalRawText = JournalDocumentSource is { } document ? document(JournalNoise) : string.Empty;
 
         // The selection is an index into a list that has just been rebuilt, so it cannot survive
         // it. Dropped rather than clamped: keeping it would show the fields of whichever event
@@ -638,6 +655,12 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         return page switch
         {
             TranscriptPage.Log => [new TranscriptSegment(LogText, Marker: false, TranscriptVoice.Ship)],
+
+            // A file, drawn as one, exactly as the log above is. Never through TranscriptMarkup -
+            // see Drawn() - because a journal carries other players' text and JSON full of
+            // asterisks and underscores, none of which is markup.
+            TranscriptPage.RawJournal =>
+                [new TranscriptSegment(JournalRawText, Marker: false, TranscriptVoice.Ship)],
             TranscriptPage.Technical =>
                 [.. _runs.Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))],
             _ =>
