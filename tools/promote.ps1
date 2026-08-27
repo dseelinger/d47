@@ -61,23 +61,56 @@ function Invoke-Native {
     finally { $ErrorActionPreference = $previous }
 }
 
+<#
+    Runs gh and parses its JSON, refusing to parse anything it did not succeed at.
+
+    One function because the unguarded version was got right in one place and wrong in another on
+    2026-08-27: `gh release view --json isLatest` is not a field that exists, gh said so on stderr,
+    `2>&1` folded that into the output, and ConvertFrom-Json reported "Invalid JSON primitive" -
+    which names neither the field nor the command. Checking the exit code first turns that into
+    gh's own sentence, which already says what is wrong and lists the fields that do exist.
+#>
+function Invoke-GhJson {
+    param([string[]] $Arguments, [string] $What)
+
+    $raw = Invoke-Native { & gh @Arguments 2>&1 | ForEach-Object { "$_" } }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not ${What}: $($raw -join ' ')"
+    }
+
+    return ($raw -join "`n") | ConvertFrom-Json
+}
+
 # --json and ConvertFrom-Json rather than --jq: a jq filter needs double quotes and Windows
 # PowerShell's legacy argument passing re-parses an argument containing them.
-$raw = Invoke-Native {
-    gh release list --repo $Repo --limit 50 --exclude-drafts `
-        --json tagName,isPrerelease,isLatest,publishedAt 2>&1
-}
-
-if ($LASTEXITCODE -ne 0) {
-    throw "Could not list releases: $($raw -join ' ')"
-}
-
+#
 # An empty array deserialises to one empty object rather than to nothing; unrolled on the way out.
-$releases = @($raw | ConvertFrom-Json | ForEach-Object { $_ })
+$releases = @(
+    (Invoke-GhJson -What 'list releases' -Arguments @(
+        'release', 'list', '--repo', $Repo, '--limit', '50', '--exclude-drafts',
+        '--json', 'tagName,isPrerelease,isLatest,publishedAt')) | ForEach-Object { $_ }
+)
 
 if ($releases.Count -eq 0) {
     throw "No releases in $Repo."
 }
+
+# Compared as a version rather than by date, which is what `gh release list` orders by. Those agree
+# right up until they do not: a pre-release cut before the current latest is older by version and
+# newer by nothing, and promoting it would offer the install base a build it has already left.
+function ConvertTo-Version {
+    param([string] $Tag)
+
+    if ($Tag -match '^v(\d+)\.(\d+)\.(\d+)$') {
+        return [version]::new([int]$Matches[1], [int]$Matches[2], [int]$Matches[3])
+    }
+
+    return $null
+}
+
+$latest = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1)
+$latestVersion = if ($latest) { ConvertTo-Version -Tag $latest.tagName } else { $null }
 
 $target =
     if ($Version) {
@@ -91,17 +124,35 @@ $target =
         $found[0]
     }
     else {
-        $found = @($releases | Where-Object { $_.isPrerelease })
+        # Newer than what is already out, not merely the most recent pre-release. Those are the same
+        # thing on a tidy day and not on 2026-08-27, when v0.78.1 was still flagged pre-release after
+        # v0.79.0 had been promoted past it - so the plain reading would have offered every Commander
+        # a downgrade, which is the one thing this script exists to not do by accident.
+        $waiting = @(
+            $releases |
+                Where-Object { $_.isPrerelease } |
+                Where-Object {
+                    $version = ConvertTo-Version -Tag $_.tagName
+                    $version -and (-not $latestVersion -or $version -gt $latestVersion)
+                }
+        )
 
-        if ($found.Count -eq 0) {
-            $current = ($releases | Where-Object { $_.isLatest } | Select-Object -First 1)
-            $name = if ($current) { $current.tagName } else { $releases[0].tagName }
-
-            throw "There is no pre-release waiting. $name is already the latest."
+        if ($waiting.Count -eq 0) {
+            $name = if ($latest) { $latest.tagName } else { $releases[0].tagName }
+            throw "No pre-release newer than $name is waiting. Nothing to promote."
         }
 
-        $found[0]
+        $waiting[0]
     }
+
+# The same guard for a version named by hand, because naming one is not a reason to be allowed to go
+# backwards. A release that turned out bad is superseded by the next patch, never by promoting an
+# older tag over it - a published tag never moves, and the update checker compares version numbers.
+$targetVersion = ConvertTo-Version -Tag $target.tagName
+
+if ($latestVersion -and $targetVersion -and $targetVersion -lt $latestVersion) {
+    throw "$($target.tagName) is older than the current latest $($latest.tagName). Promoting it would offer every Commander a downgrade. Ship a new patch instead."
+}
 
 $tag = $target.tagName
 
@@ -113,9 +164,8 @@ if (-not $target.isPrerelease) {
 
 # Read the assets back rather than assuming the workflow finished. A release promoted before its
 # build has published is one the updater will offer and then fail to install from.
-$detail = Invoke-Native {
-    gh release view $tag --repo $Repo --json assets,isDraft 2>&1
-} | ConvertFrom-Json
+$detail = Invoke-GhJson -What "read $tag" -Arguments @(
+    'release', 'view', $tag, '--repo', $Repo, '--json', 'assets,isDraft')
 
 if ($detail.isDraft) {
     throw "$tag is a draft. Publishing it is a different act from promoting it."
@@ -153,11 +203,22 @@ if ($LASTEXITCODE -ne 0) {
 
 # Read it back. The command exiting zero and the release actually being latest are different claims,
 # and this is the one place where believing the wrong one reaches every install.
-$after = Invoke-Native {
-    gh release view $tag --repo $Repo --json isPrerelease,isLatest 2>&1
-} | ConvertFrom-Json
+#
+# Through `release list` rather than `release view`, because **isLatest is a field on list and not on
+# view** - which this script got wrong on its first real run and which the guarded parse above now
+# reports properly instead of as a JSON error.
+$after = @(
+    (Invoke-GhJson -What "read $tag back" -Arguments @(
+        'release', 'list', '--repo', $Repo, '--limit', '50', '--exclude-drafts',
+        '--json', 'tagName,isPrerelease,isLatest')) |
+        ForEach-Object { $_ } | Where-Object { $_.tagName -eq $tag }
+)
 
-if ($after.isPrerelease -or -not $after.isLatest) {
+if ($after.Count -eq 0) {
+    throw "$tag did not come back in the release list at all. Check it: gh release view $tag"
+}
+
+if ($after[0].isPrerelease -or -not $after[0].isLatest) {
     throw "$tag did not read back as the latest release. Check it: gh release view $tag"
 }
 
