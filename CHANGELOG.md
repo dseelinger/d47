@@ -20,7 +20,7 @@ the file as it stood then.
 
 ---
 
-## 0.78.0 — 2026-08-26 — 924 voices to cast from
+## 0.78.0 — 2026-08-27 — 924 voices to cast from
 
 ### A fourth voice provider, and it is here for the size of its library
 
@@ -64,6 +64,26 @@ their price page, type the number in, and every figure follows it as it does for
 Concurrency is held at two requests at once, which is the floor their own documentation gives for
 entry tiers — lower than the three Directive 47 allows ElevenLabs. That figure is read rather than
 measured, and it is recorded as such.
+
+### A voice you pick now shows on its row
+
+Choosing a voice for your carrier's captain or its tower wrote the choice down and then went on
+showing the row's default, so there was no way to tell it had worked short of listening.
+
+**The store was never the problem.** Both voices were saved, both applies are in the log, and both
+ids resolve to real names. The row had simply stopped re-reading — twice over. The settings page
+subscribed to changes once when it was built and unsubscribed every time it left the screen, so
+after the first time it did, it never heard about a change again. And applying a setting only
+redrew the page when the change was *rejected*, on the reasoning that a change which worked is
+visible in the control that made it — true of a switch, false of a button whose caption is a voice's
+name looked up from your provider.
+
+### About is the bottom of the page
+
+It was second from the bottom, under an Audio mixer card that had never been given a position at
+all and so took the one the code falls back to — which is past everything deliberate. About now
+states its own place, and so does the mixer.
+
 
 ---
 
