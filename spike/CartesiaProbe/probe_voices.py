@@ -181,32 +181,118 @@ def speed(key, out):
 
     print(f"  speaking with {first.get('name', '?')}")
 
-    # The documented enum first, then the numbers either side of it. A provider that refuses an
-    # out-of-range value is one d47 can adapt to; one that accepts and ignores it is invisible,
-    # which is the failure that moved the ElevenLabs pin off Multilingual 2.
-    for label in ("slowest", "slow", "normal", "fast", "fastest", -1.0, 0.0, 1.0, 2.0):
-        body = {
-            "model_id": "sonic-2",
-            "transcript": LINE,
-            "voice": {"mode": "id", "id": voice_id},
-            "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 44100},
-            "language": "en",
-            "speed": label,
-        }
+    # **Asked two ways, because the first run could not tell "ignored" from "asked wrong".**
+    # A first pass sent speed as a top-level field and every value came back at the same
+    # duration - including -1.0 and 0.0, both accepted with 200. That is either the provider
+    # ignoring the parameter, or the provider dropping an unknown top-level field, and those
+    # have opposite consequences for d47: an ignored parameter is invisible to every caller,
+    # a wrong placement is d47's own bug. Cartesia has taken these as voice controls rather
+    # than as request fields, so both are sent and labelled.
+    def top_level(label):
+        return {"speed": label}, {"mode": "id", "id": voice_id}
 
-        status, payload, elapsed = call(key, "POST", "/tts/bytes", body, raw=True)
+    def voice_control(label):
+        return {}, {"mode": "id", "id": voice_id, "__experimental_controls": {"speed": label}}
 
-        if status != 200:
-            print(f"  speed={label!r:>10}  REFUSED {status}: {str(payload)[:160]}")
+    baseline = None
+
+    for where, shape in (("top-level", top_level), ("voice-control", voice_control)):
+        print(f"  -- speed sent as {where} --")
+
+        for label in ("slowest", "slow", "normal", "fast", "fastest", -1.0, 0.0, 1.0, 2.0):
+            extra, voice = shape(label)
+
+            body = {
+                "model_id": "sonic-2",
+                "transcript": LINE,
+                "voice": voice,
+                "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 44100},
+                "language": "en",
+                **extra,
+            }
+
+            status, payload, elapsed = call(key, "POST", "/tts/bytes", body, raw=True)
+
+            if status != 200:
+                print(f"     speed={label!r:>10}  REFUSED {status}: {str(payload)[:160]}")
+                continue
+
+            seconds = (len(payload) - 44) / (44100 * 2)
+            name = os.path.join(out, f"speed-{where}-{str(label).replace('.', '_')}.wav")
+
+            with open(name, "wb") as handle:
+                handle.write(payload)
+
+            if baseline is None:
+                baseline = seconds
+
+            # Against the first measured duration, so a reader can see at a glance whether
+            # anything moved at all. The OpenAI spike measured about +-7% between identical
+            # calls, so anything inside that band is noise and not an effect.
+            drift = (seconds - baseline) / baseline * 100
+
+            print(
+                f"     speed={label!r:>10}  {seconds:5.2f}s audio  ({drift:+5.1f}% vs first)"
+                f"  ({elapsed:.1f}s call)"
+            )
+
+
+def repeated(key, times):
+    """Whether the float control does anything, measured against its own noise.
+
+    The single-sample pass showed the enum moving durations by about 25% and the float by about
+    2%. Synthesis is not deterministic - the OpenAI spike measured about +-7% between identical
+    calls - so 25% is an effect and 2% is indistinguishable from nothing. This repeats the
+    discriminating cases so the two can be told apart, which decides whether a Cartesia rate row
+    is a slider or a five-way picker.
+    """
+
+    print(f"== speed, repeated {times}x (voice-control placement only) ==")
+
+    status, payload, _ = call(key, "GET", "/voices/?limit=1")
+    first = (payload.get("data") if isinstance(payload, dict) else payload)[0]
+    voice_id = first.get("id")
+
+    print(f"  speaking with {first.get('name', '?')}")
+    print()
+
+    for label in ("slowest", "normal", "fastest", -1.0, 0.0, 1.0):
+        runs = []
+
+        for _ in range(times):
+            body = {
+                "model_id": "sonic-2",
+                "transcript": LINE,
+                "voice": {
+                    "mode": "id",
+                    "id": voice_id,
+                    "__experimental_controls": {"speed": label},
+                },
+                "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 44100},
+                "language": "en",
+            }
+
+            status, payload, _ = call(key, "POST", "/tts/bytes", body, raw=True)
+
+            if status != 200:
+                print(f"  speed={label!r:>10}  REFUSED {status}: {str(payload)[:120]}")
+                runs = []
+                break
+
+            runs.append((len(payload) - 44) / (44100 * 2))
+
+        if not runs:
             continue
 
-        seconds = (len(payload) - 44) / (44100 * 2)
-        name = os.path.join(out, f"speed-{str(label).replace('.', '_')}.wav")
+        mean = sum(runs) / len(runs)
+        spread = max(runs) - min(runs)
 
-        with open(name, "wb") as handle:
-            handle.write(payload)
-
-        print(f"  speed={label!r:>10}  {seconds:5.2f}s audio  ({elapsed:.1f}s call)  -> {name}")
+        # The spread within one setting is this instrument's own noise floor. A difference
+        # between settings smaller than it is not a finding.
+        print(
+            f"  speed={label!r:>10}  mean {mean:5.2f}s  spread {spread:4.2f}s  "
+            + "  ".join(f"{run:5.2f}" for run in runs)
+        )
 
 
 def billing(key):
@@ -223,8 +309,9 @@ def billing(key):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--only", choices=["voices", "speed", "billing"])
+    parser.add_argument("--only", choices=["voices", "speed", "billing", "repeat"])
     parser.add_argument("--out", default="cartesia-spike")
+    parser.add_argument("--repeat", type=int, default=3)
     args = parser.parse_args()
 
     key = key_from_environment() or key_from_d47()
@@ -244,6 +331,8 @@ def main():
         billing(key)
     if args.only in (None, "speed"):
         speed(key, args.out)
+    if args.only == "repeat":
+        repeated(key, args.repeat)
 
     return 0
 

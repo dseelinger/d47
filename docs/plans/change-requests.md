@@ -196,6 +196,14 @@ loses the far ends of Edge's wider offset, because the row is narrowed for a pro
 voices use. That is the price of one honest row over six, and it is the Commander's call, made
 knowing it.
 
+**Cartesia does not tighten it** (measured 2026-08-26, [cartesia-voices-and-speed.md](../spikes/cartesia-voices-and-speed.md)).
+The revisit condition below anticipated that a fourth provider's range might move the common
+denominator. It does not: Cartesia **validates a speed and then does not act on it**, so it never
+joins the set of providers that have a rate at all, and Phase 60 declares it as taking none. Worth
+recording that its float is an **offset** in `[-1.0, 1.0]` rather than a multiplier — so even had it
+been honoured it would have been a third unit needing conversion, not a narrower version of an
+existing one.
+
 **It is a default and not a settlement** — *"until if/when we decide to change it"*. The per-category
 rows stay written up above rather than deleted, because the argument for them survives intact and
 this entry is where the next person will look. **Revisit it when a fourth provider arrives**: if
