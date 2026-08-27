@@ -8,15 +8,25 @@ tree renders to both a desktop window and a SteamVR overlay.
 **[Documentation](https://dseelinger.github.io/d47/)** — including [how to install and
 verify a build](https://dseelinger.github.io/d47/install.html).
 
+**[Join the Discord](https://dseelinger.github.io/d47/community.html)** — questions, bug
+reports and screenshots. It is the place to reach a person; you do not need a GitHub account.
+
 ## Status
 
-Phases 1-15 are complete: the foundation, the journal spine, typed and spoken conversation,
-the settings surface, speaking and listening, game knowledge, proactive callouts, the SteamVR
-overlay, acting on the game, personas and voices, the soundscape, hands-free listening,
-knowledge from outside the journal, and warnings that arrive before the thing they warn about.
-Phase 16 (two spikes and the first-run key prompt) is next. See [list.md](list.md) for the full
-plan, [docs/plans/build-order.md](docs/plans/build-order.md) for what is being built next and why,
-and [architecture.md](architecture.md) for how it is built.
+**It is built and it is flown.** Phases 1 to 54, 57 and 58 have shipped — the journal spine,
+typed and spoken conversation, the settings surface, speaking and listening, game knowledge,
+proactive callouts, the SteamVR overlay, acting on the game, personas and voices, the
+soundscape, hands-free listening, knowledge from outside the journal, ships and modules,
+engineers and blueprints, routing, the build gauges, adventures, and per-role voices.
+
+That is a description rather than a boast: it is one person's project, it has a handful of
+users, and the [open issues](https://github.com/dseelinger/d47/issues) are the honest list of
+what is wrong with it today.
+
+See [list.md](list.md) for the full plan and what each phase covers,
+[docs/plans/build-order.md](docs/plans/build-order.md) for what is being built next and why,
+[CHANGELOG.md](CHANGELOG.md) for what changed in each release, and
+[architecture.md](architecture.md) for how it is built.
 
 ## Building
 

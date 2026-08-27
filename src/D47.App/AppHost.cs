@@ -1636,6 +1636,12 @@ public sealed class AppHost : IDisposable
 
                     StartMenuWanted = () => !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
                     SetUpKeys = () => _ = self?.SetUpKeys?.Invoke(),
+
+                    ShowCommunity = () => System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.CommunityUrl)
+                        {
+                            UseShellExecute = true,
+                        }),
                 }));
 
         built = capabilities;

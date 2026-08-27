@@ -49,6 +49,13 @@ public sealed class ChangelogWindow : Window
     /// </summary>
     public const string OnlineUrl = "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md";
 
+    /// <summary>
+    /// The community page, which is where the Discord invite lives — deliberately not the
+    /// invite itself. An invite compiled into a build cannot be reissued without a release;
+    /// this page is a file in the repository, so it can be.
+    /// </summary>
+    public const string CommunityUrl = "https://dseelinger.github.io/d47/community.html";
+
     public ChangelogWindow(string text)
     {
         Title = "What changed";

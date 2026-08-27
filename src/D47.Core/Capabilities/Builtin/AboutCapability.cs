@@ -48,6 +48,8 @@ public static class AboutCapability
 
     public const string SetUpKeysKey = "about.setUpKeys";
 
+    public const string CommunityKey = "about.community";
+
     /// <summary>
     /// Frontier's long-form attribution, as their media usage rules word it.
     /// <para>
@@ -93,7 +95,8 @@ public static class AboutCapability
         Action? showChangelogOnline = null,
         Action? addToStartMenu = null,
         Func<bool>? startMenuWanted = null,
-        Action? setUpKeys = null)
+        Action? setUpKeys = null,
+        Action? showCommunity = null)
     {
         var rows = new List<SettingRow>
         {
@@ -138,6 +141,22 @@ public static class AboutCapability
                 DocsAnchor = "changelog",
                 Press = online,
                 PressLabel = "Open on GitHub",
+            });
+        }
+
+        if (showCommunity is { } community)
+        {
+            rows.Add(new SettingRow
+            {
+                Key = CommunityKey,
+                Label = "Community",
+                Help =
+                    "Where the other Commanders are, and the fastest way to reach a person. "
+                    + "Opens a browser.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "community",
+                Press = community,
+                PressLabel = "Open the Discord",
             });
         }
 
@@ -236,4 +255,15 @@ public sealed record AboutSurface
 
     /// <summary>Reopens the guided key setup.</summary>
     public Action? SetUpKeys { get; init; }
+
+    /// <summary>
+    /// Opens the community page, which is where the Discord invite lives.
+    /// <para>
+    /// <b>The page, not the invite.</b> A <c>discord.gg</c> link compiled into a build is
+    /// permanent — revoke that invite and every copy already installed has a dead button that
+    /// only a release can fix. The page is a file in this repository, so reissuing an invite is
+    /// a commit.
+    /// </para>
+    /// </summary>
+    public Action? ShowCommunity { get; init; }
 }

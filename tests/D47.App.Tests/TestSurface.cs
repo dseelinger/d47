@@ -143,6 +143,7 @@ public static class TestSurface
                 AddToStartMenu = () => { },
                 StartMenuWanted = () => true,
                 SetUpKeys = () => { },
+                ShowCommunity = () => { },
             }));
 
         built = registry;

@@ -63,6 +63,25 @@
     Pushes the tag without waiting for CI. Only for a run where the CI result is already known,
     and it prints what it is skipping.
 
+.PARAMETER PreRelease
+    Cuts the version, but marks the GitHub Release as a pre-release so nobody is offered it.
+    The update checker reads only releases/latest, and GitHub's latest endpoint skips
+    pre-releases - so this build is installable by you and invisible to everyone else. Fly it,
+    then promote it:
+
+        gh release edit vX.Y.Z --prerelease=false --latest
+
+    Use the real version number rather than an -rc suffix. A pre-release that fails its soak is
+    simply never promoted, and you fix forward to the next patch: the tag stays where it is,
+    which is the rule, and no public release ever carried the fault.
+
+    The marking happens after the release workflow publishes, because the workflow is what
+    creates the Release. This script waits for that to finish and then flips the flag, so there
+    is a window of a minute or two where the new release is the latest one. That window is
+    accepted rather than engineered away: closing it means teaching the workflow to read the
+    tag annotation, and the workflow is the one piece of this pipeline that cannot be tested
+    without spending a version number.
+
 .EXAMPLE
     ./tools/release.ps1 -Release patch -Message "Remediation 14 item 1: the row layout"
 
@@ -89,7 +108,9 @@ param(
 
     [switch] $SkipTests,
 
-    [switch] $SkipCi
+    [switch] $SkipCi,
+
+    [switch] $PreRelease
 )
 
 Set-StrictMode -Version Latest
@@ -438,3 +459,57 @@ Invoke-Git push $Remote $next | Out-Null
 
 Write-Step "$next is pushed. The release workflow builds, checksums and publishes it."
 Write-Note "gh run watch (gh run list --workflow release.yml --limit 1 --json databaseId -q '.[0].databaseId')"
+
+# ------------------------------------------------------------------ pre-release
+
+# The Release is created by the workflow, not here, so the flag can only be set once that has
+# published. Waiting is the point: flipping it early would race the workflow, and the failure
+# mode of that race is exactly the thing this switch exists to prevent.
+if ($PreRelease) {
+    Write-Step "Marking $next as a pre-release"
+    Write-Note 'Waiting for the release workflow to publish it first.'
+
+    $deadline = (Get-Date).AddMinutes(20)
+    $published = $false
+
+    while ((Get-Date) -lt $deadline) {
+        # gh exits non-zero until the Release exists, which is the signal being waited on.
+        $state = gh release view $next --json isDraft --jq '.isDraft' 2>$null
+
+        if ($LASTEXITCODE -eq 0 -and $state -eq 'false') {
+            $published = $true
+            break
+        }
+
+        Start-Sleep -Seconds 15
+    }
+
+    if (-not $published) {
+        Write-Warning "The Release for $next did not appear within 20 minutes, so it is NOT marked as a pre-release."
+        Write-Warning "It may still be building. Mark it by hand once it is up:"
+        Write-Warning "    gh release edit $next --prerelease"
+        return
+    }
+
+    gh release edit $next --prerelease | Out-Null
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Could not mark $next as a pre-release. Do it by hand: gh release edit $next --prerelease"
+        return
+    }
+
+    # Read it back rather than trusting the exit code: the whole value of this switch is that
+    # nobody is offered the build, and "probably marked" is not that.
+    $isPre = gh release view $next --json isPrerelease --jq '.isPrerelease' 2>$null
+    $latest = gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>$null
+
+    if ($isPre -ne 'true') {
+        Write-Warning "$next does not read back as a pre-release. Check it: gh release view $next"
+        return
+    }
+
+    Write-Step "$next is a pre-release. Nobody is offered it."
+    Write-Note "The update checker still points at $latest."
+    Write-Note 'Fly it, then promote:'
+    Write-Note "    gh release edit $next --prerelease=false --latest"
+}

@@ -276,6 +276,7 @@ public sealed class TestSurface
                 AddToStartMenu = () => { },
                 StartMenuWanted = () => true,
                 SetUpKeys = () => { },
+                ShowCommunity = () => { },
             }));
 
         built = registry;

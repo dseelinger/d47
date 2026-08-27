@@ -63,6 +63,17 @@ they came for.
 Both survive on purpose. The offline one answers when there is no network; the online one answers
 about a version this build has never heard of.
 
+#### Community {#community}
+
+Opens the community page, which carries the invite to the Discord — where questions get
+answered by a person, and where a bug report reaches somebody who can fix it. You do not need a
+GitHub account to use it.
+
+**The button opens the page rather than the invite**, and that is deliberate. A `discord.gg` link
+compiled into a build is permanent: revoke that invite and every copy already installed has a dead
+button, fixable only by shipping a release. The page is a file in the repository, so reissuing an
+invite is a commit and every build ever installed follows it.
+
 #### Set up keys {#set-up-keys}
 
 Walks through the API keys again — the same guided setup first run offers.

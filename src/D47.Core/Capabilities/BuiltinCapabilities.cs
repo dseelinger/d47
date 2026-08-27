@@ -338,6 +338,7 @@ public static class BuiltinCapabilities
             about?.ShowChangelogOnline,
             about?.AddToStartMenu,
             about?.StartMenuWanted,
-            about?.SetUpKeys),
+            about?.SetUpKeys,
+            about?.ShowCommunity),
     ];
 }
