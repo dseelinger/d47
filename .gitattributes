@@ -12,3 +12,10 @@ tests/fixtures/** -text -diff
 *.mp3 binary
 *.ogg binary
 *.dll binary
+
+# Shell scripts are LF, always. `* text=auto` above plus core.autocrlf=true checks these out with
+# CRLF on Windows, and a shebang followed by a carriage return is not an interpreter path: bash
+# answers `bad interpreter: /usr/bin/env bash^M` and the script is dead on a fresh clone. It runs
+# in the working tree it was written in, which is the worst way for this to fail.
+tools/get-ver text eol=lf
+*.sh text eol=lf
