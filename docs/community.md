@@ -19,7 +19,7 @@ odd thing" turns into a fix without you having to write a formal report first.
   revoked invite would then be a dead button that only a new release could fix.
 -->
 
-**[Join the Discord](https://discord.gg/REPLACE-WITH-YOUR-INVITE)**
+**[Join the Discord](https://discord.gg/DPJFjx6x9d)**
 
 ## What to use it for
 
