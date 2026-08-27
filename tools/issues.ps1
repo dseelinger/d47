@@ -22,6 +22,11 @@
     its number, its author, its labels and its dates. Never its title, and never its body — a title
     is attacker-controlled text like any other, and "just the title" is how this leaks.
 
+    **"By the Commander" is checked rather than assumed, since 2026-08-27** (#94). Until then the
+    label path asked only whether the string `ready` was present, which is a different question from
+    who put it there — so the script now reads the issue's event log and takes the actor of the most
+    recent application. It fails closed: a log that cannot be read withholds.
+
     **Comments are filtered even on an issue that is allowed.** Anyone may comment on the
     Commander's own issue, so passing a vouched-for issue through unfiltered would hand over a
     stranger's prose under a trusted heading. Comments not written by the Commander are counted and
@@ -102,23 +107,127 @@ function Invoke-Gh {
     return ($output -join "`n")
 }
 
-function Test-Vouched {
-    param([string] $Author, [string[]] $Labels)
+# Who most recently applied $ReadyLabel, or $null if nobody currently has. Throws when the log
+# cannot be read, which the caller turns into a withholding rather than an allowance.
+#
+# The *events* endpoint rather than the issue's own JSON, because `gh issue view` reports which
+# labels are on an issue and never who put them there - and who put them there is the entire
+# question. --paginate because a long-lived issue's older events would otherwise fall off the first
+# page, and --slurp to collect those pages into one array rather than several concatenated ones.
+#
+# The filtering is done here rather than with `--jq`, and that is not a preference. A jq filter
+# needs double quotes around every string, and Windows PowerShell's legacy native-argument passing
+# re-parses an argument containing them - gh saw three positional arguments and refused. No argument
+# this function passes contains a quote or a space.
+#
+# Ordered oldest-first, so the last match wins: a label can be applied, removed and re-applied, and
+# only the most recent application says anything about the issue as it stands now.
+function Get-ReadyApprover {
+    param([int] $Number)
 
-    if ($Vouched -contains $Author) { return $true }
+    $raw = Invoke-Gh @('api', '--paginate', '--slurp', "repos/$Repo/issues/$Number/events")
+    $pages = $raw | ConvertFrom-Json
 
-    return $Labels -contains $ReadyLabel
+    # --slurp yields an array of pages; each page is an array of events. Flattened rather than
+    # assumed to be one page, which is the whole reason --paginate is here.
+    $events = @()
+    foreach ($page in $pages) {
+        if ($page -is [System.Array]) { $events += $page } else { $events += , $page }
+    }
+
+    $last = $null
+    foreach ($e in $events) {
+        # StrictMode makes a missing property a terminating error, and most events have no label.
+        $names = $e.PSObject.Properties.Name
+        if ($names -notcontains 'event') { continue }
+        if ($e.event -ne 'labeled' -and $e.event -ne 'unlabeled') { continue }
+        if ($names -notcontains 'label' -or $null -eq $e.label) { continue }
+        if ($e.label.name -ne $ReadyLabel) { continue }
+        $last = $e
+    }
+
+    if ($null -eq $last) { return $null }
+
+    # Currently unlabelled, or an actor GitHub could not name (a deleted account). Neither is an
+    # approval, and neither is an error worth failing the whole run over.
+    if ($last.event -ne 'labeled') { return $null }
+    if (($last.PSObject.Properties.Name) -notcontains 'actor' -or $null -eq $last.actor) { return $null }
+    if ([string]::IsNullOrWhiteSpace($last.actor.login)) { return $null }
+
+    return $last.actor.login
 }
 
-# Number, author, labels, dates. Everything here is either a fact GitHub assigns or a value only
-# the Commander can set - no field on this line is prose somebody else wrote.
+# Two keys open this door, and until 2026-08-27 only one of them was checked for who turned it
+# (#94). An author is an identity GitHub assigns and cannot be forged through the API. A label was
+# only ever a string until you ask who applied it - and `ready` means "approved by the maintainer",
+# which is a claim about a *person*. So the label path now reads the event log and takes the actor.
+#
+# It was never a live hole: applying a label needs triage permission, so a member of the public
+# cannot open the door they are standing at. It was an assumption about how the repository happens
+# to be configured, sitting underneath a control whose whole job is not to assume - and it would
+# have become real, silently, the first time a collaborator, an App or a workflow gained that scope.
+#
+# **It fails closed.** An event log that cannot be read withholds the issue, because a control that
+# opens when it cannot check is not a control. The cost of that is one API call per issue that is
+# *only* vouched by its label - never for the Commander's own, which is nearly all of them.
+function Resolve-Trust {
+    param([string] $Author, [string[]] $Labels, [int] $Number)
+
+    if ($Vouched -contains $Author) {
+        return [pscustomobject]@{ Allowed = $true; Mark = 'yours   '; Why = "written by $Author" }
+    }
+
+    if ($Labels -notcontains $ReadyLabel) {
+        return [pscustomobject]@{ Allowed = $false; Mark = ''; Why = 'not vouched' }
+    }
+
+    try {
+        $approver = Get-ReadyApprover -Number $Number
+    }
+    catch {
+        # To stderr rather than into the receipt: a control that fails closed silently is one
+        # nobody can tell from a control that is working. This text is gh's own and the endpoint's,
+        # never the issue's.
+        Write-Warning "Could not read who applied '$ReadyLabel' to #${Number}: $($_.Exception.Message)"
+
+        return [pscustomobject]@{
+            Allowed = $false; Mark = ''
+            Why     = "labelled $ReadyLabel, but who applied it could not be read"
+        }
+    }
+
+    if ($null -eq $approver) {
+        return [pscustomobject]@{
+            Allowed = $false; Mark = ''
+            Why     = "labelled $ReadyLabel, but no application of it is recorded"
+        }
+    }
+
+    if ($Vouched -notcontains $approver) {
+        return [pscustomobject]@{
+            Allowed = $false; Mark = ''
+            Why     = "labelled $ReadyLabel by $approver, who is not the Commander"
+        }
+    }
+
+    return [pscustomobject]@{ Allowed = $true; Mark = 'ready   '; Why = "labelled $ReadyLabel by $approver" }
+}
+
+# Number, author, labels, dates - and why it was withheld. Everything here is either a fact GitHub
+# assigns or a login GitHub assigns; no field on this line is prose somebody else wrote. The reason
+# is this script's own words rather than the issue's, for the same reason.
 function Write-Receipt {
-    param($Item, [string]$Kind = 'issue')
+    param($Item, [string]$Kind = 'issue', [string]$Why = '')
 
     $labels = if ($Item.labels.Count -gt 0) { ($Item.labels | ForEach-Object { $_.name }) -join ',' } else { 'none' }
 
     Write-Host ("  #{0,-5} WITHHELD  {1} by {2}, labels: {3}, opened {4}" -f `
         $Item.number, $Kind, $Item.author.login, $labels, $Item.createdAt.Substring(0, 10))
+
+    # Only when it is not the ordinary case, so the common line stays one line.
+    if ($Why -and $Why -ne 'not vouched') {
+        Write-Host ("  {0,-6}           {1}" -f '', $Why)
+    }
 }
 
 switch ($Command) {
@@ -141,15 +250,15 @@ switch ($Command) {
 
         foreach ($item in $items) {
             $labels = @($item.labels | ForEach-Object { $_.name })
+            $trust = Resolve-Trust -Author $item.author.login -Labels $labels -Number $item.number
 
-            if (Test-Vouched -Author $item.author.login -Labels $labels) {
+            if ($trust.Allowed) {
                 $shown++
-                $mark = if ($Vouched -contains $item.author.login) { 'yours   ' } else { 'ready   ' }
-                Write-Host ("  #{0,-5} {1}  {2}" -f $item.number, $mark, $item.title)
+                Write-Host ("  #{0,-5} {1}  {2}" -f $item.number, $trust.Mark, $item.title)
             }
             else {
                 $withheld++
-                Write-Receipt -Item $item
+                Write-Receipt -Item $item -Why $trust.Why
             }
         }
 
@@ -172,12 +281,15 @@ switch ($Command) {
         $item = $raw | ConvertFrom-Json
         $labels = @($item.labels | ForEach-Object { $_.name })
 
-        if (-not (Test-Vouched -Author $item.author.login -Labels $labels)) {
+        $trust = Resolve-Trust -Author $item.author.login -Labels $labels -Number $item.number
+
+        if (-not $trust.Allowed) {
             Write-Host "#$($item.number) is WITHHELD."
             Write-Host ""
             Write-Host "  author : $($item.author.login)  (not the Commander)"
             Write-Host "  labels : $(if ($labels.Count) { $labels -join ',' } else { 'none' })"
             Write-Host "  opened : $($item.createdAt.Substring(0, 10))"
+            Write-Host "  reason : $($trust.Why)"
             Write-Host ""
             Write-Host "Its title and body are not shown, and not because they are long: they are"
             Write-Host "text written by somebody else, and reading them is the act this refuses."
@@ -187,10 +299,8 @@ switch ($Command) {
             exit 3
         }
 
-        $why = if ($Vouched -contains $item.author.login) { "written by $($item.author.login)" } else { "labelled $ReadyLabel" }
-
         Write-Host "#$($item.number)  $($item.title)"
-        Write-Host "  $($item.state), $why, labels: $(if ($labels.Count) { $labels -join ',' } else { 'none' })"
+        Write-Host "  $($item.state), $($trust.Why), labels: $(if ($labels.Count) { $labels -join ',' } else { 'none' })"
         Write-Host ""
         Write-Host $item.body
 
