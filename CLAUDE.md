@@ -108,11 +108,11 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-21, 23-54, 57 and 58 are frozen.** Several hundred code comments
+- **Phase numbers are references, and phases 1-21, 23-54, 57, 58 and 60 are frozen.** Several hundred code comments
   cite `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
   phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
   Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
-  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, Phases 39 to 43 on 2026-08-21, Phases 44 to 47 on 2026-08-22, Phases 48 and 51 on 2026-08-24, and Phases 49, 50, 52 and 53 on 2026-08-25, and Phases 57, 58 and 54 on 2026-08-26 —
+  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, Phases 39 to 43 on 2026-08-21, Phases 44 to 47 on 2026-08-22, Phases 48 and 51 on 2026-08-24, and Phases 49, 50, 52 and 53 on 2026-08-25, and Phases 57, 58, 54 and 60 on 2026-08-26 —
   and the set only ever grows. **57 and 58 joined it late**, on the day Phase 54 shipped rather than
   on the day each of them did, which is the rule being applied a day after it applied: they had
   already shipped in v0.72.0 and v0.73.0. **Phase 57 is frozen while its own item stays open** —

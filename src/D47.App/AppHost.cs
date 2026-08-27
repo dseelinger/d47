@@ -2987,6 +2987,10 @@ public sealed class AppHost : IDisposable
             direction: () => VoiceDirection.For(
                 Settings.Current.Llm.PersonalityEnabled ? Personas.Current : null)),
 
+        TtsProviderCatalog.CartesiaId => new CartesiaTtsProvider(
+            () => Secrets.TryGet(CartesiaTtsProvider.KeySecretName, out var key) ? key : null,
+            _loggerFactory.CreateLogger<CartesiaTtsProvider>()),
+
         _ => null,
     };
 
@@ -5552,6 +5556,10 @@ public sealed class AppHost : IDisposable
             TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
                 () => key,
                 _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
+
+            TtsProviderCatalog.CartesiaId => new CartesiaTtsProvider(
+                () => key,
+                _loggerFactory.CreateLogger<CartesiaTtsProvider>()),
 
             _ => null,
         };
