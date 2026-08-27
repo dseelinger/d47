@@ -20,6 +20,47 @@ the file as it stood then.
 
 ---
 
+## 0.78.1 — 2026-08-27 — A build that says which one it is
+
+### About told you the same thing twice
+
+**Version** and **Build** both read `0.78.0+4b18aaecbe2510b0aeae95d3f19583edd18ea205`. The row whose
+help says *"Which release this is"* answered with forty characters of commit hash, and the row
+beside it — whose help says a version alone *"cannot tell two builds of the same release apart"* —
+proved its own point by being identical to it.
+
+**Version** now reads `0.78.1`. **Build** still carries the commit, which is the thing worth quoting
+in a bug report. Every build since About became a settings page had this, so if you have ever
+copied that row into a report, it told whoever read it less than it looked like it did.
+
+The same change reaches the status Directive 47 reports when you ask it what it is running: it says
+`0.78.1` rather than reading a commit hash aloud.
+
+### A pre-release says so
+
+Directive 47 now knows whether the build you are running is a pre-release, and says so in three
+places: the title bar, About's **Version** row, and a small mark beside the **?** in the top right.
+
+**It asks GitHub rather than being told at build time**, and that is the whole design. A
+pre-release becomes a normal release when it is promoted — same download, same file, same version
+number — so a build that had been *stamped* as a pre-release would go on saying so for ever
+afterwards, on every machine that had installed it. Asking means the mark disappears by itself once
+the release is promoted, with nothing to reinstall.
+
+**If it cannot ask — no internet, or GitHub is unreachable — it says nothing at all** rather than
+claiming the build is final. A marker you cannot trust is worse than no marker.
+
+**The mark does not appear in the headset.** You are flying; which build you are on is not a
+question you are asking mid-flight, and there is no way to dismiss something in an overlay.
+
+### Underneath
+
+The left navigation's sections no longer share positions with each other. Nothing moved — the order
+is exactly what it was — but each section now states where it belongs rather than landing there by
+the order the code happens to register things in.
+
+---
+
 ## 0.78.0 — 2026-08-27 — 924 voices to cast from
 
 ### A fourth voice provider, and it is here for the size of its library
