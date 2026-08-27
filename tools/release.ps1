@@ -509,8 +509,20 @@ if ($PreRelease) {
 
     # Read it back rather than trusting the exit code: the whole value of this switch is that
     # nobody is offered the build, and "probably marked" is not that.
-    $isPre = gh release view $next --json isPrerelease --jq '.isPrerelease' 2>$null
-    $latest = gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>$null
+    # Both through Invoke-Native, for the reason given at the poll above: a bare native call with
+    # stderr in it is a terminating error while the preference is Stop, and `2>$null` is applied
+    # too late to prevent one.
+    $isPre = Invoke-Native { gh release view $next --json isPrerelease --jq '.isPrerelease' 2>&1 }
+
+    # `gh release list` rather than `gh api repos/:owner/:repo/releases/latest`, which says the
+    # same thing: the newest release that is neither a draft nor a pre-release is the definition
+    # of that endpoint's answer. The raw API is denied to agents by .claude/settings.json, because
+    # it is the road around tools/issues.ps1 — an issue body is one `gh api` call away otherwise —
+    # and a script that needs a denied command is a reason to lift the deny.
+    $latest = Invoke-Native {
+        gh release list --limit 1 --exclude-drafts --exclude-pre-releases `
+            --json tagName --jq '.[0].tagName' 2>&1
+    }
 
     if ($isPre -ne 'true') {
         Write-Warning "$next does not read back as a pre-release. Check it: gh release view $next"
