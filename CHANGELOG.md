@@ -27,6 +27,66 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.0 — 2026-08-28 — Phase 59: a voice that never leaves the machine
+
+**Every provider Directive 47 has ever had is a service.** The words it speaks are sent
+somewhere to be turned into audio — and that includes re-voiced in-game messages, which are
+written by other players. Edge is free, and free is not the same as private.
+
+**Kokoro runs the voice on your own computer.** Choose it and nothing D47 says leaves the
+machine. The model is downloaded once — about 350 MB, from `huggingface.co`, with a **Local
+voice** row in Settings that says whether it is here and fetches it if not — and after that this
+provider needs no network at all.
+
+**This closes the oldest promise still standing.** Phase 57 shipped in v0.72.0 with one item
+unticked: *no other player's text has to leave the machine*. Half of it was settled then, because
+every slot carrying another player's words defaults to Edge and Edge costs nothing. The other
+half could not be, because Edge is free and **not local**, so those words still went to Microsoft.
+Now they need not go anywhere.
+
+### It had to learn to read first, and that is most of the work
+
+Kokoro is given **sounds, not letters**. It has no text input at all — every other provider does
+that step inside its own service, invisibly — so Directive 47 had to learn to turn writing into
+speech sounds itself.
+
+The obvious answer was measured and thrown away: the usual neural model for this scored **0.0%**
+on words from its own training data, and Elite has 400 billion system names, so no dictionary can
+be extended to cover them.
+
+**So it works them out by rule.** Known words come from a pronunciation dictionary. Anything else
+is broken on spaces and dashes and taken a piece at a time: a piece that reads as English is
+pronounced, digits are read as a number, and a run of letters nobody could say — or letters
+mixed with digits — is spelled out.
+
+```text
+COL 385 SECTOR B0-GQPI
+  → call three eighty-five sector bee zero dash gee queue pee eye
+```
+
+*Shinrarta Dezhra* is **pronounced** rather than spelled, because sounds an English speaker can
+make are allowed even where English does not spell them that way. And a voice with a British
+accent says **zed**.
+
+The dash is only spoken where it is holding a designation together. *Well-known* is two words,
+not three.
+
+### What to know before choosing it
+
+**It speaks English and only English.** Every other provider is told which language a line is in;
+Kokoro is not told, because it has only one. A message in French is read out by an English
+speaker rather than in French. For the slots carrying other people's words that is the trade, and
+it is the point: the alternative is that those words leave your computer.
+
+**It has been heard, but not yet judged.** The voice was downloaded, loaded and spoken end to end
+before this shipped — which is more than the last new provider got — but whether it sounds
+*good* is a thing a person decides, and nobody has decided it yet.
+
+---
+
+Fixes [#101](https://github.com/dseelinger/d47/issues/101).
+
+---
 ## 0.83.0 — 2026-08-28 — Habits is gone
 
 ### The feature, and the data it kept about you
