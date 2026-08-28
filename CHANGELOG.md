@@ -27,6 +27,51 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.83.0 — 2026-08-28 — Habits is gone
+
+### The feature, and the data it kept about you
+
+> Remove "Habits" from D47, it was only ever half baked. Remove any data associated with it as
+> well from existing data files as part of the update.
+
+Habits was d47 reading your journals and noticing what you keep doing — overshooting a drop,
+submitting to interdictions, landing hard on high-gravity worlds — and remarking on it when the
+situation came round again. It shipped as Phase 32, it was the only callout that was off until
+you switched it on, and it is now withdrawn.
+
+**Everything it stored goes with it.** `data/habits.json` is deleted on the first launch after
+this update, and the line in the log says so when it actually removes something — deleting your
+own flying silently is the wrong way round even when you asked for it.
+
+**Your settings file is not disturbed.** The `callouts.habits` key stays in the record, read by
+nothing: settings files reject keys they do not recognise, so *removing* the property would have
+refused every file written before today rather than ignoring a value nobody reads. The name is
+retired and will never be reused for anything else — a later feature answering to it would
+silently inherit a decision you made about a different one.
+
+**What it gave back:** three tools and 505 bytes of the surface every conversation pays for,
+measured before and after rather than estimated. That is half a percent, which is worth saying
+plainly: this was removed because it was half baked, not to make room.
+
+Phase 32 is withdrawn in place and its number is retired forever, the same treatment Phase 22
+got and for the same reason: a later phase renumbered into it would silently repoint every
+reference that ever said "Phase 32" at a subject it was never about.
+
+### The download progress bar stops trailing the download
+
+Reported while flying 0.82.0: a model download far slower than a gigabit line should allow.
+
+**It was not slow.** Hugging Face serves that file at 54 MB/s, and d47's own copy loop was
+measured at 60 to 77 MB/s. What was wrong is that a 75 MB model fired **4,700** progress
+updates at the window, and that queue drains long after the bytes have landed — so the bar
+trailed reality, and a download that had already finished still looked like one that was
+crawling. It now sends 101, which is every update a progress bar can express.
+
+---
+
+Fixes [#84](https://github.com/dseelinger/d47/issues/84).
+
+---
 ## 0.82.0 — 2026-08-28 — Eight things that were quietly wrong
 
 A release of fixes rather than a new capability, and three of them were silent in the way that
