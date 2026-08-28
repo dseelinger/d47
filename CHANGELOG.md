@@ -2,27 +2,28 @@
 
 What changed in each release of Directive 47, newest first.
 
-A **completed phase in [list.md](list.md) is a minor release** — `0.<minor+1>.0` — because the
-version is how a Commander tells "some fixes landed" from "there is a whole capability here
-now". A batch of wanted changes — issues labelled `change-request` — is a minor for the same
-reason: nothing in it is a defect, so shipping it as a patch would tell a Commander that nothing had
-changed. Fixes between phases are patches. **A published tag never moves**: it is a receipt for
-one exact `d47.exe` and the checksum beside it, so a correction ships as the next patch rather
-than as the same number twice.
+**This file is the only record of the product this repository keeps.** Since 2026-08-27 there is
+no `list.md`, no `docs/plans/`, no archive of retired queues — they were deleted, and what they
+held is recorded in [#129](https://github.com/dseelinger/d47/issues/129). Everything not yet built
+is a [GitHub Issue](https://github.com/dseelinger/d47/issues): defects as `bug`, wanted changes as
+`change-request`, unbuilt phases as `phase`. An issue closes when it ships, and **the line it gets
+here is its permanent record**; an issue closing is not a record.
 
-**Everything not yet built is a [GitHub Issue](https://github.com/dseelinger/d47/issues)** — defects
-as `bug`, wanted changes as `change-request`, and since 2026-08-27 unbuilt phases as `phase`. An
-issue closes when it ships, and **the line it gets here is its permanent record**; an issue closing
-is not a record. `bugs.md` and `remediation.md` were retired on 2026-08-24 and are archived under
-[docs/archive/](docs/archive/README.md), and `docs/plans/change-requests.md` stopped holding open
-entries on 2026-08-27, keeping only the rules its numbers obey; a release section below that names
-any of them means the file as it stood then.
+A **completed phase is a minor release** — `0.<minor+1>.0` — because the version is how a Commander
+tells "some fixes landed" from "there is a whole capability here now". A batch of wanted changes
+— issues labelled `change-request` — is a minor for the same reason: nothing in it is a defect, so
+shipping it as a patch would tell a Commander that nothing had changed. Fixes between phases are
+patches. **A published tag never moves**: it is a receipt for one exact `d47.exe` and the checksum
+beside it, so a correction ships as the next patch rather than as the same number twice.
 
-**A release section below may name a phase by a number that was not in `list.md` at the time** —
-Phase 59 is named under 0.7x, and did not exist in the file until it shipped. That is the numbering
-rule working as intended rather than an error: a phase is planned as an issue and takes its number
-when it lands, but a changelog line naming it early **spends that number permanently**, because this
-file never moves.
+**A phase takes its number here, on the release that ships it**, and that spends the number
+permanently because this file never moves. Phase 59 is named under 0.7x and was still unbuilt on
+the day it was named, which is the rule working as intended rather than an error.
+
+**Sections below name files that no longer exist** — `list.md`, `bugs.md`, `remediation.md`,
+`docs/plans/change-requests.md`. Each means the file as it stood on the day of that release, and
+each is readable at `cd091a3`. They are left as written: this file is a record, so correcting its
+history to match today's layout would be the one edit it must never take.
 
 ---
 

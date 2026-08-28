@@ -8,61 +8,58 @@ The specs call the product **"TheApp"** — a placeholder. The repo and the work
 
 ## Read the spec, don't guess
 
-Three documents carry the design. They are not summarized here — go read the relevant one.
+Two documents carry the design, and the queue is not one of them. They are not summarized
+here — go read the relevant one.
 
-| Question | File |
+| Question | Where |
 |---|---|
-| What has it shipped? Is this in scope? | [list.md](list.md) — 356 items in 57 phases, each line carrying its own acceptance criteria. **Built phases only** |
-| What is planned but not built? | [Issues labelled `phase`](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Aphase) — one per unbuilt phase; it lands in `list.md` when it ships |
 | How is it built? Why not X? | [architecture.md](architecture.md) — stack, dependency direction, trust boundaries, packaging |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) — 11 Guardian cores plus the shared preamble |
-| What is broken? What is wanted next? | [GitHub Issues](https://github.com/dseelinger/d47/issues) — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1 list`, never `gh issue list`, which is denied |
+| What has it shipped? | [CHANGELOG.md](CHANGELOG.md) — the permanent record, newest first. One section per release, naming the phase or the issues it carried |
+| What is broken? What is planned? What is wanted next? | [GitHub Issues](https://github.com/dseelinger/d47/issues) — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1 list`, never `gh issue list`, which is denied |
 
 Before proposing a stack change, check `architecture.md` §10 (rejected alternatives) and §1
 (constraints). Most of the obvious alternatives were already considered and rejected for a
 stated reason.
 
-**Defects and wanted fixes are Issues, not files.** `bugs.md` and `remediation.md` were retired on
-2026-08-24 and archived under [docs/archive/](docs/archive/README.md) — a queue held in a file
-conflicts on every parallel branch and carries a hand-written count that is eventually wrong, and
-both had already happened. Close an issue from the commit that fixes it (`Fixes #21` in the body)
-rather than by editing anything. **`list.md` did not move and is not a tracker** — it is the
-product description, its numbers are cited over a thousand times from code, and a phase joins the
-frozen set the day it ships. `CHANGELOG.md` is untouched and is still the permanent record:
-an issue closing is not a record, the changelog line is.
+**The repository holds no project-management state at all.** *Completed 2026-08-27, and this is
+the whole rule rather than a stage of one.* There is no list of what is built, no queue of what is
+not, no plan of record, and no archive of retired queues. `list.md`, `docs/plans/` and
+`docs/archive/` were deleted together — 29 files, recorded in
+[#129](https://github.com/dseelinger/d47/issues/129), recoverable in full from `cd091a3`.
 
-**And since 2026-08-27, planning is an Issue too — which finishes the sentence above rather than
-contradicting it.** The Commander's reason: *"I dislike having to modify the repo when planning new
-work."* It is the argument that retired `bugs.md` reaching the same file from the other end — a
-phase that is being *designed* is a queue, conflicts on every parallel branch, and makes a repo edit
-the price of thinking. So the two jobs `list.md` was doing are split, and the split falls along a
-line that already existed: **1,463 code citations of `list.md Phase N` name a shipped phase and not
-one names an unbuilt one.** The frozen half cannot move and does not. The unbuilt tail was free, and
-went.
+**Two things hold everything, and they divide cleanly.**
 
-- **An unbuilt phase is an Issue labelled `phase`.** It lands in `list.md` on the commit that ships
-  it, closing the issue with `Fixes #N` — the changelog rule applied to the product description.
-  Phases 55, 56 and 59 moved out on 2026-08-27 as [#99](https://github.com/dseelinger/d47/issues/99),
-  [#100](https://github.com/dseelinger/d47/issues/100) and
-  [#101](https://github.com/dseelinger/d47/issues/101).
-- **A wanted change is an Issue labelled `change-request`.** `change-requests.md`'s `## Open` section
-  went the same day and for the same reason — it was a queue with nothing else in it. The file stays
-  for the numbering rules its 61 code citations depend on.
-- **A plan of record is an Issue while it is a plan.** It lands in `docs/plans/` with the build, and
-  only if the code needs to cite it — four of twenty-five ever did, so most never needed to be files.
-- **What does *not* move: work being planned in order to be built now.** A design written and
-  executed in one sitting is not a queue and does not conflict with anything, so it may go straight
-  into the repo. The rule is about planning that outlives the session that wrote it.
+- **`CHANGELOG.md` is the record of what happened.** It never moves, an issue closing is not a
+  record, and the changelog line is. It is the only file in this repository that is allowed to
+  describe the state of the product.
+- **GitHub Issues is every queue.** A defect is a `bug`, a wanted change is a `change-request`, an
+  unbuilt phase is a `phase`. Close one from the commit that fixes it (`Fixes #21` in the body)
+  rather than by editing anything.
 
-**Two consequences worth knowing before relying on this.** `tools/issues.ps1` **drops third-party
-comments even on the Commander's own issues** — right for a defect report, but it means a stranger's
-good idea about a phase plan reaches no agent, and the Commander has to restate it. And the move
-makes the `ready` label load-bearing in a way it was not: unattended work used to read phases from a
-trusted in-repo file and now rests entirely on that label. **So [#94](https://github.com/dseelinger/d47/issues/94)
-was fixed the same day** — the label is only accepted when a vouched account applied it, read from
-the issue's event log rather than assumed, and an event log that cannot be read withholds. The
-receipt says *labelled `ready` by dseelinger* rather than merely that a label exists.
+**The reason is the same one three times, and it was learned three times.** A queue held in a file
+conflicts on every parallel branch, carries a hand-written count that is eventually wrong, and makes
+a repo edit the price of thinking. Defects went first, on 2026-08-24. Unbuilt phases and change
+requests followed on 2026-08-27, on the Commander's reason: *"I dislike having to modify the repo
+when planning new work."* The rest went the same day, once it was clear the files left behind were
+doing the same job badly: three plans of record still announced phases as unbuilt that had shipped
+weeks earlier, and one sent a reader to `bugs.md` for *"the current record"* of a defect, by a path
+that had not resolved since the day it was archived.
 
+**A plan may still be written; it may not be left behind.** A design written and executed in one
+sitting is not a queue and conflicts with nothing, so write it wherever it helps you think. What is
+refused is the artefact that outlives the session: a file whose top line claims what is built is
+wrong the first time somebody ships without updating it, and nothing checks it. Reasoning that
+is worth keeping goes in the issue it belongs to, or in the changelog section that ships it.
+
+**One consequence to know before relying on this**, and it is now the only road in: `tools/issues.ps1`
+**drops third-party comments even on the Commander's own issues** — right for a defect report, but
+it means a stranger's good idea about a phase plan reaches no agent, and the Commander has to
+restate it. And unattended work rests entirely on the `ready` label now that there is no trusted
+in-repo file to read a phase from. **So [#94](https://github.com/dseelinger/d47/issues/94) was fixed
+the same day** — the label is only accepted when a vouched account applied it, read from the
+issue's event log rather than assumed, and an event log that cannot be read withholds. The receipt
+says *labelled `ready` by dseelinger* rather than merely that a label exists.
 ## Invariants
 
 Each of these is cheap to break by accident and expensive to fix later.
@@ -153,73 +150,49 @@ Each of these is cheap to break by accident and expensive to fix later.
 - Build and release stay frictionless: one command to build, one to test, one to publish.
   If a workflow needs a checklist to run, fix the workflow.
 - Every registered capability needs a documentation page; CI enforces this.
-- **Phase numbers are references, and phases 1-21, 23-55, 57, 58 and 60 are frozen.** Several hundred code comments
-  cite `list.md Phase N` to say why a thing exists — Phase 4 alone 55 times — so renumbering a built
-  phase silently repoints them at the wrong item. Each phase joins the frozen set the day it ships —
-  Phase 15 did so at 22 citations across 18 files, Phase 21 on 2026-08-16, Phase 23 on 2026-08-17,
-  Phases 24 and 25 together on 2026-08-17, Phases 26, 27, 28 and 29 on 2026-08-18, Phases 30, 31, 32, 33 and 34 the same day, Phases 35 and 36 on 2026-08-19, Phases 37 and 38 on 2026-08-20, Phases 39 to 43 on 2026-08-21, Phases 44 to 47 on 2026-08-22, Phases 48 and 51 on 2026-08-24, and Phases 49, 50, 52 and 53 on 2026-08-25, and Phases 57, 58, 54 and 60 on 2026-08-26 —
-  and the set only ever grows. **57 and 58 joined it late**, on the day Phase 54 shipped rather than
-  on the day each of them did, which is the rule being applied a day after it applied: they had
-  already shipped in v0.72.0 and v0.73.0. **Phase 57 is frozen while its own item stays open** —
-  the rule is that a phase which has shipped anything never moves again, and it has shipped half.
-  **22 is a retired number, not a hole.** Phase 22 was cut on 2026-08-18 with nothing built,
-  and it is **not reused**: a later phase renumbered into 22 would silently repoint every citation
-  that ever said "Phase 22" at a subject it was never about, which is the failure the rule above
-  exists to prevent arriving by a different road. It was also the only phase whose number was still
-  free to move, so nothing is now movable at all.
-  The unfinished tail was renumbered **twice on 2026-08-15** — once into build order, and once again
-  when three items were pulled into a new Phase 16 so the running order is the numbers themselves
-  rather than a paragraph explaining them. Both passes are recorded with their mapping in
-  [docs/plans/build-order.md](docs/plans/build-order.md). They were cheap only because those phases
-  were unbuilt. **From here new phases are appended**, and a phase that has shipped anything is not
-  renumbered again. Moving items *between* unbuilt phases stays free and encouraged when a phase
-  stops being one subject — a phase is a minor release, so one that cannot be finished holds its
-  ready items hostage.
-- **A number is allocated when the phase ships, not when it is planned.** *Added 2026-08-27, with
-  planning.* A `phase` issue is titled by its **subject** — "Panel panes: drag the divider to resize
-  them", never "Phase 61" — and takes its number on the commit that lands it in `list.md`. That keeps the
-  renumbering freedom the two 2026-08-15 passes needed, right up to the build, and it costs nothing:
-  issues cross-reference each other by issue number, which cannot go stale the way a prose "Phase 56"
-  can. **The exception is a number something permanent has already spent**, and the rule for spotting
-  one is that it is *not* the ship date. `CHANGELOG.md` names **Phase 59** under 0.72.0, and a
-  published tag never moves — so 59 was spent on 2026-08-25 by the release that shipped a *different*
-  phase, and the one it names is still unbuilt today. **56 and 59 are
-  reserved to [#100](https://github.com/dseelinger/d47/issues/100) and
-  [#101](https://github.com/dseelinger/d47/issues/101)** — 56 by courtesy, since nothing cites it,
-  and 59 because something already does. **55 was reserved the same way and took its number on
-  2026-08-27**, which is the whole rule working once: it was planned as
-  [#99](https://github.com/dseelinger/d47/issues/99) under its subject, kept 55 because
-  `phase-54-a-floor-and-a-ceiling.md` already named it, and joined the frozen set on the commit that
-  landed it. Before allocating, grep the prose as well as the source: a number is spent by a
-  changelog line or a frozen phase naming it, not only by a `list.md Phase N` comment.
-- **An issue title is diagnostic prose, not `list.md`'s prose.** *Added 2026-08-27, the day the
-  first six planning issues were filed with the wrong register.* `list.md` is a product description
-  read top to bottom, so *"A voice that never leaves the machine"* is exactly right there: it tells a
-  Commander what they would get. An issue title has a different job — it is **scanned in a list of
-  twenty, searched for, and cited in a commit** — and that line does not say *local text-to-speech*
-  to anybody who does not already know. The test the Commander set: **you should know what an issue
-  is about at a glance at 3am without opening it.**
-  The defect titles already passed it and the planning ones did not, because the planning ones were
-  moved across from `list.md` verbatim and nobody asked whether the voice travelled. It does not.
-  So: **say the subject plainly first**, and keep the evocative line for `list.md`, where it lands in
-  full on the commit that ships the phase. A colon is the usual shape — subject, then the sharp part
-  — and length is not the problem: `#89` and `#98` are long and every word earns its place. **Vagueness
-  is the problem.** [#99](https://github.com/dseelinger/d47/issues/99) to
-  [#104](https://github.com/dseelinger/d47/issues/104) were renamed under this rule the day it was
-  written; their `list.md` headings were left exactly as they were.
+- **Phase numbers are references, and phases 1-21, 23-55, 57, 58 and 60 are frozen.** Several
+  hundred code comments cite `Phase N` to say why a thing exists — Phase 4 alone 55 times — so
+  renumbering a built phase silently repoints them at the wrong item. Each phase joins the frozen
+  set the day it ships, and the set only ever grows. **The numbers themselves live in
+  `CHANGELOG.md` now**, which never moves, so what a citation names is fixed by a published
+  release rather than by a file anybody can edit. **22 is a retired number, not a hole.** Phase 22
+  was cut on 2026-08-18 with nothing built, and it is **not reused**: a later phase renumbered into
+  22 would silently repoint every citation that ever said "Phase 22" at a subject it was never
+  about, which is the failure this rule exists to prevent arriving by a different road. It was also
+  the only phase whose number was still free to move, so nothing is now movable at all. The
+  unfinished tail was renumbered twice on 2026-08-15 — once into build order, and once again when
+  three items were pulled into a new Phase 16. Both passes were cheap only because those phases were
+  unbuilt. **From here new phases are appended**, and a phase that has shipped anything is not
+  renumbered again.
+- **A number is allocated when the phase ships, not when it is planned.** A `phase` issue is titled
+  by its **subject** — "Panel panes: drag the divider to resize them", never "Phase 61" — and takes
+  its number on the commit that ships it, in the changelog section that records it. That keeps the
+  renumbering freedom right up to the build, and it costs nothing: issues cross-reference each other
+  by issue number, which cannot go stale the way a prose "Phase 56" can. **The exception is a number
+  something permanent has already spent**, and the rule for spotting one is that it is *not* the ship
+  date. `CHANGELOG.md` names **Phase 59** under 0.72.0, and a published tag never moves, so 59 was
+  spent on 2026-08-25 by the release that shipped a *different* phase, and the one it names is still
+  unbuilt today. **56 and 59 are reserved** to [#100](https://github.com/dseelinger/d47/issues/100)
+  and [#101](https://github.com/dseelinger/d47/issues/101) — 56 by courtesy, since nothing cites it,
+  and 59 because something already does. Before allocating, grep the prose as well as the source: a
+  number is spent by a changelog line naming it, not only by a `Phase N` code comment.
+- **An issue title is diagnostic prose.** *Added 2026-08-27, the day the first six planning issues
+  were filed with the wrong register.* An issue title is **scanned in a list of twenty, searched
+  for, and cited in a commit**, so *"A voice that never leaves the machine"* fails at it — that line
+  does not say *local text-to-speech* to anybody who does not already know. The test the Commander
+  set: **you should know what an issue is about at a glance at 3am without opening it.** So **say the
+  subject plainly first**. A colon is the usual shape — subject, then the sharp part — and length is
+  not the problem: `#89` and `#98` are long and every word earns its place. **Vagueness is the
+  problem.** The evocative line belongs in the changelog section that ships the work, where a reader
+  has already arrived at the thing being described.
 - **Renumbering: remap the numbers mechanically, then check the moved items by hand.** Both passes
   moved every number correctly and both got the same thing wrong: a citation naming an *item* that
   changed phase, which a faithful remap carries to a number that still resolves — to the wrong place,
-  reported by nothing. Map through placeholders exactly once per file so no replacement can re-consume
-  its own output, cover the prose forms (`Phases 17, 19 and 20` matches no pattern looking for
-  `Phase` + space + digit), **check bare numbers in table cells** — a `| 16 |` in a phase column has
-  no `Phase` next to it and has now been missed twice — and then re-read every citation of an item
-  that moved. That last step is
-  not automatable; it is the only one that matters.
-- **Order within a phase is subject grouping; execution order lives in the plan.** `list.md`
-  reads top to bottom as a description of the product, not as a schedule — Phase 14 shipped its
-  ninth item as step 12 of 13. When sequence matters, it belongs in `docs/plans/`, which is where
-  dependencies can be stated and argued rather than implied by position.
+  reported by nothing. Map through placeholders exactly once per file so no replacement can
+  re-consume its own output, cover the prose forms (`Phases 17, 19 and 20` matches no pattern looking
+  for `Phase` + space + digit), **check bare numbers in table cells** — a `| 16 |` in a phase column
+  has no `Phase` next to it and has now been missed twice — and then re-read every citation of an
+  item that moved. That last step is not automatable; it is the only one that matters.
 
 ## Build
 
@@ -260,14 +233,16 @@ is no second description of any rule to disagree with the first.
 | `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
 
-**`prerelease` automates the one decision a person gets wrong.** It reads the phase state out of
-`list.md` **at the last tag** and compares it with the working tree: a phase ticked now that was not
-ticked then is a minor, so is a `change-request` issue closed since that tag, and anything else is a
-patch. That is the rule two paragraphs down, applied rather than remembered — and it is the trap
-this repository has already recorded, because a newly ticked phase is obvious on the day it ships
-and invisible three days later. `-Minor` and `-Patch` override it and say so when they disagree;
-`-DryRun` explains its reasoning and stops. It checks `CHANGELOG.md` **before** anything is
-committed, for the same reason `release.ps1` works the version out first.
+**`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
+last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
+if any of them is a `phase`, a `change-request` or an `enhancement` — a patch otherwise. That is
+the rule two paragraphs down, applied rather than remembered, and it is a trap this repository has
+already recorded: a phase landing is obvious on the day it ships and invisible three days later.
+**It reads the commits and not GitHub's closed list**, because an issue closes when the commit
+reaching it is pushed and this decision is made before anything is pushed, so a closed query can
+never see the issues that this very release is the one closing. `-Minor` and `-Patch` override it
+and say so when they disagree; `-DryRun` explains its reasoning and stops. It checks `CHANGELOG.md`
+**before** anything is committed, for the same reason `release.ps1` works the version out first.
 
 **`release` is the other half, and it is the direction that cannot be taken back.** It refuses a
 draft, refuses a release missing `d47.zip` or its checksum — the two names every build in the field
@@ -293,9 +268,11 @@ in a latest reaches the install base and can only be superseded. Every build is 
 because a green suite and a working feature are different claims — Phase 60 shipped fully green with
 Cartesia never once heard aloud.
 
-**A completed phase is always a minor release.** Finishing a phase in `list.md` means the
-next tag is `0.<minor+1>.0`, not another patch — the version is how a Commander tells "some
-fixes landed" from "there is a whole capability here now". Fixes between phases are patches.
+**A completed phase is always a minor release.** Shipping a phase means the next tag is
+`0.<minor+1>.0`, not another patch — the version is how a Commander tells "some fixes landed" from
+"there is a whole capability here now". A phase ships by closing its `phase` issue from the commit
+that carries it, and the changelog section for that release is where the phase is described in full
+and takes its number. Fixes between phases are patches.
 
 **A published tag never moves.** Tags are signed and annotated, and once one is pushed and a
 Release is built from it, that tag is a receipt for one exact `d47.exe` and the checksum

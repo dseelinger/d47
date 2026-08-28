@@ -23,11 +23,9 @@ That is a description rather than a boast: it is one person's project, it has a 
 users, and the [open issues](https://github.com/dseelinger/d47/issues) are the honest list of
 what is wrong with it today.
 
-See [list.md](list.md) for what has shipped and what each phase covers,
+See [CHANGELOG.md](CHANGELOG.md) for what has shipped and what changed in each release,
 [issues labelled `phase`](https://github.com/dseelinger/d47/issues?q=is%3Aissue+is%3Aopen+label%3Aphase)
-for what is planned but not built yet,
-[docs/plans/build-order.md](docs/plans/build-order.md) for what is being built next and why,
-[CHANGELOG.md](CHANGELOG.md) for what changed in each release, and
+for what is planned but not built yet, and
 [architecture.md](architecture.md) for how it is built.
 
 ## Building

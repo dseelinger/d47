@@ -27,5 +27,3 @@ elite_official_url: https://www.elitedangerous.com/
 # to the install guide.
 exclude:
   - spikes/
-  - plans/
-  - archive/
