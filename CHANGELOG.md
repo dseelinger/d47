@@ -27,69 +27,9 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.85.0 — 2026-08-28 — The switch that was bound twice
+## 0.84.4 — 2026-08-28 — Four field reports, and the one that was not a bug in the code
 
-The gear switch inverted: flip it to up and the gear went down, flip it back and the gear went down
-again, and only pressing **L** by hand ever fixed it.
-[#147](https://github.com/dseelinger/d47/issues/147).
-
-**Directive 47 was right every single time.** The same physical button was bound twice — once in
-Elite, once as a d47 maintained switch — so every flip acted twice. Where d47 correctly pressed
-nothing, Elite's own binding toggled and the gear moved the wrong way; where d47 correctly pressed,
-the two toggles cancelled and nothing happened at all. One setup fault, wearing two disguises, both
-of which look exactly like the reconciler misbehaving.
-
-It was settled by measuring rather than by reasoning: the gear's true state sampled at 10 Hz from
-Status.json and laid against d47's own log, seven flips, every one accounted for and **d47's belief
-about the gear correct on all of them**. The same measurement killed the theory this had been
-filed under — [#148](https://github.com/dseelinger/d47/issues/148), a stale status read — which is
-now closed as not reproduced, with `GameStatusReader` unchanged.
-
-**So d47 now notices.** It already parsed the binds file at startup and already knew the device and
-button of every switch position; nobody had asked the one question that joins them. A switch sitting
-on a button Elite binds says so, on the panel, in the switch window and when asked out loud, naming
-the Elite action it collides with. It is narrowed to the device as well as the button — this
-Commander's binds file carries four `DeviceIndex` values under one VID and PID, and matching the
-button alone reported four collisions where one was real. **Binds stay read-only**: the one thing
-d47 can do about a collision is be the component in the room that can see it.
-
-**And a press that never takes is said out loud.** The watch has always reported a state arriving
-and then going back — something fighting d47 — and never reported it not arriving at all. That is
-precisely the shape two cancelling toggles make: the log said *Sent* twice while the gear did not
-move, and nothing said so. One sentence would have diagnosed in a moment what took an afternoon.
-Only where the state is readable, because an action d47 presses blind cannot tell *did not arrive*
-from *cannot say*.
-
-The off-by-one is pinned by a test, since it is the kind of fact that rots silently: Elite counts
-joystick buttons from one, so its `Joy_9` is d47's button 8.
-
----
-
-## 0.84.5 — 2026-08-28 — The log page keeps up, and says which service spoke
-
-**The log page was a snapshot of the moment it was opened.** The read ran on navigation and nothing
-ever read again — so a Commander who opened it to watch a failure saw nothing arrive, and the only
-way to see the next line was to leave the page and come back. It now re-reads once a second while
-it is the page showing, and stops the moment it is not.
-
-The original reasoning is kept rather than overturned, because it was right: *a log nobody is
-looking at is not worth a file read per tick.* What changed is that a page somebody is looking at
-now counts as somebody looking. The refresh is silent — no busy glyph for something nobody asked
-for — and does not redraw at all when the file has not moved, because a redraw rebuilds every run
-and would fight a reader's selection once a second for no new text. Scrolling still follows only if
-the reader was already following.
-
-**And a voice id now says whose it is.** The line read `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2`
-— an opaque id, with no way to tell which voice that was or which service said it. Since Phase 57
-three providers can be speaking at once, so the provider is a fact about the line rather than
-something a reader can infer: it is now `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2 through
-ElevenLabs`. Asked of the client that actually spoke rather than of settings, which can have moved
-on since. Kokoro's ids happen to carry a name and ElevenLabs' do not, which had made the gap look
-like a formatting quirk of one provider rather than a missing fact about all of them.
-
----
-
-## 0.84.4 — 2026-08-28 — Take us out, walked the way the panel actually works
+### Take us out, walked the way the panel actually works
 
 *Take us out* has never once worked, and the reason it never worked is the reason nobody could see
 what else was wrong with it. [#106](https://github.com/dseelinger/d47/issues/106).
@@ -149,6 +89,64 @@ carrying any label is now answered from the binary and GitHub is not asked at al
 reads `0.84.3 (local build)` and the panel badge matches. The rule is not about one tool's wording —
 the release workflow builds from the tag's bare version, so a published `d47.exe` never carries a
 label.
+
+### The switch that was bound twice
+
+The gear switch inverted: flip it to up and the gear went down, flip it back and the gear went down
+again, and only pressing **L** by hand ever fixed it.
+[#147](https://github.com/dseelinger/d47/issues/147).
+
+**Directive 47 was right every single time.** The same physical button was bound twice — once in
+Elite, once as a d47 maintained switch — so every flip acted twice. Where d47 correctly pressed
+nothing, Elite's own binding toggled and the gear moved the wrong way; where d47 correctly pressed,
+the two toggles cancelled and nothing happened at all. One setup fault, wearing two disguises, both
+of which look exactly like the reconciler misbehaving.
+
+It was settled by measuring rather than by reasoning: the gear's true state sampled at 10 Hz from
+Status.json and laid against d47's own log, seven flips, every one accounted for and **d47's belief
+about the gear correct on all of them**. The same measurement killed the theory this had been
+filed under — [#148](https://github.com/dseelinger/d47/issues/148), a stale status read — which is
+now closed as not reproduced, with `GameStatusReader` unchanged.
+
+**So d47 now notices.** It already parsed the binds file at startup and already knew the device and
+button of every switch position; nobody had asked the one question that joins them. A switch sitting
+on a button Elite binds says so, on the panel, in the switch window and when asked out loud, naming
+the Elite action it collides with. It is narrowed to the device as well as the button — this
+Commander's binds file carries four `DeviceIndex` values under one VID and PID, and matching the
+button alone reported four collisions where one was real. **Binds stay read-only**: the one thing
+d47 can do about a collision is be the component in the room that can see it.
+
+**And a press that never takes is said out loud.** The watch has always reported a state arriving
+and then going back — something fighting d47 — and never reported it not arriving at all. That is
+precisely the shape two cancelling toggles make: the log said *Sent* twice while the gear did not
+move, and nothing said so. One sentence would have diagnosed in a moment what took an afternoon.
+Only where the state is readable, because an action d47 presses blind cannot tell *did not arrive*
+from *cannot say*.
+
+The off-by-one is pinned by a test, since it is the kind of fact that rots silently: Elite counts
+joystick buttons from one, so its `Joy_9` is d47's button 8.
+
+### The log page keeps up, and says which service spoke
+
+**The log page was a snapshot of the moment it was opened.** The read ran on navigation and nothing
+ever read again — so a Commander who opened it to watch a failure saw nothing arrive, and the only
+way to see the next line was to leave the page and come back. It now re-reads once a second while
+it is the page showing, and stops the moment it is not.
+
+The original reasoning is kept rather than overturned, because it was right: *a log nobody is
+looking at is not worth a file read per tick.* What changed is that a page somebody is looking at
+now counts as somebody looking. The refresh is silent — no busy glyph for something nobody asked
+for — and does not redraw at all when the file has not moved, because a redraw rebuilds every run
+and would fight a reader's selection once a second for no new text. Scrolling still follows only if
+the reader was already following.
+
+**And a voice id now says whose it is.** The line read `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2`
+— an opaque id, with no way to tell which voice that was or which service said it. Since Phase 57
+three providers can be speaking at once, so the provider is a fact about the line rather than
+something a reader can infer: it is now `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2 through
+ElevenLabs`. Asked of the client that actually spoke rather than of settings, which can have moved
+on since. Kokoro's ids happen to carry a name and ElevenLabs' do not, which had made the gap look
+like a formatting quirk of one provider rather than a missing fact about all of them.
 
 ---
 
