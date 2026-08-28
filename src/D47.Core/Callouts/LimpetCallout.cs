@@ -103,7 +103,7 @@ public sealed class LimpetCallout : ICallout
                 continue;
             }
 
-            yield return new Announcement(Key, Said(held, capacity))
+            yield return new Announcement(Key, Said(held, capacity, Silencing(capacity)))
             {
                 // Long, because it is about a place rather than a moment, and a Commander who
                 // docks twice in ten minutes has not forgotten.
@@ -116,10 +116,43 @@ public sealed class LimpetCallout : ICallout
         journalEvent.Items("StationServices")
             .Any(service => string.Equals(service.GetString(), Service, StringComparison.OrdinalIgnoreCase));
 
-    private static string Said(int held, int capacity) =>
+    /// <summary>
+    /// The number of limpets that silences this callout
+    /// (<a href="https://github.com/dseelinger/d47/issues/140">#140</a>).
+    /// <para>
+    /// <b>Solved from the comparison that fires it, never restated as a percentage.</b> The filter
+    /// is <c>held × 100 &lt; capacity × percent</c>, so the target is the smallest whole number of
+    /// limpets making that false — which is the same arithmetic run backwards and rounded
+    /// <em>up</em>. Rounding down would name a number that leaves the reminder still firing, and a
+    /// Commander who buys the stated number and gets nagged anyway has been lied to by arithmetic.
+    /// </para>
+    /// <para>
+    /// It is a method rather than a value passed in because <see cref="Percent"/> is read through
+    /// on every examination: the sentence and the trigger read the same setting at the same moment,
+    /// so moving the slider cannot leave one of them describing the other's rule.
+    /// </para>
+    /// </summary>
+    private int Silencing(int capacity) => ((capacity * Percent()) + 99) / 100;
+
+    /// <summary>
+    /// <b>The line says the number, which is the whole of #140.</b> It used to state both inputs —
+    /// what is aboard and what the hold takes — and withhold the answer they were being compared to
+    /// produce: <i>"doesn't actually tell me how many limpets to put in the hold (total) to get it
+    /// to stop complaining"</i>. The silencing total was computed at the moment it spoke and thrown
+    /// away.
+    /// <para>
+    /// Both wordings name that total. The empty case needs only the one number, since with nothing
+    /// aboard the total and the shortfall are the same; the other names the total first and the
+    /// shortfall after it, because the total is what the callout is promising about and the
+    /// shortfall is what the Commander types into the purchase screen.
+    /// </para>
+    /// </summary>
+    private static string Said(int held, int capacity, int silencing) =>
         held == 0
-            ? $"No limpets aboard, and this station sells them. You have {Tonnes(capacity)} to fill."
-            : $"{Tonnes(held)} of limpets against {Tonnes(capacity)} of hold. This station sells them.";
+            ? $"No limpets aboard, and this station sells them. You have {Tonnes(capacity)} to fill. "
+              + $"Buy {silencing} and I'll stop asking."
+            : $"{Tonnes(held)} of limpets against {Tonnes(capacity)} of hold. This station sells them. "
+              + $"{silencing} aboard silences me — {silencing - held} more.";
 
     private static string Tonnes(int count) => count == 1 ? "1 tonne" : $"{count} tonnes";
 }
